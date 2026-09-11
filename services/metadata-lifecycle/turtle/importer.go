@@ -601,10 +601,16 @@ func (m *mapper) webService(source string, owner uuid.UUID, format, operationSou
 		return domain.WebService{}, err
 	}
 	service := domain.WebService{
-		ID:               ownedID(owner.String(), "web-service", source),
-		Name:             m.optionalString(source, schemaName),
-		Description:      m.optionalString(source, schemaDescription),
-		TemplateURL:      "",
+		ID:          ownedID(owner.String(), "web-service", source),
+		Name:        m.optionalString(source, schemaName),
+		Description: stringPtr(m.optionalString(source, schemaDescription)),
+		TemplateURL: "",
+		Method:      domain.HTTPMethodGet,
+		// TODO: Import web-service type from source metadata instead of hardcoding GEOJSON.
+		Type: domain.WebServiceTypeGeoJSON,
+		// TODO: Import visible-on targets from source metadata.
+		VisibleOn:        nil,
+		Body:             nil,
 		Parameters:       nil,
 		Format:           format,
 		Provider:         nil,
@@ -624,6 +630,14 @@ func (m *mapper) webService(source string, owner uuid.UUID, format, operationSou
 
 	if value, ok := m.first(source, dctSpatial); ok {
 		service.SpatialCoverage = m.spatial(value.RawValue())
+	}
+	method := strings.ToUpper(m.optionalString(operationSource, hydraMethod))
+	if method == "" {
+		method = string(domain.HTTPMethodGet)
+	}
+	service.Method = domain.HTTPMethod(method)
+	if !service.Method.Valid() {
+		return domain.WebService{}, fmt.Errorf("unsupported web service method %q", method)
 	}
 
 	providers := m.graph.refs(source, schemaProvider)
@@ -659,19 +673,30 @@ func (m *mapper) webService(source string, owner uuid.UUID, format, operationSou
 		}
 	}
 
-	if template, ok := m.firstString(operationSource, hydraTemplate); ok {
-		service.TemplateURL = template
+	serviceTemplate := ""
+	if rawTemplate, ok := m.firstString(operationSource, hydraTemplate); ok {
+		serviceTemplate = rawTemplate
+		service.TemplateURL = stripHydraQueryTemplate(rawTemplate)
 	}
 	for _, property := range m.graph.refs(operationSource, hydraProperty) {
-		if template, ok := m.firstString(property, hydraTemplate); ok && service.TemplateURL == "" {
-			service.TemplateURL = template
+		if rawTemplate, ok := m.firstString(property, hydraTemplate); ok && serviceTemplate == "" {
+			serviceTemplate = rawTemplate
+			service.TemplateURL = stripHydraQueryTemplate(rawTemplate)
 		}
 		for _, mapping := range m.graph.refs(property, hydraMapping) {
-			parameter, err := m.parameter(mapping, service.ID)
+			parameterValue, err := m.parameter(mapping)
 			if err != nil {
 				m.recordInvalid("parameter", mapping, err)
 				m.omitRelation(source, hydraMapping, "parameter", mapping, err)
 				continue
+			}
+			parameterValue.Position = len(service.Parameters)
+			parameter := domain.WebServiceParameter{
+				ID:        ownedID(service.ID.String(), "parameter", mapping),
+				Parameter: parameterValue,
+				Property:  stringPtr(m.optionalString(mapping, hydraProperty)),
+				Location:  hydraParameterLocation(serviceTemplate, parameterValue.Name),
+				Explode:   false,
 			}
 			parameters, mergeErr := appendUniqueParameter(service.Parameters, parameter)
 			if mergeErr != nil {
@@ -686,34 +711,30 @@ func (m *mapper) webService(source string, owner uuid.UUID, format, operationSou
 	return service, nil
 }
 
-func (m *mapper) parameter(source string, owner uuid.UUID) (domain.Parameter, error) {
+func (m *mapper) parameter(source string) (domain.Parameter, error) {
 	if err := m.checkSingleValues(source,
 		hydraVariable, "http://www.w3.org/2000/01/rdf-schema#label", hydraProperty,
 		hydraRequired, schemaMultipleValues, schemaReadonlyValue,
 		rdfsRange, schemaDefaultValue, schemaMinValue, schemaMaxValue,
 		schemaValuePattern,
 	); err != nil {
-		return nil, err
+		return domain.Parameter{}, err
 	}
-	parameterMetadata := domain.ParameterMetadata{
-		ID:             ownedID(owner.String(), "parameter", source),
-		Kind:           "",
-		Variable:       m.requiredString(source, hydraVariable),
-		Label:          m.optionalString(source, "http://www.w3.org/2000/01/rdf-schema#label"),
-		Property:       m.optionalString(source, hydraProperty),
-		Required:       m.bool(source, hydraRequired),
-		MultipleValues: m.bool(source, schemaMultipleValues),
-		ReadOnly:       m.bool(source, schemaReadonlyValue),
+	name := m.requiredString(source, hydraVariable)
+	label := m.optionalString(source, "http://www.w3.org/2000/01/rdf-schema#label")
+	if label == "" {
+		label = name
 	}
-	if parameterMetadata.Variable == "" {
-		return nil, fmt.Errorf("parameter %q has no variable", source)
+	if name == "" {
+		return domain.Parameter{}, fmt.Errorf("parameter %q has no variable", source)
 	}
-	if parameterMetadata.Label == "" {
-		parameterMetadata.Label = parameterMetadata.Variable
+	parameter := domain.Parameter{
+		Name:     name,
+		Label:    label,
+		Required: m.bool(source, hydraRequired),
+		ReadOnly: m.bool(source, schemaReadonlyValue),
 	}
-	if parameterMetadata.Property == "" {
-		parameterMetadata.Property = parameterMetadata.Variable
-	}
+	multipleValues := m.bool(source, schemaMultipleValues)
 	rangeIRI := normalizeRange(m.optionalString(source, rdfsRange))
 	config := func() (string, []string) {
 		return m.optionalString(source, schemaDefaultValue), m.strings(source, httpParamValue)
@@ -721,41 +742,44 @@ func (m *mapper) parameter(source string, owner uuid.UUID) (domain.Parameter, er
 	switch rangeIRI {
 	case rdfsDatatypeBoolean:
 		defaultText, hasDefault := m.firstString(source, schemaDefaultValue)
-		defaultValueText := strings.EqualFold(defaultText, "true")
-		var defaultValue *bool
-		if hasDefault {
-			defaultValue = &defaultValueText
+		defaultValue := strings.EqualFold(defaultText, "true")
+		if hasDefault && !strings.EqualFold(defaultText, "false") && !defaultValue {
+			return domain.Parameter{}, fmt.Errorf("invalid boolean default %q", defaultText)
 		}
-		return domain.BooleanParameter{
-			Metadata: parameterMetadata,
-			Default:  defaultValue,
-		}, nil
+		var defaultPointer *bool
+		if hasDefault {
+			defaultPointer = &defaultValue
+		}
+		parameter.Schema = domain.BooleanSchema{Default: defaultPointer}
+		return parameter, nil
 	case rdfsDatatypeInteger:
 		defaultValue := m.intPtr(source, schemaDefaultValue)
-		return domain.IntegerParameter{
-			Metadata:      parameterMetadata,
-			Minimum:       m.intPtr(source, schemaMinValue),
-			Maximum:       m.intPtr(source, schemaMaxValue),
-			Default:       defaultValue,
-			AllowedValues: m.validIntValues(source, defaultValue),
-		}, nil
+		parameter.Schema = domain.IntegerSchema{
+			Minimum:        m.intPtr(source, schemaMinValue),
+			Maximum:        m.intPtr(source, schemaMaxValue),
+			Default:        defaultValue,
+			Enum:           nilIfEmpty(m.validIntValues(source, defaultValue)),
+			MultipleValues: multipleValues,
+		}
+		return parameter, nil
 	case rdfsDatatypeFloat:
 		defaultValue := m.floatPtr(source, schemaDefaultValue)
-		return domain.FloatParameter{
-			Metadata:      parameterMetadata,
-			Minimum:       m.floatPtr(source, schemaMinValue),
-			Maximum:       m.floatPtr(source, schemaMaxValue),
-			Default:       defaultValue,
-			AllowedValues: m.validFloatValues(source, defaultValue),
-		}, nil
+		parameter.Schema = domain.FloatSchema{
+			Minimum:        m.floatPtr(source, schemaMinValue),
+			Maximum:        m.floatPtr(source, schemaMaxValue),
+			Default:        defaultValue,
+			Enum:           nilIfEmpty(m.validFloatValues(source, defaultValue)),
+			MultipleValues: multipleValues,
+		}
+		return parameter, nil
 	case rdfsDatatypeDateTime:
-		return domain.DateTimeParameter{
-			Metadata: parameterMetadata,
-			Minimum:  timePtr(m.time(source, schemaMinValue)),
-			Maximum:  timePtr(m.time(source, schemaMaxValue)),
-			Default:  timePtr(m.time(source, schemaDefaultValue)),
-			Pattern:  m.optionalString(source, schemaValuePattern),
-		}, nil
+		parameter.Schema = domain.DateTimeSchema{
+			Minimum: timePtr(m.time(source, schemaMinValue)),
+			Maximum: timePtr(m.time(source, schemaMaxValue)),
+			Default: timePtr(m.time(source, schemaDefaultValue)),
+			Layout:  stringPtr(m.optionalString(source, schemaValuePattern)),
+		}
+		return parameter, nil
 	default:
 		defaultValue, allowed := config()
 		var pointer *string
@@ -771,12 +795,13 @@ func (m *mapper) parameter(source string, owner uuid.UUID) (domain.Parameter, er
 			})
 			allowed = nil
 		}
-		return domain.StringParameter{
-			Metadata:      parameterMetadata,
-			Default:       pointer,
-			AllowedValues: allowed,
-			Pattern:       m.optionalString(source, schemaValuePattern),
-		}, nil
+		parameter.Schema = domain.StringSchema{
+			Default:        pointer,
+			Enum:           nilIfEmpty(allowed),
+			Pattern:        stringPtr(m.optionalString(source, schemaValuePattern)),
+			MultipleValues: multipleValues,
+		}
+		return parameter, nil
 	}
 }
 
@@ -1177,7 +1202,7 @@ func (m *mapper) intPtr(subject, predicate string) *int64 {
 		return nil
 	}
 	value := m.int64(subject, predicate)
-	return &value
+	return new(value)
 }
 
 func (m *mapper) floatPtr(subject, predicate string) *float64 {
@@ -1185,7 +1210,7 @@ func (m *mapper) floatPtr(subject, predicate string) *float64 {
 		return nil
 	}
 	value := m.float64(subject, predicate)
-	return &value
+	return new(value)
 }
 
 func (m *mapper) validIntValues(source string, defaultValue *int64) []int64 {
@@ -1253,14 +1278,51 @@ func stringPtr(value string) *string {
 	if value == "" {
 		return nil
 	}
-	return &value
+	return new(value)
+}
+
+func stripHydraQueryTemplate(value string) string {
+	for _, marker := range []string{"{?", "{&"} {
+		if before, _, ok := strings.Cut(value, marker); ok {
+			return before
+		}
+	}
+	return value
+}
+
+func hydraParameterLocation(template, name string) domain.ParameterLocation {
+	for _, marker := range []string{"{?", "{&"} {
+		start := 0
+		for {
+			index := strings.Index(template[start:], marker)
+			if index < 0 {
+				break
+			}
+			index += start
+			end := strings.IndexByte(template[index:], '}')
+			if end < 0 {
+				break
+			}
+			end += index
+			for variable := range strings.SplitSeq(template[index+2:end], ",") {
+				if strings.TrimSpace(variable) == name {
+					return domain.ParameterLocationQuery
+				}
+			}
+			start = end + 1
+		}
+	}
+	if strings.Contains(template, "{"+name+"}") {
+		return domain.ParameterLocationPath
+	}
+	return domain.ParameterLocationQuery
 }
 
 func timePtr(value time.Time) *time.Time {
 	if value.IsZero() {
 		return nil
 	}
-	return &value
+	return new(value)
 }
 
 func intValues(values []string) []int64 {
@@ -1315,86 +1377,100 @@ func appendUniqueIdentifier(values []domain.Identifier, value domain.Identifier)
 	return append(values, value)
 }
 
-func appendUniqueParameter(values []domain.Parameter, value domain.Parameter) ([]domain.Parameter, error) {
-	variable := value.GetMetadata().Variable
+func appendUniqueParameter(values []domain.WebServiceParameter, value domain.WebServiceParameter) ([]domain.WebServiceParameter, error) {
 	for i, existing := range values {
-		if existing.GetMetadata().Variable == variable {
-			if existing.Kind() != value.Kind() {
-				return values, fmt.Errorf("parameter %q has incompatible kinds %q and %q", variable, existing.Kind(), value.Kind())
-			}
-			values[i] = mergeParameter(existing, value)
-			return values, nil
+		if existing.Name != value.Name {
+			continue
 		}
+		if existing.Schema == nil || value.Schema == nil || existing.Schema.Kind() != value.Schema.Kind() {
+			return values, fmt.Errorf("parameter %q has incompatible kinds %q and %q", value.Name, schemaKind(existing.Schema), schemaKind(value.Schema))
+		}
+		values[i].Parameter = mergeParameter(existing.Parameter, value.Parameter)
+		return values, nil
 	}
 	return append(values, value), nil
 }
 
 func mergeParameter(existing, incoming domain.Parameter) domain.Parameter {
-	metadata := existing.GetMetadata()
-	incomingMetadata := incoming.GetMetadata()
-	metadata.Required = metadata.Required || incomingMetadata.Required
-	metadata.MultipleValues = metadata.MultipleValues || incomingMetadata.MultipleValues
-	metadata.ReadOnly = metadata.ReadOnly || incomingMetadata.ReadOnly
+	merged := existing
+	merged.Description = mergeStringDefault(existing.Description, incoming.Description)
+	merged.Required = existing.Required || incoming.Required
+	merged.ReadOnly = existing.ReadOnly || incoming.ReadOnly
 
-	switch current := existing.(type) {
-	case domain.StringParameter:
-		other, ok := incoming.(domain.StringParameter)
+	switch current := existing.Schema.(type) {
+	case domain.StringSchema:
+		other, ok := incoming.Schema.(domain.StringSchema)
 		if !ok {
-			return existing
+			return merged
 		}
-		current.Metadata = metadata
-		current.AllowedValues = mergeStringValues(current.AllowedValues, other.AllowedValues)
+		current.MultipleValues = current.MultipleValues || other.MultipleValues
+		current.Enum = nilIfEmpty(mergeStringValues(current.Enum, other.Enum))
 		current.Default = mergeStringDefault(current.Default, other.Default)
-		if current.Pattern != other.Pattern {
-			current.Pattern = ""
+		if !sameStringPointer(current.Pattern, other.Pattern) {
+			current.Pattern = nil
 		}
-		return current
-	case domain.BooleanParameter:
-		other, ok := incoming.(domain.BooleanParameter)
+		merged.Schema = current
+	case domain.BooleanSchema:
+		other, ok := incoming.Schema.(domain.BooleanSchema)
+		if ok {
+			current.Default = mergeBoolDefault(current.Default, other.Default)
+		}
+		merged.Schema = current
+	case domain.IntegerSchema:
+		other, ok := incoming.Schema.(domain.IntegerSchema)
 		if !ok {
-			return existing
+			return merged
 		}
-		current.Metadata = metadata
-		current.Default = mergeBoolDefault(current.Default, other.Default)
-		return current
-	case domain.IntegerParameter:
-		other, ok := incoming.(domain.IntegerParameter)
-		if !ok {
-			return existing
-		}
-		current.Metadata = metadata
+		current.MultipleValues = current.MultipleValues || other.MultipleValues
 		current.Minimum = mergeIntDefault(current.Minimum, other.Minimum)
 		current.Maximum = mergeIntDefault(current.Maximum, other.Maximum)
 		current.Default = mergeIntDefault(current.Default, other.Default)
-		current.AllowedValues = mergeIntValues(current.AllowedValues, other.AllowedValues)
-		return current
-	case domain.FloatParameter:
-		other, ok := incoming.(domain.FloatParameter)
+		current.Enum = nilIfEmpty(mergeIntValues(current.Enum, other.Enum))
+		merged.Schema = current
+	case domain.FloatSchema:
+		other, ok := incoming.Schema.(domain.FloatSchema)
 		if !ok {
-			return existing
+			return merged
 		}
-		current.Metadata = metadata
+		current.MultipleValues = current.MultipleValues || other.MultipleValues
 		current.Minimum = mergeFloatDefault(current.Minimum, other.Minimum)
 		current.Maximum = mergeFloatDefault(current.Maximum, other.Maximum)
 		current.Default = mergeFloatDefault(current.Default, other.Default)
-		current.AllowedValues = mergeFloatValues(current.AllowedValues, other.AllowedValues)
-		return current
-	case domain.DateTimeParameter:
-		other, ok := incoming.(domain.DateTimeParameter)
+		current.Enum = nilIfEmpty(mergeFloatValues(current.Enum, other.Enum))
+		merged.Schema = current
+	case domain.DateTimeSchema:
+		other, ok := incoming.Schema.(domain.DateTimeSchema)
 		if !ok {
-			return existing
+			return merged
 		}
-		current.Metadata = metadata
 		current.Minimum = mergeTimeDefault(current.Minimum, other.Minimum)
 		current.Maximum = mergeTimeDefault(current.Maximum, other.Maximum)
 		current.Default = mergeTimeDefault(current.Default, other.Default)
-		if current.Pattern != other.Pattern {
-			current.Pattern = ""
-		}
-		return current
-	default:
-		return existing
+		current.Layout = mergeStringDefault(current.Layout, other.Layout)
+		merged.Schema = current
 	}
+	return merged
+}
+
+func schemaKind(schema domain.ParameterSchema) domain.ParameterSchemaKind {
+	if schema == nil {
+		return ""
+	}
+	return schema.Kind()
+}
+
+func sameStringPointer(first, second *string) bool {
+	if first == nil || second == nil {
+		return first == second
+	}
+	return *first == *second
+}
+
+func nilIfEmpty[T any](values []T) []T {
+	if len(values) == 0 {
+		return nil
+	}
+	return values
 }
 
 func mergeStringValues(first, second []string) []string {

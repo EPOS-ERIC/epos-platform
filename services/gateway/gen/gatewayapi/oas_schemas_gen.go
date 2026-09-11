@@ -67,9 +67,23 @@ func (s *BlockUserRequest) SetReason(val NonBlankString) {
 
 // Ref: #/components/schemas/BooleanParameter
 type BooleanParameter struct {
-	Kind     BooleanParameterKind `json:"kind"`
-	Metadata ParameterMetadata    `json:"metadata"`
-	Default  NilBool              `json:"default"`
+	ID          uuid.UUID            `json:"id"`
+	Kind        BooleanParameterKind `json:"kind"`
+	Position    int32                `json:"position"`
+	Name        NonBlankString       `json:"name"`
+	Label       NonBlankString       `json:"label"`
+	Description OptNilString         `json:"description"`
+	Required    bool                 `json:"required"`
+	Property    OptNilString         `json:"property"`
+	Location    ParameterLocation    `json:"location"`
+	Explode     bool                 `json:"explode"`
+	ReadOnly    bool                 `json:"read_only"`
+	Default     OptNilBool           `json:"default"`
+}
+
+// GetID returns the value of ID.
+func (s *BooleanParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -77,14 +91,59 @@ func (s *BooleanParameter) GetKind() BooleanParameterKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *BooleanParameter) GetMetadata() ParameterMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *BooleanParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *BooleanParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *BooleanParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *BooleanParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *BooleanParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *BooleanParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *BooleanParameter) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *BooleanParameter) GetExplode() bool {
+	return s.Explode
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *BooleanParameter) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetDefault returns the value of Default.
-func (s *BooleanParameter) GetDefault() NilBool {
+func (s *BooleanParameter) GetDefault() OptNilBool {
 	return s.Default
+}
+
+// SetID sets the value of ID.
+func (s *BooleanParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -92,21 +151,69 @@ func (s *BooleanParameter) SetKind(val BooleanParameterKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *BooleanParameter) SetMetadata(val ParameterMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *BooleanParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *BooleanParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *BooleanParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *BooleanParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *BooleanParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *BooleanParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *BooleanParameter) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *BooleanParameter) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *BooleanParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetDefault sets the value of Default.
-func (s *BooleanParameter) SetDefault(val NilBool) {
+func (s *BooleanParameter) SetDefault(val OptNilBool) {
 	s.Default = val
 }
 
 // Ref: #/components/schemas/BooleanParameterDraft
 type BooleanParameterDraft struct {
-	Kind     BooleanParameterDraftKind `json:"kind"`
-	Metadata ParameterDraftMetadata    `json:"metadata"`
-	Default  NilBool                   `json:"default"`
+	Kind        BooleanParameterDraftKind `json:"kind"`
+	Position    int32                     `json:"position"`
+	Name        NonBlankString            `json:"name"`
+	Label       NonBlankString            `json:"label"`
+	Description OptNilString              `json:"description"`
+	Required    bool                      `json:"required"`
+	Property    OptNilString              `json:"property"`
+	Location    ParameterLocation         `json:"location"`
+	Explode     bool                      `json:"explode"`
+	ReadOnly    bool                      `json:"read_only"`
+	Default     OptNilBool                `json:"default"`
 }
 
 // GetKind returns the value of Kind.
@@ -114,13 +221,53 @@ func (s *BooleanParameterDraft) GetKind() BooleanParameterDraftKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *BooleanParameterDraft) GetMetadata() ParameterDraftMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *BooleanParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *BooleanParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *BooleanParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *BooleanParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *BooleanParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *BooleanParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *BooleanParameterDraft) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *BooleanParameterDraft) GetExplode() bool {
+	return s.Explode
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *BooleanParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetDefault returns the value of Default.
-func (s *BooleanParameterDraft) GetDefault() NilBool {
+func (s *BooleanParameterDraft) GetDefault() OptNilBool {
 	return s.Default
 }
 
@@ -129,13 +276,53 @@ func (s *BooleanParameterDraft) SetKind(val BooleanParameterDraftKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *BooleanParameterDraft) SetMetadata(val ParameterDraftMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *BooleanParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *BooleanParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *BooleanParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *BooleanParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *BooleanParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *BooleanParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *BooleanParameterDraft) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *BooleanParameterDraft) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *BooleanParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetDefault sets the value of Default.
-func (s *BooleanParameterDraft) SetDefault(val NilBool) {
+func (s *BooleanParameterDraft) SetDefault(val OptNilBool) {
 	s.Default = val
 }
 
@@ -201,6 +388,258 @@ func (s *BooleanParameterKind) UnmarshalText(data []byte) error {
 	switch BooleanParameterKind(data) {
 	case BooleanParameterKindBOOLEAN:
 		*s = BooleanParameterKindBOOLEAN
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/BooleanScalarParameter
+type BooleanScalarParameter struct {
+	Kind        BooleanScalarParameterKind `json:"kind"`
+	Position    int32                      `json:"position"`
+	Name        NonBlankString             `json:"name"`
+	Label       NonBlankString             `json:"label"`
+	Description OptNilString               `json:"description"`
+	Required    bool                       `json:"required"`
+	ReadOnly    bool                       `json:"read_only"`
+	Default     OptNilBool                 `json:"default"`
+}
+
+// GetKind returns the value of Kind.
+func (s *BooleanScalarParameter) GetKind() BooleanScalarParameterKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *BooleanScalarParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *BooleanScalarParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *BooleanScalarParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *BooleanScalarParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *BooleanScalarParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *BooleanScalarParameter) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetDefault returns the value of Default.
+func (s *BooleanScalarParameter) GetDefault() OptNilBool {
+	return s.Default
+}
+
+// SetKind sets the value of Kind.
+func (s *BooleanScalarParameter) SetKind(val BooleanScalarParameterKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *BooleanScalarParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *BooleanScalarParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *BooleanScalarParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *BooleanScalarParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *BooleanScalarParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *BooleanScalarParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetDefault sets the value of Default.
+func (s *BooleanScalarParameter) SetDefault(val OptNilBool) {
+	s.Default = val
+}
+
+// Ref: #/components/schemas/BooleanScalarParameterDraft
+type BooleanScalarParameterDraft struct {
+	Kind        BooleanScalarParameterDraftKind `json:"kind"`
+	Position    int32                           `json:"position"`
+	Name        NonBlankString                  `json:"name"`
+	Label       NonBlankString                  `json:"label"`
+	Description OptNilString                    `json:"description"`
+	Required    bool                            `json:"required"`
+	ReadOnly    bool                            `json:"read_only"`
+	Default     OptNilBool                      `json:"default"`
+}
+
+// GetKind returns the value of Kind.
+func (s *BooleanScalarParameterDraft) GetKind() BooleanScalarParameterDraftKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *BooleanScalarParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *BooleanScalarParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *BooleanScalarParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *BooleanScalarParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *BooleanScalarParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *BooleanScalarParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetDefault returns the value of Default.
+func (s *BooleanScalarParameterDraft) GetDefault() OptNilBool {
+	return s.Default
+}
+
+// SetKind sets the value of Kind.
+func (s *BooleanScalarParameterDraft) SetKind(val BooleanScalarParameterDraftKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *BooleanScalarParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *BooleanScalarParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *BooleanScalarParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *BooleanScalarParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *BooleanScalarParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *BooleanScalarParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetDefault sets the value of Default.
+func (s *BooleanScalarParameterDraft) SetDefault(val OptNilBool) {
+	s.Default = val
+}
+
+type BooleanScalarParameterDraftKind string
+
+const (
+	BooleanScalarParameterDraftKindBOOLEAN BooleanScalarParameterDraftKind = "BOOLEAN"
+)
+
+// AllValues returns all BooleanScalarParameterDraftKind values.
+func (BooleanScalarParameterDraftKind) AllValues() []BooleanScalarParameterDraftKind {
+	return []BooleanScalarParameterDraftKind{
+		BooleanScalarParameterDraftKindBOOLEAN,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s BooleanScalarParameterDraftKind) MarshalText() ([]byte, error) {
+	switch s {
+	case BooleanScalarParameterDraftKindBOOLEAN:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *BooleanScalarParameterDraftKind) UnmarshalText(data []byte) error {
+	switch BooleanScalarParameterDraftKind(data) {
+	case BooleanScalarParameterDraftKindBOOLEAN:
+		*s = BooleanScalarParameterDraftKindBOOLEAN
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type BooleanScalarParameterKind string
+
+const (
+	BooleanScalarParameterKindBOOLEAN BooleanScalarParameterKind = "BOOLEAN"
+)
+
+// AllValues returns all BooleanScalarParameterKind values.
+func (BooleanScalarParameterKind) AllValues() []BooleanScalarParameterKind {
+	return []BooleanScalarParameterKind{
+		BooleanScalarParameterKindBOOLEAN,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s BooleanScalarParameterKind) MarshalText() ([]byte, error) {
+	switch s {
+	case BooleanScalarParameterKindBOOLEAN:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *BooleanScalarParameterKind) UnmarshalText(data []byte) error {
+	switch BooleanScalarParameterKind(data) {
+	case BooleanScalarParameterKindBOOLEAN:
+		*s = BooleanScalarParameterKindBOOLEAN
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1659,12 +2098,26 @@ func (s *DatasetResourceMetadataResourceType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/DateTimeParameter
 type DateTimeParameter struct {
-	Kind     DateTimeParameterKind `json:"kind"`
-	Metadata ParameterMetadata     `json:"metadata"`
-	Minimum  NilDateTime           `json:"minimum"`
-	Maximum  NilDateTime           `json:"maximum"`
-	Default  NilDateTime           `json:"default"`
-	Pattern  string                `json:"pattern"`
+	ID          uuid.UUID             `json:"id"`
+	Kind        DateTimeParameterKind `json:"kind"`
+	Position    int32                 `json:"position"`
+	Name        NonBlankString        `json:"name"`
+	Label       NonBlankString        `json:"label"`
+	Description OptNilString          `json:"description"`
+	Required    bool                  `json:"required"`
+	Property    OptNilString          `json:"property"`
+	Location    ParameterLocation     `json:"location"`
+	Explode     bool                  `json:"explode"`
+	ReadOnly    bool                  `json:"read_only"`
+	Minimum     OptNilDateTime        `json:"minimum"`
+	Maximum     OptNilDateTime        `json:"maximum"`
+	Default     OptNilDateTime        `json:"default"`
+	Layout      OptNilString          `json:"layout"`
+}
+
+// GetID returns the value of ID.
+func (s *DateTimeParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -1672,29 +2125,74 @@ func (s *DateTimeParameter) GetKind() DateTimeParameterKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *DateTimeParameter) GetMetadata() ParameterMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *DateTimeParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *DateTimeParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *DateTimeParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *DateTimeParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *DateTimeParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *DateTimeParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *DateTimeParameter) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *DateTimeParameter) GetExplode() bool {
+	return s.Explode
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *DateTimeParameter) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetMinimum returns the value of Minimum.
-func (s *DateTimeParameter) GetMinimum() NilDateTime {
+func (s *DateTimeParameter) GetMinimum() OptNilDateTime {
 	return s.Minimum
 }
 
 // GetMaximum returns the value of Maximum.
-func (s *DateTimeParameter) GetMaximum() NilDateTime {
+func (s *DateTimeParameter) GetMaximum() OptNilDateTime {
 	return s.Maximum
 }
 
 // GetDefault returns the value of Default.
-func (s *DateTimeParameter) GetDefault() NilDateTime {
+func (s *DateTimeParameter) GetDefault() OptNilDateTime {
 	return s.Default
 }
 
-// GetPattern returns the value of Pattern.
-func (s *DateTimeParameter) GetPattern() string {
-	return s.Pattern
+// GetLayout returns the value of Layout.
+func (s *DateTimeParameter) GetLayout() OptNilString {
+	return s.Layout
+}
+
+// SetID sets the value of ID.
+func (s *DateTimeParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -1702,39 +2200,87 @@ func (s *DateTimeParameter) SetKind(val DateTimeParameterKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *DateTimeParameter) SetMetadata(val ParameterMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *DateTimeParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *DateTimeParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *DateTimeParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *DateTimeParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *DateTimeParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *DateTimeParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *DateTimeParameter) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *DateTimeParameter) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *DateTimeParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetMinimum sets the value of Minimum.
-func (s *DateTimeParameter) SetMinimum(val NilDateTime) {
+func (s *DateTimeParameter) SetMinimum(val OptNilDateTime) {
 	s.Minimum = val
 }
 
 // SetMaximum sets the value of Maximum.
-func (s *DateTimeParameter) SetMaximum(val NilDateTime) {
+func (s *DateTimeParameter) SetMaximum(val OptNilDateTime) {
 	s.Maximum = val
 }
 
 // SetDefault sets the value of Default.
-func (s *DateTimeParameter) SetDefault(val NilDateTime) {
+func (s *DateTimeParameter) SetDefault(val OptNilDateTime) {
 	s.Default = val
 }
 
-// SetPattern sets the value of Pattern.
-func (s *DateTimeParameter) SetPattern(val string) {
-	s.Pattern = val
+// SetLayout sets the value of Layout.
+func (s *DateTimeParameter) SetLayout(val OptNilString) {
+	s.Layout = val
 }
 
 // Ref: #/components/schemas/DateTimeParameterDraft
 type DateTimeParameterDraft struct {
-	Kind     DateTimeParameterDraftKind `json:"kind"`
-	Metadata ParameterDraftMetadata     `json:"metadata"`
-	Minimum  NilDateTime                `json:"minimum"`
-	Maximum  NilDateTime                `json:"maximum"`
-	Default  NilDateTime                `json:"default"`
-	Pattern  string                     `json:"pattern"`
+	Kind        DateTimeParameterDraftKind `json:"kind"`
+	Position    int32                      `json:"position"`
+	Name        NonBlankString             `json:"name"`
+	Label       NonBlankString             `json:"label"`
+	Description OptNilString               `json:"description"`
+	Required    bool                       `json:"required"`
+	Property    OptNilString               `json:"property"`
+	Location    ParameterLocation          `json:"location"`
+	Explode     bool                       `json:"explode"`
+	ReadOnly    bool                       `json:"read_only"`
+	Minimum     OptNilDateTime             `json:"minimum"`
+	Maximum     OptNilDateTime             `json:"maximum"`
+	Default     OptNilDateTime             `json:"default"`
+	Layout      OptNilString               `json:"layout"`
 }
 
 // GetKind returns the value of Kind.
@@ -1742,29 +2288,69 @@ func (s *DateTimeParameterDraft) GetKind() DateTimeParameterDraftKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *DateTimeParameterDraft) GetMetadata() ParameterDraftMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *DateTimeParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *DateTimeParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *DateTimeParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *DateTimeParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *DateTimeParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *DateTimeParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *DateTimeParameterDraft) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *DateTimeParameterDraft) GetExplode() bool {
+	return s.Explode
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *DateTimeParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetMinimum returns the value of Minimum.
-func (s *DateTimeParameterDraft) GetMinimum() NilDateTime {
+func (s *DateTimeParameterDraft) GetMinimum() OptNilDateTime {
 	return s.Minimum
 }
 
 // GetMaximum returns the value of Maximum.
-func (s *DateTimeParameterDraft) GetMaximum() NilDateTime {
+func (s *DateTimeParameterDraft) GetMaximum() OptNilDateTime {
 	return s.Maximum
 }
 
 // GetDefault returns the value of Default.
-func (s *DateTimeParameterDraft) GetDefault() NilDateTime {
+func (s *DateTimeParameterDraft) GetDefault() OptNilDateTime {
 	return s.Default
 }
 
-// GetPattern returns the value of Pattern.
-func (s *DateTimeParameterDraft) GetPattern() string {
-	return s.Pattern
+// GetLayout returns the value of Layout.
+func (s *DateTimeParameterDraft) GetLayout() OptNilString {
+	return s.Layout
 }
 
 // SetKind sets the value of Kind.
@@ -1772,29 +2358,69 @@ func (s *DateTimeParameterDraft) SetKind(val DateTimeParameterDraftKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *DateTimeParameterDraft) SetMetadata(val ParameterDraftMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *DateTimeParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *DateTimeParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *DateTimeParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *DateTimeParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *DateTimeParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *DateTimeParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *DateTimeParameterDraft) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *DateTimeParameterDraft) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *DateTimeParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetMinimum sets the value of Minimum.
-func (s *DateTimeParameterDraft) SetMinimum(val NilDateTime) {
+func (s *DateTimeParameterDraft) SetMinimum(val OptNilDateTime) {
 	s.Minimum = val
 }
 
 // SetMaximum sets the value of Maximum.
-func (s *DateTimeParameterDraft) SetMaximum(val NilDateTime) {
+func (s *DateTimeParameterDraft) SetMaximum(val OptNilDateTime) {
 	s.Maximum = val
 }
 
 // SetDefault sets the value of Default.
-func (s *DateTimeParameterDraft) SetDefault(val NilDateTime) {
+func (s *DateTimeParameterDraft) SetDefault(val OptNilDateTime) {
 	s.Default = val
 }
 
-// SetPattern sets the value of Pattern.
-func (s *DateTimeParameterDraft) SetPattern(val string) {
-	s.Pattern = val
+// SetLayout sets the value of Layout.
+func (s *DateTimeParameterDraft) SetLayout(val OptNilString) {
+	s.Layout = val
 }
 
 type DateTimeParameterDraftKind string
@@ -1859,6 +2485,324 @@ func (s *DateTimeParameterKind) UnmarshalText(data []byte) error {
 	switch DateTimeParameterKind(data) {
 	case DateTimeParameterKindDATETIME:
 		*s = DateTimeParameterKindDATETIME
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/DateTimeScalarParameter
+type DateTimeScalarParameter struct {
+	Kind        DateTimeScalarParameterKind `json:"kind"`
+	Position    int32                       `json:"position"`
+	Name        NonBlankString              `json:"name"`
+	Label       NonBlankString              `json:"label"`
+	Description OptNilString                `json:"description"`
+	Required    bool                        `json:"required"`
+	ReadOnly    bool                        `json:"read_only"`
+	Minimum     OptNilDateTime              `json:"minimum"`
+	Maximum     OptNilDateTime              `json:"maximum"`
+	Default     OptNilDateTime              `json:"default"`
+	Layout      OptNilString                `json:"layout"`
+}
+
+// GetKind returns the value of Kind.
+func (s *DateTimeScalarParameter) GetKind() DateTimeScalarParameterKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *DateTimeScalarParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *DateTimeScalarParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *DateTimeScalarParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *DateTimeScalarParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *DateTimeScalarParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *DateTimeScalarParameter) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetMinimum returns the value of Minimum.
+func (s *DateTimeScalarParameter) GetMinimum() OptNilDateTime {
+	return s.Minimum
+}
+
+// GetMaximum returns the value of Maximum.
+func (s *DateTimeScalarParameter) GetMaximum() OptNilDateTime {
+	return s.Maximum
+}
+
+// GetDefault returns the value of Default.
+func (s *DateTimeScalarParameter) GetDefault() OptNilDateTime {
+	return s.Default
+}
+
+// GetLayout returns the value of Layout.
+func (s *DateTimeScalarParameter) GetLayout() OptNilString {
+	return s.Layout
+}
+
+// SetKind sets the value of Kind.
+func (s *DateTimeScalarParameter) SetKind(val DateTimeScalarParameterKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *DateTimeScalarParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *DateTimeScalarParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *DateTimeScalarParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *DateTimeScalarParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *DateTimeScalarParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *DateTimeScalarParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetMinimum sets the value of Minimum.
+func (s *DateTimeScalarParameter) SetMinimum(val OptNilDateTime) {
+	s.Minimum = val
+}
+
+// SetMaximum sets the value of Maximum.
+func (s *DateTimeScalarParameter) SetMaximum(val OptNilDateTime) {
+	s.Maximum = val
+}
+
+// SetDefault sets the value of Default.
+func (s *DateTimeScalarParameter) SetDefault(val OptNilDateTime) {
+	s.Default = val
+}
+
+// SetLayout sets the value of Layout.
+func (s *DateTimeScalarParameter) SetLayout(val OptNilString) {
+	s.Layout = val
+}
+
+// Ref: #/components/schemas/DateTimeScalarParameterDraft
+type DateTimeScalarParameterDraft struct {
+	Kind        DateTimeScalarParameterDraftKind `json:"kind"`
+	Position    int32                            `json:"position"`
+	Name        NonBlankString                   `json:"name"`
+	Label       NonBlankString                   `json:"label"`
+	Description OptNilString                     `json:"description"`
+	Required    bool                             `json:"required"`
+	ReadOnly    bool                             `json:"read_only"`
+	Minimum     OptNilDateTime                   `json:"minimum"`
+	Maximum     OptNilDateTime                   `json:"maximum"`
+	Default     OptNilDateTime                   `json:"default"`
+	Layout      OptNilString                     `json:"layout"`
+}
+
+// GetKind returns the value of Kind.
+func (s *DateTimeScalarParameterDraft) GetKind() DateTimeScalarParameterDraftKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *DateTimeScalarParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *DateTimeScalarParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *DateTimeScalarParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *DateTimeScalarParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *DateTimeScalarParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *DateTimeScalarParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetMinimum returns the value of Minimum.
+func (s *DateTimeScalarParameterDraft) GetMinimum() OptNilDateTime {
+	return s.Minimum
+}
+
+// GetMaximum returns the value of Maximum.
+func (s *DateTimeScalarParameterDraft) GetMaximum() OptNilDateTime {
+	return s.Maximum
+}
+
+// GetDefault returns the value of Default.
+func (s *DateTimeScalarParameterDraft) GetDefault() OptNilDateTime {
+	return s.Default
+}
+
+// GetLayout returns the value of Layout.
+func (s *DateTimeScalarParameterDraft) GetLayout() OptNilString {
+	return s.Layout
+}
+
+// SetKind sets the value of Kind.
+func (s *DateTimeScalarParameterDraft) SetKind(val DateTimeScalarParameterDraftKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *DateTimeScalarParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *DateTimeScalarParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *DateTimeScalarParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *DateTimeScalarParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *DateTimeScalarParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *DateTimeScalarParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetMinimum sets the value of Minimum.
+func (s *DateTimeScalarParameterDraft) SetMinimum(val OptNilDateTime) {
+	s.Minimum = val
+}
+
+// SetMaximum sets the value of Maximum.
+func (s *DateTimeScalarParameterDraft) SetMaximum(val OptNilDateTime) {
+	s.Maximum = val
+}
+
+// SetDefault sets the value of Default.
+func (s *DateTimeScalarParameterDraft) SetDefault(val OptNilDateTime) {
+	s.Default = val
+}
+
+// SetLayout sets the value of Layout.
+func (s *DateTimeScalarParameterDraft) SetLayout(val OptNilString) {
+	s.Layout = val
+}
+
+type DateTimeScalarParameterDraftKind string
+
+const (
+	DateTimeScalarParameterDraftKindDATETIME DateTimeScalarParameterDraftKind = "DATETIME"
+)
+
+// AllValues returns all DateTimeScalarParameterDraftKind values.
+func (DateTimeScalarParameterDraftKind) AllValues() []DateTimeScalarParameterDraftKind {
+	return []DateTimeScalarParameterDraftKind{
+		DateTimeScalarParameterDraftKindDATETIME,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DateTimeScalarParameterDraftKind) MarshalText() ([]byte, error) {
+	switch s {
+	case DateTimeScalarParameterDraftKindDATETIME:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DateTimeScalarParameterDraftKind) UnmarshalText(data []byte) error {
+	switch DateTimeScalarParameterDraftKind(data) {
+	case DateTimeScalarParameterDraftKindDATETIME:
+		*s = DateTimeScalarParameterDraftKindDATETIME
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type DateTimeScalarParameterKind string
+
+const (
+	DateTimeScalarParameterKindDATETIME DateTimeScalarParameterKind = "DATETIME"
+)
+
+// AllValues returns all DateTimeScalarParameterKind values.
+func (DateTimeScalarParameterKind) AllValues() []DateTimeScalarParameterKind {
+	return []DateTimeScalarParameterKind{
+		DateTimeScalarParameterKindDATETIME,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DateTimeScalarParameterKind) MarshalText() ([]byte, error) {
+	switch s {
+	case DateTimeScalarParameterKindDATETIME:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DateTimeScalarParameterKind) UnmarshalText(data []byte) error {
+	switch DateTimeScalarParameterKind(data) {
+	case DateTimeScalarParameterKindDATETIME:
+		*s = DateTimeScalarParameterKindDATETIME
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -2549,12 +3493,27 @@ func (s *DownloadableFileDistributionType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/FloatParameter
 type FloatParameter struct {
-	Kind          FloatParameterKind `json:"kind"`
-	Metadata      ParameterMetadata  `json:"metadata"`
-	Minimum       NilFloat64         `json:"minimum"`
-	Maximum       NilFloat64         `json:"maximum"`
-	Default       NilFloat64         `json:"default"`
-	AllowedValues []float64          `json:"allowed_values"`
+	ID             uuid.UUID          `json:"id"`
+	Kind           FloatParameterKind `json:"kind"`
+	Position       int32              `json:"position"`
+	Name           NonBlankString     `json:"name"`
+	Label          NonBlankString     `json:"label"`
+	Description    OptNilString       `json:"description"`
+	Required       bool               `json:"required"`
+	Property       OptNilString       `json:"property"`
+	Location       ParameterLocation  `json:"location"`
+	Explode        bool               `json:"explode"`
+	MultipleValues bool               `json:"multiple_values"`
+	ReadOnly       bool               `json:"read_only"`
+	Minimum        OptNilFloat64      `json:"minimum"`
+	Maximum        OptNilFloat64      `json:"maximum"`
+	Default        OptNilFloat64      `json:"default"`
+	Enum           []float64          `json:"enum"`
+}
+
+// GetID returns the value of ID.
+func (s *FloatParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -2562,29 +3521,79 @@ func (s *FloatParameter) GetKind() FloatParameterKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *FloatParameter) GetMetadata() ParameterMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *FloatParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *FloatParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *FloatParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *FloatParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *FloatParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *FloatParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *FloatParameter) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *FloatParameter) GetExplode() bool {
+	return s.Explode
+}
+
+// GetMultipleValues returns the value of MultipleValues.
+func (s *FloatParameter) GetMultipleValues() bool {
+	return s.MultipleValues
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *FloatParameter) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetMinimum returns the value of Minimum.
-func (s *FloatParameter) GetMinimum() NilFloat64 {
+func (s *FloatParameter) GetMinimum() OptNilFloat64 {
 	return s.Minimum
 }
 
 // GetMaximum returns the value of Maximum.
-func (s *FloatParameter) GetMaximum() NilFloat64 {
+func (s *FloatParameter) GetMaximum() OptNilFloat64 {
 	return s.Maximum
 }
 
 // GetDefault returns the value of Default.
-func (s *FloatParameter) GetDefault() NilFloat64 {
+func (s *FloatParameter) GetDefault() OptNilFloat64 {
 	return s.Default
 }
 
-// GetAllowedValues returns the value of AllowedValues.
-func (s *FloatParameter) GetAllowedValues() []float64 {
-	return s.AllowedValues
+// GetEnum returns the value of Enum.
+func (s *FloatParameter) GetEnum() []float64 {
+	return s.Enum
+}
+
+// SetID sets the value of ID.
+func (s *FloatParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -2592,39 +3601,93 @@ func (s *FloatParameter) SetKind(val FloatParameterKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *FloatParameter) SetMetadata(val ParameterMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *FloatParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *FloatParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *FloatParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *FloatParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *FloatParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *FloatParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *FloatParameter) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *FloatParameter) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetMultipleValues sets the value of MultipleValues.
+func (s *FloatParameter) SetMultipleValues(val bool) {
+	s.MultipleValues = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *FloatParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetMinimum sets the value of Minimum.
-func (s *FloatParameter) SetMinimum(val NilFloat64) {
+func (s *FloatParameter) SetMinimum(val OptNilFloat64) {
 	s.Minimum = val
 }
 
 // SetMaximum sets the value of Maximum.
-func (s *FloatParameter) SetMaximum(val NilFloat64) {
+func (s *FloatParameter) SetMaximum(val OptNilFloat64) {
 	s.Maximum = val
 }
 
 // SetDefault sets the value of Default.
-func (s *FloatParameter) SetDefault(val NilFloat64) {
+func (s *FloatParameter) SetDefault(val OptNilFloat64) {
 	s.Default = val
 }
 
-// SetAllowedValues sets the value of AllowedValues.
-func (s *FloatParameter) SetAllowedValues(val []float64) {
-	s.AllowedValues = val
+// SetEnum sets the value of Enum.
+func (s *FloatParameter) SetEnum(val []float64) {
+	s.Enum = val
 }
 
 // Ref: #/components/schemas/FloatParameterDraft
 type FloatParameterDraft struct {
-	Kind          FloatParameterDraftKind `json:"kind"`
-	Metadata      ParameterDraftMetadata  `json:"metadata"`
-	Minimum       NilFloat64              `json:"minimum"`
-	Maximum       NilFloat64              `json:"maximum"`
-	Default       NilFloat64              `json:"default"`
-	AllowedValues []float64               `json:"allowed_values"`
+	Kind           FloatParameterDraftKind `json:"kind"`
+	Position       int32                   `json:"position"`
+	Name           NonBlankString          `json:"name"`
+	Label          NonBlankString          `json:"label"`
+	Description    OptNilString            `json:"description"`
+	Required       bool                    `json:"required"`
+	Property       OptNilString            `json:"property"`
+	Location       ParameterLocation       `json:"location"`
+	Explode        bool                    `json:"explode"`
+	MultipleValues bool                    `json:"multiple_values"`
+	ReadOnly       bool                    `json:"read_only"`
+	Minimum        OptNilFloat64           `json:"minimum"`
+	Maximum        OptNilFloat64           `json:"maximum"`
+	Default        OptNilFloat64           `json:"default"`
+	Enum           []float64               `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -2632,29 +3695,74 @@ func (s *FloatParameterDraft) GetKind() FloatParameterDraftKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *FloatParameterDraft) GetMetadata() ParameterDraftMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *FloatParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *FloatParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *FloatParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *FloatParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *FloatParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *FloatParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *FloatParameterDraft) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *FloatParameterDraft) GetExplode() bool {
+	return s.Explode
+}
+
+// GetMultipleValues returns the value of MultipleValues.
+func (s *FloatParameterDraft) GetMultipleValues() bool {
+	return s.MultipleValues
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *FloatParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetMinimum returns the value of Minimum.
-func (s *FloatParameterDraft) GetMinimum() NilFloat64 {
+func (s *FloatParameterDraft) GetMinimum() OptNilFloat64 {
 	return s.Minimum
 }
 
 // GetMaximum returns the value of Maximum.
-func (s *FloatParameterDraft) GetMaximum() NilFloat64 {
+func (s *FloatParameterDraft) GetMaximum() OptNilFloat64 {
 	return s.Maximum
 }
 
 // GetDefault returns the value of Default.
-func (s *FloatParameterDraft) GetDefault() NilFloat64 {
+func (s *FloatParameterDraft) GetDefault() OptNilFloat64 {
 	return s.Default
 }
 
-// GetAllowedValues returns the value of AllowedValues.
-func (s *FloatParameterDraft) GetAllowedValues() []float64 {
-	return s.AllowedValues
+// GetEnum returns the value of Enum.
+func (s *FloatParameterDraft) GetEnum() []float64 {
+	return s.Enum
 }
 
 // SetKind sets the value of Kind.
@@ -2662,29 +3770,74 @@ func (s *FloatParameterDraft) SetKind(val FloatParameterDraftKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *FloatParameterDraft) SetMetadata(val ParameterDraftMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *FloatParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *FloatParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *FloatParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *FloatParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *FloatParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *FloatParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *FloatParameterDraft) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *FloatParameterDraft) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetMultipleValues sets the value of MultipleValues.
+func (s *FloatParameterDraft) SetMultipleValues(val bool) {
+	s.MultipleValues = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *FloatParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetMinimum sets the value of Minimum.
-func (s *FloatParameterDraft) SetMinimum(val NilFloat64) {
+func (s *FloatParameterDraft) SetMinimum(val OptNilFloat64) {
 	s.Minimum = val
 }
 
 // SetMaximum sets the value of Maximum.
-func (s *FloatParameterDraft) SetMaximum(val NilFloat64) {
+func (s *FloatParameterDraft) SetMaximum(val OptNilFloat64) {
 	s.Maximum = val
 }
 
 // SetDefault sets the value of Default.
-func (s *FloatParameterDraft) SetDefault(val NilFloat64) {
+func (s *FloatParameterDraft) SetDefault(val OptNilFloat64) {
 	s.Default = val
 }
 
-// SetAllowedValues sets the value of AllowedValues.
-func (s *FloatParameterDraft) SetAllowedValues(val []float64) {
-	s.AllowedValues = val
+// SetEnum sets the value of Enum.
+func (s *FloatParameterDraft) SetEnum(val []float64) {
+	s.Enum = val
 }
 
 type FloatParameterDraftKind string
@@ -2749,6 +3902,324 @@ func (s *FloatParameterKind) UnmarshalText(data []byte) error {
 	switch FloatParameterKind(data) {
 	case FloatParameterKindFLOAT:
 		*s = FloatParameterKindFLOAT
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/FloatScalarParameter
+type FloatScalarParameter struct {
+	Kind        FloatScalarParameterKind `json:"kind"`
+	Position    int32                    `json:"position"`
+	Name        NonBlankString           `json:"name"`
+	Label       NonBlankString           `json:"label"`
+	Description OptNilString             `json:"description"`
+	Required    bool                     `json:"required"`
+	ReadOnly    bool                     `json:"read_only"`
+	Minimum     OptNilFloat64            `json:"minimum"`
+	Maximum     OptNilFloat64            `json:"maximum"`
+	Default     OptNilFloat64            `json:"default"`
+	Enum        []float64                `json:"enum"`
+}
+
+// GetKind returns the value of Kind.
+func (s *FloatScalarParameter) GetKind() FloatScalarParameterKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *FloatScalarParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *FloatScalarParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *FloatScalarParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *FloatScalarParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *FloatScalarParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *FloatScalarParameter) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetMinimum returns the value of Minimum.
+func (s *FloatScalarParameter) GetMinimum() OptNilFloat64 {
+	return s.Minimum
+}
+
+// GetMaximum returns the value of Maximum.
+func (s *FloatScalarParameter) GetMaximum() OptNilFloat64 {
+	return s.Maximum
+}
+
+// GetDefault returns the value of Default.
+func (s *FloatScalarParameter) GetDefault() OptNilFloat64 {
+	return s.Default
+}
+
+// GetEnum returns the value of Enum.
+func (s *FloatScalarParameter) GetEnum() []float64 {
+	return s.Enum
+}
+
+// SetKind sets the value of Kind.
+func (s *FloatScalarParameter) SetKind(val FloatScalarParameterKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *FloatScalarParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *FloatScalarParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *FloatScalarParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *FloatScalarParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *FloatScalarParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *FloatScalarParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetMinimum sets the value of Minimum.
+func (s *FloatScalarParameter) SetMinimum(val OptNilFloat64) {
+	s.Minimum = val
+}
+
+// SetMaximum sets the value of Maximum.
+func (s *FloatScalarParameter) SetMaximum(val OptNilFloat64) {
+	s.Maximum = val
+}
+
+// SetDefault sets the value of Default.
+func (s *FloatScalarParameter) SetDefault(val OptNilFloat64) {
+	s.Default = val
+}
+
+// SetEnum sets the value of Enum.
+func (s *FloatScalarParameter) SetEnum(val []float64) {
+	s.Enum = val
+}
+
+// Ref: #/components/schemas/FloatScalarParameterDraft
+type FloatScalarParameterDraft struct {
+	Kind        FloatScalarParameterDraftKind `json:"kind"`
+	Position    int32                         `json:"position"`
+	Name        NonBlankString                `json:"name"`
+	Label       NonBlankString                `json:"label"`
+	Description OptNilString                  `json:"description"`
+	Required    bool                          `json:"required"`
+	ReadOnly    bool                          `json:"read_only"`
+	Minimum     OptNilFloat64                 `json:"minimum"`
+	Maximum     OptNilFloat64                 `json:"maximum"`
+	Default     OptNilFloat64                 `json:"default"`
+	Enum        []float64                     `json:"enum"`
+}
+
+// GetKind returns the value of Kind.
+func (s *FloatScalarParameterDraft) GetKind() FloatScalarParameterDraftKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *FloatScalarParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *FloatScalarParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *FloatScalarParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *FloatScalarParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *FloatScalarParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *FloatScalarParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetMinimum returns the value of Minimum.
+func (s *FloatScalarParameterDraft) GetMinimum() OptNilFloat64 {
+	return s.Minimum
+}
+
+// GetMaximum returns the value of Maximum.
+func (s *FloatScalarParameterDraft) GetMaximum() OptNilFloat64 {
+	return s.Maximum
+}
+
+// GetDefault returns the value of Default.
+func (s *FloatScalarParameterDraft) GetDefault() OptNilFloat64 {
+	return s.Default
+}
+
+// GetEnum returns the value of Enum.
+func (s *FloatScalarParameterDraft) GetEnum() []float64 {
+	return s.Enum
+}
+
+// SetKind sets the value of Kind.
+func (s *FloatScalarParameterDraft) SetKind(val FloatScalarParameterDraftKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *FloatScalarParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *FloatScalarParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *FloatScalarParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *FloatScalarParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *FloatScalarParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *FloatScalarParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetMinimum sets the value of Minimum.
+func (s *FloatScalarParameterDraft) SetMinimum(val OptNilFloat64) {
+	s.Minimum = val
+}
+
+// SetMaximum sets the value of Maximum.
+func (s *FloatScalarParameterDraft) SetMaximum(val OptNilFloat64) {
+	s.Maximum = val
+}
+
+// SetDefault sets the value of Default.
+func (s *FloatScalarParameterDraft) SetDefault(val OptNilFloat64) {
+	s.Default = val
+}
+
+// SetEnum sets the value of Enum.
+func (s *FloatScalarParameterDraft) SetEnum(val []float64) {
+	s.Enum = val
+}
+
+type FloatScalarParameterDraftKind string
+
+const (
+	FloatScalarParameterDraftKindFLOAT FloatScalarParameterDraftKind = "FLOAT"
+)
+
+// AllValues returns all FloatScalarParameterDraftKind values.
+func (FloatScalarParameterDraftKind) AllValues() []FloatScalarParameterDraftKind {
+	return []FloatScalarParameterDraftKind{
+		FloatScalarParameterDraftKindFLOAT,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s FloatScalarParameterDraftKind) MarshalText() ([]byte, error) {
+	switch s {
+	case FloatScalarParameterDraftKindFLOAT:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *FloatScalarParameterDraftKind) UnmarshalText(data []byte) error {
+	switch FloatScalarParameterDraftKind(data) {
+	case FloatScalarParameterDraftKindFLOAT:
+		*s = FloatScalarParameterDraftKindFLOAT
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type FloatScalarParameterKind string
+
+const (
+	FloatScalarParameterKindFLOAT FloatScalarParameterKind = "FLOAT"
+)
+
+// AllValues returns all FloatScalarParameterKind values.
+func (FloatScalarParameterKind) AllValues() []FloatScalarParameterKind {
+	return []FloatScalarParameterKind{
+		FloatScalarParameterKindFLOAT,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s FloatScalarParameterKind) MarshalText() ([]byte, error) {
+	switch s {
+	case FloatScalarParameterKindFLOAT:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *FloatScalarParameterKind) UnmarshalText(data []byte) error {
+	switch FloatScalarParameterKind(data) {
+	case FloatScalarParameterKindFLOAT:
+		*s = FloatScalarParameterKindFLOAT
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -3415,12 +4886,27 @@ func (s ImportTurtleMetadataReq) Read(p []byte) (n int, err error) {
 
 // Ref: #/components/schemas/IntegerParameter
 type IntegerParameter struct {
-	Kind          IntegerParameterKind `json:"kind"`
-	Metadata      ParameterMetadata    `json:"metadata"`
-	Minimum       NilInt64             `json:"minimum"`
-	Maximum       NilInt64             `json:"maximum"`
-	Default       NilInt64             `json:"default"`
-	AllowedValues []int64              `json:"allowed_values"`
+	ID             uuid.UUID            `json:"id"`
+	Kind           IntegerParameterKind `json:"kind"`
+	Position       int32                `json:"position"`
+	Name           NonBlankString       `json:"name"`
+	Label          NonBlankString       `json:"label"`
+	Description    OptNilString         `json:"description"`
+	Required       bool                 `json:"required"`
+	Property       OptNilString         `json:"property"`
+	Location       ParameterLocation    `json:"location"`
+	Explode        bool                 `json:"explode"`
+	MultipleValues bool                 `json:"multiple_values"`
+	ReadOnly       bool                 `json:"read_only"`
+	Minimum        OptNilInt64          `json:"minimum"`
+	Maximum        OptNilInt64          `json:"maximum"`
+	Default        OptNilInt64          `json:"default"`
+	Enum           []int64              `json:"enum"`
+}
+
+// GetID returns the value of ID.
+func (s *IntegerParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -3428,29 +4914,79 @@ func (s *IntegerParameter) GetKind() IntegerParameterKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *IntegerParameter) GetMetadata() ParameterMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *IntegerParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *IntegerParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *IntegerParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *IntegerParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *IntegerParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *IntegerParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *IntegerParameter) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *IntegerParameter) GetExplode() bool {
+	return s.Explode
+}
+
+// GetMultipleValues returns the value of MultipleValues.
+func (s *IntegerParameter) GetMultipleValues() bool {
+	return s.MultipleValues
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *IntegerParameter) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetMinimum returns the value of Minimum.
-func (s *IntegerParameter) GetMinimum() NilInt64 {
+func (s *IntegerParameter) GetMinimum() OptNilInt64 {
 	return s.Minimum
 }
 
 // GetMaximum returns the value of Maximum.
-func (s *IntegerParameter) GetMaximum() NilInt64 {
+func (s *IntegerParameter) GetMaximum() OptNilInt64 {
 	return s.Maximum
 }
 
 // GetDefault returns the value of Default.
-func (s *IntegerParameter) GetDefault() NilInt64 {
+func (s *IntegerParameter) GetDefault() OptNilInt64 {
 	return s.Default
 }
 
-// GetAllowedValues returns the value of AllowedValues.
-func (s *IntegerParameter) GetAllowedValues() []int64 {
-	return s.AllowedValues
+// GetEnum returns the value of Enum.
+func (s *IntegerParameter) GetEnum() []int64 {
+	return s.Enum
+}
+
+// SetID sets the value of ID.
+func (s *IntegerParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -3458,39 +4994,93 @@ func (s *IntegerParameter) SetKind(val IntegerParameterKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *IntegerParameter) SetMetadata(val ParameterMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *IntegerParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *IntegerParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *IntegerParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *IntegerParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *IntegerParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *IntegerParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *IntegerParameter) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *IntegerParameter) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetMultipleValues sets the value of MultipleValues.
+func (s *IntegerParameter) SetMultipleValues(val bool) {
+	s.MultipleValues = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *IntegerParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetMinimum sets the value of Minimum.
-func (s *IntegerParameter) SetMinimum(val NilInt64) {
+func (s *IntegerParameter) SetMinimum(val OptNilInt64) {
 	s.Minimum = val
 }
 
 // SetMaximum sets the value of Maximum.
-func (s *IntegerParameter) SetMaximum(val NilInt64) {
+func (s *IntegerParameter) SetMaximum(val OptNilInt64) {
 	s.Maximum = val
 }
 
 // SetDefault sets the value of Default.
-func (s *IntegerParameter) SetDefault(val NilInt64) {
+func (s *IntegerParameter) SetDefault(val OptNilInt64) {
 	s.Default = val
 }
 
-// SetAllowedValues sets the value of AllowedValues.
-func (s *IntegerParameter) SetAllowedValues(val []int64) {
-	s.AllowedValues = val
+// SetEnum sets the value of Enum.
+func (s *IntegerParameter) SetEnum(val []int64) {
+	s.Enum = val
 }
 
 // Ref: #/components/schemas/IntegerParameterDraft
 type IntegerParameterDraft struct {
-	Kind          IntegerParameterDraftKind `json:"kind"`
-	Metadata      ParameterDraftMetadata    `json:"metadata"`
-	Minimum       NilInt64                  `json:"minimum"`
-	Maximum       NilInt64                  `json:"maximum"`
-	Default       NilInt64                  `json:"default"`
-	AllowedValues []int64                   `json:"allowed_values"`
+	Kind           IntegerParameterDraftKind `json:"kind"`
+	Position       int32                     `json:"position"`
+	Name           NonBlankString            `json:"name"`
+	Label          NonBlankString            `json:"label"`
+	Description    OptNilString              `json:"description"`
+	Required       bool                      `json:"required"`
+	Property       OptNilString              `json:"property"`
+	Location       ParameterLocation         `json:"location"`
+	Explode        bool                      `json:"explode"`
+	MultipleValues bool                      `json:"multiple_values"`
+	ReadOnly       bool                      `json:"read_only"`
+	Minimum        OptNilInt64               `json:"minimum"`
+	Maximum        OptNilInt64               `json:"maximum"`
+	Default        OptNilInt64               `json:"default"`
+	Enum           []int64                   `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -3498,29 +5088,74 @@ func (s *IntegerParameterDraft) GetKind() IntegerParameterDraftKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *IntegerParameterDraft) GetMetadata() ParameterDraftMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *IntegerParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *IntegerParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *IntegerParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *IntegerParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *IntegerParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *IntegerParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *IntegerParameterDraft) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *IntegerParameterDraft) GetExplode() bool {
+	return s.Explode
+}
+
+// GetMultipleValues returns the value of MultipleValues.
+func (s *IntegerParameterDraft) GetMultipleValues() bool {
+	return s.MultipleValues
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *IntegerParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetMinimum returns the value of Minimum.
-func (s *IntegerParameterDraft) GetMinimum() NilInt64 {
+func (s *IntegerParameterDraft) GetMinimum() OptNilInt64 {
 	return s.Minimum
 }
 
 // GetMaximum returns the value of Maximum.
-func (s *IntegerParameterDraft) GetMaximum() NilInt64 {
+func (s *IntegerParameterDraft) GetMaximum() OptNilInt64 {
 	return s.Maximum
 }
 
 // GetDefault returns the value of Default.
-func (s *IntegerParameterDraft) GetDefault() NilInt64 {
+func (s *IntegerParameterDraft) GetDefault() OptNilInt64 {
 	return s.Default
 }
 
-// GetAllowedValues returns the value of AllowedValues.
-func (s *IntegerParameterDraft) GetAllowedValues() []int64 {
-	return s.AllowedValues
+// GetEnum returns the value of Enum.
+func (s *IntegerParameterDraft) GetEnum() []int64 {
+	return s.Enum
 }
 
 // SetKind sets the value of Kind.
@@ -3528,29 +5163,74 @@ func (s *IntegerParameterDraft) SetKind(val IntegerParameterDraftKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *IntegerParameterDraft) SetMetadata(val ParameterDraftMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *IntegerParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *IntegerParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *IntegerParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *IntegerParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *IntegerParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *IntegerParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *IntegerParameterDraft) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *IntegerParameterDraft) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetMultipleValues sets the value of MultipleValues.
+func (s *IntegerParameterDraft) SetMultipleValues(val bool) {
+	s.MultipleValues = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *IntegerParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetMinimum sets the value of Minimum.
-func (s *IntegerParameterDraft) SetMinimum(val NilInt64) {
+func (s *IntegerParameterDraft) SetMinimum(val OptNilInt64) {
 	s.Minimum = val
 }
 
 // SetMaximum sets the value of Maximum.
-func (s *IntegerParameterDraft) SetMaximum(val NilInt64) {
+func (s *IntegerParameterDraft) SetMaximum(val OptNilInt64) {
 	s.Maximum = val
 }
 
 // SetDefault sets the value of Default.
-func (s *IntegerParameterDraft) SetDefault(val NilInt64) {
+func (s *IntegerParameterDraft) SetDefault(val OptNilInt64) {
 	s.Default = val
 }
 
-// SetAllowedValues sets the value of AllowedValues.
-func (s *IntegerParameterDraft) SetAllowedValues(val []int64) {
-	s.AllowedValues = val
+// SetEnum sets the value of Enum.
+func (s *IntegerParameterDraft) SetEnum(val []int64) {
+	s.Enum = val
 }
 
 type IntegerParameterDraftKind string
@@ -3615,6 +5295,324 @@ func (s *IntegerParameterKind) UnmarshalText(data []byte) error {
 	switch IntegerParameterKind(data) {
 	case IntegerParameterKindINTEGER:
 		*s = IntegerParameterKindINTEGER
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/IntegerScalarParameter
+type IntegerScalarParameter struct {
+	Kind        IntegerScalarParameterKind `json:"kind"`
+	Position    int32                      `json:"position"`
+	Name        NonBlankString             `json:"name"`
+	Label       NonBlankString             `json:"label"`
+	Description OptNilString               `json:"description"`
+	Required    bool                       `json:"required"`
+	ReadOnly    bool                       `json:"read_only"`
+	Minimum     OptNilInt64                `json:"minimum"`
+	Maximum     OptNilInt64                `json:"maximum"`
+	Default     OptNilInt64                `json:"default"`
+	Enum        []int64                    `json:"enum"`
+}
+
+// GetKind returns the value of Kind.
+func (s *IntegerScalarParameter) GetKind() IntegerScalarParameterKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *IntegerScalarParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *IntegerScalarParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *IntegerScalarParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *IntegerScalarParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *IntegerScalarParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *IntegerScalarParameter) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetMinimum returns the value of Minimum.
+func (s *IntegerScalarParameter) GetMinimum() OptNilInt64 {
+	return s.Minimum
+}
+
+// GetMaximum returns the value of Maximum.
+func (s *IntegerScalarParameter) GetMaximum() OptNilInt64 {
+	return s.Maximum
+}
+
+// GetDefault returns the value of Default.
+func (s *IntegerScalarParameter) GetDefault() OptNilInt64 {
+	return s.Default
+}
+
+// GetEnum returns the value of Enum.
+func (s *IntegerScalarParameter) GetEnum() []int64 {
+	return s.Enum
+}
+
+// SetKind sets the value of Kind.
+func (s *IntegerScalarParameter) SetKind(val IntegerScalarParameterKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *IntegerScalarParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *IntegerScalarParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *IntegerScalarParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *IntegerScalarParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *IntegerScalarParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *IntegerScalarParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetMinimum sets the value of Minimum.
+func (s *IntegerScalarParameter) SetMinimum(val OptNilInt64) {
+	s.Minimum = val
+}
+
+// SetMaximum sets the value of Maximum.
+func (s *IntegerScalarParameter) SetMaximum(val OptNilInt64) {
+	s.Maximum = val
+}
+
+// SetDefault sets the value of Default.
+func (s *IntegerScalarParameter) SetDefault(val OptNilInt64) {
+	s.Default = val
+}
+
+// SetEnum sets the value of Enum.
+func (s *IntegerScalarParameter) SetEnum(val []int64) {
+	s.Enum = val
+}
+
+// Ref: #/components/schemas/IntegerScalarParameterDraft
+type IntegerScalarParameterDraft struct {
+	Kind        IntegerScalarParameterDraftKind `json:"kind"`
+	Position    int32                           `json:"position"`
+	Name        NonBlankString                  `json:"name"`
+	Label       NonBlankString                  `json:"label"`
+	Description OptNilString                    `json:"description"`
+	Required    bool                            `json:"required"`
+	ReadOnly    bool                            `json:"read_only"`
+	Minimum     OptNilInt64                     `json:"minimum"`
+	Maximum     OptNilInt64                     `json:"maximum"`
+	Default     OptNilInt64                     `json:"default"`
+	Enum        []int64                         `json:"enum"`
+}
+
+// GetKind returns the value of Kind.
+func (s *IntegerScalarParameterDraft) GetKind() IntegerScalarParameterDraftKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *IntegerScalarParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *IntegerScalarParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *IntegerScalarParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *IntegerScalarParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *IntegerScalarParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *IntegerScalarParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetMinimum returns the value of Minimum.
+func (s *IntegerScalarParameterDraft) GetMinimum() OptNilInt64 {
+	return s.Minimum
+}
+
+// GetMaximum returns the value of Maximum.
+func (s *IntegerScalarParameterDraft) GetMaximum() OptNilInt64 {
+	return s.Maximum
+}
+
+// GetDefault returns the value of Default.
+func (s *IntegerScalarParameterDraft) GetDefault() OptNilInt64 {
+	return s.Default
+}
+
+// GetEnum returns the value of Enum.
+func (s *IntegerScalarParameterDraft) GetEnum() []int64 {
+	return s.Enum
+}
+
+// SetKind sets the value of Kind.
+func (s *IntegerScalarParameterDraft) SetKind(val IntegerScalarParameterDraftKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *IntegerScalarParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *IntegerScalarParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *IntegerScalarParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *IntegerScalarParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *IntegerScalarParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *IntegerScalarParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetMinimum sets the value of Minimum.
+func (s *IntegerScalarParameterDraft) SetMinimum(val OptNilInt64) {
+	s.Minimum = val
+}
+
+// SetMaximum sets the value of Maximum.
+func (s *IntegerScalarParameterDraft) SetMaximum(val OptNilInt64) {
+	s.Maximum = val
+}
+
+// SetDefault sets the value of Default.
+func (s *IntegerScalarParameterDraft) SetDefault(val OptNilInt64) {
+	s.Default = val
+}
+
+// SetEnum sets the value of Enum.
+func (s *IntegerScalarParameterDraft) SetEnum(val []int64) {
+	s.Enum = val
+}
+
+type IntegerScalarParameterDraftKind string
+
+const (
+	IntegerScalarParameterDraftKindINTEGER IntegerScalarParameterDraftKind = "INTEGER"
+)
+
+// AllValues returns all IntegerScalarParameterDraftKind values.
+func (IntegerScalarParameterDraftKind) AllValues() []IntegerScalarParameterDraftKind {
+	return []IntegerScalarParameterDraftKind{
+		IntegerScalarParameterDraftKindINTEGER,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s IntegerScalarParameterDraftKind) MarshalText() ([]byte, error) {
+	switch s {
+	case IntegerScalarParameterDraftKindINTEGER:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *IntegerScalarParameterDraftKind) UnmarshalText(data []byte) error {
+	switch IntegerScalarParameterDraftKind(data) {
+	case IntegerScalarParameterDraftKindINTEGER:
+		*s = IntegerScalarParameterDraftKindINTEGER
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type IntegerScalarParameterKind string
+
+const (
+	IntegerScalarParameterKindINTEGER IntegerScalarParameterKind = "INTEGER"
+)
+
+// AllValues returns all IntegerScalarParameterKind values.
+func (IntegerScalarParameterKind) AllValues() []IntegerScalarParameterKind {
+	return []IntegerScalarParameterKind{
+		IntegerScalarParameterKindINTEGER,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s IntegerScalarParameterKind) MarshalText() ([]byte, error) {
+	switch s {
+	case IntegerScalarParameterKindINTEGER:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *IntegerScalarParameterKind) UnmarshalText(data []byte) error {
+	switch IntegerScalarParameterKind(data) {
+	case IntegerScalarParameterKindINTEGER:
+		*s = IntegerScalarParameterKindINTEGER
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -3873,186 +5871,6 @@ func (s *MembershipUser) SetFamilyName(val string) {
 // SetEmail sets the value of Email.
 func (s *MembershipUser) SetEmail(val string) {
 	s.Email = val
-}
-
-// NewNilBool returns new NilBool with value set to v.
-func NewNilBool(v bool) NilBool {
-	return NilBool{
-		Value: v,
-	}
-}
-
-// NilBool is nullable bool.
-type NilBool struct {
-	Value bool
-	Null  bool
-}
-
-// SetTo sets value to v.
-func (o *NilBool) SetTo(v bool) {
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o NilBool) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *NilBool) SetToNull() {
-	o.Null = true
-	var v bool
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o NilBool) Get() (v, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o NilBool) Or(d bool) bool {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewNilDateTime returns new NilDateTime with value set to v.
-func NewNilDateTime(v time.Time) NilDateTime {
-	return NilDateTime{
-		Value: v,
-	}
-}
-
-// NilDateTime is nullable time.Time.
-type NilDateTime struct {
-	Value time.Time
-	Null  bool
-}
-
-// SetTo sets value to v.
-func (o *NilDateTime) SetTo(v time.Time) {
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o NilDateTime) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *NilDateTime) SetToNull() {
-	o.Null = true
-	var v time.Time
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o NilDateTime) Get() (v time.Time, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o NilDateTime) Or(d time.Time) time.Time {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewNilFloat64 returns new NilFloat64 with value set to v.
-func NewNilFloat64(v float64) NilFloat64 {
-	return NilFloat64{
-		Value: v,
-	}
-}
-
-// NilFloat64 is nullable float64.
-type NilFloat64 struct {
-	Value float64
-	Null  bool
-}
-
-// SetTo sets value to v.
-func (o *NilFloat64) SetTo(v float64) {
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o NilFloat64) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *NilFloat64) SetToNull() {
-	o.Null = true
-	var v float64
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o NilFloat64) Get() (v float64, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o NilFloat64) Or(d float64) float64 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewNilInt64 returns new NilInt64 with value set to v.
-func NewNilInt64(v int64) NilInt64 {
-	return NilInt64{
-		Value: v,
-	}
-}
-
-// NilInt64 is nullable int64.
-type NilInt64 struct {
-	Value int64
-	Null  bool
-}
-
-// SetTo sets value to v.
-func (o *NilInt64) SetTo(v int64) {
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o NilInt64) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *NilInt64) SetToNull() {
-	o.Null = true
-	var v int64
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o NilInt64) Get() (v int64, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o NilInt64) Or(d int64) int64 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
 }
 
 // NewNilString returns new NilString with value set to v.
@@ -4330,6 +6148,74 @@ func (o OptInt32) Or(d int32) int32 {
 	return d
 }
 
+// NewOptNilBool returns new OptNilBool with value set to v.
+func NewOptNilBool(v bool) OptNilBool {
+	return OptNilBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilBool is optional nullable bool.
+type OptNilBool struct {
+	Value bool
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilBool was set.
+func (o OptNilBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilBool) SetTo(v bool) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilBool) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilBool) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v bool
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilBool) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilBool) Get() (v, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilDateTime returns new OptNilDateTime with value set to v.
 func NewOptNilDateTime(v time.Time) OptNilDateTime {
 	return OptNilDateTime{
@@ -4392,6 +6278,74 @@ func (o OptNilDateTime) Get() (v time.Time, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilFloat64 returns new OptNilFloat64 with value set to v.
+func NewOptNilFloat64(v float64) OptNilFloat64 {
+	return OptNilFloat64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilFloat64 is optional nullable float64.
+type OptNilFloat64 struct {
+	Value float64
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilFloat64 was set.
+func (o OptNilFloat64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilFloat64) Reset() {
+	var v float64
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilFloat64) SetTo(v float64) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilFloat64) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilFloat64) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v float64
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilFloat64) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilFloat64) Get() (v float64, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilFloat64) Or(d float64) float64 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -4664,6 +6618,74 @@ func (o OptNilUUID) Get() (v uuid.UUID, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilWebServiceVisibleOnArray returns new OptNilWebServiceVisibleOnArray with value set to v.
+func NewOptNilWebServiceVisibleOnArray(v []WebServiceVisibleOn) OptNilWebServiceVisibleOnArray {
+	return OptNilWebServiceVisibleOnArray{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilWebServiceVisibleOnArray is optional nullable []WebServiceVisibleOn.
+type OptNilWebServiceVisibleOnArray struct {
+	Value []WebServiceVisibleOn
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilWebServiceVisibleOnArray was set.
+func (o OptNilWebServiceVisibleOnArray) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilWebServiceVisibleOnArray) Reset() {
+	var v []WebServiceVisibleOn
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilWebServiceVisibleOnArray) SetTo(v []WebServiceVisibleOn) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilWebServiceVisibleOnArray) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilWebServiceVisibleOnArray) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v []WebServiceVisibleOn
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilWebServiceVisibleOnArray) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilWebServiceVisibleOnArray) Get() (v []WebServiceVisibleOn, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilWebServiceVisibleOnArray) Or(d []WebServiceVisibleOn) []WebServiceVisibleOn {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -5096,6 +7118,7 @@ type Parameter struct {
 	IntegerParameter  IntegerParameter
 	FloatParameter    FloatParameter
 	DateTimeParameter DateTimeParameter
+	TemplateParameter TemplateParameter
 }
 
 // ParameterType is oneOf type of Parameter.
@@ -5108,6 +7131,7 @@ const (
 	IntegerParameterParameter  ParameterType = "INTEGER"
 	FloatParameterParameter    ParameterType = "FLOAT"
 	DateTimeParameterParameter ParameterType = "DATETIME"
+	TemplateParameterParameter ParameterType = "TEMPLATE"
 )
 
 // IsStringParameter reports whether Parameter is StringParameter.
@@ -5124,6 +7148,9 @@ func (s Parameter) IsFloatParameter() bool { return s.Type == FloatParameterPara
 
 // IsDateTimeParameter reports whether Parameter is DateTimeParameter.
 func (s Parameter) IsDateTimeParameter() bool { return s.Type == DateTimeParameterParameter }
+
+// IsTemplateParameter reports whether Parameter is TemplateParameter.
+func (s Parameter) IsTemplateParameter() bool { return s.Type == TemplateParameterParameter }
 
 // SetStringParameter sets Parameter to StringParameter.
 func (s *Parameter) SetStringParameter(v StringParameter) {
@@ -5230,6 +7257,27 @@ func NewDateTimeParameterParameter(v DateTimeParameter) Parameter {
 	return s
 }
 
+// SetTemplateParameter sets Parameter to TemplateParameter.
+func (s *Parameter) SetTemplateParameter(v TemplateParameter) {
+	s.Type = TemplateParameterParameter
+	s.TemplateParameter = v
+}
+
+// GetTemplateParameter returns TemplateParameter and true boolean if Parameter is TemplateParameter.
+func (s Parameter) GetTemplateParameter() (v TemplateParameter, ok bool) {
+	if !s.IsTemplateParameter() {
+		return v, false
+	}
+	return s.TemplateParameter, true
+}
+
+// NewTemplateParameterParameter returns new Parameter from TemplateParameter.
+func NewTemplateParameterParameter(v TemplateParameter) Parameter {
+	var s Parameter
+	s.SetTemplateParameter(v)
+	return s
+}
+
 // Ref: #/components/schemas/ParameterDraft
 // ParameterDraft represents sum type.
 type ParameterDraft struct {
@@ -5240,6 +7288,7 @@ type ParameterDraft struct {
 	IntegerParameterDraft  IntegerParameterDraft
 	FloatParameterDraft    FloatParameterDraft
 	DateTimeParameterDraft DateTimeParameterDraft
+	TemplateParameterDraft TemplateParameterDraft
 }
 
 // ParameterDraftType is oneOf type of ParameterDraft.
@@ -5252,6 +7301,7 @@ const (
 	IntegerParameterDraftParameterDraft  ParameterDraftType = "INTEGER"
 	FloatParameterDraftParameterDraft    ParameterDraftType = "FLOAT"
 	DateTimeParameterDraftParameterDraft ParameterDraftType = "DATETIME"
+	TemplateParameterDraftParameterDraft ParameterDraftType = "TEMPLATE"
 )
 
 // IsStringParameterDraft reports whether ParameterDraft is StringParameterDraft.
@@ -5277,6 +7327,11 @@ func (s ParameterDraft) IsFloatParameterDraft() bool {
 // IsDateTimeParameterDraft reports whether ParameterDraft is DateTimeParameterDraft.
 func (s ParameterDraft) IsDateTimeParameterDraft() bool {
 	return s.Type == DateTimeParameterDraftParameterDraft
+}
+
+// IsTemplateParameterDraft reports whether ParameterDraft is TemplateParameterDraft.
+func (s ParameterDraft) IsTemplateParameterDraft() bool {
+	return s.Type == TemplateParameterDraftParameterDraft
 }
 
 // SetStringParameterDraft sets ParameterDraft to StringParameterDraft.
@@ -5384,121 +7439,53 @@ func NewDateTimeParameterDraftParameterDraft(v DateTimeParameterDraft) Parameter
 	return s
 }
 
-// Ref: #/components/schemas/ParameterDraftMetadata
-type ParameterDraftMetadata struct {
-	Kind           ParameterKind `json:"kind"`
-	Variable       string        `json:"variable"`
-	Property       string        `json:"property"`
-	Label          string        `json:"label"`
-	Required       bool          `json:"required"`
-	MultipleValues bool          `json:"multiple_values"`
-	ReadOnly       bool          `json:"read_only"`
+// SetTemplateParameterDraft sets ParameterDraft to TemplateParameterDraft.
+func (s *ParameterDraft) SetTemplateParameterDraft(v TemplateParameterDraft) {
+	s.Type = TemplateParameterDraftParameterDraft
+	s.TemplateParameterDraft = v
 }
 
-// GetKind returns the value of Kind.
-func (s *ParameterDraftMetadata) GetKind() ParameterKind {
-	return s.Kind
+// GetTemplateParameterDraft returns TemplateParameterDraft and true boolean if ParameterDraft is TemplateParameterDraft.
+func (s ParameterDraft) GetTemplateParameterDraft() (v TemplateParameterDraft, ok bool) {
+	if !s.IsTemplateParameterDraft() {
+		return v, false
+	}
+	return s.TemplateParameterDraft, true
 }
 
-// GetVariable returns the value of Variable.
-func (s *ParameterDraftMetadata) GetVariable() string {
-	return s.Variable
+// NewTemplateParameterDraftParameterDraft returns new ParameterDraft from TemplateParameterDraft.
+func NewTemplateParameterDraftParameterDraft(v TemplateParameterDraft) ParameterDraft {
+	var s ParameterDraft
+	s.SetTemplateParameterDraft(v)
+	return s
 }
 
-// GetProperty returns the value of Property.
-func (s *ParameterDraftMetadata) GetProperty() string {
-	return s.Property
-}
-
-// GetLabel returns the value of Label.
-func (s *ParameterDraftMetadata) GetLabel() string {
-	return s.Label
-}
-
-// GetRequired returns the value of Required.
-func (s *ParameterDraftMetadata) GetRequired() bool {
-	return s.Required
-}
-
-// GetMultipleValues returns the value of MultipleValues.
-func (s *ParameterDraftMetadata) GetMultipleValues() bool {
-	return s.MultipleValues
-}
-
-// GetReadOnly returns the value of ReadOnly.
-func (s *ParameterDraftMetadata) GetReadOnly() bool {
-	return s.ReadOnly
-}
-
-// SetKind sets the value of Kind.
-func (s *ParameterDraftMetadata) SetKind(val ParameterKind) {
-	s.Kind = val
-}
-
-// SetVariable sets the value of Variable.
-func (s *ParameterDraftMetadata) SetVariable(val string) {
-	s.Variable = val
-}
-
-// SetProperty sets the value of Property.
-func (s *ParameterDraftMetadata) SetProperty(val string) {
-	s.Property = val
-}
-
-// SetLabel sets the value of Label.
-func (s *ParameterDraftMetadata) SetLabel(val string) {
-	s.Label = val
-}
-
-// SetRequired sets the value of Required.
-func (s *ParameterDraftMetadata) SetRequired(val bool) {
-	s.Required = val
-}
-
-// SetMultipleValues sets the value of MultipleValues.
-func (s *ParameterDraftMetadata) SetMultipleValues(val bool) {
-	s.MultipleValues = val
-}
-
-// SetReadOnly sets the value of ReadOnly.
-func (s *ParameterDraftMetadata) SetReadOnly(val bool) {
-	s.ReadOnly = val
-}
-
-// Ref: #/components/schemas/ParameterKind
-type ParameterKind string
+// Ref: #/components/schemas/ParameterLocation
+type ParameterLocation string
 
 const (
-	ParameterKindSTRING   ParameterKind = "STRING"
-	ParameterKindBOOLEAN  ParameterKind = "BOOLEAN"
-	ParameterKindINTEGER  ParameterKind = "INTEGER"
-	ParameterKindFLOAT    ParameterKind = "FLOAT"
-	ParameterKindDATETIME ParameterKind = "DATETIME"
+	ParameterLocationPATH   ParameterLocation = "PATH"
+	ParameterLocationQUERY  ParameterLocation = "QUERY"
+	ParameterLocationHEADER ParameterLocation = "HEADER"
 )
 
-// AllValues returns all ParameterKind values.
-func (ParameterKind) AllValues() []ParameterKind {
-	return []ParameterKind{
-		ParameterKindSTRING,
-		ParameterKindBOOLEAN,
-		ParameterKindINTEGER,
-		ParameterKindFLOAT,
-		ParameterKindDATETIME,
+// AllValues returns all ParameterLocation values.
+func (ParameterLocation) AllValues() []ParameterLocation {
+	return []ParameterLocation{
+		ParameterLocationPATH,
+		ParameterLocationQUERY,
+		ParameterLocationHEADER,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ParameterKind) MarshalText() ([]byte, error) {
+func (s ParameterLocation) MarshalText() ([]byte, error) {
 	switch s {
-	case ParameterKindSTRING:
+	case ParameterLocationPATH:
 		return []byte(s), nil
-	case ParameterKindBOOLEAN:
+	case ParameterLocationQUERY:
 		return []byte(s), nil
-	case ParameterKindINTEGER:
-		return []byte(s), nil
-	case ParameterKindFLOAT:
-		return []byte(s), nil
-	case ParameterKindDATETIME:
+	case ParameterLocationHEADER:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -5506,107 +7493,20 @@ func (s ParameterKind) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ParameterKind) UnmarshalText(data []byte) error {
-	switch ParameterKind(data) {
-	case ParameterKindSTRING:
-		*s = ParameterKindSTRING
+func (s *ParameterLocation) UnmarshalText(data []byte) error {
+	switch ParameterLocation(data) {
+	case ParameterLocationPATH:
+		*s = ParameterLocationPATH
 		return nil
-	case ParameterKindBOOLEAN:
-		*s = ParameterKindBOOLEAN
+	case ParameterLocationQUERY:
+		*s = ParameterLocationQUERY
 		return nil
-	case ParameterKindINTEGER:
-		*s = ParameterKindINTEGER
-		return nil
-	case ParameterKindFLOAT:
-		*s = ParameterKindFLOAT
-		return nil
-	case ParameterKindDATETIME:
-		*s = ParameterKindDATETIME
+	case ParameterLocationHEADER:
+		*s = ParameterLocationHEADER
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
-}
-
-// Ref: #/components/schemas/ParameterMetadata
-type ParameterMetadata struct {
-	ID             uuid.UUID `json:"id"`
-	Variable       string    `json:"variable"`
-	Property       string    `json:"property"`
-	Label          string    `json:"label"`
-	Required       bool      `json:"required"`
-	MultipleValues bool      `json:"multiple_values"`
-	ReadOnly       bool      `json:"read_only"`
-}
-
-// GetID returns the value of ID.
-func (s *ParameterMetadata) GetID() uuid.UUID {
-	return s.ID
-}
-
-// GetVariable returns the value of Variable.
-func (s *ParameterMetadata) GetVariable() string {
-	return s.Variable
-}
-
-// GetProperty returns the value of Property.
-func (s *ParameterMetadata) GetProperty() string {
-	return s.Property
-}
-
-// GetLabel returns the value of Label.
-func (s *ParameterMetadata) GetLabel() string {
-	return s.Label
-}
-
-// GetRequired returns the value of Required.
-func (s *ParameterMetadata) GetRequired() bool {
-	return s.Required
-}
-
-// GetMultipleValues returns the value of MultipleValues.
-func (s *ParameterMetadata) GetMultipleValues() bool {
-	return s.MultipleValues
-}
-
-// GetReadOnly returns the value of ReadOnly.
-func (s *ParameterMetadata) GetReadOnly() bool {
-	return s.ReadOnly
-}
-
-// SetID sets the value of ID.
-func (s *ParameterMetadata) SetID(val uuid.UUID) {
-	s.ID = val
-}
-
-// SetVariable sets the value of Variable.
-func (s *ParameterMetadata) SetVariable(val string) {
-	s.Variable = val
-}
-
-// SetProperty sets the value of Property.
-func (s *ParameterMetadata) SetProperty(val string) {
-	s.Property = val
-}
-
-// SetLabel sets the value of Label.
-func (s *ParameterMetadata) SetLabel(val string) {
-	s.Label = val
-}
-
-// SetRequired sets the value of Required.
-func (s *ParameterMetadata) SetRequired(val bool) {
-	s.Required = val
-}
-
-// SetMultipleValues sets the value of MultipleValues.
-func (s *ParameterMetadata) SetMultipleValues(val bool) {
-	s.MultipleValues = val
-}
-
-// SetReadOnly sets the value of ReadOnly.
-func (s *ParameterMetadata) SetReadOnly(val bool) {
-	s.ReadOnly = val
 }
 
 type Permission string
@@ -6857,6 +8757,314 @@ func (s *RoleRequestStatus) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/ScalarParameter
+// ScalarParameter represents sum type.
+type ScalarParameter struct {
+	// Type selects the active sum variant, switch on this field.
+	Type                    ScalarParameterType
+	StringScalarParameter   StringScalarParameter
+	BooleanScalarParameter  BooleanScalarParameter
+	IntegerScalarParameter  IntegerScalarParameter
+	FloatScalarParameter    FloatScalarParameter
+	DateTimeScalarParameter DateTimeScalarParameter
+}
+
+// ScalarParameterType is oneOf type of ScalarParameter.
+type ScalarParameterType string
+
+// Possible values for ScalarParameterType.
+const (
+	StringScalarParameterScalarParameter   ScalarParameterType = "STRING"
+	BooleanScalarParameterScalarParameter  ScalarParameterType = "BOOLEAN"
+	IntegerScalarParameterScalarParameter  ScalarParameterType = "INTEGER"
+	FloatScalarParameterScalarParameter    ScalarParameterType = "FLOAT"
+	DateTimeScalarParameterScalarParameter ScalarParameterType = "DATETIME"
+)
+
+// IsStringScalarParameter reports whether ScalarParameter is StringScalarParameter.
+func (s ScalarParameter) IsStringScalarParameter() bool {
+	return s.Type == StringScalarParameterScalarParameter
+}
+
+// IsBooleanScalarParameter reports whether ScalarParameter is BooleanScalarParameter.
+func (s ScalarParameter) IsBooleanScalarParameter() bool {
+	return s.Type == BooleanScalarParameterScalarParameter
+}
+
+// IsIntegerScalarParameter reports whether ScalarParameter is IntegerScalarParameter.
+func (s ScalarParameter) IsIntegerScalarParameter() bool {
+	return s.Type == IntegerScalarParameterScalarParameter
+}
+
+// IsFloatScalarParameter reports whether ScalarParameter is FloatScalarParameter.
+func (s ScalarParameter) IsFloatScalarParameter() bool {
+	return s.Type == FloatScalarParameterScalarParameter
+}
+
+// IsDateTimeScalarParameter reports whether ScalarParameter is DateTimeScalarParameter.
+func (s ScalarParameter) IsDateTimeScalarParameter() bool {
+	return s.Type == DateTimeScalarParameterScalarParameter
+}
+
+// SetStringScalarParameter sets ScalarParameter to StringScalarParameter.
+func (s *ScalarParameter) SetStringScalarParameter(v StringScalarParameter) {
+	s.Type = StringScalarParameterScalarParameter
+	s.StringScalarParameter = v
+}
+
+// GetStringScalarParameter returns StringScalarParameter and true boolean if ScalarParameter is StringScalarParameter.
+func (s ScalarParameter) GetStringScalarParameter() (v StringScalarParameter, ok bool) {
+	if !s.IsStringScalarParameter() {
+		return v, false
+	}
+	return s.StringScalarParameter, true
+}
+
+// NewStringScalarParameterScalarParameter returns new ScalarParameter from StringScalarParameter.
+func NewStringScalarParameterScalarParameter(v StringScalarParameter) ScalarParameter {
+	var s ScalarParameter
+	s.SetStringScalarParameter(v)
+	return s
+}
+
+// SetBooleanScalarParameter sets ScalarParameter to BooleanScalarParameter.
+func (s *ScalarParameter) SetBooleanScalarParameter(v BooleanScalarParameter) {
+	s.Type = BooleanScalarParameterScalarParameter
+	s.BooleanScalarParameter = v
+}
+
+// GetBooleanScalarParameter returns BooleanScalarParameter and true boolean if ScalarParameter is BooleanScalarParameter.
+func (s ScalarParameter) GetBooleanScalarParameter() (v BooleanScalarParameter, ok bool) {
+	if !s.IsBooleanScalarParameter() {
+		return v, false
+	}
+	return s.BooleanScalarParameter, true
+}
+
+// NewBooleanScalarParameterScalarParameter returns new ScalarParameter from BooleanScalarParameter.
+func NewBooleanScalarParameterScalarParameter(v BooleanScalarParameter) ScalarParameter {
+	var s ScalarParameter
+	s.SetBooleanScalarParameter(v)
+	return s
+}
+
+// SetIntegerScalarParameter sets ScalarParameter to IntegerScalarParameter.
+func (s *ScalarParameter) SetIntegerScalarParameter(v IntegerScalarParameter) {
+	s.Type = IntegerScalarParameterScalarParameter
+	s.IntegerScalarParameter = v
+}
+
+// GetIntegerScalarParameter returns IntegerScalarParameter and true boolean if ScalarParameter is IntegerScalarParameter.
+func (s ScalarParameter) GetIntegerScalarParameter() (v IntegerScalarParameter, ok bool) {
+	if !s.IsIntegerScalarParameter() {
+		return v, false
+	}
+	return s.IntegerScalarParameter, true
+}
+
+// NewIntegerScalarParameterScalarParameter returns new ScalarParameter from IntegerScalarParameter.
+func NewIntegerScalarParameterScalarParameter(v IntegerScalarParameter) ScalarParameter {
+	var s ScalarParameter
+	s.SetIntegerScalarParameter(v)
+	return s
+}
+
+// SetFloatScalarParameter sets ScalarParameter to FloatScalarParameter.
+func (s *ScalarParameter) SetFloatScalarParameter(v FloatScalarParameter) {
+	s.Type = FloatScalarParameterScalarParameter
+	s.FloatScalarParameter = v
+}
+
+// GetFloatScalarParameter returns FloatScalarParameter and true boolean if ScalarParameter is FloatScalarParameter.
+func (s ScalarParameter) GetFloatScalarParameter() (v FloatScalarParameter, ok bool) {
+	if !s.IsFloatScalarParameter() {
+		return v, false
+	}
+	return s.FloatScalarParameter, true
+}
+
+// NewFloatScalarParameterScalarParameter returns new ScalarParameter from FloatScalarParameter.
+func NewFloatScalarParameterScalarParameter(v FloatScalarParameter) ScalarParameter {
+	var s ScalarParameter
+	s.SetFloatScalarParameter(v)
+	return s
+}
+
+// SetDateTimeScalarParameter sets ScalarParameter to DateTimeScalarParameter.
+func (s *ScalarParameter) SetDateTimeScalarParameter(v DateTimeScalarParameter) {
+	s.Type = DateTimeScalarParameterScalarParameter
+	s.DateTimeScalarParameter = v
+}
+
+// GetDateTimeScalarParameter returns DateTimeScalarParameter and true boolean if ScalarParameter is DateTimeScalarParameter.
+func (s ScalarParameter) GetDateTimeScalarParameter() (v DateTimeScalarParameter, ok bool) {
+	if !s.IsDateTimeScalarParameter() {
+		return v, false
+	}
+	return s.DateTimeScalarParameter, true
+}
+
+// NewDateTimeScalarParameterScalarParameter returns new ScalarParameter from DateTimeScalarParameter.
+func NewDateTimeScalarParameterScalarParameter(v DateTimeScalarParameter) ScalarParameter {
+	var s ScalarParameter
+	s.SetDateTimeScalarParameter(v)
+	return s
+}
+
+// Ref: #/components/schemas/ScalarParameterDraft
+// ScalarParameterDraft represents sum type.
+type ScalarParameterDraft struct {
+	// Type selects the active sum variant, switch on this field.
+	Type                         ScalarParameterDraftType
+	StringScalarParameterDraft   StringScalarParameterDraft
+	BooleanScalarParameterDraft  BooleanScalarParameterDraft
+	IntegerScalarParameterDraft  IntegerScalarParameterDraft
+	FloatScalarParameterDraft    FloatScalarParameterDraft
+	DateTimeScalarParameterDraft DateTimeScalarParameterDraft
+}
+
+// ScalarParameterDraftType is oneOf type of ScalarParameterDraft.
+type ScalarParameterDraftType string
+
+// Possible values for ScalarParameterDraftType.
+const (
+	StringScalarParameterDraftScalarParameterDraft   ScalarParameterDraftType = "STRING"
+	BooleanScalarParameterDraftScalarParameterDraft  ScalarParameterDraftType = "BOOLEAN"
+	IntegerScalarParameterDraftScalarParameterDraft  ScalarParameterDraftType = "INTEGER"
+	FloatScalarParameterDraftScalarParameterDraft    ScalarParameterDraftType = "FLOAT"
+	DateTimeScalarParameterDraftScalarParameterDraft ScalarParameterDraftType = "DATETIME"
+)
+
+// IsStringScalarParameterDraft reports whether ScalarParameterDraft is StringScalarParameterDraft.
+func (s ScalarParameterDraft) IsStringScalarParameterDraft() bool {
+	return s.Type == StringScalarParameterDraftScalarParameterDraft
+}
+
+// IsBooleanScalarParameterDraft reports whether ScalarParameterDraft is BooleanScalarParameterDraft.
+func (s ScalarParameterDraft) IsBooleanScalarParameterDraft() bool {
+	return s.Type == BooleanScalarParameterDraftScalarParameterDraft
+}
+
+// IsIntegerScalarParameterDraft reports whether ScalarParameterDraft is IntegerScalarParameterDraft.
+func (s ScalarParameterDraft) IsIntegerScalarParameterDraft() bool {
+	return s.Type == IntegerScalarParameterDraftScalarParameterDraft
+}
+
+// IsFloatScalarParameterDraft reports whether ScalarParameterDraft is FloatScalarParameterDraft.
+func (s ScalarParameterDraft) IsFloatScalarParameterDraft() bool {
+	return s.Type == FloatScalarParameterDraftScalarParameterDraft
+}
+
+// IsDateTimeScalarParameterDraft reports whether ScalarParameterDraft is DateTimeScalarParameterDraft.
+func (s ScalarParameterDraft) IsDateTimeScalarParameterDraft() bool {
+	return s.Type == DateTimeScalarParameterDraftScalarParameterDraft
+}
+
+// SetStringScalarParameterDraft sets ScalarParameterDraft to StringScalarParameterDraft.
+func (s *ScalarParameterDraft) SetStringScalarParameterDraft(v StringScalarParameterDraft) {
+	s.Type = StringScalarParameterDraftScalarParameterDraft
+	s.StringScalarParameterDraft = v
+}
+
+// GetStringScalarParameterDraft returns StringScalarParameterDraft and true boolean if ScalarParameterDraft is StringScalarParameterDraft.
+func (s ScalarParameterDraft) GetStringScalarParameterDraft() (v StringScalarParameterDraft, ok bool) {
+	if !s.IsStringScalarParameterDraft() {
+		return v, false
+	}
+	return s.StringScalarParameterDraft, true
+}
+
+// NewStringScalarParameterDraftScalarParameterDraft returns new ScalarParameterDraft from StringScalarParameterDraft.
+func NewStringScalarParameterDraftScalarParameterDraft(v StringScalarParameterDraft) ScalarParameterDraft {
+	var s ScalarParameterDraft
+	s.SetStringScalarParameterDraft(v)
+	return s
+}
+
+// SetBooleanScalarParameterDraft sets ScalarParameterDraft to BooleanScalarParameterDraft.
+func (s *ScalarParameterDraft) SetBooleanScalarParameterDraft(v BooleanScalarParameterDraft) {
+	s.Type = BooleanScalarParameterDraftScalarParameterDraft
+	s.BooleanScalarParameterDraft = v
+}
+
+// GetBooleanScalarParameterDraft returns BooleanScalarParameterDraft and true boolean if ScalarParameterDraft is BooleanScalarParameterDraft.
+func (s ScalarParameterDraft) GetBooleanScalarParameterDraft() (v BooleanScalarParameterDraft, ok bool) {
+	if !s.IsBooleanScalarParameterDraft() {
+		return v, false
+	}
+	return s.BooleanScalarParameterDraft, true
+}
+
+// NewBooleanScalarParameterDraftScalarParameterDraft returns new ScalarParameterDraft from BooleanScalarParameterDraft.
+func NewBooleanScalarParameterDraftScalarParameterDraft(v BooleanScalarParameterDraft) ScalarParameterDraft {
+	var s ScalarParameterDraft
+	s.SetBooleanScalarParameterDraft(v)
+	return s
+}
+
+// SetIntegerScalarParameterDraft sets ScalarParameterDraft to IntegerScalarParameterDraft.
+func (s *ScalarParameterDraft) SetIntegerScalarParameterDraft(v IntegerScalarParameterDraft) {
+	s.Type = IntegerScalarParameterDraftScalarParameterDraft
+	s.IntegerScalarParameterDraft = v
+}
+
+// GetIntegerScalarParameterDraft returns IntegerScalarParameterDraft and true boolean if ScalarParameterDraft is IntegerScalarParameterDraft.
+func (s ScalarParameterDraft) GetIntegerScalarParameterDraft() (v IntegerScalarParameterDraft, ok bool) {
+	if !s.IsIntegerScalarParameterDraft() {
+		return v, false
+	}
+	return s.IntegerScalarParameterDraft, true
+}
+
+// NewIntegerScalarParameterDraftScalarParameterDraft returns new ScalarParameterDraft from IntegerScalarParameterDraft.
+func NewIntegerScalarParameterDraftScalarParameterDraft(v IntegerScalarParameterDraft) ScalarParameterDraft {
+	var s ScalarParameterDraft
+	s.SetIntegerScalarParameterDraft(v)
+	return s
+}
+
+// SetFloatScalarParameterDraft sets ScalarParameterDraft to FloatScalarParameterDraft.
+func (s *ScalarParameterDraft) SetFloatScalarParameterDraft(v FloatScalarParameterDraft) {
+	s.Type = FloatScalarParameterDraftScalarParameterDraft
+	s.FloatScalarParameterDraft = v
+}
+
+// GetFloatScalarParameterDraft returns FloatScalarParameterDraft and true boolean if ScalarParameterDraft is FloatScalarParameterDraft.
+func (s ScalarParameterDraft) GetFloatScalarParameterDraft() (v FloatScalarParameterDraft, ok bool) {
+	if !s.IsFloatScalarParameterDraft() {
+		return v, false
+	}
+	return s.FloatScalarParameterDraft, true
+}
+
+// NewFloatScalarParameterDraftScalarParameterDraft returns new ScalarParameterDraft from FloatScalarParameterDraft.
+func NewFloatScalarParameterDraftScalarParameterDraft(v FloatScalarParameterDraft) ScalarParameterDraft {
+	var s ScalarParameterDraft
+	s.SetFloatScalarParameterDraft(v)
+	return s
+}
+
+// SetDateTimeScalarParameterDraft sets ScalarParameterDraft to DateTimeScalarParameterDraft.
+func (s *ScalarParameterDraft) SetDateTimeScalarParameterDraft(v DateTimeScalarParameterDraft) {
+	s.Type = DateTimeScalarParameterDraftScalarParameterDraft
+	s.DateTimeScalarParameterDraft = v
+}
+
+// GetDateTimeScalarParameterDraft returns DateTimeScalarParameterDraft and true boolean if ScalarParameterDraft is DateTimeScalarParameterDraft.
+func (s ScalarParameterDraft) GetDateTimeScalarParameterDraft() (v DateTimeScalarParameterDraft, ok bool) {
+	if !s.IsDateTimeScalarParameterDraft() {
+		return v, false
+	}
+	return s.DateTimeScalarParameterDraft, true
+}
+
+// NewDateTimeScalarParameterDraftScalarParameterDraft returns new ScalarParameterDraft from DateTimeScalarParameterDraft.
+func NewDateTimeScalarParameterDraftScalarParameterDraft(v DateTimeScalarParameterDraft) ScalarParameterDraft {
+	var s ScalarParameterDraft
+	s.SetDateTimeScalarParameterDraft(v)
+	return s
+}
+
 // Ref: #/components/schemas/SoftwareApplicationDiscoveryItem
 type SoftwareApplicationDiscoveryItem struct {
 	Type       SoftwareApplicationDiscoveryItemType `json:"type"`
@@ -7899,11 +10107,26 @@ func (s *SoftwareSourceCodeResourceMetadataResourceType) UnmarshalText(data []by
 
 // Ref: #/components/schemas/StringParameter
 type StringParameter struct {
-	Kind          StringParameterKind `json:"kind"`
-	Metadata      ParameterMetadata   `json:"metadata"`
-	Default       NilString           `json:"default"`
-	AllowedValues []string            `json:"allowed_values"`
-	Pattern       string              `json:"pattern"`
+	ID             uuid.UUID           `json:"id"`
+	Kind           StringParameterKind `json:"kind"`
+	Position       int32               `json:"position"`
+	Name           NonBlankString      `json:"name"`
+	Label          NonBlankString      `json:"label"`
+	Description    OptNilString        `json:"description"`
+	Required       bool                `json:"required"`
+	Property       OptNilString        `json:"property"`
+	Location       ParameterLocation   `json:"location"`
+	Explode        bool                `json:"explode"`
+	MultipleValues bool                `json:"multiple_values"`
+	ReadOnly       bool                `json:"read_only"`
+	Default        OptNilString        `json:"default"`
+	Enum           []string            `json:"enum"`
+	Pattern        OptNilString        `json:"pattern"`
+}
+
+// GetID returns the value of ID.
+func (s *StringParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -7911,24 +10134,74 @@ func (s *StringParameter) GetKind() StringParameterKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *StringParameter) GetMetadata() ParameterMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *StringParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *StringParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *StringParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *StringParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *StringParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *StringParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *StringParameter) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *StringParameter) GetExplode() bool {
+	return s.Explode
+}
+
+// GetMultipleValues returns the value of MultipleValues.
+func (s *StringParameter) GetMultipleValues() bool {
+	return s.MultipleValues
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *StringParameter) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetDefault returns the value of Default.
-func (s *StringParameter) GetDefault() NilString {
+func (s *StringParameter) GetDefault() OptNilString {
 	return s.Default
 }
 
-// GetAllowedValues returns the value of AllowedValues.
-func (s *StringParameter) GetAllowedValues() []string {
-	return s.AllowedValues
+// GetEnum returns the value of Enum.
+func (s *StringParameter) GetEnum() []string {
+	return s.Enum
 }
 
 // GetPattern returns the value of Pattern.
-func (s *StringParameter) GetPattern() string {
+func (s *StringParameter) GetPattern() OptNilString {
 	return s.Pattern
+}
+
+// SetID sets the value of ID.
+func (s *StringParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -7936,33 +10209,87 @@ func (s *StringParameter) SetKind(val StringParameterKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *StringParameter) SetMetadata(val ParameterMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *StringParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *StringParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *StringParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *StringParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *StringParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *StringParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *StringParameter) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *StringParameter) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetMultipleValues sets the value of MultipleValues.
+func (s *StringParameter) SetMultipleValues(val bool) {
+	s.MultipleValues = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *StringParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetDefault sets the value of Default.
-func (s *StringParameter) SetDefault(val NilString) {
+func (s *StringParameter) SetDefault(val OptNilString) {
 	s.Default = val
 }
 
-// SetAllowedValues sets the value of AllowedValues.
-func (s *StringParameter) SetAllowedValues(val []string) {
-	s.AllowedValues = val
+// SetEnum sets the value of Enum.
+func (s *StringParameter) SetEnum(val []string) {
+	s.Enum = val
 }
 
 // SetPattern sets the value of Pattern.
-func (s *StringParameter) SetPattern(val string) {
+func (s *StringParameter) SetPattern(val OptNilString) {
 	s.Pattern = val
 }
 
 // Ref: #/components/schemas/StringParameterDraft
 type StringParameterDraft struct {
-	Kind          StringParameterDraftKind `json:"kind"`
-	Metadata      ParameterDraftMetadata   `json:"metadata"`
-	Default       NilString                `json:"default"`
-	AllowedValues []string                 `json:"allowed_values"`
-	Pattern       string                   `json:"pattern"`
+	Kind           StringParameterDraftKind `json:"kind"`
+	Position       int32                    `json:"position"`
+	Name           NonBlankString           `json:"name"`
+	Label          NonBlankString           `json:"label"`
+	Description    OptNilString             `json:"description"`
+	Required       bool                     `json:"required"`
+	Property       OptNilString             `json:"property"`
+	Location       ParameterLocation        `json:"location"`
+	Explode        bool                     `json:"explode"`
+	MultipleValues bool                     `json:"multiple_values"`
+	ReadOnly       bool                     `json:"read_only"`
+	Default        OptNilString             `json:"default"`
+	Enum           []string                 `json:"enum"`
+	Pattern        OptNilString             `json:"pattern"`
 }
 
 // GetKind returns the value of Kind.
@@ -7970,23 +10297,68 @@ func (s *StringParameterDraft) GetKind() StringParameterDraftKind {
 	return s.Kind
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *StringParameterDraft) GetMetadata() ParameterDraftMetadata {
-	return s.Metadata
+// GetPosition returns the value of Position.
+func (s *StringParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *StringParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *StringParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *StringParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *StringParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *StringParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *StringParameterDraft) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *StringParameterDraft) GetExplode() bool {
+	return s.Explode
+}
+
+// GetMultipleValues returns the value of MultipleValues.
+func (s *StringParameterDraft) GetMultipleValues() bool {
+	return s.MultipleValues
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *StringParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
 }
 
 // GetDefault returns the value of Default.
-func (s *StringParameterDraft) GetDefault() NilString {
+func (s *StringParameterDraft) GetDefault() OptNilString {
 	return s.Default
 }
 
-// GetAllowedValues returns the value of AllowedValues.
-func (s *StringParameterDraft) GetAllowedValues() []string {
-	return s.AllowedValues
+// GetEnum returns the value of Enum.
+func (s *StringParameterDraft) GetEnum() []string {
+	return s.Enum
 }
 
 // GetPattern returns the value of Pattern.
-func (s *StringParameterDraft) GetPattern() string {
+func (s *StringParameterDraft) GetPattern() OptNilString {
 	return s.Pattern
 }
 
@@ -7995,23 +10367,68 @@ func (s *StringParameterDraft) SetKind(val StringParameterDraftKind) {
 	s.Kind = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *StringParameterDraft) SetMetadata(val ParameterDraftMetadata) {
-	s.Metadata = val
+// SetPosition sets the value of Position.
+func (s *StringParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *StringParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *StringParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *StringParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *StringParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *StringParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *StringParameterDraft) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *StringParameterDraft) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetMultipleValues sets the value of MultipleValues.
+func (s *StringParameterDraft) SetMultipleValues(val bool) {
+	s.MultipleValues = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *StringParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
 }
 
 // SetDefault sets the value of Default.
-func (s *StringParameterDraft) SetDefault(val NilString) {
+func (s *StringParameterDraft) SetDefault(val OptNilString) {
 	s.Default = val
 }
 
-// SetAllowedValues sets the value of AllowedValues.
-func (s *StringParameterDraft) SetAllowedValues(val []string) {
-	s.AllowedValues = val
+// SetEnum sets the value of Enum.
+func (s *StringParameterDraft) SetEnum(val []string) {
+	s.Enum = val
 }
 
 // SetPattern sets the value of Pattern.
-func (s *StringParameterDraft) SetPattern(val string) {
+func (s *StringParameterDraft) SetPattern(val OptNilString) {
 	s.Pattern = val
 }
 
@@ -8077,6 +10494,653 @@ func (s *StringParameterKind) UnmarshalText(data []byte) error {
 	switch StringParameterKind(data) {
 	case StringParameterKindSTRING:
 		*s = StringParameterKindSTRING
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/StringScalarParameter
+type StringScalarParameter struct {
+	Kind        StringScalarParameterKind `json:"kind"`
+	Position    int32                     `json:"position"`
+	Name        NonBlankString            `json:"name"`
+	Label       NonBlankString            `json:"label"`
+	Description OptNilString              `json:"description"`
+	Required    bool                      `json:"required"`
+	ReadOnly    bool                      `json:"read_only"`
+	Default     OptNilString              `json:"default"`
+	Enum        []string                  `json:"enum"`
+	Pattern     OptNilString              `json:"pattern"`
+}
+
+// GetKind returns the value of Kind.
+func (s *StringScalarParameter) GetKind() StringScalarParameterKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *StringScalarParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *StringScalarParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *StringScalarParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *StringScalarParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *StringScalarParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *StringScalarParameter) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetDefault returns the value of Default.
+func (s *StringScalarParameter) GetDefault() OptNilString {
+	return s.Default
+}
+
+// GetEnum returns the value of Enum.
+func (s *StringScalarParameter) GetEnum() []string {
+	return s.Enum
+}
+
+// GetPattern returns the value of Pattern.
+func (s *StringScalarParameter) GetPattern() OptNilString {
+	return s.Pattern
+}
+
+// SetKind sets the value of Kind.
+func (s *StringScalarParameter) SetKind(val StringScalarParameterKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *StringScalarParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *StringScalarParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *StringScalarParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *StringScalarParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *StringScalarParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *StringScalarParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetDefault sets the value of Default.
+func (s *StringScalarParameter) SetDefault(val OptNilString) {
+	s.Default = val
+}
+
+// SetEnum sets the value of Enum.
+func (s *StringScalarParameter) SetEnum(val []string) {
+	s.Enum = val
+}
+
+// SetPattern sets the value of Pattern.
+func (s *StringScalarParameter) SetPattern(val OptNilString) {
+	s.Pattern = val
+}
+
+// Ref: #/components/schemas/StringScalarParameterDraft
+type StringScalarParameterDraft struct {
+	Kind        StringScalarParameterDraftKind `json:"kind"`
+	Position    int32                          `json:"position"`
+	Name        NonBlankString                 `json:"name"`
+	Label       NonBlankString                 `json:"label"`
+	Description OptNilString                   `json:"description"`
+	Required    bool                           `json:"required"`
+	ReadOnly    bool                           `json:"read_only"`
+	Default     OptNilString                   `json:"default"`
+	Enum        []string                       `json:"enum"`
+	Pattern     OptNilString                   `json:"pattern"`
+}
+
+// GetKind returns the value of Kind.
+func (s *StringScalarParameterDraft) GetKind() StringScalarParameterDraftKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *StringScalarParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *StringScalarParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *StringScalarParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *StringScalarParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *StringScalarParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *StringScalarParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetDefault returns the value of Default.
+func (s *StringScalarParameterDraft) GetDefault() OptNilString {
+	return s.Default
+}
+
+// GetEnum returns the value of Enum.
+func (s *StringScalarParameterDraft) GetEnum() []string {
+	return s.Enum
+}
+
+// GetPattern returns the value of Pattern.
+func (s *StringScalarParameterDraft) GetPattern() OptNilString {
+	return s.Pattern
+}
+
+// SetKind sets the value of Kind.
+func (s *StringScalarParameterDraft) SetKind(val StringScalarParameterDraftKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *StringScalarParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *StringScalarParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *StringScalarParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *StringScalarParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *StringScalarParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *StringScalarParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetDefault sets the value of Default.
+func (s *StringScalarParameterDraft) SetDefault(val OptNilString) {
+	s.Default = val
+}
+
+// SetEnum sets the value of Enum.
+func (s *StringScalarParameterDraft) SetEnum(val []string) {
+	s.Enum = val
+}
+
+// SetPattern sets the value of Pattern.
+func (s *StringScalarParameterDraft) SetPattern(val OptNilString) {
+	s.Pattern = val
+}
+
+type StringScalarParameterDraftKind string
+
+const (
+	StringScalarParameterDraftKindSTRING StringScalarParameterDraftKind = "STRING"
+)
+
+// AllValues returns all StringScalarParameterDraftKind values.
+func (StringScalarParameterDraftKind) AllValues() []StringScalarParameterDraftKind {
+	return []StringScalarParameterDraftKind{
+		StringScalarParameterDraftKindSTRING,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s StringScalarParameterDraftKind) MarshalText() ([]byte, error) {
+	switch s {
+	case StringScalarParameterDraftKindSTRING:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *StringScalarParameterDraftKind) UnmarshalText(data []byte) error {
+	switch StringScalarParameterDraftKind(data) {
+	case StringScalarParameterDraftKindSTRING:
+		*s = StringScalarParameterDraftKindSTRING
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type StringScalarParameterKind string
+
+const (
+	StringScalarParameterKindSTRING StringScalarParameterKind = "STRING"
+)
+
+// AllValues returns all StringScalarParameterKind values.
+func (StringScalarParameterKind) AllValues() []StringScalarParameterKind {
+	return []StringScalarParameterKind{
+		StringScalarParameterKindSTRING,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s StringScalarParameterKind) MarshalText() ([]byte, error) {
+	switch s {
+	case StringScalarParameterKindSTRING:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *StringScalarParameterKind) UnmarshalText(data []byte) error {
+	switch StringScalarParameterKind(data) {
+	case StringScalarParameterKindSTRING:
+		*s = StringScalarParameterKindSTRING
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/TemplateParameter
+type TemplateParameter struct {
+	ID          uuid.UUID             `json:"id"`
+	Kind        TemplateParameterKind `json:"kind"`
+	Position    int32                 `json:"position"`
+	Name        NonBlankString        `json:"name"`
+	Label       NonBlankString        `json:"label"`
+	Description OptNilString          `json:"description"`
+	Required    bool                  `json:"required"`
+	Property    OptNilString          `json:"property"`
+	Location    ParameterLocation     `json:"location"`
+	Explode     bool                  `json:"explode"`
+	ReadOnly    bool                  `json:"read_only"`
+	Template    string                `json:"template"`
+	Parameters  []ScalarParameter     `json:"parameters"`
+}
+
+// GetID returns the value of ID.
+func (s *TemplateParameter) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetKind returns the value of Kind.
+func (s *TemplateParameter) GetKind() TemplateParameterKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *TemplateParameter) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *TemplateParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *TemplateParameter) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *TemplateParameter) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *TemplateParameter) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *TemplateParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *TemplateParameter) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *TemplateParameter) GetExplode() bool {
+	return s.Explode
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *TemplateParameter) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetTemplate returns the value of Template.
+func (s *TemplateParameter) GetTemplate() string {
+	return s.Template
+}
+
+// GetParameters returns the value of Parameters.
+func (s *TemplateParameter) GetParameters() []ScalarParameter {
+	return s.Parameters
+}
+
+// SetID sets the value of ID.
+func (s *TemplateParameter) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetKind sets the value of Kind.
+func (s *TemplateParameter) SetKind(val TemplateParameterKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *TemplateParameter) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *TemplateParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *TemplateParameter) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *TemplateParameter) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *TemplateParameter) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *TemplateParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *TemplateParameter) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *TemplateParameter) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *TemplateParameter) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetTemplate sets the value of Template.
+func (s *TemplateParameter) SetTemplate(val string) {
+	s.Template = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *TemplateParameter) SetParameters(val []ScalarParameter) {
+	s.Parameters = val
+}
+
+// Ref: #/components/schemas/TemplateParameterDraft
+type TemplateParameterDraft struct {
+	Kind        TemplateParameterDraftKind `json:"kind"`
+	Position    int32                      `json:"position"`
+	Name        NonBlankString             `json:"name"`
+	Label       NonBlankString             `json:"label"`
+	Description OptNilString               `json:"description"`
+	Required    bool                       `json:"required"`
+	Property    OptNilString               `json:"property"`
+	Location    ParameterLocation          `json:"location"`
+	Explode     bool                       `json:"explode"`
+	ReadOnly    bool                       `json:"read_only"`
+	Template    string                     `json:"template"`
+	Parameters  []ScalarParameterDraft     `json:"parameters"`
+}
+
+// GetKind returns the value of Kind.
+func (s *TemplateParameterDraft) GetKind() TemplateParameterDraftKind {
+	return s.Kind
+}
+
+// GetPosition returns the value of Position.
+func (s *TemplateParameterDraft) GetPosition() int32 {
+	return s.Position
+}
+
+// GetName returns the value of Name.
+func (s *TemplateParameterDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetLabel returns the value of Label.
+func (s *TemplateParameterDraft) GetLabel() NonBlankString {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *TemplateParameterDraft) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetRequired returns the value of Required.
+func (s *TemplateParameterDraft) GetRequired() bool {
+	return s.Required
+}
+
+// GetProperty returns the value of Property.
+func (s *TemplateParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetLocation returns the value of Location.
+func (s *TemplateParameterDraft) GetLocation() ParameterLocation {
+	return s.Location
+}
+
+// GetExplode returns the value of Explode.
+func (s *TemplateParameterDraft) GetExplode() bool {
+	return s.Explode
+}
+
+// GetReadOnly returns the value of ReadOnly.
+func (s *TemplateParameterDraft) GetReadOnly() bool {
+	return s.ReadOnly
+}
+
+// GetTemplate returns the value of Template.
+func (s *TemplateParameterDraft) GetTemplate() string {
+	return s.Template
+}
+
+// GetParameters returns the value of Parameters.
+func (s *TemplateParameterDraft) GetParameters() []ScalarParameterDraft {
+	return s.Parameters
+}
+
+// SetKind sets the value of Kind.
+func (s *TemplateParameterDraft) SetKind(val TemplateParameterDraftKind) {
+	s.Kind = val
+}
+
+// SetPosition sets the value of Position.
+func (s *TemplateParameterDraft) SetPosition(val int32) {
+	s.Position = val
+}
+
+// SetName sets the value of Name.
+func (s *TemplateParameterDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetLabel sets the value of Label.
+func (s *TemplateParameterDraft) SetLabel(val NonBlankString) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *TemplateParameterDraft) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetRequired sets the value of Required.
+func (s *TemplateParameterDraft) SetRequired(val bool) {
+	s.Required = val
+}
+
+// SetProperty sets the value of Property.
+func (s *TemplateParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetLocation sets the value of Location.
+func (s *TemplateParameterDraft) SetLocation(val ParameterLocation) {
+	s.Location = val
+}
+
+// SetExplode sets the value of Explode.
+func (s *TemplateParameterDraft) SetExplode(val bool) {
+	s.Explode = val
+}
+
+// SetReadOnly sets the value of ReadOnly.
+func (s *TemplateParameterDraft) SetReadOnly(val bool) {
+	s.ReadOnly = val
+}
+
+// SetTemplate sets the value of Template.
+func (s *TemplateParameterDraft) SetTemplate(val string) {
+	s.Template = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *TemplateParameterDraft) SetParameters(val []ScalarParameterDraft) {
+	s.Parameters = val
+}
+
+type TemplateParameterDraftKind string
+
+const (
+	TemplateParameterDraftKindTEMPLATE TemplateParameterDraftKind = "TEMPLATE"
+)
+
+// AllValues returns all TemplateParameterDraftKind values.
+func (TemplateParameterDraftKind) AllValues() []TemplateParameterDraftKind {
+	return []TemplateParameterDraftKind{
+		TemplateParameterDraftKindTEMPLATE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TemplateParameterDraftKind) MarshalText() ([]byte, error) {
+	switch s {
+	case TemplateParameterDraftKindTEMPLATE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TemplateParameterDraftKind) UnmarshalText(data []byte) error {
+	switch TemplateParameterDraftKind(data) {
+	case TemplateParameterDraftKindTEMPLATE:
+		*s = TemplateParameterDraftKindTEMPLATE
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type TemplateParameterKind string
+
+const (
+	TemplateParameterKindTEMPLATE TemplateParameterKind = "TEMPLATE"
+)
+
+// AllValues returns all TemplateParameterKind values.
+func (TemplateParameterKind) AllValues() []TemplateParameterKind {
+	return []TemplateParameterKind{
+		TemplateParameterKindTEMPLATE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TemplateParameterKind) MarshalText() ([]byte, error) {
+	switch s {
+	case TemplateParameterKindTEMPLATE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TemplateParameterKind) UnmarshalText(data []byte) error {
+	switch TemplateParameterKind(data) {
+	case TemplateParameterKindTEMPLATE:
+		*s = TemplateParameterKindTEMPLATE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -8523,14 +11587,20 @@ func (s *VersioningStatus) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/WebService
 type WebService struct {
-	ID            uuid.UUID                   `json:"id"`
-	Name          string                      `json:"name"`
-	Description   string                      `json:"description"`
-	TemplateURL   string                      `json:"template_url"`
-	Parameters    []Parameter                 `json:"parameters"`
-	Format        string                      `json:"format"`
-	Provider      OptResourceVersionReference `json:"provider"`
-	Documentation OptDocumentation            `json:"documentation"`
+	ID              uuid.UUID                      `json:"id"`
+	Name            string                         `json:"name"`
+	Description     OptNilString                   `json:"description"`
+	TemplateURL     string                         `json:"template_url"`
+	Method          WebServiceMethod               `json:"method"`
+	Type            WebServiceType                 `json:"type"`
+	VisibleOn       OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Parameters      []Parameter                    `json:"parameters"`
+	Format          string                         `json:"format"`
+	BodyContentType OptNilString                   `json:"body_content_type"`
+	BodyTemplate    OptNilString                   `json:"body_template"`
+	BodyParameters  []ScalarParameter              `json:"body_parameters"`
+	Provider        OptResourceVersionReference    `json:"provider"`
+	Documentation   OptDocumentation               `json:"documentation"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
@@ -8548,13 +11618,28 @@ func (s *WebService) GetName() string {
 }
 
 // GetDescription returns the value of Description.
-func (s *WebService) GetDescription() string {
+func (s *WebService) GetDescription() OptNilString {
 	return s.Description
 }
 
 // GetTemplateURL returns the value of TemplateURL.
 func (s *WebService) GetTemplateURL() string {
 	return s.TemplateURL
+}
+
+// GetMethod returns the value of Method.
+func (s *WebService) GetMethod() WebServiceMethod {
+	return s.Method
+}
+
+// GetType returns the value of Type.
+func (s *WebService) GetType() WebServiceType {
+	return s.Type
+}
+
+// GetVisibleOn returns the value of VisibleOn.
+func (s *WebService) GetVisibleOn() OptNilWebServiceVisibleOnArray {
+	return s.VisibleOn
 }
 
 // GetParameters returns the value of Parameters.
@@ -8565,6 +11650,21 @@ func (s *WebService) GetParameters() []Parameter {
 // GetFormat returns the value of Format.
 func (s *WebService) GetFormat() string {
 	return s.Format
+}
+
+// GetBodyContentType returns the value of BodyContentType.
+func (s *WebService) GetBodyContentType() OptNilString {
+	return s.BodyContentType
+}
+
+// GetBodyTemplate returns the value of BodyTemplate.
+func (s *WebService) GetBodyTemplate() OptNilString {
+	return s.BodyTemplate
+}
+
+// GetBodyParameters returns the value of BodyParameters.
+func (s *WebService) GetBodyParameters() []ScalarParameter {
+	return s.BodyParameters
 }
 
 // GetProvider returns the value of Provider.
@@ -8603,13 +11703,28 @@ func (s *WebService) SetName(val string) {
 }
 
 // SetDescription sets the value of Description.
-func (s *WebService) SetDescription(val string) {
+func (s *WebService) SetDescription(val OptNilString) {
 	s.Description = val
 }
 
 // SetTemplateURL sets the value of TemplateURL.
 func (s *WebService) SetTemplateURL(val string) {
 	s.TemplateURL = val
+}
+
+// SetMethod sets the value of Method.
+func (s *WebService) SetMethod(val WebServiceMethod) {
+	s.Method = val
+}
+
+// SetType sets the value of Type.
+func (s *WebService) SetType(val WebServiceType) {
+	s.Type = val
+}
+
+// SetVisibleOn sets the value of VisibleOn.
+func (s *WebService) SetVisibleOn(val OptNilWebServiceVisibleOnArray) {
+	s.VisibleOn = val
 }
 
 // SetParameters sets the value of Parameters.
@@ -8620,6 +11735,21 @@ func (s *WebService) SetParameters(val []Parameter) {
 // SetFormat sets the value of Format.
 func (s *WebService) SetFormat(val string) {
 	s.Format = val
+}
+
+// SetBodyContentType sets the value of BodyContentType.
+func (s *WebService) SetBodyContentType(val OptNilString) {
+	s.BodyContentType = val
+}
+
+// SetBodyTemplate sets the value of BodyTemplate.
+func (s *WebService) SetBodyTemplate(val OptNilString) {
+	s.BodyTemplate = val
+}
+
+// SetBodyParameters sets the value of BodyParameters.
+func (s *WebService) SetBodyParameters(val []ScalarParameter) {
+	s.BodyParameters = val
 }
 
 // SetProvider sets the value of Provider.
@@ -8912,13 +12042,19 @@ func (s *WebServiceDistributionType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/WebServiceDraft
 type WebServiceDraft struct {
-	Name          NonBlankString   `json:"name"`
-	Description   OptString        `json:"description"`
-	TemplateURL   NonBlankString   `json:"template_url"`
-	Parameters    []ParameterDraft `json:"parameters"`
-	Format        NonBlankString   `json:"format"`
-	Provider      OptUUID          `json:"provider"`
-	Documentation OptDocumentation `json:"documentation"`
+	Name            NonBlankString                 `json:"name"`
+	Description     OptNilString                   `json:"description"`
+	TemplateURL     NonBlankString                 `json:"template_url"`
+	Method          WebServiceMethod               `json:"method"`
+	Type            WebServiceType                 `json:"type"`
+	VisibleOn       OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Parameters      []ParameterDraft               `json:"parameters"`
+	BodyContentType OptNonBlankString              `json:"body_content_type"`
+	BodyTemplate    OptNonBlankString              `json:"body_template"`
+	BodyParameters  []ScalarParameterDraft         `json:"body_parameters"`
+	Format          NonBlankString                 `json:"format"`
+	Provider        OptUUID                        `json:"provider"`
+	Documentation   OptDocumentation               `json:"documentation"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
@@ -8931,7 +12067,7 @@ func (s *WebServiceDraft) GetName() NonBlankString {
 }
 
 // GetDescription returns the value of Description.
-func (s *WebServiceDraft) GetDescription() OptString {
+func (s *WebServiceDraft) GetDescription() OptNilString {
 	return s.Description
 }
 
@@ -8940,9 +12076,39 @@ func (s *WebServiceDraft) GetTemplateURL() NonBlankString {
 	return s.TemplateURL
 }
 
+// GetMethod returns the value of Method.
+func (s *WebServiceDraft) GetMethod() WebServiceMethod {
+	return s.Method
+}
+
+// GetType returns the value of Type.
+func (s *WebServiceDraft) GetType() WebServiceType {
+	return s.Type
+}
+
+// GetVisibleOn returns the value of VisibleOn.
+func (s *WebServiceDraft) GetVisibleOn() OptNilWebServiceVisibleOnArray {
+	return s.VisibleOn
+}
+
 // GetParameters returns the value of Parameters.
 func (s *WebServiceDraft) GetParameters() []ParameterDraft {
 	return s.Parameters
+}
+
+// GetBodyContentType returns the value of BodyContentType.
+func (s *WebServiceDraft) GetBodyContentType() OptNonBlankString {
+	return s.BodyContentType
+}
+
+// GetBodyTemplate returns the value of BodyTemplate.
+func (s *WebServiceDraft) GetBodyTemplate() OptNonBlankString {
+	return s.BodyTemplate
+}
+
+// GetBodyParameters returns the value of BodyParameters.
+func (s *WebServiceDraft) GetBodyParameters() []ScalarParameterDraft {
+	return s.BodyParameters
 }
 
 // GetFormat returns the value of Format.
@@ -8981,7 +12147,7 @@ func (s *WebServiceDraft) SetName(val NonBlankString) {
 }
 
 // SetDescription sets the value of Description.
-func (s *WebServiceDraft) SetDescription(val OptString) {
+func (s *WebServiceDraft) SetDescription(val OptNilString) {
 	s.Description = val
 }
 
@@ -8990,9 +12156,39 @@ func (s *WebServiceDraft) SetTemplateURL(val NonBlankString) {
 	s.TemplateURL = val
 }
 
+// SetMethod sets the value of Method.
+func (s *WebServiceDraft) SetMethod(val WebServiceMethod) {
+	s.Method = val
+}
+
+// SetType sets the value of Type.
+func (s *WebServiceDraft) SetType(val WebServiceType) {
+	s.Type = val
+}
+
+// SetVisibleOn sets the value of VisibleOn.
+func (s *WebServiceDraft) SetVisibleOn(val OptNilWebServiceVisibleOnArray) {
+	s.VisibleOn = val
+}
+
 // SetParameters sets the value of Parameters.
 func (s *WebServiceDraft) SetParameters(val []ParameterDraft) {
 	s.Parameters = val
+}
+
+// SetBodyContentType sets the value of BodyContentType.
+func (s *WebServiceDraft) SetBodyContentType(val OptNonBlankString) {
+	s.BodyContentType = val
+}
+
+// SetBodyTemplate sets the value of BodyTemplate.
+func (s *WebServiceDraft) SetBodyTemplate(val OptNonBlankString) {
+	s.BodyTemplate = val
+}
+
+// SetBodyParameters sets the value of BodyParameters.
+func (s *WebServiceDraft) SetBodyParameters(val []ScalarParameterDraft) {
+	s.BodyParameters = val
 }
 
 // SetFormat sets the value of Format.
@@ -9023,6 +12219,181 @@ func (s *WebServiceDraft) SetTemporalCoverage(val OptTemporalCoverage) {
 // SetContactPoints sets the value of ContactPoints.
 func (s *WebServiceDraft) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
+}
+
+// Ref: #/components/schemas/WebServiceMethod
+type WebServiceMethod string
+
+const (
+	WebServiceMethodGET    WebServiceMethod = "GET"
+	WebServiceMethodPOST   WebServiceMethod = "POST"
+	WebServiceMethodPUT    WebServiceMethod = "PUT"
+	WebServiceMethodDELETE WebServiceMethod = "DELETE"
+)
+
+// AllValues returns all WebServiceMethod values.
+func (WebServiceMethod) AllValues() []WebServiceMethod {
+	return []WebServiceMethod{
+		WebServiceMethodGET,
+		WebServiceMethodPOST,
+		WebServiceMethodPUT,
+		WebServiceMethodDELETE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WebServiceMethod) MarshalText() ([]byte, error) {
+	switch s {
+	case WebServiceMethodGET:
+		return []byte(s), nil
+	case WebServiceMethodPOST:
+		return []byte(s), nil
+	case WebServiceMethodPUT:
+		return []byte(s), nil
+	case WebServiceMethodDELETE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WebServiceMethod) UnmarshalText(data []byte) error {
+	switch WebServiceMethod(data) {
+	case WebServiceMethodGET:
+		*s = WebServiceMethodGET
+		return nil
+	case WebServiceMethodPOST:
+		*s = WebServiceMethodPOST
+		return nil
+	case WebServiceMethodPUT:
+		*s = WebServiceMethodPUT
+		return nil
+	case WebServiceMethodDELETE:
+		*s = WebServiceMethodDELETE
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/WebServiceType
+type WebServiceType string
+
+const (
+	WebServiceTypeWMS     WebServiceType = "WMS"
+	WebServiceTypeGEOJSON WebServiceType = "GEOJSON"
+	WebServiceTypeDYNAMIC WebServiceType = "DYNAMIC"
+	WebServiceTypeWMTS    WebServiceType = "WMTS"
+	WebServiceTypeWFS     WebServiceType = "WFS"
+	WebServiceTypeCOVJSON WebServiceType = "COVJSON"
+)
+
+// AllValues returns all WebServiceType values.
+func (WebServiceType) AllValues() []WebServiceType {
+	return []WebServiceType{
+		WebServiceTypeWMS,
+		WebServiceTypeGEOJSON,
+		WebServiceTypeDYNAMIC,
+		WebServiceTypeWMTS,
+		WebServiceTypeWFS,
+		WebServiceTypeCOVJSON,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WebServiceType) MarshalText() ([]byte, error) {
+	switch s {
+	case WebServiceTypeWMS:
+		return []byte(s), nil
+	case WebServiceTypeGEOJSON:
+		return []byte(s), nil
+	case WebServiceTypeDYNAMIC:
+		return []byte(s), nil
+	case WebServiceTypeWMTS:
+		return []byte(s), nil
+	case WebServiceTypeWFS:
+		return []byte(s), nil
+	case WebServiceTypeCOVJSON:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WebServiceType) UnmarshalText(data []byte) error {
+	switch WebServiceType(data) {
+	case WebServiceTypeWMS:
+		*s = WebServiceTypeWMS
+		return nil
+	case WebServiceTypeGEOJSON:
+		*s = WebServiceTypeGEOJSON
+		return nil
+	case WebServiceTypeDYNAMIC:
+		*s = WebServiceTypeDYNAMIC
+		return nil
+	case WebServiceTypeWMTS:
+		*s = WebServiceTypeWMTS
+		return nil
+	case WebServiceTypeWFS:
+		*s = WebServiceTypeWFS
+		return nil
+	case WebServiceTypeCOVJSON:
+		*s = WebServiceTypeCOVJSON
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/WebServiceVisibleOn
+type WebServiceVisibleOn string
+
+const (
+	WebServiceVisibleOnGRAPH WebServiceVisibleOn = "GRAPH"
+	WebServiceVisibleOnTABLE WebServiceVisibleOn = "TABLE"
+	WebServiceVisibleOnMAP   WebServiceVisibleOn = "MAP"
+)
+
+// AllValues returns all WebServiceVisibleOn values.
+func (WebServiceVisibleOn) AllValues() []WebServiceVisibleOn {
+	return []WebServiceVisibleOn{
+		WebServiceVisibleOnGRAPH,
+		WebServiceVisibleOnTABLE,
+		WebServiceVisibleOnMAP,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WebServiceVisibleOn) MarshalText() ([]byte, error) {
+	switch s {
+	case WebServiceVisibleOnGRAPH:
+		return []byte(s), nil
+	case WebServiceVisibleOnTABLE:
+		return []byte(s), nil
+	case WebServiceVisibleOnMAP:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WebServiceVisibleOn) UnmarshalText(data []byte) error {
+	switch WebServiceVisibleOn(data) {
+	case WebServiceVisibleOnGRAPH:
+		*s = WebServiceVisibleOnGRAPH
+		return nil
+	case WebServiceVisibleOnTABLE:
+		*s = WebServiceVisibleOnTABLE
+		return nil
+	case WebServiceVisibleOnMAP:
+		*s = WebServiceVisibleOnMAP
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // WithdrawGroupMembershipRequestNoContent is response for WithdrawGroupMembershipRequest operation.

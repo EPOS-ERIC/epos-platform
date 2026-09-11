@@ -45,11 +45,6 @@ services:
 
   gateway-service:
     image: epos-gateway-dev:local
-    depends_on:
-      metadata-lifecycle-service:
-        condition: service_healthy
-      oss-aai-service:
-        condition: service_healthy
     ports:
       - "32000:5000"
     environment:

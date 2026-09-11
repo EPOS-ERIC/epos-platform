@@ -97,6 +97,10 @@ func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {
 		Name:             value.Name,
 		Description:      value.Description,
 		TemplateURL:      value.TemplateUrl,
+		Method:           domain.HTTPMethod(value.Method),
+		Type:             domain.WebServiceType(value.Type),
+		VisibleOn:        domainVisibleOnValues(value.VisibleOn),
+		Body:             nil,
 		Parameters:       nil,
 		Format:           value.Format,
 		Provider:         nil,
@@ -105,6 +109,17 @@ func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {
 		TemporalCoverage: temporal(value.TemporalStart, value.TemporalEnd),
 		ContactPoints:    nil,
 	}, nil
+}
+
+func domainVisibleOnValues(values []sqlc.WebServiceVisibleOn) []domain.WebServiceVisibleOn {
+	if values == nil {
+		return nil
+	}
+	result := make([]domain.WebServiceVisibleOn, len(values))
+	for i, value := range values {
+		result[i] = domain.WebServiceVisibleOn(value)
+	}
+	return result
 }
 
 func toDomainDistribution(value sqlc.Distribution, services map[uuid.UUID]domain.WebService) domain.Distribution {

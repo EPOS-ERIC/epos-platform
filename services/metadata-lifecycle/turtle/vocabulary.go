@@ -71,6 +71,7 @@ const (
 	hydraDescription           = "http://www.w3.org/ns/hydra/core#description"
 	hydraAPIDocumentation      = "http://www.w3.org/ns/hydra/core#ApiDocumentation"
 	hydraSupportedOperation    = "http://www.w3.org/ns/hydra/core#supportedOperation"
+	hydraMethod                = "http://www.w3.org/ns/hydra/core#method"
 	hydraProperty              = "http://www.w3.org/ns/hydra/core#property"
 	hydraMapping               = "http://www.w3.org/ns/hydra/core#mapping"
 	hydraVariable              = "http://www.w3.org/ns/hydra/core#variable"

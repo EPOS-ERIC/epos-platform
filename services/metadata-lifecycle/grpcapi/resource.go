@@ -665,7 +665,14 @@ func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribu
 }
 
 func webServiceOutput(value domain.WebService) *metadatalifecyclev1.WebService {
-	result := &metadatalifecyclev1.WebService{Id: value.ID.String(), Name: value.Name, Description: value.Description, TemplateUrl: value.TemplateURL, Format: value.Format, Documentation: documentationOutput(value.Documentation), SpatialCoverage: geometryString(value.SpatialCoverage), TemporalCoverage: temporalOutput(value.TemporalCoverage)}
+	result := &metadatalifecyclev1.WebService{Id: value.ID.String(), Name: value.Name, Description: value.Description, TemplateUrl: value.TemplateURL, Method: webServiceMethodOutput(value.Method), Type: webServiceTypeOutput(value.Type), VisibleOn: webServiceVisibleOnOutput(value.VisibleOn), Format: value.Format, Documentation: documentationOutput(value.Documentation), SpatialCoverage: geometryString(value.SpatialCoverage), TemporalCoverage: temporalOutput(value.TemporalCoverage)}
+	if value.Body != nil {
+		result.BodyContentType = &value.Body.ContentType
+		result.BodyTemplate = &value.Body.Template
+		for _, parameter := range value.Body.Parameters {
+			result.BodyParameters = append(result.BodyParameters, scalarParameterOutput(parameter))
+		}
+	}
 	if value.Provider != nil {
 		result.ProviderReference = referenceOutput(value.Provider.ID, value.Provider.Name)
 	}
@@ -673,7 +680,10 @@ func webServiceOutput(value domain.WebService) *metadatalifecyclev1.WebService {
 		result.ContactPoints = append(result.ContactPoints, item.ID.String())
 	}
 	for _, item := range value.Parameters {
-		result.Parameters = append(result.Parameters, parameterOutput(item))
+		result.Parameters = append(result.Parameters, &metadatalifecyclev1.WebServiceParameter{
+			Id:        item.ID.String(),
+			Parameter: parameterOutput(item),
+		})
 	}
 	return result
 }
@@ -685,20 +695,59 @@ func documentationOutput(value *domain.Documentation) *metadatalifecyclev1.Docum
 	return &metadatalifecyclev1.Documentation{Title: value.Title, Description: value.Description, Uri: value.URI}
 }
 
-func parameterOutput(value domain.Parameter) *metadatalifecyclev1.Parameter {
-	metadata := value.GetMetadata()
-	result := &metadatalifecyclev1.Parameter{Metadata: &metadatalifecyclev1.ParameterMetadata{Id: metadata.ID.String(), Variable: metadata.Variable, Property: metadata.Property, Label: metadata.Label, Required: metadata.Required, MultipleValues: metadata.MultipleValues, ReadOnly: metadata.ReadOnly}}
-	switch item := value.(type) {
-	case domain.StringParameter:
-		result.Value = &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{Default: item.Default, AllowedValues: item.AllowedValues, Pattern: item.Pattern}}
-	case domain.BooleanParameter:
+func parameterOutput(value domain.WebServiceParameter) *metadatalifecyclev1.Parameter {
+	result := &metadatalifecyclev1.Parameter{
+		Position:    int32(value.Position),
+		Name:        value.Name,
+		Label:       value.Label,
+		Description: value.Description,
+		Required:    value.Required,
+		ReadOnly:    value.ReadOnly,
+		Property:    value.Property,
+		Location:    webServiceParameterLocationOutput(value.Location),
+		Explode:     value.Explode,
+	}
+	switch item := value.Schema.(type) {
+	case domain.StringSchema:
+		result.Value = &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{Default: item.Default, Enum: item.Enum, Pattern: item.Pattern, MultipleValues: item.MultipleValues}}
+	case domain.BooleanSchema:
 		result.Value = &metadatalifecyclev1.Parameter_Boolean{Boolean: &metadatalifecyclev1.BooleanParameter{Default: item.Default}}
-	case domain.IntegerParameter:
-		result.Value = &metadatalifecyclev1.Parameter_Integer{Integer: &metadatalifecyclev1.IntegerParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, AllowedValues: item.AllowedValues}}
-	case domain.FloatParameter:
-		result.Value = &metadatalifecyclev1.Parameter_Float{Float: &metadatalifecyclev1.FloatParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, AllowedValues: item.AllowedValues}}
-	case domain.DateTimeParameter:
-		result.Value = &metadatalifecyclev1.Parameter_DateTime{DateTime: &metadatalifecyclev1.DateTimeParameter{Minimum: timestampOutput(item.Minimum), Maximum: timestampOutput(item.Maximum), Default: timestampOutput(item.Default), Pattern: item.Pattern}}
+	case domain.IntegerSchema:
+		result.Value = &metadatalifecyclev1.Parameter_Integer{Integer: &metadatalifecyclev1.IntegerParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, Enum: item.Enum, MultipleValues: item.MultipleValues}}
+	case domain.FloatSchema:
+		result.Value = &metadatalifecyclev1.Parameter_Float{Float: &metadatalifecyclev1.FloatParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, Enum: item.Enum, MultipleValues: item.MultipleValues}}
+	case domain.DateTimeSchema:
+		result.Value = &metadatalifecyclev1.Parameter_DateTime{DateTime: &metadatalifecyclev1.DateTimeParameter{Minimum: timestampOutput(item.Minimum), Maximum: timestampOutput(item.Maximum), Default: timestampOutput(item.Default), Layout: item.Layout}}
+	case domain.TemplateSchema:
+		template := &metadatalifecyclev1.TemplateParameter{Template: item.Template}
+		for _, parameter := range item.Parameters {
+			template.Parameters = append(template.Parameters, scalarParameterOutput(parameter))
+		}
+		result.Value = &metadatalifecyclev1.Parameter_Template{Template: template}
+	}
+	return result
+}
+
+func scalarParameterOutput(value domain.Parameter) *metadatalifecyclev1.ScalarParameter {
+	result := &metadatalifecyclev1.ScalarParameter{
+		Position:    int32(value.Position),
+		Name:        value.Name,
+		Label:       value.Label,
+		Description: value.Description,
+		Required:    value.Required,
+		ReadOnly:    value.ReadOnly,
+	}
+	switch item := value.Schema.(type) {
+	case domain.StringSchema:
+		result.Value = &metadatalifecyclev1.ScalarParameter_String_{String_: &metadatalifecyclev1.ScalarStringParameter{Default: item.Default, Enum: item.Enum, Pattern: item.Pattern}}
+	case domain.BooleanSchema:
+		result.Value = &metadatalifecyclev1.ScalarParameter_Boolean{Boolean: &metadatalifecyclev1.ScalarBooleanParameter{Default: item.Default}}
+	case domain.IntegerSchema:
+		result.Value = &metadatalifecyclev1.ScalarParameter_Integer{Integer: &metadatalifecyclev1.ScalarIntegerParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, Enum: item.Enum}}
+	case domain.FloatSchema:
+		result.Value = &metadatalifecyclev1.ScalarParameter_Float{Float: &metadatalifecyclev1.ScalarFloatParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, Enum: item.Enum}}
+	case domain.DateTimeSchema:
+		result.Value = &metadatalifecyclev1.ScalarParameter_DateTime{DateTime: &metadatalifecyclev1.ScalarDateTimeParameter{Minimum: timestampOutput(item.Minimum), Maximum: timestampOutput(item.Maximum), Default: timestampOutput(item.Default), Layout: item.Layout}}
 	}
 	return result
 }
@@ -813,76 +862,302 @@ func webServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServ
 	if err != nil {
 		return domain.WebServiceInput{}, err
 	}
-	parameters := make([]domain.Parameter, 0, len(value.GetParameters()))
+	parameters := make([]domain.WebServiceParameterInput, 0, len(value.GetParameters()))
 	for _, item := range value.GetParameters() {
-		mapped, err := parameterInput(item)
+		mapped, err := webServiceParameterInput(item)
 		if err != nil {
 			return domain.WebServiceInput{}, err
 		}
 		parameters = append(parameters, mapped)
 	}
-	return domain.WebServiceInput{Name: value.GetName(), Description: value.GetDescription(), TemplateURL: value.GetTemplateUrl(), Parameters: parameters, Format: value.GetFormat(), ProviderID: provider, Documentation: documentation, SpatialCoverage: spatial, TemporalCoverage: temporal, ContactPointIDs: contactPoints}, nil
+	method, err := webServiceMethodInput(value.GetMethod())
+	if err != nil {
+		return domain.WebServiceInput{}, err
+	}
+	serviceType, err := webServiceTypeInput(value.GetType())
+	if err != nil {
+		return domain.WebServiceInput{}, err
+	}
+	visibleOn, err := webServiceVisibleOnInput(value.GetVisibleOn())
+	if err != nil {
+		return domain.WebServiceInput{}, err
+	}
+	var body *domain.RequestBody
+	if value.BodyContentType != nil || value.BodyTemplate != nil || len(value.GetBodyParameters()) > 0 {
+		if value.BodyContentType == nil || value.BodyTemplate == nil {
+			return domain.WebServiceInput{}, status.Error(codes.InvalidArgument, "web service body content type and template are required") //nolint:wrapcheck
+		}
+		bodyParameters := make([]domain.Parameter, 0, len(value.GetBodyParameters()))
+		for _, item := range value.GetBodyParameters() {
+			mapped, err := scalarParameterInput(item)
+			if err != nil {
+				return domain.WebServiceInput{}, err
+			}
+			bodyParameters = append(bodyParameters, mapped)
+		}
+		body = &domain.RequestBody{ContentType: value.GetBodyContentType(), Template: value.GetBodyTemplate(), Parameters: bodyParameters}
+	}
+	return domain.WebServiceInput{Name: value.GetName(), Description: value.Description, TemplateURL: value.GetTemplateUrl(), Method: method, Type: serviceType, VisibleOn: visibleOn, Body: body, Parameters: parameters, Format: value.GetFormat(), ProviderID: provider, Documentation: documentation, SpatialCoverage: spatial, TemporalCoverage: temporal, ContactPointIDs: contactPoints}, nil
 }
 
-func parameterInput(value *metadatalifecyclev1.ParameterInput) (domain.Parameter, error) {
-	if value == nil || value.GetMetadata() == nil {
-		return nil, status.Error(codes.InvalidArgument, "parameter metadata is required")
+func webServiceMethodInput(value metadatalifecyclev1.WebServiceMethod) (domain.HTTPMethod, error) {
+	switch value {
+	case metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET:
+		return domain.HTTPMethodGet, nil
+	case metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_POST:
+		return domain.HTTPMethodPost, nil
+	case metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_PUT:
+		return domain.HTTPMethodPut, nil
+	case metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_DELETE:
+		return domain.HTTPMethodDelete, nil
+	default:
+		return "", status.Error(codes.InvalidArgument, "web service method is invalid") //nolint:wrapcheck
 	}
-	m := value.GetMetadata()
-	metadata := domain.ParameterMetadata{
-		Variable:       m.GetVariable(),
-		Property:       m.GetProperty(),
-		Label:          m.GetLabel(),
-		Required:       m.GetRequired(),
-		MultipleValues: m.GetMultipleValues(),
-		ReadOnly:       m.GetReadOnly(),
+}
+
+func webServiceMethodOutput(value domain.HTTPMethod) metadatalifecyclev1.WebServiceMethod {
+	switch value {
+	case domain.HTTPMethodGet:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET
+	case domain.HTTPMethodPost:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_POST
+	case domain.HTTPMethodPut:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_PUT
+	case domain.HTTPMethodDelete:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_DELETE
+	default:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_UNSPECIFIED
 	}
+}
+
+func webServiceTypeInput(value metadatalifecyclev1.WebServiceType) (domain.WebServiceType, error) {
+	switch value {
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS:
+		return domain.WebServiceTypeWMS, nil
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_GEOJSON:
+		return domain.WebServiceTypeGeoJSON, nil
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC:
+		return domain.WebServiceTypeDynamic, nil
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS:
+		return domain.WebServiceTypeWMTS, nil
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS:
+		return domain.WebServiceTypeWFS, nil
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_COVJSON:
+		return domain.WebServiceTypeCOVJSON, nil
+	default:
+		return "", status.Error(codes.InvalidArgument, "web service type is invalid") //nolint:wrapcheck
+	}
+}
+
+func webServiceTypeOutput(value domain.WebServiceType) metadatalifecyclev1.WebServiceType {
+	switch value {
+	case domain.WebServiceTypeWMS:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS
+	case domain.WebServiceTypeGeoJSON:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_GEOJSON
+	case domain.WebServiceTypeDynamic:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
+	case domain.WebServiceTypeWMTS:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
+	case domain.WebServiceTypeWFS:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
+	case domain.WebServiceTypeCOVJSON:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_COVJSON
+	default:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
+	}
+}
+
+func webServiceVisibleOnInput(values []metadatalifecyclev1.WebServiceVisibleOn) ([]domain.WebServiceVisibleOn, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+	result := make([]domain.WebServiceVisibleOn, len(values))
+	for i, value := range values {
+		switch value {
+		case metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH:
+			result[i] = domain.WebServiceVisibleOnGraph
+		case metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_TABLE:
+			result[i] = domain.WebServiceVisibleOnTable
+		case metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP:
+			result[i] = domain.WebServiceVisibleOnMap
+		default:
+			return nil, status.Error(codes.InvalidArgument, "web service visible on is invalid") //nolint:wrapcheck
+		}
+	}
+	return result, nil
+}
+
+func webServiceVisibleOnOutput(values []domain.WebServiceVisibleOn) []metadatalifecyclev1.WebServiceVisibleOn {
+	if values == nil {
+		return nil
+	}
+	result := make([]metadatalifecyclev1.WebServiceVisibleOn, len(values))
+	for i, value := range values {
+		switch value {
+		case domain.WebServiceVisibleOnGraph:
+			result[i] = metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH
+		case domain.WebServiceVisibleOnTable:
+			result[i] = metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_TABLE
+		case domain.WebServiceVisibleOnMap:
+			result[i] = metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP
+		default:
+			result[i] = metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_UNSPECIFIED
+		}
+	}
+	return result
+}
+
+func webServiceParameterInput(value *metadatalifecyclev1.Parameter) (domain.WebServiceParameterInput, error) {
+	if value == nil {
+		return domain.WebServiceParameterInput{}, status.Error(codes.InvalidArgument, "web service parameter is required") //nolint:wrapcheck
+	}
+	parameter, err := parameterInput(value)
+	if err != nil {
+		return domain.WebServiceParameterInput{}, err
+	}
+	location, err := webServiceParameterLocationInput(value.GetLocation())
+	if err != nil {
+		return domain.WebServiceParameterInput{}, err
+	}
+	return domain.WebServiceParameterInput{Parameter: parameter, Property: value.Property, Location: location, Explode: value.GetExplode()}, nil
+}
+
+func webServiceParameterLocationInput(value metadatalifecyclev1.WebServiceParameterLocation) (domain.ParameterLocation, error) {
+	switch value {
+	case metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_PATH:
+		return domain.ParameterLocationPath, nil
+	case metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_QUERY:
+		return domain.ParameterLocationQuery, nil
+	case metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_HEADER:
+		return domain.ParameterLocationHeader, nil
+	default:
+		return "", status.Error(codes.InvalidArgument, "parameter location is invalid") //nolint:wrapcheck
+	}
+}
+
+func webServiceParameterLocationOutput(value domain.ParameterLocation) metadatalifecyclev1.WebServiceParameterLocation {
+	switch value {
+	case domain.ParameterLocationPath:
+		return metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_PATH
+	case domain.ParameterLocationQuery:
+		return metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_QUERY
+	case domain.ParameterLocationHeader:
+		return metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_HEADER
+	default:
+		return metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_UNSPECIFIED
+	}
+}
+
+func parameterInput(value *metadatalifecyclev1.Parameter) (domain.Parameter, error) {
+	if value == nil {
+		return domain.Parameter{}, status.Error(codes.InvalidArgument, "parameter is required") //nolint:wrapcheck
+	}
+	parameter := domain.Parameter{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
 	switch v := value.GetValue().(type) {
-	case *metadatalifecyclev1.ParameterInput_String_:
+	case *metadatalifecyclev1.Parameter_String_:
 		if v.String_ == nil {
-			return nil, status.Error(codes.InvalidArgument, "string parameter is required")
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "string parameter is required") //nolint:wrapcheck
 		}
-		return domain.StringParameter{
-			Metadata:      metadata,
-			Default:       v.String_.Default,
-			AllowedValues: v.String_.GetAllowedValues(),
-			Pattern:       v.String_.GetPattern(),
-		}, nil
-	case *metadatalifecyclev1.ParameterInput_Boolean:
+		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: v.String_.GetEnum(), Pattern: v.String_.Pattern, MultipleValues: v.String_.MultipleValues}
+	case *metadatalifecyclev1.Parameter_Boolean:
 		if v.Boolean == nil {
-			return nil, status.Error(codes.InvalidArgument, "boolean parameter is required")
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "boolean parameter is required") //nolint:wrapcheck
 		}
-		return domain.BooleanParameter{Metadata: metadata, Default: v.Boolean.Default}, nil
-	case *metadatalifecyclev1.ParameterInput_Integer:
+		parameter.Schema = domain.BooleanSchema{Default: v.Boolean.Default}
+	case *metadatalifecyclev1.Parameter_Integer:
 		if v.Integer == nil {
-			return nil, status.Error(codes.InvalidArgument, "integer parameter is required")
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "integer parameter is required") //nolint:wrapcheck
 		}
-		return domain.IntegerParameter{Metadata: metadata, Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, AllowedValues: v.Integer.GetAllowedValues()}, nil
-	case *metadatalifecyclev1.ParameterInput_Float:
+		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: v.Integer.GetEnum(), MultipleValues: v.Integer.MultipleValues}
+	case *metadatalifecyclev1.Parameter_Float:
 		if v.Float == nil {
-			return nil, status.Error(codes.InvalidArgument, "float parameter is required")
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "float parameter is required") //nolint:wrapcheck
 		}
-		return domain.FloatParameter{Metadata: metadata, Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, AllowedValues: v.Float.GetAllowedValues()}, nil
-	case *metadatalifecyclev1.ParameterInput_DateTime:
+		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: v.Float.GetEnum(), MultipleValues: v.Float.MultipleValues}
+	case *metadatalifecyclev1.Parameter_DateTime:
 		if v.DateTime == nil {
-			return nil, status.Error(codes.InvalidArgument, "date-time parameter is required")
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "date-time parameter is required") //nolint:wrapcheck
 		}
 		minimum, err := timestampInput(v.DateTime.GetMinimum())
 		if err != nil {
-			return nil, err
+			return domain.Parameter{}, err
 		}
 		maximum, err := timestampInput(v.DateTime.GetMaximum())
 		if err != nil {
-			return nil, err
+			return domain.Parameter{}, err
 		}
 		def, err := timestampInput(v.DateTime.GetDefault())
 		if err != nil {
-			return nil, err
+			return domain.Parameter{}, err
 		}
-		return domain.DateTimeParameter{Metadata: metadata, Minimum: minimum, Maximum: maximum, Default: def, Pattern: v.DateTime.GetPattern()}, nil
+		parameter.Schema = domain.DateTimeSchema{Minimum: minimum, Maximum: maximum, Default: def, Layout: v.DateTime.Layout}
+	case *metadatalifecyclev1.Parameter_Template:
+		if v.Template == nil {
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "template parameter is required") //nolint:wrapcheck
+		}
+		parameters := make([]domain.Parameter, 0, len(v.Template.GetParameters()))
+		for _, item := range v.Template.GetParameters() {
+			mapped, err := scalarParameterInput(item)
+			if err != nil {
+				return domain.Parameter{}, err
+			}
+			parameters = append(parameters, mapped)
+		}
+		parameter.Schema = domain.TemplateSchema{Template: v.Template.GetTemplate(), Parameters: parameters}
 	default:
-		return nil, status.Error(codes.InvalidArgument, "parameter value is required")
+		return domain.Parameter{}, status.Error(codes.InvalidArgument, "parameter value is required") //nolint:wrapcheck
 	}
+	return parameter, nil
+}
+
+func scalarParameterInput(value *metadatalifecyclev1.ScalarParameter) (domain.Parameter, error) {
+	if value == nil {
+		return domain.Parameter{}, status.Error(codes.InvalidArgument, "scalar parameter is required") //nolint:wrapcheck
+	}
+	parameter := domain.Parameter{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
+	switch v := value.GetValue().(type) {
+	case *metadatalifecyclev1.ScalarParameter_String_:
+		if v.String_ == nil {
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "string parameter is required") //nolint:wrapcheck
+		}
+		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: v.String_.GetEnum(), Pattern: v.String_.Pattern}
+	case *metadatalifecyclev1.ScalarParameter_Boolean:
+		if v.Boolean == nil {
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "boolean parameter is required") //nolint:wrapcheck
+		}
+		parameter.Schema = domain.BooleanSchema{Default: v.Boolean.Default}
+	case *metadatalifecyclev1.ScalarParameter_Integer:
+		if v.Integer == nil {
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "integer parameter is required") //nolint:wrapcheck
+		}
+		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: v.Integer.GetEnum()}
+	case *metadatalifecyclev1.ScalarParameter_Float:
+		if v.Float == nil {
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "float parameter is required") //nolint:wrapcheck
+		}
+		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: v.Float.GetEnum()}
+	case *metadatalifecyclev1.ScalarParameter_DateTime:
+		if v.DateTime == nil {
+			return domain.Parameter{}, status.Error(codes.InvalidArgument, "date-time parameter is required") //nolint:wrapcheck
+		}
+		minimum, err := timestampInput(v.DateTime.GetMinimum())
+		if err != nil {
+			return domain.Parameter{}, err
+		}
+		maximum, err := timestampInput(v.DateTime.GetMaximum())
+		if err != nil {
+			return domain.Parameter{}, err
+		}
+		def, err := timestampInput(v.DateTime.GetDefault())
+		if err != nil {
+			return domain.Parameter{}, err
+		}
+		parameter.Schema = domain.DateTimeSchema{Minimum: minimum, Maximum: maximum, Default: def, Layout: v.DateTime.Layout}
+	default:
+		return domain.Parameter{}, status.Error(codes.InvalidArgument, "scalar parameter value is required") //nolint:wrapcheck
+	}
+	return parameter, nil
 }
 
 func documentationInput(value *metadatalifecyclev1.Documentation) (*domain.Documentation, error) {

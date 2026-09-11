@@ -1,154 +1,257 @@
 package dataset
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
+	"github.com/google/uuid"
 )
 
-// TODO: since we store json in the db we should have a test here or something that makes sure we always have the correct shape passed through to avoid inconsistencies in the data in the db
+func parameterParams(
+	value domain.Parameter,
+	webServiceID, webServiceBodyID, templateParameterID *uuid.UUID,
+	property *string,
+	location *domain.ParameterLocation,
+	explode bool,
+) (sqlc.AddLifecycleParameterParams, error) {
+	if value.Schema == nil {
+		return sqlc.AddLifecycleParameterParams{}, fmt.Errorf("parameter schema is required")
+	}
 
-type parameterRecord struct {
-	kind     domain.ParameterKind
-	metadata domain.ParameterMetadata
-	config   json.RawMessage
+	params := sqlc.AddLifecycleParameterParams{
+		WebServiceID:        webServiceID,
+		WebServiceBodyID:    webServiceBodyID,
+		TemplateParameterID: templateParameterID,
+		Position:            int32(value.Position),
+		Name:                value.Name,
+		Label:               value.Label,
+		Description:         value.Description,
+		Required:            value.Required,
+		ReadOnly:            value.ReadOnly,
+		Property:            property,
+		Explode:             explode,
+	}
+	if location != nil {
+		converted := sqlc.WebServiceParameterLocation(*location)
+		params.Location = &converted
+	}
+
+	params.SchemaKind = sqlc.ParameterSchemaKind(value.Schema.Kind())
+	return params, nil
 }
 
-func encodeParameter(parameter domain.Parameter) (parameterRecord, error) {
-	if parameter == nil {
-		return parameterRecord{}, fmt.Errorf("parameter is required")
-	}
-
-	var (
-		config json.RawMessage
-		err    error
-	)
-	switch value := parameter.(type) {
-	case domain.StringParameter:
-		config, err = json.Marshal(struct {
-			Default       *string  `json:"default,omitempty"`
-			AllowedValues []string `json:"allowed_values,omitempty"`
-			Pattern       string   `json:"pattern,omitempty"`
-		}{value.Default, value.AllowedValues, value.Pattern})
-	case domain.BooleanParameter:
-		config, err = json.Marshal(struct {
-			Default *bool `json:"default,omitempty"`
-		}{value.Default})
-	case domain.IntegerParameter:
-		config, err = json.Marshal(struct {
-			Minimum       *int64  `json:"minimum,omitempty"`
-			Maximum       *int64  `json:"maximum,omitempty"`
-			Default       *int64  `json:"default,omitempty"`
-			AllowedValues []int64 `json:"allowed_values,omitempty"`
-		}{value.Minimum, value.Maximum, value.Default, value.AllowedValues})
-	case domain.FloatParameter:
-		config, err = json.Marshal(struct {
-			Minimum       *float64  `json:"minimum,omitempty"`
-			Maximum       *float64  `json:"maximum,omitempty"`
-			Default       *float64  `json:"default,omitempty"`
-			AllowedValues []float64 `json:"allowed_values,omitempty"`
-		}{value.Minimum, value.Maximum, value.Default, value.AllowedValues})
-	case domain.DateTimeParameter:
-		config, err = json.Marshal(struct {
-			Minimum *time.Time `json:"minimum,omitempty"`
-			Maximum *time.Time `json:"maximum,omitempty"`
-			Default *time.Time `json:"default,omitempty"`
-			Pattern string     `json:"pattern,omitempty"`
-		}{value.Minimum, value.Maximum, value.Default, value.Pattern})
-	default:
-		return parameterRecord{}, fmt.Errorf("unsupported parameter type %T", parameter)
-	}
+func persistParameter(
+	ctx context.Context,
+	q *sqlc.Queries,
+	value domain.Parameter,
+	webServiceID, webServiceBodyID, templateParameterID *uuid.UUID,
+	property *string,
+	location *domain.ParameterLocation,
+	explode bool,
+) (sqlc.Parameter, error) {
+	params, err := parameterParams(value, webServiceID, webServiceBodyID, templateParameterID, property, location, explode)
 	if err != nil {
-		return parameterRecord{}, fmt.Errorf("marshal %s parameter config: %w", parameter.Kind(), err)
+		return sqlc.Parameter{}, err
+	}
+	created, err := q.AddLifecycleParameter(ctx, params)
+	if err != nil {
+		return sqlc.Parameter{}, fmt.Errorf("add parameter: %w", err)
 	}
 
-	return parameterRecord{kind: parameter.Kind(), metadata: parameter.GetMetadata(), config: config}, nil
+	var schemaErr error
+	switch schema := value.Schema.(type) {
+	case domain.StringSchema:
+		schemaErr = q.AddLifecycleStringParameterSchema(ctx, sqlc.AddLifecycleStringParameterSchemaParams{
+			ParameterID: created.ID, Pattern: schema.Pattern, DefaultValue: schema.Default, Enum: schema.Enum, MultipleValues: schema.MultipleValues,
+		})
+	case domain.BooleanSchema:
+		schemaErr = q.AddLifecycleBooleanParameterSchema(ctx, sqlc.AddLifecycleBooleanParameterSchemaParams{
+			ParameterID: created.ID, DefaultValue: schema.Default,
+		})
+	case domain.IntegerSchema:
+		schemaErr = q.AddLifecycleIntegerParameterSchema(ctx, sqlc.AddLifecycleIntegerParameterSchemaParams{
+			ParameterID: created.ID, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Enum: schema.Enum, MultipleValues: schema.MultipleValues,
+		})
+	case domain.FloatSchema:
+		schemaErr = q.AddLifecycleFloatParameterSchema(ctx, sqlc.AddLifecycleFloatParameterSchemaParams{
+			ParameterID: created.ID, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Enum: schema.Enum, MultipleValues: schema.MultipleValues,
+		})
+	case domain.DateTimeSchema:
+		schemaErr = q.AddLifecycleDatetimeParameterSchema(ctx, sqlc.AddLifecycleDatetimeParameterSchemaParams{
+			ParameterID: created.ID, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Layout: schema.Layout,
+		})
+	case domain.TemplateSchema:
+		schemaErr = q.AddLifecycleParameterTemplate(ctx, sqlc.AddLifecycleParameterTemplateParams{
+			ParameterID: created.ID,
+			Template:    schema.Template,
+		})
+		if schemaErr == nil {
+			for _, child := range schema.Parameters {
+				if _, err := persistParameter(ctx, q, child, nil, nil, &created.ID, nil, nil, false); err != nil {
+					return sqlc.Parameter{}, fmt.Errorf("add template parameter: %w", err)
+				}
+			}
+		}
+	default:
+		return sqlc.Parameter{}, fmt.Errorf("unsupported parameter schema %T", value.Schema)
+	}
+	if schemaErr != nil {
+		return sqlc.Parameter{}, fmt.Errorf("add parameter schema: %w", schemaErr)
+	}
+	return created, nil
 }
 
-func decodeParameter(record parameterRecord) (domain.Parameter, error) {
-	record.metadata.Kind = record.kind
+type parameterSchemas struct {
+	string     sqlc.StringParameterSchema
+	stringOK   bool
+	boolean    sqlc.BooleanParameterSchema
+	booleanOK  bool
+	integer    sqlc.IntegerParameterSchema
+	integerOK  bool
+	float      sqlc.FloatParameterSchema
+	floatOK    bool
+	datetime   sqlc.DatetimeParameterSchema
+	datetimeOK bool
+}
 
-	switch record.kind {
-	case domain.ParameterKindString:
-		var config struct {
-			Default       *string  `json:"default"`
-			AllowedValues []string `json:"allowed_values"`
-			Pattern       string   `json:"pattern"`
-		}
-		if err := json.Unmarshal(record.config, &config); err != nil {
-			return nil, fmt.Errorf("decode string parameter config: %w", err)
-		}
-		return domain.StringParameter{
-			Metadata:      record.metadata,
-			Default:       config.Default,
-			AllowedValues: config.AllowedValues,
-			Pattern:       config.Pattern,
-		}, nil
-	case domain.ParameterKindBoolean:
-		var config struct {
-			Default *bool `json:"default"`
-		}
-		if err := json.Unmarshal(record.config, &config); err != nil {
-			return nil, fmt.Errorf("decode boolean parameter config: %w", err)
-		}
-		return domain.BooleanParameter{
-			Metadata: record.metadata,
-			Default:  config.Default,
-		}, nil
-	case domain.ParameterKindInteger:
-		var config struct {
-			Minimum       *int64  `json:"minimum"`
-			Maximum       *int64  `json:"maximum"`
-			Default       *int64  `json:"default"`
-			AllowedValues []int64 `json:"allowed_values"`
-		}
-		if err := json.Unmarshal(record.config, &config); err != nil {
-			return nil, fmt.Errorf("decode integer parameter config: %w", err)
-		}
-		return domain.IntegerParameter{
-			Metadata:      record.metadata,
-			Minimum:       config.Minimum,
-			Maximum:       config.Maximum,
-			Default:       config.Default,
-			AllowedValues: config.AllowedValues,
-		}, nil
-	case domain.ParameterKindFloat:
-		var config struct {
-			Minimum       *float64  `json:"minimum"`
-			Maximum       *float64  `json:"maximum"`
-			Default       *float64  `json:"default"`
-			AllowedValues []float64 `json:"allowed_values"`
-		}
-		if err := json.Unmarshal(record.config, &config); err != nil {
-			return nil, fmt.Errorf("decode float parameter config: %w", err)
-		}
-		return domain.FloatParameter{
-			Metadata:      record.metadata,
-			Minimum:       config.Minimum,
-			Maximum:       config.Maximum,
-			Default:       config.Default,
-			AllowedValues: config.AllowedValues,
-		}, nil
-	case domain.ParameterKindDateTime:
-		var config struct {
-			Minimum *time.Time `json:"minimum"`
-			Maximum *time.Time `json:"maximum"`
-			Default *time.Time `json:"default"`
-			Pattern string     `json:"pattern"`
-		}
-		if err := json.Unmarshal(record.config, &config); err != nil {
-			return nil, fmt.Errorf("decode datetime parameter config: %w", err)
-		}
-		return domain.DateTimeParameter{
-			Metadata: record.metadata,
-			Minimum:  config.Minimum,
-			Maximum:  config.Maximum,
-			Default:  config.Default,
-			Pattern:  config.Pattern,
-		}, nil
-	default:
-		return nil, fmt.Errorf("unsupported parameter kind %q", record.kind)
+func readParameterSchemas(ctx context.Context, q *sqlc.Queries, parameterIDs []uuid.UUID) (map[uuid.UUID]parameterSchemas, error) {
+	result := make(map[uuid.UUID]parameterSchemas, len(parameterIDs))
+	strings, err := q.ListLifecycleStringParameterSchemas(ctx, parameterIDs)
+	if err != nil {
+		return nil, fmt.Errorf("list string parameter schemas: %w", err)
 	}
+	for _, row := range strings {
+		schemas := result[row.StringParameterSchema.ParameterID]
+		schemas.string = row.StringParameterSchema
+		schemas.stringOK = true
+		result[row.StringParameterSchema.ParameterID] = schemas
+	}
+
+	booleans, err := q.ListLifecycleBooleanParameterSchemas(ctx, parameterIDs)
+	if err != nil {
+		return nil, fmt.Errorf("list boolean parameter schemas: %w", err)
+	}
+	for _, row := range booleans {
+		schemas := result[row.BooleanParameterSchema.ParameterID]
+		schemas.boolean = row.BooleanParameterSchema
+		schemas.booleanOK = true
+		result[row.BooleanParameterSchema.ParameterID] = schemas
+	}
+
+	integers, err := q.ListLifecycleIntegerParameterSchemas(ctx, parameterIDs)
+	if err != nil {
+		return nil, fmt.Errorf("list integer parameter schemas: %w", err)
+	}
+	for _, row := range integers {
+		schemas := result[row.IntegerParameterSchema.ParameterID]
+		schemas.integer = row.IntegerParameterSchema
+		schemas.integerOK = true
+		result[row.IntegerParameterSchema.ParameterID] = schemas
+	}
+
+	floats, err := q.ListLifecycleFloatParameterSchemas(ctx, parameterIDs)
+	if err != nil {
+		return nil, fmt.Errorf("list float parameter schemas: %w", err)
+	}
+	for _, row := range floats {
+		schemas := result[row.FloatParameterSchema.ParameterID]
+		schemas.float = row.FloatParameterSchema
+		schemas.floatOK = true
+		result[row.FloatParameterSchema.ParameterID] = schemas
+	}
+
+	datetimes, err := q.ListLifecycleDatetimeParameterSchemas(ctx, parameterIDs)
+	if err != nil {
+		return nil, fmt.Errorf("list datetime parameter schemas: %w", err)
+	}
+	for _, row := range datetimes {
+		schemas := result[row.DatetimeParameterSchema.ParameterID]
+		schemas.datetime = row.DatetimeParameterSchema
+		schemas.datetimeOK = true
+		result[row.DatetimeParameterSchema.ParameterID] = schemas
+	}
+	return result, nil
+}
+
+func domainParameter(value sqlc.Parameter, template *sqlc.ParameterTemplate, children []sqlc.Parameter, schemas map[uuid.UUID]parameterSchemas) (domain.Parameter, error) {
+	if value.SchemaKind != sqlc.ParameterSchemaKindTEMPLATE && len(children) > 0 {
+		return domain.Parameter{}, fmt.Errorf("non-template parameter has child parameters")
+	}
+	parameterSchema := schemas[value.ID]
+	var schema domain.ParameterSchema
+	switch value.SchemaKind {
+	case sqlc.ParameterSchemaKindSTRING:
+		if !parameterSchema.stringOK {
+			return domain.Parameter{}, fmt.Errorf("string parameter schema is missing")
+		}
+		schema = domain.StringSchema{
+			Pattern:        parameterSchema.string.Pattern,
+			Default:        parameterSchema.string.DefaultValue,
+			Enum:           parameterSchema.string.Enum,
+			MultipleValues: parameterSchema.string.MultipleValues,
+		}
+	case sqlc.ParameterSchemaKindBOOLEAN:
+		if !parameterSchema.booleanOK {
+			return domain.Parameter{}, fmt.Errorf("boolean parameter schema is missing")
+		}
+		schema = domain.BooleanSchema{Default: parameterSchema.boolean.DefaultValue}
+	case sqlc.ParameterSchemaKindINTEGER:
+		if !parameterSchema.integerOK {
+			return domain.Parameter{}, fmt.Errorf("integer parameter schema is missing")
+		}
+		schema = domain.IntegerSchema{
+			Minimum:        parameterSchema.integer.Minimum,
+			Maximum:        parameterSchema.integer.Maximum,
+			Default:        parameterSchema.integer.DefaultValue,
+			Enum:           parameterSchema.integer.Enum,
+			MultipleValues: parameterSchema.integer.MultipleValues,
+		}
+	case sqlc.ParameterSchemaKindFLOAT:
+		if !parameterSchema.floatOK {
+			return domain.Parameter{}, fmt.Errorf("float parameter schema is missing")
+		}
+		schema = domain.FloatSchema{
+			Minimum:        parameterSchema.float.Minimum,
+			Maximum:        parameterSchema.float.Maximum,
+			Default:        parameterSchema.float.DefaultValue,
+			Enum:           parameterSchema.float.Enum,
+			MultipleValues: parameterSchema.float.MultipleValues,
+		}
+	case sqlc.ParameterSchemaKindDATETIME:
+		if !parameterSchema.datetimeOK {
+			return domain.Parameter{}, fmt.Errorf("datetime parameter schema is missing")
+		}
+		schema = domain.DateTimeSchema{
+			Minimum: parameterSchema.datetime.Minimum,
+			Maximum: parameterSchema.datetime.Maximum,
+			Default: parameterSchema.datetime.DefaultValue,
+			Layout:  parameterSchema.datetime.Layout,
+		}
+	case sqlc.ParameterSchemaKindTEMPLATE:
+		if template == nil {
+			return domain.Parameter{}, fmt.Errorf("parameter template is missing")
+		}
+		parameters := make([]domain.Parameter, 0, len(children))
+		for _, child := range children {
+			parameter, err := domainParameter(child, nil, nil, schemas)
+			if err != nil {
+				return domain.Parameter{}, fmt.Errorf("decode template parameter: %w", err)
+			}
+			parameters = append(parameters, parameter)
+		}
+		schema = domain.TemplateSchema{Template: template.Template, Parameters: parameters}
+	default:
+		return domain.Parameter{}, fmt.Errorf("unsupported parameter schema kind %q", value.SchemaKind)
+	}
+	return domain.Parameter{
+		Position:    int(value.Position),
+		Name:        value.Name,
+		Label:       value.Label,
+		Description: value.Description,
+		Required:    value.Required,
+		ReadOnly:    value.ReadOnly,
+		Schema:      schema,
+	}, nil
 }

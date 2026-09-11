@@ -23,8 +23,7 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			Categories:       uuidStrings(v.Categories),
 		}
 		if v.Description.Set {
-			description := string(v.Description.Value)
-			metadata.Description = &description
+			metadata.Description = new(string(v.Description.Value))
 		}
 		if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
 			metadata.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)

@@ -194,8 +194,7 @@ func (h *ogenHandler) CreateGroupCategory(ctx context.Context, q *gatewayapi.Cre
 	}
 	in := &metadatalifecyclev1.CreateCategoryRequest{GroupId: params.GroupId.String(), Name: string(q.Name)}
 	if q.ParentCategoryID.Set && !q.ParentCategoryID.Null {
-		s := q.ParentCategoryID.Value.String()
-		in.ParentCategoryId = &s
+		in.ParentCategoryId = new(q.ParentCategoryID.Value.String())
 	}
 	v, err := h.metadataLifecycle.CreateCategory(ctx, a, in)
 	if err != nil {
@@ -215,8 +214,7 @@ func (h *ogenHandler) ReplaceGroupCategory(ctx context.Context, q *gatewayapi.Re
 	}
 	in := &metadatalifecyclev1.ReplaceCategoryRequest{GroupId: params.GroupId.String(), CategoryId: params.CategoryId.String(), Name: string(q.Name)}
 	if !q.ParentCategoryID.Null {
-		s := q.ParentCategoryID.Value.String()
-		in.ParentCategoryId = &s
+		in.ParentCategoryId = new(q.ParentCategoryID.Value.String())
 	}
 	v, err := h.metadataLifecycle.ReplaceCategory(ctx, a, in)
 	if err != nil {

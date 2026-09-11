@@ -13,6 +13,23 @@ import (
 	go_geom "github.com/twpayne/go-geom"
 )
 
+const addLifecycleBooleanParameterSchema = `-- name: AddLifecycleBooleanParameterSchema :exec
+INSERT INTO
+    boolean_parameter_schemas (parameter_id, default_value)
+VALUES
+    ($1, $2)
+`
+
+type AddLifecycleBooleanParameterSchemaParams struct {
+	ParameterID  uuid.UUID
+	DefaultValue *bool
+}
+
+func (q *Queries) AddLifecycleBooleanParameterSchema(ctx context.Context, arg AddLifecycleBooleanParameterSchemaParams) error {
+	_, err := q.db.Exec(ctx, addLifecycleBooleanParameterSchema, arg.ParameterID, arg.DefaultValue)
+	return err
+}
+
 const addLifecycleDatasetCategory = `-- name: AddLifecycleDatasetCategory :exec
 INSERT INTO
     dataset_version_categories (dataset_version_id, group_id, category_id)
@@ -99,6 +116,44 @@ func (q *Queries) AddLifecycleDatasetProvider(ctx context.Context, arg AddLifecy
 	return err
 }
 
+const addLifecycleDatetimeParameterSchema = `-- name: AddLifecycleDatetimeParameterSchema :exec
+INSERT INTO
+    datetime_parameter_schemas (
+        parameter_id,
+        minimum,
+        maximum,
+        default_value,
+        layout
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5
+    )
+`
+
+type AddLifecycleDatetimeParameterSchemaParams struct {
+	ParameterID  uuid.UUID
+	Minimum      *time.Time
+	Maximum      *time.Time
+	DefaultValue *time.Time
+	Layout       *string
+}
+
+func (q *Queries) AddLifecycleDatetimeParameterSchema(ctx context.Context, arg AddLifecycleDatetimeParameterSchemaParams) error {
+	_, err := q.db.Exec(ctx, addLifecycleDatetimeParameterSchema,
+		arg.ParameterID,
+		arg.Minimum,
+		arg.Maximum,
+		arg.DefaultValue,
+		arg.Layout,
+	)
+	return err
+}
+
 const addLifecycleDistribution = `-- name: AddLifecycleDistribution :exec
 INSERT INTO
     distributions (
@@ -161,6 +216,237 @@ func (q *Queries) AddLifecycleDistribution(ctx context.Context, arg AddLifecycle
 	return err
 }
 
+const addLifecycleFloatParameterSchema = `-- name: AddLifecycleFloatParameterSchema :exec
+INSERT INTO
+    float_parameter_schemas (
+        parameter_id,
+        minimum,
+        maximum,
+        default_value,
+        enum,
+        multiple_values
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6
+    )
+`
+
+type AddLifecycleFloatParameterSchemaParams struct {
+	ParameterID    uuid.UUID
+	Minimum        *float64
+	Maximum        *float64
+	DefaultValue   *float64
+	Enum           []float64
+	MultipleValues bool
+}
+
+func (q *Queries) AddLifecycleFloatParameterSchema(ctx context.Context, arg AddLifecycleFloatParameterSchemaParams) error {
+	_, err := q.db.Exec(ctx, addLifecycleFloatParameterSchema,
+		arg.ParameterID,
+		arg.Minimum,
+		arg.Maximum,
+		arg.DefaultValue,
+		arg.Enum,
+		arg.MultipleValues,
+	)
+	return err
+}
+
+const addLifecycleIntegerParameterSchema = `-- name: AddLifecycleIntegerParameterSchema :exec
+INSERT INTO
+    integer_parameter_schemas (
+        parameter_id,
+        minimum,
+        maximum,
+        default_value,
+        enum,
+        multiple_values
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6
+    )
+`
+
+type AddLifecycleIntegerParameterSchemaParams struct {
+	ParameterID    uuid.UUID
+	Minimum        *int64
+	Maximum        *int64
+	DefaultValue   *int64
+	Enum           []int64
+	MultipleValues bool
+}
+
+func (q *Queries) AddLifecycleIntegerParameterSchema(ctx context.Context, arg AddLifecycleIntegerParameterSchemaParams) error {
+	_, err := q.db.Exec(ctx, addLifecycleIntegerParameterSchema,
+		arg.ParameterID,
+		arg.Minimum,
+		arg.Maximum,
+		arg.DefaultValue,
+		arg.Enum,
+		arg.MultipleValues,
+	)
+	return err
+}
+
+const addLifecycleParameter = `-- name: AddLifecycleParameter :one
+INSERT INTO
+    parameters (
+        web_service_id,
+        web_service_body_id,
+        template_parameter_id,
+        position,
+        name,
+        label,
+        description,
+        required,
+        READ_ONLY,
+        property,
+        location,
+        explode,
+        schema_kind
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13
+    )
+RETURNING
+    id, position, name, label, description, required, read_only, web_service_id, web_service_body_id, template_parameter_id, schema_kind, property, location, explode
+`
+
+type AddLifecycleParameterParams struct {
+	WebServiceID        *uuid.UUID
+	WebServiceBodyID    *uuid.UUID
+	TemplateParameterID *uuid.UUID
+	Position            int32
+	Name                string
+	Label               string
+	Description         *string
+	Required            bool
+	ReadOnly            bool
+	Property            *string
+	Location            *WebServiceParameterLocation
+	Explode             bool
+	SchemaKind          ParameterSchemaKind
+}
+
+func (q *Queries) AddLifecycleParameter(ctx context.Context, arg AddLifecycleParameterParams) (Parameter, error) {
+	row := q.db.QueryRow(ctx, addLifecycleParameter,
+		arg.WebServiceID,
+		arg.WebServiceBodyID,
+		arg.TemplateParameterID,
+		arg.Position,
+		arg.Name,
+		arg.Label,
+		arg.Description,
+		arg.Required,
+		arg.ReadOnly,
+		arg.Property,
+		arg.Location,
+		arg.Explode,
+		arg.SchemaKind,
+	)
+	var i Parameter
+	err := row.Scan(
+		&i.ID,
+		&i.Position,
+		&i.Name,
+		&i.Label,
+		&i.Description,
+		&i.Required,
+		&i.ReadOnly,
+		&i.WebServiceID,
+		&i.WebServiceBodyID,
+		&i.TemplateParameterID,
+		&i.SchemaKind,
+		&i.Property,
+		&i.Location,
+		&i.Explode,
+	)
+	return i, err
+}
+
+const addLifecycleParameterTemplate = `-- name: AddLifecycleParameterTemplate :exec
+INSERT INTO
+    parameter_templates (parameter_id, template)
+VALUES
+    (
+        $1,
+        $2
+    )
+`
+
+type AddLifecycleParameterTemplateParams struct {
+	ParameterID uuid.UUID
+	Template    string
+}
+
+func (q *Queries) AddLifecycleParameterTemplate(ctx context.Context, arg AddLifecycleParameterTemplateParams) error {
+	_, err := q.db.Exec(ctx, addLifecycleParameterTemplate, arg.ParameterID, arg.Template)
+	return err
+}
+
+const addLifecycleStringParameterSchema = `-- name: AddLifecycleStringParameterSchema :exec
+INSERT INTO
+    string_parameter_schemas (
+        parameter_id,
+        pattern,
+        default_value,
+        enum,
+        multiple_values
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5
+    )
+`
+
+type AddLifecycleStringParameterSchemaParams struct {
+	ParameterID    uuid.UUID
+	Pattern        *string
+	DefaultValue   *string
+	Enum           []string
+	MultipleValues bool
+}
+
+func (q *Queries) AddLifecycleStringParameterSchema(ctx context.Context, arg AddLifecycleStringParameterSchemaParams) error {
+	_, err := q.db.Exec(ctx, addLifecycleStringParameterSchema,
+		arg.ParameterID,
+		arg.Pattern,
+		arg.DefaultValue,
+		arg.Enum,
+		arg.MultipleValues,
+	)
+	return err
+}
+
 const addLifecycleWebService = `-- name: AddLifecycleWebService :one
 INSERT INTO
     web_services (
@@ -168,6 +454,9 @@ INSERT INTO
         name,
         description,
         template_url,
+        method,
+        TYPE,
+        visible_on,
         format,
         provider_organization_id,
         documentation_title,
@@ -190,17 +479,23 @@ VALUES
         $9,
         $10,
         $11,
-        $12
+        $12,
+        $13,
+        $14,
+        $15
     )
 RETURNING
-    id, dataset_version_id, name, description, template_url, format, provider_organization_id, documentation_title, documentation_description, documentation_uri, spatial_coverage, temporal_start, temporal_end
+    id, dataset_version_id, name, description, template_url, method, type, visible_on, format, provider_organization_id, documentation_title, documentation_description, documentation_uri, spatial_coverage, temporal_start, temporal_end
 `
 
 type AddLifecycleWebServiceParams struct {
 	DatasetVersionID         uuid.UUID
 	Name                     string
-	Description              string
+	Description              *string
 	TemplateUrl              string
+	Method                   WebServiceHttpMethod
+	Type                     WebServiceType
+	VisibleOn                []WebServiceVisibleOn
 	Format                   string
 	ProviderOrganizationID   *uuid.UUID
 	DocumentationTitle       *string
@@ -217,6 +512,9 @@ func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWe
 		arg.Name,
 		arg.Description,
 		arg.TemplateUrl,
+		arg.Method,
+		arg.Type,
+		arg.VisibleOn,
 		arg.Format,
 		arg.ProviderOrganizationID,
 		arg.DocumentationTitle,
@@ -233,6 +531,9 @@ func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWe
 		&i.Name,
 		&i.Description,
 		&i.TemplateUrl,
+		&i.Method,
+		&i.Type,
+		&i.VisibleOn,
 		&i.Format,
 		&i.ProviderOrganizationID,
 		&i.DocumentationTitle,
@@ -241,6 +542,37 @@ func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWe
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+	)
+	return i, err
+}
+
+const addLifecycleWebServiceBody = `-- name: AddLifecycleWebServiceBody :one
+INSERT INTO
+    web_service_bodies (web_service_id, content_type, template)
+VALUES
+    (
+        $1,
+        $2,
+        $3
+    )
+RETURNING
+    id, web_service_id, content_type, template
+`
+
+type AddLifecycleWebServiceBodyParams struct {
+	WebServiceID uuid.UUID
+	ContentType  string
+	Template     string
+}
+
+func (q *Queries) AddLifecycleWebServiceBody(ctx context.Context, arg AddLifecycleWebServiceBodyParams) (WebServiceBody, error) {
+	row := q.db.QueryRow(ctx, addLifecycleWebServiceBody, arg.WebServiceID, arg.ContentType, arg.Template)
+	var i WebServiceBody
+	err := row.Scan(
+		&i.ID,
+		&i.WebServiceID,
+		&i.ContentType,
+		&i.Template,
 	)
 	return i, err
 }
@@ -262,60 +594,6 @@ type AddLifecycleWebServiceContactPointParams struct {
 
 func (q *Queries) AddLifecycleWebServiceContactPoint(ctx context.Context, arg AddLifecycleWebServiceContactPointParams) error {
 	_, err := q.db.Exec(ctx, addLifecycleWebServiceContactPoint, arg.WebServiceID, arg.ContactPointID)
-	return err
-}
-
-const addLifecycleWebServiceParameter = `-- name: AddLifecycleWebServiceParameter :exec
-INSERT INTO
-    web_service_parameters (
-        web_service_id,
-        kind,
-        variable,
-        property,
-        label,
-        required,
-        multiple_values,
-        READ_ONLY,
-        config
-    )
-VALUES
-    (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7,
-        $8,
-        $9
-    )
-`
-
-type AddLifecycleWebServiceParameterParams struct {
-	WebServiceID   uuid.UUID
-	Kind           ParameterKind
-	Variable       string
-	Property       string
-	Label          string
-	Required       bool
-	MultipleValues bool
-	ReadOnly       bool
-	Config         []byte
-}
-
-func (q *Queries) AddLifecycleWebServiceParameter(ctx context.Context, arg AddLifecycleWebServiceParameterParams) error {
-	_, err := q.db.Exec(ctx, addLifecycleWebServiceParameter,
-		arg.WebServiceID,
-		arg.Kind,
-		arg.Variable,
-		arg.Property,
-		arg.Label,
-		arg.Required,
-		arg.MultipleValues,
-		arg.ReadOnly,
-		arg.Config,
-	)
 	return err
 }
 
@@ -440,6 +718,9 @@ inserted_web_services AS (
             name,
             description,
             template_url,
+            method,
+            TYPE,
+            visible_on,
             format,
             provider_organization_id,
             documentation_title,
@@ -468,6 +749,9 @@ inserted_web_services AS (
         name,
         description,
         template_url,
+        method,
+        TYPE,
+        visible_on,
         format,
         provider_organization_id,
         documentation_title,
@@ -483,6 +767,32 @@ inserted_web_services AS (
     RETURNING
         id,
         dataset_version_id
+),
+inserted_web_service_bodies AS (
+    INSERT INTO
+        web_service_bodies (id, web_service_id, content_type, template)
+    SELECT
+        uuid_generate_v5(target.id, source.id::text),
+        target.id,
+        source.content_type,
+        source.template
+    FROM
+        web_service_bodies AS source
+        JOIN web_services AS source_service ON source_service.id = source.web_service_id
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_service.id::text
+        )
+    WHERE
+        source_service.dataset_version_id = $1
+    RETURNING
+        id,
+        web_service_id
 ),
 web_service_contacts AS (
     INSERT INTO
@@ -511,33 +821,163 @@ web_service_contacts AS (
     WHERE
         source.dataset_version_id = $1
 ),
-web_service_parameters AS (
+inserted_parameters AS (
     INSERT INTO
-        web_service_parameters (
+        parameters (
+            id,
             web_service_id,
-            kind,
-            variable,
-            property,
+            web_service_body_id,
+            position,
+            name,
             label,
+            description,
             required,
-            multiple_values,
             READ_ONLY,
-            config
+            property,
+            location,
+            explode,
+            schema_kind,
+            template_parameter_id
         )
     SELECT
-        target.id,
-        parameter.kind,
-        parameter.variable,
-        parameter.property,
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            parameter.id::text
+        ),
+        target_service.id,
+        target_body.id,
+        parameter.position,
+        parameter.name,
         parameter.label,
+        parameter.description,
         parameter.required,
-        parameter.multiple_values,
         parameter.read_only,
-        parameter.config
+        parameter.property,
+        parameter.location,
+        parameter.explode,
+        parameter.schema_kind,
+        NULL
     FROM
-        web_service_parameters AS parameter
-        JOIN web_services AS source ON source.id = parameter.web_service_id
-        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+        parameters AS parameter
+        LEFT JOIN web_service_bodies AS source_body ON source_body.id = parameter.web_service_body_id
+        LEFT JOIN inserted_web_services AS target_service ON target_service.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            COALESCE(
+                parameter.web_service_id,
+                source_body.web_service_id
+            )::text
+        )
+        LEFT JOIN inserted_web_service_bodies AS target_body ON target_body.id = uuid_generate_v5(
+            target_service.id,
+            source_body.id::text
+        )
+    WHERE
+        parameter.template_parameter_id IS NULL
+        AND (
+            target_service.id IS NOT NULL
+            OR target_body.id IS NOT NULL
+        )
+    RETURNING
+        id
+),
+inserted_parameter_templates AS (
+    INSERT INTO
+        parameter_templates (parameter_id, template)
+    SELECT
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_template.parameter_id::text
+        ),
+        source_template.template
+    FROM
+        parameter_templates AS source_template
+        JOIN inserted_parameters AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_template.parameter_id::text
+        )
+    RETURNING
+        parameter_id
+),
+template_parameters AS (
+    INSERT INTO
+        parameters (
+            id,
+            template_parameter_id,
+            position,
+            name,
+            label,
+            description,
+            required,
+            READ_ONLY,
+            schema_kind
+        )
+    SELECT
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_parameter.id::text
+        ),
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_parameter.template_parameter_id::text
+        ),
+        source_parameter.position,
+        source_parameter.name,
+        source_parameter.label,
+        source_parameter.description,
+        source_parameter.required,
+        source_parameter.read_only,
+        source_parameter.schema_kind
+    FROM
+        parameters AS source_parameter
+        JOIN inserted_parameter_templates AS target_template ON target_template.parameter_id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_parameter.template_parameter_id::text
+        )
+    RETURNING
+        id
+),
+parameter_map AS (
+    SELECT
+        source.id AS source_id,
+        target.id
+    FROM
+        parameters AS source
+        JOIN inserted_parameters AS target ON target.id = uuid_generate_v5(
             (
                 SELECT
                     id
@@ -546,14 +986,111 @@ web_service_parameters AS (
             ),
             source.id::text
         )
-        AND target.dataset_version_id = (
-            SELECT
-                id
-            FROM
-                inserted
+    UNION ALL
+    SELECT
+        source.id AS source_id,
+        target.id
+    FROM
+        parameters AS source
+        JOIN template_parameters AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
         )
-    WHERE
-        source.dataset_version_id = $1
+),
+inserted_string_parameter_schemas AS (
+    INSERT INTO
+        string_parameter_schemas (
+            parameter_id,
+            pattern,
+            default_value,
+            enum,
+            multiple_values
+        )
+    SELECT
+        target.id,
+        source.pattern,
+        source.default_value,
+        source.enum,
+        source.multiple_values
+    FROM
+        string_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
+),
+inserted_boolean_parameter_schemas AS (
+    INSERT INTO
+        boolean_parameter_schemas (parameter_id, default_value)
+    SELECT
+        target.id,
+        source.default_value
+    FROM
+        boolean_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
+),
+inserted_integer_parameter_schemas AS (
+    INSERT INTO
+        integer_parameter_schemas (
+            parameter_id,
+            minimum,
+            maximum,
+            default_value,
+            enum,
+            multiple_values
+        )
+    SELECT
+        target.id,
+        source.minimum,
+        source.maximum,
+        source.default_value,
+        source.enum,
+        source.multiple_values
+    FROM
+        integer_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
+),
+inserted_float_parameter_schemas AS (
+    INSERT INTO
+        float_parameter_schemas (
+            parameter_id,
+            minimum,
+            maximum,
+            default_value,
+            enum,
+            multiple_values
+        )
+    SELECT
+        target.id,
+        source.minimum,
+        source.maximum,
+        source.default_value,
+        source.enum,
+        source.multiple_values
+    FROM
+        float_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
+),
+inserted_datetime_parameter_schemas AS (
+    INSERT INTO
+        datetime_parameter_schemas (
+            parameter_id,
+            minimum,
+            maximum,
+            default_value,
+            layout
+        )
+    SELECT
+        target.id,
+        source.minimum,
+        source.maximum,
+        source.default_value,
+        source.layout
+    FROM
+        datetime_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
 ),
 distributions AS (
     INSERT INTO
@@ -1211,6 +1748,39 @@ func (q *Queries) GetPublishedLifecycleDatasetVersion(ctx context.Context, datas
 	return i, err
 }
 
+const listLifecycleBooleanParameterSchemas = `-- name: ListLifecycleBooleanParameterSchemas :many
+SELECT
+    schema.parameter_id, schema.schema_kind, schema.default_value
+FROM
+    boolean_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY($1::uuid [])
+`
+
+type ListLifecycleBooleanParameterSchemasRow struct {
+	BooleanParameterSchema BooleanParameterSchema
+}
+
+func (q *Queries) ListLifecycleBooleanParameterSchemas(ctx context.Context, parameterIds []uuid.UUID) ([]ListLifecycleBooleanParameterSchemasRow, error) {
+	rows, err := q.db.Query(ctx, listLifecycleBooleanParameterSchemas, parameterIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLifecycleBooleanParameterSchemasRow
+	for rows.Next() {
+		var i ListLifecycleBooleanParameterSchemasRow
+		if err := rows.Scan(&i.BooleanParameterSchema.ParameterID, &i.BooleanParameterSchema.SchemaKind, &i.BooleanParameterSchema.DefaultValue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLifecycleDatasetCategories = `-- name: ListLifecycleDatasetCategories :many
 SELECT
     category.id,
@@ -1380,6 +1950,46 @@ func (q *Queries) ListLifecycleDatasetProviders(ctx context.Context, datasetVers
 	return items, nil
 }
 
+const listLifecycleDatetimeParameterSchemas = `-- name: ListLifecycleDatetimeParameterSchemas :many
+SELECT
+    schema.parameter_id, schema.schema_kind, schema.minimum, schema.maximum, schema.default_value, schema.layout
+FROM
+    datetime_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY($1::uuid [])
+`
+
+type ListLifecycleDatetimeParameterSchemasRow struct {
+	DatetimeParameterSchema DatetimeParameterSchema
+}
+
+func (q *Queries) ListLifecycleDatetimeParameterSchemas(ctx context.Context, parameterIds []uuid.UUID) ([]ListLifecycleDatetimeParameterSchemasRow, error) {
+	rows, err := q.db.Query(ctx, listLifecycleDatetimeParameterSchemas, parameterIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLifecycleDatetimeParameterSchemasRow
+	for rows.Next() {
+		var i ListLifecycleDatetimeParameterSchemasRow
+		if err := rows.Scan(
+			&i.DatetimeParameterSchema.ParameterID,
+			&i.DatetimeParameterSchema.SchemaKind,
+			&i.DatetimeParameterSchema.Minimum,
+			&i.DatetimeParameterSchema.Maximum,
+			&i.DatetimeParameterSchema.DefaultValue,
+			&i.DatetimeParameterSchema.Layout,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLifecycleDistributions = `-- name: ListLifecycleDistributions :many
 SELECT
     id, dataset_version_id, title, description, license, source_issued_at, source_modified_at, byte_size, type, downloadable_file_url, downloadable_file_format, web_service_id
@@ -1413,6 +2023,88 @@ func (q *Queries) ListLifecycleDistributions(ctx context.Context, datasetVersion
 			&i.DownloadableFileUrl,
 			&i.DownloadableFileFormat,
 			&i.WebServiceID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLifecycleFloatParameterSchemas = `-- name: ListLifecycleFloatParameterSchemas :many
+SELECT
+    schema.parameter_id, schema.schema_kind, schema.minimum, schema.maximum, schema.default_value, schema.enum, schema.multiple_values
+FROM
+    float_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY($1::uuid [])
+`
+
+type ListLifecycleFloatParameterSchemasRow struct {
+	FloatParameterSchema FloatParameterSchema
+}
+
+func (q *Queries) ListLifecycleFloatParameterSchemas(ctx context.Context, parameterIds []uuid.UUID) ([]ListLifecycleFloatParameterSchemasRow, error) {
+	rows, err := q.db.Query(ctx, listLifecycleFloatParameterSchemas, parameterIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLifecycleFloatParameterSchemasRow
+	for rows.Next() {
+		var i ListLifecycleFloatParameterSchemasRow
+		if err := rows.Scan(
+			&i.FloatParameterSchema.ParameterID,
+			&i.FloatParameterSchema.SchemaKind,
+			&i.FloatParameterSchema.Minimum,
+			&i.FloatParameterSchema.Maximum,
+			&i.FloatParameterSchema.DefaultValue,
+			&i.FloatParameterSchema.Enum,
+			&i.FloatParameterSchema.MultipleValues,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLifecycleIntegerParameterSchemas = `-- name: ListLifecycleIntegerParameterSchemas :many
+SELECT
+    schema.parameter_id, schema.schema_kind, schema.minimum, schema.maximum, schema.default_value, schema.enum, schema.multiple_values
+FROM
+    integer_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY($1::uuid [])
+`
+
+type ListLifecycleIntegerParameterSchemasRow struct {
+	IntegerParameterSchema IntegerParameterSchema
+}
+
+func (q *Queries) ListLifecycleIntegerParameterSchemas(ctx context.Context, parameterIds []uuid.UUID) ([]ListLifecycleIntegerParameterSchemasRow, error) {
+	rows, err := q.db.Query(ctx, listLifecycleIntegerParameterSchemas, parameterIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLifecycleIntegerParameterSchemasRow
+	for rows.Next() {
+		var i ListLifecycleIntegerParameterSchemasRow
+		if err := rows.Scan(
+			&i.IntegerParameterSchema.ParameterID,
+			&i.IntegerParameterSchema.SchemaKind,
+			&i.IntegerParameterSchema.Minimum,
+			&i.IntegerParameterSchema.Maximum,
+			&i.IntegerParameterSchema.DefaultValue,
+			&i.IntegerParameterSchema.Enum,
+			&i.IntegerParameterSchema.MultipleValues,
 		); err != nil {
 			return nil, err
 		}
@@ -1519,6 +2211,161 @@ func (q *Queries) ListLifecycleOrganizations(ctx context.Context, organizationId
 	return items, nil
 }
 
+const listLifecycleParameterTemplates = `-- name: ListLifecycleParameterTemplates :many
+SELECT
+    parameter_id, schema_kind, template
+FROM
+    parameter_templates
+WHERE
+    parameter_id = ANY($1::uuid [])
+ORDER BY
+    parameter_id
+`
+
+func (q *Queries) ListLifecycleParameterTemplates(ctx context.Context, parameterIds []uuid.UUID) ([]ParameterTemplate, error) {
+	rows, err := q.db.Query(ctx, listLifecycleParameterTemplates, parameterIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ParameterTemplate
+	for rows.Next() {
+		var i ParameterTemplate
+		if err := rows.Scan(&i.ParameterID, &i.SchemaKind, &i.Template); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLifecycleStringParameterSchemas = `-- name: ListLifecycleStringParameterSchemas :many
+SELECT
+    schema.parameter_id, schema.schema_kind, schema.pattern, schema.default_value, schema.enum, schema.multiple_values
+FROM
+    string_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY($1::uuid [])
+`
+
+type ListLifecycleStringParameterSchemasRow struct {
+	StringParameterSchema StringParameterSchema
+}
+
+func (q *Queries) ListLifecycleStringParameterSchemas(ctx context.Context, parameterIds []uuid.UUID) ([]ListLifecycleStringParameterSchemasRow, error) {
+	rows, err := q.db.Query(ctx, listLifecycleStringParameterSchemas, parameterIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLifecycleStringParameterSchemasRow
+	for rows.Next() {
+		var i ListLifecycleStringParameterSchemasRow
+		if err := rows.Scan(
+			&i.StringParameterSchema.ParameterID,
+			&i.StringParameterSchema.SchemaKind,
+			&i.StringParameterSchema.Pattern,
+			&i.StringParameterSchema.DefaultValue,
+			&i.StringParameterSchema.Enum,
+			&i.StringParameterSchema.MultipleValues,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLifecycleTemplateParameters = `-- name: ListLifecycleTemplateParameters :many
+SELECT
+    id, position, name, label, description, required, read_only, web_service_id, web_service_body_id, template_parameter_id, schema_kind, property, location, explode
+FROM
+    parameters
+WHERE
+    template_parameter_id = ANY($1::uuid [])
+ORDER BY
+    template_parameter_id,
+    position,
+    name
+`
+
+func (q *Queries) ListLifecycleTemplateParameters(ctx context.Context, parameterIds []uuid.UUID) ([]Parameter, error) {
+	rows, err := q.db.Query(ctx, listLifecycleTemplateParameters, parameterIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Parameter
+	for rows.Next() {
+		var i Parameter
+		if err := rows.Scan(
+			&i.ID,
+			&i.Position,
+			&i.Name,
+			&i.Label,
+			&i.Description,
+			&i.Required,
+			&i.ReadOnly,
+			&i.WebServiceID,
+			&i.WebServiceBodyID,
+			&i.TemplateParameterID,
+			&i.SchemaKind,
+			&i.Property,
+			&i.Location,
+			&i.Explode,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLifecycleWebServiceBodies = `-- name: ListLifecycleWebServiceBodies :many
+SELECT
+    id, web_service_id, content_type, template
+FROM
+    web_service_bodies
+WHERE
+    web_service_id = ANY($1::uuid [])
+ORDER BY
+    web_service_id
+`
+
+func (q *Queries) ListLifecycleWebServiceBodies(ctx context.Context, webServiceIds []uuid.UUID) ([]WebServiceBody, error) {
+	rows, err := q.db.Query(ctx, listLifecycleWebServiceBodies, webServiceIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []WebServiceBody
+	for rows.Next() {
+		var i WebServiceBody
+		if err := rows.Scan(
+			&i.ID,
+			&i.WebServiceID,
+			&i.ContentType,
+			&i.Template,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLifecycleWebServiceContactPoints = `-- name: ListLifecycleWebServiceContactPoints :many
 SELECT
     link.web_service_id,
@@ -1565,45 +2412,43 @@ func (q *Queries) ListLifecycleWebServiceContactPoints(ctx context.Context, webS
 
 const listLifecycleWebServiceParameters = `-- name: ListLifecycleWebServiceParameters :many
 SELECT
-    id,
-    web_service_id,
-    kind,
-    variable,
-    property,
-    label,
-    required,
-    multiple_values,
-    READ_ONLY,
-    config
+    parameter.id, parameter.position, parameter.name, parameter.label, parameter.description, parameter.required, parameter.read_only, parameter.web_service_id, parameter.web_service_body_id, parameter.template_parameter_id, parameter.schema_kind, parameter.property, parameter.location, parameter.explode
 FROM
-    web_service_parameters
+    parameters AS parameter
+    LEFT JOIN web_service_bodies AS body ON body.id = parameter.web_service_body_id
 WHERE
-    web_service_id = ANY($1::uuid [])
+    parameter.web_service_id = ANY($1::uuid [])
+    OR body.web_service_id = ANY($1::uuid [])
 ORDER BY
-    web_service_id,
-    id
+    COALESCE(parameter.web_service_id, body.web_service_id),
+    parameter.position,
+    parameter.name
 `
 
-func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServiceIds []uuid.UUID) ([]WebServiceParameter, error) {
+func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServiceIds []uuid.UUID) ([]Parameter, error) {
 	rows, err := q.db.Query(ctx, listLifecycleWebServiceParameters, webServiceIds)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []WebServiceParameter
+	var items []Parameter
 	for rows.Next() {
-		var i WebServiceParameter
+		var i Parameter
 		if err := rows.Scan(
 			&i.ID,
-			&i.WebServiceID,
-			&i.Kind,
-			&i.Variable,
-			&i.Property,
+			&i.Position,
+			&i.Name,
 			&i.Label,
+			&i.Description,
 			&i.Required,
-			&i.MultipleValues,
 			&i.ReadOnly,
-			&i.Config,
+			&i.WebServiceID,
+			&i.WebServiceBodyID,
+			&i.TemplateParameterID,
+			&i.SchemaKind,
+			&i.Property,
+			&i.Location,
+			&i.Explode,
 		); err != nil {
 			return nil, err
 		}
@@ -1617,7 +2462,7 @@ func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServ
 
 const listLifecycleWebServices = `-- name: ListLifecycleWebServices :many
 SELECT
-    service.id, service.dataset_version_id, service.name, service.description, service.template_url, service.format, service.provider_organization_id, service.documentation_title, service.documentation_description, service.documentation_uri, service.spatial_coverage, service.temporal_start, service.temporal_end
+    service.id, service.dataset_version_id, service.name, service.description, service.template_url, service.method, service.type, service.visible_on, service.format, service.provider_organization_id, service.documentation_title, service.documentation_description, service.documentation_uri, service.spatial_coverage, service.temporal_start, service.temporal_end
 FROM
     web_services AS service
 WHERE
@@ -1645,6 +2490,9 @@ func (q *Queries) ListLifecycleWebServices(ctx context.Context, datasetVersionID
 			&i.WebService.Name,
 			&i.WebService.Description,
 			&i.WebService.TemplateUrl,
+			&i.WebService.Method,
+			&i.WebService.Type,
+			&i.WebService.VisibleOn,
 			&i.WebService.Format,
 			&i.WebService.ProviderOrganizationID,
 			&i.WebService.DocumentationTitle,
