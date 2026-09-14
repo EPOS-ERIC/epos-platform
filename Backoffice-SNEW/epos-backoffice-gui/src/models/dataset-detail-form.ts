@@ -1,14 +1,16 @@
 import type {
-  Documentation,
-  DownloadableFile,
-  ParameterMetadata,
-  ResourceVersionReference,
-  TemporalCoverage
+  ParameterLocation,
+  WebServiceMethod,
+  WebServiceType,
+  WebServiceVisibleOn,
 } from '../../generated/backofficeSchemas';
 
 export type DatasetSpatialForm = string | null;
 
-export type DatasetTemporalForm = TemporalCoverage;
+export type DatasetTemporalForm = {
+  start: string;
+  end: string;
+};
 
 export type DatasetPersistentIdentifierForm = {
   id?: string;
@@ -16,61 +18,128 @@ export type DatasetPersistentIdentifierForm = {
   value: string;
 };
 
-export type DatasetProviderForm = ResourceVersionReference;
+export type DatasetProviderForm = {
+  id: string;
+  name: string;
+};
 
-export type DatasetCategoryForm = ResourceVersionReference;
+export type DatasetCategoryForm = DatasetProviderForm;
 
-export type DatasetWebServiceDocumentationForm = Documentation;
+export type DatasetWebServiceDocumentationForm = {
+  title: string;
+  description: string;
+  uri: string;
+};
 
 export type DatasetWebServiceContactPointForm = string;
 
-export type DatasetWebServiceProviderForm = ResourceVersionReference;
+export type DatasetWebServiceProviderForm = DatasetProviderForm;
 
-export type DatasetWebServiceParameterMetadataForm = ParameterMetadata;
+export type DatasetWebServiceScalarParameterCommonForm = {
+  position: number;
+  name: string;
+  label: string;
+  description: string;
+  required: boolean;
+  readOnly: boolean;
+};
 
-export type DatasetWebServiceParameterForm =
-  | {
-      kind: 'STRING';
-      metadata: DatasetWebServiceParameterMetadataForm;
-      defaultValue: string | null;
-      allowedValues: string[];
-      pattern: string;
-    }
-  | {
-      kind: 'BOOLEAN';
-      metadata: DatasetWebServiceParameterMetadataForm;
-      defaultValue: boolean | null;
-    }
-  | {
-      kind: 'INTEGER';
-      metadata: DatasetWebServiceParameterMetadataForm;
-      minimum: string;
-      maximum: string;
-      defaultValue: string;
-      allowedValues: string[];
-    }
-  | {
-      kind: 'FLOAT';
-      metadata: DatasetWebServiceParameterMetadataForm;
-      minimum: string;
-      maximum: string;
-      defaultValue: string;
-      allowedValues: string[];
-    }
-  | {
-      kind: 'DATETIME';
-      metadata: DatasetWebServiceParameterMetadataForm;
-      minimum: string;
-      maximum: string;
-      defaultValue: string;
-      pattern: string;
-    };
+export type DatasetWebServiceScalarParameterForm = DatasetWebServiceScalarParameterCommonForm &
+  (
+    | {
+        kind: 'STRING';
+        defaultValue: string | null;
+        allowedValues: string[];
+        pattern: string;
+      }
+    | {
+        kind: 'BOOLEAN';
+        defaultValue: boolean | null;
+      }
+    | {
+        kind: 'INTEGER';
+        minimum: string;
+        maximum: string;
+        defaultValue: string;
+        allowedValues: string[];
+      }
+    | {
+        kind: 'FLOAT';
+        minimum: string;
+        maximum: string;
+        defaultValue: string;
+        allowedValues: string[];
+      }
+    | {
+        kind: 'DATETIME';
+        minimum: string;
+        maximum: string;
+        defaultValue: string;
+        layout: string;
+      }
+  );
+
+export type DatasetWebServiceParameterCommonForm = DatasetWebServiceScalarParameterCommonForm & {
+  id: string;
+  property: string;
+  location: ParameterLocation;
+  explode: boolean;
+};
+
+export type DatasetWebServiceParameterForm = DatasetWebServiceParameterCommonForm &
+  (
+    | {
+        kind: 'STRING';
+        multipleValues: boolean;
+        defaultValue: string | null;
+        allowedValues: string[];
+        pattern: string;
+      }
+    | {
+        kind: 'BOOLEAN';
+        defaultValue: boolean | null;
+      }
+    | {
+        kind: 'INTEGER';
+        multipleValues: boolean;
+        minimum: string;
+        maximum: string;
+        defaultValue: string;
+        allowedValues: string[];
+      }
+    | {
+        kind: 'FLOAT';
+        multipleValues: boolean;
+        minimum: string;
+        maximum: string;
+        defaultValue: string;
+        allowedValues: string[];
+      }
+    | {
+        kind: 'DATETIME';
+        minimum: string;
+        maximum: string;
+        defaultValue: string;
+        layout: string;
+      }
+    | {
+        kind: 'TEMPLATE';
+        template: string;
+        parameters: DatasetWebServiceScalarParameterForm[];
+      }
+  );
 
 export type DatasetWebServiceForm = {
   name: string;
   description: string;
   templateUrl: string;
+  method: WebServiceMethod;
+  type: WebServiceType;
+  visibleOn: WebServiceVisibleOn[];
   format: string;
+  bodyContentType: string;
+  bodyTemplate: string;
+  bodyParameters: DatasetWebServiceScalarParameterForm[];
   documentation: DatasetWebServiceDocumentationForm;
   provider: DatasetWebServiceProviderForm;
   contactPoints: DatasetWebServiceContactPointForm[];
@@ -88,7 +157,10 @@ export type DatasetDistributionCommonForm = {
   type: string;
 };
 
-export type DatasetDownloadableFileForm = DownloadableFile;
+export type DatasetDownloadableFileForm = {
+  url: string;
+  format: string;
+};
 
 export type DatasetDistributionForm = DatasetDistributionCommonForm &
   (

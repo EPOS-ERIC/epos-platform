@@ -1,10 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import type { ParameterDraftMetadata, ParameterKind } from '../../../../../generated/backofficeSchemas';
 import { AppIconComponent } from '../../../app-icon/app-icon.component';
 import type { DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
+import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
+
+type ParameterFormKind = DatasetWebServiceParameterForm['kind'];
 
 interface ParameterListItem {
   parameter: DatasetWebServiceParameterForm;
@@ -13,7 +15,7 @@ interface ParameterListItem {
 
 @Component({
   selector: 'app-web-service-parameters',
-  imports: [AllowedValuesEditorComponent, AppIconComponent, FormsModule],
+  imports: [AllowedValuesEditorComponent, AppIconComponent, FormsModule, ScalarParametersEditorComponent],
   templateUrl: './web-service-parameters.component.html',
   styleUrl: './web-service-parameters.component.css'
 })
@@ -26,9 +28,10 @@ export class WebServiceParametersComponent {
   protected selectedParameterIndex = 0;
   protected parameterSearchQuery = '';
   protected readonly parameterPageSize = 10;
-  protected readonly parameterKinds: readonly ParameterKind[] = ['STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME'];
+  protected readonly parameterKinds: readonly ParameterFormKind[] = ['STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME', 'TEMPLATE'];
+  protected readonly parameterLocations = ['PATH', 'QUERY', 'HEADER'] as const;
   protected addParameterDialogOpen = false;
-  protected selectedParameterKind: ParameterKind | '' = '';
+  protected selectedParameterKind: ParameterFormKind | '' = '';
   protected parameterKindRequired = false;
 
   protected emitModelChange(): void {
@@ -140,13 +143,16 @@ export class WebServiceParametersComponent {
     this.emitModelChange();
   }
 
-  protected isDefaultMissing(parameter: DatasetWebServiceParameterForm): boolean {
-    if (!parameter.metadata.required) {
-      return false;
-    }
+  protected onMultipleValuesChange(
+    parameter: Extract<DatasetWebServiceParameterForm, { kind: 'STRING' | 'INTEGER' | 'FLOAT' }>,
+  ): void {
+    if (!parameter.multipleValues) parameter.explode = false;
+    this.emitModelChange();
+  }
 
-    return parameter.defaultValue === null
-      || (typeof parameter.defaultValue === 'string' && !parameter.defaultValue.trim());
+  protected onLocationChange(parameter: DatasetWebServiceParameterForm): void {
+    if (parameter.location !== 'QUERY') parameter.explode = false;
+    this.emitModelChange();
   }
 
   protected previousParameterPage(): void {
@@ -157,10 +163,6 @@ export class WebServiceParametersComponent {
   protected nextParameterPage(): void {
     this.parameterPage = Math.min(this.parameterPageCount() - 1, this.parameterPage + 1);
     this.selectFirstParameterOnPage();
-  }
-
-  private isParameterKind(value: string): value is ParameterKind {
-    return this.parameterKinds.some((kind) => kind === value);
   }
 
   private selectFirstParameterOnPage(): void {
@@ -174,42 +176,42 @@ export class WebServiceParametersComponent {
       .map((parameter, globalIndex) => ({ parameter, globalIndex }))
       .filter(({ parameter }) => !query || [
         parameter.kind,
-        parameter.metadata.label,
-        parameter.metadata.variable,
-        parameter.metadata.property
+        parameter.label,
+        parameter.name,
+        parameter.property
       ].some((value) => value.toLocaleLowerCase().includes(query)));
   }
 
-  private createParameter(kind: ParameterKind): DatasetWebServiceParameterForm {
-    const draftMetadata: ParameterDraftMetadata = {
-      kind,
-      variable: '',
-      property: '',
-      label: '',
-      required: false,
-      multiple_values: false,
-      read_only: false
-    };
-    const metadata = {
+  private isParameterKind(value: string): value is ParameterFormKind {
+    return this.parameterKinds.some((kind) => kind === value);
+  }
+
+  private createParameter(kind: ParameterFormKind): DatasetWebServiceParameterForm {
+    const common = {
       id: '',
-      variable: draftMetadata.variable,
-      property: draftMetadata.property,
-      label: draftMetadata.label,
-      required: draftMetadata.required,
-      multiple_values: draftMetadata.multiple_values,
-      read_only: draftMetadata.read_only
+      position: this.model.length,
+      name: '',
+      label: '',
+      description: '',
+      property: '',
+      required: false,
+      location: 'QUERY' as const,
+      explode: false,
+      readOnly: false
     };
 
     switch (kind) {
       case 'STRING':
-        return { kind, metadata, defaultValue: null, allowedValues: [], pattern: '' };
+        return { kind, ...common, multipleValues: false, defaultValue: null, allowedValues: [], pattern: '' };
       case 'BOOLEAN':
-        return { kind, metadata, defaultValue: null };
+        return { kind, ...common, defaultValue: null };
       case 'INTEGER':
       case 'FLOAT':
-        return { kind, metadata, minimum: '', maximum: '', defaultValue: '', allowedValues: [] };
+        return { kind, ...common, multipleValues: false, minimum: '', maximum: '', defaultValue: '', allowedValues: [] };
       case 'DATETIME':
-        return { kind, metadata, minimum: '', maximum: '', defaultValue: '', pattern: '' };
+        return { kind, ...common, minimum: '', maximum: '', defaultValue: '', layout: '' };
+      case 'TEMPLATE':
+        return { kind, ...common, template: '', parameters: [] };
     }
   }
 }

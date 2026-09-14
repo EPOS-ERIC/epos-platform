@@ -49,8 +49,8 @@
                     <span class="parameter-kind">{{ parameter.kind }}</span>
                     <app-icon name="chevron-right" [size]="14" />
                   </span>
-                  <strong>{{ parameter.metadata.label || 'Unnamed parameter' }}</strong>
-                  <span class="parameter-list-item-meta">{{ parameter.metadata.variable || 'No variable' }}</span>
+                  <strong>{{ parameter.label || 'Unnamed parameter' }}</strong>
+                  <span class="parameter-list-item-meta">{{ parameter.name || 'No name' }}</span>
                 </button>
               } @empty {
                 <p class="parameter-search-empty">No parameters match your search.</p>
@@ -72,8 +72,8 @@
                 <header class="parameter-editor-header">
                   <div>
                     <span class="parameter-kind">{{ parameter.kind }}</span>
-                    <h3>{{ parameter.metadata.label || 'Unnamed parameter' }}</h3>
-                    <p>{{ parameter.metadata.variable || 'No variable configured' }}<span aria-hidden="true"> · </span>{{ parameter.metadata.property || 'No property configured' }}</p>
+                    <h3>{{ parameter.label || 'Unnamed parameter' }}</h3>
+                    <p>{{ parameter.name || 'No name configured' }}<span aria-hidden="true"> · </span>{{ parameter.location }}<span aria-hidden="true"> · </span>{{ parameter.property || 'No property configured' }}</p>
                   </div>
                   @if (!disabled) {
                     <button type="button" class="app-button app-button--ghost parameter-remove-button" (click)="removeParameter(selectedParameterGlobalIndex())">Remove</button>
@@ -82,20 +82,34 @@
 
                 <fieldset class="detail-fieldset parameter-editor-fields" [disabled]="disabled">
                   <div class="parameter-detail-panel">
-                  <div class="detail-form-grid">
+                    <div class="detail-form-grid">
                         <label class="detail-field">
-                          <span class="detail-label">Variable</span>
-                          <input class="app-input" type="text" [(ngModel)]="parameter.metadata.variable" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+                          <span class="detail-label">Name *</span>
+                          <input class="app-input" type="text" [(ngModel)]="parameter.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
                         </label>
 
                         <label class="detail-field">
                           <span class="detail-label">Property</span>
-                          <input class="app-input" type="text" [(ngModel)]="parameter.metadata.property" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+                          <input class="app-input" type="text" [(ngModel)]="parameter.property" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                         </label>
 
                         <label class="detail-field detail-field--full">
-                          <span class="detail-label">Label</span>
-                          <input class="app-input" type="text" [(ngModel)]="parameter.metadata.label" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+                          <span class="detail-label">Label *</span>
+                          <input class="app-input" type="text" [(ngModel)]="parameter.label" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
+                        </label>
+
+                        <label class="detail-field detail-field--full">
+                          <span class="detail-label">Description</span>
+                          <textarea class="app-input" rows="2" [(ngModel)]="parameter.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea>
+                        </label>
+
+                        <label class="detail-field">
+                          <span class="detail-label">Location</span>
+                          <select class="app-input" [(ngModel)]="parameter.location" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onLocationChange(parameter)">
+                            @for (location of parameterLocations; track location) {
+                              <option [ngValue]="location">{{ location }}</option>
+                            }
+                          </select>
                         </label>
 
                         <label class="detail-field">
@@ -104,27 +118,12 @@
                             <input
                               type="checkbox"
                               role="switch"
-                              [(ngModel)]="parameter.metadata.required"
+                              [(ngModel)]="parameter.required"
                               [ngModelOptions]="{ standalone: true }"
                               (ngModelChange)="emitModelChange()"
                             />
                             <span class="parameter-switch-track" aria-hidden="true"></span>
-                            <span>{{ parameter.metadata.required ? 'Enabled' : 'Disabled' }}</span>
-                          </span>
-                        </label>
-
-                        <label class="detail-field">
-                          <span class="detail-label">Multiple values</span>
-                          <span class="parameter-switch-control">
-                            <input
-                              type="checkbox"
-                              role="switch"
-                              [(ngModel)]="parameter.metadata.multiple_values"
-                              [ngModelOptions]="{ standalone: true }"
-                              (ngModelChange)="emitModelChange()"
-                            />
-                            <span class="parameter-switch-track" aria-hidden="true"></span>
-                            <span>{{ parameter.metadata.multiple_values ? 'Enabled' : 'Disabled' }}</span>
+                            <span>{{ parameter.required ? 'Enabled' : 'Disabled' }}</span>
                           </span>
                         </label>
 
@@ -134,47 +133,65 @@
                             <input
                               type="checkbox"
                               role="switch"
-                              [(ngModel)]="parameter.metadata.read_only"
+                              [(ngModel)]="parameter.readOnly"
                               [ngModelOptions]="{ standalone: true }"
                               (ngModelChange)="emitModelChange()"
                             />
                             <span class="parameter-switch-track" aria-hidden="true"></span>
-                            <span>{{ parameter.metadata.read_only ? 'Enabled' : 'Disabled' }}</span>
+                            <span>{{ parameter.readOnly ? 'Enabled' : 'Disabled' }}</span>
                           </span>
                         </label>
+
+                        @if ('multipleValues' in parameter) {
+                          <label class="detail-field">
+                            <span class="detail-label">Multiple values</span>
+                            <span class="parameter-switch-control">
+                              <input type="checkbox" role="switch" [(ngModel)]="parameter.multipleValues" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onMultipleValuesChange(parameter)" />
+                              <span class="parameter-switch-track" aria-hidden="true"></span>
+                              <span>{{ parameter.multipleValues ? 'Enabled' : 'Disabled' }}</span>
+                            </span>
+                          </label>
+                          <label class="detail-field">
+                            <span class="detail-label">Explode</span>
+                            <span class="parameter-switch-control">
+                              <input
+                                type="checkbox"
+                                role="switch"
+                                [(ngModel)]="parameter.explode"
+                                [ngModelOptions]="{ standalone: true }"
+                                [disabled]="disabled || parameter.location !== 'QUERY' || !parameter.multipleValues"
+                                (ngModelChange)="emitModelChange()"
+                              />
+                              <span class="parameter-switch-track" aria-hidden="true"></span>
+                              <span>{{ parameter.explode ? 'Enabled' : 'Disabled' }}</span>
+                            </span>
+                          </label>
+                        }
                       </div>
 
                       @switch (parameter.kind) {
                         @case ('STRING') {
                           <div class="detail-form-grid distribution-parameter-grid">
                              <label class="detail-field">
-                              <span class="detail-label">Default{{ parameter.metadata.required ? ' *' : '' }}</span>
-                              <input class="app-input" [class.app-input--invalid]="isDefaultMissing(parameter)" type="text" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="parameter.metadata.required" />
-                              @if (isDefaultMissing(parameter)) {
-                                <span class="parameter-dialog-error">A default value is required.</span>
-                              }
+                               <span class="detail-label">Default</span>
+                               <input class="app-input" type="text" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                             </label>
                             <label class="detail-field">
                               <span class="detail-label">Pattern</span>
                               <input class="app-input" type="text" [(ngModel)]="parameter.pattern" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                             </label>
                           </div>
-                          @if (parameter.metadata.multiple_values) {
-                            <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
-                          }
+                          <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
                         }
                         @case ('BOOLEAN') {
                           <div class="detail-form-grid distribution-parameter-grid">
                             <label class="detail-field">
-                              <span class="detail-label">Default{{ parameter.metadata.required ? ' *' : '' }}</span>
-                              <select class="app-input" [class.app-input--invalid]="isDefaultMissing(parameter)" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="parameter.metadata.required">
+                              <span class="detail-label">Default</span>
+                              <select class="app-input" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()">
                                 <option [ngValue]="null">No default</option>
                                 <option [ngValue]="true">True</option>
                                 <option [ngValue]="false">False</option>
                               </select>
-                              @if (isDefaultMissing(parameter)) {
-                                <span class="parameter-dialog-error">A default value is required.</span>
-                              }
                             </label>
                           </div>
                         }
@@ -189,16 +206,11 @@
                               <input class="app-input" type="text" [(ngModel)]="parameter.maximum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                             </label>
                             <label class="detail-field detail-field--full">
-                              <span class="detail-label">Default{{ parameter.metadata.required ? ' *' : '' }}</span>
-                              <input class="app-input" [class.app-input--invalid]="isDefaultMissing(parameter)" type="number" step="1" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="parameter.metadata.required" />
-                              @if (isDefaultMissing(parameter)) {
-                                <span class="parameter-dialog-error">A default value is required.</span>
-                              }
+                              <span class="detail-label">Default</span>
+                              <input class="app-input" type="number" step="1" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                             </label>
                           </div>
-                          @if (parameter.metadata.multiple_values) {
-                            <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
-                          }
+                          <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
                         }
                         @case ('FLOAT') {
                           <div class="detail-form-grid distribution-parameter-grid">
@@ -211,16 +223,11 @@
                               <input class="app-input" type="text" [(ngModel)]="parameter.maximum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                             </label>
                             <label class="detail-field detail-field--full">
-                              <span class="detail-label">Default{{ parameter.metadata.required ? ' *' : '' }}</span>
-                              <input class="app-input" [class.app-input--invalid]="isDefaultMissing(parameter)" type="number" step="any" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="parameter.metadata.required" />
-                              @if (isDefaultMissing(parameter)) {
-                                <span class="parameter-dialog-error">A default value is required.</span>
-                              }
+                              <span class="detail-label">Default</span>
+                              <input class="app-input" type="number" step="any" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                             </label>
                           </div>
-                          @if (parameter.metadata.multiple_values) {
-                            <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
-                          }
+                          <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
                         }
                         @case ('DATETIME') {
                           <div class="detail-form-grid distribution-parameter-grid">
@@ -233,17 +240,24 @@
                               <input class="app-input" type="datetime-local" [(ngModel)]="parameter.maximum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                             </label>
                             <label class="detail-field detail-field--full">
-                              <span class="detail-label">Default{{ parameter.metadata.required ? ' *' : '' }}</span>
-                              <input class="app-input" [class.app-input--invalid]="isDefaultMissing(parameter)" type="datetime-local" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="parameter.metadata.required" />
-                              @if (isDefaultMissing(parameter)) {
-                                <span class="parameter-dialog-error">A default value is required.</span>
-                              }
+                              <span class="detail-label">Default</span>
+                              <input class="app-input" type="datetime-local" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                             </label>
                             <label class="detail-field detail-field--full">
-                              <span class="detail-label">Pattern</span>
-                              <input class="app-input" type="text" [(ngModel)]="parameter.pattern" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+                              <span class="detail-label">Layout</span>
+                              <input class="app-input" type="text" [(ngModel)]="parameter.layout" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                             </label>
                           </div>
+                        }
+                        @case ('TEMPLATE') {
+                          <div class="detail-form-grid distribution-parameter-grid">
+                            <label class="detail-field detail-field--full">
+                              <span class="detail-label">Template *</span>
+                              <textarea class="app-input detail-textarea" rows="3" [(ngModel)]="parameter.template" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required></textarea>
+                            </label>
+                          </div>
+                          <p class="subtitle app-muted">Template parameters do not support Multiple values or Explode.</p>
+                          <app-scalar-parameters-editor [model]="parameter.parameters" [disabled]="disabled" (modelChange)="parameter.parameters = $event; emitModelChange()" />
                         }
                       }
                   </div>

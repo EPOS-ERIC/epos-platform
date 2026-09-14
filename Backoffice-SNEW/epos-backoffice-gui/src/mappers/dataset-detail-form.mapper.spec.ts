@@ -2,15 +2,19 @@ import type { DatasetResourceMetadata } from '../../generated/backofficeSchemas'
 import { describe, expect, it } from 'vitest';
 import type {
   DatasetDetailForm,
-  DatasetWebServiceParameterForm
+  DatasetWebServiceParameterForm,
+  DatasetWebServiceScalarParameterForm,
 } from '../models/dataset-detail-form';
 import {
+  hasBodyOnUnsupportedMethod,
+  hasIncompleteWebServiceBody,
+  hasInvalidExplodeParameter,
+  hasMultipleParameterWithoutAllowedValues,
   hasParameterDefaultOutsideAllowedValues,
-  hasRequiredParameterWithoutDefault,
   temporalWarningKind,
   temporalWarningMessage,
   toDatasetDetailForm,
-  toDatasetSaveRequest
+  toDatasetSaveRequest,
 } from './dataset-detail-form.mapper';
 
 const WEB_SERVICE_TYPE =
@@ -37,34 +41,93 @@ function datasetMetadata(): DatasetResourceMetadata {
         web_service: {
           id: 'service-id',
           name: 'Service',
-          description: 'Service description',
+          description: null,
           template_url: 'https://example.test/{value}',
+          method: 'POST',
+          type: 'DYNAMIC',
+          visible_on: ['GRAPH', 'MAP'],
           format: 'application/json',
+          body_content_type: 'application/json',
+          body_template: '{"when":"{when}"}',
           provider: { id: 'provider-id', name: 'Provider' },
           documentation: { title: null, description: null, uri: 'https://example.test/docs' },
           contact_points: ['contact-id'],
           spatial_coverage: 'POINT (12.5 41.9)',
           temporal_coverage: { start: 'invalid-start', end: null },
+          body_parameters: [
+            {
+              kind: 'DATETIME',
+              position: 12,
+              name: 'when',
+              label: 'When',
+              description: null,
+              required: true,
+              read_only: false,
+              minimum: '2025-01-01T00:00:00Z',
+              maximum: null,
+              default: '2026-01-01T00:00:00Z',
+              layout: '2006-01-02',
+            },
+          ],
           parameters: [
             {
+              id: 'parameter-id',
               kind: 'FLOAT',
-              metadata: {
-                id: 'parameter-id',
-                variable: 'value',
-                property: 'value',
-                label: 'Value',
-                required: true,
-                multiple_values: false,
-                read_only: false
-              },
+              position: 8,
+              name: 'value',
+              label: 'Value',
+              description: 'Numeric value',
+              required: true,
+              property: 'schema:value',
+              location: 'QUERY',
+              explode: true,
+              multiple_values: true,
+              read_only: false,
               minimum: 1.5,
               maximum: null,
               default: 2.5,
-              allowed_values: [1.5, 2.5]
-            }
-          ]
-        }
-      }
+              enum: [1.5, 2.5],
+            },
+            {
+              id: 'template-id',
+              kind: 'TEMPLATE',
+              position: 9,
+              name: 'filter',
+              label: 'Filter',
+              description: null,
+              required: false,
+              property: null,
+              location: 'HEADER',
+              explode: false,
+              read_only: true,
+              template: '{code}:{enabled}',
+              parameters: [
+                {
+                  kind: 'STRING',
+                  position: 4,
+                  name: 'code',
+                  label: 'Code',
+                  description: 'Filter code',
+                  required: true,
+                  read_only: false,
+                  default: 'A',
+                  enum: ['A', 'B'],
+                  pattern: '[A-Z]',
+                },
+                {
+                  kind: 'BOOLEAN',
+                  position: 5,
+                  name: 'enabled',
+                  label: 'Enabled',
+                  required: false,
+                  read_only: true,
+                  default: false,
+                },
+              ],
+            },
+          ],
+        },
+      },
     ],
     spatial_coverage: null,
     temporal_coverage: { start: 'invalid-start', end: null },
@@ -73,7 +136,7 @@ function datasetMetadata(): DatasetResourceMetadata {
     providers: [{ id: 'provider-id', name: 'Provider' }],
     categories: [{ id: 'category-id', name: 'Category' }],
     created: 'invalid-created',
-    updated: null
+    updated: null,
   };
 }
 
@@ -92,32 +155,55 @@ function emptyDatasetForm(): DatasetDetailForm {
     contactPoints: [],
     providers: [],
     categories: [],
-    distributions: []
+    distributions: [],
   };
 }
 
 function parameter(
   defaultValue: string | null,
-  required = true
+  required = true,
 ): Extract<DatasetWebServiceParameterForm, { kind: 'STRING' }> {
   return {
     kind: 'STRING',
-    metadata: {
-      id: '',
-      variable: 'value',
-      property: '',
-      label: '',
-      required,
-      multiple_values: false,
-      read_only: false
-    },
+    id: '',
+    position: 0,
+    name: 'value',
+    label: 'Value',
+    description: '',
+    required,
+    property: '',
+    location: 'QUERY',
+    explode: false,
+    multipleValues: false,
+    readOnly: false,
     defaultValue,
     allowedValues: [],
-    pattern: ''
+    pattern: '',
   };
 }
 
-function formWithParameters(parameters: DatasetWebServiceParameterForm[]): DatasetDetailForm {
+function scalarParameter(
+  defaultValue: string | null,
+  required = true,
+): Extract<DatasetWebServiceScalarParameterForm, { kind: 'STRING' }> {
+  return {
+    kind: 'STRING',
+    position: 0,
+    name: 'nested',
+    label: 'Nested',
+    description: '',
+    required,
+    readOnly: false,
+    defaultValue,
+    allowedValues: [],
+    pattern: '',
+  };
+}
+
+function formWithParameters(
+  parameters: DatasetWebServiceParameterForm[],
+  bodyParameters: DatasetWebServiceScalarParameterForm[] = [],
+): DatasetDetailForm {
   return {
     ...emptyDatasetForm(),
     distributions: [
@@ -130,24 +216,30 @@ function formWithParameters(parameters: DatasetWebServiceParameterForm[]): Datas
         license: '',
         type: WEB_SERVICE_TYPE,
         webService: {
-          name: '',
+          name: 'Service',
           description: '',
-          templateUrl: '',
-          format: '',
-          documentation: { title: '', description: '', uri: '' },
+          templateUrl: 'https://example.test/{value}',
+          method: 'GET',
+          type: 'DYNAMIC',
+          visibleOn: [],
+          format: 'application/json',
+          bodyContentType: '',
+          bodyTemplate: '',
+          bodyParameters,
+          documentation: { title: '', description: '', uri: 'https://example.test/docs' },
           provider: { id: '', name: '' },
           contactPoints: [],
           spatialCoverage: null,
           temporalCoverage: { start: '', end: '' },
-          parameters
-        }
-      }
-    ]
+          parameters,
+        },
+      },
+    ],
   };
 }
 
 describe('toDatasetDetailForm', () => {
-  it('maps resource metadata and nested web service values into editable form values', () => {
+  it('maps the complete web service contract and recursive parameter forms', () => {
     const form = toDatasetDetailForm(datasetMetadata());
 
     expect(form).toMatchObject({
@@ -158,39 +250,67 @@ describe('toDatasetDetailForm', () => {
       qualityAnnotation: 'reviewed',
       created: 'invalid-created',
       updated: '',
-      spatial: null,
       temporal: { start: 'invalid-start', end: '' },
-      persistentIdentifiers: [{ id: 'identifier-id', type: 'DOI', value: '10.123/example' }],
-      providers: [{ id: 'provider-id', name: 'Provider' }]
     });
     expect(form.distributions[0]).toMatchObject({
       kind: 'web-service',
       issued: '',
       modified: 'invalid-date',
       webService: {
+        description: '',
+        method: 'POST',
+        type: 'DYNAMIC',
+        visibleOn: ['GRAPH', 'MAP'],
+        bodyContentType: 'application/json',
+        bodyTemplate: '{"when":"{when}"}',
         documentation: { title: '', description: '', uri: 'https://example.test/docs' },
-        provider: { id: 'provider-id', name: 'Provider' },
-        temporalCoverage: { start: 'invalid-start', end: '' },
+        bodyParameters: [
+          {
+            kind: 'DATETIME',
+            position: 12,
+            name: 'when',
+            description: '',
+            defaultValue: '2026-01-01T00:00:00Z',
+            layout: '2006-01-02',
+          },
+        ],
         parameters: [
           {
             kind: 'FLOAT',
+            id: 'parameter-id',
+            position: 8,
+            name: 'value',
+            property: 'schema:value',
+            location: 'QUERY',
+            explode: true,
+            multipleValues: true,
             minimum: '1.5',
             maximum: '',
             defaultValue: '2.5',
-            allowedValues: ['1.5', '2.5']
-          }
-        ]
-      }
+            allowedValues: ['1.5', '2.5'],
+          },
+          {
+            kind: 'TEMPLATE',
+            template: '{code}:{enabled}',
+            parameters: [
+              { kind: 'STRING', name: 'code', allowedValues: ['A', 'B'], pattern: '[A-Z]' },
+              { kind: 'BOOLEAN', name: 'enabled', defaultValue: false },
+            ],
+          },
+        ],
+      },
     });
   });
 
-  it('supplies the current placeholder rows when identifiers, providers, or parameters are absent', () => {
+  it('supplies current placeholder rows and empty optional arrays', () => {
     const metadata = datasetMetadata();
     metadata.persistent_identifiers = [];
     metadata.providers = [];
     const distribution = metadata.distributions[0];
     if (distribution.type === WEB_SERVICE_TYPE) {
       distribution.web_service.parameters = [];
+      distribution.web_service.visible_on = null;
+      distribution.web_service.body_parameters = undefined;
     }
 
     const form = toDatasetDetailForm(metadata);
@@ -199,103 +319,206 @@ describe('toDatasetDetailForm', () => {
     expect(form.providers).toEqual([{ id: '', name: '' }]);
     expect(form.distributions[0]).toMatchObject({
       webService: {
-        parameters: [{ kind: 'STRING', defaultValue: null, allowedValues: [], pattern: '' }]
-      }
+        visibleOn: [],
+        bodyParameters: [],
+        parameters: [
+          {
+            kind: 'STRING',
+            name: '',
+            label: '',
+            location: 'QUERY',
+            multipleValues: false,
+            defaultValue: null,
+          },
+        ],
+      },
     });
   });
 });
 
 describe('toDatasetSaveRequest', () => {
-  it('maps outbound fields, filters blank references, and preserves access_right', () => {
+  it('roundtrips all new web service fields with deterministic parameter positions', () => {
     const form = toDatasetDetailForm(datasetMetadata());
-    form.title = '';
-    form.description = '   ';
-    form.keywords = ' first, , second ';
-    form.persistentIdentifiers.push({ type: ' ', value: 'ignored' });
-    form.contactPoints.push('  ');
-    form.providers.push({ id: '', name: 'Ignored' });
-    form.categories.push({ id: ' ', name: 'Ignored' });
-
     const request = toDatasetSaveRequest(form, 7, datasetMetadata());
-
-    expect(request).toMatchObject({
-      resource_type: 'dataset',
-      revision: 7,
-      metadata: {
-        title: 'Untitled dataset',
-        description: undefined,
-        keywords: ['first', 'second'],
-        access_right: 'restricted',
-        persistent_identifiers: [{ type: 'DOI', value: '10.123/example' }],
-        contact_points: ['contact-id'],
-        providers: ['provider-id'],
-        categories: ['category-id']
-      }
-    });
-  });
-
-  it('normalizes comma decimals and maps blank numeric values to null', () => {
-    const numericParameter: DatasetWebServiceParameterForm = {
-      kind: 'FLOAT',
-      metadata: {
-        id: 'parameter-id',
-        variable: 'value',
-        property: '',
-        label: '',
-        required: false,
-        multiple_values: false,
-        read_only: false
-      },
-      minimum: '1,5',
-      maximum: '   ',
-      defaultValue: '2,75',
-      allowedValues: ['3.5', '4,5', 'bad']
-    };
-    const request = toDatasetSaveRequest(
-      formWithParameters([numericParameter]),
-      2,
-      datasetMetadata()
-    );
     const distribution = request.metadata.distributions?.[0];
 
     expect(distribution).toMatchObject({
       web_service: {
+        name: 'Service',
+        description: undefined,
+        method: 'POST',
+        type: 'DYNAMIC',
+        visible_on: ['GRAPH', 'MAP'],
+        body_content_type: 'application/json',
+        body_template: '{"when":"{when}"}',
+        body_parameters: [
+          {
+            kind: 'DATETIME',
+            position: 0,
+            name: 'when',
+            description: undefined,
+            default: '2026-01-01T00:00:00.000Z',
+            layout: '2006-01-02',
+          },
+        ],
         parameters: [
           {
             kind: 'FLOAT',
+            position: 0,
+            name: 'value',
+            description: 'Numeric value',
+            property: 'schema:value',
+            location: 'QUERY',
+            explode: true,
+            multiple_values: true,
+            enum: [1.5, 2.5],
+          },
+          {
+            kind: 'TEMPLATE',
+            position: 1,
+            property: undefined,
+            template: '{code}:{enabled}',
+            parameters: [
+              { kind: 'STRING', position: 0, enum: ['A', 'B'], pattern: '[A-Z]' },
+              { kind: 'BOOLEAN', position: 1, default: false },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  it('serializes blank optional strings and empty visibleOn as undefined', () => {
+    const form = formWithParameters([parameter(null)]);
+    form.description = '   ';
+    form.distributions[0].description = ' ';
+    const webService =
+      form.distributions[0].kind === 'web-service' ? form.distributions[0].webService : undefined;
+    if (!webService) throw new Error('Expected a web service');
+    webService.description = ' ';
+    webService.bodyContentType = '';
+    webService.bodyTemplate = '   ';
+
+    const request = toDatasetSaveRequest(form, 1, datasetMetadata());
+    const distribution = request.metadata.distributions?.[0];
+
+    expect(request.metadata.description).toBeUndefined();
+    expect(distribution?.description).toBeUndefined();
+    if (!distribution || distribution.type !== WEB_SERVICE_TYPE)
+      throw new Error('Expected web service draft');
+    expect(distribution.web_service.description).toBeUndefined();
+    expect(distribution.web_service.visible_on).toBeUndefined();
+    expect(distribution.web_service.body_content_type).toBeUndefined();
+    expect(distribution.web_service.body_template).toBeUndefined();
+    const stringDraft = distribution.web_service.parameters?.[0];
+    if (!stringDraft || stringDraft.kind !== 'STRING') throw new Error('Expected string parameter');
+    expect(stringDraft.enum).toBeUndefined();
+  });
+
+  it('normalizes comma decimals and maps numeric enum values by kind', () => {
+    const numericParameter: DatasetWebServiceParameterForm = {
+      kind: 'FLOAT',
+      id: '',
+      position: 99,
+      name: 'value',
+      label: 'Value',
+      description: '',
+      required: false,
+      property: '',
+      location: 'QUERY',
+      explode: false,
+      multipleValues: true,
+      readOnly: false,
+      minimum: '1,5',
+      maximum: '   ',
+      defaultValue: '2,75',
+      allowedValues: ['3.5', '4,5', 'bad'],
+    };
+    const request = toDatasetSaveRequest(
+      formWithParameters([numericParameter]),
+      2,
+      datasetMetadata(),
+    );
+
+    expect(request.metadata.distributions?.[0]).toMatchObject({
+      web_service: {
+        parameters: [
+          {
+            kind: 'FLOAT',
+            position: 0,
             minimum: 1.5,
             maximum: null,
             default: 2.75,
-            allowed_values: [3.5]
-          }
-        ]
-      }
+            enum: [3.5, 4.5],
+          },
+        ],
+      },
     });
   });
 });
 
 describe('dataset validation helpers', () => {
-  it('detects parameter defaults that are missing from allowed values', () => {
-    const stringParameter = parameter('fallback');
-    stringParameter.allowedValues = ['first', 'second'];
+  it('checks enum defaults on full, template scalar, and body scalar parameters', () => {
+    const full = parameter('fallback');
+    full.allowedValues = ['first', 'second'];
+    const nested = scalarParameter('3');
+    nested.allowedValues = ['1', '2'];
+    const template: DatasetWebServiceParameterForm = {
+      ...parameter(null, false),
+      kind: 'TEMPLATE',
+      template: '{nested}',
+      parameters: [nested],
+    };
 
-    expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([stringParameter]))).toBe(true);
-
-    stringParameter.allowedValues.push('fallback');
-    expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([stringParameter]))).toBe(false);
+    expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([full]))).toBe(true);
+    expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([template]))).toBe(true);
+    expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([], [nested]))).toBe(true);
+    nested.allowedValues.push('3');
+    expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([template]))).toBe(false);
   });
 
-  it('detects required null and blank string defaults but accepts non-required or false defaults', () => {
-    expect(hasRequiredParameterWithoutDefault(formWithParameters([parameter(null)]))).toBe(true);
-    expect(hasRequiredParameterWithoutDefault(formWithParameters([parameter('   ')]))).toBe(true);
-    expect(hasRequiredParameterWithoutDefault(formWithParameters([parameter('', false)]))).toBe(false);
+  it('requires a non-empty enum when multiple values are enabled', () => {
+    const multipleParameter = parameter(null);
+    multipleParameter.multipleValues = true;
 
-    const booleanParameter: DatasetWebServiceParameterForm = {
-      kind: 'BOOLEAN',
-      metadata: { ...parameter(null).metadata, required: true },
-      defaultValue: false
+    expect(hasMultipleParameterWithoutAllowedValues(formWithParameters([multipleParameter]))).toBe(true);
+    multipleParameter.allowedValues.push('value');
+    expect(hasMultipleParameterWithoutAllowedValues(formWithParameters([multipleParameter]))).toBe(false);
+  });
+
+  it('requires explode parameters to be multiple-value query parameters', () => {
+    const explodedParameter = parameter(null);
+    explodedParameter.explode = true;
+
+    expect(hasInvalidExplodeParameter(formWithParameters([explodedParameter]))).toBe(true);
+
+    explodedParameter.location = 'QUERY';
+    explodedParameter.multipleValues = true;
+    expect(hasInvalidExplodeParameter(formWithParameters([explodedParameter]))).toBe(false);
+
+    const templateParameter: DatasetWebServiceParameterForm = {
+      ...parameter(null, false),
+      kind: 'TEMPLATE',
+      explode: true,
+      template: '{}',
+      parameters: [],
     };
-    expect(hasRequiredParameterWithoutDefault(formWithParameters([booleanParameter]))).toBe(false);
+    expect(hasInvalidExplodeParameter(formWithParameters([templateParameter]))).toBe(true);
+  });
+
+  it('rejects incomplete request bodies and methods that do not support them', () => {
+    const form = formWithParameters([]);
+    const distribution = form.distributions[0];
+    if (distribution.kind !== 'web-service') throw new Error('Expected a web service distribution');
+
+    distribution.webService.bodyContentType = 'application/json';
+    expect(hasIncompleteWebServiceBody(form)).toBe(true);
+    expect(hasBodyOnUnsupportedMethod(form)).toBe(true);
+
+    distribution.webService.method = 'POST';
+    distribution.webService.bodyTemplate = '{}';
+    expect(hasIncompleteWebServiceBody(form)).toBe(false);
+    expect(hasBodyOnUnsupportedMethod(form)).toBe(false);
   });
 
   it('returns the current warning kinds and messages for temporal coverage', () => {

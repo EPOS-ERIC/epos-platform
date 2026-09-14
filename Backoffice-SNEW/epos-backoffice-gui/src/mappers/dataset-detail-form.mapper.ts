@@ -8,11 +8,12 @@ import type {
   DownloadableFileDistributionDraft,
   Parameter,
   ParameterDraft,
-  ParameterDraftMetadata,
   ReplaceDatasetDraftRequest,
   ResourceVersionReference,
+  ScalarParameter,
+  ScalarParameterDraft,
   WebServiceDistribution,
-  WebServiceDistributionDraft
+  WebServiceDistributionDraft,
 } from '../../generated/backofficeSchemas';
 import type {
   DatasetDetailForm,
@@ -22,8 +23,8 @@ import type {
   DatasetWebServiceDocumentationForm,
   DatasetWebServiceForm,
   DatasetWebServiceParameterForm,
-  DatasetWebServiceParameterMetadataForm,
-  DatasetWebServiceProviderForm
+  DatasetWebServiceProviderForm,
+  DatasetWebServiceScalarParameterForm,
 } from '../models/dataset-detail-form';
 
 export function toDatasetDetailForm(metadata: DatasetResourceMetadata): DatasetDetailForm {
@@ -40,13 +41,13 @@ export function toDatasetDetailForm(metadata: DatasetResourceMetadata): DatasetD
     spatial: metadata.spatial_coverage ?? null,
     temporal: {
       start: temporalCoverage?.start ? toDateTimeLocalValue(temporalCoverage.start) : '',
-      end: temporalCoverage?.end ? toDateTimeLocalValue(temporalCoverage.end) : ''
+      end: temporalCoverage?.end ? toDateTimeLocalValue(temporalCoverage.end) : '',
     },
     persistentIdentifiers: metadata.persistent_identifiers?.length
       ? metadata.persistent_identifiers.map((identifier) => ({
           id: identifier.id,
           type: identifier.type,
-          value: identifier.value
+          value: identifier.value,
         }))
       : [{ type: '', value: '' }],
     contactPoints: metadata.contact_points?.length
@@ -60,14 +61,14 @@ export function toDatasetDetailForm(metadata: DatasetResourceMetadata): DatasetD
       : [],
     distributions: metadata.distributions?.length
       ? metadata.distributions.map(buildDistributionForm)
-      : []
+      : [],
   };
 }
 
 export function toDatasetSaveRequest(
   form: DatasetDetailForm,
   revision: number,
-  preservedMetadata: DatasetResourceMetadata
+  preservedMetadata: DatasetResourceMetadata,
 ): ReplaceDatasetDraftRequest {
   return {
     resource_type: 'dataset',
@@ -83,44 +84,79 @@ export function toDatasetSaveRequest(
       spatial_coverage: buildSpatialCoverageDraft(form.spatial),
       temporal_coverage: buildTemporalCoverageDraft(form.temporal),
       persistent_identifiers: form.persistentIdentifiers
-        .filter((identifier) => hasIdentifierValue(identifier.type) && hasIdentifierValue(identifier.value))
+        .filter(
+          (identifier) =>
+            hasIdentifierValue(identifier.type) && hasIdentifierValue(identifier.value),
+        )
         .map((identifier) => ({ type: identifier.type, value: identifier.value })),
       contact_points: form.contactPoints.filter(hasIdentifierValue),
-      providers: form.providers.filter((provider) => hasIdentifierValue(provider.id)).map((provider) => provider.id),
-      categories: form.categories.filter((category) => hasIdentifierValue(category.id)).map((category) => category.id),
+      providers: form.providers
+        .filter((provider) => hasIdentifierValue(provider.id))
+        .map((provider) => provider.id),
+      categories: form.categories
+        .filter((category) => hasIdentifierValue(category.id))
+        .map((category) => category.id),
       created: toIsoDateTimeOrNull(form.created),
-      updated: toIsoDateTimeOrNull(form.updated)
-    }
+      updated: toIsoDateTimeOrNull(form.updated),
+    },
   };
 }
 
-export function hasRequiredParameterWithoutDefault(form: DatasetDetailForm): boolean {
+export function hasMultipleParameterWithoutAllowedValues(form: DatasetDetailForm): boolean {
+  return form.distributions.some(
+    (distribution) =>
+      distribution.kind === 'web-service' &&
+      distribution.webService.parameters.some(
+        (parameter) => 'multipleValues' in parameter && parameter.multipleValues && !parameter.allowedValues.some(hasIdentifierValue),
+      ),
+  );
+}
+
+export function hasInvalidExplodeParameter(form: DatasetDetailForm): boolean {
   return form.distributions.some(
     (distribution) =>
       distribution.kind === 'web-service' &&
       distribution.webService.parameters.some(
         (parameter) =>
-          parameter.metadata.required &&
-          (parameter.defaultValue === null ||
-            (typeof parameter.defaultValue === 'string' && !parameter.defaultValue.trim()))
-      )
+          parameter.explode &&
+          (parameter.location !== 'QUERY' || !('multipleValues' in parameter) || !parameter.multipleValues),
+      ),
   );
+}
+
+export function hasIncompleteWebServiceBody(form: DatasetDetailForm): boolean {
+  return form.distributions.some((distribution) => {
+    if (distribution.kind !== 'web-service') return false;
+
+    const webService = distribution.webService;
+    const hasContentType = Boolean(webService.bodyContentType.trim());
+    const hasTemplate = Boolean(webService.bodyTemplate.trim());
+    const hasBody = hasContentType || hasTemplate || webService.bodyParameters.length > 0;
+
+    return hasBody && (!hasContentType || !hasTemplate);
+  });
+}
+
+export function hasBodyOnUnsupportedMethod(form: DatasetDetailForm): boolean {
+  return form.distributions.some((distribution) => {
+    if (distribution.kind !== 'web-service') return false;
+
+    const webService = distribution.webService;
+    const hasBody = Boolean(
+      webService.bodyContentType.trim() || webService.bodyTemplate.trim() || webService.bodyParameters.length,
+    );
+
+    return hasBody && (webService.method === 'GET' || webService.method === 'DELETE');
+  });
 }
 
 export function hasParameterDefaultOutsideAllowedValues(form: DatasetDetailForm): boolean {
   return form.distributions.some(
-    (distribution) => distribution.kind === 'web-service' && distribution.webService.parameters.some((parameter) => {
-      if (!('allowedValues' in parameter) || !parameter.allowedValues.length || parameter.defaultValue === null) {
-        return false;
-      }
-
-      if (parameter.kind === 'STRING') {
-        return !!parameter.defaultValue.trim() && !parameter.allowedValues.includes(parameter.defaultValue);
-      }
-
-      const defaultValue = toNumberOrNull(parameter.defaultValue);
-      return defaultValue !== null && !parameter.allowedValues.some((value) => toNumberOrNull(value) === defaultValue);
-    })
+    (distribution) =>
+      distribution.kind === 'web-service' &&
+      [...distribution.webService.parameters, ...distribution.webService.bodyParameters].some(
+        hasScalarDefaultOutsideAllowedValues,
+      ),
   );
 }
 
@@ -166,10 +202,13 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
     issued: distribution.issued ? toDateTimeLocalValue(distribution.issued) : '',
     modified: distribution.modified ? toDateTimeLocalValue(distribution.modified) : '',
     license: distribution.license ?? '',
-    type: distribution.type
+    type: distribution.type,
   };
 
-  if (distribution.type === 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE') {
+  if (
+    distribution.type ===
+    'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE'
+  ) {
     const webService = (distribution as WebServiceDistribution).web_service;
 
     return {
@@ -177,9 +216,15 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
       kind: 'web-service',
       webService: {
         name: webService.name,
-        description: webService.description,
+        description: webService.description ?? '',
         templateUrl: webService.template_url,
+        method: webService.method,
+        type: webService.type,
+        visibleOn: webService.visible_on ?? [],
         format: webService.format,
+        bodyContentType: webService.body_content_type ?? '',
+        bodyTemplate: webService.body_template ?? '',
+        bodyParameters: webService.body_parameters?.map(buildWebServiceScalarParameterForm) ?? [],
         documentation: webService.documentation
           ? buildWebServiceDocumentationForm(webService.documentation)
           : { title: '', description: '', uri: '' },
@@ -193,8 +238,8 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
         temporalCoverage: buildTemporalForm(webService.temporal_coverage),
         parameters: webService.parameters?.length
           ? webService.parameters.map(buildWebServiceParameterForm)
-          : [buildEmptyWebServiceParameterForm()]
-      }
+          : [buildEmptyWebServiceParameterForm()],
+      },
     };
   }
 
@@ -205,84 +250,142 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
     kind: 'downloadable-file',
     downloadableFile: {
       url: downloadableFile.url,
-      format: downloadableFile.format
-    }
+      format: downloadableFile.format,
+    },
   };
 }
 
 function buildWebServiceDocumentationForm(
-  documentation: Documentation
+  documentation: Documentation,
 ): DatasetWebServiceDocumentationForm {
   return {
     title: documentation.title ?? '',
     description: documentation.description ?? '',
-    uri: documentation.uri
+    uri: documentation.uri,
   };
 }
 
 function buildWebServiceProviderForm(
-  provider: ResourceVersionReference
+  provider: ResourceVersionReference,
 ): DatasetWebServiceProviderForm {
   return { id: provider.id, name: provider.name };
 }
 
 function buildTemporalForm(
-  temporalCoverage: WebServiceDistribution['web_service']['temporal_coverage']
+  temporalCoverage: WebServiceDistribution['web_service']['temporal_coverage'],
 ): DatasetTemporalForm {
   return {
     start: temporalCoverage?.start ? toDateTimeLocalValue(temporalCoverage.start) : '',
-    end: temporalCoverage?.end ? toDateTimeLocalValue(temporalCoverage.end) : ''
+    end: temporalCoverage?.end ? toDateTimeLocalValue(temporalCoverage.end) : '',
   };
 }
 
 function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServiceParameterForm {
-  const metadata: DatasetWebServiceParameterMetadataForm = {
-    id: parameter.metadata.id,
-    variable: parameter.metadata.variable,
-    property: parameter.metadata.property,
-    label: parameter.metadata.label,
-    required: parameter.metadata.required,
-    multiple_values: parameter.metadata.multiple_values,
-    read_only: parameter.metadata.read_only
+  const common = {
+    id: parameter.id,
+    position: parameter.position,
+    name: parameter.name,
+    label: parameter.label,
+    description: parameter.description ?? '',
+    required: parameter.required,
+    property: parameter.property ?? '',
+    location: parameter.location,
+    explode: parameter.explode,
+    readOnly: parameter.read_only,
   };
 
   switch (parameter.kind) {
     case 'STRING':
       return {
         kind: 'STRING',
-        metadata,
-        defaultValue: parameter.default,
-        allowedValues: parameter.allowed_values,
-        pattern: parameter.pattern
+        ...common,
+        multipleValues: parameter.multiple_values,
+        defaultValue: parameter.default ?? null,
+        allowedValues: parameter.enum ?? [],
+        pattern: parameter.pattern ?? '',
       };
     case 'BOOLEAN':
-      return { kind: 'BOOLEAN', metadata, defaultValue: parameter.default };
+      return { kind: 'BOOLEAN', ...common, defaultValue: parameter.default ?? null };
     case 'INTEGER':
       return {
         kind: 'INTEGER',
-        metadata,
+        ...common,
+        multipleValues: parameter.multiple_values,
         minimum: parameter.minimum == null ? '' : String(parameter.minimum),
         maximum: parameter.maximum == null ? '' : String(parameter.maximum),
         defaultValue: parameter.default == null ? '' : String(parameter.default),
-        allowedValues: parameter.allowed_values.map((value) => String(value))
+        allowedValues: (parameter.enum ?? []).map(String),
       };
     case 'FLOAT':
       return {
         kind: 'FLOAT',
-        metadata,
+        ...common,
+        multipleValues: parameter.multiple_values,
         minimum: parameter.minimum == null ? '' : String(parameter.minimum),
         maximum: parameter.maximum == null ? '' : String(parameter.maximum),
         defaultValue: parameter.default == null ? '' : String(parameter.default),
-        allowedValues: parameter.allowed_values.map((value) => String(value))
+        allowedValues: (parameter.enum ?? []).map(String),
       };
     case 'DATETIME':
       return {
         kind: 'DATETIME',
-        metadata,
+        ...common,
         minimum: parameter.minimum ?? '',
         maximum: parameter.maximum ?? '',
         defaultValue: parameter.default ?? '',
-        pattern: parameter.pattern
+        layout: parameter.layout ?? '',
+      };
+    case 'TEMPLATE':
+      return {
+        kind: 'TEMPLATE',
+        ...common,
+        template: parameter.template,
+        parameters: parameter.parameters.map(buildWebServiceScalarParameterForm),
+      };
+  }
+}
+
+function buildWebServiceScalarParameterForm(
+  parameter: ScalarParameter,
+): DatasetWebServiceScalarParameterForm {
+  const common = {
+    position: parameter.position,
+    name: parameter.name,
+    label: parameter.label,
+    description: parameter.description ?? '',
+    required: parameter.required,
+    readOnly: parameter.read_only,
+  };
+
+  switch (parameter.kind) {
+    case 'STRING':
+      return {
+        kind: 'STRING',
+        ...common,
+        defaultValue: parameter.default ?? null,
+        allowedValues: parameter.enum ?? [],
+        pattern: parameter.pattern ?? '',
+      };
+    case 'BOOLEAN':
+      return { kind: 'BOOLEAN', ...common, defaultValue: parameter.default ?? null };
+    case 'INTEGER':
+    case 'FLOAT':
+      return {
+        kind: parameter.kind,
+        ...common,
+        minimum: parameter.minimum == null ? '' : String(parameter.minimum),
+        maximum: parameter.maximum == null ? '' : String(parameter.maximum),
+        defaultValue: parameter.default == null ? '' : String(parameter.default),
+        allowedValues: (parameter.enum ?? []).map(String),
+      };
+    case 'DATETIME':
+      return {
+        kind: 'DATETIME',
+        ...common,
+        minimum: parameter.minimum ?? '',
+        maximum: parameter.maximum ?? '',
+        defaultValue: parameter.default ?? '',
+        layout: parameter.layout ?? '',
       };
   }
 }
@@ -290,138 +393,218 @@ function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServicePa
 function buildEmptyWebServiceParameterForm(): DatasetWebServiceParameterForm {
   return {
     kind: 'STRING',
-    metadata: {
-      id: '',
-      variable: '',
-      property: '',
-      label: '',
-      required: false,
-      multiple_values: false,
-      read_only: false
-    },
+    id: '',
+    position: 0,
+    name: '',
+    label: '',
+    description: '',
+    required: false,
+    property: '',
+    location: 'QUERY',
+    explode: false,
+    readOnly: false,
+    multipleValues: false,
     defaultValue: null,
     allowedValues: [],
-    pattern: ''
+    pattern: '',
   };
 }
 
 function buildDistributionDraft(distribution: DatasetDistributionForm): DistributionDraft {
   const base = {
     title: distribution.title,
-    description: distribution.description,
+    description: undefinedIfBlank(distribution.description),
     license: undefinedIfBlank(distribution.license),
     issued: toIsoDateTimeOrNull(distribution.issued),
-    modified: toIsoDateTimeOrNull(distribution.modified)
+    modified: toIsoDateTimeOrNull(distribution.modified),
   };
 
   if (distribution.kind === 'web-service') {
     return {
       ...base,
       type: 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE',
-      web_service: buildWebServiceDraft(distribution.webService)
+      web_service: buildWebServiceDraft(distribution.webService),
     } satisfies WebServiceDistributionDraft;
   }
 
   return {
     ...base,
     type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
-    downloadable_file: distribution.downloadableFile
+    downloadable_file: distribution.downloadableFile,
   } satisfies DownloadableFileDistributionDraft;
 }
 
 function buildWebServiceDraft(
-  webService: DatasetWebServiceForm
+  webService: DatasetWebServiceForm,
 ): WebServiceDistributionDraft['web_service'] {
   return {
     name: webService.name,
-    description: webService.description,
+    description: undefinedIfBlank(webService.description),
     template_url: webService.templateUrl,
+    method: webService.method,
+    type: webService.type,
+    visible_on: webService.visibleOn.length ? webService.visibleOn : undefined,
+    body_content_type: undefinedIfBlank(webService.bodyContentType),
+    body_template: undefinedIfBlank(webService.bodyTemplate),
+    body_parameters: webService.bodyParameters.map(buildWebServiceScalarParameterDraft),
     format: webService.format,
     provider: hasIdentifierValue(webService.provider.id) ? webService.provider.id : undefined,
-    documentation: webService.documentation,
+    documentation: {
+      title: undefinedIfBlank(webService.documentation.title),
+      description: undefinedIfBlank(webService.documentation.description),
+      uri: webService.documentation.uri,
+    },
     spatial_coverage: buildSpatialCoverageDraft(webService.spatialCoverage),
     temporal_coverage: buildTemporalCoverageDraft(webService.temporalCoverage),
     contact_points: webService.contactPoints.filter(hasIdentifierValue),
     parameters: webService.parameters
       .filter((parameter) => !isEmptyWebServiceParameter(parameter))
-      .map(buildWebServiceParameterDraft)
+      .map(buildWebServiceParameterDraft),
   };
 }
 
-function buildWebServiceParameterDraft(parameter: DatasetWebServiceParameterForm): ParameterDraft {
-  const metadata: ParameterDraftMetadata = {
-    kind: parameter.kind,
-    variable: parameter.metadata.variable,
-    property: parameter.metadata.property,
-    label: parameter.metadata.label,
-    required: parameter.metadata.required,
-    multiple_values: parameter.metadata.multiple_values,
-    read_only: parameter.metadata.read_only
+function buildWebServiceParameterDraft(
+  parameter: DatasetWebServiceParameterForm,
+  position: number,
+): ParameterDraft {
+  const common = {
+    position,
+    name: parameter.name,
+    label: parameter.label,
+    description: undefinedIfBlank(parameter.description),
+    required: parameter.required,
+    property: undefinedIfBlank(parameter.property),
+    location: parameter.location,
+    explode: parameter.explode,
+    read_only: parameter.readOnly,
   };
 
   switch (parameter.kind) {
     case 'STRING':
       return {
         kind: 'STRING',
-        metadata,
+        ...common,
+        multiple_values: parameter.multipleValues,
         default: blankToNull(parameter.defaultValue),
-        allowed_values: parameter.allowedValues.filter(hasIdentifierValue),
-        pattern: parameter.pattern
+        enum: stringEnum(parameter.allowedValues),
+        pattern: undefinedIfBlank(parameter.pattern),
       };
     case 'BOOLEAN':
-      return { kind: 'BOOLEAN', metadata, default: parameter.defaultValue };
+      return { kind: 'BOOLEAN', ...common, default: parameter.defaultValue };
     case 'INTEGER':
       return {
         kind: 'INTEGER',
-        metadata,
+        ...common,
+        multiple_values: parameter.multipleValues,
         minimum: toNumberOrNull(parameter.minimum),
         maximum: toNumberOrNull(parameter.maximum),
         default: toNumberOrNull(parameter.defaultValue),
-        allowed_values: parameter.allowedValues
-          .map((value) => Number(value))
-          .filter((value) => Number.isInteger(value))
+        enum: numericEnum(parameter.allowedValues, Number.isInteger),
       };
     case 'FLOAT':
       return {
         kind: 'FLOAT',
-        metadata,
+        ...common,
+        multiple_values: parameter.multipleValues,
         minimum: toNumberOrNull(parameter.minimum),
         maximum: toNumberOrNull(parameter.maximum),
         default: toNumberOrNull(parameter.defaultValue),
-        allowed_values: parameter.allowedValues
-          .map((value) => Number(value))
-          .filter((value) => Number.isFinite(value))
+        enum: numericEnum(parameter.allowedValues),
       };
     case 'DATETIME':
       return {
         kind: 'DATETIME',
-        metadata,
+        ...common,
         minimum: toIsoDateTimeOrNull(parameter.minimum),
         maximum: toIsoDateTimeOrNull(parameter.maximum),
         default: toIsoDateTimeOrNull(parameter.defaultValue),
-        pattern: parameter.pattern
+        layout: undefinedIfBlank(parameter.layout),
+      };
+    case 'TEMPLATE':
+      return {
+        kind: 'TEMPLATE',
+        ...common,
+        template: parameter.template,
+        parameters: parameter.parameters.map(buildWebServiceScalarParameterDraft),
       };
   }
 }
 
-function buildSpatialCoverageDraft(spatial: DatasetSpatialForm): DatasetDraftMetadata['spatial_coverage'] {
+function buildWebServiceScalarParameterDraft(
+  parameter: DatasetWebServiceScalarParameterForm,
+  position: number,
+): ScalarParameterDraft {
+  const common = {
+    position,
+    name: parameter.name,
+    label: parameter.label,
+    description: undefinedIfBlank(parameter.description),
+    required: parameter.required,
+    read_only: parameter.readOnly,
+  };
+
+  switch (parameter.kind) {
+    case 'STRING':
+      return {
+        kind: 'STRING',
+        ...common,
+        default: blankToNull(parameter.defaultValue),
+        enum: stringEnum(parameter.allowedValues),
+        pattern: undefinedIfBlank(parameter.pattern),
+      };
+    case 'BOOLEAN':
+      return { kind: 'BOOLEAN', ...common, default: parameter.defaultValue };
+    case 'INTEGER':
+      return {
+        kind: 'INTEGER',
+        ...common,
+        minimum: toNumberOrNull(parameter.minimum),
+        maximum: toNumberOrNull(parameter.maximum),
+        default: toNumberOrNull(parameter.defaultValue),
+        enum: numericEnum(parameter.allowedValues, Number.isInteger),
+      };
+    case 'FLOAT':
+      return {
+        kind: 'FLOAT',
+        ...common,
+        minimum: toNumberOrNull(parameter.minimum),
+        maximum: toNumberOrNull(parameter.maximum),
+        default: toNumberOrNull(parameter.defaultValue),
+        enum: numericEnum(parameter.allowedValues),
+      };
+    case 'DATETIME':
+      return {
+        kind: 'DATETIME',
+        ...common,
+        minimum: toIsoDateTimeOrNull(parameter.minimum),
+        maximum: toIsoDateTimeOrNull(parameter.maximum),
+        default: toIsoDateTimeOrNull(parameter.defaultValue),
+        layout: undefinedIfBlank(parameter.layout),
+      };
+  }
+}
+
+function buildSpatialCoverageDraft(
+  spatial: DatasetSpatialForm,
+): DatasetDraftMetadata['spatial_coverage'] {
   return blankToNull(spatial);
 }
 
 function buildTemporalCoverageDraft(
-  temporal: DatasetTemporalForm
+  temporal: DatasetTemporalForm,
 ): DatasetDraftMetadata['temporal_coverage'] {
   return {
     start: toIsoDateTimeOrNull(temporal.start),
-    end: toIsoDateTimeOrNull(temporal.end)
+    end: toIsoDateTimeOrNull(temporal.end),
   };
 }
 
 function isEmptyWebServiceParameter(parameter: DatasetWebServiceParameterForm): boolean {
   const isMetadataEmpty = [
-    parameter.metadata.variable,
-    parameter.metadata.property,
-    parameter.metadata.label
+    parameter.name,
+    parameter.label,
+    parameter.description,
+    parameter.property,
   ].every((value) => !hasIdentifierValue(value));
 
   switch (parameter.kind) {
@@ -449,9 +632,55 @@ function isEmptyWebServiceParameter(parameter: DatasetWebServiceParameterForm): 
         !hasIdentifierValue(parameter.minimum) &&
         !hasIdentifierValue(parameter.maximum) &&
         !hasIdentifierValue(parameter.defaultValue) &&
-        !hasIdentifierValue(parameter.pattern)
+        !hasIdentifierValue(parameter.layout)
+      );
+    case 'TEMPLATE':
+      return (
+        isMetadataEmpty && !hasIdentifierValue(parameter.template) && !parameter.parameters.length
       );
   }
+}
+
+function hasScalarDefaultOutsideAllowedValues(
+  parameter: DatasetWebServiceParameterForm | DatasetWebServiceScalarParameterForm,
+): boolean {
+  if (parameter.kind === 'TEMPLATE') {
+    return parameter.parameters.some(hasScalarDefaultOutsideAllowedValues);
+  }
+
+  if (!('allowedValues' in parameter) || parameter.defaultValue === null) {
+    return false;
+  }
+
+  const allowedValues = parameter.allowedValues.filter(hasIdentifierValue);
+  if (!allowedValues.length) return false;
+
+  if (parameter.kind === 'STRING') {
+    return (
+      !!parameter.defaultValue.trim() && !allowedValues.includes(parameter.defaultValue)
+    );
+  }
+
+  const defaultValue = toNumberOrNull(parameter.defaultValue);
+  return (
+    defaultValue !== null &&
+    !allowedValues.some((value) => toNumberOrNull(value) === defaultValue)
+  );
+}
+
+function stringEnum(values: string[]): string[] | undefined {
+  const result = values.filter(hasIdentifierValue);
+  return result.length ? result : undefined;
+}
+
+function numericEnum(
+  values: string[],
+  predicate: (value: number) => boolean = Number.isFinite,
+): number[] | undefined {
+  const result = values
+    .map(toNumberOrNull)
+    .filter((value): value is number => value !== null && predicate(value));
+  return result.length ? result : undefined;
 }
 
 function toDateTimeLocalValue(value: string): string {

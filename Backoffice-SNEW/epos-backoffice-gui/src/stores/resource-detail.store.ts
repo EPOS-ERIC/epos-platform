@@ -11,8 +11,11 @@ import type {
   VersioningStatus
 } from '../../generated/backofficeSchemas';
 import {
+  hasBodyOnUnsupportedMethod,
+  hasIncompleteWebServiceBody,
+  hasInvalidExplodeParameter,
   hasParameterDefaultOutsideAllowedValues,
-  hasRequiredParameterWithoutDefault,
+  hasMultipleParameterWithoutAllowedValues,
   temporalWarningKind,
   temporalWarningMessage,
   toDatasetDetailForm,
@@ -325,13 +328,28 @@ export class ResourceDetailStore {
     const datasetForm = this.datasetForm();
 
     if (datasetVersion && datasetForm) {
-      if (hasRequiredParameterWithoutDefault(datasetForm)) {
-        this.resourceActions.setError('Every required web service parameter must have a default value.');
+      if (hasInvalidExplodeParameter(datasetForm)) {
+        this.resourceActions.setError('Explode requires a QUERY parameter with Multiple values enabled.');
+        return null;
+      }
+
+      if (hasMultipleParameterWithoutAllowedValues(datasetForm)) {
+        this.resourceActions.setError('Every multiple-value web service parameter must define at least one allowed value.');
         return null;
       }
 
       if (hasParameterDefaultOutsideAllowedValues(datasetForm)) {
         this.resourceActions.setError('A web service parameter default value must be included in its allowed values.');
+        return null;
+      }
+
+      if (hasIncompleteWebServiceBody(datasetForm)) {
+        this.resourceActions.setError('Request body content type and template are both required.');
+        return null;
+      }
+
+      if (hasBodyOnUnsupportedMethod(datasetForm)) {
+        this.resourceActions.setError('Request bodies are supported only for POST and PUT web services.');
         return null;
       }
 

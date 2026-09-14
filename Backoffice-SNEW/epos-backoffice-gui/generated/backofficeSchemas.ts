@@ -159,9 +159,21 @@ export type DownloadableFileDistributionDraft = {
 
 export type WebServiceDraft = {
   name: NonBlankString;
-  description?: string;
+  /**
+   * @minLength 1
+   */
+  description?: string | null;
   template_url: NonBlankString;
+  method: WebServiceMethod;
+  type: WebServiceType;
+  /**
+   * @minItems 1
+   */
+  visible_on?: WebServiceVisibleOn[] | null;
   parameters?: ParameterDraft[];
+  body_content_type?: NonBlankString;
+  body_template?: NonBlankString;
+  body_parameters?: ScalarParameterDraft[];
   format: NonBlankString;
   /**
    * @format uuid
@@ -184,176 +196,573 @@ export type Parameter =
   | BooleanParameter
   | IntegerParameter
   | FloatParameter
-  | DateTimeParameter;
+  | DateTimeParameter
+  | TemplateParameter;
 
 export type ParameterDraft =
   | StringParameterDraft
   | BooleanParameterDraft
   | IntegerParameterDraft
   | FloatParameterDraft
-  | DateTimeParameterDraft;
+  | DateTimeParameterDraft
+  | TemplateParameterDraft;
 
-export type ParameterDraftMetadata = {
-  kind: ParameterKind;
-  variable: string;
-  property: string;
-  label: string;
-  required: boolean;
-  multiple_values: boolean;
-  read_only: boolean;
-};
+export type ScalarParameter =
+  | StringScalarParameter
+  | BooleanScalarParameter
+  | IntegerScalarParameter
+  | FloatScalarParameter
+  | DateTimeScalarParameter;
+
+export type ScalarParameterDraft =
+  | StringScalarParameterDraft
+  | BooleanScalarParameterDraft
+  | IntegerScalarParameterDraft
+  | FloatScalarParameterDraft
+  | DateTimeScalarParameterDraft;
 
 export type StringParameterDraft = {
   kind: "STRING";
-  metadata: ParameterDraftMetadata;
-  ["default"]: string | null;
-  allowed_values: string[];
-  pattern: string;
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  multiple_values: boolean;
+  read_only: boolean;
+  ["default"]?: string | null;
+  ["enum"]?: string[];
+  pattern?: string | null;
 };
 
 export type BooleanParameterDraft = {
   kind: "BOOLEAN";
-  metadata: ParameterDraftMetadata;
-  ["default"]: boolean | null;
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  read_only: boolean;
+  ["default"]?: boolean | null;
 };
 
 export type IntegerParameterDraft = {
   kind: "INTEGER";
-  metadata: ParameterDraftMetadata;
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  multiple_values: boolean;
+  read_only: boolean;
   /**
    * @format int64
    */
-  minimum: number | null;
+  minimum?: number | null;
   /**
    * @format int64
    */
-  maximum: number | null;
+  maximum?: number | null;
   /**
    * @format int64
    */
-  ["default"]: number | null;
-  allowed_values: number[];
+  ["default"]?: number | null;
+  ["enum"]?: number[];
 };
 
 export type FloatParameterDraft = {
   kind: "FLOAT";
-  metadata: ParameterDraftMetadata;
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  multiple_values: boolean;
+  read_only: boolean;
   /**
    * @format double
    */
-  minimum: number | null;
+  minimum?: number | null;
   /**
    * @format double
    */
-  maximum: number | null;
+  maximum?: number | null;
   /**
    * @format double
    */
-  ["default"]: number | null;
-  allowed_values: number[];
+  ["default"]?: number | null;
+  ["enum"]?: number[];
 };
 
 export type DateTimeParameterDraft = {
   kind: "DATETIME";
-  metadata: ParameterDraftMetadata;
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  read_only: boolean;
   /**
    * @format date-time
    */
-  minimum: string | null;
+  minimum?: string | null;
   /**
    * @format date-time
    */
-  maximum: string | null;
+  maximum?: string | null;
   /**
    * @format date-time
    */
-  ["default"]: string | null;
-  pattern: string;
+  ["default"]?: string | null;
+  layout?: string | null;
 };
 
-export type ParameterMetadata = {
+export type StringParameter = {
   /**
    * @format uuid
    */
   id: string;
-  variable: string;
-  property: string;
-  label: string;
+  kind: "STRING";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
   required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
-};
-
-export type StringParameter = {
-  kind: "STRING";
-  metadata: ParameterMetadata;
-  ["default"]: string | null;
-  allowed_values: string[];
-  pattern: string;
+  ["default"]?: string | null;
+  ["enum"]?: string[];
+  pattern?: string | null;
 };
 
 export type BooleanParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
   kind: "BOOLEAN";
-  metadata: ParameterMetadata;
-  ["default"]: boolean | null;
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  read_only: boolean;
+  ["default"]?: boolean | null;
 };
 
 export type IntegerParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
   kind: "INTEGER";
-  metadata: ParameterMetadata;
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  multiple_values: boolean;
+  read_only: boolean;
   /**
    * @format int64
    */
-  minimum: number | null;
+  minimum?: number | null;
   /**
    * @format int64
    */
-  maximum: number | null;
+  maximum?: number | null;
   /**
    * @format int64
    */
-  ["default"]: number | null;
-  allowed_values: number[];
+  ["default"]?: number | null;
+  ["enum"]?: number[];
 };
 
 export type FloatParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
   kind: "FLOAT";
-  metadata: ParameterMetadata;
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  multiple_values: boolean;
+  read_only: boolean;
   /**
    * @format double
    */
-  minimum: number | null;
+  minimum?: number | null;
   /**
    * @format double
    */
-  maximum: number | null;
+  maximum?: number | null;
   /**
    * @format double
    */
-  ["default"]: number | null;
-  allowed_values: number[];
+  ["default"]?: number | null;
+  ["enum"]?: number[];
 };
 
 export type DateTimeParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
   kind: "DATETIME";
-  metadata: ParameterMetadata;
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  read_only: boolean;
   /**
    * @format date-time
    */
-  minimum: string | null;
+  minimum?: string | null;
   /**
    * @format date-time
    */
-  maximum: string | null;
+  maximum?: string | null;
   /**
    * @format date-time
    */
-  ["default"]: string | null;
-  pattern: string;
+  ["default"]?: string | null;
+  layout?: string | null;
 };
 
-export type ParameterKind =
-  "STRING" | "BOOLEAN" | "INTEGER" | "FLOAT" | "DATETIME";
+export type TemplateParameterDraft = {
+  kind: "TEMPLATE";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  read_only: boolean;
+  /**
+   * @minLength 1
+   */
+  template: string;
+  parameters: ScalarParameterDraft[];
+};
+
+export type TemplateParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  kind: "TEMPLATE";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  property?: string | null;
+  location: ParameterLocation;
+  explode: boolean;
+  read_only: boolean;
+  /**
+   * @minLength 1
+   */
+  template: string;
+  parameters: ScalarParameter[];
+};
+
+export type StringScalarParameterDraft = {
+  kind: "STRING";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  ["default"]?: string | null;
+  ["enum"]?: string[];
+  pattern?: string | null;
+};
+
+export type BooleanScalarParameterDraft = {
+  kind: "BOOLEAN";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  ["default"]?: boolean | null;
+};
+
+export type IntegerScalarParameterDraft = {
+  kind: "INTEGER";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  /**
+   * @format int64
+   */
+  minimum?: number | null;
+  /**
+   * @format int64
+   */
+  maximum?: number | null;
+  /**
+   * @format int64
+   */
+  ["default"]?: number | null;
+  ["enum"]?: number[];
+};
+
+export type FloatScalarParameterDraft = {
+  kind: "FLOAT";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  /**
+   * @format double
+   */
+  minimum?: number | null;
+  /**
+   * @format double
+   */
+  maximum?: number | null;
+  /**
+   * @format double
+   */
+  ["default"]?: number | null;
+  ["enum"]?: number[];
+};
+
+export type DateTimeScalarParameterDraft = {
+  kind: "DATETIME";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  /**
+   * @format date-time
+   */
+  minimum?: string | null;
+  /**
+   * @format date-time
+   */
+  maximum?: string | null;
+  /**
+   * @format date-time
+   */
+  ["default"]?: string | null;
+  layout?: string | null;
+};
+
+export type StringScalarParameter = {
+  kind: "STRING";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  ["default"]?: string | null;
+  ["enum"]?: string[];
+  pattern?: string | null;
+};
+
+export type BooleanScalarParameter = {
+  kind: "BOOLEAN";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  ["default"]?: boolean | null;
+};
+
+export type IntegerScalarParameter = {
+  kind: "INTEGER";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  /**
+   * @format int64
+   */
+  minimum?: number | null;
+  /**
+   * @format int64
+   */
+  maximum?: number | null;
+  /**
+   * @format int64
+   */
+  ["default"]?: number | null;
+  ["enum"]?: number[];
+};
+
+export type FloatScalarParameter = {
+  kind: "FLOAT";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  /**
+   * @format double
+   */
+  minimum?: number | null;
+  /**
+   * @format double
+   */
+  maximum?: number | null;
+  /**
+   * @format double
+   */
+  ["default"]?: number | null;
+  ["enum"]?: number[];
+};
+
+export type DateTimeScalarParameter = {
+  kind: "DATETIME";
+  /**
+   * @format int32
+   */
+  position: number;
+  name: NonBlankString;
+  label: NonBlankString;
+  description?: string | null;
+  required: boolean;
+  read_only: boolean;
+  /**
+   * @format date-time
+   */
+  minimum?: string | null;
+  /**
+   * @format date-time
+   */
+  maximum?: string | null;
+  /**
+   * @format date-time
+   */
+  ["default"]?: string | null;
+  layout?: string | null;
+};
+
+export type ParameterLocation = "PATH" | "QUERY" | "HEADER";
+
+export type WebServiceMethod = "GET" | "POST" | "PUT" | "DELETE";
+
+export type WebServiceType =
+  "WMS" | "GEOJSON" | "DYNAMIC" | "WMTS" | "WFS" | "COVJSON";
+
+export type WebServiceVisibleOn = "GRAPH" | "TABLE" | "MAP";
 
 export type DownloadableFile = {
   url: NonBlankString;
@@ -464,10 +873,81 @@ export type ResourceVersion = {
    * @format date-time
    */
   updated_at: string;
+  rejection_note?: NonBlankString;
   metadata:
     | DatasetResourceMetadata
     | SoftwareApplicationResourceMetadata
     | SoftwareSourceCodeResourceMetadata;
+};
+
+export type ResourceVersionSummary = {
+  resource_type: DiscoveryResourceType;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
+  /**
+   * @format uuid
+   */
+  version_id: string;
+  /**
+   * @format int32
+   * @minimum 1
+   */
+  revision: number;
+  status: VersioningStatus;
+  /**
+   * @minLength 1
+   */
+  name: string;
+  /**
+   * @minLength 1
+   */
+  created_by: string;
+  /**
+   * @format date-time
+   */
+  created_at: string;
+  /**
+   * @format date-time
+   */
+  updated_at: string;
+  /**
+   * @minLength 1
+   */
+  submitted_by: string | null;
+  /**
+   * @format date-time
+   */
+  submitted_at: string | null;
+  /**
+   * @minLength 1
+   */
+  published_by: string | null;
+  /**
+   * @format date-time
+   */
+  published_at: string | null;
+  /**
+   * @minLength 1
+   */
+  archived_by: string | null;
+  /**
+   * @format date-time
+   */
+  archived_at: string | null;
+  /**
+   * @minLength 1
+   */
+  rejected_by: string | null;
+  /**
+   * @format date-time
+   */
+  rejected_at: string | null;
+  /**
+   * @minLength 1
+   */
+  rejection_note: string | null;
 };
 
 export type DatasetResourceMetadata = {
@@ -607,10 +1087,22 @@ export type WebService = {
    */
   id: string;
   name: string;
-  description: string;
+  /**
+   * @minLength 1
+   */
+  description?: string | null;
   template_url: string;
+  method: WebServiceMethod;
+  type: WebServiceType;
+  /**
+   * @minItems 1
+   */
+  visible_on?: WebServiceVisibleOn[] | null;
   parameters?: Parameter[];
   format: string;
+  body_content_type?: string | null;
+  body_template?: string | null;
+  body_parameters?: ScalarParameter[];
   provider?: ResourceVersionReference;
   documentation?: Documentation;
   /**

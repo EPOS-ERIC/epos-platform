@@ -6,17 +6,19 @@ import { TemporalCoverageComponent } from '../temporal-coverage/temporal-coverag
 import { WebServiceDocumentationComponent } from './web-service-documentation.component';
 import { ProvidersComponent } from '../providers/providers.component';
 import { WebServiceParametersComponent } from './web-service-parameters.component';
+import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
 import type {
   DatasetTemporalForm,
   DatasetWebServiceDocumentationForm,
   DatasetWebServiceForm,
   DatasetWebServiceParameterForm,
+  DatasetWebServiceScalarParameterForm,
   DatasetProviderForm
 } from '../../../../models/dataset-detail-form';
 
 @Component({
   selector: 'app-web-service',
-  imports: [FormsModule, ContactPointsComponent, SpatialCoverageComponent, TemporalCoverageComponent, WebServiceDocumentationComponent, WebServiceParametersComponent, ProvidersComponent],
+  imports: [FormsModule, ContactPointsComponent, ProvidersComponent, ScalarParametersEditorComponent, SpatialCoverageComponent, TemporalCoverageComponent, WebServiceDocumentationComponent, WebServiceParametersComponent],
   templateUrl: './web-service.component.html',
   styleUrl: './web-service.component.css'
 })
@@ -24,6 +26,10 @@ export class WebServiceComponent {
   @Input() model: DatasetWebServiceForm | null = null;
   @Input() disabled = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceForm>();
+
+  protected readonly methods: readonly DatasetWebServiceForm['method'][] = ['GET', 'POST', 'PUT', 'DELETE'];
+  protected readonly types: readonly DatasetWebServiceForm['type'][] = ['WMS', 'GEOJSON', 'DYNAMIC', 'WMTS', 'WFS', 'COVJSON'];
+  protected readonly visibleOnOptions: readonly DatasetWebServiceForm['visibleOn'][number][] = ['GRAPH', 'TABLE', 'MAP'];
 
   protected emitModelChange(): void {
     this.modelChange.emit(this.model as DatasetWebServiceForm);
@@ -80,6 +86,24 @@ export class WebServiceComponent {
     }
 
     this.model.parameters = parameters;
+    this.emitModelChange();
+  }
+
+  protected onBodyParametersChange(parameters: DatasetWebServiceScalarParameterForm[]): void {
+    if (this.model) {
+      this.model.bodyParameters = parameters;
+      this.emitModelChange();
+    }
+  }
+
+  protected toggleVisibleOn(value: DatasetWebServiceForm['visibleOn'][number], checked: boolean): void {
+    if (!this.model) {
+      return;
+    }
+
+    this.model.visibleOn = checked
+      ? Array.from(new Set([...this.model.visibleOn, value]))
+      : this.model.visibleOn.filter((currentValue) => currentValue !== value);
     this.emitModelChange();
   }
 }
