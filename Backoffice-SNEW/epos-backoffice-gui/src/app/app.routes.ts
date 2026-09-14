@@ -59,6 +59,12 @@ export const routes: Routes = [
     data: { sectionTitle: 'Facilities', discoveryType: ['software-source-code'] }
   },
   {
+    path: 'memberships',
+    component: MainContainerComponent,
+    canActivate: [authGuard],
+    data: { sectionTitle: 'My Account', accountPage: 'memberships' }
+  },
+  {
     path: 'admin/groups',
     component: MainContainerComponent,
     canActivate: [authGuard],

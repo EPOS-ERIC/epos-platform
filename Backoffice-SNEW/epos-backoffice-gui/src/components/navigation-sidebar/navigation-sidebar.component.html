@@ -139,6 +139,15 @@
     </div>
   }
 
+  @if (!detailItems.length) {
+    <div class="membership-request-footer">
+      <a class="app-button membership-request-button" routerLink="/memberships" [class.active]="currentSectionPath === 'memberships'" aria-label="Open my memberships">
+        <app-icon name="users" [size]="16" />
+        <span [class.hidden]="collapsed()">My memberships</span>
+      </a>
+    </div>
+  }
+
   @if (detailItems.length && detailActions.length) {
     <div class="sidebar-footer">
       <span class="sidebar-footer-title">Actions</span>

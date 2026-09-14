@@ -1,0 +1,61 @@
+<section class="memberships-page">
+  <header class="memberships-page-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">My Account</p>
+      <h2>My Memberships</h2>
+      <p class="subtitle app-muted">Review your group access, assigned roles and pending requests.</p>
+    </div>
+    <button
+      type="button"
+      class="app-button app-button--primary"
+      (click)="requestDialog.open()"
+      [disabled]="requestDialog.groupsLoading() || !requestDialog.groups().length"
+    >Request membership</button>
+  </header>
+
+  @if (error()) {
+    <div class="memberships-message memberships-message--error">{{ error() }}</div>
+  } @else if (loading()) {
+    <div class="memberships-message">Loading memberships...</div>
+  } @else if (user(); as currentUser) {
+    @if (currentUser.memberships.length) {
+      <div class="membership-grid">
+        @for (membership of currentUser.memberships; track membership.group.id) {
+          <article class="membership-summary app-card">
+            <div class="membership-summary-header">
+              <div>
+                <span class="membership-group-label">Group</span>
+                <h3>{{ membership.group.name }}</h3>
+              </div>
+              <span class="status-pill" [attr.data-status]="membership.status.toLowerCase()">{{ membership.status }}</span>
+            </div>
+
+            <dl>
+              <div>
+                <dt>Assigned roles</dt>
+                <dd>{{ membership.roles.length ? membership.roles.join(', ') : 'None' }}</dd>
+              </div>
+              <div>
+                <dt>Pending role requests</dt>
+                <dd>{{ pendingRoleNames(membership) }}</dd>
+              </div>
+              <div>
+                <dt>Direct permissions</dt>
+                <dd>{{ membership.permissions.length ? membership.permissions.join(', ') : 'None' }}</dd>
+              </div>
+              <div>
+                <dt>Last updated</dt>
+                <dd>{{ membership.updated_at | date:'medium' }}</dd>
+              </div>
+            </dl>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="memberships-empty app-card">
+        <h3>No memberships yet</h3>
+        <p class="app-muted">Request access to a group to start contributing to Backoffice resources.</p>
+      </div>
+    }
+  }
+</section>

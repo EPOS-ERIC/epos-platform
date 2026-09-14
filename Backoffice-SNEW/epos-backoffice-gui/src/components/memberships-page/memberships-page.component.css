@@ -1,0 +1,141 @@
+:host {
+  display: block;
+}
+
+.memberships-page {
+  display: grid;
+  gap: 20px;
+}
+
+.memberships-page-header,
+.membership-summary-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.memberships-page-header h2,
+.memberships-page-header .subtitle,
+.memberships-page-header .eyebrow,
+.membership-summary h3 {
+  margin-top: 0;
+}
+
+.memberships-page-header h2 {
+  margin-bottom: 6px;
+  color: var(--text-strong);
+  font-size: 1.35rem;
+}
+
+.memberships-page-header .eyebrow {
+  margin-bottom: 8px;
+}
+
+.memberships-page-header .subtitle {
+  margin-bottom: 0;
+}
+
+.membership-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.membership-summary {
+  padding: 20px;
+}
+
+.membership-summary h3 {
+  margin-bottom: 0;
+  color: var(--text-strong);
+  font-size: 1.05rem;
+}
+
+.membership-group-label,
+.membership-summary dt {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.status-pill {
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.status-pill[data-status='active'] {
+  background: var(--olive-100);
+  color: var(--olive-700);
+}
+
+.status-pill[data-status='pending'] {
+  background: var(--amber-100);
+  color: var(--amber-600);
+}
+
+.status-pill[data-status='rejected'] {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.membership-summary dl {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0 0;
+}
+
+.membership-summary dl div {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.membership-summary dd {
+  margin: 5px 0 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.memberships-message,
+.memberships-empty {
+  padding: 24px;
+  color: var(--text-muted);
+}
+
+.memberships-message--error {
+  color: #b91c1c;
+}
+
+.memberships-empty {
+  text-align: center;
+}
+
+.memberships-empty h3 {
+  margin: 0 0 8px;
+  color: var(--text-strong);
+}
+
+.memberships-empty p {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .memberships-page-header {
+    flex-direction: column;
+  }
+
+  .memberships-page-header .app-button,
+  .membership-grid {
+    width: 100%;
+  }
+
+  .membership-grid {
+    grid-template-columns: 1fr;
+  }
+}

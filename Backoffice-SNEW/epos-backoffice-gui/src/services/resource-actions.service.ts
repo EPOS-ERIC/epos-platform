@@ -10,7 +10,7 @@ import type {
 import type { ResourceActionItem, ResourceActionKey, ResourceVersionContext, SaveResourceContext } from '../models/resource-actions';
 import { resourceCapabilities } from '../models/resource-capabilities';
 import { ApiService } from './api.service';
-import { GroupsStore } from './groups.store';
+import { GroupsStore } from '../stores/groups.store';
 import { ToastService } from './toast.service';
 
 @Injectable({ providedIn: 'root' })

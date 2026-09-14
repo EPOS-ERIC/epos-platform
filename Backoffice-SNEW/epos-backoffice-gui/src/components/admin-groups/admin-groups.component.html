@@ -1,3 +1,78 @@
+<section class="requests-card app-card">
+  <div class="requests-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">Administration</p>
+      <h2>Membership Requests</h2>
+      <p class="subtitle app-muted">Review pending group access requests and choose the roles to assign.</p>
+    </div>
+    <span class="request-count">{{ membershipRequests().length }} pending</span>
+  </div>
+
+  @if (membershipRequestsError()) {
+    <div class="users-message users-message--error">{{ membershipRequestsError() }}</div>
+  }
+
+  @if (membershipRequestsLoading()) {
+    <div class="users-message">Loading membership requests...</div>
+  } @else if (membershipRequests().length) {
+    <div class="request-list">
+      @for (request of membershipRequests(); track membershipRequestKey(request)) {
+        <article class="request-item">
+          <div class="request-identity">
+            <div>
+              <strong>{{ request.membership.user.email }}</strong>
+              <span>{{ userName(request.membership.user) }}</span>
+            </div>
+            <div>
+              <small>Requested group</small>
+              <strong>{{ request.group.name }}</strong>
+            </div>
+            <div>
+              <small>Requested roles</small>
+              <span>{{ request.requestedRoles.length ? request.requestedRoles.join(', ') : 'No role requested' }}</span>
+            </div>
+            <time class="app-muted" [attr.datetime]="request.membership.created_at">{{ request.membership.created_at | date:'medium' }}</time>
+          </div>
+
+          <fieldset class="request-role-picker" [disabled]="!!membershipDecision()">
+            <legend>Roles to assign</legend>
+            @for (role of groupRoles; track role) {
+              <label [class.requested-role]="request.requestedRoles.includes(role)">
+                <input
+                  type="checkbox"
+                  [checked]="request.selectedRoles.includes(role)"
+                  (change)="toggleRequestedRole(request, role)"
+                />
+                <span>{{ role }}</span>
+                @if (request.requestedRoles.includes(role)) {
+                  <small>Requested</small>
+                }
+              </label>
+            }
+          </fieldset>
+
+          <div class="request-actions">
+            <button
+              type="button"
+              class="app-button app-button--ghost request-reject"
+              [disabled]="!!membershipDecision()"
+              (click)="decideMembership(request, 'REJECTED')"
+            >Reject</button>
+            <button
+              type="button"
+              class="app-button app-button--primary"
+              [disabled]="!!membershipDecision()"
+              (click)="decideMembership(request, 'ACTIVE')"
+            >{{ membershipDecision() === membershipRequestKey(request) ? 'Saving...' : 'Accept and assign' }}</button>
+          </div>
+        </article>
+      }
+    </div>
+  } @else if (!membershipRequestsError()) {
+    <div class="users-message">No pending membership requests.</div>
+  }
+</section>
+
 <section class="users-card app-card">
   <div class="users-header">
     <div>

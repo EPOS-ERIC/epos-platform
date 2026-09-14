@@ -2,10 +2,16 @@
   display: block;
 }
 
+.requests-card {
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
 .users-card {
   overflow: hidden;
 }
 
+.requests-header,
 .users-header,
 .membership-dialog-header,
 .membership-card-header {
@@ -15,9 +21,116 @@
   gap: 18px;
 }
 
+.requests-header,
 .users-header {
   padding: 20px;
   border-bottom: 1px solid var(--line);
+}
+
+.request-count {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.request-list {
+  display: grid;
+}
+
+.request-item {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.25fr) minmax(330px, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.request-item:last-child {
+  border-bottom: 0;
+}
+
+.request-identity {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 12px 18px;
+  color: var(--text);
+}
+
+.request-identity div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.request-identity strong,
+.request-identity span {
+  overflow-wrap: anywhere;
+}
+
+.request-identity small,
+.request-identity time {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.request-role-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.request-role-picker legend {
+  width: 100%;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.request-role-picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.request-role-picker label.requested-role {
+  border-color: var(--olive-600);
+  background: var(--olive-100);
+}
+
+.request-role-picker input {
+  accent-color: var(--olive-600);
+}
+
+.request-role-picker small {
+  color: var(--olive-700);
+  font-weight: 700;
+}
+
+.request-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.request-reject {
+  color: #b91c1c;
 }
 
 .eyebrow,
@@ -242,6 +355,7 @@ tbody tr:hover {
 }
 
 @media (max-width: 700px) {
+  .requests-header,
   .users-header,
   .membership-dialog-header,
   .membership-card-header {
@@ -265,5 +379,28 @@ tbody tr:hover {
   .membership-dialog {
     max-height: calc(100vh - 24px);
     padding: 16px;
+  }
+
+  .request-item {
+    grid-template-columns: 1fr;
+  }
+
+  .request-identity {
+    grid-template-columns: 1fr;
+  }
+
+  .request-actions,
+  .request-actions .app-button {
+    width: 100%;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 1100px) {
+  .request-item {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .request-actions {
+    grid-column: 1 / -1;
   }
 }

@@ -5,7 +5,7 @@ import { catchError, finalize, of, switchMap } from 'rxjs';
 
 import type { CreateResourceDraftRequest, DiscoveryResourceType } from '../../generated/backofficeSchemas';
 import { ApiService } from './api.service';
-import { GroupsStore } from './groups.store';
+import { GroupsStore } from '../stores/groups.store';
 import { ResourceActionsService } from './resource-actions.service';
 
 @Injectable({ providedIn: 'root' })

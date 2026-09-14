@@ -6,7 +6,7 @@ import { vi } from 'vitest';
 import type { WriteResult } from '../../generated/backofficeSchemas';
 import type { ResourceVersionContext } from '../models/resource-actions';
 import { ApiService } from './api.service';
-import { GroupsStore } from './groups.store';
+import { GroupsStore } from '../stores/groups.store';
 import { ResourceActionsService } from './resource-actions.service';
 import { ToastService } from './toast.service';
 

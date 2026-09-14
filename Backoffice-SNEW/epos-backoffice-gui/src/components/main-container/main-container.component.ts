@@ -1,4 +1,4 @@
-import { Component, DestroyRef, DOCUMENT, ElementRef, Input, ViewChild, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, DOCUMENT, ElementRef, ViewChild, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, catchError, combineLatest, debounceTime, distinctUntilChanged, finalize, map, of } from 'rxjs';
@@ -7,14 +7,16 @@ import type { Subscription } from 'rxjs';
 import type { DiscoveryConcept, DiscoveryItem, DiscoveryResourceType, Group } from '../../../generated/backofficeSchemas';
 import { normalizeResultsFilters, type ResultsFilters } from '../../models/results-filters';
 import { ApiService } from '../../services/api.service';
-import { GroupsStore } from '../../services/groups.store';
 import { LocalStorageService } from '../../services/local-storage.service';
 import { ResourceCreationDialogService } from '../../services/resource-creation-dialog.service';
+import { CurrentUserStore } from '../../stores/current-user.store';
+import { GroupsStore } from '../../stores/groups.store';
 import { ResourceDetailStore } from '../../stores/resource-detail.store';
 import { AdminCategoriesComponent } from '../admin-categories/admin-categories.component';
 import { AdminGroupsComponent } from '../admin-groups/admin-groups.component';
 import { AdminOrganizationsComponent } from '../admin-organizations/admin-organizations.component';
 import { BackofficeHeaderComponent } from '../backoffice-header/backoffice-header.component';
+import { MembershipsPageComponent } from '../memberships-page/memberships-page.component';
 import { NavigationSidebarComponent } from '../navigation-sidebar/navigation-sidebar.component';
 import { ResourceDetailPageComponent } from '../resource-detail-page/resource-detail-page.component';
 import { ResultsTableComponent } from '../results-table/results-table.component';
@@ -23,6 +25,7 @@ type RouteData = {
   sectionTitle?: string;
   discoveryType?: DiscoveryResourceType[];
   adminPage?: 'groups' | 'categories' | 'organizations';
+  accountPage?: 'memberships';
 };
 
 type RouteState = {
@@ -41,6 +44,7 @@ const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
     AdminGroupsComponent,
     AdminOrganizationsComponent,
     BackofficeHeaderComponent,
+    MembershipsPageComponent,
     NavigationSidebarComponent,
     ResourceDetailPageComponent,
     ResultsTableComponent
@@ -50,11 +54,11 @@ const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
   styleUrl: './main-container.component.css'
 })
 export class MainContainerComponent {
-  @Input() isAdmin = true;
   @ViewChild('detailScrollContainer') private detailScrollContainerRef?: ElementRef<HTMLElement>;
 
   private readonly apiService = inject(ApiService);
   private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly currentUserStore = inject(CurrentUserStore);
   private readonly groupsStore = inject(GroupsStore);
   private readonly localStorage = inject(LocalStorageService);
   private readonly resourceCreationDialog = inject(ResourceCreationDialogService);
@@ -67,12 +71,14 @@ export class MainContainerComponent {
   protected readonly sectionTitle = signal('Data');
   protected readonly pageLabel = signal('Results');
   protected readonly adminPage = signal<RouteData['adminPage'] | null>(null);
+  protected readonly accountPage = signal<RouteData['accountPage'] | null>(null);
   protected readonly sectionPath = signal('data');
   protected readonly darkMode = signal(false);
   protected readonly discoveryItems = signal<DiscoveryItem[] | null>(null);
   protected readonly discoveryLoading = signal(false);
   protected readonly groups = this.groupsStore.groups;
   protected readonly groupsLoading = this.groupsStore.loading;
+  protected readonly isAdmin = this.currentUserStore.isAdmin;
   protected readonly selectedGroupId = signal('');
   protected readonly selectedGroupName = signal('');
   protected readonly searchQuery = signal(this.initialResultsFilters.searchQuery);
@@ -111,11 +117,13 @@ export class MainContainerComponent {
 
   private syncRouteState(routeData: RouteData, routeState: RouteState): void {
     const adminPage = routeData.adminPage ?? null;
+    const accountPage = routeData.accountPage ?? null;
     const discoveryType = routeData.discoveryType;
     const detailDataType = this.toDiscoveryResourceType(routeState.dataType) ?? discoveryType?.[0];
     const isDetailRoute = Boolean(routeState.resourceId && routeState.versionId);
     this.adminPage.set(adminPage);
-    this.sectionPath.set(adminPage ? `admin/${adminPage}` : this.currentSectionPath());
+    this.accountPage.set(accountPage);
+    this.sectionPath.set(accountPage ?? (adminPage ? `admin/${adminPage}` : this.currentSectionPath()));
     this.sectionTitle.set(
       isDetailRoute && detailDataType
         ? detailDataType === 'dataset'
@@ -126,12 +134,12 @@ export class MainContainerComponent {
         : (routeData.sectionTitle ?? 'Data')
     );
 
-    if (adminPage) {
+    if (adminPage || accountPage) {
       this.detailStore.clear();
       this.discoveryRequest?.unsubscribe();
       this.selectedGroupId.set('');
       this.selectedGroupName.set('');
-      this.pageLabel.set(adminPage === 'groups' ? 'Users' : adminPage === 'categories' ? 'Categories' : 'Organizations');
+      this.pageLabel.set(accountPage ? 'Memberships' : adminPage === 'groups' ? 'Users' : adminPage === 'categories' ? 'Categories' : 'Organizations');
       this.discoveryItems.set(null);
       this.discoveryLoading.set(false);
       return;
@@ -151,7 +159,7 @@ export class MainContainerComponent {
         versionId: routeState.versionId,
         groupId: selectedGroup?.id ?? '',
         sectionPath: this.sectionPath(),
-        isAdmin: this.isAdmin
+        isAdmin: this.isAdmin()
       });
       return;
     }

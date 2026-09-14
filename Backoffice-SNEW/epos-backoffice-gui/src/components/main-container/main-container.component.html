@@ -1,6 +1,6 @@
 <main class="main-container-layout">
   <app-navigation-sidebar
-    [isAdmin]="isAdmin"
+    [isAdmin]="isAdmin()"
     [groups]="groups()"
     [groupsLoading]="groupsLoading()"
     [currentSectionPath]="sectionPath()"
@@ -37,7 +37,9 @@
     }
 
     <div class="content-spacer">
-      @if (adminPage() === 'groups') {
+      @if (accountPage() === 'memberships') {
+        <app-memberships-page />
+      } @else if (adminPage() === 'groups') {
         <app-admin-groups />
       } @else if (adminPage() === 'categories') {
         <app-admin-categories [groups]="groups()" [groupsLoading]="groupsLoading()" />

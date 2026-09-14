@@ -7,12 +7,15 @@ import type {
   Category,
   ContactPoint,
   CreateCategoryRequest,
+  CreateMembershipRequest,
   CreateOrganizationRequest,
   CreateResourceDraftRequest,
   DatasetResourceMetadata,
   DiscoveryItem,
   DiscoveryResourceType,
   Group,
+  GroupMembership,
+  MembershipDecisionRequest,
   ResourceVersionReference,
   ResourceVersion,
   RejectResourceRequest,
@@ -27,7 +30,8 @@ import type {
   SoftwareSourceCodeResourceMetadata,
   User,
   UserListItem,
-  MembershipRole
+  MembershipRole,
+  RoleRequestDecisionRequest
 } from '../../generated/backofficeSchemas';
 import type {
   DateFrom,
@@ -312,6 +316,38 @@ export class ApiService {
 
   getGroups(): Observable<Group[]> {
     return this.http.get<Group[]>(`${this.baseUrl}/groups`);
+  }
+
+  getGroupMemberships(groupId: string): Observable<GroupMembership[]> {
+    return this.http.get<GroupMembership[]>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  requestGroupMembership(groupId: string, payload: CreateMembershipRequest): Observable<GroupMembership> {
+    return this.http.post<GroupMembership>(
+      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/membership-requests`,
+      payload,
+      { headers: { Authorization: `Bearer ${this.bearerToken}` } }
+    );
+  }
+
+  decideGroupMembership(groupId: string, userId: string, payload: MembershipDecisionRequest): Observable<GroupMembership> {
+    return this.http.patch<GroupMembership>(
+      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/${encodeURIComponent(userId)}`,
+      payload,
+      { headers: { Authorization: `Bearer ${this.bearerToken}` } }
+    );
+  }
+
+  decideGroupRoleRequest(groupId: string, requestId: string, payload: RoleRequestDecisionRequest): Observable<GroupMembership> {
+    return this.http.patch<GroupMembership>(
+      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/role-requests/${encodeURIComponent(requestId)}`,
+      payload,
+      { headers: { Authorization: `Bearer ${this.bearerToken}` } }
+    );
   }
 
   getUsers(): Observable<UserListItem[]> {

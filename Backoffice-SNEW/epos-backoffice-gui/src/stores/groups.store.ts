@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import type { Group } from '../../generated/backofficeSchemas';
-import { ApiService } from './api.service';
+import { ApiService } from '../services/api.service';
 
 @Injectable({ providedIn: 'root' })
 export class GroupsStore {
