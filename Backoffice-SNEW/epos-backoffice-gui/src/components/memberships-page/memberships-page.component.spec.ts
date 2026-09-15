@@ -19,7 +19,7 @@ describe('MembershipsPageComponent', () => {
     created_at: '2026-09-14T08:00:00Z',
     updated_at: '2026-09-14T08:00:00Z',
     memberships: [{
-      group: { id: 'group-id', name: 'Data Group' },
+      group: { id: '1375500a-fc04-5831-a7f5-39ea5fcb0445', name: 'Data Group' },
       status: 'PENDING',
       roles: [],
       permissions: [],
@@ -48,6 +48,7 @@ describe('MembershipsPageComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Data Group');
     expect(fixture.nativeElement.textContent).toContain('PENDING');
     expect(fixture.nativeElement.textContent).toContain('EDITOR');
+    expect((fixture.nativeElement.querySelector('.membership-group-logo') as HTMLImageElement).src).toContain('1375500a-fc04-5831-a7f5-39ea5fcb0445.svg');
 
     (fixture.nativeElement.querySelector('.memberships-page-header button') as HTMLButtonElement).click();
     expect(open).toHaveBeenCalledOnce();

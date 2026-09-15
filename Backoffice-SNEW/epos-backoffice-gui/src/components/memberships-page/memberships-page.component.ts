@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
 import type { UserMembershipSummary } from '../../../generated/backofficeSchemas';
+import { groupIconPath } from '../../group-icons';
 import { CurrentUserStore } from '../../stores/current-user.store';
 import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
 
@@ -17,6 +18,7 @@ export class MembershipsPageComponent {
   protected readonly user = this.currentUserStore.user;
   protected readonly loading = this.currentUserStore.loading;
   protected readonly error = this.currentUserStore.error;
+  protected readonly groupIconPath = groupIconPath;
 
   protected pendingRoleNames(membership: UserMembershipSummary): string {
     const roles = membership.role_requests

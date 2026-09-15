@@ -23,9 +23,14 @@
         @for (membership of currentUser.memberships; track membership.group.id) {
           <article class="membership-summary app-card">
             <div class="membership-summary-header">
-              <div>
-                <span class="membership-group-label">Group</span>
-                <h3>{{ membership.group.name }}</h3>
+              <div class="membership-group-heading">
+                @if (groupIconPath(membership.group.id); as iconPath) {
+                  <img class="membership-group-logo" [src]="iconPath" alt="" aria-hidden="true" />
+                }
+                <div>
+                  <span class="membership-group-label">Group</span>
+                  <h3>{{ membership.group.name }}</h3>
+                </div>
               </div>
               <span class="status-pill" [attr.data-status]="membership.status.toLowerCase()">{{ membership.status }}</span>
             </div>
