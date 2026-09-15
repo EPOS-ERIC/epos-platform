@@ -663,4 +663,5 @@ func encodeErrorResponse(response *ProblemStatusCode, w http.ResponseWriter) err
 		return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
 	}
 	return nil
+
 }

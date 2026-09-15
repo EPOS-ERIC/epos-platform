@@ -256,7 +256,7 @@ func (h *ogenHandler) AssignGroupRole(ctx context.Context, p gatewayapi.AssignGr
 	if err != nil {
 		return err
 	}
-	if err := h.metadataLifecycle.AssignGroupRole(ctx, p.GroupId.String(), p.UserId.String(), role, a); err != nil {
+	if err := h.metadataLifecycle.AssignGroupRole(ctx, p.GroupId.String(), p.UserId, role, a); err != nil {
 		return fmt.Errorf("assign group role: %w", err)
 	}
 	return nil
@@ -271,7 +271,7 @@ func (h *ogenHandler) RemoveGroupRole(ctx context.Context, p gatewayapi.RemoveGr
 	if err != nil {
 		return err
 	}
-	if err := h.metadataLifecycle.RemoveGroupRole(ctx, p.GroupId.String(), p.UserId.String(), role, a); err != nil {
+	if err := h.metadataLifecycle.RemoveGroupRole(ctx, p.GroupId.String(), p.UserId, role, a); err != nil {
 		return fmt.Errorf("remove group role: %w", err)
 	}
 	return nil
@@ -282,7 +282,7 @@ func (h *ogenHandler) GrantGroupPermission(ctx context.Context, p gatewayapi.Gra
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.GrantGroupPermission(ctx, p.GroupId.String(), p.UserId.String(), string(p.Permission), a); err != nil {
+	if err := h.metadataLifecycle.GrantGroupPermission(ctx, p.GroupId.String(), p.UserId, string(p.Permission), a); err != nil {
 		return fmt.Errorf("grant group permission: %w", err)
 	}
 	return nil
@@ -293,7 +293,7 @@ func (h *ogenHandler) RevokeGroupPermission(ctx context.Context, p gatewayapi.Re
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.RevokeGroupPermission(ctx, p.GroupId.String(), p.UserId.String(), string(p.Permission), a); err != nil {
+	if err := h.metadataLifecycle.RevokeGroupPermission(ctx, p.GroupId.String(), p.UserId, string(p.Permission), a); err != nil {
 		return fmt.Errorf("revoke group permission: %w", err)
 	}
 	return nil
@@ -416,7 +416,7 @@ func (h *ogenHandler) DecideGroupMembership(ctx context.Context, params gatewaya
 	if err != nil {
 		return nil, err
 	}
-	v, err := h.metadataLifecycle.DecideMembership(ctx, params.GroupId.String(), params.UserId.String(), decision, a)
+	v, err := h.metadataLifecycle.DecideMembership(ctx, params.GroupId.String(), params.UserId, decision, a)
 	if err != nil {
 		return nil, fmt.Errorf("decide membership: %w", err)
 	}
@@ -432,7 +432,7 @@ func (h *ogenHandler) DeleteGroupMembership(ctx context.Context, params gatewaya
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.RevokeMembership(ctx, params.GroupId.String(), params.UserId.String(), a); err != nil {
+	if err := h.metadataLifecycle.RevokeMembership(ctx, params.GroupId.String(), params.UserId, a); err != nil {
 		return fmt.Errorf("revoke membership: %w", err)
 	}
 	return nil

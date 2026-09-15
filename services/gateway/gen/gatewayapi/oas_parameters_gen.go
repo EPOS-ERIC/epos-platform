@@ -150,7 +150,7 @@ type AssignGroupRoleParams struct {
 	// Group identifier.
 	GroupId uuid.UUID
 	// User identifier for membership operations.
-	UserId uuid.UUID
+	UserId string
 	// Group role to assign or remove.
 	Role GroupRole
 }
@@ -168,7 +168,7 @@ func unpackAssignGroupRoleParams(packed middleware.Parameters) (params AssignGro
 			Name: "userId",
 			In:   "path",
 		}
-		params.UserId = packed[key].(uuid.UUID)
+		params.UserId = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -250,7 +250,7 @@ func decodeAssignGroupRoleParams(args [3]string, argsEscaped bool, r *http.Reque
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -712,7 +712,7 @@ type DecideGroupMembershipParams struct {
 	// Group identifier.
 	GroupId uuid.UUID
 	// User identifier for membership operations.
-	UserId uuid.UUID
+	UserId string
 	// Decision to apply to the pending request.
 	Decision Decision
 }
@@ -730,7 +730,7 @@ func unpackDecideGroupMembershipParams(packed middleware.Parameters) (params Dec
 			Name: "userId",
 			In:   "path",
 		}
-		params.UserId = packed[key].(uuid.UUID)
+		params.UserId = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -812,7 +812,7 @@ func decodeDecideGroupMembershipParams(args [3]string, argsEscaped bool, r *http
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -1326,7 +1326,7 @@ type DeleteGroupMembershipParams struct {
 	// Group identifier.
 	GroupId uuid.UUID
 	// User identifier for membership operations.
-	UserId uuid.UUID
+	UserId string
 }
 
 func unpackDeleteGroupMembershipParams(packed middleware.Parameters) (params DeleteGroupMembershipParams) {
@@ -1342,7 +1342,7 @@ func unpackDeleteGroupMembershipParams(packed middleware.Parameters) (params Del
 			Name: "userId",
 			In:   "path",
 		}
-		params.UserId = packed[key].(uuid.UUID)
+		params.UserId = packed[key].(string)
 	}
 	return params
 }
@@ -1417,7 +1417,7 @@ func decodeDeleteGroupMembershipParams(args [2]string, argsEscaped bool, r *http
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -3359,7 +3359,7 @@ type GrantGroupPermissionParams struct {
 	// Group identifier.
 	GroupId uuid.UUID
 	// User identifier for membership operations.
-	UserId uuid.UUID
+	UserId string
 	// Group-scoped permission to grant or revoke.
 	Permission GroupPermission
 }
@@ -3377,7 +3377,7 @@ func unpackGrantGroupPermissionParams(packed middleware.Parameters) (params Gran
 			Name: "userId",
 			In:   "path",
 		}
-		params.UserId = packed[key].(uuid.UUID)
+		params.UserId = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -3459,7 +3459,7 @@ func decodeGrantGroupPermissionParams(args [3]string, argsEscaped bool, r *http.
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -4293,7 +4293,7 @@ type RemoveGroupRoleParams struct {
 	// Group identifier.
 	GroupId uuid.UUID
 	// User identifier for membership operations.
-	UserId uuid.UUID
+	UserId string
 	// Group role to assign or remove.
 	Role GroupRole
 }
@@ -4311,7 +4311,7 @@ func unpackRemoveGroupRoleParams(packed middleware.Parameters) (params RemoveGro
 			Name: "userId",
 			In:   "path",
 		}
-		params.UserId = packed[key].(uuid.UUID)
+		params.UserId = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -4393,7 +4393,7 @@ func decodeRemoveGroupRoleParams(args [3]string, argsEscaped bool, r *http.Reque
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -5353,7 +5353,7 @@ type RevokeGroupPermissionParams struct {
 	// Group identifier.
 	GroupId uuid.UUID
 	// User identifier for membership operations.
-	UserId uuid.UUID
+	UserId string
 	// Group-scoped permission to grant or revoke.
 	Permission GroupPermission
 }
@@ -5371,7 +5371,7 @@ func unpackRevokeGroupPermissionParams(packed middleware.Parameters) (params Rev
 			Name: "userId",
 			In:   "path",
 		}
-		params.UserId = packed[key].(uuid.UUID)
+		params.UserId = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -5453,7 +5453,7 @@ func decodeRevokeGroupPermissionParams(args [3]string, argsEscaped bool, r *http
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
