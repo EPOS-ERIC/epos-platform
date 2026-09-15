@@ -25,10 +25,6 @@
   resize: vertical;
 }
 
-.dialog--destructive::before {
-  background: linear-gradient(90deg, #991b1b, #dc2626, #f97316);
-}
-
 .dialog-confirm--destructive {
   border-color: #b91c1c;
   background: #dc2626;
