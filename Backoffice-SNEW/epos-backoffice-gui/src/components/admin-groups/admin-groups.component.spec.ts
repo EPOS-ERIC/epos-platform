@@ -81,8 +81,8 @@ describe('AdminGroupsComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(apiService.decideGroupMembership).toHaveBeenCalledWith('group-id', 'user-id', { status: 'ACTIVE' });
-    expect(apiService.decideGroupRoleRequest).toHaveBeenCalledWith('group-id', 'request-id', { status: 'REJECTED' });
+    expect(apiService.decideGroupMembership).toHaveBeenCalledWith('group-id', 'user-id', 'accept');
+    expect(apiService.decideGroupRoleRequest).toHaveBeenCalledWith('group-id', 'request-id', 'reject');
     expect(apiService.setGroupMembershipRole).toHaveBeenCalledWith('group-id', 'user-id', 'GROUP_ADMIN', true);
     expect(fixture.nativeElement.textContent).toContain('No pending membership requests.');
   });

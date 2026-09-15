@@ -153,7 +153,7 @@ export class AdminGroupsComponent {
 
     const decision = status === 'ACTIVE'
       ? this.acceptMembership(request)
-      : this.apiService.decideGroupMembership(request.group.id, request.membership.user.id, { status });
+      : this.apiService.decideGroupMembership(request.group.id, request.membership.user.id, 'reject');
 
     decision
       .pipe(
@@ -234,16 +234,18 @@ export class AdminGroupsComponent {
 
   private acceptMembership(request: PendingMembershipRequest): Observable<unknown> {
     return this.apiService
-      .decideGroupMembership(request.group.id, request.membership.user.id, { status: 'ACTIVE' })
+      .decideGroupMembership(request.group.id, request.membership.user.id, 'accept')
       .pipe(
         switchMap(() => {
           const selectedRoles = new Set(request.selectedRoles);
           const requestedRoles = new Set(request.requestedRoles);
           const decisions: Observable<unknown>[] = request.membership.role_requests
             .filter((roleRequest) => roleRequest.status === 'PENDING')
-            .map((roleRequest) => this.apiService.decideGroupRoleRequest(request.group.id, roleRequest.id, {
-              status: selectedRoles.has(roleRequest.role) ? 'ACCEPTED' : 'REJECTED'
-            }));
+            .map((roleRequest) => this.apiService.decideGroupRoleRequest(
+              request.group.id,
+              roleRequest.id,
+              selectedRoles.has(roleRequest.role) ? 'accept' : 'reject'
+            ));
 
           for (const role of selectedRoles) {
             if (!requestedRoles.has(role)) {

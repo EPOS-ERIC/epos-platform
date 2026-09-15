@@ -15,7 +15,6 @@ import type {
   DiscoveryResourceType,
   Group,
   GroupMembership,
-  MembershipDecisionRequest,
   ResourceVersionReference,
   ResourceVersion,
   RejectResourceRequest,
@@ -30,12 +29,12 @@ import type {
   SoftwareSourceCodeResourceMetadata,
   User,
   UserListItem,
-  MembershipRole,
-  RoleRequestDecisionRequest
+  MembershipRole
 } from '../../generated/backofficeSchemas';
 import type {
   DateFrom,
   DateTo,
+  Decision,
   GroupPermission,
   GroupFilter,
   Keywords,
@@ -334,18 +333,18 @@ export class ApiService {
     );
   }
 
-  decideGroupMembership(groupId: string, userId: string, payload: MembershipDecisionRequest): Observable<GroupMembership> {
-    return this.http.patch<GroupMembership>(
-      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/${encodeURIComponent(userId)}`,
-      payload,
+  decideGroupMembership(groupId: string, userId: string, decision: Decision): Observable<GroupMembership> {
+    return this.http.post<GroupMembership>(
+      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/${encodeURIComponent(userId)}/${decision}`,
+      undefined,
       { headers: { Authorization: `Bearer ${this.bearerToken}` } }
     );
   }
 
-  decideGroupRoleRequest(groupId: string, requestId: string, payload: RoleRequestDecisionRequest): Observable<GroupMembership> {
-    return this.http.patch<GroupMembership>(
-      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/role-requests/${encodeURIComponent(requestId)}`,
-      payload,
+  decideGroupRoleRequest(groupId: string, requestId: string, decision: Decision): Observable<GroupMembership> {
+    return this.http.post<GroupMembership>(
+      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/role-requests/${encodeURIComponent(requestId)}/${decision}`,
+      undefined,
       { headers: { Authorization: `Bearer ${this.bearerToken}` } }
     );
   }

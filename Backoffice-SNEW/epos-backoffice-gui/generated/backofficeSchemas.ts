@@ -1650,14 +1650,6 @@ export type CreateMembershipRequest = {
   roles: ("EDITOR" | "REVIEWER")[];
 };
 
-export type MembershipDecisionRequest = {
-  status: "ACTIVE" | "REJECTED";
-};
-
-export type RoleRequestDecisionRequest = {
-  status: "ACCEPTED" | "REJECTED";
-};
-
 export type Problem = {
   /**
    * Short, human-readable summary of problem
