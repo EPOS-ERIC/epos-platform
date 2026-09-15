@@ -1482,7 +1482,6 @@ components:
       description: User identifier for membership operations.
       schema:
         type: string
-        format: uuid
 
     Decision:
       name: decision
