@@ -36,6 +36,12 @@ enum MembershipStatus {
   MEMBERSHIP_STATUS_REJECTED = 3;
 }
 
+enum Decision {
+  DECISION_UNSPECIFIED = 0;
+  DECISION_ACCEPT = 1;
+  DECISION_REJECT = 2;
+}
+
 enum GroupRole {
   GROUP_ROLE_UNSPECIFIED = 0;
   GROUP_ROLE_EDITOR = 1;

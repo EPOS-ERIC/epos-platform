@@ -25,23 +25,12 @@ func NewRequestedGroupRole(value string) (GroupRole, error) {
 	return role, nil
 }
 
-// NewMembershipStatus validates and normalizes a membership decision.
-func NewMembershipStatus(value string) (MembershipStatus, error) {
-	status := MembershipStatus(strings.TrimSpace(value))
-	switch status {
-	case MembershipActive, MembershipRejected:
-		return status, nil
-	default:
-		return "", ErrInvalidAccess
-	}
-}
-
-// NewRoleRequestStatus validates and normalizes a role-request decision.
-func NewRoleRequestStatus(value string) (RoleRequestStatus, error) {
-	status := RoleRequestStatus(strings.TrimSpace(value))
-	switch status {
-	case RoleRequestAccepted, RoleRequestRejected:
-		return status, nil
+// NewDecision validates and normalizes a request decision.
+func NewDecision(value string) (Decision, error) {
+	decision := Decision(strings.TrimSpace(value))
+	switch decision {
+	case DecisionAccept, DecisionReject:
+		return decision, nil
 	default:
 		return "", ErrInvalidAccess
 	}

@@ -1764,6 +1764,17 @@ func (s DateTimeScalarParameterKind) Validate() error {
 	}
 }
 
+func (s Decision) Validate() error {
+	switch s {
+	case "accept":
+		return nil
+	case "reject":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s DiscoveryConcept) Validate() error {
 	switch s {
 	case "DATA":
@@ -3350,40 +3361,6 @@ func (s LifecycleResourceType) Validate() error {
 	}
 }
 
-func (s *MembershipDecisionRequest) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Status.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "status",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s MembershipDecisionRequestStatus) Validate() error {
-	switch s {
-	case "ACTIVE":
-		return nil
-	case "REJECTED":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
 func (s MembershipRole) Validate() error {
 	switch s {
 	case "EDITOR":
@@ -4707,40 +4684,6 @@ func (s *RoleRequest) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
-}
-
-func (s *RoleRequestDecisionRequest) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Status.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "status",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s RoleRequestDecisionRequestStatus) Validate() error {
-	switch s {
-	case "ACCEPTED":
-		return nil
-	case "REJECTED":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
 }
 
 func (s RoleRequestRole) Validate() error {

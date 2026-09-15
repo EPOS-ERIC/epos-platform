@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// TODO: simplify this huge error mapper. return the correct formatted error already in the fuction that handles the error
+// TODO: change the way the errors hare handled in the system. we should have a specific error object that we return to the gateway with the "outside" error and the "internal" error
 
 // statusError keeps the internal cause available to server-side logging while
 // exposing only the sanitized gRPC status to clients.
@@ -237,7 +237,7 @@ func operationForMethod(method string) string {
 		return "revoke membership"
 	case "RequestRole":
 		return "request role"
-	case "ApplyRoleRequestDecision":
+	case "DecideRoleRequest":
 		return "decide role request"
 	case "WithdrawRoleRequest":
 		return "withdraw role request"

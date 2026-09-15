@@ -236,6 +236,55 @@ func (MembershipStatus) EnumDescriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{3}
 }
 
+type Decision int32
+
+const (
+	Decision_DECISION_UNSPECIFIED Decision = 0
+	Decision_DECISION_ACCEPT      Decision = 1
+	Decision_DECISION_REJECT      Decision = 2
+)
+
+// Enum value maps for Decision.
+var (
+	Decision_name = map[int32]string{
+		0: "DECISION_UNSPECIFIED",
+		1: "DECISION_ACCEPT",
+		2: "DECISION_REJECT",
+	}
+	Decision_value = map[string]int32{
+		"DECISION_UNSPECIFIED": 0,
+		"DECISION_ACCEPT":      1,
+		"DECISION_REJECT":      2,
+	}
+)
+
+func (x Decision) Enum() *Decision {
+	p := new(Decision)
+	*p = x
+	return p
+}
+
+func (x Decision) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Decision) Descriptor() protoreflect.EnumDescriptor {
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[4].Descriptor()
+}
+
+func (Decision) Type() protoreflect.EnumType {
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[4]
+}
+
+func (x Decision) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Decision.Descriptor instead.
+func (Decision) EnumDescriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{4}
+}
+
 type GroupRole int32
 
 const (
@@ -272,11 +321,11 @@ func (x GroupRole) String() string {
 }
 
 func (GroupRole) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_common_proto_enumTypes[4].Descriptor()
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[5].Descriptor()
 }
 
 func (GroupRole) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_common_proto_enumTypes[4]
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[5]
 }
 
 func (x GroupRole) Number() protoreflect.EnumNumber {
@@ -285,7 +334,7 @@ func (x GroupRole) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GroupRole.Descriptor instead.
 func (GroupRole) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{4}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
 type RoleRequestStatus int32
@@ -324,11 +373,11 @@ func (x RoleRequestStatus) String() string {
 }
 
 func (RoleRequestStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_common_proto_enumTypes[5].Descriptor()
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[6].Descriptor()
 }
 
 func (RoleRequestStatus) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_common_proto_enumTypes[5]
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[6]
 }
 
 func (x RoleRequestStatus) Number() protoreflect.EnumNumber {
@@ -337,7 +386,7 @@ func (x RoleRequestStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RoleRequestStatus.Descriptor instead.
 func (RoleRequestStatus) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{5}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{6}
 }
 
 type Identifier struct {
@@ -596,7 +645,11 @@ const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"\x1dMEMBERSHIP_STATUS_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19MEMBERSHIP_STATUS_PENDING\x10\x01\x12\x1c\n" +
 	"\x18MEMBERSHIP_STATUS_ACTIVE\x10\x02\x12\x1e\n" +
-	"\x1aMEMBERSHIP_STATUS_REJECTED\x10\x03*m\n" +
+	"\x1aMEMBERSHIP_STATUS_REJECTED\x10\x03*N\n" +
+	"\bDecision\x12\x18\n" +
+	"\x14DECISION_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fDECISION_ACCEPT\x10\x01\x12\x13\n" +
+	"\x0fDECISION_REJECT\x10\x02*m\n" +
 	"\tGroupRole\x12\x1a\n" +
 	"\x16GROUP_ROLE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11GROUP_ROLE_EDITOR\x10\x01\x12\x17\n" +
@@ -620,19 +673,20 @@ func file_metadata_lifecycle_v1_common_proto_rawDescGZIP() []byte {
 	return file_metadata_lifecycle_v1_common_proto_rawDescData
 }
 
-var file_metadata_lifecycle_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_metadata_lifecycle_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
 var file_metadata_lifecycle_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_metadata_lifecycle_v1_common_proto_goTypes = []any{
 	(ResourceType)(0),       // 0: metadata_lifecycle.v1.ResourceType
 	(VersioningStatus)(0),   // 1: metadata_lifecycle.v1.VersioningStatus
 	(TopLevelConcept)(0),    // 2: metadata_lifecycle.v1.TopLevelConcept
 	(MembershipStatus)(0),   // 3: metadata_lifecycle.v1.MembershipStatus
-	(GroupRole)(0),          // 4: metadata_lifecycle.v1.GroupRole
-	(RoleRequestStatus)(0),  // 5: metadata_lifecycle.v1.RoleRequestStatus
-	(*Identifier)(nil),      // 6: metadata_lifecycle.v1.Identifier
-	(*IdentifierInput)(nil), // 7: metadata_lifecycle.v1.IdentifierInput
-	(*EntityReference)(nil), // 8: metadata_lifecycle.v1.EntityReference
-	(*UserReference)(nil),   // 9: metadata_lifecycle.v1.UserReference
+	(Decision)(0),           // 4: metadata_lifecycle.v1.Decision
+	(GroupRole)(0),          // 5: metadata_lifecycle.v1.GroupRole
+	(RoleRequestStatus)(0),  // 6: metadata_lifecycle.v1.RoleRequestStatus
+	(*Identifier)(nil),      // 7: metadata_lifecycle.v1.Identifier
+	(*IdentifierInput)(nil), // 8: metadata_lifecycle.v1.IdentifierInput
+	(*EntityReference)(nil), // 9: metadata_lifecycle.v1.EntityReference
+	(*UserReference)(nil),   // 10: metadata_lifecycle.v1.UserReference
 }
 var file_metadata_lifecycle_v1_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -652,7 +706,7 @@ func file_metadata_lifecycle_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_common_proto_rawDesc), len(file_metadata_lifecycle_v1_common_proto_rawDesc)),
-			NumEnums:      6,
+			NumEnums:      7,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
