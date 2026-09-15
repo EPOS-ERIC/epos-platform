@@ -41,7 +41,8 @@ describe('MembershipsPageComponent', () => {
     refresh: vi.fn()
   };
   const apiService = {
-    withdrawGroupMembershipRequest: vi.fn()
+    withdrawGroupMembershipRequest: vi.fn(),
+    leaveOwnGroupMembership: vi.fn()
   };
   const dialog = { confirm: vi.fn() };
   const toast = { success: vi.fn() };
@@ -51,6 +52,7 @@ describe('MembershipsPageComponent', () => {
     currentUser.set(user);
     currentUserStore.refresh.mockResolvedValue(undefined);
     apiService.withdrawGroupMembershipRequest.mockReturnValue(of(undefined));
+    apiService.leaveOwnGroupMembership.mockReturnValue(of(undefined));
     dialog.confirm.mockResolvedValue(true);
     TestBed.configureTestingModule({
       imports: [MembershipsPageComponent],
@@ -81,7 +83,7 @@ describe('MembershipsPageComponent', () => {
     const fixture = TestBed.createComponent(MembershipsPageComponent);
     fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('.membership-cancel-button') as HTMLButtonElement;
+    const button = fixture.nativeElement.querySelector('.membership-remove-button') as HTMLButtonElement;
     expect(button.textContent).toContain('Cancel Request');
     button.click();
 
@@ -89,6 +91,44 @@ describe('MembershipsPageComponent', () => {
     expect(apiService.withdrawGroupMembershipRequest).toHaveBeenCalledWith('1375500a-fc04-5831-a7f5-39ea5fcb0445');
     expect(currentUserStore.refresh).toHaveBeenCalledOnce();
     expect(toast.success).toHaveBeenCalledWith('Membership request cancelled.');
+  });
+
+  it('leaves an active membership using the self endpoint for a regular user', async () => {
+    currentUser.set({
+      ...user,
+      memberships: [{ ...user.memberships[0], status: 'ACTIVE', roles: ['EDITOR'], role_requests: [] }]
+    });
+    const fixture = TestBed.createComponent(MembershipsPageComponent);
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('.membership-remove-button') as HTMLButtonElement;
+    expect(button.textContent.trim()).toBe('Leave');
+    button.click();
+
+    await vi.waitFor(() => expect(apiService.leaveOwnGroupMembership).toHaveBeenCalled());
+    expect(apiService.leaveOwnGroupMembership).toHaveBeenCalledWith('1375500a-fc04-5831-a7f5-39ea5fcb0445');
+    expect(currentUserStore.refresh).toHaveBeenCalledOnce();
+    expect(toast.success).toHaveBeenCalledWith('Group membership removed.');
+  });
+
+  it('does not offer Leave to global or group administrators', () => {
+    currentUser.set({
+      ...user,
+      global_roles: ['ADMIN'],
+      memberships: [{ ...user.memberships[0], status: 'ACTIVE', roles: ['EDITOR'], role_requests: [] }]
+    });
+    const fixture = TestBed.createComponent(MembershipsPageComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.membership-remove-button')).toBeNull();
+
+    currentUser.set({
+      ...user,
+      memberships: [{ ...user.memberships[0], status: 'ACTIVE', roles: ['GROUP_ADMIN'], role_requests: [] }]
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.membership-remove-button')).toBeNull();
   });
 
 });

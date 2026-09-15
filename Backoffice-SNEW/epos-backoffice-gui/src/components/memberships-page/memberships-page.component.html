@@ -62,7 +62,7 @@
               <footer class="membership-summary-footer">
                 <button
                   type="button"
-                  class="app-button membership-cancel-button"
+                  class="app-button membership-remove-button"
                   [disabled]="!!membershipMutation()"
                   (click)="cancelMembershipRequest(membership)"
                 >
@@ -72,6 +72,15 @@
                     Cancel Request
                   }
                 </button>
+              </footer>
+            } @else if (membership.status === 'ACTIVE' && !currentUser.global_roles.includes('ADMIN') && !membership.roles.includes('GROUP_ADMIN')) {
+              <footer class="membership-summary-footer">
+                <button
+                  type="button"
+                  class="app-button membership-remove-button"
+                  [disabled]="!!membershipMutation()"
+                  (click)="leaveOwnMembership(membership)"
+                >{{ membershipMutation() === membership.group.id ? 'Leaving...' : 'Leave' }}</button>
               </footer>
             }
           </article>

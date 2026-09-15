@@ -127,13 +127,13 @@
   padding-top: 14px;
 }
 
-.membership-cancel-button {
+.membership-remove-button {
   border-color: #b91c1c;
   background: #dc2626;
   color: #fff;
 }
 
-.membership-cancel-button:hover:not(:disabled) {
+.membership-remove-button:hover:not(:disabled) {
   border-color: #991b1b;
   background: #b91c1c;
   color: #fff;

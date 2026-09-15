@@ -35,6 +35,8 @@ export type GlobalRole = "ADMIN";
 
 export type MembershipUserId = string;
 
+export type DeleteMembershipUserId = string;
+
 export type Decision = "accept" | "reject";
 
 export type GroupRole = "EDITOR" | "REVIEWER" | "GROUP_ADMIN";

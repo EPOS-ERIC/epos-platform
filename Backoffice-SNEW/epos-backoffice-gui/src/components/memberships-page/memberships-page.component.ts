@@ -39,34 +39,56 @@ export class MembershipsPageComponent {
   }
 
   protected async cancelMembershipRequest(membership: UserMembershipSummary): Promise<void> {
-    if (this.membershipMutation() || membership.status !== 'PENDING') return;
+    if (membership.status !== 'PENDING') return;
+    await this.confirmAndDeleteOwnMembership(membership, 'cancel');
+  }
+
+  protected async leaveOwnMembership(membership: UserMembershipSummary): Promise<void> {
+    if (membership.status !== 'ACTIVE') return;
+    await this.confirmAndDeleteOwnMembership(membership, 'leave');
+  }
+
+  private async confirmAndDeleteOwnMembership(
+    membership: UserMembershipSummary,
+    action: 'cancel' | 'leave'
+  ): Promise<void> {
+    if (this.membershipMutation()) return;
+
+    const pending = action === 'cancel';
 
     const confirmed = await this.dialog.confirm({
-      eyebrow: 'Membership Request',
-      title: 'Cancel membership request?',
-      message: `Your pending request to join ${membership.group.name} will be cancelled.`,
-      confirmLabel: 'Cancel Request',
+      eyebrow: pending ? 'Membership Request' : 'Group Membership',
+      title: pending ? 'Cancel membership request?' : 'Leave this group?',
+      message: pending
+        ? `Your pending request to join ${membership.group.name} will be cancelled.`
+        : `Your membership and assigned roles in ${membership.group.name} will be removed.`,
+      confirmLabel: pending ? 'Cancel Request' : 'Leave Group',
       destructive: true
     });
     if (!confirmed) return;
 
     this.membershipMutation.set(membership.group.id);
     this.membershipActionError.set('');
-    this.apiService
-      .withdrawGroupMembershipRequest(membership.group.id)
+    const request = pending
+      ? this.apiService.withdrawGroupMembershipRequest(membership.group.id)
+      : this.apiService.leaveOwnGroupMembership(membership.group.id);
+
+    request
       .pipe(
         switchMap(() => from(this.currentUserStore.refresh())),
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.membershipMutation.set('')),
         catchError((error) => {
           console.error('Failed to remove membership', error);
-          this.membershipActionError.set('Failed to cancel the membership request.');
+          this.membershipActionError.set(pending
+            ? 'Failed to cancel the membership request.'
+            : 'Failed to leave the group.');
           return of(null);
         })
       )
       .subscribe((result) => {
         if (result !== null) {
-          this.toast.success('Membership request cancelled.');
+          this.toast.success(pending ? 'Membership request cancelled.' : 'Group membership removed.');
         }
       });
   }
