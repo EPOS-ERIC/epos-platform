@@ -6,7 +6,6 @@ package api
 type OperationName = string
 
 const (
-	ApplyRoleRequestDecisionOperation       OperationName = "ApplyRoleRequestDecision"
 	AssignGlobalRoleOperation               OperationName = "AssignGlobalRole"
 	AssignGroupRoleOperation                OperationName = "AssignGroupRole"
 	BlockUserOperation                      OperationName = "BlockUser"
@@ -17,6 +16,7 @@ const (
 	CreateOrganizationOperation             OperationName = "CreateOrganization"
 	CreateResourceOperation                 OperationName = "CreateResource"
 	DecideGroupMembershipOperation          OperationName = "DecideGroupMembership"
+	DecideGroupRoleRequestOperation         OperationName = "DecideGroupRoleRequest"
 	DeleteContactPointOperation             OperationName = "DeleteContactPoint"
 	DeleteGroupOperation                    OperationName = "DeleteGroup"
 	DeleteGroupCategoryOperation            OperationName = "DeleteGroupCategory"

@@ -4,10 +4,12 @@ SCHEMATHESIS_EXCLUDE_PATHS := \
 	--exclude-path /imports/turtle \
 	--exclude-path /groups/{groupId}/membership-requests \
 	--exclude-path /groups/{groupId}/memberships/{userId} \
+	--exclude-path /groups/{groupId}/memberships/{userId}/{decision} \
 	--exclude-path /groups/{groupId}/memberships/{userId}/roles/{role} \
 	--exclude-path /groups/{groupId}/memberships/{userId}/permissions/{permission} \
 	--exclude-path /groups/{groupId}/role-requests \
 	--exclude-path /groups/{groupId}/role-requests/{requestId} \
+	--exclude-path /groups/{groupId}/role-requests/{requestId}/{decision} \
 	--exclude-path /groups/{groupId}/resources \
 	--exclude-path /groups/{groupId}/resources/{resourceType}/{id}/copy \
 	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/submit \

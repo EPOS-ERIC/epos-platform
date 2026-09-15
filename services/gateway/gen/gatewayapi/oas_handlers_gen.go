@@ -28,167 +28,6 @@ func (c *codeRecorder) Unwrap() http.ResponseWriter {
 
 func recordError(string, error) {}
 
-// handleApplyRoleRequestDecisionRequest handles applyRoleRequestDecision operation.
-//
-// Accept or reject a pending role request. Requires group role management permission or global role
-// management permission.
-//
-// PATCH /groups/{groupId}/role-requests/{requestId}
-func (s *Server) handleApplyRoleRequestDecisionRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
-	statusWriter := &codeRecorder{ResponseWriter: w}
-	w = statusWriter
-	ctx := r.Context()
-
-	var (
-		err          error
-		opErrContext = ogenerrors.OperationContext{
-			Name: ApplyRoleRequestDecisionOperation,
-			ID:   "applyRoleRequestDecision",
-		}
-	)
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			sctx, ok, err := s.securityBearerAuth(ctx, ApplyRoleRequestDecisionOperation, r)
-			if err != nil {
-				err = &ogenerrors.SecurityError{
-					OperationContext: opErrContext,
-					Security:         "BearerAuth",
-					Err:              err,
-				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
-					defer recordError("Security:BearerAuth", err)
-				}
-				return
-			}
-			if ok {
-				satisfied[0] |= 1 << 0
-				ctx = sctx
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			err = &ogenerrors.SecurityError{
-				OperationContext: opErrContext,
-				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
-			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
-				defer recordError("Security", err)
-			}
-			return
-		}
-	}
-	params, err := decodeApplyRoleRequestDecisionParams(args, argsEscaped, r)
-	if err != nil {
-		err = &ogenerrors.DecodeParamsError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeParams", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	var rawBody []byte
-	request, rawBody, close, err := s.decodeApplyRoleRequestDecisionRequest(r)
-	if err != nil {
-		err = &ogenerrors.DecodeRequestError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeRequest", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-	defer func() {
-		if err := close(); err != nil {
-			recordError("CloseRequest", err)
-		}
-	}()
-
-	var response *GroupMembership
-	if m := s.cfg.Middleware; m != nil {
-		mreq := middleware.Request{
-			Context:          ctx,
-			OperationName:    ApplyRoleRequestDecisionOperation,
-			OperationSummary: "Accept or reject role request",
-			OperationID:      "applyRoleRequestDecision",
-			Body:             request,
-			RawBody:          rawBody,
-			Params: middleware.Parameters{
-				{
-					Name: "groupId",
-					In:   "path",
-				}: params.GroupId,
-				{
-					Name: "requestId",
-					In:   "path",
-				}: params.RequestId,
-			},
-			Raw: r,
-		}
-
-		type (
-			Request  = *RoleRequestDecisionRequest
-			Params   = ApplyRoleRequestDecisionParams
-			Response = *GroupMembership
-		)
-		response, err = middleware.HookMiddleware[
-			Request,
-			Params,
-			Response,
-		](
-			m,
-			mreq,
-			unpackApplyRoleRequestDecisionParams,
-			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.ApplyRoleRequestDecision(ctx, request, params)
-				return response, err
-			},
-		)
-	} else {
-		response, err = s.h.ApplyRoleRequestDecision(ctx, request, params)
-	}
-	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
-			if err := encodeErrorResponse(errRes, w); err != nil {
-				defer recordError("Internal", err)
-			}
-			return
-		}
-		if errors.Is(err, ht.ErrNotImplemented) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-		if err := encodeErrorResponse(s.h.NewError(ctx, err), w); err != nil {
-			defer recordError("Internal", err)
-		}
-		return
-	}
-
-	if err := encodeApplyRoleRequestDecisionResponse(response, w); err != nil {
-		defer recordError("EncodeResponse", err)
-		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-		}
-		return
-	}
-}
-
 // handleAssignGlobalRoleRequest handles assignGlobalRole operation.
 //
 // Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
@@ -1531,8 +1370,8 @@ func (s *Server) handleCreateResourceRequest(args [1]string, argsEscaped bool, w
 // Accept or reject a pending membership request. Requires group membership management permission or
 // global membership management permission.
 //
-// PATCH /groups/{groupId}/memberships/{userId}
-func (s *Server) handleDecideGroupMembershipRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /groups/{groupId}/memberships/{userId}/{decision}
+func (s *Server) handleDecideGroupMembershipRequest(args [3]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	ctx := r.Context()
@@ -1602,30 +1441,15 @@ func (s *Server) handleDecideGroupMembershipRequest(args [2]string, argsEscaped 
 	}
 
 	var rawBody []byte
-	request, rawBody, close, err := s.decodeDecideGroupMembershipRequest(r)
-	if err != nil {
-		err = &ogenerrors.DecodeRequestError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeRequest", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-	defer func() {
-		if err := close(); err != nil {
-			recordError("CloseRequest", err)
-		}
-	}()
 
 	var response *GroupMembership
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
 			OperationName:    DecideGroupMembershipOperation,
-			OperationSummary: "Accept or reject membership request",
+			OperationSummary: "Decide group membership request",
 			OperationID:      "decideGroupMembership",
-			Body:             request,
+			Body:             nil,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
@@ -1636,12 +1460,16 @@ func (s *Server) handleDecideGroupMembershipRequest(args [2]string, argsEscaped 
 					Name: "userId",
 					In:   "path",
 				}: params.UserId,
+				{
+					Name: "decision",
+					In:   "path",
+				}: params.Decision,
 			},
 			Raw: r,
 		}
 
 		type (
-			Request  = *MembershipDecisionRequest
+			Request  = struct{}
 			Params   = DecideGroupMembershipParams
 			Response = *GroupMembership
 		)
@@ -1654,12 +1482,12 @@ func (s *Server) handleDecideGroupMembershipRequest(args [2]string, argsEscaped 
 			mreq,
 			unpackDecideGroupMembershipParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.DecideGroupMembership(ctx, request, params)
+				response, err = s.h.DecideGroupMembership(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.DecideGroupMembership(ctx, request, params)
+		response, err = s.h.DecideGroupMembership(ctx, params)
 	}
 	if err != nil {
 		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
@@ -1679,6 +1507,156 @@ func (s *Server) handleDecideGroupMembershipRequest(args [2]string, argsEscaped 
 	}
 
 	if err := encodeDecideGroupMembershipResponse(response, w); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleDecideGroupRoleRequestRequest handles decideGroupRoleRequest operation.
+//
+// Accept or reject a pending role request. Requires group role management permission or global role
+// management permission.
+//
+// POST /groups/{groupId}/role-requests/{requestId}/{decision}
+func (s *Server) handleDecideGroupRoleRequestRequest(args [3]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	ctx := r.Context()
+
+	var (
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: DecideGroupRoleRequestOperation,
+			ID:   "decideGroupRoleRequest",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, DecideGroupRoleRequestOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
+				defer recordError("Security", err)
+			}
+			return
+		}
+	}
+	params, err := decodeDecideGroupRoleRequestParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+
+	var response *GroupMembership
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    DecideGroupRoleRequestOperation,
+			OperationSummary: "Decide group role request",
+			OperationID:      "decideGroupRoleRequest",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "groupId",
+					In:   "path",
+				}: params.GroupId,
+				{
+					Name: "requestId",
+					In:   "path",
+				}: params.RequestId,
+				{
+					Name: "decision",
+					In:   "path",
+				}: params.Decision,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = DecideGroupRoleRequestParams
+			Response = *GroupMembership
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackDecideGroupRoleRequestParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.DecideGroupRoleRequest(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.DecideGroupRoleRequest(ctx, params)
+	}
+	if err != nil {
+		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w); err != nil {
+			defer recordError("Internal", err)
+		}
+		return
+	}
+
+	if err := encodeDecideGroupRoleRequestResponse(response, w); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)

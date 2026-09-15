@@ -227,18 +227,18 @@ func (h *ogenHandler) ReplaceGroupCategory(ctx context.Context, q *gatewayapi.Re
 	return &r, nil
 }
 
-func (h *ogenHandler) ApplyRoleRequestDecision(ctx context.Context, q *gatewayapi.RoleRequestDecisionRequest, p gatewayapi.ApplyRoleRequestDecisionParams) (*gatewayapi.GroupMembership, error) {
+func (h *ogenHandler) DecideGroupRoleRequest(ctx context.Context, p gatewayapi.DecideGroupRoleRequestParams) (*gatewayapi.GroupMembership, error) {
 	a, ok := actorID(ctx)
 	if !ok {
 		return nil, authMissing()
 	}
-	status, err := toProtoRoleRequestStatus(q.Status)
+	decision, err := toProtoDecision(p.Decision)
 	if err != nil {
 		return nil, err
 	}
-	v, err := h.metadataLifecycle.ApplyRoleRequestDecision(ctx, p.GroupId.String(), p.RequestId.String(), status, a)
+	v, err := h.metadataLifecycle.DecideRoleRequest(ctx, p.GroupId.String(), p.RequestId.String(), decision, a)
 	if err != nil {
-		return nil, fmt.Errorf("apply role request decision: %w", err)
+		return nil, fmt.Errorf("decide role request: %w", err)
 	}
 	r, err := toAPIProtoGroupMembership(v.Membership)
 	if err != nil {
@@ -407,16 +407,16 @@ func (h *ogenHandler) RequestGroupMembership(ctx context.Context, q *gatewayapi.
 	return &r, nil
 }
 
-func (h *ogenHandler) DecideGroupMembership(ctx context.Context, q *gatewayapi.MembershipDecisionRequest, params gatewayapi.DecideGroupMembershipParams) (*gatewayapi.GroupMembership, error) {
+func (h *ogenHandler) DecideGroupMembership(ctx context.Context, params gatewayapi.DecideGroupMembershipParams) (*gatewayapi.GroupMembership, error) {
 	a, ok := actorID(ctx)
 	if !ok {
 		return nil, authMissing()
 	}
-	status, err := toProtoMembershipStatus(q.Status)
+	decision, err := toProtoDecision(params.Decision)
 	if err != nil {
 		return nil, err
 	}
-	v, err := h.metadataLifecycle.DecideMembership(ctx, params.GroupId.String(), params.UserId.String(), status, a)
+	v, err := h.metadataLifecycle.DecideMembership(ctx, params.GroupId.String(), params.UserId.String(), decision, a)
 	if err != nil {
 		return nil, fmt.Errorf("decide membership: %w", err)
 	}

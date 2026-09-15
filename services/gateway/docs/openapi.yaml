@@ -667,20 +667,19 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
-    patch:
+  /groups/{groupId}/memberships/{userId}/{decision}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/MembershipUserId"
+      - $ref: "#/components/parameters/Decision"
+    post:
       tags:
         - Memberships
-      summary: Accept or reject membership request
+      summary: Decide group membership request
       description: Accept or reject a pending membership request. Requires group membership management permission or global membership management permission.
       operationId: decideGroupMembership
       security:
         - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MembershipDecisionRequest"
       responses:
         "200":
           description: Membership decision applied
@@ -811,33 +810,6 @@ paths:
         schema:
           type: string
           format: uuid
-    patch:
-      tags:
-        - Memberships
-      summary: Accept or reject role request
-      description: Accept or reject a pending role request. Requires group role management permission or global role management permission.
-      operationId: applyRoleRequestDecision
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RoleRequestDecisionRequest"
-      responses:
-        "200":
-          description: Role request decision applied
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GroupMembership"
-        default:
-          description: Gateway error
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
     delete:
       tags:
         - Memberships
@@ -849,6 +821,37 @@ paths:
       responses:
         "204":
           description: Role request withdrawn
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /groups/{groupId}/role-requests/{requestId}/{decision}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - name: requestId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: "#/components/parameters/Decision"
+    post:
+      tags:
+        - Memberships
+      summary: Decide group role request
+      description: Accept or reject a pending role request. Requires group role management permission or global role management permission.
+      operationId: decideGroupRoleRequest
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Role request decision applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMembership"
         default:
           description: Gateway error
           content:
@@ -1480,6 +1483,15 @@ components:
       schema:
         type: string
         format: uuid
+
+    Decision:
+      name: decision
+      in: path
+      required: true
+      description: Decision to apply to the pending request.
+      schema:
+        type: string
+        enum: [accept, reject]
 
     GroupRole:
       name: role
@@ -3658,26 +3670,6 @@ components:
           items:
             type: string
             enum: [EDITOR, REVIEWER]
-
-    MembershipDecisionRequest:
-      type: object
-      required:
-        - status
-      additionalProperties: false
-      properties:
-        status:
-          type: string
-          enum: [ACTIVE, REJECTED]
-
-    RoleRequestDecisionRequest:
-      type: object
-      required:
-        - status
-      additionalProperties: false
-      properties:
-        status:
-          type: string
-          enum: [ACCEPTED, REJECTED]
 
     Problem:
       type: object

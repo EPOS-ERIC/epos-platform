@@ -150,13 +150,13 @@ func (c *MetadataLifecycle) RequestMembership(ctx context.Context, groupID, acto
 	return response, nil
 }
 
-func (c *MetadataLifecycle) DecideMembership(ctx context.Context, groupID, userID string, status metadatalifecyclev1.MembershipStatus, actorID string) (*metadatalifecyclev1.DecideMembershipResponse, error) {
+func (c *MetadataLifecycle) DecideMembership(ctx context.Context, groupID, userID string, decision metadatalifecyclev1.Decision, actorID string) (*metadatalifecyclev1.DecideMembershipResponse, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 
 	response, err := c.access.DecideMembership(ctx, &metadatalifecyclev1.DecideMembershipRequest{
-		GroupId: groupID,
-		UserId:  userID,
-		Status:  status,
+		GroupId:  groupID,
+		UserId:   userID,
+		Decision: decision,
 	})
 	if err != nil {
 		return nil, c.wrapError(ctx, "decide membership", err)
@@ -189,12 +189,12 @@ func (c *MetadataLifecycle) RequestRole(ctx context.Context, groupID string, rol
 	return response, nil
 }
 
-func (c *MetadataLifecycle) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID string, status metadatalifecyclev1.RoleRequestStatus, actorID string) (*metadatalifecyclev1.ApplyRoleRequestDecisionResponse, error) {
+func (c *MetadataLifecycle) DecideRoleRequest(ctx context.Context, groupID, requestID string, decision metadatalifecyclev1.Decision, actorID string) (*metadatalifecyclev1.DecideRoleRequestResponse, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.access.ApplyRoleRequestDecision(ctx, &metadatalifecyclev1.ApplyRoleRequestDecisionRequest{
+	response, err := c.access.DecideRoleRequest(ctx, &metadatalifecyclev1.DecideRoleRequestRequest{
 		GroupId:   groupID,
 		RequestId: requestID,
-		Status:    status,
+		Decision:  decision,
 	})
 	if err != nil {
 		return nil, c.wrapError(ctx, "decide role request", err)

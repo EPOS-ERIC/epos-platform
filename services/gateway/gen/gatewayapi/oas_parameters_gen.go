@@ -17,125 +17,6 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-// ApplyRoleRequestDecisionParams is parameters of applyRoleRequestDecision operation.
-type ApplyRoleRequestDecisionParams struct {
-	// Group identifier.
-	GroupId   uuid.UUID
-	RequestId uuid.UUID
-}
-
-func unpackApplyRoleRequestDecisionParams(packed middleware.Parameters) (params ApplyRoleRequestDecisionParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "groupId",
-			In:   "path",
-		}
-		params.GroupId = packed[key].(uuid.UUID)
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "requestId",
-			In:   "path",
-		}
-		params.RequestId = packed[key].(uuid.UUID)
-	}
-	return params
-}
-
-func decodeApplyRoleRequestDecisionParams(args [2]string, argsEscaped bool, r *http.Request) (params ApplyRoleRequestDecisionParams, _ error) {
-	// Decode path: groupId.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "groupId",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.GroupId = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "groupId",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	// Decode path: requestId.
-	if err := func() error {
-		param := args[1]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[1])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "requestId",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.RequestId = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "requestId",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
 // AssignGlobalRoleParams is parameters of assignGlobalRole operation.
 type AssignGlobalRoleParams struct {
 	// User identifier.
@@ -832,6 +713,8 @@ type DecideGroupMembershipParams struct {
 	GroupId uuid.UUID
 	// User identifier for membership operations.
 	UserId uuid.UUID
+	// Decision to apply to the pending request.
+	Decision Decision
 }
 
 func unpackDecideGroupMembershipParams(packed middleware.Parameters) (params DecideGroupMembershipParams) {
@@ -849,10 +732,17 @@ func unpackDecideGroupMembershipParams(packed middleware.Parameters) (params Dec
 		}
 		params.UserId = packed[key].(uuid.UUID)
 	}
+	{
+		key := middleware.ParameterKey{
+			Name: "decision",
+			In:   "path",
+		}
+		params.Decision = packed[key].(Decision)
+	}
 	return params
 }
 
-func decodeDecideGroupMembershipParams(args [2]string, argsEscaped bool, r *http.Request) (params DecideGroupMembershipParams, _ error) {
+func decodeDecideGroupMembershipParams(args [3]string, argsEscaped bool, r *http.Request) (params DecideGroupMembershipParams, _ error) {
 	// Decode path: groupId.
 	if err := func() error {
 		param := args[0]
@@ -939,6 +829,240 @@ func decodeDecideGroupMembershipParams(args [2]string, argsEscaped bool, r *http
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "userId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: decision.
+	if err := func() error {
+		param := args[2]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[2])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "decision",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Decision = Decision(c)
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Decision.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "decision",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// DecideGroupRoleRequestParams is parameters of decideGroupRoleRequest operation.
+type DecideGroupRoleRequestParams struct {
+	// Group identifier.
+	GroupId   uuid.UUID
+	RequestId uuid.UUID
+	// Decision to apply to the pending request.
+	Decision Decision
+}
+
+func unpackDecideGroupRoleRequestParams(packed middleware.Parameters) (params DecideGroupRoleRequestParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "groupId",
+			In:   "path",
+		}
+		params.GroupId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "requestId",
+			In:   "path",
+		}
+		params.RequestId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "decision",
+			In:   "path",
+		}
+		params.Decision = packed[key].(Decision)
+	}
+	return params
+}
+
+func decodeDecideGroupRoleRequestParams(args [3]string, argsEscaped bool, r *http.Request) (params DecideGroupRoleRequestParams, _ error) {
+	// Decode path: groupId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "groupId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.GroupId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "groupId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: requestId.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "requestId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.RequestId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "requestId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: decision.
+	if err := func() error {
+		param := args[2]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[2])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "decision",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Decision = Decision(c)
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Decision.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "decision",
 			In:   "path",
 			Err:  err,
 		}

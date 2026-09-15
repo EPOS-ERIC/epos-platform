@@ -43,25 +43,14 @@ func toProtoRoleRequestRole(value gatewayapi.CreateRoleRequestRole) (metadatalif
 	}
 }
 
-func toProtoMembershipStatus(value gatewayapi.MembershipDecisionRequestStatus) (metadatalifecyclev1.MembershipStatus, error) {
+func toProtoDecision(value gatewayapi.Decision) (metadatalifecyclev1.Decision, error) {
 	switch value {
-	case gatewayapi.MembershipDecisionRequestStatusACTIVE:
-		return metadatalifecyclev1.MembershipStatus_MEMBERSHIP_STATUS_ACTIVE, nil
-	case gatewayapi.MembershipDecisionRequestStatusREJECTED:
-		return metadatalifecyclev1.MembershipStatus_MEMBERSHIP_STATUS_REJECTED, nil
+	case gatewayapi.DecisionAccept:
+		return metadatalifecyclev1.Decision_DECISION_ACCEPT, nil
+	case gatewayapi.DecisionReject:
+		return metadatalifecyclev1.Decision_DECISION_REJECT, nil
 	default:
-		return 0, fmt.Errorf("invalid membership decision status %q", value)
-	}
-}
-
-func toProtoRoleRequestStatus(value gatewayapi.RoleRequestDecisionRequestStatus) (metadatalifecyclev1.RoleRequestStatus, error) {
-	switch value {
-	case gatewayapi.RoleRequestDecisionRequestStatusACCEPTED:
-		return metadatalifecyclev1.RoleRequestStatus_ROLE_REQUEST_STATUS_ACCEPTED, nil
-	case gatewayapi.RoleRequestDecisionRequestStatusREJECTED:
-		return metadatalifecyclev1.RoleRequestStatus_ROLE_REQUEST_STATUS_REJECTED, nil
-	default:
-		return 0, fmt.Errorf("invalid role request decision status %q", value)
+		return 0, fmt.Errorf("invalid decision %q", value)
 	}
 }
 
