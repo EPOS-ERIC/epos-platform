@@ -1,10 +1,14 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { vi } from 'vitest';
 
 import type { User } from '../../../generated/backofficeSchemas';
-import { CurrentUserStore } from '../../stores/current-user.store';
+import { ApiService } from '../../services/api.service';
+import { DialogService } from '../../services/dialog.service';
 import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
+import { ToastService } from '../../services/toast.service';
+import { CurrentUserStore } from '../../stores/current-user.store';
 import { MembershipsPageComponent } from './memberships-page.component';
 
 describe('MembershipsPageComponent', () => {
@@ -29,14 +33,33 @@ describe('MembershipsPageComponent', () => {
     }]
   };
   const open = vi.fn();
+  const currentUser = signal<User | null>(user);
+  const currentUserStore = {
+    user: currentUser,
+    loading: signal(false),
+    error: signal<string | null>(null),
+    refresh: vi.fn()
+  };
+  const apiService = {
+    withdrawGroupMembershipRequest: vi.fn()
+  };
+  const dialog = { confirm: vi.fn() };
+  const toast = { success: vi.fn() };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    currentUser.set(user);
+    currentUserStore.refresh.mockResolvedValue(undefined);
+    apiService.withdrawGroupMembershipRequest.mockReturnValue(of(undefined));
+    dialog.confirm.mockResolvedValue(true);
     TestBed.configureTestingModule({
       imports: [MembershipsPageComponent],
       providers: [
-        { provide: CurrentUserStore, useValue: { user: signal(user), loading: signal(false), error: signal(null) } },
-        { provide: MembershipRequestDialogService, useValue: { open, groups: signal([{ id: 'group-id' }]), groupsLoading: signal(false) } }
+        { provide: ApiService, useValue: apiService },
+        { provide: CurrentUserStore, useValue: currentUserStore },
+        { provide: DialogService, useValue: dialog },
+        { provide: MembershipRequestDialogService, useValue: { open, groups: signal([{ id: 'group-id' }]), groupsLoading: signal(false) } },
+        { provide: ToastService, useValue: toast }
       ]
     });
   });
@@ -53,4 +76,19 @@ describe('MembershipsPageComponent', () => {
     (fixture.nativeElement.querySelector('.memberships-page-header button') as HTMLButtonElement).click();
     expect(open).toHaveBeenCalledOnce();
   });
+
+  it('cancels a pending membership request after confirmation', async () => {
+    const fixture = TestBed.createComponent(MembershipsPageComponent);
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('.membership-cancel-button') as HTMLButtonElement;
+    expect(button.textContent).toContain('Cancel Request');
+    button.click();
+
+    await vi.waitFor(() => expect(apiService.withdrawGroupMembershipRequest).toHaveBeenCalled());
+    expect(apiService.withdrawGroupMembershipRequest).toHaveBeenCalledWith('1375500a-fc04-5831-a7f5-39ea5fcb0445');
+    expect(currentUserStore.refresh).toHaveBeenCalledOnce();
+    expect(toast.success).toHaveBeenCalledWith('Membership request cancelled.');
+  });
+
 });

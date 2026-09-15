@@ -13,6 +13,10 @@
     >Request membership</button>
   </header>
 
+  @if (membershipActionError()) {
+    <div class="memberships-message memberships-message--error">{{ membershipActionError() }}</div>
+  }
+
   @if (error()) {
     <div class="memberships-message memberships-message--error">{{ error() }}</div>
   } @else if (loading()) {
@@ -53,6 +57,23 @@
                 <dd>{{ membership.updated_at | date:'medium' }}</dd>
               </div>
             </dl>
+
+            @if (membership.status === 'PENDING') {
+              <footer class="membership-summary-footer">
+                <button
+                  type="button"
+                  class="app-button membership-cancel-button"
+                  [disabled]="!!membershipMutation()"
+                  (click)="cancelMembershipRequest(membership)"
+                >
+                  @if (membershipMutation() === membership.group.id) {
+                    Cancelling...
+                  } @else {
+                    Cancel Request
+                  }
+                </button>
+              </footer>
+            }
           </article>
         }
       </div>

@@ -333,6 +333,12 @@ export class ApiService {
     );
   }
 
+  withdrawGroupMembershipRequest(groupId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/membership-requests`, {
+      headers: { Authorization: `Bearer ${this.bearerToken}` }
+    });
+  }
+
   decideGroupMembership(groupId: string, userId: string, decision: Decision): Observable<GroupMembership> {
     return this.http.post<GroupMembership>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/${encodeURIComponent(userId)}/${decision}`,

@@ -43,6 +43,8 @@
 }
 
 .membership-summary {
+  display: flex;
+  flex-direction: column;
   padding: 16px;
 }
 
@@ -116,6 +118,25 @@
   color: var(--text);
   font-size: 0.84rem;
   overflow-wrap: anywhere;
+}
+
+.membership-summary-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.membership-cancel-button {
+  border-color: #b91c1c;
+  background: #dc2626;
+  color: #fff;
+}
+
+.membership-cancel-button:hover:not(:disabled) {
+  border-color: #991b1b;
+  background: #b91c1c;
+  color: #fff;
 }
 
 .memberships-message,
