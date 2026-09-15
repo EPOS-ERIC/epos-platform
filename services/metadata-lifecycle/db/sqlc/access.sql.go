@@ -194,7 +194,8 @@ const decideGroupMembership = `-- name: DecideGroupMembership :one
 UPDATE
     group_memberships
 SET
-    STATUS = CASE $1::text
+    STATUS = CASE
+        $1::text
         WHEN 'ACCEPT' THEN 'ACTIVE'::membership_status
         WHEN 'REJECT' THEN 'REJECTED'::membership_status
     END
@@ -233,7 +234,8 @@ const decideRoleRequest = `-- name: DecideRoleRequest :one
 UPDATE
     group_role_requests
 SET
-    STATUS = CASE $1::text
+    STATUS = CASE
+        $1::text
         WHEN 'ACCEPT' THEN 'ACCEPTED'::role_request_status
         WHEN 'REJECT' THEN 'REJECTED'::role_request_status
     END,

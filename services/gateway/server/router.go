@@ -12,6 +12,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	"github.com/go-chi/chi/v5"
 )
@@ -19,6 +20,7 @@ import (
 func NewRouter(
 	log *slog.Logger,
 	identityService *identity.Service,
+	membershipService *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
 	authService *auth.Service,
 	corsAllowOrigin string,
@@ -51,6 +53,7 @@ func NewRouter(
 
 	generatedHandler := handlers.NewOgenHandler(
 		identityService,
+		membershipService,
 		metadataLifecycleClient,
 	)
 	generatedServer, err := gatewayapi.NewServer(

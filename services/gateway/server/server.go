@@ -16,6 +16,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 )
 
@@ -40,7 +41,8 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 	}()
 
 	identitySvc := identity.NewService(baseLog, metadataLifecycleClient)
-	router := NewRouter(baseLog, identitySvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
+	membershipSvc := membership.NewService(baseLog, metadataLifecycleClient)
+	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
 	handler := handlers.NewTimeoutHandler(baseLog, router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{
