@@ -33,9 +33,6 @@ export type Permission =
  */
 export type GlobalRole = "ADMIN";
 
-/**
- * @format uuid
- */
 export type MembershipUserId = string;
 
 export type Decision = "accept" | "reject";

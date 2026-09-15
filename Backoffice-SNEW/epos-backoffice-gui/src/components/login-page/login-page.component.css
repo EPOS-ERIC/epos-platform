@@ -9,10 +9,11 @@
   align-content: center;
   place-items: center;
   padding: 24px;
+  /* Previous base gradient: #5d9989 0%, #4f8577 100%. */
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 24%),
     radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.08), transparent 22%),
-    linear-gradient(180deg, #5d9989 0%, #4f8577 100%);
+    linear-gradient(180deg, #348579 0%, #2f7779 100%);
 }
 
 .login-shell {
