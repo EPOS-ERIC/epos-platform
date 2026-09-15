@@ -17,6 +17,7 @@ import (
 
 func NewErrorHandler(log *slog.Logger) ogenerrors.ErrorHandler {
 	return func(ctx context.Context, w http.ResponseWriter, _ *http.Request, err error) {
+		log.DebugContext(ctx, "error handler", "error", err)
 		status, code, message := problemDetails(err)
 		if code == "request_failed" {
 			status = http.StatusBadRequest
