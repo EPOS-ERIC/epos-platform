@@ -19,18 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	GroupAccessService_ListGroupMemberships_FullMethodName     = "/metadata_lifecycle.v1.GroupAccessService/ListGroupMemberships"
-	GroupAccessService_RequestMembership_FullMethodName        = "/metadata_lifecycle.v1.GroupAccessService/RequestMembership"
-	GroupAccessService_WithdrawMembership_FullMethodName       = "/metadata_lifecycle.v1.GroupAccessService/WithdrawMembership"
-	GroupAccessService_DecideMembership_FullMethodName         = "/metadata_lifecycle.v1.GroupAccessService/DecideMembership"
-	GroupAccessService_RevokeMembership_FullMethodName         = "/metadata_lifecycle.v1.GroupAccessService/RevokeMembership"
-	GroupAccessService_RequestRole_FullMethodName              = "/metadata_lifecycle.v1.GroupAccessService/RequestRole"
-	GroupAccessService_ApplyRoleRequestDecision_FullMethodName = "/metadata_lifecycle.v1.GroupAccessService/ApplyRoleRequestDecision"
-	GroupAccessService_WithdrawRoleRequest_FullMethodName      = "/metadata_lifecycle.v1.GroupAccessService/WithdrawRoleRequest"
-	GroupAccessService_AssignRole_FullMethodName               = "/metadata_lifecycle.v1.GroupAccessService/AssignRole"
-	GroupAccessService_RemoveRole_FullMethodName               = "/metadata_lifecycle.v1.GroupAccessService/RemoveRole"
-	GroupAccessService_GrantPermission_FullMethodName          = "/metadata_lifecycle.v1.GroupAccessService/GrantPermission"
-	GroupAccessService_RevokePermission_FullMethodName         = "/metadata_lifecycle.v1.GroupAccessService/RevokePermission"
+	GroupAccessService_ListGroupMemberships_FullMethodName = "/metadata_lifecycle.v1.GroupAccessService/ListGroupMemberships"
+	GroupAccessService_RequestMembership_FullMethodName    = "/metadata_lifecycle.v1.GroupAccessService/RequestMembership"
+	GroupAccessService_WithdrawMembership_FullMethodName   = "/metadata_lifecycle.v1.GroupAccessService/WithdrawMembership"
+	GroupAccessService_DecideMembership_FullMethodName     = "/metadata_lifecycle.v1.GroupAccessService/DecideMembership"
+	GroupAccessService_RevokeMembership_FullMethodName     = "/metadata_lifecycle.v1.GroupAccessService/RevokeMembership"
+	GroupAccessService_RequestRole_FullMethodName          = "/metadata_lifecycle.v1.GroupAccessService/RequestRole"
+	GroupAccessService_DecideRoleRequest_FullMethodName    = "/metadata_lifecycle.v1.GroupAccessService/DecideRoleRequest"
+	GroupAccessService_WithdrawRoleRequest_FullMethodName  = "/metadata_lifecycle.v1.GroupAccessService/WithdrawRoleRequest"
+	GroupAccessService_AssignRole_FullMethodName           = "/metadata_lifecycle.v1.GroupAccessService/AssignRole"
+	GroupAccessService_RemoveRole_FullMethodName           = "/metadata_lifecycle.v1.GroupAccessService/RemoveRole"
+	GroupAccessService_GrantPermission_FullMethodName      = "/metadata_lifecycle.v1.GroupAccessService/GrantPermission"
+	GroupAccessService_RevokePermission_FullMethodName     = "/metadata_lifecycle.v1.GroupAccessService/RevokePermission"
 )
 
 // GroupAccessServiceClient is the client API for GroupAccessService service.
@@ -43,7 +43,7 @@ type GroupAccessServiceClient interface {
 	DecideMembership(ctx context.Context, in *DecideMembershipRequest, opts ...grpc.CallOption) (*DecideMembershipResponse, error)
 	RevokeMembership(ctx context.Context, in *RevokeMembershipRequest, opts ...grpc.CallOption) (*RevokeMembershipResponse, error)
 	RequestRole(ctx context.Context, in *RequestRoleRequest, opts ...grpc.CallOption) (*RequestRoleResponse, error)
-	ApplyRoleRequestDecision(ctx context.Context, in *ApplyRoleRequestDecisionRequest, opts ...grpc.CallOption) (*ApplyRoleRequestDecisionResponse, error)
+	DecideRoleRequest(ctx context.Context, in *DecideRoleRequestRequest, opts ...grpc.CallOption) (*DecideRoleRequestResponse, error)
 	WithdrawRoleRequest(ctx context.Context, in *WithdrawRoleRequestRequest, opts ...grpc.CallOption) (*WithdrawRoleRequestResponse, error)
 	AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error)
 	RemoveRole(ctx context.Context, in *RemoveRoleRequest, opts ...grpc.CallOption) (*RemoveRoleResponse, error)
@@ -119,10 +119,10 @@ func (c *groupAccessServiceClient) RequestRole(ctx context.Context, in *RequestR
 	return out, nil
 }
 
-func (c *groupAccessServiceClient) ApplyRoleRequestDecision(ctx context.Context, in *ApplyRoleRequestDecisionRequest, opts ...grpc.CallOption) (*ApplyRoleRequestDecisionResponse, error) {
+func (c *groupAccessServiceClient) DecideRoleRequest(ctx context.Context, in *DecideRoleRequestRequest, opts ...grpc.CallOption) (*DecideRoleRequestResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ApplyRoleRequestDecisionResponse)
-	err := c.cc.Invoke(ctx, GroupAccessService_ApplyRoleRequestDecision_FullMethodName, in, out, cOpts...)
+	out := new(DecideRoleRequestResponse)
+	err := c.cc.Invoke(ctx, GroupAccessService_DecideRoleRequest_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ type GroupAccessServiceServer interface {
 	DecideMembership(context.Context, *DecideMembershipRequest) (*DecideMembershipResponse, error)
 	RevokeMembership(context.Context, *RevokeMembershipRequest) (*RevokeMembershipResponse, error)
 	RequestRole(context.Context, *RequestRoleRequest) (*RequestRoleResponse, error)
-	ApplyRoleRequestDecision(context.Context, *ApplyRoleRequestDecisionRequest) (*ApplyRoleRequestDecisionResponse, error)
+	DecideRoleRequest(context.Context, *DecideRoleRequestRequest) (*DecideRoleRequestResponse, error)
 	WithdrawRoleRequest(context.Context, *WithdrawRoleRequestRequest) (*WithdrawRoleRequestResponse, error)
 	AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error)
 	RemoveRole(context.Context, *RemoveRoleRequest) (*RemoveRoleResponse, error)
@@ -223,8 +223,8 @@ func (UnimplementedGroupAccessServiceServer) RevokeMembership(context.Context, *
 func (UnimplementedGroupAccessServiceServer) RequestRole(context.Context, *RequestRoleRequest) (*RequestRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RequestRole not implemented")
 }
-func (UnimplementedGroupAccessServiceServer) ApplyRoleRequestDecision(context.Context, *ApplyRoleRequestDecisionRequest) (*ApplyRoleRequestDecisionResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ApplyRoleRequestDecision not implemented")
+func (UnimplementedGroupAccessServiceServer) DecideRoleRequest(context.Context, *DecideRoleRequestRequest) (*DecideRoleRequestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DecideRoleRequest not implemented")
 }
 func (UnimplementedGroupAccessServiceServer) WithdrawRoleRequest(context.Context, *WithdrawRoleRequestRequest) (*WithdrawRoleRequestResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method WithdrawRoleRequest not implemented")
@@ -370,20 +370,20 @@ func _GroupAccessService_RequestRole_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GroupAccessService_ApplyRoleRequestDecision_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ApplyRoleRequestDecisionRequest)
+func _GroupAccessService_DecideRoleRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DecideRoleRequestRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GroupAccessServiceServer).ApplyRoleRequestDecision(ctx, in)
+		return srv.(GroupAccessServiceServer).DecideRoleRequest(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: GroupAccessService_ApplyRoleRequestDecision_FullMethodName,
+		FullMethod: GroupAccessService_DecideRoleRequest_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GroupAccessServiceServer).ApplyRoleRequestDecision(ctx, req.(*ApplyRoleRequestDecisionRequest))
+		return srv.(GroupAccessServiceServer).DecideRoleRequest(ctx, req.(*DecideRoleRequestRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -510,8 +510,8 @@ var GroupAccessService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GroupAccessService_RequestRole_Handler,
 		},
 		{
-			MethodName: "ApplyRoleRequestDecision",
-			Handler:    _GroupAccessService_ApplyRoleRequestDecision_Handler,
+			MethodName: "DecideRoleRequest",
+			Handler:    _GroupAccessService_DecideRoleRequest_Handler,
 		},
 		{
 			MethodName: "WithdrawRoleRequest",

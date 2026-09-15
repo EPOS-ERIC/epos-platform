@@ -2809,6 +2809,47 @@ func (s *DateTimeScalarParameterKind) UnmarshalText(data []byte) error {
 	}
 }
 
+type Decision string
+
+const (
+	DecisionAccept Decision = "accept"
+	DecisionReject Decision = "reject"
+)
+
+// AllValues returns all Decision values.
+func (Decision) AllValues() []Decision {
+	return []Decision{
+		DecisionAccept,
+		DecisionReject,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s Decision) MarshalText() ([]byte, error) {
+	switch s {
+	case DecisionAccept:
+		return []byte(s), nil
+	case DecisionReject:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *Decision) UnmarshalText(data []byte) error {
+	switch Decision(data) {
+	case DecisionAccept:
+		*s = DecisionAccept
+		return nil
+	case DecisionReject:
+		*s = DecisionReject
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // DeleteContactPointNoContent is response for DeleteContactPoint operation.
 type DeleteContactPointNoContent struct{}
 
@@ -5663,62 +5704,6 @@ func (s *LifecycleResourceType) UnmarshalText(data []byte) error {
 		return nil
 	case LifecycleResourceTypeSoftwareSourceCode:
 		*s = LifecycleResourceTypeSoftwareSourceCode
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Ref: #/components/schemas/MembershipDecisionRequest
-type MembershipDecisionRequest struct {
-	Status MembershipDecisionRequestStatus `json:"status"`
-}
-
-// GetStatus returns the value of Status.
-func (s *MembershipDecisionRequest) GetStatus() MembershipDecisionRequestStatus {
-	return s.Status
-}
-
-// SetStatus sets the value of Status.
-func (s *MembershipDecisionRequest) SetStatus(val MembershipDecisionRequestStatus) {
-	s.Status = val
-}
-
-type MembershipDecisionRequestStatus string
-
-const (
-	MembershipDecisionRequestStatusACTIVE   MembershipDecisionRequestStatus = "ACTIVE"
-	MembershipDecisionRequestStatusREJECTED MembershipDecisionRequestStatus = "REJECTED"
-)
-
-// AllValues returns all MembershipDecisionRequestStatus values.
-func (MembershipDecisionRequestStatus) AllValues() []MembershipDecisionRequestStatus {
-	return []MembershipDecisionRequestStatus{
-		MembershipDecisionRequestStatusACTIVE,
-		MembershipDecisionRequestStatusREJECTED,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s MembershipDecisionRequestStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case MembershipDecisionRequestStatusACTIVE:
-		return []byte(s), nil
-	case MembershipDecisionRequestStatusREJECTED:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *MembershipDecisionRequestStatus) UnmarshalText(data []byte) error {
-	switch MembershipDecisionRequestStatus(data) {
-	case MembershipDecisionRequestStatusACTIVE:
-		*s = MembershipDecisionRequestStatusACTIVE
-		return nil
-	case MembershipDecisionRequestStatusREJECTED:
-		*s = MembershipDecisionRequestStatusREJECTED
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -8857,62 +8842,6 @@ func (s *RoleRequest) SetStatus(val RoleRequestStatus) {
 // SetRequestedAt sets the value of RequestedAt.
 func (s *RoleRequest) SetRequestedAt(val time.Time) {
 	s.RequestedAt = val
-}
-
-// Ref: #/components/schemas/RoleRequestDecisionRequest
-type RoleRequestDecisionRequest struct {
-	Status RoleRequestDecisionRequestStatus `json:"status"`
-}
-
-// GetStatus returns the value of Status.
-func (s *RoleRequestDecisionRequest) GetStatus() RoleRequestDecisionRequestStatus {
-	return s.Status
-}
-
-// SetStatus sets the value of Status.
-func (s *RoleRequestDecisionRequest) SetStatus(val RoleRequestDecisionRequestStatus) {
-	s.Status = val
-}
-
-type RoleRequestDecisionRequestStatus string
-
-const (
-	RoleRequestDecisionRequestStatusACCEPTED RoleRequestDecisionRequestStatus = "ACCEPTED"
-	RoleRequestDecisionRequestStatusREJECTED RoleRequestDecisionRequestStatus = "REJECTED"
-)
-
-// AllValues returns all RoleRequestDecisionRequestStatus values.
-func (RoleRequestDecisionRequestStatus) AllValues() []RoleRequestDecisionRequestStatus {
-	return []RoleRequestDecisionRequestStatus{
-		RoleRequestDecisionRequestStatusACCEPTED,
-		RoleRequestDecisionRequestStatusREJECTED,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s RoleRequestDecisionRequestStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case RoleRequestDecisionRequestStatusACCEPTED:
-		return []byte(s), nil
-	case RoleRequestDecisionRequestStatusREJECTED:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *RoleRequestDecisionRequestStatus) UnmarshalText(data []byte) error {
-	switch RoleRequestDecisionRequestStatus(data) {
-	case RoleRequestDecisionRequestStatusACCEPTED:
-		*s = RoleRequestDecisionRequestStatusACCEPTED
-		return nil
-	case RoleRequestDecisionRequestStatusREJECTED:
-		*s = RoleRequestDecisionRequestStatusREJECTED
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 type RoleRequestRole string

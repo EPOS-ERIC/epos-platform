@@ -31,6 +31,14 @@ const (
 	MembershipRejected MembershipStatus = "REJECTED"
 )
 
+// Decision identifies an accept or reject operation on a pending request.
+type Decision string
+
+const (
+	DecisionAccept Decision = "ACCEPT"
+	DecisionReject Decision = "REJECT"
+)
+
 // RoleRequestStatus is the current state of a role request.
 type RoleRequestStatus string
 

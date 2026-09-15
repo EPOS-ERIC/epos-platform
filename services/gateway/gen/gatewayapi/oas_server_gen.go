@@ -8,13 +8,6 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// ApplyRoleRequestDecision implements applyRoleRequestDecision operation.
-	//
-	// Accept or reject a pending role request. Requires group role management permission or global role
-	// management permission.
-	//
-	// PATCH /groups/{groupId}/role-requests/{requestId}
-	ApplyRoleRequestDecision(ctx context.Context, req *RoleRequestDecisionRequest, params ApplyRoleRequestDecisionParams) (*GroupMembership, error)
 	// AssignGlobalRole implements assignGlobalRole operation.
 	//
 	// Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
@@ -77,8 +70,15 @@ type Handler interface {
 	// Accept or reject a pending membership request. Requires group membership management permission or
 	// global membership management permission.
 	//
-	// PATCH /groups/{groupId}/memberships/{userId}
-	DecideGroupMembership(ctx context.Context, req *MembershipDecisionRequest, params DecideGroupMembershipParams) (*GroupMembership, error)
+	// POST /groups/{groupId}/memberships/{userId}/{decision}
+	DecideGroupMembership(ctx context.Context, params DecideGroupMembershipParams) (*GroupMembership, error)
+	// DecideGroupRoleRequest implements decideGroupRoleRequest operation.
+	//
+	// Accept or reject a pending role request. Requires group role management permission or global role
+	// management permission.
+	//
+	// POST /groups/{groupId}/role-requests/{requestId}/{decision}
+	DecideGroupRoleRequest(ctx context.Context, params DecideGroupRoleRequestParams) (*GroupMembership, error)
 	// DeleteContactPoint implements deleteContactPoint operation.
 	//
 	// Delete contact point.
