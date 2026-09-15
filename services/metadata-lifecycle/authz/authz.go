@@ -183,6 +183,14 @@ func (a *Authorizer) CanManageGroupMemberships(ctx context.Context, userID strin
 
 // CanRevokeGroupMembership applies the extra protection for GROUP_ADMIN memberships.
 func (a *Authorizer) CanRevokeGroupMembership(ctx context.Context, userID string, groupID uuid.UUID, targetUserID string) (domain.Result, error) {
+	if userID == targetUserID {
+		active, err := a.AuthorizeActiveUser(ctx, userID)
+		if err != nil || !active.Allowed {
+			return active, err
+		}
+		return domain.Result{Allowed: true, Reason: "self"}, nil
+	}
+
 	allowed, err := a.CanManageGroupMemberships(ctx, userID, groupID)
 	if err != nil || !allowed.Allowed {
 		return allowed, err

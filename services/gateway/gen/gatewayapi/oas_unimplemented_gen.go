@@ -146,9 +146,10 @@ func (UnimplementedHandler) DeleteGroupCategory(ctx context.Context, params Dele
 
 // DeleteGroupMembership implements deleteGroupMembership operation.
 //
-// Remove a user membership from a group. Requires group membership management permission or global
-// membership management permission. Memberships holding GROUP_ADMIN require global membership
-// management permission.
+// Remove a user membership from a group. The authenticated user may remove their own membership by
+// using 'self' or their own user ID. Removing another user's membership requires group membership
+// management permission or global membership management permission. Memberships holding GROUP_ADMIN
+// require global membership management permission unless the user removes their own membership.
 //
 // DELETE /groups/{groupId}/memberships/{userId}
 func (UnimplementedHandler) DeleteGroupMembership(ctx context.Context, params DeleteGroupMembershipParams) error {

@@ -12,6 +12,7 @@ import (
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	"github.com/ogen-go/ogen/ogenerrors"
 )
 
@@ -25,12 +26,14 @@ var (
 type ogenHandler struct {
 	metadataLifecycle *clients.MetadataLifecycle
 	identity          *identity.Service
+	membership        *membership.Service
 }
 
-func NewOgenHandler(i *identity.Service, metadataLifecycle *clients.MetadataLifecycle) *ogenHandler {
+func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle) *ogenHandler {
 	return &ogenHandler{
 		metadataLifecycle: metadataLifecycle,
 		identity:          i,
+		membership:        m,
 	}
 }
 

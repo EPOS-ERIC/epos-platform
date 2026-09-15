@@ -1325,7 +1325,7 @@ func decodeDeleteGroupCategoryParams(args [2]string, argsEscaped bool, r *http.R
 type DeleteGroupMembershipParams struct {
 	// Group identifier.
 	GroupId uuid.UUID
-	// User identifier for membership operations.
+	// User identifier for membership deletion. Use 'self' to target the authenticated user.
 	UserId string
 }
 

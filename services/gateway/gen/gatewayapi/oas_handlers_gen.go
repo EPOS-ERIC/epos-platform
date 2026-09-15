@@ -2925,9 +2925,10 @@ func (s *Server) handleDeleteGroupCategoryRequest(args [2]string, argsEscaped bo
 
 // handleDeleteGroupMembershipRequest handles deleteGroupMembership operation.
 //
-// Remove a user membership from a group. Requires group membership management permission or global
-// membership management permission. Memberships holding GROUP_ADMIN require global membership
-// management permission.
+// Remove a user membership from a group. The authenticated user may remove their own membership by
+// using 'self' or their own user ID. Removing another user's membership requires group membership
+// management permission or global membership management permission. Memberships holding GROUP_ADMIN
+// require global membership management permission unless the user removes their own membership.
 //
 // DELETE /groups/{groupId}/memberships/{userId}
 func (s *Server) handleDeleteGroupMembershipRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

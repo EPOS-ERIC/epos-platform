@@ -649,12 +649,12 @@ paths:
   /groups/{groupId}/memberships/{userId}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
-      - $ref: "#/components/parameters/MembershipUserId"
+      - $ref: "#/components/parameters/DeleteMembershipUserId"
     delete:
       tags:
         - Memberships
       summary: Delete membership
-      description: Remove a user membership from a group. Requires group membership management permission or global membership management permission. Memberships holding GROUP_ADMIN require global membership management permission.
+      description: "Remove a user membership from a group. The authenticated user may remove their own membership by using 'self' or their own user ID. Removing another user's membership requires group membership management permission or global membership management permission. Memberships holding GROUP_ADMIN require global membership management permission unless the user removes their own membership."
       operationId: deleteGroupMembership
       security:
         - bearerAuth: []
@@ -1480,6 +1480,14 @@ components:
       in: path
       required: true
       description: User identifier for membership operations.
+      schema:
+        type: string
+
+    DeleteMembershipUserId:
+      name: userId
+      in: path
+      required: true
+      description: User identifier for membership deletion. Use 'self' to target the authenticated user.
       schema:
         type: string
 
