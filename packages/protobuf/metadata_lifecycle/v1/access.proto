@@ -50,7 +50,7 @@ message WithdrawMembershipResponse {}
 message DecideMembershipRequest {
   string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
-  MembershipStatus status = 3 [(buf.validate.field).enum.defined_only = true];
+  Decision decision = 3 [(buf.validate.field).enum.defined_only = true];
 }
 message DecideMembershipResponse {
   GroupMembership membership = 1;
@@ -70,12 +70,12 @@ message RequestRoleResponse {
   RoleRequest request = 1;
 }
 
-message ApplyRoleRequestDecisionRequest {
+message DecideRoleRequestRequest {
   string group_id = 1 [(buf.validate.field).string.uuid = true];
   string request_id = 2 [(buf.validate.field).string.uuid = true];
-  RoleRequestStatus status = 3 [(buf.validate.field).enum.defined_only = true];
+  Decision decision = 3 [(buf.validate.field).enum.defined_only = true];
 }
-message ApplyRoleRequestDecisionResponse {
+message DecideRoleRequestResponse {
   GroupMembership membership = 1;
 }
 
@@ -132,7 +132,7 @@ service GroupAccessService {
   rpc RequestRole(RequestRoleRequest) returns (RequestRoleResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
   }
-  rpc ApplyRoleRequestDecision(ApplyRoleRequestDecisionRequest) returns (ApplyRoleRequestDecisionResponse) {
+  rpc DecideRoleRequest(DecideRoleRequestRequest) returns (DecideRoleRequestResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
   }
   rpc WithdrawRoleRequest(WithdrawRoleRequestRequest) returns (WithdrawRoleRequestResponse) {

@@ -92,11 +92,11 @@ func (s *AccessServer) DecideMembership(ctx context.Context, request *metadatali
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
-	membershipStatus, err := toDomainMembershipStatus(request.Status)
+	decision, err := toDomainDecision(request.Decision)
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
-	value, err := s.access.DecideMembership(ctx, actor, groupID, request.UserId, membershipStatus)
+	value, err := s.access.DecideMembership(ctx, actor, groupID, request.UserId, decision)
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
@@ -140,7 +140,7 @@ func (s *AccessServer) RequestRole(ctx context.Context, request *metadatalifecyc
 	return &metadatalifecyclev1.RequestRoleResponse{Request: roleRequest}, nil
 }
 
-func (s *AccessServer) ApplyRoleRequestDecision(ctx context.Context, request *metadatalifecyclev1.ApplyRoleRequestDecisionRequest) (*metadatalifecyclev1.ApplyRoleRequestDecisionResponse, error) {
+func (s *AccessServer) DecideRoleRequest(ctx context.Context, request *metadatalifecyclev1.DecideRoleRequestRequest) (*metadatalifecyclev1.DecideRoleRequestResponse, error) {
 	actor, err := actorFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -153,15 +153,15 @@ func (s *AccessServer) ApplyRoleRequestDecision(ctx context.Context, request *me
 	if err != nil {
 		return nil, err
 	}
-	roleRequestStatus, err := toDomainRoleRequestStatus(request.Status)
+	decision, err := toDomainDecision(request.Decision)
 	if err != nil {
 		return nil, err
 	}
-	value, err := s.access.ApplyRoleRequestDecision(ctx, actor, groupID, requestID, roleRequestStatus)
+	value, err := s.access.DecideRoleRequest(ctx, actor, groupID, requestID, decision)
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
-	return &metadatalifecyclev1.ApplyRoleRequestDecisionResponse{Membership: toProtoGroupMembership(value)}, nil
+	return &metadatalifecyclev1.DecideRoleRequestResponse{Membership: toProtoGroupMembership(value)}, nil
 }
 
 func (s *AccessServer) WithdrawRoleRequest(ctx context.Context, request *metadatalifecyclev1.WithdrawRoleRequestRequest) (*metadatalifecyclev1.WithdrawRoleRequestResponse, error) {
@@ -270,23 +270,12 @@ func toDomainGroupRole(value metadatalifecyclev1.GroupRole) (domain.GroupRole, e
 	}
 }
 
-func toDomainMembershipStatus(value metadatalifecyclev1.MembershipStatus) (domain.MembershipStatus, error) {
+func toDomainDecision(value metadatalifecyclev1.Decision) (domain.Decision, error) {
 	switch value {
-	case metadatalifecyclev1.MembershipStatus_MEMBERSHIP_STATUS_ACTIVE:
-		return domain.MembershipActive, nil
-	case metadatalifecyclev1.MembershipStatus_MEMBERSHIP_STATUS_REJECTED:
-		return domain.MembershipRejected, nil
-	default:
-		return "", domain.ErrInvalidAccess
-	}
-}
-
-func toDomainRoleRequestStatus(value metadatalifecyclev1.RoleRequestStatus) (domain.RoleRequestStatus, error) {
-	switch value {
-	case metadatalifecyclev1.RoleRequestStatus_ROLE_REQUEST_STATUS_ACCEPTED:
-		return domain.RoleRequestAccepted, nil
-	case metadatalifecyclev1.RoleRequestStatus_ROLE_REQUEST_STATUS_REJECTED:
-		return domain.RoleRequestRejected, nil
+	case metadatalifecyclev1.Decision_DECISION_ACCEPT:
+		return domain.DecisionAccept, nil
+	case metadatalifecyclev1.Decision_DECISION_REJECT:
+		return domain.DecisionReject, nil
 	default:
 		return "", domain.ErrInvalidAccess
 	}

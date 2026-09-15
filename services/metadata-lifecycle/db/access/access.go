@@ -250,10 +250,10 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string
 	return result, nil
 }
 
-// ApplyRoleRequestDecision accepts or rejects a pending role request and records the
+// DecideRoleRequest accepts or rejects a pending role request and records the
 // decision actor and time. Acceptance assigns the requested role atomically,
 // then returns the target user's updated membership.
-func (r *Repo) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID uuid.UUID, status domain.RoleRequestStatus, actorID string) (domain.GroupMembership, error) {
+func (r *Repo) DecideRoleRequest(ctx context.Context, groupID, requestID uuid.UUID, decision domain.Decision, actorID string) (domain.GroupMembership, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
 		return domain.GroupMembership{}, domain.ErrAccessNotFound
 	} else if err != nil {
@@ -262,8 +262,8 @@ func (r *Repo) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID 
 
 	var request sqlc.GroupRoleRequest
 	err := dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
-		value, err := q.ApplyRoleRequestDecision(ctx, sqlc.ApplyRoleRequestDecisionParams{
-			Status:    sqlc.RoleRequestStatus(status),
+		value, err := q.DecideRoleRequest(ctx, sqlc.DecideRoleRequestParams{
+			Decision:  string(decision),
 			DecidedBy: &actorID,
 			RequestID: requestID,
 			GroupID:   groupID,
@@ -276,7 +276,7 @@ func (r *Repo) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID 
 		}
 		request = value
 
-		if status == domain.RoleRequestAccepted {
+		if decision == domain.DecisionAccept {
 			if err := q.AssignGroupRoleFromRequest(ctx, sqlc.AssignGroupRoleFromRequestParams{
 				AssignedBy: actorID,
 				RequestID:  requestID,
@@ -493,9 +493,9 @@ func (r *Repo) checkRoleTarget(ctx context.Context, groupID uuid.UUID, userID st
 	return false, nil
 }
 
-// DecideMembership changes a pending membership to ACTIVE or REJECTED.
+// DecideMembership changes a pending membership according to the requested decision.
 // Rejection also marks its pending role requests as rejected in the same transaction.
-func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID string, status domain.MembershipStatus, actorID string) (domain.GroupMembership, error) {
+func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID string, decision domain.Decision, actorID string) (domain.GroupMembership, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
 		return domain.GroupMembership{}, domain.ErrAccessNotFound
 	} else if err != nil {
@@ -511,9 +511,9 @@ func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID s
 	var membership sqlc.GroupMembership
 	err := dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
 		row, err := q.DecideGroupMembership(ctx, sqlc.DecideGroupMembershipParams{
-			Status:  sqlc.MembershipStatus(status),
-			GroupID: groupID,
-			UserID:  userID,
+			Decision: string(decision),
+			GroupID:  groupID,
+			UserID:   userID,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.ErrAccessConflict
@@ -524,7 +524,7 @@ func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID s
 
 		membership = row
 
-		if status == domain.MembershipRejected {
+		if decision == domain.DecisionReject {
 			if err := q.RejectPendingGroupRoleRequests(ctx, sqlc.RejectPendingGroupRoleRequestsParams{
 				DecidedBy: &actorID,
 				GroupID:   groupID,

@@ -161,7 +161,11 @@ WHERE
 UPDATE
     group_memberships
 SET
-    STATUS = sqlc.arg(STATUS)::membership_status
+    STATUS = CASE
+        sqlc.arg(decision)::text
+        WHEN 'ACCEPT' THEN 'ACTIVE'::membership_status
+        WHEN 'REJECT' THEN 'REJECTED'::membership_status
+    END
 WHERE
     group_id = sqlc.arg(group_id)
     AND user_id = sqlc.arg(user_id)
@@ -185,11 +189,15 @@ WHERE
     AND user_id = sqlc.arg(user_id)
     AND STATUS = 'PENDING';
 
--- name: ApplyRoleRequestDecision :one
+-- name: DecideRoleRequest :one
 UPDATE
     group_role_requests
 SET
-    STATUS = sqlc.arg(STATUS)::role_request_status,
+    STATUS = CASE
+        sqlc.arg(decision)::text
+        WHEN 'ACCEPT' THEN 'ACCEPTED'::role_request_status
+        WHEN 'REJECT' THEN 'REJECTED'::role_request_status
+    END,
     decided_by = sqlc.arg(decided_by),
     decided_at = NOW()
 WHERE

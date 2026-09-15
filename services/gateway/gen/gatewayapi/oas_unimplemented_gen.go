@@ -13,16 +13,6 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// ApplyRoleRequestDecision implements applyRoleRequestDecision operation.
-//
-// Accept or reject a pending role request. Requires group role management permission or global role
-// management permission.
-//
-// PATCH /groups/{groupId}/role-requests/{requestId}
-func (UnimplementedHandler) ApplyRoleRequestDecision(ctx context.Context, req *RoleRequestDecisionRequest, params ApplyRoleRequestDecisionParams) (r *GroupMembership, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // AssignGlobalRole implements assignGlobalRole operation.
 //
 // Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
@@ -112,8 +102,18 @@ func (UnimplementedHandler) CreateResource(ctx context.Context, req CreateResour
 // Accept or reject a pending membership request. Requires group membership management permission or
 // global membership management permission.
 //
-// PATCH /groups/{groupId}/memberships/{userId}
-func (UnimplementedHandler) DecideGroupMembership(ctx context.Context, req *MembershipDecisionRequest, params DecideGroupMembershipParams) (r *GroupMembership, _ error) {
+// POST /groups/{groupId}/memberships/{userId}/{decision}
+func (UnimplementedHandler) DecideGroupMembership(ctx context.Context, params DecideGroupMembershipParams) (r *GroupMembership, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// DecideGroupRoleRequest implements decideGroupRoleRequest operation.
+//
+// Accept or reject a pending role request. Requires group role management permission or global role
+// management permission.
+//
+// POST /groups/{groupId}/role-requests/{requestId}/{decision}
+func (UnimplementedHandler) DecideGroupRoleRequest(ctx context.Context, params DecideGroupRoleRequestParams) (r *GroupMembership, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

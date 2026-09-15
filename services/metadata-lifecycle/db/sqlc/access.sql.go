@@ -12,66 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const applyRoleRequestDecision = `-- name: ApplyRoleRequestDecision :one
-UPDATE
-    group_role_requests
-SET
-    STATUS = $1::role_request_status,
-    decided_by = $2,
-    decided_at = NOW()
-WHERE
-    group_role_requests.id = $3
-    AND group_role_requests.group_id = $4
-    AND group_role_requests.STATUS = 'PENDING'
-    AND EXISTS (
-        SELECT
-            1
-        FROM
-            group_memberships
-        WHERE
-            user_id = group_role_requests.user_id
-            AND group_id = group_role_requests.group_id
-            AND STATUS = 'ACTIVE'
-    )
-RETURNING
-    group_role_requests.id,
-    group_role_requests.user_id,
-    group_role_requests.group_id,
-    group_role_requests.role_key,
-    group_role_requests.STATUS,
-    group_role_requests.requested_at,
-    group_role_requests.decided_by,
-    group_role_requests.decided_at
-`
-
-type ApplyRoleRequestDecisionParams struct {
-	Status    RoleRequestStatus
-	DecidedBy *string
-	RequestID uuid.UUID
-	GroupID   uuid.UUID
-}
-
-func (q *Queries) ApplyRoleRequestDecision(ctx context.Context, arg ApplyRoleRequestDecisionParams) (GroupRoleRequest, error) {
-	row := q.db.QueryRow(ctx, applyRoleRequestDecision,
-		arg.Status,
-		arg.DecidedBy,
-		arg.RequestID,
-		arg.GroupID,
-	)
-	var i GroupRoleRequest
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.GroupID,
-		&i.RoleKey,
-		&i.Status,
-		&i.RequestedAt,
-		&i.DecidedBy,
-		&i.DecidedAt,
-	)
-	return i, err
-}
-
 const assignGroupRole = `-- name: AssignGroupRole :execrows
 INSERT INTO
     group_membership_roles (user_id, group_id, role_key, assigned_by)
@@ -254,7 +194,10 @@ const decideGroupMembership = `-- name: DecideGroupMembership :one
 UPDATE
     group_memberships
 SET
-    STATUS = $1::membership_status
+    STATUS = CASE $1::text
+        WHEN 'ACCEPT' THEN 'ACTIVE'::membership_status
+        WHEN 'REJECT' THEN 'REJECTED'::membership_status
+    END
 WHERE
     group_id = $2
     AND user_id = $3
@@ -268,13 +211,13 @@ RETURNING
 `
 
 type DecideGroupMembershipParams struct {
-	Status  MembershipStatus
-	GroupID uuid.UUID
-	UserID  string
+	Decision string
+	GroupID  uuid.UUID
+	UserID   string
 }
 
 func (q *Queries) DecideGroupMembership(ctx context.Context, arg DecideGroupMembershipParams) (GroupMembership, error) {
-	row := q.db.QueryRow(ctx, decideGroupMembership, arg.Status, arg.GroupID, arg.UserID)
+	row := q.db.QueryRow(ctx, decideGroupMembership, arg.Decision, arg.GroupID, arg.UserID)
 	var i GroupMembership
 	err := row.Scan(
 		&i.UserID,
@@ -282,6 +225,69 @@ func (q *Queries) DecideGroupMembership(ctx context.Context, arg DecideGroupMemb
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const decideRoleRequest = `-- name: DecideRoleRequest :one
+UPDATE
+    group_role_requests
+SET
+    STATUS = CASE $1::text
+        WHEN 'ACCEPT' THEN 'ACCEPTED'::role_request_status
+        WHEN 'REJECT' THEN 'REJECTED'::role_request_status
+    END,
+    decided_by = $2,
+    decided_at = NOW()
+WHERE
+    group_role_requests.id = $3
+    AND group_role_requests.group_id = $4
+    AND group_role_requests.STATUS = 'PENDING'
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            group_memberships
+        WHERE
+            user_id = group_role_requests.user_id
+            AND group_id = group_role_requests.group_id
+            AND STATUS = 'ACTIVE'
+    )
+RETURNING
+    group_role_requests.id,
+    group_role_requests.user_id,
+    group_role_requests.group_id,
+    group_role_requests.role_key,
+    group_role_requests.STATUS,
+    group_role_requests.requested_at,
+    group_role_requests.decided_by,
+    group_role_requests.decided_at
+`
+
+type DecideRoleRequestParams struct {
+	Decision  string
+	DecidedBy *string
+	RequestID uuid.UUID
+	GroupID   uuid.UUID
+}
+
+func (q *Queries) DecideRoleRequest(ctx context.Context, arg DecideRoleRequestParams) (GroupRoleRequest, error) {
+	row := q.db.QueryRow(ctx, decideRoleRequest,
+		arg.Decision,
+		arg.DecidedBy,
+		arg.RequestID,
+		arg.GroupID,
+	)
+	var i GroupRoleRequest
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.GroupID,
+		&i.RoleKey,
+		&i.Status,
+		&i.RequestedAt,
+		&i.DecidedBy,
+		&i.DecidedAt,
 	)
 	return i, err
 }
