@@ -829,6 +829,12 @@ app-navigation-sidebar .group-nav-icon {
   object-fit: contain;
 }
 
+app-navigation-sidebar .brand-mark img {
+  filter:
+    drop-shadow(0 5px 4px rgba(8, 47, 43, 0.24))
+    drop-shadow(0 16px 11px rgba(8, 35, 34, 0.46));
+}
+
 app-navigation-sidebar .membership-request-footer {
   margin-top: auto;
   padding-top: 14px;
