@@ -196,14 +196,14 @@
 }
 
 .sidebar-action-button.sidebar-action-button--submit {
-  border-color: #c2410c;
-  background: #e5a113;
+  border-color: #9a4d18;
+  background: #d18a32;
   color: #fff;
-  box-shadow: 0 8px 18px rgba(229, 161, 19, 0.18), 0 8px 18px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 18px rgba(154, 77, 24, 0.24), 0 8px 18px rgba(15, 23, 42, 0.12);
 }
 
 .sidebar-action-button.sidebar-action-button--submit:hover {
-  background: #c2410c;
+  background: #b86220;
   color: #fff;
 }
 

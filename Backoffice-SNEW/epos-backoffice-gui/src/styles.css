@@ -835,6 +835,20 @@ app-navigation-sidebar .brand-mark img {
     drop-shadow(0 16px 11px rgba(8, 35, 34, 0.46));
 }
 
+app-navigation-sidebar .sidebar-top > .sidebar-back-button {
+  align-self: center;
+}
+
+[data-theme='light'] app-navigation-sidebar .sidebar-top > .sidebar-back-button {
+  border-color: rgba(7, 54, 51, 0.72);
+  background: rgba(13, 73, 68, 0.78);
+  color: #f8fafc;
+}
+
+[data-theme='light'] app-navigation-sidebar .sidebar-top > .sidebar-back-button:hover {
+  background: rgba(7, 54, 51, 0.94);
+}
+
 app-navigation-sidebar .membership-request-footer {
   margin-top: auto;
   padding-top: 14px;

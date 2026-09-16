@@ -4,13 +4,6 @@
       <button type="button" class="sidebar-toggle-button app-button app-button--ghost app-button--icon" (click)="toggleSidebar()" [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'">
         <app-icon [name]="collapsed() ? 'chevron-right' : 'chevron-left'" [size]="14" />
       </button>
-
-      @if (detailItems.length || showBackButton) {
-        <a class="sidebar-back-button app-button app-button--ghost" [routerLink]="detailBackLink" [queryParams]="detailBackQueryParams" aria-label="Back to results">
-          <app-icon name="chevron-left" [size]="14" />
-          <span class="sidebar-back-text">Back</span>
-        </a>
-      }
     </div>
 
     <div class="brand">
@@ -18,6 +11,13 @@
         <img [src]="logoSrc" alt="Backoffice logo" />
       </span>
     </div>
+
+    @if (detailItems.length || showBackButton) {
+      <a class="sidebar-back-button app-button app-button--ghost" [routerLink]="detailBackLink" [queryParams]="detailBackQueryParams" aria-label="Back to results">
+        <app-icon name="chevron-left" [size]="14" />
+        <span class="sidebar-back-text">Back</span>
+      </a>
+    }
   </div>
 
   <nav class="nav" [class.nav--main]="!detailItems.length" [class.nav--detail]="!!detailItems.length">
