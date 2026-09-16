@@ -1,0 +1,60 @@
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+
+import type { User } from '../../../generated/backofficeSchemas';
+import { AuthService } from '../../services/auth.service';
+import { CurrentUserStore } from '../../stores/current-user.store';
+import { BackofficeHeaderComponent } from './backoffice-header.component';
+
+describe('BackofficeHeaderComponent', () => {
+  const user: User = {
+    id: 'user-id',
+    email: 'editor@example.org',
+    given_name: 'Test',
+    family_name: 'Editor',
+    status: 'ACTIVE',
+    global_roles: [],
+    global_permissions: [],
+    created_at: '2026-09-16T08:00:00Z',
+    updated_at: '2026-09-16T08:00:00Z',
+    memberships: [{
+      group: { id: 'group-id', name: 'Data Group' },
+      status: 'ACTIVE',
+      roles: ['EDITOR'],
+      permissions: [],
+      role_requests: [],
+      created_at: '2026-09-16T08:00:00Z',
+      updated_at: '2026-09-16T08:00:00Z'
+    }]
+  };
+  const currentUser = signal<User | null>(user);
+
+  beforeEach(async () => {
+    currentUser.set(user);
+    await TestBed.configureTestingModule({
+      imports: [BackofficeHeaderComponent],
+      providers: [
+        { provide: AuthService, useValue: { logout: () => undefined } },
+        { provide: CurrentUserStore, useValue: { user: currentUser } }
+      ]
+    }).compileComponents();
+  });
+
+  it('shows the current user name without exposing group roles', () => {
+    const fixture = TestBed.createComponent(BackofficeHeaderComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.admin-copy strong')?.textContent?.trim()).toBe('Test Editor');
+    expect(fixture.nativeElement.querySelector('.admin-subtitle')?.textContent?.trim()).toBe('Backoffice User');
+    expect(fixture.nativeElement.querySelector('.global-admin-badge')).toBeNull();
+  });
+
+  it('shows the ADMIN badge only for a global administrator', () => {
+    currentUser.set({ ...user, global_roles: ['ADMIN'] });
+    const fixture = TestBed.createComponent(BackofficeHeaderComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.global-admin-badge')?.textContent?.trim()).toBe('ADMIN');
+    expect(fixture.nativeElement.querySelector('.admin-subtitle')).toBeNull();
+  });
+});

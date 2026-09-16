@@ -154,9 +154,14 @@
           @for (membership of user.memberships; track membership.group.id) {
             <article class="membership-card">
               <div class="membership-card-header">
-                <div>
-                  <h3>{{ membership.group.name }}</h3>
-                  <span class="status-pill" [attr.data-status]="membership.status.toLowerCase()">{{ membership.status }}</span>
+                <div class="membership-group-heading">
+                  @if (groupIconPath(membership.group.id); as iconPath) {
+                    <img class="membership-group-logo" [src]="iconPath" alt="" aria-hidden="true" />
+                  }
+                  <div>
+                    <h3>{{ membership.group.name }}</h3>
+                    <span class="status-pill" [attr.data-status]="membership.status.toLowerCase()">{{ membership.status }}</span>
+                  </div>
                 </div>
                 <span class="membership-updated app-muted">Updated {{ membership.updated_at | date:'medium' }}</span>
               </div>
@@ -177,20 +182,25 @@
                   </div>
                 </fieldset>
 
-                <fieldset class="membership-options" [disabled]="!!membershipMutation()">
-                  <legend>Direct permissions</legend>
-                  <div class="option-grid option-grid--permissions">
-                    @for (permission of groupPermissions; track permission) {
-                      <label class="membership-option">
-                        <input type="checkbox" [checked]="membership.permissions.includes(permission)" (change)="togglePermission(membership, permission)" />
-                        <span>{{ permission }}</span>
-                        @if (isMutationLoading(membership.group.id, 'permission', permission)) {
-                          <small>Saving...</small>
-                        }
-                      </label>
-                    }
-                  </div>
-                </fieldset>
+                <details class="membership-permissions">
+                  <summary>
+                    <span>Direct permissions</span>
+                    <small>{{ membership.permissions.length }} assigned</small>
+                  </summary>
+                  <fieldset class="membership-permissions-content" [disabled]="!!membershipMutation()">
+                    <div class="option-grid option-grid--permissions">
+                      @for (permission of groupPermissions; track permission) {
+                        <label class="membership-option">
+                          <input type="checkbox" [checked]="membership.permissions.includes(permission)" (change)="togglePermission(membership, permission)" />
+                          <span>{{ permission }}</span>
+                          @if (isMutationLoading(membership.group.id, 'permission', permission)) {
+                            <small>Saving...</small>
+                          }
+                        </label>
+                      }
+                    </div>
+                  </fieldset>
+                </details>
               } @else {
                 <p class="membership-note app-muted">Roles and permissions can only be modified for active memberships.</p>
               }

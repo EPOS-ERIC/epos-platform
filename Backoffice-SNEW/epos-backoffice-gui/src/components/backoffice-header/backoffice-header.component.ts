@@ -1,9 +1,10 @@
-import { Component, Input, Output, EventEmitter, HostListener, inject, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import type { DiscoveryResourceType, VersioningStatus } from '../../../generated/backofficeSchemas';
 import { DISCOVERY_VERSIONING_STATUSES, type ResultsFilters } from '../../models/results-filters';
 import { AuthService } from '../../services/auth.service';
+import { CurrentUserStore } from '../../stores/current-user.store';
 import { AppIconComponent } from '../app-icon/app-icon.component';
 
 @Component({
@@ -14,9 +15,17 @@ import { AppIconComponent } from '../app-icon/app-icon.component';
 })
 export class BackofficeHeaderComponent {
   private readonly authService = inject(AuthService);
+  private readonly currentUserStore = inject(CurrentUserStore);
 
   protected readonly userMenuOpen = signal(false);
   protected readonly filterMenuOpen = signal(false);
+  protected readonly currentUserName = computed(() => {
+    const user = this.currentUserStore.user();
+    if (!user) return 'Backoffice user';
+
+    return `${user.given_name} ${user.family_name}`.trim() || user.email;
+  });
+  protected readonly isGlobalAdmin = computed(() => this.currentUserStore.user()?.global_roles.includes('ADMIN') ?? false);
   protected readonly dataTypeOptions: Array<{ label: string; value: DiscoveryResourceType }> = [
     { label: 'Dataset', value: 'dataset' },
     { label: 'Software Application', value: 'software-application' },

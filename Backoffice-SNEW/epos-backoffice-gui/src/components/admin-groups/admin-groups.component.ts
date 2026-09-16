@@ -6,6 +6,7 @@ import { Observable, catchError, finalize, forkJoin, map, of, switchMap } from '
 
 import type { Group, GroupMembership, MembershipRole, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import type { GroupPermission } from '../../../generated/backofficeParameters';
+import { groupIconPath } from '../../group-icons';
 import { ApiService } from '../../services/api.service';
 import { GroupsStore } from '../../stores/groups.store';
 
@@ -40,6 +41,7 @@ export class AdminGroupsComponent {
   protected readonly selectedUserLoading = signal(false);
   protected readonly membershipError = signal('');
   protected readonly membershipMutation = signal('');
+  protected readonly groupIconPath = groupIconPath;
   protected readonly groupRoles: MembershipRole[] = ['EDITOR', 'REVIEWER', 'GROUP_ADMIN'];
   protected readonly groupPermissions: GroupPermission[] = [
     'resource.create',

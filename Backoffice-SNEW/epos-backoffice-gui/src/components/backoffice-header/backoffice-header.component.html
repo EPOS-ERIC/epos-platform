@@ -22,8 +22,12 @@
       >
         <span class="app-avatar"><app-icon name="user" [size]="16" /></span>
         <span class="admin-copy">
-          <strong>Admin</strong>
-          <span class="app-muted">Backoffice user</span>
+          <strong>{{ currentUserName() }}</strong>
+          @if (isGlobalAdmin()) {
+            <span class="global-admin-badge">ADMIN</span>
+          } @else {
+            <span class="admin-subtitle app-muted">Backoffice User</span>
+          }
         </span>
         <app-icon name="chevron-down" [size]="14" />
       </button>
