@@ -42,7 +42,7 @@ func (r fakeRepository) HasAnyActiveMembership(context.Context, string) (bool, e
 	return r.anyMember, nil
 }
 
-func (r fakeRepository) ActiveMemberGroupIDs(context.Context, string, []uuid.UUID) ([]uuid.UUID, error) {
+func (r fakeRepository) ListActiveUserMemberships(context.Context, domain.Actor) ([]uuid.UUID, error) {
 	return r.activeGroups, nil
 }
 
@@ -211,7 +211,6 @@ func TestAuthorizeDiscoveryPreservesVersionVisibilityRules(t *testing.T) {
 	actor := domain.Actor("user-1")
 	result, err := New(slog.Default(), fakeRepository{
 		user:         domain.AuthorizationUser{ID: string(actor), Status: domain.UserStatusActive},
-		anyMember:    true,
 		activeGroups: []uuid.UUID{groupID},
 	}).AuthorizeDiscovery(context.Background(), &actor, candidates)
 	if err != nil {
@@ -220,11 +219,41 @@ func TestAuthorizeDiscoveryPreservesVersionVisibilityRules(t *testing.T) {
 	if len(result.AllowedCandidates) != 2 {
 		t.Fatalf("allowed candidates = %d, want 2", len(result.AllowedCandidates))
 	}
-	if !result.IncludeCreatedBy {
-		t.Fatal("include creator = false, want true")
+	if _, ok := result.CreatedByGroupIDs[groupID]; !ok {
+		t.Fatalf("created-by groups = %#v, want %s", result.CreatedByGroupIDs, groupID)
 	}
 	if result.AllowedCandidates[0].ResourceID != candidates[0].ResourceID || result.AllowedCandidates[1].ResourceID != candidates[1].ResourceID {
 		t.Fatalf("allowed candidates = %#v", result.AllowedCandidates)
+	}
+}
+
+func TestAuthorizeDiscoveryUsesGlobalAdminFromAuthorizationUser(t *testing.T) {
+	t.Parallel()
+	groupID := uuid.New()
+	candidate := domain.DiscoveryCandidate{
+		Type:       domain.Dataset,
+		ResourceID: uuid.New(),
+		VersionID:  uuid.New(),
+		GroupID:    groupID,
+		Status:     domain.Draft,
+		Name:       "admin draft",
+	}
+	actor := domain.Actor("admin")
+	result, err := New(slog.Default(), fakeRepository{
+		user: domain.AuthorizationUser{
+			ID:          string(actor),
+			Status:      domain.UserStatusActive,
+			GlobalAdmin: true,
+		},
+	}).AuthorizeDiscovery(context.Background(), &actor, []domain.DiscoveryCandidate{candidate})
+	if err != nil {
+		t.Fatalf("authorize discovery: %v", err)
+	}
+	if len(result.AllowedCandidates) != 1 {
+		t.Fatalf("allowed candidates = %#v, want one candidate", result.AllowedCandidates)
+	}
+	if _, ok := result.CreatedByGroupIDs[groupID]; !ok {
+		t.Fatalf("created-by groups = %#v, want %s", result.CreatedByGroupIDs, groupID)
 	}
 }
 
@@ -248,7 +277,7 @@ func TestAuthorizeDiscoveryAllowsPublishedCandidatesWithoutActor(t *testing.T) {
 	if len(result.AllowedCandidates) != 1 || result.AllowedCandidates[0].ResourceID != published.ResourceID {
 		t.Fatalf("allowed candidates = %#v", result.AllowedCandidates)
 	}
-	if result.IncludeCreatedBy {
-		t.Fatal("include creator = true, want false")
+	if len(result.CreatedByGroupIDs) != 0 {
+		t.Fatalf("created-by groups = %#v, want empty", result.CreatedByGroupIDs)
 	}
 }

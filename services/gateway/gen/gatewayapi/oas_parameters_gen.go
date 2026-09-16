@@ -1702,20 +1702,22 @@ type DiscoverResourcesParams struct {
 	GroupId OptUUID `json:",omitempty,omitzero"`
 	// Filter results by the user who created the resource version.
 	EditorId OptString `json:",omitempty,omitzero"`
-	// Spatial filter expressed as a WKT POINT or POLYGON string (EPSG:4326). Resources whose spatial
-	// coverage intersects this geometry are returned. Example:
-	// `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`.
+	// Dataset spatial filter expressed as a WKT POINT or POLYGON string (EPSG:4326). Datasets whose
+	// spatial coverage intersects this geometry are returned; software resources do not match this filter.
+	// Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`.
 	SpatialFilter OptString `json:",omitempty,omitzero"`
-	// Start of the temporal filter (inclusive). ISO 8601 date-time (UTC). Resources with temporal coverage
-	// overlapping this range are returned. Must be less than or equal to `dateTo` when both are supplied.
+	// Start of the dataset temporal filter (inclusive). ISO 8601 date-time (UTC). Datasets with temporal
+	// coverage overlapping this range are returned; software resources do not match this filter. Must be
+	// less than or equal to `dateTo` when both are supplied.
 	DateFrom OptDateTime `json:",omitempty,omitzero"`
-	// End of the temporal filter (inclusive). ISO 8601 date-time (UTC). Resources with temporal coverage
-	// overlapping this range are returned. Must be greater than or equal to `dateFrom` when both are
-	// supplied.
+	// End of the dataset temporal filter (inclusive). ISO 8601 date-time (UTC). Datasets with temporal
+	// coverage overlapping this range are returned; software resources do not match this filter. Must be
+	// greater than or equal to `dateFrom` when both are supplied.
 	DateTo OptDateTime `json:",omitempty,omitzero"`
-	// Filter by one or more provider organization IDs. Use this filter to restrict results to resources
-	// associated with one of the specified provider organizations. Pass comma-separated values in a single
-	// parameter: `?provider=94f4885e-502e-5f33-ba82-033a72efd827`.
+	// Filter by one or more organization IDs. For datasets, this matches provider organizations. For
+	// software applications and source code, this matches creator organizations because software resources
+	// have no provider field. Pass comma-separated values in a single parameter:
+	// `?provider=94f4885e-502e-5f33-ba82-033a72efd827`.
 	Provider []uuid.UUID `json:",omitempty"`
 	// Filter by one or more versioning states. When omitted, defaults to `PUBLISHED`. Pass comma-separated
 	// values in a single parameter: `?versioningStatus=PUBLISHED,DRAFT`.

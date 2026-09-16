@@ -491,6 +491,57 @@ same invalid domain errors.
 Verification: Run `make generate` from `services/metadata-lifecycle`,
 `make build`, `make test`, and `make test-contract`.
 
+### `test_discovery_filters.py`
+
+Status: approved
+Purpose: Protect public catalogue visibility and discovery filter semantics
+across all supported resource types.
+
+OperationIds: `discoverResources` and `getResourceVersion`.
+
+Actors and permissions: Anonymous caller verifies public published visibility.
+The global admin creates canonical and resource fixtures and can see all
+statuses. An active editor in the fixture group creates a private draft and can
+see it through discovery. An authenticated outsider has no membership in the
+fixture group and must not see its private draft. Invalid and blocked bearer
+behavior remains covered by `test_authorization.py`.
+
+Fixtures and ownership: Use Metadatone only for the public baseline and
+read-oriented relations. Create unique API-owned DATA and SOFTWARE groups, a
+canonical organization, an active editor, an outsider, one dataset, one
+software application, one software source code, and one private dataset draft.
+Published fixtures carry unique names, descriptions, keywords, provider or
+creator references, dataset temporal coverage, and dataset spatial coverage.
+
+HTTP flow: Verify anonymous default search returns published results only and
+omits `created_by`. Verify authenticated admin and fixture-group member searches
+expose `created_by` and the member can discover the private draft. Exercise
+resource type, mixed type, concept, group, editor, provider, free-text,
+all-keywords, versioning-status, date, spatial, and one combined filter. The
+`provider` filter matches dataset providers and software creators. Date and
+spatial filters apply only to datasets; software resources do not match those
+filters. Use detail reads to verify selected result identity and status.
+
+Negative cases: A fixture-group outsider cannot discover the private draft.
+Invalid type, UUID, WKT, date-time, and reversed date-range parameters return
+`400`; assert status only because OpenAPI does not define stable error fields
+for these cases.
+
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+filter result membership and exclusion, resource type, status, group,
+case-insensitive text/keyword behavior, inclusive temporal boundaries,
+spatial intersection, mixed-result ordering where deterministic, and
+authenticated versus anonymous `created_by` projection.
+
+OpenAPI alignment: Clarify that `provider` matches dataset providers and
+software creators, and that date/spatial filters apply only to datasets.
+
+Exclusions: Do not duplicate lifecycle transitions, canonical CRUD, or invalid
+and blocked-token authorization cases covered by existing flows.
+
+Verification: Run `make generate` from `services/gateway`, then
+`make test-contract`.
+
 ## Per-Flow Planning Gate
 
 Before implementing a new flow file, the agent must stop and work with the

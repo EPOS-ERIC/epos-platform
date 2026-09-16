@@ -26,8 +26,9 @@ const (
 
 // AuthorizationUser contains the user fields needed for authorization decisions.
 type AuthorizationUser struct {
-	ID     string
-	Status UserStatus
+	ID          string
+	Status      UserStatus
+	GlobalAdmin bool
 }
 
 // VersionAuthz contains the resource fields needed for version authorization.
@@ -40,5 +41,5 @@ type VersionAuthz struct {
 // DiscoveryAuthorization contains candidates allowed by the discovery policy.
 type DiscoveryAuthorization struct {
 	AllowedCandidates []DiscoveryCandidate
-	IncludeCreatedBy  bool
+	CreatedByGroupIDs map[uuid.UUID]struct{}
 }

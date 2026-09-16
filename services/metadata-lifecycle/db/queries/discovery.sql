@@ -131,6 +131,9 @@ WHERE
         sqlc.narg(group_id)::uuid IS NULL
         OR resource.group_id = sqlc.narg(group_id)::uuid
     )
+    AND sqlc.narg(spatial_filter)::geometry IS NULL
+    AND sqlc.narg(date_from)::timestamptz IS NULL
+    AND sqlc.narg(date_to)::timestamptz IS NULL
     AND (
         sqlc.narg(query)::text IS NULL
         OR lower(
@@ -212,6 +215,9 @@ WHERE
         sqlc.narg(group_id)::uuid IS NULL
         OR resource.group_id = sqlc.narg(group_id)::uuid
     )
+    AND sqlc.narg(spatial_filter)::geometry IS NULL
+    AND sqlc.narg(date_from)::timestamptz IS NULL
+    AND sqlc.narg(date_to)::timestamptz IS NULL
     AND (
         sqlc.narg(query)::text IS NULL
         OR lower(

@@ -1631,8 +1631,9 @@ components:
       in: query
       required: false
       description: |
-        Spatial filter expressed as a WKT POINT or POLYGON string (EPSG:4326).
-        Resources whose spatial coverage intersects this geometry are returned.
+        Dataset spatial filter expressed as a WKT POINT or POLYGON string
+        (EPSG:4326). Datasets whose spatial coverage intersects this geometry
+        are returned; software resources do not match this filter.
         Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
       schema:
         type: string
@@ -1643,8 +1644,9 @@ components:
       in: query
       required: false
       description: |
-        Start of the temporal filter (inclusive). ISO 8601 date-time (UTC).
-        Resources with temporal coverage overlapping this range are returned.
+        Start of the dataset temporal filter (inclusive). ISO 8601 date-time
+        (UTC). Datasets with temporal coverage overlapping this range are
+        returned; software resources do not match this filter.
         Must be less than or equal to `dateTo` when both are supplied.
       schema:
         type: string
@@ -1656,8 +1658,9 @@ components:
       in: query
       required: false
       description: |
-        End of the temporal filter (inclusive). ISO 8601 date-time (UTC).
-        Resources with temporal coverage overlapping this range are returned.
+        End of the dataset temporal filter (inclusive). ISO 8601 date-time
+        (UTC). Datasets with temporal coverage overlapping this range are
+        returned; software resources do not match this filter.
         Must be greater than or equal to `dateFrom` when both are supplied.
       schema:
         type: string
@@ -1669,9 +1672,10 @@ components:
       in: query
       required: false
       description: |
-        Filter by one or more provider organization IDs.
-        Use this filter to restrict results to resources associated with one of the
-        specified provider organizations.
+        Filter by one or more organization IDs. For datasets, this matches
+        provider organizations. For software applications and source code, this
+        matches creator organizations because software resources have no provider
+        field.
         Pass comma-separated values in a single parameter:
         `?provider=94f4885e-502e-5f33-ba82-033a72efd827`.
       schema:
@@ -3198,7 +3202,10 @@ components:
           $ref: "#/components/schemas/VersioningStatus"
         updated_at: { type: string, format: date-time }
         concept: { $ref: "#/components/schemas/DiscoveryConcept" }
-        created_by: { $ref: "#/components/schemas/Reference" }
+        created_by:
+          description: Creator identity is returned only when caller may see
+            identities for this resource group.
+          $ref: "#/components/schemas/Reference"
         group: { $ref: "#/components/schemas/Reference" }
         providers:
           type: array
@@ -3231,7 +3238,10 @@ components:
           $ref: "#/components/schemas/VersioningStatus"
         updated_at: { type: string, format: date-time }
         concept: { $ref: "#/components/schemas/DiscoveryConcept" }
-        created_by: { $ref: "#/components/schemas/Reference" }
+        created_by:
+          description: Creator identity is returned only when caller may see
+            identities for this resource group.
+          $ref: "#/components/schemas/Reference"
         group: { $ref: "#/components/schemas/Reference" }
         creators:
           type: array
@@ -3261,7 +3271,10 @@ components:
           $ref: "#/components/schemas/VersioningStatus"
         updated_at: { type: string, format: date-time }
         concept: { $ref: "#/components/schemas/DiscoveryConcept" }
-        created_by: { $ref: "#/components/schemas/Reference" }
+        created_by:
+          description: Creator identity is returned only when caller may see
+            identities for this resource group.
+          $ref: "#/components/schemas/Reference"
         group: { $ref: "#/components/schemas/Reference" }
         creators:
           type: array

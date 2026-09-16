@@ -1532,18 +1532,19 @@ func (s *CreateSoftwareSourceCodeResourceRequestResourceType) UnmarshalText(data
 
 // Ref: #/components/schemas/DatasetDiscoveryItem
 type DatasetDiscoveryItem struct {
-	Type          DatasetDiscoveryItemType `json:"type"`
-	ResourceID    uuid.UUID                `json:"resource_id"`
-	VersionID     uuid.UUID                `json:"version_id"`
-	Name          string                   `json:"name"`
-	Status        VersioningStatus         `json:"status"`
-	UpdatedAt     time.Time                `json:"updated_at"`
-	Concept       DiscoveryConcept         `json:"concept"`
-	CreatedBy     OptReference             `json:"created_by"`
-	Group         Reference                `json:"group"`
-	Providers     []Reference              `json:"providers"`
-	Categories    []Reference              `json:"categories"`
-	Distributions []Reference              `json:"distributions"`
+	Type       DatasetDiscoveryItemType `json:"type"`
+	ResourceID uuid.UUID                `json:"resource_id"`
+	VersionID  uuid.UUID                `json:"version_id"`
+	Name       string                   `json:"name"`
+	Status     VersioningStatus         `json:"status"`
+	UpdatedAt  time.Time                `json:"updated_at"`
+	Concept    DiscoveryConcept         `json:"concept"`
+	// Creator identity is returned only when caller may see identities for this resource group.
+	CreatedBy     OptReference `json:"created_by"`
+	Group         Reference    `json:"group"`
+	Providers     []Reference  `json:"providers"`
+	Categories    []Reference  `json:"categories"`
+	Distributions []Reference  `json:"distributions"`
 }
 
 // GetType returns the value of Type.
@@ -9250,10 +9251,11 @@ type SoftwareApplicationDiscoveryItem struct {
 	Status     VersioningStatus                     `json:"status"`
 	UpdatedAt  time.Time                            `json:"updated_at"`
 	Concept    DiscoveryConcept                     `json:"concept"`
-	CreatedBy  OptReference                         `json:"created_by"`
-	Group      Reference                            `json:"group"`
-	Creators   []Reference                          `json:"creators"`
-	Categories []Reference                          `json:"categories"`
+	// Creator identity is returned only when caller may see identities for this resource group.
+	CreatedBy  OptReference `json:"created_by"`
+	Group      Reference    `json:"group"`
+	Creators   []Reference  `json:"creators"`
+	Categories []Reference  `json:"categories"`
 }
 
 // GetType returns the value of Type.
@@ -9759,10 +9761,11 @@ type SoftwareSourceCodeDiscoveryItem struct {
 	Status     VersioningStatus                    `json:"status"`
 	UpdatedAt  time.Time                           `json:"updated_at"`
 	Concept    DiscoveryConcept                    `json:"concept"`
-	CreatedBy  OptReference                        `json:"created_by"`
-	Group      Reference                           `json:"group"`
-	Creators   []Reference                         `json:"creators"`
-	Categories []Reference                         `json:"categories"`
+	// Creator identity is returned only when caller may see identities for this resource group.
+	CreatedBy  OptReference `json:"created_by"`
+	Group      Reference    `json:"group"`
+	Creators   []Reference  `json:"creators"`
+	Categories []Reference  `json:"categories"`
 }
 
 // GetType returns the value of Type.

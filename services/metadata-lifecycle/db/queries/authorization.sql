@@ -1,7 +1,16 @@
 -- name: GetAuthorizationUser :one
 SELECT
     id,
-    STATUS
+    STATUS,
+    EXISTS (
+        SELECT
+            1
+        FROM
+            user_global_roles
+        WHERE
+            user_id = users.id
+            AND role_key = 'ADMIN'
+    ) AS global_admin
 FROM
     users
 WHERE
@@ -307,11 +316,8 @@ SELECT
 FROM
     group_memberships
 WHERE
-    user_id = sqlc.arg(user_id)
-    AND STATUS = 'ACTIVE'
-    AND group_id = ANY(sqlc.arg(group_ids)::uuid [])
-ORDER BY
-    group_id;
+    user_id = $1
+    AND STATUS = 'ACTIVE';
 
 -- name: HasAnyActiveMembership :one
 SELECT

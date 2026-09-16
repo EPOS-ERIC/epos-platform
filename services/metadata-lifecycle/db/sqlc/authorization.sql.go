@@ -143,7 +143,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 const getAuthorizationUser = `-- name: GetAuthorizationUser :one
 SELECT
     id,
-    STATUS
+    STATUS,
+    EXISTS (
+        SELECT
+            1
+        FROM
+            user_global_roles
+        WHERE
+            user_id = users.id
+            AND role_key = 'ADMIN'
+    ) AS global_admin
 FROM
     users
 WHERE
@@ -151,14 +160,15 @@ WHERE
 `
 
 type GetAuthorizationUserRow struct {
-	ID     string
-	Status UserStatus
+	ID          string
+	Status      UserStatus
+	GlobalAdmin bool
 }
 
 func (q *Queries) GetAuthorizationUser(ctx context.Context, id string) (GetAuthorizationUserRow, error) {
 	row := q.db.QueryRow(ctx, getAuthorizationUser, id)
 	var i GetAuthorizationUserRow
-	err := row.Scan(&i.ID, &i.Status)
+	err := row.Scan(&i.ID, &i.Status, &i.GlobalAdmin)
 	return i, err
 }
 
@@ -842,18 +852,10 @@ FROM
 WHERE
     user_id = $1
     AND STATUS = 'ACTIVE'
-    AND group_id = ANY($2::uuid [])
-ORDER BY
-    group_id
 `
 
-type ListActiveMemberGroupIDsParams struct {
-	UserID   string
-	GroupIds []uuid.UUID
-}
-
-func (q *Queries) ListActiveMemberGroupIDs(ctx context.Context, arg ListActiveMemberGroupIDsParams) ([]uuid.UUID, error) {
-	rows, err := q.db.Query(ctx, listActiveMemberGroupIDs, arg.UserID, arg.GroupIds)
+func (q *Queries) ListActiveMemberGroupIDs(ctx context.Context, userID string) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listActiveMemberGroupIDs, userID)
 	if err != nil {
 		return nil, err
 	}

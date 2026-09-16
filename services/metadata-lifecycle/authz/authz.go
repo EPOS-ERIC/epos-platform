@@ -17,7 +17,7 @@ type repository interface {
 	IsGlobalAdmin(context.Context, string) (bool, error)
 	HasGlobalPermission(context.Context, string, string) (bool, error)
 	IsActiveMember(context.Context, string, uuid.UUID) (bool, error)
-	ActiveMemberGroupIDs(context.Context, string, []uuid.UUID) ([]uuid.UUID, error)
+	ListActiveUserMemberships(context.Context, domain.Actor) ([]uuid.UUID, error)
 	HasAnyActiveMembership(context.Context, string) (bool, error)
 	HasGroupPermission(context.Context, string, uuid.UUID, string) (bool, error)
 	HasGroupRole(context.Context, string, uuid.UUID, string) (bool, error)
@@ -596,112 +596,84 @@ func (a *Authorizer) CanReadContactPoint(ctx context.Context, userID string) (do
 	return domain.Result{Allowed: true, Reason: "active group member"}, nil
 }
 
-// CanReadDiscoveryCreatedBy allows creator identity exposure to active users
-// with membership in at least one group.
-func (a *Authorizer) CanReadDiscoveryCreatedBy(ctx context.Context, userID *string) (domain.Result, error) {
-	if userID == nil || *userID == "" {
-		return domain.Result{Allowed: false, Reason: "authentication required"}, nil
-	}
-
-	_, result, err := a.activeUser(ctx, *userID)
-	if err != nil || !result.Allowed {
-		return result, err
-	}
-
-	admin, err := a.repository.IsGlobalAdmin(ctx, *userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
-	}
-
-	member, err := a.repository.HasAnyActiveMembership(ctx, *userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check active memberships: %w", err)
-	}
-	if !member {
-		return domain.Result{Allowed: false, Reason: "user has no active group membership"}, nil
-	}
-
-	return domain.Result{Allowed: true, Reason: "active group member"}, nil
-}
-
 // AuthorizeDiscovery applies discovery visibility once and returns candidates safe to project.
-// It reuses creator visibility checks and loads candidate group memberships in one batch.
+// It loads the actor's active group memberships and filters candidates in memory.
 func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *domain.Actor, candidates []domain.DiscoveryCandidate) (domain.DiscoveryAuthorization, error) {
-	result := domain.DiscoveryAuthorization{
-		AllowedCandidates: make([]domain.DiscoveryCandidate, 0, len(candidates)),
-	}
 	if len(candidates) == 0 {
-		return result, nil
+		return domain.DiscoveryAuthorization{
+			AllowedCandidates: []domain.DiscoveryCandidate{},
+			CreatedByGroupIDs: map[uuid.UUID]struct{}{},
+		}, nil
 	}
-	for _, candidate := range candidates {
-		switch candidate.Type {
+
+	// Reject unsupported resource types up front.
+	for _, c := range candidates {
+		switch c.Type {
 		case domain.Dataset, domain.SoftwareApplication, domain.SoftwareSourceCode:
 		default:
-			return domain.DiscoveryAuthorization{}, fmt.Errorf("unsupported resource type %q: %w", candidate.Type, domain.ErrInvalidDiscovery)
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("unsupported resource type %q: %w", c.Type, domain.ErrInvalidDiscovery)
 		}
 	}
 
-	creator := domain.Result{Allowed: false, Reason: "authentication required"}
+	// Resolve the acting user, if any; anonymous or inactive actors stay nil.
+	var user *domain.AuthorizationUser
 	if actor != nil {
-		var err error
-		creator, err = a.CanReadDiscoveryCreatedBy(ctx, (*string)(actor))
+		loaded, userResult, err := a.activeUser(ctx, string(*actor))
 		if err != nil {
-			return domain.DiscoveryAuthorization{}, fmt.Errorf("check discovery creator visibility: %w", err)
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("load discovery user: %w", err)
 		}
-		result.IncludeCreatedBy = creator.Allowed
-	}
-
-	activeGroups := make(map[uuid.UUID]struct{})
-	if actor != nil && creator.Allowed && creator.Reason != "global admin" {
-		groupIDs := make([]uuid.UUID, 0, len(candidates))
-		seenGroups := make(map[uuid.UUID]struct{}, len(candidates))
-		for _, candidate := range candidates {
-			if candidate.Status == domain.Published || candidate.GroupID == uuid.Nil {
-				continue
-			}
-			if _, ok := seenGroups[candidate.GroupID]; ok {
-				continue
-			}
-			seenGroups[candidate.GroupID] = struct{}{}
-			groupIDs = append(groupIDs, candidate.GroupID)
-		}
-		if len(groupIDs) > 0 {
-			groups, err := a.repository.ActiveMemberGroupIDs(ctx, string(*actor), groupIDs)
-			if err != nil {
-				return domain.DiscoveryAuthorization{}, fmt.Errorf("load discovery group memberships: %w", err)
-			}
-			for _, groupID := range groups {
-				activeGroups[groupID] = struct{}{}
-			}
+		if userResult.Allowed {
+			user = &loaded
 		}
 	}
 
-	for _, candidate := range candidates {
-		if !discoveryCandidateAllowed(actor, creator, activeGroups, candidate) {
+	visibleGroupIDs := map[uuid.UUID]struct{}{}
+
+	// Find the groups where the user is an active member to protect fields like "created_by".
+	switch {
+	case user == nil:
+		// No active user: nothing to look up, nothing to grant beyond defaults.
+
+	case user.GlobalAdmin:
+		// Admins bypass membership checks entirely; expose every candidate's group.
+		for _, c := range candidates {
+			visibleGroupIDs[c.GroupID] = struct{}{}
+		}
+
+	default:
+		// Regular member: load this user's active group memberships once.
+		memberships, err := a.repository.ListActiveUserMemberships(ctx, *actor)
+		if err != nil {
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("load discovery group memberships: %w", err)
+		}
+		for _, g := range memberships {
+			visibleGroupIDs[g] = struct{}{}
+		}
+	}
+
+	// Filter candidates down to what's actually visible to the actor
+	allowed := make([]domain.DiscoveryCandidate, 0, len(candidates))
+	for _, c := range candidates {
+		if c.Status == domain.Published {
+			allowed = append(allowed, c)
 			continue
 		}
-		result.AllowedCandidates = append(result.AllowedCandidates, candidate)
+		if user == nil {
+			continue
+		}
+		if user.GlobalAdmin {
+			allowed = append(allowed, c)
+			continue
+		}
+		if _, member := visibleGroupIDs[c.GroupID]; member {
+			allowed = append(allowed, c)
+		}
 	}
 
-	return result, nil
-}
-
-// discoveryCandidateAllowed evaluates canonical candidate status and group facts.
-func discoveryCandidateAllowed(actor *domain.Actor, creator domain.Result, activeGroups map[uuid.UUID]struct{}, candidate domain.DiscoveryCandidate) bool {
-	if candidate.Status == domain.Published {
-		return true
-	}
-	if actor == nil || !creator.Allowed {
-		return false
-	}
-	if creator.Reason == "global admin" {
-		return true
-	}
-	_, member := activeGroups[candidate.GroupID]
-	return member
+	return domain.DiscoveryAuthorization{
+		AllowedCandidates: allowed,
+		CreatedByGroupIDs: visibleGroupIDs,
+	}, nil
 }
 
 func (a *Authorizer) resourcePublished(ctx context.Context, typ domain.ResourceType, id uuid.UUID) (bool, error) {
