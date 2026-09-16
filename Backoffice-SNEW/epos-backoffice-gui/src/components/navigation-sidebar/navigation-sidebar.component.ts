@@ -26,6 +26,7 @@ export class NavigationSidebarComponent {
 
   @Input() isAdmin = true;
   @Input() detailItems: NavigationItem[] = [];
+  @Input() showBackButton = false;
   @Input() detailRootLabel = '';
   @Input() detailBackLink: string | string[] = '/';
   @Input() detailBackQueryParams: Record<string, string> | null = null;

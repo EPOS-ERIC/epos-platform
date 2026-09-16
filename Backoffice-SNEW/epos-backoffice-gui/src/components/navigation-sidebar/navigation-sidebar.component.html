@@ -5,7 +5,7 @@
         <app-icon [name]="collapsed() ? 'chevron-right' : 'chevron-left'" [size]="14" />
       </button>
 
-      @if (detailItems.length) {
+      @if (detailItems.length || showBackButton) {
         <a class="sidebar-back-button app-button app-button--ghost" [routerLink]="detailBackLink" [queryParams]="detailBackQueryParams" aria-label="Back to results">
           <app-icon name="chevron-left" [size]="14" />
           <span class="sidebar-back-text">Back</span>
@@ -141,7 +141,13 @@
 
   @if (!detailItems.length) {
     <div class="membership-request-footer">
-      <a class="app-button membership-request-button" routerLink="/memberships" [class.active]="currentSectionPath === 'memberships'" aria-label="Open my memberships">
+      <a
+        class="app-button membership-request-button"
+        routerLink="/memberships"
+        [queryParams]="selectedGroupId ? { groupId: selectedGroupId } : null"
+        [class.active]="currentSectionPath === 'memberships'"
+        aria-label="Open my memberships"
+      >
         <app-icon name="users" [size]="16" />
         <span [class.hidden]="collapsed()">My memberships</span>
       </a>

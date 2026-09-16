@@ -137,8 +137,11 @@ export class MainContainerComponent {
     if (adminPage || accountPage) {
       this.detailStore.clear();
       this.discoveryRequest?.unsubscribe();
-      this.selectedGroupId.set('');
-      this.selectedGroupName.set('');
+      const selectedGroup = accountPage
+        ? this.groups().find((group) => group.id === routeState.groupId)
+        : undefined;
+      this.selectedGroupId.set(selectedGroup?.id ?? '');
+      this.selectedGroupName.set(selectedGroup?.name ?? '');
       this.pageLabel.set(accountPage ? 'Memberships' : adminPage === 'groups' ? 'Users' : adminPage === 'categories' ? 'Categories' : 'Organizations');
       this.discoveryItems.set(null);
       this.discoveryLoading.set(false);
@@ -247,6 +250,12 @@ export class MainContainerComponent {
 
   protected scrollDetailToTop(): void {
     this.detailScrollContainerRef?.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  protected membershipBackLink(): string[] {
+    const concept = this.groups().find((group) => group.id === this.selectedGroupId())?.concept;
+    const sectionPath = concept === 'SOFTWARE' ? 'software' : concept === 'FACILITIES' ? 'facilities' : 'data';
+    return ['/', sectionPath];
   }
 
   private currentSectionPath(): string {
