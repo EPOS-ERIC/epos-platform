@@ -109,6 +109,28 @@ func (q *Queries) AddLifecycleSoftwareSourceCodeIdentifier(ctx context.Context, 
 	return err
 }
 
+const archivePublishedLifecycleSoftwareSourceCodeVersion = `-- name: ArchivePublishedLifecycleSoftwareSourceCodeVersion :exec
+UPDATE
+    software_source_code_versions
+SET
+    STATUS = 'ARCHIVED',
+    archived_by = $1,
+    archived_at = NOW()
+WHERE
+    software_source_code_id = $2
+    AND STATUS = 'PUBLISHED'
+`
+
+type ArchivePublishedLifecycleSoftwareSourceCodeVersionParams struct {
+	ActorID              *string
+	SoftwareSourceCodeID uuid.UUID
+}
+
+func (q *Queries) ArchivePublishedLifecycleSoftwareSourceCodeVersion(ctx context.Context, arg ArchivePublishedLifecycleSoftwareSourceCodeVersionParams) error {
+	_, err := q.db.Exec(ctx, archivePublishedLifecycleSoftwareSourceCodeVersion, arg.ActorID, arg.SoftwareSourceCodeID)
+	return err
+}
+
 const cloneLifecycleSoftwareSourceCodeVersion = `-- name: CloneLifecycleSoftwareSourceCodeVersion :one
 WITH source AS (
     SELECT
@@ -1069,32 +1091,6 @@ func (q *Queries) ListLifecycleSoftwareSourceCodeVersionSummaries(ctx context.Co
 }
 
 const publishLifecycleSoftwareSourceCodeVersion = `-- name: PublishLifecycleSoftwareSourceCodeVersion :one
-WITH target AS (
-    SELECT
-        software_source_code_id
-    FROM
-        software_source_code_versions
-    WHERE
-        id = $2
-        AND STATUS = 'SUBMITTED' FOR
-    UPDATE
-),
-archived AS (
-    UPDATE
-        software_source_code_versions
-    SET
-        STATUS = 'ARCHIVED',
-        archived_by = $1,
-        archived_at = NOW()
-    WHERE
-        software_source_code_id = (
-            SELECT
-                software_source_code_id
-            FROM
-                target
-        )
-        AND STATUS = 'PUBLISHED'
-)
 UPDATE
     software_source_code_versions
 SET

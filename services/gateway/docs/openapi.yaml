@@ -1143,7 +1143,7 @@ paths:
       tags:
         - Resources
       summary: Delete resource draft version
-      description: Permanently deletes an existing editable draft version. This operation does not create or assign a lifecycle status.
+      description: Permanently deletes an existing editable DRAFT or REJECTED active change version. This operation does not create or assign a lifecycle status.
       operationId: discardResourceDraftVersion
       security:
         - bearerAuth: []

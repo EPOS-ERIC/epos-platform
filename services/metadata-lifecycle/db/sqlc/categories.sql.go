@@ -161,6 +161,43 @@ func (q *Queries) ListGroupCategories(ctx context.Context, groupID uuid.UUID) ([
 	return items, nil
 }
 
+const listLifecycleCategoryIDsByGroup = `-- name: ListLifecycleCategoryIDsByGroup :many
+SELECT
+    id
+FROM
+    categories
+WHERE
+    group_id = $1
+    AND id = ANY($2::uuid [])
+ORDER BY
+    id
+`
+
+type ListLifecycleCategoryIDsByGroupParams struct {
+	GroupID     uuid.UUID
+	CategoryIds []uuid.UUID
+}
+
+func (q *Queries) ListLifecycleCategoryIDsByGroup(ctx context.Context, arg ListLifecycleCategoryIDsByGroupParams) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listLifecycleCategoryIDsByGroup, arg.GroupID, arg.CategoryIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const replaceGroupCategory = `-- name: ReplaceGroupCategory :one
 UPDATE
     categories

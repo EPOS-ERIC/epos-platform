@@ -89,6 +89,9 @@ func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, applicat
 
 func (s *Service) Read(ctx context.Context, actor *domain.Actor, applicationID, versionID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	result, err := s.authorizer.CanReadSoftwareApplicationVersion(ctx, actor.OptionalString(), applicationID, versionID)
+	if errors.Is(err, domain.ErrAuthorizationNotFound) {
+		return domain.SoftwareApplicationVersion{}, domain.ErrSoftwareApplicationNotFound
+	}
 	if err != nil {
 		return domain.SoftwareApplicationVersion{}, operationError("authorize application read", err)
 	}

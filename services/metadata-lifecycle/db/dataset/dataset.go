@@ -31,6 +31,14 @@ func New(pool *pgxpool.Pool) *Repo {
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.DatasetInput) (domain.DatasetVersion, error) {
 	var result domain.DatasetVersion
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+		valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
+		if err != nil {
+			return fmt.Errorf("validate dataset categories: %w", err)
+		}
+		if !valid {
+			return domain.ErrInvalidDataset
+		}
+
 		dataset, err := q.CreateLifecycleDataset(ctx, sqlc.CreateLifecycleDatasetParams{
 			GroupID:   groupID,
 			CreatedBy: actorID,
@@ -69,6 +77,20 @@ func (r *Repo) ReplaceDraft(
 ) (domain.DatasetVersion, error) {
 	var result domain.DatasetVersion
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+		if len(value.Metadata.CategoryIDs) > 0 {
+			dataset, err := q.GetLifecycleDataset(ctx, datasetID)
+			if err != nil {
+				return fmt.Errorf("get dataset for category validation: %w", err)
+			}
+			valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, dataset.GroupID, value.Metadata.CategoryIDs)
+			if err != nil {
+				return fmt.Errorf("validate dataset categories: %w", err)
+			}
+			if !valid {
+				return domain.ErrInvalidDataset
+			}
+		}
+
 		params, err := ToReplaceDraftParams(datasetID, versionID, value.Revision, value.Metadata)
 		if err != nil {
 			return fmt.Errorf("build draft replacement: %w", err)
@@ -217,17 +239,33 @@ func (r *Repo) Publish(ctx context.Context, actorID string, datasetID, versionID
 		return domain.DatasetVersion{}, fmt.Errorf("publish dataset version: %w", err)
 	}
 
-	v, err := sqlc.New(r.db).PublishLifecycleDatasetVersion(ctx, sqlc.PublishLifecycleDatasetVersionParams{
-		ActorID:   &actorID,
-		VersionID: versionID,
+	var result domain.DatasetVersion
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+		if err := q.ArchivePublishedLifecycleDatasetVersion(ctx, sqlc.ArchivePublishedLifecycleDatasetVersionParams{
+			ActorID:   &actorID,
+			DatasetID: datasetID,
+		}); err != nil {
+			return fmt.Errorf("archive published dataset version: %w", err)
+		}
+
+		v, err := q.PublishLifecycleDatasetVersion(ctx, sqlc.PublishLifecycleDatasetVersionParams{
+			ActorID:   &actorID,
+			VersionID: versionID,
+		})
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return domain.ErrDatasetConflict
+			}
+			return fmt.Errorf("publish dataset version: %w", err)
+		}
+
+		result, err = datasetResultByID(ctx, q, datasetID, v.ID)
+		return err
 	})
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.DatasetVersion{}, domain.ErrDatasetConflict
-		}
-		return domain.DatasetVersion{}, fmt.Errorf("publish dataset version: %w", err)
+		return domain.DatasetVersion{}, lifecycleError(err)
 	}
-	return datasetResultByID(ctx, sqlc.New(r.db), v.DatasetID, v.ID)
+	return result, nil
 }
 
 func (r *Repo) Unpublish(ctx context.Context, actorID string, datasetID, versionID uuid.UUID) (domain.DatasetVersion, error) {
@@ -552,9 +590,17 @@ func lifecycleError(err error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.ErrDatasetConflict
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && (strings.HasPrefix(pgErr.Code, "23") || pgErr.Code == "P0001") {
-		return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, domain.ErrDatasetConflict)
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+		switch pgErr.Code {
+		case "23514":
+			return fmt.Errorf("database validation: %w", domain.ErrInvalidDataset)
+		case "23001", "23505", "23P01", "P0001":
+			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, domain.ErrDatasetConflict)
+		default:
+			if strings.HasPrefix(pgErr.Code, "23") {
+				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, domain.ErrDatasetInternal)
+			}
+		}
 	}
 	return err
 }

@@ -113,32 +113,6 @@ RETURNING
     *;
 
 -- name: PublishLifecycleSoftwareApplicationVersion :one
-WITH target AS (
-    SELECT
-        software_application_id
-    FROM
-        software_application_versions
-    WHERE
-        id = sqlc.arg(version_id)
-        AND STATUS = 'SUBMITTED' FOR
-    UPDATE
-),
-archived AS (
-    UPDATE
-        software_application_versions
-    SET
-        STATUS = 'ARCHIVED',
-        archived_by = sqlc.arg(actor_id),
-        archived_at = NOW()
-    WHERE
-        software_application_id = (
-            SELECT
-                software_application_id
-            FROM
-                target
-        )
-        AND STATUS = 'PUBLISHED'
-)
 UPDATE
     software_application_versions
 SET
@@ -153,6 +127,17 @@ WHERE
     AND software_application_versions.status = 'SUBMITTED'
 RETURNING
     *;
+
+-- name: ArchivePublishedLifecycleSoftwareApplicationVersion :exec
+UPDATE
+    software_application_versions
+SET
+    STATUS = 'ARCHIVED',
+    archived_by = sqlc.arg(actor_id),
+    archived_at = NOW()
+WHERE
+    software_application_id = sqlc.arg(software_application_id)
+    AND STATUS = 'PUBLISHED';
 
 -- name: UnpublishLifecycleSoftwareApplicationVersion :one
 UPDATE

@@ -332,9 +332,6 @@ func (a *Authorizer) canManageGroupPermission(ctx context.Context, userID string
 // CanReadDatasetVersion applies publication and stored-group membership rules to one version.
 func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, datasetID, versionID uuid.UUID) (domain.Result, error) {
 	version, err := a.repository.DatasetVersionAuthz(ctx, datasetID, versionID)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
-		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
-	}
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("load dataset version authorization: %w", err)
 	}
@@ -346,7 +343,7 @@ func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, 
 func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, userID *string, applicationID, versionID uuid.UUID) (domain.Result, error) {
 	version, err := a.repository.SoftwareApplicationVersionAuthz(ctx, applicationID, versionID)
 	if err != nil {
-		return versionReadError("software application", err)
+		return domain.Result{}, fmt.Errorf("load software application version authorization: %w", err)
 	}
 	return a.authorizeVersionRead(ctx, userID, version.GroupID, version.Status)
 }
@@ -355,16 +352,9 @@ func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, user
 func (a *Authorizer) CanReadSoftwareSourceCodeVersion(ctx context.Context, userID *string, sourceCodeID, versionID uuid.UUID) (domain.Result, error) {
 	version, err := a.repository.SoftwareSourceCodeVersionAuthz(ctx, sourceCodeID, versionID)
 	if err != nil {
-		return versionReadError("software source code", err)
+		return domain.Result{}, fmt.Errorf("load software source code version authorization: %w", err)
 	}
 	return a.authorizeVersionRead(ctx, userID, version.GroupID, version.Status)
-}
-
-func versionReadError(resource string, err error) (domain.Result, error) {
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
-		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
-	}
-	return domain.Result{}, fmt.Errorf("load %s version authorization: %w", resource, err)
 }
 
 // authorizeVersionRead loads actor facts needed to evaluate one non-public version.

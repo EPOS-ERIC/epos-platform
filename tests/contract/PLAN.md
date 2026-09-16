@@ -1,8 +1,8 @@
 # Gateway Contract Tests
 
 This document is the source of truth for deterministic Gateway contract-test
-work. It records fixed architecture decisions and the process for planning
-each flow. It does not pre-approve implementations for future test files.
+work. It records fixed architecture decisions, test quality rules, and the
+process for planning each new flow. It does not pre-approve implementations.
 
 ## Fixed Decisions
 
@@ -18,10 +18,22 @@ each flow. It does not pre-approve implementations for future test files.
 - Every test method must have a short docstring explaining the behavior it
   verifies. Regression-test docstrings must also identify the bug they catch.
 
+## Current Baseline
+
+Existing contract tests cover basic Gateway CRUD, one admin dataset lifecycle,
+basic membership and role flows, canonical reads and writes, discovery of
+imported drafts, and authorization reachability for all 56 current OpenAPI
+operations. The authorization flow proves important allow/deny boundaries, but
+it is not a substitute for functional tests of every lifecycle branch, filter,
+validation rule, or cross-resource invariant.
+
+New tests should strengthen those behavioral contracts instead of adding more
+generic endpoint smoke calls.
+
 ## Authorization Coverage
 
-The completed contract-test suite must cover authorization for every Gateway
-endpoint whose access rules are defined by `lifecycle.md`.
+The contract-test suite must cover authorization for every Gateway endpoint
+whose access rules are defined by `lifecycle.md`.
 
 - Derive the endpoint and permission matrix from the Gateway OpenAPI contract
   and `lifecycle.md`; do not infer authorization rules from test behavior.
@@ -39,6 +51,9 @@ endpoint whose access rules are defined by `lifecycle.md`.
 - Authorization coverage is not complete until every applicable endpoint has
   an explicit test or is documented as public.
 
+Authorization tests must use valid request bodies and valid lifecycle state so
+  authorization is evaluated before validation or transition conflicts.
+
 ## Failure And Bug Handling
 
 When a new test fails, do not weaken the test or alter expected behavior to
@@ -53,6 +68,7 @@ make it pass.
   should be fixed before continuing.
 - Preserve the failing assertion when it captures a product bug. Add or update
   a regression test only after the expected behavior is agreed.
+- Do not design setup or assertions around accidental current behavior.
 - Regression-test docstrings must identify the bug being protected.
 
 ## Runtime Setup
@@ -131,9 +147,9 @@ test.
 
 ## Setup And Data
 
-There is no shared fixture context at this stage. `client.py` and `auth.py`
-are shared because every authenticated flow uses them. Keep flow-specific
-setup in its flow file until the same setup is needed by at least two flows.
+There is no shared fixture context at this stage. `client.py` and `auth.py` are
+shared because every authenticated flow uses them. Keep flow-specific setup in
+its flow file until the same setup is needed by at least two flows.
 
 When real duplication appears, add the smallest shared helper that removes it
 without hiding mutable state. Discuss that extraction with the user before
@@ -164,25 +180,316 @@ and other linked examples.
   filter and identify one record of each supported resource type.
 - Do not rely on API response ordering when selecting fixtures.
 
-## Coverage Backlog
+## Proposed Next Flows
 
-Coverage is implemented flow by flow after the planning gate below. The
-current backlog includes:
+These flows are ordered by regression value. They are proposals, not approval
+to implement. Before each flow, use the planning gate below to confirm exact
+scope, fixtures, actors, assertions, and exclusions.
 
-- Resource lifecycle for datasets, software applications, and software source
-  code.
-- Groups and categories.
-- Organizations and contact points.
-- Users and secondary-user behavior.
-- Authorization coverage for every applicable Gateway endpoint.
-- Membership requests and membership decisions.
-- Role requests and role management.
-- Permission grants and revocations.
-- Turtle import.
-- Discovery filters and public/private access.
+### 1. `test_resource_lifecycle_branches.py`
 
-The exact endpoints, starting state, actors, data, assertions, negative cases,
-and file boundaries are decided with the user before each file is implemented.
+Purpose: Lock lifecycle state transitions and version invariants beyond the
+existing create/replace/submit/publish happy path.
+
+OperationIds: `createResource`, `replaceResourceDraftVersion`,
+`getResourceVersion`, `listResourceVersions`, `submitResourceVersion`,
+`withdrawResourceVersion`, `rejectResourceVersion`, `reopenResourceVersion`,
+`publishResourceVersion`, `unpublishResourceVersion`,
+`discardResourceDraftVersion`, `draftFromPublication`, and `draftFromArchive`.
+
+Flow: Establish unique dataset fixtures and drive valid branches through
+`DRAFT -> SUBMITTED -> REJECTED -> DRAFT -> SUBMITTED -> PUBLISHED -> ARCHIVED`.
+Use separate resources where one-active-change rules would otherwise block the
+next transition.
+
+Assertions: Verify statuses, stable logical IDs, version IDs and revisions,
+rejection note/actor/timestamp persistence and clearing, publication archival,
+historical-version immutability, active-change conflicts, draft discard, and
+metadata preservation for drafts made from publication or archive.
+
+Negative cases: Use valid requests for unauthorized actors and invalid
+transitions. Do not assert a transition error until the expected state rule is
+confirmed from the contract and implementation.
+
+### 2. `test_resource_variants_and_copy.py`
+
+Purpose: Protect resource-type mappings and copy semantics used by the three
+resource implementations.
+
+OperationIds: `createResource`, `copyResource`, `getResourceVersion`,
+`replaceResourceDraftVersion`, and `draftFromPublication`.
+
+Flow: Create or use one valid dataset, software application, and software
+source-code fixture. Populate representative metadata, identifiers,
+organizations, contact points, web services, and categories where each schema
+supports them. Copy a published resource into another group and create a draft
+from a publication.
+
+Assertions: Verify discriminator-specific response shapes, new logical IDs for
+copies, preserved cloned metadata and identifiers with new ownership rows,
+preserved logical IDs for publication drafts, and category/link rules including
+zero categories on copies where `lifecycle.md` requires it.
+
+Negative cases: Cross-group category references, unauthorized target-group
+copies, and resource-type/body mismatches when the request is otherwise valid.
+
+### 3. `test_canonical_reference_integrity.py`
+
+Purpose: Protect unlinking, ownership, and cascade behavior across canonical
+metadata and resource versions.
+
+OperationIds: `createOrganization`, `replaceOrganization`,
+`deleteOrganization`, `createContactPoint`, `replaceContactPoint`,
+`deleteContactPoint`, `createGroupCategory`, `deleteGroupCategory`, and
+`deleteGroup`.
+
+Flow: Create canonical organizations, contact points, a category subtree, and
+resource versions that reference them. Exercise parent, identifier, provider,
+contact-point, web-service, and category links before deleting canonical data.
+
+Assertions: Verify resource links are removed or nulled according to the
+documented rule, identifiers retain correct ownership, category subtree links
+are removed from published and archived versions, and group deletion is blocked
+while resources still reference the group.
+
+Negative cases: Duplicate ownership, cross-group category links, hierarchy
+cycles, self-links, and deletion conflicts must return schema-validated
+business errors.
+
+### 4. `test_discovery_filters.py`
+
+Purpose: Lock search visibility and filter semantics so query/index changes do
+not change the public catalogue contract.
+
+OperationIds: `discoverResources` and the related
+`getResourceVersion` read path.
+
+Flow: Establish or identify unique records with distinct resource types,
+statuses, groups, editors, providers, keywords, dates, and spatial values.
+Exercise default search plus a compact matrix of positive and negative filters.
+
+Assertions: Verify default published visibility, exact result identity for each
+filter, mixed resource-type results, date-boundary behavior, and exclusion of
+private records for anonymous callers and callers without group access.
+
+Negative cases: Invalid filter combinations and invalid date ranges must retain
+their documented validation behavior. Optional-auth requests must distinguish
+anonymous, invalid-token, and blocked-token behavior.
+
+### 5. `test_membership_invariants.py`
+
+Purpose: Protect access cleanup and role-request state that basic membership
+tests do not cover.
+
+OperationIds: `requestGroupMembership`, `withdrawGroupMembershipRequest`,
+`decideGroupMembership`, `deleteGroupMembership`, `requestGroupRole`,
+`withdrawGroupRoleRequest`, `decideGroupRoleRequest`, `assignGroupRole`,
+`removeGroupRole`, `grantGroupPermission`, and `revokeGroupPermission`.
+
+Flow: Request membership with roles, reject it, verify role-request cascade,
+retry and accept it, create pending role requests, revoke membership, and
+request membership again. Include direct role and permission assignments.
+
+Assertions: Verify pending/rejected/active state, role-request decisions,
+effective permissions, removal of roles, grants, pending requests, and related
+access after revocation, plus successful re-request after revocation.
+
+Negative cases: Pending matching role requests block direct assignment; pending,
+rejected, and revoked memberships cannot receive roles or permissions.
+
+### 6. `test_authorization_edge_cases.py`
+
+Purpose: Protect blocked-user restoration and global-admin safety boundaries.
+
+OperationIds: `blockUser`, `unblockUser`, `getUser`, `discoverResources`,
+`getResourceVersion`, `listContactPoints`, `getContactPoint`,
+`removeGlobalRole`, and the relevant membership and resource operations.
+
+Flow: Fully provision a user with active membership, roles, grants, and access;
+block the user; exercise protected, optional-auth, and fully public operations;
+unblock the user; verify access restoration. Exercise last-active-admin block
+and role-removal safeguards.
+
+Assertions: Verify blocked bearer rejection where authentication is required or
+optional, token-agnostic behavior for fully public operations, dormant access
+while blocked, restored access after unblock, and protection of the last active
+administrator.
+
+Negative cases: Invalid and missing tokens must use the same valid request/state
+as the allowed cases. Do not add duplicate endpoint smoke tests already covered
+by `test_authorization.py`.
+
+### 7. `test_validation_errors.py`
+
+Purpose: Lock representative HTTP and `Problem` error contracts at the Gateway
+boundary.
+
+OperationIds: `createGroup`, `createGroupCategory`, `replaceGroupCategory`,
+`createOrganization`, `createContactPoint`, `replaceResourceDraftVersion`,
+`rejectResourceVersion`, `requestGroupMembership`, `requestGroupRole`, and
+`discoverResources`.
+
+Cases: Wrong media type (`415`), missing required fields, unknown fields,
+blank strings, malformed UUIDs, invalid enum values, invalid email/URI/date-time
+values, invalid date ranges, empty rejection notes, duplicate data, and invalid
+lifecycle transitions.
+
+Assertions: Validate each response through `GatewayClient`, then assert only
+stable status and `Problem` fields agreed by OpenAPI and `lifecycle.md`.
+Resolve any OpenAPI-versus-implementation mismatch as a real contract decision;
+do not silently encode whichever behavior the current server happens to return.
+
+### 8. `test_import_semantics.py`
+
+Purpose: Protect functional Turtle import behavior after authorization is
+covered.
+
+OperationId: `importTurtleMetadata`.
+
+Flow: Submit one explicit valid Turtle document and one document containing
+invalid entities or optional relations. Exercise repeated import against draft
+state and a conflicting active state.
+
+Assertions: Verify persisted counts, warning and diagnostic shapes, skipped
+entities, omitted optional relations, draft-only persistence, and transaction
+rollback on syntax or non-recoverable failure.
+
+Negative cases: Non-admin denial remains in `test_authorization.py`; this flow
+focuses on import behavior and must not use import as hidden fixture setup.
+
+## Approved Flow Plans
+
+### `test_resource_lifecycle_branches.py`
+
+Status: approved
+Purpose: Lock lifecycle state transitions and version invariants beyond the
+existing create/replace/submit/publish happy path.
+
+OperationIds: `createResource`, `replaceResourceDraftVersion`,
+`getResourceVersion`, `listResourceVersions`, `submitResourceVersion`,
+`withdrawResourceVersion`, `rejectResourceVersion`, `reopenResourceVersion`,
+`publishResourceVersion`, `unpublishResourceVersion`,
+`discardResourceDraftVersion`, `draftFromPublication`, and `draftFromArchive`.
+
+Actors and permissions: Admin creates the unique group and may establish
+fixtures. An active `EDITOR` performs create, edit, submit, withdraw, reopen,
+discard, and draft creation. An active `REVIEWER` performs reject and publish;
+the admin grants it the narrow group permission `resource.unpublish`.
+
+Fixtures and ownership: The test owns one unique group, one editor, one
+reviewer, and unique dataset resources. It leaves local data in place and does
+not require cleanup.
+
+HTTP flow: Drive one dataset through
+`DRAFT -> SUBMITTED -> REJECTED -> DRAFT -> SUBMITTED -> PUBLISHED -> ARCHIVED`.
+Create and discard a rejected-only resource and a draft-only resource. Create a
+draft from publication, verify repeated draft creation conflicts, unpublish the
+publication, and create a draft from the latest archive.
+
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+statuses, stable logical IDs, version IDs and revisions, rejection note and
+audit fields, rejection-field clearing on publication, publication archival,
+historical-version immutability, active-change conflicts, draft discard, and
+metadata preservation for drafts made from publication or archive.
+
+Negative cases: Use valid requests and valid lifecycle state for unauthorized
+actors and invalid transitions. Discarding a `REJECTED` version is valid and
+must remain documented by OpenAPI, `lifecycle.md`, and the implementation.
+
+Verification: Run `make generate` from `services/gateway`, then
+`make test-contract`.
+
+### `test_resource_variants_and_copy.py`
+
+Status: approved
+Purpose: Protect resource-type mappings and copy semantics used by the three
+resource implementations.
+
+OperationIds: `createResource`, `copyResource`, `getResourceVersion`,
+`replaceResourceDraftVersion`, and `draftFromPublication`.
+
+Actors and permissions: Admin creates canonical fixtures and publishes source
+resources. An active `EDITOR` belongs to both source and target groups and
+performs successful copies and publication drafts. A separate active source-
+only user verifies target-group copy denial.
+
+Fixtures and ownership: Create two unique groups, one source and one target;
+three unique resources, one dataset, software application, and software
+source-code; canonical organizations and contact points; and group categories.
+The flow owns all mutable fixtures and leaves local data in place.
+
+HTTP flow: Admin creates representative linked metadata for each resource and
+publishes all three source resources. The editor copies each published resource
+to the target group, replaces each copied draft once, and creates a draft from
+each source publication. The source-only user attempts a copy into the target
+group.
+
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+discriminator-specific response shapes, new logical IDs for copies, stable
+logical IDs for publication drafts, new version IDs and revisions, cloned
+identifier values with new internal IDs, preserved supported links, zero
+categories on copies, and preserved categories on publication drafts.
+
+Negative cases: Cross-group category references, unauthorized target-group
+copies, and resource-type/body mismatches use otherwise valid requests and
+starting state. Cross-group category references and resource-type/body
+mismatches return `400`; unauthorized target-group copies return `403`.
+Assert stable schema-validated problem fields where the exact business error is
+documented.
+
+Exclusions: Do not add broad lifecycle transition coverage, cleanup, imported
+fixtures, or new Go unit tests in this flow.
+
+Verification: Run `make generate` from `services/gateway`, then
+`make test-contract`.
+
+### `test_canonical_reference_integrity.py`
+
+Status: approved
+Purpose: Protect canonical deletion, ownership, hierarchy, and cascade
+behavior across resource versions.
+
+OperationIds: `createOrganization`, `replaceOrganization`,
+`deleteOrganization`, `createContactPoint`, `deleteContactPoint`,
+`createGroupCategory`, `replaceGroupCategory`, `deleteGroupCategory`, and
+`deleteGroup`. Resource creation and publication operations are setup steps for
+the reference assertions: `createResource`, `submitResourceVersion`,
+`publishResourceVersion`, `draftFromPublication`, and `getResourceVersion`.
+
+Actors and permissions: The global admin creates and manages every fixture and
+performs canonical and resource operations. No authorization boundary is under
+test in this flow.
+
+Fixtures and ownership: Create one unique group, parent and child canonical
+organizations, one contact point, a root and child category, and one dataset,
+software application, and software source-code resource. Each resource owns a
+published and archived version with organization, contact-point, category, and
+identifier references. The dataset also owns a web service with organization
+and contact-point references. The flow leaves local data in place.
+
+HTTP flow: Publish an initial version for each resource, create and publish a
+second version so the first becomes archived, then delete the parent
+organization, contact point, and category root. Verify each canonical entity is
+deleted and all documented resource, hierarchy, web-service, and category links
+are removed from both versions. Verify resource-owned identifier IDs and values
+remain unchanged. Attempt group deletion while logical resources remain and
+expect `409`.
+
+Negative cases: Category self-links and indirect cycles, plus organization
+self-links and indirect cycles, return `400` and leave the existing hierarchy
+unchanged. Cross-group resource-category validation remains covered by
+`test_resource_variants_and_copy.py` and is not duplicated here.
+
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+only stable statuses, IDs, link presence/removal, identifier ownership, and
+the group conflict problem fields documented by existing contract patterns.
+
+Implementation alignment: Hierarchy trigger failures use PostgreSQL `23514`;
+legacy `P0001` responses from an already-migrated local database map to the
+same invalid domain errors.
+
+Verification: Run `make generate` from `services/metadata-lifecycle`,
+`make build`, `make test`, and `make test-contract`.
 
 ## Per-Flow Planning Gate
 
@@ -221,344 +528,21 @@ Questions should cover, when relevant:
 
 Do not guess answers that are not explicit. Surface the inconsistency and ask.
 
-## Approved Flow Plans
-
-### test_resource_lifecycle.py
-
-Status: approved
-Purpose: Verify the admin dataset lifecycle from creation through publication.
-In scope: Create one unique dataset, inspect its draft, replace it, reject a
-stale replacement revision, submit it, and publish it.
-Out of scope: Withdraw, reject, reopen, archive/unpublish, delete, copy,
-draft-from-publication, other resource types, and authorization tests.
-Actors and permissions: Admin actor only.
-Fixtures and ownership: Reuse imported `Seismology` group by name without
-mutating it. Create one unique dataset owned by this flow. Leave local data in
-place; no cleanup.
-Setup: Run against the existing stack after `make populate-metadatone`.
-HTTP flow: `GET /groups`; `POST /groups/{groupId}/resources`; list and fetch
-the draft version; `PUT /resources/{id}/versions/{versionId}/draft`; retry
-with a stale revision; re-list and fetch the current draft; submit; re-list
-and fetch the submitted version; publish; re-list and fetch the published
-version.
-Assertions: Validate every Gateway response through `GatewayClient`; assert
-creation and transition statuses, dataset type, stable logical resource ID
-and owning group, draft revision increment, submission and publication audit
-fields, and published status.
-Negative cases: A stale draft revision returns schema-validated `409` with
-`title: "conflict"` and `detail: "operation conflicts with existing data"`.
-Verification: `make test-contract`.
-
-### test_groups_and_categories.py
-
-Status: approved
-Purpose: Verify admin group and category CRUD, hierarchy, normalization, and
-cascade behavior.
-In scope: Create, read, update, and delete one unique group; create, read,
-update, and delete a root and child category; verify normalized duplicate-name
-conflict and root-category cascade deletion.
-Out of scope: Secondary-user authorization, unauthenticated reads,
-cross-group parents, hierarchy cycles, group deletion conflicts, memberships,
-roles, direct grants, organizations, resources, and Metadatone mutation.
-Actors and permissions: Admin actor only.
-Fixtures and ownership: Create unique group, root category, and child category
-owned by this flow. Do not mutate imported groups or categories. No cleanup is
-required.
-Setup: Run against the existing stack with the admin credentials configured.
-HTTP flow: `POST /groups`; `GET /groups` and `GET /groups/{groupId}`; `PUT
-/groups/{groupId}`; create root and child categories; list and fetch both;
-replace the child; create a case-normalized duplicate root; delete the root;
-verify the root and child are gone; delete the group; verify the group is gone.
-Assertions: Validate every Gateway response through `GatewayClient`; assert
-stable IDs, group ownership, parent relationships, updated metadata, empty
-category listing after cascade deletion, and `404` responses after deletion.
-Negative cases: A case-normalized duplicate root category returns
-schema-validated `409` with `title: "conflict"` and
-`detail: "operation conflicts with existing data"`.
-Verification: `make test-contract`.
-
-### test_organizations_and_contact_points.py
-
-Status: approved
-Purpose: Verify canonical organization and contact-point reads, CRUD, links,
-and deletion unlinking.
-In scope: Read imported organization and contact-point records; create, read,
-update, and delete one contact point and parent/child organization pair;
-verify duplicate conflicts and link removal after canonical deletion.
-Out of scope: Secondary-user authorization, unauthenticated contact-point
-reads, software/application/web-service links, multiple parents, hierarchy
-cycles, memberships, roles, direct grants, resources, and Metadatone mutation.
-Actors and permissions: Admin actor only. Organization reads use public access;
-contact-point reads and all writes use the admin actor.
-Fixtures and ownership: Read imported INGV and Andrea contact-point records
-without mutating them. Create unique contact point and parent/child
-organizations owned by this flow. No cleanup is required.
-Setup: Run against the existing stack after `make populate-metadatone`.
-HTTP flow: Read imported organization and contact point; create and duplicate
-contact point; create and duplicate parent organization; create child
-organization; read child; replace contact point; replace child organization;
-delete parent; verify child remains without parent; delete contact point;
-verify child remains without contact point; delete child; verify all deleted
-entities return `404`.
-Assertions: Validate every Gateway response through `GatewayClient`; assert
-imported read fields, stable IDs, organization parent/contact links, retained
-links after replacement, exact duplicate conflict responses, and canonical
-deletion unlinking.
-Negative cases: Duplicate contact point and duplicate organization name return
-schema-validated `409` responses with `title: "conflict"` and
-`detail: "operation conflicts with existing data"`. Deleted entities return
-schema-validated `404` responses.
-Verification: `make test-contract`.
-
-### test_users.py
-
-Status: approved
-Purpose: Verify a newly registered AAI user is provisioned and can read its
-own Gateway profile.
-In scope: Register one unique user, obtain its token, and call
-`GET /users/self`; assert identity and initial access state.
-Out of scope: User listing, reading other users, blocking, global roles,
-global permissions, memberships, authorization matrix, and AAI implementation
-details beyond successful registration and token issuance.
-Actors and permissions: Newly registered user only.
-Fixtures and ownership: Generate unique user credentials in memory. Leave the
-registered user in the local environment; no cleanup is required.
-Setup: Run against the existing stack with AAI and Gateway available.
-HTTP flow: AAI `GET /register`; AAI `POST /register`; AAI
-`POST /oauth/token`; Gateway `GET /users/{id}` with `id="self"`.
-Assertions: Validate the Gateway response through `GatewayClient`; assert
-`200`, a non-empty opaque string user ID, matching email, given name, and
-family name, `ACTIVE` status, empty global roles, empty global permissions,
-and empty memberships.
-Negative cases: None in this flow.
-Verification: `make test-contract`.
-
-### test_memberships.py
-
-Status: approved
-Purpose: Verify membership requests, decisions, access states, and decision
-authorization.
-In scope: Create one group; register one applicant; request membership with no
-roles; verify duplicate-request conflict, applicant self-decision denial,
-admin rejection, re-request, admin acceptance, invalid repeated acceptance,
-and the applicant's active membership view.
-Out of scope: Role requests, membership roster reads, request withdrawal,
-membership revocation, direct roles and permissions, and the full
-authorization matrix.
-Actors and permissions: Admin creates the group and makes membership
-decisions. A newly registered applicant requests membership and cannot decide
-its own request.
-Fixtures and ownership: Create one unique group and applicant owned by this
-flow. Use opaque user IDs returned by the API. Do not mutate Metadatone data.
-No cleanup is required.
-Setup: Run against the existing stack with AAI and Gateway available, including
-the string `userId` Gateway fix.
-HTTP flow: Admin `POST /groups`; AAI registration and token issuance; applicant
-`POST /groups/{groupId}/membership-requests` with `{"roles": []}`; repeat the
-request; applicant attempts `POST
-/groups/{groupId}/memberships/{userId}/accept`; admin rejects; applicant
-requests again; admin accepts; admin repeats acceptance; applicant reads
-`GET /users/{id}` with `id="self"`.
-Assertions: Validate every Gateway response through `GatewayClient`; assert
-pending, rejected, and active membership states, applicant identity, empty
-roles/permissions/role requests, stable group and user IDs, and the active
-membership summary.
-Negative cases: Duplicate request and repeated acceptance return
-schema-validated `409` responses with `title: "conflict"` and
-`detail: "operation conflicts with existing data"`. Applicant self-decision
-returns schema-validated `403` with `title: "forbidden"` and
-`detail: "operation is not permitted"`.
-Verification: `make test-contract`.
-
-### test_role_requests.py
-
-Status: approved
-Purpose: Verify role-request creation, rejection, re-request, acceptance, and
-effective role permissions.
-In scope: Create one group; register one applicant; accept membership; request
-`EDITOR`; verify duplicate conflict, rejection, re-request, acceptance, and
-the applicant's effective editor permissions.
-Out of scope: Historical decided-request visibility, direct role assignment or
-removal, `GROUP_ADMIN`, roster authorization, direct permissions, and the full
-authorization matrix.
-Actors and permissions: Admin creates the group and makes membership and role
-decisions. An active applicant requests `EDITOR`.
-Fixtures and ownership: Create one unique group and applicant owned by this
-flow. Use opaque user IDs and the role-request UUID returned by the API. Do not
-mutate Metadatone data. No cleanup is required.
-Setup: Run against the existing stack with AAI and Gateway available,
-including the string `userId` Gateway fix.
-HTTP flow: Admin `POST /groups`; AAI registration and token issuance; applicant
-`POST /groups/{groupId}/membership-requests` with `{"roles": []}`; admin accepts
-membership; applicant `POST /groups/{groupId}/role-requests` with
-`{"role": "EDITOR"}`; repeat the request; admin rejects the role request;
-applicant requests `EDITOR` again; admin accepts it; applicant reads
-`GET /users/{id}` with `id="self"`.
-Assertions: Validate every Gateway response through `GatewayClient`; assert
-pending role and membership states, duplicate conflict, no role after
-rejection, `EDITOR` after acceptance, stable IDs, no pending role requests,
-and effective editor permissions: `resource.create`, `resource.edit`,
-`resource.submit`, `resource.withdraw`, `resource.reopen`, and
-`resource.discard`.
-Negative cases: Duplicate pending role request returns schema-validated `409`
-with `title: "conflict"` and
-`detail: "operation conflicts with existing data"`.
-Verification: `make test-contract`.
-
-### test_group_roles.py
-
-Status: approved
-Purpose: Verify direct group-role assignment, removal, idempotence, and the
-`GROUP_ADMIN` authorization boundary.
-In scope: Create one group; register target, group-role manager, and global-role
-manager; establish memberships; assign and remove `EDITOR`; verify effective
-permissions; deny `GROUP_ADMIN` to the group-role manager; allow the global
-role manager to assign and remove `GROUP_ADMIN`.
-Out of scope: Direct group permissions, role requests, roster coverage, and the
-remaining authorization matrix.
-Actors and permissions: Admin creates the group, accepts memberships, assigns
-`GROUP_ADMIN` to the group-role manager, and grants `global.role.manage` to the
-global-role manager. The group-role manager manages standard roles only. The
-global-role manager manages `GROUP_ADMIN` without group membership.
-Fixtures and ownership: Create one unique group and three unique users owned
-by this flow. Use opaque user IDs returned by the API. Do not mutate Metadatone
-data. No cleanup is required.
-Setup: Run against the existing stack with AAI and Gateway available, including
-the string `userId` Gateway fix and the corrected `GROUP_ADMIN` rule in
-`lifecycle.md`.
-HTTP flow: Admin `POST /groups`; AAI registration and token issuance for all
-users; applicant membership requests and admin membership decisions for the
-target and group-role manager; admin assigns `GROUP_ADMIN` to the group-role
-manager; admin grants `global.role.manage` to the global-role manager; group
-role manager assigns and removes `EDITOR` twice; group-role manager attempts
-`GROUP_ADMIN`; global-role manager assigns and removes `GROUP_ADMIN`.
-Read back each target state with `GET /users/{id}` using `id="self"`.
-Assertions: Validate every Gateway response through `GatewayClient`; assert
-stable IDs, active memberships, effective role permissions, idempotent `204`
-responses, forbidden `GROUP_ADMIN` assignment by group role manager, and
-successful `GROUP_ADMIN` assignment/removal by global role manager.
-Negative cases: Group role manager assigning `GROUP_ADMIN` returns
-schema-validated `403` with `title: "forbidden"` and
-`detail: "operation is not permitted"`.
-Verification: `make test-contract`.
-
-### test_group_permissions.py
-
-Status: approved
-Purpose: Verify direct group-permission grants, revocations, idempotence, and
-effective permission read-back.
-In scope: Create one group; register manager and target; establish active
-memberships; grant `group.permission.manage` to the manager; grant and revoke
-`resource.create` on the target twice; verify direct permission visibility.
-Out of scope: Roles, resources, Metadatone mutation, inactive targets, all
-permission variants, generic authorization denials, and the full authorization
-matrix.
-Actors and permissions: Admin creates the group, accepts both memberships, and
-grants the manager `group.permission.manage`. The manager grants and revokes
-the target's `resource.create` permission.
-Fixtures and ownership: Create one unique group and two unique users owned by
-this flow. Use opaque user IDs returned by the API. Do not mutate Metadatone
-data. No cleanup is required.
-Setup: Run against the existing stack with AAI and Gateway available, including
-the string `userId` Gateway fix.
-HTTP flow: Admin `POST /groups`; AAI registration and token issuance for the
-manager and target; both users request membership with `{"roles": []}`; admin
-accepts both; admin grants the manager `group.permission.manage`; manager reads
-`GET /users/{id}` with `id="self"`; manager grants target `resource.create`
-twice; target reads its profile; manager revokes `resource.create` twice; target
-reads its profile again.
-Assertions: Validate every Gateway response through `GatewayClient`; assert
-active memberships, no roles, manager direct permission, target direct grant
-under membership `permissions` rather than `global_permissions`, and removal
-after revocation.
-Negative cases: Repeated grant and repeated revoke both return idempotent
-`204` responses.
-Verification: `make test-contract`.
-
-### test_authorization.py
-
-Status: approved
-Purpose: Verify authorization for every Gateway operation defined by
-`lifecycle.md`, including public, optional-auth, protected, global, group, and
-resource access.
-In scope: Cover all 56 OpenAPI operations with valid request bodies and valid
-lifecycle state; use least-privilege allowed actors and active denied actors;
-verify fully public operations ignore supplied credentials; verify optional-auth
-operations allow no-token public access but reject invalid and blocked bearer
-tokens; verify protected operations reject missing tokens and unauthorized
-active actors.
-Out of scope: New Go unit tests, Hurl changes, database cleanup, hidden Turtle
-import setup, Schemathesis state-machine generation, and notification
-subscription operations not exposed by Gateway.
-Actors and permissions: Use global `ADMIN` only for admin-only operations.
-Use the narrow global permission, group permission, or group role required by
-each operation. Use active users without the required access as denied actors.
-Use a blocked user only for optional-auth token rejection and fully public
-token-agnostic read checks.
-Fixtures and ownership: Each test method owns its users, memberships, grants,
-groups, categories, organizations, contact points, and resources. Register
-secondary users through AAI and keep credentials in memory. Use separate unique
-dataset/version fixtures for resource operations requiring different lifecycle
-states. Leave local data in place; no cleanup is required.
-Setup: Run against the existing stack after `make populate-metadatone`; use
-`GatewayClient` for every Gateway request and the existing AAI helpers for
-secondary users.
-HTTP flow: `test_public_and_optional_read_authorization` covers fully public
-group/category/organization reads, anonymous discovery, active-member private
-discovery and resource reads, and blocked/invalid optional bearer tokens.
-`test_user_directory_authorization` covers list/read users, global permission
-grant/revoke, blocking/unblocking, and global role assignment/removal.
-`test_canonical_entity_authorization` covers group, category, organization,
-and contact-point writes while public reads remain covered separately.
-`test_membership_and_access_authorization` covers membership roster and request
-operations, role requests and decisions, direct role changes, and direct group
-permission changes. `test_resource_authorization` covers all dataset resource
-creation, copying, draft editing/discarding, version reads/lists, lifecycle
-transitions, and draft creation operations. `test_turtle_import_authorization`
-covers admin success and non-admin denial for Turtle import.
-Assertions: Validate every Gateway response through `GatewayClient`; assert
-allowed operations succeed, denied operations return schema-validated `403`
-with `title: "forbidden"` and `detail: "operation is not permitted"`, missing
-tokens return schema-validated `401`, fully public reads succeed regardless of
-supplied credentials, and optional-auth invalid/blocked tokens are rejected.
-Use valid lifecycle state so authorization is evaluated before validation or
-transition conflicts.
-Negative cases: Use the same valid request and state for allowed and denied
-actors. Include blocked-token rejection for optional-auth reads and
-token-agnostic behavior for fully public reads.
-Verification: `make test-contract`.
-
-Add one concise subsection here before implementing each additional flow:
-
-```text
-### test_<flow>.py
-
-Status: approved
-Purpose:
-In scope:
-Out of scope:
-Actors and permissions:
-Fixtures and ownership:
-Setup:
-HTTP flow:
-Assertions:
-Negative cases:
-Verification:
-```
-
-An approved subsection is the implementation boundary for that file. Update
-it if scope changes.
-
 ## Assertions
 
 Use OpenAPI validation plus focused business assertions. Do not compare full
 responses. Treat IDs, timestamps, audit fields, and ordering as dynamic unless
 the flow plan identifies a specific invariant.
 
+Every negative test must use a valid request and valid starting state when the
+purpose is authorization. Validation tests must isolate the validation rule
+being tested. Do not allow a malformed body or invalid lifecycle state to hide
+an authorization failure.
+
 For lifecycle flows, candidate business assertions include status changes,
 stable logical resource IDs, new version IDs, revision conflicts, linked IDs,
-rejection notes, and publication archival. The exact assertions belong in the
-approved flow plan.
+rejection notes, publication archival, and deletion/unlinking effects. The
+exact assertions belong in the approved flow plan.
 
 ## Verification And Scope
 

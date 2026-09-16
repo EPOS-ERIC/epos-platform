@@ -62,6 +62,13 @@ lint-oss-aai-service:
 lint-metadata-lifecycle:
 	$(MAKE) -C services/metadata-lifecycle lint
 
+generate:
+	+$(MAKE) -j generate-gateway generate-metadata-lifecycle
+generate-gateway:
+	$(MAKE) -C services/gateway generate
+generate-metadata-lifecycle:
+	$(MAKE) -C services/metadata-lifecycle generate
+
 test-schemathesis:
 	schemathesis_env="$$(./packages/scripts/schemathesis-env.sh)" && eval "$$schemathesis_env" && docker run --rm \
 		--add-host host.docker.internal:host-gateway \
@@ -118,4 +125,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-schemathesis test-contract get-dev-token
+.PHONY: up down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-schemathesis test-contract get-dev-token generate generate-gateway generate-metadata-lifecycle

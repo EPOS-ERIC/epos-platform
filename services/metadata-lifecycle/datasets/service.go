@@ -92,6 +92,9 @@ func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, datasetI
 
 func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, versionID uuid.UUID) (domain.DatasetVersion, error) {
 	result, err := s.authorizer.CanReadDatasetVersion(ctx, actor.OptionalString(), datasetID, versionID)
+	if errors.Is(err, domain.ErrAuthorizationNotFound) {
+		return domain.DatasetVersion{}, domain.ErrDatasetNotFound
+	}
 	if err != nil {
 		return domain.DatasetVersion{}, operationError("authorize dataset read", err)
 	}

@@ -597,6 +597,28 @@ func (q *Queries) AddLifecycleWebServiceContactPoint(ctx context.Context, arg Ad
 	return err
 }
 
+const archivePublishedLifecycleDatasetVersion = `-- name: ArchivePublishedLifecycleDatasetVersion :exec
+UPDATE
+    dataset_versions
+SET
+    STATUS = 'ARCHIVED',
+    archived_by = $1,
+    archived_at = NOW()
+WHERE
+    dataset_id = $2
+    AND STATUS = 'PUBLISHED'
+`
+
+type ArchivePublishedLifecycleDatasetVersionParams struct {
+	ActorID   *string
+	DatasetID uuid.UUID
+}
+
+func (q *Queries) ArchivePublishedLifecycleDatasetVersion(ctx context.Context, arg ArchivePublishedLifecycleDatasetVersionParams) error {
+	_, err := q.db.Exec(ctx, archivePublishedLifecycleDatasetVersion, arg.ActorID, arg.DatasetID)
+	return err
+}
+
 const cloneLifecycleDatasetVersion = `-- name: CloneLifecycleDatasetVersion :one
 WITH source AS (
     SELECT
@@ -2600,32 +2622,6 @@ func (q *Queries) ListLifecycleWebServices(ctx context.Context, datasetVersionID
 }
 
 const publishLifecycleDatasetVersion = `-- name: PublishLifecycleDatasetVersion :one
-WITH target AS (
-    SELECT
-        dataset_id
-    FROM
-        dataset_versions
-    WHERE
-        id = $2
-        AND STATUS = 'SUBMITTED' FOR
-    UPDATE
-),
-archived AS (
-    UPDATE
-        dataset_versions
-    SET
-        STATUS = 'ARCHIVED',
-        archived_by = $1,
-        archived_at = NOW()
-    WHERE
-        dataset_id = (
-            SELECT
-                dataset_id
-            FROM
-                target
-        )
-        AND STATUS = 'PUBLISHED'
-)
 UPDATE
     dataset_versions
 SET

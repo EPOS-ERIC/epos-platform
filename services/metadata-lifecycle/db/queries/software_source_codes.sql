@@ -116,32 +116,6 @@ RETURNING
     *;
 
 -- name: PublishLifecycleSoftwareSourceCodeVersion :one
-WITH target AS (
-    SELECT
-        software_source_code_id
-    FROM
-        software_source_code_versions
-    WHERE
-        id = sqlc.arg(version_id)
-        AND STATUS = 'SUBMITTED' FOR
-    UPDATE
-),
-archived AS (
-    UPDATE
-        software_source_code_versions
-    SET
-        STATUS = 'ARCHIVED',
-        archived_by = sqlc.arg(actor_id),
-        archived_at = NOW()
-    WHERE
-        software_source_code_id = (
-            SELECT
-                software_source_code_id
-            FROM
-                target
-        )
-        AND STATUS = 'PUBLISHED'
-)
 UPDATE
     software_source_code_versions
 SET
@@ -156,6 +130,17 @@ WHERE
     AND software_source_code_versions.status = 'SUBMITTED'
 RETURNING
     *;
+
+-- name: ArchivePublishedLifecycleSoftwareSourceCodeVersion :exec
+UPDATE
+    software_source_code_versions
+SET
+    STATUS = 'ARCHIVED',
+    archived_by = sqlc.arg(actor_id),
+    archived_at = NOW()
+WHERE
+    software_source_code_id = sqlc.arg(software_source_code_id)
+    AND STATUS = 'PUBLISHED';
 
 -- name: UnpublishLifecycleSoftwareSourceCodeVersion :one
 UPDATE
