@@ -18,6 +18,43 @@ each flow. It does not pre-approve implementations for future test files.
 - Every test method must have a short docstring explaining the behavior it
   verifies. Regression-test docstrings must also identify the bug they catch.
 
+## Authorization Coverage
+
+The completed contract-test suite must cover authorization for every Gateway
+endpoint whose access rules are defined by `lifecycle.md`.
+
+- Derive the endpoint and permission matrix from the Gateway OpenAPI contract
+  and `lifecycle.md`; do not infer authorization rules from test behavior.
+- Test each endpoint with actors that should be allowed and denied under its
+  defined access rules.
+- Test public endpoints without authentication where `lifecycle.md` defines
+  public access.
+- Keep authorization coverage in a dedicated flow, initially
+  `test_authorization.py`, rather than duplicating secondary-user setup in
+  every endpoint flow.
+- Each authorization test owns its users, memberships, roles, grants, groups,
+  and resources. Do not depend on state created by business-flow tests.
+- Endpoint-specific authorization regressions may remain in the dedicated
+  authorization flow and must identify the caught bug in the test docstring.
+- Authorization coverage is not complete until every applicable endpoint has
+  an explicit test or is documented as public.
+
+## Failure And Bug Handling
+
+When a new test fails, do not weaken the test or alter expected behavior to
+make it pass.
+
+- Stop implementation and classify the failure as a test defect, environment
+  failure, contract mismatch, or implementation bug.
+- Compare actual behavior with the Gateway OpenAPI contract, `lifecycle.md`,
+  and the relevant implementation before changing code or assertions.
+- If the failure is an implementation bug, document the expected behavior,
+  actual behavior, affected path, and impact, then ask whether product code
+  should be fixed before continuing.
+- Preserve the failing assertion when it captures a product bug. Add or update
+  a regression test only after the expected behavior is agreed.
+- Regression-test docstrings must identify the bug being protected.
+
 ## Runtime Setup
 
 Tests run against an already-running local stack. The user must import
@@ -137,6 +174,7 @@ current backlog includes:
 - Groups and categories.
 - Organizations and contact points.
 - Users and secondary-user behavior.
+- Authorization coverage for every applicable Gateway endpoint.
 - Membership requests and membership decisions.
 - Role requests and role management.
 - Permission grants and revocations.
@@ -237,6 +275,204 @@ category listing after cascade deletion, and `404` responses after deletion.
 Negative cases: A case-normalized duplicate root category returns
 schema-validated `409` with `title: "conflict"` and
 `detail: "operation conflicts with existing data"`.
+Verification: `make test-contract`.
+
+### test_organizations_and_contact_points.py
+
+Status: approved
+Purpose: Verify canonical organization and contact-point reads, CRUD, links,
+and deletion unlinking.
+In scope: Read imported organization and contact-point records; create, read,
+update, and delete one contact point and parent/child organization pair;
+verify duplicate conflicts and link removal after canonical deletion.
+Out of scope: Secondary-user authorization, unauthenticated contact-point
+reads, software/application/web-service links, multiple parents, hierarchy
+cycles, memberships, roles, direct grants, resources, and Metadatone mutation.
+Actors and permissions: Admin actor only. Organization reads use public access;
+contact-point reads and all writes use the admin actor.
+Fixtures and ownership: Read imported INGV and Andrea contact-point records
+without mutating them. Create unique contact point and parent/child
+organizations owned by this flow. No cleanup is required.
+Setup: Run against the existing stack after `make populate-metadatone`.
+HTTP flow: Read imported organization and contact point; create and duplicate
+contact point; create and duplicate parent organization; create child
+organization; read child; replace contact point; replace child organization;
+delete parent; verify child remains without parent; delete contact point;
+verify child remains without contact point; delete child; verify all deleted
+entities return `404`.
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+imported read fields, stable IDs, organization parent/contact links, retained
+links after replacement, exact duplicate conflict responses, and canonical
+deletion unlinking.
+Negative cases: Duplicate contact point and duplicate organization name return
+schema-validated `409` responses with `title: "conflict"` and
+`detail: "operation conflicts with existing data"`. Deleted entities return
+schema-validated `404` responses.
+Verification: `make test-contract`.
+
+### test_users.py
+
+Status: approved
+Purpose: Verify a newly registered AAI user is provisioned and can read its
+own Gateway profile.
+In scope: Register one unique user, obtain its token, and call
+`GET /users/self`; assert identity and initial access state.
+Out of scope: User listing, reading other users, blocking, global roles,
+global permissions, memberships, authorization matrix, and AAI implementation
+details beyond successful registration and token issuance.
+Actors and permissions: Newly registered user only.
+Fixtures and ownership: Generate unique user credentials in memory. Leave the
+registered user in the local environment; no cleanup is required.
+Setup: Run against the existing stack with AAI and Gateway available.
+HTTP flow: AAI `GET /register`; AAI `POST /register`; AAI
+`POST /oauth/token`; Gateway `GET /users/{id}` with `id="self"`.
+Assertions: Validate the Gateway response through `GatewayClient`; assert
+`200`, a non-empty opaque string user ID, matching email, given name, and
+family name, `ACTIVE` status, empty global roles, empty global permissions,
+and empty memberships.
+Negative cases: None in this flow.
+Verification: `make test-contract`.
+
+### test_memberships.py
+
+Status: approved
+Purpose: Verify membership requests, decisions, access states, and decision
+authorization.
+In scope: Create one group; register one applicant; request membership with no
+roles; verify duplicate-request conflict, applicant self-decision denial,
+admin rejection, re-request, admin acceptance, invalid repeated acceptance,
+and the applicant's active membership view.
+Out of scope: Role requests, membership roster reads, request withdrawal,
+membership revocation, direct roles and permissions, and the full
+authorization matrix.
+Actors and permissions: Admin creates the group and makes membership
+decisions. A newly registered applicant requests membership and cannot decide
+its own request.
+Fixtures and ownership: Create one unique group and applicant owned by this
+flow. Use opaque user IDs returned by the API. Do not mutate Metadatone data.
+No cleanup is required.
+Setup: Run against the existing stack with AAI and Gateway available, including
+the string `userId` Gateway fix.
+HTTP flow: Admin `POST /groups`; AAI registration and token issuance; applicant
+`POST /groups/{groupId}/membership-requests` with `{"roles": []}`; repeat the
+request; applicant attempts `POST
+/groups/{groupId}/memberships/{userId}/accept`; admin rejects; applicant
+requests again; admin accepts; admin repeats acceptance; applicant reads
+`GET /users/{id}` with `id="self"`.
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+pending, rejected, and active membership states, applicant identity, empty
+roles/permissions/role requests, stable group and user IDs, and the active
+membership summary.
+Negative cases: Duplicate request and repeated acceptance return
+schema-validated `409` responses with `title: "conflict"` and
+`detail: "operation conflicts with existing data"`. Applicant self-decision
+returns schema-validated `403` with `title: "forbidden"` and
+`detail: "operation is not permitted"`.
+Verification: `make test-contract`.
+
+### test_role_requests.py
+
+Status: approved
+Purpose: Verify role-request creation, rejection, re-request, acceptance, and
+effective role permissions.
+In scope: Create one group; register one applicant; accept membership; request
+`EDITOR`; verify duplicate conflict, rejection, re-request, acceptance, and
+the applicant's effective editor permissions.
+Out of scope: Historical decided-request visibility, direct role assignment or
+removal, `GROUP_ADMIN`, roster authorization, direct permissions, and the full
+authorization matrix.
+Actors and permissions: Admin creates the group and makes membership and role
+decisions. An active applicant requests `EDITOR`.
+Fixtures and ownership: Create one unique group and applicant owned by this
+flow. Use opaque user IDs and the role-request UUID returned by the API. Do not
+mutate Metadatone data. No cleanup is required.
+Setup: Run against the existing stack with AAI and Gateway available,
+including the string `userId` Gateway fix.
+HTTP flow: Admin `POST /groups`; AAI registration and token issuance; applicant
+`POST /groups/{groupId}/membership-requests` with `{"roles": []}`; admin accepts
+membership; applicant `POST /groups/{groupId}/role-requests` with
+`{"role": "EDITOR"}`; repeat the request; admin rejects the role request;
+applicant requests `EDITOR` again; admin accepts it; applicant reads
+`GET /users/{id}` with `id="self"`.
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+pending role and membership states, duplicate conflict, no role after
+rejection, `EDITOR` after acceptance, stable IDs, no pending role requests,
+and effective editor permissions: `resource.create`, `resource.edit`,
+`resource.submit`, `resource.withdraw`, `resource.reopen`, and
+`resource.discard`.
+Negative cases: Duplicate pending role request returns schema-validated `409`
+with `title: "conflict"` and
+`detail: "operation conflicts with existing data"`.
+Verification: `make test-contract`.
+
+### test_group_roles.py
+
+Status: approved
+Purpose: Verify direct group-role assignment, removal, idempotence, and the
+`GROUP_ADMIN` authorization boundary.
+In scope: Create one group; register target, group-role manager, and global-role
+manager; establish memberships; assign and remove `EDITOR`; verify effective
+permissions; deny `GROUP_ADMIN` to the group-role manager; allow the global
+role manager to assign and remove `GROUP_ADMIN`.
+Out of scope: Direct group permissions, role requests, roster coverage, and the
+remaining authorization matrix.
+Actors and permissions: Admin creates the group, accepts memberships, assigns
+`GROUP_ADMIN` to the group-role manager, and grants `global.role.manage` to the
+global-role manager. The group-role manager manages standard roles only. The
+global-role manager manages `GROUP_ADMIN` without group membership.
+Fixtures and ownership: Create one unique group and three unique users owned
+by this flow. Use opaque user IDs returned by the API. Do not mutate Metadatone
+data. No cleanup is required.
+Setup: Run against the existing stack with AAI and Gateway available, including
+the string `userId` Gateway fix and the corrected `GROUP_ADMIN` rule in
+`lifecycle.md`.
+HTTP flow: Admin `POST /groups`; AAI registration and token issuance for all
+users; applicant membership requests and admin membership decisions for the
+target and group-role manager; admin assigns `GROUP_ADMIN` to the group-role
+manager; admin grants `global.role.manage` to the global-role manager; group
+role manager assigns and removes `EDITOR` twice; group-role manager attempts
+`GROUP_ADMIN`; global-role manager assigns and removes `GROUP_ADMIN`.
+Read back each target state with `GET /users/{id}` using `id="self"`.
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+stable IDs, active memberships, effective role permissions, idempotent `204`
+responses, forbidden `GROUP_ADMIN` assignment by group role manager, and
+successful `GROUP_ADMIN` assignment/removal by global role manager.
+Negative cases: Group role manager assigning `GROUP_ADMIN` returns
+schema-validated `403` with `title: "forbidden"` and
+`detail: "operation is not permitted"`.
+Verification: `make test-contract`.
+
+### test_group_permissions.py
+
+Status: approved
+Purpose: Verify direct group-permission grants, revocations, idempotence, and
+effective permission read-back.
+In scope: Create one group; register manager and target; establish active
+memberships; grant `group.permission.manage` to the manager; grant and revoke
+`resource.create` on the target twice; verify direct permission visibility.
+Out of scope: Roles, resources, Metadatone mutation, inactive targets, all
+permission variants, generic authorization denials, and the full authorization
+matrix.
+Actors and permissions: Admin creates the group, accepts both memberships, and
+grants the manager `group.permission.manage`. The manager grants and revokes
+the target's `resource.create` permission.
+Fixtures and ownership: Create one unique group and two unique users owned by
+this flow. Use opaque user IDs returned by the API. Do not mutate Metadatone
+data. No cleanup is required.
+Setup: Run against the existing stack with AAI and Gateway available, including
+the string `userId` Gateway fix.
+HTTP flow: Admin `POST /groups`; AAI registration and token issuance for the
+manager and target; both users request membership with `{"roles": []}`; admin
+accepts both; admin grants the manager `group.permission.manage`; manager reads
+`GET /users/{id}` with `id="self"`; manager grants target `resource.create`
+twice; target reads its profile; manager revokes `resource.create` twice; target
+reads its profile again.
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+active memberships, no roles, manager direct permission, target direct grant
+under membership `permissions` rather than `global_permissions`, and removal
+after revocation.
+Negative cases: Repeated grant and repeated revoke both return idempotent
+`204` responses.
 Verification: `make test-contract`.
 
 Add one concise subsection here before implementing each additional flow:

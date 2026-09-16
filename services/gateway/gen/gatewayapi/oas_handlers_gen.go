@@ -4536,9 +4536,7 @@ func (s *Server) handleListGroupsRequest(args [0]string, argsEscaped bool, w htt
 	w = statusWriter
 	ctx := r.Context()
 
-	var (
-		err error
-	)
+	var err error
 
 	var rawBody []byte
 
@@ -4612,9 +4610,7 @@ func (s *Server) handleListOrganizationsRequest(args [0]string, argsEscaped bool
 	w = statusWriter
 	ctx := r.Context()
 
-	var (
-		err error
-	)
+	var err error
 
 	var rawBody []byte
 

@@ -193,14 +193,14 @@ Users may hold both `EDITOR` and `REVIEWER` in same group. Active membership its
 | `group.role.manage`        | Group  | View group membership roster; accept or reject role requests and assign or remove fixed group roles.                                                       |
 | `group.permission.manage`  | Group  | View group membership roster and grant or revoke group-scoped direct permissions.                                                                          |
 | `global.membership.manage` | Global | List and read users; view every group membership roster and accept, reject, or revoke memberships in every group.                                          |
-| `global.role.manage`       | Global | List and read users; view every group membership roster; accept or reject role requests and assign or remove `EDITOR` and `REVIEWER` roles in every group. |
+| `global.role.manage`       | Global | List and read users; view every group membership roster; accept or reject role requests and assign or remove `EDITOR` and `REVIEWER` roles in every group, plus assign or remove `GROUP_ADMIN`. |
 | `global.permission.manage` | Global | List and read users; grant or revoke globally scoped permissions.                                                                                          |
 | `organization.manage`      | Global | Manage canonical organizations, identifiers, and hierarchy.                                                                                                |
 | `contact_point.manage`     | Global | Manage canonical contact points.                                                                                                                           |
 | `category_scheme.manage`   | Global | Manage groups' category-scheme metadata.                                                                                                                   |
 | `category.manage`          | Group  | Manage canonical categories in owning group.                                                                                                               |
 
-Global `ADMIN` grants and revokes global roles and `GROUP_ADMIN`. An active user with `global.permission.manage` or global `ADMIN` grants and revokes globally scoped permissions. An active member with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` performs that action only in their group. An active user with the corresponding `global.membership.manage` or `global.role.manage` permission performs that action in every group without membership. Role managers may assign only `EDITOR` and `REVIEWER`; only global `ADMIN` or an active user with `global.role.manage` may assign or remove `GROUP_ADMIN`. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires global `ADMIN` or `global.membership.manage`. Group permission managers grant and revoke group-scoped direct permissions in their group. `GROUP_ADMIN` includes all three group management permissions. Users with `organization.manage`, `contact_point.manage`, or `category_scheme.manage` manage corresponding canonical entities or category-scheme metadata globally. User with `category.manage` manages canonical categories only in group where permission is granted. Group creation and deletion require global `ADMIN`. Global `ADMIN` may perform all operations.
+Global `ADMIN` grants and revokes global roles and `GROUP_ADMIN`. An active user with `global.permission.manage` or global `ADMIN` grants and revokes globally scoped permissions. An active member with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` performs that action only in their group. An active user with the corresponding `global.membership.manage` or `global.role.manage` permission performs that action in every group without membership. Group role managers may assign or remove `EDITOR` and `REVIEWER` only; an active user with `global.role.manage` may also assign or remove `GROUP_ADMIN`, and global `ADMIN` may perform all role changes. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires global `ADMIN` or `global.membership.manage`. Group permission managers grant and revoke group-scoped direct permissions in their group. `GROUP_ADMIN` includes all three group management permissions. Users with `organization.manage`, `contact_point.manage`, or `category_scheme.manage` manage corresponding canonical entities or category-scheme metadata globally. User with `category.manage` manages canonical categories only in group where permission is granted. Group creation and deletion require global `ADMIN`. Global `ADMIN` may perform all operations.
 
 Groups and categories are publicly readable without authentication. A group is also its canonical category scheme for authorization and API purposes. Public group metadata never includes memberships, roles, direct permissions, or role requests. Global `ADMIN` and every global management permission holder may list users and read any user detail; users may also read their own detail. Group membership roster access requires global `ADMIN`, global membership/role management permission, or an active membership with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` in that group. Roster entries expose member ID, given name, family name, email, membership status, assigned roles, assigned direct group permissions, and pending role requests. A user may read the same assigned roles and direct group permissions for their own memberships.
 
@@ -208,7 +208,7 @@ Group roles and additive group permissions may be assigned only to active member
 
 ### Decision Order
 
-1. Allow public read without requiring user identity; blocked user has public-read access only.
+1. Allow public read without requiring user identity; a blocked identity supplied by a bearer token is denied.
 2. Reject authenticated action for missing or blocked user.
 3. Allow global `ADMIN` without membership or resource grants.
 4. Evaluate additive global permission for global action or cross-group membership and role management.
@@ -255,7 +255,7 @@ First created user receives global `ADMIN` role. Removing its legacy `users.is_s
 
 Global `ADMIN` may block user with required non-empty reason and may later unblock user. Block stores reason, actor, and timestamp. Memberships, roles, grants, and subscriptions remain stored but dormant. Unblocking restores their effect subject to normal active-membership checks.
 
-Blocked identity remains attributable but has unauthenticated-level access: public reads remain allowed, while every authenticated action and request is denied due to blocked status. Blocking last active global `ADMIN` is forbidden. Attempt by blocked user to perform authenticated action emits attributed configured global security event; public reads do not.
+Blocked identity remains attributable but every request made with its bearer token is denied, including public reads. Requests without user identity retain public-read access. Blocking last active global `ADMIN` is forbidden. Attempt by blocked user to perform an authenticated action emits an attributed configured global security event.
 
 ## Metadata Import
 
@@ -338,7 +338,7 @@ Group references from logical datasets, software applications, and software sour
 
 Grant tables record `granted_by` and `granted_at`. Role-request decisions record decision actor and timestamp. Revoking membership deletes every role-request row for user/group regardless of status. Existing `group_permissions` does not model per-user grants and is replaced by scoped grant tables.
 
-Database constraints must enforce scopes: only `ADMIN` may appear in `user_global_roles`; only `EDITOR`, `REVIEWER`, and `GROUP_ADMIN` may appear in `group_membership_roles`; global grant table accepts only global permissions; group grant table accepts only group permissions. Application policy permits only global `ADMIN` to change `GROUP_ADMIN` assignments.
+Database constraints must enforce scopes: only `ADMIN` may appear in `user_global_roles`; only `EDITOR`, `REVIEWER`, and `GROUP_ADMIN` may appear in `group_membership_roles`; global grant table accepts only global permissions; group grant table accepts only group permissions. Application policy permits global `ADMIN` or `global.role.manage` to change `GROUP_ADMIN` assignments.
 
 Per-user category scheme access grants and `user_category_scheme_grants` are removed without replacement. Group metadata is public; active membership controls non-public resource access and group-scoped actions. Global `category_scheme.manage` manages group/category-scheme metadata; group-scoped `category.manage` is sole non-admin permission for managing canonical categories in that group.
 
@@ -370,9 +370,9 @@ Notification preferences do not add columns to `users`.
 | Client previews referenced contact-point impact, then requests delete | All contact links are removed, then contact point is deleted.                                                     |
 | Group owns no resource                                                | Category scheme, categories, memberships, access assignments, requests, and subscriptions are deleted with group. |
 | Group Admin unpublishes resource                                      | Public version becomes archived; later draft may publish normally.                                                |
-| Role manager tries to assign `GROUP_ADMIN`                            | Denied; only global `ADMIN` may assign it.                                                                        |
+| Group role manager tries to assign `GROUP_ADMIN`                      | Denied; a user with `global.role.manage` may assign it.                                                          |
 | Membership is revoked                                                 | Membership and related access/subscriptions/pending requests are deleted; user may request again.                 |
-| Blocked user performs public read                                     | Allowed.                                                                                                          |
+| Blocked user with bearer token performs public read                    | Denied; public read without a token remains allowed.                                                             |
 | Blocked user attempts authenticated action                            | Denied and configured global security event emitted; stored access remains dormant.                               |
 | System Admin unblocks user                                            | Prior memberships, roles, grants, and subscriptions become effective again when otherwise valid.                  |
 | New System Admin or global event is added                             | System Admin is subscribed to all global events by default and may opt out.                                       |

@@ -51,9 +51,17 @@ func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) 
 	}
 
 	actor, result, err := a.activeUser(ctx, actorID)
-	if err != nil || !result.Allowed {
-		return result, err
+	if err != nil {
+		return domain.Result{}, err
 	}
+	if !result.Allowed {
+		// allow self status lookup for blocked users to allow the gateway to block any blocked user authorized requests
+		if actorID == targetID && actor.Status == domain.UserStatusBlocked {
+			return domain.Result{Allowed: true, Reason: "blocked self status lookup"}, nil
+		}
+		return result, nil
+	}
+
 	if actorID == targetID {
 		return domain.Result{Allowed: true, Reason: "self"}, nil
 	}
@@ -732,7 +740,7 @@ func (a *Authorizer) activeUser(ctx context.Context, userID string) (domain.Auth
 		return domain.AuthorizationUser{}, domain.Result{}, fmt.Errorf("load user: %w", err)
 	}
 	if user.Status != domain.UserStatusActive {
-		return domain.AuthorizationUser{ID: "", Status: ""}, domain.Result{Allowed: false, Reason: "user is not active"}, nil
+		return user, domain.Result{Allowed: false, Reason: "user is not active"}, nil
 	}
 	return user, domain.Result{Allowed: true, Reason: ""}, nil
 }
