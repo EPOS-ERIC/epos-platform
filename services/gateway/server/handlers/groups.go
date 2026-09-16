@@ -432,7 +432,7 @@ func (h *ogenHandler) DeleteGroupMembership(ctx context.Context, params gatewaya
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.RevokeMembership(ctx, params.GroupId.String(), params.UserId, a); err != nil {
+	if err := h.membership.RevokeMembership(ctx, a, params.GroupId.String(), params.UserId); err != nil {
 		return fmt.Errorf("revoke membership: %w", err)
 	}
 	return nil
