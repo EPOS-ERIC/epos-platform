@@ -475,6 +475,59 @@ Negative cases: Repeated grant and repeated revoke both return idempotent
 `204` responses.
 Verification: `make test-contract`.
 
+### test_authorization.py
+
+Status: approved
+Purpose: Verify authorization for every Gateway operation defined by
+`lifecycle.md`, including public, optional-auth, protected, global, group, and
+resource access.
+In scope: Cover all 56 OpenAPI operations with valid request bodies and valid
+lifecycle state; use least-privilege allowed actors and active denied actors;
+verify fully public operations ignore supplied credentials; verify optional-auth
+operations allow no-token public access but reject invalid and blocked bearer
+tokens; verify protected operations reject missing tokens and unauthorized
+active actors.
+Out of scope: New Go unit tests, Hurl changes, database cleanup, hidden Turtle
+import setup, Schemathesis state-machine generation, and notification
+subscription operations not exposed by Gateway.
+Actors and permissions: Use global `ADMIN` only for admin-only operations.
+Use the narrow global permission, group permission, or group role required by
+each operation. Use active users without the required access as denied actors.
+Use a blocked user only for optional-auth token rejection and fully public
+token-agnostic read checks.
+Fixtures and ownership: Each test method owns its users, memberships, grants,
+groups, categories, organizations, contact points, and resources. Register
+secondary users through AAI and keep credentials in memory. Use separate unique
+dataset/version fixtures for resource operations requiring different lifecycle
+states. Leave local data in place; no cleanup is required.
+Setup: Run against the existing stack after `make populate-metadatone`; use
+`GatewayClient` for every Gateway request and the existing AAI helpers for
+secondary users.
+HTTP flow: `test_public_and_optional_read_authorization` covers fully public
+group/category/organization reads, anonymous discovery, active-member private
+discovery and resource reads, and blocked/invalid optional bearer tokens.
+`test_user_directory_authorization` covers list/read users, global permission
+grant/revoke, blocking/unblocking, and global role assignment/removal.
+`test_canonical_entity_authorization` covers group, category, organization,
+and contact-point writes while public reads remain covered separately.
+`test_membership_and_access_authorization` covers membership roster and request
+operations, role requests and decisions, direct role changes, and direct group
+permission changes. `test_resource_authorization` covers all dataset resource
+creation, copying, draft editing/discarding, version reads/lists, lifecycle
+transitions, and draft creation operations. `test_turtle_import_authorization`
+covers admin success and non-admin denial for Turtle import.
+Assertions: Validate every Gateway response through `GatewayClient`; assert
+allowed operations succeed, denied operations return schema-validated `403`
+with `title: "forbidden"` and `detail: "operation is not permitted"`, missing
+tokens return schema-validated `401`, fully public reads succeed regardless of
+supplied credentials, and optional-auth invalid/blocked tokens are rejected.
+Use valid lifecycle state so authorization is evaluated before validation or
+transition conflicts.
+Negative cases: Use the same valid request and state for allowed and denied
+actors. Include blocked-token rejection for optional-auth reads and
+token-agnostic behavior for fully public reads.
+Verification: `make test-contract`.
+
 Add one concise subsection here before implementing each additional flow:
 
 ```text

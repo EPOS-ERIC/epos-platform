@@ -208,8 +208,8 @@ Group roles and additive group permissions may be assigned only to active member
 
 ### Decision Order
 
-1. Allow public read without requiring user identity; a blocked identity supplied by a bearer token is denied.
-2. Reject authenticated action for missing or blocked user.
+1. Allow public read without requiring user identity; fully public operations ignore supplied credentials, while optional-auth operations validate supplied bearer tokens.
+2. Reject missing or blocked identities for authenticated operations.
 3. Allow global `ADMIN` without membership or resource grants.
 4. Evaluate additive global permission for global action or cross-group membership and role management.
 5. Allow public reads of groups and categories without user identity.
@@ -255,7 +255,7 @@ First created user receives global `ADMIN` role. Removing its legacy `users.is_s
 
 Global `ADMIN` may block user with required non-empty reason and may later unblock user. Block stores reason, actor, and timestamp. Memberships, roles, grants, and subscriptions remain stored but dormant. Unblocking restores their effect subject to normal active-membership checks.
 
-Blocked identity remains attributable but every request made with its bearer token is denied, including public reads. Requests without user identity retain public-read access. Blocking last active global `ADMIN` is forbidden. Attempt by blocked user to perform an authenticated action emits an attributed configured global security event.
+Blocked identity remains attributable. Operations requiring or optionally accepting authentication reject blocked bearer tokens; fully public operations ignore supplied credentials and remain readable. Requests without user identity retain public-read access. Blocking last active global `ADMIN` is forbidden. Attempt by blocked user to perform an authenticated action emits an attributed configured global security event.
 
 ## Metadata Import
 
@@ -372,7 +372,7 @@ Notification preferences do not add columns to `users`.
 | Group Admin unpublishes resource                                      | Public version becomes archived; later draft may publish normally.                                                |
 | Group role manager tries to assign `GROUP_ADMIN`                      | Denied; a user with `global.role.manage` may assign it.                                                          |
 | Membership is revoked                                                 | Membership and related access/subscriptions/pending requests are deleted; user may request again.                 |
-| Blocked user with bearer token performs public read                    | Denied; public read without a token remains allowed.                                                             |
+| Blocked user with bearer token performs fully public read               | Allowed; optional-auth public reads reject the blocked token.                                                   |
 | Blocked user attempts authenticated action                            | Denied and configured global security event emitted; stored access remains dormant.                               |
 | System Admin unblocks user                                            | Prior memberships, roles, grants, and subscriptions become effective again when otherwise valid.                  |
 | New System Admin or global event is added                             | System Admin is subscribed to all global events by default and may opt out.                                       |
