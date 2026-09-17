@@ -649,7 +649,7 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		ID:                    version.ID,
 		Title:                 version.Title,
 		Description:           version.Description,
-		Keywords:              resourcedb.KeywordsFromString(version.Keywords),
+		Keywords:              version.Keywords,
 		AccrualPeriodicity:    version.AccrualPeriodicity,
 		QualityAnnotation:     version.QualityAnnotation,
 		AccessRight:           version.AccessRight,

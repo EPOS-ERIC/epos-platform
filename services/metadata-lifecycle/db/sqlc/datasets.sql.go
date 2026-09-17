@@ -1276,7 +1276,7 @@ type CreateLifecycleDatasetVersionParams struct {
 	DatasetID          uuid.UUID
 	Title              string
 	Description        string
-	Keywords           string
+	Keywords           []string
 	AccrualPeriodicity *string
 	QualityAnnotation  *string
 	AccessRight        *string
@@ -1656,7 +1656,7 @@ type GetLifecycleDatasetVersionRow struct {
 	Revision           int32
 	Title              string
 	Description        string
-	Keywords           string
+	Keywords           []string
 	AccrualPeriodicity *string
 	QualityAnnotation  *string
 	AccessRight        *string
@@ -2809,7 +2809,7 @@ RETURNING
 type ReplaceLifecycleDatasetDraftParams struct {
 	Title              string
 	Description        string
-	Keywords           string
+	Keywords           []string
 	AccrualPeriodicity *string
 	QualityAnnotation  *string
 	AccessRight        *string

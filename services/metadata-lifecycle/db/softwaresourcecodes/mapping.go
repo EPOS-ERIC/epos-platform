@@ -3,7 +3,6 @@ package softwaresourcecodes
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	resourcedb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
@@ -18,7 +17,7 @@ func ToCreateVersionParams(sourceCodeID uuid.UUID, actorID string, value domain.
 		Name:                 value.Name,
 		Description:          value.Description,
 		ProgrammingLanguage:  value.ProgrammingLanguage,
-		Keywords:             strings.Join(value.Keywords, ","),
+		Keywords:             value.Keywords,
 		Repository:           value.Repository,
 		License:              value.License,
 		SoftwareRequirements: value.SoftwareRequirements,
@@ -35,7 +34,7 @@ func ToReplaceDraftParams(sourceCodeID, versionID uuid.UUID, revision int32, val
 		Name:                 value.Name,
 		Description:          value.Description,
 		ProgrammingLanguage:  value.ProgrammingLanguage,
-		Keywords:             strings.Join(value.Keywords, ","),
+		Keywords:             value.Keywords,
 		Repository:           value.Repository,
 		License:              value.License,
 		SoftwareRequirements: value.SoftwareRequirements,
@@ -142,7 +141,7 @@ func sourceCodeMetadata(ctx context.Context, q *sqlc.Queries, row sqlc.GetLifecy
 		Name:                 version.Name,
 		Description:          version.Description,
 		ProgrammingLanguage:  version.ProgrammingLanguage,
-		Keywords:             resourcedb.KeywordsFromString(version.Keywords),
+		Keywords:             version.Keywords,
 		Repository:           version.Repository,
 		License:              version.License,
 		SoftwareRequirements: version.SoftwareRequirements,

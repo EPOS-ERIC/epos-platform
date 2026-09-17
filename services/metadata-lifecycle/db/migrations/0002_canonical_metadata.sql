@@ -7,15 +7,14 @@ CREATE TABLE categories (
     parent_category_id uuid,
 
     -- Category metadata
-    name               text NOT NULL,
+    name               nonblank_text NOT NULL,
 
     -- Metadata Lifecycle record timestamps
     created_at         timestamptz NOT NULL DEFAULT now(),
     updated_at         timestamptz NOT NULL DEFAULT now(),
     UNIQUE (id, group_id),
     FOREIGN KEY (parent_category_id, group_id) REFERENCES categories(id, group_id) ON DELETE CASCADE,
-    CHECK (parent_category_id IS NULL OR parent_category_id <> id),
-    CHECK (length(trim(name)) > 0)
+    CHECK (parent_category_id IS NULL OR parent_category_id <> id)
 );
 
 -- Store only display name. Expression indexes enforce trim/case-insensitive
@@ -33,15 +32,15 @@ CREATE TABLE organizations (
     id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 
     -- Schema.org organization metadata
-    name        text NOT NULL UNIQUE,
-    street      text,
-    locality    text,
-    postal_code text,
-    country     text,
-    logo_url    text,
-    page_url    text,
-    email       text,
-    lei_code    text
+    name        nonblank_text NOT NULL UNIQUE,
+    street      nonblank_text_opt,
+    locality    nonblank_text_opt,
+    postal_code nonblank_text_opt,
+    country     nonblank_text_opt,
+    logo_url    nonblank_text_opt,
+    page_url    nonblank_text_opt,
+    email       nonblank_text_opt,
+    lei_code    nonblank_text_opt 
 );
 CREATE TABLE organization_memberships (
     child_organization_id  uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -54,8 +53,8 @@ CREATE TABLE contact_points (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 
     -- Contact-point metadata
-    email      text NOT NULL,
-    role       text NOT NULL,
+    email      nonblank_text NOT NULL,
+    role       nonblank_text NOT NULL,
 
     UNIQUE (email, role)
 );

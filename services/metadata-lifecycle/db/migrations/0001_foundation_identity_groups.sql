@@ -3,6 +3,15 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE DOMAIN nonblank_text AS text
+    CHECK (length(btrim(VALUE)) > 0);
+
+CREATE DOMAIN nonblank_text_opt AS text
+    CHECK (VALUE IS NULL OR length(btrim(VALUE)) > 0);
+
+CREATE DOMAIN positive_int AS integer
+    CHECK (VALUE > 0);
+
 CREATE TYPE user_status AS ENUM ('ACTIVE', 'BLOCKED');
 CREATE TYPE membership_status AS ENUM ('PENDING', 'ACTIVE', 'REJECTED');
 CREATE TYPE membership_role AS ENUM ('EDITOR', 'REVIEWER', 'GROUP_ADMIN');
@@ -10,31 +19,30 @@ CREATE TYPE top_level_concept AS ENUM ('DATA', 'FACILITIES', 'SOFTWARE');
 
 CREATE TABLE users (
     id              text PRIMARY KEY,
-    family_name     text NOT NULL,
-    given_name      text NOT NULL,
-    email           text NOT NULL UNIQUE,
+    family_name     nonblank_text NOT NULL,
+    given_name      nonblank_text NOT NULL,
+    email           nonblank_text NOT NULL UNIQUE,
     status          user_status NOT NULL DEFAULT 'ACTIVE',
-    block_reason    text,
+    block_reason    nonblank_text_opt,
     blocked_by      text REFERENCES users(id) ON DELETE RESTRICT,
     blocked_at      timestamptz,
     created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz NOT NULL DEFAULT now(),
-    CHECK ((status = 'BLOCKED') = (block_reason IS NOT NULL AND blocked_by IS NOT NULL AND blocked_at IS NOT NULL)),
-    CHECK (block_reason IS NULL OR length(trim(block_reason)) > 0)
+    CHECK ((status = 'BLOCKED') = (block_reason IS NOT NULL AND blocked_by IS NOT NULL AND blocked_at IS NOT NULL))
 );
 
 CREATE TABLE groups (
     -- Group identity and authorization boundary
     id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name        text NOT NULL UNIQUE,
-    description text,
+    name        nonblank_text NOT NULL UNIQUE,
+    description nonblank_text_opt,
 
     -- Category scheme metadata: groups own exactly one scheme
     concept     top_level_concept NOT NULL,
-    label       text,
-    logo        text,
-    page        text,
-    color       text,
+    label       nonblank_text_opt,
+    logo        nonblank_text_opt,
+    page        nonblank_text_opt,
+    color       nonblank_text_opt,
     position    integer NOT NULL DEFAULT 0,
 
     created_at  timestamptz NOT NULL DEFAULT now(),
@@ -44,4 +52,5 @@ CREATE TABLE groups (
 -- +goose Down
 
 DROP TABLE IF EXISTS groups, users;
+DROP DOMAIN IF EXISTS positive_int, nonblank_text_opt, nonblank_text;
 DROP TYPE IF EXISTS top_level_concept, membership_role, membership_status, user_status;

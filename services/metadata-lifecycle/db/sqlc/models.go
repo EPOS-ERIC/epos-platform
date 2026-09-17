@@ -654,7 +654,7 @@ type DatasetVersion struct {
 	Revision           int32
 	Title              string
 	Description        string
-	Keywords           string
+	Keywords           []string
 	AccrualPeriodicity *string
 	QualityAnnotation  *string
 	AccessRight        *string
@@ -902,7 +902,7 @@ type SoftwareApplicationVersion struct {
 	MainEntityOfPage      *string
 	License               *string
 	Version               *string
-	Keywords              string
+	Keywords              []string
 	DownloadUrl           *string
 	Requirements          *string
 	OperatingSystem       *string
@@ -951,7 +951,7 @@ type SoftwareSourceCodeVersion struct {
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
-	Keywords             string
+	Keywords             []string
 	Repository           *string
 	License              *string
 	SoftwareRequirements *string

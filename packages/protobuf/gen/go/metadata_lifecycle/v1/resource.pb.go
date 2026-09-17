@@ -1542,7 +1542,7 @@ func (x *Temporal) GetEnd() *timestamppb.Timestamp {
 type DatasetInput struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	Title                 string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Description           *string                `protobuf:"bytes,2,opt,name=description,proto3,oneof" json:"description,omitempty"`
+	Description           string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	Keywords              []string               `protobuf:"bytes,3,rep,name=keywords,proto3" json:"keywords,omitempty"`
 	AccrualPeriodicity    *string                `protobuf:"bytes,4,opt,name=accrual_periodicity,json=accrualPeriodicity,proto3,oneof" json:"accrual_periodicity,omitempty"`
 	QualityAnnotation     *string                `protobuf:"bytes,5,opt,name=quality_annotation,json=qualityAnnotation,proto3,oneof" json:"quality_annotation,omitempty"`
@@ -1598,8 +1598,8 @@ func (x *DatasetInput) GetTitle() string {
 }
 
 func (x *DatasetInput) GetDescription() string {
-	if x != nil && x.Description != nil {
-		return *x.Description
+	if x != nil {
+		return x.Description
 	}
 	return ""
 }
@@ -5223,16 +5223,16 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x06status\x18\x04 \x01(\x0e2'.metadata_lifecycle.v1.VersioningStatusB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06status\"j\n" +
 	"\bTemporal\x120\n" +
 	"\x05start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
-	"\x03end\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\"\xdf\a\n" +
+	"\x03end\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\"\xca\a\n" +
 	"\fDatasetInput\x12\x1d\n" +
-	"\x05title\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05title\x12.\n" +
-	"\vdescription\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\vdescription\x88\x01\x01\x12:\n" +
+	"\x05title\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05title\x12)\n" +
+	"\vdescription\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x12:\n" +
 	"\bkeywords\x18\x03 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x12=\n" +
-	"\x13accrual_periodicity\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\x12accrualPeriodicity\x88\x01\x01\x12;\n" +
-	"\x12quality_annotation\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\x11qualityAnnotation\x88\x01\x01\x12/\n" +
-	"\faccess_right\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\vaccessRight\x88\x01\x01\x12N\n" +
+	"\x13accrual_periodicity\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x12accrualPeriodicity\x88\x01\x01\x12;\n" +
+	"\x12quality_annotation\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\x11qualityAnnotation\x88\x01\x01\x12/\n" +
+	"\faccess_right\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\vaccessRight\x88\x01\x01\x12N\n" +
 	"\rdistributions\x18\a \x03(\v2(.metadata_lifecycle.v1.DistributionInputR\rdistributions\x127\n" +
-	"\x10spatial_coverage\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x0fspatialCoverage\x88\x01\x01\x12L\n" +
+	"\x10spatial_coverage\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\x0fspatialCoverage\x88\x01\x01\x12L\n" +
 	"\x11temporal_coverage\x18\t \x01(\v2\x1f.metadata_lifecycle.v1.TemporalR\x10temporalCoverage\x12]\n" +
 	"\x16persistent_identifiers\x18\n" +
 	" \x03(\v2&.metadata_lifecycle.v1.IdentifierInputR\x15persistentIdentifiers\x124\n" +
@@ -5245,8 +5245,7 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\n" +
 	"categories\x124\n" +
 	"\acreated\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\acreated\x124\n" +
-	"\aupdated\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\aupdatedB\x0e\n" +
-	"\f_descriptionB\x16\n" +
+	"\aupdated\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\aupdatedB\x16\n" +
 	"\x14_accrual_periodicityB\x15\n" +
 	"\x13_quality_annotationB\x0f\n" +
 	"\r_access_rightB\x13\n" +

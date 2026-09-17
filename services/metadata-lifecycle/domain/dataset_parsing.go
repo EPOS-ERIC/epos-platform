@@ -14,6 +14,13 @@ func NewDatasetInput(value DatasetInput) (DatasetInput, error) {
 	if value.Title == "" {
 		return DatasetInput{}, fmt.Errorf("dataset title is required: %w", ErrInvalidDataset)
 	}
+	value.Description = strings.TrimSpace(value.Description)
+	if value.Description == "" {
+		return DatasetInput{}, fmt.Errorf("dataset description is required: %w", ErrInvalidDataset)
+	}
+	value.AccrualPeriodicity = optionalTrimmedString(value.AccrualPeriodicity)
+	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
+	value.AccessRight = optionalTrimmedString(value.AccessRight)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return DatasetInput{}, fmt.Errorf("dataset keywords: %w: %w", err, ErrInvalidDataset)
@@ -92,6 +99,13 @@ func NewDatasetMetadata(value DatasetMetadata) (DatasetMetadata, error) {
 	if value.Title == "" {
 		return DatasetMetadata{}, fmt.Errorf("dataset title is required: %w", ErrInvalidDataset)
 	}
+	value.Description = strings.TrimSpace(value.Description)
+	if value.Description == "" {
+		return DatasetMetadata{}, fmt.Errorf("dataset description is required: %w", ErrInvalidDataset)
+	}
+	value.AccrualPeriodicity = optionalTrimmedString(value.AccrualPeriodicity)
+	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
+	value.AccessRight = optionalTrimmedString(value.AccessRight)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return DatasetMetadata{}, fmt.Errorf("dataset keywords: %w: %w", err, ErrInvalidDataset)
@@ -127,6 +141,7 @@ func NewDatasetMetadata(value DatasetMetadata) (DatasetMetadata, error) {
 
 	distributions := make([]Distribution, len(value.Distributions))
 	for i, distribution := range value.Distributions {
+		distribution.License = optionalTrimmedString(distribution.License)
 		if err := validateDistribution(distribution); err != nil {
 			return DatasetMetadata{}, fmt.Errorf("dataset distribution: %w", err)
 		}
@@ -254,6 +269,11 @@ func NewDistributionInput(value DistributionInput) (DistributionInput, error) {
 	if value.Title == "" {
 		return DistributionInput{}, fmt.Errorf("distribution title is required: %w", ErrInvalidDataset)
 	}
+	value.Description = strings.TrimSpace(value.Description)
+	if value.Description == "" {
+		return DistributionInput{}, fmt.Errorf("distribution description is required: %w", ErrInvalidDataset)
+	}
+	value.License = optionalTrimmedString(value.License)
 	if value.WebService != nil && value.DownloadableFile != nil {
 		return DistributionInput{}, fmt.Errorf("distribution cannot contain both delivery methods: %w", ErrInvalidDataset)
 	}
@@ -288,6 +308,9 @@ func NewDistributionInput(value DistributionInput) (DistributionInput, error) {
 func validateDistribution(value Distribution) error {
 	if value.ID == uuid.Nil || strings.TrimSpace(value.Title) == "" {
 		return fmt.Errorf("ID and title are required: %w", ErrInvalidDataset)
+	}
+	if strings.TrimSpace(value.Description) == "" {
+		return fmt.Errorf("distribution description is required: %w", ErrInvalidDataset)
 	}
 	if !value.Type.Valid() {
 		return fmt.Errorf("distribution type is invalid: %w", ErrInvalidDataset)

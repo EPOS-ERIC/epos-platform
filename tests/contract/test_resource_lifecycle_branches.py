@@ -117,7 +117,10 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
             groupId=group_id,
             json={
                 "resource_type": "dataset",
-                "metadata": {"title": title},
+                "metadata": {
+                    "title": title,
+                    "description": "Lifecycle branch description",
+                },
             },
         )
         self.assertEqual(created.status_code, 201)
@@ -260,7 +263,10 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
             json={
                 "resource_type": "dataset",
                 "revision": published_version["revision"],
-                "metadata": {"title": "must remain immutable"},
+                "metadata": {
+                    "title": "must remain immutable",
+                    "description": "Immutable edit description",
+                },
             },
         )
         self.assert_conflict(immutable_edit)
@@ -339,7 +345,10 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
             groupId=group_id,
             json={
                 "resource_type": "dataset",
-                "metadata": {"title": f"rejected-discard-{suffix}"},
+                "metadata": {
+                    "title": f"rejected-discard-{suffix}",
+                    "description": "Rejected discard description",
+                },
             },
         )
         self.assertEqual(rejected_resource.status_code, 201)
@@ -384,7 +393,10 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
             groupId=group_id,
             json={
                 "resource_type": "dataset",
-                "metadata": {"title": f"draft-discard-{suffix}"},
+                "metadata": {
+                    "title": f"draft-discard-{suffix}",
+                    "description": "Draft discard description",
+                },
             },
         )
         self.assertEqual(draft_resource.status_code, 201)
