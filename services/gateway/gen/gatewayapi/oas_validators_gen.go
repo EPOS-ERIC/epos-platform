@@ -1230,15 +1230,8 @@ func (s *DatasetDraftMetadata) Validate() error {
 		})
 	}
 	if err := func() error {
-		if value, ok := s.Description.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
+		if err := s.Description.Validate(); err != nil {
+			return err
 		}
 		return nil
 	}(); err != nil {

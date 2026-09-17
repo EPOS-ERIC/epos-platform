@@ -3715,10 +3715,8 @@ func (s *DatasetDraftMetadata) encodeFields(e *jx.Encoder) {
 		s.Title.Encode(e)
 	}
 	{
-		if s.Description.Set {
-			e.FieldStart("description")
-			s.Description.Encode(e)
-		}
+		e.FieldStart("description")
+		s.Description.Encode(e)
 	}
 	{
 		if s.Keywords != nil {
@@ -3862,8 +3860,8 @@ func (s *DatasetDraftMetadata) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"title\"")
 			}
 		case "description":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				s.Description.Reset()
 				if err := s.Description.Decode(d); err != nil {
 					return err
 				}
@@ -4059,7 +4057,7 @@ func (s *DatasetDraftMetadata) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b00000001,
+		0b00000011,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {

@@ -15,9 +15,7 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) *metadatalif
 		Keywords:         toProtoKeywords(v.Keywords),
 		TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
 	}
-	if v.Description.Set {
-		r.Description = string(v.Description.Value)
-	}
+	r.Description = string(v.Description)
 	if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
 		r.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)
 	}

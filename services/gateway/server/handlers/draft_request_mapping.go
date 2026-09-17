@@ -16,14 +16,12 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 		v := q.CreateDatasetResourceRequest.Metadata
 		metadata := &metadatalifecyclev1.DatasetInput{
 			Title:            string(v.Title),
+			Description:      string(v.Description),
 			Keywords:         toProtoKeywords(v.Keywords),
 			TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
 			ContactPoints:    uuidStrings(v.ContactPoints),
 			Providers:        uuidStrings(v.Providers),
 			Categories:       uuidStrings(v.Categories),
-		}
-		if v.Description.Set {
-			metadata.Description = string(v.Description.Value)
 		}
 		if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
 			metadata.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)

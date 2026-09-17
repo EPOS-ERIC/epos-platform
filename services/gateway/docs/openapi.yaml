@@ -1891,7 +1891,7 @@ components:
     DatasetDraftMetadata:
       type: object
       additionalProperties: false
-      required: [title]
+      required: [title, description]
       properties:
         title: { $ref: "#/components/schemas/NonBlankString" }
         description: { $ref: "#/components/schemas/NonBlankString" }
