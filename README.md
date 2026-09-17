@@ -77,11 +77,10 @@ make fmt
 make lint
 ```
 
-Use each module's Makefile for builds, generated code, and module-specific commands. Integration suites run against an already-running development stack:
+Use each module's Makefile for builds, generated code, and module-specific commands. The contract suite runs against an already-running development stack:
 
 ```bash
-make test-contract
-make test-schemathesis
+make test-integration
 ```
 
 ## Generated code
@@ -94,9 +93,9 @@ Do not edit generated files directly. Change the owning OpenAPI specification or
 
 ## CI
 
-Workflows under `.github/workflows/` validate each application or service independently, deterministic contract, and Schemathesis integration suites. Reusable workflow definitions are prefixed with `_`.
+Workflows under `.github/workflows/` validate each application or service independently and run the deterministic contract suite. Reusable workflow definitions are prefixed with `_`.
 
-Run the CI stack locally with `make ci`; it builds production images and leaves the stack running for `make populate-metadatone`, `make test-contract`, or `make test-schemathesis`.
+Run the CI stack locally with `make ci`; it builds production images and leaves the stack running for `make populate-metadatone` or `make test-integration`.
 
 ## Component documentation
 
