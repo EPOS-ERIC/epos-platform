@@ -1,0 +1,39 @@
+name: Go Service CI
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ inputs.service }}/go.mod
+          cache-dependency-path: ${{ inputs.service }}/go.sum
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.13.2
+          install-only: true
+
+      - name: Run Go tests
+        working-directory: ${{ inputs.service }}
+        run: make test
+
+      - name: Run Go lint
+        working-directory: ${{ inputs.service }}
+        run: make lint
+
+      - name: Build binary
+        working-directory: ${{ inputs.service }}
+        run: make build

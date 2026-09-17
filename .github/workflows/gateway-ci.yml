@@ -12,7 +12,8 @@ on:
       - "docker/gateway-config.dev.yaml"
       - "Makefile"
       - ".github/workflows/gateway-ci.yml"
-      - ".github/workflows/_go-service.yml"
+      - ".github/workflows/_go-service-ci.yml"
+      - ".github/workflows/_go-service-cd.yml"
   push:
     branches:
       - "main"
@@ -28,19 +29,28 @@ on:
       - "docker/gateway-config.dev.yaml"
       - "Makefile"
       - ".github/workflows/gateway-ci.yml"
-      - ".github/workflows/_go-service.yml"
+      - ".github/workflows/_go-service-ci.yml"
+      - ".github/workflows/_go-service-cd.yml"
+
+  workflow_dispatch:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   ci:
-    uses: ./.github/workflows/_go-service.yml
+    uses: ./.github/workflows/_go-service-ci.yml
+    secrets: inherit
+    with:
+      service: services/gateway
+
+  publish:
+    needs: ci
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_go-service-cd.yml
     secrets: inherit
     with:
       service: services/gateway
       image: gateway
-      dockerfile: services/gateway/Dockerfile
-      context: .
-      go-version-file: services/gateway/go.mod
