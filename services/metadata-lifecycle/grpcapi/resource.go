@@ -4,6 +4,7 @@ package grpcapi
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -858,7 +859,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
-	return domain.NewDatasetInput(domain.DatasetInput{
+	result, err := domain.NewDatasetInput(domain.DatasetInput{
 		Title:                 value.GetTitle(),
 		Description:           value.GetDescription(),
 		Keywords:              value.GetKeywords(),
@@ -875,6 +876,10 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 		SourceCreated:         created,
 		SourceUpdated:         updated,
 	})
+	if err != nil {
+		return domain.DatasetInput{}, fmt.Errorf("validate dataset input: %w", err)
+	}
+	return result, nil
 }
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
@@ -1260,7 +1265,7 @@ func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationInpu
 	if err != nil {
 		return domain.SoftwareApplicationInput{}, err
 	}
-	return domain.NewSoftwareApplicationInput(domain.SoftwareApplicationInput{
+	result, err := domain.NewSoftwareApplicationInput(domain.SoftwareApplicationInput{
 		Name:             value.GetName(),
 		Description:      value.GetDescription(),
 		MainEntityOfPage: value.MainEntityOfPage,
@@ -1275,6 +1280,10 @@ func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationInpu
 		CategoryIDs:      categories,
 		Identifiers:      identifiers,
 	})
+	if err != nil {
+		return domain.SoftwareApplicationInput{}, fmt.Errorf("validate software application input: %w", err)
+	}
+	return result, nil
 }
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
@@ -1295,7 +1304,7 @@ func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeInput)
 	if err != nil {
 		return domain.SoftwareSourceCodeInput{}, err
 	}
-	return domain.NewSoftwareSourceCodeInput(domain.SoftwareSourceCodeInput{
+	result, err := domain.NewSoftwareSourceCodeInput(domain.SoftwareSourceCodeInput{
 		Name:                 value.GetName(),
 		Description:          value.GetDescription(),
 		ProgrammingLanguage:  value.ProgrammingLanguage,
@@ -1311,6 +1320,10 @@ func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeInput)
 		CategoryIDs:          categories,
 		Identifiers:          identifiers,
 	})
+	if err != nil {
+		return domain.SoftwareSourceCodeInput{}, fmt.Errorf("validate software source code input: %w", err)
+	}
+	return result, nil
 }
 
 func identifierInputs(values []*metadatalifecyclev1.IdentifierInput) ([]domain.IdentifierInput, error) {
