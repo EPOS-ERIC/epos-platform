@@ -21,10 +21,11 @@ message GroupMembership {
   MembershipUser user = 1;
   MembershipStatus status = 2 [(buf.validate.field).enum.defined_only = true];
   repeated GroupRole roles = 3 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  repeated string permissions = 4;
+  repeated GroupPermission granted_permissions = 4 [(buf.validate.field).repeated.items.enum.defined_only = true];
   repeated RoleRequest role_requests = 5;
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
+  repeated GroupPermission role_permissions = 8 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }
 
 message ListGroupMembershipsRequest {
@@ -102,14 +103,14 @@ message RemoveRoleResponse {}
 message GrantPermissionRequest {
   string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
-  string permission = 3 [(buf.validate.field).string.min_len = 1];
+  GroupPermission permission = 3 [(buf.validate.field).enum.defined_only = true];
 }
 message GrantPermissionResponse {}
 
 message RevokePermissionRequest {
   string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
-  string permission = 3 [(buf.validate.field).string.min_len = 1];
+  GroupPermission permission = 3 [(buf.validate.field).enum.defined_only = true];
 }
 message RevokePermissionResponse {}
 

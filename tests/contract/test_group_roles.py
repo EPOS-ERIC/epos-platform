@@ -111,7 +111,7 @@ class GroupRoleContractTest(unittest.TestCase):
         self.assertEqual(global_manager_profile_response.status_code, 200)
         self.assertIn(
             "global.role.manage",
-            global_manager_profile_response.json()["global_permissions"],
+            global_manager_profile_response.json()["global_granted_permissions"],
         )
 
         manager_profile_response = group_role_manager.get(
@@ -151,7 +151,11 @@ class GroupRoleContractTest(unittest.TestCase):
         self.assertEqual(target_membership["group"]["id"], group_id)
         self.assertEqual(target_membership["roles"], ["EDITOR"])
         self.assertCountEqual(
-            target_membership["permissions"],
+            target_membership["granted_permissions"],
+            [],
+        )
+        self.assertCountEqual(
+            target_membership["role_permissions"],
             [
                 "resource.create",
                 "resource.edit",
@@ -184,7 +188,8 @@ class GroupRoleContractTest(unittest.TestCase):
         self.assertEqual(target_profile_response.status_code, 200)
         target_membership = target_profile_response.json()["memberships"][0]
         self.assertEqual(target_membership["roles"], [])
-        self.assertEqual(target_membership["permissions"], [])
+        self.assertEqual(target_membership["granted_permissions"], [])
+        self.assertEqual(target_membership["role_permissions"], [])
 
         group_manager_admin_response = group_role_manager.put(
             "/groups/{groupId}/memberships/{userId}/roles/{role}",
@@ -216,7 +221,11 @@ class GroupRoleContractTest(unittest.TestCase):
         target_membership = target_profile_response.json()["memberships"][0]
         self.assertEqual(target_membership["roles"], ["GROUP_ADMIN"])
         self.assertCountEqual(
-            target_membership["permissions"],
+            target_membership["granted_permissions"],
+            [],
+        )
+        self.assertCountEqual(
+            target_membership["role_permissions"],
             [
                 "resource.create",
                 "resource.edit",
@@ -248,4 +257,5 @@ class GroupRoleContractTest(unittest.TestCase):
         self.assertEqual(target_profile_response.status_code, 200)
         target_membership = target_profile_response.json()["memberships"][0]
         self.assertEqual(target_membership["roles"], [])
-        self.assertEqual(target_membership["permissions"], [])
+        self.assertEqual(target_membership["granted_permissions"], [])
+        self.assertEqual(target_membership["role_permissions"], [])

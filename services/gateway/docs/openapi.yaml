@@ -358,7 +358,8 @@ paths:
                       given_name: "Alice"
                       family_name: "Rossi"
                       global_roles: [ADMIN]
-                      global_permissions: []
+                      global_granted_permissions: []
+                      global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
                       status: "ACTIVE"
                       created_at: "2026-06-17T12:48:45.574Z"
                       updated_at: "2026-06-17T12:48:45.574Z"
@@ -885,7 +886,8 @@ paths:
                     given_name: "Alice"
                     family_name: "Rossi"
                     global_roles: [ADMIN]
-                    global_permissions: []
+                    global_granted_permissions: []
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -895,7 +897,8 @@ paths:
                           name: "Group Cool Name"
                         roles: [EDITOR]
                         status: "ACTIVE"
-                        permissions: [resource.create, resource.edit]
+                        granted_permissions: []
+                        role_permissions: [resource.create, resource.edit]
                         created_at: "2026-06-17T12:48:45.574Z"
                         updated_at: "2026-06-17T12:48:45.574Z"
                 self:
@@ -906,7 +909,8 @@ paths:
                     given_name: "Alice"
                     family_name: "Rossi"
                     global_roles: [ADMIN]
-                    global_permissions: []
+                    global_granted_permissions: []
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -916,7 +920,8 @@ paths:
                           name: "Group Cool Name"
                         roles: [EDITOR]
                         status: "ACTIVE"
-                        permissions: [resource.create, resource.edit]
+                        granted_permissions: []
+                        role_permissions: [resource.create, resource.edit]
                         created_at: "2026-06-17T12:48:45.574Z"
                         updated_at: "2026-06-17T12:48:45.574Z"
         default:
@@ -1454,16 +1459,9 @@ components:
       in: path
       required: true
       description: Global permission key.
+      example: global.permission.manage
       schema:
-        type: string
-        enum:
-          - global.membership.manage
-          - global.role.manage
-          - global.permission.manage
-          - organization.manage
-          - contact_point.manage
-          - category_scheme.manage
-        example: global.permission.manage
+        $ref: "#/components/schemas/GlobalPermission"
 
     GlobalRole:
       name: role
@@ -1515,21 +1513,7 @@ components:
       required: true
       description: Group-scoped permission to grant or revoke.
       schema:
-        type: string
-        enum:
-          - resource.create
-          - resource.edit
-          - resource.submit
-          - resource.withdraw
-          - resource.reopen
-          - resource.discard
-          - resource.reject
-          - resource.publish
-          - resource.unpublish
-          - group.membership.manage
-          - group.role.manage
-          - group.permission.manage
-          - category.manage
+        $ref: "#/components/schemas/GroupPermission"
 
     GroupId:
       name: groupId
@@ -1851,6 +1835,35 @@ components:
       type: string
       minLength: 1
       pattern: "^[A-Za-z0-9 _:-]+$"
+
+    GlobalPermission:
+      type: string
+      description: Global permission key.
+      enum:
+        - global.membership.manage
+        - global.role.manage
+        - global.permission.manage
+        - organization.manage
+        - contact_point.manage
+        - category_scheme.manage
+
+    GroupPermission:
+      type: string
+      description: Group-scoped permission key.
+      enum:
+        - resource.create
+        - resource.edit
+        - resource.submit
+        - resource.withdraw
+        - resource.reopen
+        - resource.discard
+        - resource.reject
+        - resource.publish
+        - resource.unpublish
+        - group.membership.manage
+        - group.role.manage
+        - group.permission.manage
+        - category.manage
 
     DiscoveryResourceType:
       type: string
@@ -3338,7 +3351,8 @@ components:
         - family_name
         - status
         - global_roles
-        - global_permissions
+        - global_granted_permissions
+        - global_role_permissions
         - created_at
         - updated_at
       properties:
@@ -3356,10 +3370,14 @@ components:
           type: array
           items:
             type: string
-        global_permissions:
+        global_granted_permissions:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/GlobalPermission"
+        global_role_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GlobalPermission"
         created_at:
           type: string
           format: date-time
@@ -3564,7 +3582,8 @@ components:
         - group
         - roles
         - status
-        - permissions
+        - granted_permissions
+        - role_permissions
         - role_requests
         - created_at
         - updated_at
@@ -3577,10 +3596,14 @@ components:
             $ref: "#/components/schemas/MembershipRole"
         status:
           $ref: "#/components/schemas/MembershipStatus"
-        permissions:
+        granted_permissions:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/GroupPermission"
+        role_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupPermission"
         role_requests:
           type: array
           description: Pending role requests for this membership.
@@ -3600,7 +3623,8 @@ components:
         - user
         - status
         - roles
-        - permissions
+        - granted_permissions
+        - role_permissions
         - role_requests
         - created_at
         - updated_at
@@ -3613,10 +3637,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MembershipRole"
-        permissions:
+        granted_permissions:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/GroupPermission"
+        role_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupPermission"
         role_requests:
           type: array
           description: Pending role requests only.

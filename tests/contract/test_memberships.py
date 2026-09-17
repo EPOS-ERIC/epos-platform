@@ -59,7 +59,8 @@ class MembershipContractTest(unittest.TestCase):
         membership = membership_request_response.json()
         self.assertEqual(membership["status"], "PENDING")
         self.assertEqual(membership["roles"], [])
-        self.assertEqual(membership["permissions"], [])
+        self.assertEqual(membership["granted_permissions"], [])
+        self.assertEqual(membership["role_permissions"], [])
         self.assertEqual(membership["role_requests"], [])
         self.assertEqual(membership["user"]["email"], email)
         user_id = membership["user"]["id"]
@@ -114,7 +115,8 @@ class MembershipContractTest(unittest.TestCase):
         self.assertEqual(retry_membership["user"]["id"], user_id)
         self.assertEqual(retry_membership["status"], "PENDING")
         self.assertEqual(retry_membership["roles"], [])
-        self.assertEqual(retry_membership["permissions"], [])
+        self.assertEqual(retry_membership["granted_permissions"], [])
+        self.assertEqual(retry_membership["role_permissions"], [])
         self.assertEqual(retry_membership["role_requests"], [])
 
         accepted_response = self.gateway.post(
@@ -128,7 +130,8 @@ class MembershipContractTest(unittest.TestCase):
         self.assertEqual(accepted_membership["user"]["id"], user_id)
         self.assertEqual(accepted_membership["status"], "ACTIVE")
         self.assertEqual(accepted_membership["roles"], [])
-        self.assertEqual(accepted_membership["permissions"], [])
+        self.assertEqual(accepted_membership["granted_permissions"], [])
+        self.assertEqual(accepted_membership["role_permissions"], [])
         self.assertEqual(accepted_membership["role_requests"], [])
 
         repeated_accept_response = self.gateway.post(
@@ -159,5 +162,6 @@ class MembershipContractTest(unittest.TestCase):
         self.assertEqual(membership_summary["group"]["id"], group_id)
         self.assertEqual(membership_summary["status"], "ACTIVE")
         self.assertEqual(membership_summary["roles"], [])
-        self.assertEqual(membership_summary["permissions"], [])
+        self.assertEqual(membership_summary["granted_permissions"], [])
+        self.assertEqual(membership_summary["role_permissions"], [])
         self.assertEqual(membership_summary["role_requests"], [])

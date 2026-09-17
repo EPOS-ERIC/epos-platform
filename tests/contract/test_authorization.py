@@ -304,6 +304,22 @@ class AuthorizationContractTest(unittest.TestCase):
         self.assertEqual(target_response.status_code, 200)
         self.assertEqual(target_response.json()["id"], target_id)
 
+        admin_profile_response = self.gateway.get("/users/{id}", id="self")
+        self.assertEqual(admin_profile_response.status_code, 200)
+        admin_profile = admin_profile_response.json()
+        self.assertEqual(admin_profile["global_roles"], ["ADMIN"])
+        self.assertCountEqual(
+            admin_profile["global_role_permissions"],
+            [
+                "global.membership.manage",
+                "global.role.manage",
+                "global.permission.manage",
+                "organization.manage",
+                "contact_point.manage",
+                "category_scheme.manage",
+            ],
+        )
+
         denied_target_response = denied.get(
             "/users/{id}",
             id=target_id,
@@ -319,7 +335,8 @@ class AuthorizationContractTest(unittest.TestCase):
         )
         self.assertEqual(global_permission_response.status_code, 204)
         target_profile = target.get("/users/{id}", id="self").json()
-        self.assertIn("organization.manage", target_profile["global_permissions"])
+        self.assertIn("organization.manage", target_profile["global_granted_permissions"])
+        self.assertEqual(target_profile["global_role_permissions"], [])
 
         denied_global_permission_response = denied.put(
             "/users/{id}/global-permissions/{permission}",
@@ -335,7 +352,7 @@ class AuthorizationContractTest(unittest.TestCase):
         )
         self.assertEqual(revoke_global_permission_response.status_code, 204)
         target_profile = target.get("/users/{id}", id="self").json()
-        self.assertNotIn("organization.manage", target_profile["global_permissions"])
+        self.assertNotIn("organization.manage", target_profile["global_granted_permissions"])
 
         denied_block_response = denied.post(
             "/users/{id}/block",

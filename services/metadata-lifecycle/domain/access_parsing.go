@@ -7,6 +7,79 @@ import (
 	"github.com/google/uuid"
 )
 
+// NewGlobalPermission validates and normalizes a global permission key.
+func NewGlobalPermission(value string) (GlobalPermission, error) {
+	permission := GlobalPermission(strings.TrimSpace(value))
+	switch permission {
+	case GlobalPermissionMembershipManage,
+		GlobalPermissionRoleManage,
+		GlobalPermissionPermissionManage,
+		GlobalPermissionOrganizationManage,
+		GlobalPermissionContactPointManage,
+		GlobalPermissionCategorySchemeManage:
+		return permission, nil
+	default:
+		return "", ErrInvalidAccess
+	}
+}
+
+// NewGlobalPermissions validates and normalizes global permission keys.
+func NewGlobalPermissions(values []string) ([]GlobalPermission, error) {
+	if values == nil {
+		return nil, nil
+	}
+
+	permissions := make([]GlobalPermission, len(values))
+	for i, value := range values {
+		permission, err := NewGlobalPermission(value)
+		if err != nil {
+			return nil, err
+		}
+		permissions[i] = permission
+	}
+	return permissions, nil
+}
+
+// NewGroupPermission validates and normalizes a group permission key.
+func NewGroupPermission(value string) (GroupPermission, error) {
+	permission := GroupPermission(strings.TrimSpace(value))
+	switch permission {
+	case GroupPermissionResourceCreate,
+		GroupPermissionResourceEdit,
+		GroupPermissionResourceSubmit,
+		GroupPermissionResourceWithdraw,
+		GroupPermissionResourceReopen,
+		GroupPermissionResourceDiscard,
+		GroupPermissionResourceReject,
+		GroupPermissionResourcePublish,
+		GroupPermissionResourceUnpublish,
+		GroupPermissionMembershipManage,
+		GroupPermissionRoleManage,
+		GroupPermissionPermissionManage,
+		GroupPermissionCategoryManage:
+		return permission, nil
+	default:
+		return "", ErrInvalidAccess
+	}
+}
+
+// NewGroupPermissions validates and normalizes group permission keys.
+func NewGroupPermissions(values []string) ([]GroupPermission, error) {
+	if values == nil {
+		return nil, nil
+	}
+
+	permissions := make([]GroupPermission, len(values))
+	for i, value := range values {
+		permission, err := NewGroupPermission(value)
+		if err != nil {
+			return nil, err
+		}
+		permissions[i] = permission
+	}
+	return permissions, nil
+}
+
 // NewGroupRole validates and normalizes a role path value.
 func NewGroupRole(value string) (GroupRole, error) {
 	role := GroupRole(strings.TrimSpace(value))
@@ -98,6 +171,14 @@ func NewGroupMembership(value GroupMembership) (GroupMembership, error) {
 			return GroupMembership{}, ErrInvalidAccess
 		}
 	}
+	grantedPermissions, err := normalizeGroupPermissions(value.GrantedPermissions)
+	if err != nil {
+		return GroupMembership{}, err
+	}
+	rolePermissions, err := normalizeGroupPermissions(value.RolePermissions)
+	if err != nil {
+		return GroupMembership{}, err
+	}
 
 	roleRequests := make([]RoleRequest, 0, len(value.RoleRequests))
 	for _, request := range value.RoleRequests {
@@ -111,7 +192,24 @@ func NewGroupMembership(value GroupMembership) (GroupMembership, error) {
 	value.User = user
 	value.Status = status
 	value.Roles = roles
-	value.Permissions = slices.Clone(value.Permissions)
+	value.GrantedPermissions = grantedPermissions
+	value.RolePermissions = rolePermissions
 	value.RoleRequests = roleRequests
 	return value, nil
+}
+
+func normalizeGroupPermissions(values []GroupPermission) ([]GroupPermission, error) {
+	if values == nil {
+		return nil, nil
+	}
+
+	permissions := make([]GroupPermission, len(values))
+	for i, value := range values {
+		permission, err := NewGroupPermission(string(value))
+		if err != nil {
+			return nil, err
+		}
+		permissions[i] = permission
+	}
+	return permissions, nil
 }

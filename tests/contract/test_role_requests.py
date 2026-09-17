@@ -149,7 +149,11 @@ class RoleRequestContractTest(unittest.TestCase):
         self.assertEqual(membership_summary["status"], "ACTIVE")
         self.assertEqual(membership_summary["roles"], ["EDITOR"])
         self.assertCountEqual(
-            membership_summary["permissions"],
+            membership_summary["granted_permissions"],
+            [],
+        )
+        self.assertCountEqual(
+            membership_summary["role_permissions"],
             [
                 "resource.create",
                 "resource.edit",

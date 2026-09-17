@@ -11,18 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	permissionCreate    = "resource.create"
-	permissionEdit      = "resource.edit"
-	permissionSubmit    = "resource.submit"
-	permissionWithdraw  = "resource.withdraw"
-	permissionReject    = "resource.reject"
-	permissionReopen    = "resource.reopen"
-	permissionPublish   = "resource.publish"
-	permissionDiscard   = "resource.discard"
-	permissionUnpublish = "resource.unpublish"
-)
-
 type Store interface {
 	Get(context.Context, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 	List(context.Context, uuid.UUID) ([]domain.ResourceVersionSummary, error)
@@ -43,8 +31,8 @@ type Store interface {
 }
 
 type Authorizer interface {
-	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
-	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, string) (domain.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, domain.GroupPermission) (domain.Result, error)
+	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, domain.GroupPermission) (domain.Result, error)
 	CanReadResourceVersions(context.Context, string, domain.ResourceType, uuid.UUID) (domain.Result, error)
 	CanReadSoftwareSourceCodeVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
 }
@@ -64,7 +52,7 @@ func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
 }
 
 func (s *Service) CreateDraft(ctx context.Context, actor domain.Actor, groupID uuid.UUID, value domain.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeGroup(ctx, actor, groupID, permissionCreate); err != nil {
+	if err := s.authorizeGroup(ctx, actor, groupID, domain.GroupPermissionResourceCreate); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize draft creation", err)
 	}
 	sourceCode, err := s.store.CreateDraft(ctx, string(actor), groupID, value)
@@ -75,7 +63,7 @@ func (s *Service) CreateDraft(ctx context.Context, actor domain.Actor, groupID u
 }
 
 func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeDraftInput) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionEdit); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceEdit); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize draft replacement", err)
 	}
 	sourceCode, err := s.store.ReplaceDraft(ctx, sourceCodeID, versionID, value)
@@ -121,7 +109,7 @@ func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, sourceCo
 }
 
 func (s *Service) Submit(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionSubmit); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceSubmit); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize submission", err)
 	}
 	sourceCode, err := s.store.Submit(ctx, string(actor), sourceCodeID, versionID)
@@ -129,7 +117,7 @@ func (s *Service) Submit(ctx context.Context, actor domain.Actor, sourceCodeID, 
 }
 
 func (s *Service) Withdraw(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionWithdraw); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceWithdraw); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize withdrawal", err)
 	}
 	sourceCode, err := s.store.Withdraw(ctx, sourceCodeID, versionID)
@@ -137,7 +125,7 @@ func (s *Service) Withdraw(ctx context.Context, actor domain.Actor, sourceCodeID
 }
 
 func (s *Service) Reject(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeRejectionInput) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionReject); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceReject); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize rejection", err)
 	}
 	sourceCode, err := s.store.Reject(ctx, string(actor), sourceCodeID, versionID, value)
@@ -145,7 +133,7 @@ func (s *Service) Reject(ctx context.Context, actor domain.Actor, sourceCodeID, 
 }
 
 func (s *Service) Reopen(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionReopen); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceReopen); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize reopening", err)
 	}
 	sourceCode, err := s.store.Reopen(ctx, sourceCodeID, versionID)
@@ -153,7 +141,7 @@ func (s *Service) Reopen(ctx context.Context, actor domain.Actor, sourceCodeID, 
 }
 
 func (s *Service) Publish(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionPublish); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourcePublish); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize publication", err)
 	}
 	sourceCode, err := s.store.Publish(ctx, string(actor), sourceCodeID, versionID)
@@ -161,14 +149,14 @@ func (s *Service) Publish(ctx context.Context, actor domain.Actor, sourceCodeID,
 }
 
 func (s *Service) Discard(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) error {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionDiscard); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceDiscard); err != nil {
 		return operationError("authorize discard", err)
 	}
 	return operationError("discard version", s.store.Discard(ctx, sourceCodeID, versionID))
 }
 
 func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionUnpublish); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceUnpublish); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize unpublication", err)
 	}
 	sourceCode, err := s.store.Unpublish(ctx, string(actor), sourceCodeID, versionID)
@@ -176,7 +164,7 @@ func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, sourceCodeI
 }
 
 func (s *Service) DraftFromPublication(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionCreate); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceCreate); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize draft creation", err)
 	}
 	sourceCode, err := s.store.DraftFromPublication(ctx, string(actor), sourceCodeID)
@@ -184,7 +172,7 @@ func (s *Service) DraftFromPublication(ctx context.Context, actor domain.Actor, 
 }
 
 func (s *Service) DraftFromLatestArchive(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeResource(ctx, actor, sourceCodeID, permissionCreate); err != nil {
+	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceCreate); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize draft creation", err)
 	}
 	sourceCode, err := s.store.DraftFromLatestArchive(ctx, string(actor), sourceCodeID)
@@ -192,14 +180,14 @@ func (s *Service) DraftFromLatestArchive(ctx context.Context, actor domain.Actor
 }
 
 func (s *Service) CopyPublished(ctx context.Context, actor domain.Actor, sourceSourceCodeID, targetGroupID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	if err := s.authorizeGroup(ctx, actor, targetGroupID, permissionCreate); err != nil {
+	if err := s.authorizeGroup(ctx, actor, targetGroupID, domain.GroupPermissionResourceCreate); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize source code copy", err)
 	}
 	sourceCode, err := s.store.CopyPublished(ctx, string(actor), sourceSourceCodeID, targetGroupID)
 	return sourceCode, operationError("copy published source code", err)
 }
 
-func (s *Service) authorizeGroup(ctx context.Context, actor domain.Actor, groupID uuid.UUID, permission string) error {
+func (s *Service) authorizeGroup(ctx context.Context, actor domain.Actor, groupID uuid.UUID, permission domain.GroupPermission) error {
 	result, err := s.authorizer.AuthorizeGroup(ctx, string(actor), groupID, permission)
 	if err != nil {
 		return fmt.Errorf("authorize group: %w", err)
@@ -210,7 +198,7 @@ func (s *Service) authorizeGroup(ctx context.Context, actor domain.Actor, groupI
 	return nil
 }
 
-func (s *Service) authorizeResource(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID, permission string) error {
+func (s *Service) authorizeResource(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID, permission domain.GroupPermission) error {
 	result, err := s.authorizer.AuthorizeResource(ctx, string(actor), domain.SoftwareSourceCode, sourceCodeID, permission)
 	if err != nil {
 		return fmt.Errorf("authorize source code: %w", err)

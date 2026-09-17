@@ -17,7 +17,6 @@ type fakeRepository struct {
 	anyMember    bool
 	groupAllowed bool
 	datasetGroup uuid.UUID
-	scope        domain.PermissionScope
 	published    bool
 	activeGroups []uuid.UUID
 }
@@ -26,11 +25,8 @@ func (r fakeRepository) User(context.Context, string) (domain.AuthorizationUser,
 	return r.user, nil
 }
 
-func (r fakeRepository) PermissionScope(context.Context, string) (domain.PermissionScope, error) {
-	return r.scope, nil
-}
 func (r fakeRepository) IsGlobalAdmin(context.Context, string) (bool, error) { return r.admin, nil }
-func (r fakeRepository) HasGlobalPermission(context.Context, string, string) (bool, error) {
+func (r fakeRepository) HasGlobalPermission(context.Context, string, domain.GlobalPermission) (bool, error) {
 	return r.global, nil
 }
 
@@ -46,7 +42,7 @@ func (r fakeRepository) ListActiveUserMemberships(context.Context, domain.Actor)
 	return r.activeGroups, nil
 }
 
-func (r fakeRepository) HasGroupPermission(context.Context, string, uuid.UUID, string) (bool, error) {
+func (r fakeRepository) HasGroupPermission(context.Context, string, uuid.UUID, domain.GroupPermission) (bool, error) {
 	return r.groupAllowed, nil
 }
 
@@ -113,10 +109,9 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 		member:       true,
 		groupAllowed: true,
 		datasetGroup: groupID,
-		scope:        domain.PermissionScopeGroup,
 	})
 
-	result, err := authorizer.AuthorizeResource(context.Background(), "user-1", domain.Dataset, uuid.New(), "resource.edit")
+	result, err := authorizer.AuthorizeResource(context.Background(), "user-1", domain.Dataset, uuid.New(), domain.GroupPermissionResourceEdit)
 	if err != nil {
 		t.Fatalf("authorize resource: %v", err)
 	}
@@ -127,9 +122,9 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 
 func TestAuthorizeGroupDeniesBlockedUser(t *testing.T) {
 	t.Parallel()
-	authorizer := New(slog.Default(), fakeRepository{user: domain.AuthorizationUser{Status: domain.UserStatusBlocked}, scope: domain.PermissionScopeGroup})
+	authorizer := New(slog.Default(), fakeRepository{user: domain.AuthorizationUser{Status: domain.UserStatusBlocked}})
 
-	result, err := authorizer.AuthorizeGroup(context.Background(), "user-1", uuid.New(), "resource.edit")
+	result, err := authorizer.AuthorizeGroup(context.Background(), "user-1", uuid.New(), domain.GroupPermissionResourceEdit)
 	if err != nil {
 		t.Fatalf("authorize group: %v", err)
 	}
@@ -143,10 +138,9 @@ func TestAuthorizeGlobalAllowsGlobalGrant(t *testing.T) {
 	authorizer := New(slog.Default(), fakeRepository{
 		user:   domain.AuthorizationUser{Status: domain.UserStatusActive},
 		global: true,
-		scope:  domain.PermissionScopeGlobal,
 	})
 
-	result, err := authorizer.AuthorizeGlobal(context.Background(), "user-1", "organization.manage")
+	result, err := authorizer.AuthorizeGlobal(context.Background(), "user-1", domain.GlobalPermissionOrganizationManage)
 	if err != nil {
 		t.Fatalf("authorize global: %v", err)
 	}

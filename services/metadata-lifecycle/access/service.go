@@ -21,8 +21,8 @@ type Store interface {
 	WithdrawRoleRequest(context.Context, uuid.UUID, uuid.UUID, string) error
 	AssignRole(context.Context, uuid.UUID, string, domain.GroupRole, string) error
 	RemoveRole(context.Context, uuid.UUID, string, domain.GroupRole) error
-	GrantPermission(context.Context, uuid.UUID, string, string, string) error
-	RevokePermission(context.Context, uuid.UUID, string, string) error
+	GrantPermission(context.Context, uuid.UUID, string, domain.GroupPermission, string) error
+	RevokePermission(context.Context, uuid.UUID, string, domain.GroupPermission) error
 }
 
 type Authorizer interface {
@@ -33,7 +33,7 @@ type Authorizer interface {
 	CanRequestGroupRole(context.Context, string, uuid.UUID) (domain.Result, error)
 	CanManageGroupRoles(context.Context, string, uuid.UUID) (domain.Result, error)
 	CanManageSpecificGroupRole(context.Context, string, uuid.UUID, string) (domain.Result, error)
-	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, domain.GroupPermission) (domain.Result, error)
 }
 
 type Service struct {
@@ -255,12 +255,12 @@ func (s *Service) RemoveRole(ctx context.Context, actorID domain.Actor, groupID 
 	return nil
 }
 
-func (s *Service) GrantPermission(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID, permission string) error {
+func (s *Service) GrantPermission(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string, permission domain.GroupPermission) error {
 	if groupID == uuid.Nil || userID == "" || permission == "" {
 		return domain.ErrInvalidAccess
 	}
 
-	allowed, err := s.authorizer.AuthorizeGroup(ctx, string(actorID), groupID, "group.permission.manage")
+	allowed, err := s.authorizer.AuthorizeGroup(ctx, string(actorID), groupID, domain.GroupPermissionPermissionManage)
 	if err != nil {
 		return fmt.Errorf("authorize group permission grant: %w", err)
 	}
@@ -275,12 +275,12 @@ func (s *Service) GrantPermission(ctx context.Context, actorID domain.Actor, gro
 	return nil
 }
 
-func (s *Service) RevokePermission(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID, permission string) error {
+func (s *Service) RevokePermission(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string, permission domain.GroupPermission) error {
 	if groupID == uuid.Nil || userID == "" || permission == "" {
 		return domain.ErrInvalidAccess
 	}
 
-	allowed, err := s.authorizer.AuthorizeGroup(ctx, string(actorID), groupID, "group.permission.manage")
+	allowed, err := s.authorizer.AuthorizeGroup(ctx, string(actorID), groupID, domain.GroupPermissionPermissionManage)
 	if err != nil {
 		return fmt.Errorf("authorize group permission revoke: %w", err)
 	}

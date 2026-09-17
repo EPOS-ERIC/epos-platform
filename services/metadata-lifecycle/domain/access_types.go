@@ -66,11 +66,12 @@ type RoleRequest struct {
 
 // GroupMembership is a complete group membership returned by group access operations.
 type GroupMembership struct {
-	User         MembershipUser
-	Status       MembershipStatus
-	Roles        []GroupRole
-	Permissions  []string
-	RoleRequests []RoleRequest
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	User               MembershipUser
+	Status             MembershipStatus
+	Roles              []GroupRole
+	GrantedPermissions []GroupPermission
+	RolePermissions    []GroupPermission
+	RoleRequests       []RoleRequest
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }

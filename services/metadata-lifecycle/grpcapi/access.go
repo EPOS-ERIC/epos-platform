@@ -2,6 +2,7 @@ package grpcapi
 
 import (
 	"context"
+	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	accessservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
@@ -36,7 +37,10 @@ func (s *AccessServer) ListGroupMemberships(ctx context.Context, request *metada
 	}
 	result := make([]*metadatalifecyclev1.GroupMembership, len(values))
 	for i, value := range values {
-		result[i] = toProtoGroupMembership(value)
+		result[i], err = toProtoGroupMembership(value)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &metadatalifecyclev1.ListGroupMembershipsResponse{Memberships: result}, nil
 }
@@ -70,7 +74,13 @@ func (s *AccessServer) RequestMembership(ctx context.Context, request *metadatal
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
-	return &metadatalifecyclev1.RequestMembershipResponse{Membership: toProtoGroupMembership(value)}, nil
+	membership, err := toProtoGroupMembership(value)
+	if err != nil {
+		return nil, err
+	}
+	return &metadatalifecyclev1.RequestMembershipResponse{
+		Membership: membership,
+	}, nil
 }
 
 func (s *AccessServer) WithdrawMembership(ctx context.Context, request *metadatalifecyclev1.WithdrawMembershipRequest) (*metadatalifecyclev1.WithdrawMembershipResponse, error) {
@@ -100,7 +110,13 @@ func (s *AccessServer) DecideMembership(ctx context.Context, request *metadatali
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
-	return &metadatalifecyclev1.DecideMembershipResponse{Membership: toProtoGroupMembership(value)}, nil
+	membership, err := toProtoGroupMembership(value)
+	if err != nil {
+		return nil, err
+	}
+	return &metadatalifecyclev1.DecideMembershipResponse{
+		Membership: membership,
+	}, nil
 }
 
 func (s *AccessServer) RevokeMembership(ctx context.Context, request *metadatalifecyclev1.RevokeMembershipRequest) (*metadatalifecyclev1.RevokeMembershipResponse, error) {
@@ -161,7 +177,13 @@ func (s *AccessServer) DecideRoleRequest(ctx context.Context, request *metadatal
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
-	return &metadatalifecyclev1.DecideRoleRequestResponse{Membership: toProtoGroupMembership(value)}, nil
+	membership, err := toProtoGroupMembership(value)
+	if err != nil {
+		return nil, err
+	}
+	return &metadatalifecyclev1.DecideRoleRequestResponse{
+		Membership: membership,
+	}, nil
 }
 
 func (s *AccessServer) WithdrawRoleRequest(ctx context.Context, request *metadatalifecyclev1.WithdrawRoleRequestRequest) (*metadatalifecyclev1.WithdrawRoleRequestResponse, error) {
@@ -212,7 +234,11 @@ func (s *AccessServer) GrantPermission(ctx context.Context, request *metadatalif
 		if err != nil {
 			return err
 		}
-		return s.access.GrantPermission(ctx, actor, groupID, request.UserId, request.Permission)
+		permission, err := toDomainGroupPermission(request.GetPermission())
+		if err != nil {
+			return err
+		}
+		return s.access.GrantPermission(ctx, actor, groupID, request.UserId, permission)
 	})
 }
 
@@ -222,7 +248,11 @@ func (s *AccessServer) RevokePermission(ctx context.Context, request *metadatali
 		if err != nil {
 			return err
 		}
-		return s.access.RevokePermission(ctx, actor, groupID, request.UserId, request.Permission)
+		permission, err := toDomainGroupPermission(request.GetPermission())
+		if err != nil {
+			return err
+		}
+		return s.access.RevokePermission(ctx, actor, groupID, request.UserId, permission)
 	})
 }
 
@@ -243,7 +273,7 @@ func parseAccessID(value, name string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func toProtoGroupMembership(value domain.GroupMembership) *metadatalifecyclev1.GroupMembership {
+func toProtoGroupMembership(value domain.GroupMembership) (*metadatalifecyclev1.GroupMembership, error) {
 	roles := make([]metadatalifecyclev1.GroupRole, len(value.Roles))
 	for i, role := range value.Roles {
 		roles[i], _ = toProtoGroupRole(role)
@@ -253,8 +283,99 @@ func toProtoGroupMembership(value domain.GroupMembership) *metadatalifecyclev1.G
 		mapped, _ := toProtoRoleRequest(request)
 		requests[i] = mapped
 	}
-	status, _ := toProtoMembershipStatus(value.Status)
-	return &metadatalifecyclev1.GroupMembership{User: &metadatalifecyclev1.MembershipUser{Id: value.User.ID, GivenName: value.User.GivenName, FamilyName: value.User.FamilyName, Email: value.User.Email}, Status: status, Roles: roles, Permissions: append([]string(nil), value.Permissions...), RoleRequests: requests, CreatedAt: timestamppb.New(value.CreatedAt), UpdatedAt: timestamppb.New(value.UpdatedAt)}
+	status, err := toProtoMembershipStatus(value.Status)
+	if err != nil {
+		return nil, err
+	}
+	grantedPermissions, err := mapSliceErr(value.GrantedPermissions, toProtoGroupPermission)
+	if err != nil {
+		return nil, err
+	}
+	rolePermissions, err := mapSliceErr(value.RolePermissions, toProtoGroupPermission)
+	if err != nil {
+		return nil, err
+	}
+	return &metadatalifecyclev1.GroupMembership{
+		User: &metadatalifecyclev1.MembershipUser{
+			Id:         value.User.ID,
+			GivenName:  value.User.GivenName,
+			FamilyName: value.User.FamilyName,
+			Email:      value.User.Email,
+		},
+		Status:             status,
+		Roles:              roles,
+		GrantedPermissions: grantedPermissions,
+		RolePermissions:    rolePermissions,
+		RoleRequests:       requests,
+		CreatedAt:          timestamppb.New(value.CreatedAt),
+		UpdatedAt:          timestamppb.New(value.UpdatedAt),
+	}, nil
+}
+
+func toProtoGroupPermission(value domain.GroupPermission) (metadatalifecyclev1.GroupPermission, error) {
+	switch value {
+	case domain.GroupPermissionResourceCreate:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE, nil
+	case domain.GroupPermissionResourceEdit:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_EDIT, nil
+	case domain.GroupPermissionResourceSubmit:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_SUBMIT, nil
+	case domain.GroupPermissionResourceWithdraw:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_WITHDRAW, nil
+	case domain.GroupPermissionResourceReopen:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REOPEN, nil
+	case domain.GroupPermissionResourceDiscard:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_DISCARD, nil
+	case domain.GroupPermissionResourceReject:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REJECT, nil
+	case domain.GroupPermissionResourcePublish:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_PUBLISH, nil
+	case domain.GroupPermissionResourceUnpublish:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_UNPUBLISH, nil
+	case domain.GroupPermissionMembershipManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_MEMBERSHIP_MANAGE, nil
+	case domain.GroupPermissionRoleManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_ROLE_MANAGE, nil
+	case domain.GroupPermissionPermissionManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GroupPermissionCategoryManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE, nil
+	default:
+		return 0, fmt.Errorf("unknown group permission: %q", value)
+	}
+}
+
+func toDomainGroupPermission(value metadatalifecyclev1.GroupPermission) (domain.GroupPermission, error) {
+	switch value {
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE:
+		return domain.GroupPermissionResourceCreate, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_EDIT:
+		return domain.GroupPermissionResourceEdit, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_SUBMIT:
+		return domain.GroupPermissionResourceSubmit, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_WITHDRAW:
+		return domain.GroupPermissionResourceWithdraw, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REOPEN:
+		return domain.GroupPermissionResourceReopen, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_DISCARD:
+		return domain.GroupPermissionResourceDiscard, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REJECT:
+		return domain.GroupPermissionResourceReject, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_PUBLISH:
+		return domain.GroupPermissionResourcePublish, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_UNPUBLISH:
+		return domain.GroupPermissionResourceUnpublish, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_MEMBERSHIP_MANAGE:
+		return domain.GroupPermissionMembershipManage, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_ROLE_MANAGE:
+		return domain.GroupPermissionRoleManage, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE:
+		return domain.GroupPermissionPermissionManage, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE:
+		return domain.GroupPermissionCategoryManage, nil
+	default:
+		return "", domain.ErrInvalidAccess
+	}
 }
 
 func toDomainGroupRole(value metadatalifecyclev1.GroupRole) (domain.GroupRole, error) {

@@ -240,12 +240,16 @@ func (c *MetadataLifecycle) RemoveGroupRole(ctx context.Context, groupID, userID
 	return nil
 }
 
-func (c *MetadataLifecycle) GrantGroupPermission(ctx context.Context, groupID, userID, permission, actorID string) error {
+func (c *MetadataLifecycle) GrantGroupPermission(ctx context.Context, groupID, userID string, permission domain.GroupPermission, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.access.GrantPermission(ctx, &metadatalifecyclev1.GrantPermissionRequest{
+	permissionValue, err := toProtoGroupPermission(permission)
+	if err != nil {
+		return err
+	}
+	_, err = c.access.GrantPermission(ctx, &metadatalifecyclev1.GrantPermissionRequest{
 		GroupId:    groupID,
 		UserId:     userID,
-		Permission: permission,
+		Permission: permissionValue,
 	})
 	if err != nil {
 		return c.wrapError(ctx, "grant permission", err)
@@ -253,12 +257,16 @@ func (c *MetadataLifecycle) GrantGroupPermission(ctx context.Context, groupID, u
 	return nil
 }
 
-func (c *MetadataLifecycle) RevokeGroupPermission(ctx context.Context, groupID, userID, permission, actorID string) error {
+func (c *MetadataLifecycle) RevokeGroupPermission(ctx context.Context, groupID, userID string, permission domain.GroupPermission, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.access.RevokePermission(ctx, &metadatalifecyclev1.RevokePermissionRequest{
+	permissionValue, err := toProtoGroupPermission(permission)
+	if err != nil {
+		return err
+	}
+	_, err = c.access.RevokePermission(ctx, &metadatalifecyclev1.RevokePermissionRequest{
 		GroupId:    groupID,
 		UserId:     userID,
-		Permission: permission,
+		Permission: permissionValue,
 	})
 	if err != nil {
 		return c.wrapError(ctx, "revoke permission", err)
@@ -266,11 +274,15 @@ func (c *MetadataLifecycle) RevokeGroupPermission(ctx context.Context, groupID, 
 	return nil
 }
 
-func (c *MetadataLifecycle) RevokeGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
+func (c *MetadataLifecycle) RevokeGlobalPermission(ctx context.Context, actorID, userID string, permission domain.GlobalPermission) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.users.RevokeGlobalPermission(ctx, &metadatalifecyclev1.RevokeGlobalPermissionRequest{
+	permissionValue, err := toProtoGlobalPermission(permission)
+	if err != nil {
+		return err
+	}
+	_, err = c.users.RevokeGlobalPermission(ctx, &metadatalifecyclev1.RevokeGlobalPermissionRequest{
 		UserId:     userID,
-		Permission: permission,
+		Permission: permissionValue,
 	})
 	if err != nil {
 		return c.wrapError(ctx, "revoke metadata-lifecycle global permission", err)
@@ -278,11 +290,15 @@ func (c *MetadataLifecycle) RevokeGlobalPermission(ctx context.Context, actorID,
 	return nil
 }
 
-func (c *MetadataLifecycle) GrantGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
+func (c *MetadataLifecycle) GrantGlobalPermission(ctx context.Context, actorID, userID string, permission domain.GlobalPermission) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.users.GrantGlobalPermission(ctx, &metadatalifecyclev1.GrantGlobalPermissionRequest{
+	permissionValue, err := toProtoGlobalPermission(permission)
+	if err != nil {
+		return err
+	}
+	_, err = c.users.GrantGlobalPermission(ctx, &metadatalifecyclev1.GrantGlobalPermissionRequest{
 		UserId:     userID,
-		Permission: permission,
+		Permission: permissionValue,
 	})
 	if err != nil {
 		return c.wrapError(ctx, "grant metadata-lifecycle global permission", err)

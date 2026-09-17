@@ -3233,7 +3233,7 @@ type GrantGlobalPermissionParams struct {
 	// User identifier.
 	ID string
 	// Global permission key.
-	Permission Permission
+	Permission GlobalPermission
 }
 
 func unpackGrantGlobalPermissionParams(packed middleware.Parameters) (params GrantGlobalPermissionParams) {
@@ -3249,7 +3249,7 @@ func unpackGrantGlobalPermissionParams(packed middleware.Parameters) (params Gra
 			Name: "permission",
 			In:   "path",
 		}
-		params.Permission = packed[key].(Permission)
+		params.Permission = packed[key].(GlobalPermission)
 	}
 	return params
 }
@@ -3329,7 +3329,7 @@ func decodeGrantGlobalPermissionParams(args [2]string, argsEscaped bool, r *http
 					return err
 				}
 
-				params.Permission = Permission(c)
+				params.Permission = GlobalPermission(c)
 				return nil
 			}(); err != nil {
 				return err
@@ -5227,7 +5227,7 @@ type RevokeGlobalPermissionParams struct {
 	// User identifier.
 	ID string
 	// Global permission key.
-	Permission Permission
+	Permission GlobalPermission
 }
 
 func unpackRevokeGlobalPermissionParams(packed middleware.Parameters) (params RevokeGlobalPermissionParams) {
@@ -5243,7 +5243,7 @@ func unpackRevokeGlobalPermissionParams(packed middleware.Parameters) (params Re
 			Name: "permission",
 			In:   "path",
 		}
-		params.Permission = packed[key].(Permission)
+		params.Permission = packed[key].(GlobalPermission)
 	}
 	return params
 }
@@ -5323,7 +5323,7 @@ func decodeRevokeGlobalPermissionParams(args [2]string, argsEscaped bool, r *htt
 					return err
 				}
 
-				params.Permission = Permission(c)
+				params.Permission = GlobalPermission(c)
 				return nil
 			}(); err != nil {
 				return err
