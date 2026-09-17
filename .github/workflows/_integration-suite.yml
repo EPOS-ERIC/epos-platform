@@ -6,10 +6,7 @@ on:
       job-name:
         required: true
         type: string
-      build-dev-images-command:
-        required: true
-        type: string
-      compose-up-command:
+      ci-command:
         required: true
         type: string
       test-command:
@@ -32,13 +29,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build dev images
+      - name: Build and start CI stack
         shell: bash
-        run: ${{ inputs.build-dev-images-command }}
-
-      - name: Start integration stack
-        shell: bash
-        run: ${{ inputs.compose-up-command }}
+        run: ${{ inputs.ci-command }}
 
       - name: Populate integration metadata
         if: ${{ inputs.populate-command != '' }}
@@ -55,7 +48,7 @@ jobs:
             fi
             sleep 5
           done
-          docker compose -f docker/compose.dev.yaml logs
+          docker compose -f docker/compose.ci.yaml logs
           exit 1
 
       - name: Run integration tests
@@ -65,18 +58,18 @@ jobs:
       - name: Show integration logs on failure
         if: failure()
         shell: bash
-        run: docker compose -f docker/compose.dev.yaml logs --no-color
+        run: docker compose -f docker/compose.ci.yaml logs --no-color
 
       - name: Show compose state on failure
         if: failure()
         shell: bash
         run: |
-          docker compose -f docker/compose.dev.yaml ps -a
-          for id in $(docker compose -f docker/compose.dev.yaml ps -q); do
+          docker compose -f docker/compose.ci.yaml ps -a
+          for id in $(docker compose -f docker/compose.ci.yaml ps -q); do
             docker inspect "$id" --format '{{.Name}} {{if .State.Health}}{{json .State.Health}}{{else}}no-healthcheck{{end}}'
           done
 
       - name: Stop integration stack
         if: always()
         shell: bash
-        run: docker compose -f docker/compose.dev.yaml down -v
+        run: docker compose -f docker/compose.ci.yaml down -v

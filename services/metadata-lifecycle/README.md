@@ -51,7 +51,7 @@ make lint
 - `make generate` runs Go generation, including SQLC.
 - `make build` regenerates code before compiling.
 - `make lint` formats before running golangci-lint.
-- `make build-docker` builds the production image; set `IMAGE` to override its tag.
+- `make docker` builds the production image; set `IMAGE` to override its tag.
 
 SQL queries and migrations are the source of truth for generated persistence code under `db/sqlc/`; do not edit generated files manually.
 

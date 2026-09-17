@@ -28,6 +28,12 @@ SCHEMATHESIS_EXCLUDE_PATHS := \
 up: 
 	tilt up $(TILT_CONTEXT_ARG)
 
+ci:
+	+$(MAKE) -C services/gateway docker
+	+$(MAKE) -C services/metadata-lifecycle docker
+	+$(MAKE) -C services/oss-aai-service docker
+	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle oss-aai-service
+
 down:
 	tilt down $(TILT_CONTEXT_ARG)
 
@@ -125,4 +131,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-schemathesis test-contract get-dev-token generate generate-gateway generate-metadata-lifecycle
+.PHONY: up ci down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-schemathesis test-contract get-dev-token generate generate-gateway generate-metadata-lifecycle

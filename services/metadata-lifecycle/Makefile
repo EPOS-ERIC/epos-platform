@@ -1,4 +1,4 @@
-IMAGE ?= metadata-lifecycle:latest
+IMAGE ?= epos-metadata-lifecycle:latest
 
 BIN = metadata-lifecycle
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -10,7 +10,7 @@ BUILDFLAGS=-trimpath
 build: generate
 	CGO_ENABLED=0 go build $(BUILDFLAGS) -ldflags "$(LDFLAGS)" -o $(BIN) .
 
-build-docker: build
+docker: build
 	docker build -t $(IMAGE) -f Dockerfile ../..
 
 test:
@@ -32,4 +32,4 @@ fmt:
 lint: fix fmt
 	golangci-lint run ./...
 
-.PHONY: build build-docker generate test fmt lint fix dev
+.PHONY: build docker generate test fmt lint fix dev

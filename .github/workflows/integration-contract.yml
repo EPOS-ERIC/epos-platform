@@ -14,8 +14,8 @@ on:
       - "packages/scripts/epos-banner.sh"
       - "packages/scripts/metadatone.sh"
       - "packages/scripts/schemathesis-env.sh"
-      - "docker/compose.dev.yaml"
-      - "docker/gateway-config.dev.yaml"
+      - "docker/compose.ci.yaml"
+      - "docker/gateway-config.yaml"
       - "Makefile"
       - ".github/workflows/integration-contract.yml"
       - ".github/workflows/_integration-suite.yml"
@@ -34,8 +34,8 @@ on:
       - "packages/scripts/epos-banner.sh"
       - "packages/scripts/metadatone.sh"
       - "packages/scripts/schemathesis-env.sh"
-      - "docker/compose.dev.yaml"
-      - "docker/gateway-config.dev.yaml"
+      - "docker/compose.ci.yaml"
+      - "docker/gateway-config.yaml"
       - "Makefile"
       - ".github/workflows/integration-contract.yml"
       - ".github/workflows/_integration-suite.yml"
@@ -49,8 +49,7 @@ jobs:
     secrets: inherit
     with:
       job-name: Contract tests
-      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
-      compose-up-command: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service metadata-lifecycle-service oss-aai-service
+      ci-command: make ci
       populate-command: make populate-metadatone
       wait-url: http://localhost:32000/health
       test-command: make test-contract

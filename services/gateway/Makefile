@@ -10,7 +10,7 @@ BUILDFLAGS=-trimpath
 build:
 	CGO_ENABLED=0 go build $(BUILDFLAGS) -ldflags "$(LDFLAGS)" -o $(BIN) .
 
-build-docker: build
+docker: build
 	docker build -t $(IMAGE) -f Dockerfile ../..
 
 test:
@@ -33,4 +33,4 @@ GATEWAY_SERVER_GEN_DIR := gen/gatewayapi
 clean:
 	rm -rf $(BIN) $(GATEWAY_SERVER_GEN_DIR)
 
-.PHONY: build build-docker generate test fmt lint clean fix
+.PHONY: build docker generate test fmt lint clean fix

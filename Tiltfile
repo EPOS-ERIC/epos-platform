@@ -2,31 +2,6 @@ docker_compose('docker/compose.dev.yaml')
 docker_prune_settings(disable=False, max_age_mins=1, num_builds=1)
 
 docker_build(
-    'epos-platform-dev:local',
-    '.',
-    dockerfile='apps/platform/Dockerfile.dev',
-    only=[
-        'apps/platform',
-        'services/gateway/docs/openapi.yaml',
-        'packages/scripts/epos-banner.sh',
-    ],
-    ignore=[
-        'apps/platform/.angular',
-        'apps/platform/dist',
-        'apps/platform/node_modules',
-    ],
-    live_update=[
-        sync('apps/platform/src', '/workspace/apps/platform/src'),
-        sync('apps/platform/public', '/workspace/apps/platform/public'),
-        sync('apps/platform/angular.json', '/workspace/apps/platform/angular.json'),
-        sync('apps/platform/package.json', '/workspace/apps/platform/package.json'),
-        sync('services/gateway/docs/openapi.yaml', '/workspace/services/gateway/docs/openapi.yaml'),
-        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
-        restart_container(),
-    ],
-)
-
-docker_build(
     'epos-gateway-dev:local',
     '.',
     dockerfile='services/gateway/Dockerfile.dev',
@@ -66,6 +41,9 @@ docker_build(
         'packages/go/observability',
         'packages/protobuf',
         'packages/scripts/epos-banner.sh',
+    ],
+    ignore=[
+        'services/metadata-lifecycle/db/sqlc',
     ],
     live_update=[
         sync('services/metadata-lifecycle', '/workspace/services/metadata-lifecycle'),
@@ -108,6 +86,9 @@ docker_build(
         'services/oss-aai-service',
         'packages/scripts/epos-banner.sh',
     ],
+    ignore=[
+        'services/oss-aai-service/data',
+    ],
     live_update=[
         sync('services/oss-aai-service', '/workspace/services/oss-aai-service'),
         sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
@@ -121,5 +102,4 @@ dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retri
 dc_resource('oss-aai-service', labels=['app'])
 dc_resource('gateway-service', labels=['app'])
 dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['metadata-lifecycle-db'])
-dc_resource('platform-app', labels=['app'], resource_deps=['gateway-service'])
 dc_resource('otel-lgtm', labels=['observability'])

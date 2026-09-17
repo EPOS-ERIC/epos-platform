@@ -49,4 +49,4 @@ make lint
 - `make fmt` applies Prettier.
 - `make lint` formats and then checks the resulting files with Prettier.
 
-Build the production container with `make build-docker`. Set `IMAGE` to override the default image name and tag.
+Build the production container with `make docker`. Set `IMAGE` to override the default image name and tag.
