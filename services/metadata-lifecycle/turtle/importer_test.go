@@ -41,14 +41,50 @@ func TestParserUsesFallbackDescriptionAndKeepsDatasetWhenContactPointIsInvalid(t
 	if len(batch.Datasets) != 1 {
 		t.Fatalf("Datasets = %d, want 1", len(batch.Datasets))
 	}
-	if batch.Datasets[0].Description != defaultImportedDatasetDescription {
-		t.Fatalf("dataset description = %q, want %q", batch.Datasets[0].Description, defaultImportedDatasetDescription)
+	if batch.Datasets[0].Description != "Dataset one description" {
+		t.Fatalf("dataset description = %q, want %q", batch.Datasets[0].Description, "Dataset one description")
 	}
 	if len(batch.ContactPoints) != 0 {
 		t.Fatalf("ContactPoints = %d, want 0", len(batch.ContactPoints))
 	}
 	assertDiagnostic(t, batch.Warnings, "dataset:one", dcatContactPoint, "omitted")
-	assertDiagnostic(t, batch.Warnings, "dataset:one", dctDescription, "using default")
+	assertDiagnostic(t, batch.Warnings, "dataset:one", dctDescription, `using default "Dataset one description"`)
+}
+
+func TestParserUsesTitleFallbackDescriptionsForSoftwareResources(t *testing.T) {
+	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
+<category:software> a skos:ConceptScheme;
+    dct:title "Software categories";
+    skos:hasTopConcept <category:facets/software-theme>.
+<category:software-item> a skos:Concept;
+    skos:inScheme <category:software>;
+    skos:prefLabel "Software".
+<application:one> a schema:SoftwareApplication;
+    schema:name "Application one";
+    dcat:theme <category:software-item>.
+<source:one> a schema:SoftwareSourceCode;
+    schema:name "Source code one";
+    schema:description "   ";
+    dcat:theme <category:software-item>.
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	if len(batch.SoftwareApplications) != 1 {
+		t.Fatalf("SoftwareApplications = %d, want 1", len(batch.SoftwareApplications))
+	}
+	if batch.SoftwareApplications[0].Description != "Application one description" {
+		t.Fatalf("software application description = %q, want %q", batch.SoftwareApplications[0].Description, "Application one description")
+	}
+	if len(batch.SoftwareSourceCodes) != 1 {
+		t.Fatalf("SoftwareSourceCodes = %d, want 1", len(batch.SoftwareSourceCodes))
+	}
+	if batch.SoftwareSourceCodes[0].Description != "Source code one description" {
+		t.Fatalf("software source code description = %q, want %q", batch.SoftwareSourceCodes[0].Description, "Source code one description")
+	}
+	assertDiagnostic(t, batch.Warnings, "application:one", schemaDescription, `using default "Application one description"`)
+	assertDiagnostic(t, batch.Warnings, "source:one", schemaDescription, `using default "Source code one description"`)
 }
 
 func TestParserDropsDistributionWithInvalidWebService(t *testing.T) {

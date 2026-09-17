@@ -1704,7 +1704,7 @@ func (s *DatasetDiscoveryItemType) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/DatasetDraftMetadata
 type DatasetDraftMetadata struct {
 	Title              NonBlankString      `json:"title"`
-	Description        OptNonBlankString   `json:"description"`
+	Description        NonBlankString      `json:"description"`
 	Keywords           []Keyword           `json:"keywords"`
 	AccrualPeriodicity OptNilString        `json:"accrual_periodicity"`
 	QualityAnnotation  OptNilString        `json:"quality_annotation"`
@@ -1727,7 +1727,7 @@ func (s *DatasetDraftMetadata) GetTitle() NonBlankString {
 }
 
 // GetDescription returns the value of Description.
-func (s *DatasetDraftMetadata) GetDescription() OptNonBlankString {
+func (s *DatasetDraftMetadata) GetDescription() NonBlankString {
 	return s.Description
 }
 
@@ -1802,7 +1802,7 @@ func (s *DatasetDraftMetadata) SetTitle(val NonBlankString) {
 }
 
 // SetDescription sets the value of Description.
-func (s *DatasetDraftMetadata) SetDescription(val OptNonBlankString) {
+func (s *DatasetDraftMetadata) SetDescription(val NonBlankString) {
 	s.Description = val
 }
 

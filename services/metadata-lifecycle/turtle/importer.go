@@ -18,8 +18,6 @@ import (
 
 // TODO: try to infer decent defaults for required fields missing in the ttls but still emit the warnings so that we have valid resources as much as possible
 
-const defaultImportedDatasetDescription = "Imported dataset description"
-
 // Parser adapts Turtle parsing to the import handler parser interface.
 type Parser struct {
 	log *slog.Logger
@@ -282,10 +280,11 @@ func (m *mapper) softwareApplication(source string) (domain.SoftwareApplicationM
 	); err != nil {
 		return domain.SoftwareApplicationMetadata{}, err
 	}
+	name := m.requiredString(source, schemaName)
 	result := domain.SoftwareApplicationMetadata{
 		ID:               sharedID("software-application", source),
-		Name:             m.requiredString(source, schemaName),
-		Description:      m.optionalString(source, schemaDescription),
+		Name:             name,
+		Description:      m.importedDescription(source, schemaDescription, "software application", name),
 		MainEntityOfPage: stringPtr(m.optionalString(source, schemaMainEntityOfPage)),
 		License:          stringPtr(m.optionalString(source, schemaLicense)),
 		Version:          stringPtr(m.optionalStringOneOf(source, schemaSoftwareVersion, schemaVersion)),
@@ -314,10 +313,11 @@ func (m *mapper) softwareSourceCode(source string) (domain.SoftwareSourceCodeMet
 	); err != nil {
 		return domain.SoftwareSourceCodeMetadata{}, err
 	}
+	name := m.requiredString(source, schemaName)
 	result := domain.SoftwareSourceCodeMetadata{
 		ID:                   sharedID("software-source-code", source),
-		Name:                 m.requiredString(source, schemaName),
-		Description:          m.optionalString(source, schemaDescription),
+		Name:                 name,
+		Description:          m.importedDescription(source, schemaDescription, "software source code", name),
 		ProgrammingLanguage:  stringPtr(m.optionalString(source, schemaProgrammingLanguage)),
 		Keywords:             m.keywords(source, schemaKeywords),
 		Repository:           stringPtr(m.optionalString(source, schemaCodeRepository)),
@@ -387,20 +387,12 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 	); err != nil {
 		return domain.DatasetMetadata{}, err
 	}
-	description, ok := m.firstString(source, dctDescription)
-	if !ok || strings.TrimSpace(description) == "" {
-		description = defaultImportedDatasetDescription
-		m.addWarning(domain.ImportDiagnostic{
-			Severity:  domain.ImportSeverityWarning,
-			Subject:   source,
-			Predicate: dctDescription,
-			Message:   fmt.Sprintf("dataset description missing; using default %q", defaultImportedDatasetDescription),
-		})
-	}
+	title := m.requiredString(source, dctTitle)
+	description := m.importedDescription(source, dctDescription, "dataset", title)
 	id := ownedID("", "dataset", source)
 	dataset := domain.DatasetMetadata{
 		ID:          id,
-		Title:       m.requiredString(source, dctTitle),
+		Title:       title,
 		Description: description,
 		Keywords:    m.keywords(source, dcatKeyword),
 
@@ -492,6 +484,22 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 	}
 
 	return dataset, nil
+}
+
+func (m *mapper) importedDescription(source, predicate, kind, title string) string {
+	description, ok := m.firstString(source, predicate)
+	if ok && strings.TrimSpace(description) != "" {
+		return description
+	}
+
+	description = fmt.Sprintf("%s description", strings.TrimSpace(title))
+	m.addWarning(domain.ImportDiagnostic{
+		Severity:  domain.ImportSeverityWarning,
+		Subject:   source,
+		Predicate: predicate,
+		Message:   fmt.Sprintf("%s description missing; using default %q", kind, description),
+	})
+	return description
 }
 
 func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distribution, error) {
