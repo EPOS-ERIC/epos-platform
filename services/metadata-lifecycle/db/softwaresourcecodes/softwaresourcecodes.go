@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
+	resourcedb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -29,6 +30,14 @@ func New(pool *pgxpool.Pool) *Repo {
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeVersion, error) {
 	var result domain.SoftwareSourceCodeVersion
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+		valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
+		if err != nil {
+			return fmt.Errorf("validate source code categories: %w", err)
+		}
+		if !valid {
+			return domain.ErrSoftwareSourceCodeInvalid
+		}
+
 		sourceCode, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{
 			GroupID:   groupID,
 			CreatedBy: actorID,
@@ -52,6 +61,20 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeDraftInput) (domain.SoftwareSourceCodeVersion, error) {
 	var result domain.SoftwareSourceCodeVersion
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+		if len(value.Metadata.CategoryIDs) > 0 {
+			sourceCode, err := q.GetLifecycleSoftwareSourceCode(ctx, sourceCodeID)
+			if err != nil {
+				return fmt.Errorf("get source code for category validation: %w", err)
+			}
+			valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, sourceCode.GroupID, value.Metadata.CategoryIDs)
+			if err != nil {
+				return fmt.Errorf("validate source code categories: %w", err)
+			}
+			if !valid {
+				return domain.ErrSoftwareSourceCodeInvalid
+			}
+		}
+
 		version, err := q.ReplaceLifecycleSoftwareSourceCodeDraft(ctx, ToReplaceDraftParams(sourceCodeID, versionID, value.Revision, value.Metadata))
 		if err != nil {
 			return fmt.Errorf("replace source code draft: %w", err)
@@ -144,6 +167,12 @@ func (r *Repo) Reopen(ctx context.Context, sourceCodeID, versionID uuid.UUID) (d
 
 func (r *Repo) Publish(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	return r.transition(ctx, sourceCodeID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareSourceCodeVersion, error) {
+		if err := q.ArchivePublishedLifecycleSoftwareSourceCodeVersion(ctx, sqlc.ArchivePublishedLifecycleSoftwareSourceCodeVersionParams{
+			ActorID:              &actorID,
+			SoftwareSourceCodeID: sourceCodeID,
+		}); err != nil {
+			return sqlc.SoftwareSourceCodeVersion{}, fmt.Errorf("archive published source code version: %w", err)
+		}
 		return q.PublishLifecycleSoftwareSourceCodeVersion(ctx, sqlc.PublishLifecycleSoftwareSourceCodeVersionParams{
 			ActorID:   &actorID,
 			VersionID: versionID,
@@ -299,9 +328,17 @@ func lifecycleError(err error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.ErrSoftwareSourceCodeConflict
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && (strings.HasPrefix(pgErr.Code, "23") || pgErr.Code == "P0001") {
-		return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, domain.ErrSoftwareSourceCodeConflict)
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+		switch pgErr.Code {
+		case "23514":
+			return fmt.Errorf("database validation: %w", domain.ErrSoftwareSourceCodeInvalid)
+		case "23001", "23505", "23P01", "P0001":
+			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, domain.ErrSoftwareSourceCodeConflict)
+		default:
+			if strings.HasPrefix(pgErr.Code, "23") {
+				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, domain.ErrSoftwareSourceCodeInternal)
+			}
+		}
 	}
 	return err
 }

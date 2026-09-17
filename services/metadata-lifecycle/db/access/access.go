@@ -41,9 +41,14 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 		return nil, fmt.Errorf("list group membership roles: %w", err)
 	}
 
-	permissions, err := r.ListGroupMembershipPermissions(ctx, groupID)
+	grantedPermissions, err := r.ListGroupMembershipGrantedPermissions(ctx, groupID)
 	if err != nil {
-		return nil, fmt.Errorf("list group membership permissions: %w", err)
+		return nil, fmt.Errorf("list group membership granted permissions: %w", err)
+	}
+
+	rolePermissions, err := r.ListGroupMembershipRolePermissions(ctx, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("list group membership role permissions: %w", err)
 	}
 
 	requests, err := r.ListPendingGroupRoleRequests(ctx, groupID)
@@ -60,9 +65,22 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 		rolesByUser[role.UserID] = append(rolesByUser[role.UserID], value)
 	}
 
-	permissionsByUser := make(map[string][]string)
-	for _, permission := range permissions {
-		permissionsByUser[permission.UserID] = append(permissionsByUser[permission.UserID], permission.PermissionKey)
+	grantedPermissionsByUser := make(map[string][]domain.GroupPermission)
+	for _, permission := range grantedPermissions {
+		value, err := domain.NewGroupPermission(permission.PermissionKey)
+		if err != nil {
+			return nil, fmt.Errorf("construct granted permission: %w", err)
+		}
+		grantedPermissionsByUser[permission.UserID] = append(grantedPermissionsByUser[permission.UserID], value)
+	}
+
+	rolePermissionsByUser := make(map[string][]domain.GroupPermission)
+	for _, permission := range rolePermissions {
+		value, err := domain.NewGroupPermission(permission.PermissionKey)
+		if err != nil {
+			return nil, fmt.Errorf("construct role permission: %w", err)
+		}
+		rolePermissionsByUser[permission.UserID] = append(rolePermissionsByUser[permission.UserID], value)
 	}
 
 	requestsByUser := make(map[string][]domain.RoleRequest)
@@ -85,7 +103,8 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 			},
 			row.GroupMembership,
 			rolesByUser[row.GroupMembership.UserID],
-			permissionsByUser[row.GroupMembership.UserID],
+			grantedPermissionsByUser[row.GroupMembership.UserID],
+			rolePermissionsByUser[row.GroupMembership.UserID],
 			requestsByUser[row.GroupMembership.UserID],
 		)
 		if err != nil {
@@ -151,6 +170,7 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 				Email:      user.Email,
 			},
 			row,
+			nil,
 			nil,
 			nil,
 			requests,
@@ -363,7 +383,7 @@ func (r *Repo) RemoveRole(ctx context.Context, groupID uuid.UUID, userID string,
 	return nil
 }
 
-func (r *Repo) GrantPermission(ctx context.Context, groupID uuid.UUID, userID, permission, actorID string) error {
+func (r *Repo) GrantPermission(ctx context.Context, groupID uuid.UUID, userID string, permission domain.GroupPermission, actorID string) error {
 	if err := r.checkPermissionTarget(ctx, groupID, userID, permission); err != nil {
 		return err
 	}
@@ -371,7 +391,7 @@ func (r *Repo) GrantPermission(ctx context.Context, groupID uuid.UUID, userID, p
 	if err := r.GrantGroupPermission(ctx, sqlc.GrantGroupPermissionParams{
 		UserID:        userID,
 		GroupID:       groupID,
-		PermissionKey: permission,
+		PermissionKey: string(permission),
 		GrantedBy:     actorID,
 	}); err != nil {
 		return fmt.Errorf("grant permission: %w", err)
@@ -380,23 +400,31 @@ func (r *Repo) GrantPermission(ctx context.Context, groupID uuid.UUID, userID, p
 	return nil
 }
 
-func (r *Repo) RevokePermission(ctx context.Context, groupID uuid.UUID, userID, permission string) error {
+func (r *Repo) RevokePermission(ctx context.Context, groupID uuid.UUID, userID string, permission domain.GroupPermission) error {
 	if err := r.checkPermissionTarget(ctx, groupID, userID, permission); err != nil {
 		return err
 	}
 
-	if err := r.RevokeGroupPermission(ctx, sqlc.RevokeGroupPermissionParams{
+	outcome, err := r.RevokeGroupPermission(ctx, sqlc.RevokeGroupPermissionParams{
 		UserID:        userID,
 		GroupID:       groupID,
-		PermissionKey: permission,
-	}); err != nil {
+		PermissionKey: string(permission),
+	})
+	if err != nil {
 		return fmt.Errorf("revoke permission: %w", err)
 	}
 
-	return nil
+	switch outcome {
+	case "GRANTED", "ABSENT":
+		return nil
+	case "ROLE":
+		return domain.ErrAccessConflict
+	default:
+		return fmt.Errorf("revoke permission: unexpected outcome %q", outcome)
+	}
 }
 
-func (r *Repo) checkPermissionTarget(ctx context.Context, groupID uuid.UUID, userID, permission string) error {
+func (r *Repo) checkPermissionTarget(ctx context.Context, groupID uuid.UUID, userID string, permission domain.GroupPermission) error {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
 		return domain.ErrAccessNotFound
 	} else if err != nil {
@@ -423,7 +451,7 @@ func (r *Repo) checkPermissionTarget(ctx context.Context, groupID uuid.UUID, use
 		return domain.ErrAccessConflict
 	}
 
-	scope, err := r.GetPermissionScope(ctx, permission)
+	scope, err := r.GetPermissionScope(ctx, string(permission))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.ErrInvalidAccess
 	}
@@ -562,9 +590,14 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 		return domain.GroupMembership{}, fmt.Errorf("list membership roles: %w", err)
 	}
 
-	permissions, err := r.ListGroupMembershipPermissions(ctx, groupID)
+	grantedPermissions, err := r.ListGroupMembershipGrantedPermissions(ctx, groupID)
 	if err != nil {
-		return domain.GroupMembership{}, fmt.Errorf("list membership permissions: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("list membership granted permissions: %w", err)
+	}
+
+	rolePermissions, err := r.ListGroupMembershipRolePermissions(ctx, groupID)
+	if err != nil {
+		return domain.GroupMembership{}, fmt.Errorf("list membership role permissions: %w", err)
 	}
 
 	requests, err := r.ListPendingGroupRoleRequests(ctx, groupID)
@@ -584,10 +617,25 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 		memberRoles = append(memberRoles, value)
 	}
 
-	memberPermissions := make([]string, 0)
-	for _, permission := range permissions {
+	memberGrantedPermissions := make([]domain.GroupPermission, 0)
+	for _, permission := range grantedPermissions {
 		if permission.UserID == userID {
-			memberPermissions = append(memberPermissions, permission.PermissionKey)
+			value, err := domain.NewGroupPermission(permission.PermissionKey)
+			if err != nil {
+				return domain.GroupMembership{}, fmt.Errorf("construct granted permission: %w", err)
+			}
+			memberGrantedPermissions = append(memberGrantedPermissions, value)
+		}
+	}
+
+	memberRolePermissions := make([]domain.GroupPermission, 0)
+	for _, permission := range rolePermissions {
+		if permission.UserID == userID {
+			value, err := domain.NewGroupPermission(permission.PermissionKey)
+			if err != nil {
+				return domain.GroupMembership{}, fmt.Errorf("construct role permission: %w", err)
+			}
+			memberRolePermissions = append(memberRolePermissions, value)
 		}
 	}
 
@@ -612,7 +660,8 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 		},
 		row.GroupMembership,
 		memberRoles,
-		memberPermissions,
+		memberGrantedPermissions,
+		memberRolePermissions,
 		memberRequests,
 	)
 	if err != nil {

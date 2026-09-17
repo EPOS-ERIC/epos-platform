@@ -330,8 +330,11 @@ WHERE
         $3::uuid IS NULL
         OR resource.group_id = $3::uuid
     )
+    AND $4::geometry IS NULL
+    AND $5::timestamptz IS NULL
+    AND $6::timestamptz IS NULL
     AND (
-        $4::text IS NULL
+        $7::text IS NULL
         OR lower(
             concat_ws(
                 ' ',
@@ -339,10 +342,10 @@ WHERE
                 version.description,
                 version.keywords
             )
-        ) LIKE '%' || lower($4::text) || '%'
+        ) LIKE '%' || lower($7::text) || '%'
     )
     AND (
-        cardinality($5::uuid []) = 0
+        cardinality($8::uuid []) = 0
         OR EXISTS (
             SELECT
                 1
@@ -350,16 +353,16 @@ WHERE
                 software_application_version_creators AS creator
             WHERE
                 creator.software_application_version_id = version.id
-                AND creator.organization_id = ANY($5::uuid [])
+                AND creator.organization_id = ANY($8::uuid [])
         )
     )
     AND (
-        cardinality($6::text []) = 0
+        cardinality($9::text []) = 0
         OR NOT EXISTS (
             SELECT
                 1
             FROM
-                unnest($6::text []) AS requested(keyword)
+                unnest($9::text []) AS requested(keyword)
             WHERE
                 NOT EXISTS (
                     SELECT
@@ -372,12 +375,12 @@ WHERE
         )
     )
     AND (
-        $7::text IS NULL
-        OR version.created_by = $7::text
+        $10::text IS NULL
+        OR version.created_by = $10::text
     )
     AND (
-        cardinality($8::text []) = 0
-        OR 'software-application' = ANY($8::text [])
+        cardinality($11::text []) = 0
+        OR 'software-application' = ANY($11::text [])
     )
 `
 
@@ -385,6 +388,9 @@ type SearchDiscoveryApplicationsParams struct {
 	VersioningStatuses []string
 	Concepts           []string
 	GroupID            *uuid.UUID
+	SpatialFilter      go_geom.T
+	DateFrom           *time.Time
+	DateTo             *time.Time
 	Query              *string
 	ProviderIds        []uuid.UUID
 	Keywords           []string
@@ -410,6 +416,9 @@ func (q *Queries) SearchDiscoveryApplications(ctx context.Context, arg SearchDis
 		arg.VersioningStatuses,
 		arg.Concepts,
 		arg.GroupID,
+		arg.SpatialFilter,
+		arg.DateFrom,
+		arg.DateTo,
 		arg.Query,
 		arg.ProviderIds,
 		arg.Keywords,
@@ -649,8 +658,11 @@ WHERE
         $3::uuid IS NULL
         OR resource.group_id = $3::uuid
     )
+    AND $4::geometry IS NULL
+    AND $5::timestamptz IS NULL
+    AND $6::timestamptz IS NULL
     AND (
-        $4::text IS NULL
+        $7::text IS NULL
         OR lower(
             concat_ws(
                 ' ',
@@ -658,10 +670,10 @@ WHERE
                 version.description,
                 version.keywords
             )
-        ) LIKE '%' || lower($4::text) || '%'
+        ) LIKE '%' || lower($7::text) || '%'
     )
     AND (
-        cardinality($5::uuid []) = 0
+        cardinality($8::uuid []) = 0
         OR EXISTS (
             SELECT
                 1
@@ -669,16 +681,16 @@ WHERE
                 software_source_code_version_creators AS creator
             WHERE
                 creator.software_source_code_version_id = version.id
-                AND creator.organization_id = ANY($5::uuid [])
+                AND creator.organization_id = ANY($8::uuid [])
         )
     )
     AND (
-        cardinality($6::text []) = 0
+        cardinality($9::text []) = 0
         OR NOT EXISTS (
             SELECT
                 1
             FROM
-                unnest($6::text []) AS requested(keyword)
+                unnest($9::text []) AS requested(keyword)
             WHERE
                 NOT EXISTS (
                     SELECT
@@ -691,12 +703,12 @@ WHERE
         )
     )
     AND (
-        $7::text IS NULL
-        OR version.created_by = $7::text
+        $10::text IS NULL
+        OR version.created_by = $10::text
     )
     AND (
-        cardinality($8::text []) = 0
-        OR 'software-source-code' = ANY($8::text [])
+        cardinality($11::text []) = 0
+        OR 'software-source-code' = ANY($11::text [])
     )
 `
 
@@ -704,6 +716,9 @@ type SearchDiscoverySourceCodesParams struct {
 	VersioningStatuses []string
 	Concepts           []string
 	GroupID            *uuid.UUID
+	SpatialFilter      go_geom.T
+	DateFrom           *time.Time
+	DateTo             *time.Time
 	Query              *string
 	ProviderIds        []uuid.UUID
 	Keywords           []string
@@ -729,6 +744,9 @@ func (q *Queries) SearchDiscoverySourceCodes(ctx context.Context, arg SearchDisc
 		arg.VersioningStatuses,
 		arg.Concepts,
 		arg.GroupID,
+		arg.SpatialFilter,
+		arg.DateFrom,
+		arg.DateTo,
 		arg.Query,
 		arg.ProviderIds,
 		arg.Keywords,

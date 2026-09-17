@@ -3,7 +3,6 @@ package grpcapi
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
@@ -47,6 +46,14 @@ func (u *UserServer) GetUser(ctx context.Context, request *metadatalifecyclev1.G
 	if err != nil {
 		return nil, err
 	}
+	globalGrantedPermissions, err := mapSliceErr(user.GlobalGrantedPermissions, toProtoGlobalPermission)
+	if err != nil {
+		return nil, err
+	}
+	globalRolePermissions, err := mapSliceErr(user.GlobalRolePermissions, toProtoGlobalPermission)
+	if err != nil {
+		return nil, err
+	}
 
 	memberships, err := mapSliceErr(user.Memberships, toProtoMembership)
 	if err != nil {
@@ -54,16 +61,17 @@ func (u *UserServer) GetUser(ctx context.Context, request *metadatalifecyclev1.G
 	}
 
 	return &metadatalifecyclev1.GetUserResponse{
-		Id:                user.ID,
-		Email:             user.Email,
-		GivenName:         user.GivenName,
-		FamilyName:        user.FamilyName,
-		Status:            userStatus,
-		GlobalRoles:       globalRoles,
-		GlobalPermissions: slices.Clone(user.GlobalPermissions),
-		CreatedAt:         timestamppb.New(user.CreatedAt),
-		UpdatedAt:         timestamppb.New(user.UpdatedAt),
-		Memberships:       memberships,
+		Id:                       user.ID,
+		Email:                    user.Email,
+		GivenName:                user.GivenName,
+		FamilyName:               user.FamilyName,
+		Status:                   userStatus,
+		GlobalRoles:              globalRoles,
+		GlobalGrantedPermissions: globalGrantedPermissions,
+		GlobalRolePermissions:    globalRolePermissions,
+		CreatedAt:                timestamppb.New(user.CreatedAt),
+		UpdatedAt:                timestamppb.New(user.UpdatedAt),
+		Memberships:              memberships,
 	}, nil
 }
 
@@ -91,8 +99,12 @@ func (u *UserServer) GrantGlobalPermission(ctx context.Context, request *metadat
 	if err != nil {
 		return nil, err
 	}
+	permission, err := toDomainGlobalPermission(request.GetPermission())
+	if err != nil {
+		return nil, wrapHandlerError(err)
+	}
 
-	if err := u.users.GrantGlobalPermission(ctx, actor, request.GetUserId(), request.GetPermission()); err != nil {
+	if err := u.users.GrantGlobalPermission(ctx, actor, request.GetUserId(), permission); err != nil {
 		return nil, wrapHandlerError(err)
 	}
 
@@ -104,8 +116,12 @@ func (u *UserServer) RevokeGlobalPermission(ctx context.Context, request *metada
 	if err != nil {
 		return nil, err
 	}
+	permission, err := toDomainGlobalPermission(request.GetPermission())
+	if err != nil {
+		return nil, wrapHandlerError(err)
+	}
 
-	if err := u.users.RevokeGlobalPermission(ctx, actor, request.GetUserId(), request.GetPermission()); err != nil {
+	if err := u.users.RevokeGlobalPermission(ctx, actor, request.GetUserId(), permission); err != nil {
 		return nil, wrapHandlerError(err)
 	}
 
@@ -201,17 +217,26 @@ func toProtoUserListItem(value domain.UserSummary) (*metadatalifecyclev1.UserLis
 	if err != nil {
 		return nil, err
 	}
+	globalGrantedPermissions, err := mapSliceErr(value.GlobalGrantedPermissions, toProtoGlobalPermission)
+	if err != nil {
+		return nil, err
+	}
+	globalRolePermissions, err := mapSliceErr(value.GlobalRolePermissions, toProtoGlobalPermission)
+	if err != nil {
+		return nil, err
+	}
 
 	return &metadatalifecyclev1.UserListItem{
-		Id:                value.ID,
-		Email:             value.Email,
-		GivenName:         value.GivenName,
-		FamilyName:        value.FamilyName,
-		Status:            status,
-		GlobalRoles:       globalRoles,
-		GlobalPermissions: slices.Clone(value.GlobalPermissions),
-		CreatedAt:         timestamppb.New(value.CreatedAt),
-		UpdatedAt:         timestamppb.New(value.UpdatedAt),
+		Id:                       value.ID,
+		Email:                    value.Email,
+		GivenName:                value.GivenName,
+		FamilyName:               value.FamilyName,
+		Status:                   status,
+		GlobalRoles:              globalRoles,
+		GlobalGrantedPermissions: globalGrantedPermissions,
+		GlobalRolePermissions:    globalRolePermissions,
+		CreatedAt:                timestamppb.New(value.CreatedAt),
+		UpdatedAt:                timestamppb.New(value.UpdatedAt),
 	}, nil
 }
 
@@ -231,17 +256,27 @@ func toProtoMembership(value domain.Membership) (*metadatalifecyclev1.UserMember
 		return nil, err
 	}
 
+	grantedPermissions, err := mapSliceErr(value.GrantedPermissions, toProtoGroupPermission)
+	if err != nil {
+		return nil, err
+	}
+	rolePermissions, err := mapSliceErr(value.RolePermissions, toProtoGroupPermission)
+	if err != nil {
+		return nil, err
+	}
+
 	return &metadatalifecyclev1.UserMembership{
 		Group: &metadatalifecyclev1.EntityReference{
 			Id:   value.Group.ID.String(),
 			Name: value.Group.Name,
 		},
-		GroupRoles:       roles,
-		Status:           status,
-		GroupPermissions: slices.Clone(value.Permissions),
-		RoleRequests:     roleRequests,
-		CreatedAt:        timestamppb.New(value.CreatedAt),
-		UpdatedAt:        timestamppb.New(value.UpdatedAt),
+		GroupRoles:         roles,
+		Status:             status,
+		GrantedPermissions: grantedPermissions,
+		RolePermissions:    rolePermissions,
+		RoleRequests:       roleRequests,
+		CreatedAt:          timestamppb.New(value.CreatedAt),
+		UpdatedAt:          timestamppb.New(value.UpdatedAt),
 	}, nil
 }
 
@@ -322,6 +357,44 @@ func toProtoGlobalRole(value domain.GlobalRole) (metadatalifecyclev1.GlobalRole,
 		return metadatalifecyclev1.GlobalRole_GLOBAL_ROLE_ADMIN, nil
 	default:
 		return 0, fmt.Errorf("unknown global role: %q", value)
+	}
+}
+
+func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1.GlobalPermission, error) {
+	switch value {
+	case domain.GlobalPermissionMembershipManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_MEMBERSHIP_MANAGE, nil
+	case domain.GlobalPermissionRoleManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE, nil
+	case domain.GlobalPermissionPermissionManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GlobalPermissionOrganizationManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE, nil
+	case domain.GlobalPermissionContactPointManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE, nil
+	case domain.GlobalPermissionCategorySchemeManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE, nil
+	default:
+		return 0, fmt.Errorf("unknown global permission: %q", value)
+	}
+}
+
+func toDomainGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domain.GlobalPermission, error) {
+	switch value {
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_MEMBERSHIP_MANAGE:
+		return domain.GlobalPermissionMembershipManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE:
+		return domain.GlobalPermissionRoleManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE:
+		return domain.GlobalPermissionPermissionManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE:
+		return domain.GlobalPermissionOrganizationManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE:
+		return domain.GlobalPermissionContactPointManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE:
+		return domain.GlobalPermissionCategorySchemeManage, nil
+	default:
+		return "", domain.ErrInvalidAccess
 	}
 }
 

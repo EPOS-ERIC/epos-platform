@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
 
@@ -282,7 +283,11 @@ func (h *ogenHandler) GrantGroupPermission(ctx context.Context, p gatewayapi.Gra
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.GrantGroupPermission(ctx, p.GroupId.String(), p.UserId, string(p.Permission), a); err != nil {
+	permission, err := domain.NewGroupPermission(string(p.Permission))
+	if err != nil {
+		return fmt.Errorf("map group permission: %w", err)
+	}
+	if err := h.metadataLifecycle.GrantGroupPermission(ctx, p.GroupId.String(), p.UserId, permission, a); err != nil {
 		return fmt.Errorf("grant group permission: %w", err)
 	}
 	return nil
@@ -293,7 +298,11 @@ func (h *ogenHandler) RevokeGroupPermission(ctx context.Context, p gatewayapi.Re
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.RevokeGroupPermission(ctx, p.GroupId.String(), p.UserId, string(p.Permission), a); err != nil {
+	permission, err := domain.NewGroupPermission(string(p.Permission))
+	if err != nil {
+		return fmt.Errorf("map group permission: %w", err)
+	}
+	if err := h.metadataLifecycle.RevokeGroupPermission(ctx, p.GroupId.String(), p.UserId, permission, a); err != nil {
 		return fmt.Errorf("revoke group permission: %w", err)
 	}
 	return nil

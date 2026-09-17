@@ -14,7 +14,11 @@ func toDomainUser(row sqlc.GetAuthorizationUserRow) (domain.AuthorizationUser, e
 		return domain.AuthorizationUser{}, fmt.Errorf("invalid user status: %w", err)
 	}
 
-	return domain.AuthorizationUser{ID: row.ID, Status: status}, nil
+	return domain.AuthorizationUser{
+		ID:          row.ID,
+		Status:      status,
+		GlobalAdmin: row.GlobalAdmin,
+	}, nil
 }
 
 func toDomainPermissionScope(scope sqlc.PermissionScope) (domain.PermissionScope, error) {

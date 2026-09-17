@@ -3332,8 +3332,8 @@ func (s *Server) handleDeleteOrganizationRequest(args [1]string, argsEscaped boo
 
 // handleDiscardResourceDraftVersionRequest handles discardResourceDraftVersion operation.
 //
-// Permanently deletes an existing editable draft version. This operation does not create or assign a
-// lifecycle status.
+// Permanently deletes an existing editable DRAFT or REJECTED active change version. This operation
+// does not create or assign a lifecycle status.
 //
 // DELETE /resources/{resourceType}/{id}/versions/{versionId}/draft
 func (s *Server) handleDiscardResourceDraftVersionRequest(args [3]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

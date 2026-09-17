@@ -167,8 +167,8 @@ func (UnimplementedHandler) DeleteOrganization(ctx context.Context, params Delet
 
 // DiscardResourceDraftVersion implements discardResourceDraftVersion operation.
 //
-// Permanently deletes an existing editable draft version. This operation does not create or assign a
-// lifecycle status.
+// Permanently deletes an existing editable DRAFT or REJECTED active change version. This operation
+// does not create or assign a lifecycle status.
 //
 // DELETE /resources/{resourceType}/{id}/versions/{versionId}/draft
 func (UnimplementedHandler) DiscardResourceDraftVersion(ctx context.Context, params DiscardResourceDraftVersionParams) error {

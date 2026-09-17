@@ -226,6 +226,9 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 			ParentOrganizationID: parentID,
 		})
 		if err != nil {
+			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && (pgErr.Code == "23514" || pgErr.Code == "P0001") {
+				return domain.ErrInvalidOrganization
+			}
 			return fmt.Errorf("link organization parent: %w", err)
 		}
 	}

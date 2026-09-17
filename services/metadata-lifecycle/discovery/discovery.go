@@ -66,7 +66,8 @@ func (s *Service) Search(ctx context.Context, actor *domain.Actor, filter domain
 
 	items := make([]domain.DiscoveryItem, 0, len(authorization.AllowedCandidates))
 	for _, candidate := range authorization.AllowedCandidates {
-		item, err := s.item(candidate, relations[candidate.VersionID], authorization.IncludeCreatedBy)
+		_, includeCreatedBy := authorization.CreatedByGroupIDs[candidate.GroupID]
+		item, err := s.item(candidate, relations[candidate.VersionID], includeCreatedBy)
 		if err != nil {
 			return nil, err
 		}

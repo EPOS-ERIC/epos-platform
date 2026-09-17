@@ -51,6 +51,14 @@ func NewUserMembership(value Membership) (Membership, error) {
 			return Membership{}, err
 		}
 	}
+	grantedPermissions, err := normalizeGroupPermissions(value.GrantedPermissions)
+	if err != nil {
+		return Membership{}, err
+	}
+	rolePermissions, err := normalizeGroupPermissions(value.RolePermissions)
+	if err != nil {
+		return Membership{}, err
+	}
 
 	roleRequests := make([]RoleRequest, 0, len(value.RoleRequests))
 	for _, request := range value.RoleRequests {
@@ -64,7 +72,8 @@ func NewUserMembership(value Membership) (Membership, error) {
 	value.Group = group
 	value.Status = status
 	value.Roles = roles
-	value.Permissions = slices.Clone(value.Permissions)
+	value.GrantedPermissions = grantedPermissions
+	value.RolePermissions = rolePermissions
 	value.RoleRequests = roleRequests
 	return value, nil
 }
@@ -85,6 +94,14 @@ func NewUser(value User) (User, error) {
 	if err != nil {
 		return User{}, err
 	}
+	globalGrantedPermissions, err := normalizeGlobalPermissions(value.GlobalGrantedPermissions)
+	if err != nil {
+		return User{}, err
+	}
+	globalRolePermissions, err := normalizeGlobalPermissions(value.GlobalRolePermissions)
+	if err != nil {
+		return User{}, err
+	}
 
 	memberships := make([]Membership, 0, len(value.Memberships))
 	for _, membership := range value.Memberships {
@@ -97,7 +114,8 @@ func NewUser(value User) (User, error) {
 
 	value.Status = status
 	value.GlobalRoles = slices.Clone(value.GlobalRoles)
-	value.GlobalPermissions = slices.Clone(value.GlobalPermissions)
+	value.GlobalGrantedPermissions = globalGrantedPermissions
+	value.GlobalRolePermissions = globalRolePermissions
 	value.Memberships = memberships
 	return value, nil
 }
@@ -118,11 +136,36 @@ func NewUserSummary(value UserSummary) (UserSummary, error) {
 	if err != nil {
 		return UserSummary{}, err
 	}
+	globalGrantedPermissions, err := normalizeGlobalPermissions(value.GlobalGrantedPermissions)
+	if err != nil {
+		return UserSummary{}, err
+	}
+	globalRolePermissions, err := normalizeGlobalPermissions(value.GlobalRolePermissions)
+	if err != nil {
+		return UserSummary{}, err
+	}
 
 	value.Status = status
 	value.GlobalRoles = slices.Clone(value.GlobalRoles)
-	value.GlobalPermissions = slices.Clone(value.GlobalPermissions)
+	value.GlobalGrantedPermissions = globalGrantedPermissions
+	value.GlobalRolePermissions = globalRolePermissions
 	return value, nil
+}
+
+func normalizeGlobalPermissions(values []GlobalPermission) ([]GlobalPermission, error) {
+	if values == nil {
+		return nil, nil
+	}
+
+	permissions := make([]GlobalPermission, len(values))
+	for i, value := range values {
+		permission, err := NewGlobalPermission(string(value))
+		if err != nil {
+			return nil, err
+		}
+		permissions[i] = permission
+	}
+	return permissions, nil
 }
 
 func normalizeUserFields(id, email, givenName, familyName string) (string, string, string, string) {

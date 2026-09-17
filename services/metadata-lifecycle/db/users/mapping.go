@@ -9,20 +9,29 @@ import (
 	"github.com/google/uuid"
 )
 
-func toDomainUserSummary(row sqlc.ListUsersRow, globalRoles, globalPermissions []string) (domain.UserSummary, error) {
+func toDomainUserSummary(row sqlc.ListUsersRow, globalRoles, globalGrantedPermissions, globalRolePermissions []string) (domain.UserSummary, error) {
 	roles, err := toDomainGlobalRoles(globalRoles)
 	if err != nil {
 		return domain.UserSummary{}, fmt.Errorf("map global roles: %w", err)
 	}
+	globalGrantedPermissionValues, err := domain.NewGlobalPermissions(globalGrantedPermissions)
+	if err != nil {
+		return domain.UserSummary{}, fmt.Errorf("map global granted permissions: %w", err)
+	}
+	globalRolePermissionValues, err := domain.NewGlobalPermissions(globalRolePermissions)
+	if err != nil {
+		return domain.UserSummary{}, fmt.Errorf("map global role permissions: %w", err)
+	}
 
 	user, err := domain.NewUserSummary(domain.UserSummary{
-		ID:                row.ID,
-		Email:             row.Email,
-		GivenName:         row.GivenName,
-		FamilyName:        row.FamilyName,
-		Status:            domain.UserStatus(row.Status),
-		GlobalRoles:       roles,
-		GlobalPermissions: globalPermissions,
+		ID:                       row.ID,
+		Email:                    row.Email,
+		GivenName:                row.GivenName,
+		FamilyName:               row.FamilyName,
+		Status:                   domain.UserStatus(row.Status),
+		GlobalRoles:              roles,
+		GlobalGrantedPermissions: globalGrantedPermissionValues,
+		GlobalRolePermissions:    globalRolePermissionValues,
 	})
 	if err != nil {
 		return domain.UserSummary{}, fmt.Errorf("construct user summary: %w", err)
@@ -40,25 +49,35 @@ func toDomainUser(
 	createdAt,
 	updatedAt time.Time,
 	globalRoles []string,
-	globalPermissions []string,
+	globalGrantedPermissions []string,
+	globalRolePermissions []string,
 	memberships []domain.Membership,
 ) (domain.User, error) {
 	roles, err := toDomainGlobalRoles(globalRoles)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("map global roles: %w", err)
 	}
+	globalGrantedPermissionValues, err := domain.NewGlobalPermissions(globalGrantedPermissions)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("map global granted permissions: %w", err)
+	}
+	globalRolePermissionValues, err := domain.NewGlobalPermissions(globalRolePermissions)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("map global role permissions: %w", err)
+	}
 
 	user, err := domain.NewUser(domain.User{
-		ID:                id,
-		Email:             email,
-		GivenName:         givenName,
-		FamilyName:        familyName,
-		Status:            domain.UserStatus(status),
-		CreatedAt:         createdAt,
-		UpdatedAt:         updatedAt,
-		GlobalRoles:       roles,
-		GlobalPermissions: globalPermissions,
-		Memberships:       memberships,
+		ID:                       id,
+		Email:                    email,
+		GivenName:                givenName,
+		FamilyName:               familyName,
+		Status:                   domain.UserStatus(status),
+		GlobalRoles:              roles,
+		GlobalGrantedPermissions: globalGrantedPermissionValues,
+		GlobalRolePermissions:    globalRolePermissionValues,
+		CreatedAt:                createdAt,
+		UpdatedAt:                updatedAt,
+		Memberships:              memberships,
 	})
 	if err != nil {
 		return domain.User{}, fmt.Errorf("construct user: %w", err)

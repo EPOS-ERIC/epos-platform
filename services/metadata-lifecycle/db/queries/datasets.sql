@@ -122,32 +122,6 @@ RETURNING
     *;
 
 -- name: PublishLifecycleDatasetVersion :one
-WITH target AS (
-    SELECT
-        dataset_id
-    FROM
-        dataset_versions
-    WHERE
-        id = sqlc.arg(version_id)
-        AND STATUS = 'SUBMITTED' FOR
-    UPDATE
-),
-archived AS (
-    UPDATE
-        dataset_versions
-    SET
-        STATUS = 'ARCHIVED',
-        archived_by = sqlc.arg(actor_id),
-        archived_at = NOW()
-    WHERE
-        dataset_id = (
-            SELECT
-                dataset_id
-            FROM
-                target
-        )
-        AND STATUS = 'PUBLISHED'
-)
 UPDATE
     dataset_versions
 SET
@@ -162,6 +136,17 @@ WHERE
     AND dataset_versions.status = 'SUBMITTED'
 RETURNING
     *;
+
+-- name: ArchivePublishedLifecycleDatasetVersion :exec
+UPDATE
+    dataset_versions
+SET
+    STATUS = 'ARCHIVED',
+    archived_by = sqlc.arg(actor_id),
+    archived_at = NOW()
+WHERE
+    dataset_id = sqlc.arg(dataset_id)
+    AND STATUS = 'PUBLISHED';
 
 -- name: UnpublishLifecycleDatasetVersion :one
 UPDATE

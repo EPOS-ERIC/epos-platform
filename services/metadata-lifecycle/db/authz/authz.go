@@ -55,10 +55,10 @@ func (r *Repo) PermissionScope(ctx context.Context, key string) (domain.Permissi
 	return result, nil
 }
 
-func (r *Repo) HasGlobalPermission(ctx context.Context, userID, permissionKey string) (bool, error) {
+func (r *Repo) HasGlobalPermission(ctx context.Context, userID string, permission domain.GlobalPermission) (bool, error) {
 	allowed, err := r.Queries.HasGlobalPermission(ctx, sqlc.HasGlobalPermissionParams{
 		UserID:        userID,
-		PermissionKey: permissionKey,
+		PermissionKey: string(permission),
 	})
 	if err != nil {
 		return false, fmt.Errorf("check global permission: %w", err)
@@ -79,12 +79,9 @@ func (r *Repo) IsActiveMember(ctx context.Context, userID string, groupID uuid.U
 	return active, nil
 }
 
-// ActiveMemberGroupIDs returns candidate groups where user has active membership.
-func (r *Repo) ActiveMemberGroupIDs(ctx context.Context, userID string, groupIDs []uuid.UUID) ([]uuid.UUID, error) {
-	result, err := r.ListActiveMemberGroupIDs(ctx, sqlc.ListActiveMemberGroupIDsParams{
-		UserID:   userID,
-		GroupIds: groupIDs,
-	})
+// ListActiveUserMemberships returns all groups where user has active membership.
+func (r *Repo) ListActiveUserMemberships(ctx context.Context, userID domain.Actor) ([]uuid.UUID, error) {
+	result, err := r.ListActiveMemberGroupIDs(ctx, string(userID))
 	if err != nil {
 		return nil, fmt.Errorf("list active member groups: %w", err)
 	}
@@ -105,11 +102,11 @@ func (r *Repo) HasGroupRole(ctx context.Context, userID string, groupID uuid.UUI
 	return hasRole, nil
 }
 
-func (r *Repo) HasGroupPermission(ctx context.Context, userID string, groupID uuid.UUID, permissionKey string) (bool, error) {
+func (r *Repo) HasGroupPermission(ctx context.Context, userID string, groupID uuid.UUID, permission domain.GroupPermission) (bool, error) {
 	allowed, err := r.Queries.HasGroupPermission(ctx, sqlc.HasGroupPermissionParams{
 		UserID:        userID,
 		GroupID:       groupID,
-		PermissionKey: permissionKey,
+		PermissionKey: string(permission),
 	})
 	if err != nil {
 		return false, fmt.Errorf("check group permission: %w", err)

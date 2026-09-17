@@ -1,7 +1,16 @@
 -- name: GetAuthorizationUser :one
 SELECT
     id,
-    STATUS
+    STATUS,
+    EXISTS (
+        SELECT
+            1
+        FROM
+            user_global_roles
+        WHERE
+            user_id = users.id
+            AND role_key = 'ADMIN'
+    ) AS global_admin
 FROM
     users
 WHERE
@@ -45,7 +54,17 @@ WHERE
 ORDER BY
     role_key;
 
--- name: GetUserGlobalPermissions :many
+-- name: GetUserGlobalGrantedPermissions :many
+SELECT
+    global_grant.permission_key
+FROM
+    global_permission_grants AS global_grant
+WHERE
+    global_grant.user_id = sqlc.arg(user_id)
+ORDER BY
+    permission_key;
+
+-- name: GetUserGlobalRolePermissions :many
 SELECT
     role_permission.permission_key
 FROM
@@ -53,13 +72,6 @@ FROM
     JOIN role_permissions AS role_permission ON role_permission.role_key = global_role.role_key
 WHERE
     global_role.user_id = sqlc.arg(user_id)
-UNION
-SELECT
-    global_grant.permission_key
-FROM
-    global_permission_grants AS global_grant
-WHERE
-    global_grant.user_id = sqlc.arg(user_id)
 UNION
 SELECT
     permission.key
@@ -107,22 +119,10 @@ ORDER BY
     group_id,
     role_key;
 
--- name: GetUserMembershipPermissions :many
+-- name: GetUserMembershipGrantedPermissions :many
 SELECT
-    membership.group_id,
-    role_permission.permission_key
-FROM
-    group_memberships AS membership
-    JOIN group_membership_roles AS role_assignment ON role_assignment.user_id = membership.user_id
-    AND role_assignment.group_id = membership.group_id
-    JOIN role_permissions AS role_permission ON role_permission.role_key = role_assignment.role_key
-WHERE
-    membership.user_id = sqlc.arg(user_id)
-    AND membership.status = 'ACTIVE'
-UNION
-SELECT
-    direct_grant.group_id,
-    direct_grant.permission_key
+    direct_grant.group_id AS group_id,
+    direct_grant.permission_key AS permission_key
 FROM
     group_permission_grants AS direct_grant
     JOIN group_memberships AS membership ON membership.user_id = direct_grant.user_id
@@ -131,8 +131,24 @@ WHERE
     direct_grant.user_id = sqlc.arg(user_id)
     AND membership.status = 'ACTIVE'
 ORDER BY
-    group_id,
-    permission_key;
+    1,
+    2;
+
+-- name: GetUserMembershipRolePermissions :many
+SELECT
+    DISTINCT membership.group_id AS group_id,
+    role_permission.permission_key AS permission_key
+FROM
+    group_memberships AS membership
+    JOIN group_membership_roles AS role_assignment ON role_assignment.user_id = membership.user_id
+    AND role_assignment.group_id = membership.group_id
+    JOIN role_permissions AS role_permission ON role_permission.role_key = role_assignment.role_key
+WHERE
+    membership.user_id = sqlc.arg(user_id)
+    AND membership.status = 'ACTIVE'
+ORDER BY
+    1,
+    2;
 
 -- name: ListPendingUserGroupRoleRequests :many
 SELECT
@@ -307,11 +323,8 @@ SELECT
 FROM
     group_memberships
 WHERE
-    user_id = sqlc.arg(user_id)
-    AND STATUS = 'ACTIVE'
-    AND group_id = ANY(sqlc.arg(group_ids)::uuid [])
-ORDER BY
-    group_id;
+    user_id = $1
+    AND STATUS = 'ACTIVE';
 
 -- name: HasAnyActiveMembership :one
 SELECT

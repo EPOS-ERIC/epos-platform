@@ -358,7 +358,8 @@ paths:
                       given_name: "Alice"
                       family_name: "Rossi"
                       global_roles: [ADMIN]
-                      global_permissions: []
+                      global_granted_permissions: []
+                      global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
                       status: "ACTIVE"
                       created_at: "2026-06-17T12:48:45.574Z"
                       updated_at: "2026-06-17T12:48:45.574Z"
@@ -885,7 +886,8 @@ paths:
                     given_name: "Alice"
                     family_name: "Rossi"
                     global_roles: [ADMIN]
-                    global_permissions: []
+                    global_granted_permissions: []
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -895,7 +897,8 @@ paths:
                           name: "Group Cool Name"
                         roles: [EDITOR]
                         status: "ACTIVE"
-                        permissions: [resource.create, resource.edit]
+                        granted_permissions: []
+                        role_permissions: [resource.create, resource.edit]
                         created_at: "2026-06-17T12:48:45.574Z"
                         updated_at: "2026-06-17T12:48:45.574Z"
                 self:
@@ -906,7 +909,8 @@ paths:
                     given_name: "Alice"
                     family_name: "Rossi"
                     global_roles: [ADMIN]
-                    global_permissions: []
+                    global_granted_permissions: []
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -916,7 +920,8 @@ paths:
                           name: "Group Cool Name"
                         roles: [EDITOR]
                         status: "ACTIVE"
-                        permissions: [resource.create, resource.edit]
+                        granted_permissions: []
+                        role_permissions: [resource.create, resource.edit]
                         created_at: "2026-06-17T12:48:45.574Z"
                         updated_at: "2026-06-17T12:48:45.574Z"
         default:
@@ -1143,7 +1148,7 @@ paths:
       tags:
         - Resources
       summary: Delete resource draft version
-      description: Permanently deletes an existing editable draft version. This operation does not create or assign a lifecycle status.
+      description: Permanently deletes an existing editable DRAFT or REJECTED active change version. This operation does not create or assign a lifecycle status.
       operationId: discardResourceDraftVersion
       security:
         - bearerAuth: []
@@ -1454,16 +1459,9 @@ components:
       in: path
       required: true
       description: Global permission key.
+      example: global.permission.manage
       schema:
-        type: string
-        enum:
-          - global.membership.manage
-          - global.role.manage
-          - global.permission.manage
-          - organization.manage
-          - contact_point.manage
-          - category_scheme.manage
-        example: global.permission.manage
+        $ref: "#/components/schemas/GlobalPermission"
 
     GlobalRole:
       name: role
@@ -1515,21 +1513,7 @@ components:
       required: true
       description: Group-scoped permission to grant or revoke.
       schema:
-        type: string
-        enum:
-          - resource.create
-          - resource.edit
-          - resource.submit
-          - resource.withdraw
-          - resource.reopen
-          - resource.discard
-          - resource.reject
-          - resource.publish
-          - resource.unpublish
-          - group.membership.manage
-          - group.role.manage
-          - group.permission.manage
-          - category.manage
+        $ref: "#/components/schemas/GroupPermission"
 
     GroupId:
       name: groupId
@@ -1631,8 +1615,9 @@ components:
       in: query
       required: false
       description: |
-        Spatial filter expressed as a WKT POINT or POLYGON string (EPSG:4326).
-        Resources whose spatial coverage intersects this geometry are returned.
+        Dataset spatial filter expressed as a WKT POINT or POLYGON string
+        (EPSG:4326). Datasets whose spatial coverage intersects this geometry
+        are returned; software resources do not match this filter.
         Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
       schema:
         type: string
@@ -1643,8 +1628,9 @@ components:
       in: query
       required: false
       description: |
-        Start of the temporal filter (inclusive). ISO 8601 date-time (UTC).
-        Resources with temporal coverage overlapping this range are returned.
+        Start of the dataset temporal filter (inclusive). ISO 8601 date-time
+        (UTC). Datasets with temporal coverage overlapping this range are
+        returned; software resources do not match this filter.
         Must be less than or equal to `dateTo` when both are supplied.
       schema:
         type: string
@@ -1656,8 +1642,9 @@ components:
       in: query
       required: false
       description: |
-        End of the temporal filter (inclusive). ISO 8601 date-time (UTC).
-        Resources with temporal coverage overlapping this range are returned.
+        End of the dataset temporal filter (inclusive). ISO 8601 date-time
+        (UTC). Datasets with temporal coverage overlapping this range are
+        returned; software resources do not match this filter.
         Must be greater than or equal to `dateFrom` when both are supplied.
       schema:
         type: string
@@ -1669,9 +1656,10 @@ components:
       in: query
       required: false
       description: |
-        Filter by one or more provider organization IDs.
-        Use this filter to restrict results to resources associated with one of the
-        specified provider organizations.
+        Filter by one or more organization IDs. For datasets, this matches
+        provider organizations. For software applications and source code, this
+        matches creator organizations because software resources have no provider
+        field.
         Pass comma-separated values in a single parameter:
         `?provider=94f4885e-502e-5f33-ba82-033a72efd827`.
       schema:
@@ -1847,6 +1835,35 @@ components:
       type: string
       minLength: 1
       pattern: "^[A-Za-z0-9 _:-]+$"
+
+    GlobalPermission:
+      type: string
+      description: Global permission key.
+      enum:
+        - global.membership.manage
+        - global.role.manage
+        - global.permission.manage
+        - organization.manage
+        - contact_point.manage
+        - category_scheme.manage
+
+    GroupPermission:
+      type: string
+      description: Group-scoped permission key.
+      enum:
+        - resource.create
+        - resource.edit
+        - resource.submit
+        - resource.withdraw
+        - resource.reopen
+        - resource.discard
+        - resource.reject
+        - resource.publish
+        - resource.unpublish
+        - group.membership.manage
+        - group.role.manage
+        - group.permission.manage
+        - category.manage
 
     DiscoveryResourceType:
       type: string
@@ -3198,7 +3215,10 @@ components:
           $ref: "#/components/schemas/VersioningStatus"
         updated_at: { type: string, format: date-time }
         concept: { $ref: "#/components/schemas/DiscoveryConcept" }
-        created_by: { $ref: "#/components/schemas/Reference" }
+        created_by:
+          description: Creator identity is returned only when caller may see
+            identities for this resource group.
+          $ref: "#/components/schemas/Reference"
         group: { $ref: "#/components/schemas/Reference" }
         providers:
           type: array
@@ -3231,7 +3251,10 @@ components:
           $ref: "#/components/schemas/VersioningStatus"
         updated_at: { type: string, format: date-time }
         concept: { $ref: "#/components/schemas/DiscoveryConcept" }
-        created_by: { $ref: "#/components/schemas/Reference" }
+        created_by:
+          description: Creator identity is returned only when caller may see
+            identities for this resource group.
+          $ref: "#/components/schemas/Reference"
         group: { $ref: "#/components/schemas/Reference" }
         creators:
           type: array
@@ -3261,7 +3284,10 @@ components:
           $ref: "#/components/schemas/VersioningStatus"
         updated_at: { type: string, format: date-time }
         concept: { $ref: "#/components/schemas/DiscoveryConcept" }
-        created_by: { $ref: "#/components/schemas/Reference" }
+        created_by:
+          description: Creator identity is returned only when caller may see
+            identities for this resource group.
+          $ref: "#/components/schemas/Reference"
         group: { $ref: "#/components/schemas/Reference" }
         creators:
           type: array
@@ -3325,7 +3351,8 @@ components:
         - family_name
         - status
         - global_roles
-        - global_permissions
+        - global_granted_permissions
+        - global_role_permissions
         - created_at
         - updated_at
       properties:
@@ -3343,10 +3370,14 @@ components:
           type: array
           items:
             type: string
-        global_permissions:
+        global_granted_permissions:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/GlobalPermission"
+        global_role_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GlobalPermission"
         created_at:
           type: string
           format: date-time
@@ -3551,7 +3582,8 @@ components:
         - group
         - roles
         - status
-        - permissions
+        - granted_permissions
+        - role_permissions
         - role_requests
         - created_at
         - updated_at
@@ -3564,10 +3596,14 @@ components:
             $ref: "#/components/schemas/MembershipRole"
         status:
           $ref: "#/components/schemas/MembershipStatus"
-        permissions:
+        granted_permissions:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/GroupPermission"
+        role_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupPermission"
         role_requests:
           type: array
           description: Pending role requests for this membership.
@@ -3587,7 +3623,8 @@ components:
         - user
         - status
         - roles
-        - permissions
+        - granted_permissions
+        - role_permissions
         - role_requests
         - created_at
         - updated_at
@@ -3600,10 +3637,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MembershipRole"
-        permissions:
+        granted_permissions:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/GroupPermission"
+        role_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupPermission"
         role_requests:
           type: array
           description: Pending role requests only.

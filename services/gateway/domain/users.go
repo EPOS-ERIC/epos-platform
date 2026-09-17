@@ -5,15 +5,16 @@ import (
 )
 
 type UserSummary struct {
-	ID                string
-	Email             string
-	GivenName         string
-	FamilyName        string
-	Status            UserStatus
-	GlobalRoles       []GlobalRole
-	GlobalPermissions []string
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID                       string
+	Email                    string
+	GivenName                string
+	FamilyName               string
+	Status                   UserStatus
+	GlobalRoles              []GlobalRole
+	GlobalGrantedPermissions []GlobalPermission
+	GlobalRolePermissions    []GlobalPermission
+	CreatedAt                time.Time
+	UpdatedAt                time.Time
 }
 
 type User struct {
@@ -22,13 +23,14 @@ type User struct {
 }
 
 type Membership struct {
-	Group            GroupSummary
-	Roles            []GroupRole
-	Status           MembershipStatus
-	GroupPermissions []string
-	RoleRequests     []RoleRequest
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	Group              GroupSummary
+	Roles              []GroupRole
+	Status             MembershipStatus
+	GrantedPermissions []GroupPermission
+	RolePermissions    []GroupPermission
+	RoleRequests       []RoleRequest
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 type GroupSummary struct {

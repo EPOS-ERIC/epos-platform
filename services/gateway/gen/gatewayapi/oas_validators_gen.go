@@ -2610,6 +2610,25 @@ func (s FloatScalarParameterKind) Validate() error {
 	}
 }
 
+func (s GlobalPermission) Validate() error {
+	switch s {
+	case "global.membership.manage":
+		return nil
+	case "global.role.manage":
+		return nil
+	case "global.permission.manage":
+		return nil
+	case "organization.manage":
+		return nil
+	case "contact_point.manage":
+		return nil
+	case "category_scheme.manage":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s GlobalRole) Validate() error {
 	switch s {
 	case "ADMIN":
@@ -2885,13 +2904,58 @@ func (s *GroupMembership) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.Permissions == nil {
+		if s.GrantedPermissions == nil {
 			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.GrantedPermissions {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "permissions",
+			Name:  "granted_permissions",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.RolePermissions == nil {
+			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.RolePermissions {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "role_permissions",
 			Error: err,
 		})
 	}
@@ -3655,25 +3719,6 @@ func (s ParameterLocation) Validate() error {
 	case "QUERY":
 		return nil
 	case "HEADER":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s Permission) Validate() error {
-	switch s {
-	case "global.membership.manage":
-		return nil
-	case "global.role.manage":
-		return nil
-	case "global.permission.manage":
-		return nil
-	case "organization.manage":
-		return nil
-	case "contact_point.manage":
-		return nil
-	case "category_scheme.manage":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -5769,13 +5814,58 @@ func (s *User) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.GlobalPermissions == nil {
+		if s.GlobalGrantedPermissions == nil {
 			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.GlobalGrantedPermissions {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "global_permissions",
+			Name:  "global_granted_permissions",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.GlobalRolePermissions == nil {
+			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.GlobalRolePermissions {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "global_role_permissions",
 			Error: err,
 		})
 	}
@@ -5842,13 +5932,58 @@ func (s *UserListItem) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.GlobalPermissions == nil {
+		if s.GlobalGrantedPermissions == nil {
 			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.GlobalGrantedPermissions {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "global_permissions",
+			Name:  "global_granted_permissions",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.GlobalRolePermissions == nil {
+			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.GlobalRolePermissions {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "global_role_permissions",
 			Error: err,
 		})
 	}
@@ -5904,13 +6039,58 @@ func (s *UserMembershipSummary) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.Permissions == nil {
+		if s.GrantedPermissions == nil {
 			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.GrantedPermissions {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "permissions",
+			Name:  "granted_permissions",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.RolePermissions == nil {
+			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.RolePermissions {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "role_permissions",
 			Error: err,
 		})
 	}

@@ -25,6 +25,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/turtle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
@@ -139,18 +140,22 @@ func logUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {
 		err = NormalizeError(info.FullMethod, err)
 
 		code := status.Code(err)
-		level := slog.LevelError
+		level := slog.LevelDebug
 		switch code {
-		case codes.Canceled,
-			codes.InvalidArgument,
-			codes.NotFound,
-			codes.AlreadyExists,
-			codes.PermissionDenied,
-			codes.Unauthenticated,
-			codes.FailedPrecondition,
-			codes.Aborted,
-			codes.OutOfRange:
-			level = slog.LevelWarn
+		case codes.Unknown,
+			codes.ResourceExhausted,
+			codes.Unimplemented,
+			codes.Internal,
+			codes.Unavailable,
+			codes.DataLoss,
+			codes.DeadlineExceeded:
+			level = slog.LevelError
+		}
+		if level == slog.LevelError {
+			span := trace.SpanFromContext(ctx)
+			if span.IsRecording() {
+				span.RecordError(status.Error(code, err.Error()))
+			}
 		}
 
 		log.Log(ctx, level, "grpc request failed", "method", info.FullMethod, "code", code.String(), "error", err)

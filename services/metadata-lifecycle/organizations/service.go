@@ -19,7 +19,7 @@ type Store interface {
 }
 
 type Authorizer interface {
-	AuthorizeGlobal(context.Context, string, string) (domain.Result, error)
+	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
 }
 
 type Service struct {
@@ -37,7 +37,7 @@ func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
 }
 
 func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain.OrganizationInput) (domain.Organization, error) {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "organization.manage")
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionOrganizationManage)
 	if err != nil {
 		return domain.Organization{}, fmt.Errorf("authorize organization creation: %w", err)
 	}
@@ -58,7 +58,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 		return domain.Organization{}, domain.ErrInvalidOrganization
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "organization.manage")
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionOrganizationManage)
 	if err != nil {
 		return domain.Organization{}, fmt.Errorf("authorize organization replacement: %w", err)
 	}
@@ -78,7 +78,7 @@ func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID
 		return domain.ErrInvalidOrganization
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "organization.manage")
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionOrganizationManage)
 	if err != nil {
 		return fmt.Errorf("authorize organization deletion: %w", err)
 	}

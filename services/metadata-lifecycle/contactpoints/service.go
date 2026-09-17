@@ -20,7 +20,7 @@ type Store interface {
 
 type Authorizer interface {
 	CanReadContactPoint(context.Context, string) (domain.Result, error)
-	AuthorizeGlobal(context.Context, string, string) (domain.Result, error)
+	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
 }
 
 type Service struct {
@@ -113,7 +113,7 @@ func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID
 }
 
 func (s *Service) authorizeManage(ctx context.Context, actorID domain.Actor) error {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "contact_point.manage")
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionContactPointManage)
 	if err != nil {
 		return fmt.Errorf("authorize contact point management: %w", err)
 	}

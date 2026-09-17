@@ -94,7 +94,9 @@ BEGIN
         )
         SELECT 1 FROM ancestors WHERE parent_category_id = NEW.id
     ) THEN
-        RAISE EXCEPTION 'category hierarchy cycle';
+        RAISE EXCEPTION USING
+            ERRCODE = '23514',
+            MESSAGE = 'category hierarchy cycle';
     END IF;
 
     RETURN NEW;
@@ -105,7 +107,9 @@ $$;
 CREATE FUNCTION enforce_organization_acyclic() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
     IF NEW.child_organization_id = NEW.parent_organization_id THEN
-        RAISE EXCEPTION 'organization hierarchy cycle';
+        RAISE EXCEPTION USING
+            ERRCODE = '23514',
+            MESSAGE = 'organization hierarchy cycle';
     END IF;
 
     IF EXISTS (
@@ -120,7 +124,9 @@ BEGIN
         )
         SELECT 1 FROM ancestors WHERE id = NEW.child_organization_id
     ) THEN
-        RAISE EXCEPTION 'organization hierarchy cycle';
+        RAISE EXCEPTION USING
+            ERRCODE = '23514',
+            MESSAGE = 'organization hierarchy cycle';
     END IF;
 
     RETURN NEW;
@@ -141,7 +147,9 @@ BEGIN
             JOIN datasets AS dataset ON dataset.id = version.dataset_id
             WHERE version.id = NEW.dataset_version_id AND dataset.group_id = NEW.group_id
         ) THEN
-            RAISE EXCEPTION 'category group must match dataset group';
+            RAISE EXCEPTION USING
+                ERRCODE = '23514',
+                MESSAGE = 'category group must match dataset group';
         END IF;
     ELSIF TG_TABLE_NAME = 'software_application_version_categories' THEN
         IF NOT EXISTS (
@@ -150,7 +158,9 @@ BEGIN
             JOIN software_applications AS application ON application.id = version.software_application_id
             WHERE version.id = NEW.software_application_version_id AND application.group_id = NEW.group_id
         ) THEN
-            RAISE EXCEPTION 'category group must match software application group';
+            RAISE EXCEPTION USING
+                ERRCODE = '23514',
+                MESSAGE = 'category group must match software application group';
         END IF;
     ELSIF TG_TABLE_NAME = 'software_source_code_version_categories' THEN
         IF NOT EXISTS (
@@ -159,7 +169,9 @@ BEGIN
             JOIN software_source_codes AS source_code ON source_code.id = version.software_source_code_id
             WHERE version.id = NEW.software_source_code_version_id AND source_code.group_id = NEW.group_id
         ) THEN
-            RAISE EXCEPTION 'category group must match source code group';
+            RAISE EXCEPTION USING
+                ERRCODE = '23514',
+                MESSAGE = 'category group must match source code group';
         END IF;
     ELSE
         RAISE EXCEPTION 'unsupported category resource table: %', TG_TABLE_NAME;

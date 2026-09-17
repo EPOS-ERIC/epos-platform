@@ -27,6 +27,9 @@ func toSearchDiscoveryApplicationsParams(filter domain.DiscoveryFilter) sqlc.Sea
 	return sqlc.SearchDiscoveryApplicationsParams{
 		VersioningStatuses: statusStrings(filter.VersioningStatuses),
 		Query:              filter.Query,
+		SpatialFilter:      filter.SpatialFilter,
+		DateFrom:           filter.DateFrom,
+		DateTo:             filter.DateTo,
 		ProviderIds:        filter.Providers,
 		Keywords:           filter.Keywords,
 		EditorID:           filter.EditorID,
@@ -40,6 +43,9 @@ func toSearchDiscoverySourceCodesParams(filter domain.DiscoveryFilter) sqlc.Sear
 	return sqlc.SearchDiscoverySourceCodesParams{
 		VersioningStatuses: statusStrings(filter.VersioningStatuses),
 		Query:              filter.Query,
+		SpatialFilter:      filter.SpatialFilter,
+		DateFrom:           filter.DateFrom,
+		DateTo:             filter.DateTo,
 		ProviderIds:        filter.Providers,
 		Keywords:           filter.Keywords,
 		EditorID:           filter.EditorID,

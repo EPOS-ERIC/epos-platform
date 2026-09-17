@@ -17,9 +17,10 @@ message UserListItem {
   string family_name = 4 [(buf.validate.field).string.min_len = 1];
   UserStatus status = 5 [(buf.validate.field).enum.defined_only = true];
   repeated GlobalRole global_roles = 6 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  repeated string global_permissions = 7 [(buf.validate.field).repeated.items.string.min_len = 1];
+  repeated GlobalPermission global_granted_permissions = 7 [(buf.validate.field).repeated.items.enum.defined_only = true];
   google.protobuf.Timestamp created_at = 8;
   google.protobuf.Timestamp updated_at = 9;
+  repeated GlobalPermission global_role_permissions = 10 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }
 message ListUsersResponse {
   repeated UserListItem users = 1;
@@ -44,21 +45,22 @@ message GetUserResponse {
   string family_name = 4 [(buf.validate.field).string.min_len = 1];
   UserStatus status = 5 [(buf.validate.field).enum.defined_only = true];
   repeated GlobalRole global_roles = 6 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  repeated string global_permissions = 7;
+  repeated GlobalPermission global_granted_permissions = 7 [(buf.validate.field).repeated.items.enum.defined_only = true];
   google.protobuf.Timestamp created_at = 8;
   google.protobuf.Timestamp updated_at = 9;
   repeated UserMembership memberships = 10;
+  repeated GlobalPermission global_role_permissions = 11 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }
 
 message GrantGlobalPermissionRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
-  string permission = 2 [(buf.validate.field).string.min_len = 1];
+  GlobalPermission permission = 2 [(buf.validate.field).enum.defined_only = true];
 }
 message GrantGlobalPermissionResponse {}
 
 message RevokeGlobalPermissionRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
-  string permission = 2 [(buf.validate.field).string.min_len = 1];
+  GlobalPermission permission = 2 [(buf.validate.field).enum.defined_only = true];
 }
 message RevokeGlobalPermissionResponse {}
 
@@ -89,10 +91,11 @@ message UserMembership {
   EntityReference group = 1;
   repeated GroupRole group_roles = 2 [(buf.validate.field).repeated.items.enum.defined_only = true];
   MembershipStatus status = 3 [(buf.validate.field).enum.defined_only = true];
-  repeated string group_permissions = 4 [(buf.validate.field).repeated.items.string.min_len = 1];
+  repeated GroupPermission granted_permissions = 4 [(buf.validate.field).repeated.items.enum.defined_only = true];
   repeated RoleRequest role_requests = 5;
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
+  repeated GroupPermission role_permissions = 8 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }
 message RoleRequest {
   string id = 1 [(buf.validate.field).string.uuid = true];

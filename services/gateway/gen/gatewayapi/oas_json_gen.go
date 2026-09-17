@@ -8753,6 +8753,54 @@ func (s *FloatScalarParameterKind) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes GlobalPermission as json.
+func (s GlobalPermission) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes GlobalPermission from json.
+func (s *GlobalPermission) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GlobalPermission to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch GlobalPermission(v) {
+	case GlobalPermissionGlobalMembershipManage:
+		*s = GlobalPermissionGlobalMembershipManage
+	case GlobalPermissionGlobalRoleManage:
+		*s = GlobalPermissionGlobalRoleManage
+	case GlobalPermissionGlobalPermissionManage:
+		*s = GlobalPermissionGlobalPermissionManage
+	case GlobalPermissionOrganizationManage:
+		*s = GlobalPermissionOrganizationManage
+	case GlobalPermissionContactPointManage:
+		*s = GlobalPermissionContactPointManage
+	case GlobalPermissionCategorySchemeManage:
+		*s = GlobalPermissionCategorySchemeManage
+	default:
+		*s = GlobalPermission(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s GlobalPermission) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GlobalPermission) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode implements json.Marshaler.
 func (s *Group) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -9052,10 +9100,18 @@ func (s *GroupMembership) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
-		e.FieldStart("permissions")
+		e.FieldStart("granted_permissions")
 		e.ArrStart()
-		for _, elem := range s.Permissions {
-			e.Str(elem)
+		for _, elem := range s.GrantedPermissions {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("role_permissions")
+		e.ArrStart()
+		for _, elem := range s.RolePermissions {
+			elem.Encode(e)
 		}
 		e.ArrEnd()
 	}
@@ -9077,14 +9133,15 @@ func (s *GroupMembership) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfGroupMembership = [7]string{
+var jsonFieldsNameOfGroupMembership = [8]string{
 	0: "user",
 	1: "status",
 	2: "roles",
-	3: "permissions",
-	4: "role_requests",
-	5: "created_at",
-	6: "updated_at",
+	3: "granted_permissions",
+	4: "role_permissions",
+	5: "role_requests",
+	6: "created_at",
+	7: "updated_at",
 }
 
 // Decode decodes GroupMembership from json.
@@ -9134,28 +9191,44 @@ func (s *GroupMembership) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"roles\"")
 			}
-		case "permissions":
+		case "granted_permissions":
 			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
-				s.Permissions = make([]string, 0)
+				s.GrantedPermissions = make([]GroupPermission, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem GroupPermission
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
-					s.Permissions = append(s.Permissions, elem)
+					s.GrantedPermissions = append(s.GrantedPermissions, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"permissions\"")
+				return errors.Wrap(err, "decode field \"granted_permissions\"")
+			}
+		case "role_permissions":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				s.RolePermissions = make([]GroupPermission, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem GroupPermission
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.RolePermissions = append(s.RolePermissions, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"role_permissions\"")
 			}
 		case "role_requests":
-			requiredBitSet[0] |= 1 << 4
+			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				s.RoleRequests = make([]RoleRequest, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -9173,7 +9246,7 @@ func (s *GroupMembership) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"role_requests\"")
 			}
 		case "created_at":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				v, err := json.DecodeDateTime(d)
 				s.CreatedAt = v
@@ -9185,7 +9258,7 @@ func (s *GroupMembership) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"created_at\"")
 			}
 		case "updated_at":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
 				v, err := json.DecodeDateTime(d)
 				s.UpdatedAt = v
@@ -9206,7 +9279,7 @@ func (s *GroupMembership) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b01111111,
+		0b11111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -9248,6 +9321,68 @@ func (s *GroupMembership) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *GroupMembership) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GroupPermission as json.
+func (s GroupPermission) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes GroupPermission from json.
+func (s *GroupPermission) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GroupPermission to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch GroupPermission(v) {
+	case GroupPermissionResourceCreate:
+		*s = GroupPermissionResourceCreate
+	case GroupPermissionResourceEdit:
+		*s = GroupPermissionResourceEdit
+	case GroupPermissionResourceSubmit:
+		*s = GroupPermissionResourceSubmit
+	case GroupPermissionResourceWithdraw:
+		*s = GroupPermissionResourceWithdraw
+	case GroupPermissionResourceReopen:
+		*s = GroupPermissionResourceReopen
+	case GroupPermissionResourceDiscard:
+		*s = GroupPermissionResourceDiscard
+	case GroupPermissionResourceReject:
+		*s = GroupPermissionResourceReject
+	case GroupPermissionResourcePublish:
+		*s = GroupPermissionResourcePublish
+	case GroupPermissionResourceUnpublish:
+		*s = GroupPermissionResourceUnpublish
+	case GroupPermissionGroupMembershipManage:
+		*s = GroupPermissionGroupMembershipManage
+	case GroupPermissionGroupRoleManage:
+		*s = GroupPermissionGroupRoleManage
+	case GroupPermissionGroupPermissionManage:
+		*s = GroupPermissionGroupPermissionManage
+	case GroupPermissionCategoryManage:
+		*s = GroupPermissionCategoryManage
+	default:
+		*s = GroupPermission(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s GroupPermission) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GroupPermission) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -21936,10 +22071,18 @@ func (s *User) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
-		e.FieldStart("global_permissions")
+		e.FieldStart("global_granted_permissions")
 		e.ArrStart()
-		for _, elem := range s.GlobalPermissions {
-			e.Str(elem)
+		for _, elem := range s.GlobalGrantedPermissions {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("global_role_permissions")
+		e.ArrStart()
+		for _, elem := range s.GlobalRolePermissions {
+			elem.Encode(e)
 		}
 		e.ArrEnd()
 	}
@@ -21961,17 +22104,18 @@ func (s *User) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUser = [10]string{
-	0: "id",
-	1: "email",
-	2: "given_name",
-	3: "family_name",
-	4: "status",
-	5: "global_roles",
-	6: "global_permissions",
-	7: "created_at",
-	8: "updated_at",
-	9: "memberships",
+var jsonFieldsNameOfUser = [11]string{
+	0:  "id",
+	1:  "email",
+	2:  "given_name",
+	3:  "family_name",
+	4:  "status",
+	5:  "global_roles",
+	6:  "global_granted_permissions",
+	7:  "global_role_permissions",
+	8:  "created_at",
+	9:  "updated_at",
+	10: "memberships",
 }
 
 // Decode decodes User from json.
@@ -22061,28 +22205,44 @@ func (s *User) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"global_roles\"")
 			}
-		case "global_permissions":
+		case "global_granted_permissions":
 			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
-				s.GlobalPermissions = make([]string, 0)
+				s.GlobalGrantedPermissions = make([]GlobalPermission, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem GlobalPermission
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
-					s.GlobalPermissions = append(s.GlobalPermissions, elem)
+					s.GlobalGrantedPermissions = append(s.GlobalGrantedPermissions, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"global_permissions\"")
+				return errors.Wrap(err, "decode field \"global_granted_permissions\"")
+			}
+		case "global_role_permissions":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				s.GlobalRolePermissions = make([]GlobalPermission, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem GlobalPermission
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.GlobalRolePermissions = append(s.GlobalRolePermissions, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"global_role_permissions\"")
 			}
 		case "created_at":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				v, err := json.DecodeDateTime(d)
 				s.CreatedAt = v
@@ -22094,7 +22254,7 @@ func (s *User) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"created_at\"")
 			}
 		case "updated_at":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				v, err := json.DecodeDateTime(d)
 				s.UpdatedAt = v
@@ -22106,7 +22266,7 @@ func (s *User) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"updated_at\"")
 			}
 		case "memberships":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				s.Memberships = make([]UserMembershipSummary, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -22134,7 +22294,7 @@ func (s *User) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b11111111,
-		0b00000011,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -22218,10 +22378,18 @@ func (s *UserListItem) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
-		e.FieldStart("global_permissions")
+		e.FieldStart("global_granted_permissions")
 		e.ArrStart()
-		for _, elem := range s.GlobalPermissions {
-			e.Str(elem)
+		for _, elem := range s.GlobalGrantedPermissions {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("global_role_permissions")
+		e.ArrStart()
+		for _, elem := range s.GlobalRolePermissions {
+			elem.Encode(e)
 		}
 		e.ArrEnd()
 	}
@@ -22235,16 +22403,17 @@ func (s *UserListItem) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUserListItem = [9]string{
+var jsonFieldsNameOfUserListItem = [10]string{
 	0: "id",
 	1: "email",
 	2: "given_name",
 	3: "family_name",
 	4: "status",
 	5: "global_roles",
-	6: "global_permissions",
-	7: "created_at",
-	8: "updated_at",
+	6: "global_granted_permissions",
+	7: "global_role_permissions",
+	8: "created_at",
+	9: "updated_at",
 }
 
 // Decode decodes UserListItem from json.
@@ -22334,28 +22503,44 @@ func (s *UserListItem) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"global_roles\"")
 			}
-		case "global_permissions":
+		case "global_granted_permissions":
 			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
-				s.GlobalPermissions = make([]string, 0)
+				s.GlobalGrantedPermissions = make([]GlobalPermission, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem GlobalPermission
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
-					s.GlobalPermissions = append(s.GlobalPermissions, elem)
+					s.GlobalGrantedPermissions = append(s.GlobalGrantedPermissions, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"global_permissions\"")
+				return errors.Wrap(err, "decode field \"global_granted_permissions\"")
+			}
+		case "global_role_permissions":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				s.GlobalRolePermissions = make([]GlobalPermission, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem GlobalPermission
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.GlobalRolePermissions = append(s.GlobalRolePermissions, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"global_role_permissions\"")
 			}
 		case "created_at":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				v, err := json.DecodeDateTime(d)
 				s.CreatedAt = v
@@ -22367,7 +22552,7 @@ func (s *UserListItem) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"created_at\"")
 			}
 		case "updated_at":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				v, err := json.DecodeDateTime(d)
 				s.UpdatedAt = v
@@ -22389,7 +22574,7 @@ func (s *UserListItem) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b11111111,
-		0b00000001,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -22461,10 +22646,18 @@ func (s *UserMembershipSummary) encodeFields(e *jx.Encoder) {
 		s.Status.Encode(e)
 	}
 	{
-		e.FieldStart("permissions")
+		e.FieldStart("granted_permissions")
 		e.ArrStart()
-		for _, elem := range s.Permissions {
-			e.Str(elem)
+		for _, elem := range s.GrantedPermissions {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("role_permissions")
+		e.ArrStart()
+		for _, elem := range s.RolePermissions {
+			elem.Encode(e)
 		}
 		e.ArrEnd()
 	}
@@ -22486,14 +22679,15 @@ func (s *UserMembershipSummary) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUserMembershipSummary = [7]string{
+var jsonFieldsNameOfUserMembershipSummary = [8]string{
 	0: "group",
 	1: "roles",
 	2: "status",
-	3: "permissions",
-	4: "role_requests",
-	5: "created_at",
-	6: "updated_at",
+	3: "granted_permissions",
+	4: "role_permissions",
+	5: "role_requests",
+	6: "created_at",
+	7: "updated_at",
 }
 
 // Decode decodes UserMembershipSummary from json.
@@ -22543,28 +22737,44 @@ func (s *UserMembershipSummary) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"status\"")
 			}
-		case "permissions":
+		case "granted_permissions":
 			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
-				s.Permissions = make([]string, 0)
+				s.GrantedPermissions = make([]GroupPermission, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem GroupPermission
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
-					s.Permissions = append(s.Permissions, elem)
+					s.GrantedPermissions = append(s.GrantedPermissions, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"permissions\"")
+				return errors.Wrap(err, "decode field \"granted_permissions\"")
+			}
+		case "role_permissions":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				s.RolePermissions = make([]GroupPermission, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem GroupPermission
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.RolePermissions = append(s.RolePermissions, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"role_permissions\"")
 			}
 		case "role_requests":
-			requiredBitSet[0] |= 1 << 4
+			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				s.RoleRequests = make([]RoleRequest, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -22582,7 +22792,7 @@ func (s *UserMembershipSummary) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"role_requests\"")
 			}
 		case "created_at":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				v, err := json.DecodeDateTime(d)
 				s.CreatedAt = v
@@ -22594,7 +22804,7 @@ func (s *UserMembershipSummary) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"created_at\"")
 			}
 		case "updated_at":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
 				v, err := json.DecodeDateTime(d)
 				s.UpdatedAt = v
@@ -22615,7 +22825,7 @@ func (s *UserMembershipSummary) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b01111111,
+		0b11111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

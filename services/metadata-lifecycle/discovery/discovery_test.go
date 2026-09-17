@@ -90,7 +90,7 @@ func TestSearchUsesAuthorizedCandidatesAndBatchedRelations(t *testing.T) {
 	}
 	authorizer := &discoveryAuthorizerFake{authorization: domain.DiscoveryAuthorization{
 		AllowedCandidates: candidates,
-		IncludeCreatedBy:  true,
+		CreatedByGroupIDs: map[uuid.UUID]struct{}{groupID: {}},
 	}}
 	actor := domain.Actor("user-1")
 	items, err := New(slog.Default(), repository, authorizer).Search(context.Background(), &actor, domain.DiscoveryFilter{})
