@@ -1,0 +1,114 @@
+:host {
+  display: block;
+}
+
+.membership-options {
+  margin: 16px 0 0;
+  padding: 14px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.membership-options legend {
+  padding: 0 8px 0 0;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.membership-permissions {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.membership-permissions summary {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.membership-permissions summary small {
+  margin-left: 8px;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.membership-permissions-content {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.option-grid--permissions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.membership-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.membership-option input {
+  flex: 0 0 auto;
+  accent-color: var(--olive-600);
+}
+
+.membership-option:has(input:disabled) {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.membership-option:has(input:disabled) input {
+  cursor: not-allowed;
+}
+
+.membership-option span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.membership-option small {
+  margin-left: auto;
+  color: var(--text-muted);
+}
+
+.membership-option--readonly {
+  cursor: default;
+}
+
+.membership-permissions-empty {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 700px) {
+  .option-grid,
+  .option-grid--permissions {
+    grid-template-columns: 1fr;
+  }
+}

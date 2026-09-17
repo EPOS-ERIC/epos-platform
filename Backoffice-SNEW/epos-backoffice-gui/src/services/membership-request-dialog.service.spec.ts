@@ -16,7 +16,8 @@ describe('MembershipRequestDialogService', () => {
     user: { id: 'user-id', given_name: 'Test', family_name: 'User', email: 'user@example.org' },
     status: 'PENDING',
     roles: [],
-    permissions: [],
+    granted_permissions: [],
+    role_permissions: [],
     role_requests: [],
     created_at: '2026-09-14T08:00:00Z',
     updated_at: '2026-09-14T08:00:00Z'
@@ -63,14 +64,16 @@ describe('MembershipRequestDialogService', () => {
       family_name: 'User',
       status: 'ACTIVE',
       global_roles: [],
-      global_permissions: [],
+      global_granted_permissions: [],
+      global_role_permissions: [],
       created_at: '2026-09-14T08:00:00Z',
       updated_at: '2026-09-14T08:00:00Z',
       memberships: [{
         group: { id: group.id, name: group.name },
         status: 'PENDING',
         roles: [],
-        permissions: [],
+        granted_permissions: [],
+        role_permissions: [],
         role_requests: [],
         created_at: '2026-09-14T08:00:00Z',
         updated_at: '2026-09-14T08:00:00Z'

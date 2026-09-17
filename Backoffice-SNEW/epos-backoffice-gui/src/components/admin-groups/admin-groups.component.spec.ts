@@ -24,7 +24,8 @@ describe('AdminGroupsComponent', () => {
     },
     status: 'PENDING',
     roles: [],
-    permissions: [],
+    granted_permissions: [],
+    role_permissions: [],
     role_requests: [{
       id: 'request-id',
       role: 'EDITOR',

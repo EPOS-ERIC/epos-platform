@@ -30,4 +30,21 @@ describe('ResultsTableComponent', () => {
     const cells = fixture.nativeElement.querySelectorAll('tbody td') as NodeListOf<HTMLTableCellElement>;
     expect(cells[4]?.textContent?.trim()).toBe(timestamp);
   });
+
+  it('links group administrators to the group management route', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResultsTableComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ResultsTableComponent);
+
+    fixture.componentRef.setInput('sectionPath', 'software');
+    fixture.componentRef.setInput('selectedGroupId', 'group-id');
+    fixture.componentRef.setInput('canManageGroup', true);
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('.toolbar a') as HTMLAnchorElement;
+    expect(link.textContent?.trim()).toBe('Manage Group');
+    expect(link.getAttribute('href')).toBe('/software/manage-group?groupId=group-id');
+  });
 });

@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { LoginPageComponent } from '../components/login-page/login-page.component';
 import { MainContainerComponent } from '../components/main-container/main-container.component';
 import { authGuard } from './auth.guard';
+import { groupAdminGuard } from './group-admin.guard';
 
 export const routes: Routes = [
   {
@@ -23,6 +24,12 @@ export const routes: Routes = [
     component: LoginPageComponent
   },
   {
+    path: 'data/manage-group',
+    component: MainContainerComponent,
+    canActivate: [authGuard, groupAdminGuard],
+    data: { sectionTitle: 'Data', sectionPath: 'data', manageGroup: true }
+  },
+  {
     path: 'data',
     component: MainContainerComponent,
     canActivate: [authGuard],
@@ -35,6 +42,12 @@ export const routes: Routes = [
     data: { sectionTitle: 'Data', discoveryType: ['dataset'] }
   },
   {
+    path: 'software/manage-group',
+    component: MainContainerComponent,
+    canActivate: [authGuard, groupAdminGuard],
+    data: { sectionTitle: 'Software', sectionPath: 'software', manageGroup: true }
+  },
+  {
     path: 'software',
     component: MainContainerComponent,
     canActivate: [authGuard],
@@ -45,6 +58,12 @@ export const routes: Routes = [
     component: MainContainerComponent,
     canActivate: [authGuard],
     data: { sectionTitle: 'Software', discoveryType: ['software-application'] }
+  },
+  {
+    path: 'facilities/manage-group',
+    component: MainContainerComponent,
+    canActivate: [authGuard, groupAdminGuard],
+    data: { sectionTitle: 'Facilities', sectionPath: 'facilities', manageGroup: true }
   },
   {
     path: 'facilities',

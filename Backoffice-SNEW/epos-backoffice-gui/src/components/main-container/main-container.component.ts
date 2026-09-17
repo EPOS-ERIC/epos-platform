@@ -1,4 +1,4 @@
-import { Component, DestroyRef, DOCUMENT, ElementRef, ViewChild, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, DOCUMENT, ElementRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, catchError, combineLatest, debounceTime, distinctUntilChanged, finalize, map, of } from 'rxjs';
@@ -17,6 +17,7 @@ import { AdminGroupsComponent } from '../admin-groups/admin-groups.component';
 import { AdminOrganizationsComponent } from '../admin-organizations/admin-organizations.component';
 import { BackofficeHeaderComponent } from '../backoffice-header/backoffice-header.component';
 import { MembershipsPageComponent } from '../memberships-page/memberships-page.component';
+import { ManageGroupPageComponent } from '../manage-group-page/manage-group-page.component';
 import { NavigationSidebarComponent } from '../navigation-sidebar/navigation-sidebar.component';
 import { ResourceDetailPageComponent } from '../resource-detail-page/resource-detail-page.component';
 import { ResultsTableComponent } from '../results-table/results-table.component';
@@ -26,6 +27,7 @@ type RouteData = {
   discoveryType?: DiscoveryResourceType[];
   adminPage?: 'groups' | 'categories' | 'organizations';
   accountPage?: 'memberships';
+  manageGroup?: boolean;
 };
 
 type RouteState = {
@@ -45,6 +47,7 @@ const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
     AdminOrganizationsComponent,
     BackofficeHeaderComponent,
     MembershipsPageComponent,
+    ManageGroupPageComponent,
     NavigationSidebarComponent,
     ResourceDetailPageComponent,
     ResultsTableComponent
@@ -72,6 +75,7 @@ export class MainContainerComponent {
   protected readonly pageLabel = signal('Results');
   protected readonly adminPage = signal<RouteData['adminPage'] | null>(null);
   protected readonly accountPage = signal<RouteData['accountPage'] | null>(null);
+  protected readonly manageGroup = signal(false);
   protected readonly sectionPath = signal('data');
   protected readonly darkMode = signal(false);
   protected readonly discoveryItems = signal<DiscoveryItem[] | null>(null);
@@ -84,6 +88,14 @@ export class MainContainerComponent {
   protected readonly searchQuery = signal(this.initialResultsFilters.searchQuery);
   protected readonly selectedDataTypes = signal(this.initialResultsFilters.dataTypes);
   protected readonly selectedVersioningStatuses = signal(this.initialResultsFilters.versioningStatuses);
+  protected readonly canManageSelectedGroup = computed(() => {
+    const groupId = this.selectedGroupId();
+    return !!groupId && (this.currentUserStore.user()?.memberships.some((membership) =>
+      membership.group.id === groupId
+      && membership.status === 'ACTIVE'
+      && membership.roles.includes('GROUP_ADMIN')
+    ) ?? false);
+  });
 
   constructor() {
     this.searchQueryChanges
@@ -118,11 +130,13 @@ export class MainContainerComponent {
   private syncRouteState(routeData: RouteData, routeState: RouteState): void {
     const adminPage = routeData.adminPage ?? null;
     const accountPage = routeData.accountPage ?? null;
+    const manageGroup = routeData.manageGroup ?? false;
     const discoveryType = routeData.discoveryType;
     const detailDataType = this.toDiscoveryResourceType(routeState.dataType) ?? discoveryType?.[0];
     const isDetailRoute = Boolean(routeState.resourceId && routeState.versionId);
     this.adminPage.set(adminPage);
     this.accountPage.set(accountPage);
+    this.manageGroup.set(manageGroup);
     this.sectionPath.set(accountPage ?? (adminPage ? `admin/${adminPage}` : this.currentSectionPath()));
     this.sectionTitle.set(
       isDetailRoute && detailDataType
@@ -134,15 +148,27 @@ export class MainContainerComponent {
         : (routeData.sectionTitle ?? 'Data')
     );
 
-    if (adminPage || accountPage) {
+    if (adminPage || accountPage || manageGroup) {
       this.detailStore.clear();
       this.discoveryRequest?.unsubscribe();
-      const selectedGroup = accountPage
-        ? this.groups().find((group) => group.id === routeState.groupId)
-        : undefined;
+      const selectedGroup = manageGroup
+        ? this.groupForCurrentSection(routeState.groupId)
+        : accountPage
+          ? this.groups().find((group) => group.id === routeState.groupId)
+          : undefined;
       this.selectedGroupId.set(selectedGroup?.id ?? '');
       this.selectedGroupName.set(selectedGroup?.name ?? '');
-      this.pageLabel.set(accountPage ? 'Memberships' : adminPage === 'groups' ? 'Users' : adminPage === 'categories' ? 'Categories' : 'Organizations');
+      this.pageLabel.set(
+        manageGroup
+          ? 'Manage Group'
+          : accountPage
+            ? 'Memberships'
+            : adminPage === 'groups'
+              ? 'Users'
+              : adminPage === 'categories'
+                ? 'Categories'
+                : 'Organizations'
+      );
       this.discoveryItems.set(null);
       this.discoveryLoading.set(false);
       return;

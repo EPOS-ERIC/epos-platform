@@ -4,11 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 
-import type { Group, GroupMembership, MembershipRole, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
-import type { GroupPermission } from '../../../generated/backofficeParameters';
+import type { Group, GroupMembership, GroupPermission, MembershipRole, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import { ApiService } from '../../services/api.service';
 import { GroupsStore } from '../../stores/groups.store';
+import { GroupMembershipAccessEditorComponent } from '../group-membership-access-editor/group-membership-access-editor.component';
 
 interface PendingMembershipRequest {
   group: Group;
@@ -19,7 +19,7 @@ interface PendingMembershipRequest {
 
 @Component({
   selector: 'app-admin-groups',
-  imports: [DatePipe, FormsModule],
+  imports: [DatePipe, FormsModule, GroupMembershipAccessEditorComponent],
   templateUrl: './admin-groups.component.html',
   styleUrl: './admin-groups.component.css'
 })
@@ -126,7 +126,7 @@ export class AdminGroupsComponent {
       return;
     }
 
-    const enabled = !membership.permissions.includes(permission);
+    const enabled = !membership.granted_permissions.includes(permission);
     this.runMembershipMutation(
       `${membership.group.id}:permission:${permission}`,
       this.apiService.setGroupMembershipPermission(membership.group.id, user.id, permission, enabled)
@@ -176,10 +176,6 @@ export class AdminGroupsComponent {
 
   protected membershipRequestKey(request: PendingMembershipRequest): string {
     return `${request.group.id}:${request.membership.user.id}`;
-  }
-
-  protected isMutationLoading(groupId: string, kind: 'role' | 'permission', value: string): boolean {
-    return this.membershipMutation() === `${groupId}:${kind}:${value}`;
   }
 
   protected userName(user: Pick<UserListItem, 'given_name' | 'family_name'>): string {

@@ -16,6 +16,35 @@ export type NonBlankString = string;
 export type Keyword = string;
 
 /**
+ * Global permission key.
+ */
+export type GlobalPermission =
+  | "global.membership.manage"
+  | "global.role.manage"
+  | "global.permission.manage"
+  | "organization.manage"
+  | "contact_point.manage"
+  | "category_scheme.manage";
+
+/**
+ * Group-scoped permission key.
+ */
+export type GroupPermission =
+  | "resource.create"
+  | "resource.edit"
+  | "resource.submit"
+  | "resource.withdraw"
+  | "resource.reopen"
+  | "resource.discard"
+  | "resource.reject"
+  | "resource.publish"
+  | "resource.unpublish"
+  | "group.membership.manage"
+  | "group.role.manage"
+  | "group.permission.manage"
+  | "category.manage";
+
+/**
  * Resource type identifier used in discovery results.
  */
 export type DiscoveryResourceType =
@@ -1199,6 +1228,9 @@ export type DatasetDiscoveryItem = {
    */
   updated_at: string;
   concept: DiscoveryConcept;
+  /**
+   * Creator identity is returned only when caller may see identities for this resource group.
+   */
   created_by?: Reference;
   group: Reference;
   providers?: Reference[];
@@ -1223,6 +1255,9 @@ export type SoftwareApplicationDiscoveryItem = {
    */
   updated_at: string;
   concept: DiscoveryConcept;
+  /**
+   * Creator identity is returned only when caller may see identities for this resource group.
+   */
   created_by?: Reference;
   group: Reference;
   creators?: Reference[];
@@ -1246,6 +1281,9 @@ export type SoftwareSourceCodeDiscoveryItem = {
    */
   updated_at: string;
   concept: DiscoveryConcept;
+  /**
+   * Creator identity is returned only when caller may see identities for this resource group.
+   */
   created_by?: Reference;
   group: Reference;
   creators?: Reference[];
@@ -1288,7 +1326,8 @@ export type UserListItem = {
   family_name: string;
   status: UserStatus;
   global_roles: string[];
-  global_permissions: string[];
+  global_granted_permissions: GlobalPermission[];
+  global_role_permissions: GlobalPermission[];
   /**
    * @format date-time
    */
@@ -1579,7 +1618,8 @@ export type UserMembershipSummary = {
   group: Reference;
   roles: MembershipRole[];
   status: MembershipStatus;
-  permissions: string[];
+  granted_permissions: GroupPermission[];
+  role_permissions: GroupPermission[];
   /**
    * Pending role requests for this membership.
    */
@@ -1601,7 +1641,8 @@ export type GroupMembership = {
   user: MembershipUser;
   status: MembershipStatus;
   roles: MembershipRole[];
-  permissions: string[];
+  granted_permissions: GroupPermission[];
+  role_permissions: GroupPermission[];
   /**
    * Pending role requests only.
    */

@@ -14,6 +14,7 @@ export class ResultsTableComponent implements OnChanges {
   @Input() sectionPath = 'data';
   @Input() selectedGroupId = '';
   @Input() selectedGroupName = '';
+  @Input() canManageGroup = false;
   @Input() discoveryItems: DiscoveryItem[] | null = null;
   @Input() discoveryLoading = false;
 
@@ -74,5 +75,9 @@ export class ResultsTableComponent implements OnChanges {
       groupId: this.selectedGroupId,
       dataType: item.type
     };
+  }
+
+  protected manageGroupLink(): string[] {
+    return ['/', this.sectionPath, 'manage-group'];
   }
 }

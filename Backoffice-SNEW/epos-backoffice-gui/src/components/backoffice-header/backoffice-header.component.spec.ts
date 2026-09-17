@@ -14,14 +14,16 @@ describe('BackofficeHeaderComponent', () => {
     family_name: 'Editor',
     status: 'ACTIVE',
     global_roles: [],
-    global_permissions: [],
+    global_granted_permissions: [],
+    global_role_permissions: [],
     created_at: '2026-09-16T08:00:00Z',
     updated_at: '2026-09-16T08:00:00Z',
     memberships: [{
       group: { id: 'group-id', name: 'Data Group' },
       status: 'ACTIVE',
       roles: ['EDITOR'],
-      permissions: [],
+      granted_permissions: [],
+      role_permissions: [],
       role_requests: [],
       created_at: '2026-09-16T08:00:00Z',
       updated_at: '2026-09-16T08:00:00Z'

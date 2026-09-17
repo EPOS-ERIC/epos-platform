@@ -15,6 +15,7 @@ import type {
   DiscoveryResourceType,
   Group,
   GroupMembership,
+  GroupPermission,
   ResourceVersionReference,
   ResourceVersion,
   RejectResourceRequest,
@@ -35,7 +36,6 @@ import type {
   DateFrom,
   DateTo,
   Decision,
-  GroupPermission,
   GroupFilter,
   Keywords,
   Provider,
@@ -342,6 +342,13 @@ export class ApiService {
   leaveOwnGroupMembership(groupId: string): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/self`,
+      { headers: { Authorization: `Bearer ${this.bearerToken}` } }
+    );
+  }
+
+  removeGroupMember(groupId: string, userId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/${encodeURIComponent(userId)}`,
       { headers: { Authorization: `Bearer ${this.bearerToken}` } }
     );
   }

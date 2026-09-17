@@ -50,7 +50,11 @@
               </div>
               <div>
                 <dt>Direct permissions</dt>
-                <dd>{{ membership.permissions.length ? membership.permissions.join(', ') : 'None' }}</dd>
+                <dd>{{ membership.granted_permissions.length ? membership.granted_permissions.join(', ') : 'None' }}</dd>
+              </div>
+              <div>
+                <dt>Role permissions</dt>
+                <dd>{{ membership.role_permissions.length ? membership.role_permissions.join(', ') : 'None' }}</dd>
               </div>
               <div>
                 <dt>Last updated</dt>

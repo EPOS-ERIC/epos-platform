@@ -6,7 +6,7 @@
     [currentSectionPath]="sectionPath()"
     [selectedGroupId]="selectedGroupId()"
     [detailItems]="detailStore.navigationItems()"
-    [showBackButton]="accountPage() === 'memberships'"
+    [showBackButton]="accountPage() === 'memberships' || manageGroup()"
     [detailRootLabel]="detailStore.rootLabel()"
     [detailBackLink]="accountPage() === 'memberships' ? membershipBackLink() : ['/', sectionPath()]"
     [detailBackQueryParams]="selectedGroupId() ? { groupId: selectedGroupId() } : null"
@@ -40,6 +40,8 @@
     <div class="content-spacer">
       @if (accountPage() === 'memberships') {
         <app-memberships-page />
+      } @else if (manageGroup()) {
+        <app-manage-group-page [groupId]="selectedGroupId()" [groupName]="selectedGroupName()" />
       } @else if (adminPage() === 'groups') {
         <app-admin-groups />
       } @else if (adminPage() === 'categories') {
@@ -49,7 +51,7 @@
       } @else if (pageLabel() === 'Detail') {
         <app-resource-detail-page />
       } @else {
-        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" />
+        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" />
       }
     </div>
   </section>

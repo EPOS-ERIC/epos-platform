@@ -17,16 +17,7 @@ export type GetUserID = string;
 
 export type UserID = string;
 
-/**
- * @example global.permission.manage
- */
-export type Permission =
-  | "global.membership.manage"
-  | "global.role.manage"
-  | "global.permission.manage"
-  | "organization.manage"
-  | "contact_point.manage"
-  | "category_scheme.manage";
+export type Permission = Schemas.GlobalPermission;
 
 /**
  * @example ADMIN
@@ -41,20 +32,7 @@ export type Decision = "accept" | "reject";
 
 export type GroupRole = "EDITOR" | "REVIEWER" | "GROUP_ADMIN";
 
-export type GroupPermission =
-  | "resource.create"
-  | "resource.edit"
-  | "resource.submit"
-  | "resource.withdraw"
-  | "resource.reopen"
-  | "resource.discard"
-  | "resource.reject"
-  | "resource.publish"
-  | "resource.unpublish"
-  | "group.membership.manage"
-  | "group.role.manage"
-  | "group.permission.manage"
-  | "category.manage";
+export type GroupPermission = Schemas.GroupPermission;
 
 /**
  * @format uuid

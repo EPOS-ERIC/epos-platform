@@ -167,40 +167,17 @@
               </div>
 
               @if (membership.status === 'ACTIVE') {
-                <fieldset class="membership-options" [disabled]="!!membershipMutation()">
-                  <legend>Roles</legend>
-                  <div class="option-grid">
-                    @for (role of groupRoles; track role) {
-                      <label class="membership-option">
-                        <input type="checkbox" [checked]="membership.roles.includes(role)" (change)="toggleRole(membership, role)" />
-                        <span>{{ role }}</span>
-                        @if (isMutationLoading(membership.group.id, 'role', role)) {
-                          <small>Saving...</small>
-                        }
-                      </label>
-                    }
-                  </div>
-                </fieldset>
-
-                <details class="membership-permissions">
-                  <summary>
-                    <span>Direct permissions</span>
-                    <small>{{ membership.permissions.length }} assigned</small>
-                  </summary>
-                  <fieldset class="membership-permissions-content" [disabled]="!!membershipMutation()">
-                    <div class="option-grid option-grid--permissions">
-                      @for (permission of groupPermissions; track permission) {
-                        <label class="membership-option">
-                          <input type="checkbox" [checked]="membership.permissions.includes(permission)" (change)="togglePermission(membership, permission)" />
-                          <span>{{ permission }}</span>
-                          @if (isMutationLoading(membership.group.id, 'permission', permission)) {
-                            <small>Saving...</small>
-                          }
-                        </label>
-                      }
-                    </div>
-                  </fieldset>
-                </details>
+                <app-group-membership-access-editor
+                  [groupId]="membership.group.id"
+                  [roles]="membership.roles"
+                  [grantedPermissions]="membership.granted_permissions"
+                  [rolePermissions]="membership.role_permissions"
+                  [allowedRoles]="groupRoles"
+                  [allowedPermissions]="groupPermissions"
+                  [mutationKey]="membershipMutation()"
+                  (roleChange)="toggleRole(membership, $event)"
+                  (permissionChange)="togglePermission(membership, $event)"
+                />
               } @else {
                 <p class="membership-note app-muted">Roles and permissions can only be modified for active memberships.</p>
               }

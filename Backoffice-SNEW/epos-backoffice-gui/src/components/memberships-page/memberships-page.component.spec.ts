@@ -19,14 +19,16 @@ describe('MembershipsPageComponent', () => {
     family_name: 'User',
     status: 'ACTIVE',
     global_roles: [],
-    global_permissions: [],
+    global_granted_permissions: [],
+    global_role_permissions: [],
     created_at: '2026-09-14T08:00:00Z',
     updated_at: '2026-09-14T08:00:00Z',
     memberships: [{
       group: { id: '1375500a-fc04-5831-a7f5-39ea5fcb0445', name: 'Data Group' },
       status: 'PENDING',
       roles: [],
-      permissions: [],
+      granted_permissions: [],
+      role_permissions: [],
       role_requests: [{ id: 'request-id', role: 'EDITOR', status: 'PENDING', requested_at: '2026-09-14T08:00:00Z' }],
       created_at: '2026-09-14T08:00:00Z',
       updated_at: '2026-09-14T08:00:00Z'

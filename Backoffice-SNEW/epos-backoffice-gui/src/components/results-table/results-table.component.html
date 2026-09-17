@@ -7,6 +7,9 @@
     </div>
 
     <div class="toolbar">
+      @if (canManageGroup && selectedGroupId) {
+        <a class="app-button app-button--primary" [routerLink]="manageGroupLink()" [queryParams]="{ groupId: selectedGroupId }">Manage Group</a>
+      }
       <button type="button" class="app-button">Export</button>
     </div>
   </div>
