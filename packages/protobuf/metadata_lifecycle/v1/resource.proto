@@ -149,7 +149,7 @@ message Temporal {
 
 message DatasetInput {
   string title = 1 [(buf.validate.field).string.min_len = 1];
-  optional string description = 2 [(buf.validate.field).string.min_len = 1];
+  string description = 2 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 3 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional string accrual_periodicity = 4 [(buf.validate.field).string.min_len = 1];
   optional string quality_annotation = 5 [(buf.validate.field).string.min_len = 1];

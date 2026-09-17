@@ -340,7 +340,7 @@ WHERE
                 ' ',
                 version.name,
                 version.description,
-                version.keywords
+                array_to_string(version.keywords, ' ')
             )
         ) LIKE '%' || lower($7::text) || '%'
     )
@@ -368,7 +368,7 @@ WHERE
                     SELECT
                         1
                     FROM
-                        unnest(string_to_array(version.keywords, ',')) AS stored(keyword)
+                        unnest(version.keywords) AS stored(keyword)
                     WHERE
                         lower(trim(stored.keyword)) = lower(trim(requested.keyword))
                 )
@@ -492,7 +492,7 @@ WHERE
                 ' ',
                 version.title,
                 version.description,
-                version.keywords
+                array_to_string(version.keywords, ' ')
             )
         ) LIKE '%' || lower($4::text) || '%'
     )
@@ -537,7 +537,7 @@ WHERE
                     SELECT
                         1
                     FROM
-                        unnest(string_to_array(version.keywords, ',')) AS stored(keyword)
+                        unnest(version.keywords) AS stored(keyword)
                     WHERE
                         lower(trim(stored.keyword)) = lower(trim(requested.keyword))
                 )
@@ -668,7 +668,7 @@ WHERE
                 ' ',
                 version.name,
                 version.description,
-                version.keywords
+                array_to_string(version.keywords, ' ')
             )
         ) LIKE '%' || lower($7::text) || '%'
     )
@@ -696,7 +696,7 @@ WHERE
                     SELECT
                         1
                     FROM
-                        unnest(string_to_array(version.keywords, ',')) AS stored(keyword)
+                        unnest(version.keywords) AS stored(keyword)
                     WHERE
                         lower(trim(stored.keyword)) = lower(trim(requested.keyword))
                 )

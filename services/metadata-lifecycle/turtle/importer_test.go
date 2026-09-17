@@ -19,7 +19,7 @@ const importPrefixes = `
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 `
 
-func TestParserKeepsDatasetWhenContactPointIsInvalid(t *testing.T) {
+func TestParserUsesFallbackDescriptionAndKeepsDatasetWhenContactPointIsInvalid(t *testing.T) {
 	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
 <category:dataset> a skos:ConceptScheme;
     dct:title "Dataset categories";
@@ -41,10 +41,14 @@ func TestParserKeepsDatasetWhenContactPointIsInvalid(t *testing.T) {
 	if len(batch.Datasets) != 1 {
 		t.Fatalf("Datasets = %d, want 1", len(batch.Datasets))
 	}
+	if batch.Datasets[0].Description != defaultImportedDatasetDescription {
+		t.Fatalf("dataset description = %q, want %q", batch.Datasets[0].Description, defaultImportedDatasetDescription)
+	}
 	if len(batch.ContactPoints) != 0 {
 		t.Fatalf("ContactPoints = %d, want 0", len(batch.ContactPoints))
 	}
 	assertDiagnostic(t, batch.Warnings, "dataset:one", dcatContactPoint, "omitted")
+	assertDiagnostic(t, batch.Warnings, "dataset:one", dctDescription, "using default")
 }
 
 func TestParserDropsDistributionWithInvalidWebService(t *testing.T) {
@@ -57,10 +61,12 @@ func TestParserDropsDistributionWithInvalidWebService(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:format "application/json";
     dct:conformsTo <service:bad>.
 <service:bad> a epos:WebService;
@@ -106,6 +112,7 @@ func TestParserDeduplicatesRepeatedRDFStatements(t *testing.T) {
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:keyword "one";
     dcat:keyword "one";
     dcat:theme <category:one>.
@@ -127,7 +134,8 @@ func TestParserSkipsDatasetWithConflictingSingleValue(t *testing.T) {
 	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
 <dataset:one> a dcat:Dataset;
     dct:title "First title";
-    dct:title "Second title".
+    dct:title "Second title";
+    dct:description "Dataset description".
 `))
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
@@ -155,6 +163,7 @@ func TestParserSkipsDatasetWithMultipleCategorySchemes(t *testing.T) {
     skos:prefLabel "Two".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>, <category:two>.
 `))
 	if err != nil {
@@ -183,6 +192,7 @@ func TestParserMergesCanonicalContactPoints(t *testing.T) {
     schema:contactType "owner".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:contactPoint <contact:one>, <contact:two>.
 `))
@@ -209,10 +219,12 @@ func TestParserUsesDistributionTypeForWebService(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:conformsTo <service:one>;
     dcat:accessURL <operation:one>;
@@ -247,10 +259,12 @@ func TestParserAllowsNumericParametersWithoutAllowedValues(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:format "application/json";
     dct:conformsTo <service:one>;
@@ -304,10 +318,12 @@ func TestParserMapsMultipleValuesForEnumParameters(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:format "application/json";
     dct:conformsTo <service:one>;
@@ -363,10 +379,12 @@ func TestParserUsesDistributionOperationOnly(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:conformsTo <service:one>;
     dcat:accessURL <operation:selected>;
@@ -416,10 +434,12 @@ func TestParserDropsWebServiceDistributionWithoutOperation(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:conformsTo <service:one>;
     dct:format "application/json".
@@ -524,10 +544,12 @@ func TestParserDiagnosesIncompatibleParameterKinds(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:format "application/json";
     dct:conformsTo <service:one>;
     dcat:accessURL <operation:one>.

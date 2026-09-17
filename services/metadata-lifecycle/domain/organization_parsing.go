@@ -11,6 +11,14 @@ import (
 // NewOrganizationInput validates and normalizes editable organization fields.
 func NewOrganizationInput(value OrganizationInput) (OrganizationInput, error) {
 	value.Name = strings.TrimSpace(value.Name)
+	value.Street = optionalTrimmedString(value.Street)
+	value.Locality = optionalTrimmedString(value.Locality)
+	value.PostalCode = optionalTrimmedString(value.PostalCode)
+	value.Country = optionalTrimmedString(value.Country)
+	value.LogoURL = optionalTrimmedString(value.LogoURL)
+	value.PageURL = optionalTrimmedString(value.PageURL)
+	value.Email = optionalTrimmedString(value.Email)
+	value.LEICode = optionalTrimmedString(value.LEICode)
 	if value.Name == "" {
 		return OrganizationInput{}, ErrInvalidOrganization
 	}

@@ -56,7 +56,7 @@ func (s *ResourceServer) CreateResource(ctx context.Context, request *metadatali
 		}
 		input, err := datasetInput(value.Dataset)
 		if err != nil {
-			return nil, err
+			return nil, wrapHandlerError(err)
 		}
 		created, err := s.datasets.CreateDraft(ctx, actor, groupID, input)
 		if err != nil {
@@ -69,7 +69,7 @@ func (s *ResourceServer) CreateResource(ctx context.Context, request *metadatali
 		}
 		input, err := softwareApplicationInput(value.SoftwareApplication)
 		if err != nil {
-			return nil, err
+			return nil, wrapHandlerError(err)
 		}
 		created, err := s.applications.CreateDraft(ctx, actor, groupID, input)
 		if err != nil {
@@ -82,7 +82,7 @@ func (s *ResourceServer) CreateResource(ctx context.Context, request *metadatali
 		}
 		input, err := softwareSourceCodeInput(value.SoftwareSourceCode)
 		if err != nil {
-			return nil, err
+			return nil, wrapHandlerError(err)
 		}
 		created, err := s.sourceCodes.CreateDraft(ctx, actor, groupID, input)
 		if err != nil {
@@ -214,9 +214,12 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		}
 		metadata, err := datasetInput(value.Dataset)
 		if err != nil {
-			return nil, err
+			return nil, wrapHandlerError(err)
 		}
-		input, err := domain.NewDatasetDraftInput(domain.DatasetDraftInput{Revision: request.GetRevision(), Metadata: metadata})
+		input, err := domain.NewDatasetDraftInput(domain.DatasetDraftInput{
+			Revision: request.GetRevision(),
+			Metadata: metadata,
+		})
 		if err != nil {
 			return nil, wrapHandlerError(err)
 		}
@@ -224,16 +227,26 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, wrapHandlerError(err)
 		}
-		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.DatasetID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}}, nil
+		return &metadatalifecyclev1.ReplaceResourceDraftResponse{
+			Resource: &metadatalifecyclev1.ResourceRecord{
+				ResourceId: result.DatasetID.String(),
+				VersionId:  result.VersionID.String(),
+				Revision:   result.Revision,
+				Status:     toGRPCVersioningStatus(result.Status),
+			},
+		}, nil
 	case *metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareApplication:
 		if value.SoftwareApplication == nil {
 			return nil, status.Error(codes.InvalidArgument, "software application metadata is required")
 		}
 		metadata, err := softwareApplicationInput(value.SoftwareApplication)
 		if err != nil {
-			return nil, err
+			return nil, wrapHandlerError(err)
 		}
-		input, err := domain.NewSoftwareApplicationDraftInput(domain.SoftwareApplicationDraftInput{Revision: request.GetRevision(), Metadata: metadata})
+		input, err := domain.NewSoftwareApplicationDraftInput(domain.SoftwareApplicationDraftInput{
+			Revision: request.GetRevision(),
+			Metadata: metadata,
+		})
 		if err != nil {
 			return nil, wrapHandlerError(err)
 		}
@@ -241,16 +254,26 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, wrapHandlerError(err)
 		}
-		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareApplicationID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}}, nil
+		return &metadatalifecyclev1.ReplaceResourceDraftResponse{
+			Resource: &metadatalifecyclev1.ResourceRecord{
+				ResourceId: result.SoftwareApplicationID.String(),
+				VersionId:  result.VersionID.String(),
+				Revision:   result.Revision,
+				Status:     toGRPCVersioningStatus(result.Status),
+			},
+		}, nil
 	case *metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareSourceCode:
 		if value.SoftwareSourceCode == nil {
 			return nil, status.Error(codes.InvalidArgument, "software source code metadata is required")
 		}
 		metadata, err := softwareSourceCodeInput(value.SoftwareSourceCode)
 		if err != nil {
-			return nil, err
+			return nil, wrapHandlerError(err)
 		}
-		input, err := domain.NewSoftwareSourceCodeDraftInput(domain.SoftwareSourceCodeDraftInput{Revision: request.GetRevision(), Metadata: metadata})
+		input, err := domain.NewSoftwareSourceCodeDraftInput(domain.SoftwareSourceCodeDraftInput{
+			Revision: request.GetRevision(),
+			Metadata: metadata,
+		})
 		if err != nil {
 			return nil, wrapHandlerError(err)
 		}
@@ -258,7 +281,14 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, wrapHandlerError(err)
 		}
-		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareSourceCodeID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}}, nil
+		return &metadatalifecyclev1.ReplaceResourceDraftResponse{
+			Resource: &metadatalifecyclev1.ResourceRecord{
+				ResourceId: result.SoftwareSourceCodeID.String(),
+				VersionId:  result.VersionID.String(),
+				Revision:   result.Revision,
+				Status:     toGRPCVersioningStatus(result.Status),
+			},
+		}, nil
 	default:
 		return nil, status.Error(codes.InvalidArgument, "resource metadata is required")
 	}
@@ -828,13 +858,23 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
-	return domain.DatasetInput{
-		Title: value.GetTitle(), Description: value.GetDescription(), Keywords: value.GetKeywords(),
-		AccrualPeriodicity: value.AccrualPeriodicity, QualityAnnotation: value.QualityAnnotation, AccessRight: value.AccessRight,
-		Distributions: distributions, SpatialCoverage: spatial, TemporalCoverage: temporal,
-		PersistentIdentifiers: identifiers, ContactPointIDs: contactPoints, ProviderIDs: providers, CategoryIDs: categories,
-		SourceCreated: created, SourceUpdated: updated,
-	}, nil
+	return domain.NewDatasetInput(domain.DatasetInput{
+		Title:                 value.GetTitle(),
+		Description:           value.GetDescription(),
+		Keywords:              value.GetKeywords(),
+		AccrualPeriodicity:    value.AccrualPeriodicity,
+		QualityAnnotation:     value.QualityAnnotation,
+		AccessRight:           value.AccessRight,
+		Distributions:         distributions,
+		SpatialCoverage:       spatial,
+		TemporalCoverage:      temporal,
+		PersistentIdentifiers: identifiers,
+		ContactPointIDs:       contactPoints,
+		ProviderIDs:           providers,
+		CategoryIDs:           categories,
+		SourceCreated:         created,
+		SourceUpdated:         updated,
+	})
 }
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
@@ -1220,7 +1260,7 @@ func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationInpu
 	if err != nil {
 		return domain.SoftwareApplicationInput{}, err
 	}
-	return domain.SoftwareApplicationInput{
+	return domain.NewSoftwareApplicationInput(domain.SoftwareApplicationInput{
 		Name:             value.GetName(),
 		Description:      value.GetDescription(),
 		MainEntityOfPage: value.MainEntityOfPage,
@@ -1234,7 +1274,7 @@ func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationInpu
 		ContactPointIDs:  contacts,
 		CategoryIDs:      categories,
 		Identifiers:      identifiers,
-	}, nil
+	})
 }
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
@@ -1255,7 +1295,7 @@ func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeInput)
 	if err != nil {
 		return domain.SoftwareSourceCodeInput{}, err
 	}
-	return domain.SoftwareSourceCodeInput{
+	return domain.NewSoftwareSourceCodeInput(domain.SoftwareSourceCodeInput{
 		Name:                 value.GetName(),
 		Description:          value.GetDescription(),
 		ProgrammingLanguage:  value.ProgrammingLanguage,
@@ -1270,7 +1310,7 @@ func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeInput)
 		ContactPointIDs:      contacts,
 		CategoryIDs:          categories,
 		Identifiers:          identifiers,
-	}, nil
+	})
 }
 
 func identifierInputs(values []*metadatalifecyclev1.IdentifierInput) ([]domain.IdentifierInput, error) {

@@ -97,7 +97,10 @@ class AuthorizationContractTest(unittest.TestCase):
             groupId=group_id,
             json={
                 "resource_type": "dataset",
-                "metadata": {"title": title},
+                "metadata": {
+                    "title": title,
+                    "description": f"{title} description",
+                },
             },
         )
         self.assertEqual(response.status_code, 201)
@@ -888,7 +891,13 @@ class AuthorizationContractTest(unittest.TestCase):
             return matches[0]
 
         def dataset_payload(title: str) -> dict[str, Any]:
-            return {"resource_type": "dataset", "metadata": {"title": title}}
+            return {
+                "resource_type": "dataset",
+                "metadata": {
+                    "title": title,
+                    "description": f"{title} description",
+                },
+            }
 
         draft_resource_id, draft_version_id = self.create_dataset(
             group_id,
@@ -903,7 +912,10 @@ class AuthorizationContractTest(unittest.TestCase):
         replace_payload = {
             "resource_type": "dataset",
             "revision": draft["revision"],
-            "metadata": {"title": f"contract-auth-draft-updated-{suffix}"},
+            "metadata": {
+                "title": f"contract-auth-draft-updated-{suffix}",
+                "description": "Authorization lifecycle description",
+            },
         }
         denied_replace = denied.put(
             "/resources/{id}/versions/{versionId}/draft",

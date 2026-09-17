@@ -3,7 +3,6 @@ package softwareapplications
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	resourcedb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
@@ -20,7 +19,7 @@ func ToCreateVersionParams(applicationID uuid.UUID, actorID string, value domain
 		MainEntityOfPage:      value.MainEntityOfPage,
 		License:               value.License,
 		Version:               value.Version,
-		Keywords:              strings.Join(value.Keywords, ","),
+		Keywords:              value.Keywords,
 		DownloadUrl:           value.DownloadURL,
 		Requirements:          value.Requirements,
 		OperatingSystem:       value.OperatingSystem,
@@ -36,7 +35,7 @@ func ToReplaceDraftParams(applicationID, versionID uuid.UUID, revision int32, va
 		MainEntityOfPage:      value.MainEntityOfPage,
 		License:               value.License,
 		Version:               value.Version,
-		Keywords:              strings.Join(value.Keywords, ","),
+		Keywords:              value.Keywords,
 		DownloadUrl:           value.DownloadURL,
 		Requirements:          value.Requirements,
 		OperatingSystem:       value.OperatingSystem,
@@ -142,7 +141,7 @@ func applicationMetadata(ctx context.Context, q *sqlc.Queries, row sqlc.GetLifec
 		MainEntityOfPage: version.MainEntityOfPage,
 		License:          version.License,
 		Version:          version.Version,
-		Keywords:         resourcedb.KeywordsFromString(version.Keywords),
+		Keywords:         version.Keywords,
 		DownloadURL:      version.DownloadUrl,
 		Requirements:     version.Requirements,
 		OperatingSystem:  version.OperatingSystem,

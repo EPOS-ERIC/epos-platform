@@ -2,7 +2,6 @@ package dataset
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
@@ -20,7 +19,7 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 		DatasetID:          datasetID,
 		Title:              value.Title,
 		Description:        value.Description,
-		Keywords:           strings.Join(value.Keywords, ","),
+		Keywords:           value.Keywords,
 		AccrualPeriodicity: value.AccrualPeriodicity,
 		QualityAnnotation:  value.QualityAnnotation,
 		AccessRight:        value.AccessRight,

@@ -9,8 +9,8 @@ CREATE TYPE parameter_schema_kind AS ENUM ('STRING', 'BOOLEAN', 'INTEGER', 'FLOA
 CREATE TABLE identifiers (
     -- Identifier identity and RDF value metadata
     id                              uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    type                            text NOT NULL,
-    value                           text NOT NULL,
+    type                            nonblank_text NOT NULL,
+    value                           nonblank_text NOT NULL,
 
     -- Exactly one immutable owner
     dataset_version_id              uuid REFERENCES dataset_versions(id) ON DELETE CASCADE,
@@ -68,36 +68,30 @@ CREATE TABLE web_services (
     dataset_version_id        uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,
 
     -- Web service metadata
-    name                      text NOT NULL,
-    description               text,
-    template_url              text NOT NULL,
+    name                      nonblank_text NOT NULL,
+    description               nonblank_text_opt,
+    template_url              nonblank_text NOT NULL,
     method                    web_service_http_method NOT NULL,
     type                      web_service_type NOT NULL,
     visible_on                web_service_visible_on[],
-    format                    text NOT NULL,
+    format                    nonblank_text NOT NULL,
     provider_organization_id  uuid REFERENCES organizations(id) ON DELETE SET NULL,
-    documentation_title       text,
-    documentation_description text,
-    documentation_uri         text,
+    documentation_title       nonblank_text_opt,
+    documentation_description nonblank_text_opt,
+    documentation_uri         nonblank_text_opt,
     spatial_coverage          geometry(Geometry, 4326),
     temporal_start            timestamptz,
     temporal_end              timestamptz,
 
     CHECK (temporal_start IS NULL OR temporal_end IS NULL OR temporal_start <= temporal_end),
     CHECK ((documentation_title IS NULL AND documentation_description IS NULL AND documentation_uri IS NULL) OR documentation_uri IS NOT NULL),
-    CHECK (btrim(name) <> ''),
-    CHECK (description IS NULL OR btrim(description) <> ''),
-    CHECK (btrim(template_url) <> ''),
-    CHECK (btrim(format) <> ''),
     CHECK (visible_on IS NULL OR cardinality(visible_on) > 0)
 );
 CREATE TABLE web_service_bodies (
     id             uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     web_service_id uuid NOT NULL UNIQUE REFERENCES web_services(id) ON DELETE CASCADE,
-    content_type   text NOT NULL,
-    template       text NOT NULL,
-    CHECK (length(btrim(content_type)) > 0),
-    CHECK (length(btrim(template)) > 0)
+    content_type   nonblank_text NOT NULL,
+    template       nonblank_text NOT NULL
 );
 CREATE TABLE web_service_contact_points (
     web_service_id   uuid NOT NULL REFERENCES web_services(id) ON DELETE CASCADE,
@@ -107,9 +101,9 @@ CREATE TABLE web_service_contact_points (
 CREATE TABLE parameters (
     id                    uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     position              integer NOT NULL,
-    name                  text NOT NULL,
-    label                 text NOT NULL,
-    description           text,
+    name                  nonblank_text NOT NULL,
+    label                 nonblank_text NOT NULL,
+    description           nonblank_text_opt,
     required              boolean NOT NULL DEFAULT false,
     read_only             boolean NOT NULL DEFAULT false,
     web_service_id        uuid REFERENCES web_services(id) ON DELETE CASCADE,
@@ -117,7 +111,7 @@ CREATE TABLE parameters (
     template_parameter_id uuid REFERENCES parameters(id) ON DELETE CASCADE,
 
     schema_kind           parameter_schema_kind NOT NULL,
-    property              text,
+    property              nonblank_text_opt,
     location              web_service_parameter_location,
     explode               boolean NOT NULL DEFAULT false,
 
@@ -129,16 +123,14 @@ CREATE TABLE parameters (
     CHECK (NOT explode OR (web_service_id IS NOT NULL AND location = 'QUERY')),
     CHECK (schema_kind <> 'TEMPLATE' OR web_service_id IS NOT NULL),
     CHECK (template_parameter_id IS NULL OR schema_kind <> 'TEMPLATE'),
-    CHECK (btrim(name) <> ''),
-    CHECK (btrim(label) <> ''),
     UNIQUE (id, schema_kind)
 );
 
 CREATE TABLE string_parameter_schemas (
     parameter_id    uuid PRIMARY KEY,
     schema_kind    parameter_schema_kind NOT NULL DEFAULT 'STRING',
-    pattern        text,
-    default_value  text,
+    pattern        nonblank_text_opt,
+    default_value  nonblank_text_opt,
     enum           text[],
     multiple_values boolean NOT NULL DEFAULT false,
 
@@ -205,7 +197,7 @@ CREATE TABLE datetime_parameter_schemas (
     minimum        timestamptz,
     maximum        timestamptz,
     default_value  timestamptz,
-    layout         text,
+    layout         nonblank_text_opt,
 
     FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
     CHECK (schema_kind = 'DATETIME'),
@@ -215,11 +207,10 @@ CREATE TABLE datetime_parameter_schemas (
 CREATE TABLE parameter_templates (
     parameter_id uuid PRIMARY KEY,
     schema_kind  parameter_schema_kind NOT NULL DEFAULT 'TEMPLATE',
-    template     text NOT NULL,
+    template     nonblank_text NOT NULL,
 
     FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
-    CHECK (schema_kind = 'TEMPLATE'),
-    CHECK (length(btrim(template)) > 0)
+    CHECK (schema_kind = 'TEMPLATE')
 );
 
 CREATE UNIQUE INDEX parameters_web_service_name_uq ON parameters (web_service_id, name) WHERE web_service_id IS NOT NULL;
@@ -339,17 +330,17 @@ CREATE TABLE distributions (
     dataset_version_id       uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,
 
     -- Distribution metadata
-    title                    text NOT NULL,
-    description              text NOT NULL DEFAULT '',
-    license                  text,
+    title                    nonblank_text NOT NULL,
+    description              nonblank_text NOT NULL,
+    license                  nonblank_text_opt,
     source_issued_at         timestamptz,
     source_modified_at       timestamptz,
     byte_size                integer,
 
     -- Delivery method. Constraint below requires one complete representation.
     type                     text NOT NULL,
-    downloadable_file_url    text,
-    downloadable_file_format text,
+    downloadable_file_url    nonblank_text_opt,
+    downloadable_file_format nonblank_text_opt,
     web_service_id           uuid REFERENCES web_services(id) ON DELETE CASCADE,
 
     CHECK (

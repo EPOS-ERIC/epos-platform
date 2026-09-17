@@ -16,6 +16,10 @@ import (
 	"github.com/twpayne/go-geom/encoding/wkt"
 )
 
+// TODO: try to infer decent defaults for required fields missing in the ttls but still emit the warnings so that we have valid resources as much as possible
+
+const defaultImportedDatasetDescription = "Imported dataset description"
+
 // Parser adapts Turtle parsing to the import handler parser interface.
 type Parser struct {
 	log *slog.Logger
@@ -383,11 +387,21 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 	); err != nil {
 		return domain.DatasetMetadata{}, err
 	}
+	description, ok := m.firstString(source, dctDescription)
+	if !ok || strings.TrimSpace(description) == "" {
+		description = defaultImportedDatasetDescription
+		m.addWarning(domain.ImportDiagnostic{
+			Severity:  domain.ImportSeverityWarning,
+			Subject:   source,
+			Predicate: dctDescription,
+			Message:   fmt.Sprintf("dataset description missing; using default %q", defaultImportedDatasetDescription),
+		})
+	}
 	id := ownedID("", "dataset", source)
 	dataset := domain.DatasetMetadata{
 		ID:          id,
 		Title:       m.requiredString(source, dctTitle),
-		Description: m.optionalString(source, dctDescription),
+		Description: description,
 		Keywords:    m.keywords(source, dcatKeyword),
 
 		AccrualPeriodicity:    nil,

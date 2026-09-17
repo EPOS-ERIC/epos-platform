@@ -53,8 +53,13 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	if err := validateUUIDList(value.ContactPointIDs, "web service contact point"); err != nil {
 		return WebServiceInput{}, fmt.Errorf("web service contact points: %w: %w", err, ErrInvalidDataset)
 	}
-	if value.Documentation != nil && strings.TrimSpace(value.Documentation.URI) == "" {
-		return WebServiceInput{}, fmt.Errorf("documentation URI is required: %w", ErrInvalidDataset)
+	if value.Documentation != nil {
+		value.Documentation.Title = optionalTrimmedString(value.Documentation.Title)
+		value.Documentation.Description = optionalTrimmedString(value.Documentation.Description)
+		value.Documentation.URI = strings.TrimSpace(value.Documentation.URI)
+		if value.Documentation.URI == "" {
+			return WebServiceInput{}, fmt.Errorf("documentation URI is required: %w", ErrInvalidDataset)
+		}
 	}
 
 	parameters, err := parseWebServiceParameterInputs(value.Parameters)
@@ -373,7 +378,7 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 		}
 	}
 	if value.Default != nil {
-		if *value.Default == "" {
+		if strings.TrimSpace(*value.Default) == "" {
 			return StringSchema{}, fmt.Errorf("string default cannot be empty: %w", ErrInvalidDataset)
 		}
 		if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(*value.Default) {

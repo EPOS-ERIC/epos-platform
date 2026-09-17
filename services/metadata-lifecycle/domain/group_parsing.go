@@ -10,6 +10,11 @@ import (
 func NewGroupInput(value GroupInput) (GroupInput, error) {
 	value.Name = strings.TrimSpace(value.Name)
 	value.Concept = strings.TrimSpace(value.Concept)
+	value.Description = optionalTrimmedString(value.Description)
+	value.Label = optionalTrimmedString(value.Label)
+	value.Logo = optionalTrimmedString(value.Logo)
+	value.Page = optionalTrimmedString(value.Page)
+	value.Color = optionalTrimmedString(value.Color)
 	if value.Name == "" || value.Concept == "" {
 		return GroupInput{}, ErrInvalidGroup
 	}

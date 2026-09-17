@@ -43,7 +43,10 @@ class ResourceLifecycleContractTest(unittest.TestCase):
             groupId=group_id,
             json={
                 "resource_type": "dataset",
-                "metadata": {"title": title},
+                "metadata": {
+                    "title": title,
+                    "description": "Contract lifecycle description",
+                },
             },
         )
         self.assertEqual(created.status_code, 201)
@@ -102,7 +105,10 @@ class ResourceLifecycleContractTest(unittest.TestCase):
             json={
                 "resource_type": "dataset",
                 "revision": initial_revision,
-                "metadata": {"title": updated_title},
+                "metadata": {
+                    "title": updated_title,
+                    "description": "Updated contract lifecycle description",
+                },
             },
         )
         self.assertEqual(replaced.status_code, 200)
@@ -123,7 +129,10 @@ class ResourceLifecycleContractTest(unittest.TestCase):
             json={
                 "resource_type": "dataset",
                 "revision": initial_revision,
-                "metadata": {"title": updated_title},
+                "metadata": {
+                    "title": updated_title,
+                    "description": "Updated contract lifecycle description",
+                },
             },
         )
         self.assertEqual(stale.status_code, 409)

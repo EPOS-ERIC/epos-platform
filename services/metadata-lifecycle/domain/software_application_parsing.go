@@ -15,6 +15,16 @@ func NewSoftwareApplicationInput(value SoftwareApplicationInput) (SoftwareApplic
 	if value.Name == "" {
 		return SoftwareApplicationInput{}, fmt.Errorf("software application name is required: %w", ErrSoftwareApplicationInvalid)
 	}
+	value.Description = strings.TrimSpace(value.Description)
+	if value.Description == "" {
+		return SoftwareApplicationInput{}, fmt.Errorf("software application description is required: %w", ErrSoftwareApplicationInvalid)
+	}
+	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
+	value.License = optionalTrimmedString(value.License)
+	value.Version = optionalTrimmedString(value.Version)
+	value.DownloadURL = optionalTrimmedString(value.DownloadURL)
+	value.Requirements = optionalTrimmedString(value.Requirements)
+	value.OperatingSystem = optionalTrimmedString(value.OperatingSystem)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return SoftwareApplicationInput{}, fmt.Errorf("software application keywords: %w: %w", err, ErrSoftwareApplicationInvalid)
@@ -79,6 +89,16 @@ func NewSoftwareApplicationMetadata(value SoftwareApplicationMetadata) (Software
 	if value.Name == "" {
 		return SoftwareApplicationMetadata{}, fmt.Errorf("software application name is required: %w", ErrSoftwareApplicationInvalid)
 	}
+	value.Description = strings.TrimSpace(value.Description)
+	if value.Description == "" {
+		return SoftwareApplicationMetadata{}, fmt.Errorf("software application description is required: %w", ErrSoftwareApplicationInvalid)
+	}
+	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
+	value.License = optionalTrimmedString(value.License)
+	value.Version = optionalTrimmedString(value.Version)
+	value.DownloadURL = optionalTrimmedString(value.DownloadURL)
+	value.Requirements = optionalTrimmedString(value.Requirements)
+	value.OperatingSystem = optionalTrimmedString(value.OperatingSystem)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return SoftwareApplicationMetadata{}, fmt.Errorf("software application keywords: %w: %w", err, ErrSoftwareApplicationInvalid)
