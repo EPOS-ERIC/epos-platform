@@ -1,3 +1,8 @@
+GATEWAY_DIR := services/gateway
+METADATA_LIFECYCLE_DIR := services/metadata-lifecycle
+DATA_RETRIEVER_DIR := services/data-retriever
+OSS_AAI_SERVICE_DIR := services/oss-aai-service
+
 up: 
 	tilt up $(TILT_CONTEXT_ARG)
 
@@ -14,39 +19,43 @@ populate-metadatone:
 	./packages/scripts/metadatone.sh
 
 ci:
-	+$(MAKE) -C services/gateway docker
-	+$(MAKE) -C services/metadata-lifecycle docker
-	+$(MAKE) -C services/oss-aai-service docker
+	+$(MAKE) -j ci-gateway-image ci-metadata-lifecycle-image ci-oss-aai-image
 	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle oss-aai-service
+ci-gateway-image:
+	+$(MAKE) -C $(GATEWAY_DIR) docker
+ci-metadata-lifecycle-image:
+	+$(MAKE) -C $(METADATA_LIFECYCLE_DIR) docker
+ci-oss-aai-image:
+	+$(MAKE) -C $(OSS_AAI_SERVICE_DIR) docker
 
 test:
 	+$(MAKE) -j test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service
 test-gateway:
-	$(MAKE) -C services/gateway test
+	$(MAKE) -C $(GATEWAY_DIR) test
 test-metadata-lifecycle:
-	$(MAKE) -C services/metadata-lifecycle test
+	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) test
 test-data-retriever:
-	$(MAKE) -C services/data-retriever test
+	$(MAKE) -C $(DATA_RETRIEVER_DIR) test
 test-oss-aai-service:
-	$(MAKE) -C services/oss-aai-service test
+	$(MAKE) -C $(OSS_AAI_SERVICE_DIR) test
 
 lint:
 	+$(MAKE) -j lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle
 lint-gateway:
-	$(MAKE) -C services/gateway lint
+	$(MAKE) -C $(GATEWAY_DIR) lint
 lint-data-retriever:
-	$(MAKE) -C services/data-retriever lint
+	$(MAKE) -C $(DATA_RETRIEVER_DIR) lint
 lint-oss-aai-service:
-	$(MAKE) -C services/oss-aai-service lint
+	$(MAKE) -C $(OSS_AAI_SERVICE_DIR) lint
 lint-metadata-lifecycle:
-	$(MAKE) -C services/metadata-lifecycle lint
+	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) lint
 
 generate:
 	+$(MAKE) -j generate-gateway generate-metadata-lifecycle
 generate-gateway:
-	$(MAKE) -C services/gateway generate
+	$(MAKE) -C $(GATEWAY_DIR) generate
 generate-metadata-lifecycle:
-	$(MAKE) -C services/metadata-lifecycle generate
+	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) generate
 
 test-integration:
 	docker run --rm \
@@ -66,4 +75,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up ci down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle
+.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle
