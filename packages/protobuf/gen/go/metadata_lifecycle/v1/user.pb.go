@@ -155,18 +155,19 @@ func (*ListUsersRequest) Descriptor() ([]byte, []int) {
 }
 
 type UserListItem struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email             string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	GivenName         string                 `protobuf:"bytes,3,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
-	FamilyName        string                 `protobuf:"bytes,4,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
-	Status            UserStatus             `protobuf:"varint,5,opt,name=status,proto3,enum=metadata_lifecycle.v1.UserStatus" json:"status,omitempty"`
-	GlobalRoles       []GlobalRole           `protobuf:"varint,6,rep,packed,name=global_roles,json=globalRoles,proto3,enum=metadata_lifecycle.v1.GlobalRole" json:"global_roles,omitempty"`
-	GlobalPermissions []string               `protobuf:"bytes,7,rep,name=global_permissions,json=globalPermissions,proto3" json:"global_permissions,omitempty"`
-	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	Id                       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email                    string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	GivenName                string                 `protobuf:"bytes,3,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
+	FamilyName               string                 `protobuf:"bytes,4,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
+	Status                   UserStatus             `protobuf:"varint,5,opt,name=status,proto3,enum=metadata_lifecycle.v1.UserStatus" json:"status,omitempty"`
+	GlobalRoles              []GlobalRole           `protobuf:"varint,6,rep,packed,name=global_roles,json=globalRoles,proto3,enum=metadata_lifecycle.v1.GlobalRole" json:"global_roles,omitempty"`
+	GlobalGrantedPermissions []GlobalPermission     `protobuf:"varint,7,rep,packed,name=global_granted_permissions,json=globalGrantedPermissions,proto3,enum=metadata_lifecycle.v1.GlobalPermission" json:"global_granted_permissions,omitempty"`
+	CreatedAt                *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt                *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	GlobalRolePermissions    []GlobalPermission     `protobuf:"varint,10,rep,packed,name=global_role_permissions,json=globalRolePermissions,proto3,enum=metadata_lifecycle.v1.GlobalPermission" json:"global_role_permissions,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *UserListItem) Reset() {
@@ -241,9 +242,9 @@ func (x *UserListItem) GetGlobalRoles() []GlobalRole {
 	return nil
 }
 
-func (x *UserListItem) GetGlobalPermissions() []string {
+func (x *UserListItem) GetGlobalGrantedPermissions() []GlobalPermission {
 	if x != nil {
-		return x.GlobalPermissions
+		return x.GlobalGrantedPermissions
 	}
 	return nil
 }
@@ -258,6 +259,13 @@ func (x *UserListItem) GetCreatedAt() *timestamppb.Timestamp {
 func (x *UserListItem) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *UserListItem) GetGlobalRolePermissions() []GlobalPermission {
+	if x != nil {
+		return x.GlobalRolePermissions
 	}
 	return nil
 }
@@ -351,19 +359,20 @@ func (x *GetUserRequest) GetUserId() string {
 }
 
 type GetUserResponse struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email             string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	GivenName         string                 `protobuf:"bytes,3,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
-	FamilyName        string                 `protobuf:"bytes,4,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
-	Status            UserStatus             `protobuf:"varint,5,opt,name=status,proto3,enum=metadata_lifecycle.v1.UserStatus" json:"status,omitempty"`
-	GlobalRoles       []GlobalRole           `protobuf:"varint,6,rep,packed,name=global_roles,json=globalRoles,proto3,enum=metadata_lifecycle.v1.GlobalRole" json:"global_roles,omitempty"`
-	GlobalPermissions []string               `protobuf:"bytes,7,rep,name=global_permissions,json=globalPermissions,proto3" json:"global_permissions,omitempty"`
-	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Memberships       []*UserMembership      `protobuf:"bytes,10,rep,name=memberships,proto3" json:"memberships,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	Id                       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email                    string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	GivenName                string                 `protobuf:"bytes,3,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
+	FamilyName               string                 `protobuf:"bytes,4,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
+	Status                   UserStatus             `protobuf:"varint,5,opt,name=status,proto3,enum=metadata_lifecycle.v1.UserStatus" json:"status,omitempty"`
+	GlobalRoles              []GlobalRole           `protobuf:"varint,6,rep,packed,name=global_roles,json=globalRoles,proto3,enum=metadata_lifecycle.v1.GlobalRole" json:"global_roles,omitempty"`
+	GlobalGrantedPermissions []GlobalPermission     `protobuf:"varint,7,rep,packed,name=global_granted_permissions,json=globalGrantedPermissions,proto3,enum=metadata_lifecycle.v1.GlobalPermission" json:"global_granted_permissions,omitempty"`
+	CreatedAt                *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt                *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Memberships              []*UserMembership      `protobuf:"bytes,10,rep,name=memberships,proto3" json:"memberships,omitempty"`
+	GlobalRolePermissions    []GlobalPermission     `protobuf:"varint,11,rep,packed,name=global_role_permissions,json=globalRolePermissions,proto3,enum=metadata_lifecycle.v1.GlobalPermission" json:"global_role_permissions,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *GetUserResponse) Reset() {
@@ -438,9 +447,9 @@ func (x *GetUserResponse) GetGlobalRoles() []GlobalRole {
 	return nil
 }
 
-func (x *GetUserResponse) GetGlobalPermissions() []string {
+func (x *GetUserResponse) GetGlobalGrantedPermissions() []GlobalPermission {
 	if x != nil {
-		return x.GlobalPermissions
+		return x.GlobalGrantedPermissions
 	}
 	return nil
 }
@@ -466,10 +475,17 @@ func (x *GetUserResponse) GetMemberships() []*UserMembership {
 	return nil
 }
 
+func (x *GetUserResponse) GetGlobalRolePermissions() []GlobalPermission {
+	if x != nil {
+		return x.GlobalRolePermissions
+	}
+	return nil
+}
+
 type GrantGlobalPermissionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Permission    string                 `protobuf:"bytes,2,opt,name=permission,proto3" json:"permission,omitempty"`
+	Permission    GlobalPermission       `protobuf:"varint,2,opt,name=permission,proto3,enum=metadata_lifecycle.v1.GlobalPermission" json:"permission,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -511,11 +527,11 @@ func (x *GrantGlobalPermissionRequest) GetUserId() string {
 	return ""
 }
 
-func (x *GrantGlobalPermissionRequest) GetPermission() string {
+func (x *GrantGlobalPermissionRequest) GetPermission() GlobalPermission {
 	if x != nil {
 		return x.Permission
 	}
-	return ""
+	return GlobalPermission_GLOBAL_PERMISSION_UNSPECIFIED
 }
 
 type GrantGlobalPermissionResponse struct {
@@ -557,7 +573,7 @@ func (*GrantGlobalPermissionResponse) Descriptor() ([]byte, []int) {
 type RevokeGlobalPermissionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Permission    string                 `protobuf:"bytes,2,opt,name=permission,proto3" json:"permission,omitempty"`
+	Permission    GlobalPermission       `protobuf:"varint,2,opt,name=permission,proto3,enum=metadata_lifecycle.v1.GlobalPermission" json:"permission,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -599,11 +615,11 @@ func (x *RevokeGlobalPermissionRequest) GetUserId() string {
 	return ""
 }
 
-func (x *RevokeGlobalPermissionRequest) GetPermission() string {
+func (x *RevokeGlobalPermissionRequest) GetPermission() GlobalPermission {
 	if x != nil {
 		return x.Permission
 	}
-	return ""
+	return GlobalPermission_GLOBAL_PERMISSION_UNSPECIFIED
 }
 
 type RevokeGlobalPermissionResponse struct {
@@ -987,16 +1003,17 @@ func (*UnblockUserResponse) Descriptor() ([]byte, []int) {
 }
 
 type UserMembership struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Group            *EntityReference       `protobuf:"bytes,1,opt,name=group,proto3" json:"group,omitempty"`
-	GroupRoles       []GroupRole            `protobuf:"varint,2,rep,packed,name=group_roles,json=groupRoles,proto3,enum=metadata_lifecycle.v1.GroupRole" json:"group_roles,omitempty"`
-	Status           MembershipStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=metadata_lifecycle.v1.MembershipStatus" json:"status,omitempty"`
-	GroupPermissions []string               `protobuf:"bytes,4,rep,name=group_permissions,json=groupPermissions,proto3" json:"group_permissions,omitempty"`
-	RoleRequests     []*RoleRequest         `protobuf:"bytes,5,rep,name=role_requests,json=roleRequests,proto3" json:"role_requests,omitempty"`
-	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Group              *EntityReference       `protobuf:"bytes,1,opt,name=group,proto3" json:"group,omitempty"`
+	GroupRoles         []GroupRole            `protobuf:"varint,2,rep,packed,name=group_roles,json=groupRoles,proto3,enum=metadata_lifecycle.v1.GroupRole" json:"group_roles,omitempty"`
+	Status             MembershipStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=metadata_lifecycle.v1.MembershipStatus" json:"status,omitempty"`
+	GrantedPermissions []GroupPermission      `protobuf:"varint,4,rep,packed,name=granted_permissions,json=grantedPermissions,proto3,enum=metadata_lifecycle.v1.GroupPermission" json:"granted_permissions,omitempty"`
+	RoleRequests       []*RoleRequest         `protobuf:"bytes,5,rep,name=role_requests,json=roleRequests,proto3" json:"role_requests,omitempty"`
+	CreatedAt          *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	RolePermissions    []GroupPermission      `protobuf:"varint,8,rep,packed,name=role_permissions,json=rolePermissions,proto3,enum=metadata_lifecycle.v1.GroupPermission" json:"role_permissions,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *UserMembership) Reset() {
@@ -1050,9 +1067,9 @@ func (x *UserMembership) GetStatus() MembershipStatus {
 	return MembershipStatus_MEMBERSHIP_STATUS_UNSPECIFIED
 }
 
-func (x *UserMembership) GetGroupPermissions() []string {
+func (x *UserMembership) GetGrantedPermissions() []GroupPermission {
 	if x != nil {
-		return x.GroupPermissions
+		return x.GrantedPermissions
 	}
 	return nil
 }
@@ -1074,6 +1091,13 @@ func (x *UserMembership) GetCreatedAt() *timestamppb.Timestamp {
 func (x *UserMembership) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *UserMembership) GetRolePermissions() []GroupPermission {
+	if x != nil {
+		return x.RolePermissions
 	}
 	return nil
 }
@@ -1151,7 +1175,7 @@ var File_metadata_lifecycle_v1_user_proto protoreflect.FileDescriptor
 const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"\n" +
 	" metadata_lifecycle/v1/user.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a'metadata_lifecycle/v1/annotations.proto\x1a\"metadata_lifecycle/v1/common.proto\"\x12\n" +
-	"\x10ListUsersRequest\"\xe5\x03\n" +
+	"\x10ListUsersRequest\"\x8e\x05\n" +
 	"\fUserListItem\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12\x1d\n" +
 	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12&\n" +
@@ -1161,16 +1185,20 @@ const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"familyName\x12C\n" +
 	"\x06status\x18\x05 \x01(\x0e2!.metadata_lifecycle.v1.UserStatusB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06status\x12S\n" +
 	"\fglobal_roles\x18\x06 \x03(\x0e2!.metadata_lifecycle.v1.GlobalRoleB\r\xbaH\n" +
-	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\vglobalRoles\x12;\n" +
-	"\x12global_permissions\x18\a \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x10\x01R\x11globalPermissions\x129\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\vglobalRoles\x12t\n" +
+	"\x1aglobal_granted_permissions\x18\a \x03(\x0e2'.metadata_lifecycle.v1.GlobalPermissionB\r\xbaH\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x18globalGrantedPermissions\x129\n" +
 	"\n" +
 	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"N\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12n\n" +
+	"\x17global_role_permissions\x18\n" +
+	" \x03(\x0e2'.metadata_lifecycle.v1.GlobalPermissionB\r\xbaH\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x15globalRolePermissions\"N\n" +
 	"\x11ListUsersResponse\x129\n" +
 	"\x05users\x18\x01 \x03(\v2#.metadata_lifecycle.v1.UserListItemR\x05users\"2\n" +
 	"\x0eGetUserRequest\x12 \n" +
-	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\xa3\x04\n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\xda\x05\n" +
 	"\x0fGetUserResponse\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12\x1d\n" +
 	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12&\n" +
@@ -1180,24 +1208,27 @@ const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"familyName\x12C\n" +
 	"\x06status\x18\x05 \x01(\x0e2!.metadata_lifecycle.v1.UserStatusB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06status\x12S\n" +
 	"\fglobal_roles\x18\x06 \x03(\x0e2!.metadata_lifecycle.v1.GlobalRoleB\r\xbaH\n" +
-	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\vglobalRoles\x12-\n" +
-	"\x12global_permissions\x18\a \x03(\tR\x11globalPermissions\x129\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\vglobalRoles\x12t\n" +
+	"\x1aglobal_granted_permissions\x18\a \x03(\x0e2'.metadata_lifecycle.v1.GlobalPermissionB\r\xbaH\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x18globalGrantedPermissions\x129\n" +
 	"\n" +
 	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12G\n" +
 	"\vmemberships\x18\n" +
-	" \x03(\v2%.metadata_lifecycle.v1.UserMembershipR\vmemberships\"i\n" +
+	" \x03(\v2%.metadata_lifecycle.v1.UserMembershipR\vmemberships\x12n\n" +
+	"\x17global_role_permissions\x18\v \x03(\x0e2'.metadata_lifecycle.v1.GlobalPermissionB\r\xbaH\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x15globalRolePermissions\"\x93\x01\n" +
 	"\x1cGrantGlobalPermissionRequest\x12 \n" +
-	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12'\n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12Q\n" +
 	"\n" +
-	"permission\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
+	"permission\x18\x02 \x01(\x0e2'.metadata_lifecycle.v1.GlobalPermissionB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
 	"permission\"\x1f\n" +
-	"\x1dGrantGlobalPermissionResponse\"j\n" +
+	"\x1dGrantGlobalPermissionResponse\"\x94\x01\n" +
 	"\x1dRevokeGlobalPermissionRequest\x12 \n" +
-	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12'\n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12Q\n" +
 	"\n" +
-	"permission\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
+	"permission\x18\x02 \x01(\x0e2'.metadata_lifecycle.v1.GlobalPermissionB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
 	"permission\" \n" +
 	"\x1eRevokeGlobalPermissionResponse\"|\n" +
 	"\x17AssignGlobalRoleRequest\x12 \n" +
@@ -1214,19 +1245,22 @@ const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"\x11BlockUserResponse\"6\n" +
 	"\x12UnblockUserRequest\x12 \n" +
 	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\x15\n" +
-	"\x13UnblockUserResponse\"\xe5\x03\n" +
+	"\x13UnblockUserResponse\"\xf4\x04\n" +
 	"\x0eUserMembership\x12<\n" +
 	"\x05group\x18\x01 \x01(\v2&.metadata_lifecycle.v1.EntityReferenceR\x05group\x12P\n" +
 	"\vgroup_roles\x18\x02 \x03(\x0e2 .metadata_lifecycle.v1.GroupRoleB\r\xbaH\n" +
 	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\n" +
 	"groupRoles\x12I\n" +
-	"\x06status\x18\x03 \x01(\x0e2'.metadata_lifecycle.v1.MembershipStatusB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06status\x129\n" +
-	"\x11group_permissions\x18\x04 \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x10\x01R\x10groupPermissions\x12G\n" +
+	"\x06status\x18\x03 \x01(\x0e2'.metadata_lifecycle.v1.MembershipStatusB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06status\x12f\n" +
+	"\x13granted_permissions\x18\x04 \x03(\x0e2&.metadata_lifecycle.v1.GroupPermissionB\r\xbaH\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x12grantedPermissions\x12G\n" +
 	"\rrole_requests\x18\x05 \x03(\v2\".metadata_lifecycle.v1.RoleRequestR\froleRequests\x129\n" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xfd\x01\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12`\n" +
+	"\x10role_permissions\x18\b \x03(\x0e2&.metadata_lifecycle.v1.GroupPermissionB\r\xbaH\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x0frolePermissions\"\xfd\x01\n" +
 	"\vRoleRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12I\n" +
 	"\n" +
@@ -1288,55 +1322,65 @@ var file_metadata_lifecycle_v1_user_proto_goTypes = []any{
 	(*UnblockUserResponse)(nil),            // 18: metadata_lifecycle.v1.UnblockUserResponse
 	(*UserMembership)(nil),                 // 19: metadata_lifecycle.v1.UserMembership
 	(*RoleRequest)(nil),                    // 20: metadata_lifecycle.v1.RoleRequest
-	(*timestamppb.Timestamp)(nil),          // 21: google.protobuf.Timestamp
-	(*EntityReference)(nil),                // 22: metadata_lifecycle.v1.EntityReference
-	(GroupRole)(0),                         // 23: metadata_lifecycle.v1.GroupRole
-	(MembershipStatus)(0),                  // 24: metadata_lifecycle.v1.MembershipStatus
-	(RoleRequestStatus)(0),                 // 25: metadata_lifecycle.v1.RoleRequestStatus
+	(GlobalPermission)(0),                  // 21: metadata_lifecycle.v1.GlobalPermission
+	(*timestamppb.Timestamp)(nil),          // 22: google.protobuf.Timestamp
+	(*EntityReference)(nil),                // 23: metadata_lifecycle.v1.EntityReference
+	(GroupRole)(0),                         // 24: metadata_lifecycle.v1.GroupRole
+	(MembershipStatus)(0),                  // 25: metadata_lifecycle.v1.MembershipStatus
+	(GroupPermission)(0),                   // 26: metadata_lifecycle.v1.GroupPermission
+	(RoleRequestStatus)(0),                 // 27: metadata_lifecycle.v1.RoleRequestStatus
 }
 var file_metadata_lifecycle_v1_user_proto_depIdxs = []int32{
 	0,  // 0: metadata_lifecycle.v1.UserListItem.status:type_name -> metadata_lifecycle.v1.UserStatus
 	1,  // 1: metadata_lifecycle.v1.UserListItem.global_roles:type_name -> metadata_lifecycle.v1.GlobalRole
-	21, // 2: metadata_lifecycle.v1.UserListItem.created_at:type_name -> google.protobuf.Timestamp
-	21, // 3: metadata_lifecycle.v1.UserListItem.updated_at:type_name -> google.protobuf.Timestamp
-	3,  // 4: metadata_lifecycle.v1.ListUsersResponse.users:type_name -> metadata_lifecycle.v1.UserListItem
-	0,  // 5: metadata_lifecycle.v1.GetUserResponse.status:type_name -> metadata_lifecycle.v1.UserStatus
-	1,  // 6: metadata_lifecycle.v1.GetUserResponse.global_roles:type_name -> metadata_lifecycle.v1.GlobalRole
-	21, // 7: metadata_lifecycle.v1.GetUserResponse.created_at:type_name -> google.protobuf.Timestamp
-	21, // 8: metadata_lifecycle.v1.GetUserResponse.updated_at:type_name -> google.protobuf.Timestamp
-	19, // 9: metadata_lifecycle.v1.GetUserResponse.memberships:type_name -> metadata_lifecycle.v1.UserMembership
-	1,  // 10: metadata_lifecycle.v1.AssignGlobalRoleRequest.role:type_name -> metadata_lifecycle.v1.GlobalRole
-	1,  // 11: metadata_lifecycle.v1.RemoveGlobalRoleRequest.role:type_name -> metadata_lifecycle.v1.GlobalRole
-	22, // 12: metadata_lifecycle.v1.UserMembership.group:type_name -> metadata_lifecycle.v1.EntityReference
-	23, // 13: metadata_lifecycle.v1.UserMembership.group_roles:type_name -> metadata_lifecycle.v1.GroupRole
-	24, // 14: metadata_lifecycle.v1.UserMembership.status:type_name -> metadata_lifecycle.v1.MembershipStatus
-	20, // 15: metadata_lifecycle.v1.UserMembership.role_requests:type_name -> metadata_lifecycle.v1.RoleRequest
-	21, // 16: metadata_lifecycle.v1.UserMembership.created_at:type_name -> google.protobuf.Timestamp
-	21, // 17: metadata_lifecycle.v1.UserMembership.updated_at:type_name -> google.protobuf.Timestamp
-	23, // 18: metadata_lifecycle.v1.RoleRequest.group_role:type_name -> metadata_lifecycle.v1.GroupRole
-	25, // 19: metadata_lifecycle.v1.RoleRequest.status:type_name -> metadata_lifecycle.v1.RoleRequestStatus
-	21, // 20: metadata_lifecycle.v1.RoleRequest.requested_at:type_name -> google.protobuf.Timestamp
-	5,  // 21: metadata_lifecycle.v1.UserService.GetUser:input_type -> metadata_lifecycle.v1.GetUserRequest
-	2,  // 22: metadata_lifecycle.v1.UserService.ListUsers:input_type -> metadata_lifecycle.v1.ListUsersRequest
-	7,  // 23: metadata_lifecycle.v1.UserService.GrantGlobalPermission:input_type -> metadata_lifecycle.v1.GrantGlobalPermissionRequest
-	9,  // 24: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:input_type -> metadata_lifecycle.v1.RevokeGlobalPermissionRequest
-	11, // 25: metadata_lifecycle.v1.UserService.AssignGlobalRole:input_type -> metadata_lifecycle.v1.AssignGlobalRoleRequest
-	13, // 26: metadata_lifecycle.v1.UserService.RemoveGlobalRole:input_type -> metadata_lifecycle.v1.RemoveGlobalRoleRequest
-	15, // 27: metadata_lifecycle.v1.UserService.BlockUser:input_type -> metadata_lifecycle.v1.BlockUserRequest
-	17, // 28: metadata_lifecycle.v1.UserService.UnblockUser:input_type -> metadata_lifecycle.v1.UnblockUserRequest
-	6,  // 29: metadata_lifecycle.v1.UserService.GetUser:output_type -> metadata_lifecycle.v1.GetUserResponse
-	4,  // 30: metadata_lifecycle.v1.UserService.ListUsers:output_type -> metadata_lifecycle.v1.ListUsersResponse
-	8,  // 31: metadata_lifecycle.v1.UserService.GrantGlobalPermission:output_type -> metadata_lifecycle.v1.GrantGlobalPermissionResponse
-	10, // 32: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:output_type -> metadata_lifecycle.v1.RevokeGlobalPermissionResponse
-	12, // 33: metadata_lifecycle.v1.UserService.AssignGlobalRole:output_type -> metadata_lifecycle.v1.AssignGlobalRoleResponse
-	14, // 34: metadata_lifecycle.v1.UserService.RemoveGlobalRole:output_type -> metadata_lifecycle.v1.RemoveGlobalRoleResponse
-	16, // 35: metadata_lifecycle.v1.UserService.BlockUser:output_type -> metadata_lifecycle.v1.BlockUserResponse
-	18, // 36: metadata_lifecycle.v1.UserService.UnblockUser:output_type -> metadata_lifecycle.v1.UnblockUserResponse
-	29, // [29:37] is the sub-list for method output_type
-	21, // [21:29] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	21, // 2: metadata_lifecycle.v1.UserListItem.global_granted_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
+	22, // 3: metadata_lifecycle.v1.UserListItem.created_at:type_name -> google.protobuf.Timestamp
+	22, // 4: metadata_lifecycle.v1.UserListItem.updated_at:type_name -> google.protobuf.Timestamp
+	21, // 5: metadata_lifecycle.v1.UserListItem.global_role_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
+	3,  // 6: metadata_lifecycle.v1.ListUsersResponse.users:type_name -> metadata_lifecycle.v1.UserListItem
+	0,  // 7: metadata_lifecycle.v1.GetUserResponse.status:type_name -> metadata_lifecycle.v1.UserStatus
+	1,  // 8: metadata_lifecycle.v1.GetUserResponse.global_roles:type_name -> metadata_lifecycle.v1.GlobalRole
+	21, // 9: metadata_lifecycle.v1.GetUserResponse.global_granted_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
+	22, // 10: metadata_lifecycle.v1.GetUserResponse.created_at:type_name -> google.protobuf.Timestamp
+	22, // 11: metadata_lifecycle.v1.GetUserResponse.updated_at:type_name -> google.protobuf.Timestamp
+	19, // 12: metadata_lifecycle.v1.GetUserResponse.memberships:type_name -> metadata_lifecycle.v1.UserMembership
+	21, // 13: metadata_lifecycle.v1.GetUserResponse.global_role_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
+	21, // 14: metadata_lifecycle.v1.GrantGlobalPermissionRequest.permission:type_name -> metadata_lifecycle.v1.GlobalPermission
+	21, // 15: metadata_lifecycle.v1.RevokeGlobalPermissionRequest.permission:type_name -> metadata_lifecycle.v1.GlobalPermission
+	1,  // 16: metadata_lifecycle.v1.AssignGlobalRoleRequest.role:type_name -> metadata_lifecycle.v1.GlobalRole
+	1,  // 17: metadata_lifecycle.v1.RemoveGlobalRoleRequest.role:type_name -> metadata_lifecycle.v1.GlobalRole
+	23, // 18: metadata_lifecycle.v1.UserMembership.group:type_name -> metadata_lifecycle.v1.EntityReference
+	24, // 19: metadata_lifecycle.v1.UserMembership.group_roles:type_name -> metadata_lifecycle.v1.GroupRole
+	25, // 20: metadata_lifecycle.v1.UserMembership.status:type_name -> metadata_lifecycle.v1.MembershipStatus
+	26, // 21: metadata_lifecycle.v1.UserMembership.granted_permissions:type_name -> metadata_lifecycle.v1.GroupPermission
+	20, // 22: metadata_lifecycle.v1.UserMembership.role_requests:type_name -> metadata_lifecycle.v1.RoleRequest
+	22, // 23: metadata_lifecycle.v1.UserMembership.created_at:type_name -> google.protobuf.Timestamp
+	22, // 24: metadata_lifecycle.v1.UserMembership.updated_at:type_name -> google.protobuf.Timestamp
+	26, // 25: metadata_lifecycle.v1.UserMembership.role_permissions:type_name -> metadata_lifecycle.v1.GroupPermission
+	24, // 26: metadata_lifecycle.v1.RoleRequest.group_role:type_name -> metadata_lifecycle.v1.GroupRole
+	27, // 27: metadata_lifecycle.v1.RoleRequest.status:type_name -> metadata_lifecycle.v1.RoleRequestStatus
+	22, // 28: metadata_lifecycle.v1.RoleRequest.requested_at:type_name -> google.protobuf.Timestamp
+	5,  // 29: metadata_lifecycle.v1.UserService.GetUser:input_type -> metadata_lifecycle.v1.GetUserRequest
+	2,  // 30: metadata_lifecycle.v1.UserService.ListUsers:input_type -> metadata_lifecycle.v1.ListUsersRequest
+	7,  // 31: metadata_lifecycle.v1.UserService.GrantGlobalPermission:input_type -> metadata_lifecycle.v1.GrantGlobalPermissionRequest
+	9,  // 32: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:input_type -> metadata_lifecycle.v1.RevokeGlobalPermissionRequest
+	11, // 33: metadata_lifecycle.v1.UserService.AssignGlobalRole:input_type -> metadata_lifecycle.v1.AssignGlobalRoleRequest
+	13, // 34: metadata_lifecycle.v1.UserService.RemoveGlobalRole:input_type -> metadata_lifecycle.v1.RemoveGlobalRoleRequest
+	15, // 35: metadata_lifecycle.v1.UserService.BlockUser:input_type -> metadata_lifecycle.v1.BlockUserRequest
+	17, // 36: metadata_lifecycle.v1.UserService.UnblockUser:input_type -> metadata_lifecycle.v1.UnblockUserRequest
+	6,  // 37: metadata_lifecycle.v1.UserService.GetUser:output_type -> metadata_lifecycle.v1.GetUserResponse
+	4,  // 38: metadata_lifecycle.v1.UserService.ListUsers:output_type -> metadata_lifecycle.v1.ListUsersResponse
+	8,  // 39: metadata_lifecycle.v1.UserService.GrantGlobalPermission:output_type -> metadata_lifecycle.v1.GrantGlobalPermissionResponse
+	10, // 40: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:output_type -> metadata_lifecycle.v1.RevokeGlobalPermissionResponse
+	12, // 41: metadata_lifecycle.v1.UserService.AssignGlobalRole:output_type -> metadata_lifecycle.v1.AssignGlobalRoleResponse
+	14, // 42: metadata_lifecycle.v1.UserService.RemoveGlobalRole:output_type -> metadata_lifecycle.v1.RemoveGlobalRoleResponse
+	16, // 43: metadata_lifecycle.v1.UserService.BlockUser:output_type -> metadata_lifecycle.v1.BlockUserResponse
+	18, // 44: metadata_lifecycle.v1.UserService.UnblockUser:output_type -> metadata_lifecycle.v1.UnblockUserResponse
+	37, // [37:45] is the sub-list for method output_type
+	29, // [29:37] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_user_proto_init() }

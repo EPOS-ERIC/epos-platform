@@ -440,7 +440,7 @@ func (q *Queries) GroupMembershipRoleExists(ctx context.Context, arg GroupMember
 	return exists, err
 }
 
-const listGroupMembershipPermissions = `-- name: ListGroupMembershipPermissions :many
+const listGroupMembershipGrantedPermissions = `-- name: ListGroupMembershipGrantedPermissions :many
 SELECT
     user_id,
     group_id,
@@ -456,8 +456,8 @@ ORDER BY
     permission_key
 `
 
-func (q *Queries) ListGroupMembershipPermissions(ctx context.Context, groupID uuid.UUID) ([]GroupPermissionGrant, error) {
-	rows, err := q.db.Query(ctx, listGroupMembershipPermissions, groupID)
+func (q *Queries) ListGroupMembershipGrantedPermissions(ctx context.Context, groupID uuid.UUID) ([]GroupPermissionGrant, error) {
+	rows, err := q.db.Query(ctx, listGroupMembershipGrantedPermissions, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -472,6 +472,47 @@ func (q *Queries) ListGroupMembershipPermissions(ctx context.Context, groupID uu
 			&i.GrantedBy,
 			&i.GrantedAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGroupMembershipRolePermissions = `-- name: ListGroupMembershipRolePermissions :many
+SELECT
+    DISTINCT assignment.user_id,
+    assignment.group_id,
+    role_permission.permission_key
+FROM
+    group_membership_roles AS assignment
+    JOIN role_permissions AS role_permission ON role_permission.role_key = assignment.role_key
+WHERE
+    assignment.group_id = $1
+ORDER BY
+    assignment.user_id,
+    role_permission.permission_key
+`
+
+type ListGroupMembershipRolePermissionsRow struct {
+	UserID        string
+	GroupID       uuid.UUID
+	PermissionKey string
+}
+
+func (q *Queries) ListGroupMembershipRolePermissions(ctx context.Context, groupID uuid.UUID) ([]ListGroupMembershipRolePermissionsRow, error) {
+	rows, err := q.db.Query(ctx, listGroupMembershipRolePermissions, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListGroupMembershipRolePermissionsRow
+	for rows.Next() {
+		var i ListGroupMembershipRolePermissionsRow
+		if err := rows.Scan(&i.UserID, &i.GroupID, &i.PermissionKey); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -734,13 +775,38 @@ func (q *Queries) RevokeGroupMembership(ctx context.Context, arg RevokeGroupMemb
 	return result.RowsAffected(), nil
 }
 
-const revokeGroupPermission = `-- name: RevokeGroupPermission :exec
-DELETE FROM
-    group_permission_grants
-WHERE
-    user_id = $1
-    AND group_id = $2
-    AND permission_key = $3
+const revokeGroupPermission = `-- name: RevokeGroupPermission :one
+WITH deleted AS (
+    DELETE FROM
+        group_permission_grants
+    WHERE
+        user_id = $1
+        AND group_id = $2
+        AND permission_key = $3
+    RETURNING
+        permission_key
+)
+SELECT
+    CASE
+        WHEN EXISTS (
+            SELECT
+                1
+            FROM
+                deleted
+        ) THEN 'GRANTED'
+        WHEN EXISTS (
+            SELECT
+                1
+            FROM
+                group_membership_roles AS assignment
+                JOIN role_permissions AS role_permission ON role_permission.role_key = assignment.role_key
+            WHERE
+                assignment.user_id = $1
+                AND assignment.group_id = $2
+                AND role_permission.permission_key = $3
+        ) THEN 'ROLE'
+        ELSE 'ABSENT'
+    END AS outcome
 `
 
 type RevokeGroupPermissionParams struct {
@@ -749,9 +815,11 @@ type RevokeGroupPermissionParams struct {
 	PermissionKey string
 }
 
-func (q *Queries) RevokeGroupPermission(ctx context.Context, arg RevokeGroupPermissionParams) error {
-	_, err := q.db.Exec(ctx, revokeGroupPermission, arg.UserID, arg.GroupID, arg.PermissionKey)
-	return err
+func (q *Queries) RevokeGroupPermission(ctx context.Context, arg RevokeGroupPermissionParams) (string, error) {
+	row := q.db.QueryRow(ctx, revokeGroupPermission, arg.UserID, arg.GroupID, arg.PermissionKey)
+	var outcome string
+	err := row.Scan(&outcome)
+	return outcome, err
 }
 
 const withdrawGroupMembershipRequest = `-- name: WithdrawGroupMembershipRequest :execrows

@@ -22,7 +22,7 @@ services/             backend services
 packages/go/          shared Go modules
 packages/scripts/     development and test scripts
 docker/               local Docker Compose configuration
-tests/                Hurl and Schemathesis integration tests
+tests/                integration tests
 cli/                  repository CLI tooling
 ```
 
@@ -82,11 +82,9 @@ make lint
 Use each module's Makefile for builds, generated code, and module-specific commands. Integration suites run against an already-running development stack:
 
 ```bash
-make test-hurl
+make test-contract
 make test-schemathesis
 ```
-
-`test-schemathesis` obtains its own development token and fixture identifiers. Stateful API flows that require ordered setup are covered by Hurl rather than schema fuzzing.
 
 ## Generated code
 
@@ -98,7 +96,7 @@ Do not edit generated files directly. Change the owning OpenAPI specification or
 
 ## CI
 
-Workflows under `.github/workflows/` validate each application or service independently and run the Hurl and Schemathesis integration suites. Reusable workflow definitions are prefixed with `_`.
+Workflows under `.github/workflows/` validate each application or service independently, deterministic contract, and Schemathesis integration suites. Reusable workflow definitions are prefixed with `_`.
 
 ## Component documentation
 

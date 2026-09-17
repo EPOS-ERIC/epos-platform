@@ -62,7 +62,15 @@ func toAPIProtoGroupMembership(value *metadatalifecyclev1.GroupMembership) (gate
 	if err != nil {
 		return gatewayapi.GroupMembership{}, err
 	}
-	result := gatewayapi.GroupMembership{User: gatewayapi.MembershipUser{ID: value.User.Id, GivenName: value.User.GivenName, FamilyName: value.User.FamilyName, Email: value.User.Email}, Status: status, Permissions: value.Permissions}
+	grantedPermissions, err := toAPIProtoGroupPermissions(value.GrantedPermissions)
+	if err != nil {
+		return gatewayapi.GroupMembership{}, err
+	}
+	rolePermissions, err := toAPIProtoGroupPermissions(value.RolePermissions)
+	if err != nil {
+		return gatewayapi.GroupMembership{}, err
+	}
+	result := gatewayapi.GroupMembership{User: gatewayapi.MembershipUser{ID: value.User.Id, GivenName: value.User.GivenName, FamilyName: value.User.FamilyName, Email: value.User.Email}, Status: status, GrantedPermissions: grantedPermissions, RolePermissions: rolePermissions}
 	for _, role := range value.Roles {
 		mapped, err := toAPIGroupMembershipRole(role)
 		if err != nil {
@@ -92,6 +100,57 @@ func toAPIProtoGroupMembership(value *metadatalifecyclev1.GroupMembership) (gate
 		result.UpdatedAt = value.UpdatedAt.AsTime()
 	}
 	return result, nil
+}
+
+func toAPIGroupPermissions(values []domain.GroupPermission) ([]gatewayapi.GroupPermission, error) {
+	permissions := make([]gatewayapi.GroupPermission, len(values))
+	for i, value := range values {
+		permission := gatewayapi.GroupPermission(value)
+		if err := permission.Validate(); err != nil {
+			return nil, fmt.Errorf("metadata-lifecycle returned unknown group permission %q: %w", value, err)
+		}
+		permissions[i] = permission
+	}
+	return permissions, nil
+}
+
+func toAPIProtoGroupPermissions(values []metadatalifecyclev1.GroupPermission) ([]gatewayapi.GroupPermission, error) {
+	permissions := make([]gatewayapi.GroupPermission, len(values))
+	for i, value := range values {
+		var permission gatewayapi.GroupPermission
+		switch value {
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE:
+			permission = gatewayapi.GroupPermissionResourceCreate
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_EDIT:
+			permission = gatewayapi.GroupPermissionResourceEdit
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_SUBMIT:
+			permission = gatewayapi.GroupPermissionResourceSubmit
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_WITHDRAW:
+			permission = gatewayapi.GroupPermissionResourceWithdraw
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REOPEN:
+			permission = gatewayapi.GroupPermissionResourceReopen
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_DISCARD:
+			permission = gatewayapi.GroupPermissionResourceDiscard
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REJECT:
+			permission = gatewayapi.GroupPermissionResourceReject
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_PUBLISH:
+			permission = gatewayapi.GroupPermissionResourcePublish
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_UNPUBLISH:
+			permission = gatewayapi.GroupPermissionResourceUnpublish
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_MEMBERSHIP_MANAGE:
+			permission = gatewayapi.GroupPermissionGroupMembershipManage
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_ROLE_MANAGE:
+			permission = gatewayapi.GroupPermissionGroupRoleManage
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE:
+			permission = gatewayapi.GroupPermissionGroupPermissionManage
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE:
+			permission = gatewayapi.GroupPermissionCategoryManage
+		default:
+			return nil, fmt.Errorf("metadata-lifecycle returned unknown group permission: %v", value)
+		}
+		permissions[i] = permission
+	}
+	return permissions, nil
 }
 
 func toAPIMembershipRole(value domain.GroupRole) (gatewayapi.MembershipRole, error) {

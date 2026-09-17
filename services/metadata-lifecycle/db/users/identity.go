@@ -41,12 +41,17 @@ func (r *Repo) ListUsers(ctx context.Context) ([]domain.UserSummary, error) {
 			return nil, fmt.Errorf("get global roles for %s: %w", row.ID, err)
 		}
 
-		permissions, err := r.GetUserGlobalPermissions(ctx, row.ID)
+		globalGrantedPermissions, err := r.GetUserGlobalGrantedPermissions(ctx, row.ID)
 		if err != nil {
-			return nil, fmt.Errorf("get global permissions for %s: %w", row.ID, err)
+			return nil, fmt.Errorf("get global granted permissions for %s: %w", row.ID, err)
 		}
 
-		user, err := toDomainUserSummary(row, roles, permissions)
+		globalRolePermissions, err := r.GetUserGlobalRolePermissions(ctx, row.ID)
+		if err != nil {
+			return nil, fmt.Errorf("get global role permissions for %s: %w", row.ID, err)
+		}
+
+		user, err := toDomainUserSummary(row, roles, globalGrantedPermissions, globalRolePermissions)
 		if err != nil {
 			return nil, fmt.Errorf("construct user summary %s: %w", row.ID, err)
 		}
@@ -83,9 +88,14 @@ func (r *Repo) loadUser(
 		return domain.User{}, fmt.Errorf("get user global roles: %w", err)
 	}
 
-	globalPermissions, err := r.GetUserGlobalPermissions(ctx, id)
+	globalGrantedPermissionValues, err := r.GetUserGlobalGrantedPermissions(ctx, id)
 	if err != nil {
-		return domain.User{}, fmt.Errorf("get user global permissions: %w", err)
+		return domain.User{}, fmt.Errorf("get user global granted permissions: %w", err)
+	}
+
+	globalRolePermissionValues, err := r.GetUserGlobalRolePermissions(ctx, id)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("get user global role permissions: %w", err)
 	}
 
 	memberships, err := r.GetUserMemberships(ctx, id)
@@ -98,9 +108,14 @@ func (r *Repo) loadUser(
 		return domain.User{}, fmt.Errorf("get user membership roles: %w", err)
 	}
 
-	permissions, err := r.GetUserMembershipPermissions(ctx, id)
+	grantedPermissions, err := r.GetUserMembershipGrantedPermissions(ctx, id)
 	if err != nil {
-		return domain.User{}, fmt.Errorf("get user membership permissions: %w", err)
+		return domain.User{}, fmt.Errorf("get user membership granted permissions: %w", err)
+	}
+
+	rolePermissions, err := r.GetUserMembershipRolePermissions(ctx, id)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("get user membership role permissions: %w", err)
 	}
 
 	roleRequests, err := r.ListPendingUserGroupRoleRequests(ctx, id)
@@ -117,9 +132,22 @@ func (r *Repo) loadUser(
 		rolesByGroup[role.GroupID] = append(rolesByGroup[role.GroupID], value)
 	}
 
-	permissionsByGroup := make(map[uuid.UUID][]string)
-	for _, permission := range permissions {
-		permissionsByGroup[permission.GroupID] = append(permissionsByGroup[permission.GroupID], permission.PermissionKey)
+	grantedPermissionsByGroup := make(map[uuid.UUID][]domain.GroupPermission)
+	for _, permission := range grantedPermissions {
+		value, err := domain.NewGroupPermission(permission.PermissionKey)
+		if err != nil {
+			return domain.User{}, fmt.Errorf("construct granted permission: %w", err)
+		}
+		grantedPermissionsByGroup[permission.GroupID] = append(grantedPermissionsByGroup[permission.GroupID], value)
+	}
+
+	rolePermissionsByGroup := make(map[uuid.UUID][]domain.GroupPermission)
+	for _, permission := range rolePermissions {
+		value, err := domain.NewGroupPermission(permission.PermissionKey)
+		if err != nil {
+			return domain.User{}, fmt.Errorf("construct role permission: %w", err)
+		}
+		rolePermissionsByGroup[permission.GroupID] = append(rolePermissionsByGroup[permission.GroupID], value)
 	}
 
 	roleRequestsByGroup := make(map[uuid.UUID][]domain.RoleRequest)
@@ -138,12 +166,13 @@ func (r *Repo) loadUser(
 				ID:   membership.GroupID,
 				Name: membership.GroupName,
 			},
-			Roles:        rolesByGroup[membership.GroupID],
-			Status:       domain.MembershipStatus(membership.Status),
-			Permissions:  permissionsByGroup[membership.GroupID],
-			RoleRequests: roleRequestsByGroup[membership.GroupID],
-			CreatedAt:    membership.CreatedAt,
-			UpdatedAt:    membership.UpdatedAt,
+			Roles:              rolesByGroup[membership.GroupID],
+			Status:             domain.MembershipStatus(membership.Status),
+			GrantedPermissions: grantedPermissionsByGroup[membership.GroupID],
+			RolePermissions:    rolePermissionsByGroup[membership.GroupID],
+			RoleRequests:       roleRequestsByGroup[membership.GroupID],
+			CreatedAt:          membership.CreatedAt,
+			UpdatedAt:          membership.UpdatedAt,
 		})
 		if err != nil {
 			return domain.User{}, fmt.Errorf("construct membership for %s: %w", membership.GroupID, err)
@@ -151,7 +180,7 @@ func (r *Repo) loadUser(
 		userMemberships = append(userMemberships, value)
 	}
 
-	return toDomainUser(id, email, givenName, familyName, status, createdAt, updatedAt, globalRoles, globalPermissions, userMemberships)
+	return toDomainUser(id, email, givenName, familyName, status, createdAt, updatedAt, globalRoles, globalGrantedPermissionValues, globalRolePermissionValues, userMemberships)
 }
 
 func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain.User, error) {
@@ -178,11 +207,12 @@ func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain
 		user.UpdatedAt,
 		[]string{},
 		[]string{},
+		[]string{},
 		[]domain.Membership{},
 	)
 }
 
-func (r *Repo) GrantGlobalPermission(ctx context.Context, userID, permission, grantedBy string) error {
+func (r *Repo) GrantGlobalPermission(ctx context.Context, userID string, permission domain.GlobalPermission, grantedBy string) error {
 	_, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.ErrUserNotFound
@@ -191,7 +221,7 @@ func (r *Repo) GrantGlobalPermission(ctx context.Context, userID, permission, gr
 		return fmt.Errorf("check target user: %w", err)
 	}
 
-	scope, err := r.GetPermissionScope(ctx, permission)
+	scope, err := r.GetPermissionScope(ctx, string(permission))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.ErrInvalidUser
 	}
@@ -205,7 +235,7 @@ func (r *Repo) GrantGlobalPermission(ctx context.Context, userID, permission, gr
 
 	err = r.Queries.GrantGlobalPermission(ctx, sqlc.GrantGlobalPermissionParams{
 		UserID:        userID,
-		PermissionKey: permission,
+		PermissionKey: string(permission),
 		GrantedBy:     grantedBy,
 	})
 	if err != nil {
@@ -215,7 +245,7 @@ func (r *Repo) GrantGlobalPermission(ctx context.Context, userID, permission, gr
 	return nil
 }
 
-func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID, permission string) error {
+func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID string, permission domain.GlobalPermission) error {
 	_, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.ErrUserNotFound
@@ -224,7 +254,7 @@ func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID, permission st
 		return fmt.Errorf("check target user: %w", err)
 	}
 
-	scope, err := r.GetPermissionScope(ctx, permission)
+	scope, err := r.GetPermissionScope(ctx, string(permission))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.ErrInvalidUser
 	}
@@ -238,7 +268,7 @@ func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID, permission st
 
 	err = r.Queries.RevokeGlobalPermission(ctx, sqlc.RevokeGlobalPermissionParams{
 		UserID:        userID,
-		PermissionKey: permission,
+		PermissionKey: string(permission),
 	})
 	if err != nil {
 		return fmt.Errorf("revoke global permission: %w", err)

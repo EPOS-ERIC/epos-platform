@@ -38,7 +38,7 @@ ORDER BY
     user_id,
     role_key;
 
--- name: ListGroupMembershipPermissions :many
+-- name: ListGroupMembershipGrantedPermissions :many
 SELECT
     user_id,
     group_id,
@@ -52,6 +52,20 @@ WHERE
 ORDER BY
     user_id,
     permission_key;
+
+-- name: ListGroupMembershipRolePermissions :many
+SELECT
+    DISTINCT assignment.user_id,
+    assignment.group_id,
+    role_permission.permission_key
+FROM
+    group_membership_roles AS assignment
+    JOIN role_permissions AS role_permission ON role_permission.role_key = assignment.role_key
+WHERE
+    assignment.group_id = sqlc.arg(group_id)
+ORDER BY
+    assignment.user_id,
+    role_permission.permission_key;
 
 -- name: ListPendingGroupRoleRequests :many
 SELECT
@@ -320,10 +334,35 @@ WHERE
     AND group_id = sqlc.arg(group_id)
     AND STATUS = 'ACTIVE' ON CONFLICT (user_id, group_id, permission_key) DO NOTHING;
 
--- name: RevokeGroupPermission :exec
-DELETE FROM
-    group_permission_grants
-WHERE
-    user_id = sqlc.arg(user_id)
-    AND group_id = sqlc.arg(group_id)
-    AND permission_key = sqlc.arg(permission_key);
+-- name: RevokeGroupPermission :one
+WITH deleted AS (
+    DELETE FROM
+        group_permission_grants
+    WHERE
+        user_id = sqlc.arg(user_id)
+        AND group_id = sqlc.arg(group_id)
+        AND permission_key = sqlc.arg(permission_key)
+    RETURNING
+        permission_key
+)
+SELECT
+    CASE
+        WHEN EXISTS (
+            SELECT
+                1
+            FROM
+                deleted
+        ) THEN 'GRANTED'
+        WHEN EXISTS (
+            SELECT
+                1
+            FROM
+                group_membership_roles AS assignment
+                JOIN role_permissions AS role_permission ON role_permission.role_key = assignment.role_key
+            WHERE
+                assignment.user_id = sqlc.arg(user_id)
+                AND assignment.group_id = sqlc.arg(group_id)
+                AND role_permission.permission_key = sqlc.arg(permission_key)
+        ) THEN 'ROLE'
+        ELSE 'ABSENT'
+    END AS outcome;

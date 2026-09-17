@@ -39,13 +39,17 @@ func (s *securityHandler) HandleBearerAuth(ctx context.Context, _ gatewayapi.Ope
 	ctx = authcontext.WithActorID(ctx, identity.AuthIdentifier)
 	observability.SetActorID(ctx, identity.AuthIdentifier)
 
-	if _, err := s.identity.EnsureUser(ctx, domain.ActorIdentity{
+	user, err := s.identity.EnsureUser(ctx, domain.ActorIdentity{
 		AuthIdentifier: identity.AuthIdentifier,
 		Email:          identity.Email,
 		GivenName:      identity.GivenName,
 		FamilyName:     identity.FamilyName,
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, fmt.Errorf("%w: %w", errProvisioningUnavailable, err)
+	}
+	if user.Status == domain.UserStatusBlocked {
+		return nil, domain.ErrForbidden
 	}
 
 	return ctx, nil

@@ -1,4 +1,4 @@
-# Stateful workflows belong in Hurl. This suite fuzzes schema contracts only.
+# This suite fuzzes schema contracts only.
 SCHEMATHESIS_EXCLUDE_PATHS := \
 	--exclude-path /search \
 	--exclude-path /imports/turtle \
@@ -62,6 +62,13 @@ lint-oss-aai-service:
 lint-metadata-lifecycle:
 	$(MAKE) -C services/metadata-lifecycle lint
 
+generate:
+	+$(MAKE) -j generate-gateway generate-metadata-lifecycle
+generate-gateway:
+	$(MAKE) -C services/gateway generate
+generate-metadata-lifecycle:
+	$(MAKE) -C services/metadata-lifecycle generate
+
 test-schemathesis:
 	schemathesis_env="$$(./packages/scripts/schemathesis-env.sh)" && eval "$$schemathesis_env" && docker run --rm \
 		--add-host host.docker.internal:host-gateway \
@@ -100,13 +107,16 @@ test-schemathesis:
 		--generation-allow-x00 false \
 		/work/services/gateway/docs/openapi.yaml
 
-test-hurl:
+test-contract:
 	docker run --rm \
 		--add-host host.docker.internal:host-gateway \
-		-v "$(CURDIR)/tests/hurl:/tests:ro" \
-		ghcr.io/orange-opensource/hurl:latest \
-		--variable baseUrl=http://host.docker.internal:32000 \
-		--test /tests
+		-v "$(CURDIR):/work:ro" \
+		-w /work \
+		-e GATEWAY_API_URL=http://host.docker.internal:32000/v1 \
+		-e AAI_URL=http://host.docker.internal:8110 \
+		--entrypoint python \
+		ghcr.io/schemathesis/schemathesis:latest \
+		-m unittest discover -s /work/tests/contract -p 'test_*.py' -v
 
 get-dev-token:
 	curl -s -X POST http://localhost:8110/oauth/token \
@@ -115,4 +125,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-hurl test-schemathesis get-dev-token
+.PHONY: up down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-schemathesis test-contract get-dev-token generate generate-gateway generate-metadata-lifecycle

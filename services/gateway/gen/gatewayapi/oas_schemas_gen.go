@@ -1532,18 +1532,19 @@ func (s *CreateSoftwareSourceCodeResourceRequestResourceType) UnmarshalText(data
 
 // Ref: #/components/schemas/DatasetDiscoveryItem
 type DatasetDiscoveryItem struct {
-	Type          DatasetDiscoveryItemType `json:"type"`
-	ResourceID    uuid.UUID                `json:"resource_id"`
-	VersionID     uuid.UUID                `json:"version_id"`
-	Name          string                   `json:"name"`
-	Status        VersioningStatus         `json:"status"`
-	UpdatedAt     time.Time                `json:"updated_at"`
-	Concept       DiscoveryConcept         `json:"concept"`
-	CreatedBy     OptReference             `json:"created_by"`
-	Group         Reference                `json:"group"`
-	Providers     []Reference              `json:"providers"`
-	Categories    []Reference              `json:"categories"`
-	Distributions []Reference              `json:"distributions"`
+	Type       DatasetDiscoveryItemType `json:"type"`
+	ResourceID uuid.UUID                `json:"resource_id"`
+	VersionID  uuid.UUID                `json:"version_id"`
+	Name       string                   `json:"name"`
+	Status     VersioningStatus         `json:"status"`
+	UpdatedAt  time.Time                `json:"updated_at"`
+	Concept    DiscoveryConcept         `json:"concept"`
+	// Creator identity is returned only when caller may see identities for this resource group.
+	CreatedBy     OptReference `json:"created_by"`
+	Group         Reference    `json:"group"`
+	Providers     []Reference  `json:"providers"`
+	Categories    []Reference  `json:"categories"`
+	Distributions []Reference  `json:"distributions"`
 }
 
 // GetType returns the value of Type.
@@ -4267,6 +4268,77 @@ func (s *FloatScalarParameterKind) UnmarshalText(data []byte) error {
 	}
 }
 
+// Global permission key.
+// Ref: #/components/schemas/GlobalPermission
+type GlobalPermission string
+
+const (
+	GlobalPermissionGlobalMembershipManage GlobalPermission = "global.membership.manage"
+	GlobalPermissionGlobalRoleManage       GlobalPermission = "global.role.manage"
+	GlobalPermissionGlobalPermissionManage GlobalPermission = "global.permission.manage"
+	GlobalPermissionOrganizationManage     GlobalPermission = "organization.manage"
+	GlobalPermissionContactPointManage     GlobalPermission = "contact_point.manage"
+	GlobalPermissionCategorySchemeManage   GlobalPermission = "category_scheme.manage"
+)
+
+// AllValues returns all GlobalPermission values.
+func (GlobalPermission) AllValues() []GlobalPermission {
+	return []GlobalPermission{
+		GlobalPermissionGlobalMembershipManage,
+		GlobalPermissionGlobalRoleManage,
+		GlobalPermissionGlobalPermissionManage,
+		GlobalPermissionOrganizationManage,
+		GlobalPermissionContactPointManage,
+		GlobalPermissionCategorySchemeManage,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GlobalPermission) MarshalText() ([]byte, error) {
+	switch s {
+	case GlobalPermissionGlobalMembershipManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalRoleManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalPermissionManage:
+		return []byte(s), nil
+	case GlobalPermissionOrganizationManage:
+		return []byte(s), nil
+	case GlobalPermissionContactPointManage:
+		return []byte(s), nil
+	case GlobalPermissionCategorySchemeManage:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GlobalPermission) UnmarshalText(data []byte) error {
+	switch GlobalPermission(data) {
+	case GlobalPermissionGlobalMembershipManage:
+		*s = GlobalPermissionGlobalMembershipManage
+		return nil
+	case GlobalPermissionGlobalRoleManage:
+		*s = GlobalPermissionGlobalRoleManage
+		return nil
+	case GlobalPermissionGlobalPermissionManage:
+		*s = GlobalPermissionGlobalPermissionManage
+		return nil
+	case GlobalPermissionOrganizationManage:
+		*s = GlobalPermissionOrganizationManage
+		return nil
+	case GlobalPermissionContactPointManage:
+		*s = GlobalPermissionContactPointManage
+		return nil
+	case GlobalPermissionCategorySchemeManage:
+		*s = GlobalPermissionCategorySchemeManage
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type GlobalRole string
 
 const (
@@ -4462,10 +4534,11 @@ func (s *GroupConcept) UnmarshalText(data []byte) error {
 // Complete membership record returned after a membership decision.
 // Ref: #/components/schemas/GroupMembership
 type GroupMembership struct {
-	User        MembershipUser   `json:"user"`
-	Status      MembershipStatus `json:"status"`
-	Roles       []MembershipRole `json:"roles"`
-	Permissions []string         `json:"permissions"`
+	User               MembershipUser    `json:"user"`
+	Status             MembershipStatus  `json:"status"`
+	Roles              []MembershipRole  `json:"roles"`
+	GrantedPermissions []GroupPermission `json:"granted_permissions"`
+	RolePermissions    []GroupPermission `json:"role_permissions"`
 	// Pending role requests only.
 	RoleRequests []RoleRequest `json:"role_requests"`
 	CreatedAt    time.Time     `json:"created_at"`
@@ -4487,9 +4560,14 @@ func (s *GroupMembership) GetRoles() []MembershipRole {
 	return s.Roles
 }
 
-// GetPermissions returns the value of Permissions.
-func (s *GroupMembership) GetPermissions() []string {
-	return s.Permissions
+// GetGrantedPermissions returns the value of GrantedPermissions.
+func (s *GroupMembership) GetGrantedPermissions() []GroupPermission {
+	return s.GrantedPermissions
+}
+
+// GetRolePermissions returns the value of RolePermissions.
+func (s *GroupMembership) GetRolePermissions() []GroupPermission {
+	return s.RolePermissions
 }
 
 // GetRoleRequests returns the value of RoleRequests.
@@ -4522,9 +4600,14 @@ func (s *GroupMembership) SetRoles(val []MembershipRole) {
 	s.Roles = val
 }
 
-// SetPermissions sets the value of Permissions.
-func (s *GroupMembership) SetPermissions(val []string) {
-	s.Permissions = val
+// SetGrantedPermissions sets the value of GrantedPermissions.
+func (s *GroupMembership) SetGrantedPermissions(val []GroupPermission) {
+	s.GrantedPermissions = val
+}
+
+// SetRolePermissions sets the value of RolePermissions.
+func (s *GroupMembership) SetRolePermissions(val []GroupPermission) {
+	s.RolePermissions = val
 }
 
 // SetRoleRequests sets the value of RoleRequests.
@@ -4542,6 +4625,8 @@ func (s *GroupMembership) SetUpdatedAt(val time.Time) {
 	s.UpdatedAt = val
 }
 
+// Group-scoped permission key.
+// Ref: #/components/schemas/GroupPermission
 type GroupPermission string
 
 const (
@@ -7539,75 +7624,6 @@ func (s *ParameterLocation) UnmarshalText(data []byte) error {
 	}
 }
 
-type Permission string
-
-const (
-	PermissionGlobalMembershipManage Permission = "global.membership.manage"
-	PermissionGlobalRoleManage       Permission = "global.role.manage"
-	PermissionGlobalPermissionManage Permission = "global.permission.manage"
-	PermissionOrganizationManage     Permission = "organization.manage"
-	PermissionContactPointManage     Permission = "contact_point.manage"
-	PermissionCategorySchemeManage   Permission = "category_scheme.manage"
-)
-
-// AllValues returns all Permission values.
-func (Permission) AllValues() []Permission {
-	return []Permission{
-		PermissionGlobalMembershipManage,
-		PermissionGlobalRoleManage,
-		PermissionGlobalPermissionManage,
-		PermissionOrganizationManage,
-		PermissionContactPointManage,
-		PermissionCategorySchemeManage,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s Permission) MarshalText() ([]byte, error) {
-	switch s {
-	case PermissionGlobalMembershipManage:
-		return []byte(s), nil
-	case PermissionGlobalRoleManage:
-		return []byte(s), nil
-	case PermissionGlobalPermissionManage:
-		return []byte(s), nil
-	case PermissionOrganizationManage:
-		return []byte(s), nil
-	case PermissionContactPointManage:
-		return []byte(s), nil
-	case PermissionCategorySchemeManage:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *Permission) UnmarshalText(data []byte) error {
-	switch Permission(data) {
-	case PermissionGlobalMembershipManage:
-		*s = PermissionGlobalMembershipManage
-		return nil
-	case PermissionGlobalRoleManage:
-		*s = PermissionGlobalRoleManage
-		return nil
-	case PermissionGlobalPermissionManage:
-		*s = PermissionGlobalPermissionManage
-		return nil
-	case PermissionOrganizationManage:
-		*s = PermissionOrganizationManage
-		return nil
-	case PermissionContactPointManage:
-		*s = PermissionContactPointManage
-		return nil
-	case PermissionCategorySchemeManage:
-		*s = PermissionCategorySchemeManage
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
 // Ref: #/components/schemas/Problem
 type Problem struct {
 	// Short, human-readable summary of problem.
@@ -9250,10 +9266,11 @@ type SoftwareApplicationDiscoveryItem struct {
 	Status     VersioningStatus                     `json:"status"`
 	UpdatedAt  time.Time                            `json:"updated_at"`
 	Concept    DiscoveryConcept                     `json:"concept"`
-	CreatedBy  OptReference                         `json:"created_by"`
-	Group      Reference                            `json:"group"`
-	Creators   []Reference                          `json:"creators"`
-	Categories []Reference                          `json:"categories"`
+	// Creator identity is returned only when caller may see identities for this resource group.
+	CreatedBy  OptReference `json:"created_by"`
+	Group      Reference    `json:"group"`
+	Creators   []Reference  `json:"creators"`
+	Categories []Reference  `json:"categories"`
 }
 
 // GetType returns the value of Type.
@@ -9759,10 +9776,11 @@ type SoftwareSourceCodeDiscoveryItem struct {
 	Status     VersioningStatus                    `json:"status"`
 	UpdatedAt  time.Time                           `json:"updated_at"`
 	Concept    DiscoveryConcept                    `json:"concept"`
-	CreatedBy  OptReference                        `json:"created_by"`
-	Group      Reference                           `json:"group"`
-	Creators   []Reference                         `json:"creators"`
-	Categories []Reference                         `json:"categories"`
+	// Creator identity is returned only when caller may see identities for this resource group.
+	CreatedBy  OptReference `json:"created_by"`
+	Group      Reference    `json:"group"`
+	Creators   []Reference  `json:"creators"`
+	Categories []Reference  `json:"categories"`
 }
 
 // GetType returns the value of Type.
@@ -11355,15 +11373,16 @@ type UnblockUserNoContent struct{}
 // Merged schema.
 // Ref: #/components/schemas/User
 type User struct {
-	ID                string     `json:"id"`
-	Email             string     `json:"email"`
-	GivenName         string     `json:"given_name"`
-	FamilyName        string     `json:"family_name"`
-	Status            UserStatus `json:"status"`
-	GlobalRoles       []string   `json:"global_roles"`
-	GlobalPermissions []string   `json:"global_permissions"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
+	ID                       string             `json:"id"`
+	Email                    string             `json:"email"`
+	GivenName                string             `json:"given_name"`
+	FamilyName               string             `json:"family_name"`
+	Status                   UserStatus         `json:"status"`
+	GlobalRoles              []string           `json:"global_roles"`
+	GlobalGrantedPermissions []GlobalPermission `json:"global_granted_permissions"`
+	GlobalRolePermissions    []GlobalPermission `json:"global_role_permissions"`
+	CreatedAt                time.Time          `json:"created_at"`
+	UpdatedAt                time.Time          `json:"updated_at"`
 	// Membership previews for this user.
 	Memberships []UserMembershipSummary `json:"memberships"`
 }
@@ -11398,9 +11417,14 @@ func (s *User) GetGlobalRoles() []string {
 	return s.GlobalRoles
 }
 
-// GetGlobalPermissions returns the value of GlobalPermissions.
-func (s *User) GetGlobalPermissions() []string {
-	return s.GlobalPermissions
+// GetGlobalGrantedPermissions returns the value of GlobalGrantedPermissions.
+func (s *User) GetGlobalGrantedPermissions() []GlobalPermission {
+	return s.GlobalGrantedPermissions
+}
+
+// GetGlobalRolePermissions returns the value of GlobalRolePermissions.
+func (s *User) GetGlobalRolePermissions() []GlobalPermission {
+	return s.GlobalRolePermissions
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -11448,9 +11472,14 @@ func (s *User) SetGlobalRoles(val []string) {
 	s.GlobalRoles = val
 }
 
-// SetGlobalPermissions sets the value of GlobalPermissions.
-func (s *User) SetGlobalPermissions(val []string) {
-	s.GlobalPermissions = val
+// SetGlobalGrantedPermissions sets the value of GlobalGrantedPermissions.
+func (s *User) SetGlobalGrantedPermissions(val []GlobalPermission) {
+	s.GlobalGrantedPermissions = val
+}
+
+// SetGlobalRolePermissions sets the value of GlobalRolePermissions.
+func (s *User) SetGlobalRolePermissions(val []GlobalPermission) {
+	s.GlobalRolePermissions = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
@@ -11471,15 +11500,16 @@ func (s *User) SetMemberships(val []UserMembershipSummary) {
 // User record returned by the user list endpoint.
 // Ref: #/components/schemas/UserListItem
 type UserListItem struct {
-	ID                string     `json:"id"`
-	Email             string     `json:"email"`
-	GivenName         string     `json:"given_name"`
-	FamilyName        string     `json:"family_name"`
-	Status            UserStatus `json:"status"`
-	GlobalRoles       []string   `json:"global_roles"`
-	GlobalPermissions []string   `json:"global_permissions"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
+	ID                       string             `json:"id"`
+	Email                    string             `json:"email"`
+	GivenName                string             `json:"given_name"`
+	FamilyName               string             `json:"family_name"`
+	Status                   UserStatus         `json:"status"`
+	GlobalRoles              []string           `json:"global_roles"`
+	GlobalGrantedPermissions []GlobalPermission `json:"global_granted_permissions"`
+	GlobalRolePermissions    []GlobalPermission `json:"global_role_permissions"`
+	CreatedAt                time.Time          `json:"created_at"`
+	UpdatedAt                time.Time          `json:"updated_at"`
 }
 
 // GetID returns the value of ID.
@@ -11512,9 +11542,14 @@ func (s *UserListItem) GetGlobalRoles() []string {
 	return s.GlobalRoles
 }
 
-// GetGlobalPermissions returns the value of GlobalPermissions.
-func (s *UserListItem) GetGlobalPermissions() []string {
-	return s.GlobalPermissions
+// GetGlobalGrantedPermissions returns the value of GlobalGrantedPermissions.
+func (s *UserListItem) GetGlobalGrantedPermissions() []GlobalPermission {
+	return s.GlobalGrantedPermissions
+}
+
+// GetGlobalRolePermissions returns the value of GlobalRolePermissions.
+func (s *UserListItem) GetGlobalRolePermissions() []GlobalPermission {
+	return s.GlobalRolePermissions
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -11557,9 +11592,14 @@ func (s *UserListItem) SetGlobalRoles(val []string) {
 	s.GlobalRoles = val
 }
 
-// SetGlobalPermissions sets the value of GlobalPermissions.
-func (s *UserListItem) SetGlobalPermissions(val []string) {
-	s.GlobalPermissions = val
+// SetGlobalGrantedPermissions sets the value of GlobalGrantedPermissions.
+func (s *UserListItem) SetGlobalGrantedPermissions(val []GlobalPermission) {
+	s.GlobalGrantedPermissions = val
+}
+
+// SetGlobalRolePermissions sets the value of GlobalRolePermissions.
+func (s *UserListItem) SetGlobalRolePermissions(val []GlobalPermission) {
+	s.GlobalRolePermissions = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
@@ -11575,10 +11615,11 @@ func (s *UserListItem) SetUpdatedAt(val time.Time) {
 // Embedded membership preview for one user-group relation.
 // Ref: #/components/schemas/UserMembershipSummary
 type UserMembershipSummary struct {
-	Group       Reference        `json:"group"`
-	Roles       []MembershipRole `json:"roles"`
-	Status      MembershipStatus `json:"status"`
-	Permissions []string         `json:"permissions"`
+	Group              Reference         `json:"group"`
+	Roles              []MembershipRole  `json:"roles"`
+	Status             MembershipStatus  `json:"status"`
+	GrantedPermissions []GroupPermission `json:"granted_permissions"`
+	RolePermissions    []GroupPermission `json:"role_permissions"`
 	// Pending role requests for this membership.
 	RoleRequests []RoleRequest `json:"role_requests"`
 	CreatedAt    time.Time     `json:"created_at"`
@@ -11600,9 +11641,14 @@ func (s *UserMembershipSummary) GetStatus() MembershipStatus {
 	return s.Status
 }
 
-// GetPermissions returns the value of Permissions.
-func (s *UserMembershipSummary) GetPermissions() []string {
-	return s.Permissions
+// GetGrantedPermissions returns the value of GrantedPermissions.
+func (s *UserMembershipSummary) GetGrantedPermissions() []GroupPermission {
+	return s.GrantedPermissions
+}
+
+// GetRolePermissions returns the value of RolePermissions.
+func (s *UserMembershipSummary) GetRolePermissions() []GroupPermission {
+	return s.RolePermissions
 }
 
 // GetRoleRequests returns the value of RoleRequests.
@@ -11635,9 +11681,14 @@ func (s *UserMembershipSummary) SetStatus(val MembershipStatus) {
 	s.Status = val
 }
 
-// SetPermissions sets the value of Permissions.
-func (s *UserMembershipSummary) SetPermissions(val []string) {
-	s.Permissions = val
+// SetGrantedPermissions sets the value of GrantedPermissions.
+func (s *UserMembershipSummary) SetGrantedPermissions(val []GroupPermission) {
+	s.GrantedPermissions = val
+}
+
+// SetRolePermissions sets the value of RolePermissions.
+func (s *UserMembershipSummary) SetRolePermissions(val []GroupPermission) {
+	s.RolePermissions = val
 }
 
 // SetRoleRequests sets the value of RoleRequests.

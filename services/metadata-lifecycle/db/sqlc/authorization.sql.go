@@ -143,7 +143,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 const getAuthorizationUser = `-- name: GetAuthorizationUser :one
 SELECT
     id,
-    STATUS
+    STATUS,
+    EXISTS (
+        SELECT
+            1
+        FROM
+            user_global_roles
+        WHERE
+            user_id = users.id
+            AND role_key = 'ADMIN'
+    ) AS global_admin
 FROM
     users
 WHERE
@@ -151,14 +160,15 @@ WHERE
 `
 
 type GetAuthorizationUserRow struct {
-	ID     string
-	Status UserStatus
+	ID          string
+	Status      UserStatus
+	GlobalAdmin bool
 }
 
 func (q *Queries) GetAuthorizationUser(ctx context.Context, id string) (GetAuthorizationUserRow, error) {
 	row := q.db.QueryRow(ctx, getAuthorizationUser, id)
 	var i GetAuthorizationUserRow
-	err := row.Scan(&i.ID, &i.Status)
+	err := row.Scan(&i.ID, &i.Status, &i.GlobalAdmin)
 	return i, err
 }
 
@@ -359,7 +369,38 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, e
 	return i, err
 }
 
-const getUserGlobalPermissions = `-- name: GetUserGlobalPermissions :many
+const getUserGlobalGrantedPermissions = `-- name: GetUserGlobalGrantedPermissions :many
+SELECT
+    global_grant.permission_key
+FROM
+    global_permission_grants AS global_grant
+WHERE
+    global_grant.user_id = $1
+ORDER BY
+    permission_key
+`
+
+func (q *Queries) GetUserGlobalGrantedPermissions(ctx context.Context, userID string) ([]string, error) {
+	rows, err := q.db.Query(ctx, getUserGlobalGrantedPermissions, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var permission_key string
+		if err := rows.Scan(&permission_key); err != nil {
+			return nil, err
+		}
+		items = append(items, permission_key)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserGlobalRolePermissions = `-- name: GetUserGlobalRolePermissions :many
 SELECT
     role_permission.permission_key
 FROM
@@ -367,13 +408,6 @@ FROM
     JOIN role_permissions AS role_permission ON role_permission.role_key = global_role.role_key
 WHERE
     global_role.user_id = $1
-UNION
-SELECT
-    global_grant.permission_key
-FROM
-    global_permission_grants AS global_grant
-WHERE
-    global_grant.user_id = $1
 UNION
 SELECT
     permission.key
@@ -394,8 +428,8 @@ ORDER BY
     permission_key
 `
 
-func (q *Queries) GetUserGlobalPermissions(ctx context.Context, userID string) ([]string, error) {
-	rows, err := q.db.Query(ctx, getUserGlobalPermissions, userID)
+func (q *Queries) GetUserGlobalRolePermissions(ctx context.Context, userID string) ([]string, error) {
+	rows, err := q.db.Query(ctx, getUserGlobalRolePermissions, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -445,22 +479,10 @@ func (q *Queries) GetUserGlobalRoles(ctx context.Context, userID string) ([]stri
 	return items, nil
 }
 
-const getUserMembershipPermissions = `-- name: GetUserMembershipPermissions :many
+const getUserMembershipGrantedPermissions = `-- name: GetUserMembershipGrantedPermissions :many
 SELECT
-    membership.group_id,
-    role_permission.permission_key
-FROM
-    group_memberships AS membership
-    JOIN group_membership_roles AS role_assignment ON role_assignment.user_id = membership.user_id
-    AND role_assignment.group_id = membership.group_id
-    JOIN role_permissions AS role_permission ON role_permission.role_key = role_assignment.role_key
-WHERE
-    membership.user_id = $1
-    AND membership.status = 'ACTIVE'
-UNION
-SELECT
-    direct_grant.group_id,
-    direct_grant.permission_key
+    direct_grant.group_id AS group_id,
+    direct_grant.permission_key AS permission_key
 FROM
     group_permission_grants AS direct_grant
     JOIN group_memberships AS membership ON membership.user_id = direct_grant.user_id
@@ -469,24 +491,66 @@ WHERE
     direct_grant.user_id = $1
     AND membership.status = 'ACTIVE'
 ORDER BY
-    group_id,
-    permission_key
+    1,
+    2
 `
 
-type GetUserMembershipPermissionsRow struct {
+type GetUserMembershipGrantedPermissionsRow struct {
 	GroupID       uuid.UUID
 	PermissionKey string
 }
 
-func (q *Queries) GetUserMembershipPermissions(ctx context.Context, userID string) ([]GetUserMembershipPermissionsRow, error) {
-	rows, err := q.db.Query(ctx, getUserMembershipPermissions, userID)
+func (q *Queries) GetUserMembershipGrantedPermissions(ctx context.Context, userID string) ([]GetUserMembershipGrantedPermissionsRow, error) {
+	rows, err := q.db.Query(ctx, getUserMembershipGrantedPermissions, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetUserMembershipPermissionsRow
+	var items []GetUserMembershipGrantedPermissionsRow
 	for rows.Next() {
-		var i GetUserMembershipPermissionsRow
+		var i GetUserMembershipGrantedPermissionsRow
+		if err := rows.Scan(&i.GroupID, &i.PermissionKey); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserMembershipRolePermissions = `-- name: GetUserMembershipRolePermissions :many
+SELECT
+    DISTINCT membership.group_id AS group_id,
+    role_permission.permission_key AS permission_key
+FROM
+    group_memberships AS membership
+    JOIN group_membership_roles AS role_assignment ON role_assignment.user_id = membership.user_id
+    AND role_assignment.group_id = membership.group_id
+    JOIN role_permissions AS role_permission ON role_permission.role_key = role_assignment.role_key
+WHERE
+    membership.user_id = $1
+    AND membership.status = 'ACTIVE'
+ORDER BY
+    1,
+    2
+`
+
+type GetUserMembershipRolePermissionsRow struct {
+	GroupID       uuid.UUID
+	PermissionKey string
+}
+
+func (q *Queries) GetUserMembershipRolePermissions(ctx context.Context, userID string) ([]GetUserMembershipRolePermissionsRow, error) {
+	rows, err := q.db.Query(ctx, getUserMembershipRolePermissions, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserMembershipRolePermissionsRow
+	for rows.Next() {
+		var i GetUserMembershipRolePermissionsRow
 		if err := rows.Scan(&i.GroupID, &i.PermissionKey); err != nil {
 			return nil, err
 		}
@@ -842,18 +906,10 @@ FROM
 WHERE
     user_id = $1
     AND STATUS = 'ACTIVE'
-    AND group_id = ANY($2::uuid [])
-ORDER BY
-    group_id
 `
 
-type ListActiveMemberGroupIDsParams struct {
-	UserID   string
-	GroupIds []uuid.UUID
-}
-
-func (q *Queries) ListActiveMemberGroupIDs(ctx context.Context, arg ListActiveMemberGroupIDsParams) ([]uuid.UUID, error) {
-	rows, err := q.db.Query(ctx, listActiveMemberGroupIDs, arg.UserID, arg.GroupIds)
+func (q *Queries) ListActiveMemberGroupIDs(ctx context.Context, userID string) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listActiveMemberGroupIDs, userID)
 	if err != nil {
 		return nil, err
 	}

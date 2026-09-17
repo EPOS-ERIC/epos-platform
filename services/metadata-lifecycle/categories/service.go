@@ -19,7 +19,7 @@ type Store interface {
 }
 
 type Authorizer interface {
-	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, domain.GroupPermission) (domain.Result, error)
 }
 
 type Service struct {
@@ -113,7 +113,7 @@ func (s *Service) Delete(ctx context.Context, actorID domain.Actor, groupID, cat
 }
 
 func (s *Service) authorize(ctx context.Context, actorID domain.Actor, groupID uuid.UUID) error {
-	allowed, err := s.authorizer.AuthorizeGroup(ctx, string(actorID), groupID, "category.manage")
+	allowed, err := s.authorizer.AuthorizeGroup(ctx, string(actorID), groupID, domain.GroupPermissionCategoryManage)
 	if err != nil {
 		return fmt.Errorf("authorize category management: %w", err)
 	}

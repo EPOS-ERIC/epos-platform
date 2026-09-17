@@ -29,6 +29,17 @@ WHERE
     group_id = sqlc.arg(group_id)
     AND id = sqlc.arg(id);
 
+-- name: ListLifecycleCategoryIDsByGroup :many
+SELECT
+    id
+FROM
+    categories
+WHERE
+    group_id = sqlc.arg(group_id)
+    AND id = ANY(sqlc.arg(category_ids)::uuid [])
+ORDER BY
+    id;
+
 -- name: CreateGroupCategory :one
 INSERT INTO
     categories (

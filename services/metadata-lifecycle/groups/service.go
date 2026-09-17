@@ -20,7 +20,7 @@ type Store interface {
 
 type Authorizer interface {
 	AuthorizeAdmin(context.Context, string) (domain.Result, error)
-	AuthorizeGlobal(context.Context, string, string) (domain.Result, error)
+	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
 }
 
 type Service struct {
@@ -59,7 +59,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 		return domain.Group{}, domain.ErrInvalidGroup
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "category_scheme.manage")
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionCategorySchemeManage)
 	if err != nil {
 		return domain.Group{}, fmt.Errorf("authorize group replacement: %w", err)
 	}

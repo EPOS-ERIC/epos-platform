@@ -16,8 +16,8 @@ type Store interface {
 	GetUserByID(context.Context, string) (domain.User, error)
 	ListUsers(context.Context) ([]domain.UserSummary, error)
 	CreateUser(context.Context, domain.UserClaims) (domain.User, error)
-	GrantGlobalPermission(context.Context, string, string, string) error
-	RevokeGlobalPermission(context.Context, string, string) error
+	GrantGlobalPermission(context.Context, string, domain.GlobalPermission, string) error
+	RevokeGlobalPermission(context.Context, string, domain.GlobalPermission) error
 	AssignGlobalRole(context.Context, string, string, string) error
 	RemoveGlobalRole(context.Context, string, string) error
 	BlockUser(context.Context, string, string, string) error
@@ -28,7 +28,7 @@ type Authorizer interface {
 	CanReadUser(context.Context, string, string) (domain.Result, error)
 	CanListUsers(context.Context, string) (domain.Result, error)
 	AuthorizeAdmin(context.Context, string) (domain.Result, error)
-	AuthorizeGlobal(context.Context, string, string) (domain.Result, error)
+	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
 }
 
 type Service struct {
@@ -100,8 +100,8 @@ func (s *Service) List(ctx context.Context, actorID domain.Actor) ([]domain.User
 	return users, nil
 }
 
-func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Actor, userID, permission string) error {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "global.permission.manage")
+func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Actor, userID string, permission domain.GlobalPermission) error {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionPermissionManage)
 	if err != nil {
 		return fmt.Errorf("authorize global permission grant: %w", err)
 	}
@@ -118,8 +118,8 @@ func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Acto
 	return nil
 }
 
-func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID domain.Actor, userID, permission string) error {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "global.permission.manage")
+func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID domain.Actor, userID string, permission domain.GlobalPermission) error {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionPermissionManage)
 	if err != nil {
 		return fmt.Errorf("authorize global permission revoke: %w", err)
 	}

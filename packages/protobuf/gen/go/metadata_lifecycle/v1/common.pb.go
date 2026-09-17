@@ -337,6 +337,149 @@ func (GroupRole) EnumDescriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
+type GlobalPermission int32
+
+const (
+	GlobalPermission_GLOBAL_PERMISSION_UNSPECIFIED            GlobalPermission = 0
+	GlobalPermission_GLOBAL_PERMISSION_MEMBERSHIP_MANAGE      GlobalPermission = 1
+	GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE            GlobalPermission = 2
+	GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE      GlobalPermission = 3
+	GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE    GlobalPermission = 4
+	GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE   GlobalPermission = 5
+	GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE GlobalPermission = 6
+)
+
+// Enum value maps for GlobalPermission.
+var (
+	GlobalPermission_name = map[int32]string{
+		0: "GLOBAL_PERMISSION_UNSPECIFIED",
+		1: "GLOBAL_PERMISSION_MEMBERSHIP_MANAGE",
+		2: "GLOBAL_PERMISSION_ROLE_MANAGE",
+		3: "GLOBAL_PERMISSION_PERMISSION_MANAGE",
+		4: "GLOBAL_PERMISSION_ORGANIZATION_MANAGE",
+		5: "GLOBAL_PERMISSION_CONTACT_POINT_MANAGE",
+		6: "GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE",
+	}
+	GlobalPermission_value = map[string]int32{
+		"GLOBAL_PERMISSION_UNSPECIFIED":            0,
+		"GLOBAL_PERMISSION_MEMBERSHIP_MANAGE":      1,
+		"GLOBAL_PERMISSION_ROLE_MANAGE":            2,
+		"GLOBAL_PERMISSION_PERMISSION_MANAGE":      3,
+		"GLOBAL_PERMISSION_ORGANIZATION_MANAGE":    4,
+		"GLOBAL_PERMISSION_CONTACT_POINT_MANAGE":   5,
+		"GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE": 6,
+	}
+)
+
+func (x GlobalPermission) Enum() *GlobalPermission {
+	p := new(GlobalPermission)
+	*p = x
+	return p
+}
+
+func (x GlobalPermission) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (GlobalPermission) Descriptor() protoreflect.EnumDescriptor {
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[6].Descriptor()
+}
+
+func (GlobalPermission) Type() protoreflect.EnumType {
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[6]
+}
+
+func (x GlobalPermission) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use GlobalPermission.Descriptor instead.
+func (GlobalPermission) EnumDescriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{6}
+}
+
+type GroupPermission int32
+
+const (
+	GroupPermission_GROUP_PERMISSION_UNSPECIFIED        GroupPermission = 0
+	GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE    GroupPermission = 1
+	GroupPermission_GROUP_PERMISSION_RESOURCE_EDIT      GroupPermission = 2
+	GroupPermission_GROUP_PERMISSION_RESOURCE_SUBMIT    GroupPermission = 3
+	GroupPermission_GROUP_PERMISSION_RESOURCE_WITHDRAW  GroupPermission = 4
+	GroupPermission_GROUP_PERMISSION_RESOURCE_REOPEN    GroupPermission = 5
+	GroupPermission_GROUP_PERMISSION_RESOURCE_DISCARD   GroupPermission = 6
+	GroupPermission_GROUP_PERMISSION_RESOURCE_REJECT    GroupPermission = 7
+	GroupPermission_GROUP_PERMISSION_RESOURCE_PUBLISH   GroupPermission = 8
+	GroupPermission_GROUP_PERMISSION_RESOURCE_UNPUBLISH GroupPermission = 9
+	GroupPermission_GROUP_PERMISSION_MEMBERSHIP_MANAGE  GroupPermission = 10
+	GroupPermission_GROUP_PERMISSION_ROLE_MANAGE        GroupPermission = 11
+	GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE  GroupPermission = 12
+	GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE    GroupPermission = 13
+)
+
+// Enum value maps for GroupPermission.
+var (
+	GroupPermission_name = map[int32]string{
+		0:  "GROUP_PERMISSION_UNSPECIFIED",
+		1:  "GROUP_PERMISSION_RESOURCE_CREATE",
+		2:  "GROUP_PERMISSION_RESOURCE_EDIT",
+		3:  "GROUP_PERMISSION_RESOURCE_SUBMIT",
+		4:  "GROUP_PERMISSION_RESOURCE_WITHDRAW",
+		5:  "GROUP_PERMISSION_RESOURCE_REOPEN",
+		6:  "GROUP_PERMISSION_RESOURCE_DISCARD",
+		7:  "GROUP_PERMISSION_RESOURCE_REJECT",
+		8:  "GROUP_PERMISSION_RESOURCE_PUBLISH",
+		9:  "GROUP_PERMISSION_RESOURCE_UNPUBLISH",
+		10: "GROUP_PERMISSION_MEMBERSHIP_MANAGE",
+		11: "GROUP_PERMISSION_ROLE_MANAGE",
+		12: "GROUP_PERMISSION_PERMISSION_MANAGE",
+		13: "GROUP_PERMISSION_CATEGORY_MANAGE",
+	}
+	GroupPermission_value = map[string]int32{
+		"GROUP_PERMISSION_UNSPECIFIED":        0,
+		"GROUP_PERMISSION_RESOURCE_CREATE":    1,
+		"GROUP_PERMISSION_RESOURCE_EDIT":      2,
+		"GROUP_PERMISSION_RESOURCE_SUBMIT":    3,
+		"GROUP_PERMISSION_RESOURCE_WITHDRAW":  4,
+		"GROUP_PERMISSION_RESOURCE_REOPEN":    5,
+		"GROUP_PERMISSION_RESOURCE_DISCARD":   6,
+		"GROUP_PERMISSION_RESOURCE_REJECT":    7,
+		"GROUP_PERMISSION_RESOURCE_PUBLISH":   8,
+		"GROUP_PERMISSION_RESOURCE_UNPUBLISH": 9,
+		"GROUP_PERMISSION_MEMBERSHIP_MANAGE":  10,
+		"GROUP_PERMISSION_ROLE_MANAGE":        11,
+		"GROUP_PERMISSION_PERMISSION_MANAGE":  12,
+		"GROUP_PERMISSION_CATEGORY_MANAGE":    13,
+	}
+)
+
+func (x GroupPermission) Enum() *GroupPermission {
+	p := new(GroupPermission)
+	*p = x
+	return p
+}
+
+func (x GroupPermission) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (GroupPermission) Descriptor() protoreflect.EnumDescriptor {
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[7].Descriptor()
+}
+
+func (GroupPermission) Type() protoreflect.EnumType {
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[7]
+}
+
+func (x GroupPermission) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use GroupPermission.Descriptor instead.
+func (GroupPermission) EnumDescriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{7}
+}
+
 type RoleRequestStatus int32
 
 const (
@@ -373,11 +516,11 @@ func (x RoleRequestStatus) String() string {
 }
 
 func (RoleRequestStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_common_proto_enumTypes[6].Descriptor()
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[8].Descriptor()
 }
 
 func (RoleRequestStatus) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_common_proto_enumTypes[6]
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[8]
 }
 
 func (x RoleRequestStatus) Number() protoreflect.EnumNumber {
@@ -386,7 +529,7 @@ func (x RoleRequestStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RoleRequestStatus.Descriptor instead.
 func (RoleRequestStatus) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{6}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{8}
 }
 
 type Identifier struct {
@@ -654,7 +797,31 @@ const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"\x16GROUP_ROLE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11GROUP_ROLE_EDITOR\x10\x01\x12\x17\n" +
 	"\x13GROUP_ROLE_REVIEWER\x10\x02\x12\x14\n" +
-	"\x10GROUP_ROLE_ADMIN\x10\x03*\x9d\x01\n" +
+	"\x10GROUP_ROLE_ADMIN\x10\x03*\xaf\x02\n" +
+	"\x10GlobalPermission\x12!\n" +
+	"\x1dGLOBAL_PERMISSION_UNSPECIFIED\x10\x00\x12'\n" +
+	"#GLOBAL_PERMISSION_MEMBERSHIP_MANAGE\x10\x01\x12!\n" +
+	"\x1dGLOBAL_PERMISSION_ROLE_MANAGE\x10\x02\x12'\n" +
+	"#GLOBAL_PERMISSION_PERMISSION_MANAGE\x10\x03\x12)\n" +
+	"%GLOBAL_PERMISSION_ORGANIZATION_MANAGE\x10\x04\x12*\n" +
+	"&GLOBAL_PERMISSION_CONTACT_POINT_MANAGE\x10\x05\x12,\n" +
+	"(GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE\x10\x06*\xa6\x04\n" +
+	"\x0fGroupPermission\x12 \n" +
+	"\x1cGROUP_PERMISSION_UNSPECIFIED\x10\x00\x12$\n" +
+	" GROUP_PERMISSION_RESOURCE_CREATE\x10\x01\x12\"\n" +
+	"\x1eGROUP_PERMISSION_RESOURCE_EDIT\x10\x02\x12$\n" +
+	" GROUP_PERMISSION_RESOURCE_SUBMIT\x10\x03\x12&\n" +
+	"\"GROUP_PERMISSION_RESOURCE_WITHDRAW\x10\x04\x12$\n" +
+	" GROUP_PERMISSION_RESOURCE_REOPEN\x10\x05\x12%\n" +
+	"!GROUP_PERMISSION_RESOURCE_DISCARD\x10\x06\x12$\n" +
+	" GROUP_PERMISSION_RESOURCE_REJECT\x10\a\x12%\n" +
+	"!GROUP_PERMISSION_RESOURCE_PUBLISH\x10\b\x12'\n" +
+	"#GROUP_PERMISSION_RESOURCE_UNPUBLISH\x10\t\x12&\n" +
+	"\"GROUP_PERMISSION_MEMBERSHIP_MANAGE\x10\n" +
+	"\x12 \n" +
+	"\x1cGROUP_PERMISSION_ROLE_MANAGE\x10\v\x12&\n" +
+	"\"GROUP_PERMISSION_PERMISSION_MANAGE\x10\f\x12$\n" +
+	" GROUP_PERMISSION_CATEGORY_MANAGE\x10\r*\x9d\x01\n" +
 	"\x11RoleRequestStatus\x12#\n" +
 	"\x1fROLE_REQUEST_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bROLE_REQUEST_STATUS_PENDING\x10\x01\x12 \n" +
@@ -673,7 +840,7 @@ func file_metadata_lifecycle_v1_common_proto_rawDescGZIP() []byte {
 	return file_metadata_lifecycle_v1_common_proto_rawDescData
 }
 
-var file_metadata_lifecycle_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
+var file_metadata_lifecycle_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 9)
 var file_metadata_lifecycle_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_metadata_lifecycle_v1_common_proto_goTypes = []any{
 	(ResourceType)(0),       // 0: metadata_lifecycle.v1.ResourceType
@@ -682,11 +849,13 @@ var file_metadata_lifecycle_v1_common_proto_goTypes = []any{
 	(MembershipStatus)(0),   // 3: metadata_lifecycle.v1.MembershipStatus
 	(Decision)(0),           // 4: metadata_lifecycle.v1.Decision
 	(GroupRole)(0),          // 5: metadata_lifecycle.v1.GroupRole
-	(RoleRequestStatus)(0),  // 6: metadata_lifecycle.v1.RoleRequestStatus
-	(*Identifier)(nil),      // 7: metadata_lifecycle.v1.Identifier
-	(*IdentifierInput)(nil), // 8: metadata_lifecycle.v1.IdentifierInput
-	(*EntityReference)(nil), // 9: metadata_lifecycle.v1.EntityReference
-	(*UserReference)(nil),   // 10: metadata_lifecycle.v1.UserReference
+	(GlobalPermission)(0),   // 6: metadata_lifecycle.v1.GlobalPermission
+	(GroupPermission)(0),    // 7: metadata_lifecycle.v1.GroupPermission
+	(RoleRequestStatus)(0),  // 8: metadata_lifecycle.v1.RoleRequestStatus
+	(*Identifier)(nil),      // 9: metadata_lifecycle.v1.Identifier
+	(*IdentifierInput)(nil), // 10: metadata_lifecycle.v1.IdentifierInput
+	(*EntityReference)(nil), // 11: metadata_lifecycle.v1.EntityReference
+	(*UserReference)(nil),   // 12: metadata_lifecycle.v1.UserReference
 }
 var file_metadata_lifecycle_v1_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -706,7 +875,7 @@ func file_metadata_lifecycle_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_common_proto_rawDesc), len(file_metadata_lifecycle_v1_common_proto_rawDesc)),
-			NumEnums:      7,
+			NumEnums:      9,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,

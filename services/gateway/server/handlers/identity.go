@@ -45,17 +45,26 @@ func toAPIUserListItem(user *metadatalifecyclev1.UserListItem) (gatewayapi.UserL
 	if err != nil {
 		return gatewayapi.UserListItem{}, err
 	}
+	globalGrantedPermissions, err := toAPIProtoGlobalPermissions(user.GetGlobalGrantedPermissions())
+	if err != nil {
+		return gatewayapi.UserListItem{}, err
+	}
+	globalRolePermissions, err := toAPIProtoGlobalPermissions(user.GetGlobalRolePermissions())
+	if err != nil {
+		return gatewayapi.UserListItem{}, err
+	}
 
 	return gatewayapi.UserListItem{
-		ID:                user.GetId(),
-		Email:             user.GetEmail(),
-		GivenName:         user.GetGivenName(),
-		FamilyName:        user.GetFamilyName(),
-		Status:            status,
-		GlobalRoles:       globalRoles,
-		GlobalPermissions: user.GetGlobalPermissions(),
-		CreatedAt:         user.GetCreatedAt().AsTime(),
-		UpdatedAt:         user.GetUpdatedAt().AsTime(),
+		ID:                       user.GetId(),
+		Email:                    user.GetEmail(),
+		GivenName:                user.GetGivenName(),
+		FamilyName:               user.GetFamilyName(),
+		Status:                   status,
+		GlobalRoles:              globalRoles,
+		GlobalGrantedPermissions: globalGrantedPermissions,
+		GlobalRolePermissions:    globalRolePermissions,
+		CreatedAt:                user.GetCreatedAt().AsTime(),
+		UpdatedAt:                user.GetUpdatedAt().AsTime(),
 	}, nil
 }
 
@@ -92,30 +101,87 @@ func toAPIGlobalRoles(values []metadatalifecyclev1.GlobalRole) ([]string, error)
 	return roles, nil
 }
 
+func toAPIGlobalPermissions(values []domain.GlobalPermission) ([]gatewayapi.GlobalPermission, error) {
+	permissions := make([]gatewayapi.GlobalPermission, len(values))
+	for i, value := range values {
+		permission := gatewayapi.GlobalPermission(value)
+		if err := permission.Validate(); err != nil {
+			return nil, fmt.Errorf("metadata-lifecycle returned unknown global permission %q: %w", value, err)
+		}
+		permissions[i] = permission
+	}
+	return permissions, nil
+}
+
+func toAPIProtoGlobalPermissions(values []metadatalifecyclev1.GlobalPermission) ([]gatewayapi.GlobalPermission, error) {
+	permissions := make([]gatewayapi.GlobalPermission, len(values))
+	for i, value := range values {
+		var permission gatewayapi.GlobalPermission
+		switch value {
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_MEMBERSHIP_MANAGE:
+			permission = gatewayapi.GlobalPermissionGlobalMembershipManage
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE:
+			permission = gatewayapi.GlobalPermissionGlobalRoleManage
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE:
+			permission = gatewayapi.GlobalPermissionGlobalPermissionManage
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE:
+			permission = gatewayapi.GlobalPermissionOrganizationManage
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE:
+			permission = gatewayapi.GlobalPermissionContactPointManage
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE:
+			permission = gatewayapi.GlobalPermissionCategorySchemeManage
+		default:
+			return nil, fmt.Errorf("metadata-lifecycle returned unknown global permission: %v", value)
+		}
+		permissions[i] = permission
+	}
+	return permissions, nil
+}
+
 func toAPIUser(v domain.User) (gatewayapi.User, error) {
 	roles := make([]string, len(v.GlobalRoles))
 	for i := range v.GlobalRoles {
 		roles[i] = string(v.GlobalRoles[i])
 	}
+	globalGrantedPermissions, err := toAPIGlobalPermissions(v.GlobalGrantedPermissions)
+	if err != nil {
+		return gatewayapi.User{}, err
+	}
+	globalRolePermissions, err := toAPIGlobalPermissions(v.GlobalRolePermissions)
+	if err != nil {
+		return gatewayapi.User{}, err
+	}
 	r := gatewayapi.User{
-		ID:                v.ID,
-		Email:             v.Email,
-		GivenName:         v.GivenName,
-		FamilyName:        v.FamilyName,
-		Status:            gatewayapi.UserStatus(v.Status),
-		GlobalRoles:       roles,
-		GlobalPermissions: v.GlobalPermissions,
+		ID:                       v.ID,
+		Email:                    v.Email,
+		GivenName:                v.GivenName,
+		FamilyName:               v.FamilyName,
+		Status:                   gatewayapi.UserStatus(v.Status),
+		GlobalRoles:              roles,
+		GlobalGrantedPermissions: globalGrantedPermissions,
+		GlobalRolePermissions:    globalRolePermissions,
+		CreatedAt:                v.CreatedAt,
+		UpdatedAt:                v.UpdatedAt,
 	}
 	for _, m := range v.Memberships {
+		grantedPermissions, err := toAPIGroupPermissions(m.GrantedPermissions)
+		if err != nil {
+			return gatewayapi.User{}, err
+		}
+		rolePermissions, err := toAPIGroupPermissions(m.RolePermissions)
+		if err != nil {
+			return gatewayapi.User{}, err
+		}
 		membership := gatewayapi.UserMembershipSummary{
 			Group: gatewayapi.Reference{
 				ID:   m.Group.ID,
 				Name: m.Group.Name,
 			},
-			Status:      gatewayapi.MembershipStatus(m.Status),
-			Permissions: m.GroupPermissions,
-			CreatedAt:   m.CreatedAt,
-			UpdatedAt:   m.UpdatedAt,
+			Status:             gatewayapi.MembershipStatus(m.Status),
+			GrantedPermissions: grantedPermissions,
+			RolePermissions:    rolePermissions,
+			CreatedAt:          m.CreatedAt,
+			UpdatedAt:          m.UpdatedAt,
 		}
 		for _, role := range m.Roles {
 			mapped, err := toAPIMembershipRole(role)
@@ -157,7 +223,11 @@ func (h *ogenHandler) GrantGlobalPermission(ctx context.Context, p gatewayapi.Gr
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.GrantGlobalPermission(ctx, a, p.ID, string(p.Permission)); err != nil {
+	permission, err := domain.NewGlobalPermission(string(p.Permission))
+	if err != nil {
+		return fmt.Errorf("map global permission: %w", err)
+	}
+	if err := h.metadataLifecycle.GrantGlobalPermission(ctx, a, p.ID, permission); err != nil {
 		return fmt.Errorf("grant global permission: %w", err)
 	}
 	return nil
@@ -168,7 +238,11 @@ func (h *ogenHandler) RevokeGlobalPermission(ctx context.Context, p gatewayapi.R
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.RevokeGlobalPermission(ctx, a, p.ID, string(p.Permission)); err != nil {
+	permission, err := domain.NewGlobalPermission(string(p.Permission))
+	if err != nil {
+		return fmt.Errorf("map global permission: %w", err)
+	}
+	if err := h.metadataLifecycle.RevokeGlobalPermission(ctx, a, p.ID, permission); err != nil {
 		return fmt.Errorf("revoke global permission: %w", err)
 	}
 	return nil

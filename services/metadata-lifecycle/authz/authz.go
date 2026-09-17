@@ -13,13 +13,12 @@ import (
 
 type repository interface {
 	User(context.Context, string) (domain.AuthorizationUser, error)
-	PermissionScope(context.Context, string) (domain.PermissionScope, error)
 	IsGlobalAdmin(context.Context, string) (bool, error)
-	HasGlobalPermission(context.Context, string, string) (bool, error)
+	HasGlobalPermission(context.Context, string, domain.GlobalPermission) (bool, error)
 	IsActiveMember(context.Context, string, uuid.UUID) (bool, error)
-	ActiveMemberGroupIDs(context.Context, string, []uuid.UUID) ([]uuid.UUID, error)
+	ListActiveUserMemberships(context.Context, domain.Actor) ([]uuid.UUID, error)
 	HasAnyActiveMembership(context.Context, string) (bool, error)
-	HasGroupPermission(context.Context, string, uuid.UUID, string) (bool, error)
+	HasGroupPermission(context.Context, string, uuid.UUID, domain.GroupPermission) (bool, error)
 	HasGroupRole(context.Context, string, uuid.UUID, string) (bool, error)
 	DatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error)
 	SoftwareApplicationGroup(context.Context, uuid.UUID) (uuid.UUID, error)
@@ -51,9 +50,17 @@ func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) 
 	}
 
 	actor, result, err := a.activeUser(ctx, actorID)
-	if err != nil || !result.Allowed {
-		return result, err
+	if err != nil {
+		return domain.Result{}, err
 	}
+	if !result.Allowed {
+		// allow self status lookup for blocked users to allow the gateway to block any blocked user authorized requests
+		if actorID == targetID && actor.Status == domain.UserStatusBlocked {
+			return domain.Result{Allowed: true, Reason: "blocked self status lookup"}, nil
+		}
+		return result, nil
+	}
+
 	if actorID == targetID {
 		return domain.Result{Allowed: true, Reason: "self"}, nil
 	}
@@ -85,10 +92,10 @@ func (a *Authorizer) canManageUserDirectory(ctx context.Context, userID string) 
 		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
-	for _, permission := range []string{
-		"global.membership.manage",
-		"global.role.manage",
-		"global.permission.manage",
+	for _, permission := range []domain.GlobalPermission{
+		domain.GlobalPermissionMembershipManage,
+		domain.GlobalPermissionRoleManage,
+		domain.GlobalPermissionPermissionManage,
 	} {
 		allowed, err := a.repository.HasGlobalPermission(ctx, userID, permission)
 		if err != nil {
@@ -96,7 +103,7 @@ func (a *Authorizer) canManageUserDirectory(ctx context.Context, userID string) 
 		}
 
 		if allowed {
-			return domain.Result{Allowed: true, Reason: permission}, nil
+			return domain.Result{Allowed: true, Reason: string(permission)}, nil
 		}
 	}
 
@@ -135,9 +142,9 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 	}
 
 	// TODO: see if these kind of permission checks could use an helper or an ad hoc query to check for more than one permission
-	for _, permission := range []string{
-		"global.membership.manage",
-		"global.role.manage",
+	for _, permission := range []domain.GlobalPermission{
+		domain.GlobalPermissionMembershipManage,
+		domain.GlobalPermissionRoleManage,
 	} {
 		allowed, err := a.repository.HasGlobalPermission(ctx, userID, permission)
 		if err != nil {
@@ -145,7 +152,7 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 		}
 
 		if allowed {
-			return domain.Result{Allowed: true, Reason: permission}, nil
+			return domain.Result{Allowed: true, Reason: string(permission)}, nil
 		}
 	}
 
@@ -158,10 +165,10 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 		return domain.Result{Allowed: false, Reason: "user is not an active group member"}, nil
 	}
 
-	for _, permission := range []string{
-		"group.membership.manage",
-		"group.role.manage",
-		"group.permission.manage",
+	for _, permission := range []domain.GroupPermission{
+		domain.GroupPermissionMembershipManage,
+		domain.GroupPermissionRoleManage,
+		domain.GroupPermissionPermissionManage,
 	} {
 		allowed, err := a.repository.HasGroupPermission(ctx, userID, groupID, permission)
 		if err != nil {
@@ -169,7 +176,7 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 		}
 
 		if allowed {
-			return domain.Result{Allowed: true, Reason: permission}, nil
+			return domain.Result{Allowed: true, Reason: string(permission)}, nil
 		}
 	}
 
@@ -178,7 +185,7 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 
 // CanManageGroupMemberships permits membership acceptance, rejection, and revocation.
 func (a *Authorizer) CanManageGroupMemberships(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
-	return a.canManageGroupPermission(ctx, userID, groupID, "global.membership.manage", "group.membership.manage")
+	return a.canManageGroupPermission(ctx, userID, groupID, domain.GlobalPermissionMembershipManage, domain.GroupPermissionMembershipManage)
 }
 
 // CanRevokeGroupMembership applies the extra protection for GROUP_ADMIN memberships.
@@ -201,7 +208,7 @@ func (a *Authorizer) CanRevokeGroupMembership(ctx context.Context, userID string
 		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
 	}
 
-	globalPermission, err := a.repository.HasGlobalPermission(ctx, userID, "global.membership.manage")
+	globalPermission, err := a.repository.HasGlobalPermission(ctx, userID, domain.GlobalPermissionMembershipManage)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global membership permission: %w", err)
 	}
@@ -247,7 +254,7 @@ func (a *Authorizer) CanRequestGroupRole(ctx context.Context, userID string, gro
 
 // CanManageGroupRoles permits role-request decisions and standard direct group role changes.
 func (a *Authorizer) CanManageGroupRoles(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
-	return a.canManageGroupPermission(ctx, userID, groupID, "global.role.manage", "group.role.manage")
+	return a.canManageGroupPermission(ctx, userID, groupID, domain.GlobalPermissionRoleManage, domain.GroupPermissionRoleManage)
 }
 
 // CanManageSpecificGroupRole applies role-specific restrictions for direct assignment and removal.
@@ -265,7 +272,7 @@ func (a *Authorizer) CanManageSpecificGroupRole(ctx context.Context, userID stri
 		return allowed, nil
 	}
 
-	globalPermission, err := a.repository.HasGlobalPermission(ctx, userID, "global.role.manage")
+	globalPermission, err := a.repository.HasGlobalPermission(ctx, userID, domain.GlobalPermissionRoleManage)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global role permission: %w", err)
 	}
@@ -276,7 +283,7 @@ func (a *Authorizer) CanManageSpecificGroupRole(ctx context.Context, userID stri
 	return allowed, nil
 }
 
-func (a *Authorizer) canManageGroupPermission(ctx context.Context, userID string, groupID uuid.UUID, globalPermission, groupPermission string) (domain.Result, error) {
+func (a *Authorizer) canManageGroupPermission(ctx context.Context, userID string, groupID uuid.UUID, globalPermission domain.GlobalPermission, groupPermission domain.GroupPermission) (domain.Result, error) {
 	if userID == "" || groupID == uuid.Nil {
 		return domain.Result{Allowed: false, Reason: "invalid group access request"}, nil
 	}
@@ -299,7 +306,7 @@ func (a *Authorizer) canManageGroupPermission(ctx context.Context, userID string
 		return domain.Result{}, fmt.Errorf("check global permission: %w", err)
 	}
 	if allowed {
-		return domain.Result{Allowed: true, Reason: globalPermission}, nil
+		return domain.Result{Allowed: true, Reason: string(globalPermission)}, nil
 	}
 
 	member, err := a.repository.IsActiveMember(ctx, userID, groupID)
@@ -315,18 +322,15 @@ func (a *Authorizer) canManageGroupPermission(ctx context.Context, userID string
 		return domain.Result{}, fmt.Errorf("check group permission: %w", err)
 	}
 	if !allowed {
-		return domain.Result{Allowed: false, Reason: groupPermission + " permission required"}, nil
+		return domain.Result{Allowed: false, Reason: string(groupPermission) + " permission required"}, nil
 	}
 
-	return domain.Result{Allowed: true, Reason: groupPermission}, nil
+	return domain.Result{Allowed: true, Reason: string(groupPermission)}, nil
 }
 
 // CanReadDatasetVersion applies publication and stored-group membership rules to one version.
 func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, datasetID, versionID uuid.UUID) (domain.Result, error) {
 	version, err := a.repository.DatasetVersionAuthz(ctx, datasetID, versionID)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
-		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
-	}
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("load dataset version authorization: %w", err)
 	}
@@ -338,7 +342,7 @@ func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, 
 func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, userID *string, applicationID, versionID uuid.UUID) (domain.Result, error) {
 	version, err := a.repository.SoftwareApplicationVersionAuthz(ctx, applicationID, versionID)
 	if err != nil {
-		return versionReadError("software application", err)
+		return domain.Result{}, fmt.Errorf("load software application version authorization: %w", err)
 	}
 	return a.authorizeVersionRead(ctx, userID, version.GroupID, version.Status)
 }
@@ -347,16 +351,9 @@ func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, user
 func (a *Authorizer) CanReadSoftwareSourceCodeVersion(ctx context.Context, userID *string, sourceCodeID, versionID uuid.UUID) (domain.Result, error) {
 	version, err := a.repository.SoftwareSourceCodeVersionAuthz(ctx, sourceCodeID, versionID)
 	if err != nil {
-		return versionReadError("software source code", err)
+		return domain.Result{}, fmt.Errorf("load software source code version authorization: %w", err)
 	}
 	return a.authorizeVersionRead(ctx, userID, version.GroupID, version.Status)
-}
-
-func versionReadError(resource string, err error) (domain.Result, error) {
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
-		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
-	}
-	return domain.Result{}, fmt.Errorf("load %s version authorization: %w", resource, err)
 }
 
 // authorizeVersionRead loads actor facts needed to evaluate one non-public version.
@@ -422,25 +419,17 @@ func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID string) (domain.
 }
 
 // AuthorizeGlobal evaluates a global permission without requiring membership.
-func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID, permissionKey string) (domain.Result, error) {
-	if err := a.requirePermissionScope(ctx, permissionKey, domain.PermissionScopeGlobal); err != nil {
-		return domain.Result{}, err
-	}
-
-	_, result, err := a.activeUser(ctx, userID)
+func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID string, permission domain.GlobalPermission) (domain.Result, error) {
+	result, admin, err := a.activeGlobalAdmin(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
 
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
 	if admin {
 		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
-	allowed, err := a.repository.HasGlobalPermission(ctx, userID, permissionKey)
+	allowed, err := a.repository.HasGlobalPermission(ctx, userID, permission)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global permission: %w", err)
 	}
@@ -457,7 +446,7 @@ func (a *Authorizer) AuthorizeResource(
 	userID string,
 	resourceType domain.ResourceType,
 	resourceID uuid.UUID,
-	permissionKey string,
+	permission domain.GroupPermission,
 ) (domain.Result, error) {
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
 	if errors.Is(err, domain.ErrAuthorizationNotFound) {
@@ -467,15 +456,11 @@ func (a *Authorizer) AuthorizeResource(
 		return domain.Result{}, fmt.Errorf("load resource group: %w", err)
 	}
 
-	return a.AuthorizeGroup(ctx, userID, groupID, permissionKey)
+	return a.AuthorizeGroup(ctx, userID, groupID, permission)
 }
 
 // AuthorizeGroup handles resource creation before a logical resource exists.
-func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID string, groupID uuid.UUID, permissionKey string) (domain.Result, error) {
-	if err := a.requirePermissionScope(ctx, permissionKey, domain.PermissionScopeGroup); err != nil {
-		return domain.Result{}, err
-	}
-
+func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID string, groupID uuid.UUID, permission domain.GroupPermission) (domain.Result, error) {
 	_, result, err := a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
@@ -497,7 +482,7 @@ func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID string, groupID 
 		return domain.Result{Allowed: false, Reason: "user is not an active group member"}, nil
 	}
 
-	allowed, err := a.repository.HasGroupPermission(ctx, userID, groupID, permissionKey)
+	allowed, err := a.repository.HasGroupPermission(ctx, userID, groupID, permission)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check group permission: %w", err)
 	}
@@ -548,15 +533,11 @@ func (a *Authorizer) CanReadResourceVersions(ctx context.Context, userID string,
 
 // canReadResourceGroup permits active users who are global admins or active group members.
 func (a *Authorizer) canReadResourceGroup(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
-	_, result, err := a.activeUser(ctx, userID)
+	result, admin, err := a.activeGlobalAdmin(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
 
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
 	if admin {
 		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
@@ -570,6 +551,20 @@ func (a *Authorizer) canReadResourceGroup(ctx context.Context, userID string, gr
 	}
 
 	return domain.Result{Allowed: true, Reason: "active group member"}, nil
+}
+
+func (a *Authorizer) activeGlobalAdmin(ctx context.Context, userID string) (domain.Result, bool, error) {
+	_, result, err := a.activeUser(ctx, userID)
+	if err != nil || !result.Allowed {
+		return result, false, err
+	}
+
+	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
+	if err != nil {
+		return domain.Result{}, false, fmt.Errorf("check global admin: %w", err)
+	}
+
+	return result, admin, nil
 }
 
 // CanReadContactPoint protects email data while allowing active members in any group.
@@ -598,112 +593,84 @@ func (a *Authorizer) CanReadContactPoint(ctx context.Context, userID string) (do
 	return domain.Result{Allowed: true, Reason: "active group member"}, nil
 }
 
-// CanReadDiscoveryCreatedBy allows creator identity exposure to active users
-// with membership in at least one group.
-func (a *Authorizer) CanReadDiscoveryCreatedBy(ctx context.Context, userID *string) (domain.Result, error) {
-	if userID == nil || *userID == "" {
-		return domain.Result{Allowed: false, Reason: "authentication required"}, nil
-	}
-
-	_, result, err := a.activeUser(ctx, *userID)
-	if err != nil || !result.Allowed {
-		return result, err
-	}
-
-	admin, err := a.repository.IsGlobalAdmin(ctx, *userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
-	}
-
-	member, err := a.repository.HasAnyActiveMembership(ctx, *userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check active memberships: %w", err)
-	}
-	if !member {
-		return domain.Result{Allowed: false, Reason: "user has no active group membership"}, nil
-	}
-
-	return domain.Result{Allowed: true, Reason: "active group member"}, nil
-}
-
 // AuthorizeDiscovery applies discovery visibility once and returns candidates safe to project.
-// It reuses creator visibility checks and loads candidate group memberships in one batch.
+// It loads the actor's active group memberships and filters candidates in memory.
 func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *domain.Actor, candidates []domain.DiscoveryCandidate) (domain.DiscoveryAuthorization, error) {
-	result := domain.DiscoveryAuthorization{
-		AllowedCandidates: make([]domain.DiscoveryCandidate, 0, len(candidates)),
-	}
 	if len(candidates) == 0 {
-		return result, nil
+		return domain.DiscoveryAuthorization{
+			AllowedCandidates: []domain.DiscoveryCandidate{},
+			CreatedByGroupIDs: map[uuid.UUID]struct{}{},
+		}, nil
 	}
-	for _, candidate := range candidates {
-		switch candidate.Type {
+
+	// Reject unsupported resource types up front.
+	for _, c := range candidates {
+		switch c.Type {
 		case domain.Dataset, domain.SoftwareApplication, domain.SoftwareSourceCode:
 		default:
-			return domain.DiscoveryAuthorization{}, fmt.Errorf("unsupported resource type %q: %w", candidate.Type, domain.ErrInvalidDiscovery)
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("unsupported resource type %q: %w", c.Type, domain.ErrInvalidDiscovery)
 		}
 	}
 
-	creator := domain.Result{Allowed: false, Reason: "authentication required"}
+	// Resolve the acting user, if any; anonymous or inactive actors stay nil.
+	var user *domain.AuthorizationUser
 	if actor != nil {
-		var err error
-		creator, err = a.CanReadDiscoveryCreatedBy(ctx, (*string)(actor))
+		loaded, userResult, err := a.activeUser(ctx, string(*actor))
 		if err != nil {
-			return domain.DiscoveryAuthorization{}, fmt.Errorf("check discovery creator visibility: %w", err)
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("load discovery user: %w", err)
 		}
-		result.IncludeCreatedBy = creator.Allowed
-	}
-
-	activeGroups := make(map[uuid.UUID]struct{})
-	if actor != nil && creator.Allowed && creator.Reason != "global admin" {
-		groupIDs := make([]uuid.UUID, 0, len(candidates))
-		seenGroups := make(map[uuid.UUID]struct{}, len(candidates))
-		for _, candidate := range candidates {
-			if candidate.Status == domain.Published || candidate.GroupID == uuid.Nil {
-				continue
-			}
-			if _, ok := seenGroups[candidate.GroupID]; ok {
-				continue
-			}
-			seenGroups[candidate.GroupID] = struct{}{}
-			groupIDs = append(groupIDs, candidate.GroupID)
-		}
-		if len(groupIDs) > 0 {
-			groups, err := a.repository.ActiveMemberGroupIDs(ctx, string(*actor), groupIDs)
-			if err != nil {
-				return domain.DiscoveryAuthorization{}, fmt.Errorf("load discovery group memberships: %w", err)
-			}
-			for _, groupID := range groups {
-				activeGroups[groupID] = struct{}{}
-			}
+		if userResult.Allowed {
+			user = &loaded
 		}
 	}
 
-	for _, candidate := range candidates {
-		if !discoveryCandidateAllowed(actor, creator, activeGroups, candidate) {
+	visibleGroupIDs := map[uuid.UUID]struct{}{}
+
+	// Find the groups where the user is an active member to protect fields like "created_by".
+	switch {
+	case user == nil:
+		// No active user: nothing to look up, nothing to grant beyond defaults.
+
+	case user.GlobalAdmin:
+		// Admins bypass membership checks entirely; expose every candidate's group.
+		for _, c := range candidates {
+			visibleGroupIDs[c.GroupID] = struct{}{}
+		}
+
+	default:
+		// Regular member: load this user's active group memberships once.
+		memberships, err := a.repository.ListActiveUserMemberships(ctx, *actor)
+		if err != nil {
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("load discovery group memberships: %w", err)
+		}
+		for _, g := range memberships {
+			visibleGroupIDs[g] = struct{}{}
+		}
+	}
+
+	// Filter candidates down to what's actually visible to the actor
+	allowed := make([]domain.DiscoveryCandidate, 0, len(candidates))
+	for _, c := range candidates {
+		if c.Status == domain.Published {
+			allowed = append(allowed, c)
 			continue
 		}
-		result.AllowedCandidates = append(result.AllowedCandidates, candidate)
+		if user == nil {
+			continue
+		}
+		if user.GlobalAdmin {
+			allowed = append(allowed, c)
+			continue
+		}
+		if _, member := visibleGroupIDs[c.GroupID]; member {
+			allowed = append(allowed, c)
+		}
 	}
 
-	return result, nil
-}
-
-// discoveryCandidateAllowed evaluates canonical candidate status and group facts.
-func discoveryCandidateAllowed(actor *domain.Actor, creator domain.Result, activeGroups map[uuid.UUID]struct{}, candidate domain.DiscoveryCandidate) bool {
-	if candidate.Status == domain.Published {
-		return true
-	}
-	if actor == nil || !creator.Allowed {
-		return false
-	}
-	if creator.Reason == "global admin" {
-		return true
-	}
-	_, member := activeGroups[candidate.GroupID]
-	return member
+	return domain.DiscoveryAuthorization{
+		AllowedCandidates: allowed,
+		CreatedByGroupIDs: visibleGroupIDs,
+	}, nil
 }
 
 func (a *Authorizer) resourcePublished(ctx context.Context, typ domain.ResourceType, id uuid.UUID) (bool, error) {
@@ -740,23 +707,9 @@ func (a *Authorizer) activeUser(ctx context.Context, userID string) (domain.Auth
 		return domain.AuthorizationUser{}, domain.Result{}, fmt.Errorf("load user: %w", err)
 	}
 	if user.Status != domain.UserStatusActive {
-		return domain.AuthorizationUser{ID: "", Status: ""}, domain.Result{Allowed: false, Reason: "user is not active"}, nil
+		return user, domain.Result{Allowed: false, Reason: "user is not active"}, nil
 	}
 	return user, domain.Result{Allowed: true, Reason: ""}, nil
-}
-
-func (a *Authorizer) requirePermissionScope(ctx context.Context, permissionKey string, scope domain.PermissionScope) error {
-	actual, err := a.repository.PermissionScope(ctx, permissionKey)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
-		return fmt.Errorf("unknown permission: %s", permissionKey)
-	}
-	if err != nil {
-		return fmt.Errorf("get permission scope: %w", err)
-	}
-	if actual != scope {
-		return fmt.Errorf("permission %s is not %s scoped", permissionKey, scope)
-	}
-	return nil
 }
 
 func (a *Authorizer) resourceGroup(ctx context.Context, typ domain.ResourceType, id uuid.UUID) (uuid.UUID, error) {

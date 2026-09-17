@@ -3,7 +3,6 @@ package clients
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -41,22 +40,33 @@ func (c *MetadataLifecycle) GetUser(ctx context.Context, actorID, id string) (do
 		return domain.User{}, err
 	}
 
+	globalGrantedPermissions, err := mapSliceErr(user.GlobalGrantedPermissions, fromProtoGlobalPermission)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	globalRolePermissions, err := mapSliceErr(user.GlobalRolePermissions, fromProtoGlobalPermission)
+	if err != nil {
+		return domain.User{}, err
+	}
+
 	memberships, err := mapSliceErr(user.Memberships, c.mapMembership)
 	if err != nil {
 		return domain.User{}, err
 	}
 
 	return domain.User{
-		ID:                user.Id,
-		Email:             user.Email,
-		GivenName:         user.GivenName,
-		FamilyName:        user.FamilyName,
-		Status:            status,
-		GlobalRoles:       globalRoles,
-		GlobalPermissions: slices.Clone(user.GlobalPermissions),
-		CreatedAt:         user.GetCreatedAt().AsTime(),
-		UpdatedAt:         user.GetUpdatedAt().AsTime(),
-		Memberships:       memberships,
+		ID:                       user.Id,
+		Email:                    user.Email,
+		GivenName:                user.GivenName,
+		FamilyName:               user.FamilyName,
+		Status:                   status,
+		GlobalRoles:              globalRoles,
+		GlobalGrantedPermissions: globalGrantedPermissions,
+		GlobalRolePermissions:    globalRolePermissions,
+		CreatedAt:                user.GetCreatedAt().AsTime(),
+		UpdatedAt:                user.GetUpdatedAt().AsTime(),
+		Memberships:              memberships,
 	}, nil
 }
 
@@ -76,17 +86,28 @@ func (c *MetadataLifecycle) mapMembership(membership *metadatalifecyclev1.UserMe
 		return domain.Membership{}, err
 	}
 
+	grantedPermissions, err := mapSliceErr(membership.GrantedPermissions, fromProtoGroupPermission)
+	if err != nil {
+		return domain.Membership{}, err
+	}
+
+	rolePermissions, err := mapSliceErr(membership.RolePermissions, fromProtoGroupPermission)
+	if err != nil {
+		return domain.Membership{}, err
+	}
+
 	return domain.Membership{
 		Group: domain.GroupSummary{
 			ID:   membership.Group.Id,
 			Name: membership.Group.Name,
 		},
-		Roles:            groupRoles,
-		Status:           status,
-		GroupPermissions: slices.Clone(membership.GroupPermissions),
-		RoleRequests:     roleRequests,
-		CreatedAt:        membership.GetCreatedAt().AsTime(),
-		UpdatedAt:        membership.GetUpdatedAt().AsTime(),
+		Roles:              groupRoles,
+		Status:             status,
+		GrantedPermissions: grantedPermissions,
+		RolePermissions:    rolePermissions,
+		RoleRequests:       roleRequests,
+		CreatedAt:          membership.GetCreatedAt().AsTime(),
+		UpdatedAt:          membership.GetUpdatedAt().AsTime(),
 	}, nil
 }
 
@@ -127,6 +148,44 @@ func fromProtoGlobalRole(value metadatalifecyclev1.GlobalRole) (domain.GlobalRol
 	}
 }
 
+func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1.GlobalPermission, error) {
+	switch value {
+	case domain.GlobalPermissionMembershipManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_MEMBERSHIP_MANAGE, nil
+	case domain.GlobalPermissionRoleManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE, nil
+	case domain.GlobalPermissionPermissionManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GlobalPermissionOrganizationManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE, nil
+	case domain.GlobalPermissionContactPointManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE, nil
+	case domain.GlobalPermissionCategorySchemeManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE, nil
+	default:
+		return 0, fmt.Errorf("invalid global permission %q", value)
+	}
+}
+
+func fromProtoGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domain.GlobalPermission, error) {
+	switch value {
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_MEMBERSHIP_MANAGE:
+		return domain.GlobalPermissionMembershipManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE:
+		return domain.GlobalPermissionRoleManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE:
+		return domain.GlobalPermissionPermissionManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE:
+		return domain.GlobalPermissionOrganizationManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE:
+		return domain.GlobalPermissionContactPointManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE:
+		return domain.GlobalPermissionCategorySchemeManage, nil
+	default:
+		return "", fmt.Errorf("metadata-lifecycle returned unknown global permission: %v", value)
+	}
+}
+
 func fromProtoGroupRole(value metadatalifecyclev1.GroupRole) (domain.GroupRole, error) {
 	switch value {
 	case metadatalifecyclev1.GroupRole_GROUP_ROLE_EDITOR:
@@ -137,6 +196,72 @@ func fromProtoGroupRole(value metadatalifecyclev1.GroupRole) (domain.GroupRole, 
 		return domain.GroupRoleAdmin, nil
 	default:
 		return "", fmt.Errorf("metadata-lifecycle returned unknown group role: %v", value)
+	}
+}
+
+func toProtoGroupPermission(value domain.GroupPermission) (metadatalifecyclev1.GroupPermission, error) {
+	switch value {
+	case domain.GroupPermissionResourceCreate:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE, nil
+	case domain.GroupPermissionResourceEdit:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_EDIT, nil
+	case domain.GroupPermissionResourceSubmit:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_SUBMIT, nil
+	case domain.GroupPermissionResourceWithdraw:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_WITHDRAW, nil
+	case domain.GroupPermissionResourceReopen:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REOPEN, nil
+	case domain.GroupPermissionResourceDiscard:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_DISCARD, nil
+	case domain.GroupPermissionResourceReject:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REJECT, nil
+	case domain.GroupPermissionResourcePublish:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_PUBLISH, nil
+	case domain.GroupPermissionResourceUnpublish:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_UNPUBLISH, nil
+	case domain.GroupPermissionMembershipManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_MEMBERSHIP_MANAGE, nil
+	case domain.GroupPermissionRoleManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_ROLE_MANAGE, nil
+	case domain.GroupPermissionPermissionManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GroupPermissionCategoryManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE, nil
+	default:
+		return 0, fmt.Errorf("invalid group permission %q", value)
+	}
+}
+
+func fromProtoGroupPermission(value metadatalifecyclev1.GroupPermission) (domain.GroupPermission, error) {
+	switch value {
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE:
+		return domain.GroupPermissionResourceCreate, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_EDIT:
+		return domain.GroupPermissionResourceEdit, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_SUBMIT:
+		return domain.GroupPermissionResourceSubmit, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_WITHDRAW:
+		return domain.GroupPermissionResourceWithdraw, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REOPEN:
+		return domain.GroupPermissionResourceReopen, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_DISCARD:
+		return domain.GroupPermissionResourceDiscard, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REJECT:
+		return domain.GroupPermissionResourceReject, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_PUBLISH:
+		return domain.GroupPermissionResourcePublish, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_UNPUBLISH:
+		return domain.GroupPermissionResourceUnpublish, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_MEMBERSHIP_MANAGE:
+		return domain.GroupPermissionMembershipManage, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_ROLE_MANAGE:
+		return domain.GroupPermissionRoleManage, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE:
+		return domain.GroupPermissionPermissionManage, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE:
+		return domain.GroupPermissionCategoryManage, nil
+	default:
+		return "", fmt.Errorf("metadata-lifecycle returned unknown group permission: %v", value)
 	}
 }
 
