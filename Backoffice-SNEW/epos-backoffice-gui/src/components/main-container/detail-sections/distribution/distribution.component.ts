@@ -17,6 +17,7 @@ export class DistributionComponent {
 
   protected readonly distributionFields: Array<keyof DatasetDistributionCommonForm> = ['title', 'description', 'issued', 'modified', 'license', 'type'];
   protected distributionTabs = 0;
+  protected newDistributionKind: DatasetDistributionForm['kind'] = 'web-service';
 
   protected selectDistributionTab(index: number): void {
     this.distributionTabs = index;
@@ -24,6 +25,16 @@ export class DistributionComponent {
 
   protected emitModelChange(): void {
     this.modelChange.emit(this.model);
+  }
+
+  protected addDistribution(): void {
+    if (this.disabled) {
+      return;
+    }
+
+    const model = [...this.model, this.emptyDistribution(this.newDistributionKind)];
+    this.distributionTabs = model.length - 1;
+    this.modelChange.emit(model);
   }
 
   protected selectedDistribution(): DatasetDistributionForm | null {
@@ -41,5 +52,48 @@ export class DistributionComponent {
     };
 
     return labels[field];
+  }
+
+  private emptyDistribution(kind: DatasetDistributionForm['kind']): DatasetDistributionForm {
+    const common = {
+      title: '',
+      description: '',
+      issued: '',
+      modified: '',
+      license: ''
+    };
+
+    if (kind === 'downloadable-file') {
+      return {
+        ...common,
+        kind,
+        type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
+        downloadableFile: { url: '', format: '' }
+      };
+    }
+
+    return {
+      ...common,
+      kind,
+      type: 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE',
+      webService: {
+        name: '',
+        description: '',
+        templateUrl: '',
+        method: 'GET',
+        type: 'DYNAMIC',
+        visibleOn: [],
+        format: '',
+        bodyContentType: '',
+        bodyTemplate: '',
+        bodyParameters: [],
+        documentation: { title: '', description: '', uri: '' },
+        provider: { id: '', name: '' },
+        contactPoints: [],
+        spatialCoverage: null,
+        temporalCoverage: { start: '', end: '' },
+        parameters: []
+      }
+    };
   }
 }

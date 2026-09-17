@@ -11,6 +11,7 @@ import type {
   VersioningStatus
 } from '../../generated/backofficeSchemas';
 import {
+  distributionValidationError,
   hasBodyOnUnsupportedMethod,
   hasIncompleteWebServiceBody,
   hasInvalidExplodeParameter,
@@ -328,6 +329,12 @@ export class ResourceDetailStore {
     const datasetForm = this.datasetForm();
 
     if (datasetVersion && datasetForm) {
+      const distributionError = distributionValidationError(datasetForm);
+      if (distributionError) {
+        this.resourceActions.setError(distributionError);
+        return null;
+      }
+
       if (hasInvalidExplodeParameter(datasetForm)) {
         this.resourceActions.setError('Explode requires a QUERY parameter with Multiple values enabled.');
         return null;

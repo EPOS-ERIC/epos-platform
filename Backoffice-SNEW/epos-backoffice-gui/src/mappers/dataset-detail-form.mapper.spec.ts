@@ -6,6 +6,7 @@ import type {
   DatasetWebServiceScalarParameterForm,
 } from '../models/dataset-detail-form';
 import {
+  distributionValidationError,
   hasBodyOnUnsupportedMethod,
   hasIncompleteWebServiceBody,
   hasInvalidExplodeParameter,
@@ -415,6 +416,21 @@ describe('toDatasetSaveRequest', () => {
     expect(stringDraft.enum).toBeUndefined();
   });
 
+  it('omits empty optional web service documentation', () => {
+    const form = formWithParameters([]);
+    const webService = form.distributions[0].kind === 'web-service'
+      ? form.distributions[0].webService
+      : undefined;
+    if (!webService) throw new Error('Expected a web service');
+    webService.documentation = { title: '', description: '', uri: '' };
+
+    const distribution = toDatasetSaveRequest(form, 1, datasetMetadata()).metadata.distributions?.[0];
+
+    if (!distribution || distribution.type !== WEB_SERVICE_TYPE)
+      throw new Error('Expected web service draft');
+    expect(distribution.web_service.documentation).toBeUndefined();
+  });
+
   it('normalizes comma decimals and maps numeric enum values by kind', () => {
     const numericParameter: DatasetWebServiceParameterForm = {
       kind: 'FLOAT',
@@ -454,6 +470,61 @@ describe('toDatasetSaveRequest', () => {
         ],
       },
     });
+  });
+});
+
+describe('distributionValidationError', () => {
+  it('reports required web service fields before saving', () => {
+    const form = formWithParameters([]);
+
+    expect(distributionValidationError(form)).toBe('Distribution 1: title is required.');
+    form.distributions[0].title = 'API distribution';
+    expect(distributionValidationError(form)).toBe('Distribution 1: description is required.');
+    form.distributions[0].description = 'API distribution description';
+    if (form.distributions[0].kind !== 'web-service') throw new Error('Expected a web service');
+    form.distributions[0].webService.name = '';
+    expect(distributionValidationError(form)).toBe('Distribution 1: web service name is required.');
+
+    form.distributions[0].webService.name = 'API';
+    form.distributions[0].webService.templateUrl = '';
+    expect(distributionValidationError(form)).toBe('Distribution 1: web service template URL is required.');
+    form.distributions[0].webService.templateUrl = 'https://example.test';
+    form.distributions[0].webService.format = '';
+    expect(distributionValidationError(form)).toBe('Distribution 1: web service format is required.');
+  });
+
+  it('requires downloadable file URL and format', () => {
+    const form = emptyDatasetForm();
+    form.distributions = [{
+      kind: 'downloadable-file',
+      title: 'Download',
+      description: 'Downloadable distribution',
+      issued: '',
+      modified: '',
+      license: '',
+      type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
+      downloadableFile: { url: '', format: '' },
+    }];
+
+    expect(distributionValidationError(form)).toBe('Distribution 1: downloadable file URL is required.');
+    const distribution = form.distributions[0];
+    if (distribution.kind !== 'downloadable-file') throw new Error('Expected a downloadable file');
+    distribution.downloadableFile.url = 'https://example.test/file';
+    expect(distributionValidationError(form)).toBe('Distribution 1: downloadable file format is required.');
+  });
+
+  it('requires a URI only when documentation content is provided', () => {
+    const form = formWithParameters([]);
+    form.distributions[0].title = 'API distribution';
+    form.distributions[0].description = 'API distribution description';
+    if (form.distributions[0].kind !== 'web-service') throw new Error('Expected a web service');
+    form.distributions[0].webService.documentation = { title: '', description: '', uri: '' };
+    expect(distributionValidationError(form)).toBeNull();
+
+    form.distributions[0].webService.documentation.title = 'Guide';
+    expect(distributionValidationError(form)).toBe(
+      'Distribution 1: documentation URI is required when documentation is provided.',
+    );
   });
 });
 

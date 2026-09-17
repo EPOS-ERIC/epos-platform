@@ -150,6 +150,48 @@ export function hasBodyOnUnsupportedMethod(form: DatasetDetailForm): boolean {
   });
 }
 
+export function distributionValidationError(form: DatasetDetailForm): string | null {
+  for (const [index, distribution] of form.distributions.entries()) {
+    const label = `Distribution ${index + 1}`;
+
+    if (!hasIdentifierValue(distribution.title)) {
+      return `${label}: title is required.`;
+    }
+    if (!hasIdentifierValue(distribution.description)) {
+      return `${label}: description is required.`;
+    }
+
+    if (distribution.kind === 'downloadable-file') {
+      if (!hasIdentifierValue(distribution.downloadableFile.url)) {
+        return `${label}: downloadable file URL is required.`;
+      }
+      if (!hasIdentifierValue(distribution.downloadableFile.format)) {
+        return `${label}: downloadable file format is required.`;
+      }
+      continue;
+    }
+
+    if (!hasIdentifierValue(distribution.webService.name)) {
+      return `${label}: web service name is required.`;
+    }
+    if (!hasIdentifierValue(distribution.webService.templateUrl)) {
+      return `${label}: web service template URL is required.`;
+    }
+    if (!hasIdentifierValue(distribution.webService.format)) {
+      return `${label}: web service format is required.`;
+    }
+
+    const documentation = distribution.webService.documentation;
+    const hasDocumentation = [documentation.title, documentation.description, documentation.uri]
+      .some(hasIdentifierValue);
+    if (hasDocumentation && !hasIdentifierValue(documentation.uri)) {
+      return `${label}: documentation URI is required when documentation is provided.`;
+    }
+  }
+
+  return null;
+}
+
 export function hasParameterDefaultOutsideAllowedValues(form: DatasetDetailForm): boolean {
   return form.distributions.some(
     (distribution) =>
@@ -449,11 +491,13 @@ function buildWebServiceDraft(
     body_parameters: webService.bodyParameters.map(buildWebServiceScalarParameterDraft),
     format: webService.format,
     provider: hasIdentifierValue(webService.provider.id) ? webService.provider.id : undefined,
-    documentation: {
-      title: undefinedIfBlank(webService.documentation.title),
-      description: undefinedIfBlank(webService.documentation.description),
-      uri: webService.documentation.uri,
-    },
+    documentation: hasIdentifierValue(webService.documentation.uri)
+      ? {
+          title: undefinedIfBlank(webService.documentation.title),
+          description: undefinedIfBlank(webService.documentation.description),
+          uri: webService.documentation.uri,
+        }
+      : undefined,
     spatial_coverage: buildSpatialCoverageDraft(webService.spatialCoverage),
     temporal_coverage: buildTemporalCoverageDraft(webService.temporalCoverage),
     contact_points: webService.contactPoints.filter(hasIdentifierValue),

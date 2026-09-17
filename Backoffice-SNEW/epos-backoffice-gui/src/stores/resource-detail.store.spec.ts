@@ -94,6 +94,23 @@ describe('ResourceDetailStore', () => {
     expect(store.navigationItems()[1]?.anchor).toBe('spatial-coverage');
   });
 
+  it('blocks invalid distributions before calling the save endpoint', () => {
+    store.load(context('dataset', 'dataset-id'));
+    store.updateDatasetDistributions([{
+      kind: 'downloadable-file',
+      title: '',
+      description: '',
+      issued: '',
+      modified: '',
+      license: '',
+      type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
+      downloadableFile: { url: '', format: '' }
+    }]);
+
+    expect(store.buildSaveContext()).toBeNull();
+    expect(resourceActions.setError).toHaveBeenCalledWith('Distribution 1: title is required.');
+  });
+
   it('cancels the first request when a second load starts', () => {
     const first = trackedRequest();
     const second = new Subject<ResourceVersionResponse<DiscoveryResourceType>>();

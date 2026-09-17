@@ -1,1 +1,37 @@
 @import '../detail-shared.css';
+
+.distribution-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.distribution-actions select {
+  min-width: 180px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 700px) {
+  .distribution-actions,
+  .distribution-actions label,
+  .distribution-actions select,
+  .distribution-actions .app-button {
+    width: 100%;
+  }
+
+  .distribution-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
