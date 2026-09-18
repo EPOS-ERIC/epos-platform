@@ -649,33 +649,35 @@ type Dataset struct {
 }
 
 type DatasetVersion struct {
-	ID                 uuid.UUID
-	DatasetID          uuid.UUID
-	Status             ResourceStatus
-	Revision           int32
-	Title              string
-	Description        string
-	Keywords           []string
-	AccrualPeriodicity *string
-	QualityAnnotation  *string
-	AccessRight        *string
-	SourceCreatedAt    *time.Time
-	SourceUpdatedAt    *time.Time
-	SpatialCoverage    go_geom.T
-	TemporalStart      *time.Time
-	TemporalEnd        *time.Time
-	CreatedBy          string
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	SubmittedBy        *string
-	SubmittedAt        *time.Time
-	PublishedBy        *string
-	PublishedAt        *time.Time
-	ArchivedBy         *string
-	ArchivedAt         *time.Time
-	RejectedBy         *string
-	RejectedAt         *time.Time
-	RejectionNote      *string
+	ID                         uuid.UUID
+	DatasetID                  uuid.UUID
+	Status                     ResourceStatus
+	Revision                   int32
+	Title                      string
+	Description                string
+	Keywords                   []string
+	AccrualPeriodicity         *string
+	QualityAnnotation          *string
+	AccessRight                *string
+	SourceCreatedAt            *time.Time
+	SourceUpdatedAt            *time.Time
+	SpatialCoverage            go_geom.T
+	TemporalStart              *time.Time
+	TemporalEnd                *time.Time
+	GeologicalTemporalStartMya *float64
+	GeologicalTemporalEndMya   *float64
+	CreatedBy                  string
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
+	SubmittedBy                *string
+	SubmittedAt                *time.Time
+	PublishedBy                *string
+	PublishedAt                *time.Time
+	ArchivedBy                 *string
+	ArchivedAt                 *time.Time
+	RejectedBy                 *string
+	RejectedAt                 *time.Time
+	RejectionNote              *string
 }
 
 type DatasetVersionCategory struct {

@@ -91,7 +91,10 @@ message DatasetResourceMetadata {
   optional string access_right = 7 [(buf.validate.field).string.min_len = 1];
   repeated Distribution distributions = 8;
   optional string spatial_coverage = 9 [(buf.validate.field).string.min_len = 1];
-  Temporal temporal_coverage = 10;
+  oneof temporal_range {
+    Temporal temporal_coverage = 10;
+    GeologicalTemporalCoverage geological_temporal_coverage = 17;
+  }
   repeated Identifier persistent_identifiers = 11;
   repeated string contact_points = 12 [(buf.validate.field).repeated.items.string.uuid = true];
   repeated EntityReference providers = 13;
@@ -147,6 +150,11 @@ message Temporal {
   google.protobuf.Timestamp end = 2;
 }
 
+message GeologicalTemporalCoverage {
+  optional double start_mya = 1;
+  optional double end_mya = 2;
+}
+
 message DatasetInput {
   string title = 1 [(buf.validate.field).string.min_len = 1];
   string description = 2 [(buf.validate.field).string.min_len = 1];
@@ -156,7 +164,10 @@ message DatasetInput {
   optional string access_right = 6 [(buf.validate.field).string.min_len = 1];
   repeated DistributionInput distributions = 7;
   optional string spatial_coverage = 8 [(buf.validate.field).string.min_len = 1];
-  Temporal temporal_coverage = 9;
+  oneof temporal_range {
+    Temporal temporal_coverage = 9;
+    GeologicalTemporalCoverage geological_temporal_coverage = 16;
+  }
   repeated IdentifierInput persistent_identifiers = 10;
   repeated string contact_points = 11 [(buf.validate.field).repeated.items.string.uuid = true];
   repeated string providers = 12 [(buf.validate.field).repeated.items.string.uuid = true];

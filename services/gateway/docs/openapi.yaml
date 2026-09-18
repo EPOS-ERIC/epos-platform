@@ -1937,6 +1937,11 @@ components:
           description: WKT POINT or POLYGON geometry in EPSG:4326.
           example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        geological_temporal_coverage:
+          {
+            $ref: "#/components/schemas/GeologicalTemporalCoverage",
+            description: Mutually exclusive with temporal_coverage.
+          }
         persistent_identifiers:
           {
             type: array,
@@ -2722,6 +2727,14 @@ components:
         start: { type: string, format: date-time, nullable: true }
         end: { type: string, format: date-time, nullable: true }
 
+    GeologicalTemporalCoverage:
+      type: object
+      additionalProperties: false
+      description: Geological age range in millions of years before present. Start is older than or equal to end.
+      properties:
+        start_mya: { type: number, format: double, nullable: true, minimum: 0 }
+        end_mya: { type: number, format: double, nullable: true, minimum: 0 }
+
     CreateResourceDraftRequest:
       oneOf:
         - $ref: "#/components/schemas/CreateDatasetResourceRequest"
@@ -2929,6 +2942,11 @@ components:
           description: WKT POINT or POLYGON geometry in EPSG:4326.
           example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        geological_temporal_coverage:
+          {
+            $ref: "#/components/schemas/GeologicalTemporalCoverage",
+            description: Mutually exclusive with temporal_coverage.
+          }
         persistent_identifiers:
           type: array
           items: { $ref: "#/components/schemas/Identifier" }

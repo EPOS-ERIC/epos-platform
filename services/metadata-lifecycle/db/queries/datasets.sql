@@ -27,6 +27,8 @@ INSERT INTO
         spatial_coverage,
         temporal_start,
         temporal_end,
+        geological_temporal_start_mya,
+        geological_temporal_end_mya,
         created_by
     )
 VALUES
@@ -43,6 +45,8 @@ VALUES
         sqlc.narg(spatial_coverage),
         sqlc.narg(temporal_start),
         sqlc.narg(temporal_end),
+        sqlc.narg(geological_temporal_start_mya),
+        sqlc.narg(geological_temporal_end_mya),
         sqlc.arg(created_by)
     )
 RETURNING
@@ -63,6 +67,8 @@ SET
     spatial_coverage = sqlc.narg(spatial_coverage),
     temporal_start = sqlc.narg(temporal_start),
     temporal_end = sqlc.narg(temporal_end),
+    geological_temporal_start_mya = sqlc.narg(geological_temporal_start_mya),
+    geological_temporal_end_mya = sqlc.narg(geological_temporal_end_mya),
     revision = revision + 1
 WHERE
     id = sqlc.arg(id)
@@ -277,6 +283,8 @@ inserted AS (
             spatial_coverage,
             temporal_start,
             temporal_end,
+            geological_temporal_start_mya,
+            geological_temporal_end_mya,
             created_by
         )
     SELECT
@@ -292,6 +300,8 @@ inserted AS (
         spatial_coverage,
         temporal_start,
         temporal_end,
+        geological_temporal_start_mya,
+        geological_temporal_end_mya,
         sqlc.arg(actor_id)
     FROM
         source
@@ -1119,6 +1129,8 @@ SELECT
     version.spatial_coverage,
     version.temporal_start,
     version.temporal_end,
+    version.geological_temporal_start_mya,
+    version.geological_temporal_end_mya,
     version.created_by,
     version.created_at,
     version.updated_at,

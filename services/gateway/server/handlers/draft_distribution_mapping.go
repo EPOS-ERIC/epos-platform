@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -18,6 +20,38 @@ func toProtoTemporal(v gatewayapi.OptTemporalCoverage) *metadatalifecyclev1.Temp
 		r.End = timestamppb.New(v.Value.End.Value)
 	}
 	return r
+}
+
+type protoDatasetTemporalRange struct {
+	temporal   *metadatalifecyclev1.Temporal
+	geological *metadatalifecyclev1.GeologicalTemporalCoverage
+}
+
+func toProtoDatasetTemporalRange(
+	temporal gatewayapi.OptTemporalCoverage,
+	geological gatewayapi.OptGeologicalTemporalCoverage,
+) (protoDatasetTemporalRange, error) {
+	if temporal.Set && geological.Set {
+		return protoDatasetTemporalRange{}, errors.New("dataset temporal coverage fields are mutually exclusive")
+	}
+	if temporal.Set {
+		return protoDatasetTemporalRange{temporal: toProtoTemporal(temporal)}, nil
+	}
+	if geological.Set {
+		return protoDatasetTemporalRange{geological: toProtoGeologicalTemporal(geological.Value)}, nil
+	}
+	return protoDatasetTemporalRange{}, nil
+}
+
+func toProtoGeologicalTemporal(v gatewayapi.GeologicalTemporalCoverage) *metadatalifecyclev1.GeologicalTemporalCoverage {
+	result := &metadatalifecyclev1.GeologicalTemporalCoverage{}
+	if v.StartMya.Set && !v.StartMya.Null {
+		result.StartMya = new(v.StartMya.Value)
+	}
+	if v.EndMya.Set && !v.EndMya.Null {
+		result.EndMya = new(v.EndMya.Value)
+	}
+	return result
 }
 
 func toProtoDocumentation(v gatewayapi.OptDocumentation) *metadatalifecyclev1.Documentation {

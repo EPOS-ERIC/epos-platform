@@ -9,21 +9,22 @@ import (
 
 // DatasetInput contains caller-controlled dataset version fields.
 type DatasetInput struct {
-	Title                 string
-	Description           string
-	Keywords              []string
-	AccrualPeriodicity    *string
-	QualityAnnotation     *string
-	AccessRight           *string
-	Distributions         []DistributionInput
-	SpatialCoverage       geom.T
-	TemporalCoverage      *Temporal
-	PersistentIdentifiers []IdentifierInput
-	ContactPointIDs       []uuid.UUID
-	ProviderIDs           []uuid.UUID
-	CategoryIDs           []uuid.UUID
-	SourceCreated         *time.Time
-	SourceUpdated         *time.Time
+	Title                      string
+	Description                string
+	Keywords                   []string
+	AccrualPeriodicity         *string
+	QualityAnnotation          *string
+	AccessRight                *string
+	Distributions              []DistributionInput
+	SpatialCoverage            geom.T
+	TemporalCoverage           *Temporal
+	GeologicalTemporalCoverage *GeologicalTemporal
+	PersistentIdentifiers      []IdentifierInput
+	ContactPointIDs            []uuid.UUID
+	ProviderIDs                []uuid.UUID
+	CategoryIDs                []uuid.UUID
+	SourceCreated              *time.Time
+	SourceUpdated              *time.Time
 }
 
 // DatasetDraftInput contains a validated draft replacement command.
@@ -39,22 +40,23 @@ type DatasetRejectionInput struct {
 
 // DatasetMetadata is persisted dataset version metadata.
 type DatasetMetadata struct {
-	ID                    uuid.UUID
-	Title                 string
-	Description           string
-	Keywords              []string
-	AccrualPeriodicity    *string
-	QualityAnnotation     *string
-	AccessRight           *string
-	Distributions         []Distribution
-	SpatialCoverage       geom.T
-	TemporalCoverage      *Temporal
-	PersistentIdentifiers []Identifier
-	ContactPoints         []ContactPoint
-	Providers             []OrganizationMetadata
-	Categories            []CategoryMetadata
-	SourceCreated         *time.Time
-	SourceUpdated         *time.Time
+	ID                         uuid.UUID
+	Title                      string
+	Description                string
+	Keywords                   []string
+	AccrualPeriodicity         *string
+	QualityAnnotation          *string
+	AccessRight                *string
+	Distributions              []Distribution
+	SpatialCoverage            geom.T
+	TemporalCoverage           *Temporal
+	GeologicalTemporalCoverage *GeologicalTemporal
+	PersistentIdentifiers      []Identifier
+	ContactPoints              []ContactPoint
+	Providers                  []OrganizationMetadata
+	Categories                 []CategoryMetadata
+	SourceCreated              *time.Time
+	SourceUpdated              *time.Time
 }
 
 // DistributionInput contains caller-controlled distribution fields.
@@ -135,6 +137,11 @@ type Documentation struct {
 type Temporal struct {
 	Start *time.Time
 	End   *time.Time
+}
+
+type GeologicalTemporal struct {
+	StartMYA *float64
+	EndMYA   *float64
 }
 
 type HTTPMethod string
