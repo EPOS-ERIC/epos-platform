@@ -370,7 +370,8 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 		return StringSchema{}, fmt.Errorf("string enum cannot be empty: %w", ErrInvalidDataset)
 	}
 	seen := make(map[string]struct{}, len(value.Enum))
-	for _, item := range value.Enum {
+	for i := range value.Enum {
+		item := &value.Enum[i]
 		if item.Value == "" {
 			return StringSchema{}, fmt.Errorf("string enum values cannot be empty: %w", ErrInvalidDataset)
 		}
