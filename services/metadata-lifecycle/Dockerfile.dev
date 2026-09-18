@@ -7,6 +7,7 @@ WORKDIR /workspace/services/metadata-lifecycle
 COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
 
 RUN go install github.com/grpc-ecosystem/grpc-health-probe@v0.4.42
+COPY . /workspace
 
 EXPOSE 5000
 

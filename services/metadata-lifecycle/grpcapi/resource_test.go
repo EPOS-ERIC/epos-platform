@@ -15,7 +15,7 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 	child := domain.Parameter{
 		Name:   "value",
 		Label:  "Value",
-		Schema: domain.StringSchema{Enum: []string{"one", "two"}},
+		Schema: domain.StringSchema{Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}},
 	}
 	value := domain.Parameter{
 		Name:  "filter",
@@ -69,7 +69,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		Name:  "value",
 		Label: "Value",
 		Value: &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{
-			Enum:           []string{"one", "two"},
+			Enum:           []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
 			MultipleValues: true,
 		}},
 		Location: metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_QUERY,
@@ -111,7 +111,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 			ID:       id,
 			Name:     "value",
 			Label:    "Value",
-			Schema:   domain.StringSchema{Enum: []string{"one", "two"}, MultipleValues: true},
+			Schema:   domain.StringSchema{Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: true},
 			Property: &property,
 			Location: domain.ParameterLocationQuery,
 			Explode:  true,

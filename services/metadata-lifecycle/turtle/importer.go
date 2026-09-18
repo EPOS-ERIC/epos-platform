@@ -780,7 +780,7 @@ func (m *mapper) parameter(source string) (domain.Parameter, error) {
 			Minimum:        m.intPtr(source, schemaMinValue),
 			Maximum:        m.intPtr(source, schemaMaxValue),
 			Default:        defaultValue,
-			Enum:           nilIfEmpty(m.validIntValues(source, defaultValue)),
+			Enum:           intEnumOptions(m.validIntValues(source, defaultValue)),
 			MultipleValues: multipleValues,
 		}
 		return parameter, nil
@@ -790,7 +790,7 @@ func (m *mapper) parameter(source string) (domain.Parameter, error) {
 			Minimum:        m.floatPtr(source, schemaMinValue),
 			Maximum:        m.floatPtr(source, schemaMaxValue),
 			Default:        defaultValue,
-			Enum:           nilIfEmpty(m.validFloatValues(source, defaultValue)),
+			Enum:           floatEnumOptions(m.validFloatValues(source, defaultValue)),
 			MultipleValues: multipleValues,
 		}
 		return parameter, nil
@@ -819,7 +819,7 @@ func (m *mapper) parameter(source string) (domain.Parameter, error) {
 		}
 		parameter.Schema = domain.StringSchema{
 			Default:        pointer,
-			Enum:           nilIfEmpty(allowed),
+			Enum:           stringEnumOptions(allowed),
 			Pattern:        stringPtr(m.optionalString(source, schemaValuePattern)),
 			MultipleValues: multipleValues,
 		}
@@ -1496,30 +1496,96 @@ func nilIfEmpty[T any](values []T) []T {
 	return values
 }
 
-func mergeStringValues(first, second []string) []string {
-	result := append([]string(nil), first...)
+func stringEnumOptions(values []string) []domain.StringEnumOption {
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([]domain.StringEnumOption, len(values))
+	for i, value := range values {
+		result[i] = domain.StringEnumOption{Value: value}
+	}
+	return result
+}
+
+func intEnumOptions(values []int64) []domain.IntegerEnumOption {
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([]domain.IntegerEnumOption, len(values))
+	for i, value := range values {
+		result[i] = domain.IntegerEnumOption{Value: value}
+	}
+	return result
+}
+
+func floatEnumOptions(values []float64) []domain.FloatEnumOption {
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([]domain.FloatEnumOption, len(values))
+	for i, value := range values {
+		result[i] = domain.FloatEnumOption{Value: value}
+	}
+	return result
+}
+
+func mergeStringValues(first, second []domain.StringEnumOption) []domain.StringEnumOption {
+	result := append([]domain.StringEnumOption(nil), first...)
 	for _, value := range second {
-		if !slices.Contains(result, value) {
+		found := false
+		for i := range result {
+			if result[i].Value != value.Value {
+				continue
+			}
+			if result[i].Label == nil {
+				result[i].Label = value.Label
+			}
+			found = true
+			break
+		}
+		if !found {
 			result = append(result, value)
 		}
 	}
 	return result
 }
 
-func mergeIntValues(first, second []int64) []int64 {
-	result := append([]int64(nil), first...)
+func mergeIntValues(first, second []domain.IntegerEnumOption) []domain.IntegerEnumOption {
+	result := append([]domain.IntegerEnumOption(nil), first...)
 	for _, value := range second {
-		if !slices.Contains(result, value) {
+		found := false
+		for i := range result {
+			if result[i].Value != value.Value {
+				continue
+			}
+			if result[i].Label == nil {
+				result[i].Label = value.Label
+			}
+			found = true
+			break
+		}
+		if !found {
 			result = append(result, value)
 		}
 	}
 	return result
 }
 
-func mergeFloatValues(first, second []float64) []float64 {
-	result := append([]float64(nil), first...)
+func mergeFloatValues(first, second []domain.FloatEnumOption) []domain.FloatEnumOption {
+	result := append([]domain.FloatEnumOption(nil), first...)
 	for _, value := range second {
-		if !slices.Contains(result, value) {
+		found := false
+		for i := range result {
+			if result[i].Value != value.Value {
+				continue
+			}
+			if result[i].Label == nil {
+				result[i].Label = value.Label
+			}
+			found = true
+			break
+		}
+		if !found {
 			result = append(result, value)
 		}
 	}

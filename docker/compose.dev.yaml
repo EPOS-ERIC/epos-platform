@@ -57,9 +57,6 @@ services:
     user: 0:0 # run as root indev for intercting with system volumes
     volumes:
       - type: bind
-        source: ..
-        target: /workspace
-      - type: bind
         source: ${HOME}/go/pkg/mod
         target: /go/pkg/mod
       - go-build-cache:/root/.cache/go-build
@@ -97,9 +94,6 @@ services:
     user: 0:0
     volumes:
       - type: bind
-        source: ..
-        target: /workspace
-      - type: bind
         source: ${HOME}/go/pkg/mod
         target: /go/pkg/mod
       - go-build-cache:/root/.cache/go-build
@@ -134,9 +128,6 @@ services:
       - OTEL_METRIC_EXPORT_INTERVAL=5000
     volumes:
       - type: bind
-        source: ..
-        target: /workspace
-      - type: bind
         source: ${HOME}/go/pkg/mod
         target: /go/pkg/mod
       - go-build-cache:/root/.cache/go-build
@@ -163,9 +154,6 @@ services:
       - APP_CORS_ALLOW_ORIGIN=*
       - OIDC_ISSUER=http://localhost:8110/oauth2
     volumes:
-      - type: bind
-        source: ..
-        target: /workspace
       - type: bind
         source: ${HOME}/go/pkg/mod
         target: /go/pkg/mod

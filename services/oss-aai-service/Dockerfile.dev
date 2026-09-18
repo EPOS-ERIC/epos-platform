@@ -5,6 +5,7 @@ WORKDIR /workspace/services/oss-aai-service
 RUN apk add --no-cache curl
 
 COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+COPY . /workspace
 
 EXPOSE 8080
 

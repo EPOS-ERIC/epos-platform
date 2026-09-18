@@ -775,15 +775,49 @@ func parameterOutput(value domain.WebServiceParameter) *metadatalifecyclev1.Para
 	}
 	switch item := value.Schema.(type) {
 	case domain.StringSchema:
-		result.Value = &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{Default: item.Default, Enum: item.Enum, Pattern: item.Pattern, MultipleValues: item.MultipleValues}}
+		result.Value = &metadatalifecyclev1.Parameter_String_{
+			String_: &metadatalifecyclev1.StringParameter{
+				Default:        item.Default,
+				Enum:           stringEnumOutput(item.Enum),
+				Pattern:        item.Pattern,
+				MultipleValues: item.MultipleValues,
+			},
+		}
 	case domain.BooleanSchema:
-		result.Value = &metadatalifecyclev1.Parameter_Boolean{Boolean: &metadatalifecyclev1.BooleanParameter{Default: item.Default}}
+		result.Value = &metadatalifecyclev1.Parameter_Boolean{
+			Boolean: &metadatalifecyclev1.BooleanParameter{
+				Default: item.Default,
+			},
+		}
 	case domain.IntegerSchema:
-		result.Value = &metadatalifecyclev1.Parameter_Integer{Integer: &metadatalifecyclev1.IntegerParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, Enum: item.Enum, MultipleValues: item.MultipleValues}}
+		result.Value = &metadatalifecyclev1.Parameter_Integer{
+			Integer: &metadatalifecyclev1.IntegerParameter{
+				Minimum:        item.Minimum,
+				Maximum:        item.Maximum,
+				Default:        item.Default,
+				Enum:           integerEnumOutput(item.Enum),
+				MultipleValues: item.MultipleValues,
+			},
+		}
 	case domain.FloatSchema:
-		result.Value = &metadatalifecyclev1.Parameter_Float{Float: &metadatalifecyclev1.FloatParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, Enum: item.Enum, MultipleValues: item.MultipleValues}}
+		result.Value = &metadatalifecyclev1.Parameter_Float{
+			Float: &metadatalifecyclev1.FloatParameter{
+				Minimum:        item.Minimum,
+				Maximum:        item.Maximum,
+				Default:        item.Default,
+				Enum:           floatEnumOutput(item.Enum),
+				MultipleValues: item.MultipleValues,
+			},
+		}
 	case domain.DateTimeSchema:
-		result.Value = &metadatalifecyclev1.Parameter_DateTime{DateTime: &metadatalifecyclev1.DateTimeParameter{Minimum: timestampOutput(item.Minimum), Maximum: timestampOutput(item.Maximum), Default: timestampOutput(item.Default), Layout: item.Layout}}
+		result.Value = &metadatalifecyclev1.Parameter_DateTime{
+			DateTime: &metadatalifecyclev1.DateTimeParameter{
+				Minimum: timestampOutput(item.Minimum),
+				Maximum: timestampOutput(item.Maximum),
+				Default: timestampOutput(item.Default),
+				Layout:  item.Layout,
+			},
+		}
 	case domain.TemplateSchema:
 		template := &metadatalifecyclev1.TemplateParameter{Template: item.Template}
 		for _, parameter := range item.Parameters {
@@ -805,17 +839,123 @@ func scalarParameterOutput(value domain.Parameter) *metadatalifecyclev1.ScalarPa
 	}
 	switch item := value.Schema.(type) {
 	case domain.StringSchema:
-		result.Value = &metadatalifecyclev1.ScalarParameter_String_{String_: &metadatalifecyclev1.ScalarStringParameter{Default: item.Default, Enum: item.Enum, Pattern: item.Pattern}}
+		result.Value = &metadatalifecyclev1.ScalarParameter_String_{
+			String_: &metadatalifecyclev1.ScalarStringParameter{
+				Default: item.Default,
+				Enum:    stringEnumOutput(item.Enum),
+				Pattern: item.Pattern,
+			},
+		}
 	case domain.BooleanSchema:
-		result.Value = &metadatalifecyclev1.ScalarParameter_Boolean{Boolean: &metadatalifecyclev1.ScalarBooleanParameter{Default: item.Default}}
+		result.Value = &metadatalifecyclev1.ScalarParameter_Boolean{
+			Boolean: &metadatalifecyclev1.ScalarBooleanParameter{
+				Default: item.Default,
+			},
+		}
 	case domain.IntegerSchema:
-		result.Value = &metadatalifecyclev1.ScalarParameter_Integer{Integer: &metadatalifecyclev1.ScalarIntegerParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, Enum: item.Enum}}
+		result.Value = &metadatalifecyclev1.ScalarParameter_Integer{
+			Integer: &metadatalifecyclev1.ScalarIntegerParameter{
+				Minimum: item.Minimum,
+				Maximum: item.Maximum,
+				Default: item.Default,
+				Enum:    integerEnumOutput(item.Enum),
+			},
+		}
 	case domain.FloatSchema:
-		result.Value = &metadatalifecyclev1.ScalarParameter_Float{Float: &metadatalifecyclev1.ScalarFloatParameter{Minimum: item.Minimum, Maximum: item.Maximum, Default: item.Default, Enum: item.Enum}}
+		result.Value = &metadatalifecyclev1.ScalarParameter_Float{
+			Float: &metadatalifecyclev1.ScalarFloatParameter{
+				Minimum: item.Minimum,
+				Maximum: item.Maximum,
+				Default: item.Default,
+				Enum:    floatEnumOutput(item.Enum),
+			},
+		}
 	case domain.DateTimeSchema:
-		result.Value = &metadatalifecyclev1.ScalarParameter_DateTime{DateTime: &metadatalifecyclev1.ScalarDateTimeParameter{Minimum: timestampOutput(item.Minimum), Maximum: timestampOutput(item.Maximum), Default: timestampOutput(item.Default), Layout: item.Layout}}
+		result.Value = &metadatalifecyclev1.ScalarParameter_DateTime{
+			DateTime: &metadatalifecyclev1.ScalarDateTimeParameter{
+				Minimum: timestampOutput(item.Minimum),
+				Maximum: timestampOutput(item.Maximum),
+				Default: timestampOutput(item.Default),
+				Layout:  item.Layout,
+			},
+		}
 	}
 	return result
+}
+
+func stringEnumOutput(values []domain.StringEnumOption) []*metadatalifecyclev1.StringEnumOption {
+	if values == nil {
+		return nil
+	}
+	result := make([]*metadatalifecyclev1.StringEnumOption, len(values))
+	for i, value := range values {
+		result[i] = &metadatalifecyclev1.StringEnumOption{Value: value.Value, Label: value.Label}
+	}
+	return result
+}
+
+func integerEnumOutput(values []domain.IntegerEnumOption) []*metadatalifecyclev1.IntegerEnumOption {
+	if values == nil {
+		return nil
+	}
+	result := make([]*metadatalifecyclev1.IntegerEnumOption, len(values))
+	for i, value := range values {
+		result[i] = &metadatalifecyclev1.IntegerEnumOption{Value: value.Value, Label: value.Label}
+	}
+	return result
+}
+
+func floatEnumOutput(values []domain.FloatEnumOption) []*metadatalifecyclev1.FloatEnumOption {
+	if values == nil {
+		return nil
+	}
+	result := make([]*metadatalifecyclev1.FloatEnumOption, len(values))
+	for i, value := range values {
+		result[i] = &metadatalifecyclev1.FloatEnumOption{Value: value.Value, Label: value.Label}
+	}
+	return result
+}
+
+func stringEnumInput(values []*metadatalifecyclev1.StringEnumOption) ([]domain.StringEnumOption, error) {
+	if values == nil {
+		return nil, nil
+	}
+	result := make([]domain.StringEnumOption, len(values))
+	for i, value := range values {
+		if value == nil {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("string enum option %d is required", i)) //nolint:wrapcheck
+		}
+		result[i] = domain.StringEnumOption{Value: value.Value, Label: value.Label}
+	}
+	return result, nil
+}
+
+func integerEnumInput(values []*metadatalifecyclev1.IntegerEnumOption) ([]domain.IntegerEnumOption, error) {
+	if values == nil {
+		return nil, nil
+	}
+	result := make([]domain.IntegerEnumOption, len(values))
+	for i, value := range values {
+		if value == nil {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("integer enum option %d is required", i)) //nolint:wrapcheck
+		}
+		result[i] = domain.IntegerEnumOption{Value: value.Value, Label: value.Label}
+	}
+	return result, nil
+}
+
+func floatEnumInput(values []*metadatalifecyclev1.FloatEnumOption) ([]domain.FloatEnumOption, error) {
+	if values == nil {
+		return nil, nil
+	}
+	result := make([]domain.FloatEnumOption, len(values))
+	for i, value := range values {
+		if value == nil {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("float enum option %d is required", i)) //nolint:wrapcheck
+		}
+		result[i] = domain.FloatEnumOption{Value: value.Value, Label: value.Label}
+	}
+	return result, nil
 }
 
 func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput, error) {
@@ -1139,7 +1279,11 @@ func parameterInput(value *metadatalifecyclev1.Parameter) (domain.Parameter, err
 		if v.String_ == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "string parameter is required") //nolint:wrapcheck
 		}
-		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: v.String_.GetEnum(), Pattern: v.String_.Pattern, MultipleValues: v.String_.MultipleValues}
+		enum, err := stringEnumInput(v.String_.GetEnum())
+		if err != nil {
+			return domain.Parameter{}, err
+		}
+		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: enum, Pattern: v.String_.Pattern, MultipleValues: v.String_.MultipleValues}
 	case *metadatalifecyclev1.Parameter_Boolean:
 		if v.Boolean == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "boolean parameter is required") //nolint:wrapcheck
@@ -1149,12 +1293,20 @@ func parameterInput(value *metadatalifecyclev1.Parameter) (domain.Parameter, err
 		if v.Integer == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "integer parameter is required") //nolint:wrapcheck
 		}
-		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: v.Integer.GetEnum(), MultipleValues: v.Integer.MultipleValues}
+		enum, err := integerEnumInput(v.Integer.GetEnum())
+		if err != nil {
+			return domain.Parameter{}, err
+		}
+		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: enum, MultipleValues: v.Integer.MultipleValues}
 	case *metadatalifecyclev1.Parameter_Float:
 		if v.Float == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "float parameter is required") //nolint:wrapcheck
 		}
-		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: v.Float.GetEnum(), MultipleValues: v.Float.MultipleValues}
+		enum, err := floatEnumInput(v.Float.GetEnum())
+		if err != nil {
+			return domain.Parameter{}, err
+		}
+		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: enum, MultipleValues: v.Float.MultipleValues}
 	case *metadatalifecyclev1.Parameter_DateTime:
 		if v.DateTime == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "date-time parameter is required") //nolint:wrapcheck
@@ -1201,7 +1353,11 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameter) (domain.Pa
 		if v.String_ == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "string parameter is required") //nolint:wrapcheck
 		}
-		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: v.String_.GetEnum(), Pattern: v.String_.Pattern}
+		enum, err := stringEnumInput(v.String_.GetEnum())
+		if err != nil {
+			return domain.Parameter{}, err
+		}
+		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: enum, Pattern: v.String_.Pattern}
 	case *metadatalifecyclev1.ScalarParameter_Boolean:
 		if v.Boolean == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "boolean parameter is required") //nolint:wrapcheck
@@ -1211,12 +1367,20 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameter) (domain.Pa
 		if v.Integer == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "integer parameter is required") //nolint:wrapcheck
 		}
-		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: v.Integer.GetEnum()}
+		enum, err := integerEnumInput(v.Integer.GetEnum())
+		if err != nil {
+			return domain.Parameter{}, err
+		}
+		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: enum}
 	case *metadatalifecyclev1.ScalarParameter_Float:
 		if v.Float == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "float parameter is required") //nolint:wrapcheck
 		}
-		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: v.Float.GetEnum()}
+		enum, err := floatEnumInput(v.Float.GetEnum())
+		if err != nil {
+			return domain.Parameter{}, err
+		}
+		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: enum}
 	case *metadatalifecyclev1.ScalarParameter_DateTime:
 		if v.DateTime == nil {
 			return domain.Parameter{}, status.Error(codes.InvalidArgument, "date-time parameter is required") //nolint:wrapcheck

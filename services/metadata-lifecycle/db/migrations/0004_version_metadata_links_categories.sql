@@ -6,6 +6,111 @@ CREATE TYPE web_service_visible_on AS ENUM ('GRAPH', 'TABLE', 'MAP');
 CREATE TYPE web_service_parameter_location AS ENUM ('PATH', 'QUERY', 'HEADER');
 CREATE TYPE parameter_schema_kind AS ENUM ('STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME', 'TEMPLATE');
 
+CREATE TYPE string_parameter_enum_option AS (
+    value text,
+    label text
+);
+
+CREATE TYPE integer_parameter_enum_option AS (
+    value bigint,
+    label text
+);
+
+CREATE TYPE float_parameter_enum_option AS (
+    value double precision,
+    label text
+);
+
+-- Shared shape rules for any {value, label} option list, converted to jsonb.
+-- Composite typing already guarantees each field's SQL type; this checks
+-- list-level invariants that composite types cannot express: non-empty lists,
+-- non-null and non-blank values, non-blank optional labels, and uniqueness.
+-- +goose StatementBegin
+CREATE FUNCTION is_valid_enum_option_list(
+    input_value jsonb,
+    default_value text DEFAULT NULL
+) RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+AS $$
+    SELECT
+        input_value IS NULL
+        OR (
+            jsonb_array_length(input_value) > 0
+            AND NOT EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements(input_value) AS elem
+                WHERE elem ->> 'value' IS NULL
+                   OR elem ->> 'value' = ''
+                   OR (elem -> 'label' IS NOT NULL AND btrim(elem ->> 'label') = '')
+            )
+            AND (
+                SELECT count(DISTINCT elem -> 'value')
+                FROM jsonb_array_elements(input_value) AS elem
+            ) = jsonb_array_length(input_value)
+            AND (
+                default_value IS NULL
+                OR EXISTS (
+                    SELECT 1
+                    FROM jsonb_array_elements(input_value) AS elem
+                    WHERE elem ->> 'value' = default_value
+                )
+            )
+        )
+$$;
+-- +goose StatementEnd
+
+-- Shared numeric-bound rules for integer and float enum lists. numeric
+-- represents both bigint and finite double precision values without loss for
+-- these comparisons; float callers reject non-finite values separately.
+-- +goose StatementBegin
+CREATE FUNCTION enum_option_list_matches_bounds(
+    input_value jsonb,
+    minimum_value numeric,
+    maximum_value numeric,
+    default_value numeric
+) RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+AS $$
+    SELECT
+        input_value IS NULL
+        OR (
+            NOT EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements(input_value) AS elem
+                WHERE (minimum_value IS NOT NULL AND (elem ->> 'value')::numeric < minimum_value)
+                   OR (maximum_value IS NOT NULL AND (elem ->> 'value')::numeric > maximum_value)
+            )
+            AND (
+                default_value IS NULL
+                OR EXISTS (
+                    SELECT 1
+                    FROM jsonb_array_elements(input_value) AS elem
+                    WHERE (elem ->> 'value')::numeric = default_value
+                )
+            )
+        )
+$$;
+-- +goose StatementEnd
+
+-- Float-only validation for values that jsonb/numeric cannot represent as
+-- meaningful finite enum options. Integer callers do not need this check.
+-- +goose StatementBegin
+CREATE FUNCTION enum_option_list_has_non_finite_float(input_value float_parameter_enum_option[]) RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+AS $$
+    SELECT EXISTS (
+        SELECT 1
+        FROM unnest(input_value) AS opt
+        WHERE (opt).value = 'NaN'::double precision
+           OR (opt).value = 'Infinity'::double precision
+           OR (opt).value = '-Infinity'::double precision
+    );
+$$;
+-- +goose StatementEnd
+
 CREATE TABLE identifiers (
     -- Identifier identity and RDF value metadata
     id                              uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -131,12 +236,12 @@ CREATE TABLE string_parameter_schemas (
     schema_kind    parameter_schema_kind NOT NULL DEFAULT 'STRING',
     pattern        nonblank_text_opt,
     default_value  nonblank_text_opt,
-    enum           text[],
+    enum           string_parameter_enum_option[],
     multiple_values boolean NOT NULL DEFAULT false,
 
     FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
     CHECK (schema_kind = 'STRING'),
-    CHECK (enum IS NULL OR (cardinality(enum) > 0 AND array_position(enum, NULL) IS NULL AND array_position(enum, '') IS NULL)),
+    CHECK (is_valid_enum_option_list(to_jsonb(enum), default_value)),
     CHECK (NOT multiple_values OR enum IS NOT NULL)
 );
 
@@ -155,19 +260,17 @@ CREATE TABLE integer_parameter_schemas (
     minimum         bigint,
     maximum         bigint,
     default_value   bigint,
-    enum            bigint[],
+    enum            integer_parameter_enum_option[],
     multiple_values boolean NOT NULL DEFAULT false,
 
     FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
     CHECK (schema_kind = 'INTEGER'),
-    CHECK (enum IS NULL OR (cardinality(enum) > 0 AND array_position(enum, NULL) IS NULL)),
+    CHECK (is_valid_enum_option_list(to_jsonb(enum))),
+    CHECK (enum_option_list_matches_bounds(to_jsonb(enum), minimum, maximum, default_value)),
     CHECK (NOT multiple_values OR enum IS NOT NULL),
     CHECK (minimum IS NULL OR maximum IS NULL OR minimum <= maximum),
-    CHECK (minimum IS NULL OR enum IS NULL OR minimum <= ALL(enum)),
-    CHECK (maximum IS NULL OR enum IS NULL OR maximum >= ALL(enum)),
     CHECK (default_value IS NULL OR minimum IS NULL OR default_value >= minimum),
-    CHECK (default_value IS NULL OR maximum IS NULL OR default_value <= maximum),
-    CHECK (default_value IS NULL OR enum IS NULL OR default_value = ANY(enum))
+    CHECK (default_value IS NULL OR maximum IS NULL OR default_value <= maximum)
 );
 
 CREATE TABLE float_parameter_schemas (
@@ -176,19 +279,18 @@ CREATE TABLE float_parameter_schemas (
     minimum         double precision,
     maximum         double precision,
     default_value   double precision,
-    enum            double precision[],
+    enum            float_parameter_enum_option[],
     multiple_values boolean NOT NULL DEFAULT false,
 
     FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
     CHECK (schema_kind = 'FLOAT'),
-    CHECK (enum IS NULL OR (cardinality(enum) > 0 AND array_position(enum, NULL) IS NULL)),
+    CHECK (is_valid_enum_option_list(to_jsonb(enum))),
+    CHECK (enum IS NULL OR NOT enum_option_list_has_non_finite_float(enum)),
+    CHECK (enum_option_list_matches_bounds(to_jsonb(enum), minimum::numeric, maximum::numeric, default_value::numeric)),
     CHECK (NOT multiple_values OR enum IS NOT NULL),
     CHECK (minimum IS NULL OR maximum IS NULL OR minimum <= maximum),
-    CHECK (minimum IS NULL OR enum IS NULL OR minimum <= ALL(enum)),
-    CHECK (maximum IS NULL OR enum IS NULL OR maximum >= ALL(enum)),
     CHECK (default_value IS NULL OR minimum IS NULL OR default_value >= minimum),
-    CHECK (default_value IS NULL OR maximum IS NULL OR default_value <= maximum),
-    CHECK (default_value IS NULL OR enum IS NULL OR default_value = ANY(enum))
+    CHECK (default_value IS NULL OR maximum IS NULL OR default_value <= maximum)
 );
 
 CREATE TABLE datetime_parameter_schemas (
@@ -384,4 +486,7 @@ CREATE TABLE software_source_code_version_categories (
 
 DROP TABLE IF EXISTS software_source_code_version_categories, software_application_version_categories, software_source_code_version_contact_points, software_application_version_contact_points, dataset_version_categories, parameter_templates, datetime_parameter_schemas, float_parameter_schemas, integer_parameter_schemas, boolean_parameter_schemas, string_parameter_schemas, parameters, web_service_bodies, web_service_contact_points, distributions, web_services, dataset_version_contact_points, software_source_code_version_creators, software_application_version_creators, dataset_version_providers, identifiers;
 DROP FUNCTION IF EXISTS validate_parameter_schema();
-DROP TYPE IF EXISTS parameter_schema_kind, web_service_parameter_location, web_service_visible_on, web_service_type, web_service_http_method;
+DROP FUNCTION IF EXISTS enum_option_list_has_non_finite_float(float_parameter_enum_option[]);
+DROP FUNCTION IF EXISTS enum_option_list_matches_bounds(jsonb, numeric, numeric, numeric);
+DROP FUNCTION IF EXISTS is_valid_enum_option_list(jsonb, text);
+DROP TYPE IF EXISTS float_parameter_enum_option, integer_parameter_enum_option, string_parameter_enum_option, parameter_schema_kind, web_service_parameter_location, web_service_visible_on, web_service_type, web_service_http_method;

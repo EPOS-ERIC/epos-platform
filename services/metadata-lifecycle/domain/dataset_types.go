@@ -257,9 +257,14 @@ type ParameterSchema interface {
 	parameterSchema()
 }
 
+type StringEnumOption struct {
+	Value string
+	Label *string
+}
+
 type StringSchema struct {
 	Pattern        *string
-	Enum           []string
+	Enum           []StringEnumOption
 	Default        *string
 	MultipleValues bool
 }
@@ -274,10 +279,15 @@ type BooleanSchema struct {
 func (BooleanSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindBoolean }
 func (BooleanSchema) parameterSchema()          {}
 
+type IntegerEnumOption struct {
+	Value int64
+	Label *string
+}
+
 type IntegerSchema struct {
 	Minimum        *int64
 	Maximum        *int64
-	Enum           []int64
+	Enum           []IntegerEnumOption
 	Default        *int64
 	MultipleValues bool
 }
@@ -285,10 +295,15 @@ type IntegerSchema struct {
 func (IntegerSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindInteger }
 func (IntegerSchema) parameterSchema()          {}
 
+type FloatEnumOption struct {
+	Value float64
+	Label *string
+}
+
 type FloatSchema struct {
 	Minimum        *float64
 	Maximum        *float64
-	Enum           []float64
+	Enum           []FloatEnumOption
 	Default        *float64
 	MultipleValues bool
 }

@@ -3533,6 +3533,32 @@ func (s *DownloadableFileDistributionType) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/FloatEnumOption
+type FloatEnumOption struct {
+	Value float64   `json:"value"`
+	Label OptString `json:"label"`
+}
+
+// GetValue returns the value of Value.
+func (s *FloatEnumOption) GetValue() float64 {
+	return s.Value
+}
+
+// GetLabel returns the value of Label.
+func (s *FloatEnumOption) GetLabel() OptString {
+	return s.Label
+}
+
+// SetValue sets the value of Value.
+func (s *FloatEnumOption) SetValue(val float64) {
+	s.Value = val
+}
+
+// SetLabel sets the value of Label.
+func (s *FloatEnumOption) SetLabel(val OptString) {
+	s.Label = val
+}
+
 // Ref: #/components/schemas/FloatParameter
 type FloatParameter struct {
 	ID             uuid.UUID          `json:"id"`
@@ -3550,7 +3576,7 @@ type FloatParameter struct {
 	Minimum        OptNilFloat64      `json:"minimum"`
 	Maximum        OptNilFloat64      `json:"maximum"`
 	Default        OptNilFloat64      `json:"default"`
-	Enum           []float64          `json:"enum"`
+	Enum           []FloatEnumOption  `json:"enum"`
 }
 
 // GetID returns the value of ID.
@@ -3629,7 +3655,7 @@ func (s *FloatParameter) GetDefault() OptNilFloat64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *FloatParameter) GetEnum() []float64 {
+func (s *FloatParameter) GetEnum() []FloatEnumOption {
 	return s.Enum
 }
 
@@ -3709,7 +3735,7 @@ func (s *FloatParameter) SetDefault(val OptNilFloat64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *FloatParameter) SetEnum(val []float64) {
+func (s *FloatParameter) SetEnum(val []FloatEnumOption) {
 	s.Enum = val
 }
 
@@ -3729,7 +3755,7 @@ type FloatParameterDraft struct {
 	Minimum        OptNilFloat64           `json:"minimum"`
 	Maximum        OptNilFloat64           `json:"maximum"`
 	Default        OptNilFloat64           `json:"default"`
-	Enum           []float64               `json:"enum"`
+	Enum           []FloatEnumOption       `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -3803,7 +3829,7 @@ func (s *FloatParameterDraft) GetDefault() OptNilFloat64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *FloatParameterDraft) GetEnum() []float64 {
+func (s *FloatParameterDraft) GetEnum() []FloatEnumOption {
 	return s.Enum
 }
 
@@ -3878,7 +3904,7 @@ func (s *FloatParameterDraft) SetDefault(val OptNilFloat64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *FloatParameterDraft) SetEnum(val []float64) {
+func (s *FloatParameterDraft) SetEnum(val []FloatEnumOption) {
 	s.Enum = val
 }
 
@@ -3962,7 +3988,7 @@ type FloatScalarParameter struct {
 	Minimum     OptNilFloat64            `json:"minimum"`
 	Maximum     OptNilFloat64            `json:"maximum"`
 	Default     OptNilFloat64            `json:"default"`
-	Enum        []float64                `json:"enum"`
+	Enum        []FloatEnumOption        `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -4016,7 +4042,7 @@ func (s *FloatScalarParameter) GetDefault() OptNilFloat64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *FloatScalarParameter) GetEnum() []float64 {
+func (s *FloatScalarParameter) GetEnum() []FloatEnumOption {
 	return s.Enum
 }
 
@@ -4071,7 +4097,7 @@ func (s *FloatScalarParameter) SetDefault(val OptNilFloat64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *FloatScalarParameter) SetEnum(val []float64) {
+func (s *FloatScalarParameter) SetEnum(val []FloatEnumOption) {
 	s.Enum = val
 }
 
@@ -4087,7 +4113,7 @@ type FloatScalarParameterDraft struct {
 	Minimum     OptNilFloat64                 `json:"minimum"`
 	Maximum     OptNilFloat64                 `json:"maximum"`
 	Default     OptNilFloat64                 `json:"default"`
-	Enum        []float64                     `json:"enum"`
+	Enum        []FloatEnumOption             `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -4141,7 +4167,7 @@ func (s *FloatScalarParameterDraft) GetDefault() OptNilFloat64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *FloatScalarParameterDraft) GetEnum() []float64 {
+func (s *FloatScalarParameterDraft) GetEnum() []FloatEnumOption {
 	return s.Enum
 }
 
@@ -4196,7 +4222,7 @@ func (s *FloatScalarParameterDraft) SetDefault(val OptNilFloat64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *FloatScalarParameterDraft) SetEnum(val []float64) {
+func (s *FloatScalarParameterDraft) SetEnum(val []FloatEnumOption) {
 	s.Enum = val
 }
 
@@ -5010,6 +5036,32 @@ func (s ImportTurtleMetadataReq) Read(p []byte) (n int, err error) {
 	return s.Data.Read(p)
 }
 
+// Ref: #/components/schemas/IntegerEnumOption
+type IntegerEnumOption struct {
+	Value int64     `json:"value"`
+	Label OptString `json:"label"`
+}
+
+// GetValue returns the value of Value.
+func (s *IntegerEnumOption) GetValue() int64 {
+	return s.Value
+}
+
+// GetLabel returns the value of Label.
+func (s *IntegerEnumOption) GetLabel() OptString {
+	return s.Label
+}
+
+// SetValue sets the value of Value.
+func (s *IntegerEnumOption) SetValue(val int64) {
+	s.Value = val
+}
+
+// SetLabel sets the value of Label.
+func (s *IntegerEnumOption) SetLabel(val OptString) {
+	s.Label = val
+}
+
 // Ref: #/components/schemas/IntegerParameter
 type IntegerParameter struct {
 	ID             uuid.UUID            `json:"id"`
@@ -5027,7 +5079,7 @@ type IntegerParameter struct {
 	Minimum        OptNilInt64          `json:"minimum"`
 	Maximum        OptNilInt64          `json:"maximum"`
 	Default        OptNilInt64          `json:"default"`
-	Enum           []int64              `json:"enum"`
+	Enum           []IntegerEnumOption  `json:"enum"`
 }
 
 // GetID returns the value of ID.
@@ -5106,7 +5158,7 @@ func (s *IntegerParameter) GetDefault() OptNilInt64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *IntegerParameter) GetEnum() []int64 {
+func (s *IntegerParameter) GetEnum() []IntegerEnumOption {
 	return s.Enum
 }
 
@@ -5186,7 +5238,7 @@ func (s *IntegerParameter) SetDefault(val OptNilInt64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *IntegerParameter) SetEnum(val []int64) {
+func (s *IntegerParameter) SetEnum(val []IntegerEnumOption) {
 	s.Enum = val
 }
 
@@ -5206,7 +5258,7 @@ type IntegerParameterDraft struct {
 	Minimum        OptNilInt64               `json:"minimum"`
 	Maximum        OptNilInt64               `json:"maximum"`
 	Default        OptNilInt64               `json:"default"`
-	Enum           []int64                   `json:"enum"`
+	Enum           []IntegerEnumOption       `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -5280,7 +5332,7 @@ func (s *IntegerParameterDraft) GetDefault() OptNilInt64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *IntegerParameterDraft) GetEnum() []int64 {
+func (s *IntegerParameterDraft) GetEnum() []IntegerEnumOption {
 	return s.Enum
 }
 
@@ -5355,7 +5407,7 @@ func (s *IntegerParameterDraft) SetDefault(val OptNilInt64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *IntegerParameterDraft) SetEnum(val []int64) {
+func (s *IntegerParameterDraft) SetEnum(val []IntegerEnumOption) {
 	s.Enum = val
 }
 
@@ -5439,7 +5491,7 @@ type IntegerScalarParameter struct {
 	Minimum     OptNilInt64                `json:"minimum"`
 	Maximum     OptNilInt64                `json:"maximum"`
 	Default     OptNilInt64                `json:"default"`
-	Enum        []int64                    `json:"enum"`
+	Enum        []IntegerEnumOption        `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -5493,7 +5545,7 @@ func (s *IntegerScalarParameter) GetDefault() OptNilInt64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *IntegerScalarParameter) GetEnum() []int64 {
+func (s *IntegerScalarParameter) GetEnum() []IntegerEnumOption {
 	return s.Enum
 }
 
@@ -5548,7 +5600,7 @@ func (s *IntegerScalarParameter) SetDefault(val OptNilInt64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *IntegerScalarParameter) SetEnum(val []int64) {
+func (s *IntegerScalarParameter) SetEnum(val []IntegerEnumOption) {
 	s.Enum = val
 }
 
@@ -5564,7 +5616,7 @@ type IntegerScalarParameterDraft struct {
 	Minimum     OptNilInt64                     `json:"minimum"`
 	Maximum     OptNilInt64                     `json:"maximum"`
 	Default     OptNilInt64                     `json:"default"`
-	Enum        []int64                         `json:"enum"`
+	Enum        []IntegerEnumOption             `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -5618,7 +5670,7 @@ func (s *IntegerScalarParameterDraft) GetDefault() OptNilInt64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *IntegerScalarParameterDraft) GetEnum() []int64 {
+func (s *IntegerScalarParameterDraft) GetEnum() []IntegerEnumOption {
 	return s.Enum
 }
 
@@ -5673,7 +5725,7 @@ func (s *IntegerScalarParameterDraft) SetDefault(val OptNilInt64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *IntegerScalarParameterDraft) SetEnum(val []int64) {
+func (s *IntegerScalarParameterDraft) SetEnum(val []IntegerEnumOption) {
 	s.Enum = val
 }
 
@@ -10299,6 +10351,32 @@ func (s *SoftwareSourceCodeResourceMetadataResourceType) UnmarshalText(data []by
 	}
 }
 
+// Ref: #/components/schemas/StringEnumOption
+type StringEnumOption struct {
+	Value string    `json:"value"`
+	Label OptString `json:"label"`
+}
+
+// GetValue returns the value of Value.
+func (s *StringEnumOption) GetValue() string {
+	return s.Value
+}
+
+// GetLabel returns the value of Label.
+func (s *StringEnumOption) GetLabel() OptString {
+	return s.Label
+}
+
+// SetValue sets the value of Value.
+func (s *StringEnumOption) SetValue(val string) {
+	s.Value = val
+}
+
+// SetLabel sets the value of Label.
+func (s *StringEnumOption) SetLabel(val OptString) {
+	s.Label = val
+}
+
 // Ref: #/components/schemas/StringParameter
 type StringParameter struct {
 	ID             uuid.UUID           `json:"id"`
@@ -10314,7 +10392,7 @@ type StringParameter struct {
 	MultipleValues bool                `json:"multiple_values"`
 	ReadOnly       bool                `json:"read_only"`
 	Default        OptNilString        `json:"default"`
-	Enum           []string            `json:"enum"`
+	Enum           []StringEnumOption  `json:"enum"`
 	Pattern        OptNilString        `json:"pattern"`
 }
 
@@ -10384,7 +10462,7 @@ func (s *StringParameter) GetDefault() OptNilString {
 }
 
 // GetEnum returns the value of Enum.
-func (s *StringParameter) GetEnum() []string {
+func (s *StringParameter) GetEnum() []StringEnumOption {
 	return s.Enum
 }
 
@@ -10459,7 +10537,7 @@ func (s *StringParameter) SetDefault(val OptNilString) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *StringParameter) SetEnum(val []string) {
+func (s *StringParameter) SetEnum(val []StringEnumOption) {
 	s.Enum = val
 }
 
@@ -10482,7 +10560,7 @@ type StringParameterDraft struct {
 	MultipleValues bool                     `json:"multiple_values"`
 	ReadOnly       bool                     `json:"read_only"`
 	Default        OptNilString             `json:"default"`
-	Enum           []string                 `json:"enum"`
+	Enum           []StringEnumOption       `json:"enum"`
 	Pattern        OptNilString             `json:"pattern"`
 }
 
@@ -10547,7 +10625,7 @@ func (s *StringParameterDraft) GetDefault() OptNilString {
 }
 
 // GetEnum returns the value of Enum.
-func (s *StringParameterDraft) GetEnum() []string {
+func (s *StringParameterDraft) GetEnum() []StringEnumOption {
 	return s.Enum
 }
 
@@ -10617,7 +10695,7 @@ func (s *StringParameterDraft) SetDefault(val OptNilString) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *StringParameterDraft) SetEnum(val []string) {
+func (s *StringParameterDraft) SetEnum(val []StringEnumOption) {
 	s.Enum = val
 }
 
@@ -10704,7 +10782,7 @@ type StringScalarParameter struct {
 	Required    bool                      `json:"required"`
 	ReadOnly    bool                      `json:"read_only"`
 	Default     OptNilString              `json:"default"`
-	Enum        []string                  `json:"enum"`
+	Enum        []StringEnumOption        `json:"enum"`
 	Pattern     OptNilString              `json:"pattern"`
 }
 
@@ -10749,7 +10827,7 @@ func (s *StringScalarParameter) GetDefault() OptNilString {
 }
 
 // GetEnum returns the value of Enum.
-func (s *StringScalarParameter) GetEnum() []string {
+func (s *StringScalarParameter) GetEnum() []StringEnumOption {
 	return s.Enum
 }
 
@@ -10799,7 +10877,7 @@ func (s *StringScalarParameter) SetDefault(val OptNilString) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *StringScalarParameter) SetEnum(val []string) {
+func (s *StringScalarParameter) SetEnum(val []StringEnumOption) {
 	s.Enum = val
 }
 
@@ -10818,7 +10896,7 @@ type StringScalarParameterDraft struct {
 	Required    bool                           `json:"required"`
 	ReadOnly    bool                           `json:"read_only"`
 	Default     OptNilString                   `json:"default"`
-	Enum        []string                       `json:"enum"`
+	Enum        []StringEnumOption             `json:"enum"`
 	Pattern     OptNilString                   `json:"pattern"`
 }
 
@@ -10863,7 +10941,7 @@ func (s *StringScalarParameterDraft) GetDefault() OptNilString {
 }
 
 // GetEnum returns the value of Enum.
-func (s *StringScalarParameterDraft) GetEnum() []string {
+func (s *StringScalarParameterDraft) GetEnum() []StringEnumOption {
 	return s.Enum
 }
 
@@ -10913,7 +10991,7 @@ func (s *StringScalarParameterDraft) SetDefault(val OptNilString) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *StringScalarParameterDraft) SetEnum(val []string) {
+func (s *StringScalarParameterDraft) SetEnum(val []StringEnumOption) {
 	s.Enum = val
 }
 

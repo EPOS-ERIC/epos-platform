@@ -60,3 +60,18 @@ sql:
             go_type:
               type: "int32"
               pointer: true
+          - column: "string_parameter_schemas.enum"
+            go_type:
+              import: "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
+              type: "StringEnumOption"
+              slice: true
+          - column: "integer_parameter_schemas.enum"
+            go_type:
+              import: "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
+              type: "IntegerEnumOption"
+              slice: true
+          - column: "float_parameter_schemas.enum"
+            go_type:
+              import: "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
+              type: "FloatEnumOption"
+              slice: true
