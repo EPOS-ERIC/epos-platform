@@ -70,6 +70,19 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+app-root {
+  display: block;
+}
+
+@media (min-width: 769px) {
+  html,
+  body,
+  app-root {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -407,7 +420,7 @@ app-navigation-sidebar .sidebar.is-collapsed .nav-item {
 app-web-service-parameters .parameter-workspace {
   display: grid;
   grid-template-columns: minmax(230px, 0.34fr) minmax(0, 1fr);
-  height: 720px;
+  height: auto;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--line) 78%, var(--text-muted) 22%);
   border-radius: 14px;
@@ -622,7 +635,7 @@ app-web-service-parameters .parameter-editor {
   min-width: 0;
   min-height: 0;
   padding: 24px;
-  overflow-y: auto;
+  overflow-y: visible;
   background: color-mix(in srgb, var(--surface-2) 82%, var(--text-muted) 18%);
 }
 
@@ -759,8 +772,8 @@ app-web-service .webservice-subsection {
 @media (max-width: 768px) {
   app-web-service-parameters .parameter-workspace {
     grid-template-columns: 1fr;
-    grid-template-rows: 290px minmax(0, 1fr);
-    height: 900px;
+    grid-template-rows: auto auto;
+    height: auto;
   }
 
   app-web-service-parameters .parameter-list-panel {
