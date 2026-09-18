@@ -1,7 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import type { User } from '../../generated/backofficeSchemas';
+import type { GroupPermission, User } from '../../generated/backofficeSchemas';
+import { GROUP_PERMISSIONS } from '../models/resource-actions';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
 
@@ -15,6 +16,21 @@ export class CurrentUserStore {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly isAdmin = computed(() => this.user()?.global_roles.includes('ADMIN') ?? false);
+
+  groupPermissions(groupId: string): GroupPermission[] {
+    const user = this.user();
+    if (!user || !groupId) return [];
+    if (user.global_roles.includes('ADMIN')) return [...GROUP_PERMISSIONS];
+
+    const membership = user.memberships.find((item) => item.group.id === groupId && item.status === 'ACTIVE');
+    return membership
+      ? [...new Set([...membership.granted_permissions, ...membership.role_permissions])]
+      : [];
+  }
+
+  hasGroupPermission(groupId: string, permission: GroupPermission): boolean {
+    return this.groupPermissions(groupId).includes(permission);
+  }
 
   initialize(): Promise<void> {
     this.initialization ??= this.loadCurrentUser();

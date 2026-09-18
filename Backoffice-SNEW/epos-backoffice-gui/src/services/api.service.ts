@@ -8,6 +8,7 @@ import type {
   ContactPoint,
   CreateCategoryRequest,
   CreateMembershipRequest,
+  CreateRoleRequest,
   CreateOrganizationRequest,
   CreateResourceDraftRequest,
   DatasetResourceMetadata,
@@ -17,6 +18,7 @@ import type {
   GroupMembership,
   GroupPermission,
   ResourceVersionReference,
+  RoleRequest,
   ResourceVersion,
   RejectResourceRequest,
   ReplaceCategoryRequest,
@@ -337,6 +339,14 @@ export class ApiService {
     return this.http.delete<void>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/membership-requests`, {
       headers: { Authorization: `Bearer ${this.bearerToken}` }
     });
+  }
+
+  requestGroupRole(groupId: string, payload: CreateRoleRequest): Observable<RoleRequest> {
+    return this.http.post<RoleRequest>(
+      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/role-requests`,
+      payload,
+      { headers: { Authorization: `Bearer ${this.bearerToken}` } }
+    );
   }
 
   leaveOwnGroupMembership(groupId: string): Observable<void> {

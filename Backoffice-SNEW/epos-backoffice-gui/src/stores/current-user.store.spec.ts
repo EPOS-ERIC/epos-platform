@@ -66,4 +66,59 @@ describe('CurrentUserStore', () => {
     expect(store.user()).toBeNull();
     expect(store.isAdmin()).toBe(false);
   });
+
+  it('combines direct and role permissions for an active group membership', () => {
+    const store = TestBed.inject(CurrentUserStore);
+    store.user.set({
+      ...currentUser,
+      global_roles: [],
+      memberships: [{
+        group: { id: 'group-id', name: 'Data Group' },
+        status: 'ACTIVE',
+        roles: ['EDITOR'],
+        granted_permissions: ['resource.submit'],
+        role_permissions: ['resource.create', 'resource.edit'],
+        role_requests: [],
+        created_at: '2026-09-14T08:00:00Z',
+        updated_at: '2026-09-14T08:00:00Z'
+      }]
+    });
+
+    expect(store.groupPermissions('group-id')).toEqual([
+      'resource.submit',
+      'resource.create',
+      'resource.edit'
+    ]);
+    expect(store.hasGroupPermission('group-id', 'resource.edit')).toBe(true);
+    expect(store.hasGroupPermission('another-group', 'resource.edit')).toBe(false);
+  });
+
+  it('grants every resource permission to global administrators', () => {
+    const store = TestBed.inject(CurrentUserStore);
+    store.user.set(currentUser);
+
+    expect(store.hasGroupPermission('group-id', 'resource.publish')).toBe(true);
+    expect(store.hasGroupPermission('group-id', 'resource.unpublish')).toBe(true);
+    expect(store.hasGroupPermission('group-id', 'category.manage')).toBe(true);
+  });
+
+  it('ignores permissions from inactive memberships', () => {
+    const store = TestBed.inject(CurrentUserStore);
+    store.user.set({
+      ...currentUser,
+      global_roles: [],
+      memberships: [{
+        group: { id: 'group-id', name: 'Data Group' },
+        status: 'PENDING',
+        roles: [],
+        granted_permissions: ['resource.create'],
+        role_permissions: ['resource.edit'],
+        role_requests: [],
+        created_at: '2026-09-14T08:00:00Z',
+        updated_at: '2026-09-14T08:00:00Z'
+      }]
+    });
+
+    expect(store.groupPermissions('group-id')).toEqual([]);
+  });
 });

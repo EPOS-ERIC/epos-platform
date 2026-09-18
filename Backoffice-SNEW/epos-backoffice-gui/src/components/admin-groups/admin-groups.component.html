@@ -73,6 +73,64 @@
   }
 </section>
 
+<section class="requests-card role-requests-card app-card">
+  <div class="requests-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">Administration</p>
+      <h2>Role Requests</h2>
+      <p class="subtitle app-muted">Review additional role requests from active group members.</p>
+    </div>
+    <span class="request-count">{{ roleRequests().length }} pending</span>
+  </div>
+
+  @if (roleRequestsError()) {
+    <div class="users-message users-message--error">{{ roleRequestsError() }}</div>
+  }
+
+  @if (roleRequestsLoading()) {
+    <div class="users-message">Loading role requests...</div>
+  } @else if (roleRequests().length) {
+    <div class="request-list">
+      @for (item of roleRequests(); track roleRequestKey(item)) {
+        <article class="request-item request-item--role">
+          <div class="request-identity">
+            <div>
+              <strong>{{ item.membership.user.email }}</strong>
+              <span>{{ userName(item.membership.user) }}</span>
+            </div>
+            <div>
+              <small>Group</small>
+              <strong>{{ item.group.name }}</strong>
+            </div>
+            <div>
+              <small>Requested role</small>
+              <strong>{{ item.request.role }}</strong>
+            </div>
+            <time class="app-muted" [attr.datetime]="item.request.requested_at">{{ item.request.requested_at | date:'medium' }}</time>
+          </div>
+
+          <div class="request-actions">
+            <button
+              type="button"
+              class="app-button app-button--ghost request-reject"
+              [disabled]="!!roleRequestDecision()"
+              (click)="decideRoleRequest(item, 'reject')"
+            >Reject</button>
+            <button
+              type="button"
+              class="app-button app-button--primary"
+              [disabled]="!!roleRequestDecision()"
+              (click)="decideRoleRequest(item, 'accept')"
+            >{{ roleRequestDecision() === roleRequestKey(item) ? 'Saving...' : 'Accept role' }}</button>
+          </div>
+        </article>
+      }
+    </div>
+  } @else if (!roleRequestsError()) {
+    <div class="users-message">No pending role requests.</div>
+  }
+</section>
+
 <section class="users-card app-card">
   <div class="users-header">
     <div>

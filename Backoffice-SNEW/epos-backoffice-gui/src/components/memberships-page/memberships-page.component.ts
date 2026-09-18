@@ -1,15 +1,17 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, finalize, from, of, switchMap } from 'rxjs';
+import { catchError, finalize, forkJoin, from, map, of, switchMap } from 'rxjs';
 
-import type { UserMembershipSummary } from '../../../generated/backofficeSchemas';
+import type { CreateRoleRequest, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import { ApiService } from '../../services/api.service';
 import { DialogService } from '../../services/dialog.service';
 import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
 import { ToastService } from '../../services/toast.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
+
+type RequestableRole = CreateRoleRequest['role'];
 
 @Component({
   selector: 'app-memberships-page',
@@ -30,6 +32,15 @@ export class MembershipsPageComponent {
   protected readonly groupIconPath = groupIconPath;
   protected readonly membershipMutation = signal('');
   protected readonly membershipActionError = signal('');
+  protected readonly roleRequestGroupId = signal('');
+  protected readonly selectedRoles = signal<RequestableRole[]>([]);
+  protected readonly roleRequestSaving = signal(false);
+  protected readonly roleRequestError = signal('');
+  protected readonly requestableRoles: readonly RequestableRole[] = ['EDITOR', 'REVIEWER'];
+  protected readonly roleRequestMembership = computed(() => {
+    const groupId = this.roleRequestGroupId();
+    return this.user()?.memberships.find((membership) => membership.group.id === groupId && membership.status === 'ACTIVE') ?? null;
+  });
 
   protected pendingRoleNames(membership: UserMembershipSummary): string {
     const roles = membership.role_requests
@@ -46,6 +57,80 @@ export class MembershipsPageComponent {
   protected async leaveOwnMembership(membership: UserMembershipSummary): Promise<void> {
     if (membership.status !== 'ACTIVE') return;
     await this.confirmAndDeleteOwnMembership(membership, 'leave');
+  }
+
+  protected openRoleRequestDialog(membership: UserMembershipSummary): void {
+    if (membership.status !== 'ACTIVE') return;
+    this.roleRequestGroupId.set(membership.group.id);
+    this.selectedRoles.set([]);
+    this.roleRequestError.set('');
+  }
+
+  protected closeRoleRequestDialog(): void {
+    if (this.roleRequestSaving()) return;
+    this.resetRoleRequestDialog();
+  }
+
+  protected toggleRequestedRole(membership: UserMembershipSummary, role: RequestableRole): void {
+    if (this.roleRequestSaving() || this.hasRole(membership, role) || this.hasPendingRoleRequest(membership, role)) return;
+    this.selectedRoles.update((roles) => roles.includes(role)
+      ? roles.filter((selectedRole) => selectedRole !== role)
+      : [...roles, role]
+    );
+  }
+
+  protected hasRole(membership: UserMembershipSummary, role: RequestableRole): boolean {
+    return membership.roles.includes(role);
+  }
+
+  protected hasPendingRoleRequest(membership: UserMembershipSummary, role: RequestableRole): boolean {
+    return membership.role_requests.some((request) => request.role === role && request.status === 'PENDING');
+  }
+
+  protected submitRoleRequests(): void {
+    const membership = this.roleRequestMembership();
+    if (!membership || this.roleRequestSaving()) return;
+
+    const roles = this.selectedRoles().filter((role) =>
+      !this.hasRole(membership, role) && !this.hasPendingRoleRequest(membership, role)
+    );
+    if (!roles.length) return;
+
+    this.roleRequestSaving.set(true);
+    this.roleRequestError.set('');
+    forkJoin(roles.map((role) => this.apiService.requestGroupRole(membership.group.id, { role }).pipe(
+      map(() => ({ role, succeeded: true as const })),
+      catchError((error) => {
+        console.error(`Failed to request ${role} role`, error);
+        return of({ role, succeeded: false as const });
+      })
+    )))
+      .pipe(
+        switchMap((results) => from(this.currentUserStore.refresh()).pipe(map(() => results))),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.roleRequestSaving.set(false))
+      )
+      .subscribe((results) => {
+        const failedRoles = results.filter((result) => !result.succeeded).map((result) => result.role);
+        const submittedCount = results.length - failedRoles.length;
+
+        if (submittedCount) {
+          this.toast.success(submittedCount === 1 ? 'Role request submitted.' : `${submittedCount} role requests submitted.`);
+        }
+        if (failedRoles.length) {
+          this.selectedRoles.set(failedRoles);
+          this.roleRequestError.set(`Failed to request: ${failedRoles.join(', ')}.`);
+          return;
+        }
+
+        this.resetRoleRequestDialog();
+      });
+  }
+
+  private resetRoleRequestDialog(): void {
+    this.roleRequestGroupId.set('');
+    this.selectedRoles.set([]);
+    this.roleRequestError.set('');
   }
 
   private async confirmAndDeleteOwnMembership(

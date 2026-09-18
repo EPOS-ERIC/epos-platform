@@ -54,6 +54,10 @@
   border-bottom: 0;
 }
 
+.request-item--role {
+  grid-template-columns: minmax(280px, 1fr) auto;
+}
+
 .request-identity {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);

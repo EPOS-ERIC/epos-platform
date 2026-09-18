@@ -59,4 +59,15 @@ describe('BackofficeHeaderComponent', () => {
     expect(fixture.nativeElement.querySelector('.global-admin-badge')?.textContent?.trim()).toBe('ADMIN');
     expect(fixture.nativeElement.querySelector('.admin-subtitle')).toBeNull();
   });
+
+  it('shows resource creation only when allowed for the selected group', () => {
+    const fixture = TestBed.createComponent(BackofficeHeaderComponent);
+    fixture.componentRef.setInput('showSearchActions', true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Add New Resource');
+
+    fixture.componentRef.setInput('canAddNewResource', true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Add New Resource');
+  });
 });

@@ -88,6 +88,9 @@ export class MainContainerComponent {
   protected readonly searchQuery = signal(this.initialResultsFilters.searchQuery);
   protected readonly selectedDataTypes = signal(this.initialResultsFilters.dataTypes);
   protected readonly selectedVersioningStatuses = signal(this.initialResultsFilters.versioningStatuses);
+  protected readonly canCreateResource = computed(() =>
+    this.currentUserStore.hasGroupPermission(this.selectedGroupId(), 'resource.create')
+  );
   protected readonly canManageSelectedGroup = computed(() => {
     const groupId = this.selectedGroupId();
     return !!groupId && (this.currentUserStore.user()?.memberships.some((membership) =>
@@ -187,8 +190,7 @@ export class MainContainerComponent {
         resourceId: routeState.resourceId,
         versionId: routeState.versionId,
         groupId: selectedGroup?.id ?? '',
-        sectionPath: this.sectionPath(),
-        isAdmin: this.isAdmin()
+        sectionPath: this.sectionPath()
       });
       return;
     }
@@ -271,6 +273,7 @@ export class MainContainerComponent {
   }
 
   protected openCreateResourceDialog(): void {
+    if (!this.canCreateResource()) return;
     this.resourceCreationDialog.open(this.selectedGroupId(), this.sectionPath());
   }
 

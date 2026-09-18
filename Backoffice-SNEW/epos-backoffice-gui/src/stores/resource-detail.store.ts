@@ -46,6 +46,7 @@ import { resourceCapabilities } from '../models/resource-capabilities';
 import { ApiService, type ResourceVersionResponse } from '../services/api.service';
 import { DialogService } from '../services/dialog.service';
 import { ResourceActionsService } from '../services/resource-actions.service';
+import { CurrentUserStore } from './current-user.store';
 
 export type ResourceDetailRouteContext = {
   resourceType: DiscoveryResourceType;
@@ -53,7 +54,6 @@ export type ResourceDetailRouteContext = {
   versionId: string;
   groupId: string;
   sectionPath: string;
-  isAdmin: boolean;
 };
 
 export type ResourceDetailNavigationItem = {
@@ -131,6 +131,7 @@ export class ResourceDetailStore {
   private readonly apiService = inject(ApiService);
   private readonly dialogService = inject(DialogService);
   private readonly resourceActions = inject(ResourceActionsService);
+  private readonly currentUserStore = inject(CurrentUserStore);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly state = signal<ResourceDetailState>({ kind: 'idle' });
@@ -212,14 +213,17 @@ export class ResourceDetailStore {
         return 'Data';
     }
   });
-  readonly capabilities = computed(() =>
-    resourceCapabilities(this.status(), this.context()?.isAdmin ?? false)
-  );
+  readonly groupPermissions = computed(() => {
+    const version = this.datasetVersion() ?? this.resourceVersion();
+    const groupId = version?.group_id ?? this.context()?.groupId ?? '';
+    return this.currentUserStore.groupPermissions(groupId);
+  });
+  readonly capabilities = computed(() => resourceCapabilities(this.status(), this.groupPermissions()));
   readonly canEdit = computed(() => this.capabilities().edit);
   readonly canDelete = computed(() => this.capabilities().delete && Boolean(this.versionContext()));
   readonly sidebarActions = computed<ResourceActionItem[]>(() => {
     const context = this.context();
-    return context ? this.resourceActions.sidebarActions(this.status(), context.isAdmin) : [];
+    return context ? this.resourceActions.sidebarActions(this.status(), this.groupPermissions()) : [];
   });
   readonly temporalWarningKind = computed(() => {
     const form = this.datasetForm();

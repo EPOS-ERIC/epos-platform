@@ -2,7 +2,11 @@ import { resourceCapabilities } from './resource-capabilities';
 
 describe('resourceCapabilities', () => {
   it('allows editing, saving, submitting and deleting drafts', () => {
-    const capabilities = resourceCapabilities('DRAFT', false);
+    const capabilities = resourceCapabilities('DRAFT', [
+      'resource.edit',
+      'resource.submit',
+      'resource.discard'
+    ]);
 
     expect(capabilities.edit).toBe(true);
     expect(capabilities.save).toBe(true);
@@ -11,18 +15,20 @@ describe('resourceCapabilities', () => {
     expect(capabilities.publish).toBe(false);
   });
 
-  it('allows only admins to review submitted resources', () => {
-    expect(resourceCapabilities('SUBMITTED', false).publish).toBe(false);
-    expect(resourceCapabilities('SUBMITTED', false).reject).toBe(false);
-    expect(resourceCapabilities('SUBMITTED', true).publish).toBe(true);
-    expect(resourceCapabilities('SUBMITTED', true).reject).toBe(true);
+  it('derives review actions independently from their permissions', () => {
+    expect(resourceCapabilities('SUBMITTED', []).publish).toBe(false);
+    expect(resourceCapabilities('SUBMITTED', []).reject).toBe(false);
+    expect(resourceCapabilities('SUBMITTED', ['resource.publish']).publish).toBe(true);
+    expect(resourceCapabilities('SUBMITTED', ['resource.publish']).reject).toBe(false);
+    expect(resourceCapabilities('SUBMITTED', ['resource.reject']).publish).toBe(false);
+    expect(resourceCapabilities('SUBMITTED', ['resource.reject']).reject).toBe(true);
   });
 
   it('maps the remaining lifecycle states to their available transitions', () => {
-    expect(resourceCapabilities('PUBLISHED', false).archive).toBe(true);
-    expect(resourceCapabilities('PUBLISHED', false).createDraft).toBe(true);
-    expect(resourceCapabilities('ARCHIVED', false).createDraft).toBe(true);
-    expect(resourceCapabilities('REJECTED', false).reopen).toBe(true);
-    expect(Object.values(resourceCapabilities(null, true)).some(Boolean)).toBe(false);
+    expect(resourceCapabilities('PUBLISHED', ['resource.unpublish']).archive).toBe(true);
+    expect(resourceCapabilities('PUBLISHED', ['resource.create']).createDraft).toBe(true);
+    expect(resourceCapabilities('ARCHIVED', ['resource.create']).createDraft).toBe(true);
+    expect(resourceCapabilities('REJECTED', ['resource.reopen']).reopen).toBe(true);
+    expect(Object.values(resourceCapabilities(null, ['resource.publish'])).some(Boolean)).toBe(false);
   });
 });

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 
-import type { Group, GroupMembership, GroupPermission, MembershipRole, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
+import type { Group, GroupMembership, GroupPermission, MembershipRole, RoleRequest, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import { ApiService } from '../../services/api.service';
 import { GroupsStore } from '../../stores/groups.store';
@@ -15,6 +15,12 @@ interface PendingMembershipRequest {
   membership: GroupMembership;
   requestedRoles: MembershipRole[];
   selectedRoles: MembershipRole[];
+}
+
+interface PendingRoleRequest {
+  group: Group;
+  membership: GroupMembership;
+  request: RoleRequest;
 }
 
 @Component({
@@ -32,6 +38,10 @@ export class AdminGroupsComponent {
   protected readonly membershipRequestsLoading = signal(true);
   protected readonly membershipRequestsError = signal('');
   protected readonly membershipDecision = signal('');
+  protected readonly roleRequests = signal<PendingRoleRequest[]>([]);
+  protected readonly roleRequestsLoading = signal(true);
+  protected readonly roleRequestsError = signal('');
+  protected readonly roleRequestDecision = signal('');
   protected readonly users = signal<UserListItem[]>([]);
   protected readonly usersLoading = signal(true);
   protected readonly usersError = signal('');
@@ -178,6 +188,34 @@ export class AdminGroupsComponent {
     return `${request.group.id}:${request.membership.user.id}`;
   }
 
+  protected decideRoleRequest(item: PendingRoleRequest, decision: 'accept' | 'reject'): void {
+    if (this.roleRequestDecision()) return;
+
+    const key = this.roleRequestKey(item);
+    this.roleRequestDecision.set(key);
+    this.roleRequestsError.set('');
+    this.apiService
+      .decideGroupRoleRequest(item.group.id, item.request.id, decision)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.roleRequestDecision.set('')),
+        catchError((error) => {
+          console.error('Failed to decide role request', error);
+          this.roleRequestsError.set('Failed to update this role request.');
+          return of(null);
+        })
+      )
+      .subscribe((membership) => {
+        if (membership) {
+          this.roleRequests.update((requests) => requests.filter((request) => request !== item));
+        }
+      });
+  }
+
+  protected roleRequestKey(item: PendingRoleRequest): string {
+    return `${item.group.id}:${item.request.id}`;
+  }
+
   protected userName(user: Pick<UserListItem, 'given_name' | 'family_name'>): string {
     return `${user.given_name} ${user.family_name}`.trim() || 'Unnamed user';
   }
@@ -203,31 +241,47 @@ export class AdminGroupsComponent {
   private loadMembershipRequests(): void {
     this.membershipRequestsLoading.set(true);
     this.membershipRequestsError.set('');
+    this.roleRequestsLoading.set(true);
+    this.roleRequestsError.set('');
 
     const requests = this.groupsStore.groups().map((group) =>
       this.apiService.getGroupMemberships(group.id).pipe(
-        map((memberships) => memberships
-          .filter((membership) => membership.status === 'PENDING')
-          .map((membership): PendingMembershipRequest => {
+        map((memberships) => ({
+          membershipRequests: memberships
+            .filter((membership) => membership.status === 'PENDING')
+            .map((membership): PendingMembershipRequest => {
             const requestedRoles = membership.role_requests
               .filter((request) => request.status === 'PENDING')
               .map((request) => request.role);
             return { group, membership, requestedRoles, selectedRoles: [...requestedRoles] };
-          }))
+            }),
+          roleRequests: memberships
+            .filter((membership) => membership.status === 'ACTIVE')
+            .flatMap((membership) => membership.role_requests
+              .filter((request) => request.status === 'PENDING')
+              .map((request): PendingRoleRequest => ({ group, membership, request })))
+        }))
       )
     );
 
-    (requests.length ? forkJoin(requests).pipe(map((groups) => groups.flat())) : of([] as PendingMembershipRequest[]))
+    (requests.length ? forkJoin(requests) : of([]))
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.membershipRequestsLoading.set(false)),
+        finalize(() => {
+          this.membershipRequestsLoading.set(false);
+          this.roleRequestsLoading.set(false);
+        }),
         catchError((error) => {
-          console.error('Failed to load membership requests', error);
+          console.error('Failed to load membership and role requests', error);
           this.membershipRequestsError.set('Failed to load membership requests.');
-          return of([] as PendingMembershipRequest[]);
+          this.roleRequestsError.set('Failed to load role requests.');
+          return of([]);
         })
       )
-      .subscribe((memberships) => this.membershipRequests.set(memberships));
+      .subscribe((groupRequests) => {
+        this.membershipRequests.set(groupRequests.flatMap((group) => group.membershipRequests));
+        this.roleRequests.set(groupRequests.flatMap((group) => group.roleRequests));
+      });
   }
 
   private acceptMembership(request: PendingMembershipRequest): Observable<unknown> {

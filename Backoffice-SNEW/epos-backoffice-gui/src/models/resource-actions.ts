@@ -1,4 +1,4 @@
-import type { DiscoveryResourceType, ReplaceResourceDraftRequest } from '../../generated/backofficeSchemas';
+import type { DiscoveryResourceType, GroupPermission, ReplaceResourceDraftRequest } from '../../generated/backofficeSchemas';
 
 export type ResourceActionKey =
   | 'save'
@@ -9,6 +9,33 @@ export type ResourceActionKey =
   | 'reject'
   | 'revert-to-draft'
   | 'delete';
+
+export const RESOURCE_ACTION_PERMISSIONS = {
+  save: 'resource.edit',
+  submit: 'resource.submit',
+  publish: 'resource.publish',
+  'create-new-draft': 'resource.create',
+  archive: 'resource.unpublish',
+  reject: 'resource.reject',
+  'revert-to-draft': 'resource.reopen',
+  delete: 'resource.discard'
+} as const satisfies Record<ResourceActionKey, GroupPermission>;
+
+export const GROUP_PERMISSIONS = [
+  'resource.create',
+  'resource.edit',
+  'resource.submit',
+  'resource.withdraw',
+  'resource.reopen',
+  'resource.discard',
+  'resource.reject',
+  'resource.publish',
+  'resource.unpublish',
+  'group.membership.manage',
+  'group.role.manage',
+  'group.permission.manage',
+  'category.manage'
+] as const satisfies readonly GroupPermission[];
 
 export type ResourceActionVariant = 'primary' | 'ghost' | 'danger';
 

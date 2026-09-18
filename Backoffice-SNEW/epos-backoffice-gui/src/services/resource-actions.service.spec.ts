@@ -41,11 +41,13 @@ describe('ResourceActionsService', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns lifecycle actions allowed by status and role', () => {
-    expect(service.sidebarActions('DRAFT', false).map((action) => action.key)).toEqual(['save', 'submit']);
-    expect(service.sidebarActions('SUBMITTED', false)).toEqual([]);
-    expect(service.sidebarActions('SUBMITTED', true).map((action) => action.key)).toEqual(['publish', 'reject']);
-    expect(service.sidebarActions('PUBLISHED', true).map((action) => action.key)).toEqual(['create-new-draft', 'archive']);
+  it('returns only lifecycle actions allowed by their individual permissions', () => {
+    expect(service.sidebarActions('DRAFT', ['resource.edit']).map((action) => action.key)).toEqual(['save']);
+    expect(service.sidebarActions('DRAFT', ['resource.submit']).map((action) => action.key)).toEqual(['submit']);
+    expect(service.sidebarActions('SUBMITTED', ['resource.publish']).map((action) => action.key)).toEqual(['publish']);
+    expect(service.sidebarActions('SUBMITTED', ['resource.reject']).map((action) => action.key)).toEqual(['reject']);
+    expect(service.sidebarActions('PUBLISHED', ['resource.create']).map((action) => action.key)).toEqual(['create-new-draft']);
+    expect(service.sidebarActions('PUBLISHED', ['resource.unpublish']).map((action) => action.key)).toEqual(['archive']);
   });
 
   it('tracks a pending action and disables the other lifecycle actions', () => {
@@ -55,7 +57,7 @@ describe('ResourceActionsService', () => {
     service.submit(context, 'Resource title').subscribe();
 
     expect(service.saving()).toBe(true);
-    expect(service.sidebarActions('DRAFT', false).every((action) => action.disabled)).toBe(true);
+    expect(service.sidebarActions('DRAFT', ['resource.edit', 'resource.submit']).every((action) => action.disabled)).toBe(true);
 
     request.next({ id: context.resourceId, resourceType: context.resourceType, status: 'SUBMITTED' });
     request.complete();

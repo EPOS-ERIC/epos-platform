@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, defer, finalize, map, of, switchMap, tap } from 'rxjs';
 
 import type {
+  GroupPermission,
   RejectResourceRequest,
   ResourceVersion,
   VersioningStatus,
@@ -39,15 +40,19 @@ export class ResourceActionsService {
     this.errorState.set(message);
   }
 
-  sidebarActions(status: VersioningStatus | null, isAdmin: boolean): ResourceActionItem[] {
+  sidebarActions(status: VersioningStatus | null, permissions: readonly GroupPermission[]): ResourceActionItem[] {
     const pending = this.pendingActionState();
-    const capabilities = resourceCapabilities(status, isAdmin);
+    const capabilities = resourceCapabilities(status, permissions);
 
-    if (capabilities.archive) {
-      return [
-        this.action('create-new-draft', 'Create New Draft', 'Creating...', 'primary', pending),
-        this.action('archive', 'Archive', 'Archiving...', 'danger', pending)
-      ];
+    if (status === 'PUBLISHED') {
+      const actions: ResourceActionItem[] = [];
+      if (capabilities.createDraft) {
+        actions.push(this.action('create-new-draft', 'Create New Draft', 'Creating...', 'primary', pending));
+      }
+      if (capabilities.archive) {
+        actions.push(this.action('archive', 'Archive', 'Archiving...', 'danger', pending));
+      }
+      return actions;
     }
 
     if (capabilities.createDraft) {
@@ -58,18 +63,26 @@ export class ResourceActionsService {
       return [this.action('revert-to-draft', 'Revert to Draft', 'Reverting...', 'primary', pending)];
     }
 
-    if (capabilities.publish || capabilities.reject) {
-      return [
-        this.action('publish', 'Publish', 'Publishing...', 'primary', pending),
-        this.action('reject', 'Reject', undefined, 'danger', pending)
-      ];
+    if (status === 'SUBMITTED') {
+      const actions: ResourceActionItem[] = [];
+      if (capabilities.publish) {
+        actions.push(this.action('publish', 'Publish', 'Publishing...', 'primary', pending));
+      }
+      if (capabilities.reject) {
+        actions.push(this.action('reject', 'Reject', undefined, 'danger', pending));
+      }
+      return actions;
     }
 
-    if (capabilities.save || capabilities.submit) {
-      return [
-        this.action('save', 'Save', 'Saving...', 'primary', pending),
-        this.action('submit', 'Submit', undefined, 'ghost', pending)
-      ];
+    if (status === 'DRAFT') {
+      const actions: ResourceActionItem[] = [];
+      if (capabilities.save) {
+        actions.push(this.action('save', 'Save', 'Saving...', 'primary', pending));
+      }
+      if (capabilities.submit) {
+        actions.push(this.action('submit', 'Submit', undefined, 'ghost', pending));
+      }
+      return actions;
     }
 
     return [];

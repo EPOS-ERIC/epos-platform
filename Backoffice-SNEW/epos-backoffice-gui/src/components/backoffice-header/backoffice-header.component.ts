@@ -37,6 +37,7 @@ export class BackofficeHeaderComponent {
   @Input() pageLabel = 'Results';
   @Input() darkMode = false;
   @Input() showSearchActions = true;
+  @Input() canAddNewResource = false;
   @Input() searchQuery = '';
   @Input() selectedDataTypes: DiscoveryResourceType[] = [];
   @Input() selectedVersioningStatuses: VersioningStatus[] = [];

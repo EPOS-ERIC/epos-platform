@@ -43,6 +43,7 @@ describe('MembershipsPageComponent', () => {
     refresh: vi.fn()
   };
   const apiService = {
+    requestGroupRole: vi.fn(),
     withdrawGroupMembershipRequest: vi.fn(),
     leaveOwnGroupMembership: vi.fn()
   };
@@ -53,6 +54,12 @@ describe('MembershipsPageComponent', () => {
     vi.clearAllMocks();
     currentUser.set(user);
     currentUserStore.refresh.mockResolvedValue(undefined);
+    apiService.requestGroupRole.mockReturnValue(of({
+      id: 'role-request-id',
+      role: 'EDITOR',
+      status: 'PENDING',
+      requested_at: '2026-09-14T08:00:00Z'
+    }));
     apiService.withdrawGroupMembershipRequest.mockReturnValue(of(undefined));
     apiService.leaveOwnGroupMembership.mockReturnValue(of(undefined));
     dialog.confirm.mockResolvedValue(true);
@@ -113,7 +120,7 @@ describe('MembershipsPageComponent', () => {
     expect(toast.success).toHaveBeenCalledWith('Group membership removed.');
   });
 
-  it('does not offer Leave to global or group administrators', () => {
+  it('offers Leave to global and group administrators for their own membership', () => {
     currentUser.set({
       ...user,
       global_roles: ['ADMIN'],
@@ -122,7 +129,7 @@ describe('MembershipsPageComponent', () => {
     const fixture = TestBed.createComponent(MembershipsPageComponent);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.membership-remove-button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.membership-remove-button')?.textContent.trim()).toBe('Leave');
 
     currentUser.set({
       ...user,
@@ -130,7 +137,58 @@ describe('MembershipsPageComponent', () => {
     });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.membership-remove-button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.membership-remove-button')?.textContent.trim()).toBe('Leave');
+  });
+
+  it('shows current and pending roles as unavailable in the role request dialog', () => {
+    currentUser.set({
+      ...user,
+      memberships: [{
+        ...user.memberships[0],
+        status: 'ACTIVE',
+        roles: ['EDITOR'],
+        role_requests: [{ id: 'request-id', role: 'REVIEWER', status: 'PENDING', requested_at: '2026-09-14T08:00:00Z' }]
+      }]
+    });
+    const fixture = TestBed.createComponent(MembershipsPageComponent);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.membership-role-request-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const dialog = fixture.nativeElement.querySelector('.role-request-dialog') as HTMLElement;
+    const options = dialog.querySelectorAll<HTMLInputElement>('.role-request-option input');
+    expect(dialog.textContent).toContain('Current roles');
+    expect(dialog.textContent).toContain('Current role');
+    expect(dialog.textContent).toContain('Request pending');
+    expect(options[0].disabled).toBe(true);
+    expect(options[1].disabled).toBe(true);
+  });
+
+  it('submits one role request for each selected role', async () => {
+    currentUser.set({
+      ...user,
+      memberships: [{ ...user.memberships[0], status: 'ACTIVE', roles: [], role_requests: [] }]
+    });
+    const fixture = TestBed.createComponent(MembershipsPageComponent);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.membership-role-request-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const options = fixture.nativeElement.querySelectorAll('.role-request-option input') as NodeListOf<HTMLInputElement>;
+    options[0].click();
+    options[1].click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.role-request-dialog .app-button--primary') as HTMLButtonElement).click();
+
+    await vi.waitFor(() => expect(apiService.requestGroupRole).toHaveBeenCalledTimes(2));
+    expect(apiService.requestGroupRole).toHaveBeenCalledWith('1375500a-fc04-5831-a7f5-39ea5fcb0445', { role: 'EDITOR' });
+    expect(apiService.requestGroupRole).toHaveBeenCalledWith('1375500a-fc04-5831-a7f5-39ea5fcb0445', { role: 'REVIEWER' });
+    await vi.waitFor(() => expect(currentUserStore.refresh).toHaveBeenCalledOnce());
+    expect(toast.success).toHaveBeenCalledWith('2 role requests submitted.');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.role-request-dialog')).toBeNull();
   });
 
 });

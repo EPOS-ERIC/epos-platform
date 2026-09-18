@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, switchMap } from 'rxjs';
@@ -7,12 +7,14 @@ import type { CreateResourceDraftRequest, DiscoveryResourceType } from '../../ge
 import { ApiService } from './api.service';
 import { GroupsStore } from '../stores/groups.store';
 import { ResourceActionsService } from './resource-actions.service';
+import { CurrentUserStore } from '../stores/current-user.store';
 
 @Injectable({ providedIn: 'root' })
 export class ResourceCreationDialogService {
   private readonly apiService = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly groupsStore = inject(GroupsStore);
+  private readonly currentUserStore = inject(CurrentUserStore);
   private readonly resourceActions = inject(ResourceActionsService);
   private readonly router = inject(Router);
   private fallbackSectionPath = 'data';
@@ -24,7 +26,9 @@ export class ResourceCreationDialogService {
   readonly groupId = signal('');
   readonly saving = signal(false);
   readonly error = signal('');
-  readonly groups = this.groupsStore.groups;
+  readonly groups = computed(() => this.groupsStore.groups().filter((group) =>
+    this.currentUserStore.hasGroupPermission(group.id, 'resource.create')
+  ));
   readonly groupsLoading = this.groupsStore.loading;
   readonly resourceTypes: Array<{ label: string; value: DiscoveryResourceType }> = [
     { label: 'dataset', value: 'dataset' },
@@ -33,11 +37,14 @@ export class ResourceCreationDialogService {
   ];
 
   open(preferredGroupId = '', fallbackSectionPath = 'data'): void {
+    const groups = this.groups();
+    if (!groups.length) return;
+
     this.fallbackSectionPath = fallbackSectionPath;
     this.title.set('');
     this.description.set('');
     this.resourceType.set('dataset');
-    this.groupId.set(preferredGroupId || this.groups()[0]?.id || '');
+    this.groupId.set(groups.some((group) => group.id === preferredGroupId) ? preferredGroupId : groups[0].id);
     this.error.set('');
     this.openState.set(true);
   }
@@ -60,7 +67,13 @@ export class ResourceCreationDialogService {
     const resourceType = this.resourceType();
     const groupId = this.groupId();
 
-    if (this.saving() || !groupId || !title || (resourceType !== 'dataset' && !description)) {
+    if (
+      this.saving()
+      || !groupId
+      || !this.currentUserStore.hasGroupPermission(groupId, 'resource.create')
+      || !title
+      || (resourceType !== 'dataset' && !description)
+    ) {
       return;
     }
 

@@ -39,6 +39,15 @@ describe('AdminGroupsComponent', () => {
     ...pendingMembership,
     status: 'ACTIVE'
   };
+  const activeMembershipWithRoleRequest: GroupMembership = {
+    ...activeMembership,
+    role_requests: [{
+      id: 'active-role-request-id',
+      role: 'REVIEWER',
+      status: 'PENDING',
+      requested_at: '2026-09-15T08:00:00Z'
+    }]
+  };
   const apiService = {
     getUsers: vi.fn(),
     getGroupMemberships: vi.fn(),
@@ -50,7 +59,7 @@ describe('AdminGroupsComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     apiService.getUsers.mockReturnValue(of([]));
-    apiService.getGroupMemberships.mockReturnValue(of([pendingMembership]));
+    apiService.getGroupMemberships.mockReturnValue(of([pendingMembership, activeMembershipWithRoleRequest]));
     apiService.decideGroupMembership.mockReturnValue(of(activeMembership));
     apiService.decideGroupRoleRequest.mockReturnValue(of(activeMembership));
     apiService.setGroupMembershipRole.mockReturnValue(of(undefined));
@@ -86,5 +95,21 @@ describe('AdminGroupsComponent', () => {
     expect(apiService.decideGroupRoleRequest).toHaveBeenCalledWith('group-id', 'request-id', 'reject');
     expect(apiService.setGroupMembershipRole).toHaveBeenCalledWith('group-id', 'user-id', 'GROUP_ADMIN', true);
     expect(fixture.nativeElement.textContent).toContain('No pending membership requests.');
+  });
+
+  it('shows and accepts role requests from active memberships', async () => {
+    const fixture = TestBed.createComponent(AdminGroupsComponent);
+    fixture.detectChanges();
+
+    const roleRequestsCard = fixture.nativeElement.querySelector('.role-requests-card') as HTMLElement;
+    expect(roleRequestsCard.textContent).toContain('user@example.org');
+    expect(roleRequestsCard.textContent).toContain('REVIEWER');
+
+    (roleRequestsCard.querySelector('.app-button--primary') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(apiService.decideGroupRoleRequest).toHaveBeenCalledWith('group-id', 'active-role-request-id', 'accept');
+    expect(roleRequestsCard.textContent).toContain('No pending role requests.');
   });
 });

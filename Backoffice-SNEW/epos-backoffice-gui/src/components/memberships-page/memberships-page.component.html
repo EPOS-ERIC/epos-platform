@@ -77,8 +77,14 @@
                   }
                 </button>
               </footer>
-            } @else if (membership.status === 'ACTIVE' && !currentUser.global_roles.includes('ADMIN') && !membership.roles.includes('GROUP_ADMIN')) {
+            } @else if (membership.status === 'ACTIVE') {
               <footer class="membership-summary-footer">
+                <button
+                  type="button"
+                  class="app-button app-button--ghost membership-role-request-button"
+                  [disabled]="!!membershipMutation()"
+                  (click)="openRoleRequestDialog(membership)"
+                >Request role</button>
                 <button
                   type="button"
                   class="app-button membership-remove-button"
@@ -98,3 +104,59 @@
     }
   }
 </section>
+
+@if (roleRequestMembership(); as membership) {
+  <div class="app-dialog-backdrop" (click)="closeRoleRequestDialog()">
+    <section class="app-dialog app-card role-request-dialog" role="dialog" aria-modal="true" aria-labelledby="role-request-title" aria-describedby="role-request-description" (click)="$event.stopPropagation()">
+      <header class="app-dialog-header">
+        <p class="eyebrow app-badge app-badge--primary">Group Access</p>
+        <h2 id="role-request-title">Request roles</h2>
+        <p id="role-request-description" class="subtitle app-muted">Request additional roles in {{ membership.group.name }}.</p>
+      </header>
+
+      <div class="app-dialog-body role-request-body">
+        <section>
+          <h3>Current roles</h3>
+          <div class="role-chip-list">
+            @for (role of membership.roles; track role) {
+              <span class="app-chip">{{ role }}</span>
+            } @empty {
+              <span class="app-muted">No roles currently assigned.</span>
+            }
+          </div>
+        </section>
+
+        <fieldset class="role-request-options" [disabled]="roleRequestSaving()">
+          <legend>Roles to request</legend>
+          @for (role of requestableRoles; track role) {
+            <label class="role-request-option">
+              <input
+                type="checkbox"
+                [checked]="hasRole(membership, role) || hasPendingRoleRequest(membership, role) || selectedRoles().includes(role)"
+                [disabled]="hasRole(membership, role) || hasPendingRoleRequest(membership, role)"
+                (change)="toggleRequestedRole(membership, role)"
+              />
+              <span>{{ role }}</span>
+              @if (hasRole(membership, role)) {
+                <small>Current role</small>
+              } @else if (hasPendingRoleRequest(membership, role)) {
+                <small>Request pending</small>
+              }
+            </label>
+          }
+        </fieldset>
+
+        @if (roleRequestError()) {
+          <div class="dialog-error" role="alert">{{ roleRequestError() }}</div>
+        }
+      </div>
+
+      <footer class="app-dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="closeRoleRequestDialog()" [disabled]="roleRequestSaving()">Cancel</button>
+        <button type="button" class="app-button app-button--primary" (click)="submitRoleRequests()" [disabled]="roleRequestSaving() || !selectedRoles().length">
+          {{ roleRequestSaving() ? 'Submitting...' : 'Submit request' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+}

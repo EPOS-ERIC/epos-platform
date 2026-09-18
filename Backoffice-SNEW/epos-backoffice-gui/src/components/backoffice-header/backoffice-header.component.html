@@ -99,7 +99,9 @@
           </div>
         }
       </div>
-      <button type="button" class="app-button app-button--primary" (click)="addNewResource.emit()">Add New Resource</button>
+      @if (canAddNewResource) {
+        <button type="button" class="app-button app-button--primary" (click)="addNewResource.emit()">Add New Resource</button>
+      }
     </div>
   }
 </header>

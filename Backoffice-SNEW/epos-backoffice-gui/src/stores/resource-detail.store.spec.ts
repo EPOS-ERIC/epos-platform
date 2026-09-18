@@ -13,6 +13,7 @@ import type {
 import { ApiService, type ResourceVersionResponse } from '../services/api.service';
 import { DialogService } from '../services/dialog.service';
 import { ResourceActionsService } from '../services/resource-actions.service';
+import { CurrentUserStore } from './current-user.store';
 import { ResourceDetailStore, type ResourceDetailRouteContext } from './resource-detail.store';
 
 describe('ResourceDetailStore', () => {
@@ -43,6 +44,7 @@ describe('ResourceDetailStore', () => {
   const dialogService = { dismiss: vi.fn(), prompt: vi.fn(), confirm: vi.fn() };
   const router = { navigate: vi.fn() };
   const actionError = signal('');
+  const currentUserStore = { groupPermissions: vi.fn(() => ['resource.edit', 'resource.submit', 'resource.discard']) };
   const resourceActions = {
     error: actionError.asReadonly(),
     saving: signal(false),
@@ -76,6 +78,7 @@ describe('ResourceDetailStore', () => {
         { provide: ApiService, useValue: apiService },
         { provide: DialogService, useValue: dialogService },
         { provide: ResourceActionsService, useValue: resourceActions },
+        { provide: CurrentUserStore, useValue: currentUserStore },
         { provide: Router, useValue: router }
       ]
     });
@@ -156,16 +159,17 @@ describe('ResourceDetailStore', () => {
     expect(store.rootLabel()).toBe('Software Application');
   });
 
-  it('derives capabilities from status and route role', () => {
+  it('derives capabilities from effective group permissions', () => {
     apiService.getResourceVersion.mockReturnValue(of(datasetVersion({ status: 'SUBMITTED' })));
+    currentUserStore.groupPermissions.mockReturnValue(['resource.publish', 'resource.reject']);
 
-    store.load({ ...context('dataset', 'dataset-id'), isAdmin: true });
+    store.load(context('dataset', 'dataset-id'));
 
     expect(store.capabilities().publish).toBe(true);
     expect(store.capabilities().reject).toBe(true);
     expect(store.canEdit()).toBe(false);
     expect(store.sidebarActions()).toEqual([]);
-    expect(resourceActions.sidebarActions).toHaveBeenCalledWith('SUBMITTED', true);
+    expect(resourceActions.sidebarActions).toHaveBeenCalledWith('SUBMITTED', ['resource.publish', 'resource.reject']);
   });
 
   function context(resourceType: DiscoveryResourceType, resourceId: string): ResourceDetailRouteContext {
@@ -174,8 +178,7 @@ describe('ResourceDetailStore', () => {
       resourceId,
       versionId: 'version-id',
       groupId: 'group-id',
-      sectionPath: resourceType === 'dataset' ? 'data' : 'software',
-      isAdmin: false
+      sectionPath: resourceType === 'dataset' ? 'data' : 'software'
     };
   }
 
