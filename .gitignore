@@ -26,7 +26,6 @@ temp/
 coverage/
 coverage.out
 htmlcov/
-tests/schemathesis/.hypothesis/
 
 ### Binaries / shared libs ###
 *.exe

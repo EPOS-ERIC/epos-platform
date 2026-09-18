@@ -7,7 +7,8 @@ on:
       - "packages/scripts/epos-banner.sh"
       - "Makefile"
       - ".github/workflows/oss-aai-ci.yml"
-      - ".github/workflows/_go-service.yml"
+      - ".github/workflows/_go-service-ci.yml"
+      - ".github/workflows/_go-service-cd.yml"
   push:
     branches:
       - "main"
@@ -18,19 +19,28 @@ on:
       - "packages/scripts/epos-banner.sh"
       - "Makefile"
       - ".github/workflows/oss-aai-ci.yml"
-      - ".github/workflows/_go-service.yml"
+      - ".github/workflows/_go-service-ci.yml"
+      - ".github/workflows/_go-service-cd.yml"
+
+  workflow_dispatch:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   ci:
-    uses: ./.github/workflows/_go-service.yml
+    uses: ./.github/workflows/_go-service-ci.yml
+    secrets: inherit
+    with:
+      service: services/oss-aai-service
+
+  publish:
+    needs: ci
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_go-service-cd.yml
     secrets: inherit
     with:
       service: services/oss-aai-service
       image: oss-aai-service
-      dockerfile: services/oss-aai-service/Dockerfile
-      context: .
-      go-version-file: services/oss-aai-service/go.mod

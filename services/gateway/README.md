@@ -36,7 +36,7 @@ make fmt
 make lint
 ```
 
-`make test` enables the race detector. Build the container with `make build-docker`; set `IMAGE` to override the default tag.
+`make test` enables the race detector. Build the container with `make docker`; set `IMAGE` to override the default tag.
 
 ## Generated code
 

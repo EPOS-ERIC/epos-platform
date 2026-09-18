@@ -6,7 +6,7 @@ BUILDFLAGS = -trimpath
 build:
 	CGO_ENABLED=0 go build $(BUILDFLAGS) -o $(BIN) .
 
-build-docker: build
+docker: build
 	docker build -t $(IMAGE) -f Dockerfile ../..
 
 test:
@@ -21,4 +21,4 @@ lint: fmt
 clean:
 	rm -rf $(BIN)
 
-.PHONY: build build-docker test fmt lint clean
+.PHONY: build docker test fmt lint clean

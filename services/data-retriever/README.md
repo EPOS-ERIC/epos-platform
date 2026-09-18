@@ -67,4 +67,4 @@ Migrations are applied automatically when the service starts.
 
 ## Docker
 
-Build the production image from this directory with `make build-docker`. Set `IMAGE` to override the default image name and tag.
+Build the production image from this directory with `make docker`. Set `IMAGE` to override the default image name and tag.

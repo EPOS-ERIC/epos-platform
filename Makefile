@@ -1,29 +1,7 @@
-# This suite fuzzes schema contracts only.
-SCHEMATHESIS_EXCLUDE_PATHS := \
-	--exclude-path /search \
-	--exclude-path /imports/turtle \
-	--exclude-path /groups/{groupId}/membership-requests \
-	--exclude-path /groups/{groupId}/memberships/{userId} \
-	--exclude-path /groups/{groupId}/memberships/{userId}/{decision} \
-	--exclude-path /groups/{groupId}/memberships/{userId}/roles/{role} \
-	--exclude-path /groups/{groupId}/memberships/{userId}/permissions/{permission} \
-	--exclude-path /groups/{groupId}/role-requests \
-	--exclude-path /groups/{groupId}/role-requests/{requestId} \
-	--exclude-path /groups/{groupId}/role-requests/{requestId}/{decision} \
-	--exclude-path /groups/{groupId}/resources \
-	--exclude-path /groups/{groupId}/resources/{resourceType}/{id}/copy \
-	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/submit \
-	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/withdraw \
-	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/reject \
-	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/reopen \
-	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/publish \
-	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/unpublish \
-	--exclude-path /resources/{resourceType}/{id}/draft-from-publication \
-	--exclude-path /resources/{resourceType}/{id}/draft-from-archive \
-	--exclude-path /users/{id}/block \
-	--exclude-path /users/{id}/unblock \
-	--exclude-path /users/{id}/global-roles/{role} \
-	--exclude-path /users/{id}/global-permissions/{permission}
+GATEWAY_DIR := services/gateway
+METADATA_LIFECYCLE_DIR := services/metadata-lifecycle
+DATA_RETRIEVER_DIR := services/data-retriever
+OSS_AAI_SERVICE_DIR := services/oss-aai-service
 
 up: 
 	tilt up $(TILT_CONTEXT_ARG)
@@ -31,83 +9,55 @@ up:
 down:
 	tilt down $(TILT_CONTEXT_ARG)
 
+clean: down
+	docker volume rm -f docker_neo4j-data docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data
+
 populate:
 	./packages/scripts/populatescript.sh
 
 populate-metadatone:
 	./packages/scripts/metadatone.sh
 
-clean: down
-	docker volume rm -f docker_neo4j-data docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data
+ci:
+	+$(MAKE) -j ci-gateway-image ci-metadata-lifecycle-image ci-oss-aai-image
+	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle oss-aai-service
+ci-gateway-image:
+	+$(MAKE) -C $(GATEWAY_DIR) docker
+ci-metadata-lifecycle-image:
+	+$(MAKE) -C $(METADATA_LIFECYCLE_DIR) docker
+ci-oss-aai-image:
+	+$(MAKE) -C $(OSS_AAI_SERVICE_DIR) docker
 
 test:
 	+$(MAKE) -j test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service
 test-gateway:
-	$(MAKE) -C services/gateway test
+	$(MAKE) -C $(GATEWAY_DIR) test
 test-metadata-lifecycle:
-	$(MAKE) -C services/metadata-lifecycle test
+	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) test
 test-data-retriever:
-	$(MAKE) -C services/data-retriever test
+	$(MAKE) -C $(DATA_RETRIEVER_DIR) test
 test-oss-aai-service:
-	$(MAKE) -C services/oss-aai-service test
+	$(MAKE) -C $(OSS_AAI_SERVICE_DIR) test
 
 lint:
 	+$(MAKE) -j lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle
 lint-gateway:
-	$(MAKE) -C services/gateway lint
+	$(MAKE) -C $(GATEWAY_DIR) lint
 lint-data-retriever:
-	$(MAKE) -C services/data-retriever lint
+	$(MAKE) -C $(DATA_RETRIEVER_DIR) lint
 lint-oss-aai-service:
-	$(MAKE) -C services/oss-aai-service lint
+	$(MAKE) -C $(OSS_AAI_SERVICE_DIR) lint
 lint-metadata-lifecycle:
-	$(MAKE) -C services/metadata-lifecycle lint
+	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) lint
 
 generate:
 	+$(MAKE) -j generate-gateway generate-metadata-lifecycle
 generate-gateway:
-	$(MAKE) -C services/gateway generate
+	$(MAKE) -C $(GATEWAY_DIR) generate
 generate-metadata-lifecycle:
-	$(MAKE) -C services/metadata-lifecycle generate
+	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) generate
 
-test-schemathesis:
-	schemathesis_env="$$(./packages/scripts/schemathesis-env.sh)" && eval "$$schemathesis_env" && docker run --rm \
-		--add-host host.docker.internal:host-gateway \
-		-v "$(CURDIR):/work:ro" \
-		-w /tmp \
-		-e HYPOTHESIS_HOME=/tmp/.hypothesis \
-		-e SCHEMATHESIS_HOOKS=/work/tests/schemathesis/hooks.py \
-		-e SCHEMATHESIS_BEARER_TOKEN="$$SCHEMATHESIS_BEARER_TOKEN" \
-		-e SCHEMATHESIS_GROUP_ID="$$SCHEMATHESIS_GROUP_ID" \
-		-e SCHEMATHESIS_CATEGORY_ID="$$SCHEMATHESIS_CATEGORY_ID" \
-		-e SCHEMATHESIS_RESOURCE_ID="$$SCHEMATHESIS_RESOURCE_ID" \
-		-e SCHEMATHESIS_RESOURCE_VERSION_ID="$$SCHEMATHESIS_RESOURCE_VERSION_ID" \
-		-e SCHEMATHESIS_PROVIDER_ID="$$SCHEMATHESIS_PROVIDER_ID" \
-		-e SCHEMATHESIS_CONTACT_POINT_ID="$$SCHEMATHESIS_CONTACT_POINT_ID" \
-		-e SCHEMATHESIS_ORGANIZATION_ID="$$SCHEMATHESIS_ORGANIZATION_ID" \
-		-e SCHEMATHESIS_USER_ID="$$SCHEMATHESIS_USER_ID" \
-		-e SCHEMATHESIS_MEMBERSHIP_USER_ID="$$SCHEMATHESIS_MEMBERSHIP_USER_ID" \
-		-e SCHEMATHESIS_ROLE_REQUEST_ID="$$SCHEMATHESIS_ROLE_REQUEST_ID" \
-		-e SCHEMATHESIS_DRAFT_RESOURCE_ID="$$SCHEMATHESIS_DRAFT_RESOURCE_ID" \
-		-e SCHEMATHESIS_DRAFT_RESOURCE_VERSION_ID="$$SCHEMATHESIS_DRAFT_RESOURCE_VERSION_ID" \
-		-e SCHEMATHESIS_PUBLISHED_RESOURCE_ID="$$SCHEMATHESIS_PUBLISHED_RESOURCE_ID" \
-		-e SCHEMATHESIS_PUBLISHED_RESOURCE_VERSION_ID="$$SCHEMATHESIS_PUBLISHED_RESOURCE_VERSION_ID" \
-		-e SCHEMATHESIS_ARCHIVED_RESOURCE_ID="$$SCHEMATHESIS_ARCHIVED_RESOURCE_ID" \
-		-e SCHEMATHESIS_ARCHIVED_RESOURCE_VERSION_ID="$$SCHEMATHESIS_ARCHIVED_RESOURCE_VERSION_ID" \
-		ghcr.io/schemathesis/schemathesis:latest \
-		run \
-		$$SCHEMATHESIS_EXCLUDE_RESOURCE_PATH \
-		$(SCHEMATHESIS_EXCLUDE_PATHS) \
-		--exclude-method DELETE \
-		--exclude-method PUT \
-		--url "http://host.docker.internal:32000/v1" \
-		--phases examples,coverage,fuzzing \
-		--suppress-health-check=filter_too_much \
-		--exclude-checks unsupported_method,missing_required_header,ignored_auth,negative_data_rejection \
-		--generation-deterministic \
-		--generation-allow-x00 false \
-		/work/services/gateway/docs/openapi.yaml
-
-test-contract:
+test-integration:
 	docker run --rm \
 		--add-host host.docker.internal:host-gateway \
 		-v "$(CURDIR):/work:ro" \
@@ -125,4 +75,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-schemathesis test-contract get-dev-token generate generate-gateway generate-metadata-lifecycle
+.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle
