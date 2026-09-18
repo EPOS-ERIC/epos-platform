@@ -1831,6 +1831,30 @@ components:
       minLength: 1
       pattern: '[^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]'
 
+    StringEnumOption:
+      type: object
+      additionalProperties: false
+      required: [value]
+      properties:
+        value: { type: string, minLength: 1 }
+        label: { type: string, minLength: 1 }
+
+    IntegerEnumOption:
+      type: object
+      additionalProperties: false
+      required: [value]
+      properties:
+        value: { type: integer, format: int64 }
+        label: { type: string, minLength: 1 }
+
+    FloatEnumOption:
+      type: object
+      additionalProperties: false
+      required: [value]
+      properties:
+        value: { type: number, format: double }
+        label: { type: string, minLength: 1 }
+
     Keyword:
       type: string
       minLength: 1
@@ -2159,7 +2183,7 @@ components:
         multiple_values: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { type: string } }
+        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanParameterDraft:
@@ -2210,7 +2234,7 @@ components:
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        enum: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatParameterDraft:
       type: object
@@ -2242,7 +2266,7 @@ components:
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        enum: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeParameterDraft:
       type: object
@@ -2295,7 +2319,7 @@ components:
         multiple_values: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { type: string } }
+        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanParameter:
@@ -2359,7 +2383,7 @@ components:
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        enum: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatParameter:
       type: object
@@ -2393,7 +2417,7 @@ components:
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        enum: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeParameter:
       type: object
@@ -2510,7 +2534,7 @@ components:
         required: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { type: string } }
+        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanScalarParameterDraft:
@@ -2542,7 +2566,7 @@ components:
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        enum: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatScalarParameterDraft:
       type: object
@@ -2559,7 +2583,7 @@ components:
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        enum: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeScalarParameterDraft:
       type: object
@@ -2591,7 +2615,7 @@ components:
         required: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { type: string } }
+        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanScalarParameter:
@@ -2623,7 +2647,7 @@ components:
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        enum: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatScalarParameter:
       type: object
@@ -2640,7 +2664,7 @@ components:
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        enum: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeScalarParameter:
       type: object

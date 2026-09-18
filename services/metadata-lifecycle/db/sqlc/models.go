@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
 	"github.com/google/uuid"
 	go_geom "github.com/twpayne/go-geom"
 )
@@ -723,7 +724,7 @@ type FloatParameterSchema struct {
 	Minimum        *float64
 	Maximum        *float64
 	DefaultValue   *float64
-	Enum           []float64
+	Enum           []types.FloatEnumOption
 	MultipleValues bool
 }
 
@@ -812,7 +813,7 @@ type IntegerParameterSchema struct {
 	Minimum        *int64
 	Maximum        *int64
 	DefaultValue   *int64
-	Enum           []int64
+	Enum           []types.IntegerEnumOption
 	MultipleValues bool
 }
 
@@ -993,7 +994,7 @@ type StringParameterSchema struct {
 	SchemaKind     ParameterSchemaKind
 	Pattern        *string
 	DefaultValue   *string
-	Enum           []string
+	Enum           []types.StringEnumOption
 	MultipleValues bool
 }
 

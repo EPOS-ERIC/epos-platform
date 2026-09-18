@@ -321,9 +321,24 @@ message WebServiceParameter {
   Parameter parameter = 2;
 }
 
+message StringEnumOption {
+  string value = 1 [(buf.validate.field).string.min_len = 1];
+  optional string label = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message IntegerEnumOption {
+  int64 value = 1;
+  optional string label = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message FloatEnumOption {
+  double value = 1;
+  optional string label = 2 [(buf.validate.field).string.min_len = 1];
+}
+
 message StringParameter {
   optional string default = 1 [(buf.validate.field).string.min_len = 1];
-  repeated string enum = 2 [(buf.validate.field).repeated.items.string.min_len = 1];
+  repeated StringEnumOption enum = 2;
   optional string pattern = 3 [(buf.validate.field).string.min_len = 1];
   bool multiple_values = 4;
 }
@@ -336,7 +351,7 @@ message IntegerParameter {
   optional int64 minimum = 1;
   optional int64 maximum = 2;
   optional int64 default = 3;
-  repeated int64 enum = 4;
+  repeated IntegerEnumOption enum = 4;
   bool multiple_values = 5;
 }
 
@@ -344,7 +359,7 @@ message FloatParameter {
   optional double minimum = 1;
   optional double maximum = 2;
   optional double default = 3;
-  repeated double enum = 4;
+  repeated FloatEnumOption enum = 4;
   bool multiple_values = 5;
 }
 
@@ -362,7 +377,7 @@ message TemplateParameter {
 
 message ScalarStringParameter {
   optional string default = 1 [(buf.validate.field).string.min_len = 1];
-  repeated string enum = 2 [(buf.validate.field).repeated.items.string.min_len = 1];
+  repeated StringEnumOption enum = 2;
   optional string pattern = 3 [(buf.validate.field).string.min_len = 1];
 }
 
@@ -374,14 +389,14 @@ message ScalarIntegerParameter {
   optional int64 minimum = 1;
   optional int64 maximum = 2;
   optional int64 default = 3;
-  repeated int64 enum = 4;
+  repeated IntegerEnumOption enum = 4;
 }
 
 message ScalarFloatParameter {
   optional double minimum = 1;
   optional double maximum = 2;
   optional double default = 3;
-  repeated double enum = 4;
+  repeated FloatEnumOption enum = 4;
 }
 
 message ScalarDateTimeParameter {

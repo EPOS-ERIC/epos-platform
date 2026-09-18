@@ -7,6 +7,7 @@ ENV CGO_ENABLED=0
 RUN apk add curl
 
 COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+COPY . /workspace
 
 EXPOSE 8100
 

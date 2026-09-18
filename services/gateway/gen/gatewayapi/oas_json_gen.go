@@ -7355,6 +7355,119 @@ func (s *DownloadableFileDistributionType) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *FloatEnumOption) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FloatEnumOption) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("value")
+		e.Float64(s.Value)
+	}
+	{
+		if s.Label.Set {
+			e.FieldStart("label")
+			s.Label.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfFloatEnumOption = [2]string{
+	0: "value",
+	1: "label",
+}
+
+// Decode decodes FloatEnumOption from json.
+func (s *FloatEnumOption) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FloatEnumOption to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "value":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Float64()
+				s.Value = float64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"value\"")
+			}
+		case "label":
+			if err := func() error {
+				s.Label.Reset()
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FloatEnumOption")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfFloatEnumOption) {
+					name = jsonFieldsNameOfFloatEnumOption[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FloatEnumOption) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FloatEnumOption) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *FloatParameter) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -7438,7 +7551,7 @@ func (s *FloatParameter) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Float64(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -7637,12 +7750,10 @@ func (s *FloatParameter) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]float64, 0)
+				s.Enum = make([]FloatEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem float64
-					v, err := d.Float64()
-					elem = float64(v)
-					if err != nil {
+					var elem FloatEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -7791,7 +7902,7 @@ func (s *FloatParameterDraft) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Float64(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -7977,12 +8088,10 @@ func (s *FloatParameterDraft) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]float64, 0)
+				s.Enum = make([]FloatEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem float64
-					v, err := d.Float64()
-					elem = float64(v)
-					if err != nil {
+					var elem FloatEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -8189,7 +8298,7 @@ func (s *FloatScalarParameter) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Float64(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -8327,12 +8436,10 @@ func (s *FloatScalarParameter) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]float64, 0)
+				s.Enum = make([]FloatEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem float64
-					v, err := d.Float64()
-					elem = float64(v)
-					if err != nil {
+					var elem FloatEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -8463,7 +8570,7 @@ func (s *FloatScalarParameterDraft) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Float64(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -8601,12 +8708,10 @@ func (s *FloatScalarParameterDraft) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]float64, 0)
+				s.Enum = make([]FloatEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem float64
-					v, err := d.Float64()
-					elem = float64(v)
-					if err != nil {
+					var elem FloatEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -9997,6 +10102,119 @@ func (s *ImportResult) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *IntegerEnumOption) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *IntegerEnumOption) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("value")
+		e.Int64(s.Value)
+	}
+	{
+		if s.Label.Set {
+			e.FieldStart("label")
+			s.Label.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfIntegerEnumOption = [2]string{
+	0: "value",
+	1: "label",
+}
+
+// Decode decodes IntegerEnumOption from json.
+func (s *IntegerEnumOption) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode IntegerEnumOption to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "value":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int64()
+				s.Value = int64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"value\"")
+			}
+		case "label":
+			if err := func() error {
+				s.Label.Reset()
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode IntegerEnumOption")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfIntegerEnumOption) {
+					name = jsonFieldsNameOfIntegerEnumOption[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *IntegerEnumOption) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *IntegerEnumOption) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *IntegerParameter) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -10080,7 +10298,7 @@ func (s *IntegerParameter) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Int64(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -10279,12 +10497,10 @@ func (s *IntegerParameter) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]int64, 0)
+				s.Enum = make([]IntegerEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem int64
-					v, err := d.Int64()
-					elem = int64(v)
-					if err != nil {
+					var elem IntegerEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -10433,7 +10649,7 @@ func (s *IntegerParameterDraft) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Int64(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -10619,12 +10835,10 @@ func (s *IntegerParameterDraft) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]int64, 0)
+				s.Enum = make([]IntegerEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem int64
-					v, err := d.Int64()
-					elem = int64(v)
-					if err != nil {
+					var elem IntegerEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -10831,7 +11045,7 @@ func (s *IntegerScalarParameter) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Int64(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -10969,12 +11183,10 @@ func (s *IntegerScalarParameter) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]int64, 0)
+				s.Enum = make([]IntegerEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem int64
-					v, err := d.Int64()
-					elem = int64(v)
-					if err != nil {
+					var elem IntegerEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -11105,7 +11317,7 @@ func (s *IntegerScalarParameterDraft) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Int64(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -11243,12 +11455,10 @@ func (s *IntegerScalarParameterDraft) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]int64, 0)
+				s.Enum = make([]IntegerEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem int64
-					v, err := d.Int64()
-					elem = int64(v)
-					if err != nil {
+					var elem IntegerEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -12856,7 +13066,7 @@ func (s Parameter) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Str(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -13000,7 +13210,7 @@ func (s Parameter) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Int64(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -13082,7 +13292,7 @@ func (s Parameter) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Float64(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -13394,7 +13604,7 @@ func (s ParameterDraft) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Str(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -13530,7 +13740,7 @@ func (s ParameterDraft) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Int64(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -13608,7 +13818,7 @@ func (s ParameterDraft) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Float64(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -17010,7 +17220,7 @@ func (s ScalarParameter) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Str(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -17114,7 +17324,7 @@ func (s ScalarParameter) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Int64(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -17174,7 +17384,7 @@ func (s ScalarParameter) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Float64(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -17381,7 +17591,7 @@ func (s ScalarParameterDraft) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Str(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -17485,7 +17695,7 @@ func (s ScalarParameterDraft) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Int64(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -17545,7 +17755,7 @@ func (s ScalarParameterDraft) encodeFields(e *jx.Encoder) {
 					e.FieldStart("enum")
 					e.ArrStart()
 					for _, elem := range s.Enum {
-						e.Float64(elem)
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -19958,6 +20168,119 @@ func (s *SoftwareSourceCodeResourceMetadataResourceType) UnmarshalJSON(data []by
 }
 
 // Encode implements json.Marshaler.
+func (s *StringEnumOption) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *StringEnumOption) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("value")
+		e.Str(s.Value)
+	}
+	{
+		if s.Label.Set {
+			e.FieldStart("label")
+			s.Label.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfStringEnumOption = [2]string{
+	0: "value",
+	1: "label",
+}
+
+// Decode decodes StringEnumOption from json.
+func (s *StringEnumOption) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StringEnumOption to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "value":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.Value = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"value\"")
+			}
+		case "label":
+			if err := func() error {
+				s.Label.Reset()
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode StringEnumOption")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfStringEnumOption) {
+					name = jsonFieldsNameOfStringEnumOption[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StringEnumOption) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StringEnumOption) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *StringParameter) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -20029,7 +20352,7 @@ func (s *StringParameter) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Str(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -20213,12 +20536,10 @@ func (s *StringParameter) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]string, 0)
+				s.Enum = make([]StringEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem StringEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -20365,7 +20686,7 @@ func (s *StringParameterDraft) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Str(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -20536,12 +20857,10 @@ func (s *StringParameterDraft) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]string, 0)
+				s.Enum = make([]StringEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem StringEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -20746,7 +21065,7 @@ func (s *StringScalarParameter) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Str(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -20869,12 +21188,10 @@ func (s *StringScalarParameter) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]string, 0)
+				s.Enum = make([]StringEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem StringEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)
@@ -21003,7 +21320,7 @@ func (s *StringScalarParameterDraft) encodeFields(e *jx.Encoder) {
 			e.FieldStart("enum")
 			e.ArrStart()
 			for _, elem := range s.Enum {
-				e.Str(elem)
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
@@ -21126,12 +21443,10 @@ func (s *StringScalarParameterDraft) Decode(d *jx.Decoder) error {
 			}
 		case "enum":
 			if err := func() error {
-				s.Enum = make([]string, 0)
+				s.Enum = make([]StringEnumOption, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem StringEnumOption
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Enum = append(s.Enum, elem)

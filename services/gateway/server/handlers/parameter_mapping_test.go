@@ -14,26 +14,27 @@ func TestScalarParameterMappingsOmitTopLevelFields(t *testing.T) {
 		Position: 1,
 		Name:     gatewayapi.NonBlankString("value"),
 		Label:    gatewayapi.NonBlankString("Value"),
-		Enum:     []string{"one", "two"},
+		Enum:     []gatewayapi.StringEnumOption{{Value: "one", Label: gatewayapi.NewOptString("One")}, {Value: "two"}},
 	})
 	proto := toProtoScalarParameterDraft(draft)
-	if proto == nil || proto.GetString_() == nil || len(proto.GetString_().GetEnum()) != 2 {
+	if proto == nil || proto.GetString_() == nil || len(proto.GetString_().GetEnum()) != 2 || proto.GetString_().GetEnum()[0].GetLabel() != "One" {
 		t.Fatalf("protobuf scalar parameter = %+v, want scalar string parameter", proto)
 	}
 
+	label := "One"
 	apiValue, err := toAPIScalarParameter(&metadatalifecyclev1.ScalarParameter{
 		Position: 1,
 		Name:     "value",
 		Label:    "Value",
 		Value: &metadatalifecyclev1.ScalarParameter_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
-			Enum: []string{"one", "two"},
+			Enum: []*metadatalifecyclev1.StringEnumOption{{Value: "one", Label: &label}, {Value: "two"}},
 		}},
 	})
 	if err != nil {
 		t.Fatalf("toAPIScalarParameter() error = %v", err)
 	}
 	value, ok := apiValue.GetStringScalarParameter()
-	if !ok || len(value.Enum) != 2 {
+	if !ok || len(value.Enum) != 2 || !value.Enum[0].Label.Set || value.Enum[0].Label.Value != "One" {
 		t.Fatalf("API scalar parameter = %+v, want scalar string parameter", apiValue)
 	}
 }
@@ -124,7 +125,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 			Location:       gatewayapi.ParameterLocationQUERY,
 			Explode:        true,
 			MultipleValues: true,
-			Enum:           []string{"one", "two"},
+			Enum:           []gatewayapi.StringEnumOption{{Value: "one"}, {Value: "two"}},
 		})},
 	}
 	proto := toProtoWebServiceDraft(draft)
@@ -144,7 +145,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 			Location: metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_QUERY,
 			Explode:  true,
 			Value: &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{
-				Enum:           []string{"one", "two"},
+				Enum:           []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
 				MultipleValues: true,
 			}},
 		},

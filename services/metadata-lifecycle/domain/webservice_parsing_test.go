@@ -91,9 +91,9 @@ func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
 		name   string
 		schema ParameterSchema
 	}{
-		{name: "string", schema: StringSchema{Enum: []string{"json", "xml"}, MultipleValues: true}},
-		{name: "integer", schema: IntegerSchema{Enum: []int64{1, 2}, MultipleValues: true}},
-		{name: "float", schema: FloatSchema{Enum: []float64{1.5, 2.5}, MultipleValues: true}},
+		{name: "string", schema: StringSchema{Enum: []StringEnumOption{{Value: "json"}, {Value: "xml"}}, MultipleValues: true}},
+		{name: "integer", schema: IntegerSchema{Enum: []IntegerEnumOption{{Value: 1}, {Value: 2}}, MultipleValues: true}},
+		{name: "float", schema: FloatSchema{Enum: []FloatEnumOption{{Value: 1.5}, {Value: 2.5}}, MultipleValues: true}},
 	}
 
 	for _, test := range tests {
@@ -115,6 +115,40 @@ func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
 	}
 }
 
+func TestNewWebServiceParameterInputNormalizesEnumLabels(t *testing.T) {
+	label := " JSON document "
+	input, err := NewWebServiceParameterInput(WebServiceParameterInput{
+		Name:  "format",
+		Label: "Format",
+		Schema: StringSchema{
+			Enum: []StringEnumOption{{Value: "json", Label: &label}, {Value: "xml"}},
+		},
+		Location: ParameterLocationQuery,
+	})
+	if err != nil {
+		t.Fatalf("NewWebServiceParameterInput() error = %v", err)
+	}
+
+	schema := input.Schema.(StringSchema)
+	if schema.Enum[0].Label == nil || *schema.Enum[0].Label != "JSON document" {
+		t.Fatalf("enum label = %v, want normalized label", schema.Enum[0].Label)
+	}
+}
+
+func TestNewWebServiceParameterInputRejectsDuplicateEnumValues(t *testing.T) {
+	_, err := NewWebServiceParameterInput(WebServiceParameterInput{
+		Name:  "format",
+		Label: "Format",
+		Schema: IntegerSchema{
+			Enum: []IntegerEnumOption{{Value: 1}, {Value: 1}},
+		},
+		Location: ParameterLocationQuery,
+	})
+	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "duplicated") {
+		t.Fatalf("error = %v, want duplicate enum error", err)
+	}
+}
+
 func TestNewWebServiceParameterInputRejectsInvalidExplode(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -130,7 +164,7 @@ func TestNewWebServiceParameterInputRejectsInvalidExplode(t *testing.T) {
 			_, err := NewWebServiceParameterInput(WebServiceParameterInput{
 				Name:     "value",
 				Label:    "Value",
-				Schema:   StringSchema{Enum: []string{"one", "two"}, MultipleValues: test.multiple},
+				Schema:   StringSchema{Enum: []StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: test.multiple},
 				Location: test.location,
 				Explode:  true,
 			})
