@@ -3769,6 +3769,12 @@ func (s *DatasetDraftMetadata) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.GeologicalTemporalCoverage.Set {
+			e.FieldStart("geological_temporal_coverage")
+			s.GeologicalTemporalCoverage.Encode(e)
+		}
+	}
+	{
 		if s.PersistentIdentifiers != nil {
 			e.FieldStart("persistent_identifiers")
 			e.ArrStart()
@@ -3822,7 +3828,7 @@ func (s *DatasetDraftMetadata) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfDatasetDraftMetadata = [15]string{
+var jsonFieldsNameOfDatasetDraftMetadata = [16]string{
 	0:  "title",
 	1:  "description",
 	2:  "keywords",
@@ -3832,12 +3838,13 @@ var jsonFieldsNameOfDatasetDraftMetadata = [15]string{
 	6:  "distributions",
 	7:  "spatial_coverage",
 	8:  "temporal_coverage",
-	9:  "persistent_identifiers",
-	10: "contact_points",
-	11: "providers",
-	12: "categories",
-	13: "created",
-	14: "updated",
+	9:  "geological_temporal_coverage",
+	10: "persistent_identifiers",
+	11: "contact_points",
+	12: "providers",
+	13: "categories",
+	14: "created",
+	15: "updated",
 }
 
 // Decode decodes DatasetDraftMetadata from json.
@@ -3952,6 +3959,16 @@ func (s *DatasetDraftMetadata) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"temporal_coverage\"")
+			}
+		case "geological_temporal_coverage":
+			if err := func() error {
+				s.GeologicalTemporalCoverage.Reset()
+				if err := s.GeologicalTemporalCoverage.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"geological_temporal_coverage\"")
 			}
 		case "persistent_identifiers":
 			if err := func() error {
@@ -4176,6 +4193,12 @@ func (s *DatasetResourceMetadata) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.GeologicalTemporalCoverage.Set {
+			e.FieldStart("geological_temporal_coverage")
+			s.GeologicalTemporalCoverage.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("persistent_identifiers")
 		e.ArrStart()
 		for _, elem := range s.PersistentIdentifiers {
@@ -4225,7 +4248,7 @@ func (s *DatasetResourceMetadata) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfDatasetResourceMetadata = [17]string{
+var jsonFieldsNameOfDatasetResourceMetadata = [18]string{
 	0:  "resource_type",
 	1:  "id",
 	2:  "title",
@@ -4237,12 +4260,13 @@ var jsonFieldsNameOfDatasetResourceMetadata = [17]string{
 	8:  "distributions",
 	9:  "spatial_coverage",
 	10: "temporal_coverage",
-	11: "persistent_identifiers",
-	12: "contact_points",
-	13: "providers",
-	14: "categories",
-	15: "created",
-	16: "updated",
+	11: "geological_temporal_coverage",
+	12: "persistent_identifiers",
+	13: "contact_points",
+	14: "providers",
+	15: "categories",
+	16: "created",
+	17: "updated",
 }
 
 // Decode decodes DatasetResourceMetadata from json.
@@ -4386,8 +4410,18 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"temporal_coverage\"")
 			}
+		case "geological_temporal_coverage":
+			if err := func() error {
+				s.GeologicalTemporalCoverage.Reset()
+				if err := s.GeologicalTemporalCoverage.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"geological_temporal_coverage\"")
+			}
 		case "persistent_identifiers":
-			requiredBitSet[1] |= 1 << 3
+			requiredBitSet[1] |= 1 << 4
 			if err := func() error {
 				s.PersistentIdentifiers = make([]Identifier, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -4405,7 +4439,7 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"persistent_identifiers\"")
 			}
 		case "contact_points":
-			requiredBitSet[1] |= 1 << 4
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				switch tt := d.Next(); tt {
 				case jx.Null:
@@ -4432,7 +4466,7 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
 		case "providers":
-			requiredBitSet[1] |= 1 << 5
+			requiredBitSet[1] |= 1 << 6
 			if err := func() error {
 				s.Providers = make([]ResourceVersionReference, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -4450,7 +4484,7 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"providers\"")
 			}
 		case "categories":
-			requiredBitSet[1] |= 1 << 6
+			requiredBitSet[1] |= 1 << 7
 			if err := func() error {
 				s.Categories = make([]ResourceVersionReference, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -4498,7 +4532,7 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [3]uint8{
 		0b00011111,
-		0b01111001,
+		0b11110001,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
@@ -8856,6 +8890,86 @@ func (s *FloatScalarParameterKind) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode implements json.Marshaler.
+func (s *GeologicalTemporalCoverage) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GeologicalTemporalCoverage) encodeFields(e *jx.Encoder) {
+	{
+		if s.StartMya.Set {
+			e.FieldStart("start_mya")
+			s.StartMya.Encode(e)
+		}
+	}
+	{
+		if s.EndMya.Set {
+			e.FieldStart("end_mya")
+			s.EndMya.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGeologicalTemporalCoverage = [2]string{
+	0: "start_mya",
+	1: "end_mya",
+}
+
+// Decode decodes GeologicalTemporalCoverage from json.
+func (s *GeologicalTemporalCoverage) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GeologicalTemporalCoverage to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "start_mya":
+			if err := func() error {
+				s.StartMya.Reset()
+				if err := s.StartMya.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"start_mya\"")
+			}
+		case "end_mya":
+			if err := func() error {
+				s.EndMya.Reset()
+				if err := s.EndMya.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"end_mya\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GeologicalTemporalCoverage")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GeologicalTemporalCoverage) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GeologicalTemporalCoverage) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes GlobalPermission as json.
 func (s GlobalPermission) Encode(e *jx.Encoder) {
 	e.Str(string(s))
@@ -12127,6 +12241,39 @@ func (s OptDocumentation) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptDocumentation) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GeologicalTemporalCoverage as json.
+func (o OptGeologicalTemporalCoverage) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes GeologicalTemporalCoverage from json.
+func (o *OptGeologicalTemporalCoverage) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptGeologicalTemporalCoverage to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptGeologicalTemporalCoverage) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptGeologicalTemporalCoverage) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -16133,6 +16280,12 @@ func (s ResourceVersionMetadata) encodeFields(e *jx.Encoder) {
 				if s.TemporalCoverage.Set {
 					e.FieldStart("temporal_coverage")
 					s.TemporalCoverage.Encode(e)
+				}
+			}
+			{
+				if s.GeologicalTemporalCoverage.Set {
+					e.FieldStart("geological_temporal_coverage")
+					s.GeologicalTemporalCoverage.Encode(e)
 				}
 			}
 			{

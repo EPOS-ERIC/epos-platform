@@ -42,6 +42,8 @@ CREATE TABLE dataset_versions (
     spatial_coverage    geometry(Geometry, 4326),
     temporal_start      timestamptz,
     temporal_end        timestamptz,
+    geological_temporal_start_mya double precision,
+    geological_temporal_end_mya   double precision,
 
     -- Metadata Lifecycle record timestamps
     created_by          text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -60,6 +62,40 @@ CREATE TABLE dataset_versions (
     rejection_note      nonblank_text_opt,
 
     CHECK (temporal_start IS NULL OR temporal_end IS NULL OR temporal_start <= temporal_end),
+    CHECK (
+        geological_temporal_start_mya IS NULL
+        OR (
+            geological_temporal_start_mya >= 0
+            AND geological_temporal_start_mya NOT IN (
+                'NaN'::double precision,
+                'Infinity'::double precision,
+                '-Infinity'::double precision
+            )
+        )
+    ),
+    CHECK (
+        geological_temporal_end_mya IS NULL
+        OR (
+            geological_temporal_end_mya >= 0
+            AND geological_temporal_end_mya NOT IN (
+                'NaN'::double precision,
+                'Infinity'::double precision,
+                '-Infinity'::double precision
+            )
+        )
+    ),
+    CHECK (
+        geological_temporal_start_mya IS NULL
+        OR geological_temporal_end_mya IS NULL
+        OR geological_temporal_start_mya >= geological_temporal_end_mya
+    ),
+    CHECK (
+        (temporal_start IS NULL AND temporal_end IS NULL)
+        OR (
+            geological_temporal_start_mya IS NULL
+            AND geological_temporal_end_mya IS NULL
+        )
+    ),
     CHECK (array_position(keywords, NULL) IS NULL)
 );
 CREATE TABLE software_application_versions (

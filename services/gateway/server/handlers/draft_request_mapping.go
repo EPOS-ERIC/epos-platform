@@ -15,13 +15,22 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 	case q.IsCreateDatasetResourceRequest():
 		v := q.CreateDatasetResourceRequest.Metadata
 		metadata := &metadatalifecyclev1.DatasetInput{
-			Title:            string(v.Title),
-			Description:      string(v.Description),
-			Keywords:         toProtoKeywords(v.Keywords),
-			TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
-			ContactPoints:    uuidStrings(v.ContactPoints),
-			Providers:        uuidStrings(v.Providers),
-			Categories:       uuidStrings(v.Categories),
+			Title:         string(v.Title),
+			Description:   string(v.Description),
+			Keywords:      toProtoKeywords(v.Keywords),
+			ContactPoints: uuidStrings(v.ContactPoints),
+			Providers:     uuidStrings(v.Providers),
+			Categories:    uuidStrings(v.Categories),
+		}
+		temporalRange, err := toProtoDatasetTemporalRange(v.TemporalCoverage, v.GeologicalTemporalCoverage)
+		if err != nil {
+			return nil, "", err
+		}
+		switch {
+		case temporalRange.temporal != nil:
+			metadata.TemporalRange = &metadatalifecyclev1.DatasetInput_TemporalCoverage{TemporalCoverage: temporalRange.temporal}
+		case temporalRange.geological != nil:
+			metadata.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: temporalRange.geological}
 		}
 		if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
 			metadata.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)
@@ -136,8 +145,12 @@ func toProtoReplaceResourceDraft(q gatewayapi.ReplaceResourceDraftRequest) (gate
 	request := &metadatalifecyclev1.ReplaceResourceDraftRequest{}
 	switch {
 	case q.IsReplaceDatasetDraftRequest():
+		metadata, err := toProtoDatasetDraftMetadata(q.ReplaceDatasetDraftRequest.Metadata)
+		if err != nil {
+			return "", nil, err
+		}
 		request.Metadata = &metadatalifecyclev1.ReplaceResourceDraftRequest_Dataset{
-			Dataset: toProtoDatasetDraftMetadata(q.ReplaceDatasetDraftRequest.Metadata),
+			Dataset: metadata,
 		}
 		request.Revision = q.ReplaceDatasetDraftRequest.Revision
 		return gatewayapi.WriteResourceTypeDataset, request, nil

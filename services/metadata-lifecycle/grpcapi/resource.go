@@ -633,7 +633,13 @@ func optionalActorFromContext(ctx context.Context) (*domain.Actor, error) {
 }
 
 func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.DatasetResourceMetadata {
-	result := &metadatalifecyclev1.DatasetResourceMetadata{Id: value.ID.String(), Title: value.Title, Description: value.Description, Keywords: value.Keywords, AccrualPeriodicity: value.AccrualPeriodicity, QualityAnnotation: value.QualityAnnotation, AccessRight: value.AccessRight, SpatialCoverage: geometryString(value.SpatialCoverage), TemporalCoverage: temporalOutput(value.TemporalCoverage), Created: timestampOutput(value.SourceCreated), Updated: timestampOutput(value.SourceUpdated)}
+	result := &metadatalifecyclev1.DatasetResourceMetadata{Id: value.ID.String(), Title: value.Title, Description: value.Description, Keywords: value.Keywords, AccrualPeriodicity: value.AccrualPeriodicity, QualityAnnotation: value.QualityAnnotation, AccessRight: value.AccessRight, SpatialCoverage: geometryString(value.SpatialCoverage), Created: timestampOutput(value.SourceCreated), Updated: timestampOutput(value.SourceUpdated)}
+	if value.TemporalCoverage != nil {
+		result.TemporalRange = &metadatalifecyclev1.DatasetResourceMetadata_TemporalCoverage{TemporalCoverage: temporalOutput(value.TemporalCoverage)}
+	}
+	if value.GeologicalTemporalCoverage != nil {
+		result.TemporalRange = &metadatalifecyclev1.DatasetResourceMetadata_GeologicalTemporalCoverage{GeologicalTemporalCoverage: geologicalTemporalOutput(value.GeologicalTemporalCoverage)}
+	}
 	for _, item := range value.PersistentIdentifiers {
 		result.PersistentIdentifiers = append(result.PersistentIdentifiers, identifierOutput(item))
 	}
@@ -717,6 +723,13 @@ func temporalOutput(value *domain.Temporal) *metadatalifecyclev1.Temporal {
 		return nil
 	}
 	return &metadatalifecyclev1.Temporal{Start: timestampOutput(value.Start), End: timestampOutput(value.End)}
+}
+
+func geologicalTemporalOutput(value *domain.GeologicalTemporal) *metadatalifecyclev1.GeologicalTemporalCoverage {
+	if value == nil {
+		return nil
+	}
+	return &metadatalifecyclev1.GeologicalTemporalCoverage{StartMya: value.StartMYA, EndMya: value.EndMYA}
 }
 
 func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribution {
@@ -975,6 +988,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
+	geologicalTemporal := geologicalTemporalInput(value.GetGeologicalTemporalCoverage())
 	spatial, err := spatialInput(value.SpatialCoverage)
 	if err != nil {
 		return domain.DatasetInput{}, err
@@ -1000,21 +1014,22 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 		return domain.DatasetInput{}, err
 	}
 	result, err := domain.NewDatasetInput(domain.DatasetInput{
-		Title:                 value.GetTitle(),
-		Description:           value.GetDescription(),
-		Keywords:              value.GetKeywords(),
-		AccrualPeriodicity:    value.AccrualPeriodicity,
-		QualityAnnotation:     value.QualityAnnotation,
-		AccessRight:           value.AccessRight,
-		Distributions:         distributions,
-		SpatialCoverage:       spatial,
-		TemporalCoverage:      temporal,
-		PersistentIdentifiers: identifiers,
-		ContactPointIDs:       contactPoints,
-		ProviderIDs:           providers,
-		CategoryIDs:           categories,
-		SourceCreated:         created,
-		SourceUpdated:         updated,
+		Title:                      value.GetTitle(),
+		Description:                value.GetDescription(),
+		Keywords:                   value.GetKeywords(),
+		AccrualPeriodicity:         value.AccrualPeriodicity,
+		QualityAnnotation:          value.QualityAnnotation,
+		AccessRight:                value.AccessRight,
+		Distributions:              distributions,
+		SpatialCoverage:            spatial,
+		TemporalCoverage:           temporal,
+		GeologicalTemporalCoverage: geologicalTemporal,
+		PersistentIdentifiers:      identifiers,
+		ContactPointIDs:            contactPoints,
+		ProviderIDs:                providers,
+		CategoryIDs:                categories,
+		SourceCreated:              created,
+		SourceUpdated:              updated,
 	})
 	if err != nil {
 		return domain.DatasetInput{}, fmt.Errorf("validate dataset input: %w", err)
@@ -1545,6 +1560,13 @@ func temporalInput(value *metadatalifecyclev1.Temporal) (*domain.Temporal, error
 		return nil, err
 	}
 	return &domain.Temporal{Start: start, End: end}, nil
+}
+
+func geologicalTemporalInput(value *metadatalifecyclev1.GeologicalTemporalCoverage) *domain.GeologicalTemporal {
+	if value == nil {
+		return nil
+	}
+	return &domain.GeologicalTemporal{StartMYA: value.StartMya, EndMYA: value.EndMya}
 }
 
 func toGRPCVersioningStatus(status domain.Status) metadatalifecyclev1.VersioningStatus {

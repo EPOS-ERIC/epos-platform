@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -26,7 +27,7 @@ func NewDatasetInput(value DatasetInput) (DatasetInput, error) {
 		return DatasetInput{}, fmt.Errorf("dataset keywords: %w: %w", err, ErrInvalidDataset)
 	}
 	value.Keywords = keywords
-	if err := validateTemporal(value.TemporalCoverage); err != nil {
+	if err := validateDatasetTemporal(value.TemporalCoverage, value.GeologicalTemporalCoverage); err != nil {
 		return DatasetInput{}, fmt.Errorf("dataset temporal coverage: %w", err)
 	}
 	if err := validateUUIDList(value.ContactPointIDs, "contact point"); err != nil {
@@ -111,7 +112,7 @@ func NewDatasetMetadata(value DatasetMetadata) (DatasetMetadata, error) {
 		return DatasetMetadata{}, fmt.Errorf("dataset keywords: %w: %w", err, ErrInvalidDataset)
 	}
 	value.Keywords = keywords
-	if err := validateTemporal(value.TemporalCoverage); err != nil {
+	if err := validateDatasetTemporal(value.TemporalCoverage, value.GeologicalTemporalCoverage); err != nil {
 		return DatasetMetadata{}, fmt.Errorf("dataset temporal coverage: %w", err)
 	}
 
@@ -246,21 +247,22 @@ func (value DatasetMetadata) Input() DatasetInput {
 		distributions[i] = distributionInput(distribution)
 	}
 	return DatasetInput{
-		Title:                 value.Title,
-		Description:           value.Description,
-		Keywords:              value.Keywords,
-		AccrualPeriodicity:    value.AccrualPeriodicity,
-		QualityAnnotation:     value.QualityAnnotation,
-		AccessRight:           value.AccessRight,
-		Distributions:         distributions,
-		SpatialCoverage:       value.SpatialCoverage,
-		TemporalCoverage:      value.TemporalCoverage,
-		PersistentIdentifiers: identifiers,
-		ContactPointIDs:       contactPointIDs,
-		ProviderIDs:           providerIDs,
-		CategoryIDs:           categoryIDs,
-		SourceCreated:         value.SourceCreated,
-		SourceUpdated:         value.SourceUpdated,
+		Title:                      value.Title,
+		Description:                value.Description,
+		Keywords:                   value.Keywords,
+		AccrualPeriodicity:         value.AccrualPeriodicity,
+		QualityAnnotation:          value.QualityAnnotation,
+		AccessRight:                value.AccessRight,
+		Distributions:              distributions,
+		SpatialCoverage:            value.SpatialCoverage,
+		TemporalCoverage:           value.TemporalCoverage,
+		GeologicalTemporalCoverage: value.GeologicalTemporalCoverage,
+		PersistentIdentifiers:      identifiers,
+		ContactPointIDs:            contactPointIDs,
+		ProviderIDs:                providerIDs,
+		CategoryIDs:                categoryIDs,
+		SourceCreated:              value.SourceCreated,
+		SourceUpdated:              value.SourceUpdated,
 	}
 }
 
@@ -347,6 +349,28 @@ func (d Distribution) DeliveryType() (DistributionType, error) {
 func validateTemporal(value *Temporal) error {
 	if value != nil && value.Start != nil && value.End != nil && value.Start.After(*value.End) {
 		return fmt.Errorf("start must not be after end: %w", ErrInvalidDataset)
+	}
+	return nil
+}
+
+func validateDatasetTemporal(temporal *Temporal, geological *GeologicalTemporal) error {
+	if temporal != nil && geological != nil {
+		return fmt.Errorf("calendar and geological temporal coverage are mutually exclusive: %w", ErrInvalidDataset)
+	}
+	if err := validateTemporal(temporal); err != nil {
+		return err
+	}
+	if geological == nil {
+		return nil
+	}
+	if value := geological.StartMYA; value != nil && (math.IsNaN(*value) || math.IsInf(*value, 0) || *value < 0) {
+		return fmt.Errorf("start_mya must be finite and non-negative: %w", ErrInvalidDataset)
+	}
+	if value := geological.EndMYA; value != nil && (math.IsNaN(*value) || math.IsInf(*value, 0) || *value < 0) {
+		return fmt.Errorf("end_mya must be finite and non-negative: %w", ErrInvalidDataset)
+	}
+	if geological.StartMYA != nil && geological.EndMYA != nil && *geological.StartMYA < *geological.EndMYA {
+		return fmt.Errorf("start_mya must not be less than end_mya: %w", ErrInvalidDataset)
 	}
 	return nil
 }

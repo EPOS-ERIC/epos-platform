@@ -1711,14 +1711,16 @@ type DatasetDraftMetadata struct {
 	AccessRight        OptNilString        `json:"access_right"`
 	Distributions      []DistributionDraft `json:"distributions"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
-	SpatialCoverage       OptNilString        `json:"spatial_coverage"`
-	TemporalCoverage      OptTemporalCoverage `json:"temporal_coverage"`
-	PersistentIdentifiers []IdentifierInput   `json:"persistent_identifiers"`
-	ContactPoints         []uuid.UUID         `json:"contact_points"`
-	Providers             []uuid.UUID         `json:"providers"`
-	Categories            []uuid.UUID         `json:"categories"`
-	Created               OptNilDateTime      `json:"created"`
-	Updated               OptNilDateTime      `json:"updated"`
+	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
+	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
+	// Mutually exclusive with temporal_coverage.
+	GeologicalTemporalCoverage OptGeologicalTemporalCoverage `json:"geological_temporal_coverage"`
+	PersistentIdentifiers      []IdentifierInput             `json:"persistent_identifiers"`
+	ContactPoints              []uuid.UUID                   `json:"contact_points"`
+	Providers                  []uuid.UUID                   `json:"providers"`
+	Categories                 []uuid.UUID                   `json:"categories"`
+	Created                    OptNilDateTime                `json:"created"`
+	Updated                    OptNilDateTime                `json:"updated"`
 }
 
 // GetTitle returns the value of Title.
@@ -1764,6 +1766,11 @@ func (s *DatasetDraftMetadata) GetSpatialCoverage() OptNilString {
 // GetTemporalCoverage returns the value of TemporalCoverage.
 func (s *DatasetDraftMetadata) GetTemporalCoverage() OptTemporalCoverage {
 	return s.TemporalCoverage
+}
+
+// GetGeologicalTemporalCoverage returns the value of GeologicalTemporalCoverage.
+func (s *DatasetDraftMetadata) GetGeologicalTemporalCoverage() OptGeologicalTemporalCoverage {
+	return s.GeologicalTemporalCoverage
 }
 
 // GetPersistentIdentifiers returns the value of PersistentIdentifiers.
@@ -1841,6 +1848,11 @@ func (s *DatasetDraftMetadata) SetTemporalCoverage(val OptTemporalCoverage) {
 	s.TemporalCoverage = val
 }
 
+// SetGeologicalTemporalCoverage sets the value of GeologicalTemporalCoverage.
+func (s *DatasetDraftMetadata) SetGeologicalTemporalCoverage(val OptGeologicalTemporalCoverage) {
+	s.GeologicalTemporalCoverage = val
+}
+
 // SetPersistentIdentifiers sets the value of PersistentIdentifiers.
 func (s *DatasetDraftMetadata) SetPersistentIdentifiers(val []IdentifierInput) {
 	s.PersistentIdentifiers = val
@@ -1883,14 +1895,16 @@ type DatasetResourceMetadata struct {
 	AccessRight        OptNilString                        `json:"access_right"`
 	Distributions      []Distribution                      `json:"distributions"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
-	SpatialCoverage       OptNilString               `json:"spatial_coverage"`
-	TemporalCoverage      OptTemporalCoverage        `json:"temporal_coverage"`
-	PersistentIdentifiers []Identifier               `json:"persistent_identifiers"`
-	ContactPoints         []uuid.UUID                `json:"contact_points"`
-	Providers             []ResourceVersionReference `json:"providers"`
-	Categories            []ResourceVersionReference `json:"categories"`
-	Created               OptNilDateTime             `json:"created"`
-	Updated               OptNilDateTime             `json:"updated"`
+	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
+	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
+	// Mutually exclusive with temporal_coverage.
+	GeologicalTemporalCoverage OptGeologicalTemporalCoverage `json:"geological_temporal_coverage"`
+	PersistentIdentifiers      []Identifier                  `json:"persistent_identifiers"`
+	ContactPoints              []uuid.UUID                   `json:"contact_points"`
+	Providers                  []ResourceVersionReference    `json:"providers"`
+	Categories                 []ResourceVersionReference    `json:"categories"`
+	Created                    OptNilDateTime                `json:"created"`
+	Updated                    OptNilDateTime                `json:"updated"`
 }
 
 // GetResourceType returns the value of ResourceType.
@@ -1946,6 +1960,11 @@ func (s *DatasetResourceMetadata) GetSpatialCoverage() OptNilString {
 // GetTemporalCoverage returns the value of TemporalCoverage.
 func (s *DatasetResourceMetadata) GetTemporalCoverage() OptTemporalCoverage {
 	return s.TemporalCoverage
+}
+
+// GetGeologicalTemporalCoverage returns the value of GeologicalTemporalCoverage.
+func (s *DatasetResourceMetadata) GetGeologicalTemporalCoverage() OptGeologicalTemporalCoverage {
+	return s.GeologicalTemporalCoverage
 }
 
 // GetPersistentIdentifiers returns the value of PersistentIdentifiers.
@@ -2031,6 +2050,11 @@ func (s *DatasetResourceMetadata) SetSpatialCoverage(val OptNilString) {
 // SetTemporalCoverage sets the value of TemporalCoverage.
 func (s *DatasetResourceMetadata) SetTemporalCoverage(val OptTemporalCoverage) {
 	s.TemporalCoverage = val
+}
+
+// SetGeologicalTemporalCoverage sets the value of GeologicalTemporalCoverage.
+func (s *DatasetResourceMetadata) SetGeologicalTemporalCoverage(val OptGeologicalTemporalCoverage) {
+	s.GeologicalTemporalCoverage = val
 }
 
 // SetPersistentIdentifiers sets the value of PersistentIdentifiers.
@@ -4294,6 +4318,33 @@ func (s *FloatScalarParameterKind) UnmarshalText(data []byte) error {
 	}
 }
 
+// Geological age range in millions of years before present. Start is older than or equal to end.
+// Ref: #/components/schemas/GeologicalTemporalCoverage
+type GeologicalTemporalCoverage struct {
+	StartMya OptNilFloat64 `json:"start_mya"`
+	EndMya   OptNilFloat64 `json:"end_mya"`
+}
+
+// GetStartMya returns the value of StartMya.
+func (s *GeologicalTemporalCoverage) GetStartMya() OptNilFloat64 {
+	return s.StartMya
+}
+
+// GetEndMya returns the value of EndMya.
+func (s *GeologicalTemporalCoverage) GetEndMya() OptNilFloat64 {
+	return s.EndMya
+}
+
+// SetStartMya sets the value of StartMya.
+func (s *GeologicalTemporalCoverage) SetStartMya(val OptNilFloat64) {
+	s.StartMya = val
+}
+
+// SetEndMya sets the value of EndMya.
+func (s *GeologicalTemporalCoverage) SetEndMya(val OptNilFloat64) {
+	s.EndMya = val
+}
+
 // Global permission key.
 // Ref: #/components/schemas/GlobalPermission
 type GlobalPermission string
@@ -6263,6 +6314,52 @@ func (o OptDocumentation) Get() (v Documentation, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDocumentation) Or(d Documentation) Documentation {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGeologicalTemporalCoverage returns new OptGeologicalTemporalCoverage with value set to v.
+func NewOptGeologicalTemporalCoverage(v GeologicalTemporalCoverage) OptGeologicalTemporalCoverage {
+	return OptGeologicalTemporalCoverage{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGeologicalTemporalCoverage is optional GeologicalTemporalCoverage.
+type OptGeologicalTemporalCoverage struct {
+	Value GeologicalTemporalCoverage
+	Set   bool
+}
+
+// IsSet returns true if OptGeologicalTemporalCoverage was set.
+func (o OptGeologicalTemporalCoverage) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGeologicalTemporalCoverage) Reset() {
+	var v GeologicalTemporalCoverage
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGeologicalTemporalCoverage) SetTo(v GeologicalTemporalCoverage) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGeologicalTemporalCoverage) Get() (v GeologicalTemporalCoverage, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGeologicalTemporalCoverage) Or(d GeologicalTemporalCoverage) GeologicalTemporalCoverage {
 	if v, ok := o.Get(); ok {
 		return v
 	}
