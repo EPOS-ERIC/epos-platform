@@ -1034,9 +1034,11 @@ func normalizeRange(value string) string {
 func normalizeDistributionType(value string) domain.DistributionType {
 	switch strings.TrimSpace(value) {
 	case string(domain.DistributionTypeWebService),
+		"http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE",
 		"https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE":
 		return domain.DistributionTypeWebService
 	case string(domain.DistributionTypeDownloadableFile),
+		"http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE",
 		"https://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE":
 		return domain.DistributionTypeDownloadableFile
 	default:

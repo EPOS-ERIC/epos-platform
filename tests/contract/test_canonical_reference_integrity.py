@@ -194,7 +194,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
                     {
                         "title": "Canonical service",
                         "description": "Canonical reference integrity service",
-                        "type": "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE",
+                        "type": "WEB_SERVICE",
                         "web_service": {
                             "name": f"Canonical Service {suffix}",
                             "template_url": "https://example.org/canonical",

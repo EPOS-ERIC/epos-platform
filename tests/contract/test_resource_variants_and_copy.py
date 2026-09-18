@@ -217,7 +217,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                 {
                     "title": "Dataset download",
                     "description": "Representative download",
-                    "type": "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE",
+                    "type": "DOWNLOADABLE_FILE",
                     "downloadable_file": {
                         "url": "https://example.org/dataset.csv",
                         "format": "text/csv",

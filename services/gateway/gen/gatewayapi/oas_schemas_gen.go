@@ -3081,8 +3081,8 @@ type DistributionType string
 
 // Possible values for DistributionType.
 const (
-	WebServiceDistributionDistribution       DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-	DownloadableFileDistributionDistribution DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	WebServiceDistributionDistribution       DistributionType = "WEB_SERVICE"
+	DownloadableFileDistributionDistribution DistributionType = "DOWNLOADABLE_FILE"
 )
 
 // IsWebServiceDistribution reports whether Distribution is WebServiceDistribution.
@@ -3151,8 +3151,8 @@ type DistributionDraftType string
 
 // Possible values for DistributionDraftType.
 const (
-	WebServiceDistributionDraftDistributionDraft       DistributionDraftType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-	DownloadableFileDistributionDraftDistributionDraft DistributionDraftType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	WebServiceDistributionDraftDistributionDraft       DistributionDraftType = "WEB_SERVICE"
+	DownloadableFileDistributionDraftDistributionDraft DistributionDraftType = "DOWNLOADABLE_FILE"
 )
 
 // IsWebServiceDistributionDraft reports whether DistributionDraft is WebServiceDistributionDraft.
@@ -3468,20 +3468,20 @@ func (s *DownloadableFileDistributionDraft) SetDownloadableFile(val Downloadable
 type DownloadableFileDistributionDraftType string
 
 const (
-	DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE DownloadableFileDistributionDraftType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE DownloadableFileDistributionDraftType = "DOWNLOADABLE_FILE"
 )
 
 // AllValues returns all DownloadableFileDistributionDraftType values.
 func (DownloadableFileDistributionDraftType) AllValues() []DownloadableFileDistributionDraftType {
 	return []DownloadableFileDistributionDraftType{
-		DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE,
+		DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s DownloadableFileDistributionDraftType) MarshalText() ([]byte, error) {
 	switch s {
-	case DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
+	case DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -3491,8 +3491,8 @@ func (s DownloadableFileDistributionDraftType) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *DownloadableFileDistributionDraftType) UnmarshalText(data []byte) error {
 	switch DownloadableFileDistributionDraftType(data) {
-	case DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
-		*s = DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE
+	case DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE:
+		*s = DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -3502,20 +3502,20 @@ func (s *DownloadableFileDistributionDraftType) UnmarshalText(data []byte) error
 type DownloadableFileDistributionType string
 
 const (
-	DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE DownloadableFileDistributionType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	DownloadableFileDistributionTypeDOWNLOADABLEFILE DownloadableFileDistributionType = "DOWNLOADABLE_FILE"
 )
 
 // AllValues returns all DownloadableFileDistributionType values.
 func (DownloadableFileDistributionType) AllValues() []DownloadableFileDistributionType {
 	return []DownloadableFileDistributionType{
-		DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE,
+		DownloadableFileDistributionTypeDOWNLOADABLEFILE,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s DownloadableFileDistributionType) MarshalText() ([]byte, error) {
 	switch s {
-	case DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
+	case DownloadableFileDistributionTypeDOWNLOADABLEFILE:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -3525,8 +3525,8 @@ func (s DownloadableFileDistributionType) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *DownloadableFileDistributionType) UnmarshalText(data []byte) error {
 	switch DownloadableFileDistributionType(data) {
-	case DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
-		*s = DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE
+	case DownloadableFileDistributionTypeDOWNLOADABLEFILE:
+		*s = DownloadableFileDistributionTypeDOWNLOADABLEFILE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -12280,20 +12280,20 @@ func (s *WebServiceDistributionDraft) SetWebService(val WebServiceDraft) {
 type WebServiceDistributionDraftType string
 
 const (
-	WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE WebServiceDistributionDraftType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+	WebServiceDistributionDraftTypeWEBSERVICE WebServiceDistributionDraftType = "WEB_SERVICE"
 )
 
 // AllValues returns all WebServiceDistributionDraftType values.
 func (WebServiceDistributionDraftType) AllValues() []WebServiceDistributionDraftType {
 	return []WebServiceDistributionDraftType{
-		WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE,
+		WebServiceDistributionDraftTypeWEBSERVICE,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s WebServiceDistributionDraftType) MarshalText() ([]byte, error) {
 	switch s {
-	case WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
+	case WebServiceDistributionDraftTypeWEBSERVICE:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -12303,8 +12303,8 @@ func (s WebServiceDistributionDraftType) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *WebServiceDistributionDraftType) UnmarshalText(data []byte) error {
 	switch WebServiceDistributionDraftType(data) {
-	case WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
-		*s = WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE
+	case WebServiceDistributionDraftTypeWEBSERVICE:
+		*s = WebServiceDistributionDraftTypeWEBSERVICE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -12314,20 +12314,20 @@ func (s *WebServiceDistributionDraftType) UnmarshalText(data []byte) error {
 type WebServiceDistributionType string
 
 const (
-	WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE WebServiceDistributionType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+	WebServiceDistributionTypeWEBSERVICE WebServiceDistributionType = "WEB_SERVICE"
 )
 
 // AllValues returns all WebServiceDistributionType values.
 func (WebServiceDistributionType) AllValues() []WebServiceDistributionType {
 	return []WebServiceDistributionType{
-		WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE,
+		WebServiceDistributionTypeWEBSERVICE,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s WebServiceDistributionType) MarshalText() ([]byte, error) {
 	switch s {
-	case WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
+	case WebServiceDistributionTypeWEBSERVICE:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -12337,8 +12337,8 @@ func (s WebServiceDistributionType) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *WebServiceDistributionType) UnmarshalText(data []byte) error {
 	switch WebServiceDistributionType(data) {
-	case WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
-		*s = WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE
+	case WebServiceDistributionTypeWEBSERVICE:
+		*s = WebServiceDistributionTypeWEBSERVICE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

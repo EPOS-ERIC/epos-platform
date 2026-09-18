@@ -2033,7 +2033,7 @@ func (s *DownloadableFileDistributionDraft) Validate() error {
 
 func (s DownloadableFileDistributionDraftType) Validate() error {
 	switch s {
-	case "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE":
+	case "DOWNLOADABLE_FILE":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -2042,7 +2042,7 @@ func (s DownloadableFileDistributionDraftType) Validate() error {
 
 func (s DownloadableFileDistributionType) Validate() error {
 	switch s {
-	case "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE":
+	case "DOWNLOADABLE_FILE":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -6840,7 +6840,7 @@ func (s *WebServiceDistributionDraft) Validate() error {
 
 func (s WebServiceDistributionDraftType) Validate() error {
 	switch s {
-	case "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE":
+	case "WEB_SERVICE":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -6849,7 +6849,7 @@ func (s WebServiceDistributionDraftType) Validate() error {
 
 func (s WebServiceDistributionType) Validate() error {
 	switch s {
-	case "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE":
+	case "WEB_SERVICE":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

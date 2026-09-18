@@ -6268,7 +6268,7 @@ func (s Distribution) encodeFields(e *jx.Encoder) {
 	switch s.Type {
 	case WebServiceDistributionDistribution:
 		e.FieldStart("type")
-		e.Str("http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE")
+		e.Str("WEB_SERVICE")
 		{
 			s := s.WebServiceDistribution
 			{
@@ -6314,7 +6314,7 @@ func (s Distribution) encodeFields(e *jx.Encoder) {
 		}
 	case DownloadableFileDistributionDistribution:
 		e.FieldStart("type")
-		e.Str("http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE")
+		e.Str("DOWNLOADABLE_FILE")
 		{
 			s := s.DownloadableFileDistribution
 			{
@@ -6384,10 +6384,10 @@ func (s *Distribution) Decode(d *jx.Decoder) error {
 					return err
 				}
 				switch typ {
-				case "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE":
+				case "WEB_SERVICE":
 					s.Type = WebServiceDistributionDistribution
 					found = true
-				case "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE":
+				case "DOWNLOADABLE_FILE":
 					s.Type = DownloadableFileDistributionDistribution
 					found = true
 				default:
@@ -6442,7 +6442,7 @@ func (s DistributionDraft) encodeFields(e *jx.Encoder) {
 	switch s.Type {
 	case WebServiceDistributionDraftDistributionDraft:
 		e.FieldStart("type")
-		e.Str("http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE")
+		e.Str("WEB_SERVICE")
 		{
 			s := s.WebServiceDistributionDraft
 			{
@@ -6486,7 +6486,7 @@ func (s DistributionDraft) encodeFields(e *jx.Encoder) {
 		}
 	case DownloadableFileDistributionDraftDistributionDraft:
 		e.FieldStart("type")
-		e.Str("http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE")
+		e.Str("DOWNLOADABLE_FILE")
 		{
 			s := s.DownloadableFileDistributionDraft
 			{
@@ -6554,10 +6554,10 @@ func (s *DistributionDraft) Decode(d *jx.Decoder) error {
 					return err
 				}
 				switch typ {
-				case "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE":
+				case "WEB_SERVICE":
 					s.Type = WebServiceDistributionDraftDistributionDraft
 					found = true
-				case "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE":
+				case "DOWNLOADABLE_FILE":
 					s.Type = DownloadableFileDistributionDraftDistributionDraft
 					found = true
 				default:
@@ -7294,8 +7294,8 @@ func (s *DownloadableFileDistributionDraftType) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch DownloadableFileDistributionDraftType(v) {
-	case DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
-		*s = DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE
+	case DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE:
+		*s = DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE
 	default:
 		*s = DownloadableFileDistributionDraftType(v)
 	}
@@ -7332,8 +7332,8 @@ func (s *DownloadableFileDistributionType) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch DownloadableFileDistributionType(v) {
-	case DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
-		*s = DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE
+	case DownloadableFileDistributionTypeDOWNLOADABLEFILE:
+		*s = DownloadableFileDistributionTypeDOWNLOADABLEFILE
 	default:
 		*s = DownloadableFileDistributionType(v)
 	}
@@ -24127,8 +24127,8 @@ func (s *WebServiceDistributionDraftType) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch WebServiceDistributionDraftType(v) {
-	case WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
-		*s = WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE
+	case WebServiceDistributionDraftTypeWEBSERVICE:
+		*s = WebServiceDistributionDraftTypeWEBSERVICE
 	default:
 		*s = WebServiceDistributionDraftType(v)
 	}
@@ -24165,8 +24165,8 @@ func (s *WebServiceDistributionType) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch WebServiceDistributionType(v) {
-	case WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
-		*s = WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE
+	case WebServiceDistributionTypeWEBSERVICE:
+		*s = WebServiceDistributionTypeWEBSERVICE
 	default:
 		*s = WebServiceDistributionType(v)
 	}

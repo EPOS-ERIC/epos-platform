@@ -446,12 +446,12 @@ CREATE TABLE distributions (
     web_service_id           uuid REFERENCES web_services(id) ON DELETE CASCADE,
 
     CHECK (
-        (type = 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE'
+        (type = 'WEB_SERVICE'
             AND downloadable_file_url IS NULL
             AND downloadable_file_format IS NULL
             AND web_service_id IS NOT NULL)
         OR
-        (type = 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE'
+        (type = 'DOWNLOADABLE_FILE'
             AND downloadable_file_url IS NOT NULL
             AND downloadable_file_format IS NOT NULL
             AND web_service_id IS NULL)

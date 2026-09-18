@@ -331,10 +331,9 @@ func (TemplateSchema) parameterSchema()          {}
 
 type DistributionType string
 
-// TODO: use better constants
 const (
-	DistributionTypeWebService       DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-	DistributionTypeDownloadableFile DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	DistributionTypeWebService       DistributionType = "WEB_SERVICE"
+	DistributionTypeDownloadableFile DistributionType = "DOWNLOADABLE_FILE"
 )
 
 func (t DistributionType) Valid() bool {

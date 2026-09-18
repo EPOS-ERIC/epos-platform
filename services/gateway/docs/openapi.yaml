@@ -2014,9 +2014,8 @@ components:
       discriminator:
         propertyName: type
         mapping:
-          # TODO: instead of having these weird constants, change them everywhere to just be WEB_SERVICE or DOWNLOADABLE_FILE (also in the db, ...)
-          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistributionDraft"
-          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistributionDraft"
+          "WEB_SERVICE": "#/components/schemas/WebServiceDistributionDraft"
+          "DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistributionDraft"
 
     WebServiceDistributionDraft:
       type: object
@@ -2029,7 +2028,7 @@ components:
         type:
           type: string
           enum:
-            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+            - "WEB_SERVICE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
@@ -2046,7 +2045,7 @@ components:
         type:
           type: string
           enum:
-            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+            - "DOWNLOADABLE_FILE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
@@ -3040,8 +3039,8 @@ components:
       discriminator:
         propertyName: type
         mapping:
-          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistribution"
-          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistribution"
+          "WEB_SERVICE": "#/components/schemas/WebServiceDistribution"
+          "DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistribution"
 
     WebServiceDistribution:
       type: object
@@ -3055,7 +3054,7 @@ components:
         type:
           type: string
           enum:
-            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+            - "WEB_SERVICE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
@@ -3073,7 +3072,7 @@ components:
         type:
           type: string
           enum:
-            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+            - "DOWNLOADABLE_FILE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
