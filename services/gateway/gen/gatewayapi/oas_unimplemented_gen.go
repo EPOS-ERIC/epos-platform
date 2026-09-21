@@ -334,6 +334,15 @@ func (UnimplementedHandler) ListOrganizations(ctx context.Context) (r []Canonica
 	return r, ht.ErrNotImplemented
 }
 
+// ListPermissions implements listPermissions operation.
+//
+// Returns the fixed catalog of permissions available in the system.
+//
+// GET /permissions
+func (UnimplementedHandler) ListPermissions(ctx context.Context) (r []Permission, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListResourceVersions implements listResourceVersions operation.
 //
 // Returns the version history for a resource. Requires an authenticated user with access to the

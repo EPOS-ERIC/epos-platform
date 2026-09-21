@@ -7773,6 +7773,100 @@ func (s *ParameterLocation) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/Permission
+type Permission struct {
+	// Stable permission key.
+	Key string `json:"key"`
+	// Human-readable permission label.
+	Label string `json:"label"`
+	// Human-readable permission description.
+	Description string          `json:"description"`
+	Scope       PermissionScope `json:"scope"`
+}
+
+// GetKey returns the value of Key.
+func (s *Permission) GetKey() string {
+	return s.Key
+}
+
+// GetLabel returns the value of Label.
+func (s *Permission) GetLabel() string {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *Permission) GetDescription() string {
+	return s.Description
+}
+
+// GetScope returns the value of Scope.
+func (s *Permission) GetScope() PermissionScope {
+	return s.Scope
+}
+
+// SetKey sets the value of Key.
+func (s *Permission) SetKey(val string) {
+	s.Key = val
+}
+
+// SetLabel sets the value of Label.
+func (s *Permission) SetLabel(val string) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *Permission) SetDescription(val string) {
+	s.Description = val
+}
+
+// SetScope sets the value of Scope.
+func (s *Permission) SetScope(val PermissionScope) {
+	s.Scope = val
+}
+
+// Scope at which a permission is evaluated.
+// Ref: #/components/schemas/PermissionScope
+type PermissionScope string
+
+const (
+	PermissionScopeGLOBAL PermissionScope = "GLOBAL"
+	PermissionScopeGROUP  PermissionScope = "GROUP"
+)
+
+// AllValues returns all PermissionScope values.
+func (PermissionScope) AllValues() []PermissionScope {
+	return []PermissionScope{
+		PermissionScopeGLOBAL,
+		PermissionScopeGROUP,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PermissionScope) MarshalText() ([]byte, error) {
+	switch s {
+	case PermissionScopeGLOBAL:
+		return []byte(s), nil
+	case PermissionScopeGROUP:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PermissionScope) UnmarshalText(data []byte) error {
+	switch PermissionScope(data) {
+	case PermissionScopeGLOBAL:
+		*s = PermissionScopeGLOBAL
+		return nil
+	case PermissionScopeGROUP:
+		*s = PermissionScopeGROUP
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/Problem
 type Problem struct {
 	// Short, human-readable summary of problem.

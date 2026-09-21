@@ -271,6 +271,17 @@ FROM
 WHERE
     KEY = sqlc.arg(permission_key);
 
+-- name: ListPermissions :many
+SELECT
+    KEY,
+    label,
+    description,
+    scope
+FROM
+    permissions
+ORDER BY
+    KEY;
+
 -- name: IsGlobalAdmin :one
 SELECT
     EXISTS (

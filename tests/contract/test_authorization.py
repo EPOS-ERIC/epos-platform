@@ -137,6 +137,46 @@ class AuthorizationContractTest(unittest.TestCase):
         self.assertEqual(problem["title"], "invalid_token")
         self.assertEqual(problem["detail"], "token is invalid")
 
+    def test_public_permission_catalog(self) -> None:
+        """Verify the public permission catalog contains every fixed permission."""
+
+        expected_scopes = {
+            "resource.create": "GROUP",
+            "resource.edit": "GROUP",
+            "resource.submit": "GROUP",
+            "resource.withdraw": "GROUP",
+            "resource.reopen": "GROUP",
+            "resource.discard": "GROUP",
+            "resource.reject": "GROUP",
+            "resource.publish": "GROUP",
+            "resource.unpublish": "GROUP",
+            "group.membership.manage": "GROUP",
+            "group.role.manage": "GROUP",
+            "group.permission.manage": "GROUP",
+            "global.membership.manage": "GLOBAL",
+            "global.role.manage": "GLOBAL",
+            "global.permission.manage": "GLOBAL",
+            "organization.manage": "GLOBAL",
+            "contact_point.manage": "GLOBAL",
+            "category_scheme.manage": "GLOBAL",
+            "category.manage": "GROUP",
+        }
+
+        response = self.gateway.get("/permissions", headers=NO_AUTH_HEADERS)
+        self.assertEqual(response.status_code, 200)
+        permissions = response.json()
+
+        self.assertEqual(len(permissions), len(expected_scopes))
+        self.assertEqual(
+            {permission["key"] for permission in permissions},
+            set(expected_scopes),
+        )
+        for permission in permissions:
+            self.assertIn(permission["key"], expected_scopes)
+            self.assertEqual(permission["scope"], expected_scopes[permission["key"]])
+            self.assertTrue(permission["label"])
+            self.assertTrue(permission["description"])
+
     def test_public_and_optional_read_authorization(self) -> None:
         """Verify public reads ignore tokens and optional reads enforce them."""
 

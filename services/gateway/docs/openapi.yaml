@@ -35,6 +35,8 @@ tags:
     description: Read resource versions and manage their draft-to-publication lifecycle.
   - name: Users
     description: Read user profiles and administer global access.
+  - name: Authorization
+    description: Read the fixed permission catalog.
   - name: Groups
     description: Read and manage groups and their categories.
   - name: Contact Points
@@ -47,6 +49,30 @@ tags:
     description: Import RDF Turtle metadata into draft resources.
 
 paths:
+  /permissions:
+    get:
+      tags:
+        - Authorization
+      summary: List permissions
+      description: Returns the fixed catalog of permissions available in the system.
+      operationId: listPermissions
+      security:
+        - {}
+      responses:
+        "200":
+          description: Permission catalog returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Permission"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /imports/turtle:
     post:
       tags:
@@ -1888,6 +1914,31 @@ components:
         - group.role.manage
         - group.permission.manage
         - category.manage
+
+    PermissionScope:
+      type: string
+      description: Scope at which a permission is evaluated.
+      enum: [GLOBAL, GROUP]
+
+    Permission:
+      type: object
+      additionalProperties: false
+      required: [key, label, description, scope]
+      properties:
+        key:
+          type: string
+          minLength: 1
+          description: Stable permission key.
+        label:
+          type: string
+          minLength: 1
+          description: Human-readable permission label.
+        description:
+          type: string
+          minLength: 1
+          description: Human-readable permission description.
+        scope:
+          $ref: "#/components/schemas/PermissionScope"
 
     DiscoveryResourceType:
       type: string

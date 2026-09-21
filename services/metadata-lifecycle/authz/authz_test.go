@@ -10,6 +10,7 @@ import (
 )
 
 type fakeRepository struct {
+	permissions  []domain.Permission
 	user         domain.AuthorizationUser
 	admin        bool
 	global       bool
@@ -19,6 +20,10 @@ type fakeRepository struct {
 	datasetGroup uuid.UUID
 	published    bool
 	activeGroups []uuid.UUID
+}
+
+func (r fakeRepository) ListPermissions(context.Context) ([]domain.Permission, error) {
+	return r.permissions, nil
 }
 
 func (r fakeRepository) User(context.Context, string) (domain.AuthorizationUser, error) {

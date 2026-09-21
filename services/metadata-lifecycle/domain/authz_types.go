@@ -24,6 +24,14 @@ const (
 	PermissionScopeGroup  PermissionScope = "GROUP"
 )
 
+// Permission describes one fixed authorization catalog entry.
+type Permission struct {
+	Key         string
+	Label       string
+	Description string
+	Scope       PermissionScope
+}
+
 // GlobalPermission is a permission that applies across all groups.
 type GlobalPermission string
 

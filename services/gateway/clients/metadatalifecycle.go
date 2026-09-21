@@ -21,6 +21,7 @@ import (
 
 type MetadataLifecycle struct {
 	log           *slog.Logger
+	authorization metadatalifecyclev1.AuthorizationServiceClient
 	users         metadatalifecyclev1.UserServiceClient
 	groups        metadatalifecyclev1.GroupServiceClient
 	categories    metadatalifecyclev1.CategoryServiceClient
@@ -47,6 +48,7 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string) (*MetadataLifecycle,
 
 	client := &MetadataLifecycle{
 		log:           log,
+		authorization: metadatalifecyclev1.NewAuthorizationServiceClient(conn),
 		users:         metadatalifecyclev1.NewUserServiceClient(conn),
 		groups:        metadatalifecyclev1.NewGroupServiceClient(conn),
 		categories:    metadatalifecyclev1.NewCategoryServiceClient(conn),
@@ -97,6 +99,15 @@ func (c *MetadataLifecycle) ListGroups(ctx context.Context) (*metadatalifecyclev
 	response, err := c.groups.ListGroups(ctx, &metadatalifecyclev1.ListGroupsRequest{})
 	if err != nil {
 		return nil, c.wrapError(ctx, "list metadata-lifecycle groups", err)
+	}
+
+	return response, nil
+}
+
+func (c *MetadataLifecycle) ListPermissions(ctx context.Context) (*metadatalifecyclev1.ListPermissionsResponse, error) {
+	response, err := c.authorization.ListPermissions(ctx, &metadatalifecyclev1.ListPermissionsRequest{})
+	if err != nil {
+		return nil, c.wrapError(ctx, "list metadata-lifecycle permissions", err)
 	}
 
 	return response, nil
