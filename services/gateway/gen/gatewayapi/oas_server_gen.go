@@ -17,7 +17,7 @@ type Handler interface {
 	// AssignGroupRole implements assignGroupRole operation.
 	//
 	// Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management
-	// permission or global ADMIN. Operation is idempotent.
+	// permission. Operation is idempotent.
 	//
 	// PUT /groups/{groupId}/memberships/{userId}/roles/{role}
 	AssignGroupRole(ctx context.Context, params AssignGroupRoleParams) error
@@ -186,7 +186,7 @@ type Handler interface {
 	// GrantGroupPermission implements grantGroupPermission operation.
 	//
 	// Grant a group-scoped direct permission to an active group member. Requires group.permission.manage
-	// in the group or global ADMIN. Operation is idempotent.
+	// in the group or global.permission.manage.
 	//
 	// PUT /groups/{groupId}/memberships/{userId}/permissions/{permission}
 	GrantGroupPermission(ctx context.Context, params GrantGroupPermissionParams) error
@@ -267,7 +267,7 @@ type Handler interface {
 	// RemoveGroupRole implements removeGroupRole operation.
 	//
 	// Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management
-	// permission or global ADMIN. Operation is idempotent.
+	// permission. Operation is idempotent.
 	//
 	// DELETE /groups/{groupId}/memberships/{userId}/roles/{role}
 	RemoveGroupRole(ctx context.Context, params RemoveGroupRoleParams) error
@@ -329,7 +329,7 @@ type Handler interface {
 	// RevokeGroupPermission implements revokeGroupPermission operation.
 	//
 	// Revoke a group-scoped direct permission from an active group member. Requires
-	// group.permission.manage in the group or global ADMIN. Operation is idempotent.
+	// group.permission.manage in the group or global.permission.manage.
 	//
 	// DELETE /groups/{groupId}/memberships/{userId}/permissions/{permission}
 	RevokeGroupPermission(ctx context.Context, params RevokeGroupPermissionParams) error

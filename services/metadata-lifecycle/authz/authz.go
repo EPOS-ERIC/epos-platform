@@ -98,7 +98,6 @@ func (a *Authorizer) canManageUserDirectory(ctx context.Context, userID string) 
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
 	}
-
 	if admin {
 		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
@@ -147,7 +146,6 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
 	}
-
 	if admin {
 		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
@@ -214,17 +212,12 @@ func (a *Authorizer) CanRevokeGroupMembership(ctx context.Context, userID string
 		return allowed, err
 	}
 
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-
 	globalPermission, err := a.repository.HasGlobalPermission(ctx, userID, domain.GlobalPermissionMembershipManage)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global membership permission: %w", err)
 	}
 
-	if admin || globalPermission {
+	if globalPermission {
 		return allowed, nil
 	}
 
@@ -275,14 +268,6 @@ func (a *Authorizer) CanManageSpecificGroupRole(ctx context.Context, userID stri
 		return allowed, err
 	}
 
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return allowed, nil
-	}
-
 	globalPermission, err := a.repository.HasGlobalPermission(ctx, userID, domain.GlobalPermissionRoleManage)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global role permission: %w", err)
@@ -302,14 +287,6 @@ func (a *Authorizer) canManageGroupPermission(ctx context.Context, userID string
 	_, result, err := a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
-	}
-
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
 	allowed, err := a.repository.HasGlobalPermission(ctx, userID, globalPermission)
@@ -431,13 +408,9 @@ func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID string) (domain.
 
 // AuthorizeGlobal evaluates a global permission without requiring membership.
 func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID string, permission domain.GlobalPermission) (domain.Result, error) {
-	result, admin, err := a.activeGlobalAdmin(ctx, userID)
+	_, result, err := a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
-	}
-
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
 	allowed, err := a.repository.HasGlobalPermission(ctx, userID, permission)
@@ -477,12 +450,14 @@ func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID string, groupID 
 		return result, err
 	}
 
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
+	if globalPermission, ok := globalPermissionForGroupPermission(permission); ok {
+		allowed, err := a.repository.HasGlobalPermission(ctx, userID, globalPermission)
+		if err != nil {
+			return domain.Result{}, fmt.Errorf("check global permission: %w", err)
+		}
+		if allowed {
+			return domain.Result{Allowed: true, Reason: string(globalPermission)}, nil
+		}
 	}
 
 	member, err := a.repository.IsActiveMember(ctx, userID, groupID)
@@ -502,6 +477,39 @@ func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID string, groupID 
 	}
 
 	return domain.Result{Allowed: true, Reason: "group permission"}, nil
+}
+
+func globalPermissionForGroupPermission(permission domain.GroupPermission) (domain.GlobalPermission, bool) {
+	switch permission {
+	case domain.GroupPermissionResourceCreate:
+		return domain.GlobalPermissionResourceCreate, true
+	case domain.GroupPermissionResourceEdit:
+		return domain.GlobalPermissionResourceEdit, true
+	case domain.GroupPermissionResourceSubmit:
+		return domain.GlobalPermissionResourceSubmit, true
+	case domain.GroupPermissionResourceWithdraw:
+		return domain.GlobalPermissionResourceWithdraw, true
+	case domain.GroupPermissionResourceReopen:
+		return domain.GlobalPermissionResourceReopen, true
+	case domain.GroupPermissionResourceDiscard:
+		return domain.GlobalPermissionResourceDiscard, true
+	case domain.GroupPermissionResourceReject:
+		return domain.GlobalPermissionResourceReject, true
+	case domain.GroupPermissionResourcePublish:
+		return domain.GlobalPermissionResourcePublish, true
+	case domain.GroupPermissionResourceUnpublish:
+		return domain.GlobalPermissionResourceUnpublish, true
+	case domain.GroupPermissionMembershipManage:
+		return domain.GlobalPermissionMembershipManage, true
+	case domain.GroupPermissionRoleManage:
+		return domain.GlobalPermissionRoleManage, true
+	case domain.GroupPermissionPermissionManage:
+		return domain.GlobalPermissionPermissionManage, true
+	case domain.GroupPermissionCategoryManage:
+		return domain.GlobalPermissionCategoryManage, true
+	default:
+		return "", false
+	}
 }
 
 // CanReadResource permits public reads of published resources. Non-public

@@ -2768,11 +2768,31 @@ func (s GlobalPermission) Validate() error {
 		return nil
 	case "global.permission.manage":
 		return nil
-	case "organization.manage":
+	case "global.organization.manage":
 		return nil
-	case "contact_point.manage":
+	case "global.contact_point.manage":
 		return nil
-	case "category_scheme.manage":
+	case "global.category_scheme.manage":
+		return nil
+	case "global.resource.create":
+		return nil
+	case "global.resource.edit":
+		return nil
+	case "global.resource.submit":
+		return nil
+	case "global.resource.withdraw":
+		return nil
+	case "global.resource.reopen":
+		return nil
+	case "global.resource.discard":
+		return nil
+	case "global.resource.reject":
+		return nil
+	case "global.resource.publish":
+		return nil
+	case "global.resource.unpublish":
+		return nil
+	case "global.category.manage":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -3145,23 +3165,23 @@ func (s *GroupMembership) Validate() error {
 
 func (s GroupPermission) Validate() error {
 	switch s {
-	case "resource.create":
+	case "group.resource.create":
 		return nil
-	case "resource.edit":
+	case "group.resource.edit":
 		return nil
-	case "resource.submit":
+	case "group.resource.submit":
 		return nil
-	case "resource.withdraw":
+	case "group.resource.withdraw":
 		return nil
-	case "resource.reopen":
+	case "group.resource.reopen":
 		return nil
-	case "resource.discard":
+	case "group.resource.discard":
 		return nil
-	case "resource.reject":
+	case "group.resource.reject":
 		return nil
-	case "resource.publish":
+	case "group.resource.publish":
 		return nil
-	case "resource.unpublish":
+	case "group.resource.unpublish":
 		return nil
 	case "group.membership.manage":
 		return nil
@@ -3169,7 +3189,7 @@ func (s GroupPermission) Validate() error {
 		return nil
 	case "group.permission.manage":
 		return nil
-	case "category.manage":
+	case "group.category.manage":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

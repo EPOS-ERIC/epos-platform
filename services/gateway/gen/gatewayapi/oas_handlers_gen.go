@@ -240,7 +240,7 @@ func (s *Server) handleAssignGlobalRoleRequest(args [2]string, argsEscaped bool,
 // handleAssignGroupRoleRequest handles assignGroupRole operation.
 //
 // Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management
-// permission or global ADMIN. Operation is idempotent.
+// permission. Operation is idempotent.
 //
 // PUT /groups/{groupId}/memberships/{userId}/roles/{role}
 func (s *Server) handleAssignGroupRoleRequest(args [3]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -5474,7 +5474,7 @@ func (s *Server) handleGrantGlobalPermissionRequest(args [2]string, argsEscaped 
 // handleGrantGroupPermissionRequest handles grantGroupPermission operation.
 //
 // Grant a group-scoped direct permission to an active group member. Requires group.permission.manage
-// in the group or global ADMIN. Operation is idempotent.
+// in the group or global.permission.manage.
 //
 // PUT /groups/{groupId}/memberships/{userId}/permissions/{permission}
 func (s *Server) handleGrantGroupPermissionRequest(args [3]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -7853,7 +7853,7 @@ func (s *Server) handleRemoveGlobalRoleRequest(args [2]string, argsEscaped bool,
 // handleRemoveGroupRoleRequest handles removeGroupRole operation.
 //
 // Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management
-// permission or global ADMIN. Operation is idempotent.
+// permission. Operation is idempotent.
 //
 // DELETE /groups/{groupId}/memberships/{userId}/roles/{role}
 func (s *Server) handleRemoveGroupRoleRequest(args [3]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -9988,7 +9988,7 @@ func (s *Server) handleRevokeGlobalPermissionRequest(args [2]string, argsEscaped
 // handleRevokeGroupPermissionRequest handles revokeGroupPermission operation.
 //
 // Revoke a group-scoped direct permission from an active group member. Requires
-// group.permission.manage in the group or global ADMIN. Operation is idempotent.
+// group.permission.manage in the group or global.permission.manage.
 //
 // DELETE /groups/{groupId}/memberships/{userId}/permissions/{permission}
 func (s *Server) handleRevokeGroupPermissionRequest(args [3]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

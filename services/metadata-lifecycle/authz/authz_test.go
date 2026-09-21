@@ -154,6 +154,49 @@ func TestAuthorizeGlobalAllowsGlobalGrant(t *testing.T) {
 	}
 }
 
+func TestAuthorizeGroupAllowsMatchingGlobalGrantWithoutMembership(t *testing.T) {
+	t.Parallel()
+	groupID := uuid.New()
+	authorizer := New(slog.Default(), fakeRepository{
+		user:   domain.AuthorizationUser{Status: domain.UserStatusActive},
+		global: true,
+	})
+
+	result, err := authorizer.AuthorizeGroup(
+		context.Background(),
+		"user-1",
+		groupID,
+		domain.GroupPermissionResourceEdit,
+	)
+	if err != nil {
+		t.Fatalf("authorize group: %v", err)
+	}
+	if !result.Allowed || result.Reason != string(domain.GlobalPermissionResourceEdit) {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestAuthorizeGroupDoesNotUseGlobalAdminBypass(t *testing.T) {
+	t.Parallel()
+	authorizer := New(slog.Default(), fakeRepository{
+		user:  domain.AuthorizationUser{Status: domain.UserStatusActive},
+		admin: true,
+	})
+
+	result, err := authorizer.AuthorizeGroup(
+		context.Background(),
+		"user-1",
+		uuid.New(),
+		domain.GroupPermissionResourceEdit,
+	)
+	if err != nil {
+		t.Fatalf("authorize group: %v", err)
+	}
+	if result.Allowed || result.Reason != "user is not an active group member" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
 func TestCanReadPublishedResourceWithoutUser(t *testing.T) {
 	t.Parallel()
 	authorizer := New(slog.Default(), fakeRepository{datasetGroup: uuid.New(), published: true})

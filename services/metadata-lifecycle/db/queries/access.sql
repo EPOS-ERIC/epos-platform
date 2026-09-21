@@ -61,8 +61,10 @@ SELECT
 FROM
     group_membership_roles AS assignment
     JOIN role_permissions AS role_permission ON role_permission.role_key = assignment.role_key
+    JOIN permissions AS permission ON permission.key = role_permission.permission_key
 WHERE
     assignment.group_id = sqlc.arg(group_id)
+    AND permission.scope = 'GROUP'
 ORDER BY
     assignment.user_id,
     role_permission.permission_key;
@@ -359,10 +361,12 @@ SELECT
             FROM
                 group_membership_roles AS assignment
                 JOIN role_permissions AS role_permission ON role_permission.role_key = assignment.role_key
+                JOIN permissions AS permission ON permission.key = role_permission.permission_key
             WHERE
                 assignment.user_id = sqlc.arg(user_id)
                 AND assignment.group_id = sqlc.arg(group_id)
                 AND role_permission.permission_key = sqlc.arg(permission_key)
+                AND permission.scope = 'GROUP'
         ) THEN 'ROLE'
         ELSE 'ABSENT'
     END AS outcome;

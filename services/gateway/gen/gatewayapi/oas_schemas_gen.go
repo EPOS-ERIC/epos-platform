@@ -4350,12 +4350,22 @@ func (s *GeologicalTemporalCoverage) SetEndMya(val OptNilFloat64) {
 type GlobalPermission string
 
 const (
-	GlobalPermissionGlobalMembershipManage GlobalPermission = "global.membership.manage"
-	GlobalPermissionGlobalRoleManage       GlobalPermission = "global.role.manage"
-	GlobalPermissionGlobalPermissionManage GlobalPermission = "global.permission.manage"
-	GlobalPermissionOrganizationManage     GlobalPermission = "organization.manage"
-	GlobalPermissionContactPointManage     GlobalPermission = "contact_point.manage"
-	GlobalPermissionCategorySchemeManage   GlobalPermission = "category_scheme.manage"
+	GlobalPermissionGlobalMembershipManage     GlobalPermission = "global.membership.manage"
+	GlobalPermissionGlobalRoleManage           GlobalPermission = "global.role.manage"
+	GlobalPermissionGlobalPermissionManage     GlobalPermission = "global.permission.manage"
+	GlobalPermissionGlobalOrganizationManage   GlobalPermission = "global.organization.manage"
+	GlobalPermissionGlobalContactPointManage   GlobalPermission = "global.contact_point.manage"
+	GlobalPermissionGlobalCategorySchemeManage GlobalPermission = "global.category_scheme.manage"
+	GlobalPermissionGlobalResourceCreate       GlobalPermission = "global.resource.create"
+	GlobalPermissionGlobalResourceEdit         GlobalPermission = "global.resource.edit"
+	GlobalPermissionGlobalResourceSubmit       GlobalPermission = "global.resource.submit"
+	GlobalPermissionGlobalResourceWithdraw     GlobalPermission = "global.resource.withdraw"
+	GlobalPermissionGlobalResourceReopen       GlobalPermission = "global.resource.reopen"
+	GlobalPermissionGlobalResourceDiscard      GlobalPermission = "global.resource.discard"
+	GlobalPermissionGlobalResourceReject       GlobalPermission = "global.resource.reject"
+	GlobalPermissionGlobalResourcePublish      GlobalPermission = "global.resource.publish"
+	GlobalPermissionGlobalResourceUnpublish    GlobalPermission = "global.resource.unpublish"
+	GlobalPermissionGlobalCategoryManage       GlobalPermission = "global.category.manage"
 )
 
 // AllValues returns all GlobalPermission values.
@@ -4364,9 +4374,19 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalMembershipManage,
 		GlobalPermissionGlobalRoleManage,
 		GlobalPermissionGlobalPermissionManage,
-		GlobalPermissionOrganizationManage,
-		GlobalPermissionContactPointManage,
-		GlobalPermissionCategorySchemeManage,
+		GlobalPermissionGlobalOrganizationManage,
+		GlobalPermissionGlobalContactPointManage,
+		GlobalPermissionGlobalCategorySchemeManage,
+		GlobalPermissionGlobalResourceCreate,
+		GlobalPermissionGlobalResourceEdit,
+		GlobalPermissionGlobalResourceSubmit,
+		GlobalPermissionGlobalResourceWithdraw,
+		GlobalPermissionGlobalResourceReopen,
+		GlobalPermissionGlobalResourceDiscard,
+		GlobalPermissionGlobalResourceReject,
+		GlobalPermissionGlobalResourcePublish,
+		GlobalPermissionGlobalResourceUnpublish,
+		GlobalPermissionGlobalCategoryManage,
 	}
 }
 
@@ -4379,11 +4399,31 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case GlobalPermissionGlobalPermissionManage:
 		return []byte(s), nil
-	case GlobalPermissionOrganizationManage:
+	case GlobalPermissionGlobalOrganizationManage:
 		return []byte(s), nil
-	case GlobalPermissionContactPointManage:
+	case GlobalPermissionGlobalContactPointManage:
 		return []byte(s), nil
-	case GlobalPermissionCategorySchemeManage:
+	case GlobalPermissionGlobalCategorySchemeManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceCreate:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceEdit:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceSubmit:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceWithdraw:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceReopen:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceDiscard:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceReject:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourcePublish:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceUnpublish:
+		return []byte(s), nil
+	case GlobalPermissionGlobalCategoryManage:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -4402,14 +4442,44 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 	case GlobalPermissionGlobalPermissionManage:
 		*s = GlobalPermissionGlobalPermissionManage
 		return nil
-	case GlobalPermissionOrganizationManage:
-		*s = GlobalPermissionOrganizationManage
+	case GlobalPermissionGlobalOrganizationManage:
+		*s = GlobalPermissionGlobalOrganizationManage
 		return nil
-	case GlobalPermissionContactPointManage:
-		*s = GlobalPermissionContactPointManage
+	case GlobalPermissionGlobalContactPointManage:
+		*s = GlobalPermissionGlobalContactPointManage
 		return nil
-	case GlobalPermissionCategorySchemeManage:
-		*s = GlobalPermissionCategorySchemeManage
+	case GlobalPermissionGlobalCategorySchemeManage:
+		*s = GlobalPermissionGlobalCategorySchemeManage
+		return nil
+	case GlobalPermissionGlobalResourceCreate:
+		*s = GlobalPermissionGlobalResourceCreate
+		return nil
+	case GlobalPermissionGlobalResourceEdit:
+		*s = GlobalPermissionGlobalResourceEdit
+		return nil
+	case GlobalPermissionGlobalResourceSubmit:
+		*s = GlobalPermissionGlobalResourceSubmit
+		return nil
+	case GlobalPermissionGlobalResourceWithdraw:
+		*s = GlobalPermissionGlobalResourceWithdraw
+		return nil
+	case GlobalPermissionGlobalResourceReopen:
+		*s = GlobalPermissionGlobalResourceReopen
+		return nil
+	case GlobalPermissionGlobalResourceDiscard:
+		*s = GlobalPermissionGlobalResourceDiscard
+		return nil
+	case GlobalPermissionGlobalResourceReject:
+		*s = GlobalPermissionGlobalResourceReject
+		return nil
+	case GlobalPermissionGlobalResourcePublish:
+		*s = GlobalPermissionGlobalResourcePublish
+		return nil
+	case GlobalPermissionGlobalResourceUnpublish:
+		*s = GlobalPermissionGlobalResourceUnpublish
+		return nil
+	case GlobalPermissionGlobalCategoryManage:
+		*s = GlobalPermissionGlobalCategoryManage
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -4707,60 +4777,60 @@ func (s *GroupMembership) SetUpdatedAt(val time.Time) {
 type GroupPermission string
 
 const (
-	GroupPermissionResourceCreate        GroupPermission = "resource.create"
-	GroupPermissionResourceEdit          GroupPermission = "resource.edit"
-	GroupPermissionResourceSubmit        GroupPermission = "resource.submit"
-	GroupPermissionResourceWithdraw      GroupPermission = "resource.withdraw"
-	GroupPermissionResourceReopen        GroupPermission = "resource.reopen"
-	GroupPermissionResourceDiscard       GroupPermission = "resource.discard"
-	GroupPermissionResourceReject        GroupPermission = "resource.reject"
-	GroupPermissionResourcePublish       GroupPermission = "resource.publish"
-	GroupPermissionResourceUnpublish     GroupPermission = "resource.unpublish"
-	GroupPermissionGroupMembershipManage GroupPermission = "group.membership.manage"
-	GroupPermissionGroupRoleManage       GroupPermission = "group.role.manage"
-	GroupPermissionGroupPermissionManage GroupPermission = "group.permission.manage"
-	GroupPermissionCategoryManage        GroupPermission = "category.manage"
+	GroupPermissionGroupResourceCreate    GroupPermission = "group.resource.create"
+	GroupPermissionGroupResourceEdit      GroupPermission = "group.resource.edit"
+	GroupPermissionGroupResourceSubmit    GroupPermission = "group.resource.submit"
+	GroupPermissionGroupResourceWithdraw  GroupPermission = "group.resource.withdraw"
+	GroupPermissionGroupResourceReopen    GroupPermission = "group.resource.reopen"
+	GroupPermissionGroupResourceDiscard   GroupPermission = "group.resource.discard"
+	GroupPermissionGroupResourceReject    GroupPermission = "group.resource.reject"
+	GroupPermissionGroupResourcePublish   GroupPermission = "group.resource.publish"
+	GroupPermissionGroupResourceUnpublish GroupPermission = "group.resource.unpublish"
+	GroupPermissionGroupMembershipManage  GroupPermission = "group.membership.manage"
+	GroupPermissionGroupRoleManage        GroupPermission = "group.role.manage"
+	GroupPermissionGroupPermissionManage  GroupPermission = "group.permission.manage"
+	GroupPermissionGroupCategoryManage    GroupPermission = "group.category.manage"
 )
 
 // AllValues returns all GroupPermission values.
 func (GroupPermission) AllValues() []GroupPermission {
 	return []GroupPermission{
-		GroupPermissionResourceCreate,
-		GroupPermissionResourceEdit,
-		GroupPermissionResourceSubmit,
-		GroupPermissionResourceWithdraw,
-		GroupPermissionResourceReopen,
-		GroupPermissionResourceDiscard,
-		GroupPermissionResourceReject,
-		GroupPermissionResourcePublish,
-		GroupPermissionResourceUnpublish,
+		GroupPermissionGroupResourceCreate,
+		GroupPermissionGroupResourceEdit,
+		GroupPermissionGroupResourceSubmit,
+		GroupPermissionGroupResourceWithdraw,
+		GroupPermissionGroupResourceReopen,
+		GroupPermissionGroupResourceDiscard,
+		GroupPermissionGroupResourceReject,
+		GroupPermissionGroupResourcePublish,
+		GroupPermissionGroupResourceUnpublish,
 		GroupPermissionGroupMembershipManage,
 		GroupPermissionGroupRoleManage,
 		GroupPermissionGroupPermissionManage,
-		GroupPermissionCategoryManage,
+		GroupPermissionGroupCategoryManage,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s GroupPermission) MarshalText() ([]byte, error) {
 	switch s {
-	case GroupPermissionResourceCreate:
+	case GroupPermissionGroupResourceCreate:
 		return []byte(s), nil
-	case GroupPermissionResourceEdit:
+	case GroupPermissionGroupResourceEdit:
 		return []byte(s), nil
-	case GroupPermissionResourceSubmit:
+	case GroupPermissionGroupResourceSubmit:
 		return []byte(s), nil
-	case GroupPermissionResourceWithdraw:
+	case GroupPermissionGroupResourceWithdraw:
 		return []byte(s), nil
-	case GroupPermissionResourceReopen:
+	case GroupPermissionGroupResourceReopen:
 		return []byte(s), nil
-	case GroupPermissionResourceDiscard:
+	case GroupPermissionGroupResourceDiscard:
 		return []byte(s), nil
-	case GroupPermissionResourceReject:
+	case GroupPermissionGroupResourceReject:
 		return []byte(s), nil
-	case GroupPermissionResourcePublish:
+	case GroupPermissionGroupResourcePublish:
 		return []byte(s), nil
-	case GroupPermissionResourceUnpublish:
+	case GroupPermissionGroupResourceUnpublish:
 		return []byte(s), nil
 	case GroupPermissionGroupMembershipManage:
 		return []byte(s), nil
@@ -4768,7 +4838,7 @@ func (s GroupPermission) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case GroupPermissionGroupPermissionManage:
 		return []byte(s), nil
-	case GroupPermissionCategoryManage:
+	case GroupPermissionGroupCategoryManage:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -4778,32 +4848,32 @@ func (s GroupPermission) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *GroupPermission) UnmarshalText(data []byte) error {
 	switch GroupPermission(data) {
-	case GroupPermissionResourceCreate:
-		*s = GroupPermissionResourceCreate
+	case GroupPermissionGroupResourceCreate:
+		*s = GroupPermissionGroupResourceCreate
 		return nil
-	case GroupPermissionResourceEdit:
-		*s = GroupPermissionResourceEdit
+	case GroupPermissionGroupResourceEdit:
+		*s = GroupPermissionGroupResourceEdit
 		return nil
-	case GroupPermissionResourceSubmit:
-		*s = GroupPermissionResourceSubmit
+	case GroupPermissionGroupResourceSubmit:
+		*s = GroupPermissionGroupResourceSubmit
 		return nil
-	case GroupPermissionResourceWithdraw:
-		*s = GroupPermissionResourceWithdraw
+	case GroupPermissionGroupResourceWithdraw:
+		*s = GroupPermissionGroupResourceWithdraw
 		return nil
-	case GroupPermissionResourceReopen:
-		*s = GroupPermissionResourceReopen
+	case GroupPermissionGroupResourceReopen:
+		*s = GroupPermissionGroupResourceReopen
 		return nil
-	case GroupPermissionResourceDiscard:
-		*s = GroupPermissionResourceDiscard
+	case GroupPermissionGroupResourceDiscard:
+		*s = GroupPermissionGroupResourceDiscard
 		return nil
-	case GroupPermissionResourceReject:
-		*s = GroupPermissionResourceReject
+	case GroupPermissionGroupResourceReject:
+		*s = GroupPermissionGroupResourceReject
 		return nil
-	case GroupPermissionResourcePublish:
-		*s = GroupPermissionResourcePublish
+	case GroupPermissionGroupResourcePublish:
+		*s = GroupPermissionGroupResourcePublish
 		return nil
-	case GroupPermissionResourceUnpublish:
-		*s = GroupPermissionResourceUnpublish
+	case GroupPermissionGroupResourceUnpublish:
+		*s = GroupPermissionGroupResourceUnpublish
 		return nil
 	case GroupPermissionGroupMembershipManage:
 		*s = GroupPermissionGroupMembershipManage
@@ -4814,8 +4884,8 @@ func (s *GroupPermission) UnmarshalText(data []byte) error {
 	case GroupPermissionGroupPermissionManage:
 		*s = GroupPermissionGroupPermissionManage
 		return nil
-	case GroupPermissionCategoryManage:
-		*s = GroupPermissionCategoryManage
+	case GroupPermissionGroupCategoryManage:
+		*s = GroupPermissionGroupCategoryManage
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

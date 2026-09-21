@@ -25,7 +25,7 @@ func (UnimplementedHandler) AssignGlobalRole(ctx context.Context, params AssignG
 // AssignGroupRole implements assignGroupRole operation.
 //
 // Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management
-// permission or global ADMIN. Operation is idempotent.
+// permission. Operation is idempotent.
 //
 // PUT /groups/{groupId}/memberships/{userId}/roles/{role}
 func (UnimplementedHandler) AssignGroupRole(ctx context.Context, params AssignGroupRoleParams) error {
@@ -272,7 +272,7 @@ func (UnimplementedHandler) GrantGlobalPermission(ctx context.Context, params Gr
 // GrantGroupPermission implements grantGroupPermission operation.
 //
 // Grant a group-scoped direct permission to an active group member. Requires group.permission.manage
-// in the group or global ADMIN. Operation is idempotent.
+// in the group or global.permission.manage.
 //
 // PUT /groups/{groupId}/memberships/{userId}/permissions/{permission}
 func (UnimplementedHandler) GrantGroupPermission(ctx context.Context, params GrantGroupPermissionParams) error {
@@ -392,7 +392,7 @@ func (UnimplementedHandler) RemoveGlobalRole(ctx context.Context, params RemoveG
 // RemoveGroupRole implements removeGroupRole operation.
 //
 // Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management
-// permission or global ADMIN. Operation is idempotent.
+// permission. Operation is idempotent.
 //
 // DELETE /groups/{groupId}/memberships/{userId}/roles/{role}
 func (UnimplementedHandler) RemoveGroupRole(ctx context.Context, params RemoveGroupRoleParams) error {
@@ -484,7 +484,7 @@ func (UnimplementedHandler) RevokeGlobalPermission(ctx context.Context, params R
 // RevokeGroupPermission implements revokeGroupPermission operation.
 //
 // Revoke a group-scoped direct permission from an active group member. Requires
-// group.permission.manage in the group or global ADMIN. Operation is idempotent.
+// group.permission.manage in the group or global.permission.manage.
 //
 // DELETE /groups/{groupId}/memberships/{userId}/permissions/{permission}
 func (UnimplementedHandler) RevokeGroupPermission(ctx context.Context, params RevokeGroupPermissionParams) error {

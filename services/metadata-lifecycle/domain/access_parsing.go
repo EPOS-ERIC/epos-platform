@@ -16,7 +16,17 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 		GlobalPermissionPermissionManage,
 		GlobalPermissionOrganizationManage,
 		GlobalPermissionContactPointManage,
-		GlobalPermissionCategorySchemeManage:
+		GlobalPermissionCategorySchemeManage,
+		GlobalPermissionResourceCreate,
+		GlobalPermissionResourceEdit,
+		GlobalPermissionResourceSubmit,
+		GlobalPermissionResourceWithdraw,
+		GlobalPermissionResourceReopen,
+		GlobalPermissionResourceDiscard,
+		GlobalPermissionResourceReject,
+		GlobalPermissionResourcePublish,
+		GlobalPermissionResourceUnpublish,
+		GlobalPermissionCategoryManage:
 		return permission, nil
 	default:
 		return "", ErrInvalidAccess

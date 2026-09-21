@@ -125,11 +125,31 @@ func toAPIProtoGlobalPermissions(values []metadatalifecyclev1.GlobalPermission) 
 		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE:
 			permission = gatewayapi.GlobalPermissionGlobalPermissionManage
 		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE:
-			permission = gatewayapi.GlobalPermissionOrganizationManage
+			permission = gatewayapi.GlobalPermissionGlobalOrganizationManage
 		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE:
-			permission = gatewayapi.GlobalPermissionContactPointManage
+			permission = gatewayapi.GlobalPermissionGlobalContactPointManage
 		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE:
-			permission = gatewayapi.GlobalPermissionCategorySchemeManage
+			permission = gatewayapi.GlobalPermissionGlobalCategorySchemeManage
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE:
+			permission = gatewayapi.GlobalPermissionGlobalResourceCreate
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_EDIT:
+			permission = gatewayapi.GlobalPermissionGlobalResourceEdit
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_SUBMIT:
+			permission = gatewayapi.GlobalPermissionGlobalResourceSubmit
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_WITHDRAW:
+			permission = gatewayapi.GlobalPermissionGlobalResourceWithdraw
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REOPEN:
+			permission = gatewayapi.GlobalPermissionGlobalResourceReopen
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_DISCARD:
+			permission = gatewayapi.GlobalPermissionGlobalResourceDiscard
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REJECT:
+			permission = gatewayapi.GlobalPermissionGlobalResourceReject
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_PUBLISH:
+			permission = gatewayapi.GlobalPermissionGlobalResourcePublish
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_UNPUBLISH:
+			permission = gatewayapi.GlobalPermissionGlobalResourceUnpublish
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE:
+			permission = gatewayapi.GlobalPermissionGlobalCategoryManage
 		default:
 			return nil, fmt.Errorf("metadata-lifecycle returned unknown global permission: %v", value)
 		}

@@ -374,6 +374,26 @@ func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE, nil
 	case domain.GlobalPermissionCategorySchemeManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE, nil
+	case domain.GlobalPermissionResourceCreate:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE, nil
+	case domain.GlobalPermissionResourceEdit:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_EDIT, nil
+	case domain.GlobalPermissionResourceSubmit:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_SUBMIT, nil
+	case domain.GlobalPermissionResourceWithdraw:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_WITHDRAW, nil
+	case domain.GlobalPermissionResourceReopen:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REOPEN, nil
+	case domain.GlobalPermissionResourceDiscard:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_DISCARD, nil
+	case domain.GlobalPermissionResourceReject:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REJECT, nil
+	case domain.GlobalPermissionResourcePublish:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_PUBLISH, nil
+	case domain.GlobalPermissionResourceUnpublish:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_UNPUBLISH, nil
+	case domain.GlobalPermissionCategoryManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE, nil
 	default:
 		return 0, fmt.Errorf("unknown global permission: %q", value)
 	}
@@ -393,6 +413,26 @@ func toDomainGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domai
 		return domain.GlobalPermissionContactPointManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE:
 		return domain.GlobalPermissionCategorySchemeManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE:
+		return domain.GlobalPermissionResourceCreate, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_EDIT:
+		return domain.GlobalPermissionResourceEdit, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_SUBMIT:
+		return domain.GlobalPermissionResourceSubmit, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_WITHDRAW:
+		return domain.GlobalPermissionResourceWithdraw, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REOPEN:
+		return domain.GlobalPermissionResourceReopen, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_DISCARD:
+		return domain.GlobalPermissionResourceDiscard, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REJECT:
+		return domain.GlobalPermissionResourceReject, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_PUBLISH:
+		return domain.GlobalPermissionResourcePublish, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_UNPUBLISH:
+		return domain.GlobalPermissionResourceUnpublish, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE:
+		return domain.GlobalPermissionCategoryManage, nil
 	default:
 		return "", domain.ErrInvalidAccess
 	}

@@ -157,12 +157,12 @@ class GroupRoleContractTest(unittest.TestCase):
         self.assertCountEqual(
             target_membership["role_permissions"],
             [
-                "resource.create",
-                "resource.edit",
-                "resource.submit",
-                "resource.withdraw",
-                "resource.reopen",
-                "resource.discard",
+                "group.resource.create",
+                "group.resource.edit",
+                "group.resource.submit",
+                "group.resource.withdraw",
+                "group.resource.reopen",
+                "group.resource.discard",
             ],
         )
 
@@ -227,15 +227,15 @@ class GroupRoleContractTest(unittest.TestCase):
         self.assertCountEqual(
             target_membership["role_permissions"],
             [
-                "resource.create",
-                "resource.edit",
-                "resource.submit",
-                "resource.withdraw",
-                "resource.reopen",
-                "resource.discard",
-                "resource.reject",
-                "resource.publish",
-                "resource.unpublish",
+                "group.resource.create",
+                "group.resource.edit",
+                "group.resource.submit",
+                "group.resource.withdraw",
+                "group.resource.reopen",
+                "group.resource.discard",
+                "group.resource.reject",
+                "group.resource.publish",
+                "group.resource.unpublish",
                 "group.membership.manage",
                 "group.role.manage",
                 "group.permission.manage",

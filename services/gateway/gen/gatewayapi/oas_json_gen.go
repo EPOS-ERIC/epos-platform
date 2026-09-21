@@ -8992,12 +8992,32 @@ func (s *GlobalPermission) Decode(d *jx.Decoder) error {
 		*s = GlobalPermissionGlobalRoleManage
 	case GlobalPermissionGlobalPermissionManage:
 		*s = GlobalPermissionGlobalPermissionManage
-	case GlobalPermissionOrganizationManage:
-		*s = GlobalPermissionOrganizationManage
-	case GlobalPermissionContactPointManage:
-		*s = GlobalPermissionContactPointManage
-	case GlobalPermissionCategorySchemeManage:
-		*s = GlobalPermissionCategorySchemeManage
+	case GlobalPermissionGlobalOrganizationManage:
+		*s = GlobalPermissionGlobalOrganizationManage
+	case GlobalPermissionGlobalContactPointManage:
+		*s = GlobalPermissionGlobalContactPointManage
+	case GlobalPermissionGlobalCategorySchemeManage:
+		*s = GlobalPermissionGlobalCategorySchemeManage
+	case GlobalPermissionGlobalResourceCreate:
+		*s = GlobalPermissionGlobalResourceCreate
+	case GlobalPermissionGlobalResourceEdit:
+		*s = GlobalPermissionGlobalResourceEdit
+	case GlobalPermissionGlobalResourceSubmit:
+		*s = GlobalPermissionGlobalResourceSubmit
+	case GlobalPermissionGlobalResourceWithdraw:
+		*s = GlobalPermissionGlobalResourceWithdraw
+	case GlobalPermissionGlobalResourceReopen:
+		*s = GlobalPermissionGlobalResourceReopen
+	case GlobalPermissionGlobalResourceDiscard:
+		*s = GlobalPermissionGlobalResourceDiscard
+	case GlobalPermissionGlobalResourceReject:
+		*s = GlobalPermissionGlobalResourceReject
+	case GlobalPermissionGlobalResourcePublish:
+		*s = GlobalPermissionGlobalResourcePublish
+	case GlobalPermissionGlobalResourceUnpublish:
+		*s = GlobalPermissionGlobalResourceUnpublish
+	case GlobalPermissionGlobalCategoryManage:
+		*s = GlobalPermissionGlobalCategoryManage
 	default:
 		*s = GlobalPermission(v)
 	}
@@ -9558,32 +9578,32 @@ func (s *GroupPermission) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch GroupPermission(v) {
-	case GroupPermissionResourceCreate:
-		*s = GroupPermissionResourceCreate
-	case GroupPermissionResourceEdit:
-		*s = GroupPermissionResourceEdit
-	case GroupPermissionResourceSubmit:
-		*s = GroupPermissionResourceSubmit
-	case GroupPermissionResourceWithdraw:
-		*s = GroupPermissionResourceWithdraw
-	case GroupPermissionResourceReopen:
-		*s = GroupPermissionResourceReopen
-	case GroupPermissionResourceDiscard:
-		*s = GroupPermissionResourceDiscard
-	case GroupPermissionResourceReject:
-		*s = GroupPermissionResourceReject
-	case GroupPermissionResourcePublish:
-		*s = GroupPermissionResourcePublish
-	case GroupPermissionResourceUnpublish:
-		*s = GroupPermissionResourceUnpublish
+	case GroupPermissionGroupResourceCreate:
+		*s = GroupPermissionGroupResourceCreate
+	case GroupPermissionGroupResourceEdit:
+		*s = GroupPermissionGroupResourceEdit
+	case GroupPermissionGroupResourceSubmit:
+		*s = GroupPermissionGroupResourceSubmit
+	case GroupPermissionGroupResourceWithdraw:
+		*s = GroupPermissionGroupResourceWithdraw
+	case GroupPermissionGroupResourceReopen:
+		*s = GroupPermissionGroupResourceReopen
+	case GroupPermissionGroupResourceDiscard:
+		*s = GroupPermissionGroupResourceDiscard
+	case GroupPermissionGroupResourceReject:
+		*s = GroupPermissionGroupResourceReject
+	case GroupPermissionGroupResourcePublish:
+		*s = GroupPermissionGroupResourcePublish
+	case GroupPermissionGroupResourceUnpublish:
+		*s = GroupPermissionGroupResourceUnpublish
 	case GroupPermissionGroupMembershipManage:
 		*s = GroupPermissionGroupMembershipManage
 	case GroupPermissionGroupRoleManage:
 		*s = GroupPermissionGroupRoleManage
 	case GroupPermissionGroupPermissionManage:
 		*s = GroupPermissionGroupPermissionManage
-	case GroupPermissionCategoryManage:
-		*s = GroupPermissionCategoryManage
+	case GroupPermissionGroupCategoryManage:
+		*s = GroupPermissionGroupCategoryManage
 	default:
 		*s = GroupPermission(v)
 	}

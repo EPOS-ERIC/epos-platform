@@ -385,7 +385,7 @@ paths:
                       family_name: "Rossi"
                       global_roles: [ADMIN]
                       global_granted_permissions: []
-                      global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
+                      global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage]
                       status: "ACTIVE"
                       created_at: "2026-06-17T12:48:45.574Z"
                       updated_at: "2026-06-17T12:48:45.574Z"
@@ -729,7 +729,7 @@ paths:
       tags:
         - Memberships
       summary: Assign group role
-      description: Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management permission or global ADMIN. Operation is idempotent.
+      description: Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management permission. Operation is idempotent.
       operationId: assignGroupRole
       security:
         - bearerAuth: []
@@ -746,7 +746,7 @@ paths:
       tags:
         - Memberships
       summary: Remove group role
-      description: Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management permission or global ADMIN. Operation is idempotent.
+      description: Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management permission. Operation is idempotent.
       operationId: removeGroupRole
       security:
         - bearerAuth: []
@@ -798,7 +798,7 @@ paths:
       tags:
         - Memberships
       summary: Grant direct group permission
-      description: Grant a group-scoped direct permission to an active group member. Requires group.permission.manage in the group or global ADMIN. Operation is idempotent.
+      description: Grant a group-scoped direct permission to an active group member. Requires group.permission.manage in the group or global.permission.manage.
       operationId: grantGroupPermission
       security:
         - bearerAuth: []
@@ -815,7 +815,7 @@ paths:
       tags:
         - Memberships
       summary: Revoke direct group permission
-      description: Revoke a group-scoped direct permission from an active group member. Requires group.permission.manage in the group or global ADMIN. Operation is idempotent.
+      description: Revoke a group-scoped direct permission from an active group member. Requires group.permission.manage in the group or global.permission.manage.
       operationId: revokeGroupPermission
       security:
         - bearerAuth: []
@@ -913,7 +913,7 @@ paths:
                     family_name: "Rossi"
                     global_roles: [ADMIN]
                     global_granted_permissions: []
-                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -924,7 +924,7 @@ paths:
                         roles: [EDITOR]
                         status: "ACTIVE"
                         granted_permissions: []
-                        role_permissions: [resource.create, resource.edit]
+                        role_permissions: [group.resource.create, group.resource.edit]
                         created_at: "2026-06-17T12:48:45.574Z"
                         updated_at: "2026-06-17T12:48:45.574Z"
                 self:
@@ -936,7 +936,7 @@ paths:
                     family_name: "Rossi"
                     global_roles: [ADMIN]
                     global_granted_permissions: []
-                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -947,7 +947,7 @@ paths:
                         roles: [EDITOR]
                         status: "ACTIVE"
                         granted_permissions: []
-                        role_permissions: [resource.create, resource.edit]
+                        role_permissions: [group.resource.create, group.resource.edit]
                         created_at: "2026-06-17T12:48:45.574Z"
                         updated_at: "2026-06-17T12:48:45.574Z"
         default:
@@ -1893,27 +1893,37 @@ components:
         - global.membership.manage
         - global.role.manage
         - global.permission.manage
-        - organization.manage
-        - contact_point.manage
-        - category_scheme.manage
+        - global.organization.manage
+        - global.contact_point.manage
+        - global.category_scheme.manage
+        - global.resource.create
+        - global.resource.edit
+        - global.resource.submit
+        - global.resource.withdraw
+        - global.resource.reopen
+        - global.resource.discard
+        - global.resource.reject
+        - global.resource.publish
+        - global.resource.unpublish
+        - global.category.manage
 
     GroupPermission:
       type: string
       description: Group-scoped permission key.
       enum:
-        - resource.create
-        - resource.edit
-        - resource.submit
-        - resource.withdraw
-        - resource.reopen
-        - resource.discard
-        - resource.reject
-        - resource.publish
-        - resource.unpublish
+        - group.resource.create
+        - group.resource.edit
+        - group.resource.submit
+        - group.resource.withdraw
+        - group.resource.reopen
+        - group.resource.discard
+        - group.resource.reject
+        - group.resource.publish
+        - group.resource.unpublish
         - group.membership.manage
         - group.role.manage
         - group.permission.manage
-        - category.manage
+        - group.category.manage
 
     PermissionScope:
       type: string

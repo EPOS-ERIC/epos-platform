@@ -406,24 +406,10 @@ SELECT
 FROM
     user_global_roles AS global_role
     JOIN role_permissions AS role_permission ON role_permission.role_key = global_role.role_key
+    JOIN permissions AS permission ON permission.key = role_permission.permission_key
 WHERE
     global_role.user_id = $1
-UNION
-SELECT
-    permission.key
-FROM
-    permissions AS permission
-WHERE
-    permission.scope = 'GLOBAL'
-    AND EXISTS (
-        SELECT
-            1
-        FROM
-            user_global_roles AS global_role
-        WHERE
-            global_role.user_id = $1
-            AND global_role.role_key = 'ADMIN'
-    )
+    AND permission.scope = 'GLOBAL'
 ORDER BY
     permission_key
 `
@@ -529,9 +515,11 @@ FROM
     JOIN group_membership_roles AS role_assignment ON role_assignment.user_id = membership.user_id
     AND role_assignment.group_id = membership.group_id
     JOIN role_permissions AS role_permission ON role_permission.role_key = role_assignment.role_key
+    JOIN permissions AS permission ON permission.key = role_permission.permission_key
 WHERE
     membership.user_id = $1
     AND membership.status = 'ACTIVE'
+    AND permission.scope = 'GROUP'
 ORDER BY
     1,
     2
@@ -700,18 +688,23 @@ SELECT
             1
         FROM
             global_permission_grants AS global_grant
+            JOIN permissions AS permission ON permission.key = global_grant.permission_key
         WHERE
             global_grant.user_id = $1
             AND global_grant.permission_key = $2
+            AND permission.scope = 'GLOBAL'
         UNION
         ALL
         SELECT
             1
         FROM
             user_global_roles AS global_role
+            JOIN role_permissions AS role_permission ON role_permission.role_key = global_role.role_key
+            JOIN permissions AS permission ON permission.key = role_permission.permission_key
         WHERE
             global_role.user_id = $1
-            AND global_role.role_key = 'ADMIN'
+            AND role_permission.permission_key = $2
+            AND permission.scope = 'GLOBAL'
     ) AS allowed
 `
 
@@ -734,10 +727,12 @@ SELECT
             1
         FROM
             group_permission_grants
+            JOIN permissions ON permissions.key = group_permission_grants.permission_key
         WHERE
             group_permission_grants.user_id = $1
             AND group_permission_grants.group_id = $2
             AND group_permission_grants.permission_key = $3
+            AND permissions.scope = 'GROUP'
         UNION
         ALL
         SELECT
@@ -745,10 +740,12 @@ SELECT
         FROM
             group_membership_roles AS assignment
             JOIN role_permissions ON role_permissions.role_key = assignment.role_key
+            JOIN permissions ON permissions.key = role_permissions.permission_key
         WHERE
             assignment.user_id = $1
             AND assignment.group_id = $2
             AND role_permissions.permission_key = $3
+            AND permissions.scope = 'GROUP'
     ) AS allowed
 `
 
