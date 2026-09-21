@@ -12,6 +12,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/urlutil"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -44,15 +45,12 @@ func NewService(log *slog.Logger, baseURL string, upstreamCfg config.Upstream) (
 		return nil, fmt.Errorf("normalize auth base URL: %w", err)
 	}
 
-	// TODO: see if we need an upstream client here too or if a default http client is fine
 	return &Service{
 		log:     log.With("component", "auth-service"),
 		baseURL: normalizedBaseURL,
 		client: &http.Client{
-			Transport:     nil,
-			CheckRedirect: nil,
-			Jar:           nil,
-			Timeout:       upstreamCfg.Timeout,
+			Transport: otelhttp.NewTransport(http.DefaultTransport),
+			Timeout:   upstreamCfg.Timeout,
 		},
 	}, nil
 }

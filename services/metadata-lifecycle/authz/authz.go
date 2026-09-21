@@ -55,7 +55,11 @@ func (a *Authorizer) ListPermissions(ctx context.Context) ([]domain.Permission, 
 	return permissions, nil
 }
 
-func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) (domain.Result, error) {
+func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanReadUser", result.Allowed, result.Reason, err)
+	}()
+
 	if actorID == "" || targetID == "" {
 		return domain.Result{Allowed: false, Reason: "invalid user"}, nil
 	}
@@ -80,7 +84,11 @@ func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) 
 }
 
 // CanListUsers checks permissions required to manage the user directory.
-func (a *Authorizer) CanListUsers(ctx context.Context, userID string) (domain.Result, error) {
+func (a *Authorizer) CanListUsers(ctx context.Context, userID string) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanListUsers", result.Allowed, result.Reason, err)
+	}()
+
 	if userID == "" {
 		return domain.Result{Allowed: false, Reason: "invalid user"}, nil
 	}
@@ -121,23 +129,34 @@ func (a *Authorizer) canManageUserDirectory(ctx context.Context, userID string) 
 }
 
 // AuthorizeActiveUser permits authenticated operations for active users.
-func (a *Authorizer) AuthorizeActiveUser(ctx context.Context, userID string) (domain.Result, error) {
+func (a *Authorizer) AuthorizeActiveUser(ctx context.Context, userID string) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "AuthorizeActiveUser", result.Allowed, result.Reason, err)
+	}()
+
 	if userID == "" {
 		return domain.Result{Allowed: false, Reason: "invalid user"}, nil
 	}
 
-	_, result, err := a.activeUser(ctx, userID)
+	_, result, err = a.activeUser(ctx, userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
 
-	return result, err
+	return domain.Result{Allowed: true, Reason: "active user"}, nil
 }
 
 // CanListGroupMemberships permits group membership roster access.
-func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
+func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string, groupID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanListGroupMemberships", result.Allowed, result.Reason, err)
+	}()
+
 	if userID == "" || groupID == uuid.Nil {
 		return domain.Result{Allowed: false, Reason: "invalid group access request"}, nil
 	}
 
-	_, result, err := a.activeUser(ctx, userID)
+	_, result, err = a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
@@ -193,12 +212,20 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 }
 
 // CanManageGroupMemberships permits membership acceptance, rejection, and revocation.
-func (a *Authorizer) CanManageGroupMemberships(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
+func (a *Authorizer) CanManageGroupMemberships(ctx context.Context, userID string, groupID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanManageGroupMemberships", result.Allowed, result.Reason, err)
+	}()
+
 	return a.canManageGroupPermission(ctx, userID, groupID, domain.GlobalPermissionMembershipManage, domain.GroupPermissionMembershipManage)
 }
 
 // CanRevokeGroupMembership applies the extra protection for GROUP_ADMIN memberships.
-func (a *Authorizer) CanRevokeGroupMembership(ctx context.Context, userID string, groupID uuid.UUID, targetUserID string) (domain.Result, error) {
+func (a *Authorizer) CanRevokeGroupMembership(ctx context.Context, userID string, groupID uuid.UUID, targetUserID string) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanRevokeGroupMembership", result.Allowed, result.Reason, err)
+	}()
+
 	if userID == targetUserID {
 		active, err := a.AuthorizeActiveUser(ctx, userID)
 		if err != nil || !active.Allowed {
@@ -235,12 +262,16 @@ func (a *Authorizer) CanRevokeGroupMembership(ctx context.Context, userID string
 }
 
 // CanRequestGroupRole permits active members to request a group role.
-func (a *Authorizer) CanRequestGroupRole(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
+func (a *Authorizer) CanRequestGroupRole(ctx context.Context, userID string, groupID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanRequestGroupRole", result.Allowed, result.Reason, err)
+	}()
+
 	if userID == "" || groupID == uuid.Nil {
 		return domain.Result{Allowed: false, Reason: "invalid group access request"}, nil
 	}
 
-	_, result, err := a.activeUser(ctx, userID)
+	_, result, err = a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
@@ -257,12 +288,20 @@ func (a *Authorizer) CanRequestGroupRole(ctx context.Context, userID string, gro
 }
 
 // CanManageGroupRoles permits role-request decisions and standard direct group role changes.
-func (a *Authorizer) CanManageGroupRoles(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
+func (a *Authorizer) CanManageGroupRoles(ctx context.Context, userID string, groupID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanManageGroupRoles", result.Allowed, result.Reason, err)
+	}()
+
 	return a.canManageGroupPermission(ctx, userID, groupID, domain.GlobalPermissionRoleManage, domain.GroupPermissionRoleManage)
 }
 
 // CanManageSpecificGroupRole applies role-specific restrictions for direct assignment and removal.
-func (a *Authorizer) CanManageSpecificGroupRole(ctx context.Context, userID string, groupID uuid.UUID, role string) (domain.Result, error) {
+func (a *Authorizer) CanManageSpecificGroupRole(ctx context.Context, userID string, groupID uuid.UUID, role string) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanManageSpecificGroupRole", result.Allowed, result.Reason, err)
+	}()
+
 	allowed, err := a.CanManageGroupRoles(ctx, userID, groupID)
 	if err != nil || !allowed.Allowed || role != "GROUP_ADMIN" {
 		return allowed, err
@@ -317,7 +356,11 @@ func (a *Authorizer) canManageGroupPermission(ctx context.Context, userID string
 }
 
 // CanReadDatasetVersion applies publication and stored-group membership rules to one version.
-func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, datasetID, versionID uuid.UUID) (domain.Result, error) {
+func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, datasetID, versionID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanReadDatasetVersion", result.Allowed, result.Reason, err)
+	}()
+
 	version, err := a.repository.DatasetVersionAuthz(ctx, datasetID, versionID)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("load dataset version authorization: %w", err)
@@ -327,7 +370,11 @@ func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, 
 
 // CanReadSoftwareApplicationVersion applies publication and stored-group membership rules to one version.
 // TODO: see if we can generalize this function to a general "can read resource version"?
-func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, userID *string, applicationID, versionID uuid.UUID) (domain.Result, error) {
+func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, userID *string, applicationID, versionID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanReadSoftwareApplicationVersion", result.Allowed, result.Reason, err)
+	}()
+
 	version, err := a.repository.SoftwareApplicationVersionAuthz(ctx, applicationID, versionID)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("load software application version authorization: %w", err)
@@ -336,7 +383,11 @@ func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, user
 }
 
 // CanReadSoftwareSourceCodeVersion applies publication and stored-group membership rules to one version.
-func (a *Authorizer) CanReadSoftwareSourceCodeVersion(ctx context.Context, userID *string, sourceCodeID, versionID uuid.UUID) (domain.Result, error) {
+func (a *Authorizer) CanReadSoftwareSourceCodeVersion(ctx context.Context, userID *string, sourceCodeID, versionID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanReadSoftwareSourceCodeVersion", result.Allowed, result.Reason, err)
+	}()
+
 	version, err := a.repository.SoftwareSourceCodeVersionAuthz(ctx, sourceCodeID, versionID)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("load software source code version authorization: %w", err)
@@ -391,8 +442,12 @@ func versionReadDecision(status domain.Status, authenticated, active, admin, mem
 }
 
 // AuthorizeAdmin permits active global administrators only.
-func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID string) (domain.Result, error) {
-	_, result, err := a.activeUser(ctx, userID)
+func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID string) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "AuthorizeAdmin", result.Allowed, result.Reason, err)
+	}()
+
+	_, result, err = a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
@@ -407,8 +462,12 @@ func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID string) (domain.
 }
 
 // AuthorizeGlobal evaluates a global permission without requiring membership.
-func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID string, permission domain.GlobalPermission) (domain.Result, error) {
-	_, result, err := a.activeUser(ctx, userID)
+func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID string, permission domain.GlobalPermission) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "AuthorizeGlobal", result.Allowed, result.Reason, err)
+	}()
+
+	_, result, err = a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
@@ -431,7 +490,11 @@ func (a *Authorizer) AuthorizeResource(
 	resourceType domain.ResourceType,
 	resourceID uuid.UUID,
 	permission domain.GroupPermission,
-) (domain.Result, error) {
+) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "AuthorizeResource", result.Allowed, result.Reason, err)
+	}()
+
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
 	if errors.Is(err, domain.ErrAuthorizationNotFound) {
 		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
@@ -444,8 +507,12 @@ func (a *Authorizer) AuthorizeResource(
 }
 
 // AuthorizeGroup handles resource creation before a logical resource exists.
-func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID string, groupID uuid.UUID, permission domain.GroupPermission) (domain.Result, error) {
-	_, result, err := a.activeUser(ctx, userID)
+func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID string, groupID uuid.UUID, permission domain.GroupPermission) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "AuthorizeGroup", result.Allowed, result.Reason, err)
+	}()
+
+	_, result, err = a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
@@ -514,7 +581,11 @@ func globalPermissionForGroupPermission(permission domain.GroupPermission) (doma
 
 // CanReadResource permits public reads of published resources. Non-public
 // resources require an active member in stored resource group or global admin.
-func (a *Authorizer) CanReadResource(ctx context.Context, userID *string, resourceType domain.ResourceType, resourceID uuid.UUID) (domain.Result, error) {
+func (a *Authorizer) CanReadResource(ctx context.Context, userID *string, resourceType domain.ResourceType, resourceID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanReadResource", result.Allowed, result.Reason, err)
+	}()
+
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
 	if errors.Is(err, domain.ErrAuthorizationNotFound) {
 		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
@@ -538,7 +609,11 @@ func (a *Authorizer) CanReadResource(ctx context.Context, userID *string, resour
 }
 
 // CanReadResourceVersions requires access to the resource's owning group.
-func (a *Authorizer) CanReadResourceVersions(ctx context.Context, userID string, resourceType domain.ResourceType, resourceID uuid.UUID) (domain.Result, error) {
+func (a *Authorizer) CanReadResourceVersions(ctx context.Context, userID string, resourceType domain.ResourceType, resourceID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanReadResourceVersions", result.Allowed, result.Reason, err)
+	}()
+
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
 	if errors.Is(err, domain.ErrAuthorizationNotFound) {
 		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
@@ -587,8 +662,12 @@ func (a *Authorizer) activeGlobalAdmin(ctx context.Context, userID string) (doma
 }
 
 // CanReadContactPoint protects email data while allowing active members in any group.
-func (a *Authorizer) CanReadContactPoint(ctx context.Context, userID string) (domain.Result, error) {
-	_, result, err := a.activeUser(ctx, userID)
+func (a *Authorizer) CanReadContactPoint(ctx context.Context, userID string) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanReadContactPoint", result.Allowed, result.Reason, err)
+	}()
+
+	_, result, err = a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
@@ -614,7 +693,11 @@ func (a *Authorizer) CanReadContactPoint(ctx context.Context, userID string) (do
 
 // AuthorizeDiscovery applies discovery visibility once and returns candidates safe to project.
 // It loads the actor's active group memberships and filters candidates in memory.
-func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *domain.Actor, candidates []domain.DiscoveryCandidate) (domain.DiscoveryAuthorization, error) {
+func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *domain.Actor, candidates []domain.DiscoveryCandidate) (authorization domain.DiscoveryAuthorization, err error) {
+	defer func() {
+		recordAuthzDiscovery(ctx, actor != nil, len(candidates), len(authorization.AllowedCandidates), err)
+	}()
+
 	if len(candidates) == 0 {
 		return domain.DiscoveryAuthorization{
 			AllowedCandidates: []domain.DiscoveryCandidate{},
