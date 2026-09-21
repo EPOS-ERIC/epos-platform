@@ -38,10 +38,19 @@ type SoftwareMetadata = SoftwareApplicationResourceMetadata | SoftwareSourceCode
 })
 export class ResourceVersionSectionComponent {
   @Input({ required: true }) sectionTitle = '';
+  @Input() comparisonSide: 'left' | 'right' = 'left';
 
   protected currentVersion: ResourceVersion | null = null;
   protected datasetForm: DatasetDetailForm | null = null;
+  protected comparisonDatasetForm: DatasetDetailForm | null = null;
   protected softwareMetadata: SoftwareMetadata | null = null;
+
+  @Input()
+  set comparisonVersion(version: ResourceVersion | null) {
+    this.comparisonDatasetForm = version?.metadata.resource_type === 'dataset'
+      ? toDatasetDetailForm(version.metadata as DatasetResourceMetadata)
+      : null;
+  }
 
   @Input({ required: true })
   set version(version: ResourceVersion) {

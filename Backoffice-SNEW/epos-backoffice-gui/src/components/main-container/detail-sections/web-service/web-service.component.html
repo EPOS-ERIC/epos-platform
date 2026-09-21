@@ -47,24 +47,27 @@
           </div>
         </div>
       </div>
+    </fieldset>
 
-      <details id="webservice-body" class="webservice-subsection">
+    <details id="webservice-body" class="webservice-subsection">
         <summary class="webservice-subsection-summary">
           <span class="distribution-subtitle">Request Body</span>
           <span class="webservice-summary-hint">Closed</span>
         </summary>
         <div class="webservice-subsection-body">
           <p class="webservice-body-hint">Request bodies are supported for POST and PUT only. Both content type and template are required.</p>
-          <div class="detail-form-grid">
-            <label class="detail-field">
-              <span class="detail-label">Content type</span>
-              <input class="app-input" [(ngModel)]="model.bodyContentType" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" placeholder="application/json" />
-            </label>
-            <label class="detail-field detail-field--full">
-              <span class="detail-label">Body template</span>
-              <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="model.bodyTemplate" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea>
-            </label>
-          </div>
+          <fieldset class="detail-fieldset" [disabled]="disabled">
+            <div class="detail-form-grid">
+              <label class="detail-field">
+                <span class="detail-label">Content type</span>
+                <input class="app-input" [(ngModel)]="model.bodyContentType" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" placeholder="application/json" />
+              </label>
+              <label class="detail-field detail-field--full">
+                <span class="detail-label">Body template</span>
+                <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="model.bodyTemplate" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea>
+              </label>
+            </div>
+          </fieldset>
           <app-scalar-parameters-editor [model]="model.bodyParameters" [disabled]="disabled" (modelChange)="onBodyParametersChange($event)" />
         </div>
       </details>
@@ -127,10 +130,12 @@
 
     <app-web-service-parameters
       [model]="model.parameters"
+      [comparisonModel]="comparisonModel?.parameters ?? []"
       [disabled]="disabled"
       [comparisonMode]="comparisonMode"
+      [comparisonSide]="comparisonSide"
+      [reversed]="comparisonMode && comparisonSide === 'right'"
       (modelChange)="onParametersChange($event)"
     ></app-web-service-parameters>
-    </fieldset>
   }
 </div>

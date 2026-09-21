@@ -28,7 +28,7 @@
 
         <fieldset [disabled]="disabled">
           <div class="scalar-grid">
-            <label><span>Name *</span><input class="app-input" [(ngModel)]="parameter.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required /></label>
+            <label><span>Name *</span><input #scalarNameInput class="app-input" [ngModel]="parameter.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateParameterName(parameter, $event, scalarNameInput)" required /></label>
             <label><span>Label *</span><input class="app-input" [(ngModel)]="parameter.label" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required /></label>
             <label class="scalar-full"><span>Description</span><textarea class="app-input" rows="2" [(ngModel)]="parameter.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea></label>
             <label class="scalar-check"><input type="checkbox" [(ngModel)]="parameter.required" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /> Required</label>

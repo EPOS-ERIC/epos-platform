@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import type { DatasetDistributionForm } from '../../../../models/dataset-detail-form';
+import { ApiService } from '../../../../services/api.service';
 import { DistributionComponent } from './distribution.component';
 
 describe('DistributionComponent', () => {
@@ -53,5 +55,71 @@ describe('DistributionComponent', () => {
       type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
       downloadableFile: { url: '', format: '' }
     });
+  });
+
+  it('keeps distribution and parameter navigation enabled in read-only mode', () => {
+    TestBed.overrideProvider(ApiService, {
+      useValue: {
+        getContactPoints: () => of([]),
+        getOrganizations: () => of([])
+      }
+    });
+    const fixture = TestBed.createComponent(DistributionComponent);
+    const emissions: DatasetDistributionForm[][] = [];
+    fixture.componentInstance.modelChange.subscribe((model) => emissions.push(model));
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.distribution-actions button') as HTMLButtonElement).click();
+
+    const model = emissions[0];
+    const distribution = model[0];
+    if (distribution.kind !== 'web-service') {
+      throw new Error('Expected a web service distribution');
+    }
+    distribution.webService.parameters = [
+      {
+        kind: 'BOOLEAN',
+        id: 'first-id',
+        position: 0,
+        label: 'First parameter',
+        name: 'first',
+        description: '',
+        property: '',
+        location: 'QUERY',
+        explode: false,
+        required: false,
+        readOnly: false,
+        defaultValue: null
+      },
+      {
+        kind: 'BOOLEAN',
+        id: 'second-id',
+        position: 1,
+        label: 'Second parameter',
+        name: 'second',
+        description: '',
+        property: 'searchable-property',
+        location: 'QUERY',
+        explode: false,
+        required: false,
+        readOnly: false,
+        defaultValue: null
+      }
+    ];
+
+    fixture.componentRef.setInput('model', model);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
+
+    const distributionTab = fixture.nativeElement.querySelector('.tab-button') as HTMLButtonElement;
+    const parameterItems = fixture.nativeElement.querySelectorAll('.parameter-list-item') as NodeListOf<HTMLButtonElement>;
+    const searchInput = fixture.nativeElement.querySelector('.parameter-search-input') as HTMLInputElement;
+    expect(distributionTab.disabled).toBe(false);
+    expect(parameterItems[1].disabled).toBe(false);
+    expect(searchInput.disabled).toBe(false);
+
+    parameterItems[1].click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.parameter-editor h3')?.textContent?.trim()).toBe('Second parameter');
+    expect((fixture.nativeElement.querySelector('.parameter-editor-fields') as HTMLFieldSetElement).disabled).toBe(true);
   });
 });

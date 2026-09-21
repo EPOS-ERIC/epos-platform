@@ -1,12 +1,14 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AppIconComponent } from '../../../app-icon/app-icon.component';
 import type { DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
+import { ToastService } from '../../../../services/toast.service';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
 
 type ParameterFormKind = DatasetWebServiceParameterForm['kind'];
+type ParameterComparisonStatus = 'unchanged' | 'changed' | 'added' | 'removed';
 
 interface ParameterListItem {
   parameter: DatasetWebServiceParameterForm;
@@ -20,9 +22,14 @@ interface ParameterListItem {
   styleUrl: './web-service-parameters.component.css'
 })
 export class WebServiceParametersComponent {
+  private readonly toast = inject(ToastService);
+
   @Input() model: DatasetWebServiceParameterForm[] = [];
+  @Input() comparisonModel: DatasetWebServiceParameterForm[] = [];
   @Input() disabled = false;
   @Input() comparisonMode = false;
+  @Input() comparisonSide: 'left' | 'right' = 'left';
+  @Input() reversed = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceParameterForm[]>();
 
   protected parameterPage = 0;
@@ -34,9 +41,33 @@ export class WebServiceParametersComponent {
   protected addParameterDialogOpen = false;
   protected selectedParameterKind: ParameterFormKind | '' = '';
   protected parameterKindRequired = false;
+  protected parameterListCollapsed = false;
+
+  protected toggleParameterList(): void {
+    this.parameterListCollapsed = !this.parameterListCollapsed;
+  }
 
   protected emitModelChange(): void {
     this.modelChange.emit(this.model);
+  }
+
+  protected updateParameterName(
+    parameter: DatasetWebServiceParameterForm,
+    name: string,
+    input: HTMLInputElement
+  ): void {
+    const normalizedName = name.trim().toLocaleLowerCase();
+    const duplicate = normalizedName && this.model.some(
+      (candidate) => candidate !== parameter && candidate.name.trim().toLocaleLowerCase() === normalizedName
+    );
+    if (duplicate) {
+      this.toast.error(`A parameter named "${name.trim()}" already exists.`);
+      input.value = parameter.name;
+      return;
+    }
+
+    parameter.name = name;
+    this.emitModelChange();
   }
 
   protected parameterPagerLabel(): string {
@@ -69,6 +100,52 @@ export class WebServiceParametersComponent {
 
   protected isParameterSelected(globalIndex: number): boolean {
     return this.selectedParameterGlobalIndex() === globalIndex;
+  }
+
+  protected parameterComparisonKey(parameter: DatasetWebServiceParameterForm): string {
+    const name = parameter.name.trim().toLocaleLowerCase();
+    if (name) {
+      return `name:${name}`;
+    }
+
+    const property = parameter.property.trim().toLocaleLowerCase();
+    if (property) {
+      return `property:${property}`;
+    }
+
+    return parameter.id.trim() ? `id:${parameter.id}` : `position:${parameter.position}`;
+  }
+
+  protected parameterComparisonStatus(parameter: DatasetWebServiceParameterForm): ParameterComparisonStatus {
+    if (!this.comparisonMode) {
+      return 'unchanged';
+    }
+
+    const counterpart = this.comparisonModel.find(
+      (candidate) => this.parameterComparisonKey(candidate) === this.parameterComparisonKey(parameter)
+    );
+    if (!counterpart) {
+      return this.comparisonSide === 'right' ? 'added' : 'removed';
+    }
+
+    return this.parameterComparableValue(parameter) === this.parameterComparableValue(counterpart)
+      ? 'unchanged'
+      : 'changed';
+  }
+
+  protected parameterStatusLabel(parameter: DatasetWebServiceParameterForm): string {
+    const status = this.parameterComparisonStatus(parameter);
+    return status === 'unchanged' ? '' : status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  protected parameterHasPositiveDiff(parameter: DatasetWebServiceParameterForm): boolean {
+    const status = this.parameterComparisonStatus(parameter);
+    return status === 'added' || (status === 'changed' && this.comparisonSide === 'right');
+  }
+
+  protected parameterHasNegativeDiff(parameter: DatasetWebServiceParameterForm): boolean {
+    const status = this.parameterComparisonStatus(parameter);
+    return status === 'removed' || (status === 'changed' && this.comparisonSide === 'left');
   }
 
   protected selectParameter(globalIndex: number): void {
@@ -185,6 +262,11 @@ export class WebServiceParametersComponent {
 
   private isParameterKind(value: string): value is ParameterFormKind {
     return this.parameterKinds.some((kind) => kind === value);
+  }
+
+  private parameterComparableValue(parameter: DatasetWebServiceParameterForm): string {
+    const { id: _id, position: _position, ...visibleValue } = parameter;
+    return JSON.stringify(visibleValue);
   }
 
   private createParameter(kind: ParameterFormKind): DatasetWebServiceParameterForm {

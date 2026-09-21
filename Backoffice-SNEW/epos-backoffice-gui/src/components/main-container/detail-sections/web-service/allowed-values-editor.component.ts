@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AppIconComponent } from '../../../app-icon/app-icon.component';
+import { ToastService } from '../../../../services/toast.service';
 
 @Component({
   selector: 'app-allowed-values-editor',
@@ -10,6 +11,8 @@ import { AppIconComponent } from '../../../app-icon/app-icon.component';
   styleUrl: './allowed-values-editor.component.css'
 })
 export class AllowedValuesEditorComponent {
+  private readonly toast = inject(ToastService);
+
   @Input() values: string[] = [];
   @Input() kind: 'STRING' | 'INTEGER' | 'FLOAT' = 'STRING';
   @Input() defaultValue: string | null = null;
@@ -44,7 +47,15 @@ export class AllowedValuesEditorComponent {
       && !this.values.some((value) => Number(value.replace(',', '.')) === defaultValue);
   }
 
-  protected updateValue(index: number, value: string): void {
+  protected updateValue(index: number, value: string, input: HTMLInputElement): void {
+    if (value.trim() && this.values.some(
+      (currentValue, currentIndex) => currentIndex !== index && this.optionKey(currentValue) === this.optionKey(value)
+    )) {
+      this.notifyDuplicate(value);
+      input.value = this.values[index] ?? '';
+      return;
+    }
+
     this.valuesChange.emit(this.values.map((currentValue, currentIndex) => currentIndex === index ? value : currentValue));
   }
 
@@ -108,7 +119,35 @@ export class AllowedValuesEditorComponent {
       return;
     }
 
+    const knownValues = new Set(this.values.filter((value) => value.trim()).map((value) => this.optionKey(value)));
+    const duplicate = parsedValues.find((value) => {
+      const key = this.optionKey(value);
+      if (knownValues.has(key)) {
+        return true;
+      }
+      knownValues.add(key);
+      return false;
+    });
+    if (duplicate) {
+      this.bulkValuesError = `The option "${duplicate}" already exists.`;
+      this.notifyDuplicate(duplicate);
+      return;
+    }
+
     this.valuesChange.emit([...this.values, ...parsedValues]);
     this.closeBulkDialog();
+  }
+
+  private optionKey(value: string): string {
+    const trimmedValue = value.trim();
+    if (this.kind === 'STRING') {
+      return trimmedValue;
+    }
+
+    return String(Number(trimmedValue.replace(',', '.')));
+  }
+
+  private notifyDuplicate(value: string): void {
+    this.toast.error(`The option "${value.trim()}" already exists.`);
   }
 }

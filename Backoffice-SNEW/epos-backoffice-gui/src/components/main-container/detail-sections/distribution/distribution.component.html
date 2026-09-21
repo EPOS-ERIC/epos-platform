@@ -19,7 +19,7 @@
   </div>
 
   @if (model.length) {
-    <fieldset class="detail-fieldset" [disabled]="disabled">
+    <div class="detail-fieldset">
       <div class="tab-bar">
         @for (distribution of model; track $index) {
           <button type="button" class="tab-button" [class.active]="distributionTabs === $index" (click)="selectDistributionTab($index)">
@@ -35,41 +35,47 @@
             <strong>{{ distribution.title || 'Selected distribution' }}</strong>
           </div>
 
-          <div class="detail-form-grid">
-            @for (field of distributionFields; track field) {
-              <label class="detail-field" [class.detail-field--full]="field === 'type'">
-                <span class="detail-label">{{ distributionFieldLabel(field) }}{{ field === 'title' || field === 'description' ? ' *' : '' }}</span>
-                <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [readonly]="field === 'type'" [required]="field === 'title' || field === 'description'" />
-              </label>
-            }
-          </div>
+          <fieldset class="detail-fieldset" [disabled]="disabled">
+            <div class="detail-form-grid">
+              @for (field of distributionFields; track field) {
+                <label class="detail-field" [class.detail-field--full]="field === 'type'">
+                  <span class="detail-label">{{ distributionFieldLabel(field) }}{{ field === 'title' || field === 'description' ? ' *' : '' }}</span>
+                  <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [readonly]="field === 'type'" [required]="field === 'title' || field === 'description'" />
+                </label>
+              }
+            </div>
+          </fieldset>
 
           @if (distribution.kind === 'web-service') {
             <app-web-service
               [model]="distribution.webService"
+              [comparisonModel]="selectedComparisonWebService()"
               [disabled]="disabled"
               [comparisonMode]="comparisonMode"
+              [comparisonSide]="comparisonSide"
               (modelChange)="emitModelChange()"
             ></app-web-service>
           } @else if (distribution.kind === 'downloadable-file') {
             <div class="distribution-subsection">
               <h3>Downloadable File</h3>
-              <div class="detail-form-grid">
-                <label class="detail-field detail-field--full">
-                  <span class="detail-label">URL *</span>
-                  <input class="app-input" type="text" [(ngModel)]="distribution.downloadableFile.url" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
-                </label>
+              <fieldset class="detail-fieldset" [disabled]="disabled">
+                <div class="detail-form-grid">
+                  <label class="detail-field detail-field--full">
+                    <span class="detail-label">URL *</span>
+                    <input class="app-input" type="text" [(ngModel)]="distribution.downloadableFile.url" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
+                  </label>
 
-                <label class="detail-field">
-                  <span class="detail-label">Format *</span>
-                  <input class="app-input" type="text" [(ngModel)]="distribution.downloadableFile.format" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
-                </label>
-              </div>
+                  <label class="detail-field">
+                    <span class="detail-label">Format *</span>
+                    <input class="app-input" type="text" [(ngModel)]="distribution.downloadableFile.format" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
+                  </label>
+                </div>
+              </fieldset>
             </div>
           }
         </div>
       }
-    </fieldset>
+    </div>
   } @else {
     <div class="detail-empty">No distributions added yet.</div>
   }

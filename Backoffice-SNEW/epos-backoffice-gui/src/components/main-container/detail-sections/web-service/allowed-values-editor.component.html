@@ -36,12 +36,13 @@
     @for (item of filteredValues(); track item.index) {
       <div class="allowed-value-row">
         <input
+          #optionInput
           class="app-input"
           [type]="kind === 'STRING' ? 'text' : 'number'"
           [attr.step]="kind === 'INTEGER' ? '1' : kind === 'FLOAT' ? 'any' : null"
           [ngModel]="item.value"
           [ngModelOptions]="{ standalone: true }"
-          (ngModelChange)="updateValue(item.index, $event)"
+          (ngModelChange)="updateValue(item.index, $event, optionInput)"
           [disabled]="disabled"
         />
         @if (!disabled) {

@@ -11,67 +11,101 @@
   <div class="webservice-subsection-body">
     @if (model.length) {
       <div class="parameter-workspace-frame">
-        <div class="parameter-workspace">
+        <div
+          class="parameter-workspace"
+          [class.parameter-workspace--reversed]="reversed"
+          [class.parameter-workspace--collapsed]="parameterListCollapsed"
+        >
           <aside class="parameter-list-panel" aria-label="Parameters list">
-            <div class="parameter-list-header">
-              <div>
-                <span class="parameter-list-title">Parameters</span>
-                <span class="parameter-list-count">
-                  {{ filteredParameterCount() === model.length ? model.length : filteredParameterCount() + ' / ' + model.length }}
-                </span>
-              </div>
-              @if (!disabled) {
-                <button type="button" class="app-button app-button--primary parameter-add-button" (click)="openAddParameterDialog()">Add</button>
-              }
-            </div>
-
-            <div class="parameter-search">
-              <app-icon class="parameter-search-icon" name="search" [size]="16" />
-              <input
-                type="search"
-                class="parameter-search-input"
-                placeholder="Search parameters"
-                aria-label="Search parameters"
-                [ngModel]="parameterSearchQuery"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="onParameterSearch($event)"
-              />
-            </div>
-
-            <div class="parameter-list" role="listbox" aria-label="Select a parameter">
-              @for (item of pagedParameters(); track item.globalIndex) {
-                @let parameter = item.parameter;
-                <button
-                  type="button"
-                  role="option"
-                  class="parameter-list-item"
-                  [class.parameter-list-item--selected]="isParameterSelected(item.globalIndex)"
-                  [attr.aria-selected]="isParameterSelected(item.globalIndex)"
-                  (click)="selectParameter(item.globalIndex)"
-                >
-                  <span class="parameter-list-item-heading">
-                    <span class="parameter-kind">{{ parameter.kind }}</span>
-                    <app-icon name="chevron-right" [size]="14" />
+            <div class="parameter-list-header" [class.parameter-list-header--collapsed]="parameterListCollapsed">
+              @if (!parameterListCollapsed) {
+                <div>
+                  <span class="parameter-list-title">Parameters</span>
+                  <span class="parameter-list-count">
+                    {{ filteredParameterCount() === model.length ? model.length : filteredParameterCount() + ' / ' + model.length }}
                   </span>
-                  <strong>{{ parameter.label || 'Unnamed parameter' }}</strong>
-                  <span class="parameter-list-item-meta">{{ parameter.name || 'No name' }}</span>
-                </button>
-              } @empty {
-                <p class="parameter-search-empty">No parameters match your search.</p>
+                </div>
+                @if (!disabled) {
+                  <button type="button" class="app-button app-button--primary parameter-add-button" (click)="openAddParameterDialog()">Add</button>
+                }
               }
+              <button
+                type="button"
+                class="parameter-list-toggle"
+                [attr.aria-expanded]="!parameterListCollapsed"
+                [attr.aria-label]="parameterListCollapsed ? 'Expand parameters list' : 'Collapse parameters list'"
+                (click)="toggleParameterList()"
+              >
+                <app-icon
+                  [name]="reversed
+                    ? (parameterListCollapsed ? 'chevron-left' : 'chevron-right')
+                    : (parameterListCollapsed ? 'chevron-right' : 'chevron-left')"
+                  [size]="16"
+                />
+              </button>
             </div>
 
-            <div class="parameter-list-footer">
-              <span>{{ parameterPagerLabel() }}</span>
-              <div class="parameter-list-pager">
-                <button type="button" class="parameter-page-button" (click)="previousParameterPage()" [disabled]="parameterPage === 0" aria-label="Previous parameters page">Prev</button>
-                <button type="button" class="parameter-page-button" (click)="nextParameterPage()" [disabled]="parameterPage >= parameterPageCount() - 1" aria-label="Next parameters page">Next</button>
+            @if (!parameterListCollapsed) {
+              <div class="parameter-search">
+                <app-icon class="parameter-search-icon" name="search" [size]="16" />
+                <input
+                  type="search"
+                  class="parameter-search-input"
+                  placeholder="Search parameters"
+                  aria-label="Search parameters"
+                  [ngModel]="parameterSearchQuery"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="onParameterSearch($event)"
+                />
               </div>
-            </div>
+
+              <div class="parameter-list" role="listbox" aria-label="Select a parameter">
+                @for (item of pagedParameters(); track item.globalIndex) {
+                  @let parameter = item.parameter;
+                  <button
+                    type="button"
+                    role="option"
+                    class="parameter-list-item"
+                    [class.parameter-list-item--selected]="isParameterSelected(item.globalIndex)"
+                    [class.parameter-list-item--positive]="parameterHasPositiveDiff(parameter)"
+                    [class.parameter-list-item--negative]="parameterHasNegativeDiff(parameter)"
+                    [attr.aria-selected]="isParameterSelected(item.globalIndex)"
+                    (click)="selectParameter(item.globalIndex)"
+                  >
+                    <span class="parameter-list-item-heading">
+                      <span class="parameter-kind">{{ parameter.kind }}</span>
+                      <span class="parameter-list-item-indicators">
+                        @if (parameterComparisonStatus(parameter) !== 'unchanged') {
+                          <span class="parameter-change-badge">{{ parameterStatusLabel(parameter) }}</span>
+                        }
+                        <app-icon [name]="reversed ? 'chevron-left' : 'chevron-right'" [size]="14" />
+                      </span>
+                    </span>
+                    <strong>{{ parameter.label || 'Unnamed parameter' }}</strong>
+                    <span class="parameter-list-item-meta">{{ parameter.name || 'No name' }}</span>
+                  </button>
+                } @empty {
+                  <p class="parameter-search-empty">No parameters match your search.</p>
+                }
+              </div>
+
+              <div class="parameter-list-footer">
+                <span>{{ parameterPagerLabel() }}</span>
+                <div class="parameter-list-pager">
+                  <button type="button" class="parameter-page-button" (click)="previousParameterPage()" [disabled]="parameterPage === 0" aria-label="Previous parameters page">Prev</button>
+                  <button type="button" class="parameter-page-button" (click)="nextParameterPage()" [disabled]="parameterPage >= parameterPageCount() - 1" aria-label="Next parameters page">Next</button>
+                </div>
+              </div>
+            }
           </aside>
 
           @if (selectedParameter(); as parameter) {
-            <section class="parameter-editor" aria-label="Selected parameter details">
+            <section
+              class="parameter-editor"
+              aria-label="Selected parameter details"
+              [attr.data-comparison-key]="comparisonMode ? parameterComparisonKey(parameter) : null"
+              [attr.data-comparison-status]="comparisonMode ? parameterComparisonStatus(parameter) : null"
+            >
               <div class="parameter-detail-card">
                 <header class="parameter-editor-header">
                   <div>
@@ -89,7 +123,7 @@
                     <div class="detail-form-grid">
                         <label class="detail-field">
                           <span class="detail-label">Name *</span>
-                          <input class="app-input" type="text" [(ngModel)]="parameter.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
+                          <input #parameterNameInput class="app-input" type="text" [ngModel]="parameter.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateParameterName(parameter, $event, parameterNameInput)" required />
                         </label>
 
                         <label class="detail-field">

@@ -427,6 +427,18 @@ app-web-service-parameters .parameter-workspace {
   background: var(--surface);
   box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
 }
+/* Reverses parameter layout (sidenav on the right) */
+app-web-service-parameters .parameter-workspace--reversed {
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 0.34fr);
+}
+/* Makes parameters sidenav collapsible */
+app-web-service-parameters .parameter-workspace--collapsed {
+  grid-template-columns: 48px minmax(0, 1fr);
+}
+
+app-web-service-parameters .parameter-workspace--reversed.parameter-workspace--collapsed {
+  grid-template-columns: minmax(0, 1fr) 48px;
+}
 
 app-web-service-parameters .parameter-list-panel {
   display: flex;
@@ -436,6 +448,18 @@ app-web-service-parameters .parameter-list-panel {
   border-right: 1px solid #596d7e;
   background: #35495a;
   color: #f8fafc;
+}
+
+app-web-service-parameters .parameter-workspace--reversed .parameter-list-panel {
+  grid-column: 2;
+  grid-row: 1;
+  border-right: 0;
+  border-left: 1px solid #596d7e;
+}
+
+app-web-service-parameters .parameter-workspace--reversed .parameter-editor {
+  grid-column: 1;
+  grid-row: 1;
 }
 
 app-web-service-parameters .parameter-list-header,
@@ -449,6 +473,40 @@ app-web-service-parameters .parameter-list-footer {
 
 app-web-service-parameters .parameter-list-header {
   border-bottom: 1px solid #596d7e;
+}
+
+app-web-service-parameters .parameter-list-header > div:first-child {
+  margin-right: auto;
+}
+
+app-web-service-parameters .parameter-list-header--collapsed {
+  justify-content: center;
+  padding: 10px 6px;
+  border-bottom: 0;
+}
+
+app-web-service-parameters .parameter-list-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  cursor: pointer;
+}
+
+app-web-service-parameters .parameter-list-toggle:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+app-web-service-parameters .parameter-list-toggle:focus-visible {
+  outline: 2px solid #f8fafc;
+  outline-offset: 2px;
 }
 
 app-web-service-parameters .parameter-list-title {
@@ -570,6 +628,37 @@ app-web-service-parameters .parameter-list-item--selected {
   border-color: rgba(255, 255, 255, 0.24);
   background: rgba(255, 255, 255, 0.15);
   box-shadow: inset 3px 0 0 var(--olive-600);
+}
+/* Tag param list items for when in compare mode (positive diff, negative dif...) */
+app-web-service-parameters .parameter-list-item--positive {
+  border-color: rgba(74, 222, 128, 0.72);
+  box-shadow: inset 3px 0 0 #22c55e;
+}
+
+app-web-service-parameters .parameter-list-item--negative {
+  border-color: rgba(248, 113, 113, 0.72);
+  box-shadow: inset 3px 0 0 #ef4444;
+}
+
+app-web-service-parameters .parameter-workspace--reversed .parameter-list-item--positive {
+  box-shadow: inset -3px 0 0 #22c55e;
+}
+
+app-web-service-parameters .parameter-list-item-indicators {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+app-web-service-parameters .parameter-change-badge {
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  color: #f8fafc;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 app-web-service-parameters .parameter-list-item-heading {
@@ -776,6 +865,25 @@ app-web-service .webservice-subsection {
     height: auto;
   }
 
+  app-web-service-parameters .parameter-workspace--collapsed,
+  app-web-service-parameters .parameter-workspace--reversed.parameter-workspace--collapsed {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  app-web-service-parameters .parameter-workspace--reversed .parameter-list-panel {
+    grid-column: 1;
+    grid-row: 1;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  app-web-service-parameters .parameter-workspace--reversed .parameter-editor {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
   app-web-service-parameters .parameter-list-panel {
     border-right: 0;
     border-bottom: 1px solid var(--line);
@@ -861,10 +969,31 @@ app-distribution .distribution--comparison .tab-button.active {
   color: var(--text);
 }
 
+app-distribution .distribution--comparison.detail-section-card {
+  padding: 12px;
+}
+
 app-distribution .distribution--comparison .distribution-body {
+  padding: 8px;
   border-color: var(--line);
   background: var(--surface-2);
   box-shadow: none;
+}
+/* Reduces width of distributions children items (it allows better view in compare mode) */
+app-distribution .distribution--comparison .distribution-body > app-web-service,
+app-distribution .distribution--comparison .distribution-body > .distribution-subsection {
+  width: calc(100% - 4px);
+}
+
+app-distribution .distribution--comparison app-web-service > .distribution-subsection,
+app-distribution .distribution--comparison .distribution-body > .distribution-subsection {
+  padding: 8px;
+}
+
+app-distribution .distribution--comparison app-web-service .webservice-subsection {
+  width: calc(100% - 4px);
+  margin-top: 6px;
+  padding: 8px;
 }
 
 app-distribution .distribution--comparison .distribution-level-heading .app-badge {
@@ -884,35 +1013,6 @@ app-distribution .distribution--comparison .distribution-root-title::before,
 app-distribution .distribution--comparison .distribution-subtitle::before {
   background: var(--text-muted);
   box-shadow: none;
-}
-
-app-web-service-parameters .webservice-parameters--comparison .parameter-workspace {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto;
-}
-
-app-web-service-parameters .webservice-parameters--comparison .parameter-list-panel {
-  border-right: 0;
-  border-bottom: 1px solid #596d7e;
-}
-
-app-web-service-parameters .webservice-parameters--comparison .parameter-list {
-  grid-auto-columns: minmax(150px, 1fr);
-  grid-auto-flow: column;
-  overflow-x: auto;
-  overflow-y: hidden;
-  background-image: none;
-  scrollbar-width: thin;
-  animation: none;
-}
-
-app-web-service-parameters .webservice-parameters--comparison .parameter-list::-webkit-scrollbar {
-  display: initial;
-  height: 6px;
-}
-
-app-web-service-parameters .webservice-parameters--comparison .parameter-list-item--selected {
-  box-shadow: inset 0 -3px 0 #c3cdd4;
 }
 
 .comparison-value--left {

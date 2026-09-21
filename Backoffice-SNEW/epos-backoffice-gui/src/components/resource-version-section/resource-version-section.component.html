@@ -77,8 +77,10 @@
       @if (datasetForm; as form) {
         <app-distribution
           [model]="form.distributions"
+          [comparisonModel]="comparisonDatasetForm?.distributions ?? []"
           [disabled]="true"
           [comparisonMode]="true"
+          [comparisonSide]="comparisonSide"
         />
       }
     }

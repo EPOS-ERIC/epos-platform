@@ -1,6 +1,6 @@
 import { AfterViewInit, Directive, ElementRef, Input, OnChanges, OnDestroy, inject } from '@angular/core';
 
-const FIELD_SELECTOR = 'input:not([type="button"]):not([type="submit"]), textarea, select';
+const FIELD_SELECTOR = 'input:not([type="button"]):not([type="submit"]):not(.parameter-search-input), textarea, select';
 const READONLY_ROW_SELECTOR = '.contact-point-row, .provider-row, .identifier-item';
 const LEFT_CLASS = 'comparison-value--left';
 const RIGHT_CLASS = 'comparison-value--right';
@@ -22,7 +22,13 @@ export class ComparisonFieldsDirective implements AfterViewInit, OnChanges, OnDe
     const element = this.elementRef.nativeElement;
     this.initialized = true;
     this.observer = new MutationObserver(() => this.scheduleComparison());
-    this.observer.observe(element, { childList: true, subtree: true, characterData: true });
+    this.observer.observe(element, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['data-comparison-key', 'data-comparison-status']
+    });
     element.addEventListener('click', this.onInteraction, true);
     element.addEventListener('change', this.onInteraction, true);
     this.scheduleComparison();
@@ -74,6 +80,7 @@ export class ComparisonFieldsDirective implements AfterViewInit, OnChanges, OnDe
       this.readonlyRows(rightPane),
       (element) => this.normalizedText(element)
     );
+    this.compareSelectedParameters(leftPane, rightPane);
   }
 
   private compareElements<T extends HTMLElement>(
@@ -92,12 +99,40 @@ export class ComparisonFieldsDirective implements AfterViewInit, OnChanges, OnDe
   }
 
   private controls(pane: HTMLElement): Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> {
+    return this.controlsWithin(pane).filter((control) => !control.closest('.parameter-editor'));
+  }
+
+  private controlsWithin(element: HTMLElement): Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> {
     return Array.from(
-      pane.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(FIELD_SELECTOR)
+      element.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(FIELD_SELECTOR)
     ).filter((control) => {
       const label = control.closest('label')?.querySelector<HTMLElement>('.detail-label');
       return label?.textContent?.replace('*', '').trim().toLowerCase() !== 'id';
     });
+  }
+
+  private compareSelectedParameters(leftPane: HTMLElement, rightPane: HTMLElement): void {
+    const leftEditor = leftPane.querySelector<HTMLElement>('.parameter-editor[data-comparison-key]');
+    const rightEditor = rightPane.querySelector<HTMLElement>('.parameter-editor[data-comparison-key]');
+    const leftControls = leftEditor ? this.controlsWithin(leftEditor) : [];
+    const rightControls = rightEditor ? this.controlsWithin(rightEditor) : [];
+
+    this.toggleComparisonClass(leftControls, LEFT_CLASS, false);
+    this.toggleComparisonClass(rightControls, RIGHT_CLASS, false);
+
+    const leftKey = leftEditor?.dataset['comparisonKey'];
+    const rightKey = rightEditor?.dataset['comparisonKey'];
+    if (leftKey && leftKey === rightKey) {
+      this.compareElements(leftControls, rightControls, (element) => this.controlValue(element));
+      return;
+    }
+
+    this.toggleComparisonClass(leftControls, LEFT_CLASS, leftEditor?.dataset['comparisonStatus'] === 'removed');
+    this.toggleComparisonClass(rightControls, RIGHT_CLASS, rightEditor?.dataset['comparisonStatus'] === 'added');
+  }
+
+  private toggleComparisonClass(elements: HTMLElement[], className: string, enabled: boolean): void {
+    elements.forEach((element) => element.classList.toggle(className, enabled));
   }
 
   private readonlyRows(pane: HTMLElement): HTMLElement[] {

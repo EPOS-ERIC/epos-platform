@@ -1,12 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 
 import type { DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
+import { ToastService } from '../../../../services/toast.service';
 import { WebServiceParametersComponent } from './web-service-parameters.component';
 
 describe('WebServiceParametersComponent', () => {
-  it('keeps the parameter list navigable when the detail fields are read only', async () => {
+  it('keeps the mirrored, collapsible parameter list navigable when detail fields are read only', async () => {
+    const toast = { error: vi.fn() };
     await TestBed.configureTestingModule({
-      imports: [WebServiceParametersComponent]
+      imports: [WebServiceParametersComponent],
+      providers: [{ provide: ToastService, useValue: toast }]
     }).compileComponents();
     const fixture = TestBed.createComponent(WebServiceParametersComponent);
     const parameters: DatasetWebServiceParameterForm[] = [
@@ -44,11 +47,19 @@ describe('WebServiceParametersComponent', () => {
     ];
 
     fixture.componentRef.setInput('model', parameters);
+    fixture.componentRef.setInput('comparisonModel', [{ ...parameters[0], id: 'different-version-id' }]);
     fixture.componentRef.setInput('disabled', true);
+    fixture.componentRef.setInput('comparisonMode', true);
+    fixture.componentRef.setInput('comparisonSide', 'right');
+    fixture.componentRef.setInput('reversed', true);
     fixture.detectChanges();
 
+    expect(fixture.nativeElement.querySelector('.parameter-workspace--reversed')).not.toBeNull();
     const listItems = fixture.nativeElement.querySelectorAll('.parameter-list-item') as NodeListOf<HTMLButtonElement>;
     expect(listItems.length).toBe(2);
+    expect(listItems[0].classList.contains('parameter-list-item--positive')).toBe(false);
+    expect(listItems[1].classList.contains('parameter-list-item--positive')).toBe(true);
+    expect(listItems[1].textContent).toContain('Added');
     expect(listItems[0]?.disabled).toBe(false);
     expect(fixture.nativeElement.querySelector('.parameter-editor h3')?.textContent?.trim()).toBe('First parameter');
 
@@ -67,9 +78,41 @@ describe('WebServiceParametersComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.parameter-list-item').length).toBe(1);
     expect(fixture.nativeElement.querySelector('.parameter-editor h3')?.textContent?.trim()).toBe('First parameter');
     expect(fixture.nativeElement.querySelector('.parameter-list-count')?.textContent?.trim()).toBe('1 / 2');
+
+    const toggle = fixture.nativeElement.querySelector('.parameter-list-toggle') as HTMLButtonElement;
+    toggle.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.parameter-workspace--collapsed')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.parameter-search-input')).toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+    toggle.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.parameter-search-input')).not.toBeNull();
+
+    fixture.componentRef.setInput('disabled', false);
+    fixture.detectChanges();
+    const reopenedSearch = fixture.nativeElement.querySelector('.parameter-search-input') as HTMLInputElement;
+    reopenedSearch.value = '';
+    reopenedSearch.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelectorAll('.parameter-list-item')[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const nameField = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.detail-field'))
+      .find((field) => field.querySelector('.detail-label')?.textContent?.trim() === 'Name *');
+    const nameInput = nameField?.querySelector('input') as HTMLInputElement;
+    nameInput.value = 'FIRST';
+    nameInput.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    expect(parameters[1].name).toBe('second');
+    expect(nameInput.value).toBe('second');
+    expect(toast.error).toHaveBeenCalledWith('A parameter named "FIRST" already exists.');
   });
 
-  it('marks the workspace for the vertical comparison layout', async () => {
+  it('marks the workspace as comparison content', async () => {
     await TestBed.configureTestingModule({
       imports: [WebServiceParametersComponent]
     }).compileComponents();

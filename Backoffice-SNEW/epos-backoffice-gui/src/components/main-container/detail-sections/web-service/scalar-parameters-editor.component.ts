@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import type { DatasetWebServiceScalarParameterForm } from '../../../../models/dataset-detail-form';
+import { ToastService } from '../../../../services/toast.service';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 
 type ScalarParameterKind = DatasetWebServiceScalarParameterForm['kind'];
@@ -15,6 +16,8 @@ type ScalarParameterKind = DatasetWebServiceScalarParameterForm['kind'];
   styleUrl: './scalar-parameters-editor.component.css'
 })
 export class ScalarParametersEditorComponent {
+  private readonly toast = inject(ToastService);
+
   @Input() model: DatasetWebServiceScalarParameterForm[] = [];
   @Input() disabled = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceScalarParameterForm[]>();
@@ -24,6 +27,25 @@ export class ScalarParametersEditorComponent {
 
   protected emitModelChange(): void {
     this.modelChange.emit(this.model);
+  }
+
+  protected updateParameterName(
+    parameter: DatasetWebServiceScalarParameterForm,
+    name: string,
+    input: HTMLInputElement
+  ): void {
+    const normalizedName = name.trim().toLocaleLowerCase();
+    const duplicate = normalizedName && this.model.some(
+      (candidate) => candidate !== parameter && candidate.name.trim().toLocaleLowerCase() === normalizedName
+    );
+    if (duplicate) {
+      this.toast.error(`A parameter named "${name.trim()}" already exists.`);
+      input.value = parameter.name;
+      return;
+    }
+
+    parameter.name = name;
+    this.emitModelChange();
   }
 
   protected addParameter(): void {

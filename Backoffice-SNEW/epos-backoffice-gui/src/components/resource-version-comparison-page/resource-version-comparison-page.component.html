@@ -64,7 +64,12 @@
                   <strong>Left</strong>
                   <span>Revision {{ leftVersion.revision }}</span>
                 </div>
-                <app-resource-version-section [sectionTitle]="section.title" [version]="leftVersion" />
+                <app-resource-version-section
+                  [sectionTitle]="section.title"
+                  [version]="leftVersion"
+                  [comparisonVersion]="rightVersion"
+                  comparisonSide="left"
+                />
               </section>
 
               <section class="version-section-pane version-section-pane--right" [class.version-section-pane--changed]="section.changedCount > 0">
@@ -72,7 +77,12 @@
                   <strong>Right</strong>
                   <span>Revision {{ rightVersion.revision }}</span>
                 </div>
-                <app-resource-version-section [sectionTitle]="section.title" [version]="rightVersion" />
+                <app-resource-version-section
+                  [sectionTitle]="section.title"
+                  [version]="rightVersion"
+                  [comparisonVersion]="leftVersion"
+                  comparisonSide="right"
+                />
               </section>
             </div>
           </article>
