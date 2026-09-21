@@ -22,6 +22,7 @@ export class SoftwareGeneralInformationComponent {
   @Input() disabled = false;
   @Input() resourceType: SoftwareResourceType = 'software-application';
   @Input() backLink: string | string[] = '/';
+  @Input() showBackLink = true;
   @Output() modelChange = new EventEmitter<SoftwareMetadata>();
 
   protected applicationModel(): SoftwareApplicationResourceMetadata | null {

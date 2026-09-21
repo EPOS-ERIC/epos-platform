@@ -1,4 +1,4 @@
-<section id="contact-points" class="detail-section-card app-card">
+<section id="contact-points" class="detail-section-card app-card" [class.detail-section-card--neutral]="neutralAppearance">
   <div class="detail-section-header">
     <div>
       <h2>Contact Points</h2>
@@ -10,6 +10,21 @@
     <div class="detail-empty">Loading contact points...</div>
   } @else if (error()) {
     <div class="detail-empty">{{ error() }}</div>
+  } @else if (readonlyView) {
+    @if (hasSelection()) {
+      <ul class="contact-points-list contact-points-list--assigned">
+        @for (contactPoint of selectedContactPoints(); track contactPoint.id) {
+          <li class="contact-point-row contact-point-row--selected">
+            <div class="contact-point-copy">
+              <strong class="contact-point-email">{{ contactPoint.email }}</strong>
+              <span class="contact-point-role">Role: {{ contactPointDescription(contactPoint) }}</span>
+            </div>
+          </li>
+        }
+      </ul>
+    } @else {
+      <div class="detail-empty">No contact points assigned.</div>
+    }
   } @else {
     <div class="contact-points-grid">
       <section class="contact-points-catalog contact-points-box contact-points-box--catalog">

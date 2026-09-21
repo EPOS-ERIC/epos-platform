@@ -1,11 +1,12 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { EMPTY, Subject, catchError, map, of, switchMap } from 'rxjs';
+import { EMPTY, Subject, Subscription, catchError, map, of, switchMap } from 'rxjs';
 
 import type {
   DiscoveryResourceType,
   ResourceVersion,
+  ResourceVersionSummary,
   SoftwareApplicationResourceMetadata,
   SoftwareSourceCodeResourceMetadata,
   VersioningStatus
@@ -126,6 +127,23 @@ const SOFTWARE_NAVIGATION_ITEMS: ResourceDetailNavigationItem[] = [
   { label: 'Categories', anchor: 'categories' }
 ];
 
+export function resourceDetailNavigationItems(
+  resourceType: DiscoveryResourceType
+): ResourceDetailNavigationItem[] {
+  return resourceType === 'dataset' ? DATASET_NAVIGATION_ITEMS : SOFTWARE_NAVIGATION_ITEMS;
+}
+
+export function resourceDetailRootLabel(resourceType: DiscoveryResourceType): string {
+  switch (resourceType) {
+    case 'dataset':
+      return 'Dataset';
+    case 'software-application':
+      return 'Software Application';
+    case 'software-source-code':
+      return 'Software Source Code';
+  }
+}
+
 @Injectable()
 export class ResourceDetailStore {
   private readonly apiService = inject(ApiService);
@@ -136,6 +154,12 @@ export class ResourceDetailStore {
   private readonly destroyRef = inject(DestroyRef);
   private readonly state = signal<ResourceDetailState>({ kind: 'idle' });
   private readonly loadCommands = new Subject<LoadCommand>();
+  private readonly historyOpenState = signal(false);
+  private readonly historyLoadingState = signal(false);
+  private readonly historyItemsState = signal<ResourceVersionSummary[]>([]);
+  private readonly historyErrorState = signal('');
+  private readonly selectedVersionIdsState = signal<readonly string[]>([]);
+  private historySubscription: Subscription | null = null;
 
   readonly loading = computed(() => this.state().kind === 'loading');
   readonly context = computed(() => {
@@ -199,19 +223,11 @@ export class ResourceDetailStore {
   });
   readonly navigationItems = computed(() => {
     const resourceType = this.context()?.resourceType;
-    return resourceType ? (resourceType === 'dataset' ? DATASET_NAVIGATION_ITEMS : SOFTWARE_NAVIGATION_ITEMS) : [];
+    return resourceType ? resourceDetailNavigationItems(resourceType) : [];
   });
   readonly rootLabel = computed(() => {
-    switch (this.context()?.resourceType) {
-      case 'dataset':
-        return 'Dataset';
-      case 'software-application':
-        return 'Software Application';
-      case 'software-source-code':
-        return 'Software Source Code';
-      default:
-        return 'Data';
-    }
+    const resourceType = this.context()?.resourceType;
+    return resourceType ? resourceDetailRootLabel(resourceType) : 'Data';
   });
   readonly groupPermissions = computed(() => {
     const version = this.datasetVersion() ?? this.resourceVersion();
@@ -221,6 +237,13 @@ export class ResourceDetailStore {
   readonly capabilities = computed(() => resourceCapabilities(this.status(), this.groupPermissions()));
   readonly canEdit = computed(() => this.capabilities().edit);
   readonly canDelete = computed(() => this.capabilities().delete && Boolean(this.versionContext()));
+  readonly canViewHistory = computed(() => this.capabilities().viewHistory);
+  readonly historyOpen = this.historyOpenState.asReadonly();
+  readonly historyLoading = this.historyLoadingState.asReadonly();
+  readonly historyItems = this.historyItemsState.asReadonly();
+  readonly historyError = this.historyErrorState.asReadonly();
+  readonly selectedVersionIds = this.selectedVersionIdsState.asReadonly();
+  readonly canCompareVersions = computed(() => this.selectedVersionIds().length === 2);
   readonly sidebarActions = computed<ResourceActionItem[]>(() => {
     const context = this.context();
     return context ? this.resourceActions.sidebarActions(this.status(), this.groupPermissions()) : [];
@@ -271,15 +294,101 @@ export class ResourceDetailStore {
   }
 
   load(context: ResourceDetailRouteContext): void {
+    this.closeVersionHistory();
     this.resourceActions.clearError();
     this.dialogService.dismiss();
     this.loadCommands.next({ kind: 'load', context });
   }
 
   clear(): void {
+    this.closeVersionHistory();
     this.resourceActions.clearError();
     this.dialogService.dismiss();
     this.loadCommands.next({ kind: 'clear' });
+  }
+
+  openVersionHistory(): void {
+    const context = this.context();
+    const version = this.datasetVersion() ?? this.resourceVersion();
+    if (!this.canViewHistory() || !context || !version) {
+      return;
+    }
+
+    this.historySubscription?.unsubscribe();
+    this.historyOpenState.set(true);
+    this.historyLoadingState.set(true);
+    this.historyItemsState.set([]);
+    this.historyErrorState.set('');
+    this.selectedVersionIdsState.set([]);
+
+    this.historySubscription = this.apiService
+      .listResourceVersions(context.resourceType, version.resource_id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => {
+          this.historyItemsState.set(
+            [...items].sort((left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at))
+          );
+          this.historyLoadingState.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to load resource version history', error);
+          this.historyItemsState.set([]);
+          this.historyErrorState.set('Failed to load version history.');
+          this.historyLoadingState.set(false);
+        }
+      });
+  }
+
+  closeVersionHistory(): void {
+    this.historySubscription?.unsubscribe();
+    this.historySubscription = null;
+    this.historyOpenState.set(false);
+    this.historyLoadingState.set(false);
+    this.historyItemsState.set([]);
+    this.historyErrorState.set('');
+    this.selectedVersionIdsState.set([]);
+  }
+
+  toggleVersionSelection(versionId: string): void {
+    if (!this.canViewHistory()) {
+      return;
+    }
+
+    const selectedIds = this.selectedVersionIds();
+    if (selectedIds.includes(versionId)) {
+      this.selectedVersionIdsState.set(selectedIds.filter((id) => id !== versionId));
+    } else if (selectedIds.length < 2) {
+      this.selectedVersionIdsState.set([...selectedIds, versionId]);
+    }
+  }
+
+  isVersionSelected(versionId: string): boolean {
+    return this.selectedVersionIds().includes(versionId);
+  }
+
+  isVersionSelectionDisabled(versionId: string): boolean {
+    return !this.isVersionSelected(versionId) && this.selectedVersionIds().length >= 2;
+  }
+
+  compareSelectedVersions(): void {
+    const [leftVersionId, rightVersionId] = this.selectedVersionIds();
+    const context = this.context();
+    const version = this.datasetVersion() ?? this.resourceVersion();
+    if (!this.canViewHistory() || !leftVersionId || !rightVersionId || !context || !version) {
+      return;
+    }
+
+    void this.router.navigate(['/', context.sectionPath, version.resource_id, 'compare'], {
+      queryParams: {
+        leftVersionId,
+        rightVersionId,
+        sourceVersionId: version.version_id,
+        groupId: version.group_id,
+        dataType: context.resourceType
+      }
+    });
+    this.closeVersionHistory();
   }
 
   setDatasetForm(form: DatasetDetailForm): void {

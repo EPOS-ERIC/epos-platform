@@ -21,4 +21,21 @@ describe('NavigationSidebarComponent', () => {
     expect(link.getAttribute('href')).toBe('/memberships?groupId=group-id');
     expect((fixture.nativeElement.querySelector('.sidebar-back-button') as HTMLAnchorElement).getAttribute('href')).toBe('/data?groupId=group-id');
   });
+
+  it('uses the supplied label for comparison navigation', async () => {
+    await TestBed.configureTestingModule({
+      imports: [NavigationSidebarComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(NavigationSidebarComponent);
+    fixture.componentRef.setInput('detailSectionLabel', 'Compare');
+    fixture.componentRef.setInput('detailRootLabel', 'Dataset');
+    fixture.componentRef.setInput('detailItems', [
+      { label: 'General Information', anchor: 'compare-general-information' }
+    ]);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement.querySelector('.nav-section-title') as HTMLElement).textContent?.trim()).toBe('Compare');
+    expect(fixture.nativeElement.querySelector('.nav-item--tree-link')?.getAttribute('href')).toBe('#compare-general-information');
+  });
 });

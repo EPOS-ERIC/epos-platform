@@ -10,7 +10,9 @@
       }
     </div>
 
-    <a class="app-button app-button--ghost" [routerLink]="backLink">Back to results</a>
+    @if (showBackLink) {
+      <a class="app-button app-button--ghost" [routerLink]="backLink">Back to results</a>
+    }
   </div>
 
   @if (applicationModel(); as model) {

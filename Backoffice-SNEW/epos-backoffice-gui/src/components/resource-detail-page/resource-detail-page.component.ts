@@ -11,6 +11,7 @@ import { ProvidersComponent } from '../main-container/detail-sections/providers/
 import { SoftwareGeneralInformationComponent } from '../main-container/detail-sections/software-general-information/software-general-information.component';
 import { SpatialCoverageComponent } from '../main-container/detail-sections/spatial-coverage/spatial-coverage.component';
 import { TemporalCoverageComponent } from '../main-container/detail-sections/temporal-coverage/temporal-coverage.component';
+import { ResourceVersionHistoryDialogComponent } from '../resource-version-history-dialog/resource-version-history-dialog.component';
 
 @Component({
   selector: 'app-resource-detail-page',
@@ -21,6 +22,7 @@ import { TemporalCoverageComponent } from '../main-container/detail-sections/tem
     GeneralInformationComponent,
     IdentifiersComponent,
     ProvidersComponent,
+    ResourceVersionHistoryDialogComponent,
     SoftwareGeneralInformationComponent,
     SpatialCoverageComponent,
     TemporalCoverageComponent

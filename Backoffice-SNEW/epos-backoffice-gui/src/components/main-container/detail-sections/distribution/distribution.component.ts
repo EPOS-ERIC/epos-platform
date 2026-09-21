@@ -13,6 +13,7 @@ import { WebServiceComponent } from '../web-service/web-service.component';
 export class DistributionComponent {
   @Input() model: DatasetDistributionForm[] = [];
   @Input() disabled = false;
+  @Input() comparisonMode = false;
   @Output() modelChange = new EventEmitter<DatasetDistributionForm[]>();
 
   protected readonly distributionFields: Array<keyof DatasetDistributionCommonForm> = ['title', 'description', 'issued', 'modified', 'license', 'type'];

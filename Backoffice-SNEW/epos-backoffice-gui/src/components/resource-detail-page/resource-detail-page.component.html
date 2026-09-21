@@ -9,16 +9,21 @@
 } @else if (store.datasetVersion(); as version) {
   @if (store.datasetForm(); as form) {
     <div class="detail-page">
-      @if (store.canDelete()) {
+      @if (store.canViewHistory() || store.canDelete()) {
         <div class="detail-overview-actions">
-          <button
-            type="button"
-            class="app-button detail-delete-button"
-            (click)="store.openDeleteDialog()"
-            [disabled]="store.deleting() || store.saving()"
-          >
-            {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
-          </button>
+          @if (store.canViewHistory()) {
+            <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
+          }
+          @if (store.canDelete()) {
+            <button
+              type="button"
+              class="app-button detail-delete-button"
+              (click)="store.openDeleteDialog()"
+              [disabled]="store.deleting() || store.saving()"
+            >
+              {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+            </button>
+          }
         </div>
       }
 
@@ -94,16 +99,21 @@
 } @else if (store.softwareApplicationForm(); as form) {
   @if (store.resourceVersion(); as version) {
     <div class="detail-page">
-      @if (store.canDelete()) {
+      @if (store.canViewHistory() || store.canDelete()) {
         <div class="detail-overview-actions">
-          <button
-            type="button"
-            class="app-button detail-delete-button"
-            (click)="store.openDeleteDialog()"
-            [disabled]="store.deleting() || store.saving()"
-          >
-            {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
-          </button>
+          @if (store.canViewHistory()) {
+            <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
+          }
+          @if (store.canDelete()) {
+            <button
+              type="button"
+              class="app-button detail-delete-button"
+              (click)="store.openDeleteDialog()"
+              [disabled]="store.deleting() || store.saving()"
+            >
+              {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+            </button>
+          }
         </div>
       }
 
@@ -158,16 +168,21 @@
 } @else if (store.softwareSourceCodeForm(); as form) {
   @if (store.resourceVersion(); as version) {
     <div class="detail-page">
-      @if (store.canDelete()) {
+      @if (store.canViewHistory() || store.canDelete()) {
         <div class="detail-overview-actions">
-          <button
-            type="button"
-            class="app-button detail-delete-button"
-            (click)="store.openDeleteDialog()"
-            [disabled]="store.deleting() || store.saving()"
-          >
-            {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
-          </button>
+          @if (store.canViewHistory()) {
+            <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
+          }
+          @if (store.canDelete()) {
+            <button
+              type="button"
+              class="app-button detail-delete-button"
+              (click)="store.openDeleteDialog()"
+              [disabled]="store.deleting() || store.saving()"
+            >
+              {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+            </button>
+          }
         </div>
       }
 
@@ -223,4 +238,8 @@
   <section class="detail-card app-card">
     <div class="detail-empty">No resource detail available.</div>
   </section>
+}
+
+@defer (when store.historyOpen()) {
+  <app-resource-version-history-dialog />
 }

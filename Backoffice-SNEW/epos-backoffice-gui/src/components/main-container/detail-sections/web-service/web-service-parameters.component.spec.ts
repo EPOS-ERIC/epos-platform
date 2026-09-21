@@ -69,6 +69,18 @@ describe('WebServiceParametersComponent', () => {
     expect(fixture.nativeElement.querySelector('.parameter-list-count')?.textContent?.trim()).toBe('1 / 2');
   });
 
+  it('marks the workspace for the vertical comparison layout', async () => {
+    await TestBed.configureTestingModule({
+      imports: [WebServiceParametersComponent]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(WebServiceParametersComponent);
+
+    fixture.componentRef.setInput('comparisonMode', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.webservice-parameters--comparison')).not.toBeNull();
+  });
+
   it('only enables explode for supported multiple-value query parameters', async () => {
     await TestBed.configureTestingModule({
       imports: [WebServiceParametersComponent]

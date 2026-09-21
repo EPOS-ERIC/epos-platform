@@ -14,6 +14,7 @@ export class GeneralInformationComponent {
   @Input() model: DatasetDetailForm | null = null;
   @Input() disabled = false;
   @Input() backLink: string | string[] = '/';
+  @Input() showBackLink = true;
   @Output() modelChange = new EventEmitter<DatasetDetailForm>();
 
   protected emitModelChange(): void {

@@ -1,4 +1,8 @@
-<section [attr.id]="single ? null : 'providers'" class="detail-section-card app-card">
+<section
+  [attr.id]="single ? null : 'providers'"
+  class="detail-section-card app-card"
+  [class.detail-section-card--neutral]="neutralAppearance"
+>
   <div class="detail-section-header">
     <div>
       <h2>{{ single ? 'Provider' : 'Providers' }}</h2>
@@ -6,7 +10,18 @@
     </div>
   </div>
 
-  <div class="providers-grid">
+  @if (readonlyView) {
+    @if (selectedProviders().length) {
+      <ul class="providers-list">
+        @for (provider of selectedProviders(); track provider.id) {
+          <li class="provider-row provider-row--selected"><strong>{{ provider.name }}</strong></li>
+        }
+      </ul>
+    } @else {
+      <div class="detail-empty">No provider selected.</div>
+    }
+  } @else {
+    <div class="providers-grid">
     <section class="providers-box">
       <div class="providers-box-header">
         <h3><span class="app-badge provider-badge--available">Available Providers</span></h3>
@@ -71,5 +86,6 @@
         <div class="detail-empty">No provider selected.</div>
       }
     </section>
-  </div>
+    </div>
+  }
 </section>

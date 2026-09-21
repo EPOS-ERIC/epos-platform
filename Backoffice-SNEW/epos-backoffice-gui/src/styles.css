@@ -834,6 +834,101 @@ app-identifiers .identifier-list-badge {
   color: #6d28d9;
 }
 
+app-identifiers .detail-section-card--neutral .identifiers-box,
+app-providers .detail-section-card--neutral .providers-box,
+app-providers .detail-section-card--neutral .provider-row--selected,
+app-contact-points .detail-section-card--neutral .contact-point-row--selected {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+app-identifiers .detail-section-card--neutral .identifier-list-badge,
+app-identifiers .detail-section-card--neutral .identifier-number,
+app-providers .detail-section-card--neutral .provider-badge--available,
+app-providers .detail-section-card--neutral .provider-badge--selected {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+app-identifiers .detail-section-card--neutral .identifier-remove,
+app-identifiers .detail-section-card--neutral .identifiers-actions {
+  display: none;
+}
+
+app-distribution .distribution--comparison .tab-button.active {
+  border-color: var(--text-muted);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+app-distribution .distribution--comparison .distribution-body {
+  border-color: var(--line);
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+app-distribution .distribution--comparison .distribution-level-heading .app-badge {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+app-distribution .distribution--comparison app-web-service > .distribution-subsection,
+app-distribution .distribution--comparison .distribution-body > .distribution-subsection,
+app-distribution .distribution--comparison app-web-service .webservice-subsection {
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+app-distribution .distribution--comparison .distribution-root-title::before,
+app-distribution .distribution--comparison .distribution-subtitle::before {
+  background: var(--text-muted);
+  box-shadow: none;
+}
+
+app-web-service-parameters .webservice-parameters--comparison .parameter-workspace {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+}
+
+app-web-service-parameters .webservice-parameters--comparison .parameter-list-panel {
+  border-right: 0;
+  border-bottom: 1px solid #596d7e;
+}
+
+app-web-service-parameters .webservice-parameters--comparison .parameter-list {
+  grid-auto-columns: minmax(150px, 1fr);
+  grid-auto-flow: column;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background-image: none;
+  scrollbar-width: thin;
+  animation: none;
+}
+
+app-web-service-parameters .webservice-parameters--comparison .parameter-list::-webkit-scrollbar {
+  display: initial;
+  height: 6px;
+}
+
+app-web-service-parameters .webservice-parameters--comparison .parameter-list-item--selected {
+  box-shadow: inset 0 -3px 0 #c3cdd4;
+}
+
+.comparison-value--left {
+  border-color: color-mix(in srgb, #ef4444 68%, var(--line)) !important;
+  background: color-mix(in srgb, #ef4444 13%, var(--surface)) !important;
+  box-shadow: inset 0 -2px 0 #ef4444 !important;
+  opacity: 1 !important;
+}
+
+.comparison-value--right {
+  border-color: color-mix(in srgb, #22c55e 68%, var(--line)) !important;
+  background: color-mix(in srgb, #22c55e 13%, var(--surface)) !important;
+  box-shadow: inset 0 -2px 0 #22c55e !important;
+  opacity: 1 !important;
+}
+
 app-navigation-sidebar .group-nav-icon {
   display: block;
   flex: 0 0 26px;

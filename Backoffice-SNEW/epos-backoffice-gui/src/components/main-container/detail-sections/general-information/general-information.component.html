@@ -6,7 +6,9 @@
       <p class="subtitle app-muted">Core metadata for the dataset.</p>
     </div>
 
-    <a class="app-button app-button--ghost" [routerLink]="backLink">Back to results</a>
+    @if (showBackLink) {
+      <a class="app-button app-button--ghost" [routerLink]="backLink">Back to results</a>
+    }
   </div>
 
   @if (model) {

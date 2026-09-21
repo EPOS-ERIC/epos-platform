@@ -22,6 +22,7 @@ interface ParameterListItem {
 export class WebServiceParametersComponent {
   @Input() model: DatasetWebServiceParameterForm[] = [];
   @Input() disabled = false;
+  @Input() comparisonMode = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceParameterForm[]>();
 
   protected parameterPage = 0;

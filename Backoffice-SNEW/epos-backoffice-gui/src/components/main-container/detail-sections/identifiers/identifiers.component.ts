@@ -12,6 +12,7 @@ import type { DatasetPersistentIdentifierForm } from '../../../../models/dataset
 export class IdentifiersComponent {
   @Input() model: DatasetPersistentIdentifierForm[] = [];
   @Input() disabled = false;
+  @Input() neutralAppearance = false;
   @Input() anchor = 'persistent-identifiers';
   @Input() title = 'Identifiers';
   @Input() subtitle = 'Type and identifier value pairs.';

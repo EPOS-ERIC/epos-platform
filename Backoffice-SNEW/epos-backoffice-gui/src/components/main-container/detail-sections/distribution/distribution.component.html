@@ -1,19 +1,21 @@
-<section id="distributions" class="detail-section-card app-card">
+<section id="distributions" class="detail-section-card app-card" [class.distribution--comparison]="comparisonMode">
   <div class="detail-section-header">
     <div>
       <h2>Distributions</h2>
       <p class="subtitle app-muted">Multiple distributions with typed internal payloads.</p>
     </div>
-    <div class="distribution-actions">
-      <label>
-        <span class="visually-hidden">Distribution type</span>
-        <select class="app-input" [(ngModel)]="newDistributionKind" [ngModelOptions]="{ standalone: true }" [disabled]="disabled">
-          <option value="web-service">Web service</option>
-          <option value="downloadable-file">Downloadable file</option>
-        </select>
-      </label>
-      <button type="button" class="app-button app-button--primary" (click)="addDistribution()" [disabled]="disabled">Add distribution</button>
-    </div>
+    @if (!comparisonMode) {
+      <div class="distribution-actions">
+        <label>
+          <span class="visually-hidden">Distribution type</span>
+          <select class="app-input" [(ngModel)]="newDistributionKind" [ngModelOptions]="{ standalone: true }" [disabled]="disabled">
+            <option value="web-service">Web service</option>
+            <option value="downloadable-file">Downloadable file</option>
+          </select>
+        </label>
+        <button type="button" class="app-button app-button--primary" (click)="addDistribution()" [disabled]="disabled">Add distribution</button>
+      </div>
+    }
   </div>
 
   @if (model.length) {
@@ -43,7 +45,12 @@
           </div>
 
           @if (distribution.kind === 'web-service') {
-            <app-web-service [model]="distribution.webService" [disabled]="disabled" (modelChange)="emitModelChange()"></app-web-service>
+            <app-web-service
+              [model]="distribution.webService"
+              [disabled]="disabled"
+              [comparisonMode]="comparisonMode"
+              (modelChange)="emitModelChange()"
+            ></app-web-service>
           } @else if (distribution.kind === 'downloadable-file') {
             <div class="distribution-subsection">
               <h3>Downloadable File</h3>

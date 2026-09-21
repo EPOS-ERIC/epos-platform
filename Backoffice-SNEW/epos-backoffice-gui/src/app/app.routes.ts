@@ -36,6 +36,12 @@ export const routes: Routes = [
     data: { sectionTitle: 'Data', discoveryType: ['dataset'] }
   },
   {
+    path: 'data/:resourceId/compare',
+    component: MainContainerComponent,
+    canActivate: [authGuard],
+    data: { sectionTitle: 'Data', discoveryType: ['dataset'], comparisonPage: true }
+  },
+  {
     path: 'data/:resourceId/:versionId',
     component: MainContainerComponent,
     canActivate: [authGuard],
@@ -54,6 +60,12 @@ export const routes: Routes = [
     data: { sectionTitle: 'Software', discoveryType: ['software-application'] }
   },
   {
+    path: 'software/:resourceId/compare',
+    component: MainContainerComponent,
+    canActivate: [authGuard],
+    data: { sectionTitle: 'Software', discoveryType: ['software-application'], comparisonPage: true }
+  },
+  {
     path: 'software/:resourceId/:versionId',
     component: MainContainerComponent,
     canActivate: [authGuard],
@@ -70,6 +82,12 @@ export const routes: Routes = [
     component: MainContainerComponent,
     canActivate: [authGuard],
     data: { sectionTitle: 'Facilities', discoveryType: ['software-source-code'] }
+  },
+  {
+    path: 'facilities/:resourceId/compare',
+    component: MainContainerComponent,
+    canActivate: [authGuard],
+    data: { sectionTitle: 'Facilities', discoveryType: ['software-source-code'], comparisonPage: true }
   },
   {
     path: 'facilities/:resourceId/:versionId',

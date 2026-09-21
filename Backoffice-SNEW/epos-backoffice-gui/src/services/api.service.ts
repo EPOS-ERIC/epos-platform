@@ -18,6 +18,7 @@ import type {
   GroupMembership,
   GroupPermission,
   ResourceVersionReference,
+  ResourceVersionSummary,
   RoleRequest,
   ResourceVersion,
   RejectResourceRequest,
@@ -92,6 +93,20 @@ export class ApiService {
   getResourceVersion<T extends DiscoveryResourceType>(resourceType: T, id: string, versionId: string): Observable<ResourceVersionResponse<T>> {
     return this.http.get<ResourceVersionResponse<T>>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.bearerToken}`
+        }
+      }
+    );
+  }
+
+  listResourceVersions(
+    resourceType: DiscoveryResourceType,
+    id: string
+  ): Observable<ResourceVersionSummary[]> {
+    return this.http.get<ResourceVersionSummary[]>(
+      `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions`,
       {
         headers: {
           Authorization: `Bearer ${this.bearerToken}`

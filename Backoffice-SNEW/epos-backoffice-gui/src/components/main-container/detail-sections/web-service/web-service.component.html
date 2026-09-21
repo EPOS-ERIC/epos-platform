@@ -1,4 +1,4 @@
-<div id="web-service" class="distribution-subsection">
+<div id="web-service" class="distribution-subsection" [class.web-service--comparison]="comparisonMode">
   <h3 class="distribution-root-title">Web Service</h3>
 
   @if (model) {
@@ -77,7 +77,14 @@
         <span class="webservice-summary-hint">Closed</span>
       </summary>
       <div class="webservice-subsection-body">
-        <app-providers [model]="model.provider" [single]="true" [disabled]="disabled" (modelChange)="onProviderChange($any($event))"></app-providers>
+        <app-providers
+          [model]="model.provider"
+          [single]="true"
+          [disabled]="disabled"
+          [readonlyView]="comparisonMode"
+          [neutralAppearance]="comparisonMode"
+          (modelChange)="onProviderChange($any($event))"
+        ></app-providers>
       </div>
     </details>
 
@@ -87,7 +94,14 @@
         <span class="webservice-summary-hint">Closed</span>
       </summary>
       <div class="webservice-subsection-body">
-        <app-contact-points [model]="model.contactPoints" [editable]="true" [disabled]="disabled" (modelChange)="onContactPointsChange($event)"></app-contact-points>
+        <app-contact-points
+          [model]="model.contactPoints"
+          [editable]="!comparisonMode"
+          [disabled]="disabled"
+          [readonlyView]="comparisonMode"
+          [neutralAppearance]="comparisonMode"
+          (modelChange)="onContactPointsChange($event)"
+        ></app-contact-points>
       </div>
     </details>
 
@@ -111,7 +125,12 @@
       </div>
     </details>
 
-    <app-web-service-parameters [model]="model.parameters" [disabled]="disabled" (modelChange)="onParametersChange($event)"></app-web-service-parameters>
+    <app-web-service-parameters
+      [model]="model.parameters"
+      [disabled]="disabled"
+      [comparisonMode]="comparisonMode"
+      (modelChange)="onParametersChange($event)"
+    ></app-web-service-parameters>
     </fieldset>
   }
 </div>

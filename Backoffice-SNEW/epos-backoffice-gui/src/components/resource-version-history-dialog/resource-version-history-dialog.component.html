@@ -1,0 +1,64 @@
+@if (store.historyOpen()) {
+  <div class="app-dialog-backdrop" (click)="store.closeVersionHistory()">
+    <section
+      class="app-dialog app-dialog--wide app-card history-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="version-history-title"
+      aria-describedby="version-history-description"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="app-dialog-header">
+        <p class="history-eyebrow app-badge app-badge--primary">Resource Versions</p>
+        <h2 id="version-history-title">Version History</h2>
+        <p id="version-history-description" class="history-description app-muted">
+          Select exactly two versions to compare their metadata.
+        </p>
+      </header>
+
+      <div class="app-dialog-body history-body">
+        @if (store.historyLoading()) {
+          <div class="history-state">Loading version history...</div>
+        } @else if (store.historyError()) {
+          <div class="history-error" role="alert">{{ store.historyError() }}</div>
+        } @else if (store.historyItems().length) {
+          <div class="history-list" role="group" aria-label="Available resource versions">
+            @for (item of store.historyItems(); track item.version_id) {
+              <label
+                class="history-item"
+                [class.history-item--selected]="store.isVersionSelected(item.version_id)"
+                [class.history-item--disabled]="store.isVersionSelectionDisabled(item.version_id)"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="store.isVersionSelected(item.version_id)"
+                  [disabled]="store.isVersionSelectionDisabled(item.version_id)"
+                  (change)="store.toggleVersionSelection(item.version_id)"
+                />
+                <span class="history-item-content">
+                  <span class="history-item-heading">
+                    <strong>{{ item.status }}</strong>
+                    <span class="history-date">{{ item.updated_at }}</span>
+                  </span>
+                  <span class="history-version-id">{{ item.version_id }}</span>
+                </span>
+              </label>
+            }
+          </div>
+        } @else {
+          <div class="history-state">No versions are available for this resource.</div>
+        }
+      </div>
+
+      <footer class="app-dialog-actions history-actions">
+        <span class="selection-count">{{ store.selectedVersionIds().length }} of 2 selected</span>
+        <div class="history-action-buttons">
+          <button type="button" class="app-button app-button--ghost" (click)="store.closeVersionHistory()">Cancel</button>
+          <button type="button" class="app-button app-button--primary" [disabled]="!store.canCompareVersions()" (click)="store.compareSelectedVersions()">
+            Compare Selected Versions
+          </button>
+        </div>
+      </footer>
+    </section>
+  </div>
+}

@@ -45,6 +45,8 @@ export class ContactPointsComponent implements OnInit {
 
   @Input() disabled = false;
   @Input() editable = false;
+  @Input() readonlyView = false;
+  @Input() neutralAppearance = false;
   @Output() modelChange = new EventEmitter<string[]>();
 
   @Input()

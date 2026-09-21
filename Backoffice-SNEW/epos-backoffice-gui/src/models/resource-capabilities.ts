@@ -11,6 +11,7 @@ export type ResourceCapabilities = {
   reopen: boolean;
   archive: boolean;
   createDraft: boolean;
+  viewHistory: boolean;
 };
 
 export function resourceCapabilities(
@@ -30,6 +31,7 @@ export function resourceCapabilities(
     reopen: status === 'REJECTED' && hasPermission(RESOURCE_ACTION_PERMISSIONS['revert-to-draft']),
     archive: status === 'PUBLISHED' && hasPermission(RESOURCE_ACTION_PERMISSIONS.archive),
     createDraft: (status === 'PUBLISHED' || status === 'ARCHIVED')
-      && hasPermission(RESOURCE_ACTION_PERMISSIONS['create-new-draft'])
+      && hasPermission(RESOURCE_ACTION_PERMISSIONS['create-new-draft']),
+    viewHistory: isDraft
   };
 }

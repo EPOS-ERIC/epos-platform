@@ -24,6 +24,11 @@
   margin-top: 24px;
 }
 
+.comparison-route-error {
+  padding: 20px;
+  color: var(--text-muted);
+}
+
 .detail-page-actions {
   display: flex;
   flex-direction: column;

@@ -60,7 +60,7 @@
 
     @if (detailItems.length) {
       <div class="nav-section nav-section--detail" [class.centered]="collapsed()">
-        <span class="nav-section-title" [class.hidden]="collapsed()">Detail</span>
+        <span class="nav-section-title" [class.hidden]="collapsed()">{{ detailSectionLabel }}</span>
 
         <div class="nav-root-item" [class.centered]="collapsed()">
           @if (detailRootIcon) {

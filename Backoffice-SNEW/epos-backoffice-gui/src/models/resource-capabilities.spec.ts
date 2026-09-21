@@ -12,12 +12,14 @@ describe('resourceCapabilities', () => {
     expect(capabilities.save).toBe(true);
     expect(capabilities.submit).toBe(true);
     expect(capabilities.delete).toBe(true);
+    expect(capabilities.viewHistory).toBe(true);
     expect(capabilities.publish).toBe(false);
   });
 
   it('derives review actions independently from their permissions', () => {
     expect(resourceCapabilities('SUBMITTED', []).publish).toBe(false);
     expect(resourceCapabilities('SUBMITTED', []).reject).toBe(false);
+    expect(resourceCapabilities('SUBMITTED', []).viewHistory).toBe(false);
     expect(resourceCapabilities('SUBMITTED', ['resource.publish']).publish).toBe(true);
     expect(resourceCapabilities('SUBMITTED', ['resource.publish']).reject).toBe(false);
     expect(resourceCapabilities('SUBMITTED', ['resource.reject']).publish).toBe(false);

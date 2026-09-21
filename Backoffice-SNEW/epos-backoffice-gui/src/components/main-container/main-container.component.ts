@@ -5,13 +5,19 @@ import { Subject, catchError, combineLatest, debounceTime, distinctUntilChanged,
 import type { Subscription } from 'rxjs';
 
 import type { DiscoveryConcept, DiscoveryItem, DiscoveryResourceType, Group } from '../../../generated/backofficeSchemas';
+import type { ResourceVersionComparisonContext } from '../../models/resource-version-comparison';
 import { normalizeResultsFilters, type ResultsFilters } from '../../models/results-filters';
 import { ApiService } from '../../services/api.service';
 import { LocalStorageService } from '../../services/local-storage.service';
 import { ResourceCreationDialogService } from '../../services/resource-creation-dialog.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
 import { GroupsStore } from '../../stores/groups.store';
-import { ResourceDetailStore } from '../../stores/resource-detail.store';
+import {
+  ResourceDetailStore,
+  resourceDetailNavigationItems,
+  resourceDetailRootLabel,
+  type ResourceDetailNavigationItem
+} from '../../stores/resource-detail.store';
 import { AdminCategoriesComponent } from '../admin-categories/admin-categories.component';
 import { AdminGroupsComponent } from '../admin-groups/admin-groups.component';
 import { AdminOrganizationsComponent } from '../admin-organizations/admin-organizations.component';
@@ -20,6 +26,7 @@ import { MembershipsPageComponent } from '../memberships-page/memberships-page.c
 import { ManageGroupPageComponent } from '../manage-group-page/manage-group-page.component';
 import { NavigationSidebarComponent } from '../navigation-sidebar/navigation-sidebar.component';
 import { ResourceDetailPageComponent } from '../resource-detail-page/resource-detail-page.component';
+import { ResourceVersionComparisonPageComponent } from '../resource-version-comparison-page/resource-version-comparison-page.component';
 import { ResultsTableComponent } from '../results-table/results-table.component';
 
 type RouteData = {
@@ -28,6 +35,7 @@ type RouteData = {
   adminPage?: 'groups' | 'categories' | 'organizations';
   accountPage?: 'memberships';
   manageGroup?: boolean;
+  comparisonPage?: boolean;
 };
 
 type RouteState = {
@@ -35,6 +43,9 @@ type RouteState = {
   versionId?: string | null;
   groupId?: string | null;
   dataType?: string | null;
+  leftVersionId?: string | null;
+  rightVersionId?: string | null;
+  sourceVersionId?: string | null;
 };
 
 const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
@@ -50,6 +61,7 @@ const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
     ManageGroupPageComponent,
     NavigationSidebarComponent,
     ResourceDetailPageComponent,
+    ResourceVersionComparisonPageComponent,
     ResultsTableComponent
   ],
   providers: [ResourceDetailStore],
@@ -99,6 +111,22 @@ export class MainContainerComponent {
       && membership.roles.includes('GROUP_ADMIN')
     ) ?? false);
   });
+  protected readonly comparisonContext = signal<ResourceVersionComparisonContext | null>(null);
+  protected readonly sidebarDetailItems = computed<ResourceDetailNavigationItem[]>(() => {
+    const comparison = this.comparisonContext();
+    if (!comparison) {
+      return this.detailStore.navigationItems();
+    }
+
+    return resourceDetailNavigationItems(comparison.resourceType).map(({ label, anchor }) => ({
+      label,
+      anchor: `compare-${anchor}`
+    }));
+  });
+  protected readonly sidebarDetailRootLabel = computed(() => {
+    const comparison = this.comparisonContext();
+    return comparison ? resourceDetailRootLabel(comparison.resourceType) : this.detailStore.rootLabel();
+  });
 
   constructor() {
     this.searchQueryChanges
@@ -121,7 +149,10 @@ export class MainContainerComponent {
           resourceId: params.get('resourceId'),
           versionId: params.get('versionId'),
           groupId: queryParams.get('groupId'),
-          dataType: queryParams.get('dataType')
+          dataType: queryParams.get('dataType'),
+          leftVersionId: queryParams.get('leftVersionId'),
+          rightVersionId: queryParams.get('rightVersionId'),
+          sourceVersionId: queryParams.get('sourceVersionId')
         });
       });
 
@@ -136,13 +167,14 @@ export class MainContainerComponent {
     const manageGroup = routeData.manageGroup ?? false;
     const discoveryType = routeData.discoveryType;
     const detailDataType = this.toDiscoveryResourceType(routeState.dataType) ?? discoveryType?.[0];
-    const isDetailRoute = Boolean(routeState.resourceId && routeState.versionId);
+    const isComparisonRoute = routeData.comparisonPage === true;
+    const isDetailRoute = !isComparisonRoute && Boolean(routeState.resourceId && routeState.versionId);
     this.adminPage.set(adminPage);
     this.accountPage.set(accountPage);
     this.manageGroup.set(manageGroup);
     this.sectionPath.set(accountPage ?? (adminPage ? `admin/${adminPage}` : this.currentSectionPath()));
     this.sectionTitle.set(
-      isDetailRoute && detailDataType
+      (isDetailRoute || isComparisonRoute) && detailDataType
         ? detailDataType === 'dataset'
           ? 'Dataset'
           : detailDataType === 'software-application'
@@ -153,6 +185,7 @@ export class MainContainerComponent {
 
     if (adminPage || accountPage || manageGroup) {
       this.detailStore.clear();
+      this.comparisonContext.set(null);
       this.discoveryRequest?.unsubscribe();
       const selectedGroup = manageGroup
         ? this.groupForCurrentSection(routeState.groupId)
@@ -180,7 +213,29 @@ export class MainContainerComponent {
     const selectedGroup = this.groupForCurrentSection(routeState.groupId);
     this.selectedGroupId.set(selectedGroup?.id ?? '');
     this.selectedGroupName.set(selectedGroup?.name ?? '');
-    this.pageLabel.set(isDetailRoute ? 'Detail' : 'Results');
+    this.pageLabel.set(isComparisonRoute ? 'Compare' : isDetailRoute ? 'Detail' : 'Results');
+
+    if (isComparisonRoute) {
+      this.detailStore.clear();
+      this.discoveryLoading.set(false);
+      this.discoveryItems.set(null);
+      this.comparisonContext.set(
+        detailDataType && routeState.resourceId && routeState.leftVersionId && routeState.rightVersionId
+          ? {
+              resourceType: detailDataType,
+              resourceId: routeState.resourceId,
+              leftVersionId: routeState.leftVersionId,
+              rightVersionId: routeState.rightVersionId,
+              sourceVersionId: routeState.sourceVersionId ?? routeState.rightVersionId,
+              groupId: selectedGroup?.id ?? routeState.groupId ?? '',
+              sectionPath: this.sectionPath()
+            }
+          : null
+      );
+      return;
+    }
+
+    this.comparisonContext.set(null);
 
     if (isDetailRoute && detailDataType && routeState.resourceId && routeState.versionId) {
       this.discoveryLoading.set(false);
@@ -277,7 +332,7 @@ export class MainContainerComponent {
     this.resourceCreationDialog.open(this.selectedGroupId(), this.sectionPath());
   }
 
-  protected scrollDetailToTop(): void {
+  protected scrollContentToTop(): void {
     this.detailScrollContainerRef?.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
   }
 

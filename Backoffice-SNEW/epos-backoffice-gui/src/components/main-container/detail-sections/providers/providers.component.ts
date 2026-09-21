@@ -39,9 +39,14 @@ export class ProvidersComponent implements OnInit {
 
   @Input() single = false;
   @Input() disabled = false;
+  @Input() readonlyView = false;
+  @Input() neutralAppearance = false;
   @Output() modelChange = new EventEmitter<DatasetProviderForm[] | DatasetProviderForm>();
 
   ngOnInit(): void {
+    if (this.readonlyView) {
+      return;
+    }
     this.loadOrganizations();
   }
 

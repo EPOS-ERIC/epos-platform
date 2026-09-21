@@ -25,6 +25,7 @@ import type {
 export class WebServiceComponent {
   @Input() model: DatasetWebServiceForm | null = null;
   @Input() disabled = false;
+  @Input() comparisonMode = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceForm>();
 
   protected readonly methods: readonly DatasetWebServiceForm['method'][] = ['GET', 'POST', 'PUT', 'DELETE'];

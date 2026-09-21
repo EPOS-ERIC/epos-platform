@@ -62,7 +62,13 @@ Resource-specific form and lifecycle logic must not be added back to this compon
 - save, submit, publish, reject, archive, reopen, draft creation, and deletion workflows;
 - reload and post-action navigation.
 
+Draft details can open the version-history dialog. The store loads discovery entries for the current group and resource, limits comparison selection to two versions, and navigates to the section-specific comparison route.
+
 Detail loads use `switchMap`. Starting another load or clearing the store cancels the previous request and prevents stale responses from replacing the current route state.
+
+### Version Comparison
+
+`ResourceVersionComparisonPageComponent` loads the two selected versions through its component-scoped `ResourceVersionComparisonStore`. The pure `resource-version-diff.mapper.ts` flattens both API responses into a field-by-field side-by-side diff and marks changed values without modifying the source payloads.
 
 ### Results And Administration
 
@@ -80,6 +86,8 @@ Angular route
     -> ResourceDetailStore
     -> ApiService / ResourceActionsService
     -> ResourceDetailPageComponent and navigation sidebar
+    -> Version History dialog
+    -> ResourceVersionComparisonPageComponent
 ```
 
 The main results flow is:

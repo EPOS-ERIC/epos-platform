@@ -1,0 +1,86 @@
+@if (currentVersion) {
+  @switch (sectionTitle) {
+    @case ('General Information') {
+      @if (datasetForm; as form) {
+        <app-general-information [model]="form" [disabled]="true" [showBackLink]="false" />
+      } @else if (softwareMetadata; as metadata) {
+        <app-software-general-information
+          [model]="metadata"
+          [disabled]="true"
+          [resourceType]="softwareResourceType()"
+          [showBackLink]="false"
+        />
+      }
+    }
+    @case ('Spatial Coverage') {
+      @if (datasetForm; as form) {
+        <app-spatial-coverage [model]="form.spatial" [disabled]="true" />
+      }
+    }
+    @case ('Temporal Coverage') {
+      @if (datasetForm; as form) {
+        <app-temporal-coverage [model]="form.temporal" [disabled]="true" />
+      }
+    }
+    @case ('Persistent Identifiers') {
+      @if (datasetForm; as form) {
+        <app-identifiers
+          [model]="form.persistentIdentifiers"
+          [disabled]="true"
+          [neutralAppearance]="true"
+          title="Persistent Identifiers"
+        />
+      } @else if (softwareMetadata; as metadata) {
+        <app-identifiers
+          [model]="metadata.identifiers"
+          [disabled]="true"
+          [neutralAppearance]="true"
+          title="Persistent Identifiers"
+        />
+      }
+    }
+    @case ('Contact Points') {
+      @if (datasetForm; as form) {
+        <app-contact-points
+          [model]="form.contactPoints"
+          [disabled]="true"
+          [readonlyView]="true"
+          [neutralAppearance]="true"
+        />
+      } @else if (softwareMetadata; as metadata) {
+        <app-contact-points
+          [model]="metadata.contact_points ?? []"
+          [disabled]="true"
+          [readonlyView]="true"
+          [neutralAppearance]="true"
+        />
+      }
+    }
+    @case ('Providers') {
+      @if (datasetForm; as form) {
+        <app-providers
+          [model]="form.providers"
+          [disabled]="true"
+          [readonlyView]="true"
+          [neutralAppearance]="true"
+        />
+      }
+    }
+    @case ('Categories') {
+      @if (datasetForm; as form) {
+        <app-categories [model]="form.categories" [disabled]="true" />
+      } @else if (softwareMetadata; as metadata) {
+        <app-categories [model]="metadata.categories" [disabled]="true" />
+      }
+    }
+    @case ('Distributions') {
+      @if (datasetForm; as form) {
+        <app-distribution
+          [model]="form.distributions"
+          [disabled]="true"
+          [comparisonMode]="true"
+        />
+      }
+    }
+  }
+}

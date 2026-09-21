@@ -1,13 +1,14 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { Observable, Subject, of } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import type {
   DatasetResourceMetadata,
   DiscoveryResourceType,
   ResourceVersion,
+  ResourceVersionSummary,
   SoftwareApplicationResourceMetadata
 } from '../../generated/backofficeSchemas';
 import { ApiService, type ResourceVersionResponse } from '../services/api.service';
@@ -40,7 +41,7 @@ describe('ResourceDetailStore', () => {
     contact_points: [],
     categories: []
   };
-  const apiService = { getResourceVersion: vi.fn() };
+  const apiService = { getResourceVersion: vi.fn(), listResourceVersions: vi.fn() };
   const dialogService = { dismiss: vi.fn(), prompt: vi.fn(), confirm: vi.fn() };
   const router = { navigate: vi.fn() };
   const actionError = signal('');
@@ -72,6 +73,7 @@ describe('ResourceDetailStore', () => {
     vi.clearAllMocks();
     actionError.set('');
     apiService.getResourceVersion.mockReturnValue(of(datasetVersion()));
+    apiService.listResourceVersions.mockReturnValue(of([]));
     TestBed.configureTestingModule({
       providers: [
         ResourceDetailStore,
@@ -172,6 +174,104 @@ describe('ResourceDetailStore', () => {
     expect(resourceActions.sidebarActions).toHaveBeenCalledWith('SUBMITTED', ['resource.publish', 'resource.reject']);
   });
 
+  it('only enables version history for a loaded draft', () => {
+    expect(store.canViewHistory()).toBe(false);
+
+    store.load(context('dataset', 'dataset-id'));
+    expect(store.canViewHistory()).toBe(true);
+
+    apiService.getResourceVersion.mockReturnValue(of(datasetVersion({ status: 'SUBMITTED' })));
+    store.load(context('dataset', 'dataset-id'));
+    expect(store.canViewHistory()).toBe(false);
+  });
+
+  it('loads and sorts version history using the loaded resource identity', () => {
+    apiService.getResourceVersion.mockReturnValue(
+      of(datasetVersion({ resource_id: 'loaded-resource', group_id: 'loaded-group' }))
+    );
+    apiService.listResourceVersions.mockReturnValue(
+      of([
+        versionSummary('older', { resource_id: 'loaded-resource', updated_at: '2026-01-01T00:00:00Z' }),
+        versionSummary('newer', { resource_id: 'loaded-resource', updated_at: '2026-03-01T00:00:00Z' })
+      ])
+    );
+
+    store.load({ ...context('dataset', 'route-resource'), groupId: 'route-group' });
+    store.openVersionHistory();
+
+    expect(apiService.listResourceVersions).toHaveBeenCalledWith('dataset', 'loaded-resource');
+    expect(store.historyOpen()).toBe(true);
+    expect(store.historyLoading()).toBe(false);
+    expect(store.historyItems().map((item) => item.version_id)).toEqual(['newer', 'older']);
+  });
+
+  it('selects at most two versions and enables comparison for exactly two', () => {
+    store.load(context('dataset', 'dataset-id'));
+    store.toggleVersionSelection('first');
+    expect(store.canCompareVersions()).toBe(false);
+    store.toggleVersionSelection('second');
+
+    expect(store.selectedVersionIds()).toEqual(['first', 'second']);
+    expect(store.canCompareVersions()).toBe(true);
+    expect(store.isVersionSelected('first')).toBe(true);
+    expect(store.isVersionSelectionDisabled('third')).toBe(true);
+
+    store.toggleVersionSelection('third');
+    expect(store.selectedVersionIds()).toEqual(['first', 'second']);
+
+    store.toggleVersionSelection('first');
+    expect(store.selectedVersionIds()).toEqual(['second']);
+    expect(store.canCompareVersions()).toBe(false);
+    expect(store.isVersionSelectionDisabled('third')).toBe(false);
+  });
+
+  it('navigates with selected versions in selection order and closes history', () => {
+    apiService.getResourceVersion.mockReturnValue(
+      of(datasetVersion({ resource_id: 'loaded-resource', group_id: 'loaded-group' }))
+    );
+    store.load({ ...context('dataset', 'route-resource'), sectionPath: 'data-section' });
+    store.openVersionHistory();
+    store.toggleVersionSelection('version-right');
+    store.toggleVersionSelection('version-left');
+
+    store.compareSelectedVersions();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/', 'data-section', 'loaded-resource', 'compare'], {
+      queryParams: {
+        leftVersionId: 'version-right',
+        rightVersionId: 'version-left',
+        sourceVersionId: 'version-id',
+        groupId: 'loaded-group',
+        dataType: 'dataset'
+      }
+    });
+    expect(store.historyOpen()).toBe(false);
+    expect(store.selectedVersionIds()).toEqual([]);
+  });
+
+  it('reports history errors and cancels pending history on close and load', () => {
+    const first = trackedVersionHistoryRequest();
+    apiService.listResourceVersions.mockReturnValueOnce(first.observable);
+    store.load(context('dataset', 'dataset-id'));
+    store.openVersionHistory();
+
+    store.closeVersionHistory();
+    expect(first.unsubscribed()).toBe(true);
+    expect(store.historyLoading()).toBe(false);
+
+    apiService.listResourceVersions.mockReturnValueOnce(throwError(() => new Error('network')));
+    store.openVersionHistory();
+    expect(store.historyError()).toBe('Failed to load version history.');
+
+    const second = trackedVersionHistoryRequest();
+    apiService.listResourceVersions.mockReturnValueOnce(second.observable);
+    store.openVersionHistory();
+    store.load(context('dataset', 'replacement'));
+    expect(second.unsubscribed()).toBe(true);
+    expect(store.historyOpen()).toBe(false);
+    expect(store.historyError()).toBe('');
+  });
+
   function context(resourceType: DiscoveryResourceType, resourceId: string): ResourceDetailRouteContext {
     return {
       resourceType,
@@ -210,6 +310,37 @@ describe('ResourceDetailStore', () => {
       created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-01T00:00:00Z',
       metadata: softwareMetadata
+    };
+  }
+
+  function versionSummary(
+    versionId: string,
+    overrides: Partial<ResourceVersionSummary> = {}
+  ): ResourceVersionSummary {
+    return {
+      resource_type: 'dataset',
+      resource_id: 'dataset-id',
+      version_id: versionId,
+      revision: 1,
+      name: `Version ${versionId}`,
+      status: 'DRAFT',
+      created_by: 'user',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-02-01T00:00:00Z',
+      ...overrides
+    } as ResourceVersionSummary;
+  }
+
+  function trackedVersionHistoryRequest(): {
+    observable: Observable<ResourceVersionSummary[]>;
+    unsubscribed: () => boolean;
+  } {
+    let wasUnsubscribed = false;
+    return {
+      observable: new Observable(() => () => {
+        wasUnsubscribed = true;
+      }),
+      unsubscribed: () => wasUnsubscribed
     };
   }
 
