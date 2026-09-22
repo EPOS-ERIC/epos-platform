@@ -57,7 +57,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	maxBodyBytes := int64(1 << 20)
+	// timeout bounds upstream response headers only; bodies stream with
+	// bounded per-chunk memory until the caller cancels the context.
+	// schemaBudget bounds the leading payload bytes buffered for output
+	// schema extraction; zero disables extraction.
+	schemaBudgetValue := getenvInt("DATA_RETRIEVER_SCHEMA_MAX_BYTES", 2<<20)
+	if schemaBudgetValue < 0 {
+		schemaBudgetValue = 0
+	}
+	schemaBudget := uint64(schemaBudgetValue)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -67,7 +75,8 @@ func main() {
 		addr,
 		log,
 		repository.NewRetrievalPostgresRepository(db),
-		retriever.NewClient(timeout, maxBodyBytes),
+		retriever.NewClient(timeout),
+		schemaBudget,
 	); err != nil {
 		log.Error("grpc server stopped", "error", err)
 		os.Exit(1)

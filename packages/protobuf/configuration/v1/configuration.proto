@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package configuration.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/configuration/v1;configurationv1";
+
+// A shared workspace configuration.
+//
+// `configuration` holds the raw client payload (for example the ICS-C
+// `configurables` / `dataSearchConfigurables` document) verbatim as JSON.
+// Its shape is intentionally unconstrained so that future frontend payloads
+// keep working without a contract change. The optional metadata fields are
+// stored in dedicated columns so they stay queryable.
+//
+// Visibility: `is_public` configurations are readable by anyone (including
+// anonymous callers); private ones are readable only by their owner or an
+// administrator. Official configurations are curated and can only be public;
+// only administrators may create them or mark them as official. Ownership is
+// derived from the caller's authenticated identity and never taken from the
+// request body.
+message Configuration {
+  reserved 5, 7;
+  reserved "example", "sharing_link_url";
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  bytes configuration = 2 [
+    (buf.validate.field).bytes.min_len = 1,
+    (buf.validate.field).bytes.max_len = 8388608
+  ];
+  optional string title = 3 [(buf.validate.field).string.max_len = 500];
+  optional string description = 4 [(buf.validate.field).string.max_len = 10000];
+  repeated string list_of_services = 6 [
+    (buf.validate.field).repeated.max_items = 100,
+    (buf.validate.field).repeated.items.string.min_len = 1,
+    (buf.validate.field).repeated.items.string.max_len = 500
+  ];
+  bool is_official = 8;
+  bool is_public = 9;
+  string owner_id = 10 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+message CreateConfigurationRequest {
+  reserved 5, 7;
+  reserved "example", "sharing_link_url";
+  // Optional client-provided identifier. When absent the server generates one.
+  optional string id = 1 [(buf.validate.field).string.uuid = true];
+  bytes configuration = 2 [
+    (buf.validate.field).bytes.min_len = 1,
+    (buf.validate.field).bytes.max_len = 8388608
+  ];
+  optional string title = 3 [(buf.validate.field).string.max_len = 500];
+  optional string description = 4 [(buf.validate.field).string.max_len = 10000];
+  repeated string list_of_services = 6 [
+    (buf.validate.field).repeated.max_items = 100,
+    (buf.validate.field).repeated.items.string.min_len = 1,
+    (buf.validate.field).repeated.items.string.max_len = 500
+  ];
+  // Administrators only; rejected otherwise. Implies public visibility.
+  bool is_official = 8;
+  // Absent means public.
+  optional bool is_public = 9;
+}
+
+message CreateConfigurationResponse {
+  Configuration configuration = 1;
+}
+
+message GetConfigurationRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message GetConfigurationResponse {
+  Configuration configuration = 1;
+}
+
+message ListConfigurationsRequest {
+  optional int32 page_size = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+  optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
+  // When set, restricts results to official or unofficial configurations.
+  optional bool official = 3;
+}
+
+message ListConfigurationsResponse {
+  repeated Configuration configurations = 1;
+  int64 total = 2 [(buf.validate.field).int64.gte = 0];
+}
+
+message UpdateConfigurationRequest {
+  reserved 5, 7;
+  reserved "example", "sharing_link_url";
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  bytes configuration = 2 [
+    (buf.validate.field).bytes.min_len = 1,
+    (buf.validate.field).bytes.max_len = 8388608
+  ];
+  optional string title = 3 [(buf.validate.field).string.max_len = 500];
+  optional string description = 4 [(buf.validate.field).string.max_len = 10000];
+  repeated string list_of_services = 6 [
+    (buf.validate.field).repeated.max_items = 100,
+    (buf.validate.field).repeated.items.string.min_len = 1,
+    (buf.validate.field).repeated.items.string.max_len = 500
+  ];
+  // Administrators only; rejected otherwise. Implies public visibility.
+  bool is_official = 8;
+  // Absent means public.
+  optional bool is_public = 9;
+}
+
+message UpdateConfigurationResponse {
+  Configuration configuration = 1;
+}
+
+message DeleteConfigurationRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message DeleteConfigurationResponse {}
+
+service ConfigurationService {
+  rpc CreateConfiguration(CreateConfigurationRequest) returns (CreateConfigurationResponse);
+  rpc GetConfiguration(GetConfigurationRequest) returns (GetConfigurationResponse);
+  rpc ListConfigurations(ListConfigurationsRequest) returns (ListConfigurationsResponse);
+  rpc UpdateConfiguration(UpdateConfigurationRequest) returns (UpdateConfigurationResponse);
+  rpc DeleteConfiguration(DeleteConfigurationRequest) returns (DeleteConfigurationResponse);
+}

@@ -1,0 +1,16 @@
+FROM golang:1.27-alpine
+
+WORKDIR /workspace/services/sharing
+
+ENV CGO_ENABLED=0
+
+COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+COPY . /workspace
+
+EXPOSE 8200
+
+ENV EPOS_SERVICE_NAME="Sharing" \
+    EPOS_PORT="8200"
+
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
+CMD ["go", "run", "."]

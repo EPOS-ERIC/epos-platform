@@ -52,6 +52,17 @@ func (UnimplementedHandler) CopyResource(ctx context.Context, params CopyResourc
 	return r, ht.ErrNotImplemented
 }
 
+// CreateConfiguration implements createConfiguration operation.
+//
+// Persists a workspace configuration document with optional descriptive metadata. The configuration
+// payload is stored as canonical JSON. Requires authentication; only administrators may mark a
+// configuration as official.
+//
+// POST /configurations
+func (UnimplementedHandler) CreateConfiguration(ctx context.Context, req *CreateConfigurationRequest) (r *Configuration, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateContactPoint implements createContactPoint operation.
 //
 // Create reusable contact point.
@@ -115,6 +126,15 @@ func (UnimplementedHandler) DecideGroupMembership(ctx context.Context, params De
 // POST /groups/{groupId}/role-requests/{requestId}/{decision}
 func (UnimplementedHandler) DecideGroupRoleRequest(ctx context.Context, params DecideGroupRoleRequestParams) (r *GroupMembership, _ error) {
 	return r, ht.ErrNotImplemented
+}
+
+// DeleteConfiguration implements deleteConfiguration operation.
+//
+// Requires authentication; only the owner or an administrator may delete.
+//
+// DELETE /configurations/{configurationId}
+func (UnimplementedHandler) DeleteConfiguration(ctx context.Context, params DeleteConfigurationParams) error {
+	return ht.ErrNotImplemented
 }
 
 // DeleteContactPoint implements deleteContactPoint operation.
@@ -205,6 +225,15 @@ func (UnimplementedHandler) DraftFromPublication(ctx context.Context, params Dra
 	return r, ht.ErrNotImplemented
 }
 
+// GetConfiguration implements getConfiguration operation.
+//
+// Private configurations are readable by their owner or an administrator only.
+//
+// GET /configurations/{configurationId}
+func (UnimplementedHandler) GetConfiguration(ctx context.Context, params GetConfigurationParams) (r *Configuration, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetContactPoint implements getContactPoint operation.
 //
 // Get contact point.
@@ -286,6 +315,17 @@ func (UnimplementedHandler) GrantGroupPermission(ctx context.Context, params Gra
 //
 // POST /imports/turtle
 func (UnimplementedHandler) ImportTurtleMetadata(ctx context.Context, req ImportTurtleMetadataReq) (r *ImportResult, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListConfigurations implements listConfigurations operation.
+//
+// Returns shared workspace configurations, newest first. Anonymous callers receive public
+// configurations only; authenticated callers additionally receive their own private configurations
+// (and every configuration when they are administrators).
+//
+// GET /configurations
+func (UnimplementedHandler) ListConfigurations(ctx context.Context, params ListConfigurationsParams) (r *ConfigurationList, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -408,6 +448,17 @@ func (UnimplementedHandler) ReopenResourceVersion(ctx context.Context, params Re
 	return r, ht.ErrNotImplemented
 }
 
+// ReplaceConfiguration implements replaceConfiguration operation.
+//
+// Fully replaces the configuration document and metadata. Absent nullable fields and an empty service
+// list clear the stored values. Requires authentication; only the owner or an administrator may
+// replace, and only administrators may change the official flag.
+//
+// PUT /configurations/{configurationId}
+func (UnimplementedHandler) ReplaceConfiguration(ctx context.Context, req *ReplaceConfigurationRequest, params ReplaceConfigurationParams) (r *Configuration, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ReplaceContactPoint implements replaceContactPoint operation.
 //
 // Replace contact point.
@@ -477,6 +528,15 @@ func (UnimplementedHandler) RequestGroupRole(ctx context.Context, req *CreateRol
 // Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses
 // never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a
 // generated command that needs authentication.
+//
+// In `EXECUTE` mode the gateway acts as a transparent streaming proxy: the HTTP status, Content-Type
+// and body are relayed verbatim from the upstream resource with no size limit, so even gigabyte
+// downloads flow through this endpoint. The service discovers output parameters from supported payload
+// formats after a complete retrieval; clients do not provide them. A 3xx upstream response is relayed
+// with its status code and `Location` header. An upstream `Content-Disposition` header (carrying the
+// original file name) is forwarded as well; when the upstream omits it, one is synthesized from the
+// file name in the request URL so downloads keep the original name. The persisted retrieval identifier
+// is exposed via the `X-Retrieval-Id` response header.
 //
 // POST /access
 func (UnimplementedHandler) RetrieveResourceVersion(ctx context.Context, req *RetrieveResourceVersionRequest) (r *RetrieveResourceVersionResponse, _ error) {

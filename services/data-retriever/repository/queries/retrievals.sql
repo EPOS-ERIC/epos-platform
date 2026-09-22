@@ -56,6 +56,13 @@ RETURNING id, resource_id, version_id, method, url_template, generated_url,
   http_status, content_type, is_binary, payload_hash, payload_size_bytes, used_auth,
   fetched_at, created_at, request_body_text;
 
+-- name: FinalizeRetrieval :exec
+UPDATE retrievals
+SET payload_hash = sqlc.arg(payload_hash),
+    payload_size_bytes = sqlc.arg(payload_size_bytes),
+    updated_at = NOW()
+WHERE id = sqlc.arg(id);
+
 -- name: GetRetrievalByID :one
 SELECT id, resource_id, version_id, method, url_template, generated_url,
   http_status, content_type, is_binary, payload_hash, payload_size_bytes, used_auth,

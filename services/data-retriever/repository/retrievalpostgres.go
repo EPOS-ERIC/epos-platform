@@ -36,7 +36,9 @@ type RetrievalRecord struct {
 }
 
 type RetrievalRepository interface {
-	Create(ctx context.Context, req domain.ValidatedRequest, result retriever.Result) (RetrievalRecord, error)
+	CreatePlaceholder(ctx context.Context, req domain.ValidatedRequest, head retriever.StreamHead) (RetrievalRecord, error)
+	FinalizeRetrieval(ctx context.Context, id int64, payloadHash string, payloadSize int64) error
+	ReplaceOutputParameters(ctx context.Context, resourceID, versionID uuid.UUID, parameters []domain.OutputParameter) error
 	GetByID(ctx context.Context, id int64) (RetrievalRecord, error)
 }
 
@@ -49,7 +51,12 @@ func NewRetrievalPostgresRepository(db *sql.DB) *RetrievalPostgresRepository {
 	return &RetrievalPostgresRepository{db: db, queries: retrievalsqlc.New(db)}
 }
 
-func (r *RetrievalPostgresRepository) Create(ctx context.Context, req domain.ValidatedRequest, result retriever.Result) (record RetrievalRecord, err error) {
+// CreatePlaceholder persists a retrieval record before the upstream body is
+// consumed, so the record identifier can be relayed upfront (e.g. in the
+// X-Retrieval-Id response header). The payload hash is empty and the size is
+// the upstream Content-Length when known, -1 otherwise; FinalizeRetrieval
+// replaces both with the exact streamed values.
+func (r *RetrievalPostgresRepository) CreatePlaceholder(ctx context.Context, req domain.ValidatedRequest, head retriever.StreamHead) (record RetrievalRecord, err error) {
 	resourceID, versionID, err := resourceVersionIDs(req)
 	if err != nil {
 		return RetrievalRecord{}, err
@@ -66,20 +73,38 @@ func (r *RetrievalPostgresRepository) Create(ctx context.Context, req domain.Val
 	}()
 	queries := r.queries.WithTx(tx)
 
-	if err := replaceOutputSchema(ctx, queries, resourceID, versionID, req.OutputParameters); err != nil {
+	// The placeholder only ensures the schema row exists; discovered output
+	// parameters replace any previous set once the body is consumed, so a
+	// failed download never destroys a previously discovered schema.
+	if err := ensureOutputSchema(ctx, queries, resourceID, versionID); err != nil {
 		return RetrievalRecord{}, err
 	}
 
-	retrieval, err := queries.UpsertRetrieval(ctx, upsertRetrievalParams(req, result, resourceID, versionID))
+	size := head.ContentLength
+	if size < 0 {
+		size = -1
+	}
+	retrieval, err := queries.UpsertRetrieval(ctx, upsertRetrievalParams(req, resourceID, versionID, head.StatusCode, head.ContentType, head.IsBinary, size))
 	if err != nil {
 		return RetrievalRecord{}, fmt.Errorf("upsert retrieval: %w", err)
 	}
-	record = toRetrievalRecordFromUpsert(retrieval, req.OutputParameters)
+	record = toRetrievalRecordFromUpsert(retrieval, nil)
 
 	if err := tx.Commit(); err != nil {
 		return RetrievalRecord{}, fmt.Errorf("commit retrieval transaction: %w", err)
 	}
 	return record, nil
+}
+
+func (r *RetrievalPostgresRepository) FinalizeRetrieval(ctx context.Context, id int64, payloadHash string, payloadSize int64) error {
+	if err := r.queries.FinalizeRetrieval(ctx, retrievalsqlc.FinalizeRetrievalParams{
+		ID:               id,
+		PayloadHash:      payloadHash,
+		PayloadSizeBytes: payloadSize,
+	}); err != nil {
+		return fmt.Errorf("finalize retrieval: %w", err)
+	}
+	return nil
 }
 
 func (r *RetrievalPostgresRepository) GetByID(ctx context.Context, id int64) (RetrievalRecord, error) {
@@ -103,9 +128,39 @@ func (r *RetrievalPostgresRepository) GetByID(ctx context.Context, id int64) (Re
 	return record, nil
 }
 
-func replaceOutputSchema(ctx context.Context, queries *retrievalsqlc.Queries, resourceID, versionID uuid.UUID, parameters []domain.OutputParameter) error {
+// ReplaceOutputParameters atomically replaces the discovered output schema
+// for a resource version with the freshly extracted parameters.
+func (r *RetrievalPostgresRepository) ReplaceOutputParameters(ctx context.Context, resourceID, versionID uuid.UUID, parameters []domain.OutputParameter) (err error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin output parameters transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	queries := r.queries.WithTx(tx)
+
+	if err := replaceOutputSchema(ctx, queries, resourceID, versionID, parameters); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit output parameters transaction: %w", err)
+	}
+	return nil
+}
+
+func ensureOutputSchema(ctx context.Context, queries *retrievalsqlc.Queries, resourceID, versionID uuid.UUID) error {
 	if err := queries.UpsertOutputSchema(ctx, retrievalsqlc.UpsertOutputSchemaParams{ResourceID: resourceID, VersionID: versionID}); err != nil {
 		return fmt.Errorf("upsert output schema: %w", err)
+	}
+	return nil
+}
+
+func replaceOutputSchema(ctx context.Context, queries *retrievalsqlc.Queries, resourceID, versionID uuid.UUID, parameters []domain.OutputParameter) error {
+	if err := ensureOutputSchema(ctx, queries, resourceID, versionID); err != nil {
+		return err
 	}
 	if err := queries.DeleteOutputParameters(ctx, retrievalsqlc.DeleteOutputParametersParams{ResourceID: resourceID, VersionID: versionID}); err != nil {
 		return fmt.Errorf("clear output parameters: %w", err)
@@ -140,7 +195,7 @@ func resourceVersionIDs(req domain.ValidatedRequest) (uuid.UUID, uuid.UUID, erro
 	return resourceID, versionID, nil
 }
 
-func upsertRetrievalParams(req domain.ValidatedRequest, result retriever.Result, resourceID, versionID uuid.UUID) retrievalsqlc.UpsertRetrievalParams {
+func upsertRetrievalParams(req domain.ValidatedRequest, resourceID, versionID uuid.UUID, httpStatus int, contentType string, isBinary bool, payloadSize int64) retrievalsqlc.UpsertRetrievalParams {
 	pathParamsJSON, _ := json.Marshal(req.PathParams)
 	queryParamsJSON, _ := json.Marshal(req.QueryParams)
 	headersJSON, _ := json.Marshal(redactHeaders(req.Headers))
@@ -162,13 +217,13 @@ func upsertRetrievalParams(req domain.ValidatedRequest, result retriever.Result,
 		RequestBodyText:   requestBodyText,
 		RequestBodyHash:   hex.EncodeToString(bodyHash[:]),
 		RequestBodyIsJson: req.Body != nil && len(req.Body.JSON) > 0,
-		HttpStatus:        int32(result.StatusCode),
-		ContentType:       result.ContentType,
-		IsBinary:          result.IsBinary,
-		PayloadHash:       result.PayloadHash,
-		PayloadSizeBytes:  int32(result.PayloadSize),
+		HttpStatus:        int32(httpStatus),
+		ContentType:       contentType,
+		IsBinary:          isBinary,
+		PayloadHash:       "",
+		PayloadSizeBytes:  payloadSize,
 		UsedAuth:          req.BearerToken != "",
-		FetchedAt:         result.ResponseDate,
+		FetchedAt:         time.Now().UTC(),
 	}
 }
 

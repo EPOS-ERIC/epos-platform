@@ -38,7 +38,6 @@ func (s *securityHandler) HandleBearerAuth(ctx context.Context, _ gatewayapi.Ope
 
 	ctx = authcontext.WithActorID(ctx, identity.AuthIdentifier)
 	observability.SetActorID(ctx, identity.AuthIdentifier)
-
 	user, err := s.identity.EnsureUser(ctx, domain.ActorIdentity{
 		AuthIdentifier: identity.AuthIdentifier,
 		Email:          identity.Email,
@@ -51,6 +50,16 @@ func (s *securityHandler) HandleBearerAuth(ctx context.Context, _ gatewayapi.Ope
 	if user.Status == domain.UserStatusBlocked {
 		return nil, domain.ErrForbidden
 	}
+	ctx = authcontext.WithAdmin(ctx, isGlobalAdmin(user))
 
 	return ctx, nil
+}
+
+func isGlobalAdmin(user domain.User) bool {
+	for _, role := range user.GlobalRoles {
+		if role == domain.GlobalRoleAdmin {
+			return true
+		}
+	}
+	return false
 }

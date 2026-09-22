@@ -38,6 +38,7 @@ type Upstream struct {
 type Services struct {
 	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
 	DataRetriever     Service `yaml:"data-retriever"`
+	Sharing           Service `yaml:"sharing"`
 	Auth              Service `yaml:"auth"`
 }
 
@@ -60,6 +61,7 @@ func Default() Config {
 		Services: Services{
 			MetadataLifecycle: Service{URL: ""},
 			DataRetriever:     Service{URL: ""},
+			Sharing:           Service{URL: ""},
 			Auth:              Service{URL: ""},
 		},
 	}
@@ -103,8 +105,11 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("server.read_timeout must be greater than zero")
 	}
 
-	if c.Server.WriteTimeout <= 0 {
-		return fmt.Errorf("server.write_timeout must be greater than zero")
+	// Zero disables the write timeout. It must stay disabled while the access
+	// proxy streams downloads: every other route is still bounded by the
+	// request timeout handler, which buffers responses before writing them.
+	if c.Server.WriteTimeout < 0 {
+		return fmt.Errorf("server.write_timeout must be zero or greater")
 	}
 
 	if c.Server.IdleTimeout <= 0 {
@@ -116,6 +121,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Services.DataRetriever.URL == "" {
 		return fmt.Errorf("services.data-retriever.url is required")
+	}
+	if c.Services.Sharing.URL == "" {
+		return fmt.Errorf("services.sharing.url is required")
 	}
 
 	if c.Services.Auth.URL == "" {

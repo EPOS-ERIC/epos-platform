@@ -1070,6 +1070,71 @@ func decodeDecideGroupRoleRequestParams(args [3]string, argsEscaped bool, r *htt
 	return params, nil
 }
 
+// DeleteConfigurationParams is parameters of deleteConfiguration operation.
+type DeleteConfigurationParams struct {
+	ConfigurationId uuid.UUID
+}
+
+func unpackDeleteConfigurationParams(packed middleware.Parameters) (params DeleteConfigurationParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "configurationId",
+			In:   "path",
+		}
+		params.ConfigurationId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeDeleteConfigurationParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteConfigurationParams, _ error) {
+	// Decode path: configurationId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "configurationId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConfigurationId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "configurationId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DeleteContactPointParams is parameters of deleteContactPoint operation.
 type DeleteContactPointParams struct {
 	ContactPointId uuid.UUID
@@ -2664,6 +2729,71 @@ func decodeDraftFromPublicationParams(args [2]string, argsEscaped bool, r *http.
 	return params, nil
 }
 
+// GetConfigurationParams is parameters of getConfiguration operation.
+type GetConfigurationParams struct {
+	ConfigurationId uuid.UUID
+}
+
+func unpackGetConfigurationParams(packed middleware.Parameters) (params GetConfigurationParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "configurationId",
+			In:   "path",
+		}
+		params.ConfigurationId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetConfigurationParams(args [1]string, argsEscaped bool, r *http.Request) (params GetConfigurationParams, _ error) {
+	// Decode path: configurationId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "configurationId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConfigurationId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "configurationId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetContactPointParams is parameters of getContactPoint operation.
 type GetContactPointParams struct {
 	ContactPointId uuid.UUID
@@ -3532,6 +3662,233 @@ func decodeGrantGroupPermissionParams(args [3]string, argsEscaped bool, r *http.
 		return params, &ogenerrors.DecodeParamError{
 			Name: "permission",
 			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListConfigurationsParams is parameters of listConfigurations operation.
+type ListConfigurationsParams struct {
+	PageSize OptInt `json:",omitempty,omitzero"`
+	Offset   OptInt `json:",omitempty,omitzero"`
+	// When set, restricts results to official or unofficial configurations.
+	Official OptBool `json:",omitempty,omitzero"`
+}
+
+func unpackListConfigurationsParams(packed middleware.Parameters) (params ListConfigurationsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "offset",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Offset = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "official",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Official = v.(OptBool)
+		}
+	}
+	return params
+}
+
+func decodeListConfigurationsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListConfigurationsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Set default value for query: page_size.
+	{
+		val := int(20)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: offset.
+	{
+		val := int(0)
+		params.Offset.SetTo(val)
+	}
+	// Decode query: offset.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotOffsetVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOffsetVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Offset.SetTo(paramsDotOffsetVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Offset.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           0,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "offset",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: official.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "official",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotOfficialVal bool
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToBool(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOfficialVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Official.SetTo(paramsDotOfficialVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "official",
+			In:   "query",
 			Err:  err,
 		}
 	}
@@ -4647,6 +5004,71 @@ func decodeReopenResourceVersionParams(args [3]string, argsEscaped bool, r *http
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "versionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ReplaceConfigurationParams is parameters of replaceConfiguration operation.
+type ReplaceConfigurationParams struct {
+	ConfigurationId uuid.UUID
+}
+
+func unpackReplaceConfigurationParams(packed middleware.Parameters) (params ReplaceConfigurationParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "configurationId",
+			In:   "path",
+		}
+		params.ConfigurationId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeReplaceConfigurationParams(args [1]string, argsEscaped bool, r *http.Request) (params ReplaceConfigurationParams, _ error) {
+	// Decode path: configurationId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "configurationId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConfigurationId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "configurationId",
 			In:   "path",
 			Err:  err,
 		}

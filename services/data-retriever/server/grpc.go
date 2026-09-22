@@ -20,7 +20,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Run(ctx context.Context, addr string, log *slog.Logger, repo repository.RetrievalRepository, client *retriever.Client) error {
+func Run(ctx context.Context, addr string, log *slog.Logger, repo repository.RetrievalRepository, client *retriever.Client, schemaBudget uint64) error {
 	validator, err := protovalidate.New()
 	if err != nil {
 		return fmt.Errorf("create protobuf validator: %w", err)
@@ -33,7 +33,7 @@ func Run(ctx context.Context, addr string, log *slog.Logger, repo repository.Ret
 	healthServer := health.NewServer()
 	healthpb.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
-	dataretrieverv1.RegisterDataRetrieverServiceServer(grpcServer, grpcapi.New(repo, client))
+	dataretrieverv1.RegisterDataRetrieverServiceServer(grpcServer, grpcapi.New(repo, client, log, schemaBudget))
 
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {

@@ -9,8 +9,8 @@ The service uses shared Go packages from `packages/go/` for structured logging a
 - Contract: `packages/protobuf/data_retriever/v1/data_retriever.proto`
 - Service: `data_retriever.v1.DataRetrieverService`
 - Health: standard gRPC health service
-- `Retrieve` requires `resource_id`, `version_id`, and output parameters; it atomically replaces the schema for that resource version.
-- Payloads are returned inline only at runtime for non-binary responses and are never persisted. Binary responses return a `redirect_url`, so large downloads bypass the service.
+- `RetrieveStream` requires `resource_id` and `version_id`; callers do not provide output parameters. On a successful complete response, the service detects JSON, XML, and CSV payloads, extracts their fields or tags, and atomically replaces the stored output parameters for that resource version. Extraction buffers a complete payload of at most `DATA_RETRIEVER_SCHEMA_MAX_BYTES` (default `2 MiB`); unsupported and larger payloads retain the previously discovered parameters.
+- `RetrieveStream` streams the upstream body in 64 KiB chunks with bounded memory and no size limit; payloads are never persisted, only metadata (status, content type, hash, exact byte size). A retrieval record is stored before streaming starts and finalized with the exact hash and size once the stream completes; interrupted streams keep an empty hash and `-1` size. Redirects are never followed: a 3xx upstream response yields the status code, the upstream `Location` in `redirect_url`, and the upstream `Content-Disposition` (original file name) in `content_disposition`. When the upstream omits `Content-Disposition`, one is synthesized as `inline; filename="<name>"` from the file name in the request URL. `DATA_RETRIEVER_HTTP_TIMEOUT` bounds upstream response headers only; bodies stream until the caller cancels.
 
 ## Build and run
 
@@ -45,7 +45,8 @@ Database environment variables:
 Runtime environment variables:
 
 - `DATA_RETRIEVER_GRPC_LISTEN_ADDR` (default `:8100`)
-- `DATA_RETRIEVER_HTTP_TIMEOUT` (default `30s`): outbound HTTP request timeout
+- `DATA_RETRIEVER_HTTP_TIMEOUT` (default `30s`): outbound HTTP response-header timeout
+- `DATA_RETRIEVER_SCHEMA_MAX_BYTES` (default `2097152`): maximum complete payload size used for schema extraction; set to `0` to disable extraction
 - `DATA_RETRIEVER_DB_CONNECT_MAX_ATTEMPTS` (default `20`)
 - `DATA_RETRIEVER_DB_CONNECT_RETRY_DELAY` (default `2s`)
 

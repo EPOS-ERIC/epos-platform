@@ -19,15 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DataRetrieverService_Retrieve_FullMethodName     = "/data_retriever.v1.DataRetrieverService/Retrieve"
-	DataRetrieverService_GetRetrieval_FullMethodName = "/data_retriever.v1.DataRetrieverService/GetRetrieval"
+	DataRetrieverService_RetrieveStream_FullMethodName = "/data_retriever.v1.DataRetrieverService/RetrieveStream"
+	DataRetrieverService_GetRetrieval_FullMethodName   = "/data_retriever.v1.DataRetrieverService/GetRetrieval"
 )
 
 // DataRetrieverServiceClient is the client API for DataRetrieverService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DataRetrieverServiceClient interface {
-	Retrieve(ctx context.Context, in *RetrieveRequest, opts ...grpc.CallOption) (*RetrieveResponse, error)
+	RetrieveStream(ctx context.Context, in *RetrieveStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[RetrieveStreamResponse], error)
 	GetRetrieval(ctx context.Context, in *GetRetrievalRequest, opts ...grpc.CallOption) (*GetRetrievalResponse, error)
 }
 
@@ -39,15 +39,24 @@ func NewDataRetrieverServiceClient(cc grpc.ClientConnInterface) DataRetrieverSer
 	return &dataRetrieverServiceClient{cc}
 }
 
-func (c *dataRetrieverServiceClient) Retrieve(ctx context.Context, in *RetrieveRequest, opts ...grpc.CallOption) (*RetrieveResponse, error) {
+func (c *dataRetrieverServiceClient) RetrieveStream(ctx context.Context, in *RetrieveStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[RetrieveStreamResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RetrieveResponse)
-	err := c.cc.Invoke(ctx, DataRetrieverService_Retrieve_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &DataRetrieverService_ServiceDesc.Streams[0], DataRetrieverService_RetrieveStream_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &grpc.GenericClientStream[RetrieveStreamRequest, RetrieveStreamResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type DataRetrieverService_RetrieveStreamClient = grpc.ServerStreamingClient[RetrieveStreamResponse]
 
 func (c *dataRetrieverServiceClient) GetRetrieval(ctx context.Context, in *GetRetrievalRequest, opts ...grpc.CallOption) (*GetRetrievalResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -63,7 +72,7 @@ func (c *dataRetrieverServiceClient) GetRetrieval(ctx context.Context, in *GetRe
 // All implementations must embed UnimplementedDataRetrieverServiceServer
 // for forward compatibility.
 type DataRetrieverServiceServer interface {
-	Retrieve(context.Context, *RetrieveRequest) (*RetrieveResponse, error)
+	RetrieveStream(*RetrieveStreamRequest, grpc.ServerStreamingServer[RetrieveStreamResponse]) error
 	GetRetrieval(context.Context, *GetRetrievalRequest) (*GetRetrievalResponse, error)
 	mustEmbedUnimplementedDataRetrieverServiceServer()
 }
@@ -75,8 +84,8 @@ type DataRetrieverServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedDataRetrieverServiceServer struct{}
 
-func (UnimplementedDataRetrieverServiceServer) Retrieve(context.Context, *RetrieveRequest) (*RetrieveResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Retrieve not implemented")
+func (UnimplementedDataRetrieverServiceServer) RetrieveStream(*RetrieveStreamRequest, grpc.ServerStreamingServer[RetrieveStreamResponse]) error {
+	return status.Error(codes.Unimplemented, "method RetrieveStream not implemented")
 }
 func (UnimplementedDataRetrieverServiceServer) GetRetrieval(context.Context, *GetRetrievalRequest) (*GetRetrievalResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetRetrieval not implemented")
@@ -102,23 +111,16 @@ func RegisterDataRetrieverServiceServer(s grpc.ServiceRegistrar, srv DataRetriev
 	s.RegisterService(&DataRetrieverService_ServiceDesc, srv)
 }
 
-func _DataRetrieverService_Retrieve_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RetrieveRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _DataRetrieverService_RetrieveStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RetrieveStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(DataRetrieverServiceServer).Retrieve(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DataRetrieverService_Retrieve_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataRetrieverServiceServer).Retrieve(ctx, req.(*RetrieveRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(DataRetrieverServiceServer).RetrieveStream(m, &grpc.GenericServerStream[RetrieveStreamRequest, RetrieveStreamResponse]{ServerStream: stream})
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type DataRetrieverService_RetrieveStreamServer = grpc.ServerStreamingServer[RetrieveStreamResponse]
 
 func _DataRetrieverService_GetRetrieval_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRetrievalRequest)
@@ -146,14 +148,16 @@ var DataRetrieverService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*DataRetrieverServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Retrieve",
-			Handler:    _DataRetrieverService_Retrieve_Handler,
-		},
-		{
 			MethodName: "GetRetrieval",
 			Handler:    _DataRetrieverService_GetRetrieval_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "RetrieveStream",
+			Handler:       _DataRetrieverService_RetrieveStream_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "data_retriever/v1/data_retriever.proto",
 }

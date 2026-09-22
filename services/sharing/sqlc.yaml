@@ -1,0 +1,23 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "./repository/queries/*.sql"
+    schema: "./storage/migrations/*.sql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "repository/sqlc"
+        sql_package: "database/sql"
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: "uuid"
+            nullable: false
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          - db_type: "uuid"
+            nullable: true
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+              pointer: true

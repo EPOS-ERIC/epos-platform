@@ -341,37 +341,36 @@ func (*RequestBody_Raw) isRequestBody_Content() {}
 
 func (*RequestBody_JsonPayload) isRequestBody_Content() {}
 
-type RetrieveRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Method           HTTPMethod             `protobuf:"varint,2,opt,name=method,proto3,enum=data_retriever.v1.HTTPMethod" json:"method,omitempty"`
-	UrlTemplate      string                 `protobuf:"bytes,3,opt,name=url_template,json=urlTemplate,proto3" json:"url_template,omitempty"`
-	PathParams       map[string]string      `protobuf:"bytes,4,rep,name=path_params,json=pathParams,proto3" json:"path_params,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	QueryParams      map[string]string      `protobuf:"bytes,5,rep,name=query_params,json=queryParams,proto3" json:"query_params,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Headers          map[string]string      `protobuf:"bytes,6,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	BearerToken      string                 `protobuf:"bytes,7,opt,name=bearer_token,json=bearerToken,proto3" json:"bearer_token,omitempty"`
-	Body             *RequestBody           `protobuf:"bytes,8,opt,name=body,proto3" json:"body,omitempty"`
-	ResourceId       string                 `protobuf:"bytes,9,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
-	VersionId        string                 `protobuf:"bytes,10,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
-	OutputParameters []*OutputParameter     `protobuf:"bytes,11,rep,name=output_parameters,json=outputParameters,proto3" json:"output_parameters,omitempty"`
-	Mode             RetrieveMode           `protobuf:"varint,12,opt,name=mode,proto3,enum=data_retriever.v1.RetrieveMode" json:"mode,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+type RetrieveStreamRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Method        HTTPMethod             `protobuf:"varint,2,opt,name=method,proto3,enum=data_retriever.v1.HTTPMethod" json:"method,omitempty"`
+	UrlTemplate   string                 `protobuf:"bytes,3,opt,name=url_template,json=urlTemplate,proto3" json:"url_template,omitempty"`
+	PathParams    map[string]string      `protobuf:"bytes,4,rep,name=path_params,json=pathParams,proto3" json:"path_params,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	QueryParams   map[string]string      `protobuf:"bytes,5,rep,name=query_params,json=queryParams,proto3" json:"query_params,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Headers       map[string]string      `protobuf:"bytes,6,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	BearerToken   string                 `protobuf:"bytes,7,opt,name=bearer_token,json=bearerToken,proto3" json:"bearer_token,omitempty"`
+	Body          *RequestBody           `protobuf:"bytes,8,opt,name=body,proto3" json:"body,omitempty"`
+	ResourceId    string                 `protobuf:"bytes,9,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	VersionId     string                 `protobuf:"bytes,10,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	Mode          RetrieveMode           `protobuf:"varint,12,opt,name=mode,proto3,enum=data_retriever.v1.RetrieveMode" json:"mode,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RetrieveRequest) Reset() {
-	*x = RetrieveRequest{}
+func (x *RetrieveStreamRequest) Reset() {
+	*x = RetrieveStreamRequest{}
 	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RetrieveRequest) String() string {
+func (x *RetrieveStreamRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RetrieveRequest) ProtoMessage() {}
+func (*RetrieveStreamRequest) ProtoMessage() {}
 
-func (x *RetrieveRequest) ProtoReflect() protoreflect.Message {
+func (x *RetrieveStreamRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -383,82 +382,75 @@ func (x *RetrieveRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RetrieveRequest.ProtoReflect.Descriptor instead.
-func (*RetrieveRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use RetrieveStreamRequest.ProtoReflect.Descriptor instead.
+func (*RetrieveStreamRequest) Descriptor() ([]byte, []int) {
 	return file_data_retriever_v1_data_retriever_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *RetrieveRequest) GetMethod() HTTPMethod {
+func (x *RetrieveStreamRequest) GetMethod() HTTPMethod {
 	if x != nil {
 		return x.Method
 	}
 	return HTTPMethod_HTTP_METHOD_UNSPECIFIED
 }
 
-func (x *RetrieveRequest) GetUrlTemplate() string {
+func (x *RetrieveStreamRequest) GetUrlTemplate() string {
 	if x != nil {
 		return x.UrlTemplate
 	}
 	return ""
 }
 
-func (x *RetrieveRequest) GetPathParams() map[string]string {
+func (x *RetrieveStreamRequest) GetPathParams() map[string]string {
 	if x != nil {
 		return x.PathParams
 	}
 	return nil
 }
 
-func (x *RetrieveRequest) GetQueryParams() map[string]string {
+func (x *RetrieveStreamRequest) GetQueryParams() map[string]string {
 	if x != nil {
 		return x.QueryParams
 	}
 	return nil
 }
 
-func (x *RetrieveRequest) GetHeaders() map[string]string {
+func (x *RetrieveStreamRequest) GetHeaders() map[string]string {
 	if x != nil {
 		return x.Headers
 	}
 	return nil
 }
 
-func (x *RetrieveRequest) GetBearerToken() string {
+func (x *RetrieveStreamRequest) GetBearerToken() string {
 	if x != nil {
 		return x.BearerToken
 	}
 	return ""
 }
 
-func (x *RetrieveRequest) GetBody() *RequestBody {
+func (x *RetrieveStreamRequest) GetBody() *RequestBody {
 	if x != nil {
 		return x.Body
 	}
 	return nil
 }
 
-func (x *RetrieveRequest) GetResourceId() string {
+func (x *RetrieveStreamRequest) GetResourceId() string {
 	if x != nil {
 		return x.ResourceId
 	}
 	return ""
 }
 
-func (x *RetrieveRequest) GetVersionId() string {
+func (x *RetrieveStreamRequest) GetVersionId() string {
 	if x != nil {
 		return x.VersionId
 	}
 	return ""
 }
 
-func (x *RetrieveRequest) GetOutputParameters() []*OutputParameter {
-	if x != nil {
-		return x.OutputParameters
-	}
-	return nil
-}
-
-func (x *RetrieveRequest) GetMode() RetrieveMode {
+func (x *RetrieveStreamRequest) GetMode() RetrieveMode {
 	if x != nil {
 		return x.Mode
 	}
@@ -629,35 +621,32 @@ func (x *RetrievalRecord) GetOutputParameters() []*OutputParameter {
 	return nil
 }
 
-type RetrieveResponse struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Record         *RetrievalRecord       `protobuf:"bytes,1,opt,name=record,proto3" json:"record,omitempty"`
-	UpstreamStatus int32                  `protobuf:"varint,2,opt,name=upstream_status,json=upstreamStatus,proto3" json:"upstream_status,omitempty"`
-	ContentType    string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
-	// Types that are valid to be assigned to Result:
-	//
-	//	*RetrieveResponse_InlinePayload
-	//	*RetrieveResponse_RedirectUrl
-	//	*RetrieveResponse_CurlCommand
-	Result        isRetrieveResponse_Result `protobuf_oneof:"result"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type RetrieveStreamHeaders struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Record             *RetrievalRecord       `protobuf:"bytes,1,opt,name=record,proto3" json:"record,omitempty"`
+	UpstreamStatus     int32                  `protobuf:"varint,2,opt,name=upstream_status,json=upstreamStatus,proto3" json:"upstream_status,omitempty"`
+	ContentType        string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	ContentDisposition string                 `protobuf:"bytes,4,opt,name=content_disposition,json=contentDisposition,proto3" json:"content_disposition,omitempty"`
+	RedirectUrl        string                 `protobuf:"bytes,5,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url,omitempty"`
+	CurlCommand        string                 `protobuf:"bytes,6,opt,name=curl_command,json=curlCommand,proto3" json:"curl_command,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
-func (x *RetrieveResponse) Reset() {
-	*x = RetrieveResponse{}
+func (x *RetrieveStreamHeaders) Reset() {
+	*x = RetrieveStreamHeaders{}
 	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RetrieveResponse) String() string {
+func (x *RetrieveStreamHeaders) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RetrieveResponse) ProtoMessage() {}
+func (*RetrieveStreamHeaders) ProtoMessage() {}
 
-func (x *RetrieveResponse) ProtoReflect() protoreflect.Message {
+func (x *RetrieveStreamHeaders) ProtoReflect() protoreflect.Message {
 	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -669,87 +658,134 @@ func (x *RetrieveResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RetrieveResponse.ProtoReflect.Descriptor instead.
-func (*RetrieveResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use RetrieveStreamHeaders.ProtoReflect.Descriptor instead.
+func (*RetrieveStreamHeaders) Descriptor() ([]byte, []int) {
 	return file_data_retriever_v1_data_retriever_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *RetrieveResponse) GetRecord() *RetrievalRecord {
+func (x *RetrieveStreamHeaders) GetRecord() *RetrievalRecord {
 	if x != nil {
 		return x.Record
 	}
 	return nil
 }
 
-func (x *RetrieveResponse) GetUpstreamStatus() int32 {
+func (x *RetrieveStreamHeaders) GetUpstreamStatus() int32 {
 	if x != nil {
 		return x.UpstreamStatus
 	}
 	return 0
 }
 
-func (x *RetrieveResponse) GetContentType() string {
+func (x *RetrieveStreamHeaders) GetContentType() string {
 	if x != nil {
 		return x.ContentType
 	}
 	return ""
 }
 
-func (x *RetrieveResponse) GetResult() isRetrieveResponse_Result {
+func (x *RetrieveStreamHeaders) GetContentDisposition() string {
 	if x != nil {
-		return x.Result
-	}
-	return nil
-}
-
-func (x *RetrieveResponse) GetInlinePayload() []byte {
-	if x != nil {
-		if x, ok := x.Result.(*RetrieveResponse_InlinePayload); ok {
-			return x.InlinePayload
-		}
-	}
-	return nil
-}
-
-func (x *RetrieveResponse) GetRedirectUrl() string {
-	if x != nil {
-		if x, ok := x.Result.(*RetrieveResponse_RedirectUrl); ok {
-			return x.RedirectUrl
-		}
+		return x.ContentDisposition
 	}
 	return ""
 }
 
-func (x *RetrieveResponse) GetCurlCommand() string {
+func (x *RetrieveStreamHeaders) GetRedirectUrl() string {
 	if x != nil {
-		if x, ok := x.Result.(*RetrieveResponse_CurlCommand); ok {
-			return x.CurlCommand
-		}
+		return x.RedirectUrl
 	}
 	return ""
 }
 
-type isRetrieveResponse_Result interface {
-	isRetrieveResponse_Result()
+func (x *RetrieveStreamHeaders) GetCurlCommand() string {
+	if x != nil {
+		return x.CurlCommand
+	}
+	return ""
 }
 
-type RetrieveResponse_InlinePayload struct {
-	InlinePayload []byte `protobuf:"bytes,4,opt,name=inline_payload,json=inlinePayload,proto3,oneof"`
+type RetrieveStreamResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Event:
+	//
+	//	*RetrieveStreamResponse_Headers
+	//	*RetrieveStreamResponse_Chunk
+	Event         isRetrieveStreamResponse_Event `protobuf_oneof:"event"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-type RetrieveResponse_RedirectUrl struct {
-	RedirectUrl string `protobuf:"bytes,5,opt,name=redirect_url,json=redirectUrl,proto3,oneof"`
+func (x *RetrieveStreamResponse) Reset() {
+	*x = RetrieveStreamResponse{}
+	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
-type RetrieveResponse_CurlCommand struct {
-	CurlCommand string `protobuf:"bytes,6,opt,name=curl_command,json=curlCommand,proto3,oneof"`
+func (x *RetrieveStreamResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RetrieveResponse_InlinePayload) isRetrieveResponse_Result() {}
+func (*RetrieveStreamResponse) ProtoMessage() {}
 
-func (*RetrieveResponse_RedirectUrl) isRetrieveResponse_Result() {}
+func (x *RetrieveStreamResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
 
-func (*RetrieveResponse_CurlCommand) isRetrieveResponse_Result() {}
+// Deprecated: Use RetrieveStreamResponse.ProtoReflect.Descriptor instead.
+func (*RetrieveStreamResponse) Descriptor() ([]byte, []int) {
+	return file_data_retriever_v1_data_retriever_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RetrieveStreamResponse) GetEvent() isRetrieveStreamResponse_Event {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
+func (x *RetrieveStreamResponse) GetHeaders() *RetrieveStreamHeaders {
+	if x != nil {
+		if x, ok := x.Event.(*RetrieveStreamResponse_Headers); ok {
+			return x.Headers
+		}
+	}
+	return nil
+}
+
+func (x *RetrieveStreamResponse) GetChunk() []byte {
+	if x != nil {
+		if x, ok := x.Event.(*RetrieveStreamResponse_Chunk); ok {
+			return x.Chunk
+		}
+	}
+	return nil
+}
+
+type isRetrieveStreamResponse_Event interface {
+	isRetrieveStreamResponse_Event()
+}
+
+type RetrieveStreamResponse_Headers struct {
+	Headers *RetrieveStreamHeaders `protobuf:"bytes,1,opt,name=headers,proto3,oneof"`
+}
+
+type RetrieveStreamResponse_Chunk struct {
+	Chunk []byte `protobuf:"bytes,2,opt,name=chunk,proto3,oneof"`
+}
+
+func (*RetrieveStreamResponse_Headers) isRetrieveStreamResponse_Event() {}
+
+func (*RetrieveStreamResponse_Chunk) isRetrieveStreamResponse_Event() {}
 
 type GetRetrievalRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -760,7 +796,7 @@ type GetRetrievalRequest struct {
 
 func (x *GetRetrievalRequest) Reset() {
 	*x = GetRetrievalRequest{}
-	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[5]
+	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -772,7 +808,7 @@ func (x *GetRetrievalRequest) String() string {
 func (*GetRetrievalRequest) ProtoMessage() {}
 
 func (x *GetRetrievalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[5]
+	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -785,7 +821,7 @@ func (x *GetRetrievalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRetrievalRequest.ProtoReflect.Descriptor instead.
 func (*GetRetrievalRequest) Descriptor() ([]byte, []int) {
-	return file_data_retriever_v1_data_retriever_proto_rawDescGZIP(), []int{5}
+	return file_data_retriever_v1_data_retriever_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetRetrievalRequest) GetId() int64 {
@@ -804,7 +840,7 @@ type GetRetrievalResponse struct {
 
 func (x *GetRetrievalResponse) Reset() {
 	*x = GetRetrievalResponse{}
-	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[6]
+	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -816,7 +852,7 @@ func (x *GetRetrievalResponse) String() string {
 func (*GetRetrievalResponse) ProtoMessage() {}
 
 func (x *GetRetrievalResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[6]
+	mi := &file_data_retriever_v1_data_retriever_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -829,7 +865,7 @@ func (x *GetRetrievalResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRetrievalResponse.ProtoReflect.Descriptor instead.
 func (*GetRetrievalResponse) Descriptor() ([]byte, []int) {
-	return file_data_retriever_v1_data_retriever_proto_rawDescGZIP(), []int{6}
+	return file_data_retriever_v1_data_retriever_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetRetrievalResponse) GetRecord() *RetrievalRecord {
@@ -854,22 +890,21 @@ const file_data_retriever_v1_data_retriever_proto_rawDesc = "" +
 	"\fcontent_type\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vcontentType\x12\x1b\n" +
 	"\x03raw\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x03raw\x12,\n" +
 	"\fjson_payload\x18\x03 \x01(\fB\a\xbaH\x04z\x02\x10\x01H\x00R\vjsonPayloadB\x10\n" +
-	"\acontent\x12\x05\xbaH\x02\b\x01\"\xfd\x06\n" +
-	"\x0fRetrieveRequest\x12?\n" +
+	"\acontent\x12\x05\xbaH\x02\b\x01\"\xdd\x06\n" +
+	"\x15RetrieveStreamRequest\x12?\n" +
 	"\x06method\x18\x02 \x01(\x0e2\x1d.data_retriever.v1.HTTPMethodB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06method\x12*\n" +
-	"\furl_template\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vurlTemplate\x12S\n" +
-	"\vpath_params\x18\x04 \x03(\v22.data_retriever.v1.RetrieveRequest.PathParamsEntryR\n" +
-	"pathParams\x12V\n" +
-	"\fquery_params\x18\x05 \x03(\v23.data_retriever.v1.RetrieveRequest.QueryParamsEntryR\vqueryParams\x12I\n" +
-	"\aheaders\x18\x06 \x03(\v2/.data_retriever.v1.RetrieveRequest.HeadersEntryR\aheaders\x12!\n" +
+	"\furl_template\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vurlTemplate\x12Y\n" +
+	"\vpath_params\x18\x04 \x03(\v28.data_retriever.v1.RetrieveStreamRequest.PathParamsEntryR\n" +
+	"pathParams\x12\\\n" +
+	"\fquery_params\x18\x05 \x03(\v29.data_retriever.v1.RetrieveStreamRequest.QueryParamsEntryR\vqueryParams\x12O\n" +
+	"\aheaders\x18\x06 \x03(\v25.data_retriever.v1.RetrieveStreamRequest.HeadersEntryR\aheaders\x12!\n" +
 	"\fbearer_token\x18\a \x01(\tR\vbearerToken\x122\n" +
 	"\x04body\x18\b \x01(\v2\x1e.data_retriever.v1.RequestBodyR\x04body\x12)\n" +
 	"\vresource_id\x18\t \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"resourceId\x12'\n" +
 	"\n" +
 	"version_id\x18\n" +
-	" \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\x12O\n" +
-	"\x11output_parameters\x18\v \x03(\v2\".data_retriever.v1.OutputParameterR\x10outputParameters\x12=\n" +
+	" \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\x12=\n" +
 	"\x04mode\x18\f \x01(\x0e2\x1f.data_retriever.v1.RetrieveModeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04mode\x1a=\n" +
 	"\x0fPathParamsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -879,7 +914,7 @@ const file_data_retriever_v1_data_retriever_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a:\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\x01\x10\x02R\tsource_id\"\xa8\x05\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\x01\x10\x02J\x04\b\v\x10\fR\tsource_idR\x11output_parameters\"\xa8\x05\n" +
 	"\x0fRetrievalRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06method\x18\x03 \x01(\tR\x06method\x12!\n" +
@@ -903,15 +938,18 @@ const file_data_retriever_v1_data_retriever_proto_rawDesc = "" +
 	"\n" +
 	"version_id\x18\x11 \x01(\tR\tversionId\x12O\n" +
 	"\x11output_parameters\x18\x12 \x03(\v2\".data_retriever.v1.OutputParameterR\x10outputParametersJ\x04\b\x02\x10\x03J\x04\b\t\x10\n" +
-	"R\tsource_idR\fpayload_text\"\xaa\x02\n" +
-	"\x10RetrieveResponse\x12:\n" +
+	"R\tsource_idR\fpayload_text\"\xa9\x02\n" +
+	"\x15RetrieveStreamHeaders\x12:\n" +
 	"\x06record\x18\x01 \x01(\v2\".data_retriever.v1.RetrievalRecordR\x06record\x12'\n" +
 	"\x0fupstream_status\x18\x02 \x01(\x05R\x0eupstreamStatus\x12!\n" +
-	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\x12'\n" +
-	"\x0einline_payload\x18\x04 \x01(\fH\x00R\rinlinePayload\x12-\n" +
-	"\fredirect_url\x18\x05 \x01(\tB\b\xbaH\x05r\x03\x90\x01\x01H\x00R\vredirectUrl\x12,\n" +
-	"\fcurl_command\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\vcurlCommandB\b\n" +
-	"\x06result\".\n" +
+	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\x12/\n" +
+	"\x13content_disposition\x18\x04 \x01(\tR\x12contentDisposition\x12+\n" +
+	"\fredirect_url\x18\x05 \x01(\tB\b\xbaH\x05r\x03\x90\x01\x01R\vredirectUrl\x12*\n" +
+	"\fcurl_command\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vcurlCommand\"\x8f\x01\n" +
+	"\x16RetrieveStreamResponse\x12D\n" +
+	"\aheaders\x18\x01 \x01(\v2(.data_retriever.v1.RetrieveStreamHeadersH\x00R\aheaders\x12\x1f\n" +
+	"\x05chunk\x18\x02 \x01(\fB\a\xbaH\x04z\x02\x10\x01H\x00R\x05chunkB\x0e\n" +
+	"\x05event\x12\x05\xbaH\x02\b\x01\".\n" +
 	"\x13GetRetrievalRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\x03B\a\xbaH\x04\"\x02 \x00R\x02id\"R\n" +
 	"\x14GetRetrievalResponse\x12:\n" +
@@ -935,9 +973,9 @@ const file_data_retriever_v1_data_retriever_proto_rawDesc = "" +
 	"\x1bOUTPUT_PARAMETER_KIND_FLOAT\x10\x04\x12\"\n" +
 	"\x1eOUTPUT_PARAMETER_KIND_DATETIME\x10\x05\x12\x1e\n" +
 	"\x1aOUTPUT_PARAMETER_KIND_JSON\x10\x06\x12 \n" +
-	"\x1cOUTPUT_PARAMETER_KIND_BINARY\x10\a2\xcc\x01\n" +
-	"\x14DataRetrieverService\x12S\n" +
-	"\bRetrieve\x12\".data_retriever.v1.RetrieveRequest\x1a#.data_retriever.v1.RetrieveResponse\x12_\n" +
+	"\x1cOUTPUT_PARAMETER_KIND_BINARY\x10\a2\xe0\x01\n" +
+	"\x14DataRetrieverService\x12g\n" +
+	"\x0eRetrieveStream\x12(.data_retriever.v1.RetrieveStreamRequest\x1a).data_retriever.v1.RetrieveStreamResponse0\x01\x12_\n" +
 	"\fGetRetrieval\x12&.data_retriever.v1.GetRetrievalRequest\x1a'.data_retriever.v1.GetRetrievalResponseB_Z]github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/data_retriever/v1;dataretrieverv1b\x06proto3"
 
 var (
@@ -953,41 +991,42 @@ func file_data_retriever_v1_data_retriever_proto_rawDescGZIP() []byte {
 }
 
 var file_data_retriever_v1_data_retriever_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_data_retriever_v1_data_retriever_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_data_retriever_v1_data_retriever_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_data_retriever_v1_data_retriever_proto_goTypes = []any{
-	(HTTPMethod)(0),               // 0: data_retriever.v1.HTTPMethod
-	(RetrieveMode)(0),             // 1: data_retriever.v1.RetrieveMode
-	(OutputParameterKind)(0),      // 2: data_retriever.v1.OutputParameterKind
-	(*OutputParameter)(nil),       // 3: data_retriever.v1.OutputParameter
-	(*RequestBody)(nil),           // 4: data_retriever.v1.RequestBody
-	(*RetrieveRequest)(nil),       // 5: data_retriever.v1.RetrieveRequest
-	(*RetrievalRecord)(nil),       // 6: data_retriever.v1.RetrievalRecord
-	(*RetrieveResponse)(nil),      // 7: data_retriever.v1.RetrieveResponse
-	(*GetRetrievalRequest)(nil),   // 8: data_retriever.v1.GetRetrievalRequest
-	(*GetRetrievalResponse)(nil),  // 9: data_retriever.v1.GetRetrievalResponse
-	nil,                           // 10: data_retriever.v1.RetrieveRequest.PathParamsEntry
-	nil,                           // 11: data_retriever.v1.RetrieveRequest.QueryParamsEntry
-	nil,                           // 12: data_retriever.v1.RetrieveRequest.HeadersEntry
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
+	(HTTPMethod)(0),                // 0: data_retriever.v1.HTTPMethod
+	(RetrieveMode)(0),              // 1: data_retriever.v1.RetrieveMode
+	(OutputParameterKind)(0),       // 2: data_retriever.v1.OutputParameterKind
+	(*OutputParameter)(nil),        // 3: data_retriever.v1.OutputParameter
+	(*RequestBody)(nil),            // 4: data_retriever.v1.RequestBody
+	(*RetrieveStreamRequest)(nil),  // 5: data_retriever.v1.RetrieveStreamRequest
+	(*RetrievalRecord)(nil),        // 6: data_retriever.v1.RetrievalRecord
+	(*RetrieveStreamHeaders)(nil),  // 7: data_retriever.v1.RetrieveStreamHeaders
+	(*RetrieveStreamResponse)(nil), // 8: data_retriever.v1.RetrieveStreamResponse
+	(*GetRetrievalRequest)(nil),    // 9: data_retriever.v1.GetRetrievalRequest
+	(*GetRetrievalResponse)(nil),   // 10: data_retriever.v1.GetRetrievalResponse
+	nil,                            // 11: data_retriever.v1.RetrieveStreamRequest.PathParamsEntry
+	nil,                            // 12: data_retriever.v1.RetrieveStreamRequest.QueryParamsEntry
+	nil,                            // 13: data_retriever.v1.RetrieveStreamRequest.HeadersEntry
+	(*timestamppb.Timestamp)(nil),  // 14: google.protobuf.Timestamp
 }
 var file_data_retriever_v1_data_retriever_proto_depIdxs = []int32{
 	2,  // 0: data_retriever.v1.OutputParameter.kind:type_name -> data_retriever.v1.OutputParameterKind
-	0,  // 1: data_retriever.v1.RetrieveRequest.method:type_name -> data_retriever.v1.HTTPMethod
-	10, // 2: data_retriever.v1.RetrieveRequest.path_params:type_name -> data_retriever.v1.RetrieveRequest.PathParamsEntry
-	11, // 3: data_retriever.v1.RetrieveRequest.query_params:type_name -> data_retriever.v1.RetrieveRequest.QueryParamsEntry
-	12, // 4: data_retriever.v1.RetrieveRequest.headers:type_name -> data_retriever.v1.RetrieveRequest.HeadersEntry
-	4,  // 5: data_retriever.v1.RetrieveRequest.body:type_name -> data_retriever.v1.RequestBody
-	3,  // 6: data_retriever.v1.RetrieveRequest.output_parameters:type_name -> data_retriever.v1.OutputParameter
-	1,  // 7: data_retriever.v1.RetrieveRequest.mode:type_name -> data_retriever.v1.RetrieveMode
-	13, // 8: data_retriever.v1.RetrievalRecord.fetched_at:type_name -> google.protobuf.Timestamp
-	13, // 9: data_retriever.v1.RetrievalRecord.created_at:type_name -> google.protobuf.Timestamp
-	3,  // 10: data_retriever.v1.RetrievalRecord.output_parameters:type_name -> data_retriever.v1.OutputParameter
-	6,  // 11: data_retriever.v1.RetrieveResponse.record:type_name -> data_retriever.v1.RetrievalRecord
+	0,  // 1: data_retriever.v1.RetrieveStreamRequest.method:type_name -> data_retriever.v1.HTTPMethod
+	11, // 2: data_retriever.v1.RetrieveStreamRequest.path_params:type_name -> data_retriever.v1.RetrieveStreamRequest.PathParamsEntry
+	12, // 3: data_retriever.v1.RetrieveStreamRequest.query_params:type_name -> data_retriever.v1.RetrieveStreamRequest.QueryParamsEntry
+	13, // 4: data_retriever.v1.RetrieveStreamRequest.headers:type_name -> data_retriever.v1.RetrieveStreamRequest.HeadersEntry
+	4,  // 5: data_retriever.v1.RetrieveStreamRequest.body:type_name -> data_retriever.v1.RequestBody
+	1,  // 6: data_retriever.v1.RetrieveStreamRequest.mode:type_name -> data_retriever.v1.RetrieveMode
+	14, // 7: data_retriever.v1.RetrievalRecord.fetched_at:type_name -> google.protobuf.Timestamp
+	14, // 8: data_retriever.v1.RetrievalRecord.created_at:type_name -> google.protobuf.Timestamp
+	3,  // 9: data_retriever.v1.RetrievalRecord.output_parameters:type_name -> data_retriever.v1.OutputParameter
+	6,  // 10: data_retriever.v1.RetrieveStreamHeaders.record:type_name -> data_retriever.v1.RetrievalRecord
+	7,  // 11: data_retriever.v1.RetrieveStreamResponse.headers:type_name -> data_retriever.v1.RetrieveStreamHeaders
 	6,  // 12: data_retriever.v1.GetRetrievalResponse.record:type_name -> data_retriever.v1.RetrievalRecord
-	5,  // 13: data_retriever.v1.DataRetrieverService.Retrieve:input_type -> data_retriever.v1.RetrieveRequest
-	8,  // 14: data_retriever.v1.DataRetrieverService.GetRetrieval:input_type -> data_retriever.v1.GetRetrievalRequest
-	7,  // 15: data_retriever.v1.DataRetrieverService.Retrieve:output_type -> data_retriever.v1.RetrieveResponse
-	9,  // 16: data_retriever.v1.DataRetrieverService.GetRetrieval:output_type -> data_retriever.v1.GetRetrievalResponse
+	5,  // 13: data_retriever.v1.DataRetrieverService.RetrieveStream:input_type -> data_retriever.v1.RetrieveStreamRequest
+	9,  // 14: data_retriever.v1.DataRetrieverService.GetRetrieval:input_type -> data_retriever.v1.GetRetrievalRequest
+	8,  // 15: data_retriever.v1.DataRetrieverService.RetrieveStream:output_type -> data_retriever.v1.RetrieveStreamResponse
+	10, // 16: data_retriever.v1.DataRetrieverService.GetRetrieval:output_type -> data_retriever.v1.GetRetrievalResponse
 	15, // [15:17] is the sub-list for method output_type
 	13, // [13:15] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
@@ -1005,10 +1044,9 @@ func file_data_retriever_v1_data_retriever_proto_init() {
 		(*RequestBody_Raw)(nil),
 		(*RequestBody_JsonPayload)(nil),
 	}
-	file_data_retriever_v1_data_retriever_proto_msgTypes[4].OneofWrappers = []any{
-		(*RetrieveResponse_InlinePayload)(nil),
-		(*RetrieveResponse_RedirectUrl)(nil),
-		(*RetrieveResponse_CurlCommand)(nil),
+	file_data_retriever_v1_data_retriever_proto_msgTypes[5].OneofWrappers = []any{
+		(*RetrieveStreamResponse_Headers)(nil),
+		(*RetrieveStreamResponse_Chunk)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1016,7 +1054,7 @@ func file_data_retriever_v1_data_retriever_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_data_retriever_v1_data_retriever_proto_rawDesc), len(file_data_retriever_v1_data_retriever_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

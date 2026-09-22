@@ -79,6 +79,29 @@ docker_build(
 )
 
 docker_build(
+    'epos-sharing-dev:local',
+    '.',
+    dockerfile='services/sharing/Dockerfile.dev',
+    only=[
+        'services/sharing',
+        'packages/go/logging',
+        'packages/go/observability',
+        'packages/go/postgres',
+        'packages/protobuf',
+        'packages/scripts/epos-banner.sh',
+    ],
+    live_update=[
+        sync('services/sharing', '/workspace/services/sharing'),
+        sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
+        sync('packages/go/postgres', '/workspace/packages/go/postgres'),
+        sync('packages/protobuf', '/workspace/packages/protobuf'),
+        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
+        restart_container(),
+    ],
+)
+
+docker_build(
     'epos-oss-aai-dev:local',
     '.',
     dockerfile='services/oss-aai-service/Dockerfile.dev',
@@ -98,8 +121,10 @@ docker_build(
 
 dc_resource('data-retriever-db', labels=['infra'])
 dc_resource('metadata-lifecycle-db', labels=['infra'])
+dc_resource('sharing-db', labels=['infra'])
 dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db'])
+dc_resource('sharing-service', labels=['app'], resource_deps=['sharing-db'])
 dc_resource('oss-aai-service', labels=['app'])
-dc_resource('gateway-service', labels=['app'], resource_deps=['data-retriever-service'])
+dc_resource('gateway-service', labels=['app'], resource_deps=['data-retriever-service', 'sharing-service'])
 dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['metadata-lifecycle-db'])
 dc_resource('otel-lgtm', labels=['observability'])

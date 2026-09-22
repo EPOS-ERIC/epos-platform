@@ -29,17 +29,26 @@ func TestToProtoRetrieveResourceVersionRequestDefaultsToExecute(t *testing.T) {
 	}
 }
 
-func TestToAPIRetrieveResourceVersionDryResponse(t *testing.T) {
-	response, err := toAPIRetrieveResourceVersionResponse(&dataretrieverv1.RetrieveResponse{
-		Result: &dataretrieverv1.RetrieveResponse_CurlCommand{CurlCommand: "curl --url 'https://example.test'"},
+func TestToAPIDryResponse(t *testing.T) {
+	response, err := toAPIDryResponse(&dataretrieverv1.RetrieveStreamHeaders{
+		CurlCommand: "curl --url 'https://example.test'",
 	})
 	if err != nil {
-		t.Fatalf("toAPIRetrieveResourceVersionResponse() error = %v", err)
+		t.Fatalf("toAPIDryResponse() error = %v", err)
 	}
 	if response.Mode != gatewayapi.RetrieveModeDRY || !response.CurlCommand.Set || response.CurlCommand.Value == "" {
 		t.Fatalf("dry response = %+v", response)
 	}
 	if response.RetrievalID.Set || response.InlinePayload.Set || response.RedirectURL.Set {
 		t.Fatalf("dry response includes execution fields: %+v", response)
+	}
+}
+
+func TestToAPIDryResponseRejectsEmptyHeaders(t *testing.T) {
+	if _, err := toAPIDryResponse(&dataretrieverv1.RetrieveStreamHeaders{}); err == nil {
+		t.Fatal("expected error for headers without curl command")
+	}
+	if _, err := toAPIDryResponse(nil); err == nil {
+		t.Fatal("expected error for nil headers")
 	}
 }

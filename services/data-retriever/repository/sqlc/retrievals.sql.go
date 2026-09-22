@@ -60,6 +60,25 @@ func (q *Queries) DeleteOutputParameters(ctx context.Context, arg DeleteOutputPa
 	return err
 }
 
+const finalizeRetrieval = `-- name: FinalizeRetrieval :exec
+UPDATE retrievals
+SET payload_hash = $1,
+    payload_size_bytes = $2,
+    updated_at = NOW()
+WHERE id = $3
+`
+
+type FinalizeRetrievalParams struct {
+	PayloadHash      string
+	PayloadSizeBytes int64
+	ID               int64
+}
+
+func (q *Queries) FinalizeRetrieval(ctx context.Context, arg FinalizeRetrievalParams) error {
+	_, err := q.db.ExecContext(ctx, finalizeRetrieval, arg.PayloadHash, arg.PayloadSizeBytes, arg.ID)
+	return err
+}
+
 const getOutputParameters = `-- name: GetOutputParameters :many
 SELECT name, kind, pattern
 FROM retrieval_output_parameters
@@ -121,7 +140,7 @@ type GetRetrievalByIDRow struct {
 	ContentType      string
 	IsBinary         bool
 	PayloadHash      string
-	PayloadSizeBytes int32
+	PayloadSizeBytes int64
 	UsedAuth         bool
 	FetchedAt        time.Time
 	CreatedAt        time.Time
@@ -222,7 +241,7 @@ type UpsertRetrievalParams struct {
 	ContentType       string
 	IsBinary          bool
 	PayloadHash       string
-	PayloadSizeBytes  int32
+	PayloadSizeBytes  int64
 	UsedAuth          bool
 	FetchedAt         time.Time
 }
@@ -238,7 +257,7 @@ type UpsertRetrievalRow struct {
 	ContentType      string
 	IsBinary         bool
 	PayloadHash      string
-	PayloadSizeBytes int32
+	PayloadSizeBytes int64
 	UsedAuth         bool
 	FetchedAt        time.Time
 	CreatedAt        time.Time

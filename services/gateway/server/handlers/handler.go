@@ -26,14 +26,16 @@ var (
 type ogenHandler struct {
 	metadataLifecycle *clients.MetadataLifecycle
 	dataRetriever     *clients.DataRetriever
+	sharing           *clients.Sharing
 	identity          *identity.Service
 	membership        *membership.Service
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, dataRetriever *clients.DataRetriever) *ogenHandler {
+func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, dataRetriever *clients.DataRetriever, sharing *clients.Sharing) *ogenHandler {
 	return &ogenHandler{
 		metadataLifecycle: metadataLifecycle,
 		dataRetriever:     dataRetriever,
+		sharing:           sharing,
 		identity:          i,
 		membership:        m,
 	}
@@ -60,6 +62,10 @@ var errMissingActor = errors.New("bearer token required")
 
 func actorID(ctx context.Context) (string, bool) {
 	return authcontext.ActorID(ctx)
+}
+
+func isAdmin(ctx context.Context) bool {
+	return authcontext.IsAdmin(ctx)
 }
 
 func toClientStringPtr(v gatewayapi.OptNilString) *string {

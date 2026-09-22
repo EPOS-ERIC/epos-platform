@@ -27,7 +27,7 @@ type Retrieval struct {
 	ContentType       string
 	IsBinary          bool
 	PayloadHash       string
-	PayloadSizeBytes  int32
+	PayloadSizeBytes  int64
 	UsedAuth          bool
 	FetchedAt         time.Time
 	CreatedAt         time.Time

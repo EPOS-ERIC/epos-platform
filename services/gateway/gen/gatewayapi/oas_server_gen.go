@@ -35,6 +35,14 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/resources/{resourceType}/{id}/copy
 	CopyResource(ctx context.Context, params CopyResourceParams) (*WriteResult, error)
+	// CreateConfiguration implements createConfiguration operation.
+	//
+	// Persists a workspace configuration document with optional descriptive metadata. The configuration
+	// payload is stored as canonical JSON. Requires authentication; only administrators may mark a
+	// configuration as official.
+	//
+	// POST /configurations
+	CreateConfiguration(ctx context.Context, req *CreateConfigurationRequest) (*Configuration, error)
 	// CreateContactPoint implements createContactPoint operation.
 	//
 	// Create reusable contact point.
@@ -79,6 +87,12 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/role-requests/{requestId}/{decision}
 	DecideGroupRoleRequest(ctx context.Context, params DecideGroupRoleRequestParams) (*GroupMembership, error)
+	// DeleteConfiguration implements deleteConfiguration operation.
+	//
+	// Requires authentication; only the owner or an administrator may delete.
+	//
+	// DELETE /configurations/{configurationId}
+	DeleteConfiguration(ctx context.Context, params DeleteConfigurationParams) error
 	// DeleteContactPoint implements deleteContactPoint operation.
 	//
 	// Delete contact point.
@@ -140,6 +154,12 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/draft-from-publication
 	DraftFromPublication(ctx context.Context, params DraftFromPublicationParams) (*WriteResult, error)
+	// GetConfiguration implements getConfiguration operation.
+	//
+	// Private configurations are readable by their owner or an administrator only.
+	//
+	// GET /configurations/{configurationId}
+	GetConfiguration(ctx context.Context, params GetConfigurationParams) (*Configuration, error)
 	// GetContactPoint implements getContactPoint operation.
 	//
 	// Get contact point.
@@ -197,6 +217,14 @@ type Handler interface {
 	//
 	// POST /imports/turtle
 	ImportTurtleMetadata(ctx context.Context, req ImportTurtleMetadataReq) (*ImportResult, error)
+	// ListConfigurations implements listConfigurations operation.
+	//
+	// Returns shared workspace configurations, newest first. Anonymous callers receive public
+	// configurations only; authenticated callers additionally receive their own private configurations
+	// (and every configuration when they are administrators).
+	//
+	// GET /configurations
+	ListConfigurations(ctx context.Context, params ListConfigurationsParams) (*ConfigurationList, error)
 	// ListContactPoints implements listContactPoints operation.
 	//
 	// List reusable contact points.
@@ -277,6 +305,14 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/versions/{versionId}/reopen
 	ReopenResourceVersion(ctx context.Context, params ReopenResourceVersionParams) (*WriteResult, error)
+	// ReplaceConfiguration implements replaceConfiguration operation.
+	//
+	// Fully replaces the configuration document and metadata. Absent nullable fields and an empty service
+	// list clear the stored values. Requires authentication; only the owner or an administrator may
+	// replace, and only administrators may change the official flag.
+	//
+	// PUT /configurations/{configurationId}
+	ReplaceConfiguration(ctx context.Context, req *ReplaceConfigurationRequest, params ReplaceConfigurationParams) (*Configuration, error)
 	// ReplaceContactPoint implements replaceContactPoint operation.
 	//
 	// Replace contact point.
@@ -325,6 +361,15 @@ type Handler interface {
 	// Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses
 	// never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a
 	// generated command that needs authentication.
+	//
+	// In `EXECUTE` mode the gateway acts as a transparent streaming proxy: the HTTP status, Content-Type
+	// and body are relayed verbatim from the upstream resource with no size limit, so even gigabyte
+	// downloads flow through this endpoint. The service discovers output parameters from supported payload
+	// formats after a complete retrieval; clients do not provide them. A 3xx upstream response is relayed
+	// with its status code and `Location` header. An upstream `Content-Disposition` header (carrying the
+	// original file name) is forwarded as well; when the upstream omits it, one is synthesized from the
+	// file name in the request URL so downloads keep the original name. The persisted retrieval identifier
+	// is exposed via the `X-Retrieval-Id` response header.
 	//
 	// POST /access
 	RetrieveResourceVersion(ctx context.Context, req *RetrieveResourceVersionRequest) (*RetrieveResourceVersionResponse, error)

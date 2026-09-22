@@ -31,17 +31,16 @@ type RequestBody struct {
 }
 
 type RetrieveRequest struct {
-	Mode             RetrieveMode      `json:"mode"`
-	ResourceID       string            `json:"resource_id"`
-	VersionID        string            `json:"version_id"`
-	Method           string            `json:"method"`
-	URLTemplate      string            `json:"url_template"`
-	PathParams       map[string]string `json:"path_params"`
-	QueryParams      map[string]string `json:"query_params,omitempty"`
-	Headers          map[string]string `json:"headers,omitempty"`
-	BearerToken      string            `json:"bearer_token,omitempty"`
-	Body             *RequestBody      `json:"body,omitempty"`
-	OutputParameters []OutputParameter `json:"output_parameters"`
+	Mode        RetrieveMode      `json:"mode"`
+	ResourceID  string            `json:"resource_id"`
+	VersionID   string            `json:"version_id"`
+	Method      string            `json:"method"`
+	URLTemplate string            `json:"url_template"`
+	PathParams  map[string]string `json:"path_params"`
+	QueryParams map[string]string `json:"query_params,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty"`
+	BearerToken string            `json:"bearer_token,omitempty"`
+	Body        *RequestBody      `json:"body,omitempty"`
 }
 
 type OutputParameter struct {
@@ -70,12 +69,6 @@ func (r RetrieveRequest) Validate() (ValidatedRequest, error) {
 	if _, err := uuid.Parse(r.VersionID); err != nil {
 		return ValidatedRequest{}, errors.New("version_id must be a UUID")
 	}
-
-	parameters, err := validateOutputParameters(r.OutputParameters)
-	if err != nil {
-		return ValidatedRequest{}, err
-	}
-	r.OutputParameters = parameters
 
 	method := strings.ToUpper(strings.TrimSpace(r.Method))
 	if !slices.Contains([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}, method) {
@@ -160,37 +153,6 @@ func (r ValidatedRequest) CurlCommand() string {
 
 func shellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
-}
-
-func validateOutputParameters(parameters []OutputParameter) ([]OutputParameter, error) {
-	validated := make([]OutputParameter, 0, len(parameters))
-	names := make(map[string]struct{}, len(parameters))
-	for _, parameter := range parameters {
-		parameter.Name = strings.TrimSpace(parameter.Name)
-		parameter.Kind = strings.ToUpper(strings.TrimSpace(parameter.Kind))
-		if parameter.Name == "" {
-			return nil, errors.New("output parameter name is required")
-		}
-		if _, exists := names[parameter.Name]; exists {
-			return nil, fmt.Errorf("output parameter %q is duplicated", parameter.Name)
-		}
-		if !slices.Contains([]string{"STRING", "BOOLEAN", "INTEGER", "FLOAT", "DATETIME", "JSON", "BINARY"}, parameter.Kind) {
-			return nil, fmt.Errorf("output parameter %q has an invalid kind", parameter.Name)
-		}
-		if parameter.Pattern != nil {
-			pattern := strings.TrimSpace(*parameter.Pattern)
-			if pattern == "" {
-				return nil, fmt.Errorf("output parameter %q pattern is empty", parameter.Name)
-			}
-			if _, err := regexp.Compile(pattern); err != nil {
-				return nil, fmt.Errorf("output parameter %q pattern is invalid: %w", parameter.Name, err)
-			}
-			parameter.Pattern = &pattern
-		}
-		names[parameter.Name] = struct{}{}
-		validated = append(validated, parameter)
-	}
-	return validated, nil
 }
 
 func buildURL(template string, pathParams map[string]string, queryParams map[string]string) (string, error) {

@@ -82,6 +82,43 @@ services:
       retries: 20
       start_period: 20s
 
+  sharing-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=sharing
+      - POSTGRES_USER=sharing
+      - POSTGRES_PASSWORD=sharing
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sharing -d sharing || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - sharing-db-data-ci:/var/lib/postgresql/data
+
+  sharing:
+    image: epos-sharing:latest
+    depends_on:
+      sharing-db:
+        condition: service_healthy
+    environment:
+      - SHARING_GRPC_LISTEN_ADDR=:8200
+      - SHARING_DB_HOST=sharing-db
+      - SHARING_DB_PORT=5432
+      - SHARING_DB_NAME=sharing
+      - SHARING_DB_USER=sharing
+      - SHARING_DB_PASSWORD=sharing
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   oss-aai-service:
     image: epos-oss-aai-service:latest
     environment:
@@ -110,6 +147,8 @@ services:
         condition: service_healthy
       data-retriever:
         condition: service_healthy
+      sharing:
+        condition: service_healthy
       oss-aai-service:
         condition: service_healthy
     environment:
@@ -136,6 +175,7 @@ services:
 volumes:
   metadata-lifecycle-db-data-ci:
   data-retriever-db-data-ci:
+  sharing-db-data-ci:
 
 networks:
   epos-network:

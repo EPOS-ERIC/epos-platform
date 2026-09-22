@@ -17,10 +17,9 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 )
 
-func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, dataRetrieverClient *clients.DataRetriever, authService *auth.Service) error {
+func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, dataRetrieverClient *clients.DataRetriever, sharingClient *clients.Sharing, authService *auth.Service) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -42,13 +41,12 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 
 	identitySvc := identity.NewService(baseLog, metadataLifecycleClient)
 	membershipSvc := membership.NewService(baseLog, metadataLifecycleClient)
-	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, dataRetrieverClient, authService, cfg.Server.CORSAllowOrigin)
-	handler := handlers.NewTimeoutHandler(baseLog, router, cfg.Server.RequestTimeout)
+	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, dataRetrieverClient, sharingClient, authService, cfg.Server.CORSAllowOrigin, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{
 		BaseContext:  func(net.Listener) context.Context { return ctx },
 		Addr:         cfg.Server.Listen,
-		Handler:      handler,
+		Handler:      router,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 		IdleTimeout:  cfg.Server.IdleTimeout,

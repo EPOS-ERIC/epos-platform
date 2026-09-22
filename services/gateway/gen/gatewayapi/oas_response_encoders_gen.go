@@ -43,6 +43,19 @@ func encodeCopyResourceResponse(response *WriteResult, w http.ResponseWriter, sp
 	return nil
 }
 
+func encodeCreateConfigurationResponse(response *Configuration, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(201)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeCreateContactPointResponse(response *ContactPoint, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
@@ -134,6 +147,12 @@ func encodeDecideGroupRoleRequestResponse(response *GroupMembership, w http.Resp
 	return nil
 }
 
+func encodeDeleteConfigurationResponse(response *DeleteConfigurationNoContent, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(204)
+
+	return nil
+}
+
 func encodeDeleteContactPointResponse(response *DeleteContactPointNoContent, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(204)
 
@@ -203,6 +222,19 @@ func encodeDraftFromArchiveResponse(response *WriteResult, w http.ResponseWriter
 func encodeDraftFromPublicationResponse(response *WriteResult, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeGetConfigurationResponse(response *Configuration, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
 
 	e := new(jx.Encoder)
 	response.Encode(e)
@@ -304,6 +336,19 @@ func encodeGrantGroupPermissionResponse(response *GrantGroupPermissionNoContent,
 }
 
 func encodeImportTurtleMetadataResponse(response *ImportResult, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeListConfigurationsResponse(response *ConfigurationList, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 
@@ -491,6 +536,19 @@ func encodeRemoveGroupRoleResponse(response *RemoveGroupRoleNoContent, w http.Re
 }
 
 func encodeReopenResourceVersionResponse(response *WriteResult, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeReplaceConfigurationResponse(response *Configuration, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 

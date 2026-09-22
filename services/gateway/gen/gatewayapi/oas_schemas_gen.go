@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 )
 
@@ -808,6 +809,147 @@ func (s *Category) SetName(val string) {
 	s.Name = val
 }
 
+// Ref: #/components/schemas/Configuration
+type Configuration struct {
+	ID uuid.UUID `json:"id"`
+	// Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+	Configuration  jx.Raw       `json:"configuration"`
+	Title          OptNilString `json:"title"`
+	Description    OptNilString `json:"description"`
+	ListOfServices []string     `json:"list_of_services"`
+	IsOfficial     bool         `json:"is_official"`
+	IsPublic       bool         `json:"is_public"`
+	OwnerID        string       `json:"owner_id"`
+	CreatedAt      time.Time    `json:"created_at"`
+	UpdatedAt      time.Time    `json:"updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *Configuration) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetConfiguration returns the value of Configuration.
+func (s *Configuration) GetConfiguration() jx.Raw {
+	return s.Configuration
+}
+
+// GetTitle returns the value of Title.
+func (s *Configuration) GetTitle() OptNilString {
+	return s.Title
+}
+
+// GetDescription returns the value of Description.
+func (s *Configuration) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetListOfServices returns the value of ListOfServices.
+func (s *Configuration) GetListOfServices() []string {
+	return s.ListOfServices
+}
+
+// GetIsOfficial returns the value of IsOfficial.
+func (s *Configuration) GetIsOfficial() bool {
+	return s.IsOfficial
+}
+
+// GetIsPublic returns the value of IsPublic.
+func (s *Configuration) GetIsPublic() bool {
+	return s.IsPublic
+}
+
+// GetOwnerID returns the value of OwnerID.
+func (s *Configuration) GetOwnerID() string {
+	return s.OwnerID
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Configuration) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *Configuration) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *Configuration) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetConfiguration sets the value of Configuration.
+func (s *Configuration) SetConfiguration(val jx.Raw) {
+	s.Configuration = val
+}
+
+// SetTitle sets the value of Title.
+func (s *Configuration) SetTitle(val OptNilString) {
+	s.Title = val
+}
+
+// SetDescription sets the value of Description.
+func (s *Configuration) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetListOfServices sets the value of ListOfServices.
+func (s *Configuration) SetListOfServices(val []string) {
+	s.ListOfServices = val
+}
+
+// SetIsOfficial sets the value of IsOfficial.
+func (s *Configuration) SetIsOfficial(val bool) {
+	s.IsOfficial = val
+}
+
+// SetIsPublic sets the value of IsPublic.
+func (s *Configuration) SetIsPublic(val bool) {
+	s.IsPublic = val
+}
+
+// SetOwnerID sets the value of OwnerID.
+func (s *Configuration) SetOwnerID(val string) {
+	s.OwnerID = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Configuration) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *Configuration) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// Ref: #/components/schemas/ConfigurationList
+type ConfigurationList struct {
+	Configurations []Configuration `json:"configurations"`
+	Total          int64           `json:"total"`
+}
+
+// GetConfigurations returns the value of Configurations.
+func (s *ConfigurationList) GetConfigurations() []Configuration {
+	return s.Configurations
+}
+
+// GetTotal returns the value of Total.
+func (s *ConfigurationList) GetTotal() int64 {
+	return s.Total
+}
+
+// SetConfigurations sets the value of Configurations.
+func (s *ConfigurationList) SetConfigurations(val []Configuration) {
+	s.Configurations = val
+}
+
+// SetTotal sets the value of Total.
+func (s *ConfigurationList) SetTotal(val int64) {
+	s.Total = val
+}
+
 // Ref: #/components/schemas/ContactPoint
 type ContactPoint struct {
 	ID    uuid.UUID `json:"id"`
@@ -869,6 +1011,90 @@ func (s *CreateCategoryRequest) SetName(val NonBlankString) {
 // SetParentCategoryID sets the value of ParentCategoryID.
 func (s *CreateCategoryRequest) SetParentCategoryID(val OptNilUUID) {
 	s.ParentCategoryID = val
+}
+
+// Ref: #/components/schemas/CreateConfigurationRequest
+type CreateConfigurationRequest struct {
+	ID OptNilUUID `json:"id"`
+	// Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+	Configuration  jx.Raw       `json:"configuration"`
+	Title          OptNilString `json:"title"`
+	Description    OptNilString `json:"description"`
+	ListOfServices []string     `json:"list_of_services"`
+	// Administrators only; official configurations are always public.
+	IsOfficial OptBool `json:"is_official"`
+	// Visibility flag. Absent means public.
+	IsPublic OptNilBool `json:"is_public"`
+}
+
+// GetID returns the value of ID.
+func (s *CreateConfigurationRequest) GetID() OptNilUUID {
+	return s.ID
+}
+
+// GetConfiguration returns the value of Configuration.
+func (s *CreateConfigurationRequest) GetConfiguration() jx.Raw {
+	return s.Configuration
+}
+
+// GetTitle returns the value of Title.
+func (s *CreateConfigurationRequest) GetTitle() OptNilString {
+	return s.Title
+}
+
+// GetDescription returns the value of Description.
+func (s *CreateConfigurationRequest) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetListOfServices returns the value of ListOfServices.
+func (s *CreateConfigurationRequest) GetListOfServices() []string {
+	return s.ListOfServices
+}
+
+// GetIsOfficial returns the value of IsOfficial.
+func (s *CreateConfigurationRequest) GetIsOfficial() OptBool {
+	return s.IsOfficial
+}
+
+// GetIsPublic returns the value of IsPublic.
+func (s *CreateConfigurationRequest) GetIsPublic() OptNilBool {
+	return s.IsPublic
+}
+
+// SetID sets the value of ID.
+func (s *CreateConfigurationRequest) SetID(val OptNilUUID) {
+	s.ID = val
+}
+
+// SetConfiguration sets the value of Configuration.
+func (s *CreateConfigurationRequest) SetConfiguration(val jx.Raw) {
+	s.Configuration = val
+}
+
+// SetTitle sets the value of Title.
+func (s *CreateConfigurationRequest) SetTitle(val OptNilString) {
+	s.Title = val
+}
+
+// SetDescription sets the value of Description.
+func (s *CreateConfigurationRequest) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetListOfServices sets the value of ListOfServices.
+func (s *CreateConfigurationRequest) SetListOfServices(val []string) {
+	s.ListOfServices = val
+}
+
+// SetIsOfficial sets the value of IsOfficial.
+func (s *CreateConfigurationRequest) SetIsOfficial(val OptBool) {
+	s.IsOfficial = val
+}
+
+// SetIsPublic sets the value of IsPublic.
+func (s *CreateConfigurationRequest) SetIsPublic(val OptNilBool) {
+	s.IsPublic = val
 }
 
 // Ref: #/components/schemas/CreateContactPointRequest
@@ -2874,6 +3100,9 @@ func (s *Decision) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// DeleteConfigurationNoContent is response for DeleteConfiguration operation.
+type DeleteConfigurationNoContent struct{}
 
 // DeleteContactPointNoContent is response for DeleteContactPoint operation.
 type DeleteContactPointNoContent struct{}
@@ -6228,6 +6457,52 @@ func (o NilUUID) Or(d uuid.UUID) uuid.UUID {
 
 type NonBlankString string
 
+// NewOptBool returns new OptBool with value set to v.
+func NewOptBool(v bool) OptBool {
+	return OptBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptBool is optional bool.
+type OptBool struct {
+	Value bool
+	Set   bool
+}
+
+// IsSet returns true if OptBool was set.
+func (o OptBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptBool) SetTo(v bool) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptBool) Get() (v bool, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptDateTime returns new OptDateTime with value set to v.
 func NewOptDateTime(v time.Time) OptDateTime {
 	return OptDateTime{
@@ -6360,6 +6635,52 @@ func (o OptGeologicalTemporalCoverage) Get() (v GeologicalTemporalCoverage, ok b
 
 // Or returns value if set, or given parameter if does not.
 func (o OptGeologicalTemporalCoverage) Or(d GeologicalTemporalCoverage) GeologicalTemporalCoverage {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt returns new OptInt with value set to v.
+func NewOptInt(v int) OptInt {
+	return OptInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt is optional int.
+type OptInt struct {
+	Value int
+	Set   bool
+}
+
+// IsSet returns true if OptInt was set.
+func (o OptInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt) SetTo(v int) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt) Get() (v int, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt) Or(d int) int {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -8407,6 +8728,79 @@ func (s *ReplaceCategoryRequest) SetParentCategoryID(val NilUUID) {
 	s.ParentCategoryID = val
 }
 
+// Ref: #/components/schemas/ReplaceConfigurationRequest
+type ReplaceConfigurationRequest struct {
+	// Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+	Configuration  jx.Raw       `json:"configuration"`
+	Title          OptNilString `json:"title"`
+	Description    OptNilString `json:"description"`
+	ListOfServices []string     `json:"list_of_services"`
+	// Administrators only; official configurations are always public.
+	IsOfficial OptBool `json:"is_official"`
+	// Visibility flag. Absent means public.
+	IsPublic OptNilBool `json:"is_public"`
+}
+
+// GetConfiguration returns the value of Configuration.
+func (s *ReplaceConfigurationRequest) GetConfiguration() jx.Raw {
+	return s.Configuration
+}
+
+// GetTitle returns the value of Title.
+func (s *ReplaceConfigurationRequest) GetTitle() OptNilString {
+	return s.Title
+}
+
+// GetDescription returns the value of Description.
+func (s *ReplaceConfigurationRequest) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetListOfServices returns the value of ListOfServices.
+func (s *ReplaceConfigurationRequest) GetListOfServices() []string {
+	return s.ListOfServices
+}
+
+// GetIsOfficial returns the value of IsOfficial.
+func (s *ReplaceConfigurationRequest) GetIsOfficial() OptBool {
+	return s.IsOfficial
+}
+
+// GetIsPublic returns the value of IsPublic.
+func (s *ReplaceConfigurationRequest) GetIsPublic() OptNilBool {
+	return s.IsPublic
+}
+
+// SetConfiguration sets the value of Configuration.
+func (s *ReplaceConfigurationRequest) SetConfiguration(val jx.Raw) {
+	s.Configuration = val
+}
+
+// SetTitle sets the value of Title.
+func (s *ReplaceConfigurationRequest) SetTitle(val OptNilString) {
+	s.Title = val
+}
+
+// SetDescription sets the value of Description.
+func (s *ReplaceConfigurationRequest) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetListOfServices sets the value of ListOfServices.
+func (s *ReplaceConfigurationRequest) SetListOfServices(val []string) {
+	s.ListOfServices = val
+}
+
+// SetIsOfficial sets the value of IsOfficial.
+func (s *ReplaceConfigurationRequest) SetIsOfficial(val OptBool) {
+	s.IsOfficial = val
+}
+
+// SetIsPublic sets the value of IsPublic.
+func (s *ReplaceConfigurationRequest) SetIsPublic(val OptNilBool) {
+	s.IsPublic = val
+}
+
 // Ref: #/components/schemas/ReplaceContactPointRequest
 type ReplaceContactPointRequest struct {
 	Email string         `json:"email"`
@@ -9493,120 +9887,6 @@ func (s *RetrievalHTTPMethod) UnmarshalText(data []byte) error {
 	}
 }
 
-// Ref: #/components/schemas/RetrievalOutputParameter
-type RetrievalOutputParameter struct {
-	Name    NonBlankString               `json:"name"`
-	Kind    RetrievalOutputParameterKind `json:"kind"`
-	Pattern OptNilString                 `json:"pattern"`
-}
-
-// GetName returns the value of Name.
-func (s *RetrievalOutputParameter) GetName() NonBlankString {
-	return s.Name
-}
-
-// GetKind returns the value of Kind.
-func (s *RetrievalOutputParameter) GetKind() RetrievalOutputParameterKind {
-	return s.Kind
-}
-
-// GetPattern returns the value of Pattern.
-func (s *RetrievalOutputParameter) GetPattern() OptNilString {
-	return s.Pattern
-}
-
-// SetName sets the value of Name.
-func (s *RetrievalOutputParameter) SetName(val NonBlankString) {
-	s.Name = val
-}
-
-// SetKind sets the value of Kind.
-func (s *RetrievalOutputParameter) SetKind(val RetrievalOutputParameterKind) {
-	s.Kind = val
-}
-
-// SetPattern sets the value of Pattern.
-func (s *RetrievalOutputParameter) SetPattern(val OptNilString) {
-	s.Pattern = val
-}
-
-// Ref: #/components/schemas/RetrievalOutputParameterKind
-type RetrievalOutputParameterKind string
-
-const (
-	RetrievalOutputParameterKindSTRING   RetrievalOutputParameterKind = "STRING"
-	RetrievalOutputParameterKindBOOLEAN  RetrievalOutputParameterKind = "BOOLEAN"
-	RetrievalOutputParameterKindINTEGER  RetrievalOutputParameterKind = "INTEGER"
-	RetrievalOutputParameterKindFLOAT    RetrievalOutputParameterKind = "FLOAT"
-	RetrievalOutputParameterKindDATETIME RetrievalOutputParameterKind = "DATETIME"
-	RetrievalOutputParameterKindJSON     RetrievalOutputParameterKind = "JSON"
-	RetrievalOutputParameterKindBINARY   RetrievalOutputParameterKind = "BINARY"
-)
-
-// AllValues returns all RetrievalOutputParameterKind values.
-func (RetrievalOutputParameterKind) AllValues() []RetrievalOutputParameterKind {
-	return []RetrievalOutputParameterKind{
-		RetrievalOutputParameterKindSTRING,
-		RetrievalOutputParameterKindBOOLEAN,
-		RetrievalOutputParameterKindINTEGER,
-		RetrievalOutputParameterKindFLOAT,
-		RetrievalOutputParameterKindDATETIME,
-		RetrievalOutputParameterKindJSON,
-		RetrievalOutputParameterKindBINARY,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s RetrievalOutputParameterKind) MarshalText() ([]byte, error) {
-	switch s {
-	case RetrievalOutputParameterKindSTRING:
-		return []byte(s), nil
-	case RetrievalOutputParameterKindBOOLEAN:
-		return []byte(s), nil
-	case RetrievalOutputParameterKindINTEGER:
-		return []byte(s), nil
-	case RetrievalOutputParameterKindFLOAT:
-		return []byte(s), nil
-	case RetrievalOutputParameterKindDATETIME:
-		return []byte(s), nil
-	case RetrievalOutputParameterKindJSON:
-		return []byte(s), nil
-	case RetrievalOutputParameterKindBINARY:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *RetrievalOutputParameterKind) UnmarshalText(data []byte) error {
-	switch RetrievalOutputParameterKind(data) {
-	case RetrievalOutputParameterKindSTRING:
-		*s = RetrievalOutputParameterKindSTRING
-		return nil
-	case RetrievalOutputParameterKindBOOLEAN:
-		*s = RetrievalOutputParameterKindBOOLEAN
-		return nil
-	case RetrievalOutputParameterKindINTEGER:
-		*s = RetrievalOutputParameterKindINTEGER
-		return nil
-	case RetrievalOutputParameterKindFLOAT:
-		*s = RetrievalOutputParameterKindFLOAT
-		return nil
-	case RetrievalOutputParameterKindDATETIME:
-		*s = RetrievalOutputParameterKindDATETIME
-		return nil
-	case RetrievalOutputParameterKindJSON:
-		*s = RetrievalOutputParameterKindJSON
-		return nil
-	case RetrievalOutputParameterKindBINARY:
-		*s = RetrievalOutputParameterKindBINARY
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
 // Ref: #/components/schemas/RetrievalRequestBody
 type RetrievalRequestBody struct {
 	ContentType NonBlankString `json:"content_type"`
@@ -9699,9 +9979,8 @@ type RetrieveResourceVersionRequest struct {
 	QueryParams OptRetrieveResourceVersionRequestQueryParams `json:"query_params"`
 	Headers     OptRetrieveResourceVersionRequestHeaders     `json:"headers"`
 	// Credential for the upstream resource. It is never persisted or returned.
-	BearerToken      OptNilString               `json:"bearer_token"`
-	Body             OptNilRetrievalRequestBody `json:"body"`
-	OutputParameters []RetrievalOutputParameter `json:"output_parameters"`
+	BearerToken OptNilString               `json:"bearer_token"`
+	Body        OptNilRetrievalRequestBody `json:"body"`
 }
 
 // GetResourceID returns the value of ResourceID.
@@ -9754,11 +10033,6 @@ func (s *RetrieveResourceVersionRequest) GetBody() OptNilRetrievalRequestBody {
 	return s.Body
 }
 
-// GetOutputParameters returns the value of OutputParameters.
-func (s *RetrieveResourceVersionRequest) GetOutputParameters() []RetrievalOutputParameter {
-	return s.OutputParameters
-}
-
 // SetResourceID sets the value of ResourceID.
 func (s *RetrieveResourceVersionRequest) SetResourceID(val uuid.UUID) {
 	s.ResourceID = val
@@ -9807,11 +10081,6 @@ func (s *RetrieveResourceVersionRequest) SetBearerToken(val OptNilString) {
 // SetBody sets the value of Body.
 func (s *RetrieveResourceVersionRequest) SetBody(val OptNilRetrievalRequestBody) {
 	s.Body = val
-}
-
-// SetOutputParameters sets the value of OutputParameters.
-func (s *RetrieveResourceVersionRequest) SetOutputParameters(val []RetrievalOutputParameter) {
-	s.OutputParameters = val
 }
 
 type RetrieveResourceVersionRequestHeaders map[string]string

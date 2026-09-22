@@ -13,14 +13,18 @@ func (h *ogenHandler) RetrieveResourceVersion(ctx context.Context, request *gate
 	if err != nil {
 		return nil, fmt.Errorf("map retrieval request: %w", err)
 	}
-	response, err := h.dataRetriever.Retrieve(ctx, protoRequest)
+	stream, err := h.dataRetriever.RetrieveStream(ctx, protoRequest)
 	if err != nil {
 		return nil, fmt.Errorf("retrieve resource version: %w", err)
 	}
-	return toAPIRetrieveResourceVersionResponse(response)
+	event, err := stream.Recv()
+	if err != nil {
+		return nil, fmt.Errorf("retrieve resource version: %w", err)
+	}
+	return toAPIDryResponse(event.GetHeaders())
 }
 
-func toProtoRetrieveResourceVersionRequest(request *gatewayapi.RetrieveResourceVersionRequest) (*dataretrieverv1.RetrieveRequest, error) {
+func toProtoRetrieveResourceVersionRequest(request *gatewayapi.RetrieveResourceVersionRequest) (*dataretrieverv1.RetrieveStreamRequest, error) {
 	if request == nil {
 		return nil, fmt.Errorf("request is required")
 	}
@@ -33,13 +37,12 @@ func toProtoRetrieveResourceVersionRequest(request *gatewayapi.RetrieveResourceV
 	if err != nil {
 		return nil, err
 	}
-	result := &dataretrieverv1.RetrieveRequest{
-		ResourceId:       request.ResourceID.String(),
-		VersionId:        request.VersionID.String(),
-		Method:           method,
-		Mode:             mode,
-		UrlTemplate:      request.URLTemplate,
-		OutputParameters: make([]*dataretrieverv1.OutputParameter, 0, len(request.OutputParameters)),
+	result := &dataretrieverv1.RetrieveStreamRequest{
+		ResourceId:  request.ResourceID.String(),
+		VersionId:   request.VersionID.String(),
+		Method:      method,
+		Mode:        mode,
+		UrlTemplate: request.URLTemplate,
 	}
 	if request.PathParams.Set {
 		result.PathParams = map[string]string(request.PathParams.Value)
@@ -52,13 +55,6 @@ func toProtoRetrieveResourceVersionRequest(request *gatewayapi.RetrieveResourceV
 	}
 	if request.BearerToken.Set && !request.BearerToken.Null {
 		result.BearerToken = request.BearerToken.Value
-	}
-	for _, parameter := range request.OutputParameters {
-		outputParameter, err := toProtoRetrievalOutputParameter(parameter)
-		if err != nil {
-			return nil, err
-		}
-		result.OutputParameters = append(result.OutputParameters, outputParameter)
 	}
 	if request.Body.Set && !request.Body.Null {
 		body, err := toProtoRetrievalRequestBody(request.Body.Value)
@@ -95,40 +91,6 @@ func toProtoRetrievalHTTPMethod(method gatewayapi.RetrievalHTTPMethod) (dataretr
 	}
 }
 
-func toProtoRetrievalOutputParameter(parameter gatewayapi.RetrievalOutputParameter) (*dataretrieverv1.OutputParameter, error) {
-	kind, err := toProtoRetrievalOutputParameterKind(parameter.Kind)
-	if err != nil {
-		return nil, err
-	}
-	result := &dataretrieverv1.OutputParameter{Name: string(parameter.Name), Kind: kind}
-	if parameter.Pattern.Set && !parameter.Pattern.Null {
-		pattern := parameter.Pattern.Value
-		result.Pattern = &pattern
-	}
-	return result, nil
-}
-
-func toProtoRetrievalOutputParameterKind(kind gatewayapi.RetrievalOutputParameterKind) (dataretrieverv1.OutputParameterKind, error) {
-	switch kind {
-	case gatewayapi.RetrievalOutputParameterKindSTRING:
-		return dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_STRING, nil
-	case gatewayapi.RetrievalOutputParameterKindBOOLEAN:
-		return dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_BOOLEAN, nil
-	case gatewayapi.RetrievalOutputParameterKindINTEGER:
-		return dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_INTEGER, nil
-	case gatewayapi.RetrievalOutputParameterKindFLOAT:
-		return dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_FLOAT, nil
-	case gatewayapi.RetrievalOutputParameterKindDATETIME:
-		return dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_DATETIME, nil
-	case gatewayapi.RetrievalOutputParameterKindJSON:
-		return dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_JSON, nil
-	case gatewayapi.RetrievalOutputParameterKindBINARY:
-		return dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_BINARY, nil
-	default:
-		return dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_UNSPECIFIED, fmt.Errorf("output parameter kind is invalid")
-	}
-}
-
 func toProtoRetrievalRequestBody(body gatewayapi.RetrievalRequestBody) (*dataretrieverv1.RequestBody, error) {
 	result := &dataretrieverv1.RequestBody{ContentType: string(body.ContentType)}
 	hasRaw := body.Raw.Set && !body.Raw.Null
@@ -144,30 +106,11 @@ func toProtoRetrievalRequestBody(body gatewayapi.RetrievalRequestBody) (*dataret
 	return result, nil
 }
 
-func toAPIRetrieveResourceVersionResponse(response *dataretrieverv1.RetrieveResponse) (*gatewayapi.RetrieveResourceVersionResponse, error) {
-	if response == nil {
-		return nil, fmt.Errorf("data-retriever response is empty")
+func toAPIDryResponse(headers *dataretrieverv1.RetrieveStreamHeaders) (*gatewayapi.RetrieveResourceVersionResponse, error) {
+	if headers == nil || headers.GetCurlCommand() == "" {
+		return nil, fmt.Errorf("data-retriever dry response is empty")
 	}
-	if command := response.GetCurlCommand(); command != "" {
-		result := &gatewayapi.RetrieveResourceVersionResponse{Mode: gatewayapi.RetrieveModeDRY}
-		result.CurlCommand.SetTo(command)
-		return result, nil
-	}
-	if response.GetRecord() == nil {
-		return nil, fmt.Errorf("data-retriever execution response has no record")
-	}
-
-	result := &gatewayapi.RetrieveResourceVersionResponse{Mode: gatewayapi.RetrieveModeEXECUTE}
-	result.RetrievalID.SetTo(response.GetRecord().GetId())
-	result.UpstreamStatus.SetTo(response.GetUpstreamStatus())
-	result.ContentType.SetTo(response.GetContentType())
-	switch payload := response.Result.(type) {
-	case *dataretrieverv1.RetrieveResponse_InlinePayload:
-		result.InlinePayload.SetTo(payload.InlinePayload)
-	case *dataretrieverv1.RetrieveResponse_RedirectUrl:
-		result.RedirectURL.SetTo(payload.RedirectUrl)
-	default:
-		return nil, fmt.Errorf("data-retriever execution response has no result")
-	}
+	result := &gatewayapi.RetrieveResourceVersionResponse{Mode: gatewayapi.RetrieveModeDRY}
+	result.CurlCommand.SetTo(headers.GetCurlCommand())
 	return result, nil
 }

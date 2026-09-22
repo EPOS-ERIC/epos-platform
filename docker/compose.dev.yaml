@@ -21,6 +21,28 @@ services:
       timeout: 5s
       retries: 20
 
+  sharing-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=sharing
+      - POSTGRES_USER=sharing
+      - POSTGRES_PASSWORD=sharing
+    ports:
+      - "5435:5432"
+    volumes:
+      - sharing-db-data:/var/lib/postgresql/data
+    networks:
+      - epos-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U sharing -d sharing || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
   metadata-lifecycle-db:
     image: postgis/postgis:16-3.4-alpine
     environment:
@@ -47,6 +69,8 @@ services:
     image: epos-gateway-dev:local
     depends_on:
       data-retriever-service:
+        condition: service_healthy
+      sharing-service:
         condition: service_healthy
     ports:
       - "32000:5000"
@@ -145,6 +169,40 @@ services:
       retries: 20
       start_period: 20s
 
+  sharing-service:
+    image: epos-sharing-dev:local
+    depends_on:
+      sharing-db:
+        condition: service_healthy
+    ports:
+      - "8200:8200"
+    environment:
+      - SHARING_GRPC_LISTEN_ADDR=:8200
+      - SHARING_DB_HOST=sharing-db
+      - SHARING_DB_PORT=5432
+      - SHARING_DB_NAME=sharing
+      - SHARING_DB_USER=sharing
+      - SHARING_DB_PASSWORD=sharing
+      - OTEL_SERVICE_NAME=sharing
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
+    volumes:
+      - type: bind
+        source: ${HOME}/go/pkg/mod
+        target: /go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    restart: on-failure
+    networks:
+      - epos-network
+    healthcheck:
+      test:
+        ["CMD-SHELL", "nc -z localhost 8200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   oss-aai-service:
     image: epos-oss-aai-dev:local
     ports:
@@ -191,6 +249,7 @@ volumes:
   go-build-cache:
   metadata-lifecycle-db-data:
   data-retriever-db-data:
+  sharing-db-data:
   oss-aai-data:
 
 networks:

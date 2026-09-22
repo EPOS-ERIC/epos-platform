@@ -49,6 +49,8 @@ tags:
     description: Request, review, and administer group membership and access.
   - name: Imports
     description: Import RDF Turtle metadata into draft resources.
+  - name: Sharing
+    description: Store and retrieve shared workspace configurations.
 
 paths:
   /permissions:
@@ -108,7 +110,10 @@ paths:
       tags:
         - Access
       summary: Access a resource version
-      description: Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a generated command that needs authentication.
+      description: |-
+        Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a generated command that needs authentication.
+
+        In `EXECUTE` mode the gateway acts as a transparent streaming proxy: the HTTP status, Content-Type and body are relayed verbatim from the upstream resource with no size limit, so even gigabyte downloads flow through this endpoint. The service discovers output parameters from supported payload formats after a complete retrieval; clients do not provide them. A 3xx upstream response is relayed with its status code and `Location` header. An upstream `Content-Disposition` header (carrying the original file name) is forwarded as well; when the upstream omits it, one is synthesized from the file name in the request URL so downloads keep the original name. The persisted retrieval identifier is exposed via the `X-Retrieval-Id` response header.
       operationId: retrieveResourceVersion
       security:
         - {}
@@ -120,11 +125,138 @@ paths:
               $ref: "#/components/schemas/RetrieveResourceVersionRequest"
       responses:
         "200":
-          description: Retrieval completed or curl command generated
+          description: DRY curl command generated. EXECUTE responses relay the upstream status, headers and body verbatim (see operation description).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/RetrieveResourceVersionResponse"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /configurations:
+    get:
+      tags: [Sharing]
+      summary: List shared configurations
+      description: |-
+        Returns shared workspace configurations, newest first.
+        Anonymous callers receive public configurations only; authenticated
+        callers additionally receive their own private configurations (and
+        every configuration when they are administrators).
+      operationId: listConfigurations
+      security:
+        - {}
+        - bearerAuth: []
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: offset
+          in: query
+          required: false
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: official
+          in: query
+          required: false
+          description: When set, restricts results to official or unofficial configurations.
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Shared configurations returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigurationList" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    post:
+      tags: [Sharing]
+      summary: Create shared configuration
+      description: Persists a workspace configuration document with optional descriptive metadata. The configuration payload is stored as canonical JSON. Requires authentication; only administrators may mark a configuration as official.
+      operationId: createConfiguration
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateConfigurationRequest" }
+      responses:
+        "201":
+          description: Shared configuration created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Configuration" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /configurations/{configurationId}:
+    parameters:
+      - {
+          name: configurationId,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
+    get:
+      tags: [Sharing]
+      summary: Get shared configuration
+      description: Private configurations are readable by their owner or an administrator only.
+      operationId: getConfiguration
+      security:
+        - {}
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Shared configuration returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Configuration" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    put:
+      tags: [Sharing]
+      summary: Replace shared configuration
+      description: Fully replaces the configuration document and metadata. Absent nullable fields and an empty service list clear the stored values. Requires authentication; only the owner or an administrator may replace, and only administrators may change the official flag.
+      operationId: replaceConfiguration
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceConfigurationRequest" }
+      responses:
+        "200":
+          description: Shared configuration replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Configuration" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    delete:
+      tags: [Sharing]
+      summary: Delete shared configuration
+      description: Requires authentication; only the owner or an administrator may delete.
+      operationId: deleteConfiguration
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Shared configuration deleted }
         default:
           description: Gateway error
           content:
@@ -1944,9 +2076,6 @@ components:
           allOf:
             - $ref: "#/components/schemas/RetrievalRequestBody"
           nullable: true
-        output_parameters:
-          type: array
-          items: { $ref: "#/components/schemas/RetrievalOutputParameter" }
 
     RetrieveResourceVersionResponse:
       type: object
@@ -3946,6 +4075,76 @@ components:
             type: string
             enum: [EDITOR, REVIEWER]
 
+    Configuration:
+      type: object
+      required: [id, configuration, list_of_services, is_official, is_public, owner_id, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        configuration:
+          description: Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+        title: { type: string, nullable: true, maxLength: 500 }
+        description: { type: string, nullable: true, maxLength: 10000 }
+        list_of_services:
+          type: array
+          maxItems: 100
+          items: { type: string, minLength: 1, maxLength: 500 }
+        is_official: { type: boolean }
+        is_public: { type: boolean }
+        owner_id: { type: string, minLength: 1 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    CreateConfigurationRequest:
+      type: object
+      required: [configuration]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid, nullable: true }
+        configuration:
+          description: Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+        title: { type: string, nullable: true, maxLength: 500 }
+        description: { type: string, nullable: true, maxLength: 10000 }
+        list_of_services:
+          type: array
+          maxItems: 100
+          items: { type: string, minLength: 1, maxLength: 500 }
+        is_official:
+          type: boolean
+          default: false
+          description: Administrators only; official configurations are always public.
+        is_public:
+          type: boolean
+          nullable: true
+          description: Visibility flag. Absent means public.
+    ReplaceConfigurationRequest:
+      type: object
+      required: [configuration]
+      additionalProperties: false
+      properties:
+        configuration:
+          description: Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+        title: { type: string, nullable: true, maxLength: 500 }
+        description: { type: string, nullable: true, maxLength: 10000 }
+        list_of_services:
+          type: array
+          maxItems: 100
+          items: { type: string, minLength: 1, maxLength: 500 }
+        is_official:
+          type: boolean
+          default: false
+          description: Administrators only; official configurations are always public.
+        is_public:
+          type: boolean
+          nullable: true
+          description: Visibility flag. Absent means public.
+    ConfigurationList:
+      type: object
+      required: [configurations, total]
+      additionalProperties: false
+      properties:
+        configurations:
+          type: array
+          items: { $ref: "#/components/schemas/Configuration" }
+        total: { type: integer, format: int64, minimum: 0 }
     Problem:
       type: object
       required:

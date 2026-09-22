@@ -3,7 +3,7 @@ server:
   cors_allow_origin: "*"
   request_timeout: "30s"
   read_timeout: "15s"
-  write_timeout: "30s"
+  write_timeout: "0s"
   idle_timeout: "60s"
 
 upstream:
@@ -17,5 +17,7 @@ services:
     url: "metadata-lifecycle-service:5000"
   data-retriever:
     url: "data-retriever-service:8100"
+  sharing:
+    url: "sharing-service:8200"
   auth:
     url: "http://oss-aai-service:8080/"

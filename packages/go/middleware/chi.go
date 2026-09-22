@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -26,6 +27,14 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 		return size, fmt.Errorf("write response body: %w", err)
 	}
 	return size, nil
+}
+
+// Flush forwards flushes so streamed responses are delivered incrementally
+// instead of buffered until the handler returns.
+func (rw *responseWriter) Flush() {
+	if flusher, ok := rw.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
 }
 
 func Logger(log *slog.Logger) func(http.Handler) http.Handler {
@@ -62,6 +71,21 @@ func CORSAllowOrigin(allowOrigin string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// ExposeHeaders adds Access-Control-Expose-Headers so browser clients can
+// read the listed response headers (e.g. Content-Disposition for download
+// file names) in cross-origin setups.
+func ExposeHeaders(headers ...string) func(http.Handler) http.Handler {
+	exposed := strings.Join(headers, ", ")
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if exposed != "" {
+				w.Header().Set("Access-Control-Expose-Headers", exposed)
+			}
 			next.ServeHTTP(w, r)
 		})
 	}

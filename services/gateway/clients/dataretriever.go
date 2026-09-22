@@ -31,10 +31,10 @@ func NewDataRetriever(log *slog.Logger, baseURL string) (*DataRetriever, error) 
 	}, nil
 }
 
-func (c *DataRetriever) Retrieve(ctx context.Context, request *dataretrieverv1.RetrieveRequest) (*dataretrieverv1.RetrieveResponse, error) {
-	response, err := c.retrieval.Retrieve(ctx, request)
+func (c *DataRetriever) RetrieveStream(ctx context.Context, request *dataretrieverv1.RetrieveStreamRequest) (dataretrieverv1.DataRetrieverService_RetrieveStreamClient, error) {
+	stream, err := c.retrieval.RetrieveStream(ctx, request)
 	if err != nil {
 		return nil, wrapRPCError(c.log, ctx, "data-retriever", "retrieve resource version", err)
 	}
-	return response, nil
+	return stream, nil
 }

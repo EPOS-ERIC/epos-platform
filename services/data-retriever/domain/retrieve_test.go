@@ -83,25 +83,6 @@ func TestValidateCanonicalizesJSONBody(t *testing.T) {
 	}
 }
 
-func TestValidateRejectsInvalidOutputParameterPattern(t *testing.T) {
-	pattern := "["
-	req := RetrieveRequest{
-		ResourceID:  "2f1d18c5-bb8a-4f2d-84f2-0a1af16dc192",
-		VersionID:   "67f6f345-5a27-467b-967b-0aa9e7f85bb1",
-		Method:      "GET",
-		URLTemplate: "https://example.org/resource",
-		OutputParameters: []OutputParameter{{
-			Name:    "value",
-			Kind:    "STRING",
-			Pattern: &pattern,
-		}},
-	}
-
-	if _, err := req.Validate(); err == nil {
-		t.Fatal("expected invalid output parameter pattern")
-	}
-}
-
 func TestValidatedRequestCurlCommandIsDeterministicAndRedactsCredentials(t *testing.T) {
 	req := RetrieveRequest{
 		Mode:        RetrieveModeDry,

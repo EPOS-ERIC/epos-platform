@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func toDomainRetrieveRequest(request *dataretrieverv1.RetrieveRequest) (domain.RetrieveRequest, error) {
+func toDomainRetrieveRequest(request *dataretrieverv1.RetrieveStreamRequest) (domain.RetrieveRequest, error) {
 	if request == nil {
 		return domain.RetrieveRequest{}, fmt.Errorf("retrieve request is required")
 	}
@@ -24,23 +24,15 @@ func toDomainRetrieveRequest(request *dataretrieverv1.RetrieveRequest) (domain.R
 	}
 
 	retrieveRequest := domain.RetrieveRequest{
-		Mode:             mode,
-		ResourceID:       request.GetResourceId(),
-		VersionID:        request.GetVersionId(),
-		Method:           method,
-		URLTemplate:      request.GetUrlTemplate(),
-		PathParams:       request.GetPathParams(),
-		QueryParams:      request.GetQueryParams(),
-		Headers:          request.GetHeaders(),
-		BearerToken:      request.GetBearerToken(),
-		OutputParameters: make([]domain.OutputParameter, 0, len(request.GetOutputParameters())),
-	}
-	for _, parameter := range request.GetOutputParameters() {
-		outputParameter, err := toDomainOutputParameter(parameter)
-		if err != nil {
-			return domain.RetrieveRequest{}, err
-		}
-		retrieveRequest.OutputParameters = append(retrieveRequest.OutputParameters, outputParameter)
+		Mode:        mode,
+		ResourceID:  request.GetResourceId(),
+		VersionID:   request.GetVersionId(),
+		Method:      method,
+		URLTemplate: request.GetUrlTemplate(),
+		PathParams:  request.GetPathParams(),
+		QueryParams: request.GetQueryParams(),
+		Headers:     request.GetHeaders(),
+		BearerToken: request.GetBearerToken(),
 	}
 	if body := request.GetBody(); body != nil {
 		retrieveRequest.Body = &domain.RequestBody{ContentType: body.GetContentType()}
@@ -84,43 +76,6 @@ func toDomainHTTPMethod(method dataretrieverv1.HTTPMethod, allowUnspecified bool
 		return "DELETE", nil
 	default:
 		return "", fmt.Errorf("method is invalid")
-	}
-}
-
-func toDomainOutputParameter(parameter *dataretrieverv1.OutputParameter) (domain.OutputParameter, error) {
-	if parameter == nil {
-		return domain.OutputParameter{}, fmt.Errorf("output parameter is required")
-	}
-	kind, err := toDomainOutputParameterKind(parameter.GetKind())
-	if err != nil {
-		return domain.OutputParameter{}, err
-	}
-	outputParameter := domain.OutputParameter{Name: parameter.GetName(), Kind: kind}
-	if parameter.Pattern != nil {
-		pattern := parameter.GetPattern()
-		outputParameter.Pattern = &pattern
-	}
-	return outputParameter, nil
-}
-
-func toDomainOutputParameterKind(kind dataretrieverv1.OutputParameterKind) (string, error) {
-	switch kind {
-	case dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_STRING:
-		return "STRING", nil
-	case dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_BOOLEAN:
-		return "BOOLEAN", nil
-	case dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_INTEGER:
-		return "INTEGER", nil
-	case dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_FLOAT:
-		return "FLOAT", nil
-	case dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_DATETIME:
-		return "DATETIME", nil
-	case dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_JSON:
-		return "JSON", nil
-	case dataretrieverv1.OutputParameterKind_OUTPUT_PARAMETER_KIND_BINARY:
-		return "BINARY", nil
-	default:
-		return "", fmt.Errorf("output parameter kind is invalid")
 	}
 }
 

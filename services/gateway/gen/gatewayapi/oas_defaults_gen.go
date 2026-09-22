@@ -3,6 +3,22 @@
 package api
 
 // setDefaults set default value of fields.
+func (s *CreateConfigurationRequest) setDefaults() {
+	{
+		val := bool(false)
+		s.IsOfficial.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
+func (s *ReplaceConfigurationRequest) setDefaults() {
+	{
+		val := bool(false)
+		s.IsOfficial.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
 func (s *RetrieveResourceVersionRequest) setDefaults() {
 	{
 		val := RetrieveMode("EXECUTE")

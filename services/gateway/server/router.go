@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
@@ -23,8 +24,10 @@ func NewRouter(
 	membershipService *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
 	dataRetrieverClient *clients.DataRetriever,
+	sharingClient *clients.Sharing,
 	authService *auth.Service,
 	corsAllowOrigin string,
+	requestTimeout time.Duration,
 ) http.Handler {
 	log = log.With("component", "http")
 	log.Info("creating HTTP handler")
@@ -34,6 +37,7 @@ func NewRouter(
 	if corsAllowOrigin != "" {
 		r.Use(middleware.CORSAllowOrigin(corsAllowOrigin))
 	}
+	r.Use(middleware.ExposeHeaders("Content-Disposition", "Location", "X-Retrieval-Id"))
 	r.Use(middleware.Logger(log))
 	r.Use(middleware.Recoverer(log))
 
@@ -57,6 +61,7 @@ func NewRouter(
 		membershipService,
 		metadataLifecycleClient,
 		dataRetrieverClient,
+		sharingClient,
 	)
 	generatedServer, err := gatewayapi.NewServer(
 		generatedHandler,
@@ -67,7 +72,10 @@ func NewRouter(
 	if err != nil {
 		panic(fmt.Sprintf("create generated gateway server: %v", err))
 	}
-	r.Mount("/v1", requestBodyLimit(generatedServer))
+	// The access proxy runs outside the request timeout: EXECUTE downloads
+	// stream until the caller cancels, while DRY and every other operation
+	// keep the timeout through the generated server.
+	r.Mount("/v1", requestBodyLimit(handlers.AccessProxyMiddleware(dataRetrieverClient, log)(handlers.NewTimeoutHandler(log, generatedServer, requestTimeout))))
 
 	return observability.NewHTTPHandler(r, "/")
 }

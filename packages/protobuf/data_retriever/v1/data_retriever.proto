@@ -47,7 +47,7 @@ message RequestBody {
   }
 }
 
-message RetrieveRequest {
+message RetrieveStreamRequest {
   reserved 1;
   reserved "source_id";
   HTTPMethod method = 2 [(buf.validate.field).enum.defined_only = true];
@@ -59,7 +59,8 @@ message RetrieveRequest {
   RequestBody body = 8;
   string resource_id = 9 [(buf.validate.field).string.uuid = true];
   string version_id = 10 [(buf.validate.field).string.uuid = true];
-  repeated OutputParameter output_parameters = 11;
+  reserved 11;
+  reserved "output_parameters";
   RetrieveMode mode = 12 [(buf.validate.field).enum.defined_only = true];
 }
 
@@ -86,14 +87,20 @@ message RetrievalRecord {
   repeated OutputParameter output_parameters = 18;
 }
 
-message RetrieveResponse {
+message RetrieveStreamHeaders {
   RetrievalRecord record = 1;
   int32 upstream_status = 2;
   string content_type = 3;
-  oneof result {
-    bytes inline_payload = 4;
-    string redirect_url = 5 [(buf.validate.field).string.uri_ref = true];
-    string curl_command = 6 [(buf.validate.field).string.min_len = 1];
+  string content_disposition = 4;
+  string redirect_url = 5 [(buf.validate.field).string.uri_ref = true];
+  string curl_command = 6 [(buf.validate.field).string.min_len = 1];
+}
+
+message RetrieveStreamResponse {
+  oneof event {
+    option (buf.validate.oneof).required = true;
+    RetrieveStreamHeaders headers = 1;
+    bytes chunk = 2 [(buf.validate.field).bytes.min_len = 1];
   }
 }
 
@@ -106,6 +113,6 @@ message GetRetrievalResponse {
 }
 
 service DataRetrieverService {
-  rpc Retrieve(RetrieveRequest) returns (RetrieveResponse);
+  rpc RetrieveStream(RetrieveStreamRequest) returns (stream RetrieveStreamResponse);
   rpc GetRetrieval(GetRetrievalRequest) returns (GetRetrievalResponse);
 }
