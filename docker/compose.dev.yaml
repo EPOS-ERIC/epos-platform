@@ -45,6 +45,9 @@ services:
 
   gateway-service:
     image: epos-gateway-dev:local
+    depends_on:
+      data-retriever-service:
+        condition: service_healthy
     ports:
       - "32000:5000"
     environment:
@@ -115,7 +118,7 @@ services:
     ports:
       - "8100:8100"
     environment:
-      - DATA_RETRIEVER_LISTEN_ADDR=:8100
+      - DATA_RETRIEVER_GRPC_LISTEN_ADDR=:8100
       - DATA_RETRIEVER_DB_HOST=data-retriever-db
       - DATA_RETRIEVER_DB_PORT=5432
       - DATA_RETRIEVER_DB_NAME=data_retriever
@@ -136,10 +139,7 @@ services:
       - epos-network
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "curl -fsS http://localhost:8100/health >/dev/null || exit 1",
-        ]
+        ["CMD-SHELL", "nc -z localhost 8100 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20

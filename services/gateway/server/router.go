@@ -22,6 +22,7 @@ func NewRouter(
 	identityService *identity.Service,
 	membershipService *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
+	dataRetrieverClient *clients.DataRetriever,
 	authService *auth.Service,
 	corsAllowOrigin string,
 ) http.Handler {
@@ -55,6 +56,7 @@ func NewRouter(
 		identityService,
 		membershipService,
 		metadataLifecycleClient,
+		dataRetrieverClient,
 	)
 	generatedServer, err := gatewayapi.NewServer(
 		generatedHandler,

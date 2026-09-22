@@ -55,6 +55,7 @@ const (
 	ReplaceResourceDraftVersionOperation    OperationName = "ReplaceResourceDraftVersion"
 	RequestGroupMembershipOperation         OperationName = "RequestGroupMembership"
 	RequestGroupRoleOperation               OperationName = "RequestGroupRole"
+	RetrieveResourceVersionOperation        OperationName = "RetrieveResourceVersion"
 	RevokeGlobalPermissionOperation         OperationName = "RevokeGlobalPermission"
 	RevokeGroupPermissionOperation          OperationName = "RevokeGroupPermission"
 	SubmitResourceVersionOperation          OperationName = "SubmitResourceVersion"

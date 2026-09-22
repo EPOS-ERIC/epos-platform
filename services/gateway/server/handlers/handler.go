@@ -25,13 +25,15 @@ var (
 // Metadata Lifecycle client; identity orchestration remains in identity.Service.
 type ogenHandler struct {
 	metadataLifecycle *clients.MetadataLifecycle
+	dataRetriever     *clients.DataRetriever
 	identity          *identity.Service
 	membership        *membership.Service
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle) *ogenHandler {
+func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, dataRetriever *clients.DataRetriever) *ogenHandler {
 	return &ogenHandler{
 		metadataLifecycle: metadataLifecycle,
+		dataRetriever:     dataRetriever,
 		identity:          i,
 		membership:        m,
 	}

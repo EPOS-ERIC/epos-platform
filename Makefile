@@ -19,12 +19,14 @@ populate-metadatone:
 	./packages/scripts/metadatone.sh
 
 ci:
-	+$(MAKE) -j ci-gateway-image ci-metadata-lifecycle-image ci-oss-aai-image
-	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle oss-aai-service
+	+$(MAKE) -j ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-oss-aai-image
+	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle data-retriever oss-aai-service
 ci-gateway-image:
 	+$(MAKE) -C $(GATEWAY_DIR) docker
 ci-metadata-lifecycle-image:
 	+$(MAKE) -C $(METADATA_LIFECYCLE_DIR) docker
+ci-data-retriever-image:
+	+$(MAKE) -C $(DATA_RETRIEVER_DIR) docker
 ci-oss-aai-image:
 	+$(MAKE) -C $(OSS_AAI_SERVICE_DIR) docker
 
@@ -51,11 +53,13 @@ lint-metadata-lifecycle:
 	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) lint
 
 generate:
-	+$(MAKE) -j generate-gateway generate-metadata-lifecycle
+	+$(MAKE) -j generate-gateway generate-metadata-lifecycle generate-protobuf
 generate-gateway:
 	$(MAKE) -C $(GATEWAY_DIR) generate
 generate-metadata-lifecycle:
 	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) generate
+generate-protobuf:
+	$(MAKE) -C packages/protobuf generate
 
 test-integration:
 	docker run --rm \
@@ -75,4 +79,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle
+.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-protobuf

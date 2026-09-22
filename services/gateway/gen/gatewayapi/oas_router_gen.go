@@ -11,6 +11,9 @@ import (
 )
 
 var (
+	rn71AllowedHeaders = map[string]string{
+		"POST": "Content-Type",
+	}
 	rn20AllowedHeaders = map[string]string{
 		"GET":  "Authorization",
 		"POST": "Authorization,Content-Type",
@@ -107,13 +110,13 @@ var (
 	rn64AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
-	rn71AllowedHeaders = map[string]string{
-		"POST": "Authorization",
-	}
-	rn73AllowedHeaders = map[string]string{
+	rn72AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
 	rn74AllowedHeaders = map[string]string{
+		"POST": "Authorization",
+	}
+	rn75AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
 	rn45AllowedHeaders = map[string]string{
@@ -136,7 +139,7 @@ var (
 		"DELETE": "Authorization",
 		"PUT":    "Authorization",
 	}
-	rn72AllowedHeaders = map[string]string{
+	rn73AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
 )
@@ -192,6 +195,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
+			case 'a': // Prefix: "access"
+
+				if l := len("access"); len(elem) >= l && elem[0:l] == "access" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleRetrieveResourceVersionRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "POST",
+							allowedHeaders: rn71AllowedHeaders,
+							acceptPost:     "application/json",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+
 			case 'c': // Prefix: "contact-points"
 
 				if l := len("contact-points"); len(elem) >= l && elem[0:l] == "contact-points" {
@@ -261,6 +289,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 						return
 					}
+
 				}
 
 			case 'g': // Prefix: "groups"
@@ -420,6 +449,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 									return
 								}
+
 							}
 
 						case 'm': // Prefix: "membership"
@@ -659,7 +689,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 											return
 										}
+
 									}
+
 								}
 
 							}
@@ -772,8 +804,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 												return
 											}
+
 										}
+
 									}
+
 								}
 
 							case 'o': // Prefix: "ole-requests"
@@ -875,13 +910,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 											return
 										}
+
 									}
+
 								}
 
 							}
 
 						}
+
 					}
+
 				}
 
 			case 'i': // Prefix: "imports/turtle"
@@ -978,6 +1017,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 						return
 					}
+
 				}
 
 			case 'p': // Prefix: "permissions"
@@ -1086,6 +1126,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 								return
 							}
+
 						}
 
 						elem = origElem
@@ -1411,7 +1452,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
-													allowedHeaders: rn71AllowedHeaders,
+													allowedHeaders: rn72AllowedHeaders,
 													acceptPost:     "",
 													acceptPatch:    "",
 												})
@@ -1440,7 +1481,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
-													allowedHeaders: rn73AllowedHeaders,
+													allowedHeaders: rn74AllowedHeaders,
 													acceptPost:     "",
 													acceptPatch:    "",
 												})
@@ -1469,7 +1510,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
-													allowedHeaders: rn74AllowedHeaders,
+													allowedHeaders: rn75AllowedHeaders,
 													acceptPost:     "",
 													acceptPatch:    "",
 												})
@@ -1479,11 +1520,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										}
 
 									}
+
 								}
+
 							}
 
 						}
+
 					}
+
 				}
 
 			case 's': // Prefix: "search"
@@ -1725,7 +1770,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "POST",
-										allowedHeaders: rn72AllowedHeaders,
+										allowedHeaders: rn73AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -1735,10 +1780,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							}
 
 						}
+
 					}
+
 				}
 
 			}
+
 		}
 	}
 	s.notFound(w, r)
@@ -1837,6 +1885,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
+			case 'a': // Prefix: "access"
+
+				if l := len("access"); len(elem) >= l && elem[0:l] == "access" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "POST":
+						r.name = RetrieveResourceVersionOperation
+						r.summary = "Access a resource version"
+						r.operationID = "retrieveResourceVersion"
+						r.operationGroup = ""
+						r.pathPattern = "/access"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
 			case 'c': // Prefix: "contact-points"
 
 				if l := len("contact-points"); len(elem) >= l && elem[0:l] == "contact-points" {
@@ -1921,6 +1994,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							return
 						}
 					}
+
 				}
 
 			case 'g': // Prefix: "groups"
@@ -2103,6 +2177,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										return
 									}
 								}
+
 							}
 
 						case 'm': // Prefix: "membership"
@@ -2334,7 +2409,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 												return
 											}
 										}
+
 									}
+
 								}
 
 							}
@@ -2441,8 +2518,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 													return
 												}
 											}
+
 										}
+
 									}
+
 								}
 
 							case 'o': // Prefix: "ole-requests"
@@ -2535,13 +2615,17 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 												return
 											}
 										}
+
 									}
+
 								}
 
 							}
 
 						}
+
 					}
+
 				}
 
 			case 'i': // Prefix: "imports/turtle"
@@ -2653,6 +2737,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							return
 						}
 					}
+
 				}
 
 			case 'p': // Prefix: "permissions"
@@ -2758,6 +2843,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 									return
 								}
 							}
+
 						}
 
 						elem = origElem
@@ -3110,11 +3196,15 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										}
 
 									}
+
 								}
+
 							}
 
 						}
+
 					}
+
 				}
 
 			case 's': // Prefix: "search"
@@ -3362,10 +3452,13 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							}
 
 						}
+
 					}
+
 				}
 
 			}
+
 		}
 	}
 	return r, false

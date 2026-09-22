@@ -33,6 +33,8 @@ tags:
     description: Search public catalogue records and authenticated records you may access.
   - name: Resources
     description: Read resource versions and manage their draft-to-publication lifecycle.
+  - name: Access
+    description: Retrieve resource data or generate executable retrieval commands.
   - name: Users
     description: Read user profiles and administer global access.
   - name: Authorization
@@ -95,6 +97,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImportResult"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /access:
+    post:
+      tags:
+        - Access
+      summary: Access a resource version
+      description: Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a generated command that needs authentication.
+      operationId: retrieveResourceVersion
+      security:
+        - {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RetrieveResourceVersionRequest"
+      responses:
+        "200":
+          description: Retrieval completed or curl command generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetrieveResourceVersionResponse"
         default:
           description: Gateway error
           content:
@@ -1848,6 +1878,111 @@ components:
                 detail: "metadata-lifecycle service unavailable"
 
   schemas:
+    RetrieveMode:
+      type: string
+      enum: [DRY, EXECUTE]
+      default: EXECUTE
+
+    RetrievalHTTPMethod:
+      type: string
+      enum: [GET, POST, PUT, DELETE]
+
+    RetrievalOutputParameterKind:
+      type: string
+      enum: [STRING, BOOLEAN, INTEGER, FLOAT, DATETIME, JSON, BINARY]
+
+    RetrievalOutputParameter:
+      type: object
+      additionalProperties: false
+      required: [name, kind]
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        kind: { $ref: "#/components/schemas/RetrievalOutputParameterKind" }
+        pattern: { type: string, nullable: true, minLength: 1 }
+
+    RetrievalRequestBody:
+      type: object
+      additionalProperties: false
+      required: [content_type]
+      properties:
+        content_type: { $ref: "#/components/schemas/NonBlankString" }
+        raw: { type: string, nullable: true, minLength: 1 }
+        json_payload:
+          type: string
+          nullable: true
+          minLength: 1
+          description: Serialized JSON document. Requires a JSON content type.
+
+    RetrieveResourceVersionRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_id, version_id, method, url_template]
+      properties:
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        mode: { $ref: "#/components/schemas/RetrieveMode" }
+        method: { $ref: "#/components/schemas/RetrievalHTTPMethod" }
+        url_template:
+          type: string
+          minLength: 1
+          description: Absolute HTTP(S) URL template. Path placeholders use `{name}` syntax.
+        path_params:
+          type: object
+          additionalProperties: { type: string }
+        query_params:
+          type: object
+          additionalProperties: { type: string }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+        bearer_token:
+          type: string
+          nullable: true
+          minLength: 1
+          description: Credential for the upstream resource. It is never persisted or returned.
+        body:
+          allOf:
+            - $ref: "#/components/schemas/RetrievalRequestBody"
+          nullable: true
+        output_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/RetrievalOutputParameter" }
+
+    RetrieveResourceVersionResponse:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode: { $ref: "#/components/schemas/RetrieveMode" }
+        retrieval_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Persisted retrieval identifier. Present only for `EXECUTE` mode.
+        upstream_status:
+          type: integer
+          format: int32
+          nullable: true
+          description: Upstream HTTP status. Present only for `EXECUTE` mode.
+        content_type:
+          type: string
+          nullable: true
+          description: Upstream content type. Present only for `EXECUTE` mode.
+        inline_payload:
+          type: string
+          format: byte
+          nullable: true
+          description: Base64-encoded non-binary upstream payload. Present only for `EXECUTE` mode.
+        redirect_url:
+          type: string
+          format: uri-reference
+          nullable: true
+          description: URL for a binary upstream payload. Present only for `EXECUTE` mode.
+        curl_command:
+          type: string
+          nullable: true
+          description: Shell-safe curl command. Present only for `DRY` mode.
+
     # -------------------------------------------------------------------------
     # Shared enums
     # -------------------------------------------------------------------------

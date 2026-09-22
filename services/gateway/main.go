@@ -24,6 +24,11 @@ func main() {
 		log.Error("error loading config", "err", err)
 		panic("error loading config")
 	}
+	dataRetrieverClient, err := clients.NewDataRetriever(log, cfg.Services.DataRetriever.URL)
+	if err != nil {
+		log.Error("invalid data-retriever service configuration", "error", err)
+		panic("invalid data-retriever service configuration")
+	}
 
 	log.Debug("config loaded", "listen", cfg.Server.Listen)
 
@@ -42,7 +47,7 @@ func main() {
 		panic("invalid auth service configuration")
 	}
 
-	if err := server.Run(*cfg, log, metadataLifecycleClient, authService); err != nil {
+	if err := server.Run(*cfg, log, metadataLifecycleClient, dataRetrieverClient, authService); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}

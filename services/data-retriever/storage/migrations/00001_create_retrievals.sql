@@ -1,3 +1,5 @@
+-- +goose Up
+
 CREATE TABLE IF NOT EXISTS retrievals (
   id BIGSERIAL PRIMARY KEY,
   source_id TEXT NOT NULL,
@@ -26,4 +28,22 @@ CREATE TABLE IF NOT EXISTS retrievals (
 CREATE INDEX IF NOT EXISTS retrievals_source_id_idx ON retrievals (source_id);
 CREATE INDEX IF NOT EXISTS retrievals_generated_url_idx ON retrievals (generated_url);
 CREATE UNIQUE INDEX IF NOT EXISTS retrievals_dedupe_idx ON retrievals (source_id, method, generated_url, request_body_hash);
-CREATE INDEX IF NOT EXISTS retrievals_search_vector_idx ON retrievals USING GIN (search_vector);
+
+-- +goose StatementBegin
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_attribute
+    WHERE attrelid = 'retrievals'::regclass
+      AND attname = 'search_vector'
+      AND NOT attisdropped
+  ) THEN
+    CREATE INDEX IF NOT EXISTS retrievals_search_vector_idx ON retrievals USING GIN (search_vector);
+  END IF;
+END $$;
+-- +goose StatementEnd
+
+-- +goose Down
+
+DROP TABLE IF EXISTS retrievals;

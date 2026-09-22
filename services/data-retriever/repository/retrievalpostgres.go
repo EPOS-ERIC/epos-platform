@@ -11,241 +11,244 @@ import (
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/domain"
+	retrievalsqlc "github.com/EPOS-ERIC/epos-platform/services/data-retriever/repository/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/retriever"
+	"github.com/google/uuid"
 )
 
 type RetrievalRecord struct {
-	ID              int64     `json:"id"`
-	SourceID        string    `json:"source_id"`
-	Method          string    `json:"method"`
-	URLTemplate     string    `json:"url_template"`
-	GeneratedURL    string    `json:"generated_url"`
-	HTTPStatus      int       `json:"http_status"`
-	ContentType     string    `json:"content_type"`
-	IsBinary        bool      `json:"is_binary"`
-	PayloadText     string    `json:"payload_text,omitempty"`
-	PayloadHash     string    `json:"payload_hash"`
-	PayloadSize     int       `json:"payload_size_bytes"`
-	UsedAuth        bool      `json:"used_auth"`
-	FetchedAt       time.Time `json:"fetched_at"`
-	CreatedAt       time.Time `json:"created_at"`
-	RequestBodyText string    `json:"request_body_text,omitempty"`
-}
-
-type SearchResult struct {
-	RetrievalRecord
-	Score float64 `json:"score"`
+	ID               int64
+	ResourceID       string
+	VersionID        string
+	Method           string
+	URLTemplate      string
+	GeneratedURL     string
+	HTTPStatus       int
+	ContentType      string
+	IsBinary         bool
+	PayloadHash      string
+	PayloadSize      int
+	UsedAuth         bool
+	FetchedAt        time.Time
+	CreatedAt        time.Time
+	RequestBodyText  string
+	OutputParameters []domain.OutputParameter
 }
 
 type RetrievalRepository interface {
 	Create(ctx context.Context, req domain.ValidatedRequest, result retriever.Result) (RetrievalRecord, error)
 	GetByID(ctx context.Context, id int64) (RetrievalRecord, error)
-	Search(ctx context.Context, q string, sourceID string, method string, page int, pageSize int) ([]SearchResult, error)
 }
 
 type RetrievalPostgresRepository struct {
-	db *sql.DB
+	db      *sql.DB
+	queries *retrievalsqlc.Queries
 }
 
 func NewRetrievalPostgresRepository(db *sql.DB) *RetrievalPostgresRepository {
-	return &RetrievalPostgresRepository{db: db}
+	return &RetrievalPostgresRepository{db: db, queries: retrievalsqlc.New(db)}
 }
 
-func (r *RetrievalPostgresRepository) Create(ctx context.Context, req domain.ValidatedRequest, result retriever.Result) (RetrievalRecord, error) {
-	pathParamsJSON, _ := json.Marshal(req.PathParams)
-	queryParamsJSON, _ := json.Marshal(req.QueryParams)
-	headersJSON, _ := json.Marshal(redactHeaders(req.Headers))
-
-	bodyText := ""
-	if len(req.BodyBytes) > 0 {
-		bodyText = string(req.BodyBytes)
-	}
-	bodyHash := sha256.Sum256(req.BodyBytes)
-	bodyHashHex := hex.EncodeToString(bodyHash[:])
-
-	payloadText := ""
-	if !result.IsBinary {
-		payloadText = string(result.Payload)
-	}
-
-	usedAuth := req.BearerToken != ""
-
-	row := r.db.QueryRowContext(ctx, `
-		WITH upserted AS (
-			INSERT INTO retrievals (
-				source_id, method, url_template, generated_url,
-				path_params_json, query_params_json, headers_json,
-				request_body_text, request_body_hash, request_body_is_json,
-				http_status, content_type, is_binary, payload_text, payload_hash, payload_size_bytes,
-				used_auth, fetched_at
-			) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
-			ON CONFLICT (source_id, method, generated_url, request_body_hash)
-			DO UPDATE SET
-				url_template = EXCLUDED.url_template,
-				path_params_json = EXCLUDED.path_params_json,
-				query_params_json = EXCLUDED.query_params_json,
-				headers_json = EXCLUDED.headers_json,
-				request_body_text = EXCLUDED.request_body_text,
-				request_body_is_json = EXCLUDED.request_body_is_json,
-				http_status = EXCLUDED.http_status,
-				content_type = EXCLUDED.content_type,
-				is_binary = EXCLUDED.is_binary,
-				payload_text = EXCLUDED.payload_text,
-				payload_hash = EXCLUDED.payload_hash,
-				payload_size_bytes = EXCLUDED.payload_size_bytes,
-				used_auth = EXCLUDED.used_auth,
-				fetched_at = EXCLUDED.fetched_at,
-				updated_at = NOW()
-			WHERE retrievals.payload_hash IS DISTINCT FROM EXCLUDED.payload_hash
-			RETURNING id, source_id, method, url_template, generated_url, http_status, content_type, is_binary, COALESCE(payload_text,''), payload_hash, payload_size_bytes, used_auth, fetched_at, created_at, COALESCE(request_body_text,'')
-		)
-		SELECT * FROM upserted
-		UNION ALL
-		SELECT id, source_id, method, url_template, generated_url, http_status, content_type, is_binary, COALESCE(payload_text,''), payload_hash, payload_size_bytes, used_auth, fetched_at, created_at, COALESCE(request_body_text,'')
-		FROM retrievals
-		WHERE source_id = $1 AND method = $2 AND generated_url = $4 AND request_body_hash = $9
-		LIMIT 1`,
-		req.SourceID,
-		req.Method,
-		req.URLTemplate,
-		req.GeneratedURL,
-		string(pathParamsJSON),
-		string(queryParamsJSON),
-		string(headersJSON),
-		nullIfEmpty(bodyText),
-		bodyHashHex,
-		req.Body != nil && len(req.Body.JSON) > 0,
-		result.StatusCode,
-		result.ContentType,
-		result.IsBinary,
-		nullIfEmpty(payloadText),
-		result.PayloadHash,
-		result.PayloadSize,
-		usedAuth,
-		result.ResponseDate,
-	)
-
-	var record RetrievalRecord
-	err := row.Scan(
-		&record.ID,
-		&record.SourceID,
-		&record.Method,
-		&record.URLTemplate,
-		&record.GeneratedURL,
-		&record.HTTPStatus,
-		&record.ContentType,
-		&record.IsBinary,
-		&record.PayloadText,
-		&record.PayloadHash,
-		&record.PayloadSize,
-		&record.UsedAuth,
-		&record.FetchedAt,
-		&record.CreatedAt,
-		&record.RequestBodyText,
-	)
+func (r *RetrievalPostgresRepository) Create(ctx context.Context, req domain.ValidatedRequest, result retriever.Result) (record RetrievalRecord, err error) {
+	resourceID, versionID, err := resourceVersionIDs(req)
 	if err != nil {
-		return RetrievalRecord{}, fmt.Errorf("insert retrieval: %w", err)
+		return RetrievalRecord{}, err
 	}
 
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return RetrievalRecord{}, fmt.Errorf("begin retrieval transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	queries := r.queries.WithTx(tx)
+
+	if err := replaceOutputSchema(ctx, queries, resourceID, versionID, req.OutputParameters); err != nil {
+		return RetrievalRecord{}, err
+	}
+
+	retrieval, err := queries.UpsertRetrieval(ctx, upsertRetrievalParams(req, result, resourceID, versionID))
+	if err != nil {
+		return RetrievalRecord{}, fmt.Errorf("upsert retrieval: %w", err)
+	}
+	record = toRetrievalRecordFromUpsert(retrieval, req.OutputParameters)
+
+	if err := tx.Commit(); err != nil {
+		return RetrievalRecord{}, fmt.Errorf("commit retrieval transaction: %w", err)
+	}
 	return record, nil
 }
 
 func (r *RetrievalPostgresRepository) GetByID(ctx context.Context, id int64) (RetrievalRecord, error) {
-	row := r.db.QueryRowContext(ctx, `
-		SELECT id, source_id, method, url_template, generated_url, http_status, content_type, is_binary, COALESCE(payload_text,''), payload_hash, payload_size_bytes, used_auth, fetched_at, created_at, COALESCE(request_body_text,'')
-		FROM retrievals
-		WHERE id = $1`, id)
-
-	var record RetrievalRecord
-	err := row.Scan(
-		&record.ID,
-		&record.SourceID,
-		&record.Method,
-		&record.URLTemplate,
-		&record.GeneratedURL,
-		&record.HTTPStatus,
-		&record.ContentType,
-		&record.IsBinary,
-		&record.PayloadText,
-		&record.PayloadHash,
-		&record.PayloadSize,
-		&record.UsedAuth,
-		&record.FetchedAt,
-		&record.CreatedAt,
-		&record.RequestBodyText,
-	)
+	retrieval, err := r.queries.GetRetrievalByID(ctx, id)
 	if err != nil {
 		return RetrievalRecord{}, err
 	}
+	record := toRetrievalRecordFromGet(retrieval)
+	if retrieval.ResourceID == nil || retrieval.VersionID == nil {
+		return record, nil
+	}
+
+	parameters, err := r.queries.GetOutputParameters(ctx, retrievalsqlc.GetOutputParametersParams{
+		ResourceID: *retrieval.ResourceID,
+		VersionID:  *retrieval.VersionID,
+	})
+	if err != nil {
+		return RetrievalRecord{}, fmt.Errorf("get output parameters: %w", err)
+	}
+	record.OutputParameters = toDomainOutputParameters(parameters)
 	return record, nil
 }
 
-func (r *RetrievalPostgresRepository) Search(ctx context.Context, q string, sourceID string, method string, page int, pageSize int) ([]SearchResult, error) {
-	offset := (page - 1) * pageSize
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT id, source_id, method, url_template, generated_url, http_status, content_type, is_binary,
-		COALESCE(payload_text,''), payload_hash, payload_size_bytes, used_auth, fetched_at, created_at,
-		COALESCE(request_body_text,''), ts_rank(search_vector, plainto_tsquery('simple', $1)) AS score
-		FROM retrievals
-		WHERE ($2 = '' OR source_id = $2)
-		AND ($3 = '' OR method = $3)
-		AND search_vector @@ plainto_tsquery('simple', $1)
-		ORDER BY score DESC, fetched_at DESC
-		LIMIT $4 OFFSET $5`, q, sourceID, method, pageSize, offset)
-	if err != nil {
-		return nil, fmt.Errorf("search retrievals: %w", err)
+func replaceOutputSchema(ctx context.Context, queries *retrievalsqlc.Queries, resourceID, versionID uuid.UUID, parameters []domain.OutputParameter) error {
+	if err := queries.UpsertOutputSchema(ctx, retrievalsqlc.UpsertOutputSchemaParams{ResourceID: resourceID, VersionID: versionID}); err != nil {
+		return fmt.Errorf("upsert output schema: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
-
-	results := []SearchResult{}
-	for rows.Next() {
-		var item SearchResult
-		if err := rows.Scan(
-			&item.ID,
-			&item.SourceID,
-			&item.Method,
-			&item.URLTemplate,
-			&item.GeneratedURL,
-			&item.HTTPStatus,
-			&item.ContentType,
-			&item.IsBinary,
-			&item.PayloadText,
-			&item.PayloadHash,
-			&item.PayloadSize,
-			&item.UsedAuth,
-			&item.FetchedAt,
-			&item.CreatedAt,
-			&item.RequestBodyText,
-			&item.Score,
-		); err != nil {
-			return nil, fmt.Errorf("scan retrieval search row: %w", err)
+	if err := queries.DeleteOutputParameters(ctx, retrievalsqlc.DeleteOutputParametersParams{ResourceID: resourceID, VersionID: versionID}); err != nil {
+		return fmt.Errorf("clear output parameters: %w", err)
+	}
+	for _, parameter := range parameters {
+		pattern := sql.NullString{}
+		if parameter.Pattern != nil {
+			pattern = sql.NullString{String: *parameter.Pattern, Valid: true}
 		}
-		results = append(results, item)
+		if err := queries.CreateOutputParameter(ctx, retrievalsqlc.CreateOutputParameterParams{
+			ResourceID: resourceID,
+			VersionID:  versionID,
+			Name:       parameter.Name,
+			Kind:       parameter.Kind,
+			Pattern:    pattern,
+		}); err != nil {
+			return fmt.Errorf("insert output parameter: %w", err)
+		}
 	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate retrieval search rows: %w", err)
-	}
-
-	return results, nil
+	return nil
 }
 
-func nullIfEmpty(value string) any {
-	if value == "" {
-		return nil
+func resourceVersionIDs(req domain.ValidatedRequest) (uuid.UUID, uuid.UUID, error) {
+	resourceID, err := uuid.Parse(req.ResourceID)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("parse resource ID: %w", err)
 	}
-	return value
+	versionID, err := uuid.Parse(req.VersionID)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("parse version ID: %w", err)
+	}
+	return resourceID, versionID, nil
+}
+
+func upsertRetrievalParams(req domain.ValidatedRequest, result retriever.Result, resourceID, versionID uuid.UUID) retrievalsqlc.UpsertRetrievalParams {
+	pathParamsJSON, _ := json.Marshal(req.PathParams)
+	queryParamsJSON, _ := json.Marshal(req.QueryParams)
+	headersJSON, _ := json.Marshal(redactHeaders(req.Headers))
+	bodyHash := sha256.Sum256(req.BodyBytes)
+
+	requestBodyText := sql.NullString{}
+	if len(req.BodyBytes) > 0 {
+		requestBodyText = sql.NullString{String: string(req.BodyBytes), Valid: true}
+	}
+	return retrievalsqlc.UpsertRetrievalParams{
+		ResourceID:        &resourceID,
+		VersionID:         &versionID,
+		Method:            req.Method,
+		UrlTemplate:       req.URLTemplate,
+		GeneratedUrl:      req.GeneratedURL,
+		PathParamsJson:    pathParamsJSON,
+		QueryParamsJson:   queryParamsJSON,
+		HeadersJson:       headersJSON,
+		RequestBodyText:   requestBodyText,
+		RequestBodyHash:   hex.EncodeToString(bodyHash[:]),
+		RequestBodyIsJson: req.Body != nil && len(req.Body.JSON) > 0,
+		HttpStatus:        int32(result.StatusCode),
+		ContentType:       result.ContentType,
+		IsBinary:          result.IsBinary,
+		PayloadHash:       result.PayloadHash,
+		PayloadSizeBytes:  int32(result.PayloadSize),
+		UsedAuth:          req.BearerToken != "",
+		FetchedAt:         result.ResponseDate,
+	}
+}
+
+func toRetrievalRecordFromUpsert(retrieval retrievalsqlc.UpsertRetrievalRow, parameters []domain.OutputParameter) RetrievalRecord {
+	return RetrievalRecord{
+		ID:               retrieval.ID,
+		ResourceID:       uuidString(retrieval.ResourceID),
+		VersionID:        uuidString(retrieval.VersionID),
+		Method:           retrieval.Method,
+		URLTemplate:      retrieval.UrlTemplate,
+		GeneratedURL:     retrieval.GeneratedUrl,
+		HTTPStatus:       int(retrieval.HttpStatus),
+		ContentType:      retrieval.ContentType,
+		IsBinary:         retrieval.IsBinary,
+		PayloadHash:      retrieval.PayloadHash,
+		PayloadSize:      int(retrieval.PayloadSizeBytes),
+		UsedAuth:         retrieval.UsedAuth,
+		FetchedAt:        retrieval.FetchedAt,
+		CreatedAt:        retrieval.CreatedAt,
+		RequestBodyText:  nullString(retrieval.RequestBodyText),
+		OutputParameters: parameters,
+	}
+}
+
+func toRetrievalRecordFromGet(retrieval retrievalsqlc.GetRetrievalByIDRow) RetrievalRecord {
+	return RetrievalRecord{
+		ID:              retrieval.ID,
+		ResourceID:      uuidString(retrieval.ResourceID),
+		VersionID:       uuidString(retrieval.VersionID),
+		Method:          retrieval.Method,
+		URLTemplate:     retrieval.UrlTemplate,
+		GeneratedURL:    retrieval.GeneratedUrl,
+		HTTPStatus:      int(retrieval.HttpStatus),
+		ContentType:     retrieval.ContentType,
+		IsBinary:        retrieval.IsBinary,
+		PayloadHash:     retrieval.PayloadHash,
+		PayloadSize:     int(retrieval.PayloadSizeBytes),
+		UsedAuth:        retrieval.UsedAuth,
+		FetchedAt:       retrieval.FetchedAt,
+		CreatedAt:       retrieval.CreatedAt,
+		RequestBodyText: nullString(retrieval.RequestBodyText),
+	}
+}
+
+func toDomainOutputParameters(parameters []retrievalsqlc.GetOutputParametersRow) []domain.OutputParameter {
+	output := make([]domain.OutputParameter, 0, len(parameters))
+	for _, parameter := range parameters {
+		outputParameter := domain.OutputParameter{Name: parameter.Name, Kind: parameter.Kind}
+		if parameter.Pattern.Valid {
+			pattern := parameter.Pattern.String
+			outputParameter.Pattern = &pattern
+		}
+		output = append(output, outputParameter)
+	}
+	return output
+}
+
+func uuidString(value *uuid.UUID) string {
+	if value == nil {
+		return ""
+	}
+	return value.String()
+}
+
+func nullString(value sql.NullString) string {
+	if !value.Valid {
+		return ""
+	}
+	return value.String
 }
 
 func redactHeaders(headers map[string]string) map[string]string {
 	out := map[string]string{}
-	for k, v := range headers {
-		lower := strings.ToLower(k)
+	for key, value := range headers {
+		lower := strings.ToLower(key)
 		if lower == "authorization" || lower == "cookie" || lower == "set-cookie" {
-			out[k] = "[redacted]"
+			out[key] = "[redacted]"
 			continue
 		}
-		out[k] = v
+		out[key] = value
 	}
 	return out
 }

@@ -320,6 +320,14 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/role-requests
 	RequestGroupRole(ctx context.Context, req *CreateRoleRequest, params RequestGroupRoleParams) (*RoleRequest, error)
+	// RetrieveResourceVersion implements retrieveResourceVersion operation.
+	//
+	// Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses
+	// never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a
+	// generated command that needs authentication.
+	//
+	// POST /access
+	RetrieveResourceVersion(ctx context.Context, req *RetrieveResourceVersionRequest) (*RetrieveResourceVersionResponse, error)
 	// RevokeGlobalPermission implements revokeGlobalPermission operation.
 	//
 	// Revoke a global permission from a user. Requires global.permission.manage or global ADMIN.

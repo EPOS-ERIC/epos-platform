@@ -472,6 +472,17 @@ func (UnimplementedHandler) RequestGroupRole(ctx context.Context, req *CreateRol
 	return r, ht.ErrNotImplemented
 }
 
+// RetrieveResourceVersion implements retrieveResourceVersion operation.
+//
+// Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses
+// never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a
+// generated command that needs authentication.
+//
+// POST /access
+func (UnimplementedHandler) RetrieveResourceVersion(ctx context.Context, req *RetrieveResourceVersionRequest) (r *RetrieveResourceVersionResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // RevokeGlobalPermission implements revokeGlobalPermission operation.
 //
 // Revoke a global permission from a user. Requires global.permission.manage or global ADMIN.

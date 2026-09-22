@@ -8,7 +8,7 @@ Monorepo for the EPOS Platform web application, backend services, shared Go pack
 | ----------------------------- | -------------------------------------------------------------- | ------------------------ |
 | `services/gateway`            | Public API, authentication, and backend aggregation            | `http://localhost:32000` |
 | `services/metadata-lifecycle` | Metadata, users, groups, authorization, and resource lifecycle | `http://localhost:33000` |
-| `services/data-retriever`     | Outbound retrieval, payload caching, and cached-text search    | `http://localhost:8100`  |
+| `services/data-retriever`     | Outbound retrieval, payload caching, and cached-text search    | `grpc://localhost:8100`  |
 | `services/oss-aai-service`    | Local web login and OAuth2/OIDC provider                       | `http://localhost:8110`  |
 
 The development stack also includes PostgreSQL databases for Metadata Lifecycle and Data Retriever, plus Grafana's OpenTelemetry LGTM stack for logs, metrics, traces, and profiles.

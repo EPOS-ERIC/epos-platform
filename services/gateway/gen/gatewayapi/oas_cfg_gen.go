@@ -20,9 +20,10 @@ var regexMap = map[string]ogenregex.Regexp{
 	"[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]": ogenregex.MustCompile("[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]"),
 	"^[A-Za-z0-9 _:-]+$": ogenregex.MustCompile("^[A-Za-z0-9 _:-]+$"),
 }
-
-// Allocate option closure once.
-var serverSpanKind = trace.WithSpanKind(trace.SpanKindServer)
+var (
+	// Allocate option closure once.
+	serverSpanKind = trace.WithSpanKind(trace.SpanKindServer)
+)
 
 type (
 	optionFunc[C any] func(*C)
@@ -70,13 +71,13 @@ type ServerOption interface {
 	applyServer(*serverConfig)
 }
 
-var _ ServerOption = optionFunc[serverConfig](nil)
+var _ ServerOption = (optionFunc[serverConfig])(nil)
 
 func (o optionFunc[C]) applyServer(c *C) {
 	o(c)
 }
 
-var _ ServerOption = otelOptionFunc(nil)
+var _ ServerOption = (otelOptionFunc)(nil)
 
 func (o otelOptionFunc) applyServer(c *serverConfig) {
 	o(&c.otelConfig)

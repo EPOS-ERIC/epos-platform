@@ -5,13 +5,24 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 var placeholderRegex = regexp.MustCompile(`\{([A-Za-z0-9_]+)\}`)
+
+type RetrieveMode string
+
+const (
+	RetrieveModeDry     RetrieveMode = "DRY"
+	RetrieveModeExecute RetrieveMode = "EXECUTE"
+)
 
 type RequestBody struct {
 	ContentType string          `json:"content_type"`
@@ -20,14 +31,23 @@ type RequestBody struct {
 }
 
 type RetrieveRequest struct {
-	SourceID    string            `json:"source_id"`
-	Method      string            `json:"method"`
-	URLTemplate string            `json:"url_template"`
-	PathParams  map[string]string `json:"path_params"`
-	QueryParams map[string]string `json:"query_params,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty"`
-	BearerToken string            `json:"bearer_token,omitempty"`
-	Body        *RequestBody      `json:"body,omitempty"`
+	Mode             RetrieveMode      `json:"mode"`
+	ResourceID       string            `json:"resource_id"`
+	VersionID        string            `json:"version_id"`
+	Method           string            `json:"method"`
+	URLTemplate      string            `json:"url_template"`
+	PathParams       map[string]string `json:"path_params"`
+	QueryParams      map[string]string `json:"query_params,omitempty"`
+	Headers          map[string]string `json:"headers,omitempty"`
+	BearerToken      string            `json:"bearer_token,omitempty"`
+	Body             *RequestBody      `json:"body,omitempty"`
+	OutputParameters []OutputParameter `json:"output_parameters"`
+}
+
+type OutputParameter struct {
+	Name    string
+	Kind    string
+	Pattern *string
 }
 
 type ValidatedRequest struct {
@@ -37,9 +57,25 @@ type ValidatedRequest struct {
 }
 
 func (r RetrieveRequest) Validate() (ValidatedRequest, error) {
-	if strings.TrimSpace(r.SourceID) == "" {
-		return ValidatedRequest{}, errors.New("source_id is required")
+	if r.Mode == "" {
+		r.Mode = RetrieveModeExecute
 	}
+	if !slices.Contains([]RetrieveMode{RetrieveModeDry, RetrieveModeExecute}, r.Mode) {
+		return ValidatedRequest{}, errors.New("mode must be DRY or EXECUTE")
+	}
+
+	if _, err := uuid.Parse(r.ResourceID); err != nil {
+		return ValidatedRequest{}, errors.New("resource_id must be a UUID")
+	}
+	if _, err := uuid.Parse(r.VersionID); err != nil {
+		return ValidatedRequest{}, errors.New("version_id must be a UUID")
+	}
+
+	parameters, err := validateOutputParameters(r.OutputParameters)
+	if err != nil {
+		return ValidatedRequest{}, err
+	}
+	r.OutputParameters = parameters
 
 	method := strings.ToUpper(strings.TrimSpace(r.Method))
 	if !slices.Contains([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}, method) {
@@ -61,13 +97,13 @@ func (r RetrieveRequest) Validate() (ValidatedRequest, error) {
 		return ValidatedRequest{}, errors.New("url_template scheme must be http or https")
 	}
 
-	if _, exists := r.Headers["Authorization"]; exists && strings.TrimSpace(r.BearerToken) != "" {
+	if hasHeader(r.Headers, "Authorization") && strings.TrimSpace(r.BearerToken) != "" {
 		return ValidatedRequest{}, errors.New("headers.Authorization cannot be set when bearer_token is provided")
 	}
-	if _, exists := r.Headers["Host"]; exists {
+	if hasHeader(r.Headers, "Host") {
 		return ValidatedRequest{}, errors.New("headers.Host is not allowed")
 	}
-	if _, exists := r.Headers["Content-Length"]; exists {
+	if hasHeader(r.Headers, "Content-Length") {
 		return ValidatedRequest{}, errors.New("headers.Content-Length is not allowed")
 	}
 
@@ -82,6 +118,79 @@ func (r RetrieveRequest) Validate() (ValidatedRequest, error) {
 	}
 
 	return ValidatedRequest{RetrieveRequest: r, GeneratedURL: generatedURL, BodyBytes: bodyBytes}, nil
+}
+
+func hasHeader(headers map[string]string, name string) bool {
+	for key := range headers {
+		if textproto.CanonicalMIMEHeaderKey(key) == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (r ValidatedRequest) CurlCommand() string {
+	arguments := []string{"curl", "--request", r.Method, "--url", shellQuote(r.GeneratedURL)}
+	headerNames := make([]string, 0, len(r.Headers))
+	for name := range r.Headers {
+		headerNames = append(headerNames, name)
+	}
+	sort.Strings(headerNames)
+	for _, name := range headerNames {
+		if r.Body != nil && textproto.CanonicalMIMEHeaderKey(name) == "Content-Type" {
+			continue
+		}
+		if textproto.CanonicalMIMEHeaderKey(name) == "Authorization" {
+			arguments = append(arguments, "--header", `"Authorization: ${AUTHORIZATION}"`)
+			continue
+		}
+		arguments = append(arguments, "--header", shellQuote(name+": "+r.Headers[name]))
+	}
+	if r.Body != nil {
+		arguments = append(arguments, "--header", shellQuote("Content-Type: "+r.Body.ContentType))
+	}
+	if strings.TrimSpace(r.BearerToken) != "" {
+		arguments = append(arguments, "--oauth2-bearer", `"${BEARER_TOKEN}"`)
+	}
+	if len(r.BodyBytes) > 0 {
+		arguments = append(arguments, "--data-binary", shellQuote(string(r.BodyBytes)))
+	}
+	return strings.Join(arguments, " ")
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+}
+
+func validateOutputParameters(parameters []OutputParameter) ([]OutputParameter, error) {
+	validated := make([]OutputParameter, 0, len(parameters))
+	names := make(map[string]struct{}, len(parameters))
+	for _, parameter := range parameters {
+		parameter.Name = strings.TrimSpace(parameter.Name)
+		parameter.Kind = strings.ToUpper(strings.TrimSpace(parameter.Kind))
+		if parameter.Name == "" {
+			return nil, errors.New("output parameter name is required")
+		}
+		if _, exists := names[parameter.Name]; exists {
+			return nil, fmt.Errorf("output parameter %q is duplicated", parameter.Name)
+		}
+		if !slices.Contains([]string{"STRING", "BOOLEAN", "INTEGER", "FLOAT", "DATETIME", "JSON", "BINARY"}, parameter.Kind) {
+			return nil, fmt.Errorf("output parameter %q has an invalid kind", parameter.Name)
+		}
+		if parameter.Pattern != nil {
+			pattern := strings.TrimSpace(*parameter.Pattern)
+			if pattern == "" {
+				return nil, fmt.Errorf("output parameter %q pattern is empty", parameter.Name)
+			}
+			if _, err := regexp.Compile(pattern); err != nil {
+				return nil, fmt.Errorf("output parameter %q pattern is invalid: %w", parameter.Name, err)
+			}
+			parameter.Pattern = &pattern
+		}
+		names[parameter.Name] = struct{}{}
+		validated = append(validated, parameter)
+	}
+	return validated, nil
 }
 
 func buildURL(template string, pathParams map[string]string, queryParams map[string]string) (string, error) {

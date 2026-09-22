@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
@@ -32,7 +33,7 @@ func main() {
 		}
 	}()
 
-	addr := getenv("DATA_RETRIEVER_LISTEN_ADDR", ":8100")
+	addr := getenv("DATA_RETRIEVER_GRPC_LISTEN_ADDR", ":8100")
 
 	db, err := openPostgresWithRetry(log)
 	if err != nil {
@@ -45,9 +46,8 @@ func main() {
 		}
 	}()
 
-	migrationsDir := getenv("DATA_RETRIEVER_MIGRATIONS_DIR", "migrations")
-	if err := storage.ApplyMigrations(db, migrationsDir); err != nil {
-		log.Error("failed to apply migrations", "migrations_dir", migrationsDir, "error", err)
+	if err := storage.ApplyMigrations(log, db); err != nil {
+		log.Error("failed to apply migrations", "error", err)
 		os.Exit(1)
 	}
 
@@ -58,16 +58,18 @@ func main() {
 	}
 
 	maxBodyBytes := int64(1 << 20)
-	handler := server.NewRouter(
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	log.Info("starting grpc server", "addr", addr, "timeout", timeout.String())
+	if err := server.Run(
+		ctx,
+		addr,
 		log,
 		repository.NewRetrievalPostgresRepository(db),
 		retriever.NewClient(timeout, maxBodyBytes),
-		db,
-	)
-	log.Info("starting http server", "addr", addr, "timeout", timeout.String())
-
-	if err := http.ListenAndServe(addr, handler); err != nil {
-		log.Error("http server stopped", "error", err)
+	); err != nil {
+		log.Error("grpc server stopped", "error", err)
 		os.Exit(1)
 	}
 }

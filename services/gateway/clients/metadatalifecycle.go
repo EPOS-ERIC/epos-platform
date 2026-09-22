@@ -3,7 +3,6 @@ package clients
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -11,10 +10,8 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
 // TODO: clean up this package, create a sub package metadatalifecycle and in there split the grpc functions into logical files
@@ -65,34 +62,7 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string) (*MetadataLifecycle,
 }
 
 func (c *MetadataLifecycle) wrapError(ctx context.Context, operation string, err error) error {
-	// Metadata-lifecycle logs handled errors; gateway logs only when it was unavailable.
-	if status.Code(err) == codes.Unavailable {
-		c.log.ErrorContext(ctx, "metadata-lifecycle request failed", "operation", operation, "code", status.Code(err), "error", err)
-	}
-
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
-	}
-
-	switch status.Code(err) {
-	case codes.InvalidArgument, codes.FailedPrecondition, codes.OutOfRange:
-		return fmt.Errorf("%s: %w", operation, domain.ErrBadRequest)
-	case codes.NotFound:
-		return fmt.Errorf("%s: %w", operation, domain.ErrNotFound)
-	case codes.AlreadyExists, codes.Aborted:
-		return fmt.Errorf("%s: %w", operation, domain.ErrConflict)
-	case codes.PermissionDenied:
-		return fmt.Errorf("%s: %w", operation, domain.ErrForbidden)
-	case codes.Unauthenticated:
-		return fmt.Errorf("%s: %w", operation, domain.ErrUnauthorized)
-	case codes.DeadlineExceeded, codes.Canceled:
-		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
-	case codes.Unavailable:
-		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamUnavailable)
-	default:
-		// Internal, Unknown, ResourceExhausted, and Unimplemented are upstream errors.
-		return fmt.Errorf("%s: %w", operation, err)
-	}
+	return wrapRPCError(c.log, ctx, "metadata-lifecycle", operation, err)
 }
 
 func (c *MetadataLifecycle) ListGroups(ctx context.Context) (*metadatalifecyclev1.ListGroupsResponse, error) {

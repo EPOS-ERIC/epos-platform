@@ -6462,7 +6462,7 @@ func (o OptNilBool) IsEmpty() bool {
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptNilBool) Get() (v, ok bool) {
+func (o OptNilBool) Get() (v bool, ok bool) {
 	if o.Null {
 		return v, false
 	}
@@ -6474,6 +6474,74 @@ func (o OptNilBool) Get() (v, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilByte returns new OptNilByte with value set to v.
+func NewOptNilByte(v []byte) OptNilByte {
+	return OptNilByte{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilByte is optional nullable []byte.
+type OptNilByte struct {
+	Value []byte
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilByte was set.
+func (o OptNilByte) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilByte) Reset() {
+	var v []byte
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilByte) SetTo(v []byte) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilByte) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilByte) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v []byte
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilByte) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilByte) Get() (v []byte, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilByte) Or(d []byte) []byte {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -6616,6 +6684,74 @@ func (o OptNilFloat64) Or(d float64) float64 {
 	return d
 }
 
+// NewOptNilInt32 returns new OptNilInt32 with value set to v.
+func NewOptNilInt32(v int32) OptNilInt32 {
+	return OptNilInt32{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt32 is optional nullable int32.
+type OptNilInt32 struct {
+	Value int32
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt32 was set.
+func (o OptNilInt32) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt32) Reset() {
+	var v int32
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt32) SetTo(v int32) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt32) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt32) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v int32
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilInt32) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt32) Get() (v int32, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilInt64 returns new OptNilInt64 with value set to v.
 func NewOptNilInt64(v int64) OptNilInt64 {
 	return OptNilInt64{
@@ -6678,6 +6814,74 @@ func (o OptNilInt64) Get() (v int64, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilInt64) Or(d int64) int64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilRetrievalRequestBody returns new OptNilRetrievalRequestBody with value set to v.
+func NewOptNilRetrievalRequestBody(v RetrievalRequestBody) OptNilRetrievalRequestBody {
+	return OptNilRetrievalRequestBody{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilRetrievalRequestBody is optional nullable RetrievalRequestBody.
+type OptNilRetrievalRequestBody struct {
+	Value RetrievalRequestBody
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilRetrievalRequestBody was set.
+func (o OptNilRetrievalRequestBody) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilRetrievalRequestBody) Reset() {
+	var v RetrievalRequestBody
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilRetrievalRequestBody) SetTo(v RetrievalRequestBody) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilRetrievalRequestBody) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilRetrievalRequestBody) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v RetrievalRequestBody
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilRetrievalRequestBody) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilRetrievalRequestBody) Get() (v RetrievalRequestBody, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilRetrievalRequestBody) Or(d RetrievalRequestBody) RetrievalRequestBody {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -7134,6 +7338,190 @@ func (o OptResourceVersionReference) Get() (v ResourceVersionReference, ok bool)
 
 // Or returns value if set, or given parameter if does not.
 func (o OptResourceVersionReference) Or(d ResourceVersionReference) ResourceVersionReference {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRetrieveMode returns new OptRetrieveMode with value set to v.
+func NewOptRetrieveMode(v RetrieveMode) OptRetrieveMode {
+	return OptRetrieveMode{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRetrieveMode is optional RetrieveMode.
+type OptRetrieveMode struct {
+	Value RetrieveMode
+	Set   bool
+}
+
+// IsSet returns true if OptRetrieveMode was set.
+func (o OptRetrieveMode) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRetrieveMode) Reset() {
+	var v RetrieveMode
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRetrieveMode) SetTo(v RetrieveMode) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRetrieveMode) Get() (v RetrieveMode, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRetrieveMode) Or(d RetrieveMode) RetrieveMode {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRetrieveResourceVersionRequestHeaders returns new OptRetrieveResourceVersionRequestHeaders with value set to v.
+func NewOptRetrieveResourceVersionRequestHeaders(v RetrieveResourceVersionRequestHeaders) OptRetrieveResourceVersionRequestHeaders {
+	return OptRetrieveResourceVersionRequestHeaders{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRetrieveResourceVersionRequestHeaders is optional RetrieveResourceVersionRequestHeaders.
+type OptRetrieveResourceVersionRequestHeaders struct {
+	Value RetrieveResourceVersionRequestHeaders
+	Set   bool
+}
+
+// IsSet returns true if OptRetrieveResourceVersionRequestHeaders was set.
+func (o OptRetrieveResourceVersionRequestHeaders) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRetrieveResourceVersionRequestHeaders) Reset() {
+	var v RetrieveResourceVersionRequestHeaders
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRetrieveResourceVersionRequestHeaders) SetTo(v RetrieveResourceVersionRequestHeaders) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRetrieveResourceVersionRequestHeaders) Get() (v RetrieveResourceVersionRequestHeaders, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRetrieveResourceVersionRequestHeaders) Or(d RetrieveResourceVersionRequestHeaders) RetrieveResourceVersionRequestHeaders {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRetrieveResourceVersionRequestPathParams returns new OptRetrieveResourceVersionRequestPathParams with value set to v.
+func NewOptRetrieveResourceVersionRequestPathParams(v RetrieveResourceVersionRequestPathParams) OptRetrieveResourceVersionRequestPathParams {
+	return OptRetrieveResourceVersionRequestPathParams{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRetrieveResourceVersionRequestPathParams is optional RetrieveResourceVersionRequestPathParams.
+type OptRetrieveResourceVersionRequestPathParams struct {
+	Value RetrieveResourceVersionRequestPathParams
+	Set   bool
+}
+
+// IsSet returns true if OptRetrieveResourceVersionRequestPathParams was set.
+func (o OptRetrieveResourceVersionRequestPathParams) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRetrieveResourceVersionRequestPathParams) Reset() {
+	var v RetrieveResourceVersionRequestPathParams
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRetrieveResourceVersionRequestPathParams) SetTo(v RetrieveResourceVersionRequestPathParams) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRetrieveResourceVersionRequestPathParams) Get() (v RetrieveResourceVersionRequestPathParams, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRetrieveResourceVersionRequestPathParams) Or(d RetrieveResourceVersionRequestPathParams) RetrieveResourceVersionRequestPathParams {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRetrieveResourceVersionRequestQueryParams returns new OptRetrieveResourceVersionRequestQueryParams with value set to v.
+func NewOptRetrieveResourceVersionRequestQueryParams(v RetrieveResourceVersionRequestQueryParams) OptRetrieveResourceVersionRequestQueryParams {
+	return OptRetrieveResourceVersionRequestQueryParams{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRetrieveResourceVersionRequestQueryParams is optional RetrieveResourceVersionRequestQueryParams.
+type OptRetrieveResourceVersionRequestQueryParams struct {
+	Value RetrieveResourceVersionRequestQueryParams
+	Set   bool
+}
+
+// IsSet returns true if OptRetrieveResourceVersionRequestQueryParams was set.
+func (o OptRetrieveResourceVersionRequestQueryParams) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRetrieveResourceVersionRequestQueryParams) Reset() {
+	var v RetrieveResourceVersionRequestQueryParams
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRetrieveResourceVersionRequestQueryParams) SetTo(v RetrieveResourceVersionRequestQueryParams) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRetrieveResourceVersionRequestQueryParams) Get() (v RetrieveResourceVersionRequestQueryParams, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRetrieveResourceVersionRequestQueryParams) Or(d RetrieveResourceVersionRequestQueryParams) RetrieveResourceVersionRequestQueryParams {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -9047,6 +9435,503 @@ func (s *ResourceVersionSummary) SetRejectedAt(val NilDateTime) {
 // SetRejectionNote sets the value of RejectionNote.
 func (s *ResourceVersionSummary) SetRejectionNote(val NilString) {
 	s.RejectionNote = val
+}
+
+// Ref: #/components/schemas/RetrievalHTTPMethod
+type RetrievalHTTPMethod string
+
+const (
+	RetrievalHTTPMethodGET    RetrievalHTTPMethod = "GET"
+	RetrievalHTTPMethodPOST   RetrievalHTTPMethod = "POST"
+	RetrievalHTTPMethodPUT    RetrievalHTTPMethod = "PUT"
+	RetrievalHTTPMethodDELETE RetrievalHTTPMethod = "DELETE"
+)
+
+// AllValues returns all RetrievalHTTPMethod values.
+func (RetrievalHTTPMethod) AllValues() []RetrievalHTTPMethod {
+	return []RetrievalHTTPMethod{
+		RetrievalHTTPMethodGET,
+		RetrievalHTTPMethodPOST,
+		RetrievalHTTPMethodPUT,
+		RetrievalHTTPMethodDELETE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s RetrievalHTTPMethod) MarshalText() ([]byte, error) {
+	switch s {
+	case RetrievalHTTPMethodGET:
+		return []byte(s), nil
+	case RetrievalHTTPMethodPOST:
+		return []byte(s), nil
+	case RetrievalHTTPMethodPUT:
+		return []byte(s), nil
+	case RetrievalHTTPMethodDELETE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *RetrievalHTTPMethod) UnmarshalText(data []byte) error {
+	switch RetrievalHTTPMethod(data) {
+	case RetrievalHTTPMethodGET:
+		*s = RetrievalHTTPMethodGET
+		return nil
+	case RetrievalHTTPMethodPOST:
+		*s = RetrievalHTTPMethodPOST
+		return nil
+	case RetrievalHTTPMethodPUT:
+		*s = RetrievalHTTPMethodPUT
+		return nil
+	case RetrievalHTTPMethodDELETE:
+		*s = RetrievalHTTPMethodDELETE
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/RetrievalOutputParameter
+type RetrievalOutputParameter struct {
+	Name    NonBlankString               `json:"name"`
+	Kind    RetrievalOutputParameterKind `json:"kind"`
+	Pattern OptNilString                 `json:"pattern"`
+}
+
+// GetName returns the value of Name.
+func (s *RetrievalOutputParameter) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetKind returns the value of Kind.
+func (s *RetrievalOutputParameter) GetKind() RetrievalOutputParameterKind {
+	return s.Kind
+}
+
+// GetPattern returns the value of Pattern.
+func (s *RetrievalOutputParameter) GetPattern() OptNilString {
+	return s.Pattern
+}
+
+// SetName sets the value of Name.
+func (s *RetrievalOutputParameter) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetKind sets the value of Kind.
+func (s *RetrievalOutputParameter) SetKind(val RetrievalOutputParameterKind) {
+	s.Kind = val
+}
+
+// SetPattern sets the value of Pattern.
+func (s *RetrievalOutputParameter) SetPattern(val OptNilString) {
+	s.Pattern = val
+}
+
+// Ref: #/components/schemas/RetrievalOutputParameterKind
+type RetrievalOutputParameterKind string
+
+const (
+	RetrievalOutputParameterKindSTRING   RetrievalOutputParameterKind = "STRING"
+	RetrievalOutputParameterKindBOOLEAN  RetrievalOutputParameterKind = "BOOLEAN"
+	RetrievalOutputParameterKindINTEGER  RetrievalOutputParameterKind = "INTEGER"
+	RetrievalOutputParameterKindFLOAT    RetrievalOutputParameterKind = "FLOAT"
+	RetrievalOutputParameterKindDATETIME RetrievalOutputParameterKind = "DATETIME"
+	RetrievalOutputParameterKindJSON     RetrievalOutputParameterKind = "JSON"
+	RetrievalOutputParameterKindBINARY   RetrievalOutputParameterKind = "BINARY"
+)
+
+// AllValues returns all RetrievalOutputParameterKind values.
+func (RetrievalOutputParameterKind) AllValues() []RetrievalOutputParameterKind {
+	return []RetrievalOutputParameterKind{
+		RetrievalOutputParameterKindSTRING,
+		RetrievalOutputParameterKindBOOLEAN,
+		RetrievalOutputParameterKindINTEGER,
+		RetrievalOutputParameterKindFLOAT,
+		RetrievalOutputParameterKindDATETIME,
+		RetrievalOutputParameterKindJSON,
+		RetrievalOutputParameterKindBINARY,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s RetrievalOutputParameterKind) MarshalText() ([]byte, error) {
+	switch s {
+	case RetrievalOutputParameterKindSTRING:
+		return []byte(s), nil
+	case RetrievalOutputParameterKindBOOLEAN:
+		return []byte(s), nil
+	case RetrievalOutputParameterKindINTEGER:
+		return []byte(s), nil
+	case RetrievalOutputParameterKindFLOAT:
+		return []byte(s), nil
+	case RetrievalOutputParameterKindDATETIME:
+		return []byte(s), nil
+	case RetrievalOutputParameterKindJSON:
+		return []byte(s), nil
+	case RetrievalOutputParameterKindBINARY:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *RetrievalOutputParameterKind) UnmarshalText(data []byte) error {
+	switch RetrievalOutputParameterKind(data) {
+	case RetrievalOutputParameterKindSTRING:
+		*s = RetrievalOutputParameterKindSTRING
+		return nil
+	case RetrievalOutputParameterKindBOOLEAN:
+		*s = RetrievalOutputParameterKindBOOLEAN
+		return nil
+	case RetrievalOutputParameterKindINTEGER:
+		*s = RetrievalOutputParameterKindINTEGER
+		return nil
+	case RetrievalOutputParameterKindFLOAT:
+		*s = RetrievalOutputParameterKindFLOAT
+		return nil
+	case RetrievalOutputParameterKindDATETIME:
+		*s = RetrievalOutputParameterKindDATETIME
+		return nil
+	case RetrievalOutputParameterKindJSON:
+		*s = RetrievalOutputParameterKindJSON
+		return nil
+	case RetrievalOutputParameterKindBINARY:
+		*s = RetrievalOutputParameterKindBINARY
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/RetrievalRequestBody
+type RetrievalRequestBody struct {
+	ContentType NonBlankString `json:"content_type"`
+	Raw         OptNilString   `json:"raw"`
+	// Serialized JSON document. Requires a JSON content type.
+	JSONPayload OptNilString `json:"json_payload"`
+}
+
+// GetContentType returns the value of ContentType.
+func (s *RetrievalRequestBody) GetContentType() NonBlankString {
+	return s.ContentType
+}
+
+// GetRaw returns the value of Raw.
+func (s *RetrievalRequestBody) GetRaw() OptNilString {
+	return s.Raw
+}
+
+// GetJSONPayload returns the value of JSONPayload.
+func (s *RetrievalRequestBody) GetJSONPayload() OptNilString {
+	return s.JSONPayload
+}
+
+// SetContentType sets the value of ContentType.
+func (s *RetrievalRequestBody) SetContentType(val NonBlankString) {
+	s.ContentType = val
+}
+
+// SetRaw sets the value of Raw.
+func (s *RetrievalRequestBody) SetRaw(val OptNilString) {
+	s.Raw = val
+}
+
+// SetJSONPayload sets the value of JSONPayload.
+func (s *RetrievalRequestBody) SetJSONPayload(val OptNilString) {
+	s.JSONPayload = val
+}
+
+// Ref: #/components/schemas/RetrieveMode
+type RetrieveMode string
+
+const (
+	RetrieveModeDRY     RetrieveMode = "DRY"
+	RetrieveModeEXECUTE RetrieveMode = "EXECUTE"
+)
+
+// AllValues returns all RetrieveMode values.
+func (RetrieveMode) AllValues() []RetrieveMode {
+	return []RetrieveMode{
+		RetrieveModeDRY,
+		RetrieveModeEXECUTE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s RetrieveMode) MarshalText() ([]byte, error) {
+	switch s {
+	case RetrieveModeDRY:
+		return []byte(s), nil
+	case RetrieveModeEXECUTE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *RetrieveMode) UnmarshalText(data []byte) error {
+	switch RetrieveMode(data) {
+	case RetrieveModeDRY:
+		*s = RetrieveModeDRY
+		return nil
+	case RetrieveModeEXECUTE:
+		*s = RetrieveModeEXECUTE
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/RetrieveResourceVersionRequest
+type RetrieveResourceVersionRequest struct {
+	ResourceID uuid.UUID           `json:"resource_id"`
+	VersionID  uuid.UUID           `json:"version_id"`
+	Mode       OptRetrieveMode     `json:"mode"`
+	Method     RetrievalHTTPMethod `json:"method"`
+	// Absolute HTTP(S) URL template. Path placeholders use `{name}` syntax.
+	URLTemplate string                                       `json:"url_template"`
+	PathParams  OptRetrieveResourceVersionRequestPathParams  `json:"path_params"`
+	QueryParams OptRetrieveResourceVersionRequestQueryParams `json:"query_params"`
+	Headers     OptRetrieveResourceVersionRequestHeaders     `json:"headers"`
+	// Credential for the upstream resource. It is never persisted or returned.
+	BearerToken      OptNilString               `json:"bearer_token"`
+	Body             OptNilRetrievalRequestBody `json:"body"`
+	OutputParameters []RetrievalOutputParameter `json:"output_parameters"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *RetrieveResourceVersionRequest) GetResourceID() uuid.UUID {
+	return s.ResourceID
+}
+
+// GetVersionID returns the value of VersionID.
+func (s *RetrieveResourceVersionRequest) GetVersionID() uuid.UUID {
+	return s.VersionID
+}
+
+// GetMode returns the value of Mode.
+func (s *RetrieveResourceVersionRequest) GetMode() OptRetrieveMode {
+	return s.Mode
+}
+
+// GetMethod returns the value of Method.
+func (s *RetrieveResourceVersionRequest) GetMethod() RetrievalHTTPMethod {
+	return s.Method
+}
+
+// GetURLTemplate returns the value of URLTemplate.
+func (s *RetrieveResourceVersionRequest) GetURLTemplate() string {
+	return s.URLTemplate
+}
+
+// GetPathParams returns the value of PathParams.
+func (s *RetrieveResourceVersionRequest) GetPathParams() OptRetrieveResourceVersionRequestPathParams {
+	return s.PathParams
+}
+
+// GetQueryParams returns the value of QueryParams.
+func (s *RetrieveResourceVersionRequest) GetQueryParams() OptRetrieveResourceVersionRequestQueryParams {
+	return s.QueryParams
+}
+
+// GetHeaders returns the value of Headers.
+func (s *RetrieveResourceVersionRequest) GetHeaders() OptRetrieveResourceVersionRequestHeaders {
+	return s.Headers
+}
+
+// GetBearerToken returns the value of BearerToken.
+func (s *RetrieveResourceVersionRequest) GetBearerToken() OptNilString {
+	return s.BearerToken
+}
+
+// GetBody returns the value of Body.
+func (s *RetrieveResourceVersionRequest) GetBody() OptNilRetrievalRequestBody {
+	return s.Body
+}
+
+// GetOutputParameters returns the value of OutputParameters.
+func (s *RetrieveResourceVersionRequest) GetOutputParameters() []RetrievalOutputParameter {
+	return s.OutputParameters
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *RetrieveResourceVersionRequest) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
+// SetVersionID sets the value of VersionID.
+func (s *RetrieveResourceVersionRequest) SetVersionID(val uuid.UUID) {
+	s.VersionID = val
+}
+
+// SetMode sets the value of Mode.
+func (s *RetrieveResourceVersionRequest) SetMode(val OptRetrieveMode) {
+	s.Mode = val
+}
+
+// SetMethod sets the value of Method.
+func (s *RetrieveResourceVersionRequest) SetMethod(val RetrievalHTTPMethod) {
+	s.Method = val
+}
+
+// SetURLTemplate sets the value of URLTemplate.
+func (s *RetrieveResourceVersionRequest) SetURLTemplate(val string) {
+	s.URLTemplate = val
+}
+
+// SetPathParams sets the value of PathParams.
+func (s *RetrieveResourceVersionRequest) SetPathParams(val OptRetrieveResourceVersionRequestPathParams) {
+	s.PathParams = val
+}
+
+// SetQueryParams sets the value of QueryParams.
+func (s *RetrieveResourceVersionRequest) SetQueryParams(val OptRetrieveResourceVersionRequestQueryParams) {
+	s.QueryParams = val
+}
+
+// SetHeaders sets the value of Headers.
+func (s *RetrieveResourceVersionRequest) SetHeaders(val OptRetrieveResourceVersionRequestHeaders) {
+	s.Headers = val
+}
+
+// SetBearerToken sets the value of BearerToken.
+func (s *RetrieveResourceVersionRequest) SetBearerToken(val OptNilString) {
+	s.BearerToken = val
+}
+
+// SetBody sets the value of Body.
+func (s *RetrieveResourceVersionRequest) SetBody(val OptNilRetrievalRequestBody) {
+	s.Body = val
+}
+
+// SetOutputParameters sets the value of OutputParameters.
+func (s *RetrieveResourceVersionRequest) SetOutputParameters(val []RetrievalOutputParameter) {
+	s.OutputParameters = val
+}
+
+type RetrieveResourceVersionRequestHeaders map[string]string
+
+func (s *RetrieveResourceVersionRequestHeaders) init() RetrieveResourceVersionRequestHeaders {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type RetrieveResourceVersionRequestPathParams map[string]string
+
+func (s *RetrieveResourceVersionRequestPathParams) init() RetrieveResourceVersionRequestPathParams {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type RetrieveResourceVersionRequestQueryParams map[string]string
+
+func (s *RetrieveResourceVersionRequestQueryParams) init() RetrieveResourceVersionRequestQueryParams {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+// Ref: #/components/schemas/RetrieveResourceVersionResponse
+type RetrieveResourceVersionResponse struct {
+	Mode RetrieveMode `json:"mode"`
+	// Persisted retrieval identifier. Present only for `EXECUTE` mode.
+	RetrievalID OptNilInt64 `json:"retrieval_id"`
+	// Upstream HTTP status. Present only for `EXECUTE` mode.
+	UpstreamStatus OptNilInt32 `json:"upstream_status"`
+	// Upstream content type. Present only for `EXECUTE` mode.
+	ContentType OptNilString `json:"content_type"`
+	// Base64-encoded non-binary upstream payload. Present only for `EXECUTE` mode.
+	InlinePayload OptNilByte `json:"inline_payload"`
+	// URL for a binary upstream payload. Present only for `EXECUTE` mode.
+	RedirectURL OptNilString `json:"redirect_url"`
+	// Shell-safe curl command. Present only for `DRY` mode.
+	CurlCommand OptNilString `json:"curl_command"`
+}
+
+// GetMode returns the value of Mode.
+func (s *RetrieveResourceVersionResponse) GetMode() RetrieveMode {
+	return s.Mode
+}
+
+// GetRetrievalID returns the value of RetrievalID.
+func (s *RetrieveResourceVersionResponse) GetRetrievalID() OptNilInt64 {
+	return s.RetrievalID
+}
+
+// GetUpstreamStatus returns the value of UpstreamStatus.
+func (s *RetrieveResourceVersionResponse) GetUpstreamStatus() OptNilInt32 {
+	return s.UpstreamStatus
+}
+
+// GetContentType returns the value of ContentType.
+func (s *RetrieveResourceVersionResponse) GetContentType() OptNilString {
+	return s.ContentType
+}
+
+// GetInlinePayload returns the value of InlinePayload.
+func (s *RetrieveResourceVersionResponse) GetInlinePayload() OptNilByte {
+	return s.InlinePayload
+}
+
+// GetRedirectURL returns the value of RedirectURL.
+func (s *RetrieveResourceVersionResponse) GetRedirectURL() OptNilString {
+	return s.RedirectURL
+}
+
+// GetCurlCommand returns the value of CurlCommand.
+func (s *RetrieveResourceVersionResponse) GetCurlCommand() OptNilString {
+	return s.CurlCommand
+}
+
+// SetMode sets the value of Mode.
+func (s *RetrieveResourceVersionResponse) SetMode(val RetrieveMode) {
+	s.Mode = val
+}
+
+// SetRetrievalID sets the value of RetrievalID.
+func (s *RetrieveResourceVersionResponse) SetRetrievalID(val OptNilInt64) {
+	s.RetrievalID = val
+}
+
+// SetUpstreamStatus sets the value of UpstreamStatus.
+func (s *RetrieveResourceVersionResponse) SetUpstreamStatus(val OptNilInt32) {
+	s.UpstreamStatus = val
+}
+
+// SetContentType sets the value of ContentType.
+func (s *RetrieveResourceVersionResponse) SetContentType(val OptNilString) {
+	s.ContentType = val
+}
+
+// SetInlinePayload sets the value of InlinePayload.
+func (s *RetrieveResourceVersionResponse) SetInlinePayload(val OptNilByte) {
+	s.InlinePayload = val
+}
+
+// SetRedirectURL sets the value of RedirectURL.
+func (s *RetrieveResourceVersionResponse) SetRedirectURL(val OptNilString) {
+	s.RedirectURL = val
+}
+
+// SetCurlCommand sets the value of CurlCommand.
+func (s *RetrieveResourceVersionResponse) SetCurlCommand(val OptNilString) {
+	s.CurlCommand = val
 }
 
 // RevokeGlobalPermissionNoContent is response for RevokeGlobalPermission operation.

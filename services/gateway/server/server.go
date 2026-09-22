@@ -20,7 +20,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 )
 
-func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, authService *auth.Service) error {
+func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, dataRetrieverClient *clients.DataRetriever, authService *auth.Service) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -42,7 +42,7 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 
 	identitySvc := identity.NewService(baseLog, metadataLifecycleClient)
 	membershipSvc := membership.NewService(baseLog, metadataLifecycleClient)
-	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
+	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, dataRetrieverClient, authService, cfg.Server.CORSAllowOrigin)
 	handler := handlers.NewTimeoutHandler(baseLog, router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{

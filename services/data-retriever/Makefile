@@ -3,6 +3,10 @@ IMAGE ?= epos-data-retriever:latest
 BIN = data-retriever
 BUILDFLAGS = -trimpath
 
+generate:
+	$(MAKE) -C ../../packages/protobuf generate
+	go generate ./...
+
 build:
 	CGO_ENABLED=0 go build $(BUILDFLAGS) -o $(BIN) .
 
@@ -21,4 +25,4 @@ lint: fmt
 clean:
 	rm -rf $(BIN)
 
-.PHONY: build docker test fmt lint clean
+.PHONY: build docker generate test fmt lint clean
