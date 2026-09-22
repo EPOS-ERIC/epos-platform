@@ -49,16 +49,31 @@
                 <dd>{{ pendingRoleNames(membership) }}</dd>
               </div>
               <div>
-                <dt>Direct permissions</dt>
-                <dd>{{ membership.granted_permissions.length ? membership.granted_permissions.join(', ') : 'None' }}</dd>
-              </div>
-              <div>
                 <dt>Last updated</dt>
                 <dd>{{ membership.updated_at | date:'medium' }}</dd>
               </div>
             </dl>
 
-            <details class="membership-role-permissions">
+            <details class="membership-permissions membership-direct-permissions">
+              <summary>
+                <span>Direct permissions</span>
+                <small>{{ membership.granted_permissions.length }} assigned</small>
+              </summary>
+              <div class="membership-permission-list">
+                @for (permission of membership.granted_permissions; track permission) {
+                  @if (permissionDetails(permission); as details) {
+                    <div class="membership-permission">
+                      <strong>{{ details.label }}</strong>
+                      <small>{{ details.description }}</small>
+                    </div>
+                  }
+                } @empty {
+                  <span class="app-muted">No direct permissions assigned.</span>
+                }
+              </div>
+            </details>
+
+            <details class="membership-permissions membership-role-permissions">
               <summary>
                 <span>Role permissions</span>
                 <small>{{ membership.role_permissions.length }} inherited</small>

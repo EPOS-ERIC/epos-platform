@@ -100,6 +100,7 @@ describe('MembershipsPageComponent', () => {
         ...user.memberships[0],
         status: 'ACTIVE',
         roles: ['EDITOR'],
+        granted_permissions: ['resource.edit'],
         role_permissions: ['resource.create', 'resource.edit']
       }]
     });
@@ -111,6 +112,11 @@ describe('MembershipsPageComponent', () => {
     expect(permissions.textContent).toContain('Create resources');
     expect(permissions.textContent).toContain('Create resources in this group.');
     expect(permissions.textContent).toContain('Edit resources');
+
+    const directPermissions = fixture.nativeElement.querySelector('.membership-direct-permissions') as HTMLDetailsElement;
+    expect(directPermissions.textContent).toContain('1 assigned');
+    expect(directPermissions.textContent).toContain('Edit resources');
+    expect(directPermissions.textContent).toContain('Edit resources in this group.');
   });
 
   it('cancels a pending membership request after confirmation', async () => {

@@ -120,13 +120,13 @@
   overflow-wrap: anywhere;
 }
 
-.membership-role-permissions {
+.membership-permissions {
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid var(--line);
 }
 
-.membership-role-permissions summary {
+.membership-permissions summary {
   color: var(--text-muted);
   font-size: 0.7rem;
   font-weight: 700;
@@ -135,7 +135,7 @@
   cursor: pointer;
 }
 
-.membership-role-permissions summary small {
+.membership-permissions summary small {
   margin-left: 6px;
   font-size: 0.68rem;
   font-weight: 600;
@@ -150,7 +150,7 @@
   margin-top: 8px;
 }
 
-.membership-role-permissions[open] .membership-permission-list {
+.membership-permissions[open] .membership-permission-list {
   height: 180px;
   overflow-y: auto;
 }
