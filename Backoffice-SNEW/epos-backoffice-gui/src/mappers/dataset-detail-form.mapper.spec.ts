@@ -7,6 +7,7 @@ import type {
 } from '../models/dataset-detail-form';
 import {
   distributionValidationError,
+  geologicalTemporalValidationError,
   hasBodyOnUnsupportedMethod,
   hasIncompleteWebServiceBody,
   hasInvalidExplodeParameter,
@@ -18,8 +19,7 @@ import {
   toDatasetSaveRequest,
 } from './dataset-detail-form.mapper';
 
-const WEB_SERVICE_TYPE =
-  'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE' as const;
+const WEB_SERVICE_TYPE = 'WEB_SERVICE' as const;
 
 function datasetMetadata(): DatasetResourceMetadata {
   return {
@@ -87,7 +87,7 @@ function datasetMetadata(): DatasetResourceMetadata {
               minimum: 1.5,
               maximum: null,
               default: 2.5,
-              enum: [1.5, 2.5],
+              enum: [{ value: 1.5, label: 'Low' }, { value: 2.5 }],
             },
             {
               id: 'template-id',
@@ -112,7 +112,7 @@ function datasetMetadata(): DatasetResourceMetadata {
                   required: true,
                   read_only: false,
                   default: 'A',
-                  enum: ['A', 'B'],
+                  enum: [{ value: 'A', label: 'Alpha' }, { value: 'B' }],
                   pattern: '[A-Z]',
                 },
                 {
@@ -151,7 +151,9 @@ function emptyDatasetForm(): DatasetDetailForm {
     created: '',
     updated: '',
     spatial: null,
+    temporalMode: 'calendar',
     temporal: { start: '', end: '' },
+    geologicalTemporal: { startMya: '', endMya: '' },
     persistentIdentifiers: [],
     contactPoints: [],
     providers: [],
@@ -288,19 +290,33 @@ describe('toDatasetDetailForm', () => {
             minimum: '1.5',
             maximum: '',
             defaultValue: '2.5',
-            allowedValues: ['1.5', '2.5'],
+            allowedValues: [{ value: '1.5', label: 'Low' }, { value: '2.5', label: '' }],
           },
           {
             kind: 'TEMPLATE',
             template: '{code}:{enabled}',
             parameters: [
-              { kind: 'STRING', name: 'code', allowedValues: ['A', 'B'], pattern: '[A-Z]' },
+              { kind: 'STRING', name: 'code', allowedValues: [{ value: 'A', label: 'Alpha' }, { value: 'B', label: '' }], pattern: '[A-Z]' },
               { kind: 'BOOLEAN', name: 'enabled', defaultValue: false },
             ],
           },
         ],
       },
     });
+  });
+
+  it('roundtrips geological temporal coverage without emitting calendar coverage', () => {
+    const metadata = datasetMetadata();
+    metadata.temporal_coverage = undefined;
+    metadata.geological_temporal_coverage = { start_mya: 145.5, end_mya: 0 };
+
+    const form = toDatasetDetailForm(metadata);
+    expect(form.temporalMode).toBe('geological');
+    expect(form.geologicalTemporal).toEqual({ startMya: '145.5', endMya: '0' });
+
+    const request = toDatasetSaveRequest(form, 3, metadata);
+    expect(request.metadata.geological_temporal_coverage).toEqual({ start_mya: 145.5, end_mya: 0 });
+    expect(request.metadata.temporal_coverage).toBeUndefined();
   });
 
   it('supplies current placeholder rows and empty optional arrays', () => {
@@ -372,7 +388,7 @@ describe('toDatasetSaveRequest', () => {
             location: 'QUERY',
             explode: true,
             multiple_values: true,
-            enum: [1.5, 2.5],
+            enum: [{ value: 1.5, label: 'Low' }, { value: 2.5, label: undefined }],
           },
           {
             kind: 'TEMPLATE',
@@ -380,7 +396,7 @@ describe('toDatasetSaveRequest', () => {
             property: undefined,
             template: '{code}:{enabled}',
             parameters: [
-              { kind: 'STRING', position: 0, enum: ['A', 'B'], pattern: '[A-Z]' },
+              { kind: 'STRING', position: 0, enum: [{ value: 'A', label: 'Alpha' }, { value: 'B', label: undefined }], pattern: '[A-Z]' },
               { kind: 'BOOLEAN', position: 1, default: false },
             ],
           },
@@ -403,7 +419,7 @@ describe('toDatasetSaveRequest', () => {
     const request = toDatasetSaveRequest(form, 1, datasetMetadata());
     const distribution = request.metadata.distributions?.[0];
 
-    expect(request.metadata.description).toBeUndefined();
+    expect(request.metadata.description).toBe('');
     expect(distribution?.description).toBeUndefined();
     if (!distribution || distribution.type !== WEB_SERVICE_TYPE)
       throw new Error('Expected web service draft');
@@ -448,7 +464,11 @@ describe('toDatasetSaveRequest', () => {
       minimum: '1,5',
       maximum: '   ',
       defaultValue: '2,75',
-      allowedValues: ['3.5', '4,5', 'bad'],
+      allowedValues: [
+        { value: '3.5', label: 'Three and a half' },
+        { value: '4,5', label: '' },
+        { value: 'bad', label: '' },
+      ],
     };
     const request = toDatasetSaveRequest(
       formWithParameters([numericParameter]),
@@ -465,7 +485,7 @@ describe('toDatasetSaveRequest', () => {
             minimum: 1.5,
             maximum: null,
             default: 2.75,
-            enum: [3.5, 4.5],
+            enum: [{ value: 3.5, label: 'Three and a half' }, { value: 4.5, label: undefined }],
           },
         ],
       },
@@ -502,7 +522,7 @@ describe('distributionValidationError', () => {
       issued: '',
       modified: '',
       license: '',
-      type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
+      type: 'DOWNLOADABLE_FILE',
       downloadableFile: { url: '', format: '' },
     }];
 
@@ -529,11 +549,21 @@ describe('distributionValidationError', () => {
 });
 
 describe('dataset validation helpers', () => {
+  it('validates geological temporal ages', () => {
+    const form = emptyDatasetForm();
+    form.temporalMode = 'geological';
+    form.geologicalTemporal = { startMya: '10', endMya: '20' };
+    expect(geologicalTemporalValidationError(form)).toContain('older');
+
+    form.geologicalTemporal = { startMya: '20', endMya: '10' };
+    expect(geologicalTemporalValidationError(form)).toBeNull();
+  });
+
   it('checks enum defaults on full, template scalar, and body scalar parameters', () => {
     const full = parameter('fallback');
-    full.allowedValues = ['first', 'second'];
+    full.allowedValues = [{ value: 'first', label: '' }, { value: 'second', label: '' }];
     const nested = scalarParameter('3');
-    nested.allowedValues = ['1', '2'];
+    nested.allowedValues = [{ value: '1', label: '' }, { value: '2', label: '' }];
     const template: DatasetWebServiceParameterForm = {
       ...parameter(null, false),
       kind: 'TEMPLATE',
@@ -544,7 +574,7 @@ describe('dataset validation helpers', () => {
     expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([full]))).toBe(true);
     expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([template]))).toBe(true);
     expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([], [nested]))).toBe(true);
-    nested.allowedValues.push('3');
+    nested.allowedValues.push({ value: '3', label: '' });
     expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([template]))).toBe(false);
   });
 
@@ -553,7 +583,7 @@ describe('dataset validation helpers', () => {
     multipleParameter.multipleValues = true;
 
     expect(hasMultipleParameterWithoutAllowedValues(formWithParameters([multipleParameter]))).toBe(true);
-    multipleParameter.allowedValues.push('value');
+    multipleParameter.allowedValues.push({ value: 'value', label: '' });
     expect(hasMultipleParameterWithoutAllowedValues(formWithParameters([multipleParameter]))).toBe(false);
   });
 

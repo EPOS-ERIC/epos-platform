@@ -19,7 +19,13 @@
     }
     @case ('Temporal Coverage') {
       @if (datasetForm; as form) {
-        <app-temporal-coverage [model]="form.temporal" [disabled]="true" />
+        <app-temporal-coverage
+          [model]="form.temporal"
+          [geologicalModel]="form.geologicalTemporal"
+          [mode]="form.temporalMode"
+          [allowGeological]="true"
+          [disabled]="true"
+        />
       }
     }
     @case ('Persistent Identifiers') {

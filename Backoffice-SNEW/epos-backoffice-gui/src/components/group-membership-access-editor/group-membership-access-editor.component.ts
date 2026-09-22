@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import type { GroupPermission, MembershipRole } from '../../../generated/backofficeSchemas';
+import type { GroupPermissionCatalogItem } from '../../models/resource-actions';
 
 @Component({
   selector: 'app-group-membership-access-editor',
@@ -13,7 +14,7 @@ export class GroupMembershipAccessEditorComponent {
   @Input() grantedPermissions: GroupPermission[] = [];
   @Input() rolePermissions: GroupPermission[] = [];
   @Input() allowedRoles: MembershipRole[] = [];
-  @Input() allowedPermissions: GroupPermission[] = [];
+  @Input() allowedPermissions: GroupPermissionCatalogItem[] = [];
   @Input() mutationKey = '';
   @Output() roleChange = new EventEmitter<MembershipRole>();
   @Output() permissionChange = new EventEmitter<GroupPermission>();

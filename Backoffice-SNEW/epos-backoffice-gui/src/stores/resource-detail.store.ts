@@ -13,6 +13,7 @@ import type {
 } from '../../generated/backofficeSchemas';
 import {
   distributionValidationError,
+  geologicalTemporalValidationError,
   hasBodyOnUnsupportedMethod,
   hasIncompleteWebServiceBody,
   hasInvalidExplodeParameter,
@@ -32,6 +33,7 @@ import type {
   DatasetCategoryForm,
   DatasetDetailForm,
   DatasetDistributionForm,
+  DatasetGeologicalTemporalForm,
   DatasetProviderForm,
   DatasetSpatialForm,
   DatasetTemporalForm,
@@ -420,6 +422,14 @@ export class ResourceDetailStore {
     this.updateDatasetForm((form) => ({ ...form, temporal }));
   }
 
+  updateDatasetTemporalMode(temporalMode: 'calendar' | 'geological'): void {
+    this.updateDatasetForm((form) => ({ ...form, temporalMode }));
+  }
+
+  updateDatasetGeologicalTemporal(geologicalTemporal: DatasetGeologicalTemporalForm): void {
+    this.updateDatasetForm((form) => ({ ...form, geologicalTemporal }));
+  }
+
   updateDatasetContactPoints(contactPoints: DatasetWebServiceContactPointForm[]): void {
     this.updateDatasetForm((form) => ({ ...form, contactPoints }));
   }
@@ -442,6 +452,17 @@ export class ResourceDetailStore {
     const datasetForm = this.datasetForm();
 
     if (datasetVersion && datasetForm) {
+      if (!datasetForm.description.trim()) {
+        this.resourceActions.setError('Dataset description is required.');
+        return null;
+      }
+
+      const geologicalTemporalError = geologicalTemporalValidationError(datasetForm);
+      if (geologicalTemporalError) {
+        this.resourceActions.setError(geologicalTemporalError);
+        return null;
+      }
+
       const distributionError = distributionValidationError(datasetForm);
       if (distributionError) {
         this.resourceActions.setError(distributionError);

@@ -2,7 +2,7 @@
   <div class="detail-section-header">
     <div>
       <h2>Temporal Coverage</h2>
-      <p class="subtitle app-muted">Start and end time fields.</p>
+      <p class="subtitle app-muted">Calendar dates or geological ages.</p>
     </div>
   </div>
 
@@ -14,14 +14,36 @@
   }
 
   <fieldset class="detail-fieldset detail-form-grid" [disabled]="disabled">
-    <label class="detail-field">
-      <span class="detail-label">Start time</span>
-      <input class="app-input" type="datetime-local" [(ngModel)]="model.start" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
-    </label>
+    @if (allowGeological) {
+      <label class="detail-field detail-field--full">
+        <span class="detail-label">Coverage type</span>
+        <select class="app-input" [ngModel]="mode" [ngModelOptions]="{ standalone: true }" (ngModelChange)="modeChange.emit($event)">
+          <option value="calendar">Calendar dates</option>
+          <option value="geological">Geological ages</option>
+        </select>
+      </label>
+    }
 
-    <label class="detail-field">
-      <span class="detail-label">End time</span>
-      <input class="app-input" type="datetime-local" [(ngModel)]="model.end" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
-    </label>
+    @if (mode === 'geological') {
+      <label class="detail-field">
+        <span class="detail-label">Start age (MYA)</span>
+        <input class="app-input" type="number" min="0" step="any" [(ngModel)]="geologicalModel.startMya" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitGeologicalModelChange()" />
+      </label>
+
+      <label class="detail-field">
+        <span class="detail-label">End age (MYA)</span>
+        <input class="app-input" type="number" min="0" step="any" [(ngModel)]="geologicalModel.endMya" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitGeologicalModelChange()" />
+      </label>
+    } @else {
+      <label class="detail-field">
+        <span class="detail-label">Start time</span>
+        <input class="app-input" type="datetime-local" [(ngModel)]="model.start" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+      </label>
+
+      <label class="detail-field">
+        <span class="detail-label">End time</span>
+        <input class="app-input" type="datetime-local" [(ngModel)]="model.end" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+      </label>
+    }
   </fieldset>
 </section>

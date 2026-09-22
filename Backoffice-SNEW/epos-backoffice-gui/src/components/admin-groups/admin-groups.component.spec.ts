@@ -50,6 +50,7 @@ describe('AdminGroupsComponent', () => {
   };
   const apiService = {
     getUsers: vi.fn(),
+    listPermissions: vi.fn(),
     getGroupMemberships: vi.fn(),
     decideGroupMembership: vi.fn(),
     decideGroupRoleRequest: vi.fn(),
@@ -59,6 +60,9 @@ describe('AdminGroupsComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     apiService.getUsers.mockReturnValue(of([]));
+    apiService.listPermissions.mockReturnValue(of([
+      { key: 'resource.create', label: 'Create resources', description: 'Create resources.', scope: 'GROUP' }
+    ]));
     apiService.getGroupMemberships.mockReturnValue(of([pendingMembership, activeMembershipWithRoleRequest]));
     apiService.decideGroupMembership.mockReturnValue(of(activeMembership));
     apiService.decideGroupRoleRequest.mockReturnValue(of(activeMembership));

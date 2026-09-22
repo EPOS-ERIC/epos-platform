@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AppIconComponent } from '../../../app-icon/app-icon.component';
-import type { DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
+import type { DatasetEnumOptionForm, DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
 import { ToastService } from '../../../../services/toast.service';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
@@ -212,7 +212,7 @@ export class WebServiceParametersComponent {
     this.modelChange.emit(nextModel);
   }
 
-  protected updateAllowedValues(parameter: DatasetWebServiceParameterForm, values: string[]): void {
+  protected updateAllowedValues(parameter: DatasetWebServiceParameterForm, values: DatasetEnumOptionForm[]): void {
     if (!('allowedValues' in parameter)) {
       return;
     }

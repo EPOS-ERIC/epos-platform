@@ -19,8 +19,8 @@
       </label>
 
     <label class="detail-field detail-field--full">
-      <span class="detail-label">Description</span>
-      <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="model.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea>
+      <span class="detail-label">Description *</span>
+      <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="model.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required></textarea>
     </label>
 
     <label class="detail-field">

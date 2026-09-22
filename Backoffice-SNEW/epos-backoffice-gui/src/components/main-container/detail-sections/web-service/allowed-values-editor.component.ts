@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AppIconComponent } from '../../../app-icon/app-icon.component';
+import type { DatasetEnumOptionForm } from '../../../../models/dataset-detail-form';
 import { ToastService } from '../../../../services/toast.service';
 
 @Component({
@@ -13,11 +14,11 @@ import { ToastService } from '../../../../services/toast.service';
 export class AllowedValuesEditorComponent {
   private readonly toast = inject(ToastService);
 
-  @Input() values: string[] = [];
+  @Input() values: DatasetEnumOptionForm[] = [];
   @Input() kind: 'STRING' | 'INTEGER' | 'FLOAT' = 'STRING';
   @Input() defaultValue: string | null = null;
   @Input() disabled = false;
-  @Output() valuesChange = new EventEmitter<string[]>();
+  @Output() valuesChange = new EventEmitter<DatasetEnumOptionForm[]>();
 
   protected searchQuery = '';
   protected addMenuOpen = false;
@@ -25,12 +26,13 @@ export class AllowedValuesEditorComponent {
   protected bulkValues = '';
   protected bulkValuesError = '';
 
-  protected filteredValues(): Array<{ value: string; index: number }> {
+  protected filteredValues(): Array<{ option: DatasetEnumOptionForm; index: number }> {
     const query = this.searchQuery.trim().toLocaleLowerCase();
 
     return this.values
-      .map((value, index) => ({ value, index }))
-      .filter(({ value }) => !query || value.toLocaleLowerCase().includes(query));
+      .map((option, index) => ({ option, index }))
+      .filter(({ option }) => !query || [option.value, option.label]
+        .some((value) => value.toLocaleLowerCase().includes(query)));
   }
 
   protected defaultOutsideAllowedValues(): boolean {
@@ -39,24 +41,28 @@ export class AllowedValuesEditorComponent {
     }
 
     if (this.kind === 'STRING') {
-      return !this.values.includes(this.defaultValue);
+      return !this.values.some((option) => option.value === this.defaultValue);
     }
 
     const defaultValue = Number(this.defaultValue.replace(',', '.'));
     return Number.isFinite(defaultValue)
-      && !this.values.some((value) => Number(value.replace(',', '.')) === defaultValue);
+      && !this.values.some((option) => Number(option.value.replace(',', '.')) === defaultValue);
   }
 
   protected updateValue(index: number, value: string, input: HTMLInputElement): void {
     if (value.trim() && this.values.some(
-      (currentValue, currentIndex) => currentIndex !== index && this.optionKey(currentValue) === this.optionKey(value)
+      (option, currentIndex) => currentIndex !== index && this.optionKey(option.value) === this.optionKey(value)
     )) {
       this.notifyDuplicate(value);
-      input.value = this.values[index] ?? '';
+      input.value = this.values[index]?.value ?? '';
       return;
     }
 
-    this.valuesChange.emit(this.values.map((currentValue, currentIndex) => currentIndex === index ? value : currentValue));
+    this.valuesChange.emit(this.values.map((option, currentIndex) => currentIndex === index ? { ...option, value } : option));
+  }
+
+  protected updateLabel(index: number, label: string): void {
+    this.valuesChange.emit(this.values.map((option, currentIndex) => currentIndex === index ? { ...option, label } : option));
   }
 
   protected removeValue(index: number): void {
@@ -73,7 +79,7 @@ export class AllowedValuesEditorComponent {
     }
 
     this.addMenuOpen = false;
-    this.valuesChange.emit([...this.values, '']);
+    this.valuesChange.emit([...this.values, { value: '', label: '' }]);
   }
 
   protected toggleAddMenu(): void {
@@ -119,7 +125,9 @@ export class AllowedValuesEditorComponent {
       return;
     }
 
-    const knownValues = new Set(this.values.filter((value) => value.trim()).map((value) => this.optionKey(value)));
+    const knownValues = new Set(this.values
+      .filter((option) => option.value.trim())
+      .map((option) => this.optionKey(option.value)));
     const duplicate = parsedValues.find((value) => {
       const key = this.optionKey(value);
       if (knownValues.has(key)) {
@@ -134,7 +142,10 @@ export class AllowedValuesEditorComponent {
       return;
     }
 
-    this.valuesChange.emit([...this.values, ...parsedValues]);
+    this.valuesChange.emit([
+      ...this.values,
+      ...parsedValues.map((value) => ({ value, label: '' })),
+    ]);
     this.closeBulkDialog();
   }
 

@@ -231,7 +231,7 @@
                   [grantedPermissions]="membership.granted_permissions"
                   [rolePermissions]="membership.role_permissions"
                   [allowedRoles]="groupRoles"
-                  [allowedPermissions]="groupPermissions"
+                  [allowedPermissions]="groupPermissions()"
                   [mutationKey]="membershipMutation()"
                   (roleChange)="toggleRole(membership, $event)"
                   (permissionChange)="togglePermission(membership, $event)"

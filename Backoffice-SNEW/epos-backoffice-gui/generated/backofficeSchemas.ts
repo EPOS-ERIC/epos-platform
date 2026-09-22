@@ -9,6 +9,39 @@
  */
 export type NonBlankString = string;
 
+export type StringEnumOption = {
+  /**
+   * @minLength 1
+   */
+  value: string;
+  /**
+   * @minLength 1
+   */
+  label?: string;
+};
+
+export type IntegerEnumOption = {
+  /**
+   * @format int64
+   */
+  value: number;
+  /**
+   * @minLength 1
+   */
+  label?: string;
+};
+
+export type FloatEnumOption = {
+  /**
+   * @format double
+   */
+  value: number;
+  /**
+   * @minLength 1
+   */
+  label?: string;
+};
+
 /**
  * @minLength 1
  * @pattern ^[A-Za-z0-9 _:-]+$
@@ -45,6 +78,33 @@ export type GroupPermission =
   | "category.manage";
 
 /**
+ * Scope at which a permission is evaluated.
+ */
+export type PermissionScope = "GLOBAL" | "GROUP";
+
+export type Permission = {
+  /**
+   * Stable permission key.
+   *
+   * @minLength 1
+   */
+  key: string;
+  /**
+   * Human-readable permission label.
+   *
+   * @minLength 1
+   */
+  label: string;
+  /**
+   * Human-readable permission description.
+   *
+   * @minLength 1
+   */
+  description: string;
+  scope: PermissionScope;
+};
+
+/**
  * Resource type identifier used in discovery results.
  */
 export type DiscoveryResourceType =
@@ -63,7 +123,7 @@ export type VersioningStatus =
 
 export type DatasetDraftMetadata = {
   title: NonBlankString;
-  description?: NonBlankString;
+  description: NonBlankString;
   keywords?: Keyword[];
   accrual_periodicity?: string | null;
   quality_annotation?: string | null;
@@ -77,6 +137,10 @@ export type DatasetDraftMetadata = {
    */
   spatial_coverage?: string | null;
   temporal_coverage?: TemporalCoverage;
+  /**
+   * Mutually exclusive with temporal_coverage.
+   */
+  geological_temporal_coverage?: GeologicalTemporalCoverage;
   persistent_identifiers?: IdentifierInput[];
   contact_points?: string[];
   providers?: string[];
@@ -148,7 +212,7 @@ export type WebServiceDistributionDraft = {
   title: string;
   description?: string;
   license?: string | null;
-  type: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE";
+  type: "WEB_SERVICE";
   /**
    * @format date-time
    */
@@ -169,7 +233,7 @@ export type DownloadableFileDistributionDraft = {
   title: string;
   description?: string;
   license?: string | null;
-  type: "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE";
+  type: "DOWNLOADABLE_FILE";
   /**
    * @format date-time
    */
@@ -266,7 +330,7 @@ export type StringParameterDraft = {
   multiple_values: boolean;
   read_only: boolean;
   ["default"]?: string | null;
-  ["enum"]?: string[];
+  ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
 
@@ -314,7 +378,7 @@ export type IntegerParameterDraft = {
    * @format int64
    */
   ["default"]?: number | null;
-  ["enum"]?: number[];
+  ["enum"]?: IntegerEnumOption[];
 };
 
 export type FloatParameterDraft = {
@@ -344,7 +408,7 @@ export type FloatParameterDraft = {
    * @format double
    */
   ["default"]?: number | null;
-  ["enum"]?: number[];
+  ["enum"]?: FloatEnumOption[];
 };
 
 export type DateTimeParameterDraft = {
@@ -396,7 +460,7 @@ export type StringParameter = {
   multiple_values: boolean;
   read_only: boolean;
   ["default"]?: string | null;
-  ["enum"]?: string[];
+  ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
 
@@ -452,7 +516,7 @@ export type IntegerParameter = {
    * @format int64
    */
   ["default"]?: number | null;
-  ["enum"]?: number[];
+  ["enum"]?: IntegerEnumOption[];
 };
 
 export type FloatParameter = {
@@ -486,7 +550,7 @@ export type FloatParameter = {
    * @format double
    */
   ["default"]?: number | null;
-  ["enum"]?: number[];
+  ["enum"]?: FloatEnumOption[];
 };
 
 export type DateTimeParameter = {
@@ -580,7 +644,7 @@ export type StringScalarParameterDraft = {
   required: boolean;
   read_only: boolean;
   ["default"]?: string | null;
-  ["enum"]?: string[];
+  ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
 
@@ -621,7 +685,7 @@ export type IntegerScalarParameterDraft = {
    * @format int64
    */
   ["default"]?: number | null;
-  ["enum"]?: number[];
+  ["enum"]?: IntegerEnumOption[];
 };
 
 export type FloatScalarParameterDraft = {
@@ -647,7 +711,7 @@ export type FloatScalarParameterDraft = {
    * @format double
    */
   ["default"]?: number | null;
-  ["enum"]?: number[];
+  ["enum"]?: FloatEnumOption[];
 };
 
 export type DateTimeScalarParameterDraft = {
@@ -688,7 +752,7 @@ export type StringScalarParameter = {
   required: boolean;
   read_only: boolean;
   ["default"]?: string | null;
-  ["enum"]?: string[];
+  ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
 
@@ -729,7 +793,7 @@ export type IntegerScalarParameter = {
    * @format int64
    */
   ["default"]?: number | null;
-  ["enum"]?: number[];
+  ["enum"]?: IntegerEnumOption[];
 };
 
 export type FloatScalarParameter = {
@@ -755,7 +819,7 @@ export type FloatScalarParameter = {
    * @format double
    */
   ["default"]?: number | null;
-  ["enum"]?: number[];
+  ["enum"]?: FloatEnumOption[];
 };
 
 export type DateTimeScalarParameter = {
@@ -813,6 +877,22 @@ export type TemporalCoverage = {
    * @format date-time
    */
   end?: string | null;
+};
+
+/**
+ * Geological age range in millions of years before present. Start is older than or equal to end.
+ */
+export type GeologicalTemporalCoverage = {
+  /**
+   * @format double
+   * @minimum 0
+   */
+  start_mya?: number | null;
+  /**
+   * @format double
+   * @minimum 0
+   */
+  end_mya?: number | null;
 };
 
 export type CreateResourceDraftRequest =
@@ -1000,6 +1080,10 @@ export type DatasetResourceMetadata = {
    */
   spatial_coverage?: string | null;
   temporal_coverage?: TemporalCoverage;
+  /**
+   * Mutually exclusive with temporal_coverage.
+   */
+  geological_temporal_coverage?: GeologicalTemporalCoverage;
   persistent_identifiers: Identifier[];
   contact_points: string[] | null;
   providers: ResourceVersionReference[];
@@ -1068,7 +1152,7 @@ export type WebServiceDistribution = {
   title: string;
   description: string;
   license?: string | null;
-  type: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE";
+  type: "WEB_SERVICE";
   /**
    * @format date-time
    */
@@ -1093,7 +1177,7 @@ export type DownloadableFileDistribution = {
   title: string;
   description: string;
   license?: string | null;
-  type: "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE";
+  type: "DOWNLOADABLE_FILE";
   /**
    * @format date-time
    */

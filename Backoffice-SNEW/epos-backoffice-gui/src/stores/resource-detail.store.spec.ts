@@ -108,7 +108,7 @@ describe('ResourceDetailStore', () => {
       issued: '',
       modified: '',
       license: '',
-      type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
+      type: 'DOWNLOADABLE_FILE',
       downloadableFile: { url: '', format: '' }
     }]);
 

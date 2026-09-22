@@ -31,6 +31,7 @@ describe('ManageGroupPageComponent', () => {
   };
   const apiService = {
     getGroupMemberships: vi.fn(),
+    listPermissions: vi.fn(),
     removeGroupMember: vi.fn(),
     setGroupMembershipRole: vi.fn(),
     setGroupMembershipPermission: vi.fn()
@@ -41,6 +42,11 @@ describe('ManageGroupPageComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     apiService.getGroupMemberships.mockReturnValue(of([groupAdmin, member]));
+    apiService.listPermissions.mockReturnValue(of([
+      { key: 'resource.create', label: 'resource.create', description: 'Create resources.', scope: 'GROUP' },
+      { key: 'resource.edit', label: 'resource.edit', description: 'Edit resources.', scope: 'GROUP' },
+      { key: 'resource.submit', label: 'resource.submit', description: 'Submit resources.', scope: 'GROUP' }
+    ]));
     apiService.removeGroupMember.mockReturnValue(of(undefined));
     apiService.setGroupMembershipRole.mockReturnValue(of(undefined));
     apiService.setGroupMembershipPermission.mockReturnValue(of(undefined));

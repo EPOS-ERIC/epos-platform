@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, switchMap } from 'rxjs';
 
-import type { GroupMembership, GroupPermission, MembershipRole } from '../../../generated/backofficeSchemas';
+import type { GroupMembership, GroupPermission, MembershipRole, Permission } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
+import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
 import { DialogService } from '../../services/dialog.service';
 import { ToastService } from '../../services/toast.service';
@@ -47,21 +48,7 @@ export class ManageGroupPageComponent {
   protected readonly removingUserId = signal('');
   protected readonly groupIconPath = groupIconPath;
   protected readonly groupRoles: MembershipRole[] = ['EDITOR', 'REVIEWER'];
-  protected readonly groupPermissions: GroupPermission[] = [
-    'resource.create',
-    'resource.edit',
-    'resource.submit',
-    'resource.withdraw',
-    'resource.reopen',
-    'resource.discard',
-    'resource.reject',
-    'resource.publish',
-    'resource.unpublish',
-    'group.membership.manage',
-    'group.role.manage',
-    'group.permission.manage',
-    'category.manage'
-  ];
+  protected readonly groupPermissions = signal<GroupPermissionCatalogItem[]>([]);
   protected readonly filteredMemberships = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
     const activeMemberships = this.memberships().filter((membership) => membership.status === 'ACTIVE');
@@ -72,6 +59,18 @@ export class ManageGroupPageComponent {
         )
       : activeMemberships;
   });
+
+  constructor() {
+    this.apiService.listPermissions().pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((error) => {
+        console.error('Failed to load permission catalog', error);
+        return of([] as Permission[]);
+      })
+    ).subscribe((permissions) => this.groupPermissions.set(
+      permissions.filter(isGroupPermissionCatalogItem)
+    ));
+  }
 
   @HostListener('document:keydown.escape')
   protected closeOnEscape(): void {

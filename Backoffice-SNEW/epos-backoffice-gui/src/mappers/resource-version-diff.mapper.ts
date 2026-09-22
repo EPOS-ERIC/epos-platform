@@ -26,6 +26,7 @@ const IGNORED_PATHS = new Set([
 const METADATA_SECTIONS: Record<string, string> = {
   spatial_coverage: 'Spatial Coverage',
   temporal_coverage: 'Temporal Coverage',
+  geological_temporal_coverage: 'Temporal Coverage',
   persistent_identifiers: 'Persistent Identifiers',
   identifiers: 'Persistent Identifiers',
   contact_points: 'Contact Points',

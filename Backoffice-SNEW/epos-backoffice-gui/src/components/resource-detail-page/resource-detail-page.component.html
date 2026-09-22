@@ -67,8 +67,13 @@
       />
       <app-temporal-coverage
         [model]="form.temporal"
+        [geologicalModel]="form.geologicalTemporal"
+        [mode]="form.temporalMode"
+        [allowGeological]="true"
         [disabled]="!store.canEdit()"
         (modelChange)="store.updateDatasetTemporal($event)"
+        (geologicalModelChange)="store.updateDatasetGeologicalTemporal($event)"
+        (modeChange)="store.updateDatasetTemporalMode($event)"
         [warningKind]="store.temporalWarningKind()"
         [warningMessage]="store.temporalWarningMessage()"
       />

@@ -36,12 +36,10 @@
             </select>
           </label>
 
-          @if (dialog.resourceType() !== 'dataset') {
-            <label class="form-field form-field--wide">
-              <span>Description</span>
-              <textarea class="app-input" rows="4" [ngModel]="dialog.description()" (ngModelChange)="dialog.description.set($event)" placeholder="Enter resource description"></textarea>
-            </label>
-          }
+          <label class="form-field form-field--wide">
+            <span>Description</span>
+            <textarea class="app-input" rows="4" [ngModel]="dialog.description()" (ngModelChange)="dialog.description.set($event)" placeholder="Enter resource description" required></textarea>
+          </label>
         </div>
 
         @if (dialog.error()) {
@@ -55,7 +53,7 @@
           type="button"
           class="app-button app-button--primary"
           (click)="dialog.submit()"
-          [disabled]="dialog.saving() || !dialog.groupId() || dialog.groupsLoading() || !dialog.title().trim() || (dialog.resourceType() !== 'dataset' && !dialog.description().trim())"
+          [disabled]="dialog.saving() || !dialog.groupId() || dialog.groupsLoading() || !dialog.title().trim() || !dialog.description().trim()"
         >
           {{ dialog.saving() ? 'Creating...' : 'Create' }}
         </button>

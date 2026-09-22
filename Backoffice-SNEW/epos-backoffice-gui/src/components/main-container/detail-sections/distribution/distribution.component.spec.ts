@@ -19,7 +19,7 @@ describe('DistributionComponent', () => {
     expect(emissions[0]).toHaveLength(1);
     expect(emissions[0][0]).toMatchObject({
       kind: 'web-service',
-      type: 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE',
+      type: 'WEB_SERVICE',
       webService: { method: 'GET', type: 'DYNAMIC' }
     });
   });
@@ -52,7 +52,7 @@ describe('DistributionComponent', () => {
 
     expect(emissions[0][0]).toMatchObject({
       kind: 'downloadable-file',
-      type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
+      type: 'DOWNLOADABLE_FILE',
       downloadableFile: { url: '', format: '' }
     });
   });

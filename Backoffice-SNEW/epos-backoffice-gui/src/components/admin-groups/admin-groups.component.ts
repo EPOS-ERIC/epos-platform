@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 
-import type { Group, GroupMembership, GroupPermission, MembershipRole, RoleRequest, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
+import type { Group, GroupMembership, GroupPermission, MembershipRole, Permission, RoleRequest, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
+import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
 import { GroupsStore } from '../../stores/groups.store';
 import { GroupMembershipAccessEditorComponent } from '../group-membership-access-editor/group-membership-access-editor.component';
@@ -53,21 +54,7 @@ export class AdminGroupsComponent {
   protected readonly membershipMutation = signal('');
   protected readonly groupIconPath = groupIconPath;
   protected readonly groupRoles: MembershipRole[] = ['EDITOR', 'REVIEWER', 'GROUP_ADMIN'];
-  protected readonly groupPermissions: GroupPermission[] = [
-    'resource.create',
-    'resource.edit',
-    'resource.submit',
-    'resource.withdraw',
-    'resource.reopen',
-    'resource.discard',
-    'resource.reject',
-    'resource.publish',
-    'resource.unpublish',
-    'group.membership.manage',
-    'group.role.manage',
-    'group.permission.manage',
-    'category.manage'
-  ];
+  protected readonly groupPermissions = signal<GroupPermissionCatalogItem[]>([]);
   protected readonly filteredUsers = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
     return query
@@ -76,8 +63,21 @@ export class AdminGroupsComponent {
   });
 
   constructor() {
+    this.loadPermissions();
     this.loadMembershipRequests();
     this.loadUsers();
+  }
+
+  private loadPermissions(): void {
+    this.apiService.listPermissions().pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((error) => {
+        console.error('Failed to load permission catalog', error);
+        return of([] as Permission[]);
+      })
+    ).subscribe((permissions) => this.groupPermissions.set(
+      permissions.filter(isGroupPermissionCatalogItem)
+    ));
   }
 
   @HostListener('document:keydown.escape')

@@ -12,6 +12,11 @@ export type DatasetTemporalForm = {
   end: string;
 };
 
+export type DatasetGeologicalTemporalForm = {
+  startMya: string;
+  endMya: string;
+};
+
 export type DatasetPersistentIdentifierForm = {
   id?: string;
   type: string;
@@ -35,6 +40,11 @@ export type DatasetWebServiceContactPointForm = string;
 
 export type DatasetWebServiceProviderForm = DatasetProviderForm;
 
+export type DatasetEnumOptionForm = {
+  value: string;
+  label: string;
+};
+
 export type DatasetWebServiceScalarParameterCommonForm = {
   position: number;
   name: string;
@@ -49,7 +59,7 @@ export type DatasetWebServiceScalarParameterForm = DatasetWebServiceScalarParame
     | {
         kind: 'STRING';
         defaultValue: string | null;
-        allowedValues: string[];
+        allowedValues: DatasetEnumOptionForm[];
         pattern: string;
       }
     | {
@@ -61,14 +71,14 @@ export type DatasetWebServiceScalarParameterForm = DatasetWebServiceScalarParame
         minimum: string;
         maximum: string;
         defaultValue: string;
-        allowedValues: string[];
+        allowedValues: DatasetEnumOptionForm[];
       }
     | {
         kind: 'FLOAT';
         minimum: string;
         maximum: string;
         defaultValue: string;
-        allowedValues: string[];
+        allowedValues: DatasetEnumOptionForm[];
       }
     | {
         kind: 'DATETIME';
@@ -92,7 +102,7 @@ export type DatasetWebServiceParameterForm = DatasetWebServiceParameterCommonFor
         kind: 'STRING';
         multipleValues: boolean;
         defaultValue: string | null;
-        allowedValues: string[];
+        allowedValues: DatasetEnumOptionForm[];
         pattern: string;
       }
     | {
@@ -105,7 +115,7 @@ export type DatasetWebServiceParameterForm = DatasetWebServiceParameterCommonFor
         minimum: string;
         maximum: string;
         defaultValue: string;
-        allowedValues: string[];
+        allowedValues: DatasetEnumOptionForm[];
       }
     | {
         kind: 'FLOAT';
@@ -113,7 +123,7 @@ export type DatasetWebServiceParameterForm = DatasetWebServiceParameterCommonFor
         minimum: string;
         maximum: string;
         defaultValue: string;
-        allowedValues: string[];
+        allowedValues: DatasetEnumOptionForm[];
       }
     | {
         kind: 'DATETIME';
@@ -154,7 +164,7 @@ export type DatasetDistributionCommonForm = {
   issued: string;
   modified: string;
   license: string;
-  type: string;
+  type: 'WEB_SERVICE' | 'DOWNLOADABLE_FILE';
 };
 
 export type DatasetDownloadableFileForm = {
@@ -183,7 +193,9 @@ export type DatasetDetailForm = {
   created: string;
   updated: string;
   spatial: DatasetSpatialForm;
+  temporalMode: 'calendar' | 'geological';
   temporal: DatasetTemporalForm;
+  geologicalTemporal: DatasetGeologicalTemporalForm;
   persistentIdentifiers: DatasetPersistentIdentifierForm[];
   contactPoints: DatasetWebServiceContactPointForm[];
   providers: DatasetProviderForm[];

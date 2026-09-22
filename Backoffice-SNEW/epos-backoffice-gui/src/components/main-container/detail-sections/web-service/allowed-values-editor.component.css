@@ -154,6 +154,10 @@
   background: var(--surface);
 }
 
+.allowed-value-row .allowed-value-input {
+  flex: 0 1 42%;
+}
+
 .allowed-value-remove {
   padding: 7px 4px;
   border: 0;

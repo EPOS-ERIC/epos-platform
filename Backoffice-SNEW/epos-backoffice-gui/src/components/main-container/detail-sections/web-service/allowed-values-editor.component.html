@@ -37,13 +37,23 @@
       <div class="allowed-value-row">
         <input
           #optionInput
-          class="app-input"
+          class="app-input allowed-value-input"
           [type]="kind === 'STRING' ? 'text' : 'number'"
           [attr.step]="kind === 'INTEGER' ? '1' : kind === 'FLOAT' ? 'any' : null"
-          [ngModel]="item.value"
+          [ngModel]="item.option.value"
           [ngModelOptions]="{ standalone: true }"
           (ngModelChange)="updateValue(item.index, $event, optionInput)"
           [disabled]="disabled"
+          placeholder="Value"
+        />
+        <input
+          class="app-input allowed-value-label-input"
+          type="text"
+          [ngModel]="item.option.label"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="updateLabel(item.index, $event)"
+          [disabled]="disabled"
+          placeholder="Label (optional)"
         />
         @if (!disabled) {
           <button type="button" class="allowed-value-remove" (click)="removeValue(item.index)">Remove</button>

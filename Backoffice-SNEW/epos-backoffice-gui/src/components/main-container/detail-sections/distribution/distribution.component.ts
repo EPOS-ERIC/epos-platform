@@ -79,7 +79,7 @@ export class DistributionComponent {
       return {
         ...common,
         kind,
-        type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
+        type: 'DOWNLOADABLE_FILE',
         downloadableFile: { url: '', format: '' }
       };
     }
@@ -87,7 +87,7 @@ export class DistributionComponent {
     return {
       ...common,
       kind,
-      type: 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE',
+      type: 'WEB_SERVICE',
       webService: {
         name: '',
         description: '',

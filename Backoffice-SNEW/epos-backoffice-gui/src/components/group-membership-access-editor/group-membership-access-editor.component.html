@@ -20,19 +20,21 @@
   </summary>
   <fieldset class="membership-permissions-content" [disabled]="!!mutationKey">
     <div class="option-grid option-grid--permissions">
-      @for (permission of allowedPermissions; track permission) {
+      @for (permission of allowedPermissions; track permission.key) {
         <label class="membership-option">
           <input
             type="checkbox"
-            [checked]="grantedPermissions.includes(permission) || rolePermissions.includes(permission)"
-            [disabled]="rolePermissions.includes(permission) && !grantedPermissions.includes(permission)"
-            (change)="permissionChange.emit(permission)"
+            [checked]="grantedPermissions.includes(permission.key) || rolePermissions.includes(permission.key)"
+            [disabled]="rolePermissions.includes(permission.key) && !grantedPermissions.includes(permission.key)"
+            (change)="permissionChange.emit(permission.key)"
           />
-          <span>{{ permission }}</span>
-          @if (isMutationLoading('permission', permission)) {
+          <span>{{ permission.label }}</span>
+          @if (isMutationLoading('permission', permission.key)) {
             <small>Saving...</small>
-          } @else if (rolePermissions.includes(permission)) {
+          } @else if (rolePermissions.includes(permission.key)) {
             <small>Already granted by role</small>
+          } @else {
+            <small>{{ permission.description }}</small>
           }
         </label>
       }

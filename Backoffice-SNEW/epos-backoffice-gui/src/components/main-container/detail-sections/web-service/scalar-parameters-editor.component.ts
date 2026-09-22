@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import type { DatasetWebServiceScalarParameterForm } from '../../../../models/dataset-detail-form';
+import type { DatasetEnumOptionForm, DatasetWebServiceScalarParameterForm } from '../../../../models/dataset-detail-form';
 import { ToastService } from '../../../../services/toast.service';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 
@@ -60,7 +60,7 @@ export class ScalarParametersEditorComponent {
     }
   }
 
-  protected updateAllowedValues(parameter: DatasetWebServiceScalarParameterForm, values: string[]): void {
+  protected updateAllowedValues(parameter: DatasetWebServiceScalarParameterForm, values: DatasetEnumOptionForm[]): void {
     if ('allowedValues' in parameter) {
       parameter.allowedValues = values;
       this.emitModelChange();

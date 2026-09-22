@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
+import type { DatasetEnumOptionForm } from '../../../../models/dataset-detail-form';
 import { ToastService } from '../../../../services/toast.service';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 
@@ -9,9 +10,12 @@ describe('AllowedValuesEditorComponent', () => {
       imports: [AllowedValuesEditorComponent]
     }).compileComponents();
     const fixture = TestBed.createComponent(AllowedValuesEditorComponent);
-    const emittedValues: string[][] = [];
+    const emittedValues: DatasetEnumOptionForm[][] = [];
 
-    fixture.componentRef.setInput('values', ['First option', 'Second option']);
+    fixture.componentRef.setInput('values', [
+      { value: 'First option', label: 'First label' },
+      { value: 'Second option', label: 'Second label' },
+    ]);
     fixture.componentInstance.valuesChange.subscribe((values) => emittedValues.push(values));
     fixture.detectChanges();
 
@@ -22,7 +26,7 @@ describe('AllowedValuesEditorComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelectorAll('.allowed-value-row').length).toBe(1);
-    expect(fixture.nativeElement.querySelector('.allowed-value-row input')?.value).toBe('Second option');
+    expect(fixture.nativeElement.querySelector('.allowed-value-input')?.value).toBe('Second option');
 
     (fixture.nativeElement.querySelector('.allowed-values-add-toggle') as HTMLButtonElement).click();
     fixture.detectChanges();
@@ -37,11 +41,11 @@ describe('AllowedValuesEditorComponent', () => {
     (fixture.nativeElement.querySelector('.resource-dialog-actions .app-button--primary') as HTMLButtonElement).click();
 
     expect(emittedValues.at(-1)).toEqual([
-      'First option',
-      'Second option',
-      'Third option',
-      'Fourth option',
-      'Fifth option'
+      { value: 'First option', label: 'First label' },
+      { value: 'Second option', label: 'Second label' },
+      { value: 'Third option', label: '' },
+      { value: 'Fourth option', label: '' },
+      { value: 'Fifth option', label: '' },
     ]);
   });
 
@@ -52,13 +56,16 @@ describe('AllowedValuesEditorComponent', () => {
       providers: [{ provide: ToastService, useValue: toast }]
     }).compileComponents();
     const fixture = TestBed.createComponent(AllowedValuesEditorComponent);
-    const emittedValues: string[][] = [];
+    const emittedValues: DatasetEnumOptionForm[][] = [];
 
-    fixture.componentRef.setInput('values', ['First option', 'Second option']);
+    fixture.componentRef.setInput('values', [
+      { value: 'First option', label: '' },
+      { value: 'Second option', label: '' },
+    ]);
     fixture.componentInstance.valuesChange.subscribe((values) => emittedValues.push(values));
     fixture.detectChanges();
 
-    const secondOption = fixture.nativeElement.querySelectorAll('.allowed-value-row input')[1] as HTMLInputElement;
+    const secondOption = fixture.nativeElement.querySelectorAll('.allowed-value-input')[1] as HTMLInputElement;
     secondOption.value = 'First option';
     secondOption.dispatchEvent(new Event('input'));
     await fixture.whenStable();

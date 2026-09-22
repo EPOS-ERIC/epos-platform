@@ -72,7 +72,7 @@ export class ResourceCreationDialogService {
       || !groupId
       || !this.currentUserStore.hasGroupPermission(groupId, 'resource.create')
       || !title
-      || (resourceType !== 'dataset' && !description)
+      || !description
     ) {
       return;
     }
@@ -105,7 +105,7 @@ export class ResourceCreationDialogService {
 
   private buildRequest(resourceType: DiscoveryResourceType, title: string, description: string): CreateResourceDraftRequest {
     if (resourceType === 'dataset') {
-      return { resource_type: 'dataset', metadata: { title } };
+      return { resource_type: 'dataset', metadata: { title, description } };
     }
 
     if (resourceType === 'software-application') {

@@ -18,6 +18,8 @@ import type {
 import type {
   DatasetDetailForm,
   DatasetDistributionForm,
+  DatasetEnumOptionForm,
+  DatasetGeologicalTemporalForm,
   DatasetSpatialForm,
   DatasetTemporalForm,
   DatasetWebServiceDocumentationForm,
@@ -29,6 +31,7 @@ import type {
 
 export function toDatasetDetailForm(metadata: DatasetResourceMetadata): DatasetDetailForm {
   const temporalCoverage = metadata.temporal_coverage;
+  const geologicalTemporalCoverage = metadata.geological_temporal_coverage;
 
   return {
     title: metadata.title ?? '',
@@ -39,9 +42,14 @@ export function toDatasetDetailForm(metadata: DatasetResourceMetadata): DatasetD
     created: metadata.created ? toDateTimeLocalValue(metadata.created) : '',
     updated: metadata.updated ? toDateTimeLocalValue(metadata.updated) : '',
     spatial: metadata.spatial_coverage ?? null,
+    temporalMode: geologicalTemporalCoverage ? 'geological' : 'calendar',
     temporal: {
       start: temporalCoverage?.start ? toDateTimeLocalValue(temporalCoverage.start) : '',
       end: temporalCoverage?.end ? toDateTimeLocalValue(temporalCoverage.end) : '',
+    },
+    geologicalTemporal: {
+      startMya: geologicalTemporalCoverage?.start_mya == null ? '' : String(geologicalTemporalCoverage.start_mya),
+      endMya: geologicalTemporalCoverage?.end_mya == null ? '' : String(geologicalTemporalCoverage.end_mya),
     },
     persistentIdentifiers: metadata.persistent_identifiers?.length
       ? metadata.persistent_identifiers.map((identifier) => ({
@@ -75,14 +83,16 @@ export function toDatasetSaveRequest(
     revision,
     metadata: {
       title: form.title || 'Untitled dataset',
-      description: undefinedIfBlank(form.description),
+      description: form.description.trim(),
       keywords: parseKeywords(form.keywords),
       accrual_periodicity: undefinedIfBlank(form.accrualPeriodicity),
       quality_annotation: undefinedIfBlank(form.qualityAnnotation),
       access_right: preservedMetadata.access_right ?? undefined,
       distributions: form.distributions.map(buildDistributionDraft),
       spatial_coverage: buildSpatialCoverageDraft(form.spatial),
-      temporal_coverage: buildTemporalCoverageDraft(form.temporal),
+      ...(form.temporalMode === 'geological'
+        ? { geological_temporal_coverage: buildGeologicalTemporalCoverageDraft(form.geologicalTemporal) }
+        : { temporal_coverage: buildTemporalCoverageDraft(form.temporal) }),
       persistent_identifiers: form.persistentIdentifiers
         .filter(
           (identifier) =>
@@ -107,7 +117,7 @@ export function hasMultipleParameterWithoutAllowedValues(form: DatasetDetailForm
     (distribution) =>
       distribution.kind === 'web-service' &&
       distribution.webService.parameters.some(
-        (parameter) => 'multipleValues' in parameter && parameter.multipleValues && !parameter.allowedValues.some(hasIdentifierValue),
+        (parameter) => 'multipleValues' in parameter && parameter.multipleValues && !parameter.allowedValues.some((option) => hasIdentifierValue(option.value)),
       ),
   );
 }
@@ -203,6 +213,10 @@ export function hasParameterDefaultOutsideAllowedValues(form: DatasetDetailForm)
 }
 
 export function temporalWarningKind(form: DatasetDetailForm): 'none' | 'warning' | 'error' {
+  if (form.temporalMode !== 'calendar') {
+    return 'none';
+  }
+
   const temporal = form.temporal;
 
   if (!temporal?.start) {
@@ -237,6 +251,22 @@ export function temporalWarningMessage(form: DatasetDetailForm): string {
   return '';
 }
 
+export function geologicalTemporalValidationError(form: DatasetDetailForm): string | null {
+  if (form.temporalMode !== 'geological') {
+    return null;
+  }
+
+  const start = toNumberOrNull(form.geologicalTemporal.startMya);
+  const end = toNumberOrNull(form.geologicalTemporal.endMya);
+  if ((start !== null && start < 0) || (end !== null && end < 0)) {
+    return 'Geological ages must be zero or greater.';
+  }
+  if (start !== null && end !== null && start < end) {
+    return 'Geological start age must be older than or equal to the end age.';
+  }
+  return null;
+}
+
 function buildDistributionForm(distribution: Distribution): DatasetDistributionForm {
   const base = {
     title: distribution.title,
@@ -247,10 +277,7 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
     type: distribution.type,
   };
 
-  if (
-    distribution.type ===
-    'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE'
-  ) {
+  if (distribution.type === 'WEB_SERVICE') {
     const webService = (distribution as WebServiceDistribution).web_service;
 
     return {
@@ -343,7 +370,7 @@ function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServicePa
         ...common,
         multipleValues: parameter.multiple_values,
         defaultValue: parameter.default ?? null,
-        allowedValues: parameter.enum ?? [],
+        allowedValues: buildEnumOptionForms(parameter.enum),
         pattern: parameter.pattern ?? '',
       };
     case 'BOOLEAN':
@@ -356,7 +383,7 @@ function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServicePa
         minimum: parameter.minimum == null ? '' : String(parameter.minimum),
         maximum: parameter.maximum == null ? '' : String(parameter.maximum),
         defaultValue: parameter.default == null ? '' : String(parameter.default),
-        allowedValues: (parameter.enum ?? []).map(String),
+        allowedValues: buildEnumOptionForms(parameter.enum),
       };
     case 'FLOAT':
       return {
@@ -366,7 +393,7 @@ function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServicePa
         minimum: parameter.minimum == null ? '' : String(parameter.minimum),
         maximum: parameter.maximum == null ? '' : String(parameter.maximum),
         defaultValue: parameter.default == null ? '' : String(parameter.default),
-        allowedValues: (parameter.enum ?? []).map(String),
+        allowedValues: buildEnumOptionForms(parameter.enum),
       };
     case 'DATETIME':
       return {
@@ -405,7 +432,7 @@ function buildWebServiceScalarParameterForm(
         kind: 'STRING',
         ...common,
         defaultValue: parameter.default ?? null,
-        allowedValues: parameter.enum ?? [],
+        allowedValues: buildEnumOptionForms(parameter.enum),
         pattern: parameter.pattern ?? '',
       };
     case 'BOOLEAN':
@@ -418,7 +445,7 @@ function buildWebServiceScalarParameterForm(
         minimum: parameter.minimum == null ? '' : String(parameter.minimum),
         maximum: parameter.maximum == null ? '' : String(parameter.maximum),
         defaultValue: parameter.default == null ? '' : String(parameter.default),
-        allowedValues: (parameter.enum ?? []).map(String),
+        allowedValues: buildEnumOptionForms(parameter.enum),
       };
     case 'DATETIME':
       return {
@@ -464,14 +491,14 @@ function buildDistributionDraft(distribution: DatasetDistributionForm): Distribu
   if (distribution.kind === 'web-service') {
     return {
       ...base,
-      type: 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE',
+      type: 'WEB_SERVICE',
       web_service: buildWebServiceDraft(distribution.webService),
     } satisfies WebServiceDistributionDraft;
   }
 
   return {
     ...base,
-    type: 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE',
+    type: 'DOWNLOADABLE_FILE',
     downloadable_file: distribution.downloadableFile,
   } satisfies DownloadableFileDistributionDraft;
 }
@@ -643,6 +670,15 @@ function buildTemporalCoverageDraft(
   };
 }
 
+function buildGeologicalTemporalCoverageDraft(
+  temporal: DatasetGeologicalTemporalForm,
+): DatasetDraftMetadata['geological_temporal_coverage'] {
+  return {
+    start_mya: toNumberOrNull(temporal.startMya),
+    end_mya: toNumberOrNull(temporal.endMya),
+  };
+}
+
 function isEmptyWebServiceParameter(parameter: DatasetWebServiceParameterForm): boolean {
   const isMetadataEmpty = [
     parameter.name,
@@ -696,35 +732,46 @@ function hasScalarDefaultOutsideAllowedValues(
     return false;
   }
 
-  const allowedValues = parameter.allowedValues.filter(hasIdentifierValue);
+  const allowedValues = parameter.allowedValues.filter((option) => hasIdentifierValue(option.value));
   if (!allowedValues.length) return false;
 
   if (parameter.kind === 'STRING') {
     return (
-      !!parameter.defaultValue.trim() && !allowedValues.includes(parameter.defaultValue)
+      !!parameter.defaultValue.trim() && !allowedValues.some((option) => option.value === parameter.defaultValue)
     );
   }
 
   const defaultValue = toNumberOrNull(parameter.defaultValue);
   return (
     defaultValue !== null &&
-    !allowedValues.some((value) => toNumberOrNull(value) === defaultValue)
+    !allowedValues.some((option) => toNumberOrNull(option.value) === defaultValue)
   );
 }
 
-function stringEnum(values: string[]): string[] | undefined {
-  const result = values.filter(hasIdentifierValue);
+function stringEnum(values: DatasetEnumOptionForm[]): Array<{ value: string; label?: string }> | undefined {
+  const result = values
+    .filter((option) => hasIdentifierValue(option.value))
+    .map((option) => ({ value: option.value, label: undefinedIfBlank(option.label) }));
   return result.length ? result : undefined;
 }
 
 function numericEnum(
-  values: string[],
+  values: DatasetEnumOptionForm[],
   predicate: (value: number) => boolean = Number.isFinite,
-): number[] | undefined {
+): Array<{ value: number; label?: string }> | undefined {
   const result = values
-    .map(toNumberOrNull)
-    .filter((value): value is number => value !== null && predicate(value));
+    .map((option) => ({ value: toNumberOrNull(option.value), label: undefinedIfBlank(option.label) }))
+    .filter((option): option is { value: number; label: string | undefined } => option.value !== null && predicate(option.value));
   return result.length ? result : undefined;
+}
+
+function buildEnumOptionForms(
+  options: Array<{ value: string | number; label?: string }> | undefined,
+): DatasetEnumOptionForm[] {
+  return (options ?? []).map((option) => ({
+    value: String(option.value),
+    label: option.label ?? '',
+  }));
 }
 
 function toDateTimeLocalValue(value: string): string {

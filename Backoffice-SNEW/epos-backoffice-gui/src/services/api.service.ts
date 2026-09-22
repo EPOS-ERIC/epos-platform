@@ -33,7 +33,8 @@ import type {
   SoftwareSourceCodeResourceMetadata,
   User,
   UserListItem,
-  MembershipRole
+  MembershipRole,
+  Permission
 } from '../../generated/backofficeSchemas';
 import type {
   DateFrom,
@@ -332,6 +333,10 @@ export class ApiService {
 
   getGroups(): Observable<Group[]> {
     return this.http.get<Group[]>(`${this.baseUrl}/groups`);
+  }
+
+  listPermissions(): Observable<Permission[]> {
+    return this.http.get<Permission[]>(`${this.baseUrl}/permissions`);
   }
 
   getGroupMemberships(groupId: string): Observable<GroupMembership[]> {

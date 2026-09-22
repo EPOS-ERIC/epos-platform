@@ -1,4 +1,4 @@
-import type { DiscoveryResourceType, GroupPermission, ReplaceResourceDraftRequest } from '../../generated/backofficeSchemas';
+import type { DiscoveryResourceType, GroupPermission, Permission, ReplaceResourceDraftRequest } from '../../generated/backofficeSchemas';
 
 export type ResourceActionKey =
   | 'save'
@@ -36,6 +36,12 @@ export const GROUP_PERMISSIONS = [
   'group.permission.manage',
   'category.manage'
 ] as const satisfies readonly GroupPermission[];
+
+export type GroupPermissionCatalogItem = Omit<Permission, 'key'> & { key: GroupPermission };
+
+export function isGroupPermissionCatalogItem(permission: Permission): permission is GroupPermissionCatalogItem {
+  return permission.scope === 'GROUP';
+}
 
 export type ResourceActionVariant = 'primary' | 'ghost' | 'danger';
 
