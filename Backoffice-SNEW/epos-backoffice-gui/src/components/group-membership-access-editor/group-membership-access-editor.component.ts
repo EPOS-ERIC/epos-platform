@@ -22,4 +22,8 @@ export class GroupMembershipAccessEditorComponent {
   protected isMutationLoading(kind: 'role' | 'permission', value: string): boolean {
     return this.mutationKey === `${this.groupId}:${kind}:${value}`;
   }
+
+  protected permissionDetails(permission: GroupPermission): GroupPermissionCatalogItem | undefined {
+    return this.allowedPermissions.find((item) => item.key === permission);
+  }
 }

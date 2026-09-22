@@ -3,8 +3,9 @@ import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, forkJoin, from, map, of, switchMap } from 'rxjs';
 
-import type { CreateRoleRequest, UserMembershipSummary } from '../../../generated/backofficeSchemas';
+import type { CreateRoleRequest, GroupPermission, Permission, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
+import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
 import { DialogService } from '../../services/dialog.service';
 import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
@@ -36,11 +37,28 @@ export class MembershipsPageComponent {
   protected readonly selectedRoles = signal<RequestableRole[]>([]);
   protected readonly roleRequestSaving = signal(false);
   protected readonly roleRequestError = signal('');
+  protected readonly groupPermissions = signal<GroupPermissionCatalogItem[]>([]);
   protected readonly requestableRoles: readonly RequestableRole[] = ['EDITOR', 'REVIEWER'];
   protected readonly roleRequestMembership = computed(() => {
     const groupId = this.roleRequestGroupId();
     return this.user()?.memberships.find((membership) => membership.group.id === groupId && membership.status === 'ACTIVE') ?? null;
   });
+
+  constructor() {
+    this.apiService.listPermissions().pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((error) => {
+        console.error('Failed to load permission catalog', error);
+        return of([] as Permission[]);
+      })
+    ).subscribe((permissions) => this.groupPermissions.set(
+      permissions.filter(isGroupPermissionCatalogItem)
+    ));
+  }
+
+  protected permissionDetails(permission: GroupPermission): GroupPermissionCatalogItem | undefined {
+    return this.groupPermissions().find((item) => item.key === permission);
+  }
 
   protected pendingRoleNames(membership: UserMembershipSummary): string {
     const roles = membership.role_requests

@@ -43,9 +43,9 @@ describe('ManageGroupPageComponent', () => {
     vi.clearAllMocks();
     apiService.getGroupMemberships.mockReturnValue(of([groupAdmin, member]));
     apiService.listPermissions.mockReturnValue(of([
-      { key: 'resource.create', label: 'resource.create', description: 'Create resources.', scope: 'GROUP' },
-      { key: 'resource.edit', label: 'resource.edit', description: 'Edit resources.', scope: 'GROUP' },
-      { key: 'resource.submit', label: 'resource.submit', description: 'Submit resources.', scope: 'GROUP' }
+      { key: 'resource.create', label: 'Create resources', description: 'Create resources.', scope: 'GROUP' },
+      { key: 'resource.edit', label: 'Edit resources', description: 'Edit resources.', scope: 'GROUP' },
+      { key: 'resource.submit', label: 'Submit resources', description: 'Submit resources.', scope: 'GROUP' }
     ]));
     apiService.removeGroupMember.mockReturnValue(of(undefined));
     apiService.setGroupMembershipRole.mockReturnValue(of(undefined));
@@ -88,16 +88,17 @@ describe('ManageGroupPageComponent', () => {
 
     const permissionOptions = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.membership-dialog label.membership-option'));
     const inheritedPermissionOption = permissionOptions
-      .find((option) => option.textContent?.includes('resource.edit'));
+      .find((option) => option.textContent?.includes('Edit resources'));
     const inheritedPermissionInput = inheritedPermissionOption?.querySelector('input') as HTMLInputElement;
 
     expect(inheritedPermissionInput.checked).toBe(true);
     expect(inheritedPermissionInput.disabled).toBe(true);
     expect(inheritedPermissionOption?.textContent).toContain('Already granted by role');
     expect(fixture.nativeElement.querySelector('.membership-dialog')?.textContent).toContain('2 inherited');
+    expect(fixture.nativeElement.querySelector('.membership-dialog')?.textContent).toContain('Create resources.');
 
     const directPermissionOption = permissionOptions
-      .find((option) => option.textContent?.includes('resource.submit'));
+      .find((option) => option.textContent?.includes('Submit resources'));
     const directPermissionInput = directPermissionOption?.querySelector('input') as HTMLInputElement;
     expect(directPermissionInput.disabled).toBe(false);
 

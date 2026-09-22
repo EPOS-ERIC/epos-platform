@@ -49,7 +49,12 @@
   </summary>
   <div class="option-grid option-grid--permissions">
     @for (permission of rolePermissions; track permission) {
-      <span class="membership-option membership-option--readonly">{{ permission }}</span>
+      @if (permissionDetails(permission); as details) {
+        <span class="membership-option membership-option--readonly">
+          <span>{{ details.label }}</span>
+          <small>{{ details.description }}</small>
+        </span>
+      }
     } @empty {
       <span class="membership-permissions-empty">No permissions inherited from roles.</span>
     }

@@ -53,14 +53,29 @@
                 <dd>{{ membership.granted_permissions.length ? membership.granted_permissions.join(', ') : 'None' }}</dd>
               </div>
               <div>
-                <dt>Role permissions</dt>
-                <dd>{{ membership.role_permissions.length ? membership.role_permissions.join(', ') : 'None' }}</dd>
-              </div>
-              <div>
                 <dt>Last updated</dt>
                 <dd>{{ membership.updated_at | date:'medium' }}</dd>
               </div>
             </dl>
+
+            <details class="membership-role-permissions">
+              <summary>
+                <span>Role permissions</span>
+                <small>{{ membership.role_permissions.length }} inherited</small>
+              </summary>
+              <div class="membership-permission-list">
+                @for (permission of membership.role_permissions; track permission) {
+                  @if (permissionDetails(permission); as details) {
+                    <div class="membership-permission">
+                      <strong>{{ details.label }}</strong>
+                      <small>{{ details.description }}</small>
+                    </div>
+                  }
+                } @empty {
+                  <span class="app-muted">No permissions inherited from roles.</span>
+                }
+              </div>
+            </details>
 
             @if (membership.status === 'PENDING') {
               <footer class="membership-summary-footer">

@@ -43,6 +43,7 @@ describe('MembershipsPageComponent', () => {
     refresh: vi.fn()
   };
   const apiService = {
+    listPermissions: vi.fn(),
     requestGroupRole: vi.fn(),
     withdrawGroupMembershipRequest: vi.fn(),
     leaveOwnGroupMembership: vi.fn()
@@ -54,6 +55,10 @@ describe('MembershipsPageComponent', () => {
     vi.clearAllMocks();
     currentUser.set(user);
     currentUserStore.refresh.mockResolvedValue(undefined);
+    apiService.listPermissions.mockReturnValue(of([
+      { key: 'resource.create', label: 'Create resources', description: 'Create resources in this group.', scope: 'GROUP' },
+      { key: 'resource.edit', label: 'Edit resources', description: 'Edit resources in this group.', scope: 'GROUP' }
+    ]));
     apiService.requestGroupRole.mockReturnValue(of({
       id: 'role-request-id',
       role: 'EDITOR',
@@ -86,6 +91,26 @@ describe('MembershipsPageComponent', () => {
 
     (fixture.nativeElement.querySelector('.memberships-page-header button') as HTMLButtonElement).click();
     expect(open).toHaveBeenCalledOnce();
+  });
+
+  it('shows inherited permission details from the permission catalog', () => {
+    currentUser.set({
+      ...user,
+      memberships: [{
+        ...user.memberships[0],
+        status: 'ACTIVE',
+        roles: ['EDITOR'],
+        role_permissions: ['resource.create', 'resource.edit']
+      }]
+    });
+    const fixture = TestBed.createComponent(MembershipsPageComponent);
+    fixture.detectChanges();
+
+    const permissions = fixture.nativeElement.querySelector('.membership-role-permissions') as HTMLDetailsElement;
+    expect(permissions.textContent).toContain('2 inherited');
+    expect(permissions.textContent).toContain('Create resources');
+    expect(permissions.textContent).toContain('Create resources in this group.');
+    expect(permissions.textContent).toContain('Edit resources');
   });
 
   it('cancels a pending membership request after confirmation', async () => {
