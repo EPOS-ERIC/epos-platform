@@ -35,6 +35,10 @@
 .detail-overview-item--wide {
   grid-column: span 2;
 }
+.rejection-note {
+  max-height: 260px;
+  overflow-y: scroll;
+}
 
 .detail-overview-item[data-status='published'] {
   background: var(--olive-100);

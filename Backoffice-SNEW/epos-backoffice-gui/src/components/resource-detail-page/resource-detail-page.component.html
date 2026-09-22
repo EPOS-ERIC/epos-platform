@@ -46,6 +46,12 @@
           <span class="detail-label">Resource ID</span>
           <strong>{{ version.resource_id }}</strong>
         </div>
+        @if (version.rejection_note != null) {
+          <div class="detail-overview-item detail-overview-item--wide rejection-note">
+            <span class="detail-label">Rejection Note</span>
+            <span>{{ version.rejection_note }}</span>
+          </div>
+        }
       </section>
 
       <app-general-information
