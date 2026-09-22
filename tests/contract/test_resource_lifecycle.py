@@ -43,7 +43,14 @@ class ResourceLifecycleContractTest(unittest.TestCase):
             groupId=group_id,
             json={
                 "resource_type": "dataset",
-                "metadata": {"title": title},
+                "metadata": {
+                    "title": title,
+                    "description": "Contract lifecycle description",
+                    "geological_temporal_coverage": {
+                        "start_mya": 251.902,
+                        "end_mya": 201.4,
+                    },
+                },
             },
         )
         self.assertEqual(created.status_code, 201)
@@ -93,6 +100,11 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         self.assertEqual(draft_details["group_id"], group_id)
         self.assertEqual(draft_details["metadata"]["resource_type"], "dataset")
         self.assertEqual(draft_details["metadata"]["title"], title)
+        self.assertEqual(
+            draft_details["metadata"]["geological_temporal_coverage"],
+            {"start_mya": 251.902, "end_mya": 201.4},
+        )
+        self.assertNotIn("temporal_coverage", draft_details["metadata"])
 
         updated_title = f"{title}-updated"
         replaced = self.gateway.put(
@@ -102,7 +114,14 @@ class ResourceLifecycleContractTest(unittest.TestCase):
             json={
                 "resource_type": "dataset",
                 "revision": initial_revision,
-                "metadata": {"title": updated_title},
+                "metadata": {
+                    "title": updated_title,
+                    "description": "Updated contract lifecycle description",
+                    "geological_temporal_coverage": {
+                        "start_mya": 251.902,
+                        "end_mya": 201.4,
+                    },
+                },
             },
         )
         self.assertEqual(replaced.status_code, 200)
@@ -110,6 +129,18 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         self.assertEqual(replaced_result["resourceType"], "dataset")
         self.assertEqual(replaced_result["id"], resource_id)
         self.assertEqual(replaced_result["status"], "DRAFT")
+
+        replaced_details_response = self.gateway.get(
+            "/resources/{resourceType}/{id}/versions/{versionId}",
+            resourceType="dataset",
+            id=resource_id,
+            versionId=version_id,
+        )
+        self.assertEqual(replaced_details_response.status_code, 200)
+        self.assertEqual(
+            replaced_details_response.json()["metadata"]["geological_temporal_coverage"],
+            {"start_mya": 251.902, "end_mya": 201.4},
+        )
 
         draft = get_version("DRAFT")
         self.assertEqual(draft["resource_id"], resource_id)
@@ -123,7 +154,10 @@ class ResourceLifecycleContractTest(unittest.TestCase):
             json={
                 "resource_type": "dataset",
                 "revision": initial_revision,
-                "metadata": {"title": updated_title},
+                "metadata": {
+                    "title": updated_title,
+                    "description": "Updated contract lifecycle description",
+                },
             },
         )
         self.assertEqual(stale.status_code, 409)
@@ -184,3 +218,14 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         self.assertEqual(published_details["group_id"], group_id)
         self.assertEqual(published_details["metadata"]["resource_type"], "dataset")
         self.assertEqual(published_details["metadata"]["title"], updated_title)
+        self.assertEqual(
+            published_details["metadata"]["geological_temporal_coverage"],
+            {"start_mya": 251.902, "end_mya": 201.4},
+        )
+
+        discovery = self.gateway.get(
+            "/search", params={"type": "dataset", "q": title}
+        )
+        self.assertEqual(discovery.status_code, 200)
+        self.assertEqual(len(discovery.json()), 1)
+        self.assertNotIn("geological_temporal_coverage", discovery.json()[0])

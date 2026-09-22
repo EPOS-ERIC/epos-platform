@@ -16,6 +16,8 @@ import (
 	"github.com/twpayne/go-geom/encoding/wkt"
 )
 
+// TODO: try to infer decent defaults for required fields missing in the ttls but still emit the warnings so that we have valid resources as much as possible
+
 // Parser adapts Turtle parsing to the import handler parser interface.
 type Parser struct {
 	log *slog.Logger
@@ -278,10 +280,11 @@ func (m *mapper) softwareApplication(source string) (domain.SoftwareApplicationM
 	); err != nil {
 		return domain.SoftwareApplicationMetadata{}, err
 	}
+	name := m.requiredString(source, schemaName)
 	result := domain.SoftwareApplicationMetadata{
 		ID:               sharedID("software-application", source),
-		Name:             m.requiredString(source, schemaName),
-		Description:      m.optionalString(source, schemaDescription),
+		Name:             name,
+		Description:      m.importedDescription(source, schemaDescription, "software application", name),
 		MainEntityOfPage: stringPtr(m.optionalString(source, schemaMainEntityOfPage)),
 		License:          stringPtr(m.optionalString(source, schemaLicense)),
 		Version:          stringPtr(m.optionalStringOneOf(source, schemaSoftwareVersion, schemaVersion)),
@@ -310,10 +313,11 @@ func (m *mapper) softwareSourceCode(source string) (domain.SoftwareSourceCodeMet
 	); err != nil {
 		return domain.SoftwareSourceCodeMetadata{}, err
 	}
+	name := m.requiredString(source, schemaName)
 	result := domain.SoftwareSourceCodeMetadata{
 		ID:                   sharedID("software-source-code", source),
-		Name:                 m.requiredString(source, schemaName),
-		Description:          m.optionalString(source, schemaDescription),
+		Name:                 name,
+		Description:          m.importedDescription(source, schemaDescription, "software source code", name),
 		ProgrammingLanguage:  stringPtr(m.optionalString(source, schemaProgrammingLanguage)),
 		Keywords:             m.keywords(source, schemaKeywords),
 		Repository:           stringPtr(m.optionalString(source, schemaCodeRepository)),
@@ -383,11 +387,13 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 	); err != nil {
 		return domain.DatasetMetadata{}, err
 	}
+	title := m.requiredString(source, dctTitle)
+	description := m.importedDescription(source, dctDescription, "dataset", title)
 	id := ownedID("", "dataset", source)
 	dataset := domain.DatasetMetadata{
 		ID:          id,
-		Title:       m.requiredString(source, dctTitle),
-		Description: m.optionalString(source, dctDescription),
+		Title:       title,
+		Description: description,
 		Keywords:    m.keywords(source, dcatKeyword),
 
 		AccrualPeriodicity:    nil,
@@ -478,6 +484,22 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 	}
 
 	return dataset, nil
+}
+
+func (m *mapper) importedDescription(source, predicate, kind, title string) string {
+	description, ok := m.firstString(source, predicate)
+	if ok && strings.TrimSpace(description) != "" {
+		return description
+	}
+
+	description = fmt.Sprintf("%s description", strings.TrimSpace(title))
+	m.addWarning(domain.ImportDiagnostic{
+		Severity:  domain.ImportSeverityWarning,
+		Subject:   source,
+		Predicate: predicate,
+		Message:   fmt.Sprintf("%s description missing; using default %q", kind, description),
+	})
+	return description
 }
 
 func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distribution, error) {
@@ -758,7 +780,7 @@ func (m *mapper) parameter(source string) (domain.Parameter, error) {
 			Minimum:        m.intPtr(source, schemaMinValue),
 			Maximum:        m.intPtr(source, schemaMaxValue),
 			Default:        defaultValue,
-			Enum:           nilIfEmpty(m.validIntValues(source, defaultValue)),
+			Enum:           intEnumOptions(m.validIntValues(source, defaultValue)),
 			MultipleValues: multipleValues,
 		}
 		return parameter, nil
@@ -768,7 +790,7 @@ func (m *mapper) parameter(source string) (domain.Parameter, error) {
 			Minimum:        m.floatPtr(source, schemaMinValue),
 			Maximum:        m.floatPtr(source, schemaMaxValue),
 			Default:        defaultValue,
-			Enum:           nilIfEmpty(m.validFloatValues(source, defaultValue)),
+			Enum:           floatEnumOptions(m.validFloatValues(source, defaultValue)),
 			MultipleValues: multipleValues,
 		}
 		return parameter, nil
@@ -797,7 +819,7 @@ func (m *mapper) parameter(source string) (domain.Parameter, error) {
 		}
 		parameter.Schema = domain.StringSchema{
 			Default:        pointer,
-			Enum:           nilIfEmpty(allowed),
+			Enum:           stringEnumOptions(allowed),
 			Pattern:        stringPtr(m.optionalString(source, schemaValuePattern)),
 			MultipleValues: multipleValues,
 		}
@@ -1012,9 +1034,11 @@ func normalizeRange(value string) string {
 func normalizeDistributionType(value string) domain.DistributionType {
 	switch strings.TrimSpace(value) {
 	case string(domain.DistributionTypeWebService),
+		"http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE",
 		"https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE":
 		return domain.DistributionTypeWebService
 	case string(domain.DistributionTypeDownloadableFile),
+		"http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE",
 		"https://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE":
 		return domain.DistributionTypeDownloadableFile
 	default:
@@ -1474,30 +1498,96 @@ func nilIfEmpty[T any](values []T) []T {
 	return values
 }
 
-func mergeStringValues(first, second []string) []string {
-	result := append([]string(nil), first...)
+func stringEnumOptions(values []string) []domain.StringEnumOption {
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([]domain.StringEnumOption, len(values))
+	for i, value := range values {
+		result[i] = domain.StringEnumOption{Value: value}
+	}
+	return result
+}
+
+func intEnumOptions(values []int64) []domain.IntegerEnumOption {
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([]domain.IntegerEnumOption, len(values))
+	for i, value := range values {
+		result[i] = domain.IntegerEnumOption{Value: value}
+	}
+	return result
+}
+
+func floatEnumOptions(values []float64) []domain.FloatEnumOption {
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([]domain.FloatEnumOption, len(values))
+	for i, value := range values {
+		result[i] = domain.FloatEnumOption{Value: value}
+	}
+	return result
+}
+
+func mergeStringValues(first, second []domain.StringEnumOption) []domain.StringEnumOption {
+	result := append([]domain.StringEnumOption(nil), first...)
 	for _, value := range second {
-		if !slices.Contains(result, value) {
+		found := false
+		for i := range result {
+			if result[i].Value != value.Value {
+				continue
+			}
+			if result[i].Label == nil {
+				result[i].Label = value.Label
+			}
+			found = true
+			break
+		}
+		if !found {
 			result = append(result, value)
 		}
 	}
 	return result
 }
 
-func mergeIntValues(first, second []int64) []int64 {
-	result := append([]int64(nil), first...)
+func mergeIntValues(first, second []domain.IntegerEnumOption) []domain.IntegerEnumOption {
+	result := append([]domain.IntegerEnumOption(nil), first...)
 	for _, value := range second {
-		if !slices.Contains(result, value) {
+		found := false
+		for i := range result {
+			if result[i].Value != value.Value {
+				continue
+			}
+			if result[i].Label == nil {
+				result[i].Label = value.Label
+			}
+			found = true
+			break
+		}
+		if !found {
 			result = append(result, value)
 		}
 	}
 	return result
 }
 
-func mergeFloatValues(first, second []float64) []float64 {
-	result := append([]float64(nil), first...)
+func mergeFloatValues(first, second []domain.FloatEnumOption) []domain.FloatEnumOption {
+	result := append([]domain.FloatEnumOption(nil), first...)
 	for _, value := range second {
-		if !slices.Contains(result, value) {
+		found := false
+		for i := range result {
+			if result[i].Value != value.Value {
+				continue
+			}
+			if result[i].Label == nil {
+				result[i].Label = value.Label
+			}
+			found = true
+			break
+		}
+		if !found {
 			result = append(result, value)
 		}
 	}

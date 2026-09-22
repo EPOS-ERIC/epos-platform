@@ -213,11 +213,15 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             "title": f"Dataset {suffix}",
             "description": "Representative dataset metadata",
             "keywords": ["variants", "dataset"],
+            "geological_temporal_coverage": {
+                "start_mya": 251.902,
+                "end_mya": 201.4,
+            },
             "distributions": [
                 {
                     "title": "Dataset download",
                     "description": "Representative download",
-                    "type": "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE",
+                    "type": "DOWNLOADABLE_FILE",
                     "downloadable_file": {
                         "url": "https://example.org/dataset.csv",
                         "format": "text/csv",
@@ -321,6 +325,10 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                     copied_metadata["distributions"][0]["downloadable_file"]["url"],
                     source_result_metadata["distributions"][0]["downloadable_file"]["url"],
                 )
+                self.assertEqual(
+                    copied_metadata["geological_temporal_coverage"],
+                    source_result_metadata["geological_temporal_coverage"],
+                )
             self.assert_identifier_clones(
                 source_result_metadata, copied_metadata, identifier_key
             )
@@ -396,6 +404,11 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                 [item["id"] for item in publication_metadata["categories"]],
                 [source_category_id],
             )
+            if resource_type == "dataset":
+                self.assertEqual(
+                    publication_metadata["geological_temporal_coverage"],
+                    source_result_metadata["geological_temporal_coverage"],
+                )
 
             unauthorized = source_only.post(
                 "/groups/{groupId}/resources/{resourceType}/{id}/copy",

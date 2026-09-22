@@ -9,6 +9,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
 	"github.com/google/uuid"
 	go_geom "github.com/twpayne/go-geom"
 )
@@ -242,7 +243,7 @@ type AddLifecycleFloatParameterSchemaParams struct {
 	Minimum        *float64
 	Maximum        *float64
 	DefaultValue   *float64
-	Enum           []float64
+	Enum           []types.FloatEnumOption
 	MultipleValues bool
 }
 
@@ -284,7 +285,7 @@ type AddLifecycleIntegerParameterSchemaParams struct {
 	Minimum        *int64
 	Maximum        *int64
 	DefaultValue   *int64
-	Enum           []int64
+	Enum           []types.IntegerEnumOption
 	MultipleValues bool
 }
 
@@ -432,7 +433,7 @@ type AddLifecycleStringParameterSchemaParams struct {
 	ParameterID    uuid.UUID
 	Pattern        *string
 	DefaultValue   *string
-	Enum           []string
+	Enum           []types.StringEnumOption
 	MultipleValues bool
 }
 
@@ -622,7 +623,7 @@ func (q *Queries) ArchivePublishedLifecycleDatasetVersion(ctx context.Context, a
 const cloneLifecycleDatasetVersion = `-- name: CloneLifecycleDatasetVersion :one
 WITH source AS (
     SELECT
-        id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+        id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
     FROM
         dataset_versions
     WHERE
@@ -644,6 +645,8 @@ inserted AS (
             spatial_coverage,
             temporal_start,
             temporal_end,
+            geological_temporal_start_mya,
+            geological_temporal_end_mya,
             created_by
         )
     SELECT
@@ -659,11 +662,13 @@ inserted AS (
         spatial_coverage,
         temporal_start,
         temporal_end,
+        geological_temporal_start_mya,
+        geological_temporal_end_mya,
         $4
     FROM
         source
     RETURNING
-        id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+        id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 ),
 identifiers AS (
     INSERT INTO
@@ -1250,6 +1255,8 @@ INSERT INTO
         spatial_coverage,
         temporal_start,
         temporal_end,
+        geological_temporal_start_mya,
+        geological_temporal_end_mya,
         created_by
     )
 VALUES
@@ -1266,26 +1273,30 @@ VALUES
         $10,
         $11,
         $12,
-        $13
+        $13,
+        $14,
+        $15
     )
 RETURNING
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 `
 
 type CreateLifecycleDatasetVersionParams struct {
-	DatasetID          uuid.UUID
-	Title              string
-	Description        string
-	Keywords           string
-	AccrualPeriodicity *string
-	QualityAnnotation  *string
-	AccessRight        *string
-	SourceCreatedAt    *time.Time
-	SourceUpdatedAt    *time.Time
-	SpatialCoverage    go_geom.T
-	TemporalStart      *time.Time
-	TemporalEnd        *time.Time
-	CreatedBy          string
+	DatasetID                  uuid.UUID
+	Title                      string
+	Description                string
+	Keywords                   []string
+	AccrualPeriodicity         *string
+	QualityAnnotation          *string
+	AccessRight                *string
+	SourceCreatedAt            *time.Time
+	SourceUpdatedAt            *time.Time
+	SpatialCoverage            go_geom.T
+	TemporalStart              *time.Time
+	TemporalEnd                *time.Time
+	GeologicalTemporalStartMya *float64
+	GeologicalTemporalEndMya   *float64
+	CreatedBy                  string
 }
 
 func (q *Queries) CreateLifecycleDatasetVersion(ctx context.Context, arg CreateLifecycleDatasetVersionParams) (DatasetVersion, error) {
@@ -1302,6 +1313,8 @@ func (q *Queries) CreateLifecycleDatasetVersion(ctx context.Context, arg CreateL
 		arg.SpatialCoverage,
 		arg.TemporalStart,
 		arg.TemporalEnd,
+		arg.GeologicalTemporalStartMya,
+		arg.GeologicalTemporalEndMya,
 		arg.CreatedBy,
 	)
 	var i DatasetVersion
@@ -1321,6 +1334,8 @@ func (q *Queries) CreateLifecycleDatasetVersion(ctx context.Context, arg CreateL
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -1441,7 +1456,7 @@ func (q *Queries) EnsureLifecycleDatasetVersion(ctx context.Context, arg EnsureL
 
 const getActiveLifecycleDatasetVersion = `-- name: GetActiveLifecycleDatasetVersion :one
 SELECT
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 FROM
     dataset_versions
 WHERE
@@ -1473,6 +1488,8 @@ func (q *Queries) GetActiveLifecycleDatasetVersion(ctx context.Context, datasetI
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -1491,7 +1508,7 @@ func (q *Queries) GetActiveLifecycleDatasetVersion(ctx context.Context, datasetI
 
 const getLatestArchivedLifecycleDatasetVersion = `-- name: GetLatestArchivedLifecycleDatasetVersion :one
 SELECT
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 FROM
     dataset_versions
 WHERE
@@ -1532,6 +1549,8 @@ func (q *Queries) GetLatestArchivedLifecycleDatasetVersion(ctx context.Context, 
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -1622,6 +1641,8 @@ SELECT
     version.spatial_coverage,
     version.temporal_start,
     version.temporal_end,
+    version.geological_temporal_start_mya,
+    version.geological_temporal_end_mya,
     version.created_by,
     version.created_at,
     version.updated_at,
@@ -1650,34 +1671,36 @@ type GetLifecycleDatasetVersionParams struct {
 }
 
 type GetLifecycleDatasetVersionRow struct {
-	ID                 uuid.UUID
-	DatasetID          uuid.UUID
-	Status             ResourceStatus
-	Revision           int32
-	Title              string
-	Description        string
-	Keywords           string
-	AccrualPeriodicity *string
-	QualityAnnotation  *string
-	AccessRight        *string
-	SourceCreatedAt    *time.Time
-	SourceUpdatedAt    *time.Time
-	SpatialCoverage    go_geom.T
-	TemporalStart      *time.Time
-	TemporalEnd        *time.Time
-	CreatedBy          string
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	SubmittedBy        *string
-	SubmittedAt        *time.Time
-	PublishedBy        *string
-	PublishedAt        *time.Time
-	ArchivedBy         *string
-	ArchivedAt         *time.Time
-	RejectedBy         *string
-	RejectedAt         *time.Time
-	RejectionNote      *string
-	Group              Group
+	ID                         uuid.UUID
+	DatasetID                  uuid.UUID
+	Status                     ResourceStatus
+	Revision                   int32
+	Title                      string
+	Description                string
+	Keywords                   []string
+	AccrualPeriodicity         *string
+	QualityAnnotation          *string
+	AccessRight                *string
+	SourceCreatedAt            *time.Time
+	SourceUpdatedAt            *time.Time
+	SpatialCoverage            go_geom.T
+	TemporalStart              *time.Time
+	TemporalEnd                *time.Time
+	GeologicalTemporalStartMya *float64
+	GeologicalTemporalEndMya   *float64
+	CreatedBy                  string
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
+	SubmittedBy                *string
+	SubmittedAt                *time.Time
+	PublishedBy                *string
+	PublishedAt                *time.Time
+	ArchivedBy                 *string
+	ArchivedAt                 *time.Time
+	RejectedBy                 *string
+	RejectedAt                 *time.Time
+	RejectionNote              *string
+	Group                      Group
 }
 
 func (q *Queries) GetLifecycleDatasetVersion(ctx context.Context, arg GetLifecycleDatasetVersionParams) (GetLifecycleDatasetVersionRow, error) {
@@ -1699,6 +1722,8 @@ func (q *Queries) GetLifecycleDatasetVersion(ctx context.Context, arg GetLifecyc
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -1728,7 +1753,7 @@ func (q *Queries) GetLifecycleDatasetVersion(ctx context.Context, arg GetLifecyc
 
 const getPublishedLifecycleDatasetVersion = `-- name: GetPublishedLifecycleDatasetVersion :one
 SELECT
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 FROM
     dataset_versions
 WHERE
@@ -1755,6 +1780,8 @@ func (q *Queries) GetPublishedLifecycleDatasetVersion(ctx context.Context, datas
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -2635,7 +2662,7 @@ WHERE
     dataset_versions.id = $2
     AND dataset_versions.status = 'SUBMITTED'
 RETURNING
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 `
 
 type PublishLifecycleDatasetVersionParams struct {
@@ -2662,6 +2689,8 @@ func (q *Queries) PublishLifecycleDatasetVersion(ctx context.Context, arg Publis
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -2690,7 +2719,7 @@ WHERE
     id = $3
     AND STATUS = 'SUBMITTED'
 RETURNING
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 `
 
 type RejectLifecycleDatasetVersionParams struct {
@@ -2718,6 +2747,8 @@ func (q *Queries) RejectLifecycleDatasetVersion(ctx context.Context, arg RejectL
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -2743,7 +2774,7 @@ WHERE
     id = $1
     AND STATUS = 'REJECTED'
 RETURNING
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 `
 
 func (q *Queries) ReopenLifecycleDatasetVersion(ctx context.Context, id uuid.UUID) (DatasetVersion, error) {
@@ -2765,6 +2796,8 @@ func (q *Queries) ReopenLifecycleDatasetVersion(ctx context.Context, id uuid.UUI
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -2796,31 +2829,35 @@ SET
     spatial_coverage = $9,
     temporal_start = $10,
     temporal_end = $11,
+    geological_temporal_start_mya = $12,
+    geological_temporal_end_mya = $13,
     revision = revision + 1
 WHERE
-    id = $12
-    AND dataset_id = $13
+    id = $14
+    AND dataset_id = $15
     AND STATUS = 'DRAFT'
-    AND revision = $14
+    AND revision = $16
 RETURNING
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 `
 
 type ReplaceLifecycleDatasetDraftParams struct {
-	Title              string
-	Description        string
-	Keywords           string
-	AccrualPeriodicity *string
-	QualityAnnotation  *string
-	AccessRight        *string
-	SourceCreatedAt    *time.Time
-	SourceUpdatedAt    *time.Time
-	SpatialCoverage    go_geom.T
-	TemporalStart      *time.Time
-	TemporalEnd        *time.Time
-	ID                 uuid.UUID
-	DatasetID          uuid.UUID
-	Revision           int32
+	Title                      string
+	Description                string
+	Keywords                   []string
+	AccrualPeriodicity         *string
+	QualityAnnotation          *string
+	AccessRight                *string
+	SourceCreatedAt            *time.Time
+	SourceUpdatedAt            *time.Time
+	SpatialCoverage            go_geom.T
+	TemporalStart              *time.Time
+	TemporalEnd                *time.Time
+	GeologicalTemporalStartMya *float64
+	GeologicalTemporalEndMya   *float64
+	ID                         uuid.UUID
+	DatasetID                  uuid.UUID
+	Revision                   int32
 }
 
 func (q *Queries) ReplaceLifecycleDatasetDraft(ctx context.Context, arg ReplaceLifecycleDatasetDraftParams) (DatasetVersion, error) {
@@ -2836,6 +2873,8 @@ func (q *Queries) ReplaceLifecycleDatasetDraft(ctx context.Context, arg ReplaceL
 		arg.SpatialCoverage,
 		arg.TemporalStart,
 		arg.TemporalEnd,
+		arg.GeologicalTemporalStartMya,
+		arg.GeologicalTemporalEndMya,
 		arg.ID,
 		arg.DatasetID,
 		arg.Revision,
@@ -2857,6 +2896,8 @@ func (q *Queries) ReplaceLifecycleDatasetDraft(ctx context.Context, arg ReplaceL
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -2884,7 +2925,7 @@ WHERE
     id = $2
     AND STATUS = 'DRAFT'
 RETURNING
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 `
 
 type SubmitLifecycleDatasetVersionParams struct {
@@ -2911,6 +2952,8 @@ func (q *Queries) SubmitLifecycleDatasetVersion(ctx context.Context, arg SubmitL
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -2938,7 +2981,7 @@ WHERE
     id = $2
     AND STATUS = 'PUBLISHED'
 RETURNING
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 `
 
 type UnpublishLifecycleDatasetVersionParams struct {
@@ -2965,6 +3008,8 @@ func (q *Queries) UnpublishLifecycleDatasetVersion(ctx context.Context, arg Unpu
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -2990,7 +3035,7 @@ WHERE
     dataset_versions.id = $1
     AND dataset_versions.status = 'SUBMITTED'
 RETURNING
-    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
+    id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note
 `
 
 func (q *Queries) WithdrawLifecycleDatasetVersion(ctx context.Context, id uuid.UUID) (DatasetVersion, error) {
@@ -3012,6 +3057,8 @@ func (q *Queries) WithdrawLifecycleDatasetVersion(ctx context.Context, id uuid.U
 		&i.SpatialCoverage,
 		&i.TemporalStart,
 		&i.TemporalEnd,
+		&i.GeologicalTemporalStartMya,
+		&i.GeologicalTemporalEndMya,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,

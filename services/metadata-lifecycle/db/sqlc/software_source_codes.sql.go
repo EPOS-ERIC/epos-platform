@@ -301,7 +301,7 @@ type CloneLifecycleSoftwareSourceCodeVersionRow struct {
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
-	Keywords             string
+	Keywords             []string
 	Repository           *string
 	License              *string
 	SoftwareRequirements *string
@@ -432,7 +432,7 @@ type CreateLifecycleSoftwareSourceCodeVersionParams struct {
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
-	Keywords             string
+	Keywords             []string
 	Repository           *string
 	License              *string
 	SoftwareRequirements *string
@@ -1275,7 +1275,7 @@ type ReplaceLifecycleSoftwareSourceCodeDraftParams struct {
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
-	Keywords             string
+	Keywords             []string
 	Repository           *string
 	License              *string
 	SoftwareRequirements *string

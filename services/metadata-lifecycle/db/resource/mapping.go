@@ -2,25 +2,10 @@
 package resource
 
 import (
-	"strings"
-
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
-
-// KeywordsFromString deserializes the comma-delimited database field.
-func KeywordsFromString(value string) []string {
-	if value == "" {
-		return []string{}
-	}
-	values := strings.Split(value, ",")
-	result := make([]string, 0, len(values))
-	for _, item := range values {
-		result = append(result, strings.TrimSpace(item))
-	}
-	return result
-}
 
 // ToOrganizationMetadata maps a persisted organization to resource metadata.
 func ToOrganizationMetadata(value sqlc.Organization) domain.OrganizationMetadata {

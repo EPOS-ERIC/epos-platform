@@ -35,6 +35,8 @@ tags:
     description: Read resource versions and manage their draft-to-publication lifecycle.
   - name: Users
     description: Read user profiles and administer global access.
+  - name: Authorization
+    description: Read the fixed permission catalog.
   - name: Groups
     description: Read and manage groups and their categories.
   - name: Contact Points
@@ -47,6 +49,30 @@ tags:
     description: Import RDF Turtle metadata into draft resources.
 
 paths:
+  /permissions:
+    get:
+      tags:
+        - Authorization
+      summary: List permissions
+      description: Returns the fixed catalog of permissions available in the system.
+      operationId: listPermissions
+      security:
+        - {}
+      responses:
+        "200":
+          description: Permission catalog returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Permission"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /imports/turtle:
     post:
       tags:
@@ -1831,6 +1857,30 @@ components:
       minLength: 1
       pattern: '[^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]'
 
+    StringEnumOption:
+      type: object
+      additionalProperties: false
+      required: [value]
+      properties:
+        value: { type: string, minLength: 1 }
+        label: { type: string, minLength: 1 }
+
+    IntegerEnumOption:
+      type: object
+      additionalProperties: false
+      required: [value]
+      properties:
+        value: { type: integer, format: int64 }
+        label: { type: string, minLength: 1 }
+
+    FloatEnumOption:
+      type: object
+      additionalProperties: false
+      required: [value]
+      properties:
+        value: { type: number, format: double }
+        label: { type: string, minLength: 1 }
+
     Keyword:
       type: string
       minLength: 1
@@ -1865,6 +1915,31 @@ components:
         - group.permission.manage
         - category.manage
 
+    PermissionScope:
+      type: string
+      description: Scope at which a permission is evaluated.
+      enum: [GLOBAL, GROUP]
+
+    Permission:
+      type: object
+      additionalProperties: false
+      required: [key, label, description, scope]
+      properties:
+        key:
+          type: string
+          minLength: 1
+          description: Stable permission key.
+        label:
+          type: string
+          minLength: 1
+          description: Human-readable permission label.
+        description:
+          type: string
+          minLength: 1
+          description: Human-readable permission description.
+        scope:
+          $ref: "#/components/schemas/PermissionScope"
+
     DiscoveryResourceType:
       type: string
       description: Resource type identifier used in discovery results.
@@ -1891,7 +1966,7 @@ components:
     DatasetDraftMetadata:
       type: object
       additionalProperties: false
-      required: [title]
+      required: [title, description]
       properties:
         title: { $ref: "#/components/schemas/NonBlankString" }
         description: { $ref: "#/components/schemas/NonBlankString" }
@@ -1913,6 +1988,11 @@ components:
           description: WKT POINT or POLYGON geometry in EPSG:4326.
           example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        geological_temporal_coverage:
+          {
+            $ref: "#/components/schemas/GeologicalTemporalCoverage",
+            description: Mutually exclusive with temporal_coverage.
+          }
         persistent_identifiers:
           {
             type: array,
@@ -1990,9 +2070,8 @@ components:
       discriminator:
         propertyName: type
         mapping:
-          # TODO: instead of having these weird constants, change them everywhere to just be WEB_SERVICE or DOWNLOADABLE_FILE (also in the db, ...)
-          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistributionDraft"
-          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistributionDraft"
+          "WEB_SERVICE": "#/components/schemas/WebServiceDistributionDraft"
+          "DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistributionDraft"
 
     WebServiceDistributionDraft:
       type: object
@@ -2005,7 +2084,7 @@ components:
         type:
           type: string
           enum:
-            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+            - "WEB_SERVICE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
@@ -2022,7 +2101,7 @@ components:
         type:
           type: string
           enum:
-            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+            - "DOWNLOADABLE_FILE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
@@ -2159,7 +2238,7 @@ components:
         multiple_values: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { type: string } }
+        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanParameterDraft:
@@ -2210,7 +2289,7 @@ components:
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        enum: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatParameterDraft:
       type: object
@@ -2242,7 +2321,7 @@ components:
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        enum: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeParameterDraft:
       type: object
@@ -2295,7 +2374,7 @@ components:
         multiple_values: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { type: string } }
+        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanParameter:
@@ -2359,7 +2438,7 @@ components:
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        enum: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatParameter:
       type: object
@@ -2393,7 +2472,7 @@ components:
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        enum: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeParameter:
       type: object
@@ -2510,7 +2589,7 @@ components:
         required: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { type: string } }
+        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanScalarParameterDraft:
@@ -2542,7 +2621,7 @@ components:
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        enum: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatScalarParameterDraft:
       type: object
@@ -2559,7 +2638,7 @@ components:
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        enum: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeScalarParameterDraft:
       type: object
@@ -2591,7 +2670,7 @@ components:
         required: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { type: string } }
+        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanScalarParameter:
@@ -2623,7 +2702,7 @@ components:
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        enum: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatScalarParameter:
       type: object
@@ -2640,7 +2719,7 @@ components:
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        enum: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeScalarParameter:
       type: object
@@ -2698,6 +2777,14 @@ components:
       properties:
         start: { type: string, format: date-time, nullable: true }
         end: { type: string, format: date-time, nullable: true }
+
+    GeologicalTemporalCoverage:
+      type: object
+      additionalProperties: false
+      description: Geological age range in millions of years before present. Start is older than or equal to end.
+      properties:
+        start_mya: { type: number, format: double, nullable: true, minimum: 0 }
+        end_mya: { type: number, format: double, nullable: true, minimum: 0 }
 
     CreateResourceDraftRequest:
       oneOf:
@@ -2906,6 +2993,11 @@ components:
           description: WKT POINT or POLYGON geometry in EPSG:4326.
           example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        geological_temporal_coverage:
+          {
+            $ref: "#/components/schemas/GeologicalTemporalCoverage",
+            description: Mutually exclusive with temporal_coverage.
+          }
         persistent_identifiers:
           type: array
           items: { $ref: "#/components/schemas/Identifier" }
@@ -3016,8 +3108,8 @@ components:
       discriminator:
         propertyName: type
         mapping:
-          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistribution"
-          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistribution"
+          "WEB_SERVICE": "#/components/schemas/WebServiceDistribution"
+          "DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistribution"
 
     WebServiceDistribution:
       type: object
@@ -3031,7 +3123,7 @@ components:
         type:
           type: string
           enum:
-            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+            - "WEB_SERVICE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
@@ -3049,7 +3141,7 @@ components:
         type:
           type: string
           enum:
-            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+            - "DOWNLOADABLE_FILE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }

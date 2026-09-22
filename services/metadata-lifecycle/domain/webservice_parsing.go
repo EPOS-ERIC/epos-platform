@@ -53,8 +53,13 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	if err := validateUUIDList(value.ContactPointIDs, "web service contact point"); err != nil {
 		return WebServiceInput{}, fmt.Errorf("web service contact points: %w: %w", err, ErrInvalidDataset)
 	}
-	if value.Documentation != nil && strings.TrimSpace(value.Documentation.URI) == "" {
-		return WebServiceInput{}, fmt.Errorf("documentation URI is required: %w", ErrInvalidDataset)
+	if value.Documentation != nil {
+		value.Documentation.Title = optionalTrimmedString(value.Documentation.Title)
+		value.Documentation.Description = optionalTrimmedString(value.Documentation.Description)
+		value.Documentation.URI = strings.TrimSpace(value.Documentation.URI)
+		if value.Documentation.URI == "" {
+			return WebServiceInput{}, fmt.Errorf("documentation URI is required: %w", ErrInvalidDataset)
+		}
 	}
 
 	parameters, err := parseWebServiceParameterInputs(value.Parameters)
@@ -364,22 +369,37 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 	if value.Enum != nil && len(value.Enum) == 0 {
 		return StringSchema{}, fmt.Errorf("string enum cannot be empty: %w", ErrInvalidDataset)
 	}
-	for _, item := range value.Enum {
-		if item == "" {
+	seen := make(map[string]struct{}, len(value.Enum))
+	for i := range value.Enum {
+		item := &value.Enum[i]
+		if item.Value == "" {
 			return StringSchema{}, fmt.Errorf("string enum values cannot be empty: %w", ErrInvalidDataset)
 		}
-		if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(item) {
-			return StringSchema{}, fmt.Errorf("string enum value %q does not match pattern: %w", item, ErrInvalidDataset)
+		if _, exists := seen[item.Value]; exists {
+			return StringSchema{}, fmt.Errorf("string enum value %q is duplicated: %w", item.Value, ErrInvalidDataset)
+		}
+		seen[item.Value] = struct{}{}
+		if item.Label != nil {
+			label := strings.TrimSpace(*item.Label)
+			if label == "" {
+				return StringSchema{}, fmt.Errorf("string enum label cannot be empty: %w", ErrInvalidDataset)
+			}
+			item.Label = &label
+		}
+		if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(item.Value) {
+			return StringSchema{}, fmt.Errorf("string enum value %q does not match pattern: %w", item.Value, ErrInvalidDataset)
 		}
 	}
 	if value.Default != nil {
-		if *value.Default == "" {
+		if strings.TrimSpace(*value.Default) == "" {
 			return StringSchema{}, fmt.Errorf("string default cannot be empty: %w", ErrInvalidDataset)
 		}
 		if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(*value.Default) {
 			return StringSchema{}, fmt.Errorf("string default does not match pattern: %w", ErrInvalidDataset)
 		}
-		if value.Enum != nil && !slices.Contains(value.Enum, *value.Default) {
+		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item StringEnumOption) bool {
+			return item.Value == *value.Default
+		}) {
 			return StringSchema{}, fmt.Errorf("string default is not an allowed value: %w", ErrInvalidDataset)
 		}
 	}
@@ -393,8 +413,21 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 	if value.Minimum != nil && value.Maximum != nil && *value.Minimum > *value.Maximum {
 		return IntegerSchema{}, fmt.Errorf("integer minimum must not exceed maximum: %w", ErrInvalidDataset)
 	}
-	for _, item := range value.Enum {
-		if !integerInRange(item, value.Minimum, value.Maximum) {
+	seen := make(map[int64]struct{}, len(value.Enum))
+	for i := range value.Enum {
+		item := &value.Enum[i]
+		if _, exists := seen[item.Value]; exists {
+			return IntegerSchema{}, fmt.Errorf("integer enum value %d is duplicated: %w", item.Value, ErrInvalidDataset)
+		}
+		seen[item.Value] = struct{}{}
+		if item.Label != nil {
+			label := strings.TrimSpace(*item.Label)
+			if label == "" {
+				return IntegerSchema{}, fmt.Errorf("integer enum label cannot be empty: %w", ErrInvalidDataset)
+			}
+			item.Label = &label
+		}
+		if !integerInRange(item.Value, value.Minimum, value.Maximum) {
 			return IntegerSchema{}, fmt.Errorf("integer enum value is outside allowed range: %w", ErrInvalidDataset)
 		}
 	}
@@ -402,7 +435,9 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 		if !integerInRange(*value.Default, value.Minimum, value.Maximum) {
 			return IntegerSchema{}, fmt.Errorf("integer default is outside allowed range: %w", ErrInvalidDataset)
 		}
-		if value.Enum != nil && !slices.Contains(value.Enum, *value.Default) {
+		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item IntegerEnumOption) bool {
+			return item.Value == *value.Default
+		}) {
 			return IntegerSchema{}, fmt.Errorf("integer default is not an allowed value: %w", ErrInvalidDataset)
 		}
 	}
@@ -416,8 +451,21 @@ func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
 	if !finiteFloat(value.Minimum) || !finiteFloat(value.Maximum) || !finiteFloat(value.Default) {
 		return FloatSchema{}, fmt.Errorf("float values must be finite: %w", ErrInvalidDataset)
 	}
-	for _, item := range value.Enum {
-		if math.IsNaN(item) || math.IsInf(item, 0) || !floatInRange(item, value.Minimum, value.Maximum) {
+	seen := make(map[float64]struct{}, len(value.Enum))
+	for i := range value.Enum {
+		item := &value.Enum[i]
+		if _, exists := seen[item.Value]; exists {
+			return FloatSchema{}, fmt.Errorf("float enum value %v is duplicated: %w", item.Value, ErrInvalidDataset)
+		}
+		seen[item.Value] = struct{}{}
+		if item.Label != nil {
+			label := strings.TrimSpace(*item.Label)
+			if label == "" {
+				return FloatSchema{}, fmt.Errorf("float enum label cannot be empty: %w", ErrInvalidDataset)
+			}
+			item.Label = &label
+		}
+		if math.IsNaN(item.Value) || math.IsInf(item.Value, 0) || !floatInRange(item.Value, value.Minimum, value.Maximum) {
 			return FloatSchema{}, fmt.Errorf("float enum value is invalid or outside allowed range: %w", ErrInvalidDataset)
 		}
 	}
@@ -428,7 +476,9 @@ func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
 		if !floatInRange(*value.Default, value.Minimum, value.Maximum) {
 			return FloatSchema{}, fmt.Errorf("float default is outside allowed range: %w", ErrInvalidDataset)
 		}
-		if value.Enum != nil && !slices.Contains(value.Enum, *value.Default) {
+		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item FloatEnumOption) bool {
+			return item.Value == *value.Default
+		}) {
 			return FloatSchema{}, fmt.Errorf("float default is not an allowed value: %w", ErrInvalidDataset)
 		}
 	}

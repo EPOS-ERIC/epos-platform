@@ -26,15 +26,15 @@ CREATE TABLE dataset_versions (
     id                  uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     dataset_id          uuid NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
     status              resource_status NOT NULL DEFAULT 'DRAFT',
-    revision            integer NOT NULL DEFAULT 1 CHECK (revision > 0),
+    revision            positive_int NOT NULL DEFAULT 1,
 
     -- Version-owned dataset metadata
-    title               text NOT NULL,
-    description         text NOT NULL DEFAULT '',
-    keywords            text NOT NULL DEFAULT '',
-    accrual_periodicity text,
-    quality_annotation  text,
-    access_right        text,
+    title               nonblank_text NOT NULL,
+    description         nonblank_text NOT NULL,
+    keywords            nonblank_text[] NOT NULL DEFAULT '{}',
+    accrual_periodicity nonblank_text_opt,
+    quality_annotation  nonblank_text_opt,
+    access_right        nonblank_text_opt,
     -- Source timestamps describe upstream dataset metadata. They are distinct
     -- from metadata-lifecycle record and lifecycle timestamps below.
     source_created_at   timestamptz,
@@ -42,6 +42,8 @@ CREATE TABLE dataset_versions (
     spatial_coverage    geometry(Geometry, 4326),
     temporal_start      timestamptz,
     temporal_end        timestamptz,
+    geological_temporal_start_mya double precision,
+    geological_temporal_end_mya   double precision,
 
     -- Metadata Lifecycle record timestamps
     created_by          text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -57,28 +59,62 @@ CREATE TABLE dataset_versions (
     archived_at         timestamptz,
     rejected_by         text REFERENCES users(id) ON DELETE RESTRICT,
     rejected_at         timestamptz,
-    rejection_note      text,
+    rejection_note      nonblank_text_opt,
 
     CHECK (temporal_start IS NULL OR temporal_end IS NULL OR temporal_start <= temporal_end),
-    CHECK (rejection_note IS NULL OR length(trim(rejection_note)) > 0)
+    CHECK (
+        geological_temporal_start_mya IS NULL
+        OR (
+            geological_temporal_start_mya >= 0
+            AND geological_temporal_start_mya NOT IN (
+                'NaN'::double precision,
+                'Infinity'::double precision,
+                '-Infinity'::double precision
+            )
+        )
+    ),
+    CHECK (
+        geological_temporal_end_mya IS NULL
+        OR (
+            geological_temporal_end_mya >= 0
+            AND geological_temporal_end_mya NOT IN (
+                'NaN'::double precision,
+                'Infinity'::double precision,
+                '-Infinity'::double precision
+            )
+        )
+    ),
+    CHECK (
+        geological_temporal_start_mya IS NULL
+        OR geological_temporal_end_mya IS NULL
+        OR geological_temporal_start_mya >= geological_temporal_end_mya
+    ),
+    CHECK (
+        (temporal_start IS NULL AND temporal_end IS NULL)
+        OR (
+            geological_temporal_start_mya IS NULL
+            AND geological_temporal_end_mya IS NULL
+        )
+    ),
+    CHECK (array_position(keywords, NULL) IS NULL)
 );
 CREATE TABLE software_application_versions (
     -- Identity and lifecycle concurrency
     id                      uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     software_application_id uuid NOT NULL REFERENCES software_applications(id) ON DELETE CASCADE,
     status                  resource_status NOT NULL DEFAULT 'DRAFT',
-    revision                integer NOT NULL DEFAULT 1 CHECK (revision > 0),
+    revision                positive_int NOT NULL DEFAULT 1,
 
     -- Version-owned application metadata
-    name                    text NOT NULL,
-    description             text NOT NULL DEFAULT '',
-    main_entity_of_page     text,
-    license                 text,
-    version                 text,
-    keywords                text NOT NULL DEFAULT '',
-    download_url            text,
-    requirements            text,
-    operating_system        text,
+    name                    nonblank_text NOT NULL,
+    description             nonblank_text NOT NULL,
+    main_entity_of_page     nonblank_text_opt,
+    license                 nonblank_text_opt,
+    version                 nonblank_text_opt,
+    keywords                nonblank_text[] NOT NULL DEFAULT '{}',
+    download_url            nonblank_text_opt,
+    requirements            nonblank_text_opt,
+    operating_system        nonblank_text_opt,
 
     -- Metadata Lifecycle record timestamps
     created_by              text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -94,27 +130,27 @@ CREATE TABLE software_application_versions (
     archived_at             timestamptz,
     rejected_by             text REFERENCES users(id) ON DELETE RESTRICT,
     rejected_at             timestamptz,
-    rejection_note          text,
-    CHECK (rejection_note IS NULL OR length(trim(rejection_note)) > 0)
+    rejection_note          nonblank_text_opt,
+    CHECK (array_position(keywords, NULL) IS NULL)
 );
 CREATE TABLE software_source_code_versions (
     -- Identity and lifecycle concurrency
     id                      uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     software_source_code_id uuid NOT NULL REFERENCES software_source_codes(id) ON DELETE CASCADE,
     status                  resource_status NOT NULL DEFAULT 'DRAFT',
-    revision                integer NOT NULL DEFAULT 1 CHECK (revision > 0),
+    revision                positive_int NOT NULL DEFAULT 1,
 
     -- Version-owned source-code metadata
-    name                    text NOT NULL,
-    description             text NOT NULL DEFAULT '',
-    programming_language    text,
-    keywords                text NOT NULL DEFAULT '',
-    repository              text,
-    license                 text,
-    software_requirements   text,
-    runtime_platform        text,
-    main_entity_of_page     text,
-    version                 text,
+    name                    nonblank_text NOT NULL,
+    description             nonblank_text NOT NULL,
+    programming_language    nonblank_text_opt,
+    keywords                nonblank_text[] NOT NULL DEFAULT '{}',
+    repository              nonblank_text_opt,
+    license                 nonblank_text_opt,
+    software_requirements   nonblank_text_opt,
+    runtime_platform        nonblank_text_opt,
+    main_entity_of_page     nonblank_text_opt,
+    version                 nonblank_text_opt,
 
     -- Metadata Lifecycle record timestamps
     created_by              text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -130,8 +166,8 @@ CREATE TABLE software_source_code_versions (
     archived_at             timestamptz,
     rejected_by             text REFERENCES users(id) ON DELETE RESTRICT,
     rejected_at             timestamptz,
-    rejection_note          text,
-    CHECK (rejection_note IS NULL OR length(trim(rejection_note)) > 0)
+    rejection_note          nonblank_text_opt,
+    CHECK (array_position(keywords, NULL) IS NULL)
 );
 
 -- A resource has one pending change and one current public version at most.

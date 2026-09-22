@@ -13,12 +13,10 @@ on:
       - "packages/go/apidocs/**"
       - "packages/scripts/epos-banner.sh"
       - "packages/scripts/metadatone.sh"
-      - "packages/scripts/schemathesis-env.sh"
-      - "docker/compose.dev.yaml"
-      - "docker/gateway-config.dev.yaml"
+      - "docker/compose.ci.yaml"
+      - "docker/gateway-config.yaml"
       - "Makefile"
       - ".github/workflows/integration-contract.yml"
-      - ".github/workflows/_integration-suite.yml"
   push:
     branches:
       - "main"
@@ -33,24 +31,56 @@ on:
       - "packages/go/apidocs/**"
       - "packages/scripts/epos-banner.sh"
       - "packages/scripts/metadatone.sh"
-      - "packages/scripts/schemathesis-env.sh"
-      - "docker/compose.dev.yaml"
-      - "docker/gateway-config.dev.yaml"
+      - "docker/compose.ci.yaml"
+      - "docker/gateway-config.yaml"
       - "Makefile"
       - ".github/workflows/integration-contract.yml"
-      - ".github/workflows/_integration-suite.yml"
 
 permissions:
   contents: read
 
 jobs:
   contract-tests:
-    uses: ./.github/workflows/_integration-suite.yml
-    secrets: inherit
-    with:
-      job-name: Contract tests
-      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
-      compose-up-command: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service metadata-lifecycle-service oss-aai-service
-      populate-command: make populate-metadatone
-      wait-url: http://localhost:32000/health
-      test-command: make test-contract
+    name: Contract tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build and start CI stack
+        shell: bash
+        run: make ci
+
+      - name: Populate integration metadata
+        shell: bash
+        run: make populate-metadatone
+
+      - name: Wait for populated gateway data
+        shell: bash
+        run: |
+          for i in {1..90}; do
+            if curl -fsS 'http://localhost:32000/health' >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f docker/compose.ci.yaml logs
+          exit 1
+
+      - name: Run integration tests
+        shell: bash
+        run: make test-integration
+
+      - name: Show integration logs on failure
+        if: failure()
+        shell: bash
+        run: docker compose -f docker/compose.ci.yaml logs --no-color
+
+      - name: Show compose state on failure
+        if: failure()
+        shell: bash
+        run: |
+          docker compose -f docker/compose.ci.yaml ps -a
+          for id in $(docker compose -f docker/compose.ci.yaml ps -q); do
+            docker inspect "$id" --format '{{.Name}} {{if .State.Health}}{{json .State.Health}}{{else}}no-healthcheck{{end}}'
+          done

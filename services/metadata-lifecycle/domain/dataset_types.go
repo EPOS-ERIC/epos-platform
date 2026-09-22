@@ -9,21 +9,22 @@ import (
 
 // DatasetInput contains caller-controlled dataset version fields.
 type DatasetInput struct {
-	Title                 string
-	Description           string
-	Keywords              []string
-	AccrualPeriodicity    *string
-	QualityAnnotation     *string
-	AccessRight           *string
-	Distributions         []DistributionInput
-	SpatialCoverage       geom.T
-	TemporalCoverage      *Temporal
-	PersistentIdentifiers []IdentifierInput
-	ContactPointIDs       []uuid.UUID
-	ProviderIDs           []uuid.UUID
-	CategoryIDs           []uuid.UUID
-	SourceCreated         *time.Time
-	SourceUpdated         *time.Time
+	Title                      string
+	Description                string
+	Keywords                   []string
+	AccrualPeriodicity         *string
+	QualityAnnotation          *string
+	AccessRight                *string
+	Distributions              []DistributionInput
+	SpatialCoverage            geom.T
+	TemporalCoverage           *Temporal
+	GeologicalTemporalCoverage *GeologicalTemporal
+	PersistentIdentifiers      []IdentifierInput
+	ContactPointIDs            []uuid.UUID
+	ProviderIDs                []uuid.UUID
+	CategoryIDs                []uuid.UUID
+	SourceCreated              *time.Time
+	SourceUpdated              *time.Time
 }
 
 // DatasetDraftInput contains a validated draft replacement command.
@@ -39,22 +40,23 @@ type DatasetRejectionInput struct {
 
 // DatasetMetadata is persisted dataset version metadata.
 type DatasetMetadata struct {
-	ID                    uuid.UUID
-	Title                 string
-	Description           string
-	Keywords              []string
-	AccrualPeriodicity    *string
-	QualityAnnotation     *string
-	AccessRight           *string
-	Distributions         []Distribution
-	SpatialCoverage       geom.T
-	TemporalCoverage      *Temporal
-	PersistentIdentifiers []Identifier
-	ContactPoints         []ContactPoint
-	Providers             []OrganizationMetadata
-	Categories            []CategoryMetadata
-	SourceCreated         *time.Time
-	SourceUpdated         *time.Time
+	ID                         uuid.UUID
+	Title                      string
+	Description                string
+	Keywords                   []string
+	AccrualPeriodicity         *string
+	QualityAnnotation          *string
+	AccessRight                *string
+	Distributions              []Distribution
+	SpatialCoverage            geom.T
+	TemporalCoverage           *Temporal
+	GeologicalTemporalCoverage *GeologicalTemporal
+	PersistentIdentifiers      []Identifier
+	ContactPoints              []ContactPoint
+	Providers                  []OrganizationMetadata
+	Categories                 []CategoryMetadata
+	SourceCreated              *time.Time
+	SourceUpdated              *time.Time
 }
 
 // DistributionInput contains caller-controlled distribution fields.
@@ -135,6 +137,11 @@ type Documentation struct {
 type Temporal struct {
 	Start *time.Time
 	End   *time.Time
+}
+
+type GeologicalTemporal struct {
+	StartMYA *float64
+	EndMYA   *float64
 }
 
 type HTTPMethod string
@@ -257,9 +264,14 @@ type ParameterSchema interface {
 	parameterSchema()
 }
 
+type StringEnumOption struct {
+	Value string
+	Label *string
+}
+
 type StringSchema struct {
 	Pattern        *string
-	Enum           []string
+	Enum           []StringEnumOption
 	Default        *string
 	MultipleValues bool
 }
@@ -274,10 +286,15 @@ type BooleanSchema struct {
 func (BooleanSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindBoolean }
 func (BooleanSchema) parameterSchema()          {}
 
+type IntegerEnumOption struct {
+	Value int64
+	Label *string
+}
+
 type IntegerSchema struct {
 	Minimum        *int64
 	Maximum        *int64
-	Enum           []int64
+	Enum           []IntegerEnumOption
 	Default        *int64
 	MultipleValues bool
 }
@@ -285,10 +302,15 @@ type IntegerSchema struct {
 func (IntegerSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindInteger }
 func (IntegerSchema) parameterSchema()          {}
 
+type FloatEnumOption struct {
+	Value float64
+	Label *string
+}
+
 type FloatSchema struct {
 	Minimum        *float64
 	Maximum        *float64
-	Enum           []float64
+	Enum           []FloatEnumOption
 	Default        *float64
 	MultipleValues bool
 }
@@ -316,10 +338,9 @@ func (TemplateSchema) parameterSchema()          {}
 
 type DistributionType string
 
-// TODO: use better constants
 const (
-	DistributionTypeWebService       DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-	DistributionTypeDownloadableFile DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	DistributionTypeWebService       DistributionType = "WEB_SERVICE"
+	DistributionTypeDownloadableFile DistributionType = "DOWNLOADABLE_FILE"
 )
 
 func (t DistributionType) Valid() bool {

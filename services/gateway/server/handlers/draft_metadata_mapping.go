@@ -6,18 +6,25 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) *metadatalifecyclev1.DatasetInput {
+func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatalifecyclev1.DatasetInput, error) {
 	r := &metadatalifecyclev1.DatasetInput{
-		Title:            string(v.Title),
-		ContactPoints:    uuidStrings(v.ContactPoints),
-		Providers:        uuidStrings(v.Providers),
-		Categories:       uuidStrings(v.Categories),
-		Keywords:         toProtoKeywords(v.Keywords),
-		TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
+		Title:         string(v.Title),
+		ContactPoints: uuidStrings(v.ContactPoints),
+		Providers:     uuidStrings(v.Providers),
+		Categories:    uuidStrings(v.Categories),
+		Keywords:      toProtoKeywords(v.Keywords),
 	}
-	if v.Description.Set {
-		r.Description = new(string(v.Description.Value))
+	temporalRange, err := toProtoDatasetTemporalRange(v.TemporalCoverage, v.GeologicalTemporalCoverage)
+	if err != nil {
+		return nil, err
 	}
+	switch {
+	case temporalRange.temporal != nil:
+		r.TemporalRange = &metadatalifecyclev1.DatasetInput_TemporalCoverage{TemporalCoverage: temporalRange.temporal}
+	case temporalRange.geological != nil:
+		r.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: temporalRange.geological}
+	}
+	r.Description = string(v.Description)
 	if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
 		r.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)
 	}
@@ -45,7 +52,7 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) *metadatalif
 	for _, distribution := range v.Distributions {
 		r.Distributions = append(r.Distributions, toProtoDistributionDraft(distribution))
 	}
-	return r
+	return r, nil
 }
 
 func toProtoSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDraftMetadata) *metadatalifecyclev1.SoftwareApplicationInput {

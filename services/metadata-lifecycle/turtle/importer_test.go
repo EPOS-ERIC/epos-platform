@@ -19,7 +19,7 @@ const importPrefixes = `
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 `
 
-func TestParserKeepsDatasetWhenContactPointIsInvalid(t *testing.T) {
+func TestParserUsesFallbackDescriptionAndKeepsDatasetWhenContactPointIsInvalid(t *testing.T) {
 	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
 <category:dataset> a skos:ConceptScheme;
     dct:title "Dataset categories";
@@ -41,10 +41,50 @@ func TestParserKeepsDatasetWhenContactPointIsInvalid(t *testing.T) {
 	if len(batch.Datasets) != 1 {
 		t.Fatalf("Datasets = %d, want 1", len(batch.Datasets))
 	}
+	if batch.Datasets[0].Description != "Dataset one description" {
+		t.Fatalf("dataset description = %q, want %q", batch.Datasets[0].Description, "Dataset one description")
+	}
 	if len(batch.ContactPoints) != 0 {
 		t.Fatalf("ContactPoints = %d, want 0", len(batch.ContactPoints))
 	}
 	assertDiagnostic(t, batch.Warnings, "dataset:one", dcatContactPoint, "omitted")
+	assertDiagnostic(t, batch.Warnings, "dataset:one", dctDescription, `using default "Dataset one description"`)
+}
+
+func TestParserUsesTitleFallbackDescriptionsForSoftwareResources(t *testing.T) {
+	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
+<category:software> a skos:ConceptScheme;
+    dct:title "Software categories";
+    skos:hasTopConcept <category:facets/software-theme>.
+<category:software-item> a skos:Concept;
+    skos:inScheme <category:software>;
+    skos:prefLabel "Software".
+<application:one> a schema:SoftwareApplication;
+    schema:name "Application one";
+    dcat:theme <category:software-item>.
+<source:one> a schema:SoftwareSourceCode;
+    schema:name "Source code one";
+    schema:description "   ";
+    dcat:theme <category:software-item>.
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	if len(batch.SoftwareApplications) != 1 {
+		t.Fatalf("SoftwareApplications = %d, want 1", len(batch.SoftwareApplications))
+	}
+	if batch.SoftwareApplications[0].Description != "Application one description" {
+		t.Fatalf("software application description = %q, want %q", batch.SoftwareApplications[0].Description, "Application one description")
+	}
+	if len(batch.SoftwareSourceCodes) != 1 {
+		t.Fatalf("SoftwareSourceCodes = %d, want 1", len(batch.SoftwareSourceCodes))
+	}
+	if batch.SoftwareSourceCodes[0].Description != "Source code one description" {
+		t.Fatalf("software source code description = %q, want %q", batch.SoftwareSourceCodes[0].Description, "Source code one description")
+	}
+	assertDiagnostic(t, batch.Warnings, "application:one", schemaDescription, `using default "Application one description"`)
+	assertDiagnostic(t, batch.Warnings, "source:one", schemaDescription, `using default "Source code one description"`)
 }
 
 func TestParserDropsDistributionWithInvalidWebService(t *testing.T) {
@@ -57,10 +97,12 @@ func TestParserDropsDistributionWithInvalidWebService(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:format "application/json";
     dct:conformsTo <service:bad>.
 <service:bad> a epos:WebService;
@@ -106,6 +148,7 @@ func TestParserDeduplicatesRepeatedRDFStatements(t *testing.T) {
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:keyword "one";
     dcat:keyword "one";
     dcat:theme <category:one>.
@@ -127,7 +170,8 @@ func TestParserSkipsDatasetWithConflictingSingleValue(t *testing.T) {
 	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
 <dataset:one> a dcat:Dataset;
     dct:title "First title";
-    dct:title "Second title".
+    dct:title "Second title";
+    dct:description "Dataset description".
 `))
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
@@ -155,6 +199,7 @@ func TestParserSkipsDatasetWithMultipleCategorySchemes(t *testing.T) {
     skos:prefLabel "Two".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>, <category:two>.
 `))
 	if err != nil {
@@ -183,6 +228,7 @@ func TestParserMergesCanonicalContactPoints(t *testing.T) {
     schema:contactType "owner".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:contactPoint <contact:one>, <contact:two>.
 `))
@@ -209,10 +255,12 @@ func TestParserUsesDistributionTypeForWebService(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:conformsTo <service:one>;
     dcat:accessURL <operation:one>;
@@ -247,10 +295,12 @@ func TestParserAllowsNumericParametersWithoutAllowedValues(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:format "application/json";
     dct:conformsTo <service:one>;
@@ -304,10 +354,12 @@ func TestParserMapsMultipleValuesForEnumParameters(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:format "application/json";
     dct:conformsTo <service:one>;
@@ -363,10 +415,12 @@ func TestParserUsesDistributionOperationOnly(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:conformsTo <service:one>;
     dcat:accessURL <operation:selected>;
@@ -416,10 +470,12 @@ func TestParserDropsWebServiceDistributionWithoutOperation(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:conformsTo <service:one>;
     dct:format "application/json".
@@ -461,7 +517,7 @@ func TestAppendUniqueParameterMergesConflictingDefaults(t *testing.T) {
 		Name: "format",
 		Schema: domain.StringSchema{
 			Default:        &firstDefault,
-			Enum:           []string{"json"},
+			Enum:           []domain.StringEnumOption{{Value: "json"}},
 			MultipleValues: true,
 		},
 	}
@@ -470,7 +526,7 @@ func TestAppendUniqueParameterMergesConflictingDefaults(t *testing.T) {
 		Required: true,
 		Schema: domain.StringSchema{
 			Default: &secondDefault,
-			Enum:    []string{"xml"},
+			Enum:    []domain.StringEnumOption{{Value: "xml"}},
 		},
 	}
 
@@ -486,7 +542,7 @@ func TestAppendUniqueParameterMergesConflictingDefaults(t *testing.T) {
 	if schema.Default != nil {
 		t.Fatalf("default = %q, want nil after conflict", *schema.Default)
 	}
-	if len(schema.Enum) != 2 || schema.Enum[0] != "json" || schema.Enum[1] != "xml" {
+	if len(schema.Enum) != 2 || schema.Enum[0].Value != "json" || schema.Enum[1].Value != "xml" {
 		t.Fatalf("allowed values = %v, want [json xml]", schema.Enum)
 	}
 	if !merged.Required {
@@ -524,10 +580,12 @@ func TestParserDiagnosesIncompatibleParameterKinds(t *testing.T) {
     skos:prefLabel "One".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
+    dct:description "Dataset description";
     dcat:theme <category:one>;
     dcat:distribution <distribution:one>.
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
+    dct:description "Distribution description";
     dct:format "application/json";
     dct:conformsTo <service:one>;
     dcat:accessURL <operation:one>.

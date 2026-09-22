@@ -188,10 +188,16 @@ func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatew
 		Created:            toAPINilTime(v.Created),
 		Updated:            toAPINilTime(v.Updated),
 	}
-	if v.TemporalCoverage != nil {
+	if temporal := v.GetTemporalCoverage(); temporal != nil {
 		result.TemporalCoverage = gatewayapi.NewOptTemporalCoverage(gatewayapi.TemporalCoverage{
-			Start: toAPINilTime(v.TemporalCoverage.Start),
-			End:   toAPINilTime(v.TemporalCoverage.End),
+			Start: toAPINilTime(temporal.Start),
+			End:   toAPINilTime(temporal.End),
+		})
+	}
+	if geological := v.GetGeologicalTemporalCoverage(); geological != nil {
+		result.GeologicalTemporalCoverage = gatewayapi.NewOptGeologicalTemporalCoverage(gatewayapi.GeologicalTemporalCoverage{
+			StartMya: toAPINilFloat64(geological.StartMya),
+			EndMya:   toAPINilFloat64(geological.EndMya),
 		})
 	}
 	for _, value := range v.PersistentIdentifiers {

@@ -34,7 +34,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 				Required:    true,
 				Schema: domain.StringSchema{
 					Default:        &stringDefault,
-					Enum:           []string{"json", "xml"},
+					Enum:           []domain.StringEnumOption{{Value: "json", Label: new("JSON")}, {Value: "xml"}},
 					Pattern:        &pattern,
 					MultipleValues: true,
 				},
@@ -55,7 +55,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 				Position: 3,
 				Name:     "count",
 				Label:    "Count",
-				Schema:   domain.IntegerSchema{Minimum: &minimum, Maximum: &maximum, Default: &minimum, Enum: []int64{1, 5, 10}},
+				Schema:   domain.IntegerSchema{Minimum: &minimum, Maximum: &maximum, Default: &minimum, Enum: []domain.IntegerEnumOption{{Value: 1}, {Value: 5}, {Value: 10}}},
 			},
 		},
 		{
@@ -64,7 +64,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 				Position: 4,
 				Name:     "ratio",
 				Label:    "Ratio",
-				Schema:   domain.FloatSchema{Default: &floatDefault, Enum: []float64{1.5, 2.5}},
+				Schema:   domain.FloatSchema{Default: &floatDefault, Enum: []domain.FloatEnumOption{{Value: 1.5}, {Value: 2.5}}},
 			},
 		},
 		{
@@ -153,16 +153,16 @@ func parameterSchemaRow(value domain.Parameter, id uuid.UUID) parameterSchemas {
 	result := parameterSchemas{}
 	switch schema := value.Schema.(type) {
 	case domain.StringSchema:
-		result.string = sqlc.StringParameterSchema{ParameterID: id, Pattern: schema.Pattern, DefaultValue: schema.Default, Enum: schema.Enum, MultipleValues: schema.MultipleValues}
+		result.string = sqlc.StringParameterSchema{ParameterID: id, Pattern: schema.Pattern, DefaultValue: schema.Default, Enum: toStringEnumOptions(schema.Enum), MultipleValues: schema.MultipleValues}
 		result.stringOK = true
 	case domain.BooleanSchema:
 		result.boolean = sqlc.BooleanParameterSchema{ParameterID: id, DefaultValue: schema.Default}
 		result.booleanOK = true
 	case domain.IntegerSchema:
-		result.integer = sqlc.IntegerParameterSchema{ParameterID: id, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Enum: schema.Enum, MultipleValues: schema.MultipleValues}
+		result.integer = sqlc.IntegerParameterSchema{ParameterID: id, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Enum: toIntegerEnumOptions(schema.Enum), MultipleValues: schema.MultipleValues}
 		result.integerOK = true
 	case domain.FloatSchema:
-		result.float = sqlc.FloatParameterSchema{ParameterID: id, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Enum: schema.Enum, MultipleValues: schema.MultipleValues}
+		result.float = sqlc.FloatParameterSchema{ParameterID: id, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Enum: toFloatEnumOptions(schema.Enum), MultipleValues: schema.MultipleValues}
 		result.floatOK = true
 	case domain.DateTimeSchema:
 		result.datetime = sqlc.DatetimeParameterSchema{ParameterID: id, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Layout: schema.Layout}

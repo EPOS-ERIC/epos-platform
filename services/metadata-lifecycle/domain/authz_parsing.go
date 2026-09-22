@@ -24,6 +24,25 @@ func NewPersistedPermissionScope(value string) (PermissionScope, error) {
 	}
 }
 
+// NewPersistedPermission validates a permission loaded from storage.
+func NewPersistedPermission(key, label, description, scope string) (Permission, error) {
+	if key == "" || label == "" || description == "" {
+		return Permission{}, ErrInvalidAuthorization
+	}
+
+	parsedScope, err := NewPersistedPermissionScope(scope)
+	if err != nil {
+		return Permission{}, err
+	}
+
+	return Permission{
+		Key:         key,
+		Label:       label,
+		Description: description,
+		Scope:       parsedScope,
+	}, nil
+}
+
 // NewVersionAuthz creates a valid persisted version authorization projection.
 func NewVersionAuthz(resourceID, groupID uuid.UUID, status Status) (VersionAuthz, error) {
 	if resourceID == uuid.Nil || groupID == uuid.Nil || !validStatus(status) {

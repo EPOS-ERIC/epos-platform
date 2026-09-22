@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -64,23 +65,42 @@ func persistParameter(
 	switch schema := value.Schema.(type) {
 	case domain.StringSchema:
 		schemaErr = q.AddLifecycleStringParameterSchema(ctx, sqlc.AddLifecycleStringParameterSchemaParams{
-			ParameterID: created.ID, Pattern: schema.Pattern, DefaultValue: schema.Default, Enum: schema.Enum, MultipleValues: schema.MultipleValues,
+			ParameterID:    created.ID,
+			Pattern:        schema.Pattern,
+			DefaultValue:   schema.Default,
+			Enum:           toStringEnumOptions(schema.Enum),
+			MultipleValues: schema.MultipleValues,
 		})
 	case domain.BooleanSchema:
 		schemaErr = q.AddLifecycleBooleanParameterSchema(ctx, sqlc.AddLifecycleBooleanParameterSchemaParams{
-			ParameterID: created.ID, DefaultValue: schema.Default,
+			ParameterID:  created.ID,
+			DefaultValue: schema.Default,
 		})
 	case domain.IntegerSchema:
 		schemaErr = q.AddLifecycleIntegerParameterSchema(ctx, sqlc.AddLifecycleIntegerParameterSchemaParams{
-			ParameterID: created.ID, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Enum: schema.Enum, MultipleValues: schema.MultipleValues,
+			ParameterID:    created.ID,
+			Minimum:        schema.Minimum,
+			Maximum:        schema.Maximum,
+			DefaultValue:   schema.Default,
+			Enum:           toIntegerEnumOptions(schema.Enum),
+			MultipleValues: schema.MultipleValues,
 		})
 	case domain.FloatSchema:
 		schemaErr = q.AddLifecycleFloatParameterSchema(ctx, sqlc.AddLifecycleFloatParameterSchemaParams{
-			ParameterID: created.ID, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Enum: schema.Enum, MultipleValues: schema.MultipleValues,
+			ParameterID:    created.ID,
+			Minimum:        schema.Minimum,
+			Maximum:        schema.Maximum,
+			DefaultValue:   schema.Default,
+			Enum:           toFloatEnumOptions(schema.Enum),
+			MultipleValues: schema.MultipleValues,
 		})
 	case domain.DateTimeSchema:
 		schemaErr = q.AddLifecycleDatetimeParameterSchema(ctx, sqlc.AddLifecycleDatetimeParameterSchemaParams{
-			ParameterID: created.ID, Minimum: schema.Minimum, Maximum: schema.Maximum, DefaultValue: schema.Default, Layout: schema.Layout,
+			ParameterID:  created.ID,
+			Minimum:      schema.Minimum,
+			Maximum:      schema.Maximum,
+			DefaultValue: schema.Default,
+			Layout:       schema.Layout,
 		})
 	case domain.TemplateSchema:
 		schemaErr = q.AddLifecycleParameterTemplate(ctx, sqlc.AddLifecycleParameterTemplateParams{
@@ -115,6 +135,72 @@ type parameterSchemas struct {
 	floatOK    bool
 	datetime   sqlc.DatetimeParameterSchema
 	datetimeOK bool
+}
+
+func toStringEnumOptions(values []domain.StringEnumOption) []types.StringEnumOption {
+	if values == nil {
+		return nil
+	}
+	options := make([]types.StringEnumOption, len(values))
+	for i, value := range values {
+		options[i] = types.StringEnumOption(value)
+	}
+	return options
+}
+
+func fromStringEnumOptions(values []types.StringEnumOption) []domain.StringEnumOption {
+	if values == nil {
+		return nil
+	}
+	options := make([]domain.StringEnumOption, len(values))
+	for i, value := range values {
+		options[i] = domain.StringEnumOption(value)
+	}
+	return options
+}
+
+func toIntegerEnumOptions(values []domain.IntegerEnumOption) []types.IntegerEnumOption {
+	if values == nil {
+		return nil
+	}
+	options := make([]types.IntegerEnumOption, len(values))
+	for i, value := range values {
+		options[i] = types.IntegerEnumOption(value)
+	}
+	return options
+}
+
+func fromIntegerEnumOptions(values []types.IntegerEnumOption) []domain.IntegerEnumOption {
+	if values == nil {
+		return nil
+	}
+	options := make([]domain.IntegerEnumOption, len(values))
+	for i, value := range values {
+		options[i] = domain.IntegerEnumOption(value)
+	}
+	return options
+}
+
+func toFloatEnumOptions(values []domain.FloatEnumOption) []types.FloatEnumOption {
+	if values == nil {
+		return nil
+	}
+	options := make([]types.FloatEnumOption, len(values))
+	for i, value := range values {
+		options[i] = types.FloatEnumOption(value)
+	}
+	return options
+}
+
+func fromFloatEnumOptions(values []types.FloatEnumOption) []domain.FloatEnumOption {
+	if values == nil {
+		return nil
+	}
+	options := make([]domain.FloatEnumOption, len(values))
+	for i, value := range values {
+		options[i] = domain.FloatEnumOption(value)
+	}
+	return options
 }
 
 func readParameterSchemas(ctx context.Context, q *sqlc.Queries, parameterIDs []uuid.UUID) (map[uuid.UUID]parameterSchemas, error) {
@@ -190,7 +276,7 @@ func domainParameter(value sqlc.Parameter, template *sqlc.ParameterTemplate, chi
 		schema = domain.StringSchema{
 			Pattern:        parameterSchema.string.Pattern,
 			Default:        parameterSchema.string.DefaultValue,
-			Enum:           parameterSchema.string.Enum,
+			Enum:           fromStringEnumOptions(parameterSchema.string.Enum),
 			MultipleValues: parameterSchema.string.MultipleValues,
 		}
 	case sqlc.ParameterSchemaKindBOOLEAN:
@@ -206,7 +292,7 @@ func domainParameter(value sqlc.Parameter, template *sqlc.ParameterTemplate, chi
 			Minimum:        parameterSchema.integer.Minimum,
 			Maximum:        parameterSchema.integer.Maximum,
 			Default:        parameterSchema.integer.DefaultValue,
-			Enum:           parameterSchema.integer.Enum,
+			Enum:           fromIntegerEnumOptions(parameterSchema.integer.Enum),
 			MultipleValues: parameterSchema.integer.MultipleValues,
 		}
 	case sqlc.ParameterSchemaKindFLOAT:
@@ -217,7 +303,7 @@ func domainParameter(value sqlc.Parameter, template *sqlc.ParameterTemplate, chi
 			Minimum:        parameterSchema.float.Minimum,
 			Maximum:        parameterSchema.float.Maximum,
 			Default:        parameterSchema.float.DefaultValue,
-			Enum:           parameterSchema.float.Enum,
+			Enum:           fromFloatEnumOptions(parameterSchema.float.Enum),
 			MultipleValues: parameterSchema.float.MultipleValues,
 		}
 	case sqlc.ParameterSchemaKindDATETIME:

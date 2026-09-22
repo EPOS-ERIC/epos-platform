@@ -1704,21 +1704,23 @@ func (s *DatasetDiscoveryItemType) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/DatasetDraftMetadata
 type DatasetDraftMetadata struct {
 	Title              NonBlankString      `json:"title"`
-	Description        OptNonBlankString   `json:"description"`
+	Description        NonBlankString      `json:"description"`
 	Keywords           []Keyword           `json:"keywords"`
 	AccrualPeriodicity OptNilString        `json:"accrual_periodicity"`
 	QualityAnnotation  OptNilString        `json:"quality_annotation"`
 	AccessRight        OptNilString        `json:"access_right"`
 	Distributions      []DistributionDraft `json:"distributions"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
-	SpatialCoverage       OptNilString        `json:"spatial_coverage"`
-	TemporalCoverage      OptTemporalCoverage `json:"temporal_coverage"`
-	PersistentIdentifiers []IdentifierInput   `json:"persistent_identifiers"`
-	ContactPoints         []uuid.UUID         `json:"contact_points"`
-	Providers             []uuid.UUID         `json:"providers"`
-	Categories            []uuid.UUID         `json:"categories"`
-	Created               OptNilDateTime      `json:"created"`
-	Updated               OptNilDateTime      `json:"updated"`
+	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
+	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
+	// Mutually exclusive with temporal_coverage.
+	GeologicalTemporalCoverage OptGeologicalTemporalCoverage `json:"geological_temporal_coverage"`
+	PersistentIdentifiers      []IdentifierInput             `json:"persistent_identifiers"`
+	ContactPoints              []uuid.UUID                   `json:"contact_points"`
+	Providers                  []uuid.UUID                   `json:"providers"`
+	Categories                 []uuid.UUID                   `json:"categories"`
+	Created                    OptNilDateTime                `json:"created"`
+	Updated                    OptNilDateTime                `json:"updated"`
 }
 
 // GetTitle returns the value of Title.
@@ -1727,7 +1729,7 @@ func (s *DatasetDraftMetadata) GetTitle() NonBlankString {
 }
 
 // GetDescription returns the value of Description.
-func (s *DatasetDraftMetadata) GetDescription() OptNonBlankString {
+func (s *DatasetDraftMetadata) GetDescription() NonBlankString {
 	return s.Description
 }
 
@@ -1766,6 +1768,11 @@ func (s *DatasetDraftMetadata) GetTemporalCoverage() OptTemporalCoverage {
 	return s.TemporalCoverage
 }
 
+// GetGeologicalTemporalCoverage returns the value of GeologicalTemporalCoverage.
+func (s *DatasetDraftMetadata) GetGeologicalTemporalCoverage() OptGeologicalTemporalCoverage {
+	return s.GeologicalTemporalCoverage
+}
+
 // GetPersistentIdentifiers returns the value of PersistentIdentifiers.
 func (s *DatasetDraftMetadata) GetPersistentIdentifiers() []IdentifierInput {
 	return s.PersistentIdentifiers
@@ -1802,7 +1809,7 @@ func (s *DatasetDraftMetadata) SetTitle(val NonBlankString) {
 }
 
 // SetDescription sets the value of Description.
-func (s *DatasetDraftMetadata) SetDescription(val OptNonBlankString) {
+func (s *DatasetDraftMetadata) SetDescription(val NonBlankString) {
 	s.Description = val
 }
 
@@ -1839,6 +1846,11 @@ func (s *DatasetDraftMetadata) SetSpatialCoverage(val OptNilString) {
 // SetTemporalCoverage sets the value of TemporalCoverage.
 func (s *DatasetDraftMetadata) SetTemporalCoverage(val OptTemporalCoverage) {
 	s.TemporalCoverage = val
+}
+
+// SetGeologicalTemporalCoverage sets the value of GeologicalTemporalCoverage.
+func (s *DatasetDraftMetadata) SetGeologicalTemporalCoverage(val OptGeologicalTemporalCoverage) {
+	s.GeologicalTemporalCoverage = val
 }
 
 // SetPersistentIdentifiers sets the value of PersistentIdentifiers.
@@ -1883,14 +1895,16 @@ type DatasetResourceMetadata struct {
 	AccessRight        OptNilString                        `json:"access_right"`
 	Distributions      []Distribution                      `json:"distributions"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
-	SpatialCoverage       OptNilString               `json:"spatial_coverage"`
-	TemporalCoverage      OptTemporalCoverage        `json:"temporal_coverage"`
-	PersistentIdentifiers []Identifier               `json:"persistent_identifiers"`
-	ContactPoints         []uuid.UUID                `json:"contact_points"`
-	Providers             []ResourceVersionReference `json:"providers"`
-	Categories            []ResourceVersionReference `json:"categories"`
-	Created               OptNilDateTime             `json:"created"`
-	Updated               OptNilDateTime             `json:"updated"`
+	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
+	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
+	// Mutually exclusive with temporal_coverage.
+	GeologicalTemporalCoverage OptGeologicalTemporalCoverage `json:"geological_temporal_coverage"`
+	PersistentIdentifiers      []Identifier                  `json:"persistent_identifiers"`
+	ContactPoints              []uuid.UUID                   `json:"contact_points"`
+	Providers                  []ResourceVersionReference    `json:"providers"`
+	Categories                 []ResourceVersionReference    `json:"categories"`
+	Created                    OptNilDateTime                `json:"created"`
+	Updated                    OptNilDateTime                `json:"updated"`
 }
 
 // GetResourceType returns the value of ResourceType.
@@ -1946,6 +1960,11 @@ func (s *DatasetResourceMetadata) GetSpatialCoverage() OptNilString {
 // GetTemporalCoverage returns the value of TemporalCoverage.
 func (s *DatasetResourceMetadata) GetTemporalCoverage() OptTemporalCoverage {
 	return s.TemporalCoverage
+}
+
+// GetGeologicalTemporalCoverage returns the value of GeologicalTemporalCoverage.
+func (s *DatasetResourceMetadata) GetGeologicalTemporalCoverage() OptGeologicalTemporalCoverage {
+	return s.GeologicalTemporalCoverage
 }
 
 // GetPersistentIdentifiers returns the value of PersistentIdentifiers.
@@ -2031,6 +2050,11 @@ func (s *DatasetResourceMetadata) SetSpatialCoverage(val OptNilString) {
 // SetTemporalCoverage sets the value of TemporalCoverage.
 func (s *DatasetResourceMetadata) SetTemporalCoverage(val OptTemporalCoverage) {
 	s.TemporalCoverage = val
+}
+
+// SetGeologicalTemporalCoverage sets the value of GeologicalTemporalCoverage.
+func (s *DatasetResourceMetadata) SetGeologicalTemporalCoverage(val OptGeologicalTemporalCoverage) {
+	s.GeologicalTemporalCoverage = val
 }
 
 // SetPersistentIdentifiers sets the value of PersistentIdentifiers.
@@ -3081,8 +3105,8 @@ type DistributionType string
 
 // Possible values for DistributionType.
 const (
-	WebServiceDistributionDistribution       DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-	DownloadableFileDistributionDistribution DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	WebServiceDistributionDistribution       DistributionType = "WEB_SERVICE"
+	DownloadableFileDistributionDistribution DistributionType = "DOWNLOADABLE_FILE"
 )
 
 // IsWebServiceDistribution reports whether Distribution is WebServiceDistribution.
@@ -3151,8 +3175,8 @@ type DistributionDraftType string
 
 // Possible values for DistributionDraftType.
 const (
-	WebServiceDistributionDraftDistributionDraft       DistributionDraftType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-	DownloadableFileDistributionDraftDistributionDraft DistributionDraftType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	WebServiceDistributionDraftDistributionDraft       DistributionDraftType = "WEB_SERVICE"
+	DownloadableFileDistributionDraftDistributionDraft DistributionDraftType = "DOWNLOADABLE_FILE"
 )
 
 // IsWebServiceDistributionDraft reports whether DistributionDraft is WebServiceDistributionDraft.
@@ -3468,20 +3492,20 @@ func (s *DownloadableFileDistributionDraft) SetDownloadableFile(val Downloadable
 type DownloadableFileDistributionDraftType string
 
 const (
-	DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE DownloadableFileDistributionDraftType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE DownloadableFileDistributionDraftType = "DOWNLOADABLE_FILE"
 )
 
 // AllValues returns all DownloadableFileDistributionDraftType values.
 func (DownloadableFileDistributionDraftType) AllValues() []DownloadableFileDistributionDraftType {
 	return []DownloadableFileDistributionDraftType{
-		DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE,
+		DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s DownloadableFileDistributionDraftType) MarshalText() ([]byte, error) {
 	switch s {
-	case DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
+	case DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -3491,8 +3515,8 @@ func (s DownloadableFileDistributionDraftType) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *DownloadableFileDistributionDraftType) UnmarshalText(data []byte) error {
 	switch DownloadableFileDistributionDraftType(data) {
-	case DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
-		*s = DownloadableFileDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE
+	case DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE:
+		*s = DownloadableFileDistributionDraftTypeDOWNLOADABLEFILE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -3502,20 +3526,20 @@ func (s *DownloadableFileDistributionDraftType) UnmarshalText(data []byte) error
 type DownloadableFileDistributionType string
 
 const (
-	DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE DownloadableFileDistributionType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+	DownloadableFileDistributionTypeDOWNLOADABLEFILE DownloadableFileDistributionType = "DOWNLOADABLE_FILE"
 )
 
 // AllValues returns all DownloadableFileDistributionType values.
 func (DownloadableFileDistributionType) AllValues() []DownloadableFileDistributionType {
 	return []DownloadableFileDistributionType{
-		DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE,
+		DownloadableFileDistributionTypeDOWNLOADABLEFILE,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s DownloadableFileDistributionType) MarshalText() ([]byte, error) {
 	switch s {
-	case DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
+	case DownloadableFileDistributionTypeDOWNLOADABLEFILE:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -3525,12 +3549,38 @@ func (s DownloadableFileDistributionType) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *DownloadableFileDistributionType) UnmarshalText(data []byte) error {
 	switch DownloadableFileDistributionType(data) {
-	case DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE:
-		*s = DownloadableFileDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeDOWNLOADABLEFILE
+	case DownloadableFileDistributionTypeDOWNLOADABLEFILE:
+		*s = DownloadableFileDistributionTypeDOWNLOADABLEFILE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// Ref: #/components/schemas/FloatEnumOption
+type FloatEnumOption struct {
+	Value float64   `json:"value"`
+	Label OptString `json:"label"`
+}
+
+// GetValue returns the value of Value.
+func (s *FloatEnumOption) GetValue() float64 {
+	return s.Value
+}
+
+// GetLabel returns the value of Label.
+func (s *FloatEnumOption) GetLabel() OptString {
+	return s.Label
+}
+
+// SetValue sets the value of Value.
+func (s *FloatEnumOption) SetValue(val float64) {
+	s.Value = val
+}
+
+// SetLabel sets the value of Label.
+func (s *FloatEnumOption) SetLabel(val OptString) {
+	s.Label = val
 }
 
 // Ref: #/components/schemas/FloatParameter
@@ -3550,7 +3600,7 @@ type FloatParameter struct {
 	Minimum        OptNilFloat64      `json:"minimum"`
 	Maximum        OptNilFloat64      `json:"maximum"`
 	Default        OptNilFloat64      `json:"default"`
-	Enum           []float64          `json:"enum"`
+	Enum           []FloatEnumOption  `json:"enum"`
 }
 
 // GetID returns the value of ID.
@@ -3629,7 +3679,7 @@ func (s *FloatParameter) GetDefault() OptNilFloat64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *FloatParameter) GetEnum() []float64 {
+func (s *FloatParameter) GetEnum() []FloatEnumOption {
 	return s.Enum
 }
 
@@ -3709,7 +3759,7 @@ func (s *FloatParameter) SetDefault(val OptNilFloat64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *FloatParameter) SetEnum(val []float64) {
+func (s *FloatParameter) SetEnum(val []FloatEnumOption) {
 	s.Enum = val
 }
 
@@ -3729,7 +3779,7 @@ type FloatParameterDraft struct {
 	Minimum        OptNilFloat64           `json:"minimum"`
 	Maximum        OptNilFloat64           `json:"maximum"`
 	Default        OptNilFloat64           `json:"default"`
-	Enum           []float64               `json:"enum"`
+	Enum           []FloatEnumOption       `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -3803,7 +3853,7 @@ func (s *FloatParameterDraft) GetDefault() OptNilFloat64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *FloatParameterDraft) GetEnum() []float64 {
+func (s *FloatParameterDraft) GetEnum() []FloatEnumOption {
 	return s.Enum
 }
 
@@ -3878,7 +3928,7 @@ func (s *FloatParameterDraft) SetDefault(val OptNilFloat64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *FloatParameterDraft) SetEnum(val []float64) {
+func (s *FloatParameterDraft) SetEnum(val []FloatEnumOption) {
 	s.Enum = val
 }
 
@@ -3962,7 +4012,7 @@ type FloatScalarParameter struct {
 	Minimum     OptNilFloat64            `json:"minimum"`
 	Maximum     OptNilFloat64            `json:"maximum"`
 	Default     OptNilFloat64            `json:"default"`
-	Enum        []float64                `json:"enum"`
+	Enum        []FloatEnumOption        `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -4016,7 +4066,7 @@ func (s *FloatScalarParameter) GetDefault() OptNilFloat64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *FloatScalarParameter) GetEnum() []float64 {
+func (s *FloatScalarParameter) GetEnum() []FloatEnumOption {
 	return s.Enum
 }
 
@@ -4071,7 +4121,7 @@ func (s *FloatScalarParameter) SetDefault(val OptNilFloat64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *FloatScalarParameter) SetEnum(val []float64) {
+func (s *FloatScalarParameter) SetEnum(val []FloatEnumOption) {
 	s.Enum = val
 }
 
@@ -4087,7 +4137,7 @@ type FloatScalarParameterDraft struct {
 	Minimum     OptNilFloat64                 `json:"minimum"`
 	Maximum     OptNilFloat64                 `json:"maximum"`
 	Default     OptNilFloat64                 `json:"default"`
-	Enum        []float64                     `json:"enum"`
+	Enum        []FloatEnumOption             `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -4141,7 +4191,7 @@ func (s *FloatScalarParameterDraft) GetDefault() OptNilFloat64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *FloatScalarParameterDraft) GetEnum() []float64 {
+func (s *FloatScalarParameterDraft) GetEnum() []FloatEnumOption {
 	return s.Enum
 }
 
@@ -4196,7 +4246,7 @@ func (s *FloatScalarParameterDraft) SetDefault(val OptNilFloat64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *FloatScalarParameterDraft) SetEnum(val []float64) {
+func (s *FloatScalarParameterDraft) SetEnum(val []FloatEnumOption) {
 	s.Enum = val
 }
 
@@ -4266,6 +4316,33 @@ func (s *FloatScalarParameterKind) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// Geological age range in millions of years before present. Start is older than or equal to end.
+// Ref: #/components/schemas/GeologicalTemporalCoverage
+type GeologicalTemporalCoverage struct {
+	StartMya OptNilFloat64 `json:"start_mya"`
+	EndMya   OptNilFloat64 `json:"end_mya"`
+}
+
+// GetStartMya returns the value of StartMya.
+func (s *GeologicalTemporalCoverage) GetStartMya() OptNilFloat64 {
+	return s.StartMya
+}
+
+// GetEndMya returns the value of EndMya.
+func (s *GeologicalTemporalCoverage) GetEndMya() OptNilFloat64 {
+	return s.EndMya
+}
+
+// SetStartMya sets the value of StartMya.
+func (s *GeologicalTemporalCoverage) SetStartMya(val OptNilFloat64) {
+	s.StartMya = val
+}
+
+// SetEndMya sets the value of EndMya.
+func (s *GeologicalTemporalCoverage) SetEndMya(val OptNilFloat64) {
+	s.EndMya = val
 }
 
 // Global permission key.
@@ -5010,6 +5087,32 @@ func (s ImportTurtleMetadataReq) Read(p []byte) (n int, err error) {
 	return s.Data.Read(p)
 }
 
+// Ref: #/components/schemas/IntegerEnumOption
+type IntegerEnumOption struct {
+	Value int64     `json:"value"`
+	Label OptString `json:"label"`
+}
+
+// GetValue returns the value of Value.
+func (s *IntegerEnumOption) GetValue() int64 {
+	return s.Value
+}
+
+// GetLabel returns the value of Label.
+func (s *IntegerEnumOption) GetLabel() OptString {
+	return s.Label
+}
+
+// SetValue sets the value of Value.
+func (s *IntegerEnumOption) SetValue(val int64) {
+	s.Value = val
+}
+
+// SetLabel sets the value of Label.
+func (s *IntegerEnumOption) SetLabel(val OptString) {
+	s.Label = val
+}
+
 // Ref: #/components/schemas/IntegerParameter
 type IntegerParameter struct {
 	ID             uuid.UUID            `json:"id"`
@@ -5027,7 +5130,7 @@ type IntegerParameter struct {
 	Minimum        OptNilInt64          `json:"minimum"`
 	Maximum        OptNilInt64          `json:"maximum"`
 	Default        OptNilInt64          `json:"default"`
-	Enum           []int64              `json:"enum"`
+	Enum           []IntegerEnumOption  `json:"enum"`
 }
 
 // GetID returns the value of ID.
@@ -5106,7 +5209,7 @@ func (s *IntegerParameter) GetDefault() OptNilInt64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *IntegerParameter) GetEnum() []int64 {
+func (s *IntegerParameter) GetEnum() []IntegerEnumOption {
 	return s.Enum
 }
 
@@ -5186,7 +5289,7 @@ func (s *IntegerParameter) SetDefault(val OptNilInt64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *IntegerParameter) SetEnum(val []int64) {
+func (s *IntegerParameter) SetEnum(val []IntegerEnumOption) {
 	s.Enum = val
 }
 
@@ -5206,7 +5309,7 @@ type IntegerParameterDraft struct {
 	Minimum        OptNilInt64               `json:"minimum"`
 	Maximum        OptNilInt64               `json:"maximum"`
 	Default        OptNilInt64               `json:"default"`
-	Enum           []int64                   `json:"enum"`
+	Enum           []IntegerEnumOption       `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -5280,7 +5383,7 @@ func (s *IntegerParameterDraft) GetDefault() OptNilInt64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *IntegerParameterDraft) GetEnum() []int64 {
+func (s *IntegerParameterDraft) GetEnum() []IntegerEnumOption {
 	return s.Enum
 }
 
@@ -5355,7 +5458,7 @@ func (s *IntegerParameterDraft) SetDefault(val OptNilInt64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *IntegerParameterDraft) SetEnum(val []int64) {
+func (s *IntegerParameterDraft) SetEnum(val []IntegerEnumOption) {
 	s.Enum = val
 }
 
@@ -5439,7 +5542,7 @@ type IntegerScalarParameter struct {
 	Minimum     OptNilInt64                `json:"minimum"`
 	Maximum     OptNilInt64                `json:"maximum"`
 	Default     OptNilInt64                `json:"default"`
-	Enum        []int64                    `json:"enum"`
+	Enum        []IntegerEnumOption        `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -5493,7 +5596,7 @@ func (s *IntegerScalarParameter) GetDefault() OptNilInt64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *IntegerScalarParameter) GetEnum() []int64 {
+func (s *IntegerScalarParameter) GetEnum() []IntegerEnumOption {
 	return s.Enum
 }
 
@@ -5548,7 +5651,7 @@ func (s *IntegerScalarParameter) SetDefault(val OptNilInt64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *IntegerScalarParameter) SetEnum(val []int64) {
+func (s *IntegerScalarParameter) SetEnum(val []IntegerEnumOption) {
 	s.Enum = val
 }
 
@@ -5564,7 +5667,7 @@ type IntegerScalarParameterDraft struct {
 	Minimum     OptNilInt64                     `json:"minimum"`
 	Maximum     OptNilInt64                     `json:"maximum"`
 	Default     OptNilInt64                     `json:"default"`
-	Enum        []int64                         `json:"enum"`
+	Enum        []IntegerEnumOption             `json:"enum"`
 }
 
 // GetKind returns the value of Kind.
@@ -5618,7 +5721,7 @@ func (s *IntegerScalarParameterDraft) GetDefault() OptNilInt64 {
 }
 
 // GetEnum returns the value of Enum.
-func (s *IntegerScalarParameterDraft) GetEnum() []int64 {
+func (s *IntegerScalarParameterDraft) GetEnum() []IntegerEnumOption {
 	return s.Enum
 }
 
@@ -5673,7 +5776,7 @@ func (s *IntegerScalarParameterDraft) SetDefault(val OptNilInt64) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *IntegerScalarParameterDraft) SetEnum(val []int64) {
+func (s *IntegerScalarParameterDraft) SetEnum(val []IntegerEnumOption) {
 	s.Enum = val
 }
 
@@ -6211,6 +6314,52 @@ func (o OptDocumentation) Get() (v Documentation, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDocumentation) Or(d Documentation) Documentation {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGeologicalTemporalCoverage returns new OptGeologicalTemporalCoverage with value set to v.
+func NewOptGeologicalTemporalCoverage(v GeologicalTemporalCoverage) OptGeologicalTemporalCoverage {
+	return OptGeologicalTemporalCoverage{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGeologicalTemporalCoverage is optional GeologicalTemporalCoverage.
+type OptGeologicalTemporalCoverage struct {
+	Value GeologicalTemporalCoverage
+	Set   bool
+}
+
+// IsSet returns true if OptGeologicalTemporalCoverage was set.
+func (o OptGeologicalTemporalCoverage) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGeologicalTemporalCoverage) Reset() {
+	var v GeologicalTemporalCoverage
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGeologicalTemporalCoverage) SetTo(v GeologicalTemporalCoverage) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGeologicalTemporalCoverage) Get() (v GeologicalTemporalCoverage, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGeologicalTemporalCoverage) Or(d GeologicalTemporalCoverage) GeologicalTemporalCoverage {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -7618,6 +7767,100 @@ func (s *ParameterLocation) UnmarshalText(data []byte) error {
 		return nil
 	case ParameterLocationHEADER:
 		*s = ParameterLocationHEADER
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/Permission
+type Permission struct {
+	// Stable permission key.
+	Key string `json:"key"`
+	// Human-readable permission label.
+	Label string `json:"label"`
+	// Human-readable permission description.
+	Description string          `json:"description"`
+	Scope       PermissionScope `json:"scope"`
+}
+
+// GetKey returns the value of Key.
+func (s *Permission) GetKey() string {
+	return s.Key
+}
+
+// GetLabel returns the value of Label.
+func (s *Permission) GetLabel() string {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *Permission) GetDescription() string {
+	return s.Description
+}
+
+// GetScope returns the value of Scope.
+func (s *Permission) GetScope() PermissionScope {
+	return s.Scope
+}
+
+// SetKey sets the value of Key.
+func (s *Permission) SetKey(val string) {
+	s.Key = val
+}
+
+// SetLabel sets the value of Label.
+func (s *Permission) SetLabel(val string) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *Permission) SetDescription(val string) {
+	s.Description = val
+}
+
+// SetScope sets the value of Scope.
+func (s *Permission) SetScope(val PermissionScope) {
+	s.Scope = val
+}
+
+// Scope at which a permission is evaluated.
+// Ref: #/components/schemas/PermissionScope
+type PermissionScope string
+
+const (
+	PermissionScopeGLOBAL PermissionScope = "GLOBAL"
+	PermissionScopeGROUP  PermissionScope = "GROUP"
+)
+
+// AllValues returns all PermissionScope values.
+func (PermissionScope) AllValues() []PermissionScope {
+	return []PermissionScope{
+		PermissionScopeGLOBAL,
+		PermissionScopeGROUP,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PermissionScope) MarshalText() ([]byte, error) {
+	switch s {
+	case PermissionScopeGLOBAL:
+		return []byte(s), nil
+	case PermissionScopeGROUP:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PermissionScope) UnmarshalText(data []byte) error {
+	switch PermissionScope(data) {
+	case PermissionScopeGLOBAL:
+		*s = PermissionScopeGLOBAL
+		return nil
+	case PermissionScopeGROUP:
+		*s = PermissionScopeGROUP
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -10299,6 +10542,32 @@ func (s *SoftwareSourceCodeResourceMetadataResourceType) UnmarshalText(data []by
 	}
 }
 
+// Ref: #/components/schemas/StringEnumOption
+type StringEnumOption struct {
+	Value string    `json:"value"`
+	Label OptString `json:"label"`
+}
+
+// GetValue returns the value of Value.
+func (s *StringEnumOption) GetValue() string {
+	return s.Value
+}
+
+// GetLabel returns the value of Label.
+func (s *StringEnumOption) GetLabel() OptString {
+	return s.Label
+}
+
+// SetValue sets the value of Value.
+func (s *StringEnumOption) SetValue(val string) {
+	s.Value = val
+}
+
+// SetLabel sets the value of Label.
+func (s *StringEnumOption) SetLabel(val OptString) {
+	s.Label = val
+}
+
 // Ref: #/components/schemas/StringParameter
 type StringParameter struct {
 	ID             uuid.UUID           `json:"id"`
@@ -10314,7 +10583,7 @@ type StringParameter struct {
 	MultipleValues bool                `json:"multiple_values"`
 	ReadOnly       bool                `json:"read_only"`
 	Default        OptNilString        `json:"default"`
-	Enum           []string            `json:"enum"`
+	Enum           []StringEnumOption  `json:"enum"`
 	Pattern        OptNilString        `json:"pattern"`
 }
 
@@ -10384,7 +10653,7 @@ func (s *StringParameter) GetDefault() OptNilString {
 }
 
 // GetEnum returns the value of Enum.
-func (s *StringParameter) GetEnum() []string {
+func (s *StringParameter) GetEnum() []StringEnumOption {
 	return s.Enum
 }
 
@@ -10459,7 +10728,7 @@ func (s *StringParameter) SetDefault(val OptNilString) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *StringParameter) SetEnum(val []string) {
+func (s *StringParameter) SetEnum(val []StringEnumOption) {
 	s.Enum = val
 }
 
@@ -10482,7 +10751,7 @@ type StringParameterDraft struct {
 	MultipleValues bool                     `json:"multiple_values"`
 	ReadOnly       bool                     `json:"read_only"`
 	Default        OptNilString             `json:"default"`
-	Enum           []string                 `json:"enum"`
+	Enum           []StringEnumOption       `json:"enum"`
 	Pattern        OptNilString             `json:"pattern"`
 }
 
@@ -10547,7 +10816,7 @@ func (s *StringParameterDraft) GetDefault() OptNilString {
 }
 
 // GetEnum returns the value of Enum.
-func (s *StringParameterDraft) GetEnum() []string {
+func (s *StringParameterDraft) GetEnum() []StringEnumOption {
 	return s.Enum
 }
 
@@ -10617,7 +10886,7 @@ func (s *StringParameterDraft) SetDefault(val OptNilString) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *StringParameterDraft) SetEnum(val []string) {
+func (s *StringParameterDraft) SetEnum(val []StringEnumOption) {
 	s.Enum = val
 }
 
@@ -10704,7 +10973,7 @@ type StringScalarParameter struct {
 	Required    bool                      `json:"required"`
 	ReadOnly    bool                      `json:"read_only"`
 	Default     OptNilString              `json:"default"`
-	Enum        []string                  `json:"enum"`
+	Enum        []StringEnumOption        `json:"enum"`
 	Pattern     OptNilString              `json:"pattern"`
 }
 
@@ -10749,7 +11018,7 @@ func (s *StringScalarParameter) GetDefault() OptNilString {
 }
 
 // GetEnum returns the value of Enum.
-func (s *StringScalarParameter) GetEnum() []string {
+func (s *StringScalarParameter) GetEnum() []StringEnumOption {
 	return s.Enum
 }
 
@@ -10799,7 +11068,7 @@ func (s *StringScalarParameter) SetDefault(val OptNilString) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *StringScalarParameter) SetEnum(val []string) {
+func (s *StringScalarParameter) SetEnum(val []StringEnumOption) {
 	s.Enum = val
 }
 
@@ -10818,7 +11087,7 @@ type StringScalarParameterDraft struct {
 	Required    bool                           `json:"required"`
 	ReadOnly    bool                           `json:"read_only"`
 	Default     OptNilString                   `json:"default"`
-	Enum        []string                       `json:"enum"`
+	Enum        []StringEnumOption             `json:"enum"`
 	Pattern     OptNilString                   `json:"pattern"`
 }
 
@@ -10863,7 +11132,7 @@ func (s *StringScalarParameterDraft) GetDefault() OptNilString {
 }
 
 // GetEnum returns the value of Enum.
-func (s *StringScalarParameterDraft) GetEnum() []string {
+func (s *StringScalarParameterDraft) GetEnum() []StringEnumOption {
 	return s.Enum
 }
 
@@ -10913,7 +11182,7 @@ func (s *StringScalarParameterDraft) SetDefault(val OptNilString) {
 }
 
 // SetEnum sets the value of Enum.
-func (s *StringScalarParameterDraft) SetEnum(val []string) {
+func (s *StringScalarParameterDraft) SetEnum(val []StringEnumOption) {
 	s.Enum = val
 }
 
@@ -12202,20 +12471,20 @@ func (s *WebServiceDistributionDraft) SetWebService(val WebServiceDraft) {
 type WebServiceDistributionDraftType string
 
 const (
-	WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE WebServiceDistributionDraftType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+	WebServiceDistributionDraftTypeWEBSERVICE WebServiceDistributionDraftType = "WEB_SERVICE"
 )
 
 // AllValues returns all WebServiceDistributionDraftType values.
 func (WebServiceDistributionDraftType) AllValues() []WebServiceDistributionDraftType {
 	return []WebServiceDistributionDraftType{
-		WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE,
+		WebServiceDistributionDraftTypeWEBSERVICE,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s WebServiceDistributionDraftType) MarshalText() ([]byte, error) {
 	switch s {
-	case WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
+	case WebServiceDistributionDraftTypeWEBSERVICE:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -12225,8 +12494,8 @@ func (s WebServiceDistributionDraftType) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *WebServiceDistributionDraftType) UnmarshalText(data []byte) error {
 	switch WebServiceDistributionDraftType(data) {
-	case WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
-		*s = WebServiceDistributionDraftTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE
+	case WebServiceDistributionDraftTypeWEBSERVICE:
+		*s = WebServiceDistributionDraftTypeWEBSERVICE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -12236,20 +12505,20 @@ func (s *WebServiceDistributionDraftType) UnmarshalText(data []byte) error {
 type WebServiceDistributionType string
 
 const (
-	WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE WebServiceDistributionType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+	WebServiceDistributionTypeWEBSERVICE WebServiceDistributionType = "WEB_SERVICE"
 )
 
 // AllValues returns all WebServiceDistributionType values.
 func (WebServiceDistributionType) AllValues() []WebServiceDistributionType {
 	return []WebServiceDistributionType{
-		WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE,
+		WebServiceDistributionTypeWEBSERVICE,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s WebServiceDistributionType) MarshalText() ([]byte, error) {
 	switch s {
-	case WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
+	case WebServiceDistributionTypeWEBSERVICE:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -12259,8 +12528,8 @@ func (s WebServiceDistributionType) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *WebServiceDistributionType) UnmarshalText(data []byte) error {
 	switch WebServiceDistributionType(data) {
-	case WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE:
-		*s = WebServiceDistributionTypeHTTPPublicationsEuropaEuResourceAuthorityDistributionTypeWEBSERVICE
+	case WebServiceDistributionTypeWEBSERVICE:
+		*s = WebServiceDistributionTypeWEBSERVICE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

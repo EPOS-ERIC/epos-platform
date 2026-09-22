@@ -23,7 +23,7 @@ The repository Tilt stack publishes the same service at `http://localhost:8110`.
 From this directory:
 
 ```bash
-make build-docker
+make docker
 docker run --rm -p 8080:8080 epos-oss-aai-service:latest
 ```
 

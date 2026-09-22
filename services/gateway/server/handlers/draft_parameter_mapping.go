@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -22,7 +24,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{
 			Default:        protoOptionalString(x.Default),
-			Enum:           x.Enum,
+			Enum:           toProtoStringEnumOptions(x.Enum),
 			Pattern:        protoOptionalString(x.Pattern),
 			MultipleValues: x.MultipleValues,
 		}}
@@ -53,7 +55,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 			Minimum:        protoOptionalInt64(x.Minimum),
 			Maximum:        protoOptionalInt64(x.Maximum),
 			Default:        protoOptionalInt64(x.Default),
-			Enum:           x.Enum,
+			Enum:           toProtoIntegerEnumOptions(x.Enum),
 			MultipleValues: x.MultipleValues,
 		}}
 	case v.IsFloatParameterDraft():
@@ -71,7 +73,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 			Minimum:        protoOptionalFloat(x.Minimum),
 			Maximum:        protoOptionalFloat(x.Maximum),
 			Default:        protoOptionalFloat(x.Default),
-			Enum:           x.Enum,
+			Enum:           toProtoFloatEnumOptions(x.Enum),
 			MultipleValues: x.MultipleValues,
 		}}
 	case v.IsDateTimeParameterDraft():
@@ -126,7 +128,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.ScalarParameter_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
 			Default: protoOptionalString(x.Default),
-			Enum:    x.Enum,
+			Enum:    toProtoStringEnumOptions(x.Enum),
 			Pattern: protoOptionalString(x.Pattern),
 		}}
 	case v.IsBooleanScalarParameterDraft():
@@ -150,7 +152,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 			Minimum: protoOptionalInt64(x.Minimum),
 			Maximum: protoOptionalInt64(x.Maximum),
 			Default: protoOptionalInt64(x.Default),
-			Enum:    x.Enum,
+			Enum:    toProtoIntegerEnumOptions(x.Enum),
 		}}
 	case v.IsFloatScalarParameterDraft():
 		x := v.FloatScalarParameterDraft
@@ -164,7 +166,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 			Minimum: protoOptionalFloat(x.Minimum),
 			Maximum: protoOptionalFloat(x.Maximum),
 			Default: protoOptionalFloat(x.Default),
-			Enum:    x.Enum,
+			Enum:    toProtoFloatEnumOptions(x.Enum),
 		}}
 	case v.IsDateTimeScalarParameterDraft():
 		x := v.DateTimeScalarParameterDraft
@@ -189,6 +191,95 @@ func protoOptionalString(v gatewayapi.OptNilString) *string {
 		return nil
 	}
 	return new(v.Value)
+}
+
+func toProtoStringEnumOptions(values []gatewayapi.StringEnumOption) []*metadatalifecyclev1.StringEnumOption {
+	if values == nil {
+		return nil
+	}
+	result := make([]*metadatalifecyclev1.StringEnumOption, len(values))
+	for i, value := range values {
+		result[i] = &metadatalifecyclev1.StringEnumOption{Value: value.Value, Label: protoOptionalEnumLabel(value.Label)}
+	}
+	return result
+}
+
+func toProtoIntegerEnumOptions(values []gatewayapi.IntegerEnumOption) []*metadatalifecyclev1.IntegerEnumOption {
+	if values == nil {
+		return nil
+	}
+	result := make([]*metadatalifecyclev1.IntegerEnumOption, len(values))
+	for i, value := range values {
+		result[i] = &metadatalifecyclev1.IntegerEnumOption{Value: value.Value, Label: protoOptionalEnumLabel(value.Label)}
+	}
+	return result
+}
+
+func toProtoFloatEnumOptions(values []gatewayapi.FloatEnumOption) []*metadatalifecyclev1.FloatEnumOption {
+	if values == nil {
+		return nil
+	}
+	result := make([]*metadatalifecyclev1.FloatEnumOption, len(values))
+	for i, value := range values {
+		result[i] = &metadatalifecyclev1.FloatEnumOption{Value: value.Value, Label: protoOptionalEnumLabel(value.Label)}
+	}
+	return result
+}
+
+func protoOptionalEnumLabel(value gatewayapi.OptString) *string {
+	if !value.Set {
+		return nil
+	}
+	return new(value.Value)
+}
+
+func toAPIStringEnumOptions(values []*metadatalifecyclev1.StringEnumOption) ([]gatewayapi.StringEnumOption, error) {
+	if values == nil {
+		return nil, nil
+	}
+	result := make([]gatewayapi.StringEnumOption, len(values))
+	for i, value := range values {
+		if value == nil {
+			return nil, fmt.Errorf("upstream string enum option %d is nil", i)
+		}
+		result[i] = gatewayapi.StringEnumOption{Value: value.Value, Label: apiEnumLabel(value.Label)}
+	}
+	return result, nil
+}
+
+func toAPIIntegerEnumOptions(values []*metadatalifecyclev1.IntegerEnumOption) ([]gatewayapi.IntegerEnumOption, error) {
+	if values == nil {
+		return nil, nil
+	}
+	result := make([]gatewayapi.IntegerEnumOption, len(values))
+	for i, value := range values {
+		if value == nil {
+			return nil, fmt.Errorf("upstream integer enum option %d is nil", i)
+		}
+		result[i] = gatewayapi.IntegerEnumOption{Value: value.Value, Label: apiEnumLabel(value.Label)}
+	}
+	return result, nil
+}
+
+func toAPIFloatEnumOptions(values []*metadatalifecyclev1.FloatEnumOption) ([]gatewayapi.FloatEnumOption, error) {
+	if values == nil {
+		return nil, nil
+	}
+	result := make([]gatewayapi.FloatEnumOption, len(values))
+	for i, value := range values {
+		if value == nil {
+			return nil, fmt.Errorf("upstream float enum option %d is nil", i)
+		}
+		result[i] = gatewayapi.FloatEnumOption{Value: value.Value, Label: apiEnumLabel(value.Label)}
+	}
+	return result, nil
+}
+
+func apiEnumLabel(value *string) gatewayapi.OptString {
+	if value == nil {
+		return gatewayapi.OptString{}
+	}
+	return gatewayapi.NewOptString(*value)
 }
 
 func toProtoParameterLocation(value gatewayapi.ParameterLocation) metadatalifecyclev1.WebServiceParameterLocation {

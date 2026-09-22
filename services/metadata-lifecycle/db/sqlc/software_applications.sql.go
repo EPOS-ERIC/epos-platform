@@ -300,7 +300,7 @@ type CloneLifecycleSoftwareApplicationVersionRow struct {
 	MainEntityOfPage      *string
 	License               *string
 	Version               *string
-	Keywords              string
+	Keywords              []string
 	DownloadUrl           *string
 	Requirements          *string
 	OperatingSystem       *string
@@ -427,7 +427,7 @@ type CreateLifecycleSoftwareApplicationVersionParams struct {
 	MainEntityOfPage      *string
 	License               *string
 	Version               *string
-	Keywords              string
+	Keywords              []string
 	DownloadUrl           *string
 	Requirements          *string
 	OperatingSystem       *string
@@ -1259,7 +1259,7 @@ type ReplaceLifecycleSoftwareApplicationDraftParams struct {
 	MainEntityOfPage      *string
 	License               *string
 	Version               *string
-	Keywords              string
+	Keywords              []string
 	DownloadUrl           *string
 	Requirements          *string
 	OperatingSystem       *string

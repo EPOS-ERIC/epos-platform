@@ -65,6 +65,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 
 	metadatalifecyclev1.RegisterIdentityServiceServer(server, grpcapi.NewIdentity(usersSvc))
 	metadatalifecyclev1.RegisterUserServiceServer(server, grpcapi.NewUser(usersSvc))
+	metadatalifecyclev1.RegisterAuthorizationServiceServer(server, grpcapi.NewAuthorization(authorizer))
 	metadatalifecyclev1.RegisterImportServiceServer(server, grpcapi.NewImport(importSvc, turtler))
 	metadatalifecyclev1.RegisterGroupServiceServer(server, grpcapi.NewGroup(groupsSvc))
 	metadatalifecyclev1.RegisterCategoryServiceServer(server, grpcapi.NewCategory(categoriesSvc))

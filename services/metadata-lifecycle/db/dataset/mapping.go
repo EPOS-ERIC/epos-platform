@@ -2,7 +2,6 @@ package dataset
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
@@ -16,20 +15,26 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 	if value.TemporalCoverage != nil {
 		start, end = value.TemporalCoverage.Start, value.TemporalCoverage.End
 	}
+	var geologicalStart, geologicalEnd *float64
+	if value.GeologicalTemporalCoverage != nil {
+		geologicalStart, geologicalEnd = value.GeologicalTemporalCoverage.StartMYA, value.GeologicalTemporalCoverage.EndMYA
+	}
 	return sqlc.CreateLifecycleDatasetVersionParams{
-		DatasetID:          datasetID,
-		Title:              value.Title,
-		Description:        value.Description,
-		Keywords:           strings.Join(value.Keywords, ","),
-		AccrualPeriodicity: value.AccrualPeriodicity,
-		QualityAnnotation:  value.QualityAnnotation,
-		AccessRight:        value.AccessRight,
-		SourceCreatedAt:    value.SourceCreated,
-		SourceUpdatedAt:    value.SourceUpdated,
-		SpatialCoverage:    value.SpatialCoverage,
-		TemporalStart:      start,
-		TemporalEnd:        end,
-		CreatedBy:          actorID,
+		DatasetID:                  datasetID,
+		Title:                      value.Title,
+		Description:                value.Description,
+		Keywords:                   value.Keywords,
+		AccrualPeriodicity:         value.AccrualPeriodicity,
+		QualityAnnotation:          value.QualityAnnotation,
+		AccessRight:                value.AccessRight,
+		SourceCreatedAt:            value.SourceCreated,
+		SourceUpdatedAt:            value.SourceUpdated,
+		SpatialCoverage:            value.SpatialCoverage,
+		TemporalStart:              start,
+		TemporalEnd:                end,
+		GeologicalTemporalStartMya: geologicalStart,
+		GeologicalTemporalEndMya:   geologicalEnd,
+		CreatedBy:                  actorID,
 	}, nil
 }
 
@@ -40,20 +45,22 @@ func ToReplaceDraftParams(datasetID, id uuid.UUID, revision int32, value domain.
 		return sqlc.ReplaceLifecycleDatasetDraftParams{}, err
 	}
 	return sqlc.ReplaceLifecycleDatasetDraftParams{
-		Title:              p.Title,
-		Description:        p.Description,
-		Keywords:           p.Keywords,
-		AccrualPeriodicity: p.AccrualPeriodicity,
-		QualityAnnotation:  p.QualityAnnotation,
-		AccessRight:        p.AccessRight,
-		SourceCreatedAt:    p.SourceCreatedAt,
-		SourceUpdatedAt:    p.SourceUpdatedAt,
-		SpatialCoverage:    p.SpatialCoverage,
-		TemporalStart:      p.TemporalStart,
-		TemporalEnd:        p.TemporalEnd,
-		DatasetID:          datasetID,
-		ID:                 id,
-		Revision:           revision,
+		Title:                      p.Title,
+		Description:                p.Description,
+		Keywords:                   p.Keywords,
+		AccrualPeriodicity:         p.AccrualPeriodicity,
+		QualityAnnotation:          p.QualityAnnotation,
+		AccessRight:                p.AccessRight,
+		SourceCreatedAt:            p.SourceCreatedAt,
+		SourceUpdatedAt:            p.SourceUpdatedAt,
+		SpatialCoverage:            p.SpatialCoverage,
+		TemporalStart:              p.TemporalStart,
+		TemporalEnd:                p.TemporalEnd,
+		GeologicalTemporalStartMya: p.GeologicalTemporalStartMya,
+		GeologicalTemporalEndMya:   p.GeologicalTemporalEndMya,
+		DatasetID:                  datasetID,
+		ID:                         id,
+		Revision:                   revision,
 	}, nil
 }
 
@@ -104,6 +111,13 @@ func temporal(start, end *time.Time) *domain.Temporal {
 		return nil
 	}
 	return &domain.Temporal{Start: start, End: end}
+}
+
+func geologicalTemporal(start, end *float64) *domain.GeologicalTemporal {
+	if start == nil && end == nil {
+		return nil
+	}
+	return &domain.GeologicalTemporal{StartMYA: start, EndMYA: end}
 }
 
 func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {

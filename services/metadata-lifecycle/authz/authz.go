@@ -12,6 +12,7 @@ import (
 )
 
 type repository interface {
+	ListPermissions(context.Context) ([]domain.Permission, error)
 	User(context.Context, string) (domain.AuthorizationUser, error)
 	IsGlobalAdmin(context.Context, string) (bool, error)
 	HasGlobalPermission(context.Context, string, domain.GlobalPermission) (bool, error)
@@ -42,6 +43,16 @@ func New(log *slog.Logger, repository repository) *Authorizer {
 		repository: repository,
 		log:        log.With("component", "authz-service"),
 	}
+}
+
+// ListPermissions returns the fixed authorization catalog.
+func (a *Authorizer) ListPermissions(ctx context.Context) ([]domain.Permission, error) {
+	permissions, err := a.repository.ListPermissions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list permissions: %w", err)
+	}
+
+	return permissions, nil
 }
 
 func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) (domain.Result, error) {

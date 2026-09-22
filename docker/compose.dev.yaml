@@ -56,8 +56,10 @@ services:
       - OTEL_METRIC_EXPORT_INTERVAL=5000
     user: 0:0 # run as root indev for intercting with system volumes
     volumes:
-      - gateway-gomod-cache:/go/pkg/mod
-      - gateway-gobuild-cache:/root/.cache/go-build
+      - type: bind
+        source: ${HOME}/go/pkg/mod
+        target: /go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
     restart: on-failure
     networks:
       - epos-network
@@ -91,8 +93,10 @@ services:
       - OTEL_METRIC_EXPORT_INTERVAL=5000
     user: 0:0
     volumes:
-      - metadata-lifecycle-gomod-cache:/go/pkg/mod
-      - metadata-lifecycle-gobuild-cache:/root/.cache/go-build
+      - type: bind
+        source: ${HOME}/go/pkg/mod
+        target: /go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
     restart: on-failure
     networks:
       - epos-network
@@ -102,26 +106,6 @@ services:
       timeout: 5s
       retries: 20
       start_period: 20s
-
-  platform-app:
-    image: epos-platform-dev:local
-    depends_on:
-      gateway-service:
-        condition: service_healthy
-    ports:
-      - "4200:4200"
-    environment:
-      - PLATFORM_API_PROXY_TARGET=http://gateway-service:5000
-    restart: on-failure
-    networks:
-      - epos-network
-    healthcheck:
-      test:
-        ["CMD-SHELL", "curl -fsS http://localhost:4200/ >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 30s
 
   data-retriever-service:
     image: epos-data-retriever-dev:local
@@ -143,8 +127,10 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
       - OTEL_METRIC_EXPORT_INTERVAL=5000
     volumes:
-      - data-retriever-gomod-cache:/go/pkg/mod
-      - data-retriever-gobuild-cache:/root/.cache/go-build
+      - type: bind
+        source: ${HOME}/go/pkg/mod
+        target: /go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
     restart: on-failure
     networks:
       - epos-network
@@ -168,8 +154,10 @@ services:
       - APP_CORS_ALLOW_ORIGIN=*
       - OIDC_ISSUER=http://localhost:8110/oauth2
     volumes:
-      - oss-aai-gomod-cache:/go/pkg/mod
-      - oss-aai-gobuild-cache:/root/.cache/go-build
+      - type: bind
+        source: ${HOME}/go/pkg/mod
+        target: /go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
       - oss-aai-data:/workspace/services/oss-aai-service/data
     restart: on-failure
     networks:
@@ -200,16 +188,9 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Editor # or Admin if you need write access
 
 volumes:
-  gateway-gomod-cache:
-  gateway-gobuild-cache:
-  metadata-lifecycle-gomod-cache:
-  metadata-lifecycle-gobuild-cache:
+  go-build-cache:
   metadata-lifecycle-db-data:
-  data-retriever-gomod-cache:
-  data-retriever-gobuild-cache:
   data-retriever-db-data:
-  oss-aai-gomod-cache:
-  oss-aai-gobuild-cache:
   oss-aai-data:
 
 networks:

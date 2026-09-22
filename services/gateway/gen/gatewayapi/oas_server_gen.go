@@ -227,6 +227,12 @@ type Handler interface {
 	//
 	// GET /organizations
 	ListOrganizations(ctx context.Context) ([]CanonicalOrganization, error)
+	// ListPermissions implements listPermissions operation.
+	//
+	// Returns the fixed catalog of permissions available in the system.
+	//
+	// GET /permissions
+	ListPermissions(ctx context.Context) ([]Permission, error)
 	// ListResourceVersions implements listResourceVersions operation.
 	//
 	// Returns the version history for a resource. Requires an authenticated user with access to the

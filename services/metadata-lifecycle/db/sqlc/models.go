@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
 	"github.com/google/uuid"
 	go_geom "github.com/twpayne/go-geom"
 )
@@ -648,33 +649,35 @@ type Dataset struct {
 }
 
 type DatasetVersion struct {
-	ID                 uuid.UUID
-	DatasetID          uuid.UUID
-	Status             ResourceStatus
-	Revision           int32
-	Title              string
-	Description        string
-	Keywords           string
-	AccrualPeriodicity *string
-	QualityAnnotation  *string
-	AccessRight        *string
-	SourceCreatedAt    *time.Time
-	SourceUpdatedAt    *time.Time
-	SpatialCoverage    go_geom.T
-	TemporalStart      *time.Time
-	TemporalEnd        *time.Time
-	CreatedBy          string
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	SubmittedBy        *string
-	SubmittedAt        *time.Time
-	PublishedBy        *string
-	PublishedAt        *time.Time
-	ArchivedBy         *string
-	ArchivedAt         *time.Time
-	RejectedBy         *string
-	RejectedAt         *time.Time
-	RejectionNote      *string
+	ID                         uuid.UUID
+	DatasetID                  uuid.UUID
+	Status                     ResourceStatus
+	Revision                   int32
+	Title                      string
+	Description                string
+	Keywords                   []string
+	AccrualPeriodicity         *string
+	QualityAnnotation          *string
+	AccessRight                *string
+	SourceCreatedAt            *time.Time
+	SourceUpdatedAt            *time.Time
+	SpatialCoverage            go_geom.T
+	TemporalStart              *time.Time
+	TemporalEnd                *time.Time
+	GeologicalTemporalStartMya *float64
+	GeologicalTemporalEndMya   *float64
+	CreatedBy                  string
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
+	SubmittedBy                *string
+	SubmittedAt                *time.Time
+	PublishedBy                *string
+	PublishedAt                *time.Time
+	ArchivedBy                 *string
+	ArchivedAt                 *time.Time
+	RejectedBy                 *string
+	RejectedAt                 *time.Time
+	RejectionNote              *string
 }
 
 type DatasetVersionCategory struct {
@@ -723,7 +726,7 @@ type FloatParameterSchema struct {
 	Minimum        *float64
 	Maximum        *float64
 	DefaultValue   *float64
-	Enum           []float64
+	Enum           []types.FloatEnumOption
 	MultipleValues bool
 }
 
@@ -812,7 +815,7 @@ type IntegerParameterSchema struct {
 	Minimum        *int64
 	Maximum        *int64
 	DefaultValue   *int64
-	Enum           []int64
+	Enum           []types.IntegerEnumOption
 	MultipleValues bool
 }
 
@@ -902,7 +905,7 @@ type SoftwareApplicationVersion struct {
 	MainEntityOfPage      *string
 	License               *string
 	Version               *string
-	Keywords              string
+	Keywords              []string
 	DownloadUrl           *string
 	Requirements          *string
 	OperatingSystem       *string
@@ -951,7 +954,7 @@ type SoftwareSourceCodeVersion struct {
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
-	Keywords             string
+	Keywords             []string
 	Repository           *string
 	License              *string
 	SoftwareRequirements *string
@@ -993,7 +996,7 @@ type StringParameterSchema struct {
 	SchemaKind     ParameterSchemaKind
 	Pattern        *string
 	DefaultValue   *string
-	Enum           []string
+	Enum           []types.StringEnumOption
 	MultipleValues bool
 }
 

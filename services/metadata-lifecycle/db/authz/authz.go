@@ -23,6 +23,24 @@ func New(db *pgxpool.Pool) *Repo {
 	}
 }
 
+func (r *Repo) ListPermissions(ctx context.Context) ([]domain.Permission, error) {
+	rows, err := r.Queries.ListPermissions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list permissions: %w", err)
+	}
+
+	permissions := make([]domain.Permission, len(rows))
+	for i, row := range rows {
+		permission, err := domain.NewPersistedPermission(row.Key, row.Label, row.Description, string(row.Scope))
+		if err != nil {
+			return nil, fmt.Errorf("construct permission %q: %w", row.Key, err)
+		}
+		permissions[i] = permission
+	}
+
+	return permissions, nil
+}
+
 func (r *Repo) User(ctx context.Context, userID string) (domain.AuthorizationUser, error) {
 	user, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {

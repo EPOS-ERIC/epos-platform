@@ -15,6 +15,17 @@ func NewSoftwareSourceCodeInput(value SoftwareSourceCodeInput) (SoftwareSourceCo
 	if value.Name == "" {
 		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code name is required: %w", ErrSoftwareSourceCodeInvalid)
 	}
+	value.Description = strings.TrimSpace(value.Description)
+	if value.Description == "" {
+		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code description is required: %w", ErrSoftwareSourceCodeInvalid)
+	}
+	value.ProgrammingLanguage = optionalTrimmedString(value.ProgrammingLanguage)
+	value.Repository = optionalTrimmedString(value.Repository)
+	value.License = optionalTrimmedString(value.License)
+	value.SoftwareRequirements = optionalTrimmedString(value.SoftwareRequirements)
+	value.RuntimePlatform = optionalTrimmedString(value.RuntimePlatform)
+	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
+	value.Version = optionalTrimmedString(value.Version)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code keywords: %w: %w", err, ErrSoftwareSourceCodeInvalid)
@@ -79,6 +90,17 @@ func NewSoftwareSourceCodeMetadata(value SoftwareSourceCodeMetadata) (SoftwareSo
 	if value.Name == "" {
 		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code name is required: %w", ErrSoftwareSourceCodeInvalid)
 	}
+	value.Description = strings.TrimSpace(value.Description)
+	if value.Description == "" {
+		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code description is required: %w", ErrSoftwareSourceCodeInvalid)
+	}
+	value.ProgrammingLanguage = optionalTrimmedString(value.ProgrammingLanguage)
+	value.Repository = optionalTrimmedString(value.Repository)
+	value.License = optionalTrimmedString(value.License)
+	value.SoftwareRequirements = optionalTrimmedString(value.SoftwareRequirements)
+	value.RuntimePlatform = optionalTrimmedString(value.RuntimePlatform)
+	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
+	value.Version = optionalTrimmedString(value.Version)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code keywords: %w: %w", err, ErrSoftwareSourceCodeInvalid)

@@ -6,7 +6,6 @@ Monorepo for the EPOS Platform web application, backend services, shared Go pack
 
 | Component                     | Purpose                                                        | Local URL                |
 | ----------------------------- | -------------------------------------------------------------- | ------------------------ |
-| `apps/platform`               | Angular web application                                        | `http://localhost:4200`  |
 | `services/gateway`            | Public API, authentication, and backend aggregation            | `http://localhost:32000` |
 | `services/metadata-lifecycle` | Metadata, users, groups, authorization, and resource lifecycle | `http://localhost:33000` |
 | `services/data-retriever`     | Outbound retrieval, payload caching, and cached-text search    | `http://localhost:8100`  |
@@ -40,13 +39,12 @@ Start the complete development stack from the repository root:
 make up
 ```
 
-Tilt uses `docker/compose.dev.yaml`, builds development images, and live-updates the application and service containers. For a Kubernetes-backed Tilt environment, select the context explicitly with `make up KUBE_CONTEXT=kind-epos`.
+Tilt uses `docker/compose.dev.yaml`, builds backend development images, and live-updates the service containers. The platform GUI is not part of the local stack yet. For a Kubernetes-backed Tilt environment, select the context explicitly with `make up KUBE_CONTEXT=kind-epos`.
 
 Stop the stack with `make down`. Pass the same `KUBE_CONTEXT` when stopping a Kubernetes-backed environment.
 
 ### Local endpoints
 
-- Platform UI: `http://localhost:4200`
 - Gateway API: `http://localhost:32000/v1`
 - Gateway Scalar UI: `http://localhost:32000/scalar/`
 - Gateway Swagger UI: `http://localhost:32000/swagger/`
@@ -79,11 +77,10 @@ make fmt
 make lint
 ```
 
-Use each module's Makefile for builds, generated code, and module-specific commands. Integration suites run against an already-running development stack:
+Use each module's Makefile for builds, generated code, and module-specific commands. The contract suite runs against an already-running development stack:
 
 ```bash
-make test-contract
-make test-schemathesis
+make test-integration
 ```
 
 ## Generated code
@@ -96,7 +93,9 @@ Do not edit generated files directly. Change the owning OpenAPI specification or
 
 ## CI
 
-Workflows under `.github/workflows/` validate each application or service independently, deterministic contract, and Schemathesis integration suites. Reusable workflow definitions are prefixed with `_`.
+Workflows under `.github/workflows/` validate each application or service independently and run the deterministic contract suite. Reusable workflow definitions are prefixed with `_`.
+
+Run the CI stack locally with `make ci`; it builds production images and leaves the stack running for `make populate-metadatone` or `make test-integration`.
 
 ## Component documentation
 

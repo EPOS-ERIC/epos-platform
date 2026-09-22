@@ -97,7 +97,10 @@ class AuthorizationContractTest(unittest.TestCase):
             groupId=group_id,
             json={
                 "resource_type": "dataset",
-                "metadata": {"title": title},
+                "metadata": {
+                    "title": title,
+                    "description": f"{title} description",
+                },
             },
         )
         self.assertEqual(response.status_code, 201)
@@ -133,6 +136,46 @@ class AuthorizationContractTest(unittest.TestCase):
         problem = response.json()
         self.assertEqual(problem["title"], "invalid_token")
         self.assertEqual(problem["detail"], "token is invalid")
+
+    def test_public_permission_catalog(self) -> None:
+        """Verify the public permission catalog contains every fixed permission."""
+
+        expected_scopes = {
+            "resource.create": "GROUP",
+            "resource.edit": "GROUP",
+            "resource.submit": "GROUP",
+            "resource.withdraw": "GROUP",
+            "resource.reopen": "GROUP",
+            "resource.discard": "GROUP",
+            "resource.reject": "GROUP",
+            "resource.publish": "GROUP",
+            "resource.unpublish": "GROUP",
+            "group.membership.manage": "GROUP",
+            "group.role.manage": "GROUP",
+            "group.permission.manage": "GROUP",
+            "global.membership.manage": "GLOBAL",
+            "global.role.manage": "GLOBAL",
+            "global.permission.manage": "GLOBAL",
+            "organization.manage": "GLOBAL",
+            "contact_point.manage": "GLOBAL",
+            "category_scheme.manage": "GLOBAL",
+            "category.manage": "GROUP",
+        }
+
+        response = self.gateway.get("/permissions", headers=NO_AUTH_HEADERS)
+        self.assertEqual(response.status_code, 200)
+        permissions = response.json()
+
+        self.assertEqual(len(permissions), len(expected_scopes))
+        self.assertEqual(
+            {permission["key"] for permission in permissions},
+            set(expected_scopes),
+        )
+        for permission in permissions:
+            self.assertIn(permission["key"], expected_scopes)
+            self.assertEqual(permission["scope"], expected_scopes[permission["key"]])
+            self.assertTrue(permission["label"])
+            self.assertTrue(permission["description"])
 
     def test_public_and_optional_read_authorization(self) -> None:
         """Verify public reads ignore tokens and optional reads enforce them."""
@@ -888,7 +931,13 @@ class AuthorizationContractTest(unittest.TestCase):
             return matches[0]
 
         def dataset_payload(title: str) -> dict[str, Any]:
-            return {"resource_type": "dataset", "metadata": {"title": title}}
+            return {
+                "resource_type": "dataset",
+                "metadata": {
+                    "title": title,
+                    "description": f"{title} description",
+                },
+            }
 
         draft_resource_id, draft_version_id = self.create_dataset(
             group_id,
@@ -903,7 +952,10 @@ class AuthorizationContractTest(unittest.TestCase):
         replace_payload = {
             "resource_type": "dataset",
             "revision": draft["revision"],
-            "metadata": {"title": f"contract-auth-draft-updated-{suffix}"},
+            "metadata": {
+                "title": f"contract-auth-draft-updated-{suffix}",
+                "description": "Authorization lifecycle description",
+            },
         }
         denied_replace = denied.put(
             "/resources/{id}/versions/{versionId}/draft",

@@ -214,6 +214,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 	switch {
 	case value.GetString_() != nil:
 		v := value.GetString_()
+		enum, err := toAPIStringEnumOptions(v.Enum)
+		if err != nil {
+			return gatewayapi.Parameter{}, err
+		}
 		return gatewayapi.NewStringParameterParameter(gatewayapi.StringParameter{
 			ID:             id,
 			Kind:           gatewayapi.StringParameterKindSTRING,
@@ -228,7 +232,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 			MultipleValues: v.MultipleValues,
 			ReadOnly:       value.ReadOnly,
 			Default:        toAPINilString(v.Default),
-			Enum:           v.Enum,
+			Enum:           enum,
 			Pattern:        toAPINilString(v.Pattern),
 		}), nil
 	case value.GetBoolean() != nil:
@@ -249,6 +253,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 		}), nil
 	case value.GetInteger() != nil:
 		v := value.GetInteger()
+		enum, err := toAPIIntegerEnumOptions(v.Enum)
+		if err != nil {
+			return gatewayapi.Parameter{}, err
+		}
 		return gatewayapi.NewIntegerParameterParameter(gatewayapi.IntegerParameter{
 			ID:             id,
 			Kind:           gatewayapi.IntegerParameterKindINTEGER,
@@ -265,10 +273,14 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 			Minimum:        toAPINilInt64(v.Minimum),
 			Maximum:        toAPINilInt64(v.Maximum),
 			Default:        toAPINilInt64(v.Default),
-			Enum:           v.Enum,
+			Enum:           enum,
 		}), nil
 	case value.GetFloat() != nil:
 		v := value.GetFloat()
+		enum, err := toAPIFloatEnumOptions(v.Enum)
+		if err != nil {
+			return gatewayapi.Parameter{}, err
+		}
 		return gatewayapi.NewFloatParameterParameter(gatewayapi.FloatParameter{
 			ID:             id,
 			Kind:           gatewayapi.FloatParameterKindFLOAT,
@@ -285,7 +297,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 			Minimum:        toAPINilFloat64(v.Minimum),
 			Maximum:        toAPINilFloat64(v.Maximum),
 			Default:        toAPINilFloat64(v.Default),
-			Enum:           v.Enum,
+			Enum:           enum,
 		}), nil
 	case value.GetDateTime() != nil:
 		v := value.GetDateTime()
@@ -344,6 +356,10 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	switch {
 	case value.GetString_() != nil:
 		v := value.GetString_()
+		enum, err := toAPIStringEnumOptions(v.Enum)
+		if err != nil {
+			return gatewayapi.ScalarParameter{}, err
+		}
 		return gatewayapi.NewStringScalarParameterScalarParameter(gatewayapi.StringScalarParameter{
 			Kind:        gatewayapi.StringScalarParameterKindSTRING,
 			Position:    value.Position,
@@ -353,7 +369,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			Required:    value.Required,
 			ReadOnly:    value.ReadOnly,
 			Default:     toAPINilString(v.Default),
-			Enum:        v.Enum,
+			Enum:        enum,
 			Pattern:     toAPINilString(v.Pattern),
 		}), nil
 	case value.GetBoolean() != nil:
@@ -370,6 +386,10 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 		}), nil
 	case value.GetInteger() != nil:
 		v := value.GetInteger()
+		enum, err := toAPIIntegerEnumOptions(v.Enum)
+		if err != nil {
+			return gatewayapi.ScalarParameter{}, err
+		}
 		return gatewayapi.NewIntegerScalarParameterScalarParameter(gatewayapi.IntegerScalarParameter{
 			Kind:        gatewayapi.IntegerScalarParameterKindINTEGER,
 			Position:    value.Position,
@@ -381,10 +401,14 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			Minimum:     toAPINilInt64(v.Minimum),
 			Maximum:     toAPINilInt64(v.Maximum),
 			Default:     toAPINilInt64(v.Default),
-			Enum:        v.Enum,
+			Enum:        enum,
 		}), nil
 	case value.GetFloat() != nil:
 		v := value.GetFloat()
+		enum, err := toAPIFloatEnumOptions(v.Enum)
+		if err != nil {
+			return gatewayapi.ScalarParameter{}, err
+		}
 		return gatewayapi.NewFloatScalarParameterScalarParameter(gatewayapi.FloatScalarParameter{
 			Kind:        gatewayapi.FloatScalarParameterKindFLOAT,
 			Position:    value.Position,
@@ -396,7 +420,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			Minimum:     toAPINilFloat64(v.Minimum),
 			Maximum:     toAPINilFloat64(v.Maximum),
 			Default:     toAPINilFloat64(v.Default),
-			Enum:        v.Enum,
+			Enum:        enum,
 		}), nil
 	case value.GetDateTime() != nil:
 		v := value.GetDateTime()

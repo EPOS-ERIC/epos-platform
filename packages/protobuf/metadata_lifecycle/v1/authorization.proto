@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+enum PermissionScope {
+  PERMISSION_SCOPE_UNSPECIFIED = 0;
+  PERMISSION_SCOPE_GLOBAL = 1;
+  PERMISSION_SCOPE_GROUP = 2;
+}
+
+message Permission {
+  string key = 1 [(buf.validate.field).string.min_len = 1];
+  string label = 2 [(buf.validate.field).string.min_len = 1];
+  string description = 3 [(buf.validate.field).string.min_len = 1];
+  PermissionScope scope = 4 [(buf.validate.field).enum.defined_only = true];
+}
+
+message ListPermissionsRequest {}
+
+message ListPermissionsResponse {
+  repeated Permission permissions = 1;
+}
+
+service AuthorizationService {
+  rpc ListPermissions(ListPermissionsRequest) returns (ListPermissionsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+}

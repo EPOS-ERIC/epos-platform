@@ -42,3 +42,36 @@ sql:
             go_type:
               import: "github.com/twpayne/go-geom"
               type: "T"
+          - db_type: "nonblank_text"
+            nullable: false
+            go_type:
+              type: "string"
+          - db_type: "nonblank_text_opt"
+            nullable: true
+            go_type:
+              type: "string"
+              pointer: true
+          - db_type: "positive_int"
+            nullable: false
+            go_type:
+              type: "int32"
+          - db_type: "positive_int"
+            nullable: true
+            go_type:
+              type: "int32"
+              pointer: true
+          - column: "string_parameter_schemas.enum"
+            go_type:
+              import: "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
+              type: "StringEnumOption"
+              slice: true
+          - column: "integer_parameter_schemas.enum"
+            go_type:
+              import: "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
+              type: "IntegerEnumOption"
+              slice: true
+          - column: "float_parameter_schemas.enum"
+            go_type:
+              import: "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/types"
+              type: "FloatEnumOption"
+              slice: true

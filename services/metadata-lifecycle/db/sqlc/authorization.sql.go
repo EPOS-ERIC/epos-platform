@@ -980,6 +980,43 @@ func (q *Queries) ListPendingUserGroupRoleRequests(ctx context.Context, userID s
 	return items, nil
 }
 
+const listPermissions = `-- name: ListPermissions :many
+SELECT
+    KEY,
+    label,
+    description,
+    scope
+FROM
+    permissions
+ORDER BY
+    KEY
+`
+
+func (q *Queries) ListPermissions(ctx context.Context) ([]Permission, error) {
+	rows, err := q.db.Query(ctx, listPermissions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Permission
+	for rows.Next() {
+		var i Permission
+		if err := rows.Scan(
+			&i.Key,
+			&i.Label,
+			&i.Description,
+			&i.Scope,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT
     users.id,
