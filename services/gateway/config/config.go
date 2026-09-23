@@ -10,9 +10,9 @@ import (
 )
 
 type Config struct {
-	Server   Server   `yaml:"server"`
-	Upstream Upstream `yaml:"upstream"`
-	Services Services `yaml:"services"`
+	Server        Server        `yaml:"server"`
+	Services      Services      `yaml:"services"`
+	Notifications Notifications `yaml:"notifications"`
 }
 
 type Server struct {
@@ -28,18 +28,23 @@ type Service struct {
 	URL string `yaml:"url"`
 }
 
-type Upstream struct {
-	Timeout     time.Duration `yaml:"timeout"`
-	RealTimeout time.Duration `yaml:"real_timeout"`
-	CacheTTL    time.Duration `yaml:"cache_ttl"`
-	MaxEntries  int           `yaml:"max_entries"`
-}
-
 type Services struct {
 	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
 	DataRetriever     Service `yaml:"data-retriever"`
 	Sharing           Service `yaml:"sharing"`
 	Auth              Service `yaml:"auth"`
+}
+
+type Notifications struct {
+	Mailgun Mailgun `yaml:"mailgun"`
+}
+
+type Mailgun struct {
+	Enable    bool          `yaml:"enable"`
+	Domain    string        `yaml:"domain"`
+	From      string        `yaml:"from"`
+	APIKeyEnv string        `yaml:"api_key_env"`
+	Timeout   time.Duration `yaml:"timeout"`
 }
 
 func Default() Config {
@@ -52,18 +57,17 @@ func Default() Config {
 			IdleTimeout:     60 * time.Second,
 			CORSAllowOrigin: "",
 		},
-		Upstream: Upstream{
-			Timeout:     5 * time.Second,
-			RealTimeout: 15 * time.Second,
-			CacheTTL:    0 * time.Second,
-			MaxEntries:  128,
-		},
 		Services: Services{
 			MetadataLifecycle: Service{URL: ""},
 			DataRetriever:     Service{URL: ""},
 			Sharing:           Service{URL: ""},
 			Auth:              Service{URL: ""},
 		},
+		Notifications: Notifications{Mailgun: Mailgun{
+			Enable:    false,
+			APIKeyEnv: "MAILGUN_API_TOKEN",
+			Timeout:   10 * time.Second,
+		}},
 	}
 }
 
@@ -130,20 +134,20 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("services.auth.url is required")
 	}
 
-	if c.Upstream.Timeout <= 0 {
-		return fmt.Errorf("upstream.timeout must be greater than zero")
-	}
-
-	if c.Upstream.RealTimeout <= 0 {
-		return fmt.Errorf("upstream.real_timeout must be greater than zero")
-	}
-
-	if c.Upstream.CacheTTL < 0 {
-		return fmt.Errorf("upstream.cache_ttl must be zero or greater")
-	}
-
-	if c.Upstream.MaxEntries <= 0 {
-		return fmt.Errorf("upstream.max_entries must be greater than zero")
+	mailgun := c.Notifications.Mailgun
+	if mailgun.Enable {
+		if mailgun.Domain == "" {
+			return fmt.Errorf("notifications.mailgun.domain is required when Mailgun is enabled")
+		}
+		if mailgun.From == "" {
+			return fmt.Errorf("notifications.mailgun.from is required when Mailgun is enabled")
+		}
+		if mailgun.APIKeyEnv == "" {
+			return fmt.Errorf("notifications.mailgun.api_key_env is required when Mailgun is enabled")
+		}
+		if mailgun.Timeout <= 0 {
+			return fmt.Errorf("notifications.mailgun.timeout must be greater than zero")
+		}
 	}
 
 	return nil

@@ -429,6 +429,23 @@ func encodeListGroupsResponse(response []Group, w http.ResponseWriter, span trac
 	return nil
 }
 
+func encodeListNotificationTopicsResponse(response []NotificationTopic, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	e.ArrStart()
+	for _, elem := range response {
+		elem.Encode(e)
+	}
+	e.ArrEnd()
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeListOrganizationsResponse(response []CanonicalOrganization, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
@@ -464,6 +481,23 @@ func encodeListPermissionsResponse(response []Permission, w http.ResponseWriter,
 }
 
 func encodeListResourceVersionsResponse(response []ResourceVersionSummary, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	e.ArrStart()
+	for _, elem := range response {
+		elem.Encode(e)
+	}
+	e.ArrEnd()
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeListUserNotificationSubscriptionsResponse(response []NotificationSubscription, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 
@@ -690,6 +724,18 @@ func encodeSubmitResourceVersionResponse(response *WriteResult, w http.ResponseW
 	return nil
 }
 
+func encodeSubscribeGroupUserNotificationResponse(response *SubscribeGroupUserNotificationNoContent, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(204)
+
+	return nil
+}
+
+func encodeSubscribeUserNotificationResponse(response *SubscribeUserNotificationNoContent, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(204)
+
+	return nil
+}
+
 func encodeUnblockUserResponse(response *UnblockUserNoContent, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(204)
 
@@ -705,6 +751,18 @@ func encodeUnpublishResourceVersionResponse(response *WriteResult, w http.Respon
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
+
+	return nil
+}
+
+func encodeUnsubscribeGroupUserNotificationResponse(response *UnsubscribeGroupUserNotificationNoContent, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(204)
+
+	return nil
+}
+
+func encodeUnsubscribeUserNotificationResponse(response *UnsubscribeUserNotificationNoContent, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(204)
 
 	return nil
 }
@@ -756,5 +814,4 @@ func encodeErrorResponse(response *ProblemStatusCode, w http.ResponseWriter, spa
 		return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
 	}
 	return nil
-
 }

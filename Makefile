@@ -11,7 +11,7 @@ down:
 	tilt down $(TILT_CONTEXT_ARG)
 
 clean: down
-	docker volume rm -f docker_neo4j-data docker_data-retriever-db-data docker_sharing-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data
+	docker volume rm -f docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data docker_sharing-db-data
 
 populate:
 	./packages/scripts/populatescript.sh

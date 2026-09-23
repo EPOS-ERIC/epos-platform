@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 
 	configurationv1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/configuration/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/sharing/repository"
@@ -49,11 +50,8 @@ func callerFromContext(ctx context.Context) (Caller, bool) {
 		return Caller{}, false
 	}
 	caller := Caller{UserID: values[0]}
-	for _, value := range md.Get(adminMetadataKey) {
-		if value == "true" {
-			caller.Admin = true
-			break
-		}
+	if slices.Contains(md.Get(adminMetadataKey), "true") {
+		caller.Admin = true
 	}
 	return caller, true
 }

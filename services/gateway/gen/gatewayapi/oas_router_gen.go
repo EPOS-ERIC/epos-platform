@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	rn75AllowedHeaders = map[string]string{
+	rn77AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
 	rn20AllowedHeaders = map[string]string{
@@ -46,7 +46,7 @@ var (
 		"DELETE": "Authorization",
 		"PUT":    "Authorization,Content-Type",
 	}
-	rn73AllowedHeaders = map[string]string{
+	rn75AllowedHeaders = map[string]string{
 		"DELETE": "Authorization",
 		"POST":   "Authorization,Content-Type",
 	}
@@ -67,13 +67,17 @@ var (
 	rn28AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
+	rn82AllowedHeaders = map[string]string{
+		"DELETE": "Authorization",
+		"PUT":    "Authorization",
+	}
 	rn26AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
 	}
 	rn19AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
-	rn74AllowedHeaders = map[string]string{
+	rn76AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
 	}
 	rn31AllowedHeaders = map[string]string{
@@ -92,7 +96,7 @@ var (
 		"DELETE": "Authorization",
 		"PUT":    "Authorization,Content-Type",
 	}
-	rn71AllowedHeaders = map[string]string{
+	rn73AllowedHeaders = map[string]string{
 		"PUT": "Authorization,Content-Type",
 	}
 	rn51AllowedHeaders = map[string]string{
@@ -101,7 +105,7 @@ var (
 	rn53AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
-	rn62AllowedHeaders = map[string]string{
+	rn63AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
 	rn47AllowedHeaders = map[string]string{
@@ -110,28 +114,28 @@ var (
 	rn48AllowedHeaders = map[string]string{
 		"DELETE": "Authorization",
 	}
-	rn65AllowedHeaders = map[string]string{
+	rn67AllowedHeaders = map[string]string{
 		"POST": "Authorization",
-	}
-	rn66AllowedHeaders = map[string]string{
-		"POST": "Authorization,Content-Type",
 	}
 	rn68AllowedHeaders = map[string]string{
-		"POST": "Authorization",
+		"POST": "Authorization,Content-Type",
 	}
-	rn76AllowedHeaders = map[string]string{
+	rn70AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
 	rn78AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
-	rn79AllowedHeaders = map[string]string{
+	rn86AllowedHeaders = map[string]string{
+		"POST": "Authorization",
+	}
+	rn87AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
 	rn49AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
-	rn63AllowedHeaders = map[string]string{
+	rn65AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
 	rn2AllowedHeaders = map[string]string{
@@ -148,7 +152,14 @@ var (
 		"DELETE": "Authorization",
 		"PUT":    "Authorization",
 	}
-	rn77AllowedHeaders = map[string]string{
+	rn64AllowedHeaders = map[string]string{
+		"GET": "Authorization",
+	}
+	rn84AllowedHeaders = map[string]string{
+		"DELETE": "Authorization",
+		"PUT":    "Authorization",
+	}
+	rn85AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
 )
@@ -220,7 +231,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "POST",
-							allowedHeaders: rn75AllowedHeaders,
+							allowedHeaders: rn77AllowedHeaders,
 							acceptPost:     "application/json",
 							acceptPatch:    "",
 						})
@@ -310,7 +321,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 							return
 						}
-
 					}
 
 				case 't': // Prefix: "tact-points"
@@ -382,7 +392,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 							return
 						}
-
 					}
 
 				}
@@ -544,7 +553,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 									return
 								}
-
 							}
 
 						case 'm': // Prefix: "membership"
@@ -581,7 +589,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "DELETE,POST",
-											allowedHeaders: rn73AllowedHeaders,
+											allowedHeaders: rn75AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -784,11 +792,75 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 											return
 										}
-
 									}
-
 								}
 
+							}
+
+						case 'n': // Prefix: "notification-subscriptions/"
+
+							if l := len("notification-subscriptions/"); len(elem) >= l && elem[0:l] == "notification-subscriptions/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "userId"
+							// Match until "/"
+							idx := strings.IndexByte(elem, '/')
+							if idx < 0 {
+								idx = len(elem)
+							}
+							args[1] = elem[:idx]
+							elem = elem[idx:]
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "topicKey"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[2] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "DELETE":
+										s.handleUnsubscribeGroupUserNotificationRequest([3]string{
+											args[0],
+											args[1],
+											args[2],
+										}, elemIsEscaped, w, r)
+									case "PUT":
+										s.handleSubscribeGroupUserNotificationRequest([3]string{
+											args[0],
+											args[1],
+											args[2],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, notAllowedParams{
+											allowedMethods: "DELETE,PUT",
+											allowedHeaders: rn82AllowedHeaders,
+											acceptPost:     "",
+											acceptPatch:    "",
+										})
+									}
+
+									return
+								}
 							}
 
 						case 'r': // Prefix: "r"
@@ -899,11 +971,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 												return
 											}
-
 										}
-
 									}
-
 								}
 
 							case 'o': // Prefix: "ole-requests"
@@ -923,7 +992,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "POST",
-											allowedHeaders: rn74AllowedHeaders,
+											allowedHeaders: rn76AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -1005,17 +1074,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 											return
 										}
-
 									}
-
 								}
 
 							}
 
 						}
-
 					}
-
 				}
 
 			case 'i': // Prefix: "imports/turtle"
@@ -1036,6 +1101,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							allowedMethods: "POST",
 							allowedHeaders: rn59AllowedHeaders,
 							acceptPost:     "text/turtle",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+
+			case 'n': // Prefix: "notification-topics"
+
+				if l := len("notification-topics"); len(elem) >= l && elem[0:l] == "notification-topics" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleListNotificationTopicsRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET",
+							allowedHeaders: nil,
+							acceptPost:     "",
 							acceptPatch:    "",
 						})
 					}
@@ -1112,7 +1202,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 						return
 					}
-
 				}
 
 			case 'p': // Prefix: "permissions"
@@ -1213,7 +1302,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "PUT",
-										allowedHeaders: rn71AllowedHeaders,
+										allowedHeaders: rn73AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -1221,7 +1310,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 								return
 							}
-
 						}
 
 						elem = origElem
@@ -1339,7 +1427,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET",
-										allowedHeaders: rn62AllowedHeaders,
+										allowedHeaders: rn63AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -1446,7 +1534,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
-													allowedHeaders: rn65AllowedHeaders,
+													allowedHeaders: rn67AllowedHeaders,
 													acceptPost:     "",
 													acceptPatch:    "",
 												})
@@ -1487,7 +1575,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 												default:
 													s.notAllowed(w, r, notAllowedParams{
 														allowedMethods: "POST",
-														allowedHeaders: rn66AllowedHeaders,
+														allowedHeaders: rn68AllowedHeaders,
 														acceptPost:     "application/json",
 														acceptPatch:    "",
 													})
@@ -1516,7 +1604,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 												default:
 													s.notAllowed(w, r, notAllowedParams{
 														allowedMethods: "POST",
-														allowedHeaders: rn68AllowedHeaders,
+														allowedHeaders: rn70AllowedHeaders,
 														acceptPost:     "",
 														acceptPatch:    "",
 													})
@@ -1547,7 +1635,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
-													allowedHeaders: rn76AllowedHeaders,
+													allowedHeaders: rn78AllowedHeaders,
 													acceptPost:     "",
 													acceptPatch:    "",
 												})
@@ -1576,7 +1664,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
-													allowedHeaders: rn78AllowedHeaders,
+													allowedHeaders: rn86AllowedHeaders,
 													acceptPost:     "",
 													acceptPatch:    "",
 												})
@@ -1605,7 +1693,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
-													allowedHeaders: rn79AllowedHeaders,
+													allowedHeaders: rn87AllowedHeaders,
 													acceptPost:     "",
 													acceptPatch:    "",
 												})
@@ -1615,15 +1703,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										}
 
 									}
-
 								}
-
 							}
 
 						}
-
 					}
-
 				}
 
 			case 's': // Prefix: "search"
@@ -1666,7 +1750,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn63AllowedHeaders,
+							allowedHeaders: rn65AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -1847,6 +1931,75 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 							}
 
+						case 'n': // Prefix: "notification-subscriptions"
+
+							if l := len("notification-subscriptions"); len(elem) >= l && elem[0:l] == "notification-subscriptions" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleListUserNotificationSubscriptionsRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "GET",
+										allowedHeaders: rn64AllowedHeaders,
+										acceptPost:     "",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "topicKey"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "DELETE":
+										s.handleUnsubscribeUserNotificationRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									case "PUT":
+										s.handleSubscribeUserNotificationRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, notAllowedParams{
+											allowedMethods: "DELETE,PUT",
+											allowedHeaders: rn84AllowedHeaders,
+											acceptPost:     "",
+											acceptPatch:    "",
+										})
+									}
+
+									return
+								}
+							}
+
 						case 'u': // Prefix: "unblock"
 
 							if l := len("unblock"); len(elem) >= l && elem[0:l] == "unblock" {
@@ -1865,7 +2018,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "POST",
-										allowedHeaders: rn77AllowedHeaders,
+										allowedHeaders: rn85AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -1875,13 +2028,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							}
 
 						}
-
 					}
-
 				}
 
 			}
-
 		}
 	}
 	s.notFound(w, r)
@@ -2101,7 +2251,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								return
 							}
 						}
-
 					}
 
 				case 't': // Prefix: "tact-points"
@@ -2188,7 +2337,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								return
 							}
 						}
-
 					}
 
 				}
@@ -2373,7 +2521,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										return
 									}
 								}
-
 							}
 
 						case 'm': // Prefix: "membership"
@@ -2605,11 +2752,74 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 												return
 											}
 										}
-
 									}
-
 								}
 
+							}
+
+						case 'n': // Prefix: "notification-subscriptions/"
+
+							if l := len("notification-subscriptions/"); len(elem) >= l && elem[0:l] == "notification-subscriptions/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "userId"
+							// Match until "/"
+							idx := strings.IndexByte(elem, '/')
+							if idx < 0 {
+								idx = len(elem)
+							}
+							args[1] = elem[:idx]
+							elem = elem[idx:]
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "topicKey"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[2] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "DELETE":
+										r.name = UnsubscribeGroupUserNotificationOperation
+										r.summary = "Unsubscribe group user from a notification topic"
+										r.operationID = "unsubscribeGroupUserNotification"
+										r.operationGroup = ""
+										r.pathPattern = "/groups/{groupId}/notification-subscriptions/{userId}/{topicKey}"
+										r.args = args
+										r.count = 3
+										return r, true
+									case "PUT":
+										r.name = SubscribeGroupUserNotificationOperation
+										r.summary = "Subscribe group user to a notification topic"
+										r.operationID = "subscribeGroupUserNotification"
+										r.operationGroup = ""
+										r.pathPattern = "/groups/{groupId}/notification-subscriptions/{userId}/{topicKey}"
+										r.args = args
+										r.count = 3
+										return r, true
+									default:
+										return
+									}
+								}
 							}
 
 						case 'r': // Prefix: "r"
@@ -2714,11 +2924,8 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 													return
 												}
 											}
-
 										}
-
 									}
-
 								}
 
 							case 'o': // Prefix: "ole-requests"
@@ -2811,17 +3018,13 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 												return
 											}
 										}
-
 									}
-
 								}
 
 							}
 
 						}
-
 					}
-
 				}
 
 			case 'i': // Prefix: "imports/turtle"
@@ -2841,6 +3044,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						r.operationID = "importTurtleMetadata"
 						r.operationGroup = ""
 						r.pathPattern = "/imports/turtle"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'n': // Prefix: "notification-topics"
+
+				if l := len("notification-topics"); len(elem) >= l && elem[0:l] == "notification-topics" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = ListNotificationTopicsOperation
+						r.summary = "List notification topics"
+						r.operationID = "listNotificationTopics"
+						r.operationGroup = ""
+						r.pathPattern = "/notification-topics"
 						r.args = args
 						r.count = 0
 						return r, true
@@ -2933,7 +3161,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							return
 						}
 					}
-
 				}
 
 			case 'p': // Prefix: "permissions"
@@ -3039,7 +3266,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 									return
 								}
 							}
-
 						}
 
 						elem = origElem
@@ -3392,15 +3618,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										}
 
 									}
-
 								}
-
 							}
 
 						}
-
 					}
-
 				}
 
 			case 's': // Prefix: "search"
@@ -3622,6 +3844,74 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 							}
 
+						case 'n': // Prefix: "notification-subscriptions"
+
+							if l := len("notification-subscriptions"); len(elem) >= l && elem[0:l] == "notification-subscriptions" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = ListUserNotificationSubscriptionsOperation
+									r.summary = "List user notification subscriptions"
+									r.operationID = "listUserNotificationSubscriptions"
+									r.operationGroup = ""
+									r.pathPattern = "/users/{userId}/notification-subscriptions"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "topicKey"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "DELETE":
+										r.name = UnsubscribeUserNotificationOperation
+										r.summary = "Unsubscribe user from a global notification topic"
+										r.operationID = "unsubscribeUserNotification"
+										r.operationGroup = ""
+										r.pathPattern = "/users/{userId}/notification-subscriptions/{topicKey}"
+										r.args = args
+										r.count = 2
+										return r, true
+									case "PUT":
+										r.name = SubscribeUserNotificationOperation
+										r.summary = "Subscribe user to a global notification topic"
+										r.operationID = "subscribeUserNotification"
+										r.operationGroup = ""
+										r.pathPattern = "/users/{userId}/notification-subscriptions/{topicKey}"
+										r.args = args
+										r.count = 2
+										return r, true
+									default:
+										return
+									}
+								}
+							}
+
 						case 'u': // Prefix: "unblock"
 
 							if l := len("unblock"); len(elem) >= l && elem[0:l] == "unblock" {
@@ -3648,13 +3938,10 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							}
 
 						}
-
 					}
-
 				}
 
 			}
-
 		}
 	}
 	return r, false

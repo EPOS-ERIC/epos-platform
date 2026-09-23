@@ -140,7 +140,9 @@ class MembershipInvariantsContractTest(unittest.TestCase):
         self.assertEqual(initial["status"], "PENDING")
         initial_requests = {item["role"]: item for item in initial["role_requests"]}
         self.assertEqual(set(initial_requests), {"EDITOR", "REVIEWER"})
-        self.assertTrue(all(item["status"] == "PENDING" for item in initial_requests.values()))
+        self.assertTrue(
+            all(item["status"] == "PENDING" for item in initial_requests.values())
+        )
 
         self.assert_conflict(
             self.gateway.put(
@@ -155,7 +157,7 @@ class MembershipInvariantsContractTest(unittest.TestCase):
                 "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
                 groupId=group_id,
                 userId=applicant_id,
-                permission="resource.create",
+                permission="group.resource.create",
             )
         )
 
@@ -199,7 +201,7 @@ class MembershipInvariantsContractTest(unittest.TestCase):
                 "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
                 groupId=group_id,
                 userId=applicant_id,
-                permission="resource.create",
+                permission="group.resource.create",
             )
         )
 
@@ -297,14 +299,14 @@ class MembershipInvariantsContractTest(unittest.TestCase):
         self.assertCountEqual(
             membership["role_permissions"],
             [
-                "resource.create",
-                "resource.edit",
-                "resource.submit",
-                "resource.withdraw",
-                "resource.reopen",
-                "resource.discard",
-                "resource.reject",
-                "resource.publish",
+                "group.resource.create",
+                "group.resource.edit",
+                "group.resource.submit",
+                "group.resource.withdraw",
+                "group.resource.reopen",
+                "group.resource.discard",
+                "group.resource.reject",
+                "group.resource.publish",
             ],
         )
 
@@ -327,17 +329,17 @@ class MembershipInvariantsContractTest(unittest.TestCase):
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=applicant_id,
-            permission="category.manage",
+            permission="group.category.manage",
         )
         self.assertEqual(granted.status_code, 204)
         membership = self.require_group_membership(group_id, applicant_id)
-        self.assertEqual(membership["granted_permissions"], ["category.manage"])
+        self.assertEqual(membership["granted_permissions"], ["group.category.manage"])
 
         revoked_grant = self.gateway.delete(
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=applicant_id,
-            permission="category.manage",
+            permission="group.category.manage",
         )
         self.assertEqual(revoked_grant.status_code, 204)
         membership = self.require_group_membership(group_id, applicant_id)
@@ -383,7 +385,7 @@ class MembershipInvariantsContractTest(unittest.TestCase):
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=member_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(granted.status_code, 204)
 
@@ -396,7 +398,7 @@ class MembershipInvariantsContractTest(unittest.TestCase):
         pending_role_id = pending_role.json()["id"]
         membership = self.require_group_membership(group_id, member_id)
         self.assertEqual(membership["roles"], ["EDITOR"])
-        self.assertEqual(membership["granted_permissions"], ["resource.create"])
+        self.assertEqual(membership["granted_permissions"], ["group.resource.create"])
         self.assertEqual(
             [item["id"] for item in membership["role_requests"]],
             [pending_role_id],
@@ -422,7 +424,7 @@ class MembershipInvariantsContractTest(unittest.TestCase):
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=member_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(revoked_permission.status_code, 404)
 

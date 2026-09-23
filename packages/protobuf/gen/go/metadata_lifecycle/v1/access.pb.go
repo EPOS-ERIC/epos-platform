@@ -334,6 +334,7 @@ func (x *RequestMembershipRequest) GetRoles() []GroupRole {
 type RequestMembershipResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Membership    *GroupMembership       `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
+	Notifications []*Notification        `protobuf:"bytes,2,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -371,6 +372,13 @@ func (*RequestMembershipResponse) Descriptor() ([]byte, []int) {
 func (x *RequestMembershipResponse) GetMembership() *GroupMembership {
 	if x != nil {
 		return x.Membership
+	}
+	return nil
+}
+
+func (x *RequestMembershipResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
 	}
 	return nil
 }
@@ -518,6 +526,7 @@ func (x *DecideMembershipRequest) GetDecision() Decision {
 type DecideMembershipResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Membership    *GroupMembership       `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
+	Notifications []*Notification        `protobuf:"bytes,2,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -555,6 +564,13 @@ func (*DecideMembershipResponse) Descriptor() ([]byte, []int) {
 func (x *DecideMembershipResponse) GetMembership() *GroupMembership {
 	if x != nil {
 		return x.Membership
+	}
+	return nil
+}
+
+func (x *DecideMembershipResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
 	}
 	return nil
 }
@@ -702,6 +718,7 @@ func (x *RequestRoleRequest) GetRole() GroupRole {
 type RequestRoleResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Request       *RoleRequest           `protobuf:"bytes,1,opt,name=request,proto3" json:"request,omitempty"`
+	Notifications []*Notification        `protobuf:"bytes,2,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -739,6 +756,13 @@ func (*RequestRoleResponse) Descriptor() ([]byte, []int) {
 func (x *RequestRoleResponse) GetRequest() *RoleRequest {
 	if x != nil {
 		return x.Request
+	}
+	return nil
+}
+
+func (x *RequestRoleResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
 	}
 	return nil
 }
@@ -806,6 +830,7 @@ func (x *DecideRoleRequestRequest) GetDecision() Decision {
 type DecideRoleRequestResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Membership    *GroupMembership       `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
+	Notifications []*Notification        `protobuf:"bytes,2,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -843,6 +868,13 @@ func (*DecideRoleRequestResponse) Descriptor() ([]byte, []int) {
 func (x *DecideRoleRequestResponse) GetMembership() *GroupMembership {
 	if x != nil {
 		return x.Membership
+	}
+	return nil
+}
+
+func (x *DecideRoleRequestResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
 	}
 	return nil
 }
@@ -997,6 +1029,7 @@ func (x *AssignRoleRequest) GetRole() GroupRole {
 
 type AssignRoleResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Notifications []*Notification        `protobuf:"bytes,1,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1029,6 +1062,13 @@ func (x *AssignRoleResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use AssignRoleResponse.ProtoReflect.Descriptor instead.
 func (*AssignRoleResponse) Descriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_access_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *AssignRoleResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
+	}
+	return nil
 }
 
 type RemoveRoleRequest struct {
@@ -1189,6 +1229,7 @@ func (x *GrantPermissionRequest) GetPermission() GroupPermission {
 
 type GrantPermissionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Notifications []*Notification        `protobuf:"bytes,1,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1221,6 +1262,13 @@ func (x *GrantPermissionResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GrantPermissionResponse.ProtoReflect.Descriptor instead.
 func (*GrantPermissionResponse) Descriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_access_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *GrantPermissionResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
+	}
+	return nil
 }
 
 type RevokePermissionRequest struct {
@@ -1352,40 +1400,44 @@ const file_metadata_lifecycle_v1_access_proto_rawDesc = "" +
 	"\x18RequestMembershipRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12E\n" +
 	"\x05roles\x18\x02 \x03(\x0e2 .metadata_lifecycle.v1.GroupRoleB\r\xbaH\n" +
-	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x05roles\"c\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x05roles\"\xae\x01\n" +
 	"\x19RequestMembershipResponse\x12F\n" +
 	"\n" +
 	"membership\x18\x01 \x01(\v2&.metadata_lifecycle.v1.GroupMembershipR\n" +
-	"membership\"@\n" +
+	"membership\x12I\n" +
+	"\rnotifications\x18\x02 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"@\n" +
 	"\x19WithdrawMembershipRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\"\x1c\n" +
 	"\x1aWithdrawMembershipResponse\"\xa7\x01\n" +
 	"\x17DecideMembershipRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12 \n" +
 	"\auser_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12E\n" +
-	"\bdecision\x18\x03 \x01(\x0e2\x1f.metadata_lifecycle.v1.DecisionB\b\xbaH\x05\x82\x01\x02\x10\x01R\bdecision\"b\n" +
+	"\bdecision\x18\x03 \x01(\x0e2\x1f.metadata_lifecycle.v1.DecisionB\b\xbaH\x05\x82\x01\x02\x10\x01R\bdecision\"\xad\x01\n" +
 	"\x18DecideMembershipResponse\x12F\n" +
 	"\n" +
 	"membership\x18\x01 \x01(\v2&.metadata_lifecycle.v1.GroupMembershipR\n" +
-	"membership\"`\n" +
+	"membership\x12I\n" +
+	"\rnotifications\x18\x02 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"`\n" +
 	"\x17RevokeMembershipRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12 \n" +
 	"\auser_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\x1a\n" +
 	"\x18RevokeMembershipResponse\"y\n" +
 	"\x12RequestRoleRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12>\n" +
-	"\x04role\x18\x02 \x01(\x0e2 .metadata_lifecycle.v1.GroupRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\"S\n" +
+	"\x04role\x18\x02 \x01(\x0e2 .metadata_lifecycle.v1.GroupRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\"\x9e\x01\n" +
 	"\x13RequestRoleResponse\x12<\n" +
-	"\arequest\x18\x01 \x01(\v2\".metadata_lifecycle.v1.RoleRequestR\arequest\"\xaf\x01\n" +
+	"\arequest\x18\x01 \x01(\v2\".metadata_lifecycle.v1.RoleRequestR\arequest\x12I\n" +
+	"\rnotifications\x18\x02 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"\xaf\x01\n" +
 	"\x18DecideRoleRequestRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12'\n" +
 	"\n" +
 	"request_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\trequestId\x12E\n" +
-	"\bdecision\x18\x03 \x01(\x0e2\x1f.metadata_lifecycle.v1.DecisionB\b\xbaH\x05\x82\x01\x02\x10\x01R\bdecision\"c\n" +
+	"\bdecision\x18\x03 \x01(\x0e2\x1f.metadata_lifecycle.v1.DecisionB\b\xbaH\x05\x82\x01\x02\x10\x01R\bdecision\"\xae\x01\n" +
 	"\x19DecideRoleRequestResponse\x12F\n" +
 	"\n" +
 	"membership\x18\x01 \x01(\v2&.metadata_lifecycle.v1.GroupMembershipR\n" +
-	"membership\"j\n" +
+	"membership\x12I\n" +
+	"\rnotifications\x18\x02 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"j\n" +
 	"\x1aWithdrawRoleRequestRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12'\n" +
 	"\n" +
@@ -1394,8 +1446,9 @@ const file_metadata_lifecycle_v1_access_proto_rawDesc = "" +
 	"\x11AssignRoleRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12 \n" +
 	"\auser_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12>\n" +
-	"\x04role\x18\x03 \x01(\x0e2 .metadata_lifecycle.v1.GroupRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\"\x14\n" +
-	"\x12AssignRoleResponse\"\x9a\x01\n" +
+	"\x04role\x18\x03 \x01(\x0e2 .metadata_lifecycle.v1.GroupRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\"_\n" +
+	"\x12AssignRoleResponse\x12I\n" +
+	"\rnotifications\x18\x01 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"\x9a\x01\n" +
 	"\x11RemoveRoleRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12 \n" +
 	"\auser_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12>\n" +
@@ -1406,8 +1459,9 @@ const file_metadata_lifecycle_v1_access_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12P\n" +
 	"\n" +
 	"permission\x18\x03 \x01(\x0e2&.metadata_lifecycle.v1.GroupPermissionB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
-	"permission\"\x19\n" +
-	"\x17GrantPermissionResponse\"\xb2\x01\n" +
+	"permission\"d\n" +
+	"\x17GrantPermissionResponse\x12I\n" +
+	"\rnotifications\x18\x01 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"\xb2\x01\n" +
 	"\x17RevokePermissionRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12 \n" +
 	"\auser_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12P\n" +
@@ -1476,7 +1530,8 @@ var file_metadata_lifecycle_v1_access_proto_goTypes = []any{
 	(GroupPermission)(0),                 // 28: metadata_lifecycle.v1.GroupPermission
 	(*RoleRequest)(nil),                  // 29: metadata_lifecycle.v1.RoleRequest
 	(*timestamppb.Timestamp)(nil),        // 30: google.protobuf.Timestamp
-	(Decision)(0),                        // 31: metadata_lifecycle.v1.Decision
+	(*Notification)(nil),                 // 31: metadata_lifecycle.v1.Notification
+	(Decision)(0),                        // 32: metadata_lifecycle.v1.Decision
 }
 var file_metadata_lifecycle_v1_access_proto_depIdxs = []int32{
 	0,  // 0: metadata_lifecycle.v1.GroupMembership.user:type_name -> metadata_lifecycle.v1.MembershipUser
@@ -1490,45 +1545,51 @@ var file_metadata_lifecycle_v1_access_proto_depIdxs = []int32{
 	1,  // 8: metadata_lifecycle.v1.ListGroupMembershipsResponse.memberships:type_name -> metadata_lifecycle.v1.GroupMembership
 	27, // 9: metadata_lifecycle.v1.RequestMembershipRequest.roles:type_name -> metadata_lifecycle.v1.GroupRole
 	1,  // 10: metadata_lifecycle.v1.RequestMembershipResponse.membership:type_name -> metadata_lifecycle.v1.GroupMembership
-	31, // 11: metadata_lifecycle.v1.DecideMembershipRequest.decision:type_name -> metadata_lifecycle.v1.Decision
-	1,  // 12: metadata_lifecycle.v1.DecideMembershipResponse.membership:type_name -> metadata_lifecycle.v1.GroupMembership
-	27, // 13: metadata_lifecycle.v1.RequestRoleRequest.role:type_name -> metadata_lifecycle.v1.GroupRole
-	29, // 14: metadata_lifecycle.v1.RequestRoleResponse.request:type_name -> metadata_lifecycle.v1.RoleRequest
-	31, // 15: metadata_lifecycle.v1.DecideRoleRequestRequest.decision:type_name -> metadata_lifecycle.v1.Decision
-	1,  // 16: metadata_lifecycle.v1.DecideRoleRequestResponse.membership:type_name -> metadata_lifecycle.v1.GroupMembership
-	27, // 17: metadata_lifecycle.v1.AssignRoleRequest.role:type_name -> metadata_lifecycle.v1.GroupRole
-	27, // 18: metadata_lifecycle.v1.RemoveRoleRequest.role:type_name -> metadata_lifecycle.v1.GroupRole
-	28, // 19: metadata_lifecycle.v1.GrantPermissionRequest.permission:type_name -> metadata_lifecycle.v1.GroupPermission
-	28, // 20: metadata_lifecycle.v1.RevokePermissionRequest.permission:type_name -> metadata_lifecycle.v1.GroupPermission
-	2,  // 21: metadata_lifecycle.v1.GroupAccessService.ListGroupMemberships:input_type -> metadata_lifecycle.v1.ListGroupMembershipsRequest
-	4,  // 22: metadata_lifecycle.v1.GroupAccessService.RequestMembership:input_type -> metadata_lifecycle.v1.RequestMembershipRequest
-	6,  // 23: metadata_lifecycle.v1.GroupAccessService.WithdrawMembership:input_type -> metadata_lifecycle.v1.WithdrawMembershipRequest
-	8,  // 24: metadata_lifecycle.v1.GroupAccessService.DecideMembership:input_type -> metadata_lifecycle.v1.DecideMembershipRequest
-	10, // 25: metadata_lifecycle.v1.GroupAccessService.RevokeMembership:input_type -> metadata_lifecycle.v1.RevokeMembershipRequest
-	12, // 26: metadata_lifecycle.v1.GroupAccessService.RequestRole:input_type -> metadata_lifecycle.v1.RequestRoleRequest
-	14, // 27: metadata_lifecycle.v1.GroupAccessService.DecideRoleRequest:input_type -> metadata_lifecycle.v1.DecideRoleRequestRequest
-	16, // 28: metadata_lifecycle.v1.GroupAccessService.WithdrawRoleRequest:input_type -> metadata_lifecycle.v1.WithdrawRoleRequestRequest
-	18, // 29: metadata_lifecycle.v1.GroupAccessService.AssignRole:input_type -> metadata_lifecycle.v1.AssignRoleRequest
-	20, // 30: metadata_lifecycle.v1.GroupAccessService.RemoveRole:input_type -> metadata_lifecycle.v1.RemoveRoleRequest
-	22, // 31: metadata_lifecycle.v1.GroupAccessService.GrantPermission:input_type -> metadata_lifecycle.v1.GrantPermissionRequest
-	24, // 32: metadata_lifecycle.v1.GroupAccessService.RevokePermission:input_type -> metadata_lifecycle.v1.RevokePermissionRequest
-	3,  // 33: metadata_lifecycle.v1.GroupAccessService.ListGroupMemberships:output_type -> metadata_lifecycle.v1.ListGroupMembershipsResponse
-	5,  // 34: metadata_lifecycle.v1.GroupAccessService.RequestMembership:output_type -> metadata_lifecycle.v1.RequestMembershipResponse
-	7,  // 35: metadata_lifecycle.v1.GroupAccessService.WithdrawMembership:output_type -> metadata_lifecycle.v1.WithdrawMembershipResponse
-	9,  // 36: metadata_lifecycle.v1.GroupAccessService.DecideMembership:output_type -> metadata_lifecycle.v1.DecideMembershipResponse
-	11, // 37: metadata_lifecycle.v1.GroupAccessService.RevokeMembership:output_type -> metadata_lifecycle.v1.RevokeMembershipResponse
-	13, // 38: metadata_lifecycle.v1.GroupAccessService.RequestRole:output_type -> metadata_lifecycle.v1.RequestRoleResponse
-	15, // 39: metadata_lifecycle.v1.GroupAccessService.DecideRoleRequest:output_type -> metadata_lifecycle.v1.DecideRoleRequestResponse
-	17, // 40: metadata_lifecycle.v1.GroupAccessService.WithdrawRoleRequest:output_type -> metadata_lifecycle.v1.WithdrawRoleRequestResponse
-	19, // 41: metadata_lifecycle.v1.GroupAccessService.AssignRole:output_type -> metadata_lifecycle.v1.AssignRoleResponse
-	21, // 42: metadata_lifecycle.v1.GroupAccessService.RemoveRole:output_type -> metadata_lifecycle.v1.RemoveRoleResponse
-	23, // 43: metadata_lifecycle.v1.GroupAccessService.GrantPermission:output_type -> metadata_lifecycle.v1.GrantPermissionResponse
-	25, // 44: metadata_lifecycle.v1.GroupAccessService.RevokePermission:output_type -> metadata_lifecycle.v1.RevokePermissionResponse
-	33, // [33:45] is the sub-list for method output_type
-	21, // [21:33] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	31, // 11: metadata_lifecycle.v1.RequestMembershipResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	32, // 12: metadata_lifecycle.v1.DecideMembershipRequest.decision:type_name -> metadata_lifecycle.v1.Decision
+	1,  // 13: metadata_lifecycle.v1.DecideMembershipResponse.membership:type_name -> metadata_lifecycle.v1.GroupMembership
+	31, // 14: metadata_lifecycle.v1.DecideMembershipResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	27, // 15: metadata_lifecycle.v1.RequestRoleRequest.role:type_name -> metadata_lifecycle.v1.GroupRole
+	29, // 16: metadata_lifecycle.v1.RequestRoleResponse.request:type_name -> metadata_lifecycle.v1.RoleRequest
+	31, // 17: metadata_lifecycle.v1.RequestRoleResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	32, // 18: metadata_lifecycle.v1.DecideRoleRequestRequest.decision:type_name -> metadata_lifecycle.v1.Decision
+	1,  // 19: metadata_lifecycle.v1.DecideRoleRequestResponse.membership:type_name -> metadata_lifecycle.v1.GroupMembership
+	31, // 20: metadata_lifecycle.v1.DecideRoleRequestResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	27, // 21: metadata_lifecycle.v1.AssignRoleRequest.role:type_name -> metadata_lifecycle.v1.GroupRole
+	31, // 22: metadata_lifecycle.v1.AssignRoleResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	27, // 23: metadata_lifecycle.v1.RemoveRoleRequest.role:type_name -> metadata_lifecycle.v1.GroupRole
+	28, // 24: metadata_lifecycle.v1.GrantPermissionRequest.permission:type_name -> metadata_lifecycle.v1.GroupPermission
+	31, // 25: metadata_lifecycle.v1.GrantPermissionResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	28, // 26: metadata_lifecycle.v1.RevokePermissionRequest.permission:type_name -> metadata_lifecycle.v1.GroupPermission
+	2,  // 27: metadata_lifecycle.v1.GroupAccessService.ListGroupMemberships:input_type -> metadata_lifecycle.v1.ListGroupMembershipsRequest
+	4,  // 28: metadata_lifecycle.v1.GroupAccessService.RequestMembership:input_type -> metadata_lifecycle.v1.RequestMembershipRequest
+	6,  // 29: metadata_lifecycle.v1.GroupAccessService.WithdrawMembership:input_type -> metadata_lifecycle.v1.WithdrawMembershipRequest
+	8,  // 30: metadata_lifecycle.v1.GroupAccessService.DecideMembership:input_type -> metadata_lifecycle.v1.DecideMembershipRequest
+	10, // 31: metadata_lifecycle.v1.GroupAccessService.RevokeMembership:input_type -> metadata_lifecycle.v1.RevokeMembershipRequest
+	12, // 32: metadata_lifecycle.v1.GroupAccessService.RequestRole:input_type -> metadata_lifecycle.v1.RequestRoleRequest
+	14, // 33: metadata_lifecycle.v1.GroupAccessService.DecideRoleRequest:input_type -> metadata_lifecycle.v1.DecideRoleRequestRequest
+	16, // 34: metadata_lifecycle.v1.GroupAccessService.WithdrawRoleRequest:input_type -> metadata_lifecycle.v1.WithdrawRoleRequestRequest
+	18, // 35: metadata_lifecycle.v1.GroupAccessService.AssignRole:input_type -> metadata_lifecycle.v1.AssignRoleRequest
+	20, // 36: metadata_lifecycle.v1.GroupAccessService.RemoveRole:input_type -> metadata_lifecycle.v1.RemoveRoleRequest
+	22, // 37: metadata_lifecycle.v1.GroupAccessService.GrantPermission:input_type -> metadata_lifecycle.v1.GrantPermissionRequest
+	24, // 38: metadata_lifecycle.v1.GroupAccessService.RevokePermission:input_type -> metadata_lifecycle.v1.RevokePermissionRequest
+	3,  // 39: metadata_lifecycle.v1.GroupAccessService.ListGroupMemberships:output_type -> metadata_lifecycle.v1.ListGroupMembershipsResponse
+	5,  // 40: metadata_lifecycle.v1.GroupAccessService.RequestMembership:output_type -> metadata_lifecycle.v1.RequestMembershipResponse
+	7,  // 41: metadata_lifecycle.v1.GroupAccessService.WithdrawMembership:output_type -> metadata_lifecycle.v1.WithdrawMembershipResponse
+	9,  // 42: metadata_lifecycle.v1.GroupAccessService.DecideMembership:output_type -> metadata_lifecycle.v1.DecideMembershipResponse
+	11, // 43: metadata_lifecycle.v1.GroupAccessService.RevokeMembership:output_type -> metadata_lifecycle.v1.RevokeMembershipResponse
+	13, // 44: metadata_lifecycle.v1.GroupAccessService.RequestRole:output_type -> metadata_lifecycle.v1.RequestRoleResponse
+	15, // 45: metadata_lifecycle.v1.GroupAccessService.DecideRoleRequest:output_type -> metadata_lifecycle.v1.DecideRoleRequestResponse
+	17, // 46: metadata_lifecycle.v1.GroupAccessService.WithdrawRoleRequest:output_type -> metadata_lifecycle.v1.WithdrawRoleRequestResponse
+	19, // 47: metadata_lifecycle.v1.GroupAccessService.AssignRole:output_type -> metadata_lifecycle.v1.AssignRoleResponse
+	21, // 48: metadata_lifecycle.v1.GroupAccessService.RemoveRole:output_type -> metadata_lifecycle.v1.RemoveRoleResponse
+	23, // 49: metadata_lifecycle.v1.GroupAccessService.GrantPermission:output_type -> metadata_lifecycle.v1.GrantPermissionResponse
+	25, // 50: metadata_lifecycle.v1.GroupAccessService.RevokePermission:output_type -> metadata_lifecycle.v1.RevokePermissionResponse
+	39, // [39:51] is the sub-list for method output_type
+	27, // [27:39] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_access_proto_init() }

@@ -9593,12 +9593,34 @@ func (s *GlobalPermission) Decode(d *jx.Decoder) error {
 		*s = GlobalPermissionGlobalRoleManage
 	case GlobalPermissionGlobalPermissionManage:
 		*s = GlobalPermissionGlobalPermissionManage
-	case GlobalPermissionOrganizationManage:
-		*s = GlobalPermissionOrganizationManage
-	case GlobalPermissionContactPointManage:
-		*s = GlobalPermissionContactPointManage
-	case GlobalPermissionCategorySchemeManage:
-		*s = GlobalPermissionCategorySchemeManage
+	case GlobalPermissionGlobalNotificationManage:
+		*s = GlobalPermissionGlobalNotificationManage
+	case GlobalPermissionGlobalOrganizationManage:
+		*s = GlobalPermissionGlobalOrganizationManage
+	case GlobalPermissionGlobalContactPointManage:
+		*s = GlobalPermissionGlobalContactPointManage
+	case GlobalPermissionGlobalCategorySchemeManage:
+		*s = GlobalPermissionGlobalCategorySchemeManage
+	case GlobalPermissionGlobalResourceCreate:
+		*s = GlobalPermissionGlobalResourceCreate
+	case GlobalPermissionGlobalResourceEdit:
+		*s = GlobalPermissionGlobalResourceEdit
+	case GlobalPermissionGlobalResourceSubmit:
+		*s = GlobalPermissionGlobalResourceSubmit
+	case GlobalPermissionGlobalResourceWithdraw:
+		*s = GlobalPermissionGlobalResourceWithdraw
+	case GlobalPermissionGlobalResourceReopen:
+		*s = GlobalPermissionGlobalResourceReopen
+	case GlobalPermissionGlobalResourceDiscard:
+		*s = GlobalPermissionGlobalResourceDiscard
+	case GlobalPermissionGlobalResourceReject:
+		*s = GlobalPermissionGlobalResourceReject
+	case GlobalPermissionGlobalResourcePublish:
+		*s = GlobalPermissionGlobalResourcePublish
+	case GlobalPermissionGlobalResourceUnpublish:
+		*s = GlobalPermissionGlobalResourceUnpublish
+	case GlobalPermissionGlobalCategoryManage:
+		*s = GlobalPermissionGlobalCategoryManage
 	default:
 		*s = GlobalPermission(v)
 	}
@@ -10159,32 +10181,34 @@ func (s *GroupPermission) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch GroupPermission(v) {
-	case GroupPermissionResourceCreate:
-		*s = GroupPermissionResourceCreate
-	case GroupPermissionResourceEdit:
-		*s = GroupPermissionResourceEdit
-	case GroupPermissionResourceSubmit:
-		*s = GroupPermissionResourceSubmit
-	case GroupPermissionResourceWithdraw:
-		*s = GroupPermissionResourceWithdraw
-	case GroupPermissionResourceReopen:
-		*s = GroupPermissionResourceReopen
-	case GroupPermissionResourceDiscard:
-		*s = GroupPermissionResourceDiscard
-	case GroupPermissionResourceReject:
-		*s = GroupPermissionResourceReject
-	case GroupPermissionResourcePublish:
-		*s = GroupPermissionResourcePublish
-	case GroupPermissionResourceUnpublish:
-		*s = GroupPermissionResourceUnpublish
+	case GroupPermissionGroupResourceCreate:
+		*s = GroupPermissionGroupResourceCreate
+	case GroupPermissionGroupResourceEdit:
+		*s = GroupPermissionGroupResourceEdit
+	case GroupPermissionGroupResourceSubmit:
+		*s = GroupPermissionGroupResourceSubmit
+	case GroupPermissionGroupResourceWithdraw:
+		*s = GroupPermissionGroupResourceWithdraw
+	case GroupPermissionGroupResourceReopen:
+		*s = GroupPermissionGroupResourceReopen
+	case GroupPermissionGroupResourceDiscard:
+		*s = GroupPermissionGroupResourceDiscard
+	case GroupPermissionGroupResourceReject:
+		*s = GroupPermissionGroupResourceReject
+	case GroupPermissionGroupResourcePublish:
+		*s = GroupPermissionGroupResourcePublish
+	case GroupPermissionGroupResourceUnpublish:
+		*s = GroupPermissionGroupResourceUnpublish
 	case GroupPermissionGroupMembershipManage:
 		*s = GroupPermissionGroupMembershipManage
 	case GroupPermissionGroupRoleManage:
 		*s = GroupPermissionGroupRoleManage
 	case GroupPermissionGroupPermissionManage:
 		*s = GroupPermissionGroupPermissionManage
-	case GroupPermissionCategoryManage:
-		*s = GroupPermissionCategoryManage
+	case GroupPermissionGroupNotificationManage:
+		*s = GroupPermissionGroupNotificationManage
+	case GroupPermissionGroupCategoryManage:
+		*s = GroupPermissionGroupCategoryManage
 	default:
 		*s = GroupPermission(v)
 	}
@@ -12809,6 +12833,451 @@ func (s NonBlankString) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *NonBlankString) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes NotificationChannel as json.
+func (s NotificationChannel) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes NotificationChannel from json.
+func (s *NotificationChannel) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode NotificationChannel to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch NotificationChannel(v) {
+	case NotificationChannelEMAIL:
+		*s = NotificationChannelEMAIL
+	default:
+		*s = NotificationChannel(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s NotificationChannel) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *NotificationChannel) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes NotificationScope as json.
+func (s NotificationScope) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes NotificationScope from json.
+func (s *NotificationScope) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode NotificationScope to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch NotificationScope(v) {
+	case NotificationScopeGROUP:
+		*s = NotificationScopeGROUP
+	case NotificationScopeGLOBAL:
+		*s = NotificationScopeGLOBAL
+	default:
+		*s = NotificationScope(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s NotificationScope) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *NotificationScope) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *NotificationSubscription) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *NotificationSubscription) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("user_id")
+		e.Str(s.UserID)
+	}
+	{
+		if s.GroupID.Set {
+			e.FieldStart("group_id")
+			s.GroupID.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("topic_key")
+		s.TopicKey.Encode(e)
+	}
+	{
+		e.FieldStart("channel")
+		s.Channel.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfNotificationSubscription = [4]string{
+	0: "user_id",
+	1: "group_id",
+	2: "topic_key",
+	3: "channel",
+}
+
+// Decode decodes NotificationSubscription from json.
+func (s *NotificationSubscription) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode NotificationSubscription to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "user_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.UserID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"user_id\"")
+			}
+		case "group_id":
+			if err := func() error {
+				s.GroupID.Reset()
+				if err := s.GroupID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"group_id\"")
+			}
+		case "topic_key":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.TopicKey.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"topic_key\"")
+			}
+		case "channel":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Channel.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"channel\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode NotificationSubscription")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00001101,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfNotificationSubscription) {
+					name = jsonFieldsNameOfNotificationSubscription[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *NotificationSubscription) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *NotificationSubscription) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *NotificationTopic) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *NotificationTopic) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("key")
+		s.Key.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		e.Str(s.Label)
+	}
+	{
+		e.FieldStart("description")
+		e.Str(s.Description)
+	}
+	{
+		e.FieldStart("scope")
+		s.Scope.Encode(e)
+	}
+	{
+		e.FieldStart("required_permissions")
+		e.ArrStart()
+		for _, elem := range s.RequiredPermissions {
+			e.Str(elem)
+		}
+		e.ArrEnd()
+	}
+}
+
+var jsonFieldsNameOfNotificationTopic = [5]string{
+	0: "key",
+	1: "label",
+	2: "description",
+	3: "scope",
+	4: "required_permissions",
+}
+
+// Decode decodes NotificationTopic from json.
+func (s *NotificationTopic) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode NotificationTopic to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "key":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Key.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"key\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Label = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Str()
+				s.Description = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "scope":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Scope.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"scope\"")
+			}
+		case "required_permissions":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				s.RequiredPermissions = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.RequiredPermissions = append(s.RequiredPermissions, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required_permissions\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode NotificationTopic")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00011111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfNotificationTopic) {
+					name = jsonFieldsNameOfNotificationTopic[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *NotificationTopic) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *NotificationTopic) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes NotificationTopicKey as json.
+func (s NotificationTopicKey) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes NotificationTopicKey from json.
+func (s *NotificationTopicKey) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode NotificationTopicKey to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch NotificationTopicKey(v) {
+	case NotificationTopicKeyGroupMembershipRequested:
+		*s = NotificationTopicKeyGroupMembershipRequested
+	case NotificationTopicKeyGlobalMembershipRequested:
+		*s = NotificationTopicKeyGlobalMembershipRequested
+	case NotificationTopicKeyGroupRoleRequestRequested:
+		*s = NotificationTopicKeyGroupRoleRequestRequested
+	case NotificationTopicKeyGlobalRoleRequestRequested:
+		*s = NotificationTopicKeyGlobalRoleRequestRequested
+	case NotificationTopicKeyGroupResourceSubmitted:
+		*s = NotificationTopicKeyGroupResourceSubmitted
+	case NotificationTopicKeyGroupResourcePublished:
+		*s = NotificationTopicKeyGroupResourcePublished
+	case NotificationTopicKeyGlobalResourceSubmitted:
+		*s = NotificationTopicKeyGlobalResourceSubmitted
+	case NotificationTopicKeyGlobalResourcePublished:
+		*s = NotificationTopicKeyGlobalResourcePublished
+	default:
+		*s = NotificationTopicKey(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s NotificationTopicKey) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *NotificationTopicKey) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

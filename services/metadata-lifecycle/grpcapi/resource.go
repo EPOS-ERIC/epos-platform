@@ -316,8 +316,9 @@ func (s *ResourceServer) DiscardResourceDraft(ctx context.Context, request *meta
 	return &metadatalifecyclev1.DiscardResourceDraftResponse{}, nil
 }
 
+//nolint:dupl // Resource lifecycle transitions intentionally mirror per-resource services.
 func (s *ResourceServer) SubmitResource(ctx context.Context, request *metadatalifecyclev1.SubmitResourceRequest) (*metadatalifecyclev1.SubmitResourceResponse, error) {
-	record, err := s.lifecycleTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, error) {
+	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, []domain.Notification, error) {
 		switch request.GetResourceType() {
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 			return s.datasets.Submit(ctx, actor, id, version)
@@ -326,13 +327,22 @@ func (s *ResourceServer) SubmitResource(ctx context.Context, request *metadatali
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
 			return s.sourceCodes.Submit(ctx, actor, id, version)
 		default:
-			return nil, status.Error(codes.InvalidArgument, "resource type is required")
+			return nil, nil, status.Error(codes.InvalidArgument, "resource type is required")
 		}
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &metadatalifecyclev1.SubmitResourceResponse{Resource: record}, nil
+
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.SubmitResourceResponse{
+		Resource:      record,
+		Notifications: protoNotifications,
+	}, nil
 }
 
 func (s *ResourceServer) WithdrawResource(ctx context.Context, request *metadatalifecyclev1.WithdrawResourceRequest) (*metadatalifecyclev1.WithdrawResourceResponse, error) {
@@ -368,34 +378,65 @@ func (s *ResourceServer) RejectResource(ctx context.Context, request *metadatali
 		if e != nil {
 			return nil, wrapHandlerError(e)
 		}
-		result, e := s.datasets.Reject(ctx, actor, resourceID, versionID, value)
+		result, notifications, e := s.datasets.Reject(ctx, actor, resourceID, versionID, value)
 		if e != nil {
 			return nil, wrapHandlerError(e)
 		}
 		record, e := lifecycleResponse(result)
-		return &metadatalifecyclev1.RejectResourceResponse{Resource: record}, e
+		if e != nil {
+			return nil, e
+		}
+
+		protoNotifications, e := mapSliceErr(notifications, toProtoNotification)
+		if e != nil {
+			return nil, e
+		}
+
+		return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
 		value, e := domain.NewSoftwareApplicationRejectionInput(domain.SoftwareApplicationRejectionInput{Note: request.GetNote()})
 		if e != nil {
 			return nil, wrapHandlerError(e)
 		}
-		result, e := s.applications.Reject(ctx, actor, resourceID, versionID, value)
+
+		result, notifications, e := s.applications.Reject(ctx, actor, resourceID, versionID, value)
 		if e != nil {
 			return nil, wrapHandlerError(e)
 		}
+
 		record, e := lifecycleResponse(result)
-		return &metadatalifecyclev1.RejectResourceResponse{Resource: record}, e
+		if e != nil {
+			return nil, e
+		}
+
+		protoNotifications, e := mapSliceErr(notifications, toProtoNotification)
+		if e != nil {
+			return nil, e
+		}
+
+		return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
 		value, e := domain.NewSoftwareSourceCodeRejectionInput(domain.SoftwareSourceCodeRejectionInput{Note: request.GetNote()})
 		if e != nil {
 			return nil, wrapHandlerError(e)
 		}
-		result, e := s.sourceCodes.Reject(ctx, actor, resourceID, versionID, value)
+
+		result, notifications, e := s.sourceCodes.Reject(ctx, actor, resourceID, versionID, value)
 		if e != nil {
 			return nil, wrapHandlerError(e)
 		}
+
 		record, e := lifecycleResponse(result)
-		return &metadatalifecyclev1.RejectResourceResponse{Resource: record}, e
+		if e != nil {
+			return nil, e
+		}
+
+		protoNotifications, e := mapSliceErr(notifications, toProtoNotification)
+		if e != nil {
+			return nil, e
+		}
+
+		return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
 	default:
 		return nil, status.Error(codes.InvalidArgument, "resource type is required") //nolint:wrapcheck
 	}
@@ -420,8 +461,9 @@ func (s *ResourceServer) ReopenResource(ctx context.Context, request *metadatali
 	return &metadatalifecyclev1.ReopenResourceResponse{Resource: record}, nil
 }
 
+//nolint:dupl // Resource lifecycle transitions intentionally mirror per-resource services.
 func (s *ResourceServer) PublishResource(ctx context.Context, request *metadatalifecyclev1.PublishResourceRequest) (*metadatalifecyclev1.PublishResourceResponse, error) {
-	record, err := s.lifecycleTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, error) {
+	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, []domain.Notification, error) {
 		switch request.GetResourceType() {
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 			return s.datasets.Publish(ctx, actor, id, version)
@@ -430,17 +472,24 @@ func (s *ResourceServer) PublishResource(ctx context.Context, request *metadatal
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
 			return s.sourceCodes.Publish(ctx, actor, id, version)
 		default:
-			return nil, status.Error(codes.InvalidArgument, "resource type is required")
+			return nil, nil, status.Error(codes.InvalidArgument, "resource type is required")
 		}
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &metadatalifecyclev1.PublishResourceResponse{Resource: record}, nil
+
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.PublishResourceResponse{Resource: record, Notifications: protoNotifications}, nil
 }
 
+//nolint:dupl // Resource lifecycle transitions intentionally mirror per-resource services.
 func (s *ResourceServer) UnpublishResource(ctx context.Context, request *metadatalifecyclev1.UnpublishResourceRequest) (*metadatalifecyclev1.UnpublishResourceResponse, error) {
-	record, err := s.lifecycleTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, error) {
+	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, []domain.Notification, error) {
 		switch request.GetResourceType() {
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 			return s.datasets.Unpublish(ctx, actor, id, version)
@@ -449,13 +498,19 @@ func (s *ResourceServer) UnpublishResource(ctx context.Context, request *metadat
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
 			return s.sourceCodes.Unpublish(ctx, actor, id, version)
 		default:
-			return nil, status.Error(codes.InvalidArgument, "resource type is required")
+			return nil, nil, status.Error(codes.InvalidArgument, "resource type is required")
 		}
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &metadatalifecyclev1.UnpublishResourceResponse{Resource: record}, nil
+
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.UnpublishResourceResponse{Resource: record, Notifications: protoNotifications}, nil
 }
 
 func (s *ResourceServer) DraftResourceFromPublication(ctx context.Context, request *metadatalifecyclev1.DraftResourceFromPublicationRequest) (*metadatalifecyclev1.DraftResourceFromPublicationResponse, error) {
@@ -552,6 +607,23 @@ func (s *ResourceServer) lifecycleTransition(ctx context.Context, request resour
 		return nil, err
 	}
 	return lifecycleResponse(result)
+}
+
+func (s *ResourceServer) lifecycleNotificationTransition(ctx context.Context, request resourceVersionRequest, call func(domain.Actor, uuid.UUID, uuid.UUID) (any, []domain.Notification, error)) (*metadatalifecyclev1.ResourceRecord, []domain.Notification, error) {
+	// TODO: to simplify this whole file with the submit/publis/reject actions which are basically the same, we could create an interface and use that to switch on the functions?
+	actor, id, version, _, err := s.lifecycleRequest(ctx, request)
+	if err != nil {
+		return nil, nil, err
+	}
+	result, notifications, err := call(actor, id, version)
+	if err != nil {
+		return nil, nil, err
+	}
+	record, err := lifecycleResponse(result)
+	if err != nil {
+		return nil, nil, err
+	}
+	return record, notifications, nil
 }
 
 type draftResourceRequest interface {

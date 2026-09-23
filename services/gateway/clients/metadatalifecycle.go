@@ -29,15 +29,22 @@ type MetadataLifecycle struct {
 	discovery     metadatalifecyclev1.DiscoveryServiceClient
 	import_       metadatalifecyclev1.ImportServiceClient
 	identity      metadatalifecyclev1.IdentityServiceClient
+	notifications metadatalifecyclev1.NotificationServiceClient
+}
+
+type NotificationDispatcher interface {
+	Dispatch(context.Context, []domain.Notification)
 }
 
 const actorMetadataKey = "x-epos-user-id"
 
-func NewMetadataLifecycle(log *slog.Logger, baseURL string) (*MetadataLifecycle, error) {
+func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher NotificationDispatcher) (*MetadataLifecycle, error) {
 	conn, err := grpc.NewClient(
 		baseURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+		// intercept every response, if there are any notifications, dispatch them
+		grpc.WithUnaryInterceptor(notificationInterceptor(log, dispatcher)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create metadata-lifecycle gRPC client: %w", err)
@@ -56,6 +63,7 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string) (*MetadataLifecycle,
 		discovery:     metadatalifecyclev1.NewDiscoveryServiceClient(conn),
 		import_:       metadatalifecyclev1.NewImportServiceClient(conn),
 		identity:      metadatalifecyclev1.NewIdentityServiceClient(conn),
+		notifications: metadatalifecyclev1.NewNotificationServiceClient(conn),
 	}
 
 	return client, nil

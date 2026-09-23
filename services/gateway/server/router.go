@@ -62,6 +62,7 @@ func NewRouter(
 		metadataLifecycleClient,
 		dataRetrieverClient,
 		sharingClient,
+		log,
 	)
 	generatedServer, err := gatewayapi.NewServer(
 		generatedHandler,

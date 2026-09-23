@@ -120,23 +120,23 @@ func toAPIProtoGroupPermissions(values []metadatalifecyclev1.GroupPermission) ([
 		var permission gatewayapi.GroupPermission
 		switch value {
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE:
-			permission = gatewayapi.GroupPermissionResourceCreate
+			permission = gatewayapi.GroupPermissionGroupResourceCreate
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_EDIT:
-			permission = gatewayapi.GroupPermissionResourceEdit
+			permission = gatewayapi.GroupPermissionGroupResourceEdit
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_SUBMIT:
-			permission = gatewayapi.GroupPermissionResourceSubmit
+			permission = gatewayapi.GroupPermissionGroupResourceSubmit
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_WITHDRAW:
-			permission = gatewayapi.GroupPermissionResourceWithdraw
+			permission = gatewayapi.GroupPermissionGroupResourceWithdraw
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REOPEN:
-			permission = gatewayapi.GroupPermissionResourceReopen
+			permission = gatewayapi.GroupPermissionGroupResourceReopen
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_DISCARD:
-			permission = gatewayapi.GroupPermissionResourceDiscard
+			permission = gatewayapi.GroupPermissionGroupResourceDiscard
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_REJECT:
-			permission = gatewayapi.GroupPermissionResourceReject
+			permission = gatewayapi.GroupPermissionGroupResourceReject
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_PUBLISH:
-			permission = gatewayapi.GroupPermissionResourcePublish
+			permission = gatewayapi.GroupPermissionGroupResourcePublish
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_UNPUBLISH:
-			permission = gatewayapi.GroupPermissionResourceUnpublish
+			permission = gatewayapi.GroupPermissionGroupResourceUnpublish
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_MEMBERSHIP_MANAGE:
 			permission = gatewayapi.GroupPermissionGroupMembershipManage
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_ROLE_MANAGE:
@@ -144,7 +144,7 @@ func toAPIProtoGroupPermissions(values []metadatalifecyclev1.GroupPermission) ([
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE:
 			permission = gatewayapi.GroupPermissionGroupPermissionManage
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE:
-			permission = gatewayapi.GroupPermissionCategoryManage
+			permission = gatewayapi.GroupPermissionGroupCategoryManage
 		default:
 			return nil, fmt.Errorf("metadata-lifecycle returned unknown group permission: %v", value)
 		}

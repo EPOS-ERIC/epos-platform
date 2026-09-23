@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
@@ -14,6 +15,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	"github.com/ogen-go/ogen/ogenerrors"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -29,15 +31,17 @@ type ogenHandler struct {
 	sharing           *clients.Sharing
 	identity          *identity.Service
 	membership        *membership.Service
+	log               *slog.Logger
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, dataRetriever *clients.DataRetriever, sharing *clients.Sharing) *ogenHandler {
+func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, dataRetriever *clients.DataRetriever, sharing *clients.Sharing, log *slog.Logger) *ogenHandler {
 	return &ogenHandler{
 		metadataLifecycle: metadataLifecycle,
 		dataRetriever:     dataRetriever,
 		sharing:           sharing,
 		identity:          i,
 		membership:        m,
+		log:               log,
 	}
 }
 
@@ -45,6 +49,10 @@ var _ gatewayapi.Handler = (*ogenHandler)(nil)
 
 func (h *ogenHandler) NewError(ctx context.Context, err error) *gatewayapi.ProblemStatusCode {
 	status, title, detail := problemDetails(err)
+	if status >= http.StatusInternalServerError {
+		trace.SpanFromContext(ctx).RecordError(err)
+		h.log.ErrorContext(ctx, "gateway request failed", "status", status, "error", err)
+	}
 	response := gatewayapi.Problem{
 		Title:  title,
 		Status: status,

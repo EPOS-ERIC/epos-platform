@@ -18,6 +18,7 @@ import (
 	discoverydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/discovery"
 	groupdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/groups"
 	importdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/metadataimport"
+	notificationdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/notifications"
 	organizationdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/organizations"
 	softwareapplicationsdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwareapplications"
 	softwaresourcecodesdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwaresourcecodes"
@@ -47,6 +48,7 @@ type PostgresDB struct {
 	Imports              *importdb.Repo
 	SoftwareApplications *softwareapplicationsdb.Repo
 	SoftwareSourceCodes  *softwaresourcecodesdb.Repo
+	Notifications        *notificationdb.Repo
 }
 
 // Open connects to PostgreSQL, applies migrations, and builds repositories.
@@ -88,7 +90,9 @@ func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 		if err := pgxgeom.Register(ctx, conn); err != nil {
 			return fmt.Errorf("register PostGIS codec: %w", err)
 		}
-		parameterTypes, err := conn.LoadTypes(ctx, []string{
+		customTypes, err := conn.LoadTypes(ctx, []string{
+			"web_service_visible_on",
+			"_web_service_visible_on",
 			"string_parameter_enum_option",
 			"_string_parameter_enum_option",
 			"integer_parameter_enum_option",
@@ -97,9 +101,9 @@ func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 			"_float_parameter_enum_option",
 		})
 		if err != nil {
-			return fmt.Errorf("load parameter types: %w", err)
+			return fmt.Errorf("load PostgreSQL types: %w", err)
 		}
-		conn.TypeMap().RegisterTypes(parameterTypes)
+		conn.TypeMap().RegisterTypes(customTypes)
 		return nil
 	}
 	db, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
@@ -130,6 +134,7 @@ func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 		Imports:              importdb.New(db),
 		SoftwareApplications: softwareapplicationsdb.New(db),
 		SoftwareSourceCodes:  softwaresourcecodesdb.New(db),
+		Notifications:        notificationdb.New(db),
 	}, nil
 }
 

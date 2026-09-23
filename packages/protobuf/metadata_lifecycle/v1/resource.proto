@@ -488,6 +488,7 @@ message UnpublishResourceRequest {
 
 message SubmitResourceResponse {
   ResourceRecord resource = 1;
+  repeated Notification notifications = 2;
 }
 message WithdrawResourceResponse {
   ResourceRecord resource = 1;
@@ -497,9 +498,11 @@ message ReopenResourceResponse {
 }
 message PublishResourceResponse {
   ResourceRecord resource = 1;
+  repeated Notification notifications = 2;
 }
 message UnpublishResourceResponse {
   ResourceRecord resource = 1;
+  repeated Notification notifications = 2;
 }
 message DiscardResourceDraftResponse {}
 
@@ -511,6 +514,7 @@ message RejectResourceRequest {
 }
 message RejectResourceResponse {
   ResourceRecord resource = 1;
+  repeated Notification notifications = 2;
 }
 
 message DraftResourceFromPublicationRequest {

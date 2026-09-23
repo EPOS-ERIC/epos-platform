@@ -104,11 +104,17 @@ func (u *UserServer) GrantGlobalPermission(ctx context.Context, request *metadat
 		return nil, wrapHandlerError(err)
 	}
 
-	if err := u.users.GrantGlobalPermission(ctx, actor, request.GetUserId(), permission); err != nil {
+	notifications, err := u.users.GrantGlobalPermission(ctx, actor, request.GetUserId(), permission)
+	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
 
-	return &metadatalifecyclev1.GrantGlobalPermissionResponse{}, nil
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.GrantGlobalPermissionResponse{Notifications: protoNotifications}, nil
 }
 
 func (u *UserServer) RevokeGlobalPermission(ctx context.Context, request *metadatalifecyclev1.RevokeGlobalPermissionRequest) (*metadatalifecyclev1.RevokeGlobalPermissionResponse, error) {
@@ -138,11 +144,18 @@ func (u *UserServer) AssignGlobalRole(ctx context.Context, request *metadatalife
 	if err != nil {
 		return nil, err
 	}
-	if err := u.users.AssignGlobalRole(ctx, actor, request.GetUserId(), string(role)); err != nil {
+
+	notifications, err := u.users.AssignGlobalRole(ctx, actor, request.GetUserId(), string(role))
+	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
 
-	return &metadatalifecyclev1.AssignGlobalRoleResponse{}, nil
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.AssignGlobalRoleResponse{Notifications: protoNotifications}, nil
 }
 
 func (u *UserServer) RemoveGlobalRole(ctx context.Context, request *metadatalifecyclev1.RemoveGlobalRoleRequest) (*metadatalifecyclev1.RemoveGlobalRoleResponse, error) {
@@ -155,6 +168,7 @@ func (u *UserServer) RemoveGlobalRole(ctx context.Context, request *metadatalife
 	if err != nil {
 		return nil, err
 	}
+
 	if err := u.users.RemoveGlobalRole(ctx, actor, request.GetUserId(), string(role)); err != nil {
 		return nil, wrapHandlerError(err)
 	}
@@ -368,12 +382,34 @@ func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE, nil
 	case domain.GlobalPermissionPermissionManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GlobalPermissionNotificationManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE, nil
 	case domain.GlobalPermissionOrganizationManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE, nil
 	case domain.GlobalPermissionContactPointManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE, nil
 	case domain.GlobalPermissionCategorySchemeManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE, nil
+	case domain.GlobalPermissionResourceCreate:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE, nil
+	case domain.GlobalPermissionResourceEdit:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_EDIT, nil
+	case domain.GlobalPermissionResourceSubmit:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_SUBMIT, nil
+	case domain.GlobalPermissionResourceWithdraw:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_WITHDRAW, nil
+	case domain.GlobalPermissionResourceReopen:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REOPEN, nil
+	case domain.GlobalPermissionResourceDiscard:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_DISCARD, nil
+	case domain.GlobalPermissionResourceReject:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REJECT, nil
+	case domain.GlobalPermissionResourcePublish:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_PUBLISH, nil
+	case domain.GlobalPermissionResourceUnpublish:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_UNPUBLISH, nil
+	case domain.GlobalPermissionCategoryManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE, nil
 	default:
 		return 0, fmt.Errorf("unknown global permission: %q", value)
 	}
@@ -387,12 +423,34 @@ func toDomainGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domai
 		return domain.GlobalPermissionRoleManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE:
 		return domain.GlobalPermissionPermissionManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE:
+		return domain.GlobalPermissionNotificationManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE:
 		return domain.GlobalPermissionOrganizationManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE:
 		return domain.GlobalPermissionContactPointManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE:
 		return domain.GlobalPermissionCategorySchemeManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE:
+		return domain.GlobalPermissionResourceCreate, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_EDIT:
+		return domain.GlobalPermissionResourceEdit, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_SUBMIT:
+		return domain.GlobalPermissionResourceSubmit, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_WITHDRAW:
+		return domain.GlobalPermissionResourceWithdraw, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REOPEN:
+		return domain.GlobalPermissionResourceReopen, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_DISCARD:
+		return domain.GlobalPermissionResourceDiscard, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REJECT:
+		return domain.GlobalPermissionResourceReject, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_PUBLISH:
+		return domain.GlobalPermissionResourcePublish, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_UNPUBLISH:
+		return domain.GlobalPermissionResourceUnpublish, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE:
+		return domain.GlobalPermissionCategoryManage, nil
 	default:
 		return "", domain.ErrInvalidAccess
 	}
