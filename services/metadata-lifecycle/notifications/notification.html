@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<body>
+<h1>{{subject .Event}}</h1>
+
+{{if eq .Event.Kind "membership.requested"}}
+<p>{{userLabel .Context.Subject}} requested to join {{groupName .Context.Group}}.</p>
+{{else if eq .Event.Kind "membership.accepted"}}
+<p>{{userLabel .Context.Subject}}'s request to join {{groupName .Context.Group}} was approved by {{userLabel .Context.Actor}}.</p>
+{{else if eq .Event.Kind "membership.rejected"}}
+<p>{{userLabel .Context.Subject}}'s request to join {{groupName .Context.Group}} was rejected by {{userLabel .Context.Actor}}.</p>
+{{else if eq .Event.Kind "role_request.requested"}}
+<p>{{userLabel .Context.Subject}} requested the <strong>{{.Event.Role}}</strong> role in {{groupName .Context.Group}}.</p>
+{{else if eq .Event.Kind "role_request.accepted"}}
+<p>{{userLabel .Context.Subject}}'s request for the <strong>{{.Event.Role}}</strong> role in {{groupName .Context.Group}} was approved by {{userLabel .Context.Actor}}.</p>
+{{else if eq .Event.Kind "role_request.rejected"}}
+<p>{{userLabel .Context.Subject}}'s request for the <strong>{{.Event.Role}}</strong> role in {{groupName .Context.Group}} was rejected by {{userLabel .Context.Actor}}.</p>
+{{else if eq .Event.Kind "role.assigned"}}
+<p>{{userLabel .Context.Actor}} assigned the <strong>{{.Event.Role}}</strong> role in {{groupName .Context.Group}} to {{userLabel .Context.Subject}}.</p>
+{{else if eq .Event.Kind "permission.assigned"}}
+<p>{{userLabel .Context.Actor}} granted the <strong>{{.Event.Permission}}</strong> permission in {{groupName .Context.Group}} to {{userLabel .Context.Subject}}.</p>
+{{else if eq .Event.Kind "resource.submitted"}}
+<p>{{userLabel .Context.Actor}} submitted {{resourceName .Event.Resource}} for review.</p>
+{{else if eq .Event.Kind "resource.published"}}
+<p>{{userLabel .Context.Actor}} published {{resourceName .Event.Resource}}.</p>
+{{else if eq .Event.Kind "resource.rejected"}}
+<p>{{userLabel .Context.Actor}} rejected {{resourceName .Event.Resource}}.</p>
+{{else if eq .Event.Kind "resource.unpublished"}}
+<p>{{userLabel .Context.Actor}} unpublished {{resourceName .Event.Resource}}.</p>
+{{else}}
+<p>A metadata lifecycle event occurred.</p>
+{{end}}
+
+{{if eq .Event.Kind "membership.requested"}}
+{{if .Context.Subject}}<p><strong>Requester:</strong> {{userLabel .Context.Subject}}</p>{{end}}
+{{else if or (eq .Event.Kind "membership.accepted") (eq .Event.Kind "membership.rejected") (eq .Event.Kind "role_request.accepted") (eq .Event.Kind "role_request.rejected")}}
+{{if .Context.Subject}}<p><strong>Requester:</strong> {{userLabel .Context.Subject}}</p>{{end}}
+{{if .Context.Actor}}<p><strong>Decided by:</strong> {{userLabel .Context.Actor}}</p>{{end}}
+{{else if eq .Event.Kind "role_request.requested"}}
+{{if .Context.Subject}}<p><strong>Requester:</strong> {{userLabel .Context.Subject}}</p>{{end}}
+{{else if eq .Event.Kind "role.assigned"}}
+{{if .Context.Actor}}<p><strong>Assigned by:</strong> {{userLabel .Context.Actor}}</p>{{end}}
+{{if .Context.Subject}}<p><strong>Assigned to:</strong> {{userLabel .Context.Subject}}</p>{{end}}
+{{else if eq .Event.Kind "permission.assigned"}}
+{{if .Context.Actor}}<p><strong>Granted by:</strong> {{userLabel .Context.Actor}}</p>{{end}}
+{{if .Context.Subject}}<p><strong>Granted to:</strong> {{userLabel .Context.Subject}}</p>{{end}}
+{{else if or (eq .Event.Kind "resource.submitted") (eq .Event.Kind "resource.published") (eq .Event.Kind "resource.rejected") (eq .Event.Kind "resource.unpublished")}}
+{{if .Context.Actor}}<p><strong>Performed by:</strong> {{userLabel .Context.Actor}}</p>{{end}}
+{{if and .Context.Subject (not (sameUser .Context.Actor .Context.Subject))}}<p><strong>Submitted by:</strong> {{userLabel .Context.Subject}}</p>{{end}}
+{{end}}
+{{if .Context.Group}}<p><strong>Group:</strong> {{groupName .Context.Group}}{{if .Context.Group.Concept}} ({{.Context.Group.Concept}}){{end}}</p>{{end}}
+{{if .Event.AccessID}}<p><strong>Access request:</strong> {{.Event.AccessID}}</p>{{end}}
+{{if .Event.Resource}}
+<p><strong>Resource:</strong> {{resourceName .Event.Resource}}</p>
+<p><strong>Resource ID:</strong> {{.Event.Resource.ResourceID}}</p>
+<p><strong>Version ID:</strong> {{.Event.Resource.VersionID}}</p>
+<p><strong>Status:</strong> {{.Event.Resource.Status}}</p>
+<p><strong>Revision:</strong> {{.Event.Resource.Revision}}</p>
+{{if .Event.Resource.RejectionNote}}<p><strong>Rejection note:</strong> {{.Event.Resource.RejectionNote}}</p>{{end}}
+{{end}}
+
+{{if .Context.Links}}
+<p><strong>Open in Gateway:</strong></p>
+<ul>
+{{range .Context.Links}}<li><a href="{{.URL}}">{{.Label}}</a></li>{{end}}
+</ul>
+{{end}}
+</body>
+</html>

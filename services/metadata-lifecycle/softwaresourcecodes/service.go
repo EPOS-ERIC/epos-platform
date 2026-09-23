@@ -37,17 +37,23 @@ type Authorizer interface {
 	CanReadSoftwareSourceCodeVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
 }
 
+type Notifier interface {
+	Build(context.Context, domain.NotificationEvent) ([]domain.Notification, error)
+}
+
 type Service struct {
 	store      Store
 	authorizer Authorizer
 	log        *slog.Logger
+	notifier   Notifier
 }
 
-func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
+func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier) *Service {
 	return &Service{
 		store:      store,
 		authorizer: authorizer,
 		log:        log.With("component", "software-source-codes-service"),
+		notifier:   notifier,
 	}
 }
 
@@ -108,12 +114,29 @@ func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, sourceCo
 	return versions, operationError("list source code versions", err)
 }
 
-func (s *Service) Submit(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
+//nolint:dupl // Resource lifecycle notification paths intentionally mirror each other.
+func (s *Service) Submit(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceSubmit); err != nil {
-		return domain.SoftwareSourceCodeVersion{}, operationError("authorize submission", err)
+		return domain.SoftwareSourceCodeVersion{}, nil, operationError("authorize submission", err)
 	}
+
 	sourceCode, err := s.store.Submit(ctx, string(actor), sourceCodeID, versionID)
-	return sourceCode, operationError("submit draft", err)
+	if err != nil {
+		return domain.SoftwareSourceCodeVersion{}, nil, operationError("submit draft", err)
+	}
+
+	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
+		Kind:     domain.NotificationEventResourceSubmitted,
+		ActorID:  actor,
+		GroupID:  &sourceCode.Group.ID,
+		Resource: sourceCodeNotificationResource(sourceCode),
+	})
+	if buildErr != nil {
+		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceSubmitted, "error", buildErr)
+		notifications = nil
+	}
+
+	return sourceCode, notifications, nil
 }
 
 func (s *Service) Withdraw(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
@@ -124,12 +147,28 @@ func (s *Service) Withdraw(ctx context.Context, actor domain.Actor, sourceCodeID
 	return sourceCode, operationError("withdraw submission", err)
 }
 
-func (s *Service) Reject(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeRejectionInput) (domain.SoftwareSourceCodeVersion, error) {
+func (s *Service) Reject(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeRejectionInput) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceReject); err != nil {
-		return domain.SoftwareSourceCodeVersion{}, operationError("authorize rejection", err)
+		return domain.SoftwareSourceCodeVersion{}, nil, operationError("authorize rejection", err)
 	}
+
 	sourceCode, err := s.store.Reject(ctx, string(actor), sourceCodeID, versionID, value)
-	return sourceCode, operationError("reject submission", err)
+	if err != nil {
+		return domain.SoftwareSourceCodeVersion{}, nil, operationError("reject submission", err)
+	}
+
+	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
+		Kind:     domain.NotificationEventResourceRejected,
+		ActorID:  actor,
+		GroupID:  &sourceCode.Group.ID,
+		Resource: sourceCodeNotificationResource(sourceCode),
+	})
+	if buildErr != nil {
+		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceRejected, "error", buildErr)
+		notifications = nil
+	}
+
+	return sourceCode, notifications, nil
 }
 
 func (s *Service) Reopen(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
@@ -140,12 +179,29 @@ func (s *Service) Reopen(ctx context.Context, actor domain.Actor, sourceCodeID, 
 	return sourceCode, operationError("reopen rejected version", err)
 }
 
-func (s *Service) Publish(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
+//nolint:dupl // Resource lifecycle notification paths intentionally mirror each other.
+func (s *Service) Publish(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourcePublish); err != nil {
-		return domain.SoftwareSourceCodeVersion{}, operationError("authorize publication", err)
+		return domain.SoftwareSourceCodeVersion{}, nil, operationError("authorize publication", err)
 	}
+
 	sourceCode, err := s.store.Publish(ctx, string(actor), sourceCodeID, versionID)
-	return sourceCode, operationError("publish version", err)
+	if err != nil {
+		return domain.SoftwareSourceCodeVersion{}, nil, operationError("publish version", err)
+	}
+
+	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
+		Kind:     domain.NotificationEventResourcePublished,
+		ActorID:  actor,
+		GroupID:  &sourceCode.Group.ID,
+		Resource: sourceCodeNotificationResource(sourceCode),
+	})
+	if buildErr != nil {
+		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourcePublished, "error", buildErr)
+		notifications = nil
+	}
+
+	return sourceCode, notifications, nil
 }
 
 func (s *Service) Discard(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) error {
@@ -155,12 +211,42 @@ func (s *Service) Discard(ctx context.Context, actor domain.Actor, sourceCodeID,
 	return operationError("discard version", s.store.Discard(ctx, sourceCodeID, versionID))
 }
 
-func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
+//nolint:dupl // Resource lifecycle notification paths intentionally mirror each other.
+func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceUnpublish); err != nil {
-		return domain.SoftwareSourceCodeVersion{}, operationError("authorize unpublication", err)
+		return domain.SoftwareSourceCodeVersion{}, nil, operationError("authorize unpublication", err)
 	}
+
 	sourceCode, err := s.store.Unpublish(ctx, string(actor), sourceCodeID, versionID)
-	return sourceCode, operationError("unpublish version", err)
+	if err != nil {
+		return domain.SoftwareSourceCodeVersion{}, nil, operationError("unpublish version", err)
+	}
+
+	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
+		Kind:     domain.NotificationEventResourceUnpublished,
+		ActorID:  actor,
+		GroupID:  &sourceCode.Group.ID,
+		Resource: sourceCodeNotificationResource(sourceCode),
+	})
+	if buildErr != nil {
+		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceUnpublished, "error", buildErr)
+		notifications = nil
+	}
+
+	return sourceCode, notifications, nil
+}
+
+func sourceCodeNotificationResource(value domain.SoftwareSourceCodeVersion) *domain.NotificationResource {
+	return &domain.NotificationResource{
+		Type:          domain.SoftwareSourceCode,
+		ResourceID:    value.SoftwareSourceCodeID,
+		VersionID:     value.VersionID,
+		Revision:      value.Revision,
+		Status:        value.Status,
+		Name:          value.Metadata.Name,
+		SubmittedBy:   value.SubmittedBy.OptionalString(),
+		RejectionNote: value.RejectionNote,
+	}
 }
 
 func (s *Service) DraftFromPublication(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {

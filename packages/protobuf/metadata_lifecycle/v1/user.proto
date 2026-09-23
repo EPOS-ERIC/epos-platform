@@ -56,25 +56,31 @@ message GrantGlobalPermissionRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
   GlobalPermission permission = 2 [(buf.validate.field).enum.defined_only = true];
 }
-message GrantGlobalPermissionResponse {}
+message GrantGlobalPermissionResponse {
+  repeated Notification notifications = 1;
+}
 
 message RevokeGlobalPermissionRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
   GlobalPermission permission = 2 [(buf.validate.field).enum.defined_only = true];
 }
-message RevokeGlobalPermissionResponse {}
+message RevokeGlobalPermissionResponse {
+}
 
 message AssignGlobalRoleRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
   GlobalRole role = 2 [(buf.validate.field).enum.defined_only = true];
 }
-message AssignGlobalRoleResponse {}
+message AssignGlobalRoleResponse {
+  repeated Notification notifications = 1;
+}
 
 message RemoveGlobalRoleRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
   GlobalRole role = 2 [(buf.validate.field).enum.defined_only = true];
 }
-message RemoveGlobalRoleResponse {}
+message RemoveGlobalRoleResponse {
+}
 
 message BlockUserRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];

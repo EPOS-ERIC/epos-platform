@@ -116,21 +116,21 @@ class GroupPermissionContractTest(unittest.TestCase):
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=target_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(grant_target_permission_response.status_code, 204)
         repeat_grant_response = manager.put(
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=target_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(repeat_grant_response.status_code, 204)
 
         target_user, target_membership = self.get_own_membership(target, group_id)
         self.assertEqual(target_membership["status"], "ACTIVE")
         self.assertEqual(target_membership["roles"], [])
-        self.assertEqual(target_membership["granted_permissions"], ["resource.create"])
+        self.assertEqual(target_membership["granted_permissions"], ["group.resource.create"])
         self.assertEqual(target_membership["role_permissions"], [])
         self.assertEqual(target_user["global_granted_permissions"], [])
         self.assertEqual(target_user["global_role_permissions"], [])
@@ -139,14 +139,14 @@ class GroupPermissionContractTest(unittest.TestCase):
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=target_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(revoke_target_permission_response.status_code, 204)
         repeat_revoke_response = manager.delete(
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=target_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(repeat_revoke_response.status_code, 204)
 
@@ -186,35 +186,35 @@ class GroupPermissionContractTest(unittest.TestCase):
 
         _, target_membership = self.get_own_membership(target, group_id)
         self.assertEqual(target_membership["granted_permissions"], [])
-        self.assertIn("resource.create", target_membership["role_permissions"])
+        self.assertIn("group.resource.create", target_membership["role_permissions"])
 
         grant_target_permission_response = manager.put(
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=target_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(grant_target_permission_response.status_code, 204)
         _, target_membership = self.get_own_membership(target, group_id)
-        self.assertEqual(target_membership["granted_permissions"], ["resource.create"])
-        self.assertIn("resource.create", target_membership["role_permissions"])
+        self.assertEqual(target_membership["granted_permissions"], ["group.resource.create"])
+        self.assertIn("group.resource.create", target_membership["role_permissions"])
 
         revoke_granted_permission_response = manager.delete(
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=target_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(revoke_granted_permission_response.status_code, 204)
         _, target_membership = self.get_own_membership(target, group_id)
         self.assertEqual(target_membership["granted_permissions"], [])
-        self.assertIn("resource.create", target_membership["role_permissions"])
+        self.assertIn("group.resource.create", target_membership["role_permissions"])
 
         revoke_response = manager.delete(
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=target_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(revoke_response.status_code, 409)
         problem = revoke_response.json()
@@ -228,6 +228,6 @@ class GroupPermissionContractTest(unittest.TestCase):
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=target_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(admin_revoke_response.status_code, 409)

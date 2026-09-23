@@ -212,37 +212,37 @@ func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain
 	)
 }
 
-func (r *Repo) GrantGlobalPermission(ctx context.Context, userID string, permission domain.GlobalPermission, grantedBy string) error {
+func (r *Repo) GrantGlobalPermission(ctx context.Context, userID string, permission domain.GlobalPermission, grantedBy string) (bool, error) {
 	_, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrUserNotFound
+		return false, domain.ErrUserNotFound
 	}
 	if err != nil {
-		return fmt.Errorf("check target user: %w", err)
+		return false, fmt.Errorf("check target user: %w", err)
 	}
 
 	scope, err := r.GetPermissionScope(ctx, string(permission))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrInvalidUser
+		return false, domain.ErrInvalidUser
 	}
 	if err != nil {
-		return fmt.Errorf("check permission: %w", err)
+		return false, fmt.Errorf("check permission: %w", err)
 	}
 
 	if scope != sqlc.PermissionScopeGLOBAL {
-		return domain.ErrInvalidUser
+		return false, domain.ErrInvalidUser
 	}
 
-	err = r.Queries.GrantGlobalPermission(ctx, sqlc.GrantGlobalPermissionParams{
+	rows, err := r.Queries.GrantGlobalPermission(ctx, sqlc.GrantGlobalPermissionParams{
 		UserID:        userID,
 		PermissionKey: string(permission),
 		GrantedBy:     grantedBy,
 	})
 	if err != nil {
-		return fmt.Errorf("grant global permission: %w", err)
+		return false, fmt.Errorf("grant global permission: %w", err)
 	}
 
-	return nil
+	return rows > 0, nil
 }
 
 func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID string, permission domain.GlobalPermission) error {
@@ -266,48 +266,53 @@ func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID string, permis
 		return domain.ErrInvalidUser
 	}
 
-	err = r.Queries.RevokeGlobalPermission(ctx, sqlc.RevokeGlobalPermissionParams{
+	if err := r.Queries.RevokeGlobalPermission(ctx, sqlc.RevokeGlobalPermissionParams{
 		UserID:        userID,
 		PermissionKey: string(permission),
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("revoke global permission: %w", err)
 	}
 
 	return nil
 }
 
-func (r *Repo) AssignGlobalRole(ctx context.Context, userID, assignedBy, role string) error {
+func (r *Repo) AssignGlobalRole(ctx context.Context, userID, assignedBy, role string) (bool, error) {
 	if role != "ADMIN" {
-		return domain.ErrInvalidUser
+		return false, domain.ErrInvalidUser
 	}
 
 	if _, err := r.GetAuthorizationUser(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrUserNotFound
+		return false, domain.ErrUserNotFound
 	} else if err != nil {
-		return fmt.Errorf("check target user: %w", err)
+		return false, fmt.Errorf("check target user: %w", err)
 	}
 
 	if r.db == nil {
-		return fmt.Errorf("identity database pool is not configured")
+		return false, fmt.Errorf("identity database pool is not configured")
 	}
 
+	var changed bool
 	err := dbtx.Run(ctx, r.db, r.Queries, func(queries *sqlc.Queries) error {
 		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
 			return fmt.Errorf("lock global role changes: %w", err)
 		}
-		if err := queries.AssignGlobalAdmin(ctx, sqlc.AssignGlobalAdminParams{
+		rows, err := queries.AssignGlobalAdmin(ctx, sqlc.AssignGlobalAdminParams{
 			UserID:     userID,
 			AssignedBy: &assignedBy,
-		}); err != nil {
+		})
+		if err != nil {
 			return fmt.Errorf("assign global admin role: %w", err)
+		}
+		changed = rows > 0
+		if err := queries.EnsureAdminNotificationSubscriptions(ctx, userID); err != nil {
+			return fmt.Errorf("ensure admin notification subscriptions: %w", err)
 		}
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("assign global role transaction: %w", err)
+		return false, fmt.Errorf("assign global role transaction: %w", err)
 	}
-	return nil
+	return changed, nil
 }
 
 func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error {

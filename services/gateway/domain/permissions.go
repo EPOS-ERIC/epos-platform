@@ -7,28 +7,40 @@ const (
 	GlobalPermissionMembershipManage     GlobalPermission = "global.membership.manage"
 	GlobalPermissionRoleManage           GlobalPermission = "global.role.manage"
 	GlobalPermissionPermissionManage     GlobalPermission = "global.permission.manage"
-	GlobalPermissionOrganizationManage   GlobalPermission = "organization.manage"
-	GlobalPermissionContactPointManage   GlobalPermission = "contact_point.manage"
-	GlobalPermissionCategorySchemeManage GlobalPermission = "category_scheme.manage"
+	GlobalPermissionNotificationManage   GlobalPermission = "global.notification.manage"
+	GlobalPermissionOrganizationManage   GlobalPermission = "global.organization.manage"
+	GlobalPermissionContactPointManage   GlobalPermission = "global.contact_point.manage"
+	GlobalPermissionCategorySchemeManage GlobalPermission = "global.category_scheme.manage"
+	GlobalPermissionResourceCreate       GlobalPermission = "global.resource.create"
+	GlobalPermissionResourceEdit         GlobalPermission = "global.resource.edit"
+	GlobalPermissionResourceSubmit       GlobalPermission = "global.resource.submit"
+	GlobalPermissionResourceWithdraw     GlobalPermission = "global.resource.withdraw"
+	GlobalPermissionResourceReopen       GlobalPermission = "global.resource.reopen"
+	GlobalPermissionResourceDiscard      GlobalPermission = "global.resource.discard"
+	GlobalPermissionResourceReject       GlobalPermission = "global.resource.reject"
+	GlobalPermissionResourcePublish      GlobalPermission = "global.resource.publish"
+	GlobalPermissionResourceUnpublish    GlobalPermission = "global.resource.unpublish"
+	GlobalPermissionCategoryManage       GlobalPermission = "global.category.manage"
 )
 
 // GroupPermission is a permission evaluated within a group's scope.
 type GroupPermission string
 
 const (
-	GroupPermissionResourceCreate    GroupPermission = "resource.create"
-	GroupPermissionResourceEdit      GroupPermission = "resource.edit"
-	GroupPermissionResourceSubmit    GroupPermission = "resource.submit"
-	GroupPermissionResourceWithdraw  GroupPermission = "resource.withdraw"
-	GroupPermissionResourceReopen    GroupPermission = "resource.reopen"
-	GroupPermissionResourceDiscard   GroupPermission = "resource.discard"
-	GroupPermissionResourceReject    GroupPermission = "resource.reject"
-	GroupPermissionResourcePublish   GroupPermission = "resource.publish"
-	GroupPermissionResourceUnpublish GroupPermission = "resource.unpublish"
-	GroupPermissionMembershipManage  GroupPermission = "group.membership.manage"
-	GroupPermissionRoleManage        GroupPermission = "group.role.manage"
-	GroupPermissionPermissionManage  GroupPermission = "group.permission.manage"
-	GroupPermissionCategoryManage    GroupPermission = "category.manage"
+	GroupPermissionResourceCreate     GroupPermission = "group.resource.create"
+	GroupPermissionResourceEdit       GroupPermission = "group.resource.edit"
+	GroupPermissionResourceSubmit     GroupPermission = "group.resource.submit"
+	GroupPermissionResourceWithdraw   GroupPermission = "group.resource.withdraw"
+	GroupPermissionResourceReopen     GroupPermission = "group.resource.reopen"
+	GroupPermissionResourceDiscard    GroupPermission = "group.resource.discard"
+	GroupPermissionResourceReject     GroupPermission = "group.resource.reject"
+	GroupPermissionResourcePublish    GroupPermission = "group.resource.publish"
+	GroupPermissionResourceUnpublish  GroupPermission = "group.resource.unpublish"
+	GroupPermissionMembershipManage   GroupPermission = "group.membership.manage"
+	GroupPermissionRoleManage         GroupPermission = "group.role.manage"
+	GroupPermissionPermissionManage   GroupPermission = "group.permission.manage"
+	GroupPermissionNotificationManage GroupPermission = "group.notification.manage"
+	GroupPermissionCategoryManage     GroupPermission = "group.category.manage"
 )
 
 func NewGlobalPermission(value string) (GlobalPermission, error) {
@@ -37,9 +49,20 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 	case GlobalPermissionMembershipManage,
 		GlobalPermissionRoleManage,
 		GlobalPermissionPermissionManage,
+		GlobalPermissionNotificationManage,
 		GlobalPermissionOrganizationManage,
 		GlobalPermissionContactPointManage,
-		GlobalPermissionCategorySchemeManage:
+		GlobalPermissionCategorySchemeManage,
+		GlobalPermissionResourceCreate,
+		GlobalPermissionResourceEdit,
+		GlobalPermissionResourceSubmit,
+		GlobalPermissionResourceWithdraw,
+		GlobalPermissionResourceReopen,
+		GlobalPermissionResourceDiscard,
+		GlobalPermissionResourceReject,
+		GlobalPermissionResourcePublish,
+		GlobalPermissionResourceUnpublish,
+		GlobalPermissionCategoryManage:
 		return permission, nil
 	default:
 		return "", ErrBadRequest
@@ -61,6 +84,7 @@ func NewGroupPermission(value string) (GroupPermission, error) {
 		GroupPermissionMembershipManage,
 		GroupPermissionRoleManage,
 		GroupPermissionPermissionManage,
+		GroupPermissionNotificationManage,
 		GroupPermissionCategoryManage:
 		return permission, nil
 	default:

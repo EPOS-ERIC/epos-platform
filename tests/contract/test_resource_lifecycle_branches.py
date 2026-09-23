@@ -107,7 +107,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=reviewer_id,
-            permission="resource.unpublish",
+            permission="group.resource.unpublish",
         )
         self.assertEqual(unpublish_permission.status_code, 204)
 

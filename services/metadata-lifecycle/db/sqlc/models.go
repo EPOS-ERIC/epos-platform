@@ -144,6 +144,7 @@ func (ns NullNotificationChannel) Value() (driver.Value, error) {
 type NotificationScope string
 
 const (
+	NotificationScopeDIRECT NotificationScope = "DIRECT"
 	NotificationScopeGLOBAL NotificationScope = "GLOBAL"
 	NotificationScopeGROUP  NotificationScope = "GROUP"
 )
@@ -820,9 +821,16 @@ type IntegerParameterSchema struct {
 }
 
 type NotificationEventType struct {
-	Key                   string
-	Scope                 NotificationScope
-	RequiredPermissionKey *string
+	Key         string
+	Label       string
+	Description string
+	Scope       NotificationScope
+	DefaultOn   bool
+}
+
+type NotificationEventTypePermission struct {
+	EventType     string
+	PermissionKey string
 }
 
 type Organization struct {

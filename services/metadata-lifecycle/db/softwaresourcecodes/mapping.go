@@ -105,6 +105,7 @@ func sourceCodeResult(ctx context.Context, q *sqlc.Queries, sourceCodeID, versio
 		version.Revision,
 		domain.Status(version.Status),
 		domain.Actor(version.CreatedBy),
+		version.SubmittedBy,
 		resourcedb.ToGroup(row.Group),
 		version.CreatedAt,
 		version.UpdatedAt,

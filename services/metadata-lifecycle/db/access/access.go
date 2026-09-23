@@ -273,11 +273,11 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string
 // DecideRoleRequest accepts or rejects a pending role request and records the
 // decision actor and time. Acceptance assigns the requested role atomically,
 // then returns the target user's updated membership.
-func (r *Repo) DecideRoleRequest(ctx context.Context, groupID, requestID uuid.UUID, decision domain.Decision, actorID string) (domain.GroupMembership, error) {
+func (r *Repo) DecideRoleRequest(ctx context.Context, groupID, requestID uuid.UUID, decision domain.Decision, actorID string) (domain.RoleRequestDecision, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.GroupMembership{}, domain.ErrAccessNotFound
+		return domain.RoleRequestDecision{}, domain.ErrAccessNotFound
 	} else if err != nil {
-		return domain.GroupMembership{}, fmt.Errorf("check group: %w", err)
+		return domain.RoleRequestDecision{}, fmt.Errorf("check group: %w", err)
 	}
 
 	var request sqlc.GroupRoleRequest
@@ -309,15 +309,19 @@ func (r *Repo) DecideRoleRequest(ctx context.Context, groupID, requestID uuid.UU
 		return nil
 	})
 	if err != nil {
-		return domain.GroupMembership{}, fmt.Errorf("decide role request transaction: %w", err)
+		return domain.RoleRequestDecision{}, fmt.Errorf("decide role request transaction: %w", err)
 	}
 
 	membership, err := r.loadMembership(ctx, request.GroupID, request.UserID)
 	if err != nil {
-		return domain.GroupMembership{}, fmt.Errorf("load decided role membership: %w", err)
+		return domain.RoleRequestDecision{}, fmt.Errorf("load decided role membership: %w", err)
 	}
 
-	return membership, nil
+	roleRequest, err := toDomainRoleRequest(request.ID, request.RoleKey, string(request.Status), request.RequestedAt)
+	if err != nil {
+		return domain.RoleRequestDecision{}, fmt.Errorf("construct decided role request %s: %w", request.ID, err)
+	}
+	return domain.RoleRequestDecision{Request: roleRequest, Membership: membership}, nil
 }
 
 func (r *Repo) WithdrawRoleRequest(ctx context.Context, groupID, requestID uuid.UUID, userID string) error {
@@ -342,13 +346,13 @@ func (r *Repo) WithdrawRoleRequest(ctx context.Context, groupID, requestID uuid.
 	return nil
 }
 
-func (r *Repo) AssignRole(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole, actorID string) error {
+func (r *Repo) AssignRole(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole, actorID string) (bool, error) {
 	exists, err := r.checkRoleTarget(ctx, groupID, userID, role)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if exists {
-		return nil
+		return false, nil
 	}
 
 	rows, err := r.AssignGroupRole(ctx, sqlc.AssignGroupRoleParams{
@@ -358,13 +362,13 @@ func (r *Repo) AssignRole(ctx context.Context, groupID uuid.UUID, userID string,
 		AssignedBy: actorID,
 	})
 	if err != nil {
-		return fmt.Errorf("assign role: %w", err)
+		return false, fmt.Errorf("assign role: %w", err)
 	}
 	if rows == 0 {
-		return domain.ErrAccessConflict
+		return false, domain.ErrAccessConflict
 	}
 
-	return nil
+	return true, nil
 }
 
 func (r *Repo) RemoveRole(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole) error {
@@ -372,7 +376,7 @@ func (r *Repo) RemoveRole(ctx context.Context, groupID uuid.UUID, userID string,
 		return err
 	}
 
-	if _, err := r.RemoveGroupRole(ctx, sqlc.RemoveGroupRoleParams{
+	if err := r.RemoveGroupRole(ctx, sqlc.RemoveGroupRoleParams{
 		UserID:  userID,
 		GroupID: groupID,
 		RoleKey: string(role),
@@ -383,21 +387,22 @@ func (r *Repo) RemoveRole(ctx context.Context, groupID uuid.UUID, userID string,
 	return nil
 }
 
-func (r *Repo) GrantPermission(ctx context.Context, groupID uuid.UUID, userID string, permission domain.GroupPermission, actorID string) error {
+func (r *Repo) GrantPermission(ctx context.Context, groupID uuid.UUID, userID string, permission domain.GroupPermission, actorID string) (bool, error) {
 	if err := r.checkPermissionTarget(ctx, groupID, userID, permission); err != nil {
-		return err
+		return false, err
 	}
 
-	if err := r.GrantGroupPermission(ctx, sqlc.GrantGroupPermissionParams{
+	rows, err := r.GrantGroupPermission(ctx, sqlc.GrantGroupPermissionParams{
 		UserID:        userID,
 		GroupID:       groupID,
 		PermissionKey: string(permission),
 		GrantedBy:     actorID,
-	}); err != nil {
-		return fmt.Errorf("grant permission: %w", err)
+	})
+	if err != nil {
+		return false, fmt.Errorf("grant permission: %w", err)
 	}
 
-	return nil
+	return rows > 0, nil
 }
 
 func (r *Repo) RevokePermission(ctx context.Context, groupID uuid.UUID, userID string, permission domain.GroupPermission) error {

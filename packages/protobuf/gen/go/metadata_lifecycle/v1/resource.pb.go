@@ -4504,6 +4504,7 @@ func (x *UnpublishResourceRequest) GetVersionId() string {
 type SubmitResourceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Resource      *ResourceRecord        `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Notifications []*Notification        `protobuf:"bytes,2,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4541,6 +4542,13 @@ func (*SubmitResourceResponse) Descriptor() ([]byte, []int) {
 func (x *SubmitResourceResponse) GetResource() *ResourceRecord {
 	if x != nil {
 		return x.Resource
+	}
+	return nil
+}
+
+func (x *SubmitResourceResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
 	}
 	return nil
 }
@@ -4636,6 +4644,7 @@ func (x *ReopenResourceResponse) GetResource() *ResourceRecord {
 type PublishResourceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Resource      *ResourceRecord        `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Notifications []*Notification        `protobuf:"bytes,2,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4677,9 +4686,17 @@ func (x *PublishResourceResponse) GetResource() *ResourceRecord {
 	return nil
 }
 
+func (x *PublishResourceResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
+	}
+	return nil
+}
+
 type UnpublishResourceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Resource      *ResourceRecord        `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Notifications []*Notification        `protobuf:"bytes,2,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4717,6 +4734,13 @@ func (*UnpublishResourceResponse) Descriptor() ([]byte, []int) {
 func (x *UnpublishResourceResponse) GetResource() *ResourceRecord {
 	if x != nil {
 		return x.Resource
+	}
+	return nil
+}
+
+func (x *UnpublishResourceResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
 	}
 	return nil
 }
@@ -4828,6 +4852,7 @@ func (x *RejectResourceRequest) GetNote() string {
 type RejectResourceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Resource      *ResourceRecord        `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Notifications []*Notification        `protobuf:"bytes,2,rep,name=notifications,proto3" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4865,6 +4890,13 @@ func (*RejectResourceResponse) Descriptor() ([]byte, []int) {
 func (x *RejectResourceResponse) GetResource() *ResourceRecord {
 	if x != nil {
 		return x.Resource
+	}
+	return nil
+}
+
+func (x *RejectResourceResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
 	}
 	return nil
 }
@@ -5893,17 +5925,20 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\vresource_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"resourceId\x12'\n" +
 	"\n" +
-	"version_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\"[\n" +
+	"version_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\"\xa6\x01\n" +
 	"\x16SubmitResourceResponse\x12A\n" +
-	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\"]\n" +
+	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\x12I\n" +
+	"\rnotifications\x18\x02 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"]\n" +
 	"\x18WithdrawResourceResponse\x12A\n" +
 	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\"[\n" +
 	"\x16ReopenResourceResponse\x12A\n" +
-	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\"\\\n" +
+	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\"\xa7\x01\n" +
 	"\x17PublishResourceResponse\x12A\n" +
-	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\"^\n" +
+	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\x12I\n" +
+	"\rnotifications\x18\x02 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"\xa9\x01\n" +
 	"\x19UnpublishResourceResponse\x12A\n" +
-	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\"\x1e\n" +
+	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\x12I\n" +
+	"\rnotifications\x18\x02 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"\x1e\n" +
 	"\x1cDiscardResourceDraftResponse\"\xdc\x01\n" +
 	"\x15RejectResourceRequest\x12R\n" +
 	"\rresource_type\x18\x01 \x01(\x0e2#.metadata_lifecycle.v1.ResourceTypeB\b\xbaH\x05\x82\x01\x02\x10\x01R\fresourceType\x12)\n" +
@@ -5911,9 +5946,10 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"resourceId\x12'\n" +
 	"\n" +
 	"version_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\x12\x1b\n" +
-	"\x04note\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04note\"[\n" +
+	"\x04note\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04note\"\xa6\x01\n" +
 	"\x16RejectResourceResponse\x12A\n" +
-	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\"\xa4\x01\n" +
+	"\bresource\x18\x01 \x01(\v2%.metadata_lifecycle.v1.ResourceRecordR\bresource\x12I\n" +
+	"\rnotifications\x18\x02 \x03(\v2#.metadata_lifecycle.v1.NotificationR\rnotifications\"\xa4\x01\n" +
 	"#DraftResourceFromPublicationRequest\x12R\n" +
 	"\rresource_type\x18\x01 \x01(\x0e2#.metadata_lifecycle.v1.ResourceTypeB\b\xbaH\x05\x82\x01\x02\x10\x01R\fresourceType\x12)\n" +
 	"\vresource_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
@@ -6072,6 +6108,7 @@ var file_metadata_lifecycle_v1_resource_proto_goTypes = []any{
 	(*Identifier)(nil),                             // 69: metadata_lifecycle.v1.Identifier
 	(*EntityReference)(nil),                        // 70: metadata_lifecycle.v1.EntityReference
 	(*IdentifierInput)(nil),                        // 71: metadata_lifecycle.v1.IdentifierInput
+	(*Notification)(nil),                           // 72: metadata_lifecycle.v1.Notification
 }
 var file_metadata_lifecycle_v1_resource_proto_depIdxs = []int32{
 	18,  // 0: metadata_lifecycle.v1.CreateResourceRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
@@ -6177,55 +6214,59 @@ var file_metadata_lifecycle_v1_resource_proto_depIdxs = []int32{
 	66,  // 100: metadata_lifecycle.v1.PublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
 	66,  // 101: metadata_lifecycle.v1.UnpublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
 	15,  // 102: metadata_lifecycle.v1.SubmitResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	15,  // 103: metadata_lifecycle.v1.WithdrawResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	15,  // 104: metadata_lifecycle.v1.ReopenResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	15,  // 105: metadata_lifecycle.v1.PublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	15,  // 106: metadata_lifecycle.v1.UnpublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	66,  // 107: metadata_lifecycle.v1.RejectResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	15,  // 108: metadata_lifecycle.v1.RejectResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	66,  // 109: metadata_lifecycle.v1.DraftResourceFromPublicationRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	15,  // 110: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	66,  // 111: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	15,  // 112: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	66,  // 113: metadata_lifecycle.v1.CopyPublishedResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	15,  // 114: metadata_lifecycle.v1.CopyPublishedResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	18,  // 115: metadata_lifecycle.v1.ReplaceResourceDraftRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
-	42,  // 116: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
-	43,  // 117: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
-	15,  // 118: metadata_lifecycle.v1.ReplaceResourceDraftResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	4,   // 119: metadata_lifecycle.v1.ResourceService.CreateResource:input_type -> metadata_lifecycle.v1.CreateResourceRequest
-	6,   // 120: metadata_lifecycle.v1.ResourceService.GetResourceVersion:input_type -> metadata_lifecycle.v1.GetResourceVersionRequest
-	8,   // 121: metadata_lifecycle.v1.ResourceService.ListResourceVersions:input_type -> metadata_lifecycle.v1.ListResourceVersionsRequest
-	64,  // 122: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:input_type -> metadata_lifecycle.v1.ReplaceResourceDraftRequest
-	44,  // 123: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:input_type -> metadata_lifecycle.v1.DiscardResourceDraftRequest
-	45,  // 124: metadata_lifecycle.v1.ResourceService.SubmitResource:input_type -> metadata_lifecycle.v1.SubmitResourceRequest
-	46,  // 125: metadata_lifecycle.v1.ResourceService.WithdrawResource:input_type -> metadata_lifecycle.v1.WithdrawResourceRequest
-	56,  // 126: metadata_lifecycle.v1.ResourceService.RejectResource:input_type -> metadata_lifecycle.v1.RejectResourceRequest
-	47,  // 127: metadata_lifecycle.v1.ResourceService.ReopenResource:input_type -> metadata_lifecycle.v1.ReopenResourceRequest
-	48,  // 128: metadata_lifecycle.v1.ResourceService.PublishResource:input_type -> metadata_lifecycle.v1.PublishResourceRequest
-	49,  // 129: metadata_lifecycle.v1.ResourceService.UnpublishResource:input_type -> metadata_lifecycle.v1.UnpublishResourceRequest
-	58,  // 130: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:input_type -> metadata_lifecycle.v1.DraftResourceFromPublicationRequest
-	60,  // 131: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:input_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
-	62,  // 132: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:input_type -> metadata_lifecycle.v1.CopyPublishedResourceRequest
-	5,   // 133: metadata_lifecycle.v1.ResourceService.CreateResource:output_type -> metadata_lifecycle.v1.CreateResourceResponse
-	7,   // 134: metadata_lifecycle.v1.ResourceService.GetResourceVersion:output_type -> metadata_lifecycle.v1.GetResourceVersionResponse
-	10,  // 135: metadata_lifecycle.v1.ResourceService.ListResourceVersions:output_type -> metadata_lifecycle.v1.ListResourceVersionsResponse
-	65,  // 136: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:output_type -> metadata_lifecycle.v1.ReplaceResourceDraftResponse
-	55,  // 137: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:output_type -> metadata_lifecycle.v1.DiscardResourceDraftResponse
-	50,  // 138: metadata_lifecycle.v1.ResourceService.SubmitResource:output_type -> metadata_lifecycle.v1.SubmitResourceResponse
-	51,  // 139: metadata_lifecycle.v1.ResourceService.WithdrawResource:output_type -> metadata_lifecycle.v1.WithdrawResourceResponse
-	57,  // 140: metadata_lifecycle.v1.ResourceService.RejectResource:output_type -> metadata_lifecycle.v1.RejectResourceResponse
-	52,  // 141: metadata_lifecycle.v1.ResourceService.ReopenResource:output_type -> metadata_lifecycle.v1.ReopenResourceResponse
-	53,  // 142: metadata_lifecycle.v1.ResourceService.PublishResource:output_type -> metadata_lifecycle.v1.PublishResourceResponse
-	54,  // 143: metadata_lifecycle.v1.ResourceService.UnpublishResource:output_type -> metadata_lifecycle.v1.UnpublishResourceResponse
-	59,  // 144: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:output_type -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse
-	61,  // 145: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:output_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
-	63,  // 146: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:output_type -> metadata_lifecycle.v1.CopyPublishedResourceResponse
-	133, // [133:147] is the sub-list for method output_type
-	119, // [119:133] is the sub-list for method input_type
-	119, // [119:119] is the sub-list for extension type_name
-	119, // [119:119] is the sub-list for extension extendee
-	0,   // [0:119] is the sub-list for field type_name
+	72,  // 103: metadata_lifecycle.v1.SubmitResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	15,  // 104: metadata_lifecycle.v1.WithdrawResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	15,  // 105: metadata_lifecycle.v1.ReopenResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	15,  // 106: metadata_lifecycle.v1.PublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	72,  // 107: metadata_lifecycle.v1.PublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	15,  // 108: metadata_lifecycle.v1.UnpublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	72,  // 109: metadata_lifecycle.v1.UnpublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	66,  // 110: metadata_lifecycle.v1.RejectResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	15,  // 111: metadata_lifecycle.v1.RejectResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	72,  // 112: metadata_lifecycle.v1.RejectResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	66,  // 113: metadata_lifecycle.v1.DraftResourceFromPublicationRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	15,  // 114: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	66,  // 115: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	15,  // 116: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	66,  // 117: metadata_lifecycle.v1.CopyPublishedResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	15,  // 118: metadata_lifecycle.v1.CopyPublishedResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	18,  // 119: metadata_lifecycle.v1.ReplaceResourceDraftRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
+	42,  // 120: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
+	43,  // 121: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
+	15,  // 122: metadata_lifecycle.v1.ReplaceResourceDraftResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	4,   // 123: metadata_lifecycle.v1.ResourceService.CreateResource:input_type -> metadata_lifecycle.v1.CreateResourceRequest
+	6,   // 124: metadata_lifecycle.v1.ResourceService.GetResourceVersion:input_type -> metadata_lifecycle.v1.GetResourceVersionRequest
+	8,   // 125: metadata_lifecycle.v1.ResourceService.ListResourceVersions:input_type -> metadata_lifecycle.v1.ListResourceVersionsRequest
+	64,  // 126: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:input_type -> metadata_lifecycle.v1.ReplaceResourceDraftRequest
+	44,  // 127: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:input_type -> metadata_lifecycle.v1.DiscardResourceDraftRequest
+	45,  // 128: metadata_lifecycle.v1.ResourceService.SubmitResource:input_type -> metadata_lifecycle.v1.SubmitResourceRequest
+	46,  // 129: metadata_lifecycle.v1.ResourceService.WithdrawResource:input_type -> metadata_lifecycle.v1.WithdrawResourceRequest
+	56,  // 130: metadata_lifecycle.v1.ResourceService.RejectResource:input_type -> metadata_lifecycle.v1.RejectResourceRequest
+	47,  // 131: metadata_lifecycle.v1.ResourceService.ReopenResource:input_type -> metadata_lifecycle.v1.ReopenResourceRequest
+	48,  // 132: metadata_lifecycle.v1.ResourceService.PublishResource:input_type -> metadata_lifecycle.v1.PublishResourceRequest
+	49,  // 133: metadata_lifecycle.v1.ResourceService.UnpublishResource:input_type -> metadata_lifecycle.v1.UnpublishResourceRequest
+	58,  // 134: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:input_type -> metadata_lifecycle.v1.DraftResourceFromPublicationRequest
+	60,  // 135: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:input_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
+	62,  // 136: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:input_type -> metadata_lifecycle.v1.CopyPublishedResourceRequest
+	5,   // 137: metadata_lifecycle.v1.ResourceService.CreateResource:output_type -> metadata_lifecycle.v1.CreateResourceResponse
+	7,   // 138: metadata_lifecycle.v1.ResourceService.GetResourceVersion:output_type -> metadata_lifecycle.v1.GetResourceVersionResponse
+	10,  // 139: metadata_lifecycle.v1.ResourceService.ListResourceVersions:output_type -> metadata_lifecycle.v1.ListResourceVersionsResponse
+	65,  // 140: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:output_type -> metadata_lifecycle.v1.ReplaceResourceDraftResponse
+	55,  // 141: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:output_type -> metadata_lifecycle.v1.DiscardResourceDraftResponse
+	50,  // 142: metadata_lifecycle.v1.ResourceService.SubmitResource:output_type -> metadata_lifecycle.v1.SubmitResourceResponse
+	51,  // 143: metadata_lifecycle.v1.ResourceService.WithdrawResource:output_type -> metadata_lifecycle.v1.WithdrawResourceResponse
+	57,  // 144: metadata_lifecycle.v1.ResourceService.RejectResource:output_type -> metadata_lifecycle.v1.RejectResourceResponse
+	52,  // 145: metadata_lifecycle.v1.ResourceService.ReopenResource:output_type -> metadata_lifecycle.v1.ReopenResourceResponse
+	53,  // 146: metadata_lifecycle.v1.ResourceService.PublishResource:output_type -> metadata_lifecycle.v1.PublishResourceResponse
+	54,  // 147: metadata_lifecycle.v1.ResourceService.UnpublishResource:output_type -> metadata_lifecycle.v1.UnpublishResourceResponse
+	59,  // 148: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:output_type -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse
+	61,  // 149: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:output_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
+	63,  // 150: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:output_type -> metadata_lifecycle.v1.CopyPublishedResourceResponse
+	137, // [137:151] is the sub-list for method output_type
+	123, // [123:137] is the sub-list for method input_type
+	123, // [123:123] is the sub-list for extension type_name
+	123, // [123:123] is the sub-list for extension extendee
+	0,   // [0:123] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_resource_proto_init() }

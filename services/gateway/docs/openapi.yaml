@@ -47,6 +47,8 @@ tags:
     description: Request, review, and administer group membership and access.
   - name: Imports
     description: Import RDF Turtle metadata into draft resources.
+  - name: Notifications
+    description: Manage notification topics and email subscriptions.
 
 paths:
   /permissions:
@@ -385,7 +387,7 @@ paths:
                       family_name: "Rossi"
                       global_roles: [ADMIN]
                       global_granted_permissions: []
-                      global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
+                      global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage]
                       status: "ACTIVE"
                       created_at: "2026-06-17T12:48:45.574Z"
                       updated_at: "2026-06-17T12:48:45.574Z"
@@ -395,6 +397,79 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /notification-topics:
+    get:
+      tags: [Notifications]
+      summary: List notification topics
+      description: Returns notification topics available for subscription. Direct notification routes are internal and are not returned.
+      operationId: listNotificationTopics
+      security:
+        - {}
+      responses:
+        "200":
+          description: Notification topics returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/NotificationTopic" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /users/{userId}/notification-subscriptions:
+    get:
+      tags: [Notifications]
+      summary: List user notification subscriptions
+      operationId: listUserNotificationSubscriptions
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/NotificationUserId"
+      responses:
+        "200":
+          description: User notification subscriptions returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/NotificationSubscription" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /users/{userId}/notification-subscriptions/{topicKey}:
+    put:
+      tags: [Notifications]
+      summary: Subscribe user to a global notification topic
+      operationId: subscribeUserNotification
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/NotificationUserId"
+        - $ref: "#/components/parameters/GlobalNotificationTopicKey"
+      responses:
+        "204": { description: Subscription created }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+    delete:
+      tags: [Notifications]
+      summary: Unsubscribe user from a global notification topic
+      operationId: unsubscribeUserNotification
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/NotificationUserId"
+        - $ref: "#/components/parameters/GlobalNotificationTopicKey"
+      responses:
+        "204": { description: Subscription removed }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /groups:
     post:
       tags: [Groups]
@@ -506,6 +581,39 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /groups/{groupId}/notification-subscriptions/{userId}/{topicKey}:
+    put:
+      tags: [Notifications]
+      summary: Subscribe group user to a notification topic
+      operationId: subscribeGroupUserNotification
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/NotificationUserId"
+        - $ref: "#/components/parameters/GroupNotificationTopicKey"
+      responses:
+        "204": { description: Subscription created }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+    delete:
+      tags: [Notifications]
+      summary: Unsubscribe group user from a notification topic
+      operationId: unsubscribeGroupUserNotification
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/NotificationUserId"
+        - $ref: "#/components/parameters/GroupNotificationTopicKey"
+      responses:
+        "204": { description: Subscription removed }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /groups/{groupId}/categories:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -729,7 +837,7 @@ paths:
       tags:
         - Memberships
       summary: Assign group role
-      description: Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management permission or global ADMIN. Operation is idempotent.
+      description: Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management permission. Operation is idempotent.
       operationId: assignGroupRole
       security:
         - bearerAuth: []
@@ -746,7 +854,7 @@ paths:
       tags:
         - Memberships
       summary: Remove group role
-      description: Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management permission or global ADMIN. Operation is idempotent.
+      description: Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management permission. Operation is idempotent.
       operationId: removeGroupRole
       security:
         - bearerAuth: []
@@ -798,7 +906,7 @@ paths:
       tags:
         - Memberships
       summary: Grant direct group permission
-      description: Grant a group-scoped direct permission to an active group member. Requires group.permission.manage in the group or global ADMIN. Operation is idempotent.
+      description: Grant a group-scoped direct permission to an active group member. Requires group.permission.manage in the group or global.permission.manage.
       operationId: grantGroupPermission
       security:
         - bearerAuth: []
@@ -815,7 +923,7 @@ paths:
       tags:
         - Memberships
       summary: Revoke direct group permission
-      description: Revoke a group-scoped direct permission from an active group member. Requires group.permission.manage in the group or global ADMIN. Operation is idempotent.
+      description: Revoke a group-scoped direct permission from an active group member. Requires group.permission.manage in the group or global.permission.manage.
       operationId: revokeGroupPermission
       security:
         - bearerAuth: []
@@ -913,7 +1021,7 @@ paths:
                     family_name: "Rossi"
                     global_roles: [ADMIN]
                     global_granted_permissions: []
-                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -924,7 +1032,7 @@ paths:
                         roles: [EDITOR]
                         status: "ACTIVE"
                         granted_permissions: []
-                        role_permissions: [resource.create, resource.edit]
+                        role_permissions: [group.resource.create, group.resource.edit]
                         created_at: "2026-06-17T12:48:45.574Z"
                         updated_at: "2026-06-17T12:48:45.574Z"
                 self:
@@ -936,7 +1044,7 @@ paths:
                     family_name: "Rossi"
                     global_roles: [ADMIN]
                     global_granted_permissions: []
-                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, organization.manage, contact_point.manage, category_scheme.manage]
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -947,7 +1055,7 @@ paths:
                         roles: [EDITOR]
                         status: "ACTIVE"
                         granted_permissions: []
-                        role_permissions: [resource.create, resource.edit]
+                        role_permissions: [group.resource.create, group.resource.edit]
                         created_at: "2026-06-17T12:48:45.574Z"
                         updated_at: "2026-06-17T12:48:45.574Z"
         default:
@@ -1480,6 +1588,31 @@ components:
       schema:
         type: string
 
+    NotificationUserId:
+      name: userId
+      in: path
+      required: true
+      description: Target user identifier. Use `self` for the authenticated user.
+      schema:
+        type: string
+        minLength: 1
+
+    GlobalNotificationTopicKey:
+      name: topicKey
+      in: path
+      required: true
+      description: Global notification topic key.
+      schema:
+        $ref: "#/components/schemas/GlobalNotificationTopicKey"
+
+    GroupNotificationTopicKey:
+      name: topicKey
+      in: path
+      required: true
+      description: Group notification topic key.
+      schema:
+        $ref: "#/components/schemas/GroupNotificationTopicKey"
+
     Permission:
       name: permission
       in: path
@@ -1893,32 +2026,109 @@ components:
         - global.membership.manage
         - global.role.manage
         - global.permission.manage
-        - organization.manage
-        - contact_point.manage
-        - category_scheme.manage
+        - global.notification.manage
+        - global.organization.manage
+        - global.contact_point.manage
+        - global.category_scheme.manage
+        - global.resource.create
+        - global.resource.edit
+        - global.resource.submit
+        - global.resource.withdraw
+        - global.resource.reopen
+        - global.resource.discard
+        - global.resource.reject
+        - global.resource.publish
+        - global.resource.unpublish
+        - global.category.manage
 
     GroupPermission:
       type: string
       description: Group-scoped permission key.
       enum:
-        - resource.create
-        - resource.edit
-        - resource.submit
-        - resource.withdraw
-        - resource.reopen
-        - resource.discard
-        - resource.reject
-        - resource.publish
-        - resource.unpublish
+        - group.resource.create
+        - group.resource.edit
+        - group.resource.submit
+        - group.resource.withdraw
+        - group.resource.reopen
+        - group.resource.discard
+        - group.resource.reject
+        - group.resource.publish
+        - group.resource.unpublish
         - group.membership.manage
         - group.role.manage
         - group.permission.manage
-        - category.manage
+        - group.notification.manage
+        - group.category.manage
 
     PermissionScope:
       type: string
       description: Scope at which a permission is evaluated.
       enum: [GLOBAL, GROUP]
+
+    NotificationScope:
+      type: string
+      enum: [GROUP, GLOBAL]
+
+    NotificationChannel:
+      type: string
+      enum: [EMAIL]
+
+    NotificationTopicKey:
+      type: string
+      enum:
+        - group.membership.requested
+        - global.membership.requested
+        - group.role_request.requested
+        - global.role_request.requested
+        - group.resource.submitted
+        - group.resource.published
+        - global.resource.submitted
+        - global.resource.published
+
+    GlobalNotificationTopicKey:
+      type: string
+      enum:
+        - global.membership.requested
+        - global.role_request.requested
+        - global.resource.submitted
+        - global.resource.published
+
+    GroupNotificationTopicKey:
+      type: string
+      enum:
+        - group.membership.requested
+        - group.role_request.requested
+        - group.resource.submitted
+        - group.resource.published
+
+    NotificationTopic:
+      type: object
+      additionalProperties: false
+      required: [key, label, description, scope, required_permissions]
+      properties:
+        key: { $ref: "#/components/schemas/NotificationTopicKey" }
+        label:
+          type: string
+          minLength: 1
+          description: Human-readable notification topic label.
+        description:
+          type: string
+          minLength: 1
+          description: Human-readable notification topic description.
+        scope: { $ref: "#/components/schemas/NotificationScope" }
+        required_permissions:
+          type: array
+          items: { type: string, minLength: 1 }
+
+    NotificationSubscription:
+      type: object
+      additionalProperties: false
+      required: [user_id, topic_key, channel]
+      properties:
+        user_id: { type: string, minLength: 1 }
+        group_id: { type: string, format: uuid }
+        topic_key: { $ref: "#/components/schemas/NotificationTopicKey" }
+        channel: { $ref: "#/components/schemas/NotificationChannel" }
 
     Permission:
       type: object
