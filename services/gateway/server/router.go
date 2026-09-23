@@ -55,6 +55,7 @@ func NewRouter(
 		identityService,
 		membershipService,
 		metadataLifecycleClient,
+		log,
 	)
 	generatedServer, err := gatewayapi.NewServer(
 		generatedHandler,

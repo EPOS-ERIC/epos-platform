@@ -8,24 +8,30 @@ import "metadata_lifecycle/v1/common.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
 
-enum NotificationMode {
-  NOTIFICATION_MODE_UNSPECIFIED = 0;
-  NOTIFICATION_MODE_MANDATORY = 1;
-  NOTIFICATION_MODE_OPT_IN = 2;
+enum NotificationTopicKey {
+  NOTIFICATION_TOPIC_KEY_UNSPECIFIED = 0;
+  NOTIFICATION_TOPIC_KEY_GROUP_MEMBERSHIP_REQUESTED = 1;
+  NOTIFICATION_TOPIC_KEY_GLOBAL_MEMBERSHIP_REQUESTED = 2;
+  NOTIFICATION_TOPIC_KEY_GROUP_ROLE_REQUEST_REQUESTED = 3;
+  NOTIFICATION_TOPIC_KEY_GLOBAL_ROLE_REQUEST_REQUESTED = 4;
+  NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_SUBMITTED = 5;
+  NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED = 6;
+  NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED = 7;
+  NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED = 8;
 }
 
 message NotificationTopic {
-  string key = 1 [(buf.validate.field).string.min_len = 1];
+  NotificationTopicKey key = 1 [(buf.validate.field).enum.defined_only = true];
   NotificationScope scope = 2 [(buf.validate.field).enum.defined_only = true];
-  NotificationMode mode = 3 [(buf.validate.field).enum.defined_only = true];
-  bool default_on = 4;
-  repeated string required_permissions = 5;
+  repeated string required_permissions = 3;
+  string label = 4 [(buf.validate.field).string.min_len = 1];
+  string description = 5 [(buf.validate.field).string.min_len = 1];
 }
 
 message NotificationSubscription {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
   string group_id = 2;
-  string topic_key = 3 [(buf.validate.field).string.min_len = 1];
+  NotificationTopicKey topic_key = 3 [(buf.validate.field).enum.defined_only = true];
   NotificationChannel channel = 4 [(buf.validate.field).enum.defined_only = true];
 }
 
@@ -44,7 +50,7 @@ message ListNotificationSubscriptionsResponse {
 message SubscribeNotificationRequest {
   string user_id = 1;
   string group_id = 2;
-  string topic_key = 3 [(buf.validate.field).string.min_len = 1];
+  NotificationTopicKey topic_key = 3 [(buf.validate.field).enum.defined_only = true];
   NotificationChannel channel = 4 [(buf.validate.field).enum.defined_only = true];
 }
 message SubscribeNotificationResponse {
@@ -54,7 +60,7 @@ message SubscribeNotificationResponse {
 message UnsubscribeNotificationRequest {
   string user_id = 1;
   string group_id = 2;
-  string topic_key = 3 [(buf.validate.field).string.min_len = 1];
+  NotificationTopicKey topic_key = 3 [(buf.validate.field).enum.defined_only = true];
   NotificationChannel channel = 4 [(buf.validate.field).enum.defined_only = true];
 }
 message UnsubscribeNotificationResponse {}

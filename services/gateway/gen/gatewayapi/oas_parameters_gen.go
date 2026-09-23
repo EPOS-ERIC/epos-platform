@@ -5806,8 +5806,8 @@ type SubscribeGroupUserNotificationParams struct {
 	GroupId uuid.UUID
 	// Target user identifier. Use `self` for the authenticated user.
 	UserId string
-	// Stable notification topic key.
-	TopicKey string
+	// Group notification topic key.
+	TopicKey GroupNotificationTopicKey
 }
 
 func unpackSubscribeGroupUserNotificationParams(packed middleware.Parameters) (params SubscribeGroupUserNotificationParams) {
@@ -5830,7 +5830,7 @@ func unpackSubscribeGroupUserNotificationParams(packed middleware.Parameters) (p
 			Name: "topicKey",
 			In:   "path",
 		}
-		params.TopicKey = packed[key].(string)
+		params.TopicKey = packed[key].(GroupNotificationTopicKey)
 	}
 	return params
 }
@@ -5975,26 +5975,14 @@ func decodeSubscribeGroupUserNotificationParams(args [3]string, argsEscaped bool
 					return err
 				}
 
-				params.TopicKey = c
+				params.TopicKey = GroupNotificationTopicKey(c)
 				return nil
 			}(); err != nil {
 				return err
 			}
 			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(params.TopicKey)); err != nil {
-					return errors.Wrap(err, "string")
+				if err := params.TopicKey.Validate(); err != nil {
+					return err
 				}
 				return nil
 			}(); err != nil {
@@ -6018,8 +6006,8 @@ func decodeSubscribeGroupUserNotificationParams(args [3]string, argsEscaped bool
 type SubscribeUserNotificationParams struct {
 	// Target user identifier. Use `self` for the authenticated user.
 	UserId string
-	// Stable notification topic key.
-	TopicKey string
+	// Global notification topic key.
+	TopicKey GlobalNotificationTopicKey
 }
 
 func unpackSubscribeUserNotificationParams(packed middleware.Parameters) (params SubscribeUserNotificationParams) {
@@ -6035,7 +6023,7 @@ func unpackSubscribeUserNotificationParams(packed middleware.Parameters) (params
 			Name: "topicKey",
 			In:   "path",
 		}
-		params.TopicKey = packed[key].(string)
+		params.TopicKey = packed[key].(GlobalNotificationTopicKey)
 	}
 	return params
 }
@@ -6135,26 +6123,14 @@ func decodeSubscribeUserNotificationParams(args [2]string, argsEscaped bool, r *
 					return err
 				}
 
-				params.TopicKey = c
+				params.TopicKey = GlobalNotificationTopicKey(c)
 				return nil
 			}(); err != nil {
 				return err
 			}
 			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(params.TopicKey)); err != nil {
-					return errors.Wrap(err, "string")
+				if err := params.TopicKey.Validate(); err != nil {
+					return err
 				}
 				return nil
 			}(); err != nil {
@@ -6428,8 +6404,8 @@ type UnsubscribeGroupUserNotificationParams struct {
 	GroupId uuid.UUID
 	// Target user identifier. Use `self` for the authenticated user.
 	UserId string
-	// Stable notification topic key.
-	TopicKey string
+	// Group notification topic key.
+	TopicKey GroupNotificationTopicKey
 }
 
 func unpackUnsubscribeGroupUserNotificationParams(packed middleware.Parameters) (params UnsubscribeGroupUserNotificationParams) {
@@ -6452,7 +6428,7 @@ func unpackUnsubscribeGroupUserNotificationParams(packed middleware.Parameters) 
 			Name: "topicKey",
 			In:   "path",
 		}
-		params.TopicKey = packed[key].(string)
+		params.TopicKey = packed[key].(GroupNotificationTopicKey)
 	}
 	return params
 }
@@ -6597,26 +6573,14 @@ func decodeUnsubscribeGroupUserNotificationParams(args [3]string, argsEscaped bo
 					return err
 				}
 
-				params.TopicKey = c
+				params.TopicKey = GroupNotificationTopicKey(c)
 				return nil
 			}(); err != nil {
 				return err
 			}
 			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(params.TopicKey)); err != nil {
-					return errors.Wrap(err, "string")
+				if err := params.TopicKey.Validate(); err != nil {
+					return err
 				}
 				return nil
 			}(); err != nil {
@@ -6640,8 +6604,8 @@ func decodeUnsubscribeGroupUserNotificationParams(args [3]string, argsEscaped bo
 type UnsubscribeUserNotificationParams struct {
 	// Target user identifier. Use `self` for the authenticated user.
 	UserId string
-	// Stable notification topic key.
-	TopicKey string
+	// Global notification topic key.
+	TopicKey GlobalNotificationTopicKey
 }
 
 func unpackUnsubscribeUserNotificationParams(packed middleware.Parameters) (params UnsubscribeUserNotificationParams) {
@@ -6657,7 +6621,7 @@ func unpackUnsubscribeUserNotificationParams(packed middleware.Parameters) (para
 			Name: "topicKey",
 			In:   "path",
 		}
-		params.TopicKey = packed[key].(string)
+		params.TopicKey = packed[key].(GlobalNotificationTopicKey)
 	}
 	return params
 }
@@ -6757,26 +6721,14 @@ func decodeUnsubscribeUserNotificationParams(args [2]string, argsEscaped bool, r
 					return err
 				}
 
-				params.TopicKey = c
+				params.TopicKey = GlobalNotificationTopicKey(c)
 				return nil
 			}(); err != nil {
 				return err
 			}
 			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(params.TopicKey)); err != nil {
-					return errors.Wrap(err, "string")
+				if err := params.TopicKey.Validate(); err != nil {
+					return err
 				}
 				return nil
 			}(); err != nil {

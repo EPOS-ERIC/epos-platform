@@ -2760,6 +2760,21 @@ func (s *GeologicalTemporalCoverage) Validate() error {
 	return nil
 }
 
+func (s GlobalNotificationTopicKey) Validate() error {
+	switch s {
+	case "global.membership.requested":
+		return nil
+	case "global.role_request.requested":
+		return nil
+	case "global.resource.submitted":
+		return nil
+	case "global.resource.published":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s GlobalPermission) Validate() error {
 	switch s {
 	case "global.membership.manage":
@@ -3163,6 +3178,21 @@ func (s *GroupMembership) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
+}
+
+func (s GroupNotificationTopicKey) Validate() error {
+	switch s {
+	case "group.membership.requested":
+		return nil
+	case "group.role_request.requested":
+		return nil
+	case "group.resource.submitted":
+		return nil
+	case "group.resource.published":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
 }
 
 func (s GroupPermission) Validate() error {
@@ -3831,21 +3861,8 @@ func (s NotificationChannel) Validate() error {
 	}
 }
 
-func (s NotificationMode) Validate() error {
-	switch s {
-	case "MANDATORY":
-		return nil
-	case "OPT_IN":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
 func (s NotificationScope) Validate() error {
 	switch s {
-	case "DIRECT":
-		return nil
 	case "GROUP":
 		return nil
 	case "GLOBAL":
@@ -3885,20 +3902,8 @@ func (s *NotificationSubscription) Validate() error {
 		})
 	}
 	if err := func() error {
-		if err := (validate.String{
-			MinLength:     1,
-			MinLengthSet:  true,
-			MaxLength:     0,
-			MaxLengthSet:  false,
-			Email:         false,
-			Hostname:      false,
-			Regex:         nil,
-			MinNumeric:    0,
-			MinNumericSet: false,
-			MaxNumeric:    0,
-			MaxNumericSet: false,
-		}).Validate(string(s.TopicKey)); err != nil {
-			return errors.Wrap(err, "string")
+		if err := s.TopicKey.Validate(); err != nil {
+			return err
 		}
 		return nil
 	}(); err != nil {
@@ -3931,6 +3936,17 @@ func (s *NotificationTopic) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
+		if err := s.Key.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "key",
+			Error: err,
+		})
+	}
+	if err := func() error {
 		if err := (validate.String{
 			MinLength:     1,
 			MinLengthSet:  true,
@@ -3943,13 +3959,36 @@ func (s *NotificationTopic) Validate() error {
 			MinNumericSet: false,
 			MaxNumeric:    0,
 			MaxNumericSet: false,
-		}).Validate(string(s.Key)); err != nil {
+		}).Validate(string(s.Label)); err != nil {
 			return errors.Wrap(err, "string")
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "key",
+			Name:  "label",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     1,
+			MinLengthSet:  true,
+			MaxLength:     0,
+			MaxLengthSet:  false,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.Description)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "description",
 			Error: err,
 		})
 	}
@@ -3961,17 +4000,6 @@ func (s *NotificationTopic) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "scope",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Mode.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "mode",
 			Error: err,
 		})
 	}
@@ -4019,6 +4047,29 @@ func (s *NotificationTopic) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
+}
+
+func (s NotificationTopicKey) Validate() error {
+	switch s {
+	case "group.membership.requested":
+		return nil
+	case "global.membership.requested":
+		return nil
+	case "group.role_request.requested":
+		return nil
+	case "global.role_request.requested":
+		return nil
+	case "group.resource.submitted":
+		return nil
+	case "group.resource.published":
+		return nil
+	case "global.resource.submitted":
+		return nil
+	case "global.resource.published":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
 }
 
 func (s *OrganizationAddress) Validate() error {

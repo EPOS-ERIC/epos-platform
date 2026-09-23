@@ -3,7 +3,6 @@
 CREATE TYPE permission_scope AS ENUM ('GLOBAL', 'GROUP');
 CREATE TYPE role_request_status AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED');
 CREATE TYPE notification_scope AS ENUM ('DIRECT', 'GLOBAL', 'GROUP');
-CREATE TYPE notification_mode AS ENUM ('MANDATORY', 'OPT_IN');
 CREATE TYPE notification_channel AS ENUM ('EMAIL');
 
 -- Authorization catalog is fixed migration data, not user-managed configuration.
@@ -83,14 +82,12 @@ CREATE TABLE group_role_requests (
 CREATE UNIQUE INDEX group_role_requests_pending_uq ON group_role_requests (user_id, group_id, role_key) WHERE status = 'PENDING';
 
 CREATE TABLE notification_event_types (
-    key        text PRIMARY KEY,
-    scope      notification_scope NOT NULL,
-    mode       notification_mode NOT NULL,
-    default_on boolean NOT NULL DEFAULT false,
-    CHECK (
-        (scope = 'DIRECT' AND mode = 'MANDATORY' AND NOT default_on)
-        OR (scope <> 'DIRECT' AND mode = 'OPT_IN')
-    )
+    key         text PRIMARY KEY,
+    label       text NOT NULL,
+    description text NOT NULL,
+    scope       notification_scope NOT NULL,
+    default_on  boolean NOT NULL DEFAULT false,
+    CHECK (scope <> 'DIRECT' OR NOT default_on)
 );
 CREATE TABLE notification_event_type_permissions (
     event_type     text NOT NULL REFERENCES notification_event_types(key) ON DELETE CASCADE,
@@ -193,24 +190,24 @@ INSERT INTO role_permissions (role_key, permission_key) VALUES
     ('ADMIN',       'global.resource.publish'),
     ('ADMIN',       'global.resource.unpublish'),
     ('ADMIN',       'global.category.manage');
-INSERT INTO notification_event_types (key, scope, mode, default_on) VALUES
-    ('direct.membership.accepted',    'DIRECT', 'MANDATORY', false),
-    ('direct.membership.rejected',    'DIRECT', 'MANDATORY', false),
-    ('direct.role_request.accepted',  'DIRECT', 'MANDATORY', false),
-    ('direct.role_request.rejected',  'DIRECT', 'MANDATORY', false),
-    ('direct.role.assigned',          'DIRECT', 'MANDATORY', false),
-    ('direct.permission.assigned',    'DIRECT', 'MANDATORY', false),
-    ('direct.resource.published',     'DIRECT', 'MANDATORY', false),
-    ('direct.resource.rejected',      'DIRECT', 'MANDATORY', false),
-    ('direct.resource.unpublished',   'DIRECT', 'MANDATORY', false),
-    ('group.membership.requested',    'GROUP',  'OPT_IN',    false),
-    ('global.membership.requested',   'GLOBAL', 'OPT_IN',    true),
-    ('group.role_request.requested',  'GROUP',  'OPT_IN',    false),
-    ('global.role_request.requested', 'GLOBAL', 'OPT_IN',    true),
-    ('group.resource.submitted',      'GROUP',  'OPT_IN',    false),
-    ('group.resource.published',      'GROUP',  'OPT_IN',    false),
-    ('global.resource.submitted',     'GLOBAL', 'OPT_IN',    true),
-    ('global.resource.published',     'GLOBAL', 'OPT_IN',    true);
+INSERT INTO notification_event_types (key, label, description, scope, default_on) VALUES
+    ('direct.membership.accepted',    'Membership accepted',          'Notifies a user when their membership request is accepted.',                                  'DIRECT', false),
+    ('direct.membership.rejected',    'Membership rejected',          'Notifies a user when their membership request is rejected.',                                  'DIRECT', false),
+    ('direct.role_request.accepted',  'Role request accepted',        'Notifies a user when their role request is accepted.',                                        'DIRECT', false),
+    ('direct.role_request.rejected',  'Role request rejected',        'Notifies a user when their role request is rejected.',                                        'DIRECT', false),
+    ('direct.role.assigned',          'Role assigned',                'Notifies a user when a role is assigned to them.',                                            'DIRECT', false),
+    ('direct.permission.assigned',    'Permission assigned',          'Notifies a user when a permission is granted to them.',                                       'DIRECT', false),
+    ('direct.resource.published',     'Resource published',           'Notifies a submitter when their resource is published.',                                      'DIRECT', false),
+    ('direct.resource.rejected',      'Resource rejected',            'Notifies a submitter when their resource is rejected.',                                       'DIRECT', false),
+    ('direct.resource.unpublished',   'Resource unpublished',         'Notifies a submitter when their resource is unpublished.',                                    'DIRECT', false),
+    ('group.membership.requested',    'Group membership requests',    'Notifies eligible group managers when a user requests membership in their group.',            'GROUP',  false),
+	('group.resource.submitted',      'Group resource submissions',   'Notifies eligible group subscribers when a resource is submitted for review in their group.', 'GROUP',  false),
+	('group.resource.published',      'Group resource publications',  'Notifies group subscribers when a resource is published in their group.',                     'GROUP',  false),
+	('group.role_request.requested',  'Group role requests',          'Notifies eligible group managers when a user requests a role in their group.',                'GROUP',  false),
+    ('global.membership.requested',   'Global membership requests',   'Notifies eligible managers when a user requests membership in any group.',                    'GLOBAL', true),
+    ('global.role_request.requested', 'Global role requests',         'Notifies eligible managers when a user requests a role in any group.',                        'GLOBAL', true),
+    ('global.resource.submitted',     'Global resource submissions',  'Notifies global subscribers when a resource is submitted for review in any group.',           'GLOBAL', true),
+    ('global.resource.published',     'Global resource publications', 'Notifies global subscribers when a resource is published in any group.',                      'GLOBAL', true);
 INSERT INTO notification_event_type_permissions (event_type, permission_key) VALUES
     ('group.membership.requested',    'group.membership.manage'),
     ('global.membership.requested',   'global.membership.manage'),
@@ -224,4 +221,4 @@ INSERT INTO notification_event_type_permissions (event_type, permission_key) VAL
 -- +goose Down
 
 DROP TABLE IF EXISTS group_notification_subscriptions, global_notification_subscriptions, notification_event_type_permissions, notification_event_types, group_role_requests, group_permission_grants, global_permission_grants, user_global_roles, group_membership_roles, group_memberships, role_permissions, roles, permissions;
-DROP TYPE IF EXISTS notification_channel, notification_mode, notification_scope, role_request_status, permission_scope;
+DROP TYPE IF EXISTS notification_channel, notification_scope, role_request_status, permission_scope;

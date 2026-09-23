@@ -401,7 +401,7 @@ paths:
     get:
       tags: [Notifications]
       summary: List notification topics
-      description: Returns the fixed notification topic catalog.
+      description: Returns notification topics available for subscription. Direct notification routes are internal and are not returned.
       operationId: listNotificationTopics
       security:
         - {}
@@ -447,7 +447,7 @@ paths:
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/NotificationUserId"
-        - $ref: "#/components/parameters/NotificationTopicKey"
+        - $ref: "#/components/parameters/GlobalNotificationTopicKey"
       responses:
         "204": { description: Subscription created }
         default:
@@ -462,7 +462,7 @@ paths:
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/NotificationUserId"
-        - $ref: "#/components/parameters/NotificationTopicKey"
+        - $ref: "#/components/parameters/GlobalNotificationTopicKey"
       responses:
         "204": { description: Subscription removed }
         default:
@@ -590,7 +590,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/NotificationUserId"
-        - $ref: "#/components/parameters/NotificationTopicKey"
+        - $ref: "#/components/parameters/GroupNotificationTopicKey"
       responses:
         "204": { description: Subscription created }
         default:
@@ -606,7 +606,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/NotificationUserId"
-        - $ref: "#/components/parameters/NotificationTopicKey"
+        - $ref: "#/components/parameters/GroupNotificationTopicKey"
       responses:
         "204": { description: Subscription removed }
         default:
@@ -1597,14 +1597,21 @@ components:
         type: string
         minLength: 1
 
-    NotificationTopicKey:
+    GlobalNotificationTopicKey:
       name: topicKey
       in: path
       required: true
-      description: Stable notification topic key.
+      description: Global notification topic key.
       schema:
-        type: string
-        minLength: 1
+        $ref: "#/components/schemas/GlobalNotificationTopicKey"
+
+    GroupNotificationTopicKey:
+      name: topicKey
+      in: path
+      required: true
+      description: Group notification topic key.
+      schema:
+        $ref: "#/components/schemas/GroupNotificationTopicKey"
 
     Permission:
       name: permission
@@ -2060,25 +2067,55 @@ components:
 
     NotificationScope:
       type: string
-      enum: [DIRECT, GROUP, GLOBAL]
-
-    NotificationMode:
-      type: string
-      enum: [MANDATORY, OPT_IN]
+      enum: [GROUP, GLOBAL]
 
     NotificationChannel:
       type: string
       enum: [EMAIL]
 
+    NotificationTopicKey:
+      type: string
+      enum:
+        - group.membership.requested
+        - global.membership.requested
+        - group.role_request.requested
+        - global.role_request.requested
+        - group.resource.submitted
+        - group.resource.published
+        - global.resource.submitted
+        - global.resource.published
+
+    GlobalNotificationTopicKey:
+      type: string
+      enum:
+        - global.membership.requested
+        - global.role_request.requested
+        - global.resource.submitted
+        - global.resource.published
+
+    GroupNotificationTopicKey:
+      type: string
+      enum:
+        - group.membership.requested
+        - group.role_request.requested
+        - group.resource.submitted
+        - group.resource.published
+
     NotificationTopic:
       type: object
       additionalProperties: false
-      required: [key, scope, mode, default_on, required_permissions]
+      required: [key, label, description, scope, required_permissions]
       properties:
-        key: { type: string, minLength: 1 }
+        key: { $ref: "#/components/schemas/NotificationTopicKey" }
+        label:
+          type: string
+          minLength: 1
+          description: Human-readable notification topic label.
+        description:
+          type: string
+          minLength: 1
+          description: Human-readable notification topic description.
         scope: { $ref: "#/components/schemas/NotificationScope" }
-        mode: { $ref: "#/components/schemas/NotificationMode" }
-        default_on: { type: boolean }
         required_permissions:
           type: array
           items: { type: string, minLength: 1 }
@@ -2090,7 +2127,7 @@ components:
       properties:
         user_id: { type: string, minLength: 1 }
         group_id: { type: string, format: uuid }
-        topic_key: { type: string, minLength: 1 }
+        topic_key: { $ref: "#/components/schemas/NotificationTopicKey" }
         channel: { $ref: "#/components/schemas/NotificationChannel" }
 
     Permission:

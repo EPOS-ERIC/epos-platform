@@ -451,29 +451,36 @@ func (q *Queries) ListNotificationEventTypePermissions(ctx context.Context, even
 const listNotificationEventTypes = `-- name: ListNotificationEventTypes :many
 SELECT
     KEY,
-    scope,
-    MODE,
-    default_on
+    label,
+    description,
+    scope
 FROM
     notification_event_types
 ORDER BY
     KEY
 `
 
-func (q *Queries) ListNotificationEventTypes(ctx context.Context) ([]NotificationEventType, error) {
+type ListNotificationEventTypesRow struct {
+	Key         string
+	Label       string
+	Description string
+	Scope       NotificationScope
+}
+
+func (q *Queries) ListNotificationEventTypes(ctx context.Context) ([]ListNotificationEventTypesRow, error) {
 	rows, err := q.db.Query(ctx, listNotificationEventTypes)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []NotificationEventType
+	var items []ListNotificationEventTypesRow
 	for rows.Next() {
-		var i NotificationEventType
+		var i ListNotificationEventTypesRow
 		if err := rows.Scan(
 			&i.Key,
+			&i.Label,
+			&i.Description,
 			&i.Scope,
-			&i.Mode,
-			&i.DefaultOn,
 		); err != nil {
 			return nil, err
 		}

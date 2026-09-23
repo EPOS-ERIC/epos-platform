@@ -6557,7 +6557,8 @@ func (s *Server) handleListGroupsRequest(args [0]string, argsEscaped bool, w htt
 
 // handleListNotificationTopicsRequest handles listNotificationTopics operation.
 //
-// Returns the fixed notification topic catalog.
+// Returns notification topics available for subscription. Direct notification routes are internal and
+// are not returned.
 //
 // GET /notification-topics
 func (s *Server) handleListNotificationTopicsRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

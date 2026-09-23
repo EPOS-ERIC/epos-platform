@@ -327,7 +327,8 @@ func (UnimplementedHandler) ListGroups(ctx context.Context) (r []Group, _ error)
 
 // ListNotificationTopics implements listNotificationTopics operation.
 //
-// Returns the fixed notification topic catalog.
+// Returns notification topics available for subscription. Direct notification routes are internal and
+// are not returned.
 //
 // GET /notification-topics
 func (UnimplementedHandler) ListNotificationTopics(ctx context.Context) (r []NotificationTopic, _ error) {

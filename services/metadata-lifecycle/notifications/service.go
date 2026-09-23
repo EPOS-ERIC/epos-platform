@@ -51,7 +51,17 @@ func (s *Service) ListTopics(ctx context.Context) ([]domain.NotificationTopic, e
 	if err != nil {
 		return nil, fmt.Errorf("list notification topics: %w", err)
 	}
-	return topics, nil
+
+	result := make([]domain.NotificationTopic, 0, len(topics))
+	for _, topic := range topics {
+		if topic.Scope != domain.NotificationScopeGroup && topic.Scope != domain.NotificationScopeGlobal {
+			continue
+		}
+
+		result = append(result, topic)
+	}
+
+	return result, nil
 }
 
 func (s *Service) ListSubscriptions(ctx context.Context, actor domain.Actor, userID string) ([]domain.NotificationSubscription, error) {
@@ -111,7 +121,7 @@ func (s *Service) authorizeSubscription(ctx context.Context, actor domain.Actor,
 	if err != nil {
 		return domain.NotificationTopic{}, err
 	}
-	if channel != domain.NotificationChannelEmail || topic.Mode != domain.NotificationModeOptIn || topic.Scope == domain.NotificationScopeDirect {
+	if channel != domain.NotificationChannelEmail || topic.Scope == domain.NotificationScopeDirect {
 		return domain.NotificationTopic{}, domain.ErrNotificationInvalid
 	}
 

@@ -141,48 +141,6 @@ func (ns NullNotificationChannel) Value() (driver.Value, error) {
 	return string(ns.NotificationChannel), nil
 }
 
-type NotificationMode string
-
-const (
-	NotificationModeMANDATORY NotificationMode = "MANDATORY"
-	NotificationModeOPTIN     NotificationMode = "OPT_IN"
-)
-
-func (e *NotificationMode) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = NotificationMode(s)
-	case string:
-		*e = NotificationMode(s)
-	default:
-		return fmt.Errorf("unsupported scan type for NotificationMode: %T", src)
-	}
-	return nil
-}
-
-type NullNotificationMode struct {
-	NotificationMode NotificationMode
-	Valid            bool // Valid is true if NotificationMode is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullNotificationMode) Scan(value interface{}) error {
-	if value == nil {
-		ns.NotificationMode, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.NotificationMode.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullNotificationMode) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.NotificationMode), nil
-}
-
 type NotificationScope string
 
 const (
@@ -863,10 +821,11 @@ type IntegerParameterSchema struct {
 }
 
 type NotificationEventType struct {
-	Key       string
-	Scope     NotificationScope
-	Mode      NotificationMode
-	DefaultOn bool
+	Key         string
+	Label       string
+	Description string
+	Scope       NotificationScope
+	DefaultOn   bool
 }
 
 type NotificationEventTypePermission struct {

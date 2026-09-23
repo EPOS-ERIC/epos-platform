@@ -105,15 +105,15 @@ func toProtoNotificationTopic(value domain.NotificationTopic) (*metadatalifecycl
 	if err != nil {
 		return nil, err
 	}
-	mode, err := toProtoNotificationMode(value.Mode)
+	key, err := toProtoNotificationTopicKey(value.Key)
 	if err != nil {
 		return nil, err
 	}
 	return &metadatalifecyclev1.NotificationTopic{
-		Key:                 string(value.Key),
+		Key:                 key,
+		Label:               value.Label,
+		Description:         value.Description,
 		Scope:               scope,
-		Mode:                mode,
-		DefaultOn:           value.DefaultOn,
 		RequiredPermissions: value.RequiredPermissions,
 	}, nil
 }
@@ -123,9 +123,13 @@ func toProtoNotificationSubscription(value domain.NotificationSubscription) (*me
 	if err != nil {
 		return nil, err
 	}
+	topicKey, err := toProtoNotificationTopicKey(value.TopicKey)
+	if err != nil {
+		return nil, err
+	}
 	result := &metadatalifecyclev1.NotificationSubscription{
 		UserId:   value.UserID,
-		TopicKey: string(value.TopicKey),
+		TopicKey: topicKey,
 		Channel:  channel,
 	}
 	if value.GroupID != nil {
@@ -147,17 +151,6 @@ func toProtoNotificationScope(value domain.NotificationScope) (metadatalifecycle
 	}
 }
 
-func toProtoNotificationMode(value domain.NotificationMode) (metadatalifecyclev1.NotificationMode, error) {
-	switch value {
-	case domain.NotificationModeMandatory:
-		return metadatalifecyclev1.NotificationMode_NOTIFICATION_MODE_MANDATORY, nil
-	case domain.NotificationModeOptIn:
-		return metadatalifecyclev1.NotificationMode_NOTIFICATION_MODE_OPT_IN, nil
-	default:
-		return 0, status.Errorf(codes.Internal, "unknown notification mode: %q", value)
-	}
-}
-
 func toDomainNotificationChannel(value metadatalifecyclev1.NotificationChannel) domain.NotificationChannel {
 	if value == metadatalifecyclev1.NotificationChannel_NOTIFICATION_CHANNEL_EMAIL {
 		return domain.NotificationChannelEmail
@@ -165,12 +158,50 @@ func toDomainNotificationChannel(value metadatalifecyclev1.NotificationChannel) 
 	return ""
 }
 
-func toDomainNotificationTopicKey(value string) (domain.NotificationTopicKey, error) {
-	key, err := domain.NewNotificationTopicKey(value)
-	if err != nil {
+func toDomainNotificationTopicKey(value metadatalifecyclev1.NotificationTopicKey) (domain.NotificationTopicKey, error) {
+	switch value {
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_MEMBERSHIP_REQUESTED:
+		return domain.NotificationTopicGroupMembershipRequested, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_MEMBERSHIP_REQUESTED:
+		return domain.NotificationTopicGlobalMembershipRequested, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_ROLE_REQUEST_REQUESTED:
+		return domain.NotificationTopicGroupRoleRequestRequested, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_ROLE_REQUEST_REQUESTED:
+		return domain.NotificationTopicGlobalRoleRequestRequested, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_SUBMITTED:
+		return domain.NotificationTopicGroupResourceSubmitted, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED:
+		return domain.NotificationTopicGroupResourcePublished, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED:
+		return domain.NotificationTopicGlobalResourceSubmitted, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED:
+		return domain.NotificationTopicGlobalResourcePublished, nil
+	default:
 		return "", status.Error(codes.InvalidArgument, "invalid notification topic key")
 	}
-	return key, nil
+}
+
+func toProtoNotificationTopicKey(value domain.NotificationTopicKey) (metadatalifecyclev1.NotificationTopicKey, error) {
+	switch value {
+	case domain.NotificationTopicGroupMembershipRequested:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_MEMBERSHIP_REQUESTED, nil
+	case domain.NotificationTopicGlobalMembershipRequested:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_MEMBERSHIP_REQUESTED, nil
+	case domain.NotificationTopicGroupRoleRequestRequested:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_ROLE_REQUEST_REQUESTED, nil
+	case domain.NotificationTopicGlobalRoleRequestRequested:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_ROLE_REQUEST_REQUESTED, nil
+	case domain.NotificationTopicGroupResourceSubmitted:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_SUBMITTED, nil
+	case domain.NotificationTopicGroupResourcePublished:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED, nil
+	case domain.NotificationTopicGlobalResourceSubmitted:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED, nil
+	case domain.NotificationTopicGlobalResourcePublished:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED, nil
+	default:
+		return 0, status.Errorf(codes.Internal, "notification topic key is not subscribable: %q", value)
+	}
 }
 
 func optionalNotificationGroupID(value string) (*uuid.UUID, error) {

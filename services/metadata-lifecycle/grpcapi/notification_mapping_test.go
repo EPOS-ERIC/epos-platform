@@ -6,6 +6,8 @@ import (
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestToProtoNotificationEventKind(t *testing.T) {
@@ -83,5 +85,86 @@ func TestToProtoNotificationPreservesOptionalIDs(t *testing.T) {
 	}
 	if result.AccessId == nil || result.GetAccessId() != accessID.String() {
 		t.Fatalf("access_id = %v, want %q", result.AccessId, accessID)
+	}
+}
+
+func TestNotificationTopicKeyMappings(t *testing.T) {
+	tests := []struct {
+		name   string
+		domain domain.NotificationTopicKey
+		proto  metadatalifecyclev1.NotificationTopicKey
+	}{
+		{
+			name:   "group membership",
+			domain: domain.NotificationTopicGroupMembershipRequested,
+			proto:  metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_MEMBERSHIP_REQUESTED,
+		},
+		{
+			name:   "global membership",
+			domain: domain.NotificationTopicGlobalMembershipRequested,
+			proto:  metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_MEMBERSHIP_REQUESTED,
+		},
+		{
+			name:   "group role request",
+			domain: domain.NotificationTopicGroupRoleRequestRequested,
+			proto:  metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_ROLE_REQUEST_REQUESTED,
+		},
+		{
+			name:   "global role request",
+			domain: domain.NotificationTopicGlobalRoleRequestRequested,
+			proto:  metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_ROLE_REQUEST_REQUESTED,
+		},
+		{
+			name:   "group resource submitted",
+			domain: domain.NotificationTopicGroupResourceSubmitted,
+			proto:  metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_SUBMITTED,
+		},
+		{
+			name:   "group resource published",
+			domain: domain.NotificationTopicGroupResourcePublished,
+			proto:  metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED,
+		},
+		{
+			name:   "global resource submitted",
+			domain: domain.NotificationTopicGlobalResourceSubmitted,
+			proto:  metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED,
+		},
+		{
+			name:   "global resource published",
+			domain: domain.NotificationTopicGlobalResourcePublished,
+			proto:  metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			protoValue, err := toProtoNotificationTopicKey(test.domain)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if protoValue != test.proto {
+				t.Fatalf("toProtoNotificationTopicKey() = %v, want %v", protoValue, test.proto)
+			}
+
+			domainValue, err := toDomainNotificationTopicKey(test.proto)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if domainValue != test.domain {
+				t.Fatalf("toDomainNotificationTopicKey() = %q, want %q", domainValue, test.domain)
+			}
+		})
+	}
+}
+
+func TestNotificationTopicKeyMappingsRejectInvalidValues(t *testing.T) {
+	_, err := toDomainNotificationTopicKey(metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_UNSPECIFIED)
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("invalid proto topic key error code = %s, want %s", status.Code(err), codes.InvalidArgument)
+	}
+
+	_, err = toProtoNotificationTopicKey(domain.NotificationTopicDirectResourcePublished)
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("direct topic key error code = %s, want %s", status.Code(err), codes.Internal)
 	}
 }

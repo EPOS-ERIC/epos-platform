@@ -26,7 +26,7 @@ func (c *MetadataLifecycle) ListNotificationSubscriptions(ctx context.Context, u
 	return response, nil
 }
 
-func (c *MetadataLifecycle) SubscribeNotification(ctx context.Context, userID, groupID, topicKey, actorID string) error {
+func (c *MetadataLifecycle) SubscribeNotification(ctx context.Context, userID, groupID string, topicKey metadatalifecyclev1.NotificationTopicKey, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	_, err := c.notifications.SubscribeNotification(ctx, &metadatalifecyclev1.SubscribeNotificationRequest{
 		UserId:   userID,
@@ -40,7 +40,7 @@ func (c *MetadataLifecycle) SubscribeNotification(ctx context.Context, userID, g
 	return nil
 }
 
-func (c *MetadataLifecycle) UnsubscribeNotification(ctx context.Context, userID, groupID, topicKey, actorID string) error {
+func (c *MetadataLifecycle) UnsubscribeNotification(ctx context.Context, userID, groupID string, topicKey metadatalifecyclev1.NotificationTopicKey, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	_, err := c.notifications.UnsubscribeNotification(ctx, &metadatalifecyclev1.UnsubscribeNotificationRequest{
 		UserId:   userID,

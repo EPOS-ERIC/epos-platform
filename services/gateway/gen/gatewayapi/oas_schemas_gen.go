@@ -4345,6 +4345,62 @@ func (s *GeologicalTemporalCoverage) SetEndMya(val OptNilFloat64) {
 	s.EndMya = val
 }
 
+// Ref: #/components/schemas/GlobalNotificationTopicKey
+type GlobalNotificationTopicKey string
+
+const (
+	GlobalNotificationTopicKeyGlobalMembershipRequested  GlobalNotificationTopicKey = "global.membership.requested"
+	GlobalNotificationTopicKeyGlobalRoleRequestRequested GlobalNotificationTopicKey = "global.role_request.requested"
+	GlobalNotificationTopicKeyGlobalResourceSubmitted    GlobalNotificationTopicKey = "global.resource.submitted"
+	GlobalNotificationTopicKeyGlobalResourcePublished    GlobalNotificationTopicKey = "global.resource.published"
+)
+
+// AllValues returns all GlobalNotificationTopicKey values.
+func (GlobalNotificationTopicKey) AllValues() []GlobalNotificationTopicKey {
+	return []GlobalNotificationTopicKey{
+		GlobalNotificationTopicKeyGlobalMembershipRequested,
+		GlobalNotificationTopicKeyGlobalRoleRequestRequested,
+		GlobalNotificationTopicKeyGlobalResourceSubmitted,
+		GlobalNotificationTopicKeyGlobalResourcePublished,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GlobalNotificationTopicKey) MarshalText() ([]byte, error) {
+	switch s {
+	case GlobalNotificationTopicKeyGlobalMembershipRequested:
+		return []byte(s), nil
+	case GlobalNotificationTopicKeyGlobalRoleRequestRequested:
+		return []byte(s), nil
+	case GlobalNotificationTopicKeyGlobalResourceSubmitted:
+		return []byte(s), nil
+	case GlobalNotificationTopicKeyGlobalResourcePublished:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GlobalNotificationTopicKey) UnmarshalText(data []byte) error {
+	switch GlobalNotificationTopicKey(data) {
+	case GlobalNotificationTopicKeyGlobalMembershipRequested:
+		*s = GlobalNotificationTopicKeyGlobalMembershipRequested
+		return nil
+	case GlobalNotificationTopicKeyGlobalRoleRequestRequested:
+		*s = GlobalNotificationTopicKeyGlobalRoleRequestRequested
+		return nil
+	case GlobalNotificationTopicKeyGlobalResourceSubmitted:
+		*s = GlobalNotificationTopicKeyGlobalResourceSubmitted
+		return nil
+	case GlobalNotificationTopicKeyGlobalResourcePublished:
+		*s = GlobalNotificationTopicKeyGlobalResourcePublished
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Global permission key.
 // Ref: #/components/schemas/GlobalPermission
 type GlobalPermission string
@@ -4777,6 +4833,62 @@ func (s *GroupMembership) SetCreatedAt(val time.Time) {
 // SetUpdatedAt sets the value of UpdatedAt.
 func (s *GroupMembership) SetUpdatedAt(val time.Time) {
 	s.UpdatedAt = val
+}
+
+// Ref: #/components/schemas/GroupNotificationTopicKey
+type GroupNotificationTopicKey string
+
+const (
+	GroupNotificationTopicKeyGroupMembershipRequested  GroupNotificationTopicKey = "group.membership.requested"
+	GroupNotificationTopicKeyGroupRoleRequestRequested GroupNotificationTopicKey = "group.role_request.requested"
+	GroupNotificationTopicKeyGroupResourceSubmitted    GroupNotificationTopicKey = "group.resource.submitted"
+	GroupNotificationTopicKeyGroupResourcePublished    GroupNotificationTopicKey = "group.resource.published"
+)
+
+// AllValues returns all GroupNotificationTopicKey values.
+func (GroupNotificationTopicKey) AllValues() []GroupNotificationTopicKey {
+	return []GroupNotificationTopicKey{
+		GroupNotificationTopicKeyGroupMembershipRequested,
+		GroupNotificationTopicKeyGroupRoleRequestRequested,
+		GroupNotificationTopicKeyGroupResourceSubmitted,
+		GroupNotificationTopicKeyGroupResourcePublished,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GroupNotificationTopicKey) MarshalText() ([]byte, error) {
+	switch s {
+	case GroupNotificationTopicKeyGroupMembershipRequested:
+		return []byte(s), nil
+	case GroupNotificationTopicKeyGroupRoleRequestRequested:
+		return []byte(s), nil
+	case GroupNotificationTopicKeyGroupResourceSubmitted:
+		return []byte(s), nil
+	case GroupNotificationTopicKeyGroupResourcePublished:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GroupNotificationTopicKey) UnmarshalText(data []byte) error {
+	switch GroupNotificationTopicKey(data) {
+	case GroupNotificationTopicKeyGroupMembershipRequested:
+		*s = GroupNotificationTopicKeyGroupMembershipRequested
+		return nil
+	case GroupNotificationTopicKeyGroupRoleRequestRequested:
+		*s = GroupNotificationTopicKeyGroupRoleRequestRequested
+		return nil
+	case GroupNotificationTopicKeyGroupResourceSubmitted:
+		*s = GroupNotificationTopicKeyGroupResourceSubmitted
+		return nil
+	case GroupNotificationTopicKeyGroupResourcePublished:
+		*s = GroupNotificationTopicKeyGroupResourcePublished
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Group-scoped permission key.
@@ -6347,53 +6459,10 @@ func (s *NotificationChannel) UnmarshalText(data []byte) error {
 	}
 }
 
-// Ref: #/components/schemas/NotificationMode
-type NotificationMode string
-
-const (
-	NotificationModeMANDATORY NotificationMode = "MANDATORY"
-	NotificationModeOPTIN     NotificationMode = "OPT_IN"
-)
-
-// AllValues returns all NotificationMode values.
-func (NotificationMode) AllValues() []NotificationMode {
-	return []NotificationMode{
-		NotificationModeMANDATORY,
-		NotificationModeOPTIN,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s NotificationMode) MarshalText() ([]byte, error) {
-	switch s {
-	case NotificationModeMANDATORY:
-		return []byte(s), nil
-	case NotificationModeOPTIN:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *NotificationMode) UnmarshalText(data []byte) error {
-	switch NotificationMode(data) {
-	case NotificationModeMANDATORY:
-		*s = NotificationModeMANDATORY
-		return nil
-	case NotificationModeOPTIN:
-		*s = NotificationModeOPTIN
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
 // Ref: #/components/schemas/NotificationScope
 type NotificationScope string
 
 const (
-	NotificationScopeDIRECT NotificationScope = "DIRECT"
 	NotificationScopeGROUP  NotificationScope = "GROUP"
 	NotificationScopeGLOBAL NotificationScope = "GLOBAL"
 )
@@ -6401,7 +6470,6 @@ const (
 // AllValues returns all NotificationScope values.
 func (NotificationScope) AllValues() []NotificationScope {
 	return []NotificationScope{
-		NotificationScopeDIRECT,
 		NotificationScopeGROUP,
 		NotificationScopeGLOBAL,
 	}
@@ -6410,8 +6478,6 @@ func (NotificationScope) AllValues() []NotificationScope {
 // MarshalText implements encoding.TextMarshaler.
 func (s NotificationScope) MarshalText() ([]byte, error) {
 	switch s {
-	case NotificationScopeDIRECT:
-		return []byte(s), nil
 	case NotificationScopeGROUP:
 		return []byte(s), nil
 	case NotificationScopeGLOBAL:
@@ -6424,9 +6490,6 @@ func (s NotificationScope) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *NotificationScope) UnmarshalText(data []byte) error {
 	switch NotificationScope(data) {
-	case NotificationScopeDIRECT:
-		*s = NotificationScopeDIRECT
-		return nil
 	case NotificationScopeGROUP:
 		*s = NotificationScopeGROUP
 		return nil
@@ -6440,10 +6503,10 @@ func (s *NotificationScope) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/NotificationSubscription
 type NotificationSubscription struct {
-	UserID   string              `json:"user_id"`
-	GroupID  OptUUID             `json:"group_id"`
-	TopicKey string              `json:"topic_key"`
-	Channel  NotificationChannel `json:"channel"`
+	UserID   string               `json:"user_id"`
+	GroupID  OptUUID              `json:"group_id"`
+	TopicKey NotificationTopicKey `json:"topic_key"`
+	Channel  NotificationChannel  `json:"channel"`
 }
 
 // GetUserID returns the value of UserID.
@@ -6457,7 +6520,7 @@ func (s *NotificationSubscription) GetGroupID() OptUUID {
 }
 
 // GetTopicKey returns the value of TopicKey.
-func (s *NotificationSubscription) GetTopicKey() string {
+func (s *NotificationSubscription) GetTopicKey() NotificationTopicKey {
 	return s.TopicKey
 }
 
@@ -6477,7 +6540,7 @@ func (s *NotificationSubscription) SetGroupID(val OptUUID) {
 }
 
 // SetTopicKey sets the value of TopicKey.
-func (s *NotificationSubscription) SetTopicKey(val string) {
+func (s *NotificationSubscription) SetTopicKey(val NotificationTopicKey) {
 	s.TopicKey = val
 }
 
@@ -6488,31 +6551,33 @@ func (s *NotificationSubscription) SetChannel(val NotificationChannel) {
 
 // Ref: #/components/schemas/NotificationTopic
 type NotificationTopic struct {
-	Key                 string            `json:"key"`
+	Key NotificationTopicKey `json:"key"`
+	// Human-readable notification topic label.
+	Label string `json:"label"`
+	// Human-readable notification topic description.
+	Description         string            `json:"description"`
 	Scope               NotificationScope `json:"scope"`
-	Mode                NotificationMode  `json:"mode"`
-	DefaultOn           bool              `json:"default_on"`
 	RequiredPermissions []string          `json:"required_permissions"`
 }
 
 // GetKey returns the value of Key.
-func (s *NotificationTopic) GetKey() string {
+func (s *NotificationTopic) GetKey() NotificationTopicKey {
 	return s.Key
+}
+
+// GetLabel returns the value of Label.
+func (s *NotificationTopic) GetLabel() string {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *NotificationTopic) GetDescription() string {
+	return s.Description
 }
 
 // GetScope returns the value of Scope.
 func (s *NotificationTopic) GetScope() NotificationScope {
 	return s.Scope
-}
-
-// GetMode returns the value of Mode.
-func (s *NotificationTopic) GetMode() NotificationMode {
-	return s.Mode
-}
-
-// GetDefaultOn returns the value of DefaultOn.
-func (s *NotificationTopic) GetDefaultOn() bool {
-	return s.DefaultOn
 }
 
 // GetRequiredPermissions returns the value of RequiredPermissions.
@@ -6521,8 +6586,18 @@ func (s *NotificationTopic) GetRequiredPermissions() []string {
 }
 
 // SetKey sets the value of Key.
-func (s *NotificationTopic) SetKey(val string) {
+func (s *NotificationTopic) SetKey(val NotificationTopicKey) {
 	s.Key = val
+}
+
+// SetLabel sets the value of Label.
+func (s *NotificationTopic) SetLabel(val string) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *NotificationTopic) SetDescription(val string) {
+	s.Description = val
 }
 
 // SetScope sets the value of Scope.
@@ -6530,19 +6605,93 @@ func (s *NotificationTopic) SetScope(val NotificationScope) {
 	s.Scope = val
 }
 
-// SetMode sets the value of Mode.
-func (s *NotificationTopic) SetMode(val NotificationMode) {
-	s.Mode = val
-}
-
-// SetDefaultOn sets the value of DefaultOn.
-func (s *NotificationTopic) SetDefaultOn(val bool) {
-	s.DefaultOn = val
-}
-
 // SetRequiredPermissions sets the value of RequiredPermissions.
 func (s *NotificationTopic) SetRequiredPermissions(val []string) {
 	s.RequiredPermissions = val
+}
+
+// Ref: #/components/schemas/NotificationTopicKey
+type NotificationTopicKey string
+
+const (
+	NotificationTopicKeyGroupMembershipRequested   NotificationTopicKey = "group.membership.requested"
+	NotificationTopicKeyGlobalMembershipRequested  NotificationTopicKey = "global.membership.requested"
+	NotificationTopicKeyGroupRoleRequestRequested  NotificationTopicKey = "group.role_request.requested"
+	NotificationTopicKeyGlobalRoleRequestRequested NotificationTopicKey = "global.role_request.requested"
+	NotificationTopicKeyGroupResourceSubmitted     NotificationTopicKey = "group.resource.submitted"
+	NotificationTopicKeyGroupResourcePublished     NotificationTopicKey = "group.resource.published"
+	NotificationTopicKeyGlobalResourceSubmitted    NotificationTopicKey = "global.resource.submitted"
+	NotificationTopicKeyGlobalResourcePublished    NotificationTopicKey = "global.resource.published"
+)
+
+// AllValues returns all NotificationTopicKey values.
+func (NotificationTopicKey) AllValues() []NotificationTopicKey {
+	return []NotificationTopicKey{
+		NotificationTopicKeyGroupMembershipRequested,
+		NotificationTopicKeyGlobalMembershipRequested,
+		NotificationTopicKeyGroupRoleRequestRequested,
+		NotificationTopicKeyGlobalRoleRequestRequested,
+		NotificationTopicKeyGroupResourceSubmitted,
+		NotificationTopicKeyGroupResourcePublished,
+		NotificationTopicKeyGlobalResourceSubmitted,
+		NotificationTopicKeyGlobalResourcePublished,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s NotificationTopicKey) MarshalText() ([]byte, error) {
+	switch s {
+	case NotificationTopicKeyGroupMembershipRequested:
+		return []byte(s), nil
+	case NotificationTopicKeyGlobalMembershipRequested:
+		return []byte(s), nil
+	case NotificationTopicKeyGroupRoleRequestRequested:
+		return []byte(s), nil
+	case NotificationTopicKeyGlobalRoleRequestRequested:
+		return []byte(s), nil
+	case NotificationTopicKeyGroupResourceSubmitted:
+		return []byte(s), nil
+	case NotificationTopicKeyGroupResourcePublished:
+		return []byte(s), nil
+	case NotificationTopicKeyGlobalResourceSubmitted:
+		return []byte(s), nil
+	case NotificationTopicKeyGlobalResourcePublished:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *NotificationTopicKey) UnmarshalText(data []byte) error {
+	switch NotificationTopicKey(data) {
+	case NotificationTopicKeyGroupMembershipRequested:
+		*s = NotificationTopicKeyGroupMembershipRequested
+		return nil
+	case NotificationTopicKeyGlobalMembershipRequested:
+		*s = NotificationTopicKeyGlobalMembershipRequested
+		return nil
+	case NotificationTopicKeyGroupRoleRequestRequested:
+		*s = NotificationTopicKeyGroupRoleRequestRequested
+		return nil
+	case NotificationTopicKeyGlobalRoleRequestRequested:
+		*s = NotificationTopicKeyGlobalRoleRequestRequested
+		return nil
+	case NotificationTopicKeyGroupResourceSubmitted:
+		*s = NotificationTopicKeyGroupResourceSubmitted
+		return nil
+	case NotificationTopicKeyGroupResourcePublished:
+		*s = NotificationTopicKeyGroupResourcePublished
+		return nil
+	case NotificationTopicKeyGlobalResourceSubmitted:
+		*s = NotificationTopicKeyGlobalResourceSubmitted
+		return nil
+	case NotificationTopicKeyGlobalResourcePublished:
+		*s = NotificationTopicKeyGlobalResourcePublished
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // NewOptDateTime returns new OptDateTime with value set to v.

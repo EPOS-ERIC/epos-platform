@@ -1,9 +1,9 @@
 -- name: ListNotificationEventTypes :many
 SELECT
     KEY,
-    scope,
-    MODE,
-    default_on
+    label,
+    description,
+    scope
 FROM
     notification_event_types
 ORDER BY

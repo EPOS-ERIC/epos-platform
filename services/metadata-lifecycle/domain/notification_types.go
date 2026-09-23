@@ -18,14 +18,6 @@ const (
 	NotificationScopeGroup  NotificationScope = "GROUP"
 )
 
-// NotificationMode identifies whether a topic requires a subscription.
-type NotificationMode string
-
-const (
-	NotificationModeMandatory NotificationMode = "MANDATORY"
-	NotificationModeOptIn     NotificationMode = "OPT_IN"
-)
-
 // NotificationEventKind identifies a supported notification event.
 type NotificationEventKind string
 
@@ -70,9 +62,9 @@ const (
 // NotificationTopic is fixed catalog metadata used for routing and eligibility.
 type NotificationTopic struct {
 	Key                 NotificationTopicKey
+	Label               string
+	Description         string
 	Scope               NotificationScope
-	Mode                NotificationMode
-	DefaultOn           bool
 	RequiredPermissions []string
 }
 

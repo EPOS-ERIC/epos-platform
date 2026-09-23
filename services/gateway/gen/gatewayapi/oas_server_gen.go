@@ -223,7 +223,8 @@ type Handler interface {
 	ListGroups(ctx context.Context) ([]Group, error)
 	// ListNotificationTopics implements listNotificationTopics operation.
 	//
-	// Returns the fixed notification topic catalog.
+	// Returns notification topics available for subscription. Direct notification routes are internal and
+	// are not returned.
 	//
 	// GET /notification-topics
 	ListNotificationTopics(ctx context.Context) ([]NotificationTopic, error)

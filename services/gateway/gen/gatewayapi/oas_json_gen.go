@@ -12274,46 +12274,6 @@ func (s *NotificationChannel) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes NotificationMode as json.
-func (s NotificationMode) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes NotificationMode from json.
-func (s *NotificationMode) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode NotificationMode to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch NotificationMode(v) {
-	case NotificationModeMANDATORY:
-		*s = NotificationModeMANDATORY
-	case NotificationModeOPTIN:
-		*s = NotificationModeOPTIN
-	default:
-		*s = NotificationMode(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s NotificationMode) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *NotificationMode) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes NotificationScope as json.
 func (s NotificationScope) Encode(e *jx.Encoder) {
 	e.Str(string(s))
@@ -12330,8 +12290,6 @@ func (s *NotificationScope) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch NotificationScope(v) {
-	case NotificationScopeDIRECT:
-		*s = NotificationScopeDIRECT
 	case NotificationScopeGROUP:
 		*s = NotificationScopeGROUP
 	case NotificationScopeGLOBAL:
@@ -12377,7 +12335,7 @@ func (s *NotificationSubscription) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("topic_key")
-		e.Str(s.TopicKey)
+		s.TopicKey.Encode(e)
 	}
 	{
 		e.FieldStart("channel")
@@ -12426,9 +12384,7 @@ func (s *NotificationSubscription) Decode(d *jx.Decoder) error {
 		case "topic_key":
 			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				v, err := d.Str()
-				s.TopicKey = string(v)
-				if err != nil {
+				if err := s.TopicKey.Decode(d); err != nil {
 					return err
 				}
 				return nil
@@ -12512,19 +12468,19 @@ func (s *NotificationTopic) Encode(e *jx.Encoder) {
 func (s *NotificationTopic) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("key")
-		e.Str(s.Key)
+		s.Key.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		e.Str(s.Label)
+	}
+	{
+		e.FieldStart("description")
+		e.Str(s.Description)
 	}
 	{
 		e.FieldStart("scope")
 		s.Scope.Encode(e)
-	}
-	{
-		e.FieldStart("mode")
-		s.Mode.Encode(e)
-	}
-	{
-		e.FieldStart("default_on")
-		e.Bool(s.DefaultOn)
 	}
 	{
 		e.FieldStart("required_permissions")
@@ -12538,9 +12494,9 @@ func (s *NotificationTopic) encodeFields(e *jx.Encoder) {
 
 var jsonFieldsNameOfNotificationTopic = [5]string{
 	0: "key",
-	1: "scope",
-	2: "mode",
-	3: "default_on",
+	1: "label",
+	2: "description",
+	3: "scope",
 	4: "required_permissions",
 }
 
@@ -12556,17 +12512,39 @@ func (s *NotificationTopic) Decode(d *jx.Decoder) error {
 		case "key":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				v, err := d.Str()
-				s.Key = string(v)
-				if err != nil {
+				if err := s.Key.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"key\"")
 			}
-		case "scope":
+		case "label":
 			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Label = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Str()
+				s.Description = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "scope":
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.Scope.Decode(d); err != nil {
 					return err
@@ -12574,28 +12552,6 @@ func (s *NotificationTopic) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"scope\"")
-			}
-		case "mode":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				if err := s.Mode.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"mode\"")
-			}
-		case "default_on":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				v, err := d.Bool()
-				s.DefaultOn = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"default_on\"")
 			}
 		case "required_permissions":
 			requiredBitSet[0] |= 1 << 4
@@ -12669,6 +12625,58 @@ func (s *NotificationTopic) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *NotificationTopic) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes NotificationTopicKey as json.
+func (s NotificationTopicKey) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes NotificationTopicKey from json.
+func (s *NotificationTopicKey) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode NotificationTopicKey to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch NotificationTopicKey(v) {
+	case NotificationTopicKeyGroupMembershipRequested:
+		*s = NotificationTopicKeyGroupMembershipRequested
+	case NotificationTopicKeyGlobalMembershipRequested:
+		*s = NotificationTopicKeyGlobalMembershipRequested
+	case NotificationTopicKeyGroupRoleRequestRequested:
+		*s = NotificationTopicKeyGroupRoleRequestRequested
+	case NotificationTopicKeyGlobalRoleRequestRequested:
+		*s = NotificationTopicKeyGlobalRoleRequestRequested
+	case NotificationTopicKeyGroupResourceSubmitted:
+		*s = NotificationTopicKeyGroupResourceSubmitted
+	case NotificationTopicKeyGroupResourcePublished:
+		*s = NotificationTopicKeyGroupResourcePublished
+	case NotificationTopicKeyGlobalResourceSubmitted:
+		*s = NotificationTopicKeyGlobalResourceSubmitted
+	case NotificationTopicKeyGlobalResourcePublished:
+		*s = NotificationTopicKeyGlobalResourcePublished
+	default:
+		*s = NotificationTopicKey(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s NotificationTopicKey) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *NotificationTopicKey) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

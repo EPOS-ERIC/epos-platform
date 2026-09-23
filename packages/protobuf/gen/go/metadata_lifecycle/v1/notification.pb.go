@@ -22,62 +22,80 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type NotificationMode int32
+type NotificationTopicKey int32
 
 const (
-	NotificationMode_NOTIFICATION_MODE_UNSPECIFIED NotificationMode = 0
-	NotificationMode_NOTIFICATION_MODE_MANDATORY   NotificationMode = 1
-	NotificationMode_NOTIFICATION_MODE_OPT_IN      NotificationMode = 2
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_UNSPECIFIED                   NotificationTopicKey = 0
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_MEMBERSHIP_REQUESTED    NotificationTopicKey = 1
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_MEMBERSHIP_REQUESTED   NotificationTopicKey = 2
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_ROLE_REQUEST_REQUESTED  NotificationTopicKey = 3
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_ROLE_REQUEST_REQUESTED NotificationTopicKey = 4
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_SUBMITTED      NotificationTopicKey = 5
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED      NotificationTopicKey = 6
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED     NotificationTopicKey = 7
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED     NotificationTopicKey = 8
 )
 
-// Enum value maps for NotificationMode.
+// Enum value maps for NotificationTopicKey.
 var (
-	NotificationMode_name = map[int32]string{
-		0: "NOTIFICATION_MODE_UNSPECIFIED",
-		1: "NOTIFICATION_MODE_MANDATORY",
-		2: "NOTIFICATION_MODE_OPT_IN",
+	NotificationTopicKey_name = map[int32]string{
+		0: "NOTIFICATION_TOPIC_KEY_UNSPECIFIED",
+		1: "NOTIFICATION_TOPIC_KEY_GROUP_MEMBERSHIP_REQUESTED",
+		2: "NOTIFICATION_TOPIC_KEY_GLOBAL_MEMBERSHIP_REQUESTED",
+		3: "NOTIFICATION_TOPIC_KEY_GROUP_ROLE_REQUEST_REQUESTED",
+		4: "NOTIFICATION_TOPIC_KEY_GLOBAL_ROLE_REQUEST_REQUESTED",
+		5: "NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_SUBMITTED",
+		6: "NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED",
+		7: "NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED",
+		8: "NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED",
 	}
-	NotificationMode_value = map[string]int32{
-		"NOTIFICATION_MODE_UNSPECIFIED": 0,
-		"NOTIFICATION_MODE_MANDATORY":   1,
-		"NOTIFICATION_MODE_OPT_IN":      2,
+	NotificationTopicKey_value = map[string]int32{
+		"NOTIFICATION_TOPIC_KEY_UNSPECIFIED":                   0,
+		"NOTIFICATION_TOPIC_KEY_GROUP_MEMBERSHIP_REQUESTED":    1,
+		"NOTIFICATION_TOPIC_KEY_GLOBAL_MEMBERSHIP_REQUESTED":   2,
+		"NOTIFICATION_TOPIC_KEY_GROUP_ROLE_REQUEST_REQUESTED":  3,
+		"NOTIFICATION_TOPIC_KEY_GLOBAL_ROLE_REQUEST_REQUESTED": 4,
+		"NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_SUBMITTED":      5,
+		"NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED":      6,
+		"NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED":     7,
+		"NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED":     8,
 	}
 )
 
-func (x NotificationMode) Enum() *NotificationMode {
-	p := new(NotificationMode)
+func (x NotificationTopicKey) Enum() *NotificationTopicKey {
+	p := new(NotificationTopicKey)
 	*p = x
 	return p
 }
 
-func (x NotificationMode) String() string {
+func (x NotificationTopicKey) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (NotificationMode) Descriptor() protoreflect.EnumDescriptor {
+func (NotificationTopicKey) Descriptor() protoreflect.EnumDescriptor {
 	return file_metadata_lifecycle_v1_notification_proto_enumTypes[0].Descriptor()
 }
 
-func (NotificationMode) Type() protoreflect.EnumType {
+func (NotificationTopicKey) Type() protoreflect.EnumType {
 	return &file_metadata_lifecycle_v1_notification_proto_enumTypes[0]
 }
 
-func (x NotificationMode) Number() protoreflect.EnumNumber {
+func (x NotificationTopicKey) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use NotificationMode.Descriptor instead.
-func (NotificationMode) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use NotificationTopicKey.Descriptor instead.
+func (NotificationTopicKey) EnumDescriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_notification_proto_rawDescGZIP(), []int{0}
 }
 
 type NotificationTopic struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
-	Key                 string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Key                 NotificationTopicKey   `protobuf:"varint,1,opt,name=key,proto3,enum=metadata_lifecycle.v1.NotificationTopicKey" json:"key,omitempty"`
 	Scope               NotificationScope      `protobuf:"varint,2,opt,name=scope,proto3,enum=metadata_lifecycle.v1.NotificationScope" json:"scope,omitempty"`
-	Mode                NotificationMode       `protobuf:"varint,3,opt,name=mode,proto3,enum=metadata_lifecycle.v1.NotificationMode" json:"mode,omitempty"`
-	DefaultOn           bool                   `protobuf:"varint,4,opt,name=default_on,json=defaultOn,proto3" json:"default_on,omitempty"`
-	RequiredPermissions []string               `protobuf:"bytes,5,rep,name=required_permissions,json=requiredPermissions,proto3" json:"required_permissions,omitempty"`
+	RequiredPermissions []string               `protobuf:"bytes,4,rep,name=required_permissions,json=requiredPermissions,proto3" json:"required_permissions,omitempty"`
+	Label               string                 `protobuf:"bytes,5,opt,name=label,proto3" json:"label,omitempty"`
+	Description         string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -112,11 +130,11 @@ func (*NotificationTopic) Descriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_notification_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *NotificationTopic) GetKey() string {
+func (x *NotificationTopic) GetKey() NotificationTopicKey {
 	if x != nil {
 		return x.Key
 	}
-	return ""
+	return NotificationTopicKey_NOTIFICATION_TOPIC_KEY_UNSPECIFIED
 }
 
 func (x *NotificationTopic) GetScope() NotificationScope {
@@ -126,20 +144,6 @@ func (x *NotificationTopic) GetScope() NotificationScope {
 	return NotificationScope_NOTIFICATION_SCOPE_UNSPECIFIED
 }
 
-func (x *NotificationTopic) GetMode() NotificationMode {
-	if x != nil {
-		return x.Mode
-	}
-	return NotificationMode_NOTIFICATION_MODE_UNSPECIFIED
-}
-
-func (x *NotificationTopic) GetDefaultOn() bool {
-	if x != nil {
-		return x.DefaultOn
-	}
-	return false
-}
-
 func (x *NotificationTopic) GetRequiredPermissions() []string {
 	if x != nil {
 		return x.RequiredPermissions
@@ -147,11 +151,25 @@ func (x *NotificationTopic) GetRequiredPermissions() []string {
 	return nil
 }
 
+func (x *NotificationTopic) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *NotificationTopic) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 type NotificationSubscription struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	GroupId       string                 `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	TopicKey      string                 `protobuf:"bytes,3,opt,name=topic_key,json=topicKey,proto3" json:"topic_key,omitempty"`
+	TopicKey      NotificationTopicKey   `protobuf:"varint,3,opt,name=topic_key,json=topicKey,proto3,enum=metadata_lifecycle.v1.NotificationTopicKey" json:"topic_key,omitempty"`
 	Channel       NotificationChannel    `protobuf:"varint,4,opt,name=channel,proto3,enum=metadata_lifecycle.v1.NotificationChannel" json:"channel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -201,11 +219,11 @@ func (x *NotificationSubscription) GetGroupId() string {
 	return ""
 }
 
-func (x *NotificationSubscription) GetTopicKey() string {
+func (x *NotificationSubscription) GetTopicKey() NotificationTopicKey {
 	if x != nil {
 		return x.TopicKey
 	}
-	return ""
+	return NotificationTopicKey_NOTIFICATION_TOPIC_KEY_UNSPECIFIED
 }
 
 func (x *NotificationSubscription) GetChannel() NotificationChannel {
@@ -387,7 +405,7 @@ type SubscribeNotificationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	GroupId       string                 `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	TopicKey      string                 `protobuf:"bytes,3,opt,name=topic_key,json=topicKey,proto3" json:"topic_key,omitempty"`
+	TopicKey      NotificationTopicKey   `protobuf:"varint,3,opt,name=topic_key,json=topicKey,proto3,enum=metadata_lifecycle.v1.NotificationTopicKey" json:"topic_key,omitempty"`
 	Channel       NotificationChannel    `protobuf:"varint,4,opt,name=channel,proto3,enum=metadata_lifecycle.v1.NotificationChannel" json:"channel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -437,11 +455,11 @@ func (x *SubscribeNotificationRequest) GetGroupId() string {
 	return ""
 }
 
-func (x *SubscribeNotificationRequest) GetTopicKey() string {
+func (x *SubscribeNotificationRequest) GetTopicKey() NotificationTopicKey {
 	if x != nil {
 		return x.TopicKey
 	}
-	return ""
+	return NotificationTopicKey_NOTIFICATION_TOPIC_KEY_UNSPECIFIED
 }
 
 func (x *SubscribeNotificationRequest) GetChannel() NotificationChannel {
@@ -499,7 +517,7 @@ type UnsubscribeNotificationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	GroupId       string                 `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	TopicKey      string                 `protobuf:"bytes,3,opt,name=topic_key,json=topicKey,proto3" json:"topic_key,omitempty"`
+	TopicKey      NotificationTopicKey   `protobuf:"varint,3,opt,name=topic_key,json=topicKey,proto3,enum=metadata_lifecycle.v1.NotificationTopicKey" json:"topic_key,omitempty"`
 	Channel       NotificationChannel    `protobuf:"varint,4,opt,name=channel,proto3,enum=metadata_lifecycle.v1.NotificationChannel" json:"channel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -549,11 +567,11 @@ func (x *UnsubscribeNotificationRequest) GetGroupId() string {
 	return ""
 }
 
-func (x *UnsubscribeNotificationRequest) GetTopicKey() string {
+func (x *UnsubscribeNotificationRequest) GetTopicKey() NotificationTopicKey {
 	if x != nil {
 		return x.TopicKey
 	}
-	return ""
+	return NotificationTopicKey_NOTIFICATION_TOPIC_KEY_UNSPECIFIED
 }
 
 func (x *UnsubscribeNotificationRequest) GetChannel() NotificationChannel {
@@ -603,18 +621,17 @@ var File_metadata_lifecycle_v1_notification_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_notification_proto_rawDesc = "" +
 	"\n" +
-	"(metadata_lifecycle/v1/notification.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\x1a\"metadata_lifecycle/v1/common.proto\"\x91\x02\n" +
-	"\x11NotificationTopic\x12\x19\n" +
-	"\x03key\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x03key\x12H\n" +
-	"\x05scope\x18\x02 \x01(\x0e2(.metadata_lifecycle.v1.NotificationScopeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x05scope\x12E\n" +
-	"\x04mode\x18\x03 \x01(\x0e2'.metadata_lifecycle.v1.NotificationModeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04mode\x12\x1d\n" +
-	"\n" +
-	"default_on\x18\x04 \x01(\bR\tdefaultOn\x121\n" +
-	"\x14required_permissions\x18\x05 \x03(\tR\x13requiredPermissions\"\xcd\x01\n" +
+	"(metadata_lifecycle/v1/notification.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\x1a\"metadata_lifecycle/v1/common.proto\"\xa3\x02\n" +
+	"\x11NotificationTopic\x12G\n" +
+	"\x03key\x18\x01 \x01(\x0e2+.metadata_lifecycle.v1.NotificationTopicKeyB\b\xbaH\x05\x82\x01\x02\x10\x01R\x03key\x12H\n" +
+	"\x05scope\x18\x02 \x01(\x0e2(.metadata_lifecycle.v1.NotificationScopeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x05scope\x121\n" +
+	"\x14required_permissions\x18\x04 \x03(\tR\x13requiredPermissions\x12\x1d\n" +
+	"\x05label\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05label\x12)\n" +
+	"\vdescription\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\"\xfb\x01\n" +
 	"\x18NotificationSubscription\x12 \n" +
 	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12\x19\n" +
-	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12$\n" +
-	"\ttopic_key\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\btopicKey\x12N\n" +
+	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12R\n" +
+	"\ttopic_key\x18\x03 \x01(\x0e2+.metadata_lifecycle.v1.NotificationTopicKeyB\b\xbaH\x05\x82\x01\x02\x10\x01R\btopicKey\x12N\n" +
 	"\achannel\x18\x04 \x01(\x0e2*.metadata_lifecycle.v1.NotificationChannelB\b\xbaH\x05\x82\x01\x02\x10\x01R\achannel\"\x1f\n" +
 	"\x1dListNotificationTopicsRequest\"b\n" +
 	"\x1eListNotificationTopicsResponse\x12@\n" +
@@ -622,24 +639,30 @@ const file_metadata_lifecycle_v1_notification_proto_rawDesc = "" +
 	"$ListNotificationSubscriptionsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"~\n" +
 	"%ListNotificationSubscriptionsResponse\x12U\n" +
-	"\rsubscriptions\x18\x01 \x03(\v2/.metadata_lifecycle.v1.NotificationSubscriptionR\rsubscriptions\"\xc8\x01\n" +
+	"\rsubscriptions\x18\x01 \x03(\v2/.metadata_lifecycle.v1.NotificationSubscriptionR\rsubscriptions\"\xf6\x01\n" +
 	"\x1cSubscribeNotificationRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
-	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12$\n" +
-	"\ttopic_key\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\btopicKey\x12N\n" +
+	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12R\n" +
+	"\ttopic_key\x18\x03 \x01(\x0e2+.metadata_lifecycle.v1.NotificationTopicKeyB\b\xbaH\x05\x82\x01\x02\x10\x01R\btopicKey\x12N\n" +
 	"\achannel\x18\x04 \x01(\x0e2*.metadata_lifecycle.v1.NotificationChannelB\b\xbaH\x05\x82\x01\x02\x10\x01R\achannel\"t\n" +
 	"\x1dSubscribeNotificationResponse\x12S\n" +
-	"\fsubscription\x18\x01 \x01(\v2/.metadata_lifecycle.v1.NotificationSubscriptionR\fsubscription\"\xca\x01\n" +
+	"\fsubscription\x18\x01 \x01(\v2/.metadata_lifecycle.v1.NotificationSubscriptionR\fsubscription\"\xf8\x01\n" +
 	"\x1eUnsubscribeNotificationRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
-	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12$\n" +
-	"\ttopic_key\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\btopicKey\x12N\n" +
+	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12R\n" +
+	"\ttopic_key\x18\x03 \x01(\x0e2+.metadata_lifecycle.v1.NotificationTopicKeyB\b\xbaH\x05\x82\x01\x02\x10\x01R\btopicKey\x12N\n" +
 	"\achannel\x18\x04 \x01(\x0e2*.metadata_lifecycle.v1.NotificationChannelB\b\xbaH\x05\x82\x01\x02\x10\x01R\achannel\"!\n" +
-	"\x1fUnsubscribeNotificationResponse*t\n" +
-	"\x10NotificationMode\x12!\n" +
-	"\x1dNOTIFICATION_MODE_UNSPECIFIED\x10\x00\x12\x1f\n" +
-	"\x1bNOTIFICATION_MODE_MANDATORY\x10\x01\x12\x1c\n" +
-	"\x18NOTIFICATION_MODE_OPT_IN\x10\x022\xdc\x04\n" +
+	"\x1fUnsubscribeNotificationResponse*\xf6\x03\n" +
+	"\x14NotificationTopicKey\x12&\n" +
+	"\"NOTIFICATION_TOPIC_KEY_UNSPECIFIED\x10\x00\x125\n" +
+	"1NOTIFICATION_TOPIC_KEY_GROUP_MEMBERSHIP_REQUESTED\x10\x01\x126\n" +
+	"2NOTIFICATION_TOPIC_KEY_GLOBAL_MEMBERSHIP_REQUESTED\x10\x02\x127\n" +
+	"3NOTIFICATION_TOPIC_KEY_GROUP_ROLE_REQUEST_REQUESTED\x10\x03\x128\n" +
+	"4NOTIFICATION_TOPIC_KEY_GLOBAL_ROLE_REQUEST_REQUESTED\x10\x04\x123\n" +
+	"/NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_SUBMITTED\x10\x05\x123\n" +
+	"/NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED\x10\x06\x124\n" +
+	"0NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED\x10\a\x124\n" +
+	"0NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED\x10\b2\xdc\x04\n" +
 	"\x13NotificationService\x12\x85\x01\n" +
 	"\x16ListNotificationTopics\x124.metadata_lifecycle.v1.ListNotificationTopicsRequest\x1a5.metadata_lifecycle.v1.ListNotificationTopicsResponse\x12\xa0\x01\n" +
 	"\x1dListNotificationSubscriptions\x12;.metadata_lifecycle.v1.ListNotificationSubscriptionsRequest\x1a<.metadata_lifecycle.v1.ListNotificationSubscriptionsResponse\"\x04\x80\xb5\x18\x03\x12\x88\x01\n" +
@@ -661,7 +684,7 @@ func file_metadata_lifecycle_v1_notification_proto_rawDescGZIP() []byte {
 var file_metadata_lifecycle_v1_notification_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_metadata_lifecycle_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_metadata_lifecycle_v1_notification_proto_goTypes = []any{
-	(NotificationMode)(0),                         // 0: metadata_lifecycle.v1.NotificationMode
+	(NotificationTopicKey)(0),                     // 0: metadata_lifecycle.v1.NotificationTopicKey
 	(*NotificationTopic)(nil),                     // 1: metadata_lifecycle.v1.NotificationTopic
 	(*NotificationSubscription)(nil),              // 2: metadata_lifecycle.v1.NotificationSubscription
 	(*ListNotificationTopicsRequest)(nil),         // 3: metadata_lifecycle.v1.ListNotificationTopicsRequest
@@ -676,27 +699,30 @@ var file_metadata_lifecycle_v1_notification_proto_goTypes = []any{
 	(NotificationChannel)(0),                      // 12: metadata_lifecycle.v1.NotificationChannel
 }
 var file_metadata_lifecycle_v1_notification_proto_depIdxs = []int32{
-	11, // 0: metadata_lifecycle.v1.NotificationTopic.scope:type_name -> metadata_lifecycle.v1.NotificationScope
-	0,  // 1: metadata_lifecycle.v1.NotificationTopic.mode:type_name -> metadata_lifecycle.v1.NotificationMode
-	12, // 2: metadata_lifecycle.v1.NotificationSubscription.channel:type_name -> metadata_lifecycle.v1.NotificationChannel
-	1,  // 3: metadata_lifecycle.v1.ListNotificationTopicsResponse.topics:type_name -> metadata_lifecycle.v1.NotificationTopic
-	2,  // 4: metadata_lifecycle.v1.ListNotificationSubscriptionsResponse.subscriptions:type_name -> metadata_lifecycle.v1.NotificationSubscription
-	12, // 5: metadata_lifecycle.v1.SubscribeNotificationRequest.channel:type_name -> metadata_lifecycle.v1.NotificationChannel
-	2,  // 6: metadata_lifecycle.v1.SubscribeNotificationResponse.subscription:type_name -> metadata_lifecycle.v1.NotificationSubscription
-	12, // 7: metadata_lifecycle.v1.UnsubscribeNotificationRequest.channel:type_name -> metadata_lifecycle.v1.NotificationChannel
-	3,  // 8: metadata_lifecycle.v1.NotificationService.ListNotificationTopics:input_type -> metadata_lifecycle.v1.ListNotificationTopicsRequest
-	5,  // 9: metadata_lifecycle.v1.NotificationService.ListNotificationSubscriptions:input_type -> metadata_lifecycle.v1.ListNotificationSubscriptionsRequest
-	7,  // 10: metadata_lifecycle.v1.NotificationService.SubscribeNotification:input_type -> metadata_lifecycle.v1.SubscribeNotificationRequest
-	9,  // 11: metadata_lifecycle.v1.NotificationService.UnsubscribeNotification:input_type -> metadata_lifecycle.v1.UnsubscribeNotificationRequest
-	4,  // 12: metadata_lifecycle.v1.NotificationService.ListNotificationTopics:output_type -> metadata_lifecycle.v1.ListNotificationTopicsResponse
-	6,  // 13: metadata_lifecycle.v1.NotificationService.ListNotificationSubscriptions:output_type -> metadata_lifecycle.v1.ListNotificationSubscriptionsResponse
-	8,  // 14: metadata_lifecycle.v1.NotificationService.SubscribeNotification:output_type -> metadata_lifecycle.v1.SubscribeNotificationResponse
-	10, // 15: metadata_lifecycle.v1.NotificationService.UnsubscribeNotification:output_type -> metadata_lifecycle.v1.UnsubscribeNotificationResponse
-	12, // [12:16] is the sub-list for method output_type
-	8,  // [8:12] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	0,  // 0: metadata_lifecycle.v1.NotificationTopic.key:type_name -> metadata_lifecycle.v1.NotificationTopicKey
+	11, // 1: metadata_lifecycle.v1.NotificationTopic.scope:type_name -> metadata_lifecycle.v1.NotificationScope
+	0,  // 2: metadata_lifecycle.v1.NotificationSubscription.topic_key:type_name -> metadata_lifecycle.v1.NotificationTopicKey
+	12, // 3: metadata_lifecycle.v1.NotificationSubscription.channel:type_name -> metadata_lifecycle.v1.NotificationChannel
+	1,  // 4: metadata_lifecycle.v1.ListNotificationTopicsResponse.topics:type_name -> metadata_lifecycle.v1.NotificationTopic
+	2,  // 5: metadata_lifecycle.v1.ListNotificationSubscriptionsResponse.subscriptions:type_name -> metadata_lifecycle.v1.NotificationSubscription
+	0,  // 6: metadata_lifecycle.v1.SubscribeNotificationRequest.topic_key:type_name -> metadata_lifecycle.v1.NotificationTopicKey
+	12, // 7: metadata_lifecycle.v1.SubscribeNotificationRequest.channel:type_name -> metadata_lifecycle.v1.NotificationChannel
+	2,  // 8: metadata_lifecycle.v1.SubscribeNotificationResponse.subscription:type_name -> metadata_lifecycle.v1.NotificationSubscription
+	0,  // 9: metadata_lifecycle.v1.UnsubscribeNotificationRequest.topic_key:type_name -> metadata_lifecycle.v1.NotificationTopicKey
+	12, // 10: metadata_lifecycle.v1.UnsubscribeNotificationRequest.channel:type_name -> metadata_lifecycle.v1.NotificationChannel
+	3,  // 11: metadata_lifecycle.v1.NotificationService.ListNotificationTopics:input_type -> metadata_lifecycle.v1.ListNotificationTopicsRequest
+	5,  // 12: metadata_lifecycle.v1.NotificationService.ListNotificationSubscriptions:input_type -> metadata_lifecycle.v1.ListNotificationSubscriptionsRequest
+	7,  // 13: metadata_lifecycle.v1.NotificationService.SubscribeNotification:input_type -> metadata_lifecycle.v1.SubscribeNotificationRequest
+	9,  // 14: metadata_lifecycle.v1.NotificationService.UnsubscribeNotification:input_type -> metadata_lifecycle.v1.UnsubscribeNotificationRequest
+	4,  // 15: metadata_lifecycle.v1.NotificationService.ListNotificationTopics:output_type -> metadata_lifecycle.v1.ListNotificationTopicsResponse
+	6,  // 16: metadata_lifecycle.v1.NotificationService.ListNotificationSubscriptions:output_type -> metadata_lifecycle.v1.ListNotificationSubscriptionsResponse
+	8,  // 17: metadata_lifecycle.v1.NotificationService.SubscribeNotification:output_type -> metadata_lifecycle.v1.SubscribeNotificationResponse
+	10, // 18: metadata_lifecycle.v1.NotificationService.UnsubscribeNotification:output_type -> metadata_lifecycle.v1.UnsubscribeNotificationResponse
+	15, // [15:19] is the sub-list for method output_type
+	11, // [11:15] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_notification_proto_init() }

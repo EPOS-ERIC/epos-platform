@@ -32,7 +32,7 @@ func (r *Repo) ListTopics(ctx context.Context) ([]domain.NotificationTopic, erro
 		if err != nil {
 			return nil, fmt.Errorf("list permissions for notification topic %s: %w", row.Key, err)
 		}
-		topic, err := toDomainTopic(row.Key, row.Scope, row.Mode, row.DefaultOn, permissions)
+		topic, err := toDomainTopic(row.Key, row.Label, row.Description, row.Scope, permissions)
 		if err != nil {
 			return nil, fmt.Errorf("parse notification topic %s: %w", row.Key, err)
 		}
@@ -213,16 +213,16 @@ func (r *Repo) DeleteGroupSubscription(ctx context.Context, userID string, group
 	return nil
 }
 
-func toDomainTopic(key string, scope sqlc.NotificationScope, mode sqlc.NotificationMode, defaultOn bool, permissions []string) (domain.NotificationTopic, error) {
+func toDomainTopic(key, label, description string, scope sqlc.NotificationScope, permissions []string) (domain.NotificationTopic, error) {
 	parsedKey, err := domain.NewNotificationTopicKey(key)
 	if err != nil {
 		return domain.NotificationTopic{}, fmt.Errorf("validate notification topic key: %w", err)
 	}
 	return domain.NotificationTopic{
 		Key:                 parsedKey,
+		Label:               label,
+		Description:         description,
 		Scope:               domain.NotificationScope(scope),
-		Mode:                domain.NotificationMode(mode),
-		DefaultOn:           defaultOn,
 		RequiredPermissions: permissions,
 	}, nil
 }
