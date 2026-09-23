@@ -4353,6 +4353,7 @@ const (
 	GlobalPermissionGlobalMembershipManage     GlobalPermission = "global.membership.manage"
 	GlobalPermissionGlobalRoleManage           GlobalPermission = "global.role.manage"
 	GlobalPermissionGlobalPermissionManage     GlobalPermission = "global.permission.manage"
+	GlobalPermissionGlobalNotificationManage   GlobalPermission = "global.notification.manage"
 	GlobalPermissionGlobalOrganizationManage   GlobalPermission = "global.organization.manage"
 	GlobalPermissionGlobalContactPointManage   GlobalPermission = "global.contact_point.manage"
 	GlobalPermissionGlobalCategorySchemeManage GlobalPermission = "global.category_scheme.manage"
@@ -4374,6 +4375,7 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalMembershipManage,
 		GlobalPermissionGlobalRoleManage,
 		GlobalPermissionGlobalPermissionManage,
+		GlobalPermissionGlobalNotificationManage,
 		GlobalPermissionGlobalOrganizationManage,
 		GlobalPermissionGlobalContactPointManage,
 		GlobalPermissionGlobalCategorySchemeManage,
@@ -4398,6 +4400,8 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 	case GlobalPermissionGlobalRoleManage:
 		return []byte(s), nil
 	case GlobalPermissionGlobalPermissionManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalNotificationManage:
 		return []byte(s), nil
 	case GlobalPermissionGlobalOrganizationManage:
 		return []byte(s), nil
@@ -4441,6 +4445,9 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 		return nil
 	case GlobalPermissionGlobalPermissionManage:
 		*s = GlobalPermissionGlobalPermissionManage
+		return nil
+	case GlobalPermissionGlobalNotificationManage:
+		*s = GlobalPermissionGlobalNotificationManage
 		return nil
 	case GlobalPermissionGlobalOrganizationManage:
 		*s = GlobalPermissionGlobalOrganizationManage
@@ -4777,19 +4784,20 @@ func (s *GroupMembership) SetUpdatedAt(val time.Time) {
 type GroupPermission string
 
 const (
-	GroupPermissionGroupResourceCreate    GroupPermission = "group.resource.create"
-	GroupPermissionGroupResourceEdit      GroupPermission = "group.resource.edit"
-	GroupPermissionGroupResourceSubmit    GroupPermission = "group.resource.submit"
-	GroupPermissionGroupResourceWithdraw  GroupPermission = "group.resource.withdraw"
-	GroupPermissionGroupResourceReopen    GroupPermission = "group.resource.reopen"
-	GroupPermissionGroupResourceDiscard   GroupPermission = "group.resource.discard"
-	GroupPermissionGroupResourceReject    GroupPermission = "group.resource.reject"
-	GroupPermissionGroupResourcePublish   GroupPermission = "group.resource.publish"
-	GroupPermissionGroupResourceUnpublish GroupPermission = "group.resource.unpublish"
-	GroupPermissionGroupMembershipManage  GroupPermission = "group.membership.manage"
-	GroupPermissionGroupRoleManage        GroupPermission = "group.role.manage"
-	GroupPermissionGroupPermissionManage  GroupPermission = "group.permission.manage"
-	GroupPermissionGroupCategoryManage    GroupPermission = "group.category.manage"
+	GroupPermissionGroupResourceCreate     GroupPermission = "group.resource.create"
+	GroupPermissionGroupResourceEdit       GroupPermission = "group.resource.edit"
+	GroupPermissionGroupResourceSubmit     GroupPermission = "group.resource.submit"
+	GroupPermissionGroupResourceWithdraw   GroupPermission = "group.resource.withdraw"
+	GroupPermissionGroupResourceReopen     GroupPermission = "group.resource.reopen"
+	GroupPermissionGroupResourceDiscard    GroupPermission = "group.resource.discard"
+	GroupPermissionGroupResourceReject     GroupPermission = "group.resource.reject"
+	GroupPermissionGroupResourcePublish    GroupPermission = "group.resource.publish"
+	GroupPermissionGroupResourceUnpublish  GroupPermission = "group.resource.unpublish"
+	GroupPermissionGroupMembershipManage   GroupPermission = "group.membership.manage"
+	GroupPermissionGroupRoleManage         GroupPermission = "group.role.manage"
+	GroupPermissionGroupPermissionManage   GroupPermission = "group.permission.manage"
+	GroupPermissionGroupNotificationManage GroupPermission = "group.notification.manage"
+	GroupPermissionGroupCategoryManage     GroupPermission = "group.category.manage"
 )
 
 // AllValues returns all GroupPermission values.
@@ -4807,6 +4815,7 @@ func (GroupPermission) AllValues() []GroupPermission {
 		GroupPermissionGroupMembershipManage,
 		GroupPermissionGroupRoleManage,
 		GroupPermissionGroupPermissionManage,
+		GroupPermissionGroupNotificationManage,
 		GroupPermissionGroupCategoryManage,
 	}
 }
@@ -4837,6 +4846,8 @@ func (s GroupPermission) MarshalText() ([]byte, error) {
 	case GroupPermissionGroupRoleManage:
 		return []byte(s), nil
 	case GroupPermissionGroupPermissionManage:
+		return []byte(s), nil
+	case GroupPermissionGroupNotificationManage:
 		return []byte(s), nil
 	case GroupPermissionGroupCategoryManage:
 		return []byte(s), nil
@@ -4883,6 +4894,9 @@ func (s *GroupPermission) UnmarshalText(data []byte) error {
 		return nil
 	case GroupPermissionGroupPermissionManage:
 		*s = GroupPermissionGroupPermissionManage
+		return nil
+	case GroupPermissionGroupNotificationManage:
+		*s = GroupPermissionGroupNotificationManage
 		return nil
 	case GroupPermissionGroupCategoryManage:
 		*s = GroupPermissionGroupCategoryManage
@@ -6297,6 +6311,239 @@ func (o NilUUID) Or(d uuid.UUID) uuid.UUID {
 }
 
 type NonBlankString string
+
+// Ref: #/components/schemas/NotificationChannel
+type NotificationChannel string
+
+const (
+	NotificationChannelEMAIL NotificationChannel = "EMAIL"
+)
+
+// AllValues returns all NotificationChannel values.
+func (NotificationChannel) AllValues() []NotificationChannel {
+	return []NotificationChannel{
+		NotificationChannelEMAIL,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s NotificationChannel) MarshalText() ([]byte, error) {
+	switch s {
+	case NotificationChannelEMAIL:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *NotificationChannel) UnmarshalText(data []byte) error {
+	switch NotificationChannel(data) {
+	case NotificationChannelEMAIL:
+		*s = NotificationChannelEMAIL
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/NotificationMode
+type NotificationMode string
+
+const (
+	NotificationModeMANDATORY NotificationMode = "MANDATORY"
+	NotificationModeOPTIN     NotificationMode = "OPT_IN"
+)
+
+// AllValues returns all NotificationMode values.
+func (NotificationMode) AllValues() []NotificationMode {
+	return []NotificationMode{
+		NotificationModeMANDATORY,
+		NotificationModeOPTIN,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s NotificationMode) MarshalText() ([]byte, error) {
+	switch s {
+	case NotificationModeMANDATORY:
+		return []byte(s), nil
+	case NotificationModeOPTIN:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *NotificationMode) UnmarshalText(data []byte) error {
+	switch NotificationMode(data) {
+	case NotificationModeMANDATORY:
+		*s = NotificationModeMANDATORY
+		return nil
+	case NotificationModeOPTIN:
+		*s = NotificationModeOPTIN
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/NotificationScope
+type NotificationScope string
+
+const (
+	NotificationScopeDIRECT NotificationScope = "DIRECT"
+	NotificationScopeGROUP  NotificationScope = "GROUP"
+	NotificationScopeGLOBAL NotificationScope = "GLOBAL"
+)
+
+// AllValues returns all NotificationScope values.
+func (NotificationScope) AllValues() []NotificationScope {
+	return []NotificationScope{
+		NotificationScopeDIRECT,
+		NotificationScopeGROUP,
+		NotificationScopeGLOBAL,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s NotificationScope) MarshalText() ([]byte, error) {
+	switch s {
+	case NotificationScopeDIRECT:
+		return []byte(s), nil
+	case NotificationScopeGROUP:
+		return []byte(s), nil
+	case NotificationScopeGLOBAL:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *NotificationScope) UnmarshalText(data []byte) error {
+	switch NotificationScope(data) {
+	case NotificationScopeDIRECT:
+		*s = NotificationScopeDIRECT
+		return nil
+	case NotificationScopeGROUP:
+		*s = NotificationScopeGROUP
+		return nil
+	case NotificationScopeGLOBAL:
+		*s = NotificationScopeGLOBAL
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/NotificationSubscription
+type NotificationSubscription struct {
+	UserID   string              `json:"user_id"`
+	GroupID  OptUUID             `json:"group_id"`
+	TopicKey string              `json:"topic_key"`
+	Channel  NotificationChannel `json:"channel"`
+}
+
+// GetUserID returns the value of UserID.
+func (s *NotificationSubscription) GetUserID() string {
+	return s.UserID
+}
+
+// GetGroupID returns the value of GroupID.
+func (s *NotificationSubscription) GetGroupID() OptUUID {
+	return s.GroupID
+}
+
+// GetTopicKey returns the value of TopicKey.
+func (s *NotificationSubscription) GetTopicKey() string {
+	return s.TopicKey
+}
+
+// GetChannel returns the value of Channel.
+func (s *NotificationSubscription) GetChannel() NotificationChannel {
+	return s.Channel
+}
+
+// SetUserID sets the value of UserID.
+func (s *NotificationSubscription) SetUserID(val string) {
+	s.UserID = val
+}
+
+// SetGroupID sets the value of GroupID.
+func (s *NotificationSubscription) SetGroupID(val OptUUID) {
+	s.GroupID = val
+}
+
+// SetTopicKey sets the value of TopicKey.
+func (s *NotificationSubscription) SetTopicKey(val string) {
+	s.TopicKey = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *NotificationSubscription) SetChannel(val NotificationChannel) {
+	s.Channel = val
+}
+
+// Ref: #/components/schemas/NotificationTopic
+type NotificationTopic struct {
+	Key                 string            `json:"key"`
+	Scope               NotificationScope `json:"scope"`
+	Mode                NotificationMode  `json:"mode"`
+	DefaultOn           bool              `json:"default_on"`
+	RequiredPermissions []string          `json:"required_permissions"`
+}
+
+// GetKey returns the value of Key.
+func (s *NotificationTopic) GetKey() string {
+	return s.Key
+}
+
+// GetScope returns the value of Scope.
+func (s *NotificationTopic) GetScope() NotificationScope {
+	return s.Scope
+}
+
+// GetMode returns the value of Mode.
+func (s *NotificationTopic) GetMode() NotificationMode {
+	return s.Mode
+}
+
+// GetDefaultOn returns the value of DefaultOn.
+func (s *NotificationTopic) GetDefaultOn() bool {
+	return s.DefaultOn
+}
+
+// GetRequiredPermissions returns the value of RequiredPermissions.
+func (s *NotificationTopic) GetRequiredPermissions() []string {
+	return s.RequiredPermissions
+}
+
+// SetKey sets the value of Key.
+func (s *NotificationTopic) SetKey(val string) {
+	s.Key = val
+}
+
+// SetScope sets the value of Scope.
+func (s *NotificationTopic) SetScope(val NotificationScope) {
+	s.Scope = val
+}
+
+// SetMode sets the value of Mode.
+func (s *NotificationTopic) SetMode(val NotificationMode) {
+	s.Mode = val
+}
+
+// SetDefaultOn sets the value of DefaultOn.
+func (s *NotificationTopic) SetDefaultOn(val bool) {
+	s.DefaultOn = val
+}
+
+// SetRequiredPermissions sets the value of RequiredPermissions.
+func (s *NotificationTopic) SetRequiredPermissions(val []string) {
+	s.RequiredPermissions = val
+}
 
 // NewOptDateTime returns new OptDateTime with value set to v.
 func NewOptDateTime(v time.Time) OptDateTime {
@@ -11329,6 +11576,12 @@ func (s *StringScalarParameterKind) UnmarshalText(data []byte) error {
 	}
 }
 
+// SubscribeGroupUserNotificationNoContent is response for SubscribeGroupUserNotification operation.
+type SubscribeGroupUserNotificationNoContent struct{}
+
+// SubscribeUserNotificationNoContent is response for SubscribeUserNotification operation.
+type SubscribeUserNotificationNoContent struct{}
+
 // Ref: #/components/schemas/TemplateParameter
 type TemplateParameter struct {
 	ID          uuid.UUID             `json:"id"`
@@ -11708,6 +11961,12 @@ func (s *TemporalCoverage) SetEnd(val OptNilDateTime) {
 
 // UnblockUserNoContent is response for UnblockUser operation.
 type UnblockUserNoContent struct{}
+
+// UnsubscribeGroupUserNotificationNoContent is response for UnsubscribeGroupUserNotification operation.
+type UnsubscribeGroupUserNotificationNoContent struct{}
+
+// UnsubscribeUserNotificationNoContent is response for UnsubscribeUserNotification operation.
+type UnsubscribeUserNotificationNoContent struct{}
 
 // Merged schema.
 // Ref: #/components/schemas/User

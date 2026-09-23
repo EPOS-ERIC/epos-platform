@@ -41,6 +41,7 @@ message RequestMembershipRequest {
 }
 message RequestMembershipResponse {
   GroupMembership membership = 1;
+  repeated Notification notifications = 2;
 }
 
 message WithdrawMembershipRequest {
@@ -55,6 +56,7 @@ message DecideMembershipRequest {
 }
 message DecideMembershipResponse {
   GroupMembership membership = 1;
+  repeated Notification notifications = 2;
 }
 
 message RevokeMembershipRequest {
@@ -69,6 +71,7 @@ message RequestRoleRequest {
 }
 message RequestRoleResponse {
   RoleRequest request = 1;
+  repeated Notification notifications = 2;
 }
 
 message DecideRoleRequestRequest {
@@ -78,6 +81,7 @@ message DecideRoleRequestRequest {
 }
 message DecideRoleRequestResponse {
   GroupMembership membership = 1;
+  repeated Notification notifications = 2;
 }
 
 message WithdrawRoleRequestRequest {
@@ -91,28 +95,34 @@ message AssignRoleRequest {
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
   GroupRole role = 3 [(buf.validate.field).enum.defined_only = true];
 }
-message AssignRoleResponse {}
+message AssignRoleResponse {
+  repeated Notification notifications = 1;
+}
 
 message RemoveRoleRequest {
   string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
   GroupRole role = 3 [(buf.validate.field).enum.defined_only = true];
 }
-message RemoveRoleResponse {}
+message RemoveRoleResponse {
+}
 
 message GrantPermissionRequest {
   string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
   GroupPermission permission = 3 [(buf.validate.field).enum.defined_only = true];
 }
-message GrantPermissionResponse {}
+message GrantPermissionResponse {
+  repeated Notification notifications = 1;
+}
 
 message RevokePermissionRequest {
   string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
   GroupPermission permission = 3 [(buf.validate.field).enum.defined_only = true];
 }
-message RevokePermissionResponse {}
+message RevokePermissionResponse {
+}
 
 service GroupAccessService {
   rpc ListGroupMemberships(ListGroupMembershipsRequest) returns (ListGroupMembershipsResponse) {

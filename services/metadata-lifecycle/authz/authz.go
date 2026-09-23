@@ -83,6 +83,93 @@ func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) 
 	return a.canManageUserDirectory(ctx, actor.ID)
 }
 
+// CanManageGlobalNotificationSubscriptions permits self-management and global notification administrators.
+func (a *Authorizer) CanManageGlobalNotificationSubscriptions(ctx context.Context, actorID, targetID string) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanManageGlobalNotificationSubscriptions", result.Allowed, result.Reason, err)
+	}()
+
+	if actorID == "" || targetID == "" {
+		return domain.Result{Allowed: false, Reason: "invalid user"}, nil
+	}
+	if _, result, err = a.activeUser(ctx, actorID); err != nil || !result.Allowed {
+		return result, err
+	}
+	if actorID == targetID {
+		return domain.Result{Allowed: true, Reason: "self"}, nil
+	}
+
+	target, err := a.repository.User(ctx, targetID)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("get notification subscription target: %w", err)
+	}
+	if target.Status != domain.UserStatusActive {
+		return domain.Result{Allowed: false, Reason: "target user is not active"}, nil
+	}
+	admin, err := a.repository.IsGlobalAdmin(ctx, actorID)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+	if admin {
+		return domain.Result{Allowed: true, Reason: "global admin"}, nil
+	}
+	allowed, err := a.repository.HasGlobalPermission(ctx, actorID, domain.GlobalPermissionNotificationManage)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("check global notification permission: %w", err)
+	}
+	if allowed {
+		return domain.Result{Allowed: true, Reason: string(domain.GlobalPermissionNotificationManage)}, nil
+	}
+	return domain.Result{Allowed: false, Reason: "global notification permission required"}, nil
+}
+
+// CanManageGroupNotificationSubscriptions permits active members to manage themselves and group notification managers to manage others.
+func (a *Authorizer) CanManageGroupNotificationSubscriptions(ctx context.Context, actorID, targetID string, groupID uuid.UUID) (result domain.Result, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "CanManageGroupNotificationSubscriptions", result.Allowed, result.Reason, err)
+	}()
+
+	if actorID == "" || targetID == "" || groupID == uuid.Nil {
+		return domain.Result{Allowed: false, Reason: "invalid group notification request"}, nil
+	}
+	targetMember, err := a.repository.IsActiveMember(ctx, targetID, groupID)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("check target group membership: %w", err)
+	}
+	if !targetMember {
+		return domain.Result{Allowed: false, Reason: "target user is not an active group member"}, nil
+	}
+	if actorID == targetID {
+		return domain.Result{Allowed: true, Reason: "self"}, nil
+	}
+
+	if _, result, err = a.activeUser(ctx, actorID); err != nil || !result.Allowed {
+		return result, err
+	}
+	admin, err := a.repository.IsGlobalAdmin(ctx, actorID)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+	if admin {
+		return domain.Result{Allowed: true, Reason: "global admin"}, nil
+	}
+	globalAllowed, err := a.repository.HasGlobalPermission(ctx, actorID, domain.GlobalPermissionNotificationManage)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("check global notification permission: %w", err)
+	}
+	if globalAllowed {
+		return domain.Result{Allowed: true, Reason: string(domain.GlobalPermissionNotificationManage)}, nil
+	}
+	groupAllowed, err := a.repository.HasGroupPermission(ctx, actorID, groupID, domain.GroupPermissionNotificationManage)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("check group notification permission: %w", err)
+	}
+	if groupAllowed {
+		return domain.Result{Allowed: true, Reason: string(domain.GroupPermissionNotificationManage)}, nil
+	}
+	return domain.Result{Allowed: false, Reason: "group notification permission required"}, nil
+}
+
 // CanListUsers checks permissions required to manage the user directory.
 func (a *Authorizer) CanListUsers(ctx context.Context, userID string) (result domain.Result, err error) {
 	defer func() {
@@ -572,6 +659,8 @@ func globalPermissionForGroupPermission(permission domain.GroupPermission) (doma
 		return domain.GlobalPermissionRoleManage, true
 	case domain.GroupPermissionPermissionManage:
 		return domain.GlobalPermissionPermissionManage, true
+	case domain.GroupPermissionNotificationManage:
+		return domain.GlobalPermissionNotificationManage, true
 	case domain.GroupPermissionCategoryManage:
 		return domain.GlobalPermissionCategoryManage, true
 	default:

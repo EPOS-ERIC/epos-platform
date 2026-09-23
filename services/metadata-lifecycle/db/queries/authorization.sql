@@ -179,7 +179,7 @@ RETURNING
     created_at,
     updated_at;
 
--- name: GrantGlobalPermission :exec
+-- name: GrantGlobalPermission :execrows
 INSERT INTO
     global_permission_grants (user_id, permission_key, granted_by)
 VALUES
@@ -189,7 +189,7 @@ VALUES
         sqlc.arg(granted_by)
     ) ON CONFLICT (user_id, permission_key) DO NOTHING;
 
--- name: AssignGlobalAdmin :exec
+-- name: AssignGlobalAdmin :execrows
 INSERT INTO
     user_global_roles (user_id, role_key, assigned_by)
 VALUES
@@ -250,6 +250,19 @@ DELETE FROM
 WHERE
     user_id = sqlc.arg(user_id)
     AND permission_key = sqlc.arg(permission_key);
+
+-- name: EnsureAdminNotificationSubscriptions :exec
+INSERT INTO
+    global_notification_subscriptions (user_id, event_type, channel)
+SELECT
+    sqlc.arg(user_id),
+    event_type.key,
+    'EMAIL'
+FROM
+    notification_event_types AS event_type
+WHERE
+    event_type.scope = 'GLOBAL'
+    AND event_type.default_on ON CONFLICT DO NOTHING;
 
 -- name: GetPermissionScope :one
 SELECT

@@ -18,6 +18,7 @@ import (
 	discoverydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/discovery"
 	groupdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/groups"
 	importdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/metadataimport"
+	notificationdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/notifications"
 	organizationdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/organizations"
 	softwareapplicationsdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwareapplications"
 	softwaresourcecodesdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwaresourcecodes"
@@ -47,6 +48,7 @@ type PostgresDB struct {
 	Imports              *importdb.Repo
 	SoftwareApplications *softwareapplicationsdb.Repo
 	SoftwareSourceCodes  *softwaresourcecodesdb.Repo
+	Notifications        *notificationdb.Repo
 }
 
 // Open connects to PostgreSQL, applies migrations, and builds repositories.
@@ -130,6 +132,7 @@ func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 		Imports:              importdb.New(db),
 		SoftwareApplications: softwareapplicationsdb.New(db),
 		SoftwareSourceCodes:  softwaresourcecodesdb.New(db),
+		Notifications:        notificationdb.New(db),
 	}, nil
 }
 

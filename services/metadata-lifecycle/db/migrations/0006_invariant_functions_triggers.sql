@@ -209,6 +209,12 @@ BEGIN
     IF (SELECT count(*) FROM users) = 1 THEN
         INSERT INTO user_global_roles (user_id, role_key, assigned_by)
         VALUES (NEW.id, 'ADMIN', NEW.id);
+        INSERT INTO global_notification_subscriptions (user_id, event_type, channel)
+        SELECT NEW.id, event_type.key, 'EMAIL'
+        FROM notification_event_types AS event_type
+        WHERE event_type.scope = 'GLOBAL'
+          AND event_type.default_on
+        ON CONFLICT DO NOTHING;
     END IF;
 
     RETURN NEW;

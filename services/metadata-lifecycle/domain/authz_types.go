@@ -39,6 +39,7 @@ const (
 	GlobalPermissionMembershipManage     GlobalPermission = "global.membership.manage"
 	GlobalPermissionRoleManage           GlobalPermission = "global.role.manage"
 	GlobalPermissionPermissionManage     GlobalPermission = "global.permission.manage"
+	GlobalPermissionNotificationManage   GlobalPermission = "global.notification.manage"
 	GlobalPermissionOrganizationManage   GlobalPermission = "global.organization.manage"
 	GlobalPermissionContactPointManage   GlobalPermission = "global.contact_point.manage"
 	GlobalPermissionCategorySchemeManage GlobalPermission = "global.category_scheme.manage"
@@ -58,19 +59,20 @@ const (
 type GroupPermission string
 
 const (
-	GroupPermissionResourceCreate    GroupPermission = "group.resource.create"
-	GroupPermissionResourceEdit      GroupPermission = "group.resource.edit"
-	GroupPermissionResourceSubmit    GroupPermission = "group.resource.submit"
-	GroupPermissionResourceWithdraw  GroupPermission = "group.resource.withdraw"
-	GroupPermissionResourceReopen    GroupPermission = "group.resource.reopen"
-	GroupPermissionResourceDiscard   GroupPermission = "group.resource.discard"
-	GroupPermissionResourceReject    GroupPermission = "group.resource.reject"
-	GroupPermissionResourcePublish   GroupPermission = "group.resource.publish"
-	GroupPermissionResourceUnpublish GroupPermission = "group.resource.unpublish"
-	GroupPermissionMembershipManage  GroupPermission = "group.membership.manage"
-	GroupPermissionRoleManage        GroupPermission = "group.role.manage"
-	GroupPermissionPermissionManage  GroupPermission = "group.permission.manage"
-	GroupPermissionCategoryManage    GroupPermission = "group.category.manage"
+	GroupPermissionResourceCreate     GroupPermission = "group.resource.create"
+	GroupPermissionResourceEdit       GroupPermission = "group.resource.edit"
+	GroupPermissionResourceSubmit     GroupPermission = "group.resource.submit"
+	GroupPermissionResourceWithdraw   GroupPermission = "group.resource.withdraw"
+	GroupPermissionResourceReopen     GroupPermission = "group.resource.reopen"
+	GroupPermissionResourceDiscard    GroupPermission = "group.resource.discard"
+	GroupPermissionResourceReject     GroupPermission = "group.resource.reject"
+	GroupPermissionResourcePublish    GroupPermission = "group.resource.publish"
+	GroupPermissionResourceUnpublish  GroupPermission = "group.resource.unpublish"
+	GroupPermissionMembershipManage   GroupPermission = "group.membership.manage"
+	GroupPermissionRoleManage         GroupPermission = "group.role.manage"
+	GroupPermissionPermissionManage   GroupPermission = "group.permission.manage"
+	GroupPermissionNotificationManage GroupPermission = "group.notification.manage"
+	GroupPermissionCategoryManage     GroupPermission = "group.category.manage"
 )
 
 // AuthorizationUser contains the user fields needed for authorization decisions.

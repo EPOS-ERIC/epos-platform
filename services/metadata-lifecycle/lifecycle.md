@@ -291,27 +291,25 @@ The following capabilities intentionally remain behind `AuthorizeAdmin` until ex
 Notifications separate three concepts:
 
 1. **Authorization** answers what a user may do.
-2. **Canonical event kind** answers what happened.
+2. **Event kind** answers what happened.
 3. **Topic route** answers which audience may receive that event.
 
 Authorization and subscription eligibility are independent. A permission does not automatically subscribe a user, and a subscription does not grant resource read or mutation access.
 
-### Canonical Events And Topic Routes
+### Events And Topic Routes
 
-Metadata emits one canonical event kind per successful state change. Topic routes fan that event out to direct, group, and global audiences. A route key such as `global.resource.published` is a UI and subscription key; it is not a second domain event.
+Metadata emits one event kind per successful state change. Topic routes fan that event out to direct, group, and global audiences. A route key such as `global.resource.published` is a UI and subscription key; it is not a second domain event.
 
 The MVP topic catalog is:
 
-| Topic key                       | Canonical event kind     | Route  | Mode                          | Recipient or eligibility                                                                                                | Behavior                                                                                                                                                                |
+| Topic key                       | Event kind               | Route  | Mode                          | Recipient or eligibility                                                                                                | Behavior                                                                                                                                                                |
 | ------------------------------- | ------------------------ | ------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `direct.membership.accepted`    | `membership.accepted`    | Direct | Mandatory                     | Membership applicant                                                                                                    | Sends one direct email.                                                                                                                                                 |
 | `direct.membership.rejected`    | `membership.rejected`    | Direct | Mandatory                     | Membership applicant                                                                                                    | Sends one direct email. Pending role requests rejected by this operation do not produce additional emails.                                                              |
 | `direct.role_request.accepted`  | `role_request.accepted`  | Direct | Mandatory                     | Role-request applicant                                                                                                  | Sends one direct email. Role assignment performed as part of acceptance does not produce a second `role.assigned` email.                                                |
 | `direct.role_request.rejected`  | `role_request.rejected`  | Direct | Mandatory                     | Role-request applicant                                                                                                  | Sends one direct email for an explicit role-request rejection.                                                                                                          |
 | `direct.role.assigned`          | `role.assigned`          | Direct | Mandatory                     | Assigned user                                                                                                           | Sends one email for an actual explicit group or global role assignment. No email is sent for a no-op assignment or an assignment performed by an accepted role request. |
-| `direct.role.revoked`           | `role.revoked`           | Direct | Mandatory                     | Affected user                                                                                                           | Sends one email for an actual explicit group or global role removal. Cascade removals caused by membership revocation are silent.                                       |
 | `direct.permission.assigned`    | `permission.assigned`    | Direct | Mandatory                     | Granted user                                                                                                            | Sends one email for an actual explicit group or global permission grant.                                                                                                |
-| `direct.permission.revoked`     | `permission.revoked`     | Direct | Mandatory                     | Affected user                                                                                                           | Sends one email for an actual explicit group or global permission revocation. Cascade removals caused by membership revocation are silent.                              |
 | `direct.resource.published`     | `resource.published`     | Direct | Mandatory                     | Resource `submitted_by` user                                                                                            | Sends one publication result email.                                                                                                                                     |
 | `direct.resource.rejected`      | `resource.rejected`      | Direct | Mandatory                     | Resource `submitted_by` user                                                                                            | Sends one rejection result email, including the rejection note.                                                                                                         |
 | `direct.resource.unpublished`   | `resource.unpublished`   | Direct | Mandatory                     | Resource `submitted_by` user                                                                                            | Sends one unpublication result email.                                                                                                                                   |
@@ -326,7 +324,7 @@ The MVP topic catalog is:
 
 There are no group or global subscription topics for resource rejection or unpublication. Resource submission, publication, membership requests, and role requests are subscribable; rejection and unpublication remain direct-only. Request topics notify managers, not the requesting user; requesters receive the existing direct accepted/rejected topics. Submission notifications do not grant resource read access. Their payload must remain within the recipient's normal resource-read visibility. There are no email topics for membership revocation, blocked-user actions, or access removals caused by membership revocation.
 
-The same canonical event may route to multiple audiences. For example:
+The same event may route to multiple audiences. For example:
 
 ```text
 resource.published
@@ -363,13 +361,13 @@ The topic catalog retains a `required_permissions` field for permission-gated to
 
 ### Notification Work And Delivery
 
-Mandatory direct notifications have no subscription rows. Metadata builds transient notification work after the successful metadata mutation. No event or delivery record is persisted in the MVP.
+Mandatory direct notifications have no subscription rows. Metadata builds transient notifications after the successful metadata mutation. No event or delivery record is persisted in the MVP.
 
 Each work item contains enough data for the Gateway to send without another Metadata Lifecycle lookup:
 
 | Field                          | Purpose                                                                     |
 | ------------------------------ | --------------------------------------------------------------------------- |
-| `canonical_event_kind`         | Identifies what happened without audience-specific duplication.             |
+| `event_kind`                   | Identifies what happened without audience-specific duplication.             |
 | `group_id`                     | Identifies the affected group when applicable.                              |
 | Resource or access identifiers | Identifies the resource, version, role, or permission involved.             |
 | Target user ID and email       | Preserves the explicit direct target and gives Mailgun a recipient address. |
@@ -380,15 +378,15 @@ The delivery flow is:
 
 ```text
 metadata mutation commits
-  -> metadata builds notification work
-  -> gRPC response carries notification work
-  -> Gateway starts detached, time-limited delivery work
+  -> metadata builds notifications
+  -> gRPC response carries notifications
+  -> Gateway starts detached, time-limited delivery
   -> Gateway calls Mailgun
 ```
 
-Notification work must not use the request context after the response. Gateway uses an independent timeout context. Mailgun failures and work-construction failures are logged and dropped. A successful metadata mutation remains successful when notification work cannot be built or delivered. Gateway crashes can lose notifications.
+Notifications must not use the request context after the response. Gateway uses an independent timeout context. Mailgun failures and notification-construction failures are logged and dropped. A successful metadata mutation remains successful when notifications cannot be built or delivered. Gateway crashes can lose notifications.
 
-If a user qualifies for multiple routes, Metadata deduplicates before returning work. If a mutation causes several internal state changes, only the explicitly defined canonical event is emitted; implicit cascade changes do not create extra notifications.
+If a user qualifies for multiple routes, Metadata deduplicates before returning work. If a mutation causes several internal state changes, only the explicitly defined event is emitted; implicit cascade changes do not create extra notifications.
 
 ## Required Scenarios
 

@@ -14,6 +14,7 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 	case GlobalPermissionMembershipManage,
 		GlobalPermissionRoleManage,
 		GlobalPermissionPermissionManage,
+		GlobalPermissionNotificationManage,
 		GlobalPermissionOrganizationManage,
 		GlobalPermissionContactPointManage,
 		GlobalPermissionCategorySchemeManage,
@@ -66,6 +67,7 @@ func NewGroupPermission(value string) (GroupPermission, error) {
 		GroupPermissionMembershipManage,
 		GroupPermissionRoleManage,
 		GroupPermissionPermissionManage,
+		GroupPermissionNotificationManage,
 		GroupPermissionCategoryManage:
 		return permission, nil
 	default:

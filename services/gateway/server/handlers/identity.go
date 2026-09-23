@@ -124,6 +124,8 @@ func toAPIProtoGlobalPermissions(values []metadatalifecyclev1.GlobalPermission) 
 			permission = gatewayapi.GlobalPermissionGlobalRoleManage
 		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE:
 			permission = gatewayapi.GlobalPermissionGlobalPermissionManage
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE:
+			permission = gatewayapi.GlobalPermissionGlobalNotificationManage
 		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE:
 			permission = gatewayapi.GlobalPermissionGlobalOrganizationManage
 		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE:

@@ -3,12 +3,14 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	ServerPort string `envconfig:"SERVER_PORT" default:"5001"`
+	ServerPort       string `envconfig:"SERVER_PORT" default:"5001"`
+	GatewayPublicURL string `envconfig:"GATEWAY_PUBLIC_URL"`
 
 	DBHost     string `envconfig:"DB_HOST" default:"localhost"`
 	DBPort     string `envconfig:"DB_PORT" default:"5432"`
@@ -35,6 +37,10 @@ func Load() (Config, error) {
 func (c *Config) Validate() error {
 	if c.ServerPort == "" {
 		return fmt.Errorf("server_port is required")
+	}
+	publicURL, err := url.Parse(c.GatewayPublicURL)
+	if err != nil || publicURL.Host == "" || (publicURL.Scheme != "http" && publicURL.Scheme != "https") || (publicURL.Path != "" && publicURL.Path != "/") || publicURL.RawQuery != "" || publicURL.Fragment != "" {
+		return fmt.Errorf("gateway_public_url must be an absolute HTTP(S) origin")
 	}
 	if c.DBHost == "" {
 		return fmt.Errorf("db_host is required")

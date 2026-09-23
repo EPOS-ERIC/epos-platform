@@ -10,15 +10,13 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 )
 
-// TODO: see if we should move this interface to the consuming package instead of the implementing one (also for the other services)
-
 type Store interface {
 	GetUserByID(context.Context, string) (domain.User, error)
 	ListUsers(context.Context) ([]domain.UserSummary, error)
 	CreateUser(context.Context, domain.UserClaims) (domain.User, error)
-	GrantGlobalPermission(context.Context, string, domain.GlobalPermission, string) error
+	GrantGlobalPermission(context.Context, string, domain.GlobalPermission, string) (bool, error)
 	RevokeGlobalPermission(context.Context, string, domain.GlobalPermission) error
-	AssignGlobalRole(context.Context, string, string, string) error
+	AssignGlobalRole(context.Context, string, string, string) (bool, error)
 	RemoveGlobalRole(context.Context, string, string) error
 	BlockUser(context.Context, string, string, string) error
 	UnblockUser(context.Context, string) error
@@ -31,17 +29,23 @@ type Authorizer interface {
 	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
 }
 
+type Notifier interface {
+	Build(context.Context, domain.NotificationEvent) ([]domain.Notification, error)
+}
+
 type Service struct {
 	store      Store
 	authorizer Authorizer
 	log        *slog.Logger
+	notifier   Notifier
 }
 
-func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
+func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier) *Service {
 	return &Service{
 		store:      store,
 		authorizer: authorizer,
 		log:        log.With("component", "users-service"),
+		notifier:   notifier,
 	}
 }
 
@@ -100,22 +104,37 @@ func (s *Service) List(ctx context.Context, actorID domain.Actor) ([]domain.User
 	return users, nil
 }
 
-func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Actor, userID string, permission domain.GlobalPermission) error {
+func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Actor, userID string, permission domain.GlobalPermission) ([]domain.Notification, error) {
 	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionPermissionManage)
 	if err != nil {
-		return fmt.Errorf("authorize global permission grant: %w", err)
+		return nil, fmt.Errorf("authorize global permission grant: %w", err)
 	}
 
 	if !allowed.Allowed {
-		return domain.ErrUserForbidden
+		return nil, domain.ErrUserForbidden
 	}
 
-	err = s.store.GrantGlobalPermission(ctx, userID, permission, string(actorID))
+	changed, err := s.store.GrantGlobalPermission(ctx, userID, permission, string(actorID))
 	if err != nil {
-		return fmt.Errorf("grant global permission: %w", err)
+		return nil, fmt.Errorf("grant global permission: %w", err)
+	}
+	if !changed {
+		return nil, nil
 	}
 
-	return nil
+	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
+		Kind:         domain.NotificationEventPermissionAssigned,
+		ActorID:      actorID,
+		SubjectID:    userID,
+		TargetUserID: userID,
+		Permission:   string(permission),
+	})
+	if buildErr != nil {
+		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventPermissionAssigned, "error", buildErr)
+		notifications = nil
+	}
+
+	return notifications, nil
 }
 
 func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID domain.Actor, userID string, permission domain.GlobalPermission) error {
@@ -136,19 +155,36 @@ func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID domain.Act
 	return nil
 }
 
-func (s *Service) AssignGlobalRole(ctx context.Context, actorID domain.Actor, userID, role string) error {
+func (s *Service) AssignGlobalRole(ctx context.Context, actorID domain.Actor, userID, role string) ([]domain.Notification, error) {
 	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
 	if err != nil {
-		return fmt.Errorf("authorize global role assignment: %w", err)
+		return nil, fmt.Errorf("authorize global role assignment: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrUserForbidden
+		return nil, domain.ErrUserForbidden
 	}
 
-	if err := s.store.AssignGlobalRole(ctx, userID, string(actorID), role); err != nil {
-		return fmt.Errorf("assign global role: %w", err)
+	changed, err := s.store.AssignGlobalRole(ctx, userID, string(actorID), role)
+	if err != nil {
+		return nil, fmt.Errorf("assign global role: %w", err)
 	}
-	return nil
+	if !changed {
+		return nil, nil
+	}
+
+	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
+		Kind:         domain.NotificationEventRoleAssigned,
+		ActorID:      actorID,
+		SubjectID:    userID,
+		TargetUserID: userID,
+		Role:         role,
+	})
+	if buildErr != nil {
+		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventRoleAssigned, "error", buildErr)
+		notifications = nil
+	}
+
+	return notifications, nil
 }
 
 func (s *Service) RemoveGlobalRole(ctx context.Context, actorID domain.Actor, userID, role string) error {
@@ -160,9 +196,11 @@ func (s *Service) RemoveGlobalRole(ctx context.Context, actorID domain.Actor, us
 		return domain.ErrUserForbidden
 	}
 
-	if err := s.store.RemoveGlobalRole(ctx, userID, role); err != nil {
+	err = s.store.RemoveGlobalRole(ctx, userID, role)
+	if err != nil {
 		return fmt.Errorf("remove global role: %w", err)
 	}
+
 	return nil
 }
 

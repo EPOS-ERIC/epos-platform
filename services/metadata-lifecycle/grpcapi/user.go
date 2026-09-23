@@ -104,11 +104,17 @@ func (u *UserServer) GrantGlobalPermission(ctx context.Context, request *metadat
 		return nil, wrapHandlerError(err)
 	}
 
-	if err := u.users.GrantGlobalPermission(ctx, actor, request.GetUserId(), permission); err != nil {
+	notifications, err := u.users.GrantGlobalPermission(ctx, actor, request.GetUserId(), permission)
+	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
 
-	return &metadatalifecyclev1.GrantGlobalPermissionResponse{}, nil
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.GrantGlobalPermissionResponse{Notifications: protoNotifications}, nil
 }
 
 func (u *UserServer) RevokeGlobalPermission(ctx context.Context, request *metadatalifecyclev1.RevokeGlobalPermissionRequest) (*metadatalifecyclev1.RevokeGlobalPermissionResponse, error) {
@@ -138,11 +144,18 @@ func (u *UserServer) AssignGlobalRole(ctx context.Context, request *metadatalife
 	if err != nil {
 		return nil, err
 	}
-	if err := u.users.AssignGlobalRole(ctx, actor, request.GetUserId(), string(role)); err != nil {
+
+	notifications, err := u.users.AssignGlobalRole(ctx, actor, request.GetUserId(), string(role))
+	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
 
-	return &metadatalifecyclev1.AssignGlobalRoleResponse{}, nil
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.AssignGlobalRoleResponse{Notifications: protoNotifications}, nil
 }
 
 func (u *UserServer) RemoveGlobalRole(ctx context.Context, request *metadatalifecyclev1.RemoveGlobalRoleRequest) (*metadatalifecyclev1.RemoveGlobalRoleResponse, error) {
@@ -155,6 +168,7 @@ func (u *UserServer) RemoveGlobalRole(ctx context.Context, request *metadatalife
 	if err != nil {
 		return nil, err
 	}
+
 	if err := u.users.RemoveGlobalRole(ctx, actor, request.GetUserId(), string(role)); err != nil {
 		return nil, wrapHandlerError(err)
 	}
@@ -368,6 +382,8 @@ func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE, nil
 	case domain.GlobalPermissionPermissionManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GlobalPermissionNotificationManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE, nil
 	case domain.GlobalPermissionOrganizationManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE, nil
 	case domain.GlobalPermissionContactPointManage:
@@ -407,6 +423,8 @@ func toDomainGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domai
 		return domain.GlobalPermissionRoleManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE:
 		return domain.GlobalPermissionPermissionManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE:
+		return domain.GlobalPermissionNotificationManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE:
 		return domain.GlobalPermissionOrganizationManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE:

@@ -67,6 +67,7 @@ enum GlobalPermission {
   GLOBAL_PERMISSION_RESOURCE_PUBLISH = 14;
   GLOBAL_PERMISSION_RESOURCE_UNPUBLISH = 15;
   GLOBAL_PERMISSION_CATEGORY_MANAGE = 16;
+  GLOBAL_PERMISSION_NOTIFICATION_MANAGE = 17;
 }
 
 enum GroupPermission {
@@ -84,6 +85,49 @@ enum GroupPermission {
   GROUP_PERMISSION_ROLE_MANAGE = 11;
   GROUP_PERMISSION_PERMISSION_MANAGE = 12;
   GROUP_PERMISSION_CATEGORY_MANAGE = 13;
+  GROUP_PERMISSION_NOTIFICATION_MANAGE = 14;
+}
+
+enum NotificationScope {
+  NOTIFICATION_SCOPE_UNSPECIFIED = 0;
+  NOTIFICATION_SCOPE_DIRECT = 1;
+  NOTIFICATION_SCOPE_GROUP = 2;
+  NOTIFICATION_SCOPE_GLOBAL = 3;
+}
+
+enum NotificationChannel {
+  NOTIFICATION_CHANNEL_UNSPECIFIED = 0;
+  NOTIFICATION_CHANNEL_EMAIL = 1;
+}
+
+enum NotificationEventKind {
+  NOTIFICATION_EVENT_KIND_UNSPECIFIED = 0;
+  NOTIFICATION_EVENT_KIND_MEMBERSHIP_REQUESTED = 1;
+  NOTIFICATION_EVENT_KIND_MEMBERSHIP_ACCEPTED = 2;
+  NOTIFICATION_EVENT_KIND_MEMBERSHIP_REJECTED = 3;
+  NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REQUESTED = 4;
+  NOTIFICATION_EVENT_KIND_ROLE_REQUEST_ACCEPTED = 5;
+  NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REJECTED = 6;
+  NOTIFICATION_EVENT_KIND_ROLE_ASSIGNED = 7;
+  NOTIFICATION_EVENT_KIND_PERMISSION_ASSIGNED = 8;
+  NOTIFICATION_EVENT_KIND_RESOURCE_SUBMITTED = 9;
+  NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED = 10;
+  NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED = 11;
+  NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED = 12;
+}
+
+message Notification {
+  NotificationEventKind event_kind = 1 [(buf.validate.field).enum.defined_only = true];
+  optional string group_id = 2 [(buf.validate.field).string.uuid = true];
+  ResourceType resource_type = 3 [(buf.validate.field).enum.defined_only = true];
+  optional string resource_id = 4 [(buf.validate.field).string.uuid = true];
+  optional string version_id = 5 [(buf.validate.field).string.uuid = true];
+  optional string access_id = 6 [(buf.validate.field).string.uuid = true];
+  string target_user_id = 7 [(buf.validate.field).string.min_len = 1];
+  string target_email = 8 [(buf.validate.field).string.email = true];
+  string subject = 9 [(buf.validate.field).string.min_len = 1];
+  string body = 10 [(buf.validate.field).string.min_len = 1];
+  NotificationChannel channel = 11 [(buf.validate.field).enum.defined_only = true];
 }
 
 enum RoleRequestStatus {

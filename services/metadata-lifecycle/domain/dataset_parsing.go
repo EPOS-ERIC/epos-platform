@@ -161,6 +161,7 @@ func NewDatasetVersion(
 	revision int32,
 	status Status,
 	createdBy Actor,
+	submittedBy *string,
 	group Group,
 	createdAt, updatedAt time.Time,
 	rejectionNote *string,
@@ -178,6 +179,14 @@ func NewDatasetVersion(
 	actor, err := NewActor(string(createdBy))
 	if err != nil {
 		return DatasetVersion{}, fmt.Errorf("dataset creator: %w: %w", err, ErrInvalidDataset)
+	}
+	var submittedByActor *Actor
+	if submittedBy != nil {
+		value, err := NewActor(*submittedBy)
+		if err != nil {
+			return DatasetVersion{}, fmt.Errorf("dataset submitter: %w: %w", err, ErrInvalidDataset)
+		}
+		submittedByActor = &value
 	}
 	normalizedGroup, err := NewGroup(group.ID, GroupInput{
 		Name:        group.Name,
@@ -209,6 +218,7 @@ func NewDatasetVersion(
 		Revision:      revision,
 		Status:        status,
 		CreatedBy:     actor,
+		SubmittedBy:   submittedByActor,
 		Group:         normalizedGroup,
 		CreatedAt:     createdAt,
 		UpdatedAt:     updatedAt,

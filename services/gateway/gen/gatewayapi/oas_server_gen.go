@@ -221,6 +221,12 @@ type Handler interface {
 	//
 	// GET /groups
 	ListGroups(ctx context.Context) ([]Group, error)
+	// ListNotificationTopics implements listNotificationTopics operation.
+	//
+	// Returns the fixed notification topic catalog.
+	//
+	// GET /notification-topics
+	ListNotificationTopics(ctx context.Context) ([]NotificationTopic, error)
 	// ListOrganizations implements listOrganizations operation.
 	//
 	// List reusable organizations.
@@ -240,6 +246,12 @@ type Handler interface {
 	//
 	// GET /resources/{resourceType}/{id}/versions
 	ListResourceVersions(ctx context.Context, params ListResourceVersionsParams) ([]ResourceVersionSummary, error)
+	// ListUserNotificationSubscriptions implements listUserNotificationSubscriptions operation.
+	//
+	// List user notification subscriptions.
+	//
+	// GET /users/{userId}/notification-subscriptions
+	ListUserNotificationSubscriptions(ctx context.Context, params ListUserNotificationSubscriptionsParams) ([]NotificationSubscription, error)
 	// ListUsers implements listUsers operation.
 	//
 	// Retrieve all user profiles. Allowed to super admins only.
@@ -339,6 +351,18 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/versions/{versionId}/submit
 	SubmitResourceVersion(ctx context.Context, params SubmitResourceVersionParams) (*WriteResult, error)
+	// SubscribeGroupUserNotification implements subscribeGroupUserNotification operation.
+	//
+	// Subscribe group user to a notification topic.
+	//
+	// PUT /groups/{groupId}/notification-subscriptions/{userId}/{topicKey}
+	SubscribeGroupUserNotification(ctx context.Context, params SubscribeGroupUserNotificationParams) error
+	// SubscribeUserNotification implements subscribeUserNotification operation.
+	//
+	// Subscribe user to a global notification topic.
+	//
+	// PUT /users/{userId}/notification-subscriptions/{topicKey}
+	SubscribeUserNotification(ctx context.Context, params SubscribeUserNotificationParams) error
 	// UnblockUser implements unblockUser operation.
 	//
 	// Restore a blocked user to ACTIVE. Requires active global ADMIN.
@@ -351,6 +375,18 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/versions/{versionId}/unpublish
 	UnpublishResourceVersion(ctx context.Context, params UnpublishResourceVersionParams) (*WriteResult, error)
+	// UnsubscribeGroupUserNotification implements unsubscribeGroupUserNotification operation.
+	//
+	// Unsubscribe group user from a notification topic.
+	//
+	// DELETE /groups/{groupId}/notification-subscriptions/{userId}/{topicKey}
+	UnsubscribeGroupUserNotification(ctx context.Context, params UnsubscribeGroupUserNotificationParams) error
+	// UnsubscribeUserNotification implements unsubscribeUserNotification operation.
+	//
+	// Unsubscribe user from a global notification topic.
+	//
+	// DELETE /users/{userId}/notification-subscriptions/{topicKey}
+	UnsubscribeUserNotification(ctx context.Context, params UnsubscribeUserNotificationParams) error
 	// WithdrawGroupMembershipRequest implements withdrawGroupMembershipRequest operation.
 	//
 	// Delete the authenticated user's pending membership request and pending role requests.

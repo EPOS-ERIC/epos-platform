@@ -135,6 +135,7 @@ func NewSoftwareApplicationVersion(
 	revision int32,
 	status Status,
 	createdBy Actor,
+	submittedBy *string,
 	group Group,
 	createdAt, updatedAt time.Time,
 	rejectionNote *string,
@@ -152,6 +153,14 @@ func NewSoftwareApplicationVersion(
 	actor, err := NewActor(string(createdBy))
 	if err != nil {
 		return SoftwareApplicationVersion{}, fmt.Errorf("software application creator: %w: %w", err, ErrSoftwareApplicationInvalid)
+	}
+	var submittedByActor *Actor
+	if submittedBy != nil {
+		value, err := NewActor(*submittedBy)
+		if err != nil {
+			return SoftwareApplicationVersion{}, fmt.Errorf("software application submitter: %w: %w", err, ErrSoftwareApplicationInvalid)
+		}
+		submittedByActor = &value
 	}
 	normalizedGroup, err := NewGroup(group.ID, GroupInput{
 		Name:        group.Name,
@@ -183,6 +192,7 @@ func NewSoftwareApplicationVersion(
 		Revision:              revision,
 		Status:                status,
 		CreatedBy:             actor,
+		SubmittedBy:           submittedByActor,
 		Group:                 normalizedGroup,
 		CreatedAt:             createdAt,
 		UpdatedAt:             updatedAt,

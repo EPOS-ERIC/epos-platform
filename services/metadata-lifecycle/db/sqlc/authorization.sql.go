@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const assignGlobalAdmin = `-- name: AssignGlobalAdmin :exec
+const assignGlobalAdmin = `-- name: AssignGlobalAdmin :execrows
 INSERT INTO
     user_global_roles (user_id, role_key, assigned_by)
 VALUES
@@ -28,9 +28,12 @@ type AssignGlobalAdminParams struct {
 	AssignedBy *string
 }
 
-func (q *Queries) AssignGlobalAdmin(ctx context.Context, arg AssignGlobalAdminParams) error {
-	_, err := q.db.Exec(ctx, assignGlobalAdmin, arg.UserID, arg.AssignedBy)
-	return err
+func (q *Queries) AssignGlobalAdmin(ctx context.Context, arg AssignGlobalAdminParams) (int64, error) {
+	result, err := q.db.Exec(ctx, assignGlobalAdmin, arg.UserID, arg.AssignedBy)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const blockUser = `-- name: BlockUser :execrows
@@ -138,6 +141,25 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const ensureAdminNotificationSubscriptions = `-- name: EnsureAdminNotificationSubscriptions :exec
+INSERT INTO
+    global_notification_subscriptions (user_id, event_type, channel)
+SELECT
+    $1,
+    event_type.key,
+    'EMAIL'
+FROM
+    notification_event_types AS event_type
+WHERE
+    event_type.scope = 'GLOBAL'
+    AND event_type.default_on ON CONFLICT DO NOTHING
+`
+
+func (q *Queries) EnsureAdminNotificationSubscriptions(ctx context.Context, userID string) error {
+	_, err := q.db.Exec(ctx, ensureAdminNotificationSubscriptions, userID)
+	return err
 }
 
 const getAuthorizationUser = `-- name: GetAuthorizationUser :one
@@ -639,7 +661,7 @@ func (q *Queries) GetUserMemberships(ctx context.Context, userID string) ([]GetU
 	return items, nil
 }
 
-const grantGlobalPermission = `-- name: GrantGlobalPermission :exec
+const grantGlobalPermission = `-- name: GrantGlobalPermission :execrows
 INSERT INTO
     global_permission_grants (user_id, permission_key, granted_by)
 VALUES
@@ -656,9 +678,12 @@ type GrantGlobalPermissionParams struct {
 	GrantedBy     string
 }
 
-func (q *Queries) GrantGlobalPermission(ctx context.Context, arg GrantGlobalPermissionParams) error {
-	_, err := q.db.Exec(ctx, grantGlobalPermission, arg.UserID, arg.PermissionKey, arg.GrantedBy)
-	return err
+func (q *Queries) GrantGlobalPermission(ctx context.Context, arg GrantGlobalPermissionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, grantGlobalPermission, arg.UserID, arg.PermissionKey, arg.GrantedBy)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const hasAnyActiveMembership = `-- name: HasAnyActiveMembership :one

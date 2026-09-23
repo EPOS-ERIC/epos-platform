@@ -64,6 +64,12 @@ type RoleRequest struct {
 	RequestedAt time.Time
 }
 
+// RoleRequestDecision contains the decided request and resulting membership.
+type RoleRequestDecision struct {
+	Request    RoleRequest
+	Membership GroupMembership
+}
+
 // GroupMembership is a complete group membership returned by group access operations.
 type GroupMembership struct {
 	User               MembershipUser

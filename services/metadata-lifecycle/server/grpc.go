@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"runtime/debug"
 
 	"buf.build/go/protovalidate"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
@@ -19,12 +20,14 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/grpcapi"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/notifications"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwareapplications"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwaresourcecodes"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/turtle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -45,6 +48,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	server := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
+			recoverUnaryRPC(log),
 			grpcapi.ActorTracingInterceptor(),
 			logUnaryRPC(log),
 			validateUnaryRPC(validator),
@@ -56,7 +60,8 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 
 	authorizer := authz.New(log, db.Authorization)
-	usersSvc := users.New(log, db.Users, authorizer)
+	notificationsSvc := notifications.New(log, db.Notifications, authorizer, cfg.GatewayPublicURL)
+	usersSvc := users.New(log, db.Users, authorizer, notificationsSvc)
 	importSvc := metadataimport.New(log, db.Imports, authorizer)
 	turtler := turtle.New(log)
 	groupsSvc := groups.New(log, db.Groups, authorizer)
@@ -70,16 +75,17 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	metadatalifecyclev1.RegisterGroupServiceServer(server, grpcapi.NewGroup(groupsSvc))
 	metadatalifecyclev1.RegisterCategoryServiceServer(server, grpcapi.NewCategory(categoriesSvc))
 	metadatalifecyclev1.RegisterContactPointServiceServer(server, grpcapi.NewContactPoint(contactPointsSvc))
-	accessSvc := access.New(log, db.Access, authorizer)
+	accessSvc := access.New(log, db.Access, authorizer, notificationsSvc)
 	metadatalifecyclev1.RegisterGroupAccessServiceServer(server, grpcapi.NewAccess(accessSvc))
 	organizationsSvc := organizations.New(log, db.Organizations, authorizer)
 	metadatalifecyclev1.RegisterOrganizationServiceServer(server, grpcapi.NewOrganization(organizationsSvc))
-	datasetSvc := datasets.New(log, db.Datasets, authorizer)
-	applicationSvc := softwareapplications.New(log, db.SoftwareApplications, authorizer)
-	sourceCodeSvc := softwaresourcecodes.New(log, db.SoftwareSourceCodes, authorizer)
+	datasetSvc := datasets.New(log, db.Datasets, authorizer, notificationsSvc)
+	applicationSvc := softwareapplications.New(log, db.SoftwareApplications, authorizer, notificationsSvc)
+	sourceCodeSvc := softwaresourcecodes.New(log, db.SoftwareSourceCodes, authorizer, notificationsSvc)
 	metadatalifecyclev1.RegisterResourceServiceServer(server, grpcapi.NewResource(datasetSvc, applicationSvc, sourceCodeSvc))
 	discoverySvc := discovery.New(log, db.Discovery, authorizer)
 	metadatalifecyclev1.RegisterDiscoveryServiceServer(server, grpcapi.NewDiscovery(discoverySvc))
+	metadatalifecyclev1.RegisterNotificationServiceServer(server, grpcapi.NewNotification(notificationsSvc))
 
 	listener, err := net.Listen("tcp", ":"+cfg.ServerPort)
 	if err != nil {
@@ -105,6 +111,32 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	log.Info("server shutdown complete")
 
 	return nil
+}
+
+func recoverUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {
+	return func(
+		ctx context.Context,
+		req any,
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (response any, err error) {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				log.ErrorContext(ctx, "grpc handler panicked", "method", info.FullMethod, "panic", recovered, "stack", string(debug.Stack()))
+
+				span := trace.SpanFromContext(ctx)
+				if span.IsRecording() {
+					span.RecordError(fmt.Errorf("grpc handler panic: %v", recovered))
+					span.SetStatus(otelcodes.Error, "internal server error")
+				}
+
+				response = nil
+				err = status.Error(codes.Internal, "internal server error")
+			}
+		}()
+
+		return handler(ctx, req)
+	}
 }
 
 func validateUnaryRPC(validator protovalidate.Validator) grpc.UnaryServerInterceptor {

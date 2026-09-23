@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+import "metadata_lifecycle/v1/common.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+enum NotificationMode {
+  NOTIFICATION_MODE_UNSPECIFIED = 0;
+  NOTIFICATION_MODE_MANDATORY = 1;
+  NOTIFICATION_MODE_OPT_IN = 2;
+}
+
+message NotificationTopic {
+  string key = 1 [(buf.validate.field).string.min_len = 1];
+  NotificationScope scope = 2 [(buf.validate.field).enum.defined_only = true];
+  NotificationMode mode = 3 [(buf.validate.field).enum.defined_only = true];
+  bool default_on = 4;
+  repeated string required_permissions = 5;
+}
+
+message NotificationSubscription {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 2;
+  string topic_key = 3 [(buf.validate.field).string.min_len = 1];
+  NotificationChannel channel = 4 [(buf.validate.field).enum.defined_only = true];
+}
+
+message ListNotificationTopicsRequest {}
+message ListNotificationTopicsResponse {
+  repeated NotificationTopic topics = 1;
+}
+
+message ListNotificationSubscriptionsRequest {
+  string user_id = 1;
+}
+message ListNotificationSubscriptionsResponse {
+  repeated NotificationSubscription subscriptions = 1;
+}
+
+message SubscribeNotificationRequest {
+  string user_id = 1;
+  string group_id = 2;
+  string topic_key = 3 [(buf.validate.field).string.min_len = 1];
+  NotificationChannel channel = 4 [(buf.validate.field).enum.defined_only = true];
+}
+message SubscribeNotificationResponse {
+  NotificationSubscription subscription = 1;
+}
+
+message UnsubscribeNotificationRequest {
+  string user_id = 1;
+  string group_id = 2;
+  string topic_key = 3 [(buf.validate.field).string.min_len = 1];
+  NotificationChannel channel = 4 [(buf.validate.field).enum.defined_only = true];
+}
+message UnsubscribeNotificationResponse {}
+
+service NotificationService {
+  rpc ListNotificationTopics(ListNotificationTopicsRequest) returns (ListNotificationTopicsResponse);
+  rpc ListNotificationSubscriptions(ListNotificationSubscriptionsRequest) returns (ListNotificationSubscriptionsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc SubscribeNotification(SubscribeNotificationRequest) returns (SubscribeNotificationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc UnsubscribeNotification(UnsubscribeNotificationRequest) returns (UnsubscribeNotificationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

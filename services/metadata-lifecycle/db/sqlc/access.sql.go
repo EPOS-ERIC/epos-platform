@@ -380,7 +380,7 @@ func (q *Queries) GetPendingGroupRoleRequest(ctx context.Context, arg GetPending
 	return i, err
 }
 
-const grantGroupPermission = `-- name: GrantGroupPermission :exec
+const grantGroupPermission = `-- name: GrantGroupPermission :execrows
 INSERT INTO
     group_permission_grants (user_id, group_id, permission_key, granted_by)
 SELECT
@@ -403,14 +403,17 @@ type GrantGroupPermissionParams struct {
 	GrantedBy     string
 }
 
-func (q *Queries) GrantGroupPermission(ctx context.Context, arg GrantGroupPermissionParams) error {
-	_, err := q.db.Exec(ctx, grantGroupPermission,
+func (q *Queries) GrantGroupPermission(ctx context.Context, arg GrantGroupPermissionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, grantGroupPermission,
 		arg.UserID,
 		arg.GroupID,
 		arg.PermissionKey,
 		arg.GrantedBy,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const groupMembershipRoleExists = `-- name: GroupMembershipRoleExists :one
@@ -697,7 +700,7 @@ func (q *Queries) RejectPendingGroupRoleRequests(ctx context.Context, arg Reject
 	return err
 }
 
-const removeGroupRole = `-- name: RemoveGroupRole :execrows
+const removeGroupRole = `-- name: RemoveGroupRole :exec
 DELETE FROM
     group_membership_roles
 WHERE
@@ -712,12 +715,9 @@ type RemoveGroupRoleParams struct {
 	RoleKey string
 }
 
-func (q *Queries) RemoveGroupRole(ctx context.Context, arg RemoveGroupRoleParams) (int64, error) {
-	result, err := q.db.Exec(ctx, removeGroupRole, arg.UserID, arg.GroupID, arg.RoleKey)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+func (q *Queries) RemoveGroupRole(ctx context.Context, arg RemoveGroupRoleParams) error {
+	_, err := q.db.Exec(ctx, removeGroupRole, arg.UserID, arg.GroupID, arg.RoleKey)
+	return err
 }
 
 const requestGroupMembership = `-- name: RequestGroupMembership :one

@@ -325,6 +325,15 @@ func (UnimplementedHandler) ListGroups(ctx context.Context) (r []Group, _ error)
 	return r, ht.ErrNotImplemented
 }
 
+// ListNotificationTopics implements listNotificationTopics operation.
+//
+// Returns the fixed notification topic catalog.
+//
+// GET /notification-topics
+func (UnimplementedHandler) ListNotificationTopics(ctx context.Context) (r []NotificationTopic, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListOrganizations implements listOrganizations operation.
 //
 // List reusable organizations.
@@ -350,6 +359,15 @@ func (UnimplementedHandler) ListPermissions(ctx context.Context) (r []Permission
 //
 // GET /resources/{resourceType}/{id}/versions
 func (UnimplementedHandler) ListResourceVersions(ctx context.Context, params ListResourceVersionsParams) (r []ResourceVersionSummary, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListUserNotificationSubscriptions implements listUserNotificationSubscriptions operation.
+//
+// List user notification subscriptions.
+//
+// GET /users/{userId}/notification-subscriptions
+func (UnimplementedHandler) ListUserNotificationSubscriptions(ctx context.Context, params ListUserNotificationSubscriptionsParams) (r []NotificationSubscription, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -500,6 +518,24 @@ func (UnimplementedHandler) SubmitResourceVersion(ctx context.Context, params Su
 	return r, ht.ErrNotImplemented
 }
 
+// SubscribeGroupUserNotification implements subscribeGroupUserNotification operation.
+//
+// Subscribe group user to a notification topic.
+//
+// PUT /groups/{groupId}/notification-subscriptions/{userId}/{topicKey}
+func (UnimplementedHandler) SubscribeGroupUserNotification(ctx context.Context, params SubscribeGroupUserNotificationParams) error {
+	return ht.ErrNotImplemented
+}
+
+// SubscribeUserNotification implements subscribeUserNotification operation.
+//
+// Subscribe user to a global notification topic.
+//
+// PUT /users/{userId}/notification-subscriptions/{topicKey}
+func (UnimplementedHandler) SubscribeUserNotification(ctx context.Context, params SubscribeUserNotificationParams) error {
+	return ht.ErrNotImplemented
+}
+
 // UnblockUser implements unblockUser operation.
 //
 // Restore a blocked user to ACTIVE. Requires active global ADMIN.
@@ -516,6 +552,24 @@ func (UnimplementedHandler) UnblockUser(ctx context.Context, params UnblockUserP
 // POST /resources/{resourceType}/{id}/versions/{versionId}/unpublish
 func (UnimplementedHandler) UnpublishResourceVersion(ctx context.Context, params UnpublishResourceVersionParams) (r *WriteResult, _ error) {
 	return r, ht.ErrNotImplemented
+}
+
+// UnsubscribeGroupUserNotification implements unsubscribeGroupUserNotification operation.
+//
+// Unsubscribe group user from a notification topic.
+//
+// DELETE /groups/{groupId}/notification-subscriptions/{userId}/{topicKey}
+func (UnimplementedHandler) UnsubscribeGroupUserNotification(ctx context.Context, params UnsubscribeGroupUserNotificationParams) error {
+	return ht.ErrNotImplemented
+}
+
+// UnsubscribeUserNotification implements unsubscribeUserNotification operation.
+//
+// Unsubscribe user from a global notification topic.
+//
+// DELETE /users/{userId}/notification-subscriptions/{topicKey}
+func (UnimplementedHandler) UnsubscribeUserNotification(ctx context.Context, params UnsubscribeUserNotificationParams) error {
+	return ht.ErrNotImplemented
 }
 
 // WithdrawGroupMembershipRequest implements withdrawGroupMembershipRequest operation.

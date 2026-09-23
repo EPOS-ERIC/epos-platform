@@ -9,8 +9,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/urlutil"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -39,7 +39,7 @@ type Service struct {
 }
 
 // NewService builds auth service for token validation against external provider.
-func NewService(log *slog.Logger, baseURL string, upstreamCfg config.Upstream) (*Service, error) {
+func NewService(log *slog.Logger, baseURL string) (*Service, error) {
 	normalizedBaseURL, err := urlutil.NormalizeBaseURL(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("normalize auth base URL: %w", err)
@@ -50,7 +50,7 @@ func NewService(log *slog.Logger, baseURL string, upstreamCfg config.Upstream) (
 		baseURL: normalizedBaseURL,
 		client: &http.Client{
 			Transport: otelhttp.NewTransport(http.DefaultTransport),
-			Timeout:   upstreamCfg.Timeout,
+			Timeout:   10 * time.Second,
 		},
 	}, nil
 }
