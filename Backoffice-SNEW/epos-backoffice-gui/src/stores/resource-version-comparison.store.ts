@@ -10,6 +10,7 @@ import type {
   ResourceVersionDiffRow,
   ResourceVersionDiffSection
 } from '../models/resource-version-comparison';
+import { orderVersionsByCreatedAt } from '../models/resource-version-comparison';
 import { ApiService } from '../services/api.service';
 
 type LoadCommand = { kind: 'load'; context: ResourceVersionComparisonContext } | { kind: 'clear' };
@@ -102,11 +103,14 @@ export class ResourceVersionComparisonStore {
               context.rightVersionId
             ) as Observable<ResourceVersion>
           }).pipe(
-            map(({ leftVersion, rightVersion }) => ({
-              leftVersion,
-              rightVersion,
-              diffRows: mapResourceVersionDiff(leftVersion, rightVersion)
-            })),
+            map(({ leftVersion: firstVersion, rightVersion: secondVersion }) => {
+              const [leftVersion, rightVersion] = orderVersionsByCreatedAt(firstVersion, secondVersion);
+              return {
+                leftVersion,
+                rightVersion,
+                diffRows: mapResourceVersionDiff(leftVersion, rightVersion)
+              };
+            }),
             catchError((error) => {
               console.error('Failed to compare resource versions', error);
               this.loadingState.set(false);

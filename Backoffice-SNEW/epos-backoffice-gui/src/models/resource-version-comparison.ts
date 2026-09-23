@@ -34,3 +34,12 @@ export type ResourceVersionComparison = {
   rightVersion: ResourceVersion;
   diffRows: ResourceVersionDiffRow[];
 };
+
+export function orderVersionsByCreatedAt<T extends { created_at: string }>(first: T, second: T): [T, T] {
+  const firstCreatedAt = Date.parse(first.created_at);
+  const secondCreatedAt = Date.parse(second.created_at);
+
+  return Number.isFinite(firstCreatedAt) && Number.isFinite(secondCreatedAt) && firstCreatedAt > secondCreatedAt
+    ? [second, first]
+    : [first, second];
+}

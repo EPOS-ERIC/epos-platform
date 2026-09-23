@@ -225,10 +225,20 @@ describe('ResourceDetailStore', () => {
     expect(store.isVersionSelectionDisabled('third')).toBe(false);
   });
 
-  it('navigates with selected versions in selection order and closes history', () => {
+  it('navigates with the oldest selected version on the left and closes history', () => {
     apiService.getResourceVersion.mockReturnValue(
       of(datasetVersion({ resource_id: 'loaded-resource', group_id: 'loaded-group' }))
     );
+    apiService.listResourceVersions.mockReturnValue(of([
+      versionSummary('version-left', {
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-03-01T00:00:00Z'
+      }),
+      versionSummary('version-right', {
+        created_at: '2026-02-01T00:00:00Z',
+        updated_at: '2026-02-01T00:00:00Z'
+      })
+    ]));
     store.load({ ...context('dataset', 'route-resource'), sectionPath: 'data-section' });
     store.openVersionHistory();
     store.toggleVersionSelection('version-right');
@@ -238,8 +248,8 @@ describe('ResourceDetailStore', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['/', 'data-section', 'loaded-resource', 'compare'], {
       queryParams: {
-        leftVersionId: 'version-right',
-        rightVersionId: 'version-left',
+        leftVersionId: 'version-left',
+        rightVersionId: 'version-right',
         sourceVersionId: 'version-id',
         groupId: 'loaded-group',
         dataType: 'dataset'

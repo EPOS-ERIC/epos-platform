@@ -57,6 +57,25 @@ describe('ResourceVersionComparisonStore', () => {
     expect(store.changedCount()).toBeGreaterThan(0);
   });
 
+  it('places the oldest version on the left regardless of query parameter order', () => {
+    const newerVersion = version('newer', {
+      created_at: '2026-02-01T00:00:00Z',
+      updated_at: '2026-02-01T00:00:00Z'
+    });
+    const olderVersion = version('older', {
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-03-01T00:00:00Z'
+    });
+    apiService.getResourceVersion
+      .mockReturnValueOnce(of(newerVersion))
+      .mockReturnValueOnce(of(olderVersion));
+
+    store.load(context());
+
+    expect(store.leftVersion()?.version_id).toBe('older');
+    expect(store.rightVersion()?.version_id).toBe('newer');
+  });
+
   it('cancels both requests from an earlier comparison and ignores stale emissions', () => {
     const firstLeft = trackedRequest();
     const firstRight = trackedRequest();

@@ -46,6 +46,7 @@ import type {
   SaveResourceContext
 } from '../models/resource-actions';
 import { resourceCapabilities } from '../models/resource-capabilities';
+import { orderVersionsByCreatedAt } from '../models/resource-version-comparison';
 import { ApiService, type ResourceVersionResponse } from '../services/api.service';
 import { DialogService } from '../services/dialog.service';
 import { ResourceActionsService } from '../services/resource-actions.service';
@@ -374,12 +375,18 @@ export class ResourceDetailStore {
   }
 
   compareSelectedVersions(): void {
-    const [leftVersionId, rightVersionId] = this.selectedVersionIds();
+    const [firstVersionId, secondVersionId] = this.selectedVersionIds();
     const context = this.context();
     const version = this.datasetVersion() ?? this.resourceVersion();
-    if (!this.canViewHistory() || !leftVersionId || !rightVersionId || !context || !version) {
+    if (!this.canViewHistory() || !firstVersionId || !secondVersionId || !context || !version) {
       return;
     }
+
+    const firstVersion = this.historyItems().find((item) => item.version_id === firstVersionId);
+    const secondVersion = this.historyItems().find((item) => item.version_id === secondVersionId);
+    const [leftVersionId, rightVersionId] = firstVersion && secondVersion
+      ? orderVersionsByCreatedAt(firstVersion, secondVersion).map((item) => item.version_id)
+      : [firstVersionId, secondVersionId];
 
     void this.router.navigate(['/', context.sectionPath, version.resource_id, 'compare'], {
       queryParams: {
