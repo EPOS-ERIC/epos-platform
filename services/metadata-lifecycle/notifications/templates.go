@@ -64,7 +64,13 @@ func notificationUsersEqual(left, right *notificationUser) bool {
 	if left == right {
 		return true
 	}
-	return left != nil && right != nil && left.ID != "" && left.ID == right.ID
+	if left == nil || right == nil {
+		return false
+	}
+	if left.ID == "" {
+		return false
+	}
+	return left.ID == right.ID
 }
 
 func notificationGroupName(group *notificationGroup) string {
