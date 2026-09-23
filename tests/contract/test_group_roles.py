@@ -239,6 +239,8 @@ class GroupRoleContractTest(unittest.TestCase):
                 "group.membership.manage",
                 "group.role.manage",
                 "group.permission.manage",
+                "group.notification.manage",
+                "group.category.manage",
             ],
         )
 
