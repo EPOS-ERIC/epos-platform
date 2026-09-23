@@ -33,7 +33,7 @@ type notificationLink struct {
 	URL   string
 }
 
-// resolveContext enriches notification IDs with user and group details.
+// resolveContext resolves user and group details so notification templates can render meaningful context.
 func (s *Service) resolveContext(ctx context.Context, event domain.NotificationEvent) notificationContext {
 	resolved := notificationContext{}
 
