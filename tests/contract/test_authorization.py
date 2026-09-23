@@ -141,25 +141,37 @@ class AuthorizationContractTest(unittest.TestCase):
         """Verify the public permission catalog contains every fixed permission."""
 
         expected_scopes = {
-            "resource.create": "GROUP",
-            "resource.edit": "GROUP",
-            "resource.submit": "GROUP",
-            "resource.withdraw": "GROUP",
-            "resource.reopen": "GROUP",
-            "resource.discard": "GROUP",
-            "resource.reject": "GROUP",
-            "resource.publish": "GROUP",
-            "resource.unpublish": "GROUP",
+            "group.resource.create": "GROUP",
+            "global.resource.create": "GLOBAL",
+            "group.resource.edit": "GROUP",
+            "global.resource.edit": "GLOBAL",
+            "group.resource.submit": "GROUP",
+            "global.resource.submit": "GLOBAL",
+            "group.resource.withdraw": "GROUP",
+            "global.resource.withdraw": "GLOBAL",
+            "group.resource.reopen": "GROUP",
+            "global.resource.reopen": "GLOBAL",
+            "group.resource.discard": "GROUP",
+            "global.resource.discard": "GLOBAL",
+            "group.resource.reject": "GROUP",
+            "global.resource.reject": "GLOBAL",
+            "group.resource.publish": "GROUP",
+            "global.resource.publish": "GLOBAL",
+            "group.resource.unpublish": "GROUP",
+            "global.resource.unpublish": "GLOBAL",
             "group.membership.manage": "GROUP",
             "group.role.manage": "GROUP",
             "group.permission.manage": "GROUP",
+            "group.notification.manage": "GROUP",
             "global.membership.manage": "GLOBAL",
             "global.role.manage": "GLOBAL",
             "global.permission.manage": "GLOBAL",
-            "organization.manage": "GLOBAL",
-            "contact_point.manage": "GLOBAL",
-            "category_scheme.manage": "GLOBAL",
-            "category.manage": "GROUP",
+            "global.notification.manage": "GLOBAL",
+            "global.organization.manage": "GLOBAL",
+            "global.contact_point.manage": "GLOBAL",
+            "global.category_scheme.manage": "GLOBAL",
+            "group.category.manage": "GROUP",
+            "global.category.manage": "GLOBAL",
         }
 
         response = self.gateway.get("/permissions", headers=NO_AUTH_HEADERS)
@@ -357,9 +369,20 @@ class AuthorizationContractTest(unittest.TestCase):
                 "global.membership.manage",
                 "global.role.manage",
                 "global.permission.manage",
-                "organization.manage",
-                "contact_point.manage",
-                "category_scheme.manage",
+                "global.notification.manage",
+                "global.organization.manage",
+                "global.contact_point.manage",
+                "global.category_scheme.manage",
+                "global.resource.create",
+                "global.resource.edit",
+                "global.resource.submit",
+                "global.resource.withdraw",
+                "global.resource.reopen",
+                "global.resource.discard",
+                "global.resource.reject",
+                "global.resource.publish",
+                "global.resource.unpublish",
+                "global.category.manage",
             ],
         )
 
@@ -374,28 +397,28 @@ class AuthorizationContractTest(unittest.TestCase):
         global_permission_response = permission_manager.put(
             "/users/{id}/global-permissions/{permission}",
             id=target_id,
-            permission="organization.manage",
+            permission="global.organization.manage",
         )
         self.assertEqual(global_permission_response.status_code, 204)
         target_profile = target.get("/users/{id}", id="self").json()
-        self.assertIn("organization.manage", target_profile["global_granted_permissions"])
+        self.assertIn("global.organization.manage", target_profile["global_granted_permissions"])
         self.assertEqual(target_profile["global_role_permissions"], [])
 
         denied_global_permission_response = denied.put(
             "/users/{id}/global-permissions/{permission}",
             id=target_id,
-            permission="contact_point.manage",
+            permission="global.contact_point.manage",
         )
         self.assert_forbidden(denied_global_permission_response)
 
         revoke_global_permission_response = permission_manager.delete(
             "/users/{id}/global-permissions/{permission}",
             id=target_id,
-            permission="organization.manage",
+            permission="global.organization.manage",
         )
         self.assertEqual(revoke_global_permission_response.status_code, 204)
         target_profile = target.get("/users/{id}", id="self").json()
-        self.assertNotIn("organization.manage", target_profile["global_granted_permissions"])
+        self.assertNotIn("global.organization.manage", target_profile["global_granted_permissions"])
 
         denied_block_response = denied.post(
             "/users/{id}/block",
@@ -467,14 +490,14 @@ class AuthorizationContractTest(unittest.TestCase):
         self.grant_group_permission(
             group_id,
             category_manager_id,
-            "category.manage",
+            "group.category.manage",
         )
-        self.grant_global_permission(scheme_manager_id, "category_scheme.manage")
+        self.grant_global_permission(scheme_manager_id, "global.category_scheme.manage")
         self.grant_global_permission(
             organization_manager_id,
-            "organization.manage",
+            "global.organization.manage",
         )
-        self.grant_global_permission(contact_manager_id, "contact_point.manage")
+        self.grant_global_permission(contact_manager_id, "global.contact_point.manage")
 
         group_payload = {
             "name": f"contract-auth-canonical-updated-{suffix}",
@@ -861,30 +884,77 @@ class AuthorizationContractTest(unittest.TestCase):
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=permission_manager_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(grant_permission.status_code, 204)
         denied_grant_permission = denied.put(
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=permission_manager_id,
-            permission="resource.edit",
+            permission="group.resource.edit",
         )
         self.assert_forbidden(denied_grant_permission)
         denied_revoke_permission = denied.delete(
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=permission_manager_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assert_forbidden(denied_revoke_permission)
         revoke_permission = permission_manager.delete(
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=permission_manager_id,
-            permission="resource.create",
+            permission="group.resource.create",
         )
         self.assertEqual(revoke_permission.status_code, 204)
+
+    def test_global_resource_permissions_work_without_membership(self) -> None:
+        """Regression: global resource permissions must not require group membership."""
+
+        suffix = str(uuid4())
+        group_id = self.create_group(f"contract-auth-global-resource-{suffix}")
+        operator, operator_id = self.create_user("global-resource-operator", suffix)
+        self.grant_global_permission(operator_id, "global.resource.create")
+
+        created = operator.post(
+            "/groups/{groupId}/resources",
+            groupId=group_id,
+            json={
+                "resource_type": "dataset",
+                "metadata": {
+                    "title": f"contract-auth-global-resource-{suffix}",
+                    "description": "Global resource permission authorization test",
+                },
+            },
+        )
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(operator.get("/users/{id}", id="self").json()["memberships"], [])
+
+        resource_id = created.json()["id"]
+        versions = self.gateway.get(
+            "/resources/{resourceType}/{id}/versions",
+            resourceType="dataset",
+            id=resource_id,
+        ).json()
+        drafts = [version for version in versions if version["status"] == "DRAFT"]
+        self.assertEqual(len(drafts), 1)
+        draft = drafts[0]
+        self.grant_global_permission(operator_id, "global.resource.edit")
+        replaced = operator.put(
+            "/resources/{id}/versions/{versionId}/draft",
+            id=resource_id,
+            versionId=draft["version_id"],
+            json={
+                "resource_type": "dataset",
+                "revision": draft["revision"],
+                "metadata": {
+                    "title": f"contract-auth-global-resource-edited-{suffix}",
+                    "description": "Global resource edit authorization test",
+                },
+            },
+        )
+        self.assertEqual(replaced.status_code, 200)
 
     def test_resource_authorization(self) -> None:
         """Verify resource access and lifecycle operations require group access."""
@@ -917,7 +987,7 @@ class AuthorizationContractTest(unittest.TestCase):
             userId=reviewer_id,
             role="REVIEWER",
         )
-        self.grant_group_permission(group_id, reviewer_id, "resource.unpublish")
+        self.grant_group_permission(group_id, reviewer_id, "group.resource.unpublish")
 
         def get_version(resource_id: str, status: str) -> dict[str, Any]:
             response = self.gateway.get(

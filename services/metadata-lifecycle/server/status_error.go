@@ -52,6 +52,15 @@ func statusForError(method string, cause error) (codes.Code, string) {
 	if errors.Is(cause, domain.ErrAccessConflict) {
 		return codes.AlreadyExists, "access operation conflicts"
 	}
+	if errors.Is(cause, domain.ErrNotificationInvalid) {
+		return codes.InvalidArgument, "invalid notification subscription"
+	}
+	if errors.Is(cause, domain.ErrNotificationForbidden) {
+		return codes.PermissionDenied, "notification subscription operation is not permitted"
+	}
+	if errors.Is(cause, domain.ErrNotificationNotFound) {
+		return codes.NotFound, "notification resource not found"
+	}
 
 	if errors.Is(cause, domain.ErrInvalidGroup) {
 		if name == "GetGroup" {
@@ -223,6 +232,8 @@ func operationForMethod(method string) string {
 		return "metadata import"
 	case "SearchResources":
 		return "discovery search"
+	case "ListNotificationTopics", "ListNotificationSubscriptions", "SubscribeNotification", "UnsubscribeNotification":
+		return "notification operation"
 	case "GrantGlobalPermission", "RevokeGlobalPermission", "AssignGlobalRole", "RemoveGlobalRole", "BlockUser", "UnblockUser":
 		return "user operation"
 	case "ListGroupMemberships":

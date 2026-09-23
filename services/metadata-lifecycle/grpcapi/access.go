@@ -50,47 +50,64 @@ func (s *AccessServer) RequestMembership(ctx context.Context, request *metadatal
 	if err != nil {
 		return nil, err
 	}
+
 	groupID, err := parseAccessID(request.GroupId, "group id")
 	if err != nil {
 		return nil, err
 	}
+
 	roles := make([]domain.GroupRole, len(request.Roles))
 	seen := make(map[domain.GroupRole]struct{}, len(request.Roles))
 	for i, role := range request.Roles {
 		parsedRole, err := toDomainGroupRole(role)
-		if err == nil {
-			parsedRole, err = domain.NewRequestedGroupRole(string(parsedRole))
-		}
 		if err != nil {
 			return nil, wrapHandlerError(err)
 		}
+
+		parsedRole, err = domain.NewRequestedGroupRole(string(parsedRole))
+		if err != nil {
+			return nil, wrapHandlerError(err)
+		}
+
 		if _, ok := seen[parsedRole]; ok {
 			return nil, domain.ErrInvalidAccess
 		}
+
 		seen[parsedRole] = struct{}{}
 		roles[i] = parsedRole
 	}
-	value, err := s.access.RequestMembership(ctx, actor, groupID, roles)
+
+	value, notifications, err := s.access.RequestMembership(ctx, actor, groupID, roles)
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
+
 	membership, err := toProtoGroupMembership(value)
 	if err != nil {
 		return nil, err
 	}
+
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
 	return &metadatalifecyclev1.RequestMembershipResponse{
-		Membership: membership,
+		Membership:    membership,
+		Notifications: protoNotifications,
 	}, nil
 }
 
 func (s *AccessServer) WithdrawMembership(ctx context.Context, request *metadatalifecyclev1.WithdrawMembershipRequest) (*metadatalifecyclev1.WithdrawMembershipResponse, error) {
-	return &metadatalifecyclev1.WithdrawMembershipResponse{}, s.runActor(ctx, func(actor domain.Actor) error {
+	err := s.runActor(ctx, func(actor domain.Actor) error {
 		groupID, err := parseAccessID(request.GroupId, "group id")
 		if err != nil {
 			return err
 		}
 		return s.access.WithdrawMembershipRequest(ctx, actor, groupID)
 	})
+
+	return &metadatalifecyclev1.WithdrawMembershipResponse{}, err
 }
 
 func (s *AccessServer) DecideMembership(ctx context.Context, request *metadatalifecyclev1.DecideMembershipRequest) (*metadatalifecyclev1.DecideMembershipResponse, error) {
@@ -98,35 +115,47 @@ func (s *AccessServer) DecideMembership(ctx context.Context, request *metadatali
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
+
 	groupID, err := parseAccessID(request.GroupId, "group id")
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
+
 	decision, err := toDomainDecision(request.Decision)
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
-	value, err := s.access.DecideMembership(ctx, actor, groupID, request.UserId, decision)
+
+	value, notifications, err := s.access.DecideMembership(ctx, actor, groupID, request.UserId, decision)
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
+
 	membership, err := toProtoGroupMembership(value)
 	if err != nil {
 		return nil, err
 	}
+
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
 	return &metadatalifecyclev1.DecideMembershipResponse{
-		Membership: membership,
+		Membership:    membership,
+		Notifications: protoNotifications,
 	}, nil
 }
 
 func (s *AccessServer) RevokeMembership(ctx context.Context, request *metadatalifecyclev1.RevokeMembershipRequest) (*metadatalifecyclev1.RevokeMembershipResponse, error) {
-	return &metadatalifecyclev1.RevokeMembershipResponse{}, s.runActor(ctx, func(actor domain.Actor) error {
+	err := s.runActor(ctx, func(actor domain.Actor) error {
 		groupID, err := parseAccessID(request.GroupId, "group id")
 		if err != nil {
 			return err
 		}
 		return s.access.RevokeMembership(ctx, actor, groupID, request.UserId)
 	})
+	return &metadatalifecyclev1.RevokeMembershipResponse{}, err
 }
 
 func (s *AccessServer) RequestRole(ctx context.Context, request *metadatalifecyclev1.RequestRoleRequest) (*metadatalifecyclev1.RequestRoleResponse, error) {
@@ -145,7 +174,7 @@ func (s *AccessServer) RequestRole(ctx context.Context, request *metadatalifecyc
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
-	value, err := s.access.RequestRole(ctx, actor, groupID, role)
+	value, notifications, err := s.access.RequestRole(ctx, actor, groupID, role)
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
@@ -153,7 +182,11 @@ func (s *AccessServer) RequestRole(ctx context.Context, request *metadatalifecyc
 	if err != nil {
 		return nil, err
 	}
-	return &metadatalifecyclev1.RequestRoleResponse{Request: roleRequest}, nil
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+	return &metadatalifecyclev1.RequestRoleResponse{Request: roleRequest, Notifications: protoNotifications}, nil
 }
 
 func (s *AccessServer) DecideRoleRequest(ctx context.Context, request *metadatalifecyclev1.DecideRoleRequestRequest) (*metadatalifecyclev1.DecideRoleRequestResponse, error) {
@@ -173,7 +206,7 @@ func (s *AccessServer) DecideRoleRequest(ctx context.Context, request *metadatal
 	if err != nil {
 		return nil, err
 	}
-	value, err := s.access.DecideRoleRequest(ctx, actor, groupID, requestID, decision)
+	value, notifications, err := s.access.DecideRoleRequest(ctx, actor, groupID, requestID, decision)
 	if err != nil {
 		return nil, wrapHandlerError(err)
 	}
@@ -181,13 +214,15 @@ func (s *AccessServer) DecideRoleRequest(ctx context.Context, request *metadatal
 	if err != nil {
 		return nil, err
 	}
-	return &metadatalifecyclev1.DecideRoleRequestResponse{
-		Membership: membership,
-	}, nil
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+	return &metadatalifecyclev1.DecideRoleRequestResponse{Membership: membership, Notifications: protoNotifications}, nil
 }
 
 func (s *AccessServer) WithdrawRoleRequest(ctx context.Context, request *metadatalifecyclev1.WithdrawRoleRequestRequest) (*metadatalifecyclev1.WithdrawRoleRequestResponse, error) {
-	return &metadatalifecyclev1.WithdrawRoleRequestResponse{}, s.runActor(ctx, func(actor domain.Actor) error {
+	err := s.runActor(ctx, func(actor domain.Actor) error {
 		groupID, err := parseAccessID(request.GroupId, "group id")
 		if err != nil {
 			return err
@@ -198,65 +233,97 @@ func (s *AccessServer) WithdrawRoleRequest(ctx context.Context, request *metadat
 		}
 		return s.access.WithdrawRoleRequest(ctx, actor, groupID, requestID)
 	})
+	return &metadatalifecyclev1.WithdrawRoleRequestResponse{}, err
 }
 
 func (s *AccessServer) AssignRole(ctx context.Context, request *metadatalifecyclev1.AssignRoleRequest) (*metadatalifecyclev1.AssignRoleResponse, error) {
-	return &metadatalifecyclev1.AssignRoleResponse{}, s.runActor(ctx, func(actor domain.Actor) error {
-		groupID, err := parseAccessID(request.GroupId, "group id")
-		if err != nil {
-			return err
-		}
-		role, err := toDomainGroupRole(request.Role)
-		if err != nil {
-			return err
-		}
-		return s.access.AssignRole(ctx, actor, groupID, request.UserId, role)
-	})
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	groupID, err := parseAccessID(request.GroupId, "group id")
+	if err != nil {
+		return nil, err
+	}
+	role, err := toDomainGroupRole(request.Role)
+	if err != nil {
+		return nil, err
+	}
+	notifications, err := s.access.AssignRole(ctx, actor, groupID, request.UserId, role)
+	if err != nil {
+		return nil, wrapHandlerError(err)
+	}
+
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.AssignRoleResponse{Notifications: protoNotifications}, nil
 }
 
 func (s *AccessServer) RemoveRole(ctx context.Context, request *metadatalifecyclev1.RemoveRoleRequest) (*metadatalifecyclev1.RemoveRoleResponse, error) {
-	return &metadatalifecyclev1.RemoveRoleResponse{}, s.runActor(ctx, func(actor domain.Actor) error {
-		groupID, err := parseAccessID(request.GroupId, "group id")
-		if err != nil {
-			return err
-		}
-		role, err := toDomainGroupRole(request.Role)
-		if err != nil {
-			return err
-		}
-		return s.access.RemoveRole(ctx, actor, groupID, request.UserId, role)
-	})
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	groupID, err := parseAccessID(request.GroupId, "group id")
+	if err != nil {
+		return nil, err
+	}
+	role, err := toDomainGroupRole(request.Role)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.access.RemoveRole(ctx, actor, groupID, request.UserId, role); err != nil {
+		return nil, wrapHandlerError(err)
+	}
+	return &metadatalifecyclev1.RemoveRoleResponse{}, nil
 }
 
 func (s *AccessServer) GrantPermission(ctx context.Context, request *metadatalifecyclev1.GrantPermissionRequest) (*metadatalifecyclev1.GrantPermissionResponse, error) {
-	return &metadatalifecyclev1.GrantPermissionResponse{}, s.runActor(ctx, func(actor domain.Actor) error {
-		groupID, err := parseAccessID(request.GroupId, "group id")
-		if err != nil {
-			return err
-		}
-		permission, err := toDomainGroupPermission(request.GetPermission())
-		if err != nil {
-			return err
-		}
-		return s.access.GrantPermission(ctx, actor, groupID, request.UserId, permission)
-	})
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	groupID, err := parseAccessID(request.GroupId, "group id")
+	if err != nil {
+		return nil, err
+	}
+	permission, err := toDomainGroupPermission(request.GetPermission())
+	if err != nil {
+		return nil, err
+	}
+	notifications, err := s.access.GrantPermission(ctx, actor, groupID, request.UserId, permission)
+	if err != nil {
+		return nil, wrapHandlerError(err)
+	}
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
+	}
+	return &metadatalifecyclev1.GrantPermissionResponse{Notifications: protoNotifications}, nil
 }
 
 func (s *AccessServer) RevokePermission(ctx context.Context, request *metadatalifecyclev1.RevokePermissionRequest) (*metadatalifecyclev1.RevokePermissionResponse, error) {
-	return &metadatalifecyclev1.RevokePermissionResponse{}, s.runActor(ctx, func(actor domain.Actor) error {
-		groupID, err := parseAccessID(request.GroupId, "group id")
-		if err != nil {
-			return err
-		}
-		permission, err := toDomainGroupPermission(request.GetPermission())
-		if err != nil {
-			return err
-		}
-		return s.access.RevokePermission(ctx, actor, groupID, request.UserId, permission)
-	})
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	groupID, err := parseAccessID(request.GroupId, "group id")
+	if err != nil {
+		return nil, err
+	}
+	permission, err := toDomainGroupPermission(request.GetPermission())
+	if err != nil {
+		return nil, err
+	}
+	if err := s.access.RevokePermission(ctx, actor, groupID, request.UserId, permission); err != nil {
+		return nil, wrapHandlerError(err)
+	}
+	return &metadatalifecyclev1.RevokePermissionResponse{}, nil
 }
 
-// runActor TODO: delete this useless function, just inline it
 func (s *AccessServer) runActor(ctx context.Context, f func(domain.Actor) error) error {
 	actor, err := actorFromContext(ctx)
 	if err != nil {
@@ -312,6 +379,7 @@ func toProtoGroupMembership(value domain.GroupMembership) (*metadatalifecyclev1.
 	}, nil
 }
 
+//nolint:dupl // Enum conversion functions intentionally use explicit one-to-one mappings.
 func toProtoGroupPermission(value domain.GroupPermission) (metadatalifecyclev1.GroupPermission, error) {
 	switch value {
 	case domain.GroupPermissionResourceCreate:
@@ -338,6 +406,8 @@ func toProtoGroupPermission(value domain.GroupPermission) (metadatalifecyclev1.G
 		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_ROLE_MANAGE, nil
 	case domain.GroupPermissionPermissionManage:
 		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GroupPermissionNotificationManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_NOTIFICATION_MANAGE, nil
 	case domain.GroupPermissionCategoryManage:
 		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE, nil
 	default:
@@ -371,6 +441,8 @@ func toDomainGroupPermission(value metadatalifecyclev1.GroupPermission) (domain.
 		return domain.GroupPermissionRoleManage, nil
 	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE:
 		return domain.GroupPermissionPermissionManage, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_NOTIFICATION_MANAGE:
+		return domain.GroupPermissionNotificationManage, nil
 	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE:
 		return domain.GroupPermissionCategoryManage, nil
 	default:

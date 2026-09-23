@@ -19,6 +19,17 @@ BEGIN
         RAISE EXCEPTION 'invalid group role';
     END IF;
 
+    IF TG_TABLE_NAME = 'role_permissions'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM roles AS role
+            JOIN permissions AS permission ON permission.key = row_data->>'permission_key'
+            WHERE role.key = row_data->>'role_key'
+                AND role.scope = permission.scope
+        ) THEN
+        RAISE EXCEPTION 'role and permission scopes must match';
+    END IF;
+
     IF TG_TABLE_NAME IN ('group_membership_roles', 'group_permission_grants')
         AND NOT EXISTS (
             SELECT 1
@@ -198,6 +209,12 @@ BEGIN
     IF (SELECT count(*) FROM users) = 1 THEN
         INSERT INTO user_global_roles (user_id, role_key, assigned_by)
         VALUES (NEW.id, 'ADMIN', NEW.id);
+        INSERT INTO global_notification_subscriptions (user_id, event_type, channel)
+        SELECT NEW.id, event_type.key, 'EMAIL'
+        FROM notification_event_types AS event_type
+        WHERE event_type.scope = 'GLOBAL'
+          AND event_type.default_on
+        ON CONFLICT DO NOTHING;
     END IF;
 
     RETURN NEW;
@@ -305,6 +322,9 @@ FOR EACH ROW EXECUTE FUNCTION enforce_category_resource_group();
 CREATE TRIGGER user_global_roles_scope
 BEFORE INSERT OR UPDATE ON user_global_roles
 FOR EACH ROW EXECUTE FUNCTION enforce_fixed_authorization_scopes();
+CREATE TRIGGER role_permissions_scope
+BEFORE INSERT OR UPDATE ON role_permissions
+FOR EACH ROW EXECUTE FUNCTION enforce_fixed_authorization_scopes();
 CREATE TRIGGER group_membership_roles_scope
 BEFORE INSERT OR UPDATE ON group_membership_roles
 FOR EACH ROW EXECUTE FUNCTION enforce_fixed_authorization_scopes();
@@ -371,6 +391,7 @@ DROP TRIGGER IF EXISTS users_set_updated_at ON users;
 DROP TRIGGER IF EXISTS group_permission_grants_scope ON group_permission_grants;
 DROP TRIGGER IF EXISTS global_permission_grants_scope ON global_permission_grants;
 DROP TRIGGER IF EXISTS group_membership_roles_scope ON group_membership_roles;
+DROP TRIGGER IF EXISTS role_permissions_scope ON role_permissions;
 DROP TRIGGER IF EXISTS group_memberships_active_assignments ON group_memberships;
 DROP TRIGGER IF EXISTS user_global_roles_scope ON user_global_roles;
 DROP TRIGGER IF EXISTS software_source_code_version_categories_group ON software_source_code_version_categories;

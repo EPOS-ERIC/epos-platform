@@ -148,6 +148,7 @@ func fromProtoGlobalRole(value metadatalifecyclev1.GlobalRole) (domain.GlobalRol
 	}
 }
 
+//nolint:dupl // Bidirectional enum mapping intentionally mirrors protobuf values.
 func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1.GlobalPermission, error) {
 	switch value {
 	case domain.GlobalPermissionMembershipManage:
@@ -156,17 +157,40 @@ func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE, nil
 	case domain.GlobalPermissionPermissionManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GlobalPermissionNotificationManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE, nil
 	case domain.GlobalPermissionOrganizationManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE, nil
 	case domain.GlobalPermissionContactPointManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE, nil
 	case domain.GlobalPermissionCategorySchemeManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE, nil
+	case domain.GlobalPermissionResourceCreate:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE, nil
+	case domain.GlobalPermissionResourceEdit:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_EDIT, nil
+	case domain.GlobalPermissionResourceSubmit:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_SUBMIT, nil
+	case domain.GlobalPermissionResourceWithdraw:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_WITHDRAW, nil
+	case domain.GlobalPermissionResourceReopen:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REOPEN, nil
+	case domain.GlobalPermissionResourceDiscard:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_DISCARD, nil
+	case domain.GlobalPermissionResourceReject:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REJECT, nil
+	case domain.GlobalPermissionResourcePublish:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_PUBLISH, nil
+	case domain.GlobalPermissionResourceUnpublish:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_UNPUBLISH, nil
+	case domain.GlobalPermissionCategoryManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE, nil
 	default:
 		return 0, fmt.Errorf("invalid global permission %q", value)
 	}
 }
 
+//nolint:dupl // Bidirectional enum mapping intentionally mirrors protobuf values.
 func fromProtoGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domain.GlobalPermission, error) {
 	switch value {
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_MEMBERSHIP_MANAGE:
@@ -175,12 +199,34 @@ func fromProtoGlobalPermission(value metadatalifecyclev1.GlobalPermission) (doma
 		return domain.GlobalPermissionRoleManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE:
 		return domain.GlobalPermissionPermissionManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE:
+		return domain.GlobalPermissionNotificationManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE:
 		return domain.GlobalPermissionOrganizationManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE:
 		return domain.GlobalPermissionContactPointManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE:
 		return domain.GlobalPermissionCategorySchemeManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE:
+		return domain.GlobalPermissionResourceCreate, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_EDIT:
+		return domain.GlobalPermissionResourceEdit, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_SUBMIT:
+		return domain.GlobalPermissionResourceSubmit, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_WITHDRAW:
+		return domain.GlobalPermissionResourceWithdraw, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REOPEN:
+		return domain.GlobalPermissionResourceReopen, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_DISCARD:
+		return domain.GlobalPermissionResourceDiscard, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REJECT:
+		return domain.GlobalPermissionResourceReject, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_PUBLISH:
+		return domain.GlobalPermissionResourcePublish, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_UNPUBLISH:
+		return domain.GlobalPermissionResourceUnpublish, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE:
+		return domain.GlobalPermissionCategoryManage, nil
 	default:
 		return "", fmt.Errorf("metadata-lifecycle returned unknown global permission: %v", value)
 	}
@@ -199,6 +245,7 @@ func fromProtoGroupRole(value metadatalifecyclev1.GroupRole) (domain.GroupRole, 
 	}
 }
 
+//nolint:dupl // Bidirectional enum mapping intentionally mirrors protobuf values.
 func toProtoGroupPermission(value domain.GroupPermission) (metadatalifecyclev1.GroupPermission, error) {
 	switch value {
 	case domain.GroupPermissionResourceCreate:
@@ -225,6 +272,8 @@ func toProtoGroupPermission(value domain.GroupPermission) (metadatalifecyclev1.G
 		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_ROLE_MANAGE, nil
 	case domain.GroupPermissionPermissionManage:
 		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GroupPermissionNotificationManage:
+		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_NOTIFICATION_MANAGE, nil
 	case domain.GroupPermissionCategoryManage:
 		return metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE, nil
 	default:
@@ -232,6 +281,7 @@ func toProtoGroupPermission(value domain.GroupPermission) (metadatalifecyclev1.G
 	}
 }
 
+//nolint:dupl // Bidirectional enum mapping intentionally mirrors protobuf values.
 func fromProtoGroupPermission(value metadatalifecyclev1.GroupPermission) (domain.GroupPermission, error) {
 	switch value {
 	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE:
@@ -258,6 +308,8 @@ func fromProtoGroupPermission(value metadatalifecyclev1.GroupPermission) (domain
 		return domain.GroupPermissionRoleManage, nil
 	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE:
 		return domain.GroupPermissionPermissionManage, nil
+	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_NOTIFICATION_MANAGE:
+		return domain.GroupPermissionNotificationManage, nil
 	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE:
 		return domain.GroupPermissionCategoryManage, nil
 	default:

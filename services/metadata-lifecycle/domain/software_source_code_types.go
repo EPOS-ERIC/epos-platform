@@ -61,6 +61,7 @@ type SoftwareSourceCodeVersion struct {
 	Revision             int32
 	Status               Status
 	CreatedBy            Actor
+	SubmittedBy          *Actor
 	Group                Group
 	CreatedAt            time.Time
 	UpdatedAt            time.Time

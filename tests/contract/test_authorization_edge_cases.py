@@ -140,7 +140,7 @@ class AuthorizationEdgeCasesContractTest(unittest.TestCase):
         membership = self.get_membership(profile, group_id)
         self.assertEqual(membership["status"], "ACTIVE")
         self.assertEqual(membership["roles"], ["EDITOR"])
-        self.assertEqual(membership["granted_permissions"], ["category.manage"])
+        self.assertEqual(membership["granted_permissions"], ["group.category.manage"])
 
         contact_points = client.get("/contact-points")
         self.assertEqual(contact_points.status_code, 200)
@@ -191,7 +191,7 @@ class AuthorizationEdgeCasesContractTest(unittest.TestCase):
             "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
             groupId=group_id,
             userId=ordinary_id,
-            permission="category.manage",
+            permission="group.category.manage",
         )
         self.assertEqual(granted_permission.status_code, 204)
 
@@ -222,7 +222,7 @@ class AuthorizationEdgeCasesContractTest(unittest.TestCase):
         self.assertEqual(blocked_membership["roles"], ["EDITOR"])
         self.assertEqual(
             blocked_membership["granted_permissions"],
-            ["category.manage"],
+            ["group.category.manage"],
         )
 
         self.assert_forbidden(ordinary.get("/contact-points"))

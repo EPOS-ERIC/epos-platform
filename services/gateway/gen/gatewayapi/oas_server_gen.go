@@ -17,7 +17,7 @@ type Handler interface {
 	// AssignGroupRole implements assignGroupRole operation.
 	//
 	// Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management
-	// permission or global ADMIN. Operation is idempotent.
+	// permission. Operation is idempotent.
 	//
 	// PUT /groups/{groupId}/memberships/{userId}/roles/{role}
 	AssignGroupRole(ctx context.Context, params AssignGroupRoleParams) error
@@ -186,7 +186,7 @@ type Handler interface {
 	// GrantGroupPermission implements grantGroupPermission operation.
 	//
 	// Grant a group-scoped direct permission to an active group member. Requires group.permission.manage
-	// in the group or global ADMIN. Operation is idempotent.
+	// in the group or global.permission.manage.
 	//
 	// PUT /groups/{groupId}/memberships/{userId}/permissions/{permission}
 	GrantGroupPermission(ctx context.Context, params GrantGroupPermissionParams) error
@@ -221,6 +221,13 @@ type Handler interface {
 	//
 	// GET /groups
 	ListGroups(ctx context.Context) ([]Group, error)
+	// ListNotificationTopics implements listNotificationTopics operation.
+	//
+	// Returns notification topics available for subscription. Direct notification routes are internal and
+	// are not returned.
+	//
+	// GET /notification-topics
+	ListNotificationTopics(ctx context.Context) ([]NotificationTopic, error)
 	// ListOrganizations implements listOrganizations operation.
 	//
 	// List reusable organizations.
@@ -240,6 +247,12 @@ type Handler interface {
 	//
 	// GET /resources/{resourceType}/{id}/versions
 	ListResourceVersions(ctx context.Context, params ListResourceVersionsParams) ([]ResourceVersionSummary, error)
+	// ListUserNotificationSubscriptions implements listUserNotificationSubscriptions operation.
+	//
+	// List user notification subscriptions.
+	//
+	// GET /users/{userId}/notification-subscriptions
+	ListUserNotificationSubscriptions(ctx context.Context, params ListUserNotificationSubscriptionsParams) ([]NotificationSubscription, error)
 	// ListUsers implements listUsers operation.
 	//
 	// Retrieve all user profiles. Allowed to super admins only.
@@ -267,7 +280,7 @@ type Handler interface {
 	// RemoveGroupRole implements removeGroupRole operation.
 	//
 	// Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management
-	// permission or global ADMIN. Operation is idempotent.
+	// permission. Operation is idempotent.
 	//
 	// DELETE /groups/{groupId}/memberships/{userId}/roles/{role}
 	RemoveGroupRole(ctx context.Context, params RemoveGroupRoleParams) error
@@ -329,7 +342,7 @@ type Handler interface {
 	// RevokeGroupPermission implements revokeGroupPermission operation.
 	//
 	// Revoke a group-scoped direct permission from an active group member. Requires
-	// group.permission.manage in the group or global ADMIN. Operation is idempotent.
+	// group.permission.manage in the group or global.permission.manage.
 	//
 	// DELETE /groups/{groupId}/memberships/{userId}/permissions/{permission}
 	RevokeGroupPermission(ctx context.Context, params RevokeGroupPermissionParams) error
@@ -339,6 +352,18 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/versions/{versionId}/submit
 	SubmitResourceVersion(ctx context.Context, params SubmitResourceVersionParams) (*WriteResult, error)
+	// SubscribeGroupUserNotification implements subscribeGroupUserNotification operation.
+	//
+	// Subscribe group user to a notification topic.
+	//
+	// PUT /groups/{groupId}/notification-subscriptions/{userId}/{topicKey}
+	SubscribeGroupUserNotification(ctx context.Context, params SubscribeGroupUserNotificationParams) error
+	// SubscribeUserNotification implements subscribeUserNotification operation.
+	//
+	// Subscribe user to a global notification topic.
+	//
+	// PUT /users/{userId}/notification-subscriptions/{topicKey}
+	SubscribeUserNotification(ctx context.Context, params SubscribeUserNotificationParams) error
 	// UnblockUser implements unblockUser operation.
 	//
 	// Restore a blocked user to ACTIVE. Requires active global ADMIN.
@@ -351,6 +376,18 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/versions/{versionId}/unpublish
 	UnpublishResourceVersion(ctx context.Context, params UnpublishResourceVersionParams) (*WriteResult, error)
+	// UnsubscribeGroupUserNotification implements unsubscribeGroupUserNotification operation.
+	//
+	// Unsubscribe group user from a notification topic.
+	//
+	// DELETE /groups/{groupId}/notification-subscriptions/{userId}/{topicKey}
+	UnsubscribeGroupUserNotification(ctx context.Context, params UnsubscribeGroupUserNotificationParams) error
+	// UnsubscribeUserNotification implements unsubscribeUserNotification operation.
+	//
+	// Unsubscribe user from a global notification topic.
+	//
+	// DELETE /users/{userId}/notification-subscriptions/{topicKey}
+	UnsubscribeUserNotification(ctx context.Context, params UnsubscribeUserNotificationParams) error
 	// WithdrawGroupMembershipRequest implements withdrawGroupMembershipRequest operation.
 	//
 	// Delete the authenticated user's pending membership request and pending role requests.

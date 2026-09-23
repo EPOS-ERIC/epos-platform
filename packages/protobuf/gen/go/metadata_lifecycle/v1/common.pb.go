@@ -347,18 +347,40 @@ const (
 	GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE    GlobalPermission = 4
 	GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE   GlobalPermission = 5
 	GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE GlobalPermission = 6
+	GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE        GlobalPermission = 7
+	GlobalPermission_GLOBAL_PERMISSION_RESOURCE_EDIT          GlobalPermission = 8
+	GlobalPermission_GLOBAL_PERMISSION_RESOURCE_SUBMIT        GlobalPermission = 9
+	GlobalPermission_GLOBAL_PERMISSION_RESOURCE_WITHDRAW      GlobalPermission = 10
+	GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REOPEN        GlobalPermission = 11
+	GlobalPermission_GLOBAL_PERMISSION_RESOURCE_DISCARD       GlobalPermission = 12
+	GlobalPermission_GLOBAL_PERMISSION_RESOURCE_REJECT        GlobalPermission = 13
+	GlobalPermission_GLOBAL_PERMISSION_RESOURCE_PUBLISH       GlobalPermission = 14
+	GlobalPermission_GLOBAL_PERMISSION_RESOURCE_UNPUBLISH     GlobalPermission = 15
+	GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE        GlobalPermission = 16
+	GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE    GlobalPermission = 17
 )
 
 // Enum value maps for GlobalPermission.
 var (
 	GlobalPermission_name = map[int32]string{
-		0: "GLOBAL_PERMISSION_UNSPECIFIED",
-		1: "GLOBAL_PERMISSION_MEMBERSHIP_MANAGE",
-		2: "GLOBAL_PERMISSION_ROLE_MANAGE",
-		3: "GLOBAL_PERMISSION_PERMISSION_MANAGE",
-		4: "GLOBAL_PERMISSION_ORGANIZATION_MANAGE",
-		5: "GLOBAL_PERMISSION_CONTACT_POINT_MANAGE",
-		6: "GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE",
+		0:  "GLOBAL_PERMISSION_UNSPECIFIED",
+		1:  "GLOBAL_PERMISSION_MEMBERSHIP_MANAGE",
+		2:  "GLOBAL_PERMISSION_ROLE_MANAGE",
+		3:  "GLOBAL_PERMISSION_PERMISSION_MANAGE",
+		4:  "GLOBAL_PERMISSION_ORGANIZATION_MANAGE",
+		5:  "GLOBAL_PERMISSION_CONTACT_POINT_MANAGE",
+		6:  "GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE",
+		7:  "GLOBAL_PERMISSION_RESOURCE_CREATE",
+		8:  "GLOBAL_PERMISSION_RESOURCE_EDIT",
+		9:  "GLOBAL_PERMISSION_RESOURCE_SUBMIT",
+		10: "GLOBAL_PERMISSION_RESOURCE_WITHDRAW",
+		11: "GLOBAL_PERMISSION_RESOURCE_REOPEN",
+		12: "GLOBAL_PERMISSION_RESOURCE_DISCARD",
+		13: "GLOBAL_PERMISSION_RESOURCE_REJECT",
+		14: "GLOBAL_PERMISSION_RESOURCE_PUBLISH",
+		15: "GLOBAL_PERMISSION_RESOURCE_UNPUBLISH",
+		16: "GLOBAL_PERMISSION_CATEGORY_MANAGE",
+		17: "GLOBAL_PERMISSION_NOTIFICATION_MANAGE",
 	}
 	GlobalPermission_value = map[string]int32{
 		"GLOBAL_PERMISSION_UNSPECIFIED":            0,
@@ -368,6 +390,17 @@ var (
 		"GLOBAL_PERMISSION_ORGANIZATION_MANAGE":    4,
 		"GLOBAL_PERMISSION_CONTACT_POINT_MANAGE":   5,
 		"GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE": 6,
+		"GLOBAL_PERMISSION_RESOURCE_CREATE":        7,
+		"GLOBAL_PERMISSION_RESOURCE_EDIT":          8,
+		"GLOBAL_PERMISSION_RESOURCE_SUBMIT":        9,
+		"GLOBAL_PERMISSION_RESOURCE_WITHDRAW":      10,
+		"GLOBAL_PERMISSION_RESOURCE_REOPEN":        11,
+		"GLOBAL_PERMISSION_RESOURCE_DISCARD":       12,
+		"GLOBAL_PERMISSION_RESOURCE_REJECT":        13,
+		"GLOBAL_PERMISSION_RESOURCE_PUBLISH":       14,
+		"GLOBAL_PERMISSION_RESOURCE_UNPUBLISH":     15,
+		"GLOBAL_PERMISSION_CATEGORY_MANAGE":        16,
+		"GLOBAL_PERMISSION_NOTIFICATION_MANAGE":    17,
 	}
 )
 
@@ -401,20 +434,21 @@ func (GlobalPermission) EnumDescriptor() ([]byte, []int) {
 type GroupPermission int32
 
 const (
-	GroupPermission_GROUP_PERMISSION_UNSPECIFIED        GroupPermission = 0
-	GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE    GroupPermission = 1
-	GroupPermission_GROUP_PERMISSION_RESOURCE_EDIT      GroupPermission = 2
-	GroupPermission_GROUP_PERMISSION_RESOURCE_SUBMIT    GroupPermission = 3
-	GroupPermission_GROUP_PERMISSION_RESOURCE_WITHDRAW  GroupPermission = 4
-	GroupPermission_GROUP_PERMISSION_RESOURCE_REOPEN    GroupPermission = 5
-	GroupPermission_GROUP_PERMISSION_RESOURCE_DISCARD   GroupPermission = 6
-	GroupPermission_GROUP_PERMISSION_RESOURCE_REJECT    GroupPermission = 7
-	GroupPermission_GROUP_PERMISSION_RESOURCE_PUBLISH   GroupPermission = 8
-	GroupPermission_GROUP_PERMISSION_RESOURCE_UNPUBLISH GroupPermission = 9
-	GroupPermission_GROUP_PERMISSION_MEMBERSHIP_MANAGE  GroupPermission = 10
-	GroupPermission_GROUP_PERMISSION_ROLE_MANAGE        GroupPermission = 11
-	GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE  GroupPermission = 12
-	GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE    GroupPermission = 13
+	GroupPermission_GROUP_PERMISSION_UNSPECIFIED         GroupPermission = 0
+	GroupPermission_GROUP_PERMISSION_RESOURCE_CREATE     GroupPermission = 1
+	GroupPermission_GROUP_PERMISSION_RESOURCE_EDIT       GroupPermission = 2
+	GroupPermission_GROUP_PERMISSION_RESOURCE_SUBMIT     GroupPermission = 3
+	GroupPermission_GROUP_PERMISSION_RESOURCE_WITHDRAW   GroupPermission = 4
+	GroupPermission_GROUP_PERMISSION_RESOURCE_REOPEN     GroupPermission = 5
+	GroupPermission_GROUP_PERMISSION_RESOURCE_DISCARD    GroupPermission = 6
+	GroupPermission_GROUP_PERMISSION_RESOURCE_REJECT     GroupPermission = 7
+	GroupPermission_GROUP_PERMISSION_RESOURCE_PUBLISH    GroupPermission = 8
+	GroupPermission_GROUP_PERMISSION_RESOURCE_UNPUBLISH  GroupPermission = 9
+	GroupPermission_GROUP_PERMISSION_MEMBERSHIP_MANAGE   GroupPermission = 10
+	GroupPermission_GROUP_PERMISSION_ROLE_MANAGE         GroupPermission = 11
+	GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE   GroupPermission = 12
+	GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE     GroupPermission = 13
+	GroupPermission_GROUP_PERMISSION_NOTIFICATION_MANAGE GroupPermission = 14
 )
 
 // Enum value maps for GroupPermission.
@@ -434,22 +468,24 @@ var (
 		11: "GROUP_PERMISSION_ROLE_MANAGE",
 		12: "GROUP_PERMISSION_PERMISSION_MANAGE",
 		13: "GROUP_PERMISSION_CATEGORY_MANAGE",
+		14: "GROUP_PERMISSION_NOTIFICATION_MANAGE",
 	}
 	GroupPermission_value = map[string]int32{
-		"GROUP_PERMISSION_UNSPECIFIED":        0,
-		"GROUP_PERMISSION_RESOURCE_CREATE":    1,
-		"GROUP_PERMISSION_RESOURCE_EDIT":      2,
-		"GROUP_PERMISSION_RESOURCE_SUBMIT":    3,
-		"GROUP_PERMISSION_RESOURCE_WITHDRAW":  4,
-		"GROUP_PERMISSION_RESOURCE_REOPEN":    5,
-		"GROUP_PERMISSION_RESOURCE_DISCARD":   6,
-		"GROUP_PERMISSION_RESOURCE_REJECT":    7,
-		"GROUP_PERMISSION_RESOURCE_PUBLISH":   8,
-		"GROUP_PERMISSION_RESOURCE_UNPUBLISH": 9,
-		"GROUP_PERMISSION_MEMBERSHIP_MANAGE":  10,
-		"GROUP_PERMISSION_ROLE_MANAGE":        11,
-		"GROUP_PERMISSION_PERMISSION_MANAGE":  12,
-		"GROUP_PERMISSION_CATEGORY_MANAGE":    13,
+		"GROUP_PERMISSION_UNSPECIFIED":         0,
+		"GROUP_PERMISSION_RESOURCE_CREATE":     1,
+		"GROUP_PERMISSION_RESOURCE_EDIT":       2,
+		"GROUP_PERMISSION_RESOURCE_SUBMIT":     3,
+		"GROUP_PERMISSION_RESOURCE_WITHDRAW":   4,
+		"GROUP_PERMISSION_RESOURCE_REOPEN":     5,
+		"GROUP_PERMISSION_RESOURCE_DISCARD":    6,
+		"GROUP_PERMISSION_RESOURCE_REJECT":     7,
+		"GROUP_PERMISSION_RESOURCE_PUBLISH":    8,
+		"GROUP_PERMISSION_RESOURCE_UNPUBLISH":  9,
+		"GROUP_PERMISSION_MEMBERSHIP_MANAGE":   10,
+		"GROUP_PERMISSION_ROLE_MANAGE":         11,
+		"GROUP_PERMISSION_PERMISSION_MANAGE":   12,
+		"GROUP_PERMISSION_CATEGORY_MANAGE":     13,
+		"GROUP_PERMISSION_NOTIFICATION_MANAGE": 14,
 	}
 )
 
@@ -478,6 +514,183 @@ func (x GroupPermission) Number() protoreflect.EnumNumber {
 // Deprecated: Use GroupPermission.Descriptor instead.
 func (GroupPermission) EnumDescriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{7}
+}
+
+type NotificationScope int32
+
+const (
+	NotificationScope_NOTIFICATION_SCOPE_UNSPECIFIED NotificationScope = 0
+	NotificationScope_NOTIFICATION_SCOPE_DIRECT      NotificationScope = 1
+	NotificationScope_NOTIFICATION_SCOPE_GROUP       NotificationScope = 2
+	NotificationScope_NOTIFICATION_SCOPE_GLOBAL      NotificationScope = 3
+)
+
+// Enum value maps for NotificationScope.
+var (
+	NotificationScope_name = map[int32]string{
+		0: "NOTIFICATION_SCOPE_UNSPECIFIED",
+		1: "NOTIFICATION_SCOPE_DIRECT",
+		2: "NOTIFICATION_SCOPE_GROUP",
+		3: "NOTIFICATION_SCOPE_GLOBAL",
+	}
+	NotificationScope_value = map[string]int32{
+		"NOTIFICATION_SCOPE_UNSPECIFIED": 0,
+		"NOTIFICATION_SCOPE_DIRECT":      1,
+		"NOTIFICATION_SCOPE_GROUP":       2,
+		"NOTIFICATION_SCOPE_GLOBAL":      3,
+	}
+)
+
+func (x NotificationScope) Enum() *NotificationScope {
+	p := new(NotificationScope)
+	*p = x
+	return p
+}
+
+func (x NotificationScope) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (NotificationScope) Descriptor() protoreflect.EnumDescriptor {
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[8].Descriptor()
+}
+
+func (NotificationScope) Type() protoreflect.EnumType {
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[8]
+}
+
+func (x NotificationScope) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use NotificationScope.Descriptor instead.
+func (NotificationScope) EnumDescriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{8}
+}
+
+type NotificationChannel int32
+
+const (
+	NotificationChannel_NOTIFICATION_CHANNEL_UNSPECIFIED NotificationChannel = 0
+	NotificationChannel_NOTIFICATION_CHANNEL_EMAIL       NotificationChannel = 1
+)
+
+// Enum value maps for NotificationChannel.
+var (
+	NotificationChannel_name = map[int32]string{
+		0: "NOTIFICATION_CHANNEL_UNSPECIFIED",
+		1: "NOTIFICATION_CHANNEL_EMAIL",
+	}
+	NotificationChannel_value = map[string]int32{
+		"NOTIFICATION_CHANNEL_UNSPECIFIED": 0,
+		"NOTIFICATION_CHANNEL_EMAIL":       1,
+	}
+)
+
+func (x NotificationChannel) Enum() *NotificationChannel {
+	p := new(NotificationChannel)
+	*p = x
+	return p
+}
+
+func (x NotificationChannel) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (NotificationChannel) Descriptor() protoreflect.EnumDescriptor {
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[9].Descriptor()
+}
+
+func (NotificationChannel) Type() protoreflect.EnumType {
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[9]
+}
+
+func (x NotificationChannel) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use NotificationChannel.Descriptor instead.
+func (NotificationChannel) EnumDescriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{9}
+}
+
+type NotificationEventKind int32
+
+const (
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_UNSPECIFIED            NotificationEventKind = 0
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_MEMBERSHIP_REQUESTED   NotificationEventKind = 1
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_MEMBERSHIP_ACCEPTED    NotificationEventKind = 2
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_MEMBERSHIP_REJECTED    NotificationEventKind = 3
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REQUESTED NotificationEventKind = 4
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_ROLE_REQUEST_ACCEPTED  NotificationEventKind = 5
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REJECTED  NotificationEventKind = 6
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_ROLE_ASSIGNED          NotificationEventKind = 7
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_PERMISSION_ASSIGNED    NotificationEventKind = 8
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_SUBMITTED     NotificationEventKind = 9
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED     NotificationEventKind = 10
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED      NotificationEventKind = 11
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED   NotificationEventKind = 12
+)
+
+// Enum value maps for NotificationEventKind.
+var (
+	NotificationEventKind_name = map[int32]string{
+		0:  "NOTIFICATION_EVENT_KIND_UNSPECIFIED",
+		1:  "NOTIFICATION_EVENT_KIND_MEMBERSHIP_REQUESTED",
+		2:  "NOTIFICATION_EVENT_KIND_MEMBERSHIP_ACCEPTED",
+		3:  "NOTIFICATION_EVENT_KIND_MEMBERSHIP_REJECTED",
+		4:  "NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REQUESTED",
+		5:  "NOTIFICATION_EVENT_KIND_ROLE_REQUEST_ACCEPTED",
+		6:  "NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REJECTED",
+		7:  "NOTIFICATION_EVENT_KIND_ROLE_ASSIGNED",
+		8:  "NOTIFICATION_EVENT_KIND_PERMISSION_ASSIGNED",
+		9:  "NOTIFICATION_EVENT_KIND_RESOURCE_SUBMITTED",
+		10: "NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED",
+		11: "NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED",
+		12: "NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED",
+	}
+	NotificationEventKind_value = map[string]int32{
+		"NOTIFICATION_EVENT_KIND_UNSPECIFIED":            0,
+		"NOTIFICATION_EVENT_KIND_MEMBERSHIP_REQUESTED":   1,
+		"NOTIFICATION_EVENT_KIND_MEMBERSHIP_ACCEPTED":    2,
+		"NOTIFICATION_EVENT_KIND_MEMBERSHIP_REJECTED":    3,
+		"NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REQUESTED": 4,
+		"NOTIFICATION_EVENT_KIND_ROLE_REQUEST_ACCEPTED":  5,
+		"NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REJECTED":  6,
+		"NOTIFICATION_EVENT_KIND_ROLE_ASSIGNED":          7,
+		"NOTIFICATION_EVENT_KIND_PERMISSION_ASSIGNED":    8,
+		"NOTIFICATION_EVENT_KIND_RESOURCE_SUBMITTED":     9,
+		"NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED":     10,
+		"NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED":      11,
+		"NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED":   12,
+	}
+)
+
+func (x NotificationEventKind) Enum() *NotificationEventKind {
+	p := new(NotificationEventKind)
+	*p = x
+	return p
+}
+
+func (x NotificationEventKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (NotificationEventKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[10].Descriptor()
+}
+
+func (NotificationEventKind) Type() protoreflect.EnumType {
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[10]
+}
+
+func (x NotificationEventKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use NotificationEventKind.Descriptor instead.
+func (NotificationEventKind) EnumDescriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{10}
 }
 
 type RoleRequestStatus int32
@@ -516,11 +729,11 @@ func (x RoleRequestStatus) String() string {
 }
 
 func (RoleRequestStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_common_proto_enumTypes[8].Descriptor()
+	return file_metadata_lifecycle_v1_common_proto_enumTypes[11].Descriptor()
 }
 
 func (RoleRequestStatus) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_common_proto_enumTypes[8]
+	return &file_metadata_lifecycle_v1_common_proto_enumTypes[11]
 }
 
 func (x RoleRequestStatus) Number() protoreflect.EnumNumber {
@@ -529,7 +742,131 @@ func (x RoleRequestStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RoleRequestStatus.Descriptor instead.
 func (RoleRequestStatus) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{8}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{11}
+}
+
+type Notification struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventKind     NotificationEventKind  `protobuf:"varint,1,opt,name=event_kind,json=eventKind,proto3,enum=metadata_lifecycle.v1.NotificationEventKind" json:"event_kind,omitempty"`
+	GroupId       *string                `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3,oneof" json:"group_id,omitempty"`
+	ResourceType  ResourceType           `protobuf:"varint,3,opt,name=resource_type,json=resourceType,proto3,enum=metadata_lifecycle.v1.ResourceType" json:"resource_type,omitempty"`
+	ResourceId    *string                `protobuf:"bytes,4,opt,name=resource_id,json=resourceId,proto3,oneof" json:"resource_id,omitempty"`
+	VersionId     *string                `protobuf:"bytes,5,opt,name=version_id,json=versionId,proto3,oneof" json:"version_id,omitempty"`
+	AccessId      *string                `protobuf:"bytes,6,opt,name=access_id,json=accessId,proto3,oneof" json:"access_id,omitempty"`
+	TargetUserId  string                 `protobuf:"bytes,7,opt,name=target_user_id,json=targetUserId,proto3" json:"target_user_id,omitempty"`
+	TargetEmail   string                 `protobuf:"bytes,8,opt,name=target_email,json=targetEmail,proto3" json:"target_email,omitempty"`
+	Subject       string                 `protobuf:"bytes,9,opt,name=subject,proto3" json:"subject,omitempty"`
+	Body          string                 `protobuf:"bytes,10,opt,name=body,proto3" json:"body,omitempty"`
+	Channel       NotificationChannel    `protobuf:"varint,11,opt,name=channel,proto3,enum=metadata_lifecycle.v1.NotificationChannel" json:"channel,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Notification) Reset() {
+	*x = Notification{}
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Notification) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Notification) ProtoMessage() {}
+
+func (x *Notification) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Notification.ProtoReflect.Descriptor instead.
+func (*Notification) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Notification) GetEventKind() NotificationEventKind {
+	if x != nil {
+		return x.EventKind
+	}
+	return NotificationEventKind_NOTIFICATION_EVENT_KIND_UNSPECIFIED
+}
+
+func (x *Notification) GetGroupId() string {
+	if x != nil && x.GroupId != nil {
+		return *x.GroupId
+	}
+	return ""
+}
+
+func (x *Notification) GetResourceType() ResourceType {
+	if x != nil {
+		return x.ResourceType
+	}
+	return ResourceType_RESOURCE_TYPE_UNSPECIFIED
+}
+
+func (x *Notification) GetResourceId() string {
+	if x != nil && x.ResourceId != nil {
+		return *x.ResourceId
+	}
+	return ""
+}
+
+func (x *Notification) GetVersionId() string {
+	if x != nil && x.VersionId != nil {
+		return *x.VersionId
+	}
+	return ""
+}
+
+func (x *Notification) GetAccessId() string {
+	if x != nil && x.AccessId != nil {
+		return *x.AccessId
+	}
+	return ""
+}
+
+func (x *Notification) GetTargetUserId() string {
+	if x != nil {
+		return x.TargetUserId
+	}
+	return ""
+}
+
+func (x *Notification) GetTargetEmail() string {
+	if x != nil {
+		return x.TargetEmail
+	}
+	return ""
+}
+
+func (x *Notification) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *Notification) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *Notification) GetChannel() NotificationChannel {
+	if x != nil {
+		return x.Channel
+	}
+	return NotificationChannel_NOTIFICATION_CHANNEL_UNSPECIFIED
 }
 
 type Identifier struct {
@@ -543,7 +880,7 @@ type Identifier struct {
 
 func (x *Identifier) Reset() {
 	*x = Identifier{}
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[0]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -555,7 +892,7 @@ func (x *Identifier) String() string {
 func (*Identifier) ProtoMessage() {}
 
 func (x *Identifier) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[0]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -568,7 +905,7 @@ func (x *Identifier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Identifier.ProtoReflect.Descriptor instead.
 func (*Identifier) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{0}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Identifier) GetId() string {
@@ -602,7 +939,7 @@ type IdentifierInput struct {
 
 func (x *IdentifierInput) Reset() {
 	*x = IdentifierInput{}
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[1]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -614,7 +951,7 @@ func (x *IdentifierInput) String() string {
 func (*IdentifierInput) ProtoMessage() {}
 
 func (x *IdentifierInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[1]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -627,7 +964,7 @@ func (x *IdentifierInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IdentifierInput.ProtoReflect.Descriptor instead.
 func (*IdentifierInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{1}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *IdentifierInput) GetType() string {
@@ -654,7 +991,7 @@ type EntityReference struct {
 
 func (x *EntityReference) Reset() {
 	*x = EntityReference{}
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[2]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -666,7 +1003,7 @@ func (x *EntityReference) String() string {
 func (*EntityReference) ProtoMessage() {}
 
 func (x *EntityReference) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[2]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -679,7 +1016,7 @@ func (x *EntityReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityReference.ProtoReflect.Descriptor instead.
 func (*EntityReference) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{2}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *EntityReference) GetId() string {
@@ -706,7 +1043,7 @@ type UserReference struct {
 
 func (x *UserReference) Reset() {
 	*x = UserReference{}
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[3]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -718,7 +1055,7 @@ func (x *UserReference) String() string {
 func (*UserReference) ProtoMessage() {}
 
 func (x *UserReference) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[3]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -731,7 +1068,7 @@ func (x *UserReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserReference.ProtoReflect.Descriptor instead.
 func (*UserReference) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{3}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UserReference) GetId() string {
@@ -752,7 +1089,28 @@ var File_metadata_lifecycle_v1_common_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\"metadata_lifecycle/v1/common.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\"b\n" +
+	"\"metadata_lifecycle/v1/common.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\"\x92\x05\n" +
+	"\fNotification\x12U\n" +
+	"\n" +
+	"event_kind\x18\x01 \x01(\x0e2,.metadata_lifecycle.v1.NotificationEventKindB\b\xbaH\x05\x82\x01\x02\x10\x01R\teventKind\x12(\n" +
+	"\bgroup_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\agroupId\x88\x01\x01\x12R\n" +
+	"\rresource_type\x18\x03 \x01(\x0e2#.metadata_lifecycle.v1.ResourceTypeB\b\xbaH\x05\x82\x01\x02\x10\x01R\fresourceType\x12.\n" +
+	"\vresource_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x01R\n" +
+	"resourceId\x88\x01\x01\x12,\n" +
+	"\n" +
+	"version_id\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x02R\tversionId\x88\x01\x01\x12*\n" +
+	"\taccess_id\x18\x06 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x03R\baccessId\x88\x01\x01\x12-\n" +
+	"\x0etarget_user_id\x18\a \x01(\tB\a\xbaH\x04r\x02\x10\x01R\ftargetUserId\x12*\n" +
+	"\ftarget_email\x18\b \x01(\tB\a\xbaH\x04r\x02`\x01R\vtargetEmail\x12!\n" +
+	"\asubject\x18\t \x01(\tB\a\xbaH\x04r\x02\x10\x01R\asubject\x12\x1b\n" +
+	"\x04body\x18\n" +
+	" \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04body\x12N\n" +
+	"\achannel\x18\v \x01(\x0e2*.metadata_lifecycle.v1.NotificationChannelB\b\xbaH\x05\x82\x01\x02\x10\x01R\achannelB\v\n" +
+	"\t_group_idB\x0e\n" +
+	"\f_resource_idB\r\n" +
+	"\v_version_idB\f\n" +
+	"\n" +
+	"_access_id\"b\n" +
 	"\n" +
 	"Identifier\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
@@ -797,7 +1155,7 @@ const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"\x16GROUP_ROLE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11GROUP_ROLE_EDITOR\x10\x01\x12\x17\n" +
 	"\x13GROUP_ROLE_REVIEWER\x10\x02\x12\x14\n" +
-	"\x10GROUP_ROLE_ADMIN\x10\x03*\xaf\x02\n" +
+	"\x10GROUP_ROLE_ADMIN\x10\x03*\xe5\x05\n" +
 	"\x10GlobalPermission\x12!\n" +
 	"\x1dGLOBAL_PERMISSION_UNSPECIFIED\x10\x00\x12'\n" +
 	"#GLOBAL_PERMISSION_MEMBERSHIP_MANAGE\x10\x01\x12!\n" +
@@ -805,7 +1163,19 @@ const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"#GLOBAL_PERMISSION_PERMISSION_MANAGE\x10\x03\x12)\n" +
 	"%GLOBAL_PERMISSION_ORGANIZATION_MANAGE\x10\x04\x12*\n" +
 	"&GLOBAL_PERMISSION_CONTACT_POINT_MANAGE\x10\x05\x12,\n" +
-	"(GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE\x10\x06*\xa6\x04\n" +
+	"(GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE\x10\x06\x12%\n" +
+	"!GLOBAL_PERMISSION_RESOURCE_CREATE\x10\a\x12#\n" +
+	"\x1fGLOBAL_PERMISSION_RESOURCE_EDIT\x10\b\x12%\n" +
+	"!GLOBAL_PERMISSION_RESOURCE_SUBMIT\x10\t\x12'\n" +
+	"#GLOBAL_PERMISSION_RESOURCE_WITHDRAW\x10\n" +
+	"\x12%\n" +
+	"!GLOBAL_PERMISSION_RESOURCE_REOPEN\x10\v\x12&\n" +
+	"\"GLOBAL_PERMISSION_RESOURCE_DISCARD\x10\f\x12%\n" +
+	"!GLOBAL_PERMISSION_RESOURCE_REJECT\x10\r\x12&\n" +
+	"\"GLOBAL_PERMISSION_RESOURCE_PUBLISH\x10\x0e\x12(\n" +
+	"$GLOBAL_PERMISSION_RESOURCE_UNPUBLISH\x10\x0f\x12%\n" +
+	"!GLOBAL_PERMISSION_CATEGORY_MANAGE\x10\x10\x12)\n" +
+	"%GLOBAL_PERMISSION_NOTIFICATION_MANAGE\x10\x11*\xd0\x04\n" +
 	"\x0fGroupPermission\x12 \n" +
 	"\x1cGROUP_PERMISSION_UNSPECIFIED\x10\x00\x12$\n" +
 	" GROUP_PERMISSION_RESOURCE_CREATE\x10\x01\x12\"\n" +
@@ -821,7 +1191,31 @@ const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"\x12 \n" +
 	"\x1cGROUP_PERMISSION_ROLE_MANAGE\x10\v\x12&\n" +
 	"\"GROUP_PERMISSION_PERMISSION_MANAGE\x10\f\x12$\n" +
-	" GROUP_PERMISSION_CATEGORY_MANAGE\x10\r*\x9d\x01\n" +
+	" GROUP_PERMISSION_CATEGORY_MANAGE\x10\r\x12(\n" +
+	"$GROUP_PERMISSION_NOTIFICATION_MANAGE\x10\x0e*\x93\x01\n" +
+	"\x11NotificationScope\x12\"\n" +
+	"\x1eNOTIFICATION_SCOPE_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19NOTIFICATION_SCOPE_DIRECT\x10\x01\x12\x1c\n" +
+	"\x18NOTIFICATION_SCOPE_GROUP\x10\x02\x12\x1d\n" +
+	"\x19NOTIFICATION_SCOPE_GLOBAL\x10\x03*[\n" +
+	"\x13NotificationChannel\x12$\n" +
+	" NOTIFICATION_CHANNEL_UNSPECIFIED\x10\x00\x12\x1e\n" +
+	"\x1aNOTIFICATION_CHANNEL_EMAIL\x10\x01*\x8b\x05\n" +
+	"\x15NotificationEventKind\x12'\n" +
+	"#NOTIFICATION_EVENT_KIND_UNSPECIFIED\x10\x00\x120\n" +
+	",NOTIFICATION_EVENT_KIND_MEMBERSHIP_REQUESTED\x10\x01\x12/\n" +
+	"+NOTIFICATION_EVENT_KIND_MEMBERSHIP_ACCEPTED\x10\x02\x12/\n" +
+	"+NOTIFICATION_EVENT_KIND_MEMBERSHIP_REJECTED\x10\x03\x122\n" +
+	".NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REQUESTED\x10\x04\x121\n" +
+	"-NOTIFICATION_EVENT_KIND_ROLE_REQUEST_ACCEPTED\x10\x05\x121\n" +
+	"-NOTIFICATION_EVENT_KIND_ROLE_REQUEST_REJECTED\x10\x06\x12)\n" +
+	"%NOTIFICATION_EVENT_KIND_ROLE_ASSIGNED\x10\a\x12/\n" +
+	"+NOTIFICATION_EVENT_KIND_PERMISSION_ASSIGNED\x10\b\x12.\n" +
+	"*NOTIFICATION_EVENT_KIND_RESOURCE_SUBMITTED\x10\t\x12.\n" +
+	"*NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED\x10\n" +
+	"\x12-\n" +
+	")NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED\x10\v\x120\n" +
+	",NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED\x10\f*\x9d\x01\n" +
 	"\x11RoleRequestStatus\x12#\n" +
 	"\x1fROLE_REQUEST_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bROLE_REQUEST_STATUS_PENDING\x10\x01\x12 \n" +
@@ -840,29 +1234,36 @@ func file_metadata_lifecycle_v1_common_proto_rawDescGZIP() []byte {
 	return file_metadata_lifecycle_v1_common_proto_rawDescData
 }
 
-var file_metadata_lifecycle_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 9)
-var file_metadata_lifecycle_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_metadata_lifecycle_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 12)
+var file_metadata_lifecycle_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_metadata_lifecycle_v1_common_proto_goTypes = []any{
-	(ResourceType)(0),       // 0: metadata_lifecycle.v1.ResourceType
-	(VersioningStatus)(0),   // 1: metadata_lifecycle.v1.VersioningStatus
-	(TopLevelConcept)(0),    // 2: metadata_lifecycle.v1.TopLevelConcept
-	(MembershipStatus)(0),   // 3: metadata_lifecycle.v1.MembershipStatus
-	(Decision)(0),           // 4: metadata_lifecycle.v1.Decision
-	(GroupRole)(0),          // 5: metadata_lifecycle.v1.GroupRole
-	(GlobalPermission)(0),   // 6: metadata_lifecycle.v1.GlobalPermission
-	(GroupPermission)(0),    // 7: metadata_lifecycle.v1.GroupPermission
-	(RoleRequestStatus)(0),  // 8: metadata_lifecycle.v1.RoleRequestStatus
-	(*Identifier)(nil),      // 9: metadata_lifecycle.v1.Identifier
-	(*IdentifierInput)(nil), // 10: metadata_lifecycle.v1.IdentifierInput
-	(*EntityReference)(nil), // 11: metadata_lifecycle.v1.EntityReference
-	(*UserReference)(nil),   // 12: metadata_lifecycle.v1.UserReference
+	(ResourceType)(0),          // 0: metadata_lifecycle.v1.ResourceType
+	(VersioningStatus)(0),      // 1: metadata_lifecycle.v1.VersioningStatus
+	(TopLevelConcept)(0),       // 2: metadata_lifecycle.v1.TopLevelConcept
+	(MembershipStatus)(0),      // 3: metadata_lifecycle.v1.MembershipStatus
+	(Decision)(0),              // 4: metadata_lifecycle.v1.Decision
+	(GroupRole)(0),             // 5: metadata_lifecycle.v1.GroupRole
+	(GlobalPermission)(0),      // 6: metadata_lifecycle.v1.GlobalPermission
+	(GroupPermission)(0),       // 7: metadata_lifecycle.v1.GroupPermission
+	(NotificationScope)(0),     // 8: metadata_lifecycle.v1.NotificationScope
+	(NotificationChannel)(0),   // 9: metadata_lifecycle.v1.NotificationChannel
+	(NotificationEventKind)(0), // 10: metadata_lifecycle.v1.NotificationEventKind
+	(RoleRequestStatus)(0),     // 11: metadata_lifecycle.v1.RoleRequestStatus
+	(*Notification)(nil),       // 12: metadata_lifecycle.v1.Notification
+	(*Identifier)(nil),         // 13: metadata_lifecycle.v1.Identifier
+	(*IdentifierInput)(nil),    // 14: metadata_lifecycle.v1.IdentifierInput
+	(*EntityReference)(nil),    // 15: metadata_lifecycle.v1.EntityReference
+	(*UserReference)(nil),      // 16: metadata_lifecycle.v1.UserReference
 }
 var file_metadata_lifecycle_v1_common_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	10, // 0: metadata_lifecycle.v1.Notification.event_kind:type_name -> metadata_lifecycle.v1.NotificationEventKind
+	0,  // 1: metadata_lifecycle.v1.Notification.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	9,  // 2: metadata_lifecycle.v1.Notification.channel:type_name -> metadata_lifecycle.v1.NotificationChannel
+	3,  // [3:3] is the sub-list for method output_type
+	3,  // [3:3] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_common_proto_init() }
@@ -870,13 +1271,14 @@ func file_metadata_lifecycle_v1_common_proto_init() {
 	if File_metadata_lifecycle_v1_common_proto != nil {
 		return
 	}
+	file_metadata_lifecycle_v1_common_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_common_proto_rawDesc), len(file_metadata_lifecycle_v1_common_proto_rawDesc)),
-			NumEnums:      9,
-			NumMessages:   4,
+			NumEnums:      12,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

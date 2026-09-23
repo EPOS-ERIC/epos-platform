@@ -4345,17 +4345,84 @@ func (s *GeologicalTemporalCoverage) SetEndMya(val OptNilFloat64) {
 	s.EndMya = val
 }
 
+// Ref: #/components/schemas/GlobalNotificationTopicKey
+type GlobalNotificationTopicKey string
+
+const (
+	GlobalNotificationTopicKeyGlobalMembershipRequested  GlobalNotificationTopicKey = "global.membership.requested"
+	GlobalNotificationTopicKeyGlobalRoleRequestRequested GlobalNotificationTopicKey = "global.role_request.requested"
+	GlobalNotificationTopicKeyGlobalResourceSubmitted    GlobalNotificationTopicKey = "global.resource.submitted"
+	GlobalNotificationTopicKeyGlobalResourcePublished    GlobalNotificationTopicKey = "global.resource.published"
+)
+
+// AllValues returns all GlobalNotificationTopicKey values.
+func (GlobalNotificationTopicKey) AllValues() []GlobalNotificationTopicKey {
+	return []GlobalNotificationTopicKey{
+		GlobalNotificationTopicKeyGlobalMembershipRequested,
+		GlobalNotificationTopicKeyGlobalRoleRequestRequested,
+		GlobalNotificationTopicKeyGlobalResourceSubmitted,
+		GlobalNotificationTopicKeyGlobalResourcePublished,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GlobalNotificationTopicKey) MarshalText() ([]byte, error) {
+	switch s {
+	case GlobalNotificationTopicKeyGlobalMembershipRequested:
+		return []byte(s), nil
+	case GlobalNotificationTopicKeyGlobalRoleRequestRequested:
+		return []byte(s), nil
+	case GlobalNotificationTopicKeyGlobalResourceSubmitted:
+		return []byte(s), nil
+	case GlobalNotificationTopicKeyGlobalResourcePublished:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GlobalNotificationTopicKey) UnmarshalText(data []byte) error {
+	switch GlobalNotificationTopicKey(data) {
+	case GlobalNotificationTopicKeyGlobalMembershipRequested:
+		*s = GlobalNotificationTopicKeyGlobalMembershipRequested
+		return nil
+	case GlobalNotificationTopicKeyGlobalRoleRequestRequested:
+		*s = GlobalNotificationTopicKeyGlobalRoleRequestRequested
+		return nil
+	case GlobalNotificationTopicKeyGlobalResourceSubmitted:
+		*s = GlobalNotificationTopicKeyGlobalResourceSubmitted
+		return nil
+	case GlobalNotificationTopicKeyGlobalResourcePublished:
+		*s = GlobalNotificationTopicKeyGlobalResourcePublished
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Global permission key.
 // Ref: #/components/schemas/GlobalPermission
 type GlobalPermission string
 
 const (
-	GlobalPermissionGlobalMembershipManage GlobalPermission = "global.membership.manage"
-	GlobalPermissionGlobalRoleManage       GlobalPermission = "global.role.manage"
-	GlobalPermissionGlobalPermissionManage GlobalPermission = "global.permission.manage"
-	GlobalPermissionOrganizationManage     GlobalPermission = "organization.manage"
-	GlobalPermissionContactPointManage     GlobalPermission = "contact_point.manage"
-	GlobalPermissionCategorySchemeManage   GlobalPermission = "category_scheme.manage"
+	GlobalPermissionGlobalMembershipManage     GlobalPermission = "global.membership.manage"
+	GlobalPermissionGlobalRoleManage           GlobalPermission = "global.role.manage"
+	GlobalPermissionGlobalPermissionManage     GlobalPermission = "global.permission.manage"
+	GlobalPermissionGlobalNotificationManage   GlobalPermission = "global.notification.manage"
+	GlobalPermissionGlobalOrganizationManage   GlobalPermission = "global.organization.manage"
+	GlobalPermissionGlobalContactPointManage   GlobalPermission = "global.contact_point.manage"
+	GlobalPermissionGlobalCategorySchemeManage GlobalPermission = "global.category_scheme.manage"
+	GlobalPermissionGlobalResourceCreate       GlobalPermission = "global.resource.create"
+	GlobalPermissionGlobalResourceEdit         GlobalPermission = "global.resource.edit"
+	GlobalPermissionGlobalResourceSubmit       GlobalPermission = "global.resource.submit"
+	GlobalPermissionGlobalResourceWithdraw     GlobalPermission = "global.resource.withdraw"
+	GlobalPermissionGlobalResourceReopen       GlobalPermission = "global.resource.reopen"
+	GlobalPermissionGlobalResourceDiscard      GlobalPermission = "global.resource.discard"
+	GlobalPermissionGlobalResourceReject       GlobalPermission = "global.resource.reject"
+	GlobalPermissionGlobalResourcePublish      GlobalPermission = "global.resource.publish"
+	GlobalPermissionGlobalResourceUnpublish    GlobalPermission = "global.resource.unpublish"
+	GlobalPermissionGlobalCategoryManage       GlobalPermission = "global.category.manage"
 )
 
 // AllValues returns all GlobalPermission values.
@@ -4364,9 +4431,20 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalMembershipManage,
 		GlobalPermissionGlobalRoleManage,
 		GlobalPermissionGlobalPermissionManage,
-		GlobalPermissionOrganizationManage,
-		GlobalPermissionContactPointManage,
-		GlobalPermissionCategorySchemeManage,
+		GlobalPermissionGlobalNotificationManage,
+		GlobalPermissionGlobalOrganizationManage,
+		GlobalPermissionGlobalContactPointManage,
+		GlobalPermissionGlobalCategorySchemeManage,
+		GlobalPermissionGlobalResourceCreate,
+		GlobalPermissionGlobalResourceEdit,
+		GlobalPermissionGlobalResourceSubmit,
+		GlobalPermissionGlobalResourceWithdraw,
+		GlobalPermissionGlobalResourceReopen,
+		GlobalPermissionGlobalResourceDiscard,
+		GlobalPermissionGlobalResourceReject,
+		GlobalPermissionGlobalResourcePublish,
+		GlobalPermissionGlobalResourceUnpublish,
+		GlobalPermissionGlobalCategoryManage,
 	}
 }
 
@@ -4379,11 +4457,33 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case GlobalPermissionGlobalPermissionManage:
 		return []byte(s), nil
-	case GlobalPermissionOrganizationManage:
+	case GlobalPermissionGlobalNotificationManage:
 		return []byte(s), nil
-	case GlobalPermissionContactPointManage:
+	case GlobalPermissionGlobalOrganizationManage:
 		return []byte(s), nil
-	case GlobalPermissionCategorySchemeManage:
+	case GlobalPermissionGlobalContactPointManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalCategorySchemeManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceCreate:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceEdit:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceSubmit:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceWithdraw:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceReopen:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceDiscard:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceReject:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourcePublish:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceUnpublish:
+		return []byte(s), nil
+	case GlobalPermissionGlobalCategoryManage:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -4402,14 +4502,47 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 	case GlobalPermissionGlobalPermissionManage:
 		*s = GlobalPermissionGlobalPermissionManage
 		return nil
-	case GlobalPermissionOrganizationManage:
-		*s = GlobalPermissionOrganizationManage
+	case GlobalPermissionGlobalNotificationManage:
+		*s = GlobalPermissionGlobalNotificationManage
 		return nil
-	case GlobalPermissionContactPointManage:
-		*s = GlobalPermissionContactPointManage
+	case GlobalPermissionGlobalOrganizationManage:
+		*s = GlobalPermissionGlobalOrganizationManage
 		return nil
-	case GlobalPermissionCategorySchemeManage:
-		*s = GlobalPermissionCategorySchemeManage
+	case GlobalPermissionGlobalContactPointManage:
+		*s = GlobalPermissionGlobalContactPointManage
+		return nil
+	case GlobalPermissionGlobalCategorySchemeManage:
+		*s = GlobalPermissionGlobalCategorySchemeManage
+		return nil
+	case GlobalPermissionGlobalResourceCreate:
+		*s = GlobalPermissionGlobalResourceCreate
+		return nil
+	case GlobalPermissionGlobalResourceEdit:
+		*s = GlobalPermissionGlobalResourceEdit
+		return nil
+	case GlobalPermissionGlobalResourceSubmit:
+		*s = GlobalPermissionGlobalResourceSubmit
+		return nil
+	case GlobalPermissionGlobalResourceWithdraw:
+		*s = GlobalPermissionGlobalResourceWithdraw
+		return nil
+	case GlobalPermissionGlobalResourceReopen:
+		*s = GlobalPermissionGlobalResourceReopen
+		return nil
+	case GlobalPermissionGlobalResourceDiscard:
+		*s = GlobalPermissionGlobalResourceDiscard
+		return nil
+	case GlobalPermissionGlobalResourceReject:
+		*s = GlobalPermissionGlobalResourceReject
+		return nil
+	case GlobalPermissionGlobalResourcePublish:
+		*s = GlobalPermissionGlobalResourcePublish
+		return nil
+	case GlobalPermissionGlobalResourceUnpublish:
+		*s = GlobalPermissionGlobalResourceUnpublish
+		return nil
+	case GlobalPermissionGlobalCategoryManage:
+		*s = GlobalPermissionGlobalCategoryManage
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -4702,65 +4835,123 @@ func (s *GroupMembership) SetUpdatedAt(val time.Time) {
 	s.UpdatedAt = val
 }
 
+// Ref: #/components/schemas/GroupNotificationTopicKey
+type GroupNotificationTopicKey string
+
+const (
+	GroupNotificationTopicKeyGroupMembershipRequested  GroupNotificationTopicKey = "group.membership.requested"
+	GroupNotificationTopicKeyGroupRoleRequestRequested GroupNotificationTopicKey = "group.role_request.requested"
+	GroupNotificationTopicKeyGroupResourceSubmitted    GroupNotificationTopicKey = "group.resource.submitted"
+	GroupNotificationTopicKeyGroupResourcePublished    GroupNotificationTopicKey = "group.resource.published"
+)
+
+// AllValues returns all GroupNotificationTopicKey values.
+func (GroupNotificationTopicKey) AllValues() []GroupNotificationTopicKey {
+	return []GroupNotificationTopicKey{
+		GroupNotificationTopicKeyGroupMembershipRequested,
+		GroupNotificationTopicKeyGroupRoleRequestRequested,
+		GroupNotificationTopicKeyGroupResourceSubmitted,
+		GroupNotificationTopicKeyGroupResourcePublished,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GroupNotificationTopicKey) MarshalText() ([]byte, error) {
+	switch s {
+	case GroupNotificationTopicKeyGroupMembershipRequested:
+		return []byte(s), nil
+	case GroupNotificationTopicKeyGroupRoleRequestRequested:
+		return []byte(s), nil
+	case GroupNotificationTopicKeyGroupResourceSubmitted:
+		return []byte(s), nil
+	case GroupNotificationTopicKeyGroupResourcePublished:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GroupNotificationTopicKey) UnmarshalText(data []byte) error {
+	switch GroupNotificationTopicKey(data) {
+	case GroupNotificationTopicKeyGroupMembershipRequested:
+		*s = GroupNotificationTopicKeyGroupMembershipRequested
+		return nil
+	case GroupNotificationTopicKeyGroupRoleRequestRequested:
+		*s = GroupNotificationTopicKeyGroupRoleRequestRequested
+		return nil
+	case GroupNotificationTopicKeyGroupResourceSubmitted:
+		*s = GroupNotificationTopicKeyGroupResourceSubmitted
+		return nil
+	case GroupNotificationTopicKeyGroupResourcePublished:
+		*s = GroupNotificationTopicKeyGroupResourcePublished
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Group-scoped permission key.
 // Ref: #/components/schemas/GroupPermission
 type GroupPermission string
 
 const (
-	GroupPermissionResourceCreate        GroupPermission = "resource.create"
-	GroupPermissionResourceEdit          GroupPermission = "resource.edit"
-	GroupPermissionResourceSubmit        GroupPermission = "resource.submit"
-	GroupPermissionResourceWithdraw      GroupPermission = "resource.withdraw"
-	GroupPermissionResourceReopen        GroupPermission = "resource.reopen"
-	GroupPermissionResourceDiscard       GroupPermission = "resource.discard"
-	GroupPermissionResourceReject        GroupPermission = "resource.reject"
-	GroupPermissionResourcePublish       GroupPermission = "resource.publish"
-	GroupPermissionResourceUnpublish     GroupPermission = "resource.unpublish"
-	GroupPermissionGroupMembershipManage GroupPermission = "group.membership.manage"
-	GroupPermissionGroupRoleManage       GroupPermission = "group.role.manage"
-	GroupPermissionGroupPermissionManage GroupPermission = "group.permission.manage"
-	GroupPermissionCategoryManage        GroupPermission = "category.manage"
+	GroupPermissionGroupResourceCreate     GroupPermission = "group.resource.create"
+	GroupPermissionGroupResourceEdit       GroupPermission = "group.resource.edit"
+	GroupPermissionGroupResourceSubmit     GroupPermission = "group.resource.submit"
+	GroupPermissionGroupResourceWithdraw   GroupPermission = "group.resource.withdraw"
+	GroupPermissionGroupResourceReopen     GroupPermission = "group.resource.reopen"
+	GroupPermissionGroupResourceDiscard    GroupPermission = "group.resource.discard"
+	GroupPermissionGroupResourceReject     GroupPermission = "group.resource.reject"
+	GroupPermissionGroupResourcePublish    GroupPermission = "group.resource.publish"
+	GroupPermissionGroupResourceUnpublish  GroupPermission = "group.resource.unpublish"
+	GroupPermissionGroupMembershipManage   GroupPermission = "group.membership.manage"
+	GroupPermissionGroupRoleManage         GroupPermission = "group.role.manage"
+	GroupPermissionGroupPermissionManage   GroupPermission = "group.permission.manage"
+	GroupPermissionGroupNotificationManage GroupPermission = "group.notification.manage"
+	GroupPermissionGroupCategoryManage     GroupPermission = "group.category.manage"
 )
 
 // AllValues returns all GroupPermission values.
 func (GroupPermission) AllValues() []GroupPermission {
 	return []GroupPermission{
-		GroupPermissionResourceCreate,
-		GroupPermissionResourceEdit,
-		GroupPermissionResourceSubmit,
-		GroupPermissionResourceWithdraw,
-		GroupPermissionResourceReopen,
-		GroupPermissionResourceDiscard,
-		GroupPermissionResourceReject,
-		GroupPermissionResourcePublish,
-		GroupPermissionResourceUnpublish,
+		GroupPermissionGroupResourceCreate,
+		GroupPermissionGroupResourceEdit,
+		GroupPermissionGroupResourceSubmit,
+		GroupPermissionGroupResourceWithdraw,
+		GroupPermissionGroupResourceReopen,
+		GroupPermissionGroupResourceDiscard,
+		GroupPermissionGroupResourceReject,
+		GroupPermissionGroupResourcePublish,
+		GroupPermissionGroupResourceUnpublish,
 		GroupPermissionGroupMembershipManage,
 		GroupPermissionGroupRoleManage,
 		GroupPermissionGroupPermissionManage,
-		GroupPermissionCategoryManage,
+		GroupPermissionGroupNotificationManage,
+		GroupPermissionGroupCategoryManage,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s GroupPermission) MarshalText() ([]byte, error) {
 	switch s {
-	case GroupPermissionResourceCreate:
+	case GroupPermissionGroupResourceCreate:
 		return []byte(s), nil
-	case GroupPermissionResourceEdit:
+	case GroupPermissionGroupResourceEdit:
 		return []byte(s), nil
-	case GroupPermissionResourceSubmit:
+	case GroupPermissionGroupResourceSubmit:
 		return []byte(s), nil
-	case GroupPermissionResourceWithdraw:
+	case GroupPermissionGroupResourceWithdraw:
 		return []byte(s), nil
-	case GroupPermissionResourceReopen:
+	case GroupPermissionGroupResourceReopen:
 		return []byte(s), nil
-	case GroupPermissionResourceDiscard:
+	case GroupPermissionGroupResourceDiscard:
 		return []byte(s), nil
-	case GroupPermissionResourceReject:
+	case GroupPermissionGroupResourceReject:
 		return []byte(s), nil
-	case GroupPermissionResourcePublish:
+	case GroupPermissionGroupResourcePublish:
 		return []byte(s), nil
-	case GroupPermissionResourceUnpublish:
+	case GroupPermissionGroupResourceUnpublish:
 		return []byte(s), nil
 	case GroupPermissionGroupMembershipManage:
 		return []byte(s), nil
@@ -4768,7 +4959,9 @@ func (s GroupPermission) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case GroupPermissionGroupPermissionManage:
 		return []byte(s), nil
-	case GroupPermissionCategoryManage:
+	case GroupPermissionGroupNotificationManage:
+		return []byte(s), nil
+	case GroupPermissionGroupCategoryManage:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -4778,32 +4971,32 @@ func (s GroupPermission) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *GroupPermission) UnmarshalText(data []byte) error {
 	switch GroupPermission(data) {
-	case GroupPermissionResourceCreate:
-		*s = GroupPermissionResourceCreate
+	case GroupPermissionGroupResourceCreate:
+		*s = GroupPermissionGroupResourceCreate
 		return nil
-	case GroupPermissionResourceEdit:
-		*s = GroupPermissionResourceEdit
+	case GroupPermissionGroupResourceEdit:
+		*s = GroupPermissionGroupResourceEdit
 		return nil
-	case GroupPermissionResourceSubmit:
-		*s = GroupPermissionResourceSubmit
+	case GroupPermissionGroupResourceSubmit:
+		*s = GroupPermissionGroupResourceSubmit
 		return nil
-	case GroupPermissionResourceWithdraw:
-		*s = GroupPermissionResourceWithdraw
+	case GroupPermissionGroupResourceWithdraw:
+		*s = GroupPermissionGroupResourceWithdraw
 		return nil
-	case GroupPermissionResourceReopen:
-		*s = GroupPermissionResourceReopen
+	case GroupPermissionGroupResourceReopen:
+		*s = GroupPermissionGroupResourceReopen
 		return nil
-	case GroupPermissionResourceDiscard:
-		*s = GroupPermissionResourceDiscard
+	case GroupPermissionGroupResourceDiscard:
+		*s = GroupPermissionGroupResourceDiscard
 		return nil
-	case GroupPermissionResourceReject:
-		*s = GroupPermissionResourceReject
+	case GroupPermissionGroupResourceReject:
+		*s = GroupPermissionGroupResourceReject
 		return nil
-	case GroupPermissionResourcePublish:
-		*s = GroupPermissionResourcePublish
+	case GroupPermissionGroupResourcePublish:
+		*s = GroupPermissionGroupResourcePublish
 		return nil
-	case GroupPermissionResourceUnpublish:
-		*s = GroupPermissionResourceUnpublish
+	case GroupPermissionGroupResourceUnpublish:
+		*s = GroupPermissionGroupResourceUnpublish
 		return nil
 	case GroupPermissionGroupMembershipManage:
 		*s = GroupPermissionGroupMembershipManage
@@ -4814,8 +5007,11 @@ func (s *GroupPermission) UnmarshalText(data []byte) error {
 	case GroupPermissionGroupPermissionManage:
 		*s = GroupPermissionGroupPermissionManage
 		return nil
-	case GroupPermissionCategoryManage:
-		*s = GroupPermissionCategoryManage
+	case GroupPermissionGroupNotificationManage:
+		*s = GroupPermissionGroupNotificationManage
+		return nil
+	case GroupPermissionGroupCategoryManage:
+		*s = GroupPermissionGroupCategoryManage
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -6227,6 +6423,276 @@ func (o NilUUID) Or(d uuid.UUID) uuid.UUID {
 }
 
 type NonBlankString string
+
+// Ref: #/components/schemas/NotificationChannel
+type NotificationChannel string
+
+const (
+	NotificationChannelEMAIL NotificationChannel = "EMAIL"
+)
+
+// AllValues returns all NotificationChannel values.
+func (NotificationChannel) AllValues() []NotificationChannel {
+	return []NotificationChannel{
+		NotificationChannelEMAIL,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s NotificationChannel) MarshalText() ([]byte, error) {
+	switch s {
+	case NotificationChannelEMAIL:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *NotificationChannel) UnmarshalText(data []byte) error {
+	switch NotificationChannel(data) {
+	case NotificationChannelEMAIL:
+		*s = NotificationChannelEMAIL
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/NotificationScope
+type NotificationScope string
+
+const (
+	NotificationScopeGROUP  NotificationScope = "GROUP"
+	NotificationScopeGLOBAL NotificationScope = "GLOBAL"
+)
+
+// AllValues returns all NotificationScope values.
+func (NotificationScope) AllValues() []NotificationScope {
+	return []NotificationScope{
+		NotificationScopeGROUP,
+		NotificationScopeGLOBAL,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s NotificationScope) MarshalText() ([]byte, error) {
+	switch s {
+	case NotificationScopeGROUP:
+		return []byte(s), nil
+	case NotificationScopeGLOBAL:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *NotificationScope) UnmarshalText(data []byte) error {
+	switch NotificationScope(data) {
+	case NotificationScopeGROUP:
+		*s = NotificationScopeGROUP
+		return nil
+	case NotificationScopeGLOBAL:
+		*s = NotificationScopeGLOBAL
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/NotificationSubscription
+type NotificationSubscription struct {
+	UserID   string               `json:"user_id"`
+	GroupID  OptUUID              `json:"group_id"`
+	TopicKey NotificationTopicKey `json:"topic_key"`
+	Channel  NotificationChannel  `json:"channel"`
+}
+
+// GetUserID returns the value of UserID.
+func (s *NotificationSubscription) GetUserID() string {
+	return s.UserID
+}
+
+// GetGroupID returns the value of GroupID.
+func (s *NotificationSubscription) GetGroupID() OptUUID {
+	return s.GroupID
+}
+
+// GetTopicKey returns the value of TopicKey.
+func (s *NotificationSubscription) GetTopicKey() NotificationTopicKey {
+	return s.TopicKey
+}
+
+// GetChannel returns the value of Channel.
+func (s *NotificationSubscription) GetChannel() NotificationChannel {
+	return s.Channel
+}
+
+// SetUserID sets the value of UserID.
+func (s *NotificationSubscription) SetUserID(val string) {
+	s.UserID = val
+}
+
+// SetGroupID sets the value of GroupID.
+func (s *NotificationSubscription) SetGroupID(val OptUUID) {
+	s.GroupID = val
+}
+
+// SetTopicKey sets the value of TopicKey.
+func (s *NotificationSubscription) SetTopicKey(val NotificationTopicKey) {
+	s.TopicKey = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *NotificationSubscription) SetChannel(val NotificationChannel) {
+	s.Channel = val
+}
+
+// Ref: #/components/schemas/NotificationTopic
+type NotificationTopic struct {
+	Key NotificationTopicKey `json:"key"`
+	// Human-readable notification topic label.
+	Label string `json:"label"`
+	// Human-readable notification topic description.
+	Description         string            `json:"description"`
+	Scope               NotificationScope `json:"scope"`
+	RequiredPermissions []string          `json:"required_permissions"`
+}
+
+// GetKey returns the value of Key.
+func (s *NotificationTopic) GetKey() NotificationTopicKey {
+	return s.Key
+}
+
+// GetLabel returns the value of Label.
+func (s *NotificationTopic) GetLabel() string {
+	return s.Label
+}
+
+// GetDescription returns the value of Description.
+func (s *NotificationTopic) GetDescription() string {
+	return s.Description
+}
+
+// GetScope returns the value of Scope.
+func (s *NotificationTopic) GetScope() NotificationScope {
+	return s.Scope
+}
+
+// GetRequiredPermissions returns the value of RequiredPermissions.
+func (s *NotificationTopic) GetRequiredPermissions() []string {
+	return s.RequiredPermissions
+}
+
+// SetKey sets the value of Key.
+func (s *NotificationTopic) SetKey(val NotificationTopicKey) {
+	s.Key = val
+}
+
+// SetLabel sets the value of Label.
+func (s *NotificationTopic) SetLabel(val string) {
+	s.Label = val
+}
+
+// SetDescription sets the value of Description.
+func (s *NotificationTopic) SetDescription(val string) {
+	s.Description = val
+}
+
+// SetScope sets the value of Scope.
+func (s *NotificationTopic) SetScope(val NotificationScope) {
+	s.Scope = val
+}
+
+// SetRequiredPermissions sets the value of RequiredPermissions.
+func (s *NotificationTopic) SetRequiredPermissions(val []string) {
+	s.RequiredPermissions = val
+}
+
+// Ref: #/components/schemas/NotificationTopicKey
+type NotificationTopicKey string
+
+const (
+	NotificationTopicKeyGroupMembershipRequested   NotificationTopicKey = "group.membership.requested"
+	NotificationTopicKeyGlobalMembershipRequested  NotificationTopicKey = "global.membership.requested"
+	NotificationTopicKeyGroupRoleRequestRequested  NotificationTopicKey = "group.role_request.requested"
+	NotificationTopicKeyGlobalRoleRequestRequested NotificationTopicKey = "global.role_request.requested"
+	NotificationTopicKeyGroupResourceSubmitted     NotificationTopicKey = "group.resource.submitted"
+	NotificationTopicKeyGroupResourcePublished     NotificationTopicKey = "group.resource.published"
+	NotificationTopicKeyGlobalResourceSubmitted    NotificationTopicKey = "global.resource.submitted"
+	NotificationTopicKeyGlobalResourcePublished    NotificationTopicKey = "global.resource.published"
+)
+
+// AllValues returns all NotificationTopicKey values.
+func (NotificationTopicKey) AllValues() []NotificationTopicKey {
+	return []NotificationTopicKey{
+		NotificationTopicKeyGroupMembershipRequested,
+		NotificationTopicKeyGlobalMembershipRequested,
+		NotificationTopicKeyGroupRoleRequestRequested,
+		NotificationTopicKeyGlobalRoleRequestRequested,
+		NotificationTopicKeyGroupResourceSubmitted,
+		NotificationTopicKeyGroupResourcePublished,
+		NotificationTopicKeyGlobalResourceSubmitted,
+		NotificationTopicKeyGlobalResourcePublished,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s NotificationTopicKey) MarshalText() ([]byte, error) {
+	switch s {
+	case NotificationTopicKeyGroupMembershipRequested:
+		return []byte(s), nil
+	case NotificationTopicKeyGlobalMembershipRequested:
+		return []byte(s), nil
+	case NotificationTopicKeyGroupRoleRequestRequested:
+		return []byte(s), nil
+	case NotificationTopicKeyGlobalRoleRequestRequested:
+		return []byte(s), nil
+	case NotificationTopicKeyGroupResourceSubmitted:
+		return []byte(s), nil
+	case NotificationTopicKeyGroupResourcePublished:
+		return []byte(s), nil
+	case NotificationTopicKeyGlobalResourceSubmitted:
+		return []byte(s), nil
+	case NotificationTopicKeyGlobalResourcePublished:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *NotificationTopicKey) UnmarshalText(data []byte) error {
+	switch NotificationTopicKey(data) {
+	case NotificationTopicKeyGroupMembershipRequested:
+		*s = NotificationTopicKeyGroupMembershipRequested
+		return nil
+	case NotificationTopicKeyGlobalMembershipRequested:
+		*s = NotificationTopicKeyGlobalMembershipRequested
+		return nil
+	case NotificationTopicKeyGroupRoleRequestRequested:
+		*s = NotificationTopicKeyGroupRoleRequestRequested
+		return nil
+	case NotificationTopicKeyGlobalRoleRequestRequested:
+		*s = NotificationTopicKeyGlobalRoleRequestRequested
+		return nil
+	case NotificationTopicKeyGroupResourceSubmitted:
+		*s = NotificationTopicKeyGroupResourceSubmitted
+		return nil
+	case NotificationTopicKeyGroupResourcePublished:
+		*s = NotificationTopicKeyGroupResourcePublished
+		return nil
+	case NotificationTopicKeyGlobalResourceSubmitted:
+		*s = NotificationTopicKeyGlobalResourceSubmitted
+		return nil
+	case NotificationTopicKeyGlobalResourcePublished:
+		*s = NotificationTopicKeyGlobalResourcePublished
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // NewOptDateTime returns new OptDateTime with value set to v.
 func NewOptDateTime(v time.Time) OptDateTime {
@@ -11259,6 +11725,12 @@ func (s *StringScalarParameterKind) UnmarshalText(data []byte) error {
 	}
 }
 
+// SubscribeGroupUserNotificationNoContent is response for SubscribeGroupUserNotification operation.
+type SubscribeGroupUserNotificationNoContent struct{}
+
+// SubscribeUserNotificationNoContent is response for SubscribeUserNotification operation.
+type SubscribeUserNotificationNoContent struct{}
+
 // Ref: #/components/schemas/TemplateParameter
 type TemplateParameter struct {
 	ID          uuid.UUID             `json:"id"`
@@ -11638,6 +12110,12 @@ func (s *TemporalCoverage) SetEnd(val OptNilDateTime) {
 
 // UnblockUserNoContent is response for UnblockUser operation.
 type UnblockUserNoContent struct{}
+
+// UnsubscribeGroupUserNotificationNoContent is response for UnsubscribeGroupUserNotification operation.
+type UnsubscribeGroupUserNotificationNoContent struct{}
+
+// UnsubscribeUserNotificationNoContent is response for UnsubscribeUserNotification operation.
+type UnsubscribeUserNotificationNoContent struct{}
 
 // Merged schema.
 // Ref: #/components/schemas/User
