@@ -90,7 +90,9 @@ func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 		if err := pgxgeom.Register(ctx, conn); err != nil {
 			return fmt.Errorf("register PostGIS codec: %w", err)
 		}
-		parameterTypes, err := conn.LoadTypes(ctx, []string{
+		customTypes, err := conn.LoadTypes(ctx, []string{
+			"web_service_visible_on",
+			"_web_service_visible_on",
 			"string_parameter_enum_option",
 			"_string_parameter_enum_option",
 			"integer_parameter_enum_option",
@@ -99,9 +101,9 @@ func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 			"_float_parameter_enum_option",
 		})
 		if err != nil {
-			return fmt.Errorf("load parameter types: %w", err)
+			return fmt.Errorf("load PostgreSQL types: %w", err)
 		}
-		conn.TypeMap().RegisterTypes(parameterTypes)
+		conn.TypeMap().RegisterTypes(customTypes)
 		return nil
 	}
 	db, err := pgxpool.NewWithConfig(context.Background(), poolConfig)

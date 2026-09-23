@@ -48,6 +48,22 @@ Nullability is schema-driven: Go column nullable iff DDL nullable or query makes
 
 Type table, `sqlc.arg`/`sqlc.narg`, `overrides:`: `references/types-and-nullability.md`.
 
+## PostgreSQL derived and composite types (pgx/v5)
+
+sqlc generates Go types and query signatures from the schema, but it does not register PostgreSQL runtime codecs in pgx. Custom derived types must be loaded and registered on every connection, normally in the pool's `AfterConnect` callback:
+
+```go
+types, err := conn.LoadTypes(ctx, []string{"my_enum", "_my_enum"})
+if err != nil {
+	return fmt.Errorf("load PostgreSQL types: %w", err)
+}
+conn.TypeMap().RegisterTypes(types)
+```
+
+For a custom enum or composite array, register both the element type and its PostgreSQL array type (usually the `_type_name` name). PostgreSQL OIDs are instance-specific; never hard-code them. Without registration, pgx cannot encode or decode custom arrays even when sqlc generated the correct Go slice type.
+
+For custom PostgreSQL composite types, define matching Go structs manually, map them with `sqlc.yaml` `overrides` (by `db_type` or column), and load/register the composite type and any array type in pgx. Do not hand-edit generated `db/sqlc` code. See `db/types/types.go` and the composite-column overrides in `sqlc.yaml` for the repository pattern.
+
 ## Advanced features
 
 - **`sqlc.embed(table)`** — return a table as a nested generated struct (`row.Post`, `row.User`). Use it when a query combines a full table with other selected tables or values, especially joins. For a single-table query that returns the full table, select its columns explicitly so sqlc returns the table struct directly instead of wrapping it in a nested field. Use explicit columns for narrower projections or when avoiding coupling to future table columns.
