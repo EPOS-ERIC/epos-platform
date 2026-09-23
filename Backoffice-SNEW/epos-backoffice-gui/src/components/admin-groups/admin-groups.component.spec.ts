@@ -61,7 +61,7 @@ describe('AdminGroupsComponent', () => {
     vi.clearAllMocks();
     apiService.getUsers.mockReturnValue(of([]));
     apiService.listPermissions.mockReturnValue(of([
-      { key: 'resource.create', label: 'Create resources', description: 'Create resources.', scope: 'GROUP' }
+      { key: 'group.resource.create', label: 'Create resources', description: 'Create resources.', scope: 'GROUP' }
     ]));
     apiService.getGroupMemberships.mockReturnValue(of([pendingMembership, activeMembershipWithRoleRequest]));
     apiService.decideGroupMembership.mockReturnValue(of(activeMembership));

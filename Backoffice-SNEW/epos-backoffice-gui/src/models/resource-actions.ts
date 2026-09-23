@@ -11,30 +11,31 @@ export type ResourceActionKey =
   | 'delete';
 
 export const RESOURCE_ACTION_PERMISSIONS = {
-  save: 'resource.edit',
-  submit: 'resource.submit',
-  publish: 'resource.publish',
-  'create-new-draft': 'resource.create',
-  archive: 'resource.unpublish',
-  reject: 'resource.reject',
-  'revert-to-draft': 'resource.reopen',
-  delete: 'resource.discard'
+  save: 'group.resource.edit',
+  submit: 'group.resource.submit',
+  publish: 'group.resource.publish',
+  'create-new-draft': 'group.resource.create',
+  archive: 'group.resource.unpublish',
+  reject: 'group.resource.reject',
+  'revert-to-draft': 'group.resource.reopen',
+  delete: 'group.resource.discard'
 } as const satisfies Record<ResourceActionKey, GroupPermission>;
 
 export const GROUP_PERMISSIONS = [
-  'resource.create',
-  'resource.edit',
-  'resource.submit',
-  'resource.withdraw',
-  'resource.reopen',
-  'resource.discard',
-  'resource.reject',
-  'resource.publish',
-  'resource.unpublish',
+  'group.resource.create',
+  'group.resource.edit',
+  'group.resource.submit',
+  'group.resource.withdraw',
+  'group.resource.reopen',
+  'group.resource.discard',
+  'group.resource.reject',
+  'group.resource.publish',
+  'group.resource.unpublish',
   'group.membership.manage',
   'group.role.manage',
   'group.permission.manage',
-  'category.manage'
+  'group.notification.manage',
+  'group.category.manage'
 ] as const satisfies readonly GroupPermission[];
 
 export type GroupPermissionCatalogItem = Omit<Permission, 'key'> & { key: GroupPermission };

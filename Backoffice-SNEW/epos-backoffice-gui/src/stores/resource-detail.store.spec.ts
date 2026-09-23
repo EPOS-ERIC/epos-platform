@@ -45,7 +45,7 @@ describe('ResourceDetailStore', () => {
   const dialogService = { dismiss: vi.fn(), prompt: vi.fn(), confirm: vi.fn() };
   const router = { navigate: vi.fn() };
   const actionError = signal('');
-  const currentUserStore = { groupPermissions: vi.fn(() => ['resource.edit', 'resource.submit', 'resource.discard']) };
+  const currentUserStore = { groupPermissions: vi.fn(() => ['group.resource.edit', 'group.resource.submit', 'group.resource.discard']) };
   const resourceActions = {
     error: actionError.asReadonly(),
     saving: signal(false),
@@ -163,7 +163,7 @@ describe('ResourceDetailStore', () => {
 
   it('derives capabilities from effective group permissions', () => {
     apiService.getResourceVersion.mockReturnValue(of(datasetVersion({ status: 'SUBMITTED' })));
-    currentUserStore.groupPermissions.mockReturnValue(['resource.publish', 'resource.reject']);
+    currentUserStore.groupPermissions.mockReturnValue(['group.resource.publish', 'group.resource.reject']);
 
     store.load(context('dataset', 'dataset-id'));
 
@@ -171,7 +171,7 @@ describe('ResourceDetailStore', () => {
     expect(store.capabilities().reject).toBe(true);
     expect(store.canEdit()).toBe(false);
     expect(store.sidebarActions()).toEqual([]);
-    expect(resourceActions.sidebarActions).toHaveBeenCalledWith('SUBMITTED', ['resource.publish', 'resource.reject']);
+    expect(resourceActions.sidebarActions).toHaveBeenCalledWith('SUBMITTED', ['group.resource.publish', 'group.resource.reject']);
   });
 
   it('only enables version history for a loaded draft', () => {

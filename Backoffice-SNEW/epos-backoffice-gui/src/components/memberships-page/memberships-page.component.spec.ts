@@ -56,8 +56,8 @@ describe('MembershipsPageComponent', () => {
     currentUser.set(user);
     currentUserStore.refresh.mockResolvedValue(undefined);
     apiService.listPermissions.mockReturnValue(of([
-      { key: 'resource.create', label: 'Create resources', description: 'Create resources in this group.', scope: 'GROUP' },
-      { key: 'resource.edit', label: 'Edit resources', description: 'Edit resources in this group.', scope: 'GROUP' }
+      { key: 'group.resource.create', label: 'Create resources', description: 'Create resources in this group.', scope: 'GROUP' },
+      { key: 'group.resource.edit', label: 'Edit resources', description: 'Edit resources in this group.', scope: 'GROUP' }
     ]));
     apiService.requestGroupRole.mockReturnValue(of({
       id: 'role-request-id',
@@ -100,8 +100,8 @@ describe('MembershipsPageComponent', () => {
         ...user.memberships[0],
         status: 'ACTIVE',
         roles: ['EDITOR'],
-        granted_permissions: ['resource.edit'],
-        role_permissions: ['resource.create', 'resource.edit']
+        granted_permissions: ['group.resource.edit'],
+        role_permissions: ['group.resource.create', 'group.resource.edit']
       }]
     });
     const fixture = TestBed.createComponent(MembershipsPageComponent);

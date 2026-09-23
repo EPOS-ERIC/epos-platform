@@ -76,8 +76,8 @@ describe('CurrentUserStore', () => {
         group: { id: 'group-id', name: 'Data Group' },
         status: 'ACTIVE',
         roles: ['EDITOR'],
-        granted_permissions: ['resource.submit'],
-        role_permissions: ['resource.create', 'resource.edit'],
+        granted_permissions: ['group.resource.submit'],
+        role_permissions: ['group.resource.create', 'group.resource.edit'],
         role_requests: [],
         created_at: '2026-09-14T08:00:00Z',
         updated_at: '2026-09-14T08:00:00Z'
@@ -85,21 +85,36 @@ describe('CurrentUserStore', () => {
     });
 
     expect(store.groupPermissions('group-id')).toEqual([
-      'resource.submit',
-      'resource.create',
-      'resource.edit'
+      'group.resource.submit',
+      'group.resource.create',
+      'group.resource.edit'
     ]);
-    expect(store.hasGroupPermission('group-id', 'resource.edit')).toBe(true);
-    expect(store.hasGroupPermission('another-group', 'resource.edit')).toBe(false);
+    expect(store.hasGroupPermission('group-id', 'group.resource.edit')).toBe(true);
+    expect(store.hasGroupPermission('another-group', 'group.resource.edit')).toBe(false);
   });
 
   it('grants every resource permission to global administrators', () => {
     const store = TestBed.inject(CurrentUserStore);
     store.user.set(currentUser);
 
-    expect(store.hasGroupPermission('group-id', 'resource.publish')).toBe(true);
-    expect(store.hasGroupPermission('group-id', 'resource.unpublish')).toBe(true);
-    expect(store.hasGroupPermission('group-id', 'category.manage')).toBe(true);
+    expect(store.hasGroupPermission('group-id', 'group.resource.publish')).toBe(true);
+    expect(store.hasGroupPermission('group-id', 'group.resource.unpublish')).toBe(true);
+    expect(store.hasGroupPermission('group-id', 'group.category.manage')).toBe(true);
+  });
+
+  it('applies matching global permissions to every group', () => {
+    const store = TestBed.inject(CurrentUserStore);
+    store.user.set({
+      ...currentUser,
+      global_roles: [],
+      global_granted_permissions: ['global.resource.publish'],
+      global_role_permissions: ['global.category.manage']
+    });
+
+    expect(store.groupPermissions('group-id')).toEqual([
+      'group.resource.publish',
+      'group.category.manage'
+    ]);
   });
 
   it('ignores permissions from inactive memberships', () => {
@@ -111,8 +126,8 @@ describe('CurrentUserStore', () => {
         group: { id: 'group-id', name: 'Data Group' },
         status: 'PENDING',
         roles: [],
-        granted_permissions: ['resource.create'],
-        role_permissions: ['resource.edit'],
+        granted_permissions: ['group.resource.create'],
+        role_permissions: ['group.resource.edit'],
         role_requests: [],
         created_at: '2026-09-14T08:00:00Z',
         updated_at: '2026-09-14T08:00:00Z'

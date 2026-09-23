@@ -55,32 +55,101 @@ export type GlobalPermission =
   | "global.membership.manage"
   | "global.role.manage"
   | "global.permission.manage"
-  | "organization.manage"
-  | "contact_point.manage"
-  | "category_scheme.manage";
+  | "global.notification.manage"
+  | "global.organization.manage"
+  | "global.contact_point.manage"
+  | "global.category_scheme.manage"
+  | "global.resource.create"
+  | "global.resource.edit"
+  | "global.resource.submit"
+  | "global.resource.withdraw"
+  | "global.resource.reopen"
+  | "global.resource.discard"
+  | "global.resource.reject"
+  | "global.resource.publish"
+  | "global.resource.unpublish"
+  | "global.category.manage";
 
 /**
  * Group-scoped permission key.
  */
 export type GroupPermission =
-  | "resource.create"
-  | "resource.edit"
-  | "resource.submit"
-  | "resource.withdraw"
-  | "resource.reopen"
-  | "resource.discard"
-  | "resource.reject"
-  | "resource.publish"
-  | "resource.unpublish"
+  | "group.resource.create"
+  | "group.resource.edit"
+  | "group.resource.submit"
+  | "group.resource.withdraw"
+  | "group.resource.reopen"
+  | "group.resource.discard"
+  | "group.resource.reject"
+  | "group.resource.publish"
+  | "group.resource.unpublish"
   | "group.membership.manage"
   | "group.role.manage"
   | "group.permission.manage"
-  | "category.manage";
+  | "group.notification.manage"
+  | "group.category.manage";
 
 /**
  * Scope at which a permission is evaluated.
  */
 export type PermissionScope = "GLOBAL" | "GROUP";
+
+export type NotificationScope = "GROUP" | "GLOBAL";
+
+export type NotificationChannel = "EMAIL";
+
+export type NotificationTopicKey =
+  | "group.membership.requested"
+  | "global.membership.requested"
+  | "group.role_request.requested"
+  | "global.role_request.requested"
+  | "group.resource.submitted"
+  | "group.resource.published"
+  | "global.resource.submitted"
+  | "global.resource.published";
+
+export type GlobalNotificationTopicKey =
+  | "global.membership.requested"
+  | "global.role_request.requested"
+  | "global.resource.submitted"
+  | "global.resource.published";
+
+export type GroupNotificationTopicKey =
+  | "group.membership.requested"
+  | "group.role_request.requested"
+  | "group.resource.submitted"
+  | "group.resource.published";
+
+export type NotificationTopic = {
+  key: NotificationTopicKey;
+  /**
+   * Human-readable notification topic label.
+   *
+   * @minLength 1
+   */
+  label: string;
+  /**
+   * Human-readable notification topic description.
+   *
+   * @minLength 1
+   */
+  description: string;
+  scope: NotificationScope;
+  required_permissions: string[];
+};
+
+export type NotificationSubscription = {
+  /**
+   * @minLength 1
+   */
+  user_id: string;
+  /**
+   * @format uuid
+   */
+  group_id?: string;
+  topic_key: NotificationTopicKey;
+  channel: NotificationChannel;
+};
 
 export type Permission = {
   /**

@@ -42,12 +42,12 @@ describe('ResourceActionsService', () => {
   });
 
   it('returns only lifecycle actions allowed by their individual permissions', () => {
-    expect(service.sidebarActions('DRAFT', ['resource.edit']).map((action) => action.key)).toEqual(['save']);
-    expect(service.sidebarActions('DRAFT', ['resource.submit']).map((action) => action.key)).toEqual(['submit']);
-    expect(service.sidebarActions('SUBMITTED', ['resource.publish']).map((action) => action.key)).toEqual(['publish']);
-    expect(service.sidebarActions('SUBMITTED', ['resource.reject']).map((action) => action.key)).toEqual(['reject']);
-    expect(service.sidebarActions('PUBLISHED', ['resource.create']).map((action) => action.key)).toEqual(['create-new-draft']);
-    expect(service.sidebarActions('PUBLISHED', ['resource.unpublish']).map((action) => action.key)).toEqual(['archive']);
+    expect(service.sidebarActions('DRAFT', ['group.resource.edit']).map((action) => action.key)).toEqual(['save']);
+    expect(service.sidebarActions('DRAFT', ['group.resource.submit']).map((action) => action.key)).toEqual(['submit']);
+    expect(service.sidebarActions('SUBMITTED', ['group.resource.publish']).map((action) => action.key)).toEqual(['publish']);
+    expect(service.sidebarActions('SUBMITTED', ['group.resource.reject']).map((action) => action.key)).toEqual(['reject']);
+    expect(service.sidebarActions('PUBLISHED', ['group.resource.create']).map((action) => action.key)).toEqual(['create-new-draft']);
+    expect(service.sidebarActions('PUBLISHED', ['group.resource.unpublish']).map((action) => action.key)).toEqual(['archive']);
   });
 
   it('tracks a pending action and disables the other lifecycle actions', () => {
@@ -57,7 +57,7 @@ describe('ResourceActionsService', () => {
     service.submit(context, 'Resource title').subscribe();
 
     expect(service.saving()).toBe(true);
-    expect(service.sidebarActions('DRAFT', ['resource.edit', 'resource.submit']).every((action) => action.disabled)).toBe(true);
+    expect(service.sidebarActions('DRAFT', ['group.resource.edit', 'group.resource.submit']).every((action) => action.disabled)).toBe(true);
 
     request.next({ id: context.resourceId, resourceType: context.resourceType, status: 'SUBMITTED' });
     request.complete();

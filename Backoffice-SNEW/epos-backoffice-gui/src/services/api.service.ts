@@ -16,7 +16,11 @@ import type {
   DiscoveryResourceType,
   Group,
   GroupMembership,
+  GroupNotificationTopicKey,
   GroupPermission,
+  GlobalNotificationTopicKey,
+  NotificationSubscription,
+  NotificationTopic,
   ResourceVersionReference,
   ResourceVersionSummary,
   RoleRequest,
@@ -337,6 +341,34 @@ export class ApiService {
 
   listPermissions(): Observable<Permission[]> {
     return this.http.get<Permission[]>(`${this.baseUrl}/permissions`);
+  }
+
+  listNotificationTopics(): Observable<NotificationTopic[]> {
+    return this.http.get<NotificationTopic[]>(`${this.baseUrl}/notification-topics`);
+  }
+
+  listUserNotificationSubscriptions(userId: string): Observable<NotificationSubscription[]> {
+    return this.http.get<NotificationSubscription[]>(
+      `${this.baseUrl}/users/${encodeURIComponent(userId)}/notification-subscriptions`,
+      { headers: { Authorization: `Bearer ${this.bearerToken}` } }
+    );
+  }
+
+  setUserNotificationSubscription(userId: string, topicKey: GlobalNotificationTopicKey, enabled: boolean): Observable<void> {
+    const url = `${this.baseUrl}/users/${encodeURIComponent(userId)}/notification-subscriptions/${encodeURIComponent(topicKey)}`;
+    const options = { headers: { Authorization: `Bearer ${this.bearerToken}` } };
+    return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
+  }
+
+  setGroupUserNotificationSubscription(
+    groupId: string,
+    userId: string,
+    topicKey: GroupNotificationTopicKey,
+    enabled: boolean
+  ): Observable<void> {
+    const url = `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/notification-subscriptions/${encodeURIComponent(userId)}/${encodeURIComponent(topicKey)}`;
+    const options = { headers: { Authorization: `Bearer ${this.bearerToken}` } };
+    return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
   }
 
   getGroupMemberships(groupId: string): Observable<GroupMembership[]> {

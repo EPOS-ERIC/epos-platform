@@ -17,6 +17,15 @@ export type GetUserID = string;
 
 export type UserID = string;
 
+/**
+ * @minLength 1
+ */
+export type NotificationUserId = string;
+
+export type GlobalNotificationTopicKey = Schemas.GlobalNotificationTopicKey;
+
+export type GroupNotificationTopicKey = Schemas.GroupNotificationTopicKey;
+
 export type Permission = Schemas.GlobalPermission;
 
 /**

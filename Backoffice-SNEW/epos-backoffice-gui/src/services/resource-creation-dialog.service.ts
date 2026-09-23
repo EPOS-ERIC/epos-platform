@@ -27,7 +27,7 @@ export class ResourceCreationDialogService {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly groups = computed(() => this.groupsStore.groups().filter((group) =>
-    this.currentUserStore.hasGroupPermission(group.id, 'resource.create')
+    this.currentUserStore.hasGroupPermission(group.id, 'group.resource.create')
   ));
   readonly groupsLoading = this.groupsStore.loading;
   readonly resourceTypes: Array<{ label: string; value: DiscoveryResourceType }> = [
@@ -70,7 +70,7 @@ export class ResourceCreationDialogService {
     if (
       this.saving()
       || !groupId
-      || !this.currentUserStore.hasGroupPermission(groupId, 'resource.create')
+      || !this.currentUserStore.hasGroupPermission(groupId, 'group.resource.create')
       || !title
       || !description
     ) {

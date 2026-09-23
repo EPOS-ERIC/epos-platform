@@ -101,7 +101,7 @@ export class MainContainerComponent {
   protected readonly selectedDataTypes = signal(this.initialResultsFilters.dataTypes);
   protected readonly selectedVersioningStatuses = signal(this.initialResultsFilters.versioningStatuses);
   protected readonly canCreateResource = computed(() =>
-    this.currentUserStore.hasGroupPermission(this.selectedGroupId(), 'resource.create')
+    this.currentUserStore.hasGroupPermission(this.selectedGroupId(), 'group.resource.create')
   );
   protected readonly canManageSelectedGroup = computed(() => {
     const groupId = this.selectedGroupId();

@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import type { GroupPermission, User } from '../../generated/backofficeSchemas';
+import type { GlobalPermission, GroupPermission, User } from '../../generated/backofficeSchemas';
 import { GROUP_PERMISSIONS } from '../models/resource-actions';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
@@ -22,10 +22,19 @@ export class CurrentUserStore {
     if (!user || !groupId) return [];
     if (user.global_roles.includes('ADMIN')) return [...GROUP_PERMISSIONS];
 
+    const globalPermissions = new Set([
+      ...user.global_granted_permissions,
+      ...user.global_role_permissions
+    ]);
+    const inheritedPermissions = GROUP_PERMISSIONS.filter((permission) =>
+      globalPermissions.has(permission.replace(/^group\./, 'global.') as GlobalPermission)
+    );
     const membership = user.memberships.find((item) => item.group.id === groupId && item.status === 'ACTIVE');
-    return membership
-      ? [...new Set([...membership.granted_permissions, ...membership.role_permissions])]
-      : [];
+    return [...new Set([
+      ...inheritedPermissions,
+      ...(membership?.granted_permissions ?? []),
+      ...(membership?.role_permissions ?? [])
+    ])];
   }
 
   hasGroupPermission(groupId: string, permission: GroupPermission): boolean {

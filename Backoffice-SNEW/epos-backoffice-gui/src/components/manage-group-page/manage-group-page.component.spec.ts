@@ -13,7 +13,7 @@ describe('ManageGroupPageComponent', () => {
     user: { id: 'admin-id', email: 'admin@example.org', given_name: 'Group', family_name: 'Admin' },
     status: 'ACTIVE',
     roles: ['GROUP_ADMIN'],
-    granted_permissions: ['resource.edit'],
+    granted_permissions: ['group.resource.edit'],
     role_permissions: ['group.membership.manage'],
     role_requests: [],
     created_at: '2026-09-14T08:00:00Z',
@@ -24,7 +24,7 @@ describe('ManageGroupPageComponent', () => {
     status: 'ACTIVE',
     roles: ['EDITOR'],
     granted_permissions: [],
-    role_permissions: ['resource.create', 'resource.edit'],
+    role_permissions: ['group.resource.create', 'group.resource.edit'],
     role_requests: [],
     created_at: '2026-09-14T08:00:00Z',
     updated_at: '2026-09-14T08:00:00Z'
@@ -43,9 +43,9 @@ describe('ManageGroupPageComponent', () => {
     vi.clearAllMocks();
     apiService.getGroupMemberships.mockReturnValue(of([groupAdmin, member]));
     apiService.listPermissions.mockReturnValue(of([
-      { key: 'resource.create', label: 'Create resources', description: 'Create resources.', scope: 'GROUP' },
-      { key: 'resource.edit', label: 'Edit resources', description: 'Edit resources.', scope: 'GROUP' },
-      { key: 'resource.submit', label: 'Submit resources', description: 'Submit resources.', scope: 'GROUP' }
+      { key: 'group.resource.create', label: 'Create resources', description: 'Create resources.', scope: 'GROUP' },
+      { key: 'group.resource.edit', label: 'Edit resources', description: 'Edit resources.', scope: 'GROUP' },
+      { key: 'group.resource.submit', label: 'Submit resources', description: 'Submit resources.', scope: 'GROUP' }
     ]));
     apiService.removeGroupMember.mockReturnValue(of(undefined));
     apiService.setGroupMembershipRole.mockReturnValue(of(undefined));
@@ -104,7 +104,7 @@ describe('ManageGroupPageComponent', () => {
 
     directPermissionInput.click();
 
-    expect(apiService.setGroupMembershipPermission).toHaveBeenCalledWith('group-id', 'member-id', 'resource.submit', true);
+    expect(apiService.setGroupMembershipPermission).toHaveBeenCalledWith('group-id', 'member-id', 'group.resource.submit', true);
   });
 
   it('removes a regular member after confirmation', async () => {
