@@ -175,6 +175,7 @@ INSERT INTO role_permissions (role_key, permission_key) VALUES
     ('GROUP_ADMIN', 'group.role.manage'),
     ('GROUP_ADMIN', 'group.permission.manage'),
     ('GROUP_ADMIN', 'group.notification.manage'),
+    ('GROUP_ADMIN', 'group.category.manage'),
     ('ADMIN',       'global.membership.manage'),
     ('ADMIN',       'global.role.manage'),
     ('ADMIN',       'global.permission.manage'),
