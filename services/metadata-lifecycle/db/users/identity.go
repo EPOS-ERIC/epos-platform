@@ -330,13 +330,11 @@ func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error 
 		return fmt.Errorf("identity database pool is not configured")
 	}
 
-	var rows int64
 	err := dbtx.Run(ctx, r.db, r.Queries, func(queries *sqlc.Queries) error {
 		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
 			return fmt.Errorf("lock global role changes: %w", err)
 		}
-		var err error
-		rows, err = queries.RemoveGlobalAdmin(ctx, userID)
+		rows, err := queries.RemoveGlobalAdmin(ctx, userID)
 		if err != nil {
 			return fmt.Errorf("remove global admin role: %w", err)
 		}
