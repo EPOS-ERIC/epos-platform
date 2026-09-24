@@ -255,7 +255,7 @@ type Handler interface {
 	ListUserNotificationSubscriptions(ctx context.Context, params ListUserNotificationSubscriptionsParams) ([]NotificationSubscription, error)
 	// ListUsers implements listUsers operation.
 	//
-	// Retrieve all user profiles. Allowed to super admins only.
+	// Retrieve all user profiles. Requires global membership, role, or permission management permission.
 	//
 	// GET /users
 	ListUsers(ctx context.Context) ([]UserListItem, error)

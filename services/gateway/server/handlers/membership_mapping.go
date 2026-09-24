@@ -143,6 +143,8 @@ func toAPIProtoGroupPermissions(values []metadatalifecyclev1.GroupPermission) ([
 			permission = gatewayapi.GroupPermissionGroupRoleManage
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE:
 			permission = gatewayapi.GroupPermissionGroupPermissionManage
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_NOTIFICATION_MANAGE:
+			permission = gatewayapi.GroupPermissionGroupNotificationManage
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE:
 			permission = gatewayapi.GroupPermissionGroupCategoryManage
 		default:

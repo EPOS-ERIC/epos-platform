@@ -374,7 +374,7 @@ func (UnimplementedHandler) ListUserNotificationSubscriptions(ctx context.Contex
 
 // ListUsers implements listUsers operation.
 //
-// Retrieve all user profiles. Allowed to super admins only.
+// Retrieve all user profiles. Requires global membership, role, or permission management permission.
 //
 // GET /users
 func (UnimplementedHandler) ListUsers(ctx context.Context) (r []UserListItem, _ error) {
