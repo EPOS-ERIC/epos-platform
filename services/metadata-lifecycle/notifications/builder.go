@@ -79,6 +79,8 @@ func (s *Service) Build(ctx context.Context, event domain.NotificationEvent) ([]
 			if err != nil {
 				return nil, fmt.Errorf("list global notification recipients: %w", err)
 			}
+		default:
+			return nil, fmt.Errorf("unknown notification scope %q", route.scope)
 		}
 
 		for _, recipient := range recipients {

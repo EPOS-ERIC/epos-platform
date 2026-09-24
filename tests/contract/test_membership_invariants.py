@@ -442,3 +442,25 @@ class MembershipInvariantsContractTest(unittest.TestCase):
         )
         self.assertEqual(new_role_request.status_code, 201)
         self.assertNotEqual(new_role_request.json()["id"], pending_role_id)
+
+    def test_list_group_memberships_returns_notification_permission(self) -> None:
+        """Catch missing group.notification.manage mapping in ListGroupMemberships."""
+
+        suffix = uuid4().hex
+        group_id = self.create_group(f"notification-permission-{suffix}")
+        member, member_id = self.create_user("notification-member", suffix)
+        requested = self.request_membership(member, group_id, [])
+        self.assertEqual(requested["status"], "PENDING")
+        accepted = self.decide_membership(group_id, member_id, "accept")
+        self.assertEqual(accepted["status"], "ACTIVE")
+
+        granted = self.gateway.put(
+            "/groups/{groupId}/memberships/{userId}/permissions/{permission}",
+            groupId=group_id,
+            userId=member_id,
+            permission="group.notification.manage",
+        )
+        self.assertEqual(granted.status_code, 204)
+
+        membership = self.require_group_membership(group_id, member_id)
+        self.assertIn("group.notification.manage", membership["granted_permissions"])

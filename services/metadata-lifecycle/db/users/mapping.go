@@ -32,6 +32,8 @@ func toDomainUserSummary(row sqlc.ListUsersRow, globalRoles, globalGrantedPermis
 		GlobalRoles:              roles,
 		GlobalGrantedPermissions: globalGrantedPermissionValues,
 		GlobalRolePermissions:    globalRolePermissionValues,
+		CreatedAt:                row.CreatedAt,
+		UpdatedAt:                row.UpdatedAt,
 	})
 	if err != nil {
 		return domain.UserSummary{}, fmt.Errorf("construct user summary: %w", err)

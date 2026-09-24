@@ -97,8 +97,10 @@ func (c *MetadataLifecycle) wrapError(ctx context.Context, operation string, err
 		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
 	case codes.Unavailable:
 		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamUnavailable)
-	default:
+	case codes.OK, codes.Unknown, codes.ResourceExhausted, codes.Unimplemented, codes.Internal, codes.DataLoss:
 		// Internal, Unknown, ResourceExhausted, and Unimplemented are upstream errors.
+		return fmt.Errorf("%s: %w", operation, err)
+	default:
 		return fmt.Errorf("%s: %w", operation, err)
 	}
 }

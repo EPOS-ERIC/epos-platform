@@ -7368,7 +7368,7 @@ func (s *Server) handleListUserNotificationSubscriptionsRequest(args [1]string, 
 
 // handleListUsersRequest handles listUsers operation.
 //
-// Retrieve all user profiles. Allowed to super admins only.
+// Retrieve all user profiles. Requires global membership, role, or permission management permission.
 //
 // GET /users
 func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

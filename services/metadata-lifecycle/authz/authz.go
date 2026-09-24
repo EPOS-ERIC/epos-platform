@@ -189,14 +189,6 @@ func (a *Authorizer) CanListUsers(ctx context.Context, userID string) (result do
 }
 
 func (a *Authorizer) canManageUserDirectory(ctx context.Context, userID string) (domain.Result, error) {
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
-	}
-
 	for _, permission := range []domain.GlobalPermission{
 		domain.GlobalPermissionMembershipManage,
 		domain.GlobalPermissionRoleManage,

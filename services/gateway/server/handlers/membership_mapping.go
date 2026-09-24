@@ -143,6 +143,8 @@ func toAPIProtoGroupPermissions(values []metadatalifecyclev1.GroupPermission) ([
 			permission = gatewayapi.GroupPermissionGroupRoleManage
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_PERMISSION_MANAGE:
 			permission = gatewayapi.GroupPermissionGroupPermissionManage
+		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_NOTIFICATION_MANAGE:
+			permission = gatewayapi.GroupPermissionGroupNotificationManage
 		case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE:
 			permission = gatewayapi.GroupPermissionGroupCategoryManage
 		default:
@@ -230,9 +232,10 @@ func toAPIRoleRequestRole(value metadatalifecyclev1.GroupRole) (gatewayapi.RoleR
 		return gatewayapi.RoleRequestRoleEDITOR, nil
 	case metadatalifecyclev1.GroupRole_GROUP_ROLE_REVIEWER:
 		return gatewayapi.RoleRequestRoleREVIEWER, nil
+	case metadatalifecyclev1.GroupRole_GROUP_ROLE_ADMIN:
 	default:
-		return "", fmt.Errorf("unsupported role request role: %s", value.String())
 	}
+	return "", fmt.Errorf("unsupported role request role: %s", value.String())
 }
 
 func toAPIRoleRequestStatus(value metadatalifecyclev1.RoleRequestStatus) (gatewayapi.RoleRequestStatus, error) {

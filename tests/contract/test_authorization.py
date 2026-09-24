@@ -327,6 +327,7 @@ class AuthorizationContractTest(unittest.TestCase):
 
         suffix = str(uuid4())
         directory_manager, _ = self.create_user("directory-manager", suffix)
+        role_manager, _ = self.create_user("role-manager", suffix)
         permission_manager, _ = self.create_user("permission-manager", suffix)
         denied, _ = self.create_user("directory-denied", suffix)
         target, target_id = self.create_user("directory-target", suffix)
@@ -339,6 +340,10 @@ class AuthorizationContractTest(unittest.TestCase):
             self.user_id(permission_manager),
             "global.permission.manage",
         )
+        self.grant_global_permission(
+            self.user_id(role_manager),
+            "global.role.manage",
+        )
 
         missing_token_response = self.gateway.get(
             "/users",
@@ -346,18 +351,22 @@ class AuthorizationContractTest(unittest.TestCase):
         )
         self.assert_unauthorized(missing_token_response)
 
-        users_response = directory_manager.get("/users")
-        self.assertEqual(users_response.status_code, 200)
-        self.assertTrue(
-            any(user["id"] == target_id for user in users_response.json())
-        )
+        target_profile = target.get("/users/{id}", id="self").json()
+        for manager in (directory_manager, role_manager, permission_manager):
+            users_response = manager.get("/users")
+            self.assertEqual(users_response.status_code, 200)
+            listed_target = next(
+                user for user in users_response.json() if user["id"] == target_id
+            )
+            self.assertEqual(listed_target["created_at"], target_profile["created_at"])
+            self.assertEqual(listed_target["updated_at"], target_profile["updated_at"])
 
-        target_response = directory_manager.get(
-            "/users/{id}",
-            id=target_id,
-        )
-        self.assertEqual(target_response.status_code, 200)
-        self.assertEqual(target_response.json()["id"], target_id)
+            target_response = manager.get(
+                "/users/{id}",
+                id=target_id,
+            )
+            self.assertEqual(target_response.status_code, 200)
+            self.assertEqual(target_response.json()["id"], target_id)
 
         admin_profile_response = self.gateway.get("/users/{id}", id="self")
         self.assertEqual(admin_profile_response.status_code, 200)
@@ -391,6 +400,7 @@ class AuthorizationContractTest(unittest.TestCase):
             id=target_id,
         )
         self.assert_forbidden(denied_target_response)
+        self.assert_forbidden(denied.get("/users"))
         self.assertEqual(denied.get("/users/{id}", id="self").status_code, 200)
 
         permission_manager_id = self.user_id(permission_manager)

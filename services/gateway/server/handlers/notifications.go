@@ -223,9 +223,10 @@ func fromProtoNotificationScope(value metadatalifecyclev1.NotificationScope) (ga
 		return gatewayapi.NotificationScopeGROUP, nil
 	case metadatalifecyclev1.NotificationScope_NOTIFICATION_SCOPE_GLOBAL:
 		return gatewayapi.NotificationScopeGLOBAL, nil
+	case metadatalifecyclev1.NotificationScope_NOTIFICATION_SCOPE_DIRECT:
 	default:
-		return "", fmt.Errorf("metadata-lifecycle returned unknown notification scope: %v", value)
 	}
+	return "", fmt.Errorf("unsupported notification scope: %v", value)
 }
 
 func fromProtoNotificationChannel(value metadatalifecyclev1.NotificationChannel) (gatewayapi.NotificationChannel, error) {

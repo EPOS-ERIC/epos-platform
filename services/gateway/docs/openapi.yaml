@@ -364,7 +364,7 @@ paths:
       tags:
         - Users
       summary: List users
-      description: Retrieve all user profiles. Allowed to super admins only.
+      description: Retrieve all user profiles. Requires global membership, role, or permission management permission.
       operationId: listUsers
       security:
         - bearerAuth: []

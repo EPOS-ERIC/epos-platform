@@ -1045,7 +1045,9 @@ SELECT
     users.email,
     users.given_name,
     users.family_name,
-    users.status
+    users.status,
+    users.created_at,
+    users.updated_at
 FROM
     users
 ORDER BY
@@ -1060,6 +1062,8 @@ type ListUsersRow struct {
 	GivenName  string
 	FamilyName string
 	Status     UserStatus
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
@@ -1077,6 +1081,8 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 			&i.GivenName,
 			&i.FamilyName,
 			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

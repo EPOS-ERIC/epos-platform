@@ -36,7 +36,9 @@ SELECT
     users.email,
     users.given_name,
     users.family_name,
-    users.status
+    users.status,
+    users.created_at,
+    users.updated_at
 FROM
     users
 ORDER BY
