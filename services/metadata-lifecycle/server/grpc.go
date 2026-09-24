@@ -183,6 +183,17 @@ func logUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {
 			codes.DataLoss,
 			codes.DeadlineExceeded:
 			level = slog.LevelError
+		case codes.OK,
+			codes.Canceled,
+			codes.InvalidArgument,
+			codes.NotFound,
+			codes.AlreadyExists,
+			codes.PermissionDenied,
+			codes.FailedPrecondition,
+			codes.Aborted,
+			codes.OutOfRange,
+			codes.Unauthenticated:
+		default:
 		}
 		if level == slog.LevelError {
 			span := trace.SpanFromContext(ctx)

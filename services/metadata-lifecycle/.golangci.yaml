@@ -26,6 +26,7 @@ linters:
     - containedctx
     - copyloopvar
     - wrapcheck
+    - exhaustive
   exclusions:
     paths:
       - ".*gen/.*"
@@ -43,3 +44,6 @@ linters:
     wrapcheck:
       extra-ignore-sigs:
         - status.Error
+    exhaustive:
+      default-case-required: true
+      ignore-enum-members: "(_UNSPECIFIED|Unspecified)$"

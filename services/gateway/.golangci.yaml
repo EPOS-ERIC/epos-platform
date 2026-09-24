@@ -26,6 +26,7 @@ linters:
     - containedctx
     - copyloopvar
     - wrapcheck
+    - exhaustive
   exclusions:
     paths:
       - ".*gen/.*"
@@ -41,3 +42,6 @@ linters:
     goconst:
       ignore-string-values:
         - "true"
+    exhaustive:
+      default-case-required: true
+      ignore-enum-members: "(_UNSPECIFIED|Unspecified)$"

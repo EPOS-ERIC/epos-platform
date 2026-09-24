@@ -232,9 +232,10 @@ func toAPIRoleRequestRole(value metadatalifecyclev1.GroupRole) (gatewayapi.RoleR
 		return gatewayapi.RoleRequestRoleEDITOR, nil
 	case metadatalifecyclev1.GroupRole_GROUP_ROLE_REVIEWER:
 		return gatewayapi.RoleRequestRoleREVIEWER, nil
+	case metadatalifecyclev1.GroupRole_GROUP_ROLE_ADMIN:
 	default:
-		return "", fmt.Errorf("unsupported role request role: %s", value.String())
 	}
+	return "", fmt.Errorf("unsupported role request role: %s", value.String())
 }
 
 func toAPIRoleRequestStatus(value metadatalifecyclev1.RoleRequestStatus) (gatewayapi.RoleRequestStatus, error) {

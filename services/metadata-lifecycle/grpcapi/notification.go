@@ -199,8 +199,18 @@ func toProtoNotificationTopicKey(value domain.NotificationTopicKey) (metadatalif
 		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED, nil
 	case domain.NotificationTopicGlobalResourcePublished:
 		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED, nil
+	case domain.NotificationTopicDirectMembershipAccepted,
+		domain.NotificationTopicDirectMembershipRejected,
+		domain.NotificationTopicDirectRoleRequestAccepted,
+		domain.NotificationTopicDirectRoleRequestRejected,
+		domain.NotificationTopicDirectRoleAssigned,
+		domain.NotificationTopicDirectPermissionAssigned,
+		domain.NotificationTopicDirectResourcePublished,
+		domain.NotificationTopicDirectResourceRejected,
+		domain.NotificationTopicDirectResourceUnpublished:
+		return 0, status.Errorf(codes.Internal, "direct notification topic key is not subscribable: %q", value)
 	default:
-		return 0, status.Errorf(codes.Internal, "notification topic key is not subscribable: %q", value)
+		return 0, status.Errorf(codes.Internal, "unknown notification topic key: %q", value)
 	}
 }
 

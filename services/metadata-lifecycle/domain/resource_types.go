@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -67,6 +68,10 @@ func NewRejectionNote(status Status, note *string) (*string, error) {
 		if note == nil {
 			return nil, errors.New("rejection note is required for rejected resource")
 		}
+	case Draft, Submitted:
+		// No rejection-note constraint, it's optional here
+	default:
+		return nil, fmt.Errorf("invalid status when checking rejection note: %q", status)
 	}
 	return note, nil
 }
