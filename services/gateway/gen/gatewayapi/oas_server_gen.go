@@ -249,7 +249,10 @@ type Handler interface {
 	ListResourceVersions(ctx context.Context, params ListResourceVersionsParams) ([]ResourceVersionSummary, error)
 	// ListUserNotificationSubscriptions implements listUserNotificationSubscriptions operation.
 	//
-	// List user notification subscriptions.
+	// Returns all subscriptions when the actor is the user or has global notification management
+	// permission. Otherwise, returns only subscriptions for groups where the actor has group notification
+	// management permission and the target user has active membership. Returns forbidden when the actor
+	// has no qualifying group access.
 	//
 	// GET /users/{userId}/notification-subscriptions
 	ListUserNotificationSubscriptions(ctx context.Context, params ListUserNotificationSubscriptionsParams) ([]NotificationSubscription, error)

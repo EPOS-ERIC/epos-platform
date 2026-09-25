@@ -28,6 +28,7 @@ type Store interface {
 type Authorizer interface {
 	CanManageGlobalNotificationSubscriptions(context.Context, string, string) (domain.Result, error)
 	CanManageGroupNotificationSubscriptions(context.Context, string, string, uuid.UUID) (domain.Result, error)
+	GroupsWithAnyPermissionForActiveMember(context.Context, string, string, []domain.GroupPermission) ([]uuid.UUID, error)
 }
 
 type Service struct {
@@ -69,14 +70,44 @@ func (s *Service) ListSubscriptions(ctx context.Context, actor domain.Actor, use
 	if err != nil {
 		return nil, fmt.Errorf("authorize notification subscription list: %w", err)
 	}
+
+	visibleGroupIDs := map[uuid.UUID]struct{}{}
 	if !allowed.Allowed {
-		return nil, domain.ErrNotificationForbidden
+		groupIDs, err := s.authorizer.GroupsWithAnyPermissionForActiveMember(ctx, string(actor), userID, []domain.GroupPermission{domain.GroupPermissionNotificationManage})
+		if err != nil {
+			return nil, fmt.Errorf("authorize group notification subscription list: %w", err)
+		}
+		if len(groupIDs) == 0 {
+			return nil, domain.ErrNotificationForbidden
+		}
+
+		for _, groupID := range groupIDs {
+			visibleGroupIDs[groupID] = struct{}{}
+		}
 	}
+
 	subscriptions, err := s.store.ListSubscriptions(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("list notification subscriptions: %w", err)
 	}
-	return subscriptions, nil
+
+	// if the user can manage global notifications or is self then return all subsciptions
+	if allowed.Allowed {
+		return subscriptions, nil
+	}
+
+	visible := make([]domain.NotificationSubscription, 0, len(subscriptions))
+	for _, subscription := range subscriptions {
+		if subscription.GroupID == nil {
+			continue
+		}
+
+		if _, ok := visibleGroupIDs[*subscription.GroupID]; ok {
+			visible = append(visible, subscription)
+		}
+	}
+
+	return visible, nil
 }
 
 func (s *Service) Subscribe(ctx context.Context, actor domain.Actor, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) (domain.NotificationSubscription, error) {

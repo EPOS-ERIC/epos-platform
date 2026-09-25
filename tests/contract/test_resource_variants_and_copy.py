@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import create_group
 
 
 class ResourceVariantsAndCopyContractTest(unittest.TestCase):
@@ -16,14 +17,6 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(),
         )
-
-    def create_group(self, name: str) -> str:
-        response = self.gateway.post(
-            "/groups",
-            json={"name": name, "concept": "DATA"},
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["id"]
 
     def create_user(self, label: str, suffix: str) -> tuple[GatewayClient, str]:
         aai_url = os.getenv("AAI_URL", "http://localhost:8110")
@@ -196,8 +189,8 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         """Verify resource variants, copied ownership, and publication drafts."""
 
         suffix = uuid4().hex
-        source_group_id = self.create_group(f"variants-source-{suffix}")
-        target_group_id = self.create_group(f"variants-target-{suffix}")
+        source_group_id = create_group(self.gateway, f"variants-source-{suffix}")
+        target_group_id = create_group(self.gateway, f"variants-target-{suffix}")
         contact_point_id = self.create_contact_point(suffix)
         organization_id = self.create_organization(suffix, contact_point_id)
         source_category_id = self.create_category(source_group_id, f"source-{suffix}")

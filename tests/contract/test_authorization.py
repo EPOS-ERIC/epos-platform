@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import create_group
 
 
 NO_AUTH_HEADERS = {"Authorization": ""}
@@ -42,14 +43,6 @@ class AuthorizationContractTest(unittest.TestCase):
         response = client.get("/users/{id}", id="self")
         self.assertEqual(response.status_code, 200)
         return client, response.json()["id"]
-
-    def create_group(self, name: str) -> str:
-        response = self.gateway.post(
-            "/groups",
-            json={"name": name, "concept": "DATA"},
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["id"]
 
     def grant_global_permission(self, user_id: str, permission: str) -> None:
         response = self.gateway.put(
@@ -193,7 +186,7 @@ class AuthorizationContractTest(unittest.TestCase):
         """Verify public reads ignore tokens and optional reads enforce them."""
 
         suffix = str(uuid4())
-        group_id = self.create_group(f"contract-auth-public-{suffix}")
+        group_id = create_group(self.gateway, f"contract-auth-public-{suffix}")
         category_response = self.gateway.post(
             "/groups/{groupId}/categories",
             groupId=group_id,
@@ -476,7 +469,7 @@ class AuthorizationContractTest(unittest.TestCase):
         """Verify scoped canonical writes and public canonical reads."""
 
         suffix = str(uuid4())
-        group_id = self.create_group(f"contract-auth-canonical-{suffix}")
+        group_id = create_group(self.gateway, f"contract-auth-canonical-{suffix}")
         category_manager, category_manager_id = self.create_user(
             "category-manager",
             suffix,
@@ -709,7 +702,7 @@ class AuthorizationContractTest(unittest.TestCase):
         """Verify membership, role, and group permission authorization."""
 
         suffix = str(uuid4())
-        group_id = self.create_group(f"contract-auth-membership-{suffix}")
+        group_id = create_group(self.gateway, f"contract-auth-membership-{suffix}")
         membership_manager, membership_manager_id = self.create_user(
             "membership-manager",
             suffix,
@@ -923,7 +916,7 @@ class AuthorizationContractTest(unittest.TestCase):
         """Regression: global resource permissions must not require group membership."""
 
         suffix = str(uuid4())
-        group_id = self.create_group(f"contract-auth-global-resource-{suffix}")
+        group_id = create_group(self.gateway, f"contract-auth-global-resource-{suffix}")
         operator, operator_id = self.create_user("global-resource-operator", suffix)
         self.grant_global_permission(operator_id, "global.resource.create")
 
@@ -970,8 +963,8 @@ class AuthorizationContractTest(unittest.TestCase):
         """Verify resource access and lifecycle operations require group access."""
 
         suffix = str(uuid4())
-        group_id = self.create_group(f"contract-auth-resource-{suffix}")
-        target_group_id = self.create_group(f"contract-auth-resource-target-{suffix}")
+        group_id = create_group(self.gateway, f"contract-auth-resource-{suffix}")
+        target_group_id = create_group(self.gateway, f"contract-auth-resource-target-{suffix}")
         editor, _ = self.create_user("resource-editor", suffix)
         reviewer, reviewer_id = self.create_user("resource-reviewer", suffix)
         denied, _ = self.create_user("resource-denied", suffix)

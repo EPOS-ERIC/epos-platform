@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import create_group
 
 
 NO_AUTH_HEADERS = {"Authorization": ""}
@@ -18,14 +19,6 @@ class AuthorizationEdgeCasesContractTest(unittest.TestCase):
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(),
         )
-
-    def create_group(self, suffix: str) -> str:
-        response = self.gateway.post(
-            "/groups",
-            json={"name": f"authorization-edge-{suffix}", "concept": "DATA"},
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["id"]
 
     def create_user(self, suffix: str) -> tuple[GatewayClient, str]:
         aai_url = os.getenv("AAI_URL", "http://localhost:8110")
@@ -175,7 +168,7 @@ class AuthorizationEdgeCasesContractTest(unittest.TestCase):
         """Verify blocked access becomes dormant and sole-admin changes conflict."""
 
         suffix = uuid4().hex
-        group_id = self.create_group(suffix)
+        group_id = create_group(self.gateway, f"authorization-edge-{suffix}")
         ordinary, ordinary_id = self.create_user(suffix)
         accepted_id = self.accept_membership(ordinary, group_id)
         self.assertEqual(accepted_id, ordinary_id)

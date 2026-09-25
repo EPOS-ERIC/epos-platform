@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import create_group
 
 
 class ValidationErrorsContractTest(unittest.TestCase):
@@ -15,14 +16,6 @@ class ValidationErrorsContractTest(unittest.TestCase):
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(),
         )
-
-    def create_group(self, suffix: str) -> str:
-        response = self.gateway.post(
-            "/groups",
-            json={"name": f"validation-{suffix}", "concept": "DATA"},
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["id"]
 
     def create_user(self, suffix: str) -> tuple[GatewayClient, str]:
         aai_url = os.getenv("AAI_URL", "http://localhost:8110")
@@ -129,8 +122,8 @@ class ValidationErrorsContractTest(unittest.TestCase):
         """Verify representative JSON body and path validation errors."""
 
         suffix = uuid4().hex
-        group_id = self.create_group(suffix)
-        membership_group_id = self.create_group(f"membership-{suffix}")
+        group_id = create_group(self.gateway, f"validation-{suffix}")
+        membership_group_id = create_group(self.gateway, f"membership-{suffix}")
         category_id = self.create_category(group_id, suffix)
         ordinary, ordinary_id = self.create_user(suffix)
         self.assertEqual(self.accept_membership(ordinary, group_id), ordinary_id)

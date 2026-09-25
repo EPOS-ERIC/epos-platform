@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from auth import get_token
 from client import SCHEMA, GatewayClient
+from fixtures import create_group
 
 
 class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
@@ -15,14 +16,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(),
         )
-
-    def create_group(self, suffix: str) -> str:
-        response = self.gateway.post(
-            "/groups",
-            json={"name": f"canonical-integrity-{suffix}", "concept": "DATA"},
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["id"]
 
     def create_contact_point(self, suffix: str) -> str:
         response = self.gateway.post(
@@ -269,7 +262,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         """Verify canonical deletion unlinks published and archived references."""
 
         suffix = uuid4().hex
-        group_id = self.create_group(suffix)
+        group_id = create_group(self.gateway, f"canonical-integrity-{suffix}")
         contact_point_id = self.create_contact_point(suffix)
         parent_id = self.create_organization(
             f"parent-{suffix}", parents=[], contact_point_ids=[contact_point_id]
@@ -397,7 +390,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         """Verify hierarchy self-links and cycles return HTTP 400."""
 
         suffix = uuid4().hex
-        group_id = self.create_group(f"cycles-{suffix}")
+        group_id = create_group(self.gateway, f"canonical-integrity-cycles-{suffix}")
         root_category_id = self.create_category(group_id, f"root-{suffix}")
         child_category_id = self.create_category(
             group_id, f"child-{suffix}", root_category_id
