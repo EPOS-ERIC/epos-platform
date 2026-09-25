@@ -17,9 +17,10 @@ type repository interface {
 	IsGlobalAdmin(context.Context, string) (bool, error)
 	HasGlobalPermission(context.Context, string, domain.GlobalPermission) (bool, error)
 	IsActiveMember(context.Context, string, uuid.UUID) (bool, error)
-	ListActiveUserMemberships(context.Context, domain.Actor) ([]uuid.UUID, error)
+	ListActiveUserMemberships(context.Context, string) ([]uuid.UUID, error)
 	HasAnyActiveMembership(context.Context, string) (bool, error)
 	HasGroupPermission(context.Context, string, uuid.UUID, domain.GroupPermission) (bool, error)
+	ListGroupsWithAnyPermission(context.Context, string, []domain.GroupPermission) ([]uuid.UUID, error)
 	HasGroupRole(context.Context, string, uuid.UUID, string) (bool, error)
 	DatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error)
 	SoftwareApplicationGroup(context.Context, uuid.UUID) (uuid.UUID, error)
@@ -168,6 +169,47 @@ func (a *Authorizer) CanManageGroupNotificationSubscriptions(ctx context.Context
 		return domain.Result{Allowed: true, Reason: string(domain.GroupPermissionNotificationManage)}, nil
 	}
 	return domain.Result{Allowed: false, Reason: "group notification permission required"}, nil
+}
+
+// GroupsWithAnyPermissionForActiveMember lists groups where actor has any requested permission and target has an active membership.
+func (a *Authorizer) GroupsWithAnyPermissionForActiveMember(ctx context.Context, actorID, targetID string, permissions []domain.GroupPermission) (groupIDs []uuid.UUID, err error) {
+	defer func() {
+		recordAuthzDecision(ctx, "GroupsWithAnyPermissionForActiveMember", len(groupIDs) > 0, "", err)
+	}()
+
+	_, result, err := a.activeUser(ctx, actorID)
+	if err != nil {
+		return nil, fmt.Errorf("load actor: %w", err)
+	}
+	if !result.Allowed {
+		return nil, nil
+	}
+
+	permissionGroups, err := a.repository.ListGroupsWithAnyPermission(ctx, actorID, permissions)
+	if err != nil {
+		return nil, fmt.Errorf("list actor permission groups: %w", err)
+	}
+	if len(permissionGroups) == 0 {
+		return []uuid.UUID{}, nil
+	}
+
+	targetGroups, err := a.repository.ListActiveUserMemberships(ctx, targetID)
+	if err != nil {
+		return nil, fmt.Errorf("list target active group memberships: %w", err)
+	}
+
+	activeTargetGroups := make(map[uuid.UUID]struct{}, len(targetGroups))
+	for _, groupID := range targetGroups {
+		activeTargetGroups[groupID] = struct{}{}
+	}
+	groupIDs = make([]uuid.UUID, 0, len(permissionGroups))
+	for _, groupID := range permissionGroups {
+		if _, active := activeTargetGroups[groupID]; active {
+			groupIDs = append(groupIDs, groupID)
+		}
+	}
+
+	return groupIDs, nil
 }
 
 // CanListUsers checks permissions required to manage the user directory.
@@ -822,7 +864,7 @@ func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *domain.Actor
 
 	default:
 		// Regular member: load this user's active group memberships once.
-		memberships, err := a.repository.ListActiveUserMemberships(ctx, *actor)
+		memberships, err := a.repository.ListActiveUserMemberships(ctx, string(*actor))
 		if err != nil {
 			return domain.DiscoveryAuthorization{}, fmt.Errorf("load discovery group memberships: %w", err)
 		}

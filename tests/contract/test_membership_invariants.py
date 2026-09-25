@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import create_group
 
 
 class MembershipInvariantsContractTest(unittest.TestCase):
@@ -15,14 +16,6 @@ class MembershipInvariantsContractTest(unittest.TestCase):
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(),
         )
-
-    def create_group(self, suffix: str) -> str:
-        response = self.gateway.post(
-            "/groups",
-            json={"name": f"membership-invariants-{suffix}", "concept": "DATA"},
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["id"]
 
     def create_user(self, label: str, suffix: str) -> tuple[GatewayClient, str]:
         aai_url = os.getenv("AAI_URL", "http://localhost:8110")
@@ -129,7 +122,7 @@ class MembershipInvariantsContractTest(unittest.TestCase):
         """Verify membership rejection cascades role requests and resets access."""
 
         suffix = uuid4().hex
-        group_id = self.create_group(suffix)
+        group_id = create_group(self.gateway, f"membership-invariants-{suffix}")
         applicant, applicant_id = self.create_user("applicant", suffix)
 
         initial = self.request_membership(
@@ -365,7 +358,7 @@ class MembershipInvariantsContractTest(unittest.TestCase):
         """Verify revocation removes assignments and pending role requests."""
 
         suffix = uuid4().hex
-        group_id = self.create_group(f"revocation-{suffix}")
+        group_id = create_group(self.gateway, f"membership-invariants-revocation-{suffix}")
         member, member_id = self.create_user("revocation-member", suffix)
 
         requested = self.request_membership(member, group_id, [])
@@ -447,7 +440,7 @@ class MembershipInvariantsContractTest(unittest.TestCase):
         """Catch missing group.notification.manage mapping in ListGroupMemberships."""
 
         suffix = uuid4().hex
-        group_id = self.create_group(f"notification-permission-{suffix}")
+        group_id = create_group(self.gateway, f"membership-invariants-notification-permission-{suffix}")
         member, member_id = self.create_user("notification-member", suffix)
         requested = self.request_membership(member, group_id, [])
         self.assertEqual(requested["status"], "PENDING")

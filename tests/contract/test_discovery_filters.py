@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import create_group
 
 NO_AUTH_HEADERS = {"Authorization": ""}
 RESOURCE_TYPES = (
@@ -44,14 +45,6 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         response = client.get("/users/{id}", id="self")
         self.assertEqual(response.status_code, 200)
         return client, response.json()["id"]
-
-    def create_group(self, name: str, concept: str) -> str:
-        response = self.gateway.post(
-            "/groups",
-            json={"name": name, "concept": concept},
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["id"]
 
     def accept_editor(self, client: GatewayClient, group_id: str) -> str:
         request = client.post(
@@ -192,8 +185,8 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         """Verify discovery filters and group-scoped creator projection."""
 
         suffix = uuid4().hex
-        data_group = self.create_group(f"discovery-data-{suffix}", "DATA")
-        software_group = self.create_group(f"discovery-software-{suffix}", "SOFTWARE")
+        data_group = create_group(self.gateway, f"discovery-data-{suffix}")
+        software_group = create_group(self.gateway, f"discovery-software-{suffix}", "SOFTWARE")
         provider_id = self.create_organization(suffix)
         editor, editor_id = self.create_user("editor", suffix)
         outsider, _ = self.create_user("outsider", suffix)

@@ -422,6 +422,7 @@ paths:
     get:
       tags: [Notifications]
       summary: List user notification subscriptions
+      description: Returns all subscriptions when the actor is the user or has global notification management permission. Otherwise, returns only subscriptions for groups where the actor has group notification management permission and the target user has active membership. Returns forbidden when the actor has no qualifying group access.
       operationId: listUserNotificationSubscriptions
       security: [{ bearerAuth: [] }]
       parameters:

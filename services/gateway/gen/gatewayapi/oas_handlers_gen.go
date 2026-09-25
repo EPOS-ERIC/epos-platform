@@ -7168,7 +7168,10 @@ func (s *Server) handleListResourceVersionsRequest(args [2]string, argsEscaped b
 
 // handleListUserNotificationSubscriptionsRequest handles listUserNotificationSubscriptions operation.
 //
-// List user notification subscriptions.
+// Returns all subscriptions when the actor is the user or has global notification management
+// permission. Otherwise, returns only subscriptions for groups where the actor has group notification
+// management permission and the target user has active membership. Returns forbidden when the actor
+// has no qualifying group access.
 //
 // GET /users/{userId}/notification-subscriptions
 func (s *Server) handleListUserNotificationSubscriptionsRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

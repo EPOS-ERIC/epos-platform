@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import create_group
 
 
 class GroupPermissionContractTest(unittest.TestCase):
@@ -14,14 +15,6 @@ class GroupPermissionContractTest(unittest.TestCase):
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(),
         )
-
-    def create_group(self, name: str) -> str:
-        response = self.gateway.post(
-            "/groups",
-            json={"name": name, "concept": "DATA"},
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["id"]
 
     def create_user(self, label: str, suffix: str) -> GatewayClient:
         aai_url = os.getenv("AAI_URL", "http://localhost:8110")
@@ -87,7 +80,7 @@ class GroupPermissionContractTest(unittest.TestCase):
         """Verify direct group permissions are granted, read back, and revoked."""
 
         suffix = str(uuid4())
-        group_id = self.create_group(f"contract-permission-group-{suffix}")
+        group_id = create_group(self.gateway, f"contract-permission-group-{suffix}")
         manager = self.create_user("permission-manager", suffix)
         target = self.create_user("permission-target", suffix)
         manager_id = self.accept_membership(manager, group_id)
@@ -162,7 +155,7 @@ class GroupPermissionContractTest(unittest.TestCase):
         """Regression: revoking a role-derived permission returned 204 instead of 409."""
 
         suffix = str(uuid4())
-        group_id = self.create_group(f"contract-role-permission-revoke-{suffix}")
+        group_id = create_group(self.gateway, f"contract-role-permission-revoke-{suffix}")
         manager = self.create_user("role-permission-manager", suffix)
         target = self.create_user("role-permission-target", suffix)
         manager_id = self.accept_membership(manager, group_id)

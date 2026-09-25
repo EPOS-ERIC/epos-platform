@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import create_group
 
 
 class ResourceLifecycleBranchesContractTest(unittest.TestCase):
@@ -39,14 +40,6 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         response = client.get("/users/{id}", id="self")
         self.assertEqual(response.status_code, 200)
         return client, response.json()["id"]
-
-    def create_group(self, name: str) -> str:
-        response = self.gateway.post(
-            "/groups",
-            json={"name": name, "concept": "DATA"},
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["id"]
 
     def accept_membership(self, client: GatewayClient, group_id: str) -> str:
         request = client.post(
@@ -96,7 +89,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         """Verify lifecycle branches, version invariants, and discarded changes."""
 
         suffix = str(uuid4())
-        group_id = self.create_group(f"contract-lifecycle-branches-{suffix}")
+        group_id = create_group(self.gateway, f"contract-lifecycle-branches-{suffix}")
         editor, editor_id = self.create_user("editor", suffix)
         reviewer, reviewer_id = self.create_user("reviewer", suffix)
         self.accept_membership(editor, group_id)

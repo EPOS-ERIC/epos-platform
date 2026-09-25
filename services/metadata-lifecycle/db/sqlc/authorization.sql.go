@@ -950,6 +950,54 @@ func (q *Queries) ListActiveMemberGroupIDs(ctx context.Context, userID string) (
 	return items, nil
 }
 
+const listGroupsWithAnyPermission = `-- name: ListGroupsWithAnyPermission :many
+SELECT
+    group_permission_grants.group_id
+FROM
+    group_permission_grants
+    JOIN permissions ON permissions.key = group_permission_grants.permission_key
+WHERE
+    group_permission_grants.user_id = $1
+    AND group_permission_grants.permission_key = ANY($2::text[])
+    AND permissions.scope = 'GROUP'
+UNION
+SELECT
+    assignment.group_id
+FROM
+    group_membership_roles AS assignment
+    JOIN role_permissions ON role_permissions.role_key = assignment.role_key
+    JOIN permissions ON permissions.key = role_permissions.permission_key
+WHERE
+    assignment.user_id = $1
+    AND role_permissions.permission_key = ANY($2::text[])
+    AND permissions.scope = 'GROUP'
+`
+
+type ListGroupsWithAnyPermissionParams struct {
+	UserID         string
+	PermissionKeys []string
+}
+
+func (q *Queries) ListGroupsWithAnyPermission(ctx context.Context, arg ListGroupsWithAnyPermissionParams) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listGroupsWithAnyPermission, arg.UserID, arg.PermissionKeys)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var group_id uuid.UUID
+		if err := rows.Scan(&group_id); err != nil {
+			return nil, err
+		}
+		items = append(items, group_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPendingUserGroupRoleRequests = `-- name: ListPendingUserGroupRoleRequests :many
 SELECT
     id,

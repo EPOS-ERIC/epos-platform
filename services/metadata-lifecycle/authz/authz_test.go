@@ -10,16 +10,17 @@ import (
 )
 
 type fakeRepository struct {
-	permissions  []domain.Permission
-	user         domain.AuthorizationUser
-	admin        bool
-	global       bool
-	member       bool
-	anyMember    bool
-	groupAllowed bool
-	datasetGroup uuid.UUID
-	published    bool
-	activeGroups []uuid.UUID
+	permissions      []domain.Permission
+	user             domain.AuthorizationUser
+	admin            bool
+	global           bool
+	member           bool
+	anyMember        bool
+	groupAllowed     bool
+	datasetGroup     uuid.UUID
+	published        bool
+	activeGroups     []uuid.UUID
+	permissionGroups []uuid.UUID
 }
 
 func (r fakeRepository) ListPermissions(context.Context) ([]domain.Permission, error) {
@@ -43,12 +44,16 @@ func (r fakeRepository) HasAnyActiveMembership(context.Context, string) (bool, e
 	return r.anyMember, nil
 }
 
-func (r fakeRepository) ListActiveUserMemberships(context.Context, domain.Actor) ([]uuid.UUID, error) {
+func (r fakeRepository) ListActiveUserMemberships(context.Context, string) ([]uuid.UUID, error) {
 	return r.activeGroups, nil
 }
 
 func (r fakeRepository) HasGroupPermission(context.Context, string, uuid.UUID, domain.GroupPermission) (bool, error) {
 	return r.groupAllowed, nil
+}
+
+func (r fakeRepository) ListGroupsWithAnyPermission(context.Context, string, []domain.GroupPermission) ([]uuid.UUID, error) {
+	return r.permissionGroups, nil
 }
 
 func (fakeRepository) HasGroupRole(context.Context, string, uuid.UUID, string) (bool, error) {
@@ -154,6 +159,21 @@ func TestAuthorizeGlobalAllowsGlobalGrant(t *testing.T) {
 	}
 }
 
+func TestCanManageGlobalNotificationSubscriptionsAllowsSelf(t *testing.T) {
+	t.Parallel()
+	authorizer := New(slog.Default(), fakeRepository{
+		user: domain.AuthorizationUser{ID: "user-1", Status: domain.UserStatusActive},
+	})
+
+	result, err := authorizer.CanManageGlobalNotificationSubscriptions(context.Background(), "user-1", "user-1")
+	if err != nil {
+		t.Fatalf("authorize self: %v", err)
+	}
+	if !result.Allowed || result.Reason != "self" {
+		t.Fatalf("result = %#v, want self access", result)
+	}
+}
+
 func TestAuthorizeGroupAllowsMatchingGlobalGrantWithoutMembership(t *testing.T) {
 	t.Parallel()
 	groupID := uuid.New()
@@ -173,6 +193,30 @@ func TestAuthorizeGroupAllowsMatchingGlobalGrantWithoutMembership(t *testing.T) 
 	}
 	if !result.Allowed || result.Reason != string(domain.GlobalPermissionResourceEdit) {
 		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestGroupsWithAnyPermissionForActiveMemberIntersectsTargetMemberships(t *testing.T) {
+	t.Parallel()
+	permittedGroup := uuid.New()
+	inactiveTargetGroup := uuid.New()
+	authorizer := New(slog.Default(), fakeRepository{
+		user:             domain.AuthorizationUser{Status: domain.UserStatusActive},
+		activeGroups:     []uuid.UUID{permittedGroup},
+		permissionGroups: []uuid.UUID{permittedGroup, inactiveTargetGroup},
+	})
+
+	groups, err := authorizer.GroupsWithAnyPermissionForActiveMember(
+		context.Background(),
+		"actor",
+		"target",
+		[]domain.GroupPermission{domain.GroupPermissionNotificationManage},
+	)
+	if err != nil {
+		t.Fatalf("list permitted groups: %v", err)
+	}
+	if len(groups) != 1 || groups[0] != permittedGroup {
+		t.Fatalf("groups = %v, want only active target group %s", groups, permittedGroup)
 	}
 }
 

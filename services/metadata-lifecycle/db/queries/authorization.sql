@@ -434,6 +434,28 @@ SELECT
             AND permissions.scope = 'GROUP'
     ) AS allowed;
 
+-- name: ListGroupsWithAnyPermission :many
+SELECT
+    group_permission_grants.group_id
+FROM
+    group_permission_grants
+    JOIN permissions ON permissions.key = group_permission_grants.permission_key
+WHERE
+    group_permission_grants.user_id = sqlc.arg(user_id)
+    AND group_permission_grants.permission_key = ANY(sqlc.arg(permission_keys)::text [])
+    AND permissions.scope = 'GROUP'
+UNION
+SELECT
+    assignment.group_id
+FROM
+    group_membership_roles AS assignment
+    JOIN role_permissions ON role_permissions.role_key = assignment.role_key
+    JOIN permissions ON permissions.key = role_permissions.permission_key
+WHERE
+    assignment.user_id = sqlc.arg(user_id)
+    AND role_permissions.permission_key = ANY(sqlc.arg(permission_keys)::text [])
+    AND permissions.scope = 'GROUP';
+
 -- name: GetDatasetGroup :one
 SELECT
     group_id

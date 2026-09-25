@@ -365,7 +365,10 @@ func (UnimplementedHandler) ListResourceVersions(ctx context.Context, params Lis
 
 // ListUserNotificationSubscriptions implements listUserNotificationSubscriptions operation.
 //
-// List user notification subscriptions.
+// Returns all subscriptions when the actor is the user or has global notification management
+// permission. Otherwise, returns only subscriptions for groups where the actor has group notification
+// management permission and the target user has active membership. Returns forbidden when the actor
+// has no qualifying group access.
 //
 // GET /users/{userId}/notification-subscriptions
 func (UnimplementedHandler) ListUserNotificationSubscriptions(ctx context.Context, params ListUserNotificationSubscriptionsParams) (r []NotificationSubscription, _ error) {
