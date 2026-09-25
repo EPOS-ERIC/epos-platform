@@ -93,13 +93,12 @@ describe('CurrentUserStore', () => {
     expect(store.hasGroupPermission('another-group', 'group.resource.edit')).toBe(false);
   });
 
-  it('grants every resource permission to global administrators', () => {
+  it('does not derive capabilities from the ADMIN role alone', () => {
     const store = TestBed.inject(CurrentUserStore);
     store.user.set(currentUser);
 
-    expect(store.hasGroupPermission('group-id', 'group.resource.publish')).toBe(true);
-    expect(store.hasGroupPermission('group-id', 'group.resource.unpublish')).toBe(true);
-    expect(store.hasGroupPermission('group-id', 'group.category.manage')).toBe(true);
+    expect(store.groupPermissions('group-id')).toEqual([]);
+    expect(store.canAccessGlobalManage()).toBe(false);
   });
 
   it('applies matching global permissions to every group', () => {
@@ -115,6 +114,33 @@ describe('CurrentUserStore', () => {
       'group.resource.publish',
       'group.category.manage'
     ]);
+    expect(store.canManageGroup('group-id')).toBe(true);
+    expect(store.canAccessGlobalManage()).toBe(true);
+    expect(store.hasGlobalPermission('global.organization.manage')).toBe(false);
+  });
+
+  it('allows notification managers to enter group management', () => {
+    const store = TestBed.inject(CurrentUserStore);
+    store.user.set({
+      ...currentUser,
+      global_roles: [],
+      global_granted_permissions: ['global.notification.manage']
+    });
+
+    expect(store.hasGroupPermission('group-id', 'group.notification.manage')).toBe(true);
+    expect(store.canManageGroup('group-id')).toBe(true);
+    expect(store.canAccessGlobalManage()).toBe(true);
+  });
+
+  it('allows role-only managers to enter global management', () => {
+    const store = TestBed.inject(CurrentUserStore);
+    store.user.set({
+      ...currentUser,
+      global_roles: [],
+      global_granted_permissions: ['global.role.manage']
+    });
+
+    expect(store.canAccessGlobalManage()).toBe(true);
   });
 
   it('ignores permissions from inactive memberships', () => {

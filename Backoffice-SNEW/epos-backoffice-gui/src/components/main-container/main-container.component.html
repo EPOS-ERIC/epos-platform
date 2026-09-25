@@ -1,6 +1,6 @@
 <main class="main-container-layout">
   <app-navigation-sidebar
-    [isAdmin]="isAdmin()"
+    [canAccessGlobalManage]="canAccessGlobalManage()"
     [groups]="groups()"
     [groupsLoading]="groupsLoading()"
     [currentSectionPath]="sectionPath()"
@@ -43,13 +43,9 @@
       @if (accountPage() === 'memberships') {
         <app-memberships-page />
       } @else if (manageGroup()) {
-        <app-manage-group-page [groupId]="selectedGroupId()" [groupName]="selectedGroupName()" />
-      } @else if (adminPage() === 'groups') {
-        <app-admin-groups />
-      } @else if (adminPage() === 'categories') {
-        <app-admin-categories [groups]="groups()" [groupsLoading]="groupsLoading()" />
-      } @else if (adminPage() === 'organizations') {
-        <app-admin-organizations />
+        <app-manage-group-page [groupId]="selectedGroupId()" [groupName]="selectedGroupName()" [groups]="groups()" [panel]="manageGroupPanel()" />
+      } @else if (globalManage()) {
+        <app-global-manage-page [groups]="groups()" [groupsLoading]="groupsLoading()" [panel]="globalManagePanel()" />
       } @else if (pageLabel() === 'Detail') {
         @defer {
           <app-resource-detail-page />

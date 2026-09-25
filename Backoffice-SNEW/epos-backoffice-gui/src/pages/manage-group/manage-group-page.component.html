@@ -1,0 +1,210 @@
+@if (showLanding()) {
+  <section class="management-landing">
+    <div class="management-hero app-card">
+      <div class="group-heading">
+        @if (groupIconPath(groupId); as iconPath) {
+          <img class="group-logo" [src]="iconPath" alt="" aria-hidden="true" />
+        }
+        <div>
+          <p class="eyebrow app-badge app-badge--primary">Group Administration</p>
+          <h2>{{ groupName || 'Manage group' }}</h2>
+          <p class="subtitle app-muted">Choose an area to manage. Only sections available to your permissions are shown.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="management-grid">
+      @for (destination of destinations(); track destination.panel) {
+        <a class="management-destination app-card" [routerLink]="[]" [queryParams]="{ panel: destination.panel }" queryParamsHandling="merge">
+          <span class="management-destination-icon"><app-icon [name]="destination.icon" [size]="22" /></span>
+          <div>
+            <span class="management-status">Open section</span>
+            <h3>{{ destination.title }}</h3>
+            <p>{{ destination.description }}</p>
+          </div>
+          <span class="management-arrow" aria-hidden="true">→</span>
+        </a>
+      }
+    </div>
+  </section>
+} @else {
+  <nav class="panel-navigation" aria-label="Group management navigation">
+    <a class="app-button app-button--ghost" [routerLink]="[]" [queryParams]="{ panel: null }" queryParamsHandling="merge">← All management areas</a>
+  </nav>
+}
+
+@if (isPanelActive('membership-requests') && canManageMemberships()) {
+  <app-membership-requests-panel
+    [requests]="pendingMembershipRequests()"
+    [loading]="loading()"
+    [error]="requestError()"
+    [decisionKey]="membershipRequestDecision()"
+    context="Membership Requests"
+    eyebrow="Group Administration"
+    [subtitle]="'Accept or reject membership requests for ' + (groupName || 'this group') + '.'"
+    (decision)="decideMembershipRequest($event)"
+  />
+}
+
+@if (isPanelActive('membership-requests') && canManageRoles()) {
+  <app-role-requests-panel
+    [requests]="pendingRoleRequests()"
+    [loading]="loading()"
+    [error]="requestError()"
+    [decisionKey]="roleRequestDecision()"
+    context="Role Requests"
+    eyebrow="Group Administration"
+    subtitle="Accept or reject role requests from active group members."
+    (decision)="decideRoleRequest($event)"
+  />
+}
+
+@if (isPanelActive('member-access')) {
+<section class="members-card app-card">
+  <div class="members-header">
+    <div class="group-heading">
+      @if (groupIconPath(groupId); as iconPath) {
+        <img class="group-logo" [src]="iconPath" alt="" aria-hidden="true" />
+      }
+      <div>
+        <p class="eyebrow app-badge app-badge--primary">Group Administration</p>
+        <h2>{{ groupName || 'Group members' }}</h2>
+        <p class="subtitle app-muted">Manage active members, access, and notification subscriptions for this group.</p>
+      </div>
+    </div>
+
+    <label class="member-search">
+      <span class="visually-hidden">Search members</span>
+      <input class="app-input" type="search" placeholder="Search members" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+    </label>
+  </div>
+
+  @if (error()) {
+    <div class="members-message members-message--error">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="members-message">Loading group members...</div>
+  } @else if (filteredMemberships().length) {
+    <div class="members-table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Direct permissions</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (membership of filteredMemberships(); track membership.user.id) {
+            <tr>
+              <td><strong>{{ userName(membership) }}</strong></td>
+              <td>{{ membership.user.email }}</td>
+              <td>{{ membership.roles.length ? membership.roles.join(', ') : 'None' }}</td>
+              <td>{{ membership.granted_permissions.length }}</td>
+              <td class="actions-column">
+                <div class="member-actions">
+                  @if (canManageRoles() || canManagePermissions() || canManageNotifications()) {
+                    <button type="button" class="app-button app-button--ghost" (click)="openMembership(membership)">Manage</button>
+                  }
+                  @if (canManageMemberships() && !membership.roles.includes('GROUP_ADMIN')) {
+                    <button type="button" class="app-button app-button--ghost remove-button" (click)="removeMembership(membership)" [disabled]="!!membershipMutation() || !!removingUserId()">
+                      {{ removingUserId() === membership.user.id ? 'Removing...' : 'Remove' }}
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="members-footer">Showing {{ filteredMemberships().length }} active members</div>
+  } @else {
+    <div class="members-message">No active group members found.</div>
+  }
+</section>
+}
+
+@if (isPanelActive('categories')) {
+  <app-categories-panel [groups]="selectedGroup()" [embedded]="true" />
+}
+
+@if (selectedMembership(); as membership) {
+  <div class="membership-backdrop" (click)="closeMembership()">
+    <section class="membership-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="group-member-dialog-title" (click)="$event.stopPropagation()">
+      <div class="membership-dialog-header">
+        <div>
+          <p class="eyebrow app-badge app-badge--primary">Group Member</p>
+          <h2 id="group-member-dialog-title">{{ userName(membership) }}</h2>
+          <p class="subtitle app-muted">{{ membership.user.email }}</p>
+        </div>
+        <button type="button" class="app-button app-button--ghost" (click)="closeMembership()" [disabled]="!!membershipMutation() || !!notificationMutation() || !!removingUserId()">Close</button>
+      </div>
+
+      @if (canManageRoles() || canManagePermissions()) {
+        <p class="membership-updated app-muted">Updated {{ membership.updated_at | date:'medium' }}</p>
+
+        <app-group-membership-access-editor
+          [groupId]="groupId"
+          [roles]="membership.roles"
+          [grantedPermissions]="membership.granted_permissions"
+          [rolePermissions]="membership.role_permissions"
+          [allowedRoles]="groupRoles"
+          [allowedPermissions]="groupPermissions()"
+          [mutationKey]="membershipMutation()"
+          [canManageRoles]="canManageRoles()"
+          [canManagePermissions]="canManagePermissions()"
+          (roleChange)="toggleRole(membership, $event)"
+          (permissionChange)="togglePermission(membership, $event)"
+        />
+      }
+
+      @if (canManageNotifications()) {
+        <section class="member-notifications">
+          <div class="member-notifications-heading">
+            <div>
+              <h3><app-icon class="notification-bell" name="bell" [size]="18" /> Notifications</h3>
+              <p class="app-muted">Choose which group events are emailed to this member.</p>
+            </div>
+            <span class="app-badge app-badge--green">Email</span>
+          </div>
+
+          @if (notificationError()) {
+            <div class="member-notifications-message members-message--error">{{ notificationError() }}</div>
+          }
+
+          @if (notificationsLoading()) {
+            <div class="member-notifications-message app-muted">Loading notification settings...</div>
+          } @else {
+            <fieldset class="notification-options" [disabled]="!!notificationMutation()">
+              @for (topic of notificationTopics(); track topic.key) {
+                <label class="notification-option" [class.notification-option--unavailable]="!canReceiveNotification(membership, topic)">
+                  <input
+                    type="checkbox"
+                    [checked]="isNotificationSubscribed(topic.key)"
+                    [disabled]="!canReceiveNotification(membership, topic)"
+                    (change)="toggleNotification(membership, topic)"
+                  />
+                  <span>
+                    <strong>{{ topic.label }}</strong>
+                    <small>{{ topic.description }}</small>
+                    @if (!canReceiveNotification(membership, topic)) {
+                      <small>Unavailable until this member receives a required permission.</small>
+                    } @else if (notificationMutation() === topic.key) {
+                      <small>Saving...</small>
+                    }
+                  </span>
+                </label>
+              } @empty {
+                <span class="member-notifications-message app-muted">No group notification topics are available.</span>
+              }
+            </fieldset>
+          }
+        </section>
+      }
+    </section>
+  </div>
+}

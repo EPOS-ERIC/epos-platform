@@ -32,7 +32,7 @@ describe('groupAdminGuard', () => {
     updated_at: '2026-09-14T08:00:00Z'
   };
   const currentUser = signal<User | null>(user);
-  const currentUserStore = { user: currentUser, initialize: vi.fn() };
+  const currentUserStore = { user: currentUser, initialize: vi.fn(), canManageGroup: vi.fn() };
   const groupsStore = {
     groups: signal([{ id: 'group-id', name: 'Data Group', position: 0, concept: 'DATA' as const }]),
     initialize: vi.fn()
@@ -43,6 +43,7 @@ describe('groupAdminGuard', () => {
     vi.clearAllMocks();
     currentUser.set(user);
     currentUserStore.initialize.mockResolvedValue(undefined);
+    currentUserStore.canManageGroup.mockReturnValue(true);
     groupsStore.initialize.mockResolvedValue(undefined);
     router.createUrlTree.mockReturnValue('redirect');
     TestBed.configureTestingModule({
@@ -54,13 +55,14 @@ describe('groupAdminGuard', () => {
     });
   });
 
-  it('allows an active GROUP_ADMIN membership for the selected group', async () => {
+  it('allows a user with a management permission for the selected group', async () => {
     const result = await TestBed.runInInjectionContext(() => groupAdminGuard(route('group-id'), state()));
 
     expect(result).toBe(true);
   });
 
-  it('redirects users without GROUP_ADMIN in the selected group', async () => {
+  it('redirects users without a management permission in the selected group', async () => {
+    currentUserStore.canManageGroup.mockReturnValue(false);
     const result = await TestBed.runInInjectionContext(() => groupAdminGuard(route('another-group'), state()));
 
     expect(result).toBe('redirect');

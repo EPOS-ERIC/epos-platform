@@ -5,7 +5,7 @@ import type { DiscoveryResourceType, VersioningStatus } from '../../../generated
 import { DISCOVERY_VERSIONING_STATUSES, type ResultsFilters } from '../../models/results-filters';
 import { AuthService } from '../../services/auth.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
-import { AppIconComponent } from '../app-icon/app-icon.component';
+import { AppIconComponent } from '../../shared/ui/app-icon.component';
 
 @Component({
   selector: 'app-backoffice-header',

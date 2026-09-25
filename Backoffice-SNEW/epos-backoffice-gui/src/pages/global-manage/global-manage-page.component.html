@@ -1,0 +1,66 @@
+@if (showLanding()) {
+  <section class="management-landing">
+    <div class="management-hero app-card">
+      <p class="eyebrow app-badge app-badge--primary">Platform Administration</p>
+      <h2>Global Administration</h2>
+      <p class="subtitle app-muted">Choose an area to manage. Only sections available to your global permissions are shown.</p>
+    </div>
+
+    <div class="management-grid">
+      @for (destination of destinations(); track destination.panel) {
+        <a class="management-destination app-card" [routerLink]="[]" [queryParams]="{ panel: destination.panel }" queryParamsHandling="merge">
+          <span class="management-destination-icon"><app-icon [name]="destination.icon" [size]="22" /></span>
+          <div>
+            <span class="management-status">Open section</span>
+            <h3>{{ destination.title }}</h3>
+            <p>{{ destination.description }}</p>
+          </div>
+          <span class="management-arrow" aria-hidden="true">→</span>
+        </a>
+      }
+    </div>
+  </section>
+} @else {
+  <nav class="panel-navigation" aria-label="Global management navigation">
+    <a class="app-button app-button--ghost" [routerLink]="[]" [queryParams]="{ panel: null }" queryParamsHandling="merge">← All management areas</a>
+  </nav>
+}
+
+@if (isPanelActive('requests')) {
+  <app-global-requests-panel />
+}
+
+@if (isPanelActive('members')) {
+  <app-global-members-panel />
+}
+
+@if (isPanelActive('contact-points')) {
+  <section class="future-panel app-card">
+    <span class="management-destination-icon"><app-icon name="user" [size]="22" /></span>
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">Global Administration</p>
+      <h2>Contact Points</h2>
+      <p class="subtitle app-muted">Contact point management will be defined in the next refinement.</p>
+    </div>
+  </section>
+}
+
+@if (isPanelActive('categories')) {
+  @if (canManageCategorySchemes()) {
+    <section class="future-panel app-card">
+      <span class="management-destination-icon"><app-icon name="settings" [size]="22" /></span>
+      <div>
+        <p class="eyebrow app-badge app-badge--primary">Global Administration</p>
+        <h2>Category Schemes</h2>
+        <p class="subtitle app-muted">Category scheme management will be defined in the next refinement.</p>
+      </div>
+    </section>
+  }
+  @if (canManageCategories()) {
+    <app-categories-panel [groups]="groups" [groupsLoading]="groupsLoading" heading="Categories" />
+  }
+}
+
+@if (isPanelActive('organizations')) {
+  <app-global-organizations />
+}

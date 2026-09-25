@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import type { GlobalPermission, GroupPermission, User } from '../../generated/backofficeSchemas';
+import { GLOBAL_MANAGEMENT_PERMISSIONS, GROUP_MANAGEMENT_PERMISSIONS } from '../models/access-control';
 import { GROUP_PERMISSIONS } from '../models/resource-actions';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
@@ -16,11 +17,27 @@ export class CurrentUserStore {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly isAdmin = computed(() => this.user()?.global_roles.includes('ADMIN') ?? false);
+  readonly globalPermissions = computed<GlobalPermission[]>(() => {
+    const user = this.user();
+    if (!user) return [];
+    return [...new Set([...user.global_granted_permissions, ...user.global_role_permissions])];
+  });
+
+  hasGlobalPermission(permission: GlobalPermission): boolean {
+    return this.globalPermissions().includes(permission);
+  }
+
+  canAccessGlobalManage(): boolean {
+    return GLOBAL_MANAGEMENT_PERMISSIONS.some((permission) => this.hasGlobalPermission(permission));
+  }
+
+  canManageGroup(groupId: string): boolean {
+    return GROUP_MANAGEMENT_PERMISSIONS.some((permission) => this.hasGroupPermission(groupId, permission));
+  }
 
   groupPermissions(groupId: string): GroupPermission[] {
     const user = this.user();
     if (!user || !groupId) return [];
-    if (user.global_roles.includes('ADMIN')) return [...GROUP_PERMISSIONS];
 
     const globalPermissions = new Set([
       ...user.global_granted_permissions,

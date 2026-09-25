@@ -18,23 +18,21 @@ import {
   resourceDetailRootLabel,
   type ResourceDetailNavigationItem
 } from '../../stores/resource-detail.store';
-import { AdminCategoriesComponent } from '../admin-categories/admin-categories.component';
-import { AdminGroupsComponent } from '../admin-groups/admin-groups.component';
-import { AdminOrganizationsComponent } from '../admin-organizations/admin-organizations.component';
+import { GlobalManagePageComponent } from '../../pages/global-manage/global-manage-page.component';
+import { ManageGroupPageComponent } from '../../pages/manage-group/manage-group-page.component';
+import { MembershipsPageComponent } from '../../pages/memberships/memberships-page.component';
+import { ResourceDetailPageComponent } from '../../pages/resource-detail/resource-detail-page.component';
+import { ResourceVersionComparisonPageComponent } from '../../pages/resource-version-comparison/resource-version-comparison-page.component';
 import { BackofficeHeaderComponent } from '../backoffice-header/backoffice-header.component';
-import { MembershipsPageComponent } from '../memberships-page/memberships-page.component';
-import { ManageGroupPageComponent } from '../manage-group-page/manage-group-page.component';
 import { NavigationSidebarComponent } from '../navigation-sidebar/navigation-sidebar.component';
-import { ResourceDetailPageComponent } from '../resource-detail-page/resource-detail-page.component';
-import { ResourceVersionComparisonPageComponent } from '../resource-version-comparison-page/resource-version-comparison-page.component';
 import { ResultsTableComponent } from '../results-table/results-table.component';
 
 type RouteData = {
   sectionTitle?: string;
   discoveryType?: DiscoveryResourceType[];
-  adminPage?: 'groups' | 'categories' | 'organizations';
   accountPage?: 'memberships';
   manageGroup?: boolean;
+  globalManage?: boolean;
   comparisonPage?: boolean;
 };
 
@@ -46,6 +44,7 @@ type RouteState = {
   leftVersionId?: string | null;
   rightVersionId?: string | null;
   sourceVersionId?: string | null;
+  panel?: string | null;
 };
 
 const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
@@ -53,10 +52,8 @@ const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
 @Component({
   selector: 'app-main-container',
   imports: [
-    AdminCategoriesComponent,
-    AdminGroupsComponent,
-    AdminOrganizationsComponent,
     BackofficeHeaderComponent,
+    GlobalManagePageComponent,
     MembershipsPageComponent,
     ManageGroupPageComponent,
     NavigationSidebarComponent,
@@ -85,16 +82,18 @@ export class MainContainerComponent {
   protected readonly detailStore = inject(ResourceDetailStore);
   protected readonly sectionTitle = signal('Data');
   protected readonly pageLabel = signal('Results');
-  protected readonly adminPage = signal<RouteData['adminPage'] | null>(null);
   protected readonly accountPage = signal<RouteData['accountPage'] | null>(null);
   protected readonly manageGroup = signal(false);
+  protected readonly manageGroupPanel = signal('');
+  protected readonly globalManage = signal(false);
+  protected readonly globalManagePanel = signal('');
   protected readonly sectionPath = signal('data');
   protected readonly darkMode = signal(false);
   protected readonly discoveryItems = signal<DiscoveryItem[] | null>(null);
   protected readonly discoveryLoading = signal(false);
   protected readonly groups = this.groupsStore.groups;
   protected readonly groupsLoading = this.groupsStore.loading;
-  protected readonly isAdmin = this.currentUserStore.isAdmin;
+  protected readonly canAccessGlobalManage = computed(() => this.currentUserStore.canAccessGlobalManage());
   protected readonly selectedGroupId = signal('');
   protected readonly selectedGroupName = signal('');
   protected readonly searchQuery = signal(this.initialResultsFilters.searchQuery);
@@ -105,11 +104,7 @@ export class MainContainerComponent {
   );
   protected readonly canManageSelectedGroup = computed(() => {
     const groupId = this.selectedGroupId();
-    return !!groupId && (this.currentUserStore.user()?.memberships.some((membership) =>
-      membership.group.id === groupId
-      && membership.status === 'ACTIVE'
-      && membership.roles.includes('GROUP_ADMIN')
-    ) ?? false);
+    return !!groupId && this.currentUserStore.canManageGroup(groupId);
   });
   protected readonly comparisonContext = signal<ResourceVersionComparisonContext | null>(null);
   protected readonly sidebarDetailItems = computed<ResourceDetailNavigationItem[]>(() => {
@@ -152,7 +147,8 @@ export class MainContainerComponent {
           dataType: queryParams.get('dataType'),
           leftVersionId: queryParams.get('leftVersionId'),
           rightVersionId: queryParams.get('rightVersionId'),
-          sourceVersionId: queryParams.get('sourceVersionId')
+          sourceVersionId: queryParams.get('sourceVersionId'),
+          panel: queryParams.get('panel')
         });
       });
 
@@ -162,17 +158,19 @@ export class MainContainerComponent {
   }
 
   private syncRouteState(routeData: RouteData, routeState: RouteState): void {
-    const adminPage = routeData.adminPage ?? null;
     const accountPage = routeData.accountPage ?? null;
     const manageGroup = routeData.manageGroup ?? false;
+    const globalManage = routeData.globalManage ?? false;
     const discoveryType = routeData.discoveryType;
     const detailDataType = this.toDiscoveryResourceType(routeState.dataType) ?? discoveryType?.[0];
     const isComparisonRoute = routeData.comparisonPage === true;
     const isDetailRoute = !isComparisonRoute && Boolean(routeState.resourceId && routeState.versionId);
-    this.adminPage.set(adminPage);
     this.accountPage.set(accountPage);
     this.manageGroup.set(manageGroup);
-    this.sectionPath.set(accountPage ?? (adminPage ? `admin/${adminPage}` : this.currentSectionPath()));
+    this.manageGroupPanel.set(manageGroup ? (routeState.panel ?? '') : '');
+    this.globalManage.set(globalManage);
+    this.globalManagePanel.set(globalManage ? (routeState.panel ?? '') : '');
+    this.sectionPath.set(accountPage ?? (globalManage ? 'global-manage' : this.currentSectionPath()));
     this.sectionTitle.set(
       (isDetailRoute || isComparisonRoute) && detailDataType
         ? detailDataType === 'dataset'
@@ -183,7 +181,7 @@ export class MainContainerComponent {
         : (routeData.sectionTitle ?? 'Data')
     );
 
-    if (adminPage || accountPage || manageGroup) {
+    if (accountPage || manageGroup || globalManage) {
       this.detailStore.clear();
       this.comparisonContext.set(null);
       this.discoveryRequest?.unsubscribe();
@@ -197,13 +195,9 @@ export class MainContainerComponent {
       this.pageLabel.set(
         manageGroup
           ? 'Manage Group'
-          : accountPage
-            ? 'Memberships'
-            : adminPage === 'groups'
-              ? 'Users'
-              : adminPage === 'categories'
-                ? 'Categories'
-                : 'Organizations'
+          : globalManage
+            ? 'Manage'
+            : 'Memberships'
       );
       this.discoveryItems.set(null);
       this.discoveryLoading.set(false);

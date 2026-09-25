@@ -1,10 +1,10 @@
 import { Component, DOCUMENT, effect, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
-import { DialogOutletComponent } from '../components/dialog-outlet/dialog-outlet.component';
-import { MembershipRequestDialogComponent } from '../components/membership-request-dialog/membership-request-dialog.component';
-import { ResourceCreationDialogComponent } from '../components/resource-creation-dialog/resource-creation-dialog.component';
 import { ToastOutletComponent } from '../components/toast-outlet/toast-outlet.component';
+import { MembershipRequestDialogComponent } from '../dialogs/membership-request/membership-request-dialog.component';
+import { DialogOutletComponent } from '../dialogs/outlet/dialog-outlet.component';
+import { ResourceCreationDialogComponent } from '../dialogs/resource-creation/resource-creation-dialog.component';
 
 @Component({
   selector: 'app-root',

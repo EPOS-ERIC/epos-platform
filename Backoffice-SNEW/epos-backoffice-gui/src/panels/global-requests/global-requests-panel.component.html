@@ -1,0 +1,28 @@
+@if (canManageMemberships()) {
+  <app-membership-requests-panel
+    [requests]="membershipRequests()"
+    [loading]="membershipRequestsLoading()"
+    [error]="membershipRequestsError()"
+    [decisionKey]="membershipDecision()"
+    context="Membership Requests"
+    eyebrow="Administration"
+    subtitle="Review pending group access requests and choose the roles to assign."
+    [canSelectRoles]="canManageRoles()"
+    [availableRoles]="groupRoles"
+    (decision)="decideMembership($event)"
+    (roleToggle)="toggleRequestedRole($event)"
+  />
+}
+
+@if (canManageRoles()) {
+  <app-role-requests-panel
+    [requests]="roleRequests()"
+    [loading]="roleRequestsLoading()"
+    [error]="roleRequestsError()"
+    [decisionKey]="roleRequestDecision()"
+    context="Role Requests"
+    eyebrow="Administration"
+    subtitle="Review additional role requests from active group members."
+    (decision)="decideRoleRequest($event)"
+  />
+}

@@ -120,7 +120,7 @@
 
   </nav>
 
-  @if (isAdmin && !detailItems.length) {
+  @if (adminItems.length && !detailItems.length) {
     <div class="nav-section admin-nav-section" [class.centered]="collapsed()">
       <span class="nav-section-title" [class.hidden]="collapsed()">Admin</span>
 

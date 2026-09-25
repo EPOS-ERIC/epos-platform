@@ -22,11 +22,7 @@ export const groupAdminGuard: CanActivateFn = async (route) => {
     group.id === groupId && group.concept === conceptBySection[sectionPath as keyof typeof conceptBySection]
   );
 
-  const canManageGroup = groupMatchesSection && (currentUserStore.user()?.memberships.some((membership) =>
-    membership.group.id === groupId
-    && membership.status === 'ACTIVE'
-    && membership.roles.includes('GROUP_ADMIN')
-  ) ?? false);
+  const canManageGroup = !!groupId && groupMatchesSection && currentUserStore.canManageGroup(groupId);
 
   return canManageGroup
     ? true

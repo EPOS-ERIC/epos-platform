@@ -38,4 +38,19 @@ describe('NavigationSidebarComponent', () => {
     expect((fixture.nativeElement.querySelector('.nav-section-title') as HTMLElement).textContent?.trim()).toBe('Compare');
     expect(fixture.nativeElement.querySelector('.nav-item--tree-link')?.getAttribute('href')).toBe('#compare-general-information');
   });
+
+  it('shows a single global management entry when an admin capability is granted', async () => {
+    await TestBed.configureTestingModule({
+      imports: [NavigationSidebarComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(NavigationSidebarComponent);
+    fixture.componentRef.setInput('canAccessGlobalManage', true);
+    fixture.detectChanges();
+
+    const adminLinks = fixture.nativeElement.querySelectorAll('.admin-nav-section .nav-item') as NodeListOf<HTMLAnchorElement>;
+    expect(adminLinks).toHaveLength(1);
+    expect(adminLinks[0].textContent).toContain('Manage');
+    expect(adminLinks[0].getAttribute('href')).toBe('/global-manage');
+  });
 });

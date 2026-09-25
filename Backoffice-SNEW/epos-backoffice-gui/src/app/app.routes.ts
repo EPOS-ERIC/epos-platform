@@ -1,8 +1,9 @@
 import { Routes } from '@angular/router';
 
-import { LoginPageComponent } from '../components/login-page/login-page.component';
 import { MainContainerComponent } from '../components/main-container/main-container.component';
+import { LoginPageComponent } from '../pages/login/login-page.component';
 import { authGuard } from './auth.guard';
+import { globalManageGuard } from './global-manage.guard';
 import { groupAdminGuard } from './group-admin.guard';
 
 export const routes: Routes = [
@@ -102,21 +103,9 @@ export const routes: Routes = [
     data: { sectionTitle: 'My Account', accountPage: 'memberships' }
   },
   {
-    path: 'admin/groups',
+    path: 'global-manage',
     component: MainContainerComponent,
-    canActivate: [authGuard],
-    data: { sectionTitle: 'Groups', adminPage: 'groups' }
-  },
-  {
-    path: 'admin/categories',
-    component: MainContainerComponent,
-    canActivate: [authGuard],
-    data: { sectionTitle: 'Categories', adminPage: 'categories' }
-  },
-  {
-    path: 'admin/organizations',
-    component: MainContainerComponent,
-    canActivate: [authGuard],
-    data: { sectionTitle: 'Organizations', adminPage: 'organizations' }
+    canActivate: [authGuard, globalManageGuard],
+    data: { sectionTitle: 'Global Administration', globalManage: true }
   }
 ];

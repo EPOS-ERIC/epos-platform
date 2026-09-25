@@ -14,9 +14,11 @@ type fakeRepository struct {
 	user             domain.AuthorizationUser
 	admin            bool
 	global           bool
+	globalPermission domain.GlobalPermission
 	member           bool
 	anyMember        bool
 	groupAllowed     bool
+	groupPermission  domain.GroupPermission
 	datasetGroup     uuid.UUID
 	published        bool
 	activeGroups     []uuid.UUID
@@ -32,8 +34,8 @@ func (r fakeRepository) User(context.Context, string) (domain.AuthorizationUser,
 }
 
 func (r fakeRepository) IsGlobalAdmin(context.Context, string) (bool, error) { return r.admin, nil }
-func (r fakeRepository) HasGlobalPermission(context.Context, string, domain.GlobalPermission) (bool, error) {
-	return r.global, nil
+func (r fakeRepository) HasGlobalPermission(_ context.Context, _ string, permission domain.GlobalPermission) (bool, error) {
+	return r.global || r.globalPermission == permission, nil
 }
 
 func (r fakeRepository) IsActiveMember(context.Context, string, uuid.UUID) (bool, error) {
@@ -48,8 +50,8 @@ func (r fakeRepository) ListActiveUserMemberships(context.Context, string) ([]uu
 	return r.activeGroups, nil
 }
 
-func (r fakeRepository) HasGroupPermission(context.Context, string, uuid.UUID, domain.GroupPermission) (bool, error) {
-	return r.groupAllowed, nil
+func (r fakeRepository) HasGroupPermission(_ context.Context, _ string, _ uuid.UUID, permission domain.GroupPermission) (bool, error) {
+	return r.groupAllowed || r.groupPermission == permission, nil
 }
 
 func (r fakeRepository) ListGroupsWithAnyPermission(context.Context, string, []domain.GroupPermission) ([]uuid.UUID, error) {
@@ -171,6 +173,55 @@ func TestCanManageGlobalNotificationSubscriptionsAllowsSelf(t *testing.T) {
 	}
 	if !result.Allowed || result.Reason != "self" {
 		t.Fatalf("result = %#v, want self access", result)
+	}
+}
+
+func TestCanListGroupMembershipsAllowsGroupNotificationManager(t *testing.T) {
+	t.Parallel()
+	authorizer := New(slog.Default(), fakeRepository{
+		user:            domain.AuthorizationUser{Status: domain.UserStatusActive},
+		member:          true,
+		groupPermission: domain.GroupPermissionNotificationManage,
+	})
+
+	result, err := authorizer.CanListGroupMemberships(context.Background(), "user-1", uuid.New())
+	if err != nil {
+		t.Fatalf("list group memberships authorization: %v", err)
+	}
+	if !result.Allowed || result.Reason != string(domain.GroupPermissionNotificationManage) {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestCanListGroupMembershipsAllowsGlobalNotificationManager(t *testing.T) {
+	t.Parallel()
+	authorizer := New(slog.Default(), fakeRepository{
+		user:             domain.AuthorizationUser{Status: domain.UserStatusActive},
+		globalPermission: domain.GlobalPermissionNotificationManage,
+	})
+
+	result, err := authorizer.CanListGroupMemberships(context.Background(), "user-1", uuid.New())
+	if err != nil {
+		t.Fatalf("list group memberships authorization: %v", err)
+	}
+	if !result.Allowed || result.Reason != string(domain.GlobalPermissionNotificationManage) {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestCanListUsersAllowsGlobalNotificationManager(t *testing.T) {
+	t.Parallel()
+	authorizer := New(slog.Default(), fakeRepository{
+		user:             domain.AuthorizationUser{Status: domain.UserStatusActive},
+		globalPermission: domain.GlobalPermissionNotificationManage,
+	})
+
+	result, err := authorizer.CanListUsers(context.Background(), "user-1")
+	if err != nil {
+		t.Fatalf("list users authorization: %v", err)
+	}
+	if !result.Allowed || result.Reason != string(domain.GlobalPermissionNotificationManage) {
+		t.Fatalf("result = %#v", result)
 	}
 }
 

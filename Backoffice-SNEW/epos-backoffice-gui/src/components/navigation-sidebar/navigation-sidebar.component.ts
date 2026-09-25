@@ -1,7 +1,7 @@
 import { Component, DOCUMENT, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { AppIconComponent, type IconName } from '../app-icon/app-icon.component';
+import { AppIconComponent, type IconName } from '../../shared/ui/app-icon.component';
 import type { DiscoveryConcept, Group } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import type { ResourceActionItem, ResourceActionKey } from '../../models/resource-actions';
@@ -24,7 +24,7 @@ type NavigationItem = {
 export class NavigationSidebarComponent {
   private readonly document = inject(DOCUMENT);
 
-  @Input() isAdmin = true;
+  @Input() canAccessGlobalManage = false;
   @Input() detailItems: NavigationItem[] = [];
   @Input() detailSectionLabel = 'Detail';
   @Input() showBackButton = false;
@@ -47,10 +47,8 @@ export class NavigationSidebarComponent {
     { label: 'Facilities', route: '/facilities', icon: 'building', concept: 'FACILITIES' }
   ];
 
-  protected readonly adminItems: NavigationItem[] = [
-    { label: 'Categories', route: '/admin/categories', icon: 'tags' },
-    { label: 'Groups', route: '/admin/groups', icon: 'users' },
-    { label: 'Organizations', route: '/admin/organizations', icon: 'building' }
+  private readonly allAdminItems: NavigationItem[] = [
+    { label: 'Manage', route: '/global-manage', icon: 'settings' }
   ];
   protected readonly groupIconPath = groupIconPath;
 
@@ -68,6 +66,10 @@ export class NavigationSidebarComponent {
     }
 
     return undefined;
+  }
+
+  protected get adminItems(): NavigationItem[] {
+    return this.canAccessGlobalManage ? this.allAdminItems : [];
   }
 
   protected get logoSrc(): string {
