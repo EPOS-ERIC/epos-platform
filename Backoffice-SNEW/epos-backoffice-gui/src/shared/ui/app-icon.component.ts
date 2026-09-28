@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 
 export type IconName =
+  | 'arrow-left-alt'
   | 'chevron-left'
   | 'chevron-right'
   | 'chevron-down'

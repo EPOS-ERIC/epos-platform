@@ -12,11 +12,13 @@ import { SoftwareGeneralInformationComponent } from '../../components/main-conta
 import { SpatialCoverageComponent } from '../../components/main-container/detail-sections/spatial-coverage/spatial-coverage.component';
 import { TemporalCoverageComponent } from '../../components/main-container/detail-sections/temporal-coverage/temporal-coverage.component';
 import { ResourceVersionHistoryDialogComponent } from '../../dialogs/resource-version-history/resource-version-history-dialog.component';
+import { BackButtonComponent } from '../../shared/ui/back-button.component';
 
 @Component({
   selector: 'app-resource-detail-page',
   imports: [
     CategoriesComponent,
+    BackButtonComponent,
     ContactPointsComponent,
     DistributionComponent,
     GeneralInformationComponent,

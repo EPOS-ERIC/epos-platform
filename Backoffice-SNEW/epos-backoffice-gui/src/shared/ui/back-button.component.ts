@@ -14,6 +14,7 @@ export class BackButtonComponent {
 
   @Input() route = '/data';
   @Input() label = 'Back';
+  @Input() appearance: 'default' | 'dark' = 'default';
 
   protected get routeTree() {
     return this.router.parseUrl(this.route);

@@ -346,12 +346,6 @@ export class MainContainerComponent {
     this.detailScrollContainerRef?.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  protected membershipBackLink(): string[] {
-    const concept = this.groups().find((group) => group.id === this.selectedGroupId())?.concept;
-    const sectionPath = concept === 'SOFTWARE' ? 'software' : concept === 'FACILITIES' ? 'facilities' : 'data';
-    return ['/', sectionPath];
-  }
-
   protected currentUrl(): string {
     return this.router.url;
   }

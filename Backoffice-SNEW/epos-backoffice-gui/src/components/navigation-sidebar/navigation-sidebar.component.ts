@@ -27,20 +27,29 @@ export class NavigationSidebarComponent {
   @Input() canAccessGlobalManage = false;
   @Input() detailItems: NavigationItem[] = [];
   @Input() detailSectionLabel = 'Detail';
-  @Input() showBackButton = false;
   @Input() detailRootLabel = '';
-  @Input() detailBackLink: string | string[] = '/';
-  @Input() detailBackQueryParams: Record<string, string> | null = null;
   @Input() detailActions: ResourceActionItem[] = [];
   @Input() groups: Group[] = [];
   @Input() groupsLoading = false;
-  @Input() currentSectionPath = '';
+  @Input()
+  set currentSectionPath(value: string) {
+    this.currentSection = value;
+
+    const route = `/${value}`;
+    if (this.items.some((item) => item.route === route)) {
+      this.expandedMainRoute.set(route);
+    }
+  }
+  get currentSectionPath(): string {
+    return this.currentSection;
+  }
   @Input() selectedGroupId = '';
   @Input() globalManageReturnUrl = '/data';
   @Output() detailAction = new EventEmitter<ResourceActionKey>();
 
   protected readonly collapsed = signal(false);
   protected readonly expandedNodes = signal<Set<string>>(new Set());
+  protected readonly expandedMainRoute = signal<string | null>(null);
 
   protected readonly items: NavigationItem[] = [
     { label: 'Data', route: '/data', icon: 'database', concept: 'DATA' },
@@ -52,6 +61,7 @@ export class NavigationSidebarComponent {
     { label: 'Manage', route: '/global-manage', icon: 'settings' }
   ];
   protected readonly groupIconPath = groupIconPath;
+  private currentSection = '';
 
   protected get detailRootIcon(): IconName | undefined {
     if (this.detailRootLabel === 'Dataset') {
@@ -87,6 +97,20 @@ export class NavigationSidebarComponent {
 
   protected isMainSectionActive(item: NavigationItem): boolean {
     return item.route === `/${this.currentSectionPath}`;
+  }
+
+  protected isMainItemExpanded(item: NavigationItem): boolean {
+    return this.expandedMainRoute() === item.route;
+  }
+
+  protected expandMainItem(item: NavigationItem): void {
+    this.expandedMainRoute.set(item.route ?? null);
+  }
+
+  protected toggleMainItem(event: MouseEvent, item: NavigationItem): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.expandedMainRoute.update((route) => route === item.route ? null : (item.route ?? null));
   }
 
   protected isAdminSectionActive(item: NavigationItem): boolean {

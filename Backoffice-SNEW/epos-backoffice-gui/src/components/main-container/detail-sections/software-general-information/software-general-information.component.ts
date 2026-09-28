@@ -6,14 +6,13 @@ import type {
   SoftwareSourceCodeResourceMetadata,
   ResourceVersionReference
 } from '../../../../../generated/backofficeSchemas';
-import { BackButtonComponent } from '../../../../shared/ui/back-button.component';
 
 type SoftwareResourceType = 'software-application' | 'software-source-code';
 type SoftwareMetadata = SoftwareApplicationResourceMetadata | SoftwareSourceCodeResourceMetadata;
 
 @Component({
   selector: 'app-software-general-information',
-  imports: [BackButtonComponent, FormsModule],
+  imports: [FormsModule],
   templateUrl: './software-general-information.component.html',
   styleUrl: './software-general-information.component.css'
 })
@@ -21,8 +20,6 @@ export class SoftwareGeneralInformationComponent {
   @Input() model: SoftwareMetadata | null = null;
   @Input() disabled = false;
   @Input() resourceType: SoftwareResourceType = 'software-application';
-  @Input() backLink = '/';
-  @Input() showBackLink = true;
   @Output() modelChange = new EventEmitter<SoftwareMetadata>();
 
   protected applicationModel(): SoftwareApplicationResourceMetadata | null {

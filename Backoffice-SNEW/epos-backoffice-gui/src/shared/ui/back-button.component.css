@@ -7,7 +7,10 @@
 
 .back-button {
   gap: 6px;
+  text-decoration: none;
+}
+
+.back-button:not(.app-button--dark) {
   background: var(--surface-2);
   color: var(--text);
-  text-decoration: none;
 }

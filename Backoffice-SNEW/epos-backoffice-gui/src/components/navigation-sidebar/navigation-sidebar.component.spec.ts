@@ -11,15 +11,11 @@ describe('NavigationSidebarComponent', () => {
     }).compileComponents();
     const fixture = TestBed.createComponent(NavigationSidebarComponent);
     fixture.componentRef.setInput('selectedGroupId', 'group-id');
-    fixture.componentRef.setInput('showBackButton', true);
-    fixture.componentRef.setInput('detailBackLink', ['/data']);
-    fixture.componentRef.setInput('detailBackQueryParams', { groupId: 'group-id' });
     fixture.detectChanges();
 
     const link = fixture.nativeElement.querySelector('.membership-request-button') as HTMLAnchorElement;
     expect(link.textContent).toContain('My memberships');
     expect(link.getAttribute('href')).toBe('/memberships?groupId=group-id');
-    expect((fixture.nativeElement.querySelector('.sidebar-back-button') as HTMLAnchorElement).getAttribute('href')).toBe('/data?groupId=group-id');
   });
 
   it('uses the supplied label for comparison navigation', async () => {
@@ -53,5 +49,31 @@ describe('NavigationSidebarComponent', () => {
     expect(adminLinks).toHaveLength(1);
     expect(adminLinks[0].textContent).toContain('Manage');
     expect(adminLinks[0].getAttribute('href')).toBe('/global-manage?returnUrl=%2Fsoftware%3FgroupId%3Dgroup-id');
+  });
+
+  it('uses an accordion for the main navigation groups', async () => {
+    await TestBed.configureTestingModule({
+      imports: [NavigationSidebarComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(NavigationSidebarComponent);
+    fixture.componentRef.setInput('currentSectionPath', 'data');
+    fixture.detectChanges();
+
+    const toggles = fixture.nativeElement.querySelectorAll('.main-tree-toggle-button') as NodeListOf<HTMLButtonElement>;
+    expect(toggles).toHaveLength(3);
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('true');
+    expect(toggles[1].getAttribute('aria-expanded')).toBe('false');
+
+    toggles[1].click();
+    fixture.detectChanges();
+
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('false');
+    expect(toggles[1].getAttribute('aria-expanded')).toBe('true');
+
+    toggles[1].click();
+    fixture.detectChanges();
+
+    expect(toggles[1].getAttribute('aria-expanded')).toBe('false');
   });
 });

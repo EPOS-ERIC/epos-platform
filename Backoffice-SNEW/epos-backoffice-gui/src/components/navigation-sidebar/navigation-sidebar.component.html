@@ -12,46 +12,57 @@
       </span>
     </div>
 
-    @if (detailItems.length || showBackButton) {
-      <a class="sidebar-back-button app-button app-button--ghost" [routerLink]="detailBackLink" [queryParams]="detailBackQueryParams" aria-label="Back to results">
-        <app-icon name="chevron-left" [size]="14" />
-        <span class="sidebar-back-text">Back</span>
-      </a>
-    }
   </div>
 
   <nav class="nav" [class.nav--main]="!detailItems.length" [class.nav--detail]="!!detailItems.length">
     @if (!detailItems.length) {
       @for (item of items; track item.route) {
-        <div class="nav-tree-item" [class.nav-tree-item--expanded]="!collapsed() && isMainSectionActive(item)">
-          <a class="nav-item" [routerLink]="item.route" [class.active]="isMainSectionActive(item)" [class.centered]="collapsed()">
-            @if (item.icon) {
-              <span class="nav-icon"><app-icon [name]="item.icon!" [size]="16" /></span>
-            }
-            <span class="nav-label" [class.hidden]="collapsed()">{{ item.label }}</span>
-          </a>
-
-          @if (!collapsed() && isMainSectionActive(item)) {
-            <div class="nav-tree-children nav-tree-children--scrollable">
-              @if (groupsLoading) {
-                <span class="nav-section-title">Loading groups...</span>
-              } @else {
-                @for (group of groupsForItem(item); track group.id) {
-                  <a
-                    class="nav-item nav-item--nested nav-item--sub nav-item--anchor"
-                    [routerLink]="item.route"
-                    [queryParams]="{ groupId: group.id }"
-                    [class.active]="selectedGroupId === group.id"
-                  >
-                    @if (groupIconPath(group.id); as iconPath) {
-                      <img class="group-nav-icon" [src]="iconPath" alt="" aria-hidden="true" />
-                    }
-                    <span class="nav-label">{{ group.name }}</span>
-                  </a>
-                } @empty {
-                  <span class="nav-section-title">No groups</span>
-                }
+        <div class="nav-tree-item" [class.nav-tree-item--expanded]="!collapsed() && isMainItemExpanded(item)">
+          <div class="nav-tree-row nav-tree-row--main" [class.active]="isMainSectionActive(item)">
+            <a class="nav-item nav-item--main" [routerLink]="item.route" (click)="expandMainItem(item)" [class.active]="isMainSectionActive(item)" [class.centered]="collapsed()">
+              @if (item.icon) {
+                <span class="nav-icon"><app-icon [name]="item.icon!" [size]="16" /></span>
               }
+              <span class="nav-label" [class.hidden]="collapsed()">{{ item.label }}</span>
+            </a>
+
+            @if (!collapsed()) {
+              <button
+                type="button"
+                class="tree-toggle-button main-tree-toggle-button"
+                [class.is-expanded]="isMainItemExpanded(item)"
+                (click)="toggleMainItem($event, item)"
+                [attr.aria-expanded]="isMainItemExpanded(item)"
+                [attr.aria-label]="(isMainItemExpanded(item) ? 'Collapse ' : 'Expand ') + item.label + ' groups'"
+              >
+                <app-icon name="chevron-right" [size]="14" />
+              </button>
+            }
+          </div>
+
+          @if (!collapsed()) {
+            <div class="main-tree-panel" [class.is-expanded]="isMainItemExpanded(item)" [attr.aria-hidden]="!isMainItemExpanded(item)">
+              <div class="nav-tree-children nav-tree-children--scrollable">
+                @if (groupsLoading) {
+                  <span class="nav-section-title">Loading groups...</span>
+                } @else {
+                  @for (group of groupsForItem(item); track group.id) {
+                    <a
+                      class="nav-item nav-item--nested nav-item--sub nav-item--anchor"
+                      [routerLink]="item.route"
+                      [queryParams]="{ groupId: group.id }"
+                      [class.active]="selectedGroupId === group.id"
+                    >
+                      @if (groupIconPath(group.id); as iconPath) {
+                        <img class="group-nav-icon" [src]="iconPath" alt="" aria-hidden="true" />
+                      }
+                      <span class="nav-label">{{ group.name }}</span>
+                    </a>
+                  } @empty {
+                    <span class="nav-section-title">No groups</span>
+                  }
+                }
+              </div>
             </div>
           }
         </div>

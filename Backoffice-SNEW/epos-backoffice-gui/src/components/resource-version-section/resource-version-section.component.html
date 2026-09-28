@@ -2,13 +2,12 @@
   @switch (sectionTitle) {
     @case ('General Information') {
       @if (datasetForm; as form) {
-        <app-general-information [model]="form" [disabled]="true" [showBackLink]="false" />
+        <app-general-information [model]="form" [disabled]="true" />
       } @else if (softwareMetadata; as metadata) {
         <app-software-general-information
           [model]="metadata"
           [disabled]="true"
           [resourceType]="softwareResourceType()"
-          [showBackLink]="false"
         />
       }
     }

@@ -7,11 +7,8 @@
     [selectedGroupId]="selectedGroupId()"
     [globalManageReturnUrl]="globalManageReturnUrl()"
     [detailItems]="sidebarDetailItems()"
-    [showBackButton]="accountPage() === 'memberships' || manageGroup()"
     [detailSectionLabel]="pageLabel() === 'Compare' ? 'Compare' : 'Detail'"
     [detailRootLabel]="sidebarDetailRootLabel()"
-    [detailBackLink]="accountPage() === 'memberships' ? membershipBackLink() : ['/', sectionPath()]"
-    [detailBackQueryParams]="selectedGroupId() ? { groupId: selectedGroupId() } : null"
     [detailActions]="detailStore.sidebarActions()"
     (detailAction)="detailStore.handleSidebarAction($event)"
   />

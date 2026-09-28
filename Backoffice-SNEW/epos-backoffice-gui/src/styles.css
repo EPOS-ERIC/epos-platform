@@ -105,7 +105,7 @@ app-navigation-sidebar .admin-nav-section {
   flex: 0 0 auto;
 }
 
-app-navigation-sidebar .nav--main {
+app-navigation-sidebar .sidebar .nav.nav--main {
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1043,20 +1043,6 @@ app-navigation-sidebar .brand-mark img {
     drop-shadow(0 16px 11px rgba(8, 35, 34, 0.46));
 }
 
-app-navigation-sidebar .sidebar-top > .sidebar-back-button {
-  align-self: center;
-}
-
-[data-theme='light'] app-navigation-sidebar .sidebar-top > .sidebar-back-button {
-  border-color: rgba(7, 54, 51, 0.72);
-  background: rgba(13, 73, 68, 0.78);
-  color: #f8fafc;
-}
-
-[data-theme='light'] app-navigation-sidebar .sidebar-top > .sidebar-back-button:hover {
-  background: rgba(7, 54, 51, 0.94);
-}
-
 app-navigation-sidebar .membership-request-footer {
   margin-top: auto;
   padding-top: 14px;
@@ -1112,12 +1098,6 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
 }
 
 .detail-overview-error {
-  margin-bottom: 12px;
-}
-
-.detail-overview-actions {
-  display: flex;
-  justify-content: flex-end;
   margin-bottom: 12px;
 }
 
@@ -1184,6 +1164,27 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
 
 .app-button--primary:hover {
   background: var(--olive-700);
+}
+
+.app-button--dark {
+  border-color: #1e293b;
+  background: #334155;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.14);
+}
+
+.app-button--dark:hover {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+:root[data-theme='dark'] .app-button--dark {
+  border-color: #64748b;
+  background: #334155;
+}
+
+:root[data-theme='dark'] .app-button--dark:hover {
+  background: #475569;
 }
 
 .app-button--ghost {
@@ -1269,7 +1270,6 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
 }
 
 :root[data-ui-variant='scalar'] .sidebar-toggle-button,
-:root[data-ui-variant='scalar'] .sidebar-back-button,
 :root[data-ui-variant='scalar'] .tree-toggle-button {
   border-color: rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
@@ -1310,4 +1310,75 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
 
 .app-muted {
   color: var(--text-muted);
+}
+:where(app-navigation-sidebar) .nav-tree-row--main {
+  gap: 0;
+  border-radius: 10px;
+  transition: background-color 180ms ease;
+}
+
+:where(app-navigation-sidebar) .nav-tree-row--main:hover,
+:where(app-navigation-sidebar) .nav-tree-row--main.active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:where(app-navigation-sidebar) .nav-item--main {
+  min-width: 0;
+}
+
+:where(app-navigation-sidebar) .nav-tree-row--main .nav-item--main,
+:where(app-navigation-sidebar) .nav-tree-row--main .nav-item--main:hover,
+:where(app-navigation-sidebar) .nav-tree-row--main .nav-item--main.active {
+  background: transparent;
+}
+
+app-navigation-sidebar .sidebar .nav-tree-row--main .tree-toggle-button.main-tree-toggle-button {
+  margin-right: 6px;
+  border-color: transparent;
+  background: transparent;
+}
+
+app-navigation-sidebar .sidebar .nav-tree-row--main .tree-toggle-button.main-tree-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:where(app-navigation-sidebar) .main-tree-toggle-button app-icon {
+  transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:where(app-navigation-sidebar) .main-tree-toggle-button.is-expanded app-icon {
+  transform: rotate(90deg);
+}
+
+:where(app-navigation-sidebar) .main-tree-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: grid-template-rows 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 220ms ease;
+}
+
+:where(app-navigation-sidebar) .main-tree-panel.is-expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+:where(app-navigation-sidebar) .main-tree-panel > .nav-tree-children {
+  min-height: 0;
+  overflow-y: hidden;
+}
+
+:where(app-navigation-sidebar) .main-tree-panel.is-expanded > .nav-tree-children {
+  overflow-y: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(app-navigation-sidebar) .nav-tree-row--main,
+  :where(app-navigation-sidebar) .main-tree-toggle-button app-icon,
+  :where(app-navigation-sidebar) .main-tree-panel {
+    transition: none;
+  }
 }

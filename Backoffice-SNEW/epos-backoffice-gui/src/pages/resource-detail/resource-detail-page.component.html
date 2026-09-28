@@ -9,45 +9,38 @@
 } @else if (store.datasetVersion(); as version) {
   @if (store.datasetForm(); as form) {
     <div class="detail-page">
-      @if (store.canViewHistory() || store.canDelete()) {
-        <div class="detail-overview-actions">
-          @if (store.canViewHistory()) {
-            <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
-          }
-          @if (store.canDelete()) {
-            <button
-              type="button"
-              class="app-button detail-delete-button"
-              (click)="store.openDeleteDialog()"
-              [disabled]="store.deleting() || store.saving()"
-            >
-              {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
-            </button>
-          }
-        </div>
-      }
-
       @if (store.actionError()) {
         <div class="detail-action-error detail-overview-error">{{ store.actionError() }}</div>
       }
 
       <section class="detail-overview detail-card app-card">
-        <div class="detail-overview-item detail-overview-item--wide">
+        <div class="detail-context-copy">
           <span class="detail-label">Title</span>
-          <strong>{{ store.title() }}</strong>
+          <strong class="detail-context-title">{{ store.title() }}</strong>
+          <div class="detail-context-meta">
+            <span class="detail-context-id"><span class="detail-label">Resource ID</span><code>{{ version.resource_id }}</code></span>
+            <span class="detail-context-status" [attr.data-status]="version.status.toLowerCase()"><span>Status</span><strong>{{ version.status.toUpperCase() }}</strong></span>
+          </div>
         </div>
 
-        <div class="detail-overview-item" [attr.data-status]="version.status.toLowerCase()">
-          <span class="detail-label">Status</span>
-          <strong>{{ version.status.toUpperCase() }}</strong>
+        <div class="detail-context-actions">
+          <app-back-button [route]="backLink()" label="Back" appearance="dark" />
+          @if (store.canViewHistory() || store.canDelete()) {
+            <div class="detail-context-resource-actions">
+              @if (store.canViewHistory()) {
+                <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
+              }
+              @if (store.canDelete()) {
+                <button type="button" class="app-button detail-delete-button" (click)="store.openDeleteDialog()" [disabled]="store.deleting() || store.saving()">
+                  {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+                </button>
+              }
+            </div>
+          }
         </div>
 
-        <div class="detail-overview-item">
-          <span class="detail-label">Resource ID</span>
-          <strong>{{ version.resource_id }}</strong>
-        </div>
         @if (version.rejection_note != null) {
-          <div class="detail-overview-item detail-overview-item--wide rejection-note">
+          <div class="rejection-note">
             <span class="detail-label">Rejection Note</span>
             <span>{{ version.rejection_note }}</span>
           </div>
@@ -58,7 +51,6 @@
         [model]="form"
         [disabled]="!store.canEdit()"
         (modelChange)="store.setDatasetForm($event)"
-        [backLink]="backLink()"
       />
       <app-spatial-coverage
         [model]="form.spatial"
@@ -110,42 +102,34 @@
 } @else if (store.softwareApplicationForm(); as form) {
   @if (store.resourceVersion(); as version) {
     <div class="detail-page">
-      @if (store.canViewHistory() || store.canDelete()) {
-        <div class="detail-overview-actions">
-          @if (store.canViewHistory()) {
-            <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
-          }
-          @if (store.canDelete()) {
-            <button
-              type="button"
-              class="app-button detail-delete-button"
-              (click)="store.openDeleteDialog()"
-              [disabled]="store.deleting() || store.saving()"
-            >
-              {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
-            </button>
-          }
-        </div>
-      }
-
       @if (store.actionError()) {
         <div class="detail-action-error detail-overview-error">{{ store.actionError() }}</div>
       }
 
       <section class="detail-overview detail-card app-card">
-        <div class="detail-overview-item detail-overview-item--wide">
+        <div class="detail-context-copy">
           <span class="detail-label">Title</span>
-          <strong>{{ store.title() }}</strong>
+          <strong class="detail-context-title">{{ store.title() }}</strong>
+          <div class="detail-context-meta">
+            <span class="detail-context-id"><span class="detail-label">Resource ID</span><code>{{ version.resource_id }}</code></span>
+            <span class="detail-context-status" [attr.data-status]="version.status.toLowerCase()"><span>Status</span><strong>{{ version.status.toUpperCase() }}</strong></span>
+          </div>
         </div>
 
-        <div class="detail-overview-item" [attr.data-status]="version.status.toLowerCase()">
-          <span class="detail-label">Status</span>
-          <strong>{{ version.status.toUpperCase() }}</strong>
-        </div>
-
-        <div class="detail-overview-item">
-          <span class="detail-label">Resource ID</span>
-          <strong>{{ version.resource_id }}</strong>
+        <div class="detail-context-actions">
+          <app-back-button [route]="backLink()" label="Back" appearance="dark" />
+          @if (store.canViewHistory() || store.canDelete()) {
+            <div class="detail-context-resource-actions">
+              @if (store.canViewHistory()) {
+                <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
+              }
+              @if (store.canDelete()) {
+                <button type="button" class="app-button detail-delete-button" (click)="store.openDeleteDialog()" [disabled]="store.deleting() || store.saving()">
+                  {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+                </button>
+              }
+            </div>
+          }
         </div>
       </section>
 
@@ -153,7 +137,6 @@
         [model]="form"
         [disabled]="!store.canEdit()"
         resourceType="software-application"
-        [backLink]="backLink()"
         (modelChange)="store.updateSoftwareApplicationForm($event)"
       />
       <app-identifiers
@@ -179,42 +162,34 @@
 } @else if (store.softwareSourceCodeForm(); as form) {
   @if (store.resourceVersion(); as version) {
     <div class="detail-page">
-      @if (store.canViewHistory() || store.canDelete()) {
-        <div class="detail-overview-actions">
-          @if (store.canViewHistory()) {
-            <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
-          }
-          @if (store.canDelete()) {
-            <button
-              type="button"
-              class="app-button detail-delete-button"
-              (click)="store.openDeleteDialog()"
-              [disabled]="store.deleting() || store.saving()"
-            >
-              {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
-            </button>
-          }
-        </div>
-      }
-
       @if (store.actionError()) {
         <div class="detail-action-error detail-overview-error">{{ store.actionError() }}</div>
       }
 
       <section class="detail-overview detail-card app-card">
-        <div class="detail-overview-item detail-overview-item--wide">
+        <div class="detail-context-copy">
           <span class="detail-label">Title</span>
-          <strong>{{ store.title() }}</strong>
+          <strong class="detail-context-title">{{ store.title() }}</strong>
+          <div class="detail-context-meta">
+            <span class="detail-context-id"><span class="detail-label">Resource ID</span><code>{{ version.resource_id }}</code></span>
+            <span class="detail-context-status" [attr.data-status]="version.status.toLowerCase()"><span>Status</span><strong>{{ version.status.toUpperCase() }}</strong></span>
+          </div>
         </div>
 
-        <div class="detail-overview-item">
-          <span class="detail-label">Resource ID</span>
-          <strong>{{ version.resource_id }}</strong>
-        </div>
-
-        <div class="detail-overview-item" [attr.data-status]="version.status.toLowerCase()">
-          <span class="detail-label">Status</span>
-          <strong>{{ version.status.toUpperCase() }}</strong>
+        <div class="detail-context-actions">
+          <app-back-button [route]="backLink()" label="Back" appearance="dark" />
+          @if (store.canViewHistory() || store.canDelete()) {
+            <div class="detail-context-resource-actions">
+              @if (store.canViewHistory()) {
+                <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
+              }
+              @if (store.canDelete()) {
+                <button type="button" class="app-button detail-delete-button" (click)="store.openDeleteDialog()" [disabled]="store.deleting() || store.saving()">
+                  {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+                </button>
+              }
+            </div>
+          }
         </div>
       </section>
 
@@ -222,7 +197,6 @@
         [model]="form"
         [disabled]="!store.canEdit()"
         resourceType="software-source-code"
-        [backLink]="backLink()"
         (modelChange)="store.updateSoftwareSourceCodeForm($event)"
       />
       <app-identifiers
