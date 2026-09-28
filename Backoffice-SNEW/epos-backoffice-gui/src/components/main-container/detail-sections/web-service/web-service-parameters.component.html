@@ -38,8 +38,8 @@
               >
                 <app-icon
                   [name]="reversed
-                    ? (parameterListCollapsed ? 'chevron-left' : 'chevron-right')
-                    : (parameterListCollapsed ? 'chevron-right' : 'chevron-left')"
+                    ? (parameterListCollapsed ? 'menu-open' : 'menu-close')
+                    : (parameterListCollapsed ? 'menu-close' : 'menu-open')"
                   [size]="16"
                 />
               </button>
@@ -78,7 +78,7 @@
                         @if (parameterComparisonStatus(parameter) !== 'unchanged') {
                           <span class="parameter-change-badge">{{ parameterStatusLabel(parameter) }}</span>
                         }
-                        <app-icon [name]="reversed ? 'chevron-left' : 'chevron-right'" [size]="14" />
+                        <app-icon [name]="reversed ? 'menu-open' : 'menu-close'" [size]="14" />
                       </span>
                     </span>
                     <strong>{{ parameter.label || 'Unnamed parameter' }}</strong>
