@@ -19,8 +19,8 @@ type GlobalManageDestination = {
 };
 
 const GLOBAL_MANAGE_DESTINATIONS: readonly GlobalManageDestination[] = [
-  { panel: 'requests', title: 'Requests', description: 'Review membership and role requests across all groups.', icon: 'users' },
-  { panel: 'members', title: 'Members', description: 'Manage users, group access, permissions, and global notifications.', icon: 'settings' },
+  { panel: 'requests', title: 'Requests', description: 'Review membership and role requests across all groups.', icon: 'inbox' },
+  { panel: 'members', title: 'Members', description: 'Manage users, group access, permissions, and global notifications.', icon: 'users' },
   { panel: 'contact-points', title: 'Contact Points', description: 'Manage the contact points available across the platform.', icon: 'user' },
   { panel: 'categories', title: 'Categories', description: 'Manage category schemes and their category hierarchies.', icon: 'tags' },
   { panel: 'organizations', title: 'Organizations', description: 'Maintain the canonical organizations used by resources.', icon: 'building' }

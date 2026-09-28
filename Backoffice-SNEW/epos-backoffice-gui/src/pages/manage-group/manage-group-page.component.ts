@@ -42,8 +42,8 @@ type ManageGroupDestination = {
 };
 
 const MANAGE_GROUP_DESTINATIONS: readonly ManageGroupDestination[] = [
-  { panel: 'membership-requests', title: 'Requests', description: 'Review requests to join this group or receive a new role.', icon: 'users' },
-  { panel: 'member-access', title: 'Members', description: 'Manage active members, roles, direct permissions, and notification subscriptions.', icon: 'settings' },
+  { panel: 'membership-requests', title: 'Requests', description: 'Review requests to join this group or receive a new role.', icon: 'inbox' },
+  { panel: 'member-access', title: 'Members', description: 'Manage active members, roles, direct permissions, and notification subscriptions.', icon: 'users' },
   { panel: 'categories', title: 'Group Categories', description: 'Maintain this group\'s category hierarchy.', icon: 'tags' }
 ];
 
