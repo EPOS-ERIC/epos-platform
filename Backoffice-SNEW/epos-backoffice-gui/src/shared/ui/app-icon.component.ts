@@ -4,6 +4,8 @@ export type IconName =
   | 'chevron-left'
   | 'chevron-right'
   | 'chevron-down'
+  | 'menu-open'
+  | 'menu-close'
   | 'database'
   | 'settings'
   | 'building'
