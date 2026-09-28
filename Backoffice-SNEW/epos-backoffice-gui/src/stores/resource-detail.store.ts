@@ -58,6 +58,7 @@ export type ResourceDetailRouteContext = {
   versionId: string;
   groupId: string;
   sectionPath: string;
+  returnUrl: string;
 };
 
 export type ResourceDetailNavigationItem = {
@@ -394,7 +395,8 @@ export class ResourceDetailStore {
         rightVersionId,
         sourceVersionId: version.version_id,
         groupId: version.group_id,
-        dataType: context.resourceType
+        dataType: context.resourceType,
+        returnUrl: context.returnUrl
       }
     });
     this.closeVersionHistory();

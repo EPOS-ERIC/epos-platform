@@ -1,18 +1,5 @@
 @if (showLanding()) {
   <section class="management-landing">
-    <div class="management-hero app-card">
-      <div class="group-heading">
-        @if (groupIconPath(groupId); as iconPath) {
-          <img class="group-logo" [src]="iconPath" alt="" aria-hidden="true" />
-        }
-        <div>
-          <p class="eyebrow app-badge app-badge--primary">Group Administration</p>
-          <h2>{{ groupName || 'Manage group' }}</h2>
-          <p class="subtitle app-muted">Choose an area to manage. Only sections available to your permissions are shown.</p>
-        </div>
-      </div>
-    </div>
-
     <div class="management-grid">
       @for (destination of destinations(); track destination.panel) {
         <a class="management-destination app-card" [routerLink]="[]" [queryParams]="{ panel: destination.panel }" queryParamsHandling="merge">

@@ -46,11 +46,12 @@ describe('NavigationSidebarComponent', () => {
     }).compileComponents();
     const fixture = TestBed.createComponent(NavigationSidebarComponent);
     fixture.componentRef.setInput('canAccessGlobalManage', true);
+    fixture.componentRef.setInput('globalManageReturnUrl', '/software?groupId=group-id');
     fixture.detectChanges();
 
     const adminLinks = fixture.nativeElement.querySelectorAll('.admin-nav-section .nav-item') as NodeListOf<HTMLAnchorElement>;
     expect(adminLinks).toHaveLength(1);
     expect(adminLinks[0].textContent).toContain('Manage');
-    expect(adminLinks[0].getAttribute('href')).toBe('/global-manage');
+    expect(adminLinks[0].getAttribute('href')).toBe('/global-manage?returnUrl=%2Fsoftware%3FgroupId%3Dgroup-id');
   });
 });

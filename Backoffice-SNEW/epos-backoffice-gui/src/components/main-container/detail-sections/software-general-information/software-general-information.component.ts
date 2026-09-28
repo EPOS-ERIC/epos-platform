@@ -1,19 +1,19 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 import type {
   SoftwareApplicationResourceMetadata,
   SoftwareSourceCodeResourceMetadata,
   ResourceVersionReference
 } from '../../../../../generated/backofficeSchemas';
+import { BackButtonComponent } from '../../../../shared/ui/back-button.component';
 
 type SoftwareResourceType = 'software-application' | 'software-source-code';
 type SoftwareMetadata = SoftwareApplicationResourceMetadata | SoftwareSourceCodeResourceMetadata;
 
 @Component({
   selector: 'app-software-general-information',
-  imports: [FormsModule, RouterLink],
+  imports: [BackButtonComponent, FormsModule],
   templateUrl: './software-general-information.component.html',
   styleUrl: './software-general-information.component.css'
 })
@@ -21,7 +21,7 @@ export class SoftwareGeneralInformationComponent {
   @Input() model: SoftwareMetadata | null = null;
   @Input() disabled = false;
   @Input() resourceType: SoftwareResourceType = 'software-application';
-  @Input() backLink: string | string[] = '/';
+  @Input() backLink = '/';
   @Input() showBackLink = true;
   @Output() modelChange = new EventEmitter<SoftwareMetadata>();
 

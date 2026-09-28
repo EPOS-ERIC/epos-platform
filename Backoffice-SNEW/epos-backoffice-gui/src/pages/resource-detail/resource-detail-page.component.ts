@@ -33,8 +33,8 @@ import { ResourceVersionHistoryDialogComponent } from '../../dialogs/resource-ve
 export class ResourceDetailPageComponent {
   protected readonly store = inject(ResourceDetailStore);
   protected readonly backLink = computed(() => {
-    const sectionPath = this.store.context()?.sectionPath;
-    return sectionPath ? ['/', sectionPath] : ['/'];
+    const context = this.store.context();
+    return context?.returnUrl ?? (context ? `/${context.sectionPath}?groupId=${encodeURIComponent(context.groupId)}` : '/');
   });
 
   protected updateSoftwareApplicationContactPoints(contactPoints: string[]): void {

@@ -13,11 +13,92 @@
 }
 
 .content {
+  position: relative;
   padding: 0 32px 32px;
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
+}
+
+.content--management-landing {
+  isolation: isolate;
+}
+
+.content--management-landing::before {
+  position: absolute;
+  content: '';
+  pointer-events: none;
+}
+
+.content--management-landing::before {
+  top: 200px;
+  right: -190px;
+  z-index: 0;
+  width: 680px;
+  height: 680px;
+  border-radius: 50%;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 96px), #000 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 96px), #000 0);
+}
+
+.content--global-management::before {
+  background: conic-gradient(
+    from var(--orbit-angle),
+    rgba(212, 175, 55, 0.3) 0deg,
+    rgba(234, 196, 53, 0.38) 220deg,
+    rgba(248, 220, 92, 0.48) 244deg,
+    rgba(255, 250, 205, 0.6) 254deg,
+    rgba(248, 220, 92, 0.48) 264deg,
+    rgba(234, 196, 53, 0.38) 288deg,
+    rgba(212, 175, 55, 0.3) 360deg
+  );
+  animation: landing-orbit-glide 14s ease-in-out infinite;
+}
+
+.content--group-management::before {
+  background: conic-gradient(
+    from var(--orbit-angle),
+    color-mix(in srgb, var(--management-accent) 18%, transparent) 0deg,
+    color-mix(in srgb, var(--management-accent) 28%, transparent) 220deg,
+    color-mix(in srgb, var(--management-accent) 40%, transparent) 244deg,
+    rgba(239, 246, 255, 0.56) 254deg,
+    color-mix(in srgb, var(--management-accent) 40%, transparent) 264deg,
+    color-mix(in srgb, var(--management-accent) 28%, transparent) 288deg,
+    color-mix(in srgb, var(--management-accent) 18%, transparent) 360deg
+  );
+  animation: landing-orbit-glide 14s ease-in-out infinite;
+}
+
+.content--management-landing > app-backoffice-header,
+.content--management-landing > .content-spacer {
+  position: relative;
+  z-index: 1;
+}
+
+@property --orbit-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 185deg;
+}
+
+@keyframes landing-orbit-glide {
+  0%,
+  40% {
+    --orbit-angle: 185deg;
+  }
+
+  68%,
+  100% {
+    --orbit-angle: 545deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content--global-management::before,
+  .content--group-management::before {
+    animation: none;
+  }
 }
 
 .content-spacer {
@@ -71,4 +152,18 @@
     height: auto;
     overflow: visible;
   }
+
+  .content--management-landing {
+    overflow: hidden;
+  }
+
+  .content--management-landing::before {
+    top: 270px;
+    right: -230px;
+    width: 440px;
+    height: 440px;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 68px), #000 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 68px), #000 0);
+  }
+
 }

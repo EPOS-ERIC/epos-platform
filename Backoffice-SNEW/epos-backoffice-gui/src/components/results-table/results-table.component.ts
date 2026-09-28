@@ -15,6 +15,7 @@ export class ResultsTableComponent implements OnChanges {
   @Input() selectedGroupId = '';
   @Input() selectedGroupName = '';
   @Input() canManageGroup = false;
+  @Input() returnUrl = '/data';
   @Input() discoveryItems: DiscoveryItem[] | null = null;
   @Input() discoveryLoading = false;
 
@@ -73,11 +74,19 @@ export class ResultsTableComponent implements OnChanges {
   protected detailQueryParams(item: DiscoveryItem): Record<string, string> {
     return {
       groupId: this.selectedGroupId,
-      dataType: item.type
+      dataType: item.type,
+      returnUrl: this.returnUrl
     };
   }
 
   protected manageGroupLink(): string[] {
     return ['/', this.sectionPath, 'manage-group'];
+  }
+
+  protected manageGroupQueryParams(): Record<string, string> {
+    return {
+      groupId: this.selectedGroupId,
+      returnUrl: this.returnUrl
+    };
   }
 }

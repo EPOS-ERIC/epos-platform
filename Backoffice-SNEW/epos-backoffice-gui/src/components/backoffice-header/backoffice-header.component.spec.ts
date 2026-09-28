@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import type { User } from '../../../generated/backofficeSchemas';
 import { AuthService } from '../../services/auth.service';
@@ -37,7 +38,8 @@ describe('BackofficeHeaderComponent', () => {
       imports: [BackofficeHeaderComponent],
       providers: [
         { provide: AuthService, useValue: { logout: () => undefined } },
-        { provide: CurrentUserStore, useValue: { user: currentUser } }
+        { provide: CurrentUserStore, useValue: { user: currentUser } },
+        provideRouter([])
       ]
     }).compileComponents();
   });
@@ -69,5 +71,19 @@ describe('BackofficeHeaderComponent', () => {
     fixture.componentRef.setInput('canAddNewResource', true);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Add New Resource');
+  });
+
+  it('renders the management context and complete back route in a single header', () => {
+    const fixture = TestBed.createComponent(BackofficeHeaderComponent);
+    fixture.componentRef.setInput('managementContext', 'global');
+    fixture.componentRef.setInput('managementEyebrow', 'Platform Administration');
+    fixture.componentRef.setInput('managementTitle', 'Global Administration');
+    fixture.componentRef.setInput('managementSubtitle', 'Choose an area to manage.');
+    fixture.componentRef.setInput('managementBackRoute', '/software?groupId=group-id');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('h1')?.textContent?.trim()).toBe('Global Administration');
+    expect(fixture.nativeElement.querySelector('.management-eyebrow')?.textContent?.trim()).toBe('Platform Administration');
+    expect((fixture.nativeElement.querySelector('.header-manage-back a') as HTMLAnchorElement).getAttribute('href')).toBe('/software?groupId=group-id');
   });
 });

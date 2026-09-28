@@ -1,10 +1,26 @@
-<header class="header-shell">
+<header
+  class="header-shell"
+  [class.header-shell--manage]="managementContext"
+>
   <div class="header-copy">
-    <p class="breadcrumb app-muted">Backoffice / {{ sectionTitle }} / {{ pageLabel }}</p>
-    <div>
-      <h1>{{ sectionTitle }}</h1>
-      <p class="app-muted">Placheholder Text.</p>
-    </div>
+    @if (managementContext) {
+      <p class="management-eyebrow app-badge app-badge--primary" [class.management-eyebrow--global]="managementContext === 'global'">{{ managementEyebrow }}</p>
+      <div class="management-heading">
+        @if (managementIconPath) {
+          <img class="management-icon" [src]="managementIconPath" alt="" aria-hidden="true" />
+        }
+        <div>
+          <h1>{{ managementTitle }}</h1>
+          <p class="management-subtitle app-muted">{{ managementSubtitle }}</p>
+        </div>
+      </div>
+    } @else {
+      <p class="breadcrumb app-muted">Backoffice / {{ sectionTitle }} / {{ pageLabel }}</p>
+      <div>
+        <h1>{{ sectionTitle }}</h1>
+        <p class="app-muted">Placheholder Text.</p>
+      </div>
+    }
   </div>
 
   <div class="header-actions header-actions--top">
@@ -105,3 +121,9 @@
     </div>
   }
 </header>
+
+@if (managementContext) {
+  <div class="management-back-row">
+    <app-back-button class="header-manage-back" [route]="managementBackRoute" />
+  </div>
+}

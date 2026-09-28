@@ -6,10 +6,13 @@ import { DISCOVERY_VERSIONING_STATUSES, type ResultsFilters } from '../../models
 import { AuthService } from '../../services/auth.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
 import { AppIconComponent } from '../../shared/ui/app-icon.component';
+import { BackButtonComponent } from '../../shared/ui/back-button.component';
+
+export type ManagementHeaderContext = 'global' | 'group';
 
 @Component({
   selector: 'app-backoffice-header',
-  imports: [AppIconComponent, FormsModule],
+  imports: [AppIconComponent, BackButtonComponent, FormsModule],
   templateUrl: './backoffice-header.component.html',
   styleUrl: './backoffice-header.component.css'
 })
@@ -41,6 +44,12 @@ export class BackofficeHeaderComponent {
   @Input() searchQuery = '';
   @Input() selectedDataTypes: DiscoveryResourceType[] = [];
   @Input() selectedVersioningStatuses: VersioningStatus[] = [];
+  @Input() managementContext: ManagementHeaderContext | null = null;
+  @Input() managementEyebrow = '';
+  @Input() managementTitle = '';
+  @Input() managementSubtitle = '';
+  @Input() managementIconPath = '';
+  @Input() managementBackRoute = '/data';
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() addNewResource = new EventEmitter<void>();
   @Output() searchQueryChange = new EventEmitter<string>();

@@ -10,6 +10,71 @@
   border-bottom: 1px solid var(--line);
 }
 
+.header-shell--manage {
+  position: relative;
+  overflow: hidden;
+  padding: 20px 0 22px;
+}
+
+.header-shell--manage .header-copy,
+.header-shell--manage .header-actions--top {
+  position: relative;
+  z-index: 1;
+}
+
+.management-eyebrow {
+  justify-self: start;
+}
+
+.management-eyebrow--global {
+  border-color: #6d28d9;
+  background: #7c3aed;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.2);
+}
+
+.management-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.management-icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  object-fit: contain;
+}
+
+.management-subtitle {
+  max-width: 720px;
+}
+
+.management-back-row {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 56px;
+  padding-top: 12px;
+}
+
+.header-manage-back {
+  transition: filter 160ms ease, transform 160ms ease;
+}
+
+.header-manage-back:hover {
+  filter: drop-shadow(0 8px 12px rgba(15, 23, 42, 0.16));
+  transform: translateY(-2px);
+}
+
+.header-manage-back:active {
+  filter: none;
+  transform: translateY(0) scale(0.98);
+}
+
 .header-copy {
   display: grid;
   gap: 12px;
@@ -253,8 +318,8 @@ p {
   justify-self: center;
   padding: 2px 5px;
   border-radius: 5px;
-  background: var(--amber-100);
-  color: var(--amber-600);
+  background: #7c3aed;
+  color: #ffffff;
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.05em;

@@ -36,6 +36,7 @@ export class NavigationSidebarComponent {
   @Input() groupsLoading = false;
   @Input() currentSectionPath = '';
   @Input() selectedGroupId = '';
+  @Input() globalManageReturnUrl = '/data';
   @Output() detailAction = new EventEmitter<ResourceActionKey>();
 
   protected readonly collapsed = signal(false);
@@ -90,6 +91,12 @@ export class NavigationSidebarComponent {
 
   protected isAdminSectionActive(item: NavigationItem): boolean {
     return item.route === `/${this.currentSectionPath}`;
+  }
+
+  protected adminQueryParams(item: NavigationItem): Record<string, string> | null {
+    return item.route === '/global-manage'
+      ? { returnUrl: this.globalManageReturnUrl }
+      : null;
   }
 
   protected isNodeExpanded(anchor: string | undefined): boolean {

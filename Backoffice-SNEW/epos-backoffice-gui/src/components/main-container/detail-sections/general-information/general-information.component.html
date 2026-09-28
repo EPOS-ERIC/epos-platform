@@ -7,7 +7,7 @@
     </div>
 
     @if (showBackLink) {
-      <a class="app-button app-button--ghost" [routerLink]="backLink">Back to results</a>
+      <app-back-button [route]="backLink" label="Back to results" />
     }
   </div>
 

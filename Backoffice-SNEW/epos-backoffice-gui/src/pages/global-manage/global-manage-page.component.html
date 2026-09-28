@@ -1,11 +1,5 @@
 @if (showLanding()) {
   <section class="management-landing">
-    <div class="management-hero app-card">
-      <p class="eyebrow app-badge app-badge--primary">Platform Administration</p>
-      <h2>Global Administration</h2>
-      <p class="subtitle app-muted">Choose an area to manage. Only sections available to your global permissions are shown.</p>
-    </div>
-
     <div class="management-grid">
       @for (destination of destinations(); track destination.panel) {
         <a class="management-destination app-card" [routerLink]="[]" [queryParams]="{ panel: destination.panel }" queryParamsHandling="merge">

@@ -5,6 +5,7 @@
     [groupsLoading]="groupsLoading()"
     [currentSectionPath]="sectionPath()"
     [selectedGroupId]="selectedGroupId()"
+    [globalManageReturnUrl]="globalManageReturnUrl()"
     [detailItems]="sidebarDetailItems()"
     [showBackButton]="accountPage() === 'memberships' || manageGroup()"
     [detailSectionLabel]="pageLabel() === 'Compare' ? 'Compare' : 'Detail'"
@@ -15,7 +16,14 @@
     (detailAction)="detailStore.handleSidebarAction($event)"
   />
 
-  <section class="content" #detailScrollContainer>
+  <section
+    class="content"
+    [class.content--management-landing]="managementHeaderContext()"
+    [class.content--global-management]="managementHeaderContext() === 'global'"
+    [class.content--group-management]="managementHeaderContext() === 'group'"
+    [style.--management-accent]="managementHeaderContext() === 'group' ? groupAccentColor(selectedGroupId()) : null"
+    #detailScrollContainer
+  >
     <app-backoffice-header
       [sectionTitle]="sectionTitle()"
       [pageLabel]="pageLabel()"
@@ -25,6 +33,12 @@
       [searchQuery]="searchQuery()"
       [selectedDataTypes]="selectedDataTypes()"
       [selectedVersioningStatuses]="selectedVersioningStatuses()"
+      [managementContext]="managementHeaderContext()"
+      [managementEyebrow]="managementHeaderContext() === 'global' ? 'Platform Administration' : 'Group Administration · ' + sectionTitle()"
+      [managementTitle]="managementHeaderContext() === 'global' ? 'Global Administration' : (selectedGroupName() || 'Manage group')"
+      [managementSubtitle]="managementHeaderContext() === 'global' ? 'Choose an area to manage. Only sections available to your global permissions are shown.' : 'Choose an area to manage. Only sections available to your permissions are shown.'"
+      [managementIconPath]="managementHeaderContext() === 'group' ? (groupIconPath(selectedGroupId()) ?? '') : ''"
+      [managementBackRoute]="manageBackRoute()"
       (searchQueryChange)="updateSearchQuery($event)"
       (filtersChange)="updateResultsFilters($event)"
       (toggleTheme)="toggleTheme()"
@@ -63,7 +77,7 @@
           <section class="comparison-route-error app-card">Select two valid resource versions to compare.</section>
         }
       } @else {
-        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" />
+        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [returnUrl]="currentUrl()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" />
       }
     </div>
   </section>

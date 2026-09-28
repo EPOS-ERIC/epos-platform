@@ -252,7 +252,8 @@ describe('ResourceDetailStore', () => {
         rightVersionId: 'version-right',
         sourceVersionId: 'version-id',
         groupId: 'loaded-group',
-        dataType: 'dataset'
+        dataType: 'dataset',
+        returnUrl: '/data?groupId=group-id'
       }
     });
     expect(store.historyOpen()).toBe(false);
@@ -288,7 +289,8 @@ describe('ResourceDetailStore', () => {
       resourceId,
       versionId: 'version-id',
       groupId: 'group-id',
-      sectionPath: resourceType === 'dataset' ? 'data' : 'software'
+      sectionPath: resourceType === 'dataset' ? 'data' : 'software',
+      returnUrl: '/data?groupId=group-id'
     };
   }
 

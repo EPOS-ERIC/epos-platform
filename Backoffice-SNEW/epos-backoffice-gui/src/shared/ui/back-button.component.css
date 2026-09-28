@@ -1,0 +1,13 @@
+:host {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.back-button {
+  gap: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+}

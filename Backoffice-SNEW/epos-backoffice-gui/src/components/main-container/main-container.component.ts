@@ -1,10 +1,11 @@
 import { Component, DestroyRef, DOCUMENT, ElementRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, catchError, combineLatest, debounceTime, distinctUntilChanged, finalize, map, of } from 'rxjs';
 import type { Subscription } from 'rxjs';
 
 import type { DiscoveryConcept, DiscoveryItem, DiscoveryResourceType, Group } from '../../../generated/backofficeSchemas';
+import { groupAccentColor, groupIconPath } from '../../group-icons';
 import type { ResourceVersionComparisonContext } from '../../models/resource-version-comparison';
 import { normalizeResultsFilters, type ResultsFilters } from '../../models/results-filters';
 import { ApiService } from '../../services/api.service';
@@ -23,7 +24,7 @@ import { ManageGroupPageComponent } from '../../pages/manage-group/manage-group-
 import { MembershipsPageComponent } from '../../pages/memberships/memberships-page.component';
 import { ResourceDetailPageComponent } from '../../pages/resource-detail/resource-detail-page.component';
 import { ResourceVersionComparisonPageComponent } from '../../pages/resource-version-comparison/resource-version-comparison-page.component';
-import { BackofficeHeaderComponent } from '../backoffice-header/backoffice-header.component';
+import { BackofficeHeaderComponent, type ManagementHeaderContext } from '../backoffice-header/backoffice-header.component';
 import { NavigationSidebarComponent } from '../navigation-sidebar/navigation-sidebar.component';
 import { ResultsTableComponent } from '../results-table/results-table.component';
 
@@ -45,6 +46,7 @@ type RouteState = {
   rightVersionId?: string | null;
   sourceVersionId?: string | null;
   panel?: string | null;
+  returnUrl?: string | null;
 };
 
 const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
@@ -70,6 +72,7 @@ export class MainContainerComponent {
 
   private readonly apiService = inject(ApiService);
   private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly currentUserStore = inject(CurrentUserStore);
   private readonly groupsStore = inject(GroupsStore);
   private readonly localStorage = inject(LocalStorageService);
@@ -80,6 +83,8 @@ export class MainContainerComponent {
   private discoveryRequest?: Subscription;
   private readonly searchQueryChanges = new Subject<string>();
   protected readonly detailStore = inject(ResourceDetailStore);
+  protected readonly groupAccentColor = groupAccentColor;
+  protected readonly groupIconPath = groupIconPath;
   protected readonly sectionTitle = signal('Data');
   protected readonly pageLabel = signal('Results');
   protected readonly accountPage = signal<RouteData['accountPage'] | null>(null);
@@ -87,6 +92,7 @@ export class MainContainerComponent {
   protected readonly manageGroupPanel = signal('');
   protected readonly globalManage = signal(false);
   protected readonly globalManagePanel = signal('');
+  protected readonly manageBackRoute = signal('/data');
   protected readonly sectionPath = signal('data');
   protected readonly darkMode = signal(false);
   protected readonly discoveryItems = signal<DiscoveryItem[] | null>(null);
@@ -107,6 +113,13 @@ export class MainContainerComponent {
     return !!groupId && this.currentUserStore.canManageGroup(groupId);
   });
   protected readonly comparisonContext = signal<ResourceVersionComparisonContext | null>(null);
+  protected readonly managementHeaderContext = computed<ManagementHeaderContext | null>(() => {
+    if (this.globalManage() && !this.globalManagePanel()) {
+      return 'global';
+    }
+
+    return this.manageGroup() && !this.manageGroupPanel() ? 'group' : null;
+  });
   protected readonly sidebarDetailItems = computed<ResourceDetailNavigationItem[]>(() => {
     const comparison = this.comparisonContext();
     if (!comparison) {
@@ -148,7 +161,8 @@ export class MainContainerComponent {
           leftVersionId: queryParams.get('leftVersionId'),
           rightVersionId: queryParams.get('rightVersionId'),
           sourceVersionId: queryParams.get('sourceVersionId'),
-          panel: queryParams.get('panel')
+          panel: queryParams.get('panel'),
+          returnUrl: queryParams.get('returnUrl')
         });
       });
 
@@ -171,6 +185,7 @@ export class MainContainerComponent {
     this.globalManage.set(globalManage);
     this.globalManagePanel.set(globalManage ? (routeState.panel ?? '') : '');
     this.sectionPath.set(accountPage ?? (globalManage ? 'global-manage' : this.currentSectionPath()));
+    this.manageBackRoute.set(this.validReturnUrl(routeState.returnUrl) ?? this.defaultBackRoute(manageGroup || isDetailRoute || isComparisonRoute, routeState.groupId));
     this.sectionTitle.set(
       (isDetailRoute || isComparisonRoute) && detailDataType
         ? detailDataType === 'dataset'
@@ -239,7 +254,8 @@ export class MainContainerComponent {
         resourceId: routeState.resourceId,
         versionId: routeState.versionId,
         groupId: selectedGroup?.id ?? '',
-        sectionPath: this.sectionPath()
+        sectionPath: this.sectionPath(),
+        returnUrl: this.manageBackRoute()
       });
       return;
     }
@@ -334,6 +350,27 @@ export class MainContainerComponent {
     const concept = this.groups().find((group) => group.id === this.selectedGroupId())?.concept;
     const sectionPath = concept === 'SOFTWARE' ? 'software' : concept === 'FACILITIES' ? 'facilities' : 'data';
     return ['/', sectionPath];
+  }
+
+  protected currentUrl(): string {
+    return this.router.url;
+  }
+
+  protected globalManageReturnUrl(): string {
+    return this.globalManage() ? this.manageBackRoute() : this.currentUrl();
+  }
+
+  private defaultBackRoute(hasSectionBackRoute: boolean, groupId: string | null | undefined): string {
+    if (!hasSectionBackRoute) {
+      return '/data';
+    }
+
+    const groupQuery = groupId ? `?groupId=${encodeURIComponent(groupId)}` : '';
+    return `/${this.currentSectionPath()}${groupQuery}`;
+  }
+
+  private validReturnUrl(returnUrl: string | null | undefined): string | null {
+    return returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : null;
   }
 
   private currentSectionPath(): string {
