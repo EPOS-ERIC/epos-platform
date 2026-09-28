@@ -3,7 +3,7 @@ import { Component, DestroyRef, HostListener, Input, computed, inject, signal } 
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { catchError, EMPTY, finalize, forkJoin, of, switchMap } from 'rxjs';
+import { catchError, EMPTY, finalize, forkJoin, Observable, of, switchMap } from 'rxjs';
 
 import type { Group, GroupMembership, GroupNotificationTopicKey, GroupPermission, MembershipRole, NotificationSubscription, NotificationTopic, Permission } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
@@ -15,7 +15,8 @@ import { CurrentUserStore } from '../../stores/current-user.store';
 import {
   MembershipRequestsPanelComponent,
   type MembershipRequestDecision,
-  type MembershipRequestItem
+  type MembershipRequestItem,
+  type MembershipRequestRoleToggle
 } from '../../panels/access-requests/membership-requests-panel.component';
 import {
   RoleRequestsPanelComponent,
@@ -69,6 +70,7 @@ export class ManageGroupPageComponent {
     this.currentGroupId = value;
     this.groupIdValue.set(value);
     this.memberships.set([]);
+    this.membershipRequestRoles.set({});
     this.membershipsLoadedGroupId = '';
     this.selectedMembership.set(null);
     this.loadMembershipsForActivePanel();
@@ -95,6 +97,7 @@ export class ManageGroupPageComponent {
   protected readonly selectedMembership = signal<GroupMembership | null>(null);
   protected readonly membershipMutation = signal('');
   protected readonly membershipRequestDecision = signal('');
+  protected readonly membershipRequestRoles = signal<Record<string, MembershipRole[]>>({});
   protected readonly roleRequestDecision = signal('');
   protected readonly requestError = signal('');
   protected readonly removingUserId = signal('');
@@ -153,8 +156,9 @@ export class ManageGroupPageComponent {
         const requestedRoles = membership.role_requests
           .filter((request) => request.status === 'PENDING')
           .map((request) => request.role);
+        const key = `${this.groupIdValue()}:${membership.user.id}`;
         return {
-          key: `${this.groupIdValue()}:${membership.user.id}`,
+          key,
           groupId: this.groupIdValue(),
           groupName: this.groupName || 'This group',
           groupLogoPath: groupIconPath(this.groupIdValue()),
@@ -163,7 +167,7 @@ export class ManageGroupPageComponent {
           userName: this.userName(membership),
           requestedAt: membership.created_at,
           requestedRoles,
-          selectedRoles: [],
+          selectedRoles: this.membershipRequestRoles()[key] ?? requestedRoles,
           pendingRoleRequests: membership.role_requests
             .filter((request) => request.status === 'PENDING')
             .map((request) => ({ id: request.id, role: request.role }))
@@ -321,7 +325,11 @@ export class ManageGroupPageComponent {
 
     this.membershipRequestDecision.set(item.key);
     this.requestError.set('');
-    this.apiService.decideGroupMembership(this.groupId, item.userId, decision).pipe(
+    const request = decision === 'accept'
+      ? this.acceptMembershipRequest(item)
+      : this.apiService.decideGroupMembership(this.groupId, item.userId, 'reject');
+
+    request.pipe(
       switchMap(() => this.apiService.getGroupMemberships(this.groupId)),
       takeUntilDestroyed(this.destroyRef),
       finalize(() => this.membershipRequestDecision.set('')),
@@ -333,8 +341,22 @@ export class ManageGroupPageComponent {
     ).subscribe((memberships) => {
       if (!memberships) return;
       this.updateMemberships(memberships);
+      this.membershipRequestRoles.update((roles) => {
+        const remaining = { ...roles };
+        delete remaining[item.key];
+        return remaining;
+      });
       this.toast.success(decision === 'accept' ? 'Membership request accepted.' : 'Membership request rejected.');
     });
+  }
+
+  protected toggleRequestedRole({ item, role }: MembershipRequestRoleToggle): void {
+    if (!this.canManageRoles() || this.membershipRequestDecision()) return;
+
+    const selectedRoles = item.selectedRoles.includes(role)
+      ? item.selectedRoles.filter((selectedRole) => selectedRole !== role)
+      : [...item.selectedRoles, role];
+    this.membershipRequestRoles.update((roles) => ({ ...roles, [item.key]: selectedRoles }));
   }
 
   protected decideRoleRequest({ item, decision }: RoleRequestDecision): void {
@@ -368,6 +390,34 @@ export class ManageGroupPageComponent {
       case 'member-access': return this.canManageMembers();
       case 'categories': return this.canManageCategories();
     }
+  }
+
+  private acceptMembershipRequest(item: MembershipRequestItem): Observable<unknown> {
+    if (!this.canManageRoles()) {
+      return this.apiService.decideGroupMembership(this.groupId, item.userId, 'accept');
+    }
+
+    return this.apiService.decideGroupMembership(this.groupId, item.userId, 'accept').pipe(
+      switchMap(() => {
+        const selectedRoles = new Set(item.selectedRoles);
+        const requestedRoles = new Set(item.requestedRoles);
+        const decisions: Observable<unknown>[] = item.pendingRoleRequests.map((roleRequest) =>
+          this.apiService.decideGroupRoleRequest(
+            this.groupId,
+            roleRequest.id,
+            selectedRoles.has(roleRequest.role) ? 'accept' : 'reject'
+          )
+        );
+
+        for (const role of selectedRoles) {
+          if (!requestedRoles.has(role)) {
+            decisions.push(this.apiService.setGroupMembershipRole(this.groupId, item.userId, role, true));
+          }
+        }
+
+        return decisions.length ? forkJoin(decisions) : of(item);
+      })
+    );
   }
 
   private isManageGroupPanel(value: string): value is ManageGroupPanel {

@@ -42,7 +42,10 @@
     context="Membership Requests"
     eyebrow="Group Administration"
     [subtitle]="'Accept or reject membership requests for ' + (groupName || 'this group') + '.'"
+    [canSelectRoles]="canManageRoles()"
+    [availableRoles]="groupRoles"
     (decision)="decideMembershipRequest($event)"
+    (roleToggle)="toggleRequestedRole($event)"
   />
 }
 

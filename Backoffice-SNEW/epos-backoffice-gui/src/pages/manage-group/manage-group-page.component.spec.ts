@@ -126,6 +126,48 @@ describe('ManageGroupPageComponent', () => {
     expect(dialogText).not.toContain('GROUP_ADMIN');
   });
 
+  it('shows requested role options and applies the selected roles when role management is granted', async () => {
+    apiService.getGroupMemberships
+      .mockReturnValueOnce(of([pendingMember]))
+      .mockReturnValueOnce(of([member]));
+    const fixture = TestBed.createComponent(ManageGroupPageComponent);
+    fixture.componentRef.setInput('groupId', 'group-id');
+    fixture.componentRef.setInput('groupName', 'Data Group');
+    fixture.componentRef.setInput('panel', 'membership-requests');
+    fixture.detectChanges();
+
+    const roleLabels = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.request-role-picker label'));
+    const editor = roleLabels.find((label) => label.textContent?.includes('EDITOR'))!;
+    expect(editor.textContent).toContain('Requested');
+
+    (editor.querySelector('input') as HTMLInputElement).click();
+    fixture.detectChanges();
+    const reviewer = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.request-role-picker label'))
+      .find((label) => label.textContent?.includes('REVIEWER'))!;
+    (reviewer.querySelector('input') as HTMLInputElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('app-membership-requests-panel .app-button--primary') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(apiService.decideGroupMembership).toHaveBeenCalledWith('group-id', 'pending-id', 'accept');
+    expect(apiService.decideGroupRoleRequest).toHaveBeenCalledWith('group-id', 'pending-role-request-id', 'reject');
+    expect(apiService.setGroupMembershipRole).toHaveBeenCalledWith('group-id', 'pending-id', 'REVIEWER', true);
+  });
+
+  it('keeps requested roles read-only without role management permission', () => {
+    currentUserStore.hasGroupPermission.mockImplementation((_groupId: string, permission: string) =>
+      permission === 'group.membership.manage'
+    );
+    apiService.getGroupMemberships.mockReturnValue(of([pendingMember]));
+    const fixture = TestBed.createComponent(ManageGroupPageComponent);
+    fixture.componentRef.setInput('groupId', 'group-id');
+    fixture.componentRef.setInput('panel', 'membership-requests');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('EDITOR');
+    expect(fixture.nativeElement.querySelector('.request-role-picker')).toBeNull();
+  });
+
   it('disables permissions already granted by a role while keeping other direct permissions editable', () => {
     const fixture = TestBed.createComponent(ManageGroupPageComponent);
     fixture.componentRef.setInput('groupId', 'group-id');
