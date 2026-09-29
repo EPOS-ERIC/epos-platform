@@ -50,4 +50,63 @@ describe('ResultsTableComponent', () => {
     expect(link.textContent?.trim()).toBe('Manage Group');
     expect(link.getAttribute('href')).toBe('/software/manage-group?groupId=group-id&returnUrl=%2Fsoftware%3FgroupId%3Dgroup-id%26dataType%3Dsoftware-application');
   });
+
+  it('shows the selected group logo in the heading and group column', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResultsTableComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ResultsTableComponent);
+    const groupId = '23b9b58a-9f1c-5d18-85f9-73842733835c';
+    const item: DiscoveryItem = {
+      type: 'dataset',
+      resource_id: 'resource-id',
+      version_id: 'version-id',
+      name: 'Dataset',
+      status: 'PUBLISHED',
+      updated_at: '2026-09-10T07:34:26.486Z',
+      concept: 'DATA',
+      group: { id: groupId, name: 'Seismology' }
+    };
+
+    fixture.componentRef.setInput('selectedGroupId', groupId);
+    fixture.componentRef.setInput('selectedGroupName', 'Seismology');
+    fixture.componentRef.setInput('discoveryItems', [item]);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement.querySelector('.group-summary-logo') as HTMLImageElement).getAttribute('src')).toBe(`/group-icons/${groupId}.png`);
+    expect((fixture.nativeElement.querySelector('.group-cell-logo') as HTMLImageElement).getAttribute('src')).toBe(`/group-icons/${groupId}.png`);
+  });
+
+  it('renders all-group results and links each item to its canonical section', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResultsTableComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ResultsTableComponent);
+    const groupId = '23b9b58a-9f1c-5d18-85f9-73842733835c';
+    const item: DiscoveryItem = {
+      type: 'software-source-code',
+      resource_id: 'resource-id',
+      version_id: 'version-id',
+      name: 'Facility software',
+      status: 'PUBLISHED',
+      updated_at: '2026-09-10T07:34:26.486Z',
+      concept: 'FACILITIES',
+      group: { id: groupId, name: 'Seismology' }
+    };
+
+    fixture.componentRef.setInput('sectionTitle', 'All Resources');
+    fixture.componentRef.setInput('sectionPath', 'all');
+    fixture.componentRef.setInput('allGroups', true);
+    fixture.componentRef.setInput('returnUrl', '/all');
+    fixture.componentRef.setInput('discoveryItems', [item]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.subtitle')?.textContent?.trim()).toBe('Resources across all groups you belong to.');
+    expect(fixture.nativeElement.querySelector('.group-summary-logo')).toBeNull();
+    expect(fixture.nativeElement.querySelector('tbody tr')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.table-footer')).toBeTruthy();
+    expect((fixture.nativeElement.querySelector('.item-link') as HTMLAnchorElement).getAttribute('href')).toBe(`/facilities/resource-id/version-id?groupId=${groupId}&dataType=software-source-code&returnUrl=%2Fall`);
+  });
 });

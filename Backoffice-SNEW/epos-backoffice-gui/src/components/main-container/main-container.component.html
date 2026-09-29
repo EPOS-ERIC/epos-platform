@@ -74,7 +74,7 @@
           <section class="comparison-route-error app-card">Select two valid resource versions to compare.</section>
         }
       } @else {
-        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [returnUrl]="currentUrl()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" />
+        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [allGroups]="allGroups()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [returnUrl]="currentUrl()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" />
       }
     </div>
   </section>

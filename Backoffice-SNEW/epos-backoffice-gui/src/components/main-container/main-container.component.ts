@@ -35,6 +35,7 @@ type RouteData = {
   manageGroup?: boolean;
   globalManage?: boolean;
   comparisonPage?: boolean;
+  allGroups?: boolean;
 };
 
 type RouteState = {
@@ -91,6 +92,7 @@ export class MainContainerComponent {
   protected readonly manageGroup = signal(false);
   protected readonly manageGroupPanel = signal('');
   protected readonly globalManage = signal(false);
+  protected readonly allGroups = signal(false);
   protected readonly globalManagePanel = signal('');
   protected readonly manageBackRoute = signal('/data');
   protected readonly sectionPath = signal('data');
@@ -175,6 +177,7 @@ export class MainContainerComponent {
     const accountPage = routeData.accountPage ?? null;
     const manageGroup = routeData.manageGroup ?? false;
     const globalManage = routeData.globalManage ?? false;
+    const allGroups = routeData.allGroups ?? false;
     const discoveryType = routeData.discoveryType;
     const detailDataType = this.toDiscoveryResourceType(routeState.dataType) ?? discoveryType?.[0];
     const isComparisonRoute = routeData.comparisonPage === true;
@@ -183,6 +186,7 @@ export class MainContainerComponent {
     this.manageGroup.set(manageGroup);
     this.manageGroupPanel.set(manageGroup ? (routeState.panel ?? '') : '');
     this.globalManage.set(globalManage);
+    this.allGroups.set(allGroups);
     this.globalManagePanel.set(globalManage ? (routeState.panel ?? '') : '');
     this.sectionPath.set(accountPage ?? (globalManage ? 'global-manage' : this.currentSectionPath()));
     this.manageBackRoute.set(this.validReturnUrl(routeState.returnUrl) ?? this.defaultBackRoute(manageGroup || isDetailRoute || isComparisonRoute, routeState.groupId));
@@ -267,7 +271,7 @@ export class MainContainerComponent {
   private loadRouteData(groupId: string): void {
     this.discoveryRequest?.unsubscribe();
 
-    if (!groupId) {
+    if (!groupId && !this.allGroups()) {
       this.discoveryItems.set(null);
       this.discoveryLoading.set(false);
       return;
@@ -276,7 +280,7 @@ export class MainContainerComponent {
     this.discoveryLoading.set(true);
     this.discoveryRequest = this.apiService
       .getDiscovery({
-        groupId,
+        groupId: groupId || undefined,
         q: this.searchQuery().trim() || undefined,
         type: this.selectedDataTypes().length ? this.selectedDataTypes() : undefined,
         versioningStatus: this.selectedVersioningStatuses().length ? this.selectedVersioningStatuses() : undefined

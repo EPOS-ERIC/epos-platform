@@ -36,8 +36,9 @@ export class NavigationSidebarComponent {
     this.currentSection = value;
 
     const route = `/${value}`;
-    if (this.items.some((item) => item.route === route)) {
-      this.expandedMainRoute.set(route);
+    const item = this.items.find((candidate) => candidate.route === route);
+    if (item) {
+      this.expandedMainRoute.set(item.concept ? route : null);
     }
   }
   get currentSectionPath(): string {
@@ -54,7 +55,8 @@ export class NavigationSidebarComponent {
   protected readonly items: NavigationItem[] = [
     { label: 'Data', route: '/data', icon: 'database', concept: 'DATA' },
     { label: 'Software', route: '/software', icon: 'code', concept: 'SOFTWARE' },
-    { label: 'Facilities', route: '/facilities', icon: 'building', concept: 'FACILITIES' }
+    { label: 'Facilities', route: '/facilities', icon: 'building', concept: 'FACILITIES' },
+    { label: 'ALL', route: '/all', icon: 'apps' }
   ];
 
   private readonly allAdminItems: NavigationItem[] = [
@@ -104,7 +106,7 @@ export class NavigationSidebarComponent {
   }
 
   protected expandMainItem(item: NavigationItem): void {
-    this.expandedMainRoute.set(item.route ?? null);
+    this.expandedMainRoute.set(item.concept ? (item.route ?? null) : null);
   }
 
   protected toggleMainItem(event: MouseEvent, item: NavigationItem): void {

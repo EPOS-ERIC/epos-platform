@@ -61,6 +61,8 @@ describe('NavigationSidebarComponent', () => {
     fixture.detectChanges();
 
     const toggles = fixture.nativeElement.querySelectorAll('.main-tree-toggle-button') as NodeListOf<HTMLButtonElement>;
+    const mainLinks = fixture.nativeElement.querySelectorAll('.nav-item--main') as NodeListOf<HTMLAnchorElement>;
+    expect(mainLinks).toHaveLength(4);
     expect(toggles).toHaveLength(3);
     expect(toggles[0].getAttribute('aria-expanded')).toBe('true');
     expect(toggles[1].getAttribute('aria-expanded')).toBe('false');
@@ -75,5 +77,25 @@ describe('NavigationSidebarComponent', () => {
     fixture.detectChanges();
 
     expect(toggles[1].getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('renders ALL as a main link without a group accordion', async () => {
+    await TestBed.configureTestingModule({
+      imports: [NavigationSidebarComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(NavigationSidebarComponent);
+    fixture.componentRef.setInput('currentSectionPath', 'all');
+    fixture.detectChanges();
+
+    const mainLinks = Array.from(fixture.nativeElement.querySelectorAll('.nav-item--main')) as HTMLAnchorElement[];
+    const allLink = mainLinks.find((link) => link.getAttribute('href') === '/all')!;
+    const allTreeItem = allLink.closest('.nav-tree-item') as HTMLElement;
+    expect(mainLinks.at(-1)).toBe(allLink);
+    expect(allLink.textContent?.trim()).toBe('ALL');
+    expect(allLink.getAttribute('href')).toBe('/all');
+    expect(allLink.classList.contains('active')).toBe(true);
+    expect(allTreeItem.querySelector('.main-tree-toggle-button')).toBeNull();
+    expect(allTreeItem.querySelector('.main-tree-panel')).toBeNull();
   });
 });

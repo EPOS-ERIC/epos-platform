@@ -3,7 +3,18 @@
     <div>
       <p class="eyebrow app-badge app-badge--primary">Results</p>
       <h2>{{ sectionTitle }}</h2>
-      <p class="subtitle app-muted">{{ selectedGroupName ? 'Resources in ' + selectedGroupName : 'Select a group from the sidebar to load resources.' }}</p>
+      @if (selectedGroupName) {
+        <p class="subtitle group-summary app-muted">
+          @if (groupIconPath(selectedGroupId); as iconPath) {
+            <img class="group-summary-logo" [src]="iconPath" alt="" aria-hidden="true" />
+          }
+          <span>Resources in {{ selectedGroupName }}</span>
+        </p>
+      } @else if (allGroups) {
+        <p class="subtitle app-muted">Resources across all groups you belong to.</p>
+      } @else {
+        <p class="subtitle app-muted">Select a group from the sidebar to load resources.</p>
+      }
     </div>
 
     <div class="toolbar">
@@ -14,7 +25,7 @@
   </div>
 
   <div class="table-scroll">
-    @if (!selectedGroupId) {
+    @if (!allGroups && !selectedGroupId) {
       <div class="table-empty">Select a group to view resources.</div>
     } @else if (discoveryLoading) {
       <div class="table-empty">Loading discovery results...</div>
@@ -40,7 +51,14 @@
                 </a>
               </td>
               <td>{{ item.type }}</td>
-              <td>{{ item.group.name }}</td>
+              <td>
+                <div class="group-cell">
+                  @if (groupIconPath(item.group.id); as iconPath) {
+                    <img class="group-cell-logo" [src]="iconPath" alt="" aria-hidden="true" />
+                  }
+                  <span>{{ item.group.name }}</span>
+                </div>
+              </td>
               <td>
                 <div class="relation-text">{{ discoveryAuthor(item) }}</div>
               </td>
@@ -58,11 +76,11 @@
         </tbody>
       </table>
     } @else {
-      <div class="table-empty">No resources found for this group.</div>
+      <div class="table-empty">{{ allGroups ? 'No resources found.' : 'No resources found for this group.' }}</div>
     }
   </div>
 
-  @if (selectedGroupId && discoveryItems?.length) {
+  @if ((allGroups || selectedGroupId) && discoveryItems?.length) {
     <div class="table-footer">
       <div class="page-size-control">
         <label for="results-page-size">Rows per page</label>

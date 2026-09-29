@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
+import { groupIconPath } from '../../group-icons';
 
 @Component({
   selector: 'app-results-table',
@@ -12,6 +13,7 @@ import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
 export class ResultsTableComponent implements OnChanges {
   @Input() sectionTitle = 'Data';
   @Input() sectionPath = 'data';
+  @Input() allGroups = false;
   @Input() selectedGroupId = '';
   @Input() selectedGroupName = '';
   @Input() canManageGroup = false;
@@ -22,6 +24,7 @@ export class ResultsTableComponent implements OnChanges {
   protected currentPage = 1;
   protected pageSize = 10;
   protected readonly pageSizeOptions = [10, 25, 50];
+  protected readonly groupIconPath = groupIconPath;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['selectedGroupId'] || changes['discoveryItems']) {
@@ -68,12 +71,12 @@ export class ResultsTableComponent implements OnChanges {
   }
 
   protected detailLink(item: DiscoveryItem): string[] {
-    return ['/', this.sectionPath, item.resource_id, item.version_id];
+    return ['/', this.detailSectionPath(item), item.resource_id, item.version_id];
   }
 
   protected detailQueryParams(item: DiscoveryItem): Record<string, string> {
     return {
-      groupId: this.selectedGroupId,
+      groupId: item.group.id,
       dataType: item.type,
       returnUrl: this.returnUrl
     };
@@ -88,5 +91,13 @@ export class ResultsTableComponent implements OnChanges {
       groupId: this.selectedGroupId,
       returnUrl: this.returnUrl
     };
+  }
+
+  private detailSectionPath(item: DiscoveryItem): string {
+    if (!this.allGroups) {
+      return this.sectionPath;
+    }
+
+    return item.concept === 'DATA' ? 'data' : item.concept === 'SOFTWARE' ? 'software' : 'facilities';
   }
 }
