@@ -14,7 +14,7 @@ services:
 
 notifications:
   mailgun:
-    enable: true
+    enable: false
     domain: "epos-ip.org"
     from: "epos-ics-c@epos-ip.org"
     api_key_env: "MAILGUN_API_TOKEN"
