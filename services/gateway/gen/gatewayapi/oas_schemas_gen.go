@@ -9076,6 +9076,8 @@ type ResourceVersion struct {
 	GroupName     string                  `json:"group_name"`
 	CreatedAt     time.Time               `json:"created_at"`
 	UpdatedAt     time.Time               `json:"updated_at"`
+	RejectedBy    OptString               `json:"rejected_by"`
+	RejectedAt    OptDateTime             `json:"rejected_at"`
 	RejectionNote OptNonBlankString       `json:"rejection_note"`
 	Metadata      ResourceVersionMetadata `json:"metadata"`
 }
@@ -9123,6 +9125,16 @@ func (s *ResourceVersion) GetCreatedAt() time.Time {
 // GetUpdatedAt returns the value of UpdatedAt.
 func (s *ResourceVersion) GetUpdatedAt() time.Time {
 	return s.UpdatedAt
+}
+
+// GetRejectedBy returns the value of RejectedBy.
+func (s *ResourceVersion) GetRejectedBy() OptString {
+	return s.RejectedBy
+}
+
+// GetRejectedAt returns the value of RejectedAt.
+func (s *ResourceVersion) GetRejectedAt() OptDateTime {
+	return s.RejectedAt
 }
 
 // GetRejectionNote returns the value of RejectionNote.
@@ -9178,6 +9190,16 @@ func (s *ResourceVersion) SetCreatedAt(val time.Time) {
 // SetUpdatedAt sets the value of UpdatedAt.
 func (s *ResourceVersion) SetUpdatedAt(val time.Time) {
 	s.UpdatedAt = val
+}
+
+// SetRejectedBy sets the value of RejectedBy.
+func (s *ResourceVersion) SetRejectedBy(val OptString) {
+	s.RejectedBy = val
+}
+
+// SetRejectedAt sets the value of RejectedAt.
+func (s *ResourceVersion) SetRejectedAt(val OptDateTime) {
+	s.RejectedAt = val
 }
 
 // SetRejectionNote sets the value of RejectionNote.

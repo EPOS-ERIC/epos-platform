@@ -138,6 +138,8 @@ func NewSoftwareApplicationVersion(
 	submittedBy *string,
 	group Group,
 	createdAt, updatedAt time.Time,
+	rejectedBy *string,
+	rejectedAt *time.Time,
 	rejectionNote *string,
 	metadata SoftwareApplicationMetadata,
 ) (SoftwareApplicationVersion, error) {
@@ -196,6 +198,8 @@ func NewSoftwareApplicationVersion(
 		Group:                 normalizedGroup,
 		CreatedAt:             createdAt,
 		UpdatedAt:             updatedAt,
+		RejectedBy:            rejectedBy,
+		RejectedAt:            rejectedAt,
 		RejectionNote:         rejectionNote,
 		Metadata:              metadata,
 	}, nil

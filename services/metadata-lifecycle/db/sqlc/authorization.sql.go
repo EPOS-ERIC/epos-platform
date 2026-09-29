@@ -958,7 +958,7 @@ FROM
     JOIN permissions ON permissions.key = group_permission_grants.permission_key
 WHERE
     group_permission_grants.user_id = $1
-    AND group_permission_grants.permission_key = ANY($2::text[])
+    AND group_permission_grants.permission_key = ANY($2::text [])
     AND permissions.scope = 'GROUP'
 UNION
 SELECT
@@ -969,7 +969,7 @@ FROM
     JOIN permissions ON permissions.key = role_permissions.permission_key
 WHERE
     assignment.user_id = $1
-    AND role_permissions.permission_key = ANY($2::text[])
+    AND role_permissions.permission_key = ANY($2::text [])
     AND permissions.scope = 'GROUP'
 `
 

@@ -43,7 +43,14 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.Re
 	if v.RejectionNote != nil {
 		rejectionNote = gatewayapi.NewOptNonBlankString(gatewayapi.NonBlankString(*v.RejectionNote))
 	}
-
+	rejectedBy := gatewayapi.OptString{}
+	if v.RejectedBy != nil {
+		rejectedBy = gatewayapi.NewOptString(*v.RejectedBy)
+	}
+	rejectedAt := gatewayapi.OptDateTime{}
+	if v.RejectedAt != nil {
+		rejectedAt = gatewayapi.NewOptDateTime(v.RejectedAt.AsTime())
+	}
 	return gatewayapi.ResourceVersion{
 		ResourceID:    resourceID,
 		VersionID:     versionID,
@@ -54,6 +61,8 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.Re
 		GroupName:     v.GroupName,
 		CreatedAt:     v.CreatedAt.AsTime(),
 		UpdatedAt:     v.UpdatedAt.AsTime(),
+		RejectedBy:    rejectedBy,
+		RejectedAt:    rejectedAt,
 		RejectionNote: rejectionNote,
 		Metadata:      metadata,
 	}, nil

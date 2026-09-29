@@ -164,6 +164,8 @@ func NewDatasetVersion(
 	submittedBy *string,
 	group Group,
 	createdAt, updatedAt time.Time,
+	rejectedBy *string,
+	rejectedAt *time.Time,
 	rejectionNote *string,
 	metadata DatasetMetadata,
 ) (DatasetVersion, error) {
@@ -222,6 +224,8 @@ func NewDatasetVersion(
 		Group:         normalizedGroup,
 		CreatedAt:     createdAt,
 		UpdatedAt:     updatedAt,
+		RejectedBy:    rejectedBy,
+		RejectedAt:    rejectedAt,
 		RejectionNote: rejectionNote,
 		Metadata:      metadata,
 	}, nil

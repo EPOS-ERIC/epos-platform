@@ -109,6 +109,8 @@ func sourceCodeResult(ctx context.Context, q *sqlc.Queries, sourceCodeID, versio
 		resourcedb.ToGroup(row.Group),
 		version.CreatedAt,
 		version.UpdatedAt,
+		version.RejectedBy,
+		version.RejectedAt,
 		version.RejectionNote,
 		metadata,
 	)
