@@ -16,7 +16,7 @@ test:
 	go test ./...
 
 fmt:
-	gofmt -w .
+	golangci-lint fmt
 
 lint: fmt
 	go vet ./...

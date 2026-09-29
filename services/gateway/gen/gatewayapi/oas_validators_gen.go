@@ -3739,7 +3739,7 @@ func (s IntegerScalarParameterKind) Validate() error {
 }
 
 func (s Keyword) Validate() error {
-	alias := string(s)
+	alias := (string)(s)
 	if err := (validate.String{
 		MinLength:     1,
 		MinLengthSet:  true,
@@ -3833,7 +3833,7 @@ func (s *MembershipUser) Validate() error {
 }
 
 func (s NonBlankString) Validate() error {
-	alias := string(s)
+	alias := (string)(s)
 	if err := (validate.String{
 		MinLength:     1,
 		MinLengthSet:  true,

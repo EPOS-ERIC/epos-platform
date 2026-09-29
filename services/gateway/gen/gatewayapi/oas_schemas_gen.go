@@ -6928,7 +6928,7 @@ func (o OptNilBool) IsEmpty() bool {
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptNilBool) Get() (v, ok bool) {
+func (o OptNilBool) Get() (v bool, ok bool) {
 	if o.Null {
 		return v, false
 	}

@@ -7,7 +7,7 @@ formatters:
     - gofumpt
     - goimports
   exclusions:
-    generated: disable
+    generated: strict
   settings:
     gofumpt:
       extra:
