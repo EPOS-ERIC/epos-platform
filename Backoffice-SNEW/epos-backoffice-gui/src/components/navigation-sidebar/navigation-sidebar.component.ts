@@ -53,7 +53,7 @@ export class NavigationSidebarComponent {
 
   protected readonly items: NavigationItem[] = [
     { label: 'Data', route: '/data', icon: 'database', concept: 'DATA' },
-    { label: 'Software', route: '/software', icon: 'settings', concept: 'SOFTWARE' },
+    { label: 'Software', route: '/software', icon: 'code', concept: 'SOFTWARE' },
     { label: 'Facilities', route: '/facilities', icon: 'building', concept: 'FACILITIES' }
   ];
 
@@ -69,11 +69,11 @@ export class NavigationSidebarComponent {
     }
 
     if (this.detailRootLabel === 'Software Application') {
-      return 'settings';
+      return 'code';
     }
 
     if (this.detailRootLabel === 'Software Source Code') {
-      return 'building';
+      return 'code';
     }
 
     return undefined;

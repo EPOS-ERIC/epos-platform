@@ -5,6 +5,7 @@ export type IconName =
   | 'chevron-left'
   | 'chevron-right'
   | 'chevron-down'
+  | 'code'
   | 'menu-open'
   | 'menu-close'
   | 'inbox'
