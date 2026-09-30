@@ -1051,6 +1051,14 @@ export type ResourceVersion = {
    * @format date-time
    */
   updated_at: string;
+  /**
+   * @minLength 1
+   */
+  rejected_by?: string;
+  /**
+   * @format date-time
+   */
+  rejected_at?: string;
   rejection_note?: NonBlankString;
   metadata:
     | DatasetResourceMetadata

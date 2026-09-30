@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 
 import type { ResourceVersionReference } from '../../../generated/backofficeSchemas';
@@ -20,6 +21,7 @@ import { BackButtonComponent } from '../../shared/ui/back-button.component';
     CategoriesComponent,
     BackButtonComponent,
     ContactPointsComponent,
+    DatePipe,
     DistributionComponent,
     GeneralInformationComponent,
     IdentifiersComponent,

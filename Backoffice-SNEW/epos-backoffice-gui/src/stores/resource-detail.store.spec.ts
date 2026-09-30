@@ -9,7 +9,8 @@ import type {
   DiscoveryResourceType,
   ResourceVersion,
   ResourceVersionSummary,
-  SoftwareApplicationResourceMetadata
+  SoftwareApplicationResourceMetadata,
+  User
 } from '../../generated/backofficeSchemas';
 import { ApiService, type ResourceVersionResponse } from '../services/api.service';
 import { DialogService } from '../services/dialog.service';
@@ -41,7 +42,7 @@ describe('ResourceDetailStore', () => {
     contact_points: [],
     categories: []
   };
-  const apiService = { getResourceVersion: vi.fn(), listResourceVersions: vi.fn() };
+  const apiService = { getResourceVersion: vi.fn(), getUser: vi.fn(), listResourceVersions: vi.fn() };
   const dialogService = { dismiss: vi.fn(), prompt: vi.fn(), confirm: vi.fn() };
   const router = { navigate: vi.fn() };
   const actionError = signal('');
@@ -73,6 +74,7 @@ describe('ResourceDetailStore', () => {
     vi.clearAllMocks();
     actionError.set('');
     apiService.getResourceVersion.mockReturnValue(of(datasetVersion()));
+    apiService.getUser.mockReturnValue(of(user()));
     apiService.listResourceVersions.mockReturnValue(of([]));
     TestBed.configureTestingModule({
       providers: [
@@ -97,6 +99,49 @@ describe('ResourceDetailStore', () => {
     expect(store.datasetForm()?.keywords).toBe('earth, science');
     expect(store.title()).toBe('Mapped dataset');
     expect(store.navigationItems()[1]?.anchor).toBe('spatial-coverage');
+  });
+
+  it('resolves a rejection author for dataset versions', () => {
+    apiService.getResourceVersion.mockReturnValue(of(datasetVersion({
+      status: 'REJECTED',
+      rejected_by: 'reviewer-id',
+      rejected_at: '2026-03-01T12:00:00Z',
+      rejection_note: 'Please update the metadata.'
+    })));
+
+    store.load(context('dataset', 'dataset-id'));
+
+    expect(apiService.getUser).toHaveBeenCalledWith('reviewer-id');
+    expect(store.rejectionAuthorName()).toBe('Review User');
+  });
+
+  it('resolves a rejection author for software versions', () => {
+    apiService.getResourceVersion.mockReturnValue(of(softwareVersion({
+      status: 'REJECTED',
+      rejected_by: 'reviewer-id',
+      rejected_at: '2026-03-01T12:00:00Z',
+      rejection_note: 'Please update the metadata.'
+    })));
+
+    store.load(context('software-application', 'software-id'));
+
+    expect(apiService.getUser).toHaveBeenCalledWith('reviewer-id');
+    expect(store.rejectionAuthorName()).toBe('Review User');
+  });
+
+  it('keeps a rejected detail available when its author cannot be resolved', () => {
+    apiService.getResourceVersion.mockReturnValue(of(datasetVersion({
+      status: 'REJECTED',
+      rejected_by: 'missing-user',
+      rejection_note: 'Please update the metadata.'
+    })));
+    apiService.getUser.mockReturnValue(throwError(() => new Error('Not found')));
+
+    store.load(context('dataset', 'dataset-id'));
+
+    expect(store.loadError()).toBe('');
+    expect(store.datasetVersion()?.status).toBe('REJECTED');
+    expect(store.rejectionAuthorName()).toBe('missing-user');
   });
 
   it('blocks invalid distributions before calling the save endpoint', () => {
@@ -310,7 +355,9 @@ describe('ResourceDetailStore', () => {
     } as ResourceVersionResponse<'dataset'>;
   }
 
-  function softwareVersion(): ResourceVersionResponse<'software-application'> {
+  function softwareVersion(
+    overrides: Partial<ResourceVersion> = {}
+  ): ResourceVersionResponse<'software-application'> {
     return {
       resource_id: 'software-id',
       version_id: 'version-id',
@@ -321,7 +368,24 @@ describe('ResourceDetailStore', () => {
       group_name: 'Group',
       created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-01T00:00:00Z',
-      metadata: softwareMetadata
+      metadata: softwareMetadata,
+      ...overrides
+    } as ResourceVersionResponse<'software-application'>;
+  }
+
+  function user(): User {
+    return {
+      id: 'reviewer-id',
+      email: 'review.user@example.com',
+      given_name: 'Review',
+      family_name: 'User',
+      status: 'ACTIVE',
+      global_roles: [],
+      global_granted_permissions: [],
+      global_role_permissions: [],
+      memberships: [],
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z'
     };
   }
 

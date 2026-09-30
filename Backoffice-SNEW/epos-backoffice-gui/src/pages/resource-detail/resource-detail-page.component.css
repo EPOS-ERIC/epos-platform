@@ -97,6 +97,26 @@
   overflow-y: auto;
 }
 
+.rejection-note .detail-label {
+  color: inherit;
+}
+
+.rejection-note-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rejection-note p {
+  margin: 12px 0 0;
+  white-space: pre-wrap;
+}
+
 .detail-context-status[data-status='published'] {
   background: var(--olive-100);
   color: var(--olive-700);

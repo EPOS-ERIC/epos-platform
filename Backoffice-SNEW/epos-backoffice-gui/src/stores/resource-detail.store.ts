@@ -75,6 +75,7 @@ type LoadedDatasetState = {
   context: ResourceDetailRouteContext;
   version: ResourceVersionResponse<'dataset'>;
   form: DatasetDetailForm;
+  rejectionAuthorName: string | null;
 };
 
 type LoadedSoftwareState = {
@@ -83,6 +84,7 @@ type LoadedSoftwareState = {
   version: SoftwareResourceVersion;
   applicationForm: SoftwareApplicationResourceMetadata | null;
   sourceCodeForm: SoftwareSourceCodeResourceMetadata | null;
+  rejectionAuthorName: string | null;
 };
 
 type ResourceDetailState =
@@ -181,6 +183,12 @@ export class ResourceDetailStore {
   readonly resourceVersion = computed(() => {
     const state = this.state();
     return state.kind === 'loaded-software' ? state.version : null;
+  });
+  readonly rejectionAuthorName = computed(() => {
+    const state = this.state();
+    return state.kind === 'loaded-dataset' || state.kind === 'loaded-software'
+      ? state.rejectionAuthorName
+      : null;
   });
   readonly datasetForm = computed(() => {
     const state = this.state();
@@ -281,7 +289,22 @@ export class ResourceDetailStore {
           const context = command.context;
           this.state.set({ kind: 'loading', context });
           return this.apiService.getResourceVersion(context.resourceType, context.resourceId, context.versionId).pipe(
-            map((version) => this.loadedState(context, version)),
+            switchMap((version) => {
+              if (!version.rejected_by) {
+                return of(this.loadedState(context, version));
+              }
+
+              return this.apiService.getUser(version.rejected_by).pipe(
+                map((user) => {
+                  const name = `${user.given_name} ${user.family_name}`.trim();
+                  return this.loadedState(context, version, name || user.email || version.rejected_by);
+                }),
+                catchError((error) => {
+                  console.error('Failed to resolve rejection author', error);
+                  return of(this.loadedState(context, version, version.rejected_by));
+                })
+              );
+            }),
             catchError((error) => {
               console.error(`Failed to load ${context.resourceType} resource version`, error);
               return of({
@@ -726,7 +749,8 @@ export class ResourceDetailStore {
 
   private loadedState(
     context: ResourceDetailRouteContext,
-    version: ResourceVersionResponse<DiscoveryResourceType>
+    version: ResourceVersionResponse<DiscoveryResourceType>,
+    rejectionAuthorName: string | null = null
   ): LoadedDatasetState | LoadedSoftwareState {
     if (context.resourceType === 'dataset') {
       const datasetVersion = version as ResourceVersionResponse<'dataset'>;
@@ -734,7 +758,8 @@ export class ResourceDetailStore {
         kind: 'loaded-dataset',
         context,
         version: datasetVersion,
-        form: toDatasetDetailForm(datasetVersion.metadata)
+        form: toDatasetDetailForm(datasetVersion.metadata),
+        rejectionAuthorName
       };
     }
 
@@ -745,7 +770,8 @@ export class ResourceDetailStore {
         context,
         version: softwareVersion,
         applicationForm: structuredClone(version.metadata as SoftwareApplicationResourceMetadata),
-        sourceCodeForm: null
+        sourceCodeForm: null,
+        rejectionAuthorName
       };
     }
 
@@ -754,7 +780,8 @@ export class ResourceDetailStore {
       context,
       version: softwareVersion,
       applicationForm: null,
-      sourceCodeForm: structuredClone(version.metadata as SoftwareSourceCodeResourceMetadata)
+      sourceCodeForm: structuredClone(version.metadata as SoftwareSourceCodeResourceMetadata),
+      rejectionAuthorName
     };
   }
 

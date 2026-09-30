@@ -42,7 +42,15 @@
         @if (version.rejection_note != null) {
           <div class="rejection-note">
             <span class="detail-label">Rejection Note</span>
-            <span>{{ version.rejection_note }}</span>
+            <div class="rejection-note-meta">
+              @if (store.rejectionAuthorName(); as authorName) {
+                <span>Rejected by: {{ authorName }}</span>
+              }
+              @if (version.rejected_at) {
+                <span>Rejected at: {{ version.rejected_at | date: 'medium' }}</span>
+              }
+            </div>
+            <p>{{ version.rejection_note }}</p>
           </div>
         }
       </section>
@@ -131,6 +139,21 @@
             </div>
           }
         </div>
+
+        @if (version.rejection_note != null) {
+          <div class="rejection-note">
+            <span class="detail-label">Rejection Note</span>
+            <div class="rejection-note-meta">
+              @if (store.rejectionAuthorName(); as authorName) {
+                <span>Rejected by: {{ authorName }}</span>
+              }
+              @if (version.rejected_at) {
+                <span>Rejected at: {{ version.rejected_at | date: 'medium' }}</span>
+              }
+            </div>
+            <p>{{ version.rejection_note }}</p>
+          </div>
+        }
       </section>
 
       <app-software-general-information
@@ -191,6 +214,21 @@
             </div>
           }
         </div>
+
+        @if (version.rejection_note != null) {
+          <div class="rejection-note">
+            <span class="detail-label">Rejection Note</span>
+            <div class="rejection-note-meta">
+              @if (store.rejectionAuthorName(); as authorName) {
+                <span>Rejected by: {{ authorName }}</span>
+              }
+              @if (version.rejected_at) {
+                <span>Rejected at: {{ version.rejected_at | date: 'medium' }}</span>
+              }
+            </div>
+            <p>{{ version.rejection_note }}</p>
+          </div>
+        }
       </section>
 
       <app-software-general-information
