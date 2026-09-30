@@ -68,7 +68,8 @@
 }
 
 .contact-point-row--selected {
-  background: color-mix(in srgb, var(--olive-100) 40%, var(--surface) 60%);
+  background: color-mix(in srgb, #22c55e 8%, var(--surface));
+  box-shadow: inset 3px 0 #22c55e;
 }
 
 .contact-points-list--assigned .contact-point-row {

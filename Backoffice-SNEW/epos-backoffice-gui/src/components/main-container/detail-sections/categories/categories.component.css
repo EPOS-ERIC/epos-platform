@@ -11,9 +11,9 @@
   align-content: start;
   gap: 12px;
   padding: 16px;
-  border: 1px solid #facc15;
+  border: 1px solid var(--line);
   border-radius: 16px;
-  background: color-mix(in srgb, #fffbeb 52%, var(--surface) 48%);
+  background: var(--surface-2);
 }
 
 .categories-box--selected,
@@ -47,10 +47,6 @@
 .category-row {
   padding: 11px 12px;
   border-bottom: 1px solid var(--line);
-}
-
-.category-row--selected {
-  background: #fffbeb;
 }
 
 .category-action {

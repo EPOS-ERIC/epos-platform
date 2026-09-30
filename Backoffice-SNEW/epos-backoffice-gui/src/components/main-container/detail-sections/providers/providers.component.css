@@ -11,9 +11,9 @@
   align-content: start;
   gap: 12px;
   padding: 16px;
-  border: 1px solid #fdba74;
+  border: 1px solid var(--line);
   border-radius: 16px;
-  background: color-mix(in srgb, #fff7ed 48%, var(--surface) 52%);
+  background: var(--surface-2);
 }
 
 .providers-box--selected,
@@ -47,10 +47,6 @@
 .provider-row {
   padding: 11px 12px;
   border-bottom: 1px solid var(--line);
-}
-
-.provider-row--selected {
-  background: #fff7ed;
 }
 
 .provider-action {

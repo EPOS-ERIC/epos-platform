@@ -859,10 +859,9 @@ app-web-service-parameters .distribution-subtitle::before {
 
 app-distribution .distribution-body {
   padding: 18px;
-  border: 1px solid color-mix(in srgb, var(--line) 65%, #60a5fa 35%);
+  border: 1px solid var(--line);
   border-radius: 16px;
   background: color-mix(in srgb, var(--surface-2) 58%, var(--surface) 42%);
-  box-shadow: inset 4px 0 0 color-mix(in srgb, #60a5fa 65%, var(--line) 35%);
 }
 
 app-distribution .distribution-level-heading {
@@ -883,19 +882,26 @@ app-distribution .distribution-body > .distribution-subsection {
 app-web-service > .distribution-subsection,
 app-distribution .distribution-body > .distribution-subsection {
   padding: 18px;
-  border: 2px solid color-mix(in srgb, var(--line) 62%, var(--olive-600) 38%);
+  border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
 app-web-service .webservice-subsection {
   width: calc(100% - 24px);
-  margin: 12px auto 0;
-  padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--line) 76%, var(--olive-600) 24%);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--surface-2) 48%, var(--surface) 52%);
+  margin: 8px auto 0;
+  padding: 12px 2px 0 12px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  transition: border-left-color 160ms ease;
+}
+
+app-web-service .webservice-subsection[open] {
+  border-left-color: color-mix(in srgb, var(--line) 72%, var(--text-muted) 28%);
 }
 
 @media (max-width: 768px) {
@@ -958,28 +964,64 @@ app-web-service .webservice-subsection {
 }
 
 app-providers .provider-badge--available {
-  background: #ffedd5;
+  border-color: color-mix(in srgb, #f97316 28%, var(--line));
+  background: color-mix(in srgb, #f97316 10%, var(--surface));
   color: #c2410c;
 }
 
 app-providers .provider-badge--selected {
-  background: #fed7aa;
+  border-color: color-mix(in srgb, #f97316 28%, var(--line));
+  background: color-mix(in srgb, #f97316 10%, var(--surface));
   color: #9a3412;
 }
 
 app-categories .category-badge--available {
-  background: #fef9c3;
+  border-color: color-mix(in srgb, #eab308 30%, var(--line));
+  background: color-mix(in srgb, #eab308 10%, var(--surface));
   color: #854d0e;
 }
 
 app-categories .category-badge--selected {
-  background: #fef3c7;
+  border-color: color-mix(in srgb, #eab308 30%, var(--line));
+  background: color-mix(in srgb, #eab308 10%, var(--surface));
   color: #92400e;
 }
 
 app-identifiers .identifier-list-badge {
-  background: #ede9fe;
+  border-color: color-mix(in srgb, #8b5cf6 28%, var(--line));
+  background: color-mix(in srgb, #8b5cf6 10%, var(--surface));
   color: #6d28d9;
+}
+
+app-providers .provider-row--selected {
+  background: color-mix(in srgb, #f97316 7%, var(--surface));
+  box-shadow: inset 3px 0 #f97316;
+}
+
+app-categories .category-row--selected {
+  background: color-mix(in srgb, #eab308 7%, var(--surface));
+  box-shadow: inset 3px 0 #eab308;
+}
+
+app-contact-points .app-badge--blue {
+  border-color: color-mix(in srgb, #3b82f6 28%, var(--line));
+  background: color-mix(in srgb, #3b82f6 10%, var(--surface));
+}
+
+app-contact-points .app-badge--green {
+  border-color: color-mix(in srgb, #22c55e 28%, var(--line));
+  background: color-mix(in srgb, #22c55e 10%, var(--surface));
+}
+
+app-identifiers .identifier-list-badge::before,
+app-contact-points .contact-points-panel-header .app-badge::before,
+app-providers .providers-box-header .app-badge::before,
+app-categories .categories-box-header .app-badge::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
 }
 
 app-identifiers .detail-section-card--neutral .identifiers-box,
