@@ -25,8 +25,15 @@
     @if (currentUser.memberships.length) {
       <div class="membership-grid">
         @for (membership of currentUser.memberships; track membership.group.id) {
+          @let route = groupRoute(membership);
           <article class="membership-summary app-card">
-            <div class="membership-summary-header">
+            <a
+              class="membership-summary-header"
+              [class.membership-summary-header--clickable]="membership.status === 'ACTIVE' && route !== null"
+              [routerLink]="membership.status === 'ACTIVE' ? route : null"
+              [queryParams]="membership.status === 'ACTIVE' && route ? { groupId: membership.group.id } : null"
+              [attr.aria-label]="membership.status === 'ACTIVE' && route ? 'Open ' + membership.group.name : null"
+            >
               <div class="membership-group-heading">
                 @if (groupIconPath(membership.group.id); as iconPath) {
                   <img class="membership-group-logo" [src]="iconPath" alt="" aria-hidden="true" />
@@ -37,7 +44,7 @@
                 </div>
               </div>
               <span class="status-pill" [attr.data-status]="membership.status.toLowerCase()">{{ membership.status }}</span>
-            </div>
+            </a>
 
             <dl>
               <div>

@@ -1,6 +1,7 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { catchError, finalize, forkJoin, from, map, of, switchMap } from 'rxjs';
 
 import type { CreateRoleRequest, GroupPermission, Permission, UserMembershipSummary } from '../../../generated/backofficeSchemas';
@@ -11,18 +12,20 @@ import { DialogService } from '../../services/dialog.service';
 import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
 import { ToastService } from '../../services/toast.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
+import { GroupsStore } from '../../stores/groups.store';
 
 type RequestableRole = CreateRoleRequest['role'];
 
 @Component({
   selector: 'app-memberships-page',
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './memberships-page.component.html',
   styleUrl: './memberships-page.component.css'
 })
 export class MembershipsPageComponent {
   private readonly apiService = inject(ApiService);
   private readonly currentUserStore = inject(CurrentUserStore);
+  private readonly groupsStore = inject(GroupsStore);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(DialogService);
   private readonly toast = inject(ToastService);
@@ -65,6 +68,20 @@ export class MembershipsPageComponent {
       .filter((request) => request.status === 'PENDING')
       .map((request) => request.role);
     return roles.length ? roles.join(', ') : 'None';
+  }
+
+  protected groupRoute(membership: UserMembershipSummary): string | null {
+    const concept = this.groupsStore.groups().find((group) => group.id === membership.group.id)?.concept;
+    switch (concept) {
+      case 'DATA':
+        return '/data';
+      case 'SOFTWARE':
+        return '/software';
+      case 'FACILITIES':
+        return '/facilities';
+      default:
+        return null;
+    }
   }
 
   protected async cancelMembershipRequest(membership: UserMembershipSummary): Promise<void> {
