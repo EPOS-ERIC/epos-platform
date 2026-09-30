@@ -1364,6 +1364,15 @@ app-navigation-sidebar .sidebar .nav-tree-row--main .tree-toggle-button.main-tre
   grid-template-rows: 1fr;
   opacity: 1;
   pointer-events: auto;
+  transition-duration: 340ms, 240ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1), ease-out;
+}
+
+@starting-style {
+  :where(app-navigation-sidebar) .main-tree-panel.is-expanded {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
 }
 
 :where(app-navigation-sidebar) .main-tree-panel > .nav-tree-children {
