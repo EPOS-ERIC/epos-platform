@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -78,7 +79,7 @@ func (s *Service) ListSubscriptions(ctx context.Context, actor domain.Actor, use
 			return nil, fmt.Errorf("authorize group notification subscription list: %w", err)
 		}
 		if len(groupIDs) == 0 {
-			return nil, domain.ErrNotificationForbidden
+			return nil, apperror.Default(apperror.CodePermissionDenied)
 		}
 
 		for _, groupID := range groupIDs {
@@ -153,39 +154,39 @@ func (s *Service) authorizeSubscription(ctx context.Context, actor domain.Actor,
 		return domain.NotificationTopic{}, err
 	}
 	if channel != domain.NotificationChannelEmail || topic.Scope == domain.NotificationScopeDirect {
-		return domain.NotificationTopic{}, domain.ErrNotificationInvalid
+		return domain.NotificationTopic{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	if groupID == nil {
 		if topic.Scope != domain.NotificationScopeGlobal {
-			return domain.NotificationTopic{}, domain.ErrNotificationInvalid
+			return domain.NotificationTopic{}, apperror.Default(apperror.CodeValidationFailed)
 		}
 		allowed, err := s.authorizer.CanManageGlobalNotificationSubscriptions(ctx, string(actor), userID)
 		if err != nil {
 			return domain.NotificationTopic{}, fmt.Errorf("authorize global notification subscription: %w", err)
 		}
 		if !allowed.Allowed {
-			return domain.NotificationTopic{}, domain.ErrNotificationForbidden
+			return domain.NotificationTopic{}, apperror.Default(apperror.CodePermissionDenied)
 		}
 		return topic, nil
 	}
 
 	if topic.Scope != domain.NotificationScopeGroup || *groupID == uuid.Nil {
-		return domain.NotificationTopic{}, domain.ErrNotificationInvalid
+		return domain.NotificationTopic{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 	allowed, err := s.authorizer.CanManageGroupNotificationSubscriptions(ctx, string(actor), userID, *groupID)
 	if err != nil {
 		return domain.NotificationTopic{}, fmt.Errorf("authorize group notification subscription: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.NotificationTopic{}, domain.ErrNotificationForbidden
+		return domain.NotificationTopic{}, apperror.Default(apperror.CodePermissionDenied)
 	}
 	return topic, nil
 }
 
 func (s *Service) topic(ctx context.Context, key domain.NotificationTopicKey) (domain.NotificationTopic, error) {
 	if key == "" {
-		return domain.NotificationTopic{}, domain.ErrNotificationInvalid
+		return domain.NotificationTopic{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 	topics, err := s.store.ListTopics(ctx)
 	if err != nil {
@@ -196,5 +197,5 @@ func (s *Service) topic(ctx context.Context, key domain.NotificationTopicKey) (d
 			return topic, nil
 		}
 	}
-	return domain.NotificationTopic{}, domain.ErrNotificationNotFound
+	return domain.NotificationTopic{}, apperror.Default(apperror.CodeNotFound)
 }

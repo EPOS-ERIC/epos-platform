@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 )
 
 func (h *ogenHandler) ListNotificationTopics(ctx context.Context) ([]gatewayapi.NotificationTopic, error) {
@@ -27,9 +29,9 @@ func (h *ogenHandler) ListNotificationTopics(ctx context.Context) ([]gatewayapi.
 }
 
 func (h *ogenHandler) ListUserNotificationSubscriptions(ctx context.Context, params gatewayapi.ListUserNotificationSubscriptionsParams) ([]gatewayapi.NotificationSubscription, error) {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	target := notificationUserID(params.UserId, actor)
 	response, err := h.metadataLifecycle.ListNotificationSubscriptions(ctx, target, actor)
@@ -50,9 +52,9 @@ func (h *ogenHandler) ListUserNotificationSubscriptions(ctx context.Context, par
 }
 
 func (h *ogenHandler) SubscribeUserNotification(ctx context.Context, params gatewayapi.SubscribeUserNotificationParams) error {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	topicKey, err := toProtoGlobalNotificationTopicKey(params.TopicKey)
 	if err != nil {
@@ -65,9 +67,9 @@ func (h *ogenHandler) SubscribeUserNotification(ctx context.Context, params gate
 }
 
 func (h *ogenHandler) UnsubscribeUserNotification(ctx context.Context, params gatewayapi.UnsubscribeUserNotificationParams) error {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	topicKey, err := toProtoGlobalNotificationTopicKey(params.TopicKey)
 	if err != nil {
@@ -80,9 +82,9 @@ func (h *ogenHandler) UnsubscribeUserNotification(ctx context.Context, params ga
 }
 
 func (h *ogenHandler) SubscribeGroupUserNotification(ctx context.Context, params gatewayapi.SubscribeGroupUserNotificationParams) error {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	topicKey, err := toProtoGroupNotificationTopicKey(params.TopicKey)
 	if err != nil {
@@ -95,9 +97,9 @@ func (h *ogenHandler) SubscribeGroupUserNotification(ctx context.Context, params
 }
 
 func (h *ogenHandler) UnsubscribeGroupUserNotification(ctx context.Context, params gatewayapi.UnsubscribeGroupUserNotificationParams) error {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	topicKey, err := toProtoGroupNotificationTopicKey(params.TopicKey)
 	if err != nil {

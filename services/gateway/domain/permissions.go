@@ -1,5 +1,7 @@
 package domain
 
+import "github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
+
 // GlobalPermission is a permission that applies across all groups.
 type GlobalPermission string
 
@@ -65,7 +67,7 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 		GlobalPermissionCategoryManage:
 		return permission, nil
 	default:
-		return "", ErrBadRequest
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }
 
@@ -88,6 +90,6 @@ func NewGroupPermission(value string) (GroupPermission, error) {
 		GroupPermissionCategoryManage:
 		return permission, nil
 	default:
-		return "", ErrBadRequest
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }

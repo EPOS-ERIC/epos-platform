@@ -4,6 +4,7 @@ go 1.27
 
 require (
 	buf.build/go/protovalidate v1.3.0
+	github.com/EPOS-ERIC/epos-platform/packages/go/apperror v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/protobuf v0.0.0
@@ -93,6 +94,8 @@ require (
 )
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => ../../packages/go/logging
+
+replace github.com/EPOS-ERIC/epos-platform/packages/go/apperror => ../../packages/go/apperror
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => ../../packages/go/observability
 

@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 )
 
@@ -20,18 +21,18 @@ func NewOrganizationInput(value OrganizationInput) (OrganizationInput, error) {
 	value.Email = optionalTrimmedString(value.Email)
 	value.LEICode = optionalTrimmedString(value.LEICode)
 	if value.Name == "" {
-		return OrganizationInput{}, ErrInvalidOrganization
+		return OrganizationInput{}, invalidField("name", "Name must not be blank.", nil)
 	}
 	if err := validateUUIDList(value.Parents, "parent"); err != nil {
-		return OrganizationInput{}, fmt.Errorf("organization parents: %w: %w", err, ErrInvalidOrganization)
+		return OrganizationInput{}, invalidField("parents", "Each parent must be a valid UUID.", err)
 	}
 	if err := validateUUIDList(value.ContactPoints, "contact point"); err != nil {
-		return OrganizationInput{}, fmt.Errorf("organization contact points: %w: %w", err, ErrInvalidOrganization)
+		return OrganizationInput{}, invalidField("contact_points", "Each contact point must be a valid UUID.", err)
 	}
 	for i := range value.Identifiers {
 		identifierInput, err := NewOrganizationIdentifierInput(value.Identifiers[i])
 		if err != nil {
-			return OrganizationInput{}, ErrInvalidOrganization
+			return OrganizationInput{}, fmt.Errorf("validate organization identifier: %w", apperror.PrefixTarget(err, fmt.Sprintf("identifiers[%d]", i)))
 		}
 		value.Identifiers[i] = identifierInput
 	}
@@ -39,11 +40,16 @@ func NewOrganizationInput(value OrganizationInput) (OrganizationInput, error) {
 }
 
 // NewOrganization creates a complete canonical organization from its identity and input.
-func NewOrganization(id uuid.UUID, value OrganizationInput, identifiers []OrganizationIdentifier) (Organization, error) {
+func NewOrganization(id uuid.UUID, value OrganizationInput, identifiers []OrganizationIdentifier) (result Organization, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	if id == uuid.Nil {
-		return Organization{}, ErrInvalidOrganization
+		return Organization{}, apperror.Default(apperror.CodeValidationFailed)
 	}
-	value, err := NewOrganizationInput(value)
+	value, err = NewOrganizationInput(value)
 	if err != nil {
 		return Organization{}, err
 	}
@@ -53,7 +59,7 @@ func NewOrganization(id uuid.UUID, value OrganizationInput, identifiers []Organi
 			Value: identifier.Value,
 		})
 		if err != nil {
-			return Organization{}, ErrInvalidOrganization
+			return Organization{}, apperror.Default(apperror.CodeValidationFailed)
 		}
 	}
 	return Organization{
@@ -74,9 +80,14 @@ func NewOrganization(id uuid.UUID, value OrganizationInput, identifiers []Organi
 }
 
 // NewOrganizationReference creates a valid relationship projection.
-func NewOrganizationReference(id uuid.UUID, name string) (OrganizationReference, error) {
+func NewOrganizationReference(id uuid.UUID, name string) (result OrganizationReference, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	if id == uuid.Nil {
-		return OrganizationReference{}, ErrInvalidOrganization
+		return OrganizationReference{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 	return OrganizationReference{ID: id, Name: name}, nil
 }
@@ -86,17 +97,25 @@ func NewOrganizationIdentifierInput(value OrganizationIdentifierInput) (Organiza
 	value.Type = strings.TrimSpace(value.Type)
 	value.Value = strings.TrimSpace(value.Value)
 	if value.Type == "" || value.Value == "" {
-		return OrganizationIdentifierInput{}, ErrInvalidOrganization
+		if value.Type == "" {
+			return OrganizationIdentifierInput{}, invalidField("type", "Type must not be blank.", nil)
+		}
+		return OrganizationIdentifierInput{}, invalidField("value", "Value must not be blank.", nil)
 	}
 	return value, nil
 }
 
 // NewOrganizationIdentifier creates a persisted identifier from its identity and input.
-func NewOrganizationIdentifier(id uuid.UUID, value OrganizationIdentifierInput) (OrganizationIdentifier, error) {
+func NewOrganizationIdentifier(id uuid.UUID, value OrganizationIdentifierInput) (result OrganizationIdentifier, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	if id == uuid.Nil {
-		return OrganizationIdentifier{}, ErrInvalidOrganization
+		return OrganizationIdentifier{}, apperror.Default(apperror.CodeValidationFailed)
 	}
-	value, err := NewOrganizationIdentifierInput(value)
+	value, err = NewOrganizationIdentifierInput(value)
 	if err != nil {
 		return OrganizationIdentifier{}, err
 	}

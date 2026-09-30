@@ -5,10 +5,11 @@ import (
 	"fmt"
 
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 )
 
 func (h *ogenHandler) DiscoverResources(ctx context.Context, q gatewayapi.DiscoverResourcesParams) ([]gatewayapi.DiscoveryItem, error) {
-	actor, _ := actorID(ctx)
+	actor, _ := authcontext.ActorID(ctx)
 	request, err := toProtoSearchResourcesRequest(q)
 	if err != nil {
 		return nil, err

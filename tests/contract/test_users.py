@@ -7,8 +7,8 @@ from client import SCHEMA, GatewayClient
 
 
 class UserContractTest(unittest.TestCase):
-    def test_user_self_provisioning(self) -> None:
-        """Verify a new AAI user is provisioned and can read its own profile."""
+    def test_regression_provisions_new_aai_user_on_first_gateway_request(self) -> None:
+        """Regression: shared not_found must trigger metadata-lifecycle user provisioning."""
 
         suffix = str(uuid4())
         aai_url = os.getenv("AAI_URL", "http://localhost:8110")

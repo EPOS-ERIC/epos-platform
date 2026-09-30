@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -88,7 +89,7 @@ func TestListSubscriptionsDeniesWithoutVisibleGroup(t *testing.T) {
 		store:      listSubscriptionsStore{},
 		authorizer: listSubscriptionsAuthorizer{},
 	}
-	if _, err := service.ListSubscriptions(context.Background(), "actor", "target"); !errors.Is(err, domain.ErrNotificationForbidden) {
+	if _, err := service.ListSubscriptions(context.Background(), "actor", "target"); !apperror.IsCode(err, apperror.CodePermissionDenied) {
 		t.Fatalf("error = %v, want forbidden", err)
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"runtime/debug"
 
 	"buf.build/go/protovalidate"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
@@ -148,11 +149,14 @@ func validateUnaryRPC(validator protovalidate.Validator) grpc.UnaryServerInterce
 	) (any, error) {
 		message, ok := req.(proto.Message)
 		if !ok {
-			return nil, status.Error(codes.Internal, "request is not a protobuf message")
+			return nil, apperror.Default(apperror.CodeInternal)
 		}
 
 		if err := validator.Validate(message); err != nil {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
+			if appErr := grpcapi.ValidationAppError(info.FullMethod, err); appErr != nil {
+				return nil, appErr
+			}
+			return nil, apperror.Wrap(apperror.CodeValidationFailed, "The request is invalid.", err)
 		}
 
 		return handler(ctx, req)
@@ -170,7 +174,8 @@ func logUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {
 		if err == nil {
 			return response, nil
 		}
-		err = NormalizeError(info.FullMethod, err)
+		cause := err
+		err = grpcapi.NormalizeError(cause)
 
 		code := status.Code(err)
 		level := slog.LevelDebug
@@ -198,11 +203,11 @@ func logUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {
 		if level == slog.LevelError {
 			span := trace.SpanFromContext(ctx)
 			if span.IsRecording() {
-				span.RecordError(status.Error(code, err.Error()))
+				span.RecordError(status.Error(code, cause.Error()))
 			}
 		}
 
-		log.Log(ctx, level, "grpc request failed", "method", info.FullMethod, "code", code.String(), "error", err)
+		log.Log(ctx, level, "grpc request failed", "method", info.FullMethod, "code", code.String(), "error", cause)
 		return response, err
 	}
 }

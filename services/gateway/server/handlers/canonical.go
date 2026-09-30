@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 )
 
 func (h *ogenHandler) ListContactPoints(ctx context.Context) ([]gatewayapi.ContactPoint, error) {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	v, err := h.metadataLifecycle.ListContactPoints(ctx, actor)
 	if err != nil {
@@ -29,9 +31,9 @@ func (h *ogenHandler) ListContactPoints(ctx context.Context) ([]gatewayapi.Conta
 }
 
 func (h *ogenHandler) GetContactPoint(ctx context.Context, q gatewayapi.GetContactPointParams) (*gatewayapi.ContactPoint, error) {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	v, err := h.metadataLifecycle.GetContactPoint(ctx, actor, q.ContactPointId.String())
 	if err != nil {
@@ -73,9 +75,9 @@ func (h *ogenHandler) GetOrganization(ctx context.Context, p gatewayapi.GetOrgan
 }
 
 func (h *ogenHandler) CreateOrganization(ctx context.Context, q *gatewayapi.CreateOrganizationRequest) (*gatewayapi.CanonicalOrganization, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	v, err := h.metadataLifecycle.CreateOrganization(ctx, a, toProtoCreateOrganizationRequest(q))
 	if err != nil {
@@ -89,9 +91,9 @@ func (h *ogenHandler) CreateOrganization(ctx context.Context, q *gatewayapi.Crea
 }
 
 func (h *ogenHandler) ReplaceOrganization(ctx context.Context, q *gatewayapi.ReplaceOrganizationRequest, p gatewayapi.ReplaceOrganizationParams) (*gatewayapi.CanonicalOrganization, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	in := toProtoReplaceOrganizationRequest(q, p.OrganizationId.String())
 	v, err := h.metadataLifecycle.ReplaceOrganization(ctx, a, in)
@@ -106,9 +108,9 @@ func (h *ogenHandler) ReplaceOrganization(ctx context.Context, q *gatewayapi.Rep
 }
 
 func (h *ogenHandler) CreateContactPoint(ctx context.Context, q *gatewayapi.CreateContactPointRequest) (*gatewayapi.ContactPoint, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	v, err := h.metadataLifecycle.CreateContactPoint(ctx, a, &metadatalifecyclev1.CreateContactPointRequest{
 		Email: string(q.Email),
@@ -125,9 +127,9 @@ func (h *ogenHandler) CreateContactPoint(ctx context.Context, q *gatewayapi.Crea
 }
 
 func (h *ogenHandler) ReplaceContactPoint(ctx context.Context, q *gatewayapi.ReplaceContactPointRequest, p gatewayapi.ReplaceContactPointParams) (*gatewayapi.ContactPoint, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	v, err := h.metadataLifecycle.ReplaceContactPoint(ctx, a, &metadatalifecyclev1.ReplaceContactPointRequest{
 		ContactPointId: p.ContactPointId.String(),
@@ -145,9 +147,9 @@ func (h *ogenHandler) ReplaceContactPoint(ctx context.Context, q *gatewayapi.Rep
 }
 
 func (h *ogenHandler) DeleteContactPoint(ctx context.Context, p gatewayapi.DeleteContactPointParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	if _, err := h.metadataLifecycle.DeleteContactPoint(ctx, a, &metadatalifecyclev1.DeleteContactPointRequest{ContactPointId: p.ContactPointId.String()}); err != nil {
 		return fmt.Errorf("delete contact point: %w", err)
@@ -156,9 +158,9 @@ func (h *ogenHandler) DeleteContactPoint(ctx context.Context, p gatewayapi.Delet
 }
 
 func (h *ogenHandler) DeleteOrganization(ctx context.Context, p gatewayapi.DeleteOrganizationParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	if _, err := h.metadataLifecycle.DeleteOrganization(ctx, a, &metadatalifecyclev1.DeleteOrganizationRequest{OrganizationId: p.OrganizationId.String()}); err != nil {
 		return fmt.Errorf("delete organization: %w", err)

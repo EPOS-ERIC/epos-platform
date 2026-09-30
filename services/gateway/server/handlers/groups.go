@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 )
 
 func (h *ogenHandler) ListGroups(ctx context.Context) ([]gatewayapi.Group, error) {
@@ -96,9 +98,9 @@ func (h *ogenHandler) GetGroup(ctx context.Context, q gatewayapi.GetGroupParams)
 }
 
 func (h *ogenHandler) CreateGroup(ctx context.Context, q *gatewayapi.CreateGroupRequest) (*gatewayapi.Group, error) {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	in := &metadatalifecyclev1.CreateGroupRequest{
 		Name:        string(q.Name),
@@ -124,9 +126,9 @@ func (h *ogenHandler) CreateGroup(ctx context.Context, q *gatewayapi.CreateGroup
 }
 
 func (h *ogenHandler) ReplaceGroup(ctx context.Context, q *gatewayapi.ReplaceGroupRequest, params gatewayapi.ReplaceGroupParams) (*gatewayapi.Group, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	in := &metadatalifecyclev1.ReplaceGroupRequest{
 		GroupId:     params.GroupId.String(),
@@ -150,11 +152,6 @@ func (h *ogenHandler) ReplaceGroup(ctx context.Context, q *gatewayapi.ReplaceGro
 		return nil, err
 	}
 	return &r, nil
-}
-
-func authMissing() error {
-	// TODO: inline this
-	return errMissingActor
 }
 
 func (h *ogenHandler) ListGroupCategories(ctx context.Context, q gatewayapi.ListGroupCategoriesParams) ([]gatewayapi.Category, error) {
@@ -189,9 +186,9 @@ func (h *ogenHandler) GetGroupCategory(ctx context.Context, q gatewayapi.GetGrou
 }
 
 func (h *ogenHandler) CreateGroupCategory(ctx context.Context, q *gatewayapi.CreateCategoryRequest, params gatewayapi.CreateGroupCategoryParams) (*gatewayapi.Category, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	in := &metadatalifecyclev1.CreateCategoryRequest{GroupId: params.GroupId.String(), Name: string(q.Name)}
 	if q.ParentCategoryID.Set && !q.ParentCategoryID.Null {
@@ -209,9 +206,9 @@ func (h *ogenHandler) CreateGroupCategory(ctx context.Context, q *gatewayapi.Cre
 }
 
 func (h *ogenHandler) ReplaceGroupCategory(ctx context.Context, q *gatewayapi.ReplaceCategoryRequest, params gatewayapi.ReplaceGroupCategoryParams) (*gatewayapi.Category, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	in := &metadatalifecyclev1.ReplaceCategoryRequest{GroupId: params.GroupId.String(), CategoryId: params.CategoryId.String(), Name: string(q.Name)}
 	if !q.ParentCategoryID.Null {
@@ -229,9 +226,9 @@ func (h *ogenHandler) ReplaceGroupCategory(ctx context.Context, q *gatewayapi.Re
 }
 
 func (h *ogenHandler) DecideGroupRoleRequest(ctx context.Context, p gatewayapi.DecideGroupRoleRequestParams) (*gatewayapi.GroupMembership, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	decision, err := toProtoDecision(p.Decision)
 	if err != nil {
@@ -249,9 +246,9 @@ func (h *ogenHandler) DecideGroupRoleRequest(ctx context.Context, p gatewayapi.D
 }
 
 func (h *ogenHandler) AssignGroupRole(ctx context.Context, p gatewayapi.AssignGroupRoleParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	role, err := toProtoGroupRole(p.Role)
 	if err != nil {
@@ -264,9 +261,9 @@ func (h *ogenHandler) AssignGroupRole(ctx context.Context, p gatewayapi.AssignGr
 }
 
 func (h *ogenHandler) RemoveGroupRole(ctx context.Context, p gatewayapi.RemoveGroupRoleParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	role, err := toProtoGroupRole(p.Role)
 	if err != nil {
@@ -279,9 +276,9 @@ func (h *ogenHandler) RemoveGroupRole(ctx context.Context, p gatewayapi.RemoveGr
 }
 
 func (h *ogenHandler) GrantGroupPermission(ctx context.Context, p gatewayapi.GrantGroupPermissionParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	permission, err := domain.NewGroupPermission(string(p.Permission))
 	if err != nil {
@@ -294,9 +291,9 @@ func (h *ogenHandler) GrantGroupPermission(ctx context.Context, p gatewayapi.Gra
 }
 
 func (h *ogenHandler) RevokeGroupPermission(ctx context.Context, p gatewayapi.RevokeGroupPermissionParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	permission, err := domain.NewGroupPermission(string(p.Permission))
 	if err != nil {
@@ -309,9 +306,9 @@ func (h *ogenHandler) RevokeGroupPermission(ctx context.Context, p gatewayapi.Re
 }
 
 func (h *ogenHandler) WithdrawGroupMembershipRequest(ctx context.Context, p gatewayapi.WithdrawGroupMembershipRequestParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	if err := h.metadataLifecycle.WithdrawMembershipRequest(ctx, p.GroupId.String(), a); err != nil {
 		return fmt.Errorf("withdraw membership request: %w", err)
@@ -320,9 +317,9 @@ func (h *ogenHandler) WithdrawGroupMembershipRequest(ctx context.Context, p gate
 }
 
 func (h *ogenHandler) WithdrawGroupRoleRequest(ctx context.Context, p gatewayapi.WithdrawGroupRoleRequestParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	if err := h.metadataLifecycle.WithdrawRoleRequest(ctx, p.GroupId.String(), p.RequestId.String(), a); err != nil {
 		return fmt.Errorf("withdraw role request: %w", err)
@@ -331,9 +328,9 @@ func (h *ogenHandler) WithdrawGroupRoleRequest(ctx context.Context, p gatewayapi
 }
 
 func (h *ogenHandler) RequestGroupRole(ctx context.Context, q *gatewayapi.CreateRoleRequest, p gatewayapi.RequestGroupRoleParams) (*gatewayapi.RoleRequest, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	role, err := toProtoRoleRequestRole(q.Role)
 	if err != nil {
@@ -351,9 +348,9 @@ func (h *ogenHandler) RequestGroupRole(ctx context.Context, q *gatewayapi.Create
 }
 
 func (h *ogenHandler) DeleteGroupCategory(ctx context.Context, params gatewayapi.DeleteGroupCategoryParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	if _, err := h.metadataLifecycle.DeleteCategory(ctx, a, &metadatalifecyclev1.DeleteCategoryRequest{GroupId: params.GroupId.String(), CategoryId: params.CategoryId.String()}); err != nil {
 		return fmt.Errorf("delete category: %w", err)
@@ -362,9 +359,9 @@ func (h *ogenHandler) DeleteGroupCategory(ctx context.Context, params gatewayapi
 }
 
 func (h *ogenHandler) DeleteGroup(ctx context.Context, p gatewayapi.DeleteGroupParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	if _, err := h.metadataLifecycle.DeleteGroup(ctx, a, &metadatalifecyclev1.DeleteGroupRequest{GroupId: p.GroupId.String()}); err != nil {
 		return fmt.Errorf("delete group: %w", err)
@@ -373,9 +370,9 @@ func (h *ogenHandler) DeleteGroup(ctx context.Context, p gatewayapi.DeleteGroupP
 }
 
 func (h *ogenHandler) ListGroupMemberships(ctx context.Context, params gatewayapi.ListGroupMembershipsParams) ([]gatewayapi.GroupMembership, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	v, err := h.metadataLifecycle.ListGroupMemberships(ctx, a, &metadatalifecyclev1.ListGroupMembershipsRequest{GroupId: params.GroupId.String()})
 	if err != nil {
@@ -393,9 +390,9 @@ func (h *ogenHandler) ListGroupMemberships(ctx context.Context, params gatewayap
 }
 
 func (h *ogenHandler) RequestGroupMembership(ctx context.Context, q *gatewayapi.CreateMembershipRequest, params gatewayapi.RequestGroupMembershipParams) (*gatewayapi.GroupMembership, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	roles := make([]metadatalifecyclev1.GroupRole, len(q.Roles))
 	for i := range q.Roles {
@@ -417,9 +414,9 @@ func (h *ogenHandler) RequestGroupMembership(ctx context.Context, q *gatewayapi.
 }
 
 func (h *ogenHandler) DecideGroupMembership(ctx context.Context, params gatewayapi.DecideGroupMembershipParams) (*gatewayapi.GroupMembership, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	decision, err := toProtoDecision(params.Decision)
 	if err != nil {
@@ -437,9 +434,9 @@ func (h *ogenHandler) DecideGroupMembership(ctx context.Context, params gatewaya
 }
 
 func (h *ogenHandler) DeleteGroupMembership(ctx context.Context, params gatewayapi.DeleteGroupMembershipParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	if err := h.membership.RevokeMembership(ctx, a, params.GroupId.String(), params.UserId); err != nil {
 		return fmt.Errorf("revoke membership: %w", err)

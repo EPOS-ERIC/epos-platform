@@ -3,10 +3,10 @@ package softwaresourcecodes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -81,14 +81,14 @@ func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, sourceCo
 
 func (s *Service) Read(ctx context.Context, actor *domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	result, err := s.authorizer.CanReadSoftwareSourceCodeVersion(ctx, actor.OptionalString(), sourceCodeID, versionID)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
-		return domain.SoftwareSourceCodeVersion{}, domain.ErrSoftwareSourceCodeNotFound
+	if apperror.IsCode(err, apperror.CodeNotFound) {
+		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize source code read", err)
 	}
 	if !result.Allowed {
-		return domain.SoftwareSourceCodeVersion{}, fmt.Errorf("%w: %s", domain.ErrSoftwareSourceCodeForbidden, result.Reason)
+		return domain.SoftwareSourceCodeVersion{}, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 
 	sourceCode, err := s.store.Get(ctx, sourceCodeID, versionID)
@@ -105,9 +105,9 @@ func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, sourceCo
 	}
 	if !result.Allowed {
 		if result.Reason == "resource not found" {
-			return nil, domain.ErrSoftwareSourceCodeNotFound
+			return nil, apperror.Default(apperror.CodeNotFound)
 		}
-		return nil, fmt.Errorf("%w: %s", domain.ErrSoftwareSourceCodeForbidden, result.Reason)
+		return nil, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 
 	versions, err := s.store.List(ctx, sourceCodeID)
@@ -279,7 +279,7 @@ func (s *Service) authorizeGroup(ctx context.Context, actor domain.Actor, groupI
 		return fmt.Errorf("authorize group: %w", err)
 	}
 	if !result.Allowed {
-		return fmt.Errorf("%w: %s", domain.ErrSoftwareSourceCodeForbidden, result.Reason)
+		return fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 	return nil
 }
@@ -290,7 +290,7 @@ func (s *Service) authorizeResource(ctx context.Context, actor domain.Actor, sou
 		return fmt.Errorf("authorize source code: %w", err)
 	}
 	if !result.Allowed {
-		return fmt.Errorf("%w: %s", domain.ErrSoftwareSourceCodeForbidden, result.Reason)
+		return fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 	return nil
 }
@@ -299,8 +299,8 @@ func operationError(operation string, err error) error {
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, domain.ErrSoftwareSourceCodeForbidden) || errors.Is(err, domain.ErrSoftwareSourceCodeConflict) || errors.Is(err, domain.ErrSoftwareSourceCodeNotFound) || errors.Is(err, domain.ErrSoftwareSourceCodeInvalid) {
+	if apperror.IsCode(err, apperror.CodePermissionDenied) || apperror.IsCode(err, apperror.CodeConflict) || apperror.IsCode(err, apperror.CodeNotFound) || apperror.IsCode(err, apperror.CodeValidationFailed) {
 		return fmt.Errorf("%s: %w", operation, err)
 	}
-	return fmt.Errorf("%s: %w: %w", operation, domain.ErrSoftwareSourceCodeInternal, err)
+	return fmt.Errorf("%s: %w: %w", operation, apperror.Default(apperror.CodeInternal), err)
 }

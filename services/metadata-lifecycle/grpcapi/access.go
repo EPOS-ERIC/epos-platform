@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	accessservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -25,7 +24,7 @@ func NewAccess(access *accessservice.Service) *AccessServer {
 func (s *AccessServer) ListGroupMemberships(ctx context.Context, request *metadatalifecyclev1.ListGroupMembershipsRequest) (*metadatalifecyclev1.ListGroupMembershipsResponse, error) {
 	actor, err := actorFromContext(ctx)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	groupID, err := parseAccessID(request.GroupId, "group id")
 	if err != nil {
@@ -33,7 +32,7 @@ func (s *AccessServer) ListGroupMemberships(ctx context.Context, request *metada
 	}
 	values, err := s.access.ListMemberships(ctx, actor, groupID)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	result := make([]*metadatalifecyclev1.GroupMembership, len(values))
 	for i, value := range values {
@@ -61,16 +60,16 @@ func (s *AccessServer) RequestMembership(ctx context.Context, request *metadatal
 	for i, role := range request.Roles {
 		parsedRole, err := toDomainGroupRole(role)
 		if err != nil {
-			return nil, wrapHandlerError(err)
+			return nil, err
 		}
 
 		parsedRole, err = domain.NewRequestedGroupRole(string(parsedRole))
 		if err != nil {
-			return nil, wrapHandlerError(err)
+			return nil, err
 		}
 
 		if _, ok := seen[parsedRole]; ok {
-			return nil, domain.ErrInvalidAccess
+			return nil, apperror.Default(apperror.CodeValidationFailed)
 		}
 
 		seen[parsedRole] = struct{}{}
@@ -79,7 +78,7 @@ func (s *AccessServer) RequestMembership(ctx context.Context, request *metadatal
 
 	value, notifications, err := s.access.RequestMembership(ctx, actor, groupID, roles)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	membership, err := toProtoGroupMembership(value)
@@ -113,22 +112,22 @@ func (s *AccessServer) WithdrawMembership(ctx context.Context, request *metadata
 func (s *AccessServer) DecideMembership(ctx context.Context, request *metadatalifecyclev1.DecideMembershipRequest) (*metadatalifecyclev1.DecideMembershipResponse, error) {
 	actor, err := actorFromContext(ctx)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	groupID, err := parseAccessID(request.GroupId, "group id")
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	decision, err := toDomainDecision(request.Decision)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	value, notifications, err := s.access.DecideMembership(ctx, actor, groupID, request.UserId, decision)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	membership, err := toProtoGroupMembership(value)
@@ -172,11 +171,11 @@ func (s *AccessServer) RequestRole(ctx context.Context, request *metadatalifecyc
 		role, err = domain.NewRequestedGroupRole(string(role))
 	}
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	value, notifications, err := s.access.RequestRole(ctx, actor, groupID, role)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	roleRequest, err := toProtoRoleRequest(value)
 	if err != nil {
@@ -208,7 +207,7 @@ func (s *AccessServer) DecideRoleRequest(ctx context.Context, request *metadatal
 	}
 	value, notifications, err := s.access.DecideRoleRequest(ctx, actor, groupID, requestID, decision)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	membership, err := toProtoGroupMembership(value)
 	if err != nil {
@@ -251,7 +250,7 @@ func (s *AccessServer) AssignRole(ctx context.Context, request *metadatalifecycl
 	}
 	notifications, err := s.access.AssignRole(ctx, actor, groupID, request.UserId, role)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
@@ -276,7 +275,7 @@ func (s *AccessServer) RemoveRole(ctx context.Context, request *metadatalifecycl
 		return nil, err
 	}
 	if err := s.access.RemoveRole(ctx, actor, groupID, request.UserId, role); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.RemoveRoleResponse{}, nil
 }
@@ -296,7 +295,7 @@ func (s *AccessServer) GrantPermission(ctx context.Context, request *metadatalif
 	}
 	notifications, err := s.access.GrantPermission(ctx, actor, groupID, request.UserId, permission)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
 	if err != nil {
@@ -319,7 +318,7 @@ func (s *AccessServer) RevokePermission(ctx context.Context, request *metadatali
 		return nil, err
 	}
 	if err := s.access.RevokePermission(ctx, actor, groupID, request.UserId, permission); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.RevokePermissionResponse{}, nil
 }
@@ -335,7 +334,7 @@ func (s *AccessServer) runActor(ctx context.Context, f func(domain.Actor) error)
 func parseAccessID(value, name string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		return uuid.Nil, status.Errorf(codes.InvalidArgument, "invalid %s", name)
+		return uuid.Nil, apperror.New(apperror.CodeValidationFailed, fmt.Sprintf("invalid %s", name))
 	}
 	return id, nil
 }
@@ -446,7 +445,7 @@ func toDomainGroupPermission(value metadatalifecyclev1.GroupPermission) (domain.
 	case metadatalifecyclev1.GroupPermission_GROUP_PERMISSION_CATEGORY_MANAGE:
 		return domain.GroupPermissionCategoryManage, nil
 	default:
-		return "", domain.ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }
 
@@ -459,7 +458,7 @@ func toDomainGroupRole(value metadatalifecyclev1.GroupRole) (domain.GroupRole, e
 	case metadatalifecyclev1.GroupRole_GROUP_ROLE_ADMIN:
 		return domain.GroupRoleAdmin, nil
 	default:
-		return "", domain.ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }
 
@@ -470,6 +469,6 @@ func toDomainDecision(value metadatalifecyclev1.Decision) (domain.Decision, erro
 	case metadatalifecyclev1.Decision_DECISION_REJECT:
 		return domain.DecisionReject, nil
 	default:
-		return "", domain.ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }

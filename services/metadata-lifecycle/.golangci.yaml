@@ -25,7 +25,6 @@ linters:
     - contextcheck
     - containedctx
     - copyloopvar
-    - wrapcheck
     - exhaustive
   exclusions:
     paths:
@@ -41,9 +40,6 @@ linters:
     goconst:
       ignore-string-values:
         - "true"
-    wrapcheck:
-      extra-ignore-sigs:
-        - status.Error
     exhaustive:
       default-case-required: true
       ignore-enum-members: "(_UNSPECIFIED|Unspecified)$"

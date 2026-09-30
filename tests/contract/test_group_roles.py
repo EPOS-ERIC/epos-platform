@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import assert_problem
 
 
 class GroupRoleContractTest(unittest.TestCase):
@@ -197,13 +198,7 @@ class GroupRoleContractTest(unittest.TestCase):
             userId=target_id,
             role="GROUP_ADMIN",
         )
-        self.assertEqual(group_manager_admin_response.status_code, 403)
-        group_manager_problem = group_manager_admin_response.json()
-        self.assertEqual(group_manager_problem["title"], "forbidden")
-        self.assertEqual(
-            group_manager_problem["detail"],
-            "operation is not permitted",
-        )
+        assert_problem(self, group_manager_admin_response, 403, "permission_denied")
 
         global_manager_admin_response = global_role_manager.put(
             "/groups/{groupId}/memberships/{userId}/roles/{role}",

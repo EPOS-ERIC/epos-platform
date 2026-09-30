@@ -1,8 +1,9 @@
 package domain
 
 import (
-	"errors"
 	"testing"
+
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 )
 
 func TestNewNotificationTopicKey(t *testing.T) {
@@ -14,7 +15,7 @@ func TestNewNotificationTopicKey(t *testing.T) {
 		t.Fatalf("key = %q, want %q", key, NotificationTopicDirectResourcePublished)
 	}
 
-	if _, err := NewNotificationTopicKey("resource.published"); !errors.Is(err, ErrNotificationInvalid) {
-		t.Fatalf("error = %v, want ErrNotificationInvalid", err)
+	if _, err := NewNotificationTopicKey("resource.published"); !apperror.IsCode(err, apperror.CodeValidationFailed) {
+		t.Fatalf("error = %v, want validation_failed", err)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 )
 
@@ -13,11 +14,11 @@ import (
 func NewSoftwareSourceCodeInput(value SoftwareSourceCodeInput) (SoftwareSourceCodeInput, error) {
 	value.Name = strings.TrimSpace(value.Name)
 	if value.Name == "" {
-		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code name is required: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeInput{}, invalidField("name", "Name must not be blank.", nil)
 	}
 	value.Description = strings.TrimSpace(value.Description)
 	if value.Description == "" {
-		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code description is required: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeInput{}, invalidField("description", "Description must not be blank.", nil)
 	}
 	value.ProgrammingLanguage = optionalTrimmedString(value.ProgrammingLanguage)
 	value.Repository = optionalTrimmedString(value.Repository)
@@ -28,17 +29,17 @@ func NewSoftwareSourceCodeInput(value SoftwareSourceCodeInput) (SoftwareSourceCo
 	value.Version = optionalTrimmedString(value.Version)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
-		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code keywords: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeInput{}, invalidField("keywords", "Keywords must not be blank and may contain only letters, numbers, spaces, colon, hyphen, and underscore.", err)
 	}
 	value.Keywords = keywords
 	if err := validateUUIDList(value.CreatorIDs, "creator"); err != nil {
-		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code creators: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeInput{}, invalidField("creators", "Each creator must be a valid UUID.", err)
 	}
 	if err := validateUUIDList(value.ContactPointIDs, "contact point"); err != nil {
-		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code contact points: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeInput{}, invalidField("contact_points", "Each contact point must be a valid UUID.", err)
 	}
 	if err := validateUUIDList(value.CategoryIDs, "category"); err != nil {
-		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code categories: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeInput{}, invalidField("categories", "Each category must be a valid UUID.", err)
 	}
 
 	identifiers := make([]IdentifierInput, len(value.Identifiers))
@@ -46,11 +47,11 @@ func NewSoftwareSourceCodeInput(value SoftwareSourceCodeInput) (SoftwareSourceCo
 	for i, identifier := range value.Identifiers {
 		identifier, err := NewIdentifierInput(identifier)
 		if err != nil {
-			return SoftwareSourceCodeInput{}, fmt.Errorf("software source code identifier: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+			return SoftwareSourceCodeInput{}, fmt.Errorf("validate software source-code identifier: %w", apperror.PrefixTarget(err, fmt.Sprintf("identifiers[%d]", i)))
 		}
 		key := string(identifier.Type) + "\x00" + identifier.Value
 		if _, exists := seen[key]; exists {
-			return SoftwareSourceCodeInput{}, fmt.Errorf("duplicate software source code identifier %q: %w", key, ErrSoftwareSourceCodeInvalid)
+			return SoftwareSourceCodeInput{}, invalidField(fmt.Sprintf("identifiers[%d]", i), "Identifier must be unique.", nil)
 		}
 		seen[key] = struct{}{}
 		identifiers[i] = identifier
@@ -62,11 +63,11 @@ func NewSoftwareSourceCodeInput(value SoftwareSourceCodeInput) (SoftwareSourceCo
 // NewSoftwareSourceCodeDraftInput validates a draft replacement command.
 func NewSoftwareSourceCodeDraftInput(value SoftwareSourceCodeDraftInput) (SoftwareSourceCodeDraftInput, error) {
 	if value.Revision < 1 {
-		return SoftwareSourceCodeDraftInput{}, fmt.Errorf("revision must be positive: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeDraftInput{}, invalidField("revision", "Revision must be positive.", nil)
 	}
 	metadata, err := NewSoftwareSourceCodeInput(value.Metadata)
 	if err != nil {
-		return SoftwareSourceCodeDraftInput{}, err
+		return SoftwareSourceCodeDraftInput{}, fmt.Errorf("validate software source-code draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
 	}
 	value.Metadata = metadata
 	return value, nil
@@ -76,23 +77,28 @@ func NewSoftwareSourceCodeDraftInput(value SoftwareSourceCodeDraftInput) (Softwa
 func NewSoftwareSourceCodeRejectionInput(value SoftwareSourceCodeRejectionInput) (SoftwareSourceCodeRejectionInput, error) {
 	value.Note = strings.TrimSpace(value.Note)
 	if value.Note == "" {
-		return SoftwareSourceCodeRejectionInput{}, fmt.Errorf("rejection note is required: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeRejectionInput{}, invalidField("note", "Rejection note must not be blank.", nil)
 	}
 	return value, nil
 }
 
 // NewSoftwareSourceCodeMetadata validates persisted or imported metadata.
-func NewSoftwareSourceCodeMetadata(value SoftwareSourceCodeMetadata) (SoftwareSourceCodeMetadata, error) {
+func NewSoftwareSourceCodeMetadata(value SoftwareSourceCodeMetadata) (result SoftwareSourceCodeMetadata, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	if value.ID == uuid.Nil {
-		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code metadata ID is required: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code metadata ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.Name = strings.TrimSpace(value.Name)
 	if value.Name == "" {
-		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code name is required: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code name is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.Description = strings.TrimSpace(value.Description)
 	if value.Description == "" {
-		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code description is required: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code description is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.ProgrammingLanguage = optionalTrimmedString(value.ProgrammingLanguage)
 	value.Repository = optionalTrimmedString(value.Repository)
@@ -103,28 +109,28 @@ func NewSoftwareSourceCodeMetadata(value SoftwareSourceCodeMetadata) (SoftwareSo
 	value.Version = optionalTrimmedString(value.Version)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
-		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code keywords: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code keywords: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.Keywords = keywords
 
 	seenIdentifiers := make(map[uuid.UUID]struct{}, len(value.Identifiers))
 	for _, identifier := range value.Identifiers {
 		if err := validateIdentifier(identifier, true); err != nil {
-			return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code identifier: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+			return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code identifier: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 		}
 		if _, exists := seenIdentifiers[identifier.ID]; exists {
-			return SoftwareSourceCodeMetadata{}, fmt.Errorf("duplicate software source code identifier %q: %w", identifier.ID, ErrSoftwareSourceCodeInvalid)
+			return SoftwareSourceCodeMetadata{}, fmt.Errorf("duplicate software source code identifier %q: %w", identifier.ID, apperror.Default(apperror.CodeValidationFailed))
 		}
 		seenIdentifiers[identifier.ID] = struct{}{}
 	}
 	if err := validateContactPoints(value.ContactPoints, "software source code contact point"); err != nil {
-		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code contact points: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code contact points: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	if err := validateOrganizations(value.Creators, "creator"); err != nil {
-		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code creators: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code creators: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	if err := validateCategories(value.Categories, "category"); err != nil {
-		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code categories: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code categories: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	return value, nil
 }
@@ -142,25 +148,30 @@ func NewSoftwareSourceCodeVersion(
 	rejectedAt *time.Time,
 	rejectionNote *string,
 	metadata SoftwareSourceCodeMetadata,
-) (SoftwareSourceCodeVersion, error) {
+) (result SoftwareSourceCodeVersion, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	if softwareSourceCodeID == uuid.Nil || versionID == uuid.Nil {
-		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code and version IDs are required: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code and version IDs are required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if revision < 1 {
-		return SoftwareSourceCodeVersion{}, fmt.Errorf("revision must be positive: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeVersion{}, fmt.Errorf("revision must be positive: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if !status.Valid() {
-		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code status %q is invalid: %w", status, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code status %q is invalid: %w", status, apperror.Default(apperror.CodeValidationFailed))
 	}
 	actor, err := NewActor(string(createdBy))
 	if err != nil {
-		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code creator: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code creator: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	var submittedByActor *Actor
 	if submittedBy != nil {
 		value, err := NewActor(*submittedBy)
 		if err != nil {
-			return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code submitter: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+			return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code submitter: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 		}
 		submittedByActor = &value
 	}
@@ -175,18 +186,18 @@ func NewSoftwareSourceCodeVersion(
 		Concept:     group.Concept,
 	})
 	if err != nil {
-		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code group: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code group: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	metadata, err = NewSoftwareSourceCodeMetadata(metadata)
 	if err != nil {
 		return SoftwareSourceCodeVersion{}, err
 	}
 	if createdAt.IsZero() || updatedAt.IsZero() {
-		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code timestamps are required: %w", ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code timestamps are required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	rejectionNote, err = NewRejectionNote(status, rejectionNote)
 	if err != nil {
-		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code rejection note: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code rejection note: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	return SoftwareSourceCodeVersion{
 		SoftwareSourceCodeID: softwareSourceCodeID,

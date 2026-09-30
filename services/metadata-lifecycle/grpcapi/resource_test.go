@@ -4,11 +4,10 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
@@ -138,22 +137,22 @@ func TestWebServiceInputRejectsUnspecifiedEnums(t *testing.T) {
 
 	method := base()
 	method.Method = metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_UNSPECIFIED
-	if _, err := webServiceInput(method); status.Code(err) != codes.InvalidArgument {
-		t.Fatalf("unspecified method error = %v, want InvalidArgument", err)
+	if _, err := webServiceInput(method); !apperror.IsCode(err, apperror.CodeValidationFailed) {
+		t.Fatalf("unspecified method error = %v, want validation_failed", err)
 	}
 
 	typeValue := base()
 	typeValue.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
-	if _, err := webServiceInput(typeValue); status.Code(err) != codes.InvalidArgument {
-		t.Fatalf("unspecified type error = %v, want InvalidArgument", err)
+	if _, err := webServiceInput(typeValue); !apperror.IsCode(err, apperror.CodeValidationFailed) {
+		t.Fatalf("unspecified type error = %v, want validation_failed", err)
 	}
 
 	visibleOn := base()
 	visibleOn.VisibleOn = []metadatalifecyclev1.WebServiceVisibleOn{
 		metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_UNSPECIFIED,
 	}
-	if _, err := webServiceInput(visibleOn); status.Code(err) != codes.InvalidArgument {
-		t.Fatalf("unspecified visible-on error = %v, want InvalidArgument", err)
+	if _, err := webServiceInput(visibleOn); !apperror.IsCode(err, apperror.CodeValidationFailed) {
+		t.Fatalf("unspecified visible-on error = %v, want validation_failed", err)
 	}
 
 	parameter := base()
@@ -162,7 +161,7 @@ func TestWebServiceInputRejectsUnspecifiedEnums(t *testing.T) {
 		Label: "Value",
 		Value: &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{}},
 	}}
-	if _, err := webServiceInput(parameter); status.Code(err) != codes.InvalidArgument {
-		t.Fatalf("unspecified parameter location error = %v, want InvalidArgument", err)
+	if _, err := webServiceInput(parameter); !apperror.IsCode(err, apperror.CodeValidationFailed) {
+		t.Fatalf("unspecified parameter location error = %v, want validation_failed", err)
 	}
 }

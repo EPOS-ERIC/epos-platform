@@ -3,12 +3,11 @@ package grpcapi
 import (
 	"context"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	notificationservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/notifications"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type NotificationServer struct {
@@ -23,7 +22,7 @@ func NewNotification(service *notificationservice.Service) *NotificationServer {
 func (s *NotificationServer) ListNotificationTopics(ctx context.Context, _ *metadatalifecyclev1.ListNotificationTopicsRequest) (*metadatalifecyclev1.ListNotificationTopicsResponse, error) {
 	topics, err := s.notifications.ListTopics(ctx)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	values, err := mapSliceErr(topics, toProtoNotificationTopic)
 	if err != nil {
@@ -38,11 +37,11 @@ func (s *NotificationServer) ListNotificationSubscriptions(ctx context.Context, 
 		return nil, err
 	}
 	if request.GetUserId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "user id is required")
+		return nil, apperror.New(apperror.CodeValidationFailed, "user id is required")
 	}
 	subscriptions, err := s.notifications.ListSubscriptions(ctx, actor, request.GetUserId())
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	values, err := mapSliceErr(subscriptions, toProtoNotificationSubscription)
 	if err != nil {
@@ -61,7 +60,7 @@ func (s *NotificationServer) SubscribeNotification(ctx context.Context, request 
 		return nil, err
 	}
 	if request.GetUserId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "user id is required")
+		return nil, apperror.New(apperror.CodeValidationFailed, "user id is required")
 	}
 	topicKey, err := toDomainNotificationTopicKey(request.GetTopicKey())
 	if err != nil {
@@ -69,7 +68,7 @@ func (s *NotificationServer) SubscribeNotification(ctx context.Context, request 
 	}
 	subscription, err := s.notifications.Subscribe(ctx, actor, request.GetUserId(), groupID, topicKey, toDomainNotificationChannel(request.GetChannel()))
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	value, err := toProtoNotificationSubscription(subscription)
 	if err != nil {
@@ -88,14 +87,14 @@ func (s *NotificationServer) UnsubscribeNotification(ctx context.Context, reques
 		return nil, err
 	}
 	if request.GetUserId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "user id is required")
+		return nil, apperror.New(apperror.CodeValidationFailed, "user id is required")
 	}
 	topicKey, err := toDomainNotificationTopicKey(request.GetTopicKey())
 	if err != nil {
 		return nil, err
 	}
 	if err := s.notifications.Unsubscribe(ctx, actor, request.GetUserId(), groupID, topicKey, toDomainNotificationChannel(request.GetChannel())); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.UnsubscribeNotificationResponse{}, nil
 }
@@ -147,7 +146,7 @@ func toProtoNotificationScope(value domain.NotificationScope) (metadatalifecycle
 	case domain.NotificationScopeGlobal:
 		return metadatalifecyclev1.NotificationScope_NOTIFICATION_SCOPE_GLOBAL, nil
 	default:
-		return 0, status.Errorf(codes.Internal, "unknown notification scope: %q", value)
+		return 0, apperror.Default(apperror.CodeInternal)
 	}
 }
 
@@ -177,7 +176,7 @@ func toDomainNotificationTopicKey(value metadatalifecyclev1.NotificationTopicKey
 	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED:
 		return domain.NotificationTopicGlobalResourcePublished, nil
 	default:
-		return "", status.Error(codes.InvalidArgument, "invalid notification topic key")
+		return "", apperror.New(apperror.CodeValidationFailed, "invalid notification topic key")
 	}
 }
 
@@ -208,9 +207,9 @@ func toProtoNotificationTopicKey(value domain.NotificationTopicKey) (metadatalif
 		domain.NotificationTopicDirectResourcePublished,
 		domain.NotificationTopicDirectResourceRejected,
 		domain.NotificationTopicDirectResourceUnpublished:
-		return 0, status.Errorf(codes.Internal, "direct notification topic key is not subscribable: %q", value)
+		return 0, apperror.Default(apperror.CodeInternal)
 	default:
-		return 0, status.Errorf(codes.Internal, "unknown notification topic key: %q", value)
+		return 0, apperror.Default(apperror.CodeInternal)
 	}
 }
 
@@ -220,7 +219,7 @@ func optionalNotificationGroupID(value string) (*uuid.UUID, error) {
 	}
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid group id")
 	}
 	return &id, nil
 }

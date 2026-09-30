@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -25,7 +26,7 @@ func New(db *pgxpool.Pool) *Repo {
 func (r *Repo) List(ctx context.Context, groupID uuid.UUID) ([]domain.Category, error) {
 	_, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, domain.ErrCategoryNotFound
+		return nil, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("check group: %w", err)
@@ -54,7 +55,7 @@ func (r *Repo) Get(ctx context.Context, groupID, categoryID uuid.UUID) (domain.C
 		ID:      categoryID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Category{}, domain.ErrCategoryNotFound
+		return domain.Category{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.Category{}, fmt.Errorf("get group category: %w", err)
@@ -75,11 +76,11 @@ func (r *Repo) Create(ctx context.Context, groupID uuid.UUID, input domain.Categ
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			switch pgErr.Code {
 			case "23505":
-				return domain.Category{}, domain.ErrCategoryConflict
+				return domain.Category{}, apperror.Default(apperror.CodeConflict)
 			case "23503":
-				return domain.Category{}, domain.ErrCategoryNotFound
+				return domain.Category{}, apperror.Default(apperror.CodeNotFound)
 			case "P0001":
-				return domain.Category{}, domain.ErrInvalidCategory
+				return domain.Category{}, apperror.Default(apperror.CodeValidationFailed)
 			}
 		}
 		return domain.Category{}, fmt.Errorf("insert category: %w", err)
@@ -96,17 +97,17 @@ func (r *Repo) Create(ctx context.Context, groupID uuid.UUID, input domain.Categ
 func (r *Repo) Replace(ctx context.Context, groupID, categoryID uuid.UUID, input domain.CategoryInput) (domain.Category, error) {
 	row, err := r.ReplaceGroupCategory(ctx, toReplaceCategoryParams(groupID, categoryID, input))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Category{}, domain.ErrCategoryNotFound
+		return domain.Category{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			switch pgErr.Code {
 			case "23505":
-				return domain.Category{}, domain.ErrCategoryConflict
+				return domain.Category{}, apperror.Default(apperror.CodeConflict)
 			case "23503":
-				return domain.Category{}, domain.ErrCategoryNotFound
+				return domain.Category{}, apperror.Default(apperror.CodeNotFound)
 			case "23514", "P0001":
-				return domain.Category{}, domain.ErrInvalidCategory
+				return domain.Category{}, apperror.Default(apperror.CodeValidationFailed)
 			}
 		}
 		return domain.Category{}, fmt.Errorf("update category: %w", err)
@@ -129,7 +130,7 @@ func (r *Repo) Delete(ctx context.Context, groupID, categoryID uuid.UUID) error 
 		return fmt.Errorf("delete category row: %w", err)
 	}
 	if rows == 0 {
-		return domain.ErrCategoryNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 
 	return nil

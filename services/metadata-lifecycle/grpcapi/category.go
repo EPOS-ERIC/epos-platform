@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type CategoryServer struct {
@@ -24,12 +23,12 @@ func NewCategory(categories *categories.Service) *CategoryServer {
 func (c *CategoryServer) ListCategories(ctx context.Context, request *metadatalifecyclev1.ListCategoriesRequest) (*metadatalifecyclev1.ListCategoriesResponse, error) {
 	groupID, err := uuid.Parse(request.GetGroupId())
 	if err != nil || groupID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid group id")
 	}
 
 	values, err := c.categories.List(ctx, groupID)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	result := make([]*metadatalifecyclev1.CanonicalCategory, len(values))
@@ -43,16 +42,16 @@ func (c *CategoryServer) ListCategories(ctx context.Context, request *metadatali
 func (c *CategoryServer) GetCategory(ctx context.Context, request *metadatalifecyclev1.GetCategoryRequest) (*metadatalifecyclev1.GetCategoryResponse, error) {
 	groupID, err := uuid.Parse(request.GetGroupId())
 	if err != nil || groupID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid group id")
 	}
 	categoryID, err := uuid.Parse(request.GetCategoryId())
 	if err != nil || categoryID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid category id")
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid category id")
 	}
 
 	value, err := c.categories.Get(ctx, groupID, categoryID)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.GetCategoryResponse{Category: toProtoCategory(value)}, nil
@@ -65,15 +64,15 @@ func (c *CategoryServer) CreateCategory(ctx context.Context, request *metadatali
 	}
 	groupID, err := uuid.Parse(request.GetGroupId())
 	if err != nil || groupID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid group id")
 	}
 	input, err := categoryInput(request.GetName(), request.ParentCategoryId)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	value, err := c.categories.Create(ctx, actor, groupID, input)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.CreateCategoryResponse{Category: toProtoCategory(value)}, nil
 }
@@ -89,11 +88,11 @@ func (c *CategoryServer) ReplaceCategory(ctx context.Context, request *metadatal
 	}
 	input, err := categoryInput(request.GetName(), request.ParentCategoryId)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	value, err := c.categories.Replace(ctx, actor, groupID, categoryID, input)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.ReplaceCategoryResponse{Category: toProtoCategory(value)}, nil
 }
@@ -108,7 +107,7 @@ func (c *CategoryServer) DeleteCategory(ctx context.Context, request *metadatali
 		return nil, err
 	}
 	if err := c.categories.Delete(ctx, actor, groupID, categoryID); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.DeleteCategoryResponse{}, nil
 }
@@ -116,11 +115,11 @@ func (c *CategoryServer) DeleteCategory(ctx context.Context, request *metadatali
 func parseCategoryIDs(group, category string) (uuid.UUID, uuid.UUID, error) {
 	groupID, err := uuid.Parse(group)
 	if err != nil || groupID == uuid.Nil {
-		return uuid.Nil, uuid.Nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return uuid.Nil, uuid.Nil, apperror.New(apperror.CodeValidationFailed, "invalid group id")
 	}
 	categoryID, err := uuid.Parse(category)
 	if err != nil || categoryID == uuid.Nil {
-		return uuid.Nil, uuid.Nil, status.Error(codes.InvalidArgument, "invalid category id")
+		return uuid.Nil, uuid.Nil, apperror.New(apperror.CodeValidationFailed, "invalid category id")
 	}
 	return groupID, categoryID, nil
 }
@@ -130,7 +129,7 @@ func categoryInput(name string, parent *string) (domain.CategoryInput, error) {
 	if parent != nil {
 		id, err := uuid.Parse(*parent)
 		if err != nil || id == uuid.Nil {
-			return domain.CategoryInput{}, domain.ErrInvalidCategory
+			return domain.CategoryInput{}, apperror.Default(apperror.CodeValidationFailed)
 		}
 		input.ParentCategoryID = &id
 	}

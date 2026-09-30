@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
 	resourcedb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
@@ -35,7 +36,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 			return fmt.Errorf("validate source code categories: %w", err)
 		}
 		if !valid {
-			return domain.ErrSoftwareSourceCodeInvalid
+			return apperror.Default(apperror.CodeValidationFailed)
 		}
 
 		sourceCode, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{
@@ -71,7 +72,7 @@ func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UU
 				return fmt.Errorf("validate source code categories: %w", err)
 			}
 			if !valid {
-				return domain.ErrSoftwareSourceCodeInvalid
+				return apperror.Default(apperror.CodeValidationFailed)
 			}
 		}
 
@@ -94,7 +95,7 @@ func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UU
 func (r *Repo) Get(ctx context.Context, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	result, err := sourceCodeResult(ctx, sqlc.New(r.db), sourceCodeID, versionID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareSourceCodeVersion{}, domain.ErrSoftwareSourceCodeNotFound
+		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	return result, err
 }
@@ -115,7 +116,7 @@ func (r *Repo) List(ctx context.Context, sourceCodeID uuid.UUID) ([]domain.Resou
 func (r *Repo) GetPublished(ctx context.Context, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	version, err := sqlc.New(r.db).GetPublishedLifecycleSoftwareSourceCodeVersion(ctx, sourceCodeID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareSourceCodeVersion{}, domain.ErrSoftwareSourceCodeNotFound
+		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, fmt.Errorf("get published source code version: %w", err)
@@ -126,7 +127,7 @@ func (r *Repo) GetPublished(ctx context.Context, sourceCodeID uuid.UUID) (domain
 func (r *Repo) GetActive(ctx context.Context, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	version, err := sqlc.New(r.db).GetActiveLifecycleSoftwareSourceCodeVersion(ctx, sourceCodeID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareSourceCodeVersion{}, domain.ErrSoftwareSourceCodeNotFound
+		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, fmt.Errorf("get active source code version: %w", err)
@@ -201,7 +202,7 @@ func (r *Repo) transition(
 			SoftwareSourceCodeID: sourceCodeID,
 		}); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrSoftwareSourceCodeNotFound
+				return apperror.Default(apperror.CodeNotFound)
 			}
 			return fmt.Errorf("ensure source code version: %w", err)
 		}
@@ -222,7 +223,7 @@ func (r *Repo) Discard(ctx context.Context, sourceCodeID, versionID uuid.UUID) e
 			SoftwareSourceCodeID: sourceCodeID,
 		}); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrSoftwareSourceCodeNotFound
+				return apperror.Default(apperror.CodeNotFound)
 			}
 			return fmt.Errorf("ensure source code version: %w", err)
 		}
@@ -326,17 +327,17 @@ func lifecycleError(err error) error {
 		return nil
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrSoftwareSourceCodeConflict
+		return apperror.Default(apperror.CodeConflict)
 	}
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		switch pgErr.Code {
 		case "23514":
-			return fmt.Errorf("database validation: %w", domain.ErrSoftwareSourceCodeInvalid)
+			return fmt.Errorf("database validation: %w", apperror.Default(apperror.CodeValidationFailed))
 		case "23001", "23505", "23P01", "P0001":
-			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, domain.ErrSoftwareSourceCodeConflict)
+			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, apperror.Default(apperror.CodeConflict))
 		default:
 			if strings.HasPrefix(pgErr.Code, "23") {
-				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, domain.ErrSoftwareSourceCodeInternal)
+				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, apperror.Default(apperror.CodeInternal))
 			}
 		}
 	}

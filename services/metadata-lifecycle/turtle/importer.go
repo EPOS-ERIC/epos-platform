@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	rdf "github.com/deiu/rdf2go"
 	"github.com/google/uuid"
@@ -561,7 +562,7 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 			distribution.DownloadableFile = downloadableFile(m, source)
 		}
 	default:
-		return domain.Distribution{}, fmt.Errorf("unsupported distribution type %q: %w", distributionType, domain.ErrInvalidDataset)
+		return domain.Distribution{}, fmt.Errorf("unsupported distribution type %q: %w", distributionType, apperror.Default(apperror.CodeValidationFailed))
 	}
 
 	typeValue, err := distribution.DeliveryType()

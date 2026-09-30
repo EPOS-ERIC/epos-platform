@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
 	resourcedb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
@@ -35,7 +36,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 			return fmt.Errorf("validate application categories: %w", err)
 		}
 		if !valid {
-			return domain.ErrSoftwareApplicationInvalid
+			return apperror.Default(apperror.CodeValidationFailed)
 		}
 
 		application, err := q.CreateLifecycleSoftwareApplication(ctx, sqlc.CreateLifecycleSoftwareApplicationParams{
@@ -71,7 +72,7 @@ func (r *Repo) ReplaceDraft(ctx context.Context, applicationID, versionID uuid.U
 				return fmt.Errorf("validate application categories: %w", err)
 			}
 			if !valid {
-				return domain.ErrSoftwareApplicationInvalid
+				return apperror.Default(apperror.CodeValidationFailed)
 			}
 		}
 
@@ -94,7 +95,7 @@ func (r *Repo) ReplaceDraft(ctx context.Context, applicationID, versionID uuid.U
 func (r *Repo) Get(ctx context.Context, applicationID, versionID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	result, err := applicationResult(ctx, sqlc.New(r.db), applicationID, versionID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareApplicationVersion{}, domain.ErrSoftwareApplicationNotFound
+		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	return result, err
 }
@@ -115,7 +116,7 @@ func (r *Repo) List(ctx context.Context, applicationID uuid.UUID) ([]domain.Reso
 func (r *Repo) GetPublished(ctx context.Context, applicationID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	version, err := sqlc.New(r.db).GetPublishedLifecycleSoftwareApplicationVersion(ctx, applicationID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareApplicationVersion{}, domain.ErrSoftwareApplicationNotFound
+		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareApplicationVersion{}, fmt.Errorf("get published application version: %w", err)
@@ -126,7 +127,7 @@ func (r *Repo) GetPublished(ctx context.Context, applicationID uuid.UUID) (domai
 func (r *Repo) GetActive(ctx context.Context, applicationID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	version, err := sqlc.New(r.db).GetActiveLifecycleSoftwareApplicationVersion(ctx, applicationID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareApplicationVersion{}, domain.ErrSoftwareApplicationNotFound
+		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareApplicationVersion{}, fmt.Errorf("get active application version: %w", err)
@@ -201,7 +202,7 @@ func (r *Repo) transition(
 			SoftwareApplicationID: applicationID,
 		}); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrSoftwareApplicationNotFound
+				return apperror.Default(apperror.CodeNotFound)
 			}
 			return fmt.Errorf("ensure application version: %w", err)
 		}
@@ -222,7 +223,7 @@ func (r *Repo) Discard(ctx context.Context, applicationID, versionID uuid.UUID) 
 			SoftwareApplicationID: applicationID,
 		}); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrSoftwareApplicationNotFound
+				return apperror.Default(apperror.CodeNotFound)
 			}
 			return fmt.Errorf("ensure application version: %w", err)
 		}
@@ -326,17 +327,17 @@ func lifecycleError(err error) error {
 		return nil
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrSoftwareApplicationConflict
+		return apperror.Default(apperror.CodeConflict)
 	}
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		switch pgErr.Code {
 		case "23514":
-			return fmt.Errorf("database validation: %w", domain.ErrSoftwareApplicationInvalid)
+			return fmt.Errorf("database validation: %w", apperror.Default(apperror.CodeValidationFailed))
 		case "23001", "23505", "23P01", "P0001":
-			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, domain.ErrSoftwareApplicationConflict)
+			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, apperror.Default(apperror.CodeConflict))
 		default:
 			if strings.HasPrefix(pgErr.Code, "23") {
-				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, domain.ErrSoftwareApplicationInternal)
+				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, apperror.Default(apperror.CodeInternal))
 			}
 		}
 	}

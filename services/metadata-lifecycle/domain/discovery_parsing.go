@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/wkt"
@@ -21,7 +22,7 @@ func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 			continue
 		}
 		if !concept.Valid() {
-			return DiscoveryFilter{}, ErrInvalidDiscovery
+			return DiscoveryFilter{}, apperror.Default(apperror.CodeValidationFailed)
 		}
 		if !slices.Contains(concepts, concept) {
 			concepts = append(concepts, concept)
@@ -29,7 +30,7 @@ func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 	}
 	value.Concepts = concepts
 	if value.GroupID != nil && *value.GroupID == uuid.Nil {
-		return DiscoveryFilter{}, ErrInvalidDiscovery
+		return DiscoveryFilter{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	types := make([]ResourceType, 0, len(value.Types))
@@ -39,7 +40,7 @@ func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 			continue
 		}
 		if !validResourceType(resourceType) {
-			return DiscoveryFilter{}, ErrInvalidDiscovery
+			return DiscoveryFilter{}, apperror.Default(apperror.CodeValidationFailed)
 		}
 		if !slices.Contains(types, resourceType) {
 			types = append(types, resourceType)
@@ -54,7 +55,7 @@ func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 			continue
 		}
 		if !validStatus(status) {
-			return DiscoveryFilter{}, ErrInvalidDiscovery
+			return DiscoveryFilter{}, apperror.Default(apperror.CodeValidationFailed)
 		}
 		if !slices.Contains(statuses, status) {
 			statuses = append(statuses, status)
@@ -66,19 +67,19 @@ func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 	value.VersioningStatuses = statuses
 
 	if slices.Contains(value.Providers, uuid.Nil) {
-		return DiscoveryFilter{}, ErrInvalidDiscovery
+		return DiscoveryFilter{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 	providers := make([]uuid.UUID, len(value.Providers))
 	copy(providers, value.Providers)
 	value.Providers = providers
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
-		return DiscoveryFilter{}, fmt.Errorf("discovery keywords: %w: %w", err, ErrInvalidDiscovery)
+		return DiscoveryFilter{}, fmt.Errorf("discovery keywords: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.Keywords = keywords
 
 	if value.DateFrom != nil && value.DateTo != nil && value.DateFrom.After(*value.DateTo) {
-		return DiscoveryFilter{}, ErrInvalidDiscovery
+		return DiscoveryFilter{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	return value, nil
@@ -93,11 +94,11 @@ func NewSpatialFilter(value string) (geom.T, error) {
 
 	geometry, err := wkt.Unmarshal(value)
 	if err != nil {
-		return nil, fmt.Errorf("invalid spatial filter: %w: %w", err, ErrInvalidDiscovery)
+		return nil, fmt.Errorf("invalid spatial filter: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	geometry, err = geom.SetSRID(geometry, 4326)
 	if err != nil {
-		return nil, fmt.Errorf("set spatial filter SRID: %w: %w", err, ErrInvalidDiscovery)
+		return nil, fmt.Errorf("set spatial filter SRID: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 
 	return geometry, nil
@@ -107,10 +108,10 @@ func NewSpatialFilter(value string) (geom.T, error) {
 func NewDiscoveryCandidate(value DiscoveryCandidate) (DiscoveryCandidate, error) {
 	value.Name = strings.TrimSpace(value.Name)
 	if value.ResourceID == uuid.Nil || value.VersionID == uuid.Nil || value.GroupID == uuid.Nil {
-		return DiscoveryCandidate{}, ErrInvalidDiscovery
+		return DiscoveryCandidate{}, apperror.Default(apperror.CodeInternal)
 	}
 	if !validResourceType(value.Type) || !validStatus(value.Status) || value.Name == "" {
-		return DiscoveryCandidate{}, ErrInvalidDiscovery
+		return DiscoveryCandidate{}, apperror.Default(apperror.CodeInternal)
 	}
 	if value.CreatedBy != nil {
 		createdBy, err := NewDiscoveryCreatedBy(value.CreatedBy.ID, value.CreatedBy.Name)
@@ -125,7 +126,7 @@ func NewDiscoveryCandidate(value DiscoveryCandidate) (DiscoveryCandidate, error)
 // NewDiscoveryReference creates a valid relationship projection.
 func NewDiscoveryReference(id uuid.UUID, name string) (DiscoveryReference, error) {
 	if id == uuid.Nil {
-		return DiscoveryReference{}, ErrInvalidDiscovery
+		return DiscoveryReference{}, apperror.Default(apperror.CodeInternal)
 	}
 	return DiscoveryReference{ID: id, Name: name}, nil
 }
@@ -135,7 +136,7 @@ func NewDiscoveryCreatedBy(id, name string) (DiscoveryCreatedBy, error) {
 	id = strings.TrimSpace(id)
 	name = strings.TrimSpace(name)
 	if id == "" || name == "" {
-		return DiscoveryCreatedBy{}, ErrInvalidDiscovery
+		return DiscoveryCreatedBy{}, apperror.Default(apperror.CodeInternal)
 	}
 	return DiscoveryCreatedBy{ID: id, Name: name}, nil
 }

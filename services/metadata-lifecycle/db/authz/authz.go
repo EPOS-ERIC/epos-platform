@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -44,7 +45,7 @@ func (r *Repo) ListPermissions(ctx context.Context) ([]domain.Permission, error)
 func (r *Repo) User(ctx context.Context, userID string) (domain.AuthorizationUser, error) {
 	user, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.AuthorizationUser{}, domain.ErrAuthorizationNotFound
+		return domain.AuthorizationUser{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.AuthorizationUser{}, fmt.Errorf("get authorization user: %w", err)
@@ -60,7 +61,7 @@ func (r *Repo) User(ctx context.Context, userID string) (domain.AuthorizationUse
 func (r *Repo) PermissionScope(ctx context.Context, key string) (domain.PermissionScope, error) {
 	scope, err := r.GetPermissionScope(ctx, key)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return "", domain.ErrAuthorizationNotFound
+		return "", apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return "", fmt.Errorf("get permission scope: %w", err)
@@ -156,7 +157,7 @@ func (r *Repo) DatasetVersionAuthz(ctx context.Context, datasetID, versionID uui
 		VersionID: versionID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.VersionAuthz{}, domain.ErrAuthorizationNotFound
+		return domain.VersionAuthz{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.VersionAuthz{}, fmt.Errorf("get dataset version authorization: %w", err)
@@ -175,7 +176,7 @@ func (r *Repo) SoftwareApplicationVersionAuthz(ctx context.Context, applicationI
 		VersionID:             versionID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.VersionAuthz{}, domain.ErrAuthorizationNotFound
+		return domain.VersionAuthz{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.VersionAuthz{}, fmt.Errorf("get software application version authorization: %w", err)
@@ -194,7 +195,7 @@ func (r *Repo) SoftwareSourceCodeVersionAuthz(ctx context.Context, sourceCodeID,
 		VersionID:            versionID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.VersionAuthz{}, domain.ErrAuthorizationNotFound
+		return domain.VersionAuthz{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.VersionAuthz{}, fmt.Errorf("get software source code version authorization: %w", err)
@@ -210,7 +211,7 @@ func (r *Repo) SoftwareSourceCodeVersionAuthz(ctx context.Context, sourceCodeID,
 func (r *Repo) DatasetGroup(ctx context.Context, resourceID uuid.UUID) (uuid.UUID, error) {
 	resource, err := r.GetDatasetGroup(ctx, resourceID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return uuid.Nil, domain.ErrAuthorizationNotFound
+		return uuid.Nil, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("get dataset group: %w", err)
@@ -222,7 +223,7 @@ func (r *Repo) DatasetGroup(ctx context.Context, resourceID uuid.UUID) (uuid.UUI
 func (r *Repo) SoftwareApplicationGroup(ctx context.Context, resourceID uuid.UUID) (uuid.UUID, error) {
 	resource, err := r.GetSoftwareApplicationGroup(ctx, resourceID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return uuid.Nil, domain.ErrAuthorizationNotFound
+		return uuid.Nil, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("get software application group: %w", err)
@@ -234,7 +235,7 @@ func (r *Repo) SoftwareApplicationGroup(ctx context.Context, resourceID uuid.UUI
 func (r *Repo) SoftwareSourceCodeGroup(ctx context.Context, resourceID uuid.UUID) (uuid.UUID, error) {
 	resource, err := r.GetSoftwareSourceCodeGroup(ctx, resourceID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return uuid.Nil, domain.ErrAuthorizationNotFound
+		return uuid.Nil, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("get software source code group: %w", err)

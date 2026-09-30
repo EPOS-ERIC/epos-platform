@@ -1,6 +1,10 @@
 package domain
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
+)
 
 // NewNotificationTopicKey validates and normalizes a notification topic key.
 func NewNotificationTopicKey(value string) (NotificationTopicKey, error) {
@@ -25,6 +29,6 @@ func NewNotificationTopicKey(value string) (NotificationTopicKey, error) {
 		NotificationTopicGlobalResourcePublished:
 		return key, nil
 	default:
-		return "", ErrNotificationInvalid
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }

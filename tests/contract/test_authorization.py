@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
-from fixtures import create_group
+from fixtures import assert_problem, create_group
 
 
 NO_AUTH_HEADERS = {"Authorization": ""}
@@ -113,22 +113,13 @@ class AuthorizationContractTest(unittest.TestCase):
         return resource_id, drafts[0]["version_id"]
 
     def assert_forbidden(self, response: Any) -> None:
-        self.assertEqual(response.status_code, 403)
-        problem = response.json()
-        self.assertEqual(problem["title"], "forbidden")
-        self.assertEqual(problem["detail"], "operation is not permitted")
+        assert_problem(self, response, 403, "permission_denied")
 
     def assert_unauthorized(self, response: Any) -> None:
-        self.assertEqual(response.status_code, 401)
-        problem = response.json()
-        self.assertEqual(problem["title"], "missing_token")
-        self.assertEqual(problem["detail"], "bearer token required")
+        assert_problem(self, response, 401, "unauthenticated")
 
     def assert_invalid_token(self, response: Any) -> None:
-        self.assertEqual(response.status_code, 401)
-        problem = response.json()
-        self.assertEqual(problem["title"], "invalid_token")
-        self.assertEqual(problem["detail"], "token is invalid")
+        assert_problem(self, response, 401, "unauthenticated")
 
     def test_public_permission_catalog(self) -> None:
         """Verify the public permission catalog contains every fixed permission."""

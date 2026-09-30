@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -43,7 +44,7 @@ func (r *Repo) List(ctx context.Context) ([]domain.ContactPoint, error) {
 func (r *Repo) Get(ctx context.Context, id uuid.UUID) (domain.ContactPoint, error) {
 	row, err := r.GetContactPoint(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ContactPoint{}, domain.ErrContactPointNotFound
+		return domain.ContactPoint{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.ContactPoint{}, fmt.Errorf("get contact point: %w", err)
@@ -62,7 +63,7 @@ func (r *Repo) Create(ctx context.Context, input domain.ContactPointInput) (doma
 	row, err := r.CreateContactPoint(ctx, toCreateContactPointParams(id, input))
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return domain.ContactPoint{}, domain.ErrContactPointConflict
+			return domain.ContactPoint{}, apperror.Default(apperror.CodeConflict)
 		}
 
 		return domain.ContactPoint{}, fmt.Errorf("insert contact point: %w", err)
@@ -79,12 +80,12 @@ func (r *Repo) Create(ctx context.Context, input domain.ContactPointInput) (doma
 func (r *Repo) Replace(ctx context.Context, id uuid.UUID, input domain.ContactPointInput) (domain.ContactPoint, error) {
 	row, err := r.ReplaceContactPoint(ctx, toReplaceContactPointParams(id, input))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ContactPoint{}, domain.ErrContactPointNotFound
+		return domain.ContactPoint{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		// TODO: maybe we can create an helper to do this check and reuse in the various db packages?
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return domain.ContactPoint{}, domain.ErrContactPointConflict
+			return domain.ContactPoint{}, apperror.Default(apperror.CodeConflict)
 		}
 
 		return domain.ContactPoint{}, fmt.Errorf("update contact point: %w", err)
@@ -104,7 +105,7 @@ func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete contact point: %w", err)
 	}
 	if deleted == 0 {
-		return domain.ErrContactPointNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 
 	return nil

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -58,7 +59,7 @@ func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier
 
 func (s *Service) ListMemberships(ctx context.Context, actorID domain.Actor, groupID uuid.UUID) ([]domain.GroupMembership, error) {
 	if groupID == uuid.Nil {
-		return nil, domain.ErrInvalidAccess
+		return nil, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.CanListGroupMemberships(ctx, string(actorID), groupID)
@@ -66,7 +67,7 @@ func (s *Service) ListMemberships(ctx context.Context, actorID domain.Actor, gro
 		return nil, fmt.Errorf("authorize group membership list: %w", err)
 	}
 	if !allowed.Allowed {
-		return nil, domain.ErrAccessForbidden
+		return nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	memberships, err := s.store.ListMemberships(ctx, groupID)
@@ -79,7 +80,7 @@ func (s *Service) ListMemberships(ctx context.Context, actorID domain.Actor, gro
 
 func (s *Service) RequestMembership(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, roles []domain.GroupRole) (domain.GroupMembership, []domain.Notification, error) {
 	if groupID == uuid.Nil {
-		return domain.GroupMembership{}, nil, domain.ErrInvalidAccess
+		return domain.GroupMembership{}, nil, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, string(actorID))
@@ -87,7 +88,7 @@ func (s *Service) RequestMembership(ctx context.Context, actorID domain.Actor, g
 		return domain.GroupMembership{}, nil, fmt.Errorf("authorize membership request: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.GroupMembership{}, nil, domain.ErrAccessForbidden
+		return domain.GroupMembership{}, nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	membership, err := s.store.RequestMembership(ctx, groupID, string(actorID), roles)
@@ -111,7 +112,7 @@ func (s *Service) RequestMembership(ctx context.Context, actorID domain.Actor, g
 
 func (s *Service) WithdrawMembershipRequest(ctx context.Context, actorID domain.Actor, groupID uuid.UUID) error {
 	if groupID == uuid.Nil {
-		return domain.ErrInvalidAccess
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, string(actorID))
@@ -119,7 +120,7 @@ func (s *Service) WithdrawMembershipRequest(ctx context.Context, actorID domain.
 		return fmt.Errorf("authorize membership withdrawal: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrAccessForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	if err := s.store.WithdrawMembershipRequest(ctx, groupID, string(actorID)); err != nil {
@@ -131,7 +132,7 @@ func (s *Service) WithdrawMembershipRequest(ctx context.Context, actorID domain.
 
 func (s *Service) DecideMembership(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string, decision domain.Decision) (domain.GroupMembership, []domain.Notification, error) {
 	if groupID == uuid.Nil || userID == "" {
-		return domain.GroupMembership{}, nil, domain.ErrInvalidAccess
+		return domain.GroupMembership{}, nil, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.CanManageGroupMemberships(ctx, string(actorID), groupID)
@@ -139,7 +140,7 @@ func (s *Service) DecideMembership(ctx context.Context, actorID domain.Actor, gr
 		return domain.GroupMembership{}, nil, fmt.Errorf("authorize membership decision: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.GroupMembership{}, nil, domain.ErrAccessForbidden
+		return domain.GroupMembership{}, nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	membership, err := s.store.DecideMembership(ctx, groupID, userID, decision, string(actorID))
@@ -167,7 +168,7 @@ func (s *Service) DecideMembership(ctx context.Context, actorID domain.Actor, gr
 
 func (s *Service) RevokeMembership(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string) error {
 	if groupID == uuid.Nil || userID == "" {
-		return domain.ErrInvalidAccess
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.CanRevokeGroupMembership(ctx, string(actorID), groupID, userID)
@@ -175,7 +176,7 @@ func (s *Service) RevokeMembership(ctx context.Context, actorID domain.Actor, gr
 		return fmt.Errorf("authorize membership revocation: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrAccessForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	if err := s.store.RevokeMembership(ctx, groupID, userID); err != nil {
@@ -187,7 +188,7 @@ func (s *Service) RevokeMembership(ctx context.Context, actorID domain.Actor, gr
 
 func (s *Service) RequestRole(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, role domain.GroupRole) (domain.RoleRequest, []domain.Notification, error) {
 	if groupID == uuid.Nil {
-		return domain.RoleRequest{}, nil, domain.ErrInvalidAccess
+		return domain.RoleRequest{}, nil, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.CanRequestGroupRole(ctx, string(actorID), groupID)
@@ -195,7 +196,7 @@ func (s *Service) RequestRole(ctx context.Context, actorID domain.Actor, groupID
 		return domain.RoleRequest{}, nil, fmt.Errorf("authorize role request: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.RoleRequest{}, nil, domain.ErrAccessForbidden
+		return domain.RoleRequest{}, nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	request, err := s.store.RequestRole(ctx, groupID, string(actorID), role)
@@ -220,7 +221,7 @@ func (s *Service) RequestRole(ctx context.Context, actorID domain.Actor, groupID
 
 func (s *Service) DecideRoleRequest(ctx context.Context, actorID domain.Actor, groupID, requestID uuid.UUID, decision domain.Decision) (domain.GroupMembership, []domain.Notification, error) {
 	if groupID == uuid.Nil || requestID == uuid.Nil {
-		return domain.GroupMembership{}, nil, domain.ErrInvalidAccess
+		return domain.GroupMembership{}, nil, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.CanManageGroupRoles(ctx, string(actorID), groupID)
@@ -228,7 +229,7 @@ func (s *Service) DecideRoleRequest(ctx context.Context, actorID domain.Actor, g
 		return domain.GroupMembership{}, nil, fmt.Errorf("authorize role request decision: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.GroupMembership{}, nil, domain.ErrAccessForbidden
+		return domain.GroupMembership{}, nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	result, err := s.store.DecideRoleRequest(ctx, groupID, requestID, decision, string(actorID))
@@ -258,7 +259,7 @@ func (s *Service) DecideRoleRequest(ctx context.Context, actorID domain.Actor, g
 
 func (s *Service) WithdrawRoleRequest(ctx context.Context, actorID domain.Actor, groupID, requestID uuid.UUID) error {
 	if groupID == uuid.Nil || requestID == uuid.Nil {
-		return domain.ErrInvalidAccess
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, string(actorID))
@@ -266,7 +267,7 @@ func (s *Service) WithdrawRoleRequest(ctx context.Context, actorID domain.Actor,
 		return fmt.Errorf("authorize role request withdrawal: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrAccessForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	if err := s.store.WithdrawRoleRequest(ctx, groupID, requestID, string(actorID)); err != nil {
@@ -278,7 +279,7 @@ func (s *Service) WithdrawRoleRequest(ctx context.Context, actorID domain.Actor,
 
 func (s *Service) AssignRole(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string, role domain.GroupRole) ([]domain.Notification, error) {
 	if groupID == uuid.Nil || userID == "" {
-		return nil, domain.ErrInvalidAccess
+		return nil, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.CanManageSpecificGroupRole(ctx, string(actorID), groupID, string(role))
@@ -286,7 +287,7 @@ func (s *Service) AssignRole(ctx context.Context, actorID domain.Actor, groupID 
 		return nil, fmt.Errorf("authorize group role assignment: %w", err)
 	}
 	if !allowed.Allowed {
-		return nil, domain.ErrAccessForbidden
+		return nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	changed, err := s.store.AssignRole(ctx, groupID, userID, role, string(actorID))
@@ -314,7 +315,7 @@ func (s *Service) AssignRole(ctx context.Context, actorID domain.Actor, groupID 
 
 func (s *Service) RemoveRole(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string, role domain.GroupRole) error {
 	if groupID == uuid.Nil || userID == "" {
-		return domain.ErrInvalidAccess
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.CanManageSpecificGroupRole(ctx, string(actorID), groupID, string(role))
@@ -322,7 +323,7 @@ func (s *Service) RemoveRole(ctx context.Context, actorID domain.Actor, groupID 
 		return fmt.Errorf("authorize group role removal: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrAccessForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	err = s.store.RemoveRole(ctx, groupID, userID, role)
@@ -335,7 +336,7 @@ func (s *Service) RemoveRole(ctx context.Context, actorID domain.Actor, groupID 
 
 func (s *Service) GrantPermission(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string, permission domain.GroupPermission) ([]domain.Notification, error) {
 	if groupID == uuid.Nil || userID == "" || permission == "" {
-		return nil, domain.ErrInvalidAccess
+		return nil, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.AuthorizeGroup(ctx, string(actorID), groupID, domain.GroupPermissionPermissionManage)
@@ -343,7 +344,7 @@ func (s *Service) GrantPermission(ctx context.Context, actorID domain.Actor, gro
 		return nil, fmt.Errorf("authorize group permission grant: %w", err)
 	}
 	if !allowed.Allowed {
-		return nil, domain.ErrAccessForbidden
+		return nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	changed, err := s.store.GrantPermission(ctx, groupID, userID, permission, string(actorID))
@@ -371,7 +372,7 @@ func (s *Service) GrantPermission(ctx context.Context, actorID domain.Actor, gro
 
 func (s *Service) RevokePermission(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string, permission domain.GroupPermission) error {
 	if groupID == uuid.Nil || userID == "" || permission == "" {
-		return domain.ErrInvalidAccess
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	allowed, err := s.authorizer.AuthorizeGroup(ctx, string(actorID), groupID, domain.GroupPermissionPermissionManage)
@@ -379,7 +380,7 @@ func (s *Service) RevokePermission(ctx context.Context, actorID domain.Actor, gr
 		return fmt.Errorf("authorize group permission revoke: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrAccessForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	err = s.store.RevokePermission(ctx, groupID, userID, permission)

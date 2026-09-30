@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -17,8 +18,8 @@ func TestRecoverableImportError(t *testing.T) {
 		err  error
 		want bool
 	}{
-		{name: "invalid import", err: domain.ErrInvalidImport, want: true},
-		{name: "import conflict", err: domain.ErrImportConflict, want: true},
+		{name: "invalid import", err: apperror.Default(apperror.CodeValidationFailed), want: true},
+		{name: "import conflict", err: apperror.Default(apperror.CodeConflict), want: true},
 		{name: "unique violation", err: &pgconn.PgError{Code: "23505"}, want: true},
 		{name: "raise exception", err: &pgconn.PgError{Code: "P0001"}, want: true},
 		{name: "serialization failure", err: &pgconn.PgError{Code: "40001"}, want: false},

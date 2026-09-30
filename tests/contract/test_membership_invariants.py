@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
-from fixtures import create_group
+from fixtures import assert_problem, create_group
 
 
 class MembershipInvariantsContractTest(unittest.TestCase):
@@ -104,13 +104,7 @@ class MembershipInvariantsContractTest(unittest.TestCase):
         return matches[0] if matches else None
 
     def assert_conflict(self, response: Any) -> None:
-        self.assertEqual(response.status_code, 409)
-        problem = response.json()
-        self.assertEqual(problem["title"], "conflict")
-        self.assertEqual(
-            problem["detail"],
-            "operation conflicts with existing data",
-        )
+        assert_problem(self, response, 409, "conflict")
 
     def assert_empty_access(self, membership: dict[str, Any]) -> None:
         self.assertEqual(membership["roles"], [])

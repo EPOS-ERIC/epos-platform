@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type OrganizationServer struct {
@@ -24,7 +23,7 @@ func NewOrganization(organizations *organizations.Service) *OrganizationServer {
 func (o *OrganizationServer) ListOrganizations(ctx context.Context, _ *metadatalifecyclev1.ListOrganizationsRequest) (*metadatalifecyclev1.ListOrganizationsResponse, error) {
 	values, err := o.organizations.List(ctx)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	result := make([]*metadatalifecyclev1.Organization, len(values))
 	for i, value := range values {
@@ -40,7 +39,7 @@ func (o *OrganizationServer) GetOrganization(ctx context.Context, request *metad
 	}
 	value, err := o.organizations.Get(ctx, id)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.GetOrganizationResponse{Organization: toProtoOrganization(value)}, nil
 }
@@ -56,7 +55,7 @@ func (o *OrganizationServer) CreateOrganization(ctx context.Context, request *me
 	}
 	value, err := o.organizations.Create(ctx, actor, input)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.CreateOrganizationResponse{Organization: toProtoOrganization(value)}, nil
 }
@@ -76,7 +75,7 @@ func (o *OrganizationServer) ReplaceOrganization(ctx context.Context, request *m
 	}
 	value, err := o.organizations.Replace(ctx, actor, id, input)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.ReplaceOrganizationResponse{Organization: toProtoOrganization(value)}, nil
 }
@@ -91,7 +90,7 @@ func (o *OrganizationServer) DeleteOrganization(ctx context.Context, request *me
 		return nil, err
 	}
 	if err := o.organizations.Delete(ctx, actor, id); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.DeleteOrganizationResponse{}, nil
 }
@@ -99,7 +98,7 @@ func (o *OrganizationServer) DeleteOrganization(ctx context.Context, request *me
 func parseOrganizationID(value string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		return uuid.Nil, status.Error(codes.InvalidArgument, "invalid organization id")
+		return uuid.Nil, apperror.New(apperror.CodeValidationFailed, "invalid organization id")
 	}
 	return id, nil
 }
@@ -118,14 +117,17 @@ func toOrganizationInput(name string, street, locality, postalCode, country, log
 		Identifiers: make([]domain.OrganizationIdentifierInput, len(identifiers)),
 	}
 	for i, identifier := range identifiers {
+		if identifier == nil {
+			return domain.OrganizationInput{}, apperror.Field(fmt.Sprintf("identifiers[%d]", i), "Identifier is required.", fmt.Errorf("missing identifier at index %d", i))
+		}
 		input.Identifiers[i] = domain.OrganizationIdentifierInput{Type: identifier.Type, Value: identifier.Value}
 	}
 	var err error
-	input.Parents, err = parseUUIDs(parents)
+	input.Parents, err = parseUUIDs(parents, "parents")
 	if err != nil {
 		return domain.OrganizationInput{}, err
 	}
-	input.ContactPoints, err = parseUUIDs(contactPoints)
+	input.ContactPoints, err = parseUUIDs(contactPoints, "contact_point_ids")
 	if err != nil {
 		return domain.OrganizationInput{}, err
 	}
@@ -136,12 +138,15 @@ func toOrganizationInput(name string, street, locality, postalCode, country, log
 	return result, nil
 }
 
-func parseUUIDs(values []string) ([]uuid.UUID, error) {
+func parseUUIDs(values []string, target string) ([]uuid.UUID, error) {
 	result := make([]uuid.UUID, len(values))
 	for i, value := range values {
 		id, err := uuid.Parse(value)
 		if err != nil || id == uuid.Nil {
-			return nil, domain.ErrInvalidOrganization
+			if err == nil {
+				err = fmt.Errorf("%s must not be the zero UUID", target)
+			}
+			return nil, apperror.Field(fmt.Sprintf("%s[%d]", target, i), "Must be a valid UUID.", fmt.Errorf("parse %s: %w", target, err))
 		}
 		result[i] = id
 	}
