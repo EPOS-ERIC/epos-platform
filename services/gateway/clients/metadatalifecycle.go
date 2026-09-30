@@ -84,9 +84,23 @@ func (c *MetadataLifecycle) wrapError(ctx context.Context, operation string, err
 		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeUpstreamUnavailable, "", err))
 	case codes.DeadlineExceeded, codes.Canceled:
 		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeUpstreamTimeout, "", err))
+	case codes.OK,
+		codes.Unknown,
+		codes.InvalidArgument,
+		codes.NotFound,
+		codes.AlreadyExists,
+		codes.PermissionDenied,
+		codes.ResourceExhausted,
+		codes.FailedPrecondition,
+		codes.Aborted,
+		codes.OutOfRange,
+		codes.Unimplemented,
+		codes.Internal,
+		codes.DataLoss,
+		codes.Unauthenticated:
 	default:
-		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeInternal, "", err))
 	}
+	return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeInternal, "", err))
 }
 
 func (c *MetadataLifecycle) ListGroups(ctx context.Context) (*metadatalifecyclev1.ListGroupsResponse, error) {

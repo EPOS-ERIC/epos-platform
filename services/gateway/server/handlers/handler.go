@@ -114,11 +114,12 @@ func validationLeaf(err error, target string) (string, error) {
 		return target, err
 	}
 	field := validationErr.Fields[0]
-	if strings.HasPrefix(field.Name, "[") {
+	switch {
+	case strings.HasPrefix(field.Name, "["):
 		target += field.Name
-	} else if target == "" {
+	case target == "":
 		target = field.Name
-	} else {
+	default:
 		target += "." + field.Name
 	}
 	return validationLeaf(field.Error, target)
