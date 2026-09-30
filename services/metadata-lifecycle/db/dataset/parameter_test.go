@@ -196,7 +196,7 @@ func TestWebServicePersistenceMappingPreservesTypeAndVisibleOn(t *testing.T) {
 		Method:      sqlc.WebServiceHttpMethodGET,
 		Type:        sqlc.WebServiceTypeGEOJSON,
 		VisibleOn:   []sqlc.WebServiceVisibleOn{sqlc.WebServiceVisibleOnMAP, sqlc.WebServiceVisibleOnGRAPH},
-		Format:      "json",
+		Format:      "application/json",
 	})
 	if err != nil {
 		t.Fatalf("toDomainWebService() error = %v", err)

@@ -3,6 +3,7 @@ package domain
 import (
 	"cmp"
 	"fmt"
+	"mime"
 	"math"
 	"regexp"
 	"slices"
@@ -32,6 +33,10 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	value.Type = WebServiceType(strings.ToUpper(strings.TrimSpace(string(value.Type))))
 	if value.Name == "" || value.TemplateURL == "" || value.Format == "" {
 		return WebServiceInput{}, fmt.Errorf("name, template URL, and format are required: %w", ErrInvalidDataset)
+	}
+	value.Format, err = normalizeMediaType(value.Format)
+	if err != nil {
+		return WebServiceInput{}, fmt.Errorf("web service format is invalid: %w", err)
 	}
 	if !value.Method.Valid() {
 		return WebServiceInput{}, fmt.Errorf("web service method is invalid: %w", ErrInvalidDataset)
@@ -195,16 +200,43 @@ func NewWebServiceParameter(value WebServiceParameter) (WebServiceParameter, err
 func NewRequestBody(value RequestBody) (RequestBody, error) {
 	value.ContentType = strings.TrimSpace(value.ContentType)
 	value.Template = strings.TrimSpace(value.Template)
+
 	if value.ContentType == "" {
 		return RequestBody{}, fmt.Errorf("body content type and template are required: %w", ErrInvalidDataset)
 	}
+
+	contentType, err := normalizeMediaType(value.ContentType)
+	if err != nil {
+		return RequestBody{}, fmt.Errorf("body content type is invalid: %w", err)
+	}
+	value.ContentType = contentType
+
 	templateValue, parameters, err := parseTemplateDefinition(value.Template, value.Parameters)
 	if err != nil {
 		return RequestBody{}, fmt.Errorf("body template: %w", err)
 	}
 	value.Template = templateValue
 	value.Parameters = parameters
+
 	return value, nil
+}
+
+func normalizeMediaType(value string) (string, error) {
+	mediaType, parameters, err := mime.ParseMediaType(value)
+	if err != nil {
+		return "", fmt.Errorf("parse MIME media type %q: %w: %w", value, err, ErrInvalidDataset)
+	}
+
+	if !strings.Contains(mediaType, "/") {
+		return "", fmt.Errorf("MIME media type %q must contain type and subtype: %w", value, ErrInvalidDataset)
+	}
+
+	normalized := mime.FormatMediaType(mediaType, parameters)
+	if normalized == "" {
+		return "", fmt.Errorf("format MIME media type %q: %w", value, ErrInvalidDataset)
+	}
+
+	return normalized, nil
 }
 
 func parseTemplateDefinition(source string, values []Parameter) (string, []Parameter, error) {

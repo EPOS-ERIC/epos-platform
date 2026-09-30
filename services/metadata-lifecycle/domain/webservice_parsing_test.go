@@ -16,7 +16,7 @@ func TestNewWebServiceInputNormalizesAndOrdersParameters(t *testing.T) {
 		Method:      " post ",
 		Type:        " geojson ",
 		VisibleOn:   []WebServiceVisibleOn{" map ", "GRAPH", "map"},
-		Format:      " json ",
+		Format:      " Application/JSON ; Charset=UTF-8 ",
 		Parameters: []WebServiceParameterInput{
 			{Position: 1, Name: "z", Label: " Z ", Schema: StringSchema{}, Location: ParameterLocationQuery},
 			{Position: 0, Name: "item-id", Label: " Item ", Schema: StringSchema{}, Location: ParameterLocationPath},
@@ -26,7 +26,7 @@ func TestNewWebServiceInputNormalizesAndOrdersParameters(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewWebServiceInput() error = %v", err)
 	}
-	if input.Name != "service" || input.TemplateURL != "https://example.test/items/{item-id}" || input.Method != HTTPMethodPost || input.Type != WebServiceTypeGeoJSON || input.Format != "json" {
+	if input.Name != "service" || input.TemplateURL != "https://example.test/items/{item-id}" || input.Method != HTTPMethodPost || input.Type != WebServiceTypeGeoJSON || input.Format != "application/json; charset=UTF-8" {
 		t.Fatalf("normalized web service = %+v", input)
 	}
 	if got := input.VisibleOn; !slices.Equal(got, []WebServiceVisibleOn{WebServiceVisibleOnMap, WebServiceVisibleOnGraph}) {
@@ -48,7 +48,7 @@ func TestNewWebServiceDescriptionIsOptionalButNotEmpty(t *testing.T) {
 			TemplateURL: "https://example.test",
 			Method:      HTTPMethodGet,
 			Type:        WebServiceTypeGeoJSON,
-			Format:      "json",
+			Format:      "application/json",
 		}
 	}
 
@@ -75,7 +75,7 @@ func TestNewWebServiceInputRejectsDuplicateNamesAcrossLocations(t *testing.T) {
 		TemplateURL: "https://example.test",
 		Method:      HTTPMethodGet,
 		Type:        WebServiceTypeGeoJSON,
-		Format:      "json",
+		Format:      "application/json",
 		Parameters: []WebServiceParameterInput{
 			{Name: "value", Label: "Value", Schema: StringSchema{}, Location: ParameterLocationQuery},
 			{Name: "value", Label: "Value", Schema: StringSchema{}, Location: ParameterLocationHeader},
@@ -193,10 +193,19 @@ func TestNewWebServiceInputRejectsInvalidType(t *testing.T) {
 		TemplateURL: "https://example.test",
 		Method:      HTTPMethodGet,
 		Type:        "KML",
-		Format:      "json",
+		Format:      "application/json",
 	})
 	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "web service type is invalid") {
 		t.Fatalf("error = %v, want invalid type error", err)
+	}
+}
+
+func TestNormalizeMediaTypeIncludesInvalidInputInError(t *testing.T) {
+	for _, value := range []string{"not a media type", "json"} {
+		_, err := normalizeMediaType(value)
+		if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), `"`+value+`"`) {
+			t.Errorf("normalizeMediaType(%q) error = %v, want invalid dataset error containing input", value, err)
+		}
 	}
 }
 
@@ -217,7 +226,7 @@ func TestNewWebServiceInputRejectsInvalidVisibleOn(t *testing.T) {
 				Method:      HTTPMethodGet,
 				Type:        WebServiceTypeGeoJSON,
 				VisibleOn:   test.visibleOn,
-				Format:      "json",
+				Format:      "application/json",
 			})
 			if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "web service visible on") {
 				t.Fatalf("error = %v, want invalid visible-on error", err)
@@ -235,7 +244,7 @@ func TestNewWebServiceNormalizesTypeAndVisibleOn(t *testing.T) {
 		Method:      HTTPMethodGet,
 		Type:        " wms ",
 		VisibleOn:   []WebServiceVisibleOn{"TABLE", "table", " graph "},
-		Format:      "json",
+		Format:      "application/json",
 	})
 	if err != nil {
 		t.Fatalf("NewWebService() error = %v", err)
@@ -260,7 +269,7 @@ func TestNewWebServiceInputValidatesBodyAgainstMethod(t *testing.T) {
 		TemplateURL: "https://example.test",
 		Method:      HTTPMethodGet,
 		Type:        WebServiceTypeGeoJSON,
-		Format:      "json",
+		Format:      "application/json",
 		Body:        body,
 	})
 	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "body is not allowed") {
@@ -272,7 +281,7 @@ func TestNewWebServiceInputValidatesBodyAgainstMethod(t *testing.T) {
 		TemplateURL: "https://example.test",
 		Method:      HTTPMethodPost,
 		Type:        WebServiceTypeGeoJSON,
-		Format:      "json",
+		Format:      "application/json",
 		Body:        body,
 	})
 	if err != nil {

@@ -51,7 +51,7 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 		TemplateUrl:     "https://example.test",
 		Method:          metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_POST,
 		Type:            metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_GEOJSON,
-		Format:          "json",
+		Format:          "application/json",
 		BodyContentType: &contentType,
 		BodyTemplate:    &bodyTemplate,
 		BodyParameters:  []*metadatalifecyclev1.ScalarParameter{template.Parameters[0]},
@@ -84,7 +84,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
 			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP,
 		},
-		Format:     "json",
+		Format:     "application/json",
 		Parameters: []*metadatalifecyclev1.Parameter{parameter},
 	})
 	if err != nil {
@@ -106,7 +106,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		Method:      domain.HTTPMethodGet,
 		Type:        domain.WebServiceTypeGeoJSON,
 		VisibleOn:   []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnGraph, domain.WebServiceVisibleOnMap},
-		Format:      "json",
+		Format:      "application/json",
 		Parameters: []domain.WebServiceParameter{{
 			ID:       id,
 			Name:     "value",
@@ -130,7 +130,7 @@ func TestWebServiceInputRejectsUnspecifiedEnums(t *testing.T) {
 		return &metadatalifecyclev1.WebServiceInput{
 			Name:        "service",
 			TemplateUrl: "https://example.test",
-			Format:      "json",
+			Format:      "application/json",
 			Method:      metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET,
 			Type:        metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_GEOJSON,
 		}
