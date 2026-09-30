@@ -19,7 +19,7 @@ describe('resourceCapabilities', () => {
   it('derives review actions independently from their permissions', () => {
     expect(resourceCapabilities('SUBMITTED', []).publish).toBe(false);
     expect(resourceCapabilities('SUBMITTED', []).reject).toBe(false);
-    expect(resourceCapabilities('SUBMITTED', []).viewHistory).toBe(false);
+    expect(resourceCapabilities('SUBMITTED', []).viewHistory).toBe(true);
     expect(resourceCapabilities('SUBMITTED', ['group.resource.publish']).publish).toBe(true);
     expect(resourceCapabilities('SUBMITTED', ['group.resource.publish']).reject).toBe(false);
     expect(resourceCapabilities('SUBMITTED', ['group.resource.reject']).publish).toBe(false);

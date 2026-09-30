@@ -32,6 +32,6 @@ export function resourceCapabilities(
     archive: status === 'PUBLISHED' && hasPermission(RESOURCE_ACTION_PERMISSIONS.archive),
     createDraft: (status === 'PUBLISHED' || status === 'ARCHIVED')
       && hasPermission(RESOURCE_ACTION_PERMISSIONS['create-new-draft']),
-    viewHistory: isDraft
+    viewHistory: isDraft || status === 'SUBMITTED'
   };
 }

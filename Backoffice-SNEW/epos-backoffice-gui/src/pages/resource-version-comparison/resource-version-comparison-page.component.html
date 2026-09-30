@@ -26,7 +26,6 @@
       <section class="version-summaries" aria-label="Compared versions">
         <article class="version-card app-card">
           <span class="version-side">Left version</span>
-          <h2>{{ versionLabel(leftVersion) }}</h2>
           <dl>
             <div><dt>Status</dt><dd>{{ leftVersion.status }}</dd></div>
             <div><dt>Updated</dt><dd>{{ leftVersion.updated_at }}</dd></div>
@@ -35,7 +34,6 @@
 
         <article class="version-card app-card">
           <span class="version-side">Right version</span>
-          <h2>{{ versionLabel(rightVersion) }}</h2>
           <dl>
             <div><dt>Status</dt><dd>{{ rightVersion.status }}</dd></div>
             <div><dt>Updated</dt><dd>{{ rightVersion.updated_at }}</dd></div>

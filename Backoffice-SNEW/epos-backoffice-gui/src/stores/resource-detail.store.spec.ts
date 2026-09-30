@@ -219,13 +219,17 @@ describe('ResourceDetailStore', () => {
     expect(resourceActions.sidebarActions).toHaveBeenCalledWith('SUBMITTED', ['group.resource.publish', 'group.resource.reject']);
   });
 
-  it('only enables version history for a loaded draft', () => {
+  it('enables version history for loaded draft and submitted versions', () => {
     expect(store.canViewHistory()).toBe(false);
 
     store.load(context('dataset', 'dataset-id'));
     expect(store.canViewHistory()).toBe(true);
 
     apiService.getResourceVersion.mockReturnValue(of(datasetVersion({ status: 'SUBMITTED' })));
+    store.load(context('dataset', 'dataset-id'));
+    expect(store.canViewHistory()).toBe(true);
+
+    apiService.getResourceVersion.mockReturnValue(of(datasetVersion({ status: 'PUBLISHED' })));
     store.load(context('dataset', 'dataset-id'));
     expect(store.canViewHistory()).toBe(false);
   });
