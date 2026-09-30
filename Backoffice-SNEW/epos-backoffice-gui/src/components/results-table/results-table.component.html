@@ -24,11 +24,37 @@
     </div>
   </div>
 
-  <div class="table-scroll">
+  <div class="table-scroll" [attr.aria-busy]="discoveryLoading">
     @if (!allGroups && !selectedGroupId) {
       <div class="table-empty">Select a group to view resources.</div>
     } @else if (discoveryLoading) {
-      <div class="table-empty">Loading discovery results...</div>
+      <span class="app-visually-hidden" role="status">Loading discovery results...</span>
+      <table class="results-skeleton" aria-hidden="true">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Group</th>
+            <th>Author</th>
+            <th>Last Change</th>
+            <th>Status</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of skeletonRows; track row) {
+            <tr>
+              <td><span class="app-skeleton skeleton-name"></span></td>
+              <td><span class="app-skeleton skeleton-type"></span></td>
+              <td><span class="app-skeleton skeleton-group"></span></td>
+              <td><span class="app-skeleton skeleton-author"></span></td>
+              <td><span class="app-skeleton skeleton-date"></span></td>
+              <td><span class="app-skeleton skeleton-status"></span></td>
+              <td class="actions-col"><span class="app-skeleton skeleton-action"></span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
     } @else if (discoveryItems?.length) {
       <table>
         <thead>

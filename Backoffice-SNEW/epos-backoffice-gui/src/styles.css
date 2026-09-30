@@ -87,6 +87,46 @@ app-root {
   box-sizing: border-box;
 }
 
+.app-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app-skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 72%, var(--surface));
+}
+
+.app-skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--surface) 76%, transparent),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: app-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes app-skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
 app-navigation-sidebar {
   height: 100%;
   min-height: 0;
@@ -1070,6 +1110,7 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-skeleton::after,
   app-navigation-sidebar .nav-tree-children--scrollable,
   app-web-service-parameters .parameter-list {
     animation: none;

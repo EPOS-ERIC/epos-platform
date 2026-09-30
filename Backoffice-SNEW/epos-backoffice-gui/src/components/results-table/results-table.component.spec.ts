@@ -5,6 +5,22 @@ import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
 import { ResultsTableComponent } from './results-table.component';
 
 describe('ResultsTableComponent', () => {
+  it('renders an accessible table skeleton while discovery results are loading', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResultsTableComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ResultsTableComponent);
+
+    fixture.componentRef.setInput('selectedGroupId', 'group-id');
+    fixture.componentRef.setInput('discoveryLoading', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.table-scroll').getAttribute('aria-busy')).toBe('true');
+    expect(fixture.nativeElement.querySelectorAll('.results-skeleton tbody tr')).toHaveLength(10);
+    expect(fixture.nativeElement.querySelector('[role="status"]').textContent).toContain('Loading discovery results');
+  });
+
   it('renders the API timestamp without converting it to local time', async () => {
     await TestBed.configureTestingModule({
       imports: [ResultsTableComponent],

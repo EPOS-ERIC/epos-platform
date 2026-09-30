@@ -24,6 +24,7 @@ export class ResultsTableComponent implements OnChanges {
   protected currentPage = 1;
   protected pageSize = 10;
   protected readonly pageSizeOptions = [10, 25, 50];
+  protected readonly skeletonRows = Array.from({ length: 10 }, (_, index) => index);
   protected readonly groupIconPath = groupIconPath;
 
   ngOnChanges(changes: SimpleChanges): void {
