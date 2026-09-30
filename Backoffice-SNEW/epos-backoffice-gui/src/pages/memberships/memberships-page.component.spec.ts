@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
@@ -9,6 +10,7 @@ import { DialogService } from '../../services/dialog.service';
 import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
 import { ToastService } from '../../services/toast.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
+import { GroupsStore } from '../../stores/groups.store';
 import { MembershipsPageComponent } from './memberships-page.component';
 
 describe('MembershipsPageComponent', () => {
@@ -73,9 +75,11 @@ describe('MembershipsPageComponent', () => {
       providers: [
         { provide: ApiService, useValue: apiService },
         { provide: CurrentUserStore, useValue: currentUserStore },
+        { provide: GroupsStore, useValue: { groups: signal([{ id: '1375500a-fc04-5831-a7f5-39ea5fcb0445', name: 'Data Group', position: 0, concept: 'DATA' }]) } },
         { provide: DialogService, useValue: dialog },
         { provide: MembershipRequestDialogService, useValue: { open, groups: signal([{ id: 'group-id' }]), groupsLoading: signal(false) } },
-        { provide: ToastService, useValue: toast }
+        { provide: ToastService, useValue: toast },
+        provideRouter([])
       ]
     });
   });
@@ -142,7 +146,7 @@ describe('MembershipsPageComponent', () => {
     fixture.detectChanges();
 
     const button = fixture.nativeElement.querySelector('.membership-remove-button') as HTMLButtonElement;
-    expect(button.textContent.trim()).toBe('Leave');
+    expect(button?.textContent?.trim()).toBe('Leave');
     button.click();
 
     await vi.waitFor(() => expect(apiService.leaveOwnGroupMembership).toHaveBeenCalled());

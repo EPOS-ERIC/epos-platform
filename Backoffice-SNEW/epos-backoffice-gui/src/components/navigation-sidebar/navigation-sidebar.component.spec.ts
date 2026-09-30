@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 
 import { NavigationSidebarComponent } from './navigation-sidebar.component';
 
@@ -59,6 +60,7 @@ describe('NavigationSidebarComponent', () => {
     const fixture = TestBed.createComponent(NavigationSidebarComponent);
     fixture.componentRef.setInput('currentSectionPath', 'data');
     fixture.detectChanges();
+    const navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
 
     const toggles = fixture.nativeElement.querySelectorAll('.main-tree-toggle-button') as NodeListOf<HTMLButtonElement>;
     const mainLinks = fixture.nativeElement.querySelectorAll('.nav-item--main') as NodeListOf<HTMLAnchorElement>;
@@ -72,11 +74,20 @@ describe('NavigationSidebarComponent', () => {
 
     expect(toggles[0].getAttribute('aria-expanded')).toBe('false');
     expect(toggles[1].getAttribute('aria-expanded')).toBe('true');
+    expect(navigateByUrl).toHaveBeenCalledOnce();
+    expect(navigateByUrl).toHaveBeenCalledWith('/software');
 
     toggles[1].click();
     fixture.detectChanges();
 
     expect(toggles[1].getAttribute('aria-expanded')).toBe('false');
+    expect(navigateByUrl).toHaveBeenCalledOnce();
+
+    toggles[0].click();
+    fixture.detectChanges();
+
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('true');
+    expect(navigateByUrl).toHaveBeenCalledOnce();
   });
 
   it('renders ALL as a main link without a group accordion', async () => {

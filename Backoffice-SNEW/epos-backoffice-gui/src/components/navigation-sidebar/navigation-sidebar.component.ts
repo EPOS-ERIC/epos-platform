@@ -1,5 +1,5 @@
 import { Component, DOCUMENT, EventEmitter, Input, Output, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AppIconComponent, type IconName } from '../../shared/ui/app-icon.component';
 import type { DiscoveryConcept, Group } from '../../../generated/backofficeSchemas';
@@ -23,6 +23,7 @@ type NavigationItem = {
 })
 export class NavigationSidebarComponent {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
 
   @Input() canAccessGlobalManage = false;
   @Input() detailItems: NavigationItem[] = [];
@@ -112,7 +113,12 @@ export class NavigationSidebarComponent {
   protected toggleMainItem(event: MouseEvent, item: NavigationItem): void {
     event.preventDefault();
     event.stopPropagation();
-    this.expandedMainRoute.update((route) => route === item.route ? null : (item.route ?? null));
+
+    const expanding = this.expandedMainRoute() !== item.route;
+    this.expandedMainRoute.set(expanding ? (item.route ?? null) : null);
+    if (expanding && item.route && !this.isMainSectionActive(item)) {
+      void this.router.navigateByUrl(item.route);
+    }
   }
 
   protected isAdminSectionActive(item: NavigationItem): boolean {
