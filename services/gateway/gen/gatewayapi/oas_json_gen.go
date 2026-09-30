@@ -12681,6 +12681,41 @@ func (s *NotificationTopicKey) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes time.Time as json.
+func (o OptDateTime) Encode(e *jx.Encoder, format func(*jx.Encoder, time.Time)) {
+	if !o.Set {
+		return
+	}
+	format(e, o.Value)
+}
+
+// Decode decodes time.Time from json.
+func (o *OptDateTime) Decode(d *jx.Decoder, format func(*jx.Decoder) (time.Time, error)) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptDateTime to nil")
+	}
+	o.Set = true
+	v, err := format(d)
+	if err != nil {
+		return err
+	}
+	o.Value = v
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptDateTime) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e, json.EncodeDateTime)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptDateTime) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d, json.DecodeDateTime)
+}
+
 // Encode encodes Documentation as json.
 func (o OptDocumentation) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -16647,6 +16682,18 @@ func (s *ResourceVersion) encodeFields(e *jx.Encoder) {
 		json.EncodeDateTime(e, s.UpdatedAt)
 	}
 	{
+		if s.RejectedBy.Set {
+			e.FieldStart("rejected_by")
+			s.RejectedBy.Encode(e)
+		}
+	}
+	{
+		if s.RejectedAt.Set {
+			e.FieldStart("rejected_at")
+			s.RejectedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
 		if s.RejectionNote.Set {
 			e.FieldStart("rejection_note")
 			s.RejectionNote.Encode(e)
@@ -16658,7 +16705,7 @@ func (s *ResourceVersion) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfResourceVersion = [11]string{
+var jsonFieldsNameOfResourceVersion = [13]string{
 	0:  "resource_id",
 	1:  "version_id",
 	2:  "revision",
@@ -16668,8 +16715,10 @@ var jsonFieldsNameOfResourceVersion = [11]string{
 	6:  "group_name",
 	7:  "created_at",
 	8:  "updated_at",
-	9:  "rejection_note",
-	10: "metadata",
+	9:  "rejected_by",
+	10: "rejected_at",
+	11: "rejection_note",
+	12: "metadata",
 }
 
 // Decode decodes ResourceVersion from json.
@@ -16787,6 +16836,26 @@ func (s *ResourceVersion) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"updated_at\"")
 			}
+		case "rejected_by":
+			if err := func() error {
+				s.RejectedBy.Reset()
+				if err := s.RejectedBy.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rejected_by\"")
+			}
+		case "rejected_at":
+			if err := func() error {
+				s.RejectedAt.Reset()
+				if err := s.RejectedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rejected_at\"")
+			}
 		case "rejection_note":
 			if err := func() error {
 				s.RejectionNote.Reset()
@@ -16798,7 +16867,7 @@ func (s *ResourceVersion) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"rejection_note\"")
 			}
 		case "metadata":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 4
 			if err := func() error {
 				if err := s.Metadata.Decode(d); err != nil {
 					return err
@@ -16818,7 +16887,7 @@ func (s *ResourceVersion) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b11111111,
-		0b00000101,
+		0b00010001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

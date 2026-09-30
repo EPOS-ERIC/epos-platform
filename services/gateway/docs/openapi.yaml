@@ -3110,6 +3110,8 @@ components:
         group_name: { type: string }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        rejected_by: { type: string, minLength: 1 }
+        rejected_at: { type: string, format: date-time }
         rejection_note: { $ref: "#/components/schemas/NonBlankString" }
         metadata:
           oneOf:

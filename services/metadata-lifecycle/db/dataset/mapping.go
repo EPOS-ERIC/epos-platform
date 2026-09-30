@@ -75,6 +75,8 @@ func toDomainDatasetVersion(version sqlc.GetLifecycleDatasetVersionRow, metadata
 		toDomainGroup(version.Group),
 		version.CreatedAt,
 		version.UpdatedAt,
+		version.RejectedBy,
+		version.RejectedAt,
 		version.RejectionNote,
 		metadata,
 	)

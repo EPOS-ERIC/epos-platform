@@ -112,46 +112,28 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 		return nil, err
 	}
 
-	var value any
+	var response *metadatalifecyclev1.ResourceVersion
 	switch request.GetResourceType() {
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
-		value, err = s.datasets.Read(ctx, actor, resourceID, versionID)
+		value, err := s.datasets.Read(ctx, actor, resourceID, versionID)
+		if err != nil {
+			return nil, wrapHandlerError(err)
+		}
+		response = toProtoDatasetVersion(value)
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
-		value, err = s.applications.Read(ctx, actor, resourceID, versionID)
+		value, err := s.applications.Read(ctx, actor, resourceID, versionID)
+		if err != nil {
+			return nil, wrapHandlerError(err)
+		}
+		response = toProtoSoftwareApplicationVersion(value)
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
-		value, err = s.sourceCodes.Read(ctx, actor, resourceID, versionID)
+		value, err := s.sourceCodes.Read(ctx, actor, resourceID, versionID)
+		if err != nil {
+			return nil, wrapHandlerError(err)
+		}
+		response = toProtoSoftwareSourceCodeVersion(value)
 	default:
 		return nil, status.Error(codes.InvalidArgument, "resource type is required") //nolint:wrapcheck
-	}
-	if err != nil {
-		return nil, wrapHandlerError(err)
-	}
-
-	response := &metadatalifecyclev1.ResourceVersion{}
-	switch item := value.(type) {
-	case domain.DatasetVersion:
-		response.ResourceId, response.VersionId = item.DatasetID.String(), item.VersionID.String()
-		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
-		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
-		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
-		response.RejectionNote = item.RejectionNote
-		response.Metadata = &metadatalifecyclev1.ResourceVersion_Dataset{Dataset: datasetResourceMetadata(item.Metadata)}
-	case domain.SoftwareApplicationVersion:
-		response.ResourceId, response.VersionId = item.SoftwareApplicationID.String(), item.VersionID.String()
-		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
-		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
-		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
-		response.RejectionNote = item.RejectionNote
-		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareApplication{SoftwareApplication: applicationResourceMetadata(item.Metadata)}
-	case domain.SoftwareSourceCodeVersion:
-		response.ResourceId, response.VersionId = item.SoftwareSourceCodeID.String(), item.VersionID.String()
-		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
-		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
-		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
-		response.RejectionNote = item.RejectionNote
-		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareSourceCode{SoftwareSourceCode: sourceCodeResourceMetadata(item.Metadata)}
-	default:
-		return nil, status.Error(codes.Internal, "unsupported resource type") //nolint:wrapcheck
 	}
 	return &metadatalifecyclev1.GetResourceVersionResponse{Resource: response}, nil
 }

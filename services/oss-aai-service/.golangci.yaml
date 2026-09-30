@@ -1,0 +1,13 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: strict
+  settings:
+    gofumpt:
+      extra:
+        group-params: true
+        balance-calls: true

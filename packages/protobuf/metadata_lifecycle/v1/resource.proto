@@ -79,6 +79,8 @@ message ResourceVersion {
     SoftwareSourceCodeResourceMetadata software_source_code = 12;
   }
   optional string rejection_note = 13 [(buf.validate.field).string.min_len = 1];
+  optional string rejected_by = 14 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp rejected_at = 15;
 }
 
 message DatasetResourceMetadata {

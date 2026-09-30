@@ -132,6 +132,8 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         self.assertEqual(draft_details.status_code, 200)
         self.assertEqual(draft_details.json()["group_id"], group_id)
         self.assertEqual(draft_details.json()["metadata"]["title"], title)
+        self.assertNotIn("rejected_by", draft_details.json())
+        self.assertNotIn("rejected_at", draft_details.json())
 
         updated_title = f"{title}-updated"
         replace_payload = {
@@ -213,6 +215,15 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         self.assertEqual(rejected_version["rejected_by"], reviewer_id)
         self.assertIsNotNone(rejected_version["rejected_at"])
         self.assertEqual(rejected_version["rejection_note"], rejection_note)
+        rejected_details = reviewer.get(
+            "/resources/{resourceType}/{id}/versions/{versionId}",
+            resourceType="dataset",
+            id=resource_id,
+            versionId=version_id,
+        )
+        self.assertEqual(rejected_details.status_code, 200)
+        self.assertEqual(rejected_details.json()["rejected_by"], reviewer_id)
+        self.assertIsNotNone(rejected_details.json()["rejected_at"])
 
         reopened = editor.post(
             "/resources/{resourceType}/{id}/versions/{versionId}/reopen",
@@ -409,3 +420,72 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
             versionId=draft_resource_version_id,
         )
         self.assertEqual(deleted_draft.status_code, 404)
+
+        for resource_type, metadata in (
+            (
+                "software-application",
+                {
+                    "name": f"Application {suffix}",
+                    "description": "Rejection detail integration case",
+                },
+            ),
+            (
+                "software-source-code",
+                {
+                    "name": f"Source code {suffix}",
+                    "description": "Rejection detail integration case",
+                },
+            ),
+        ):
+            created = editor.post(
+                "/groups/{groupId}/resources",
+                groupId=group_id,
+                json={"resource_type": resource_type, "metadata": metadata},
+            )
+            self.assertEqual(created.status_code, 201)
+            resource_id = created.json()["id"]
+            versions = editor.get(
+                "/resources/{resourceType}/{id}/versions",
+                resourceType=resource_type,
+                id=resource_id,
+            )
+            self.assertEqual(versions.status_code, 200)
+            drafts = [
+                version for version in versions.json() if version["status"] == "DRAFT"
+            ]
+            self.assertEqual(len(drafts), 1)
+            version_id = drafts[0]["version_id"]
+            details_path = "/resources/{resourceType}/{id}/versions/{versionId}"
+            draft_details = editor.get(
+                details_path,
+                resourceType=resource_type,
+                id=resource_id,
+                versionId=version_id,
+            )
+            self.assertEqual(draft_details.status_code, 200)
+            self.assertNotIn("rejected_by", draft_details.json())
+            self.assertNotIn("rejected_at", draft_details.json())
+            submitted = editor.post(
+                "/resources/{resourceType}/{id}/versions/{versionId}/submit",
+                resourceType=resource_type,
+                id=resource_id,
+                versionId=version_id,
+            )
+            self.assertEqual(submitted.status_code, 200)
+            rejected = reviewer.post(
+                "/resources/{resourceType}/{id}/versions/{versionId}/reject",
+                resourceType=resource_type,
+                id=resource_id,
+                versionId=version_id,
+                json={"note": "Please update metadata."},
+            )
+            self.assertEqual(rejected.status_code, 200)
+            details = reviewer.get(
+                details_path,
+                resourceType=resource_type,
+                id=resource_id,
+                versionId=version_id,
+            )
+            self.assertEqual(details.status_code, 200)
+            self.assertEqual(details.json()["rejected_by"], reviewer_id)
+            self.assertIsNotNone(details.json()["rejected_at"])
