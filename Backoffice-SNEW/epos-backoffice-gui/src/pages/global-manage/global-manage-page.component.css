@@ -5,20 +5,8 @@
 }
 
 .management-destination h3,
-.management-destination p,
-.future-panel h2,
-.future-panel p {
+.management-destination p {
   margin-top: 0;
-}
-
-.future-panel h2 {
-  margin-bottom: 6px;
-  color: var(--text-strong);
-  font-size: 1.35rem;
-}
-
-.future-panel .subtitle {
-  margin-bottom: 0;
 }
 
 .management-grid {
@@ -123,13 +111,6 @@
   display: flex;
 }
 
-.future-panel {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 24px;
-}
-
 @media (max-width: 700px) {
   .management-grid {
     padding: 4px 0;
@@ -139,9 +120,5 @@
     flex-basis: min(100%, 320px);
     aspect-ratio: auto;
     min-height: 190px;
-  }
-
-  .future-panel {
-    align-items: flex-start;
   }
 }

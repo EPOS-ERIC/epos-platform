@@ -33,15 +33,8 @@
 }
 
 @if (isPanelActive('categories')) {
-  @if (canManageCategorySchemes()) {
-    <section class="future-panel app-card">
-      <span class="management-destination-icon"><app-icon name="settings" [size]="22" /></span>
-      <div>
-        <p class="eyebrow app-badge app-badge--primary">Global Administration</p>
-        <h2>Category Schemes</h2>
-        <p class="subtitle app-muted">Category scheme management will be defined in the next refinement.</p>
-      </div>
-    </section>
+  @if (canManageGroups()) {
+    <app-global-groups-panel />
   }
   @if (canManageCategories()) {
     <app-categories-panel [groups]="groups" [groupsLoading]="groupsLoading" heading="Categories" />

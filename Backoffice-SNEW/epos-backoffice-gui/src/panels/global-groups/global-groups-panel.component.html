@@ -1,0 +1,149 @@
+<section class="groups-card app-card">
+  <div class="groups-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">Administration</p>
+      <h2>Groups</h2>
+      <p class="subtitle app-muted">Create and manage platform groups and their category scheme metadata.</p>
+    </div>
+
+    <div class="groups-header-actions">
+      <label class="group-search">
+        <span class="app-visually-hidden">Search groups</span>
+        <input class="app-input" type="search" placeholder="Search groups" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" />
+      </label>
+      <button type="button" class="app-button app-button--primary add-group-button" (click)="openCreateEditor()">
+        <span aria-hidden="true">+</span>
+        Add New Group
+      </button>
+    </div>
+  </div>
+
+  @if (loadError()) {
+    <div class="groups-message groups-message--error">{{ loadError() }}</div>
+  } @else if (loading()) {
+    <div class="groups-message">Loading groups...</div>
+  } @else if (filteredGroups().length) {
+    <ul class="group-list">
+      @for (group of paginatedGroups(); track group.id) {
+        <li class="group-item">
+          <div class="group-summary">
+            @if (groupLogo(group); as logoPath) {
+              <img class="group-logo" [src]="logoPath" alt="" />
+            } @else {
+              <span class="group-logo group-logo--placeholder" [style.background-color]="group.color || null" aria-hidden="true">{{ group.name.charAt(0).toUpperCase() }}</span>
+            }
+            <div>
+              <h3>{{ group.label || group.name }}</h3>
+              <p>{{ group.name }}</p>
+              <div class="group-meta">
+                <span>{{ group.concept }}</span>
+                <span>Position {{ group.position }}</span>
+                @if (group.page) {
+                  <a [href]="group.page" target="_blank" rel="noopener noreferrer">Website</a>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="group-actions">
+            <button type="button" class="app-button app-button--ghost" (click)="openEditEditor(group)">Edit</button>
+            <button type="button" class="app-button group-delete-button" (click)="openDeleteDialog(group)">Remove</button>
+          </div>
+        </li>
+      }
+    </ul>
+    <app-list-pagination
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      [totalItems]="filteredGroups().length"
+      itemLabel="groups"
+      ariaLabel="Groups pagination"
+      (currentPageChange)="setPage($event)"
+      (pageSizeChange)="changePageSize($event)"
+    />
+  } @else {
+    <div class="groups-message">{{ groups().length ? 'No groups match the search.' : 'No groups found.' }}</div>
+  }
+</section>
+
+@if (editorOpen()) {
+  <div class="group-backdrop" (click)="closeEditor()">
+    <section class="group-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="group-dialog-title" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow app-badge app-badge--primary">{{ editingGroup() ? 'Edit group' : 'New group' }}</p>
+          <h2 id="group-dialog-title">{{ editingGroup() ? 'Edit platform group' : 'Add platform group' }}</h2>
+        </div>
+        <button type="button" class="app-button app-button--ghost" (click)="closeEditor()" [disabled]="editorSaving()">Close</button>
+      </div>
+
+      @if (editorError()) {
+        <div class="groups-message groups-message--error">{{ editorError() }}</div>
+      }
+
+      <form class="group-form" #groupEditorForm="ngForm" (ngSubmit)="saveGroup()">
+        <label class="form-field">
+          <span>Name *</span>
+          <input class="app-input" name="name" required [(ngModel)]="groupForm.name" />
+        </label>
+        <label class="form-field">
+          <span>Label</span>
+          <input class="app-input" name="label" [(ngModel)]="groupForm.label" />
+        </label>
+        <label class="form-field">
+          <span>Concept *</span>
+          <select class="app-input" name="concept" required [(ngModel)]="groupForm.concept">
+            <option value="DATA">Data</option>
+            <option value="SOFTWARE">Software</option>
+            <option value="FACILITIES">Facilities</option>
+          </select>
+        </label>
+        <label class="form-field">
+          <span>Position</span>
+          <input class="app-input" name="position" type="number" min="0" [(ngModel)]="groupForm.position" />
+        </label>
+        <label class="form-field form-field--wide">
+          <span>Description</span>
+          <textarea class="app-input" name="description" rows="3" [(ngModel)]="groupForm.description"></textarea>
+        </label>
+        <label class="form-field">
+          <span>Logo URL</span>
+          <input class="app-input" name="logo" type="url" [(ngModel)]="groupForm.logo" />
+        </label>
+        <label class="form-field">
+          <span>Page URL</span>
+          <input class="app-input" name="page" type="url" [(ngModel)]="groupForm.page" />
+        </label>
+        <label class="form-field form-field--wide">
+          <span>Color</span>
+          <input class="app-input" name="color" placeholder="#0f766e" [(ngModel)]="groupForm.color" />
+        </label>
+        <div class="dialog-actions form-field--wide">
+          <button type="button" class="app-button app-button--ghost" (click)="closeEditor()" [disabled]="editorSaving()">Cancel</button>
+          <button type="submit" class="app-button app-button--primary" [disabled]="groupEditorForm.invalid || editorSaving()">
+            {{ editorSaving() ? 'Saving...' : (editingGroup() ? 'Save changes' : 'Create group') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
+
+@if (pendingDelete(); as group) {
+  <div class="group-backdrop" (click)="closeDeleteDialog()">
+    <section class="group-dialog delete-dialog app-card" role="alertdialog" aria-modal="true" aria-labelledby="delete-group-title" (click)="$event.stopPropagation()">
+      <p class="eyebrow app-badge app-badge--danger">Remove group</p>
+      <h2 id="delete-group-title">Remove {{ group.label || group.name }}?</h2>
+      <p class="subtitle app-muted">This operation cannot be undone and may fail while the group contains memberships, categories, or resources.</p>
+      @if (deleteError()) {
+        <div class="groups-message groups-message--error">{{ deleteError() }}</div>
+      }
+      <div class="dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="closeDeleteDialog()" [disabled]="!!deletingGroupId()">Cancel</button>
+        <button type="button" class="app-button group-delete-button" (click)="deleteGroup()" [disabled]="!!deletingGroupId()">
+          {{ deletingGroupId() ? 'Removing...' : 'Remove group' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

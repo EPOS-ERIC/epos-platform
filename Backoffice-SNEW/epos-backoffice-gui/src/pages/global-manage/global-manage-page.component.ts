@@ -5,6 +5,7 @@ import type { Group } from '../../../generated/backofficeSchemas';
 import { CurrentUserStore } from '../../stores/current-user.store';
 import { CategoriesPanelComponent } from '../../panels/categories/categories-panel.component';
 import { GlobalContactPointsPanelComponent } from '../../panels/global-contact-points/global-contact-points-panel.component';
+import { GlobalGroupsPanelComponent } from '../../panels/global-groups/global-groups-panel.component';
 import { GlobalMembersPanelComponent } from '../../panels/global-members/global-members-panel.component';
 import { GlobalOrganizationsComponent } from '../../panels/global-organizations/global-organizations.component';
 import { GlobalRequestsPanelComponent } from '../../panels/global-requests/global-requests-panel.component';
@@ -23,13 +24,13 @@ const GLOBAL_MANAGE_DESTINATIONS: readonly GlobalManageDestination[] = [
   { panel: 'requests', title: 'Requests', description: 'Review membership and role requests across all groups.', icon: 'inbox' },
   { panel: 'members', title: 'Members', description: 'Manage users, group access, permissions, and global notifications.', icon: 'users' },
   { panel: 'contact-points', title: 'Contact Points', description: 'Manage the contact points available across the platform.', icon: 'at-sign' },
-  { panel: 'categories', title: 'Categories', description: 'Manage category schemes and their category hierarchies.', icon: 'tags' },
+  { panel: 'categories', title: 'Groups & Categories', description: 'Manage platform groups and their category hierarchies.', icon: 'tags' },
   { panel: 'organizations', title: 'Organizations', description: 'Maintain the canonical organizations used by resources.', icon: 'building' }
 ];
 
 @Component({
   selector: 'app-global-manage-page',
-  imports: [AppIconComponent, CategoriesPanelComponent, GlobalContactPointsPanelComponent, GlobalMembersPanelComponent, GlobalOrganizationsComponent, GlobalRequestsPanelComponent, RouterLink],
+  imports: [AppIconComponent, CategoriesPanelComponent, GlobalContactPointsPanelComponent, GlobalGroupsPanelComponent, GlobalMembersPanelComponent, GlobalOrganizationsComponent, GlobalRequestsPanelComponent, RouterLink],
   templateUrl: './global-manage-page.component.html',
   styleUrl: './global-manage-page.component.css'
 })
@@ -49,7 +50,7 @@ export class GlobalManagePageComponent {
   protected readonly canManageNotifications = computed(() => this.hasPermission('global.notification.manage'));
   protected readonly canManageContactPoints = computed(() => this.hasPermission('global.contact_point.manage'));
   protected readonly canManageCategories = computed(() => this.hasPermission('global.category.manage'));
-  protected readonly canManageCategorySchemes = computed(() => this.hasPermission('global.category_scheme.manage'));
+  protected readonly canManageGroups = computed(() => this.hasPermission('global.category_scheme.manage'));
   protected readonly canManageOrganizations = computed(() => this.hasPermission('global.organization.manage'));
   protected readonly destinations = computed(() =>
     GLOBAL_MANAGE_DESTINATIONS.filter(({ panel }) => this.canAccessPanel(panel))
@@ -67,7 +68,7 @@ export class GlobalManagePageComponent {
       case 'requests': return this.canManageMemberships() || this.canManageRoles();
       case 'members': return this.canManageMemberships() || this.canManageRoles() || this.canManagePermissions() || this.canManageNotifications();
       case 'contact-points': return this.canManageContactPoints();
-      case 'categories': return this.canManageCategories() || this.canManageCategorySchemes();
+      case 'categories': return this.canManageGroups() || this.canManageCategories();
       case 'organizations': return this.canManageOrganizations();
     }
   }

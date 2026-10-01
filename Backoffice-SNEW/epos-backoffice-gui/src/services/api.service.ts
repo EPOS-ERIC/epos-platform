@@ -8,6 +8,7 @@ import type {
   ContactPoint,
   CreateCategoryRequest,
   CreateContactPointRequest,
+  CreateGroupRequest,
   CreateMembershipRequest,
   CreateRoleRequest,
   CreateOrganizationRequest,
@@ -29,6 +30,7 @@ import type {
   RejectResourceRequest,
   ReplaceCategoryRequest,
   ReplaceContactPointRequest,
+  ReplaceGroupRequest,
   ReplaceOrganizationRequest,
   WriteResult,
   DatasetDraftMetadata,
@@ -363,6 +365,30 @@ export class ApiService {
 
   getGroups(): Observable<Group[]> {
     return this.http.get<Group[]>(`${this.baseUrl}/groups`);
+  }
+
+  createGroup(payload: CreateGroupRequest): Observable<Group> {
+    return this.http.post<Group>(`${this.baseUrl}/groups`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  replaceGroup(id: string, payload: ReplaceGroupRequest): Observable<Group> {
+    return this.http.put<Group>(`${this.baseUrl}/groups/${encodeURIComponent(id)}`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  deleteGroup(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/groups/${encodeURIComponent(id)}`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
   }
 
   listPermissions(): Observable<Permission[]> {

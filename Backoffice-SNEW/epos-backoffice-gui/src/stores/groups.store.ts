@@ -18,6 +18,21 @@ export class GroupsStore {
     return this.initialization;
   }
 
+  replaceAll(groups: Group[]): void {
+    this.groups.set(groups);
+  }
+  // Updates or insert the Group
+  upsert(group: Group): void {
+    this.groups.update((groups) => {
+      const existing = groups.some(({ id }) => id === group.id);
+      return existing ? groups.map((item) => item.id === group.id ? group : item) : [...groups, group];
+    });
+  }
+
+  remove(groupId: string): void {
+    this.groups.update((groups) => groups.filter(({ id }) => id !== groupId));
+  }
+
   private async loadGroups(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);

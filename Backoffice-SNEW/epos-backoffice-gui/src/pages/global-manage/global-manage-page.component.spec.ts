@@ -9,7 +9,10 @@ import { GlobalManagePageComponent } from './global-manage-page.component';
 
 describe('GlobalManagePageComponent', () => {
   const currentUserStore = { hasGlobalPermission: vi.fn() };
-  const apiService = { getContactPoints: vi.fn(() => of([])) };
+  const apiService = {
+    getContactPoints: vi.fn(() => of([])),
+    getGroups: vi.fn(() => of([]))
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,6 +44,42 @@ describe('GlobalManagePageComponent', () => {
     fixture.detectChanges();
 
     expect(destinationTitles(fixture.nativeElement)).toEqual(['Categories']);
+  });
+
+  it('shows the categories destination only to a category manager', () => {
+    currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
+      permission === 'global.category.manage'
+    );
+    const fixture = TestBed.createComponent(GlobalManagePageComponent);
+    fixture.detectChanges();
+
+    expect(destinationTitles(fixture.nativeElement)).toEqual(['Categories']);
+  });
+
+  it('opens groups management within categories from a deep link', () => {
+    currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
+      permission === 'global.category_scheme.manage'
+    );
+    const fixture = TestBed.createComponent(GlobalManagePageComponent);
+    fixture.componentRef.setInput('panel', 'categories');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.management-landing')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Create and manage platform groups');
+    expect(apiService.getGroups).toHaveBeenCalled();
+  });
+
+  it('shows both groups and categories panels when both permissions are present', () => {
+    currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
+      permission === 'global.category_scheme.manage' || permission === 'global.category.manage'
+    );
+    const fixture = TestBed.createComponent(GlobalManagePageComponent);
+    fixture.componentRef.setInput('panel', 'categories');
+    fixture.componentRef.setInput('groups', []);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-global-groups-panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-categories-panel')).not.toBeNull();
   });
 
   it('opens contact point management from a deep link', () => {
