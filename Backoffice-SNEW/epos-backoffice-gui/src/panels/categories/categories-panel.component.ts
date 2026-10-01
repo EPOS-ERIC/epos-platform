@@ -6,6 +6,7 @@ import { EMPTY, Subscription, catchError, finalize, of } from 'rxjs';
 import type { Category, CreateCategoryRequest, Group, ReplaceCategoryRequest } from '../../../generated/backofficeSchemas';
 import { ApiService } from '../../services/api.service';
 import { groupIconPath } from '../../group-icons';
+import { ListPaginationComponent } from '../../shared/ui/list-pagination.component';
 
 type CategoryRow = {
   category: Category;
@@ -15,7 +16,7 @@ type CategoryRow = {
 
 @Component({
   selector: 'app-categories-panel',
-  imports: [FormsModule],
+  imports: [FormsModule, ListPaginationComponent],
   templateUrl: './categories-panel.component.html',
   styleUrl: './categories-panel.component.css'
 })
@@ -47,6 +48,9 @@ export class CategoriesPanelComponent {
   protected readonly categoriesLoading = signal(false);
   protected readonly categoriesError = signal('');
   protected readonly searchQuery = signal('');
+  protected readonly currentPage = signal(1);
+  protected readonly pageSize = signal(10);
+  protected readonly pageSizeOptions = [10, 25, 50];
   protected readonly editorOpen = signal(false);
   protected readonly editingCategory = signal<Category | null>(null);
   protected readonly editorSaving = signal(false);
@@ -102,6 +106,11 @@ export class CategoriesPanelComponent {
       ? this.categoryRows().filter(({ category, parentName }) => `${category.name} ${parentName}`.toLowerCase().includes(query))
       : this.categoryRows();
   });
+  protected readonly paginatedCategoryRows = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.filteredCategoryRows().slice(start, start + this.pageSize());
+  });
+  private readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredCategoryRows().length / this.pageSize())));
 
   @HostListener('document:keydown.escape')
   protected closeOnEscape(): void {
@@ -120,6 +129,7 @@ export class CategoriesPanelComponent {
     this.selectedGroupId.set(groupId);
     this.schemeLogoFailed = false;
     this.searchQuery.set('');
+    this.currentPage.set(1);
     this.closeEditor();
     this.closeDeleteDialog();
     this.loadCategories(groupId);
@@ -135,6 +145,20 @@ export class CategoriesPanelComponent {
     this.parentCategoryId = '';
     this.editorError.set('');
     this.editorOpen.set(true);
+  }
+
+  protected onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+    this.currentPage.set(1);
+  }
+
+  protected setPage(page: number): void {
+    this.currentPage.set(page);
+  }
+
+  protected changePageSize(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.currentPage.set(1);
   }
 
   protected schemeLogo(group: Group): string | null {
@@ -292,6 +316,9 @@ export class CategoriesPanelComponent {
           return of([] as Category[]);
         })
       )
-      .subscribe((categories) => this.categories.set(categories));
+      .subscribe((categories) => {
+        this.categories.set(categories);
+        this.currentPage.update((page) => Math.min(page, this.totalPages()));
+      });
   }
 }

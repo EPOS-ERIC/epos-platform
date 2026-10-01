@@ -44,6 +44,42 @@ describe('GlobalContactPointsPanelComponent', () => {
     expect(element.textContent).toContain('No contact points match the search.');
   });
 
+  it('paginates contact points in groups of ten and resets the page when searching', async () => {
+    const contactPoints = Array.from({ length: 12 }, (_, index): ContactPoint => ({
+      id: `contact-${index + 1}`,
+      email: `contact-${String(index + 1).padStart(2, '0')}@example.org`,
+      role: 'Support'
+    }));
+    apiService.getContactPoints.mockReturnValue(of(contactPoints));
+    const fixture = TestBed.createComponent(GlobalContactPointsPanelComponent);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelectorAll('.contact-point-item')).toHaveLength(10);
+    expect(element.textContent).not.toContain('contact-11@example.org');
+
+    clickButton(element, 'Next');
+    fixture.detectChanges();
+    expect(element.querySelectorAll('.contact-point-item')).toHaveLength(2);
+    expect(element.textContent).toContain('contact-11@example.org');
+
+    const pageSize = element.querySelector<HTMLSelectElement>('.page-size-control select')!;
+    pageSize.value = '25';
+    pageSize.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(element.querySelectorAll('.contact-point-item')).toHaveLength(12);
+    expect(element.textContent).toContain('Page 1 of 1');
+
+    const search = element.querySelector<HTMLInputElement>('input[type="search"]')!;
+    search.value = 'contact-01';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(element.textContent).toContain('Page 1 of 1');
+    expect(element.textContent).toContain('contact-01@example.org');
+  });
+
   it('creates a contact point from the add dialog', async () => {
     const created: ContactPoint = { id: 'contact-2', email: 'help@example.org', role: 'Help desk' };
     apiService.createContactPoint.mockReturnValue(of(created));

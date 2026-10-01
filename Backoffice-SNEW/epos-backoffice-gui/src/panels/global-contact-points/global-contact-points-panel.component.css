@@ -57,6 +57,13 @@ h3 {
   width: min(340px, 100%);
 }
 
+.contact-points-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .contact-point-list {
   display: grid;
   margin: 0;
@@ -109,8 +116,7 @@ h3 {
   background: #b91c1c;
 }
 
-.contact-points-message,
-.contact-points-footer {
+.contact-points-message {
   padding: 18px 20px;
   color: var(--text-muted);
 }
@@ -119,22 +125,10 @@ h3 {
   color: #b91c1c;
 }
 
-.contact-points-footer {
-  font-size: 0.82rem;
-}
-
 .add-contact-point-button {
-  position: fixed;
-  right: 28px;
-  bottom: 28px;
-  z-index: 20;
+  flex: 0 0 auto;
   gap: 8px;
-  padding: 12px 18px;
-  border-color: var(--olive-700);
-  border-radius: 999px;
-  background: var(--olive-700);
-  color: #fff;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+  white-space: nowrap;
 }
 
 .add-contact-point-button span {
@@ -201,6 +195,8 @@ h3 {
   }
 
   .contact-point-search,
+  .contact-points-header-actions,
+  .add-contact-point-button,
   .contact-point-actions,
   .contact-point-actions .app-button,
   .dialog-header .app-button {
@@ -216,8 +212,8 @@ h3 {
     padding: 16px;
   }
 
-  .add-contact-point-button {
-    right: 16px;
-    bottom: 16px;
+  .contact-points-header-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

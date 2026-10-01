@@ -6,17 +6,23 @@
       <p class="subtitle app-muted">Create and manage canonical organizations used across platform resources.</p>
     </div>
 
-    <label class="organization-search">
-      <span class="visually-hidden">Search organizations</span>
-      <input
-        class="app-input"
-        type="search"
-        placeholder="Search organizations"
-        [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event)"
-        [ngModelOptions]="{ standalone: true }"
-      />
-    </label>
+    <div class="organizations-header-actions">
+      <label class="organization-search">
+        <span class="visually-hidden">Search organizations</span>
+        <input
+          class="app-input"
+          type="search"
+          placeholder="Search organizations"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+          [ngModelOptions]="{ standalone: true }"
+        />
+      </label>
+      <button type="button" class="app-button app-button--primary add-organization-button" (click)="openCreateEditor()">
+        <span aria-hidden="true">+</span>
+        Add New Organization
+      </button>
+    </div>
   </div>
 
   @if (organizationsError()) {
@@ -25,7 +31,7 @@
     <div class="organizations-message">Loading organizations...</div>
   } @else if (filteredOrganizations().length) {
     <ul class="organization-list">
-      @for (organization of filteredOrganizations(); track organization.id) {
+      @for (organization of paginatedOrganizations(); track organization.id) {
         <li class="organization-item">
           <div class="organization-summary">
             @if (organization.logo_url) {
@@ -58,16 +64,20 @@
         </li>
       }
     </ul>
-    <div class="organizations-footer">Showing {{ filteredOrganizations().length }} of {{ organizations().length }} organizations</div>
+    <app-list-pagination
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      [totalItems]="filteredOrganizations().length"
+      itemLabel="organizations"
+      ariaLabel="Organizations pagination"
+      (currentPageChange)="setPage($event)"
+      (pageSizeChange)="changePageSize($event)"
+    />
   } @else {
     <div class="organizations-message">No organizations found.</div>
   }
 </section>
-
-<button type="button" class="app-button add-organization-button" (click)="openCreateEditor()">
-  <span aria-hidden="true">+</span>
-  Add organization
-</button>
 
 @if (editorOpen()) {
   <div class="organization-backdrop" (click)="closeEditor()">

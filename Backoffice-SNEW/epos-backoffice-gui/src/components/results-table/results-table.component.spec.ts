@@ -122,7 +122,38 @@ describe('ResultsTableComponent', () => {
     expect(fixture.nativeElement.querySelector('.subtitle')?.textContent?.trim()).toBe('Resources across all groups you belong to.');
     expect(fixture.nativeElement.querySelector('.group-summary-logo')).toBeNull();
     expect(fixture.nativeElement.querySelector('tbody tr')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.table-footer')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-list-pagination')).toBeTruthy();
     expect((fixture.nativeElement.querySelector('.item-link') as HTMLAnchorElement).getAttribute('href')).toBe(`/facilities/resource-id/version-id?groupId=${groupId}&dataType=software-source-code&returnUrl=%2Fall`);
+  });
+
+  it('uses the shared pagination component and changes the page size', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResultsTableComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ResultsTableComponent);
+    const items = Array.from({ length: 12 }, (_, index): DiscoveryItem => ({
+      type: 'dataset',
+      resource_id: `resource-${index + 1}`,
+      version_id: `version-${index + 1}`,
+      name: `Dataset ${index + 1}`,
+      status: 'PUBLISHED',
+      updated_at: '2026-09-10T07:34:26.486Z',
+      concept: 'DATA',
+      group: { id: 'group-id', name: 'Group' }
+    }));
+
+    fixture.componentRef.setInput('selectedGroupId', 'group-id');
+    fixture.componentRef.setInput('discoveryItems', items);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(10);
+    const pageSize = fixture.nativeElement.querySelector('.page-size-control select') as HTMLSelectElement;
+    pageSize.value = '25';
+    pageSize.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(12);
+    expect(fixture.nativeElement.textContent).toContain('Showing 1-12 of 12 results');
   });
 });

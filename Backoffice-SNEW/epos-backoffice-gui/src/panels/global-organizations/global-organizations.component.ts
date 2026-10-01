@@ -5,6 +5,7 @@ import { EMPTY, catchError, finalize, of } from 'rxjs';
 
 import type { CanonicalOrganization, CreateOrganizationRequest, ReplaceOrganizationRequest } from '../../../generated/backofficeSchemas';
 import { ApiService } from '../../services/api.service';
+import { ListPaginationComponent } from '../../shared/ui/list-pagination.component';
 
 type OrganizationForm = {
   name: string;
@@ -32,7 +33,7 @@ const emptyOrganizationForm = (): OrganizationForm => ({
 
 @Component({
   selector: 'app-global-organizations',
-  imports: [FormsModule],
+  imports: [FormsModule, ListPaginationComponent],
   templateUrl: './global-organizations.component.html',
   styleUrl: './global-organizations.component.css'
 })
@@ -44,6 +45,9 @@ export class GlobalOrganizationsComponent {
   protected readonly organizationsLoading = signal(true);
   protected readonly organizationsError = signal('');
   protected readonly searchQuery = signal('');
+  protected readonly currentPage = signal(1);
+  protected readonly pageSize = signal(10);
+  protected readonly pageSizeOptions = [10, 25, 50];
   protected readonly editingOrganization = signal<CanonicalOrganization | null>(null);
   protected readonly editorOpen = signal(false);
   protected readonly editorSaving = signal(false);
@@ -66,6 +70,11 @@ export class GlobalOrganizationsComponent {
 
     return [...organizations].sort((left, right) => left.name.localeCompare(right.name));
   });
+  protected readonly paginatedOrganizations = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.filteredOrganizations().slice(start, start + this.pageSize());
+  });
+  private readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredOrganizations().length / this.pageSize())));
 
   constructor() {
     this.loadOrganizations();
@@ -86,6 +95,20 @@ export class GlobalOrganizationsComponent {
     this.logoPreviewFailed = false;
     this.editorError.set('');
     this.editorOpen.set(true);
+  }
+
+  protected onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+    this.currentPage.set(1);
+  }
+
+  protected setPage(page: number): void {
+    this.currentPage.set(page);
+  }
+
+  protected changePageSize(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.currentPage.set(1);
   }
 
   protected openEditEditor(organization: CanonicalOrganization): void {
@@ -219,6 +242,7 @@ export class GlobalOrganizationsComponent {
       )
       .subscribe(() => {
         this.organizations.update((organizations) => organizations.filter(({ id }) => id !== organization.id));
+        this.currentPage.update((page) => Math.min(page, this.totalPages()));
         this.pendingDelete.set(null);
         this.deleteError.set('');
       });

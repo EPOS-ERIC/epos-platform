@@ -3,10 +3,11 @@ import { RouterLink } from '@angular/router';
 
 import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
+import { ListPaginationComponent } from '../../shared/ui/list-pagination.component';
 
 @Component({
   selector: 'app-results-table',
-  imports: [RouterLink],
+  imports: [ListPaginationComponent, RouterLink],
   templateUrl: './results-table.component.html',
   styleUrl: './results-table.component.css'
 })
@@ -38,24 +39,12 @@ export class ResultsTableComponent implements OnChanges {
     return this.discoveryItems?.slice(start, start + this.pageSize) ?? [];
   }
 
-  protected get totalPages(): number {
-    return Math.max(1, Math.ceil((this.discoveryItems?.length ?? 0) / this.pageSize));
-  }
-
-  protected get firstResult(): number {
-    return (this.currentPage - 1) * this.pageSize + 1;
-  }
-
-  protected get lastResult(): number {
-    return Math.min(this.currentPage * this.pageSize, this.discoveryItems?.length ?? 0);
-  }
-
   protected setPage(page: number): void {
-    this.currentPage = Math.min(Math.max(page, 1), this.totalPages);
+    this.currentPage = page;
   }
 
-  protected changePageSize(event: Event): void {
-    this.pageSize = Number((event.target as HTMLSelectElement).value);
+  protected changePageSize(pageSize: number): void {
+    this.pageSize = pageSize;
     this.currentPage = 1;
   }
 

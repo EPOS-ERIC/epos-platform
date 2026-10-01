@@ -6,10 +6,16 @@
       <p class="subtitle app-muted">Create and manage reusable contact points available across platform resources.</p>
     </div>
 
-    <label class="contact-point-search">
-      <span class="app-visually-hidden">Search contact points</span>
-      <input class="app-input" type="search" placeholder="Search by email or role" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" [ngModelOptions]="{ standalone: true }" />
-    </label>
+    <div class="contact-points-header-actions">
+      <label class="contact-point-search">
+        <span class="app-visually-hidden">Search contact points</span>
+        <input class="app-input" type="search" placeholder="Search by email or role" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" />
+      </label>
+      <button type="button" class="app-button app-button--primary add-contact-point-button" (click)="openCreateEditor()">
+        <span aria-hidden="true">+</span>
+        Add New Contact Point
+      </button>
+    </div>
   </div>
 
   @if (loadError()) {
@@ -18,7 +24,7 @@
     <div class="contact-points-message">Loading contact points...</div>
   } @else if (filteredContactPoints().length) {
     <ul class="contact-point-list">
-      @for (contactPoint of filteredContactPoints(); track contactPoint.id) {
+      @for (contactPoint of paginatedContactPoints(); track contactPoint.id) {
         <li class="contact-point-item">
           <div class="contact-point-summary">
             <span class="contact-point-mark"><app-icon name="at-sign" [size]="22" /></span>
@@ -34,16 +40,20 @@
         </li>
       }
     </ul>
-    <div class="contact-points-footer">Showing {{ filteredContactPoints().length }} of {{ contactPoints().length }} contact points</div>
+    <app-list-pagination
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      [totalItems]="filteredContactPoints().length"
+      itemLabel="contact points"
+      ariaLabel="Contact points pagination"
+      (currentPageChange)="setPage($event)"
+      (pageSizeChange)="changePageSize($event)"
+    />
   } @else {
     <div class="contact-points-message">{{ contactPoints().length ? 'No contact points match the search.' : 'No contact points found.' }}</div>
   }
 </section>
-
-<button type="button" class="app-button add-contact-point-button" (click)="openCreateEditor()">
-  <span aria-hidden="true">+</span>
-  Add New Contact Point
-</button>
 
 @if (editorOpen()) {
   <div class="contact-point-backdrop" (click)="closeEditor()">

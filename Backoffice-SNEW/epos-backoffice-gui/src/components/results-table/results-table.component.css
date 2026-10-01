@@ -76,8 +76,7 @@ h2 {
 }
 
 .action-button,
-.ghost-button,
-.pager-button {
+.ghost-button {
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
@@ -268,68 +267,13 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
-.table-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px 20px;
-  color: var(--text-muted);
-}
-
-.page-size-control,
-.pager {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.page-size-control label,
-.page-indicator {
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.page-size-control select {
-  padding: 7px 28px 7px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
-}
-
-.pager-button {
-  padding: 8px 12px;
-}
-
-.pager-button--icon {
-  min-width: 36px;
-  padding-inline: 9px;
-  font-size: 1.05rem;
-  line-height: 1;
-}
-
-.pager-button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.pager-button--active {
-  background: var(--olive-700);
-  color: #ffffff;
-  border-color: var(--olive-700);
-}
-
 @media (max-width: 900px) {
-  .table-header,
-  .table-footer {
+  .table-header {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .toolbar,
-  .pager {
+  .toolbar {
     flex-wrap: wrap;
   }
 

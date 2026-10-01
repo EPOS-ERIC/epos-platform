@@ -38,17 +38,23 @@
           <p>{{ group.description }}</p>
         }
       </div>
-      <label class="category-search">
-        <span class="visually-hidden">Search categories</span>
-        <input
-          class="app-input"
-          type="search"
-          placeholder="Search categories"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-          [ngModelOptions]="{ standalone: true }"
-        />
-      </label>
+      <div class="category-header-actions">
+        <label class="category-search">
+          <span class="visually-hidden">Search categories</span>
+          <input
+            class="app-input"
+            type="search"
+            placeholder="Search categories"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchChange($event)"
+            [ngModelOptions]="{ standalone: true }"
+          />
+        </label>
+        <button type="button" class="app-button app-button--primary add-category-button" (click)="openCreateEditor()">
+          <span aria-hidden="true">+</span>
+          Add New Category
+        </button>
+      </div>
     </div>
 
     @if (categoriesError()) {
@@ -57,7 +63,7 @@
       <div class="categories-admin-message">Loading category scheme...</div>
     } @else if (filteredCategoryRows().length) {
       <ul class="category-tree-list">
-        @for (row of filteredCategoryRows(); track row.category.id) {
+        @for (row of paginatedCategoryRows(); track row.category.id) {
           <li class="category-tree-item">
             <div class="category-tree-summary" [style.padding-left.px]="20 + row.depth * 24">
               <span class="tree-connector" aria-hidden="true"></span>
@@ -73,7 +79,16 @@
           </li>
         }
       </ul>
-      <div class="categories-admin-footer">Showing {{ filteredCategoryRows().length }} of {{ categories().length }} categories</div>
+      <app-list-pagination
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions"
+        [totalItems]="filteredCategoryRows().length"
+        itemLabel="categories"
+        ariaLabel="Categories pagination"
+        (currentPageChange)="setPage($event)"
+        (pageSizeChange)="changePageSize($event)"
+      />
     } @else {
       <div class="categories-admin-message">{{ categories().length ? 'No categories match the search.' : 'This category scheme is empty.' }}</div>
     }
@@ -81,11 +96,6 @@
     <div class="categories-admin-message">{{ groupsLoading ? 'Loading category schemes...' : 'No category schemes are available.' }}</div>
   }
 </section>
-
-<button type="button" class="app-button add-category-button" (click)="openCreateEditor()" [disabled]="!selectedGroupId()">
-  <span aria-hidden="true">+</span>
-  Add category
-</button>
 
 @if (editorOpen()) {
   <div class="category-backdrop" (click)="closeEditor()">

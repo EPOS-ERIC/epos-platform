@@ -10,6 +10,7 @@ import type {
 } from '../../../generated/backofficeSchemas';
 import { ApiService } from '../../services/api.service';
 import { AppIconComponent } from '../../shared/ui/app-icon.component';
+import { ListPaginationComponent } from '../../shared/ui/list-pagination.component';
 
 type ContactPointForm = {
   email: string;
@@ -20,7 +21,7 @@ const emptyContactPointForm = (): ContactPointForm => ({ email: '', role: '' });
 
 @Component({
   selector: 'app-global-contact-points-panel',
-  imports: [AppIconComponent, FormsModule],
+  imports: [AppIconComponent, FormsModule, ListPaginationComponent],
   templateUrl: './global-contact-points-panel.component.html',
   styleUrl: './global-contact-points-panel.component.css'
 })
@@ -32,6 +33,9 @@ export class GlobalContactPointsPanelComponent {
   protected readonly loading = signal(true);
   protected readonly loadError = signal('');
   protected readonly searchQuery = signal('');
+  protected readonly currentPage = signal(1);
+  protected readonly pageSize = signal(10);
+  protected readonly pageSizeOptions = [10, 25, 50];
   protected readonly editorOpen = signal(false);
   protected readonly editingContactPoint = signal<ContactPoint | null>(null);
   protected readonly editorSaving = signal(false);
@@ -48,6 +52,11 @@ export class GlobalContactPointsPanelComponent {
       : this.contactPoints();
     return [...contactPoints].sort((left, right) => left.email.localeCompare(right.email));
   });
+  protected readonly paginatedContactPoints = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.filteredContactPoints().slice(start, start + this.pageSize());
+  });
+  private readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredContactPoints().length / this.pageSize())));
 
   constructor() {
     this.loadContactPoints();
@@ -81,6 +90,20 @@ export class GlobalContactPointsPanelComponent {
     this.editorOpen.set(false);
     this.editingContactPoint.set(null);
     this.editorError.set('');
+  }
+
+  protected onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+    this.currentPage.set(1);
+  }
+
+  protected setPage(page: number): void {
+    this.currentPage.set(page);
+  }
+
+  protected changePageSize(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.currentPage.set(1);
   }
 
   protected saveContactPoint(): void {
@@ -149,6 +172,7 @@ export class GlobalContactPointsPanelComponent {
       .subscribe(() => {
         // Update contact-points list
         this.contactPoints.update((contactPoints) => contactPoints.filter(({ id }) => id !== contactPoint.id));
+        this.currentPage.update((page) => Math.min(page, this.totalPages()));
         this.pendingDelete.set(null);
       });
   }
