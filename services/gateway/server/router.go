@@ -34,7 +34,7 @@ func NewRouter(
 		r.Use(middleware.CORSAllowOrigin(corsAllowOrigin))
 	}
 	r.Use(middleware.Logger(log))
-	r.Use(middleware.Recoverer(log))
+	r.Use(middleware.RecovererWithResponse(log, handlers.WritePanicProblem))
 
 	// TODO: maybe we can have this endpoint be outside of the logger middleware so that we can siplify the middleware to not manually exclude health logs
 	r.Get("/health", health)

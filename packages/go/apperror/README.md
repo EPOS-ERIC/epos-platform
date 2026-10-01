@@ -23,6 +23,6 @@ Retain causes for server-side logging and tracing. Do not use cause text as clie
 
 ## Transport boundaries
 
-This package stays independent of transport protocols. Adapter packages and service boundaries map application outcomes to protocol-native statuses and safe response shapes. Keep HTTP and gRPC mappings aligned with the shared classification; expose only the safe outcome, explanation, and field path.
+This package owns the shared application classification and its HTTP status mapping through `HTTPStatus`. Service boundaries encode HTTP response shapes; adapter packages such as `grpc/` map application errors to protocol-specific statuses and details. Keep mappings aligned with the shared classification, and expose only the safe outcome, explanation, and field path.
 
 See Gateway and Metadata Lifecycle `AGENTS.md` files for service-specific boundary responsibilities.

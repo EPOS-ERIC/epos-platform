@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/ogen-go/ogen/ogenerrors"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -17,6 +18,15 @@ func NewErrorHandler(log *slog.Logger) ogenerrors.ErrorHandler {
 	return func(ctx context.Context, w http.ResponseWriter, _ *http.Request, err error) {
 		writeError(log, ctx, w, err)
 	}
+}
+
+// WritePanicProblem writes a safe internal Problem response for recovered panics.
+func WritePanicProblem(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	_, problem := problemResponse(ctx, apperror.Default(apperror.CodeInternal))
+	w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
+	w.WriteHeader(http.StatusInternalServerError)
+	return json.NewEncoder(w).Encode(&problem)
 }
 
 // RequestTimeout gives each request a deadline. Handlers and downstream calls
