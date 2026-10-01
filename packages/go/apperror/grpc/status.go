@@ -21,9 +21,7 @@ func Code(code apperror.Code) codes.Code {
 		return codes.PermissionDenied
 	case apperror.CodeNotFound:
 		return codes.NotFound
-	case apperror.CodeConflict:
-		return codes.FailedPrecondition
-	case apperror.CodeInvalidTransition:
+	case apperror.CodeConflict, apperror.CodeInvalidTransition:
 		return codes.FailedPrecondition
 	case apperror.CodeUpstreamTimeout:
 		return codes.DeadlineExceeded
@@ -36,18 +34,13 @@ func Code(code apperror.Code) codes.Code {
 
 // ToStatus encodes an AppError as a sanitized gRPC status with ErrorInfo.
 func ToStatus(err *apperror.AppError) error {
-	code := err.Code
-	if !apperror.Known(code) {
-		code = apperror.CodeInternal
-	}
-	safe := apperror.New(code, err.Detail)
+	safe := apperror.New(err.Code, err.Detail)
 	safe.Target = err.Target
-	grpcStatus := status.New(Code(code), safe.Detail)
+	grpcStatus := status.New(Code(safe.Code), safe.Detail)
 	withDetails, detailErr := grpcStatus.WithDetails(&errdetails.ErrorInfo{
-		Reason: string(code),
+		Reason: string(safe.Code),
 		Domain: ErrorInfoDomain,
 		Metadata: map[string]string{
-			"detail": safe.Detail,
 			"target": safe.Target,
 		},
 	})
@@ -72,7 +65,7 @@ func FromStatus(err error) (*apperror.AppError, bool) {
 		if !apperror.Known(code) {
 			return nil, false
 		}
-		appErr := apperror.Wrap(code, info.Metadata["detail"], err)
+		appErr := apperror.Wrap(code, grpcStatus.Message(), err)
 		appErr.Target = info.Metadata["target"]
 		return appErr, true
 	}

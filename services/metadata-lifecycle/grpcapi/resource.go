@@ -44,7 +44,7 @@ func (s *ResourceServer) CreateResource(ctx context.Context, request *metadatali
 	if err != nil {
 		return nil, err
 	}
-	groupID, err := parseUUID(request.GetGroupId(), "group id")
+	groupID, err := parseUUIDAt(request.GetGroupId(), "group id", "groupId")
 	if err != nil {
 		return nil, err
 	}
@@ -98,11 +98,11 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 	if request == nil {
 		return nil, apperror.New(apperror.CodeValidationFailed, "resource version request is required")
 	}
-	resourceID, err := parseUUID(request.GetResourceId(), "resource id")
+	resourceID, err := parseUUIDAt(request.GetResourceId(), "resource id", "id")
 	if err != nil {
 		return nil, err
 	}
-	versionID, err := parseUUID(request.GetVersionId(), "version id")
+	versionID, err := parseUUIDAt(request.GetVersionId(), "version id", "versionId")
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (s *ResourceServer) ListResourceVersions(ctx context.Context, request *meta
 	if err != nil {
 		return nil, err
 	}
-	resourceID, err := parseUUID(request.GetResourceId(), "resource id")
+	resourceID, err := parseUUIDAt(request.GetResourceId(), "resource id", "id")
 	if err != nil {
 		return nil, err
 	}
@@ -180,11 +180,11 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 	if err != nil {
 		return nil, err
 	}
-	resourceID, err := parseUUID(request.GetResourceId(), "resource id")
+	resourceID, err := parseUUIDAt(request.GetResourceId(), "resource id", "id")
 	if err != nil {
 		return nil, err
 	}
-	versionID, err := parseUUID(request.GetVersionId(), "version id")
+	versionID, err := parseUUIDAt(request.GetVersionId(), "version id", "versionId")
 	if err != nil {
 		return nil, err
 	}
@@ -518,11 +518,11 @@ func (s *ResourceServer) CopyPublishedResource(ctx context.Context, request *met
 	if err != nil {
 		return nil, err
 	}
-	sourceID, err := parseUUID(request.GetResourceId(), "resource id")
+	sourceID, err := parseUUIDAt(request.GetResourceId(), "resource id", "id")
 	if err != nil {
 		return nil, err
 	}
-	groupID, err := parseUUID(request.GetGroupId(), "group id")
+	groupID, err := parseUUIDAt(request.GetGroupId(), "group id", "groupId")
 	if err != nil {
 		return nil, err
 	}
@@ -567,11 +567,11 @@ func (s *ResourceServer) lifecycleRequest(ctx context.Context, request resourceV
 	if err != nil {
 		return domain.Actor(""), uuid.Nil, uuid.Nil, nil, err
 	}
-	id, err := parseUUID(request.GetResourceId(), "resource id")
+	id, err := parseUUIDAt(request.GetResourceId(), "resource id", "id")
 	if err != nil {
 		return domain.Actor(""), uuid.Nil, uuid.Nil, nil, err
 	}
-	version, err := parseUUID(request.GetVersionId(), "version id")
+	version, err := parseUUIDAt(request.GetVersionId(), "version id", "versionId")
 	if err != nil {
 		return domain.Actor(""), uuid.Nil, uuid.Nil, nil, err
 	}
@@ -620,7 +620,7 @@ func (s *ResourceServer) draftResource(ctx context.Context, request draftResourc
 	if err != nil {
 		return nil, err
 	}
-	id, err := parseUUID(request.GetResourceId(), "resource id")
+	id, err := parseUUIDAt(request.GetResourceId(), "resource id", "id")
 	if err != nil {
 		return nil, err
 	}
@@ -1025,15 +1025,15 @@ func floatEnumInput(values []*metadatalifecyclev1.FloatEnumOption) ([]domain.Flo
 }
 
 func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput, error) {
-	contactPoints, err := resourceParseUUIDs(value.GetContactPoints(), "dataset contact point")
+	contactPoints, err := resourceParseUUIDs(value.GetContactPoints(), "dataset contact point", "contact_points")
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
-	providers, err := resourceParseUUIDs(value.GetProviders(), "dataset provider")
+	providers, err := resourceParseUUIDs(value.GetProviders(), "dataset provider", "providers")
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
-	categories, err := resourceParseUUIDs(value.GetCategories(), "dataset category")
+	categories, err := resourceParseUUIDs(value.GetCategories(), "dataset category", "categories")
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
@@ -1126,13 +1126,13 @@ func webServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServ
 	if value == nil {
 		return domain.WebServiceInput{}, apperror.New(apperror.CodeValidationFailed, "web service is required")
 	}
-	contactPoints, err := resourceParseUUIDs(value.GetContactPoints(), "web service contact point")
+	contactPoints, err := resourceParseUUIDs(value.GetContactPoints(), "web service contact point", "contact_points")
 	if err != nil {
 		return domain.WebServiceInput{}, err
 	}
 	var provider *uuid.UUID
 	if value.ProviderId != nil {
-		id, err := parseUUID(value.GetProviderId(), "web service provider")
+		id, err := parseUUIDAt(value.GetProviderId(), "web service provider", "provider")
 		if err != nil {
 			return domain.WebServiceInput{}, err
 		}
@@ -1481,15 +1481,15 @@ func documentationInput(value *metadatalifecyclev1.Documentation) (*domain.Docum
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
 func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationInput) (domain.SoftwareApplicationInput, error) {
-	creators, err := resourceParseUUIDs(value.GetCreators(), "software application creator")
+	creators, err := resourceParseUUIDs(value.GetCreators(), "software application creator", "creators")
 	if err != nil {
 		return domain.SoftwareApplicationInput{}, err
 	}
-	categories, err := resourceParseUUIDs(value.GetCategories(), "software application category")
+	categories, err := resourceParseUUIDs(value.GetCategories(), "software application category", "categories")
 	if err != nil {
 		return domain.SoftwareApplicationInput{}, err
 	}
-	contacts, err := resourceParseUUIDs(value.GetContactPoints(), "software application contact point")
+	contacts, err := resourceParseUUIDs(value.GetContactPoints(), "software application contact point", "contact_points")
 	if err != nil {
 		return domain.SoftwareApplicationInput{}, err
 	}
@@ -1520,15 +1520,15 @@ func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationInpu
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
 func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeInput, error) {
-	creators, err := resourceParseUUIDs(value.GetCreators(), "software source code creator")
+	creators, err := resourceParseUUIDs(value.GetCreators(), "software source code creator", "creators")
 	if err != nil {
 		return domain.SoftwareSourceCodeInput{}, err
 	}
-	categories, err := resourceParseUUIDs(value.GetCategories(), "software source code category")
+	categories, err := resourceParseUUIDs(value.GetCategories(), "software source code category", "categories")
 	if err != nil {
 		return domain.SoftwareSourceCodeInput{}, err
 	}
-	contacts, err := resourceParseUUIDs(value.GetContactPoints(), "software source code contact point")
+	contacts, err := resourceParseUUIDs(value.GetContactPoints(), "software source code contact point", "contact_points")
 	if err != nil {
 		return domain.SoftwareSourceCodeInput{}, err
 	}
@@ -1569,10 +1569,6 @@ func identifierInputs(values []*metadatalifecyclev1.IdentifierInput, target stri
 	return result, nil
 }
 
-func parseUUID(value, field string) (uuid.UUID, error) {
-	return parseUUIDAt(value, field, uuidTarget(field))
-}
-
 func parseUUIDAt(value, field, target string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
@@ -1584,33 +1580,8 @@ func parseUUIDAt(value, field, target string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func uuidTarget(field string) string {
-	switch field {
-	case "group id":
-		return "groupId"
-	case "resource id":
-		return "id"
-	case "version id":
-		return "versionId"
-	case "dataset contact point", "web service contact point", "software application contact point", "software source code contact point":
-		return "contact_points"
-	case "dataset provider", "software application creator", "software source code creator":
-		if strings.Contains(field, "provider") {
-			return "providers"
-		}
-		return "creators"
-	case "dataset category", "software application category", "software source code category":
-		return "categories"
-	case "web service provider":
-		return "provider"
-	default:
-		return strings.ReplaceAll(strings.ReplaceAll(field, " ", "_"), "_id", "Id")
-	}
-}
-
-func resourceParseUUIDs(values []string, field string) ([]uuid.UUID, error) {
+func resourceParseUUIDs(values []string, field, target string) ([]uuid.UUID, error) {
 	result := make([]uuid.UUID, 0, len(values))
-	target := uuidTarget(field)
 	for i, value := range values {
 		id, err := parseUUIDAt(value, field, fmt.Sprintf("%s[%d]", target, i))
 		if err != nil {

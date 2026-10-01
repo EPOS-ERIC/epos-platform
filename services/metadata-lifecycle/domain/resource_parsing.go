@@ -59,20 +59,6 @@ func validateContactPoints(values []ContactPoint, label string) error {
 	return nil
 }
 
-func validateUUIDList(values []uuid.UUID, label string) error {
-	seen := make(map[uuid.UUID]struct{}, len(values))
-	for _, value := range values {
-		if value == uuid.Nil {
-			return fmt.Errorf("%s ID is required: %w", label, apperror.Default(apperror.CodeValidationFailed))
-		}
-		if _, exists := seen[value]; exists {
-			return fmt.Errorf("duplicate %s %q: %w", label, value, apperror.Default(apperror.CodeValidationFailed))
-		}
-		seen[value] = struct{}{}
-	}
-	return nil
-}
-
 func validateOrganizations(values []OrganizationMetadata, relation string) error {
 	seen := make(map[uuid.UUID]struct{}, len(values))
 	for _, value := range values {

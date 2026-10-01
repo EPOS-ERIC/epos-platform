@@ -32,7 +32,7 @@ func toDomainDiscoveryFilter(value *metadatalifecyclev1.SearchResourcesRequest) 
 	if err != nil {
 		return domain.DiscoveryFilter{}, err
 	}
-	providers, err := resourceParseUUIDs(value.ProviderIds, "provider id")
+	providers, err := resourceParseUUIDs(value.ProviderIds, "provider id", "providerIds")
 	if err != nil {
 		return domain.DiscoveryFilter{}, err
 	}

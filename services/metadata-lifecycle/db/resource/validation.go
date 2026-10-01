@@ -14,21 +14,16 @@ import (
 )
 
 // invalidCategoryIndex returns the first category ID not found in the group,
-// including repeated IDs, or -1 when all references are valid.
+// or -1 when all references are valid.
 func invalidCategoryIndex(categoryIDs, groupCategoryIDs []uuid.UUID) int {
 	validIDs := make(map[uuid.UUID]struct{}, len(groupCategoryIDs))
 	for _, id := range groupCategoryIDs {
 		validIDs[id] = struct{}{}
 	}
-	seen := make(map[uuid.UUID]struct{}, len(categoryIDs))
 	for i, id := range categoryIDs {
 		if _, ok := validIDs[id]; !ok {
 			return i
 		}
-		if _, ok := seen[id]; ok {
-			return i
-		}
-		seen[id] = struct{}{}
 	}
 	return -1
 }

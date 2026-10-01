@@ -1893,14 +1893,6 @@ components:
                 title: "Unauthorized"
                 status: 401
                 detail: "Authentication is required."
-            missingToken:
-              summary: Missing bearer token
-              value:
-                type: "unauthenticated"
-                title: "Unauthorized"
-                status: 401
-                detail: "Authentication is required."
-
     Forbidden:
       description: Authenticated user lacks permission
       content:

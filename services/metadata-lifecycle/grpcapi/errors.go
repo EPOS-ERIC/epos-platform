@@ -43,29 +43,21 @@ func ValidationAppError(method string, err error) *apperror.AppError {
 	}
 
 	// update the target for form specific resource requests
-	if methodName(method) == "CreateResource" || methodName(method) == "ReplaceResourceDraft" {
-		resourcePath := false
-		for _, resourceType := range []string{"dataset", "software_application", "software_source_code"} {
-			for _, prefix := range []string{resourceType + ".", "metadata." + resourceType + "."} {
-				if after, ok := strings.CutPrefix(target, prefix); ok {
-					target = after
-					resourcePath = true
-				}
+	_, name, ok := strings.CutLast(method, "/")
+	if !ok {
+		name = method
+	}
+	if name == "CreateResource" || name == "ReplaceResourceDraft" {
+		resourceType, field, ok := strings.Cut(strings.TrimPrefix(target, "metadata."), ".")
+		switch resourceType {
+		case "dataset", "software_application", "software_source_code":
+			if ok {
+				target = "metadata." + field
 			}
-		}
-		if resourcePath {
-			target = "metadata." + target
 		}
 	}
 
 	appErr := apperror.Wrap(apperror.CodeValidationFailed, detail, err)
 	appErr.Target = target
 	return appErr
-}
-
-func methodName(method string) string {
-	if index := strings.LastIndexByte(method, '/'); index >= 0 {
-		return method[index+1:]
-	}
-	return method
 }
