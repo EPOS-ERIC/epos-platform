@@ -2,6 +2,7 @@ package grpcapi
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
@@ -35,6 +36,25 @@ func TestNormalizeErrorFailsClosedForUnknownCause(t *testing.T) {
 	}
 	if grpcStatus.Message() == "SQL credentials leaked" {
 		t.Fatal("internal cause leaked through gRPC")
+	}
+}
+
+func TestNormalizeErrorUsesOuterClassificationAndRetainsInnerCause(t *testing.T) {
+	inner := apperror.Field("metadata.title", "Title must not be blank.", errors.New("invalid title"))
+	cause := fmt.Errorf("persist dataset: %w", inner)
+	err := apperror.Wrap(apperror.CodeInternal, "", cause)
+	if !errors.Is(err, inner) {
+		t.Fatal("outer internal error lost the inner validation error")
+	}
+
+	transport := NormalizeError(err)
+	grpcStatus := status.Convert(transport)
+	if grpcStatus.Code() != codes.Internal {
+		t.Fatalf("gRPC code = %s, want Internal", grpcStatus.Code())
+	}
+	decoded, ok := apperrorgrpc.FromStatus(transport)
+	if !ok || decoded.Code != apperror.CodeInternal || decoded.Target != "" {
+		t.Fatalf("decoded error = %+v, ok = %v; want untargeted internal", decoded, ok)
 	}
 }
 

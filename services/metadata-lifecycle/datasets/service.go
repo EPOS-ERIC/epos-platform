@@ -315,5 +315,5 @@ func operationError(operation string, err error) error {
 	if apperror.IsCode(err, apperror.CodePermissionDenied) || apperror.IsCode(err, apperror.CodeConflict) || apperror.IsCode(err, apperror.CodeNotFound) || apperror.IsCode(err, apperror.CodeValidationFailed) {
 		return fmt.Errorf("%s: %w", operation, err)
 	}
-	return fmt.Errorf("%s: %w: %w", operation, apperror.Default(apperror.CodeInternal), err)
+	return apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("%s: %w", operation, err))
 }
