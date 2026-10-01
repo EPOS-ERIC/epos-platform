@@ -145,7 +145,8 @@ func NewDiscoveryCreatedBy(id, name string) (DiscoveryCreatedBy, error) {
 func NewDiscoveryItem(
 	candidate DiscoveryCandidate,
 	group DiscoveryReference,
-	providers, creators, categories, distributions []DiscoveryReference,
+	providers, creators, categories []DiscoveryReference,
+	distributions []DiscoveryDistribution,
 	includeCreatedBy bool,
 ) (DiscoveryItem, error) {
 	validatedCandidate, err := NewDiscoveryCandidate(candidate)
@@ -168,9 +169,13 @@ func NewDiscoveryItem(
 	if err != nil {
 		return DiscoveryItem{}, err
 	}
-	validatedDistributions, err := discoveryReferences(distributions)
-	if err != nil {
-		return DiscoveryItem{}, err
+	validatedDistributions := make([]DiscoveryDistribution, 0, len(distributions))
+	for _, distribution := range distributions {
+		validated, err := NewDiscoveryDistribution(distribution)
+		if err != nil {
+			return DiscoveryItem{}, err
+		}
+		validatedDistributions = append(validatedDistributions, validated)
 	}
 	var validatedCreatedBy *DiscoveryCreatedBy
 	if includeCreatedBy && validatedCandidate.CreatedBy != nil {
@@ -196,6 +201,40 @@ func NewDiscoveryItem(
 		Categories:    validatedCategories,
 		Distributions: validatedDistributions,
 	}, nil
+}
+
+// NewDiscoveryDistribution validates a persisted distribution summary.
+func NewDiscoveryDistribution(value DiscoveryDistribution) (DiscoveryDistribution, error) {
+	if value.ID == uuid.Nil || !value.Type.Valid() {
+		return DiscoveryDistribution{}, apperror.Default(apperror.CodeInternal)
+	}
+
+	if value.Type == DistributionTypeDownloadableFile {
+		if value.WebServiceType != "" || len(value.VisibleOn) != 0 || value.Provider != nil {
+			return DiscoveryDistribution{}, apperror.Default(apperror.CodeInternal)
+		}
+		return value, nil
+	}
+
+	if !value.WebServiceType.Valid() {
+		return DiscoveryDistribution{}, apperror.Default(apperror.CodeInternal)
+	}
+
+	visibleOn, err := normalizeWebServiceVisibleOn(value.VisibleOn)
+	if err != nil {
+		return DiscoveryDistribution{}, internalValidationError(err)
+	}
+
+	value.VisibleOn = visibleOn
+	if value.Provider != nil {
+		provider, err := NewDiscoveryReference(value.Provider.ID, value.Provider.Name)
+		if err != nil {
+			return DiscoveryDistribution{}, err
+		}
+		value.Provider = &provider
+	}
+
+	return value, nil
 }
 
 func discoveryReferences(values []DiscoveryReference) ([]DiscoveryReference, error) {

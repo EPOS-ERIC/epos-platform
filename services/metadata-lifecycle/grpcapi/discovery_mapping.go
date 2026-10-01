@@ -186,6 +186,10 @@ func toProtoDiscoveryItem(value domain.DiscoveryItem) (*metadatalifecyclev1.Disc
 	group := toProtoDiscoveryReference(value.Group)
 	switch value.Type {
 	case domain.Dataset:
+		distributions, err := toProtoDiscoveryDistributions(value.Distributions)
+		if err != nil {
+			return nil, err
+		}
 		return &metadatalifecyclev1.DiscoveryItem{
 			Resource: &metadatalifecyclev1.DiscoveryItem_Dataset{
 				Dataset: &metadatalifecyclev1.DatasetDiscoveryItem{
@@ -199,7 +203,7 @@ func toProtoDiscoveryItem(value domain.DiscoveryItem) (*metadatalifecyclev1.Disc
 					Group:         group,
 					Providers:     toProtoDiscoveryReferences(value.Providers),
 					Categories:    toProtoDiscoveryReferences(value.Categories),
-					Distributions: toProtoDiscoveryReferences(value.Distributions),
+					Distributions: distributions,
 				},
 			},
 		}, nil
@@ -273,4 +277,32 @@ func toProtoDiscoveryReferences(values []domain.DiscoveryReference) []*metadatal
 		result = append(result, toProtoDiscoveryReference(value))
 	}
 	return result
+}
+
+func toProtoDiscoveryDistributions(values []domain.DiscoveryDistribution) ([]*metadatalifecyclev1.DiscoveryDistribution, error) {
+	result := make([]*metadatalifecyclev1.DiscoveryDistribution, 0, len(values))
+	for _, value := range values {
+		var distribution *metadatalifecyclev1.DiscoveryDistribution
+		switch value.Type {
+		case domain.DistributionTypeWebService:
+			service := &metadatalifecyclev1.DiscoveryWebServiceDistribution{
+				Id:             value.ID.String(),
+				Name:           value.Name,
+				WebServiceType: webServiceTypeOutput(value.WebServiceType),
+				VisibleOn:      webServiceVisibleOnOutput(value.VisibleOn),
+			}
+			if value.Provider != nil {
+				service.Provider = toProtoDiscoveryReference(*value.Provider)
+			}
+			distribution = &metadatalifecyclev1.DiscoveryDistribution{Delivery: &metadatalifecyclev1.DiscoveryDistribution_WebService{WebService: service}}
+		case domain.DistributionTypeDownloadableFile:
+			distribution = &metadatalifecyclev1.DiscoveryDistribution{Delivery: &metadatalifecyclev1.DiscoveryDistribution_DownloadableFile{
+				DownloadableFile: &metadatalifecyclev1.DiscoveryDownloadableFileDistribution{Id: value.ID.String(), Name: value.Name},
+			}}
+		default:
+			return nil, apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("unsupported distribution type %q", value.Type))
+		}
+		result = append(result, distribution)
+	}
+	return result, nil
 }

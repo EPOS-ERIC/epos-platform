@@ -138,22 +138,34 @@ func (q *Queries) ListDiscoveryDatasetCategories(ctx context.Context, versionIds
 
 const listDiscoveryDatasetDistributions = `-- name: ListDiscoveryDatasetDistributions :many
 SELECT
-    dataset_version_id AS version_id,
-    id,
-    title AS name
+    distribution.dataset_version_id AS version_id,
+    distribution.id,
+    distribution.title AS name,
+    distribution.type,
+    service.type AS web_service_type,
+    service.visible_on,
+    organization.id AS provider_id,
+    coalesce(organization.name, '')::text AS provider_name
 FROM
-    distributions
+    distributions AS distribution
+    LEFT JOIN web_services AS service ON service.id = distribution.web_service_id
+    LEFT JOIN organizations AS organization ON organization.id = service.provider_organization_id
 WHERE
-    dataset_version_id = ANY($1::uuid [])
+    distribution.dataset_version_id = ANY($1::uuid [])
 ORDER BY
-    dataset_version_id,
-    id
+    distribution.dataset_version_id,
+    distribution.id
 `
 
 type ListDiscoveryDatasetDistributionsRow struct {
-	VersionID uuid.UUID
-	ID        uuid.UUID
-	Name      string
+	VersionID      uuid.UUID
+	ID             uuid.UUID
+	Name           string
+	Type           string
+	WebServiceType *WebServiceType
+	VisibleOn      []WebServiceVisibleOn
+	ProviderID     *uuid.UUID
+	ProviderName   string
 }
 
 func (q *Queries) ListDiscoveryDatasetDistributions(ctx context.Context, versionIds []uuid.UUID) ([]ListDiscoveryDatasetDistributionsRow, error) {
@@ -165,7 +177,16 @@ func (q *Queries) ListDiscoveryDatasetDistributions(ctx context.Context, version
 	var items []ListDiscoveryDatasetDistributionsRow
 	for rows.Next() {
 		var i ListDiscoveryDatasetDistributionsRow
-		if err := rows.Scan(&i.VersionID, &i.ID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.VersionID,
+			&i.ID,
+			&i.Name,
+			&i.Type,
+			&i.WebServiceType,
+			&i.VisibleOn,
+			&i.ProviderID,
+			&i.ProviderName,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

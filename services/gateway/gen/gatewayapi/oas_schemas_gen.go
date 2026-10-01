@@ -1540,11 +1540,11 @@ type DatasetDiscoveryItem struct {
 	UpdatedAt  time.Time                `json:"updated_at"`
 	Concept    DiscoveryConcept         `json:"concept"`
 	// Creator identity is returned only when caller may see identities for this resource group.
-	CreatedBy     OptReference `json:"created_by"`
-	Group         Reference    `json:"group"`
-	Providers     []Reference  `json:"providers"`
-	Categories    []Reference  `json:"categories"`
-	Distributions []Reference  `json:"distributions"`
+	CreatedBy     OptReference            `json:"created_by"`
+	Group         Reference               `json:"group"`
+	Providers     []Reference             `json:"providers"`
+	Categories    []Reference             `json:"categories"`
+	Distributions []DiscoveryDistribution `json:"distributions"`
 }
 
 // GetType returns the value of Type.
@@ -1603,7 +1603,7 @@ func (s *DatasetDiscoveryItem) GetCategories() []Reference {
 }
 
 // GetDistributions returns the value of Distributions.
-func (s *DatasetDiscoveryItem) GetDistributions() []Reference {
+func (s *DatasetDiscoveryItem) GetDistributions() []DiscoveryDistribution {
 	return s.Distributions
 }
 
@@ -1663,7 +1663,7 @@ func (s *DatasetDiscoveryItem) SetCategories(val []Reference) {
 }
 
 // SetDistributions sets the value of Distributions.
-func (s *DatasetDiscoveryItem) SetDistributions(val []Reference) {
+func (s *DatasetDiscoveryItem) SetDistributions(val []DiscoveryDistribution) {
 	s.Distributions = val
 }
 
@@ -2943,6 +2943,147 @@ func (s *DiscoveryConcept) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/DiscoveryDistribution
+// DiscoveryDistribution represents sum type.
+type DiscoveryDistribution struct {
+	// Type selects the active sum variant, switch on this field.
+	Type                                  DiscoveryDistributionType
+	DiscoveryWebServiceDistribution       DiscoveryWebServiceDistribution
+	DiscoveryDownloadableFileDistribution DiscoveryDownloadableFileDistribution
+}
+
+// DiscoveryDistributionType is oneOf type of DiscoveryDistribution.
+type DiscoveryDistributionType string
+
+// Possible values for DiscoveryDistributionType.
+const (
+	DiscoveryWebServiceDistributionDiscoveryDistribution       DiscoveryDistributionType = "WEB_SERVICE"
+	DiscoveryDownloadableFileDistributionDiscoveryDistribution DiscoveryDistributionType = "DOWNLOADABLE_FILE"
+)
+
+// IsDiscoveryWebServiceDistribution reports whether DiscoveryDistribution is DiscoveryWebServiceDistribution.
+func (s DiscoveryDistribution) IsDiscoveryWebServiceDistribution() bool {
+	return s.Type == DiscoveryWebServiceDistributionDiscoveryDistribution
+}
+
+// IsDiscoveryDownloadableFileDistribution reports whether DiscoveryDistribution is DiscoveryDownloadableFileDistribution.
+func (s DiscoveryDistribution) IsDiscoveryDownloadableFileDistribution() bool {
+	return s.Type == DiscoveryDownloadableFileDistributionDiscoveryDistribution
+}
+
+// SetDiscoveryWebServiceDistribution sets DiscoveryDistribution to DiscoveryWebServiceDistribution.
+func (s *DiscoveryDistribution) SetDiscoveryWebServiceDistribution(v DiscoveryWebServiceDistribution) {
+	s.Type = DiscoveryWebServiceDistributionDiscoveryDistribution
+	s.DiscoveryWebServiceDistribution = v
+}
+
+// GetDiscoveryWebServiceDistribution returns DiscoveryWebServiceDistribution and true boolean if DiscoveryDistribution is DiscoveryWebServiceDistribution.
+func (s DiscoveryDistribution) GetDiscoveryWebServiceDistribution() (v DiscoveryWebServiceDistribution, ok bool) {
+	if !s.IsDiscoveryWebServiceDistribution() {
+		return v, false
+	}
+	return s.DiscoveryWebServiceDistribution, true
+}
+
+// NewDiscoveryWebServiceDistributionDiscoveryDistribution returns new DiscoveryDistribution from DiscoveryWebServiceDistribution.
+func NewDiscoveryWebServiceDistributionDiscoveryDistribution(v DiscoveryWebServiceDistribution) DiscoveryDistribution {
+	var s DiscoveryDistribution
+	s.SetDiscoveryWebServiceDistribution(v)
+	return s
+}
+
+// SetDiscoveryDownloadableFileDistribution sets DiscoveryDistribution to DiscoveryDownloadableFileDistribution.
+func (s *DiscoveryDistribution) SetDiscoveryDownloadableFileDistribution(v DiscoveryDownloadableFileDistribution) {
+	s.Type = DiscoveryDownloadableFileDistributionDiscoveryDistribution
+	s.DiscoveryDownloadableFileDistribution = v
+}
+
+// GetDiscoveryDownloadableFileDistribution returns DiscoveryDownloadableFileDistribution and true boolean if DiscoveryDistribution is DiscoveryDownloadableFileDistribution.
+func (s DiscoveryDistribution) GetDiscoveryDownloadableFileDistribution() (v DiscoveryDownloadableFileDistribution, ok bool) {
+	if !s.IsDiscoveryDownloadableFileDistribution() {
+		return v, false
+	}
+	return s.DiscoveryDownloadableFileDistribution, true
+}
+
+// NewDiscoveryDownloadableFileDistributionDiscoveryDistribution returns new DiscoveryDistribution from DiscoveryDownloadableFileDistribution.
+func NewDiscoveryDownloadableFileDistributionDiscoveryDistribution(v DiscoveryDownloadableFileDistribution) DiscoveryDistribution {
+	var s DiscoveryDistribution
+	s.SetDiscoveryDownloadableFileDistribution(v)
+	return s
+}
+
+// Ref: #/components/schemas/DiscoveryDownloadableFileDistribution
+type DiscoveryDownloadableFileDistribution struct {
+	ID   uuid.UUID                                 `json:"id"`
+	Name string                                    `json:"name"`
+	Type DiscoveryDownloadableFileDistributionType `json:"type"`
+}
+
+// GetID returns the value of ID.
+func (s *DiscoveryDownloadableFileDistribution) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *DiscoveryDownloadableFileDistribution) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *DiscoveryDownloadableFileDistribution) GetType() DiscoveryDownloadableFileDistributionType {
+	return s.Type
+}
+
+// SetID sets the value of ID.
+func (s *DiscoveryDownloadableFileDistribution) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *DiscoveryDownloadableFileDistribution) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *DiscoveryDownloadableFileDistribution) SetType(val DiscoveryDownloadableFileDistributionType) {
+	s.Type = val
+}
+
+type DiscoveryDownloadableFileDistributionType string
+
+const (
+	DiscoveryDownloadableFileDistributionTypeDOWNLOADABLEFILE DiscoveryDownloadableFileDistributionType = "DOWNLOADABLE_FILE"
+)
+
+// AllValues returns all DiscoveryDownloadableFileDistributionType values.
+func (DiscoveryDownloadableFileDistributionType) AllValues() []DiscoveryDownloadableFileDistributionType {
+	return []DiscoveryDownloadableFileDistributionType{
+		DiscoveryDownloadableFileDistributionTypeDOWNLOADABLEFILE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DiscoveryDownloadableFileDistributionType) MarshalText() ([]byte, error) {
+	switch s {
+	case DiscoveryDownloadableFileDistributionTypeDOWNLOADABLEFILE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DiscoveryDownloadableFileDistributionType) UnmarshalText(data []byte) error {
+	switch DiscoveryDownloadableFileDistributionType(data) {
+	case DiscoveryDownloadableFileDistributionTypeDOWNLOADABLEFILE:
+		*s = DiscoveryDownloadableFileDistributionTypeDOWNLOADABLEFILE
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/DiscoveryItem
 // DiscoveryItem represents sum type.
 type DiscoveryItem struct {
@@ -3085,6 +3226,110 @@ func (s *DiscoveryResourceType) UnmarshalText(data []byte) error {
 		return nil
 	case DiscoveryResourceTypeSoftwareSourceCode:
 		*s = DiscoveryResourceTypeSoftwareSourceCode
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/DiscoveryWebServiceDistribution
+type DiscoveryWebServiceDistribution struct {
+	ID             uuid.UUID                           `json:"id"`
+	Name           string                              `json:"name"`
+	Type           DiscoveryWebServiceDistributionType `json:"type"`
+	WebServiceType WebServiceType                      `json:"web_service_type"`
+	VisibleOn      OptNilWebServiceVisibleOnArray      `json:"visible_on"`
+	Provider       OptReference                        `json:"provider"`
+}
+
+// GetID returns the value of ID.
+func (s *DiscoveryWebServiceDistribution) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *DiscoveryWebServiceDistribution) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *DiscoveryWebServiceDistribution) GetType() DiscoveryWebServiceDistributionType {
+	return s.Type
+}
+
+// GetWebServiceType returns the value of WebServiceType.
+func (s *DiscoveryWebServiceDistribution) GetWebServiceType() WebServiceType {
+	return s.WebServiceType
+}
+
+// GetVisibleOn returns the value of VisibleOn.
+func (s *DiscoveryWebServiceDistribution) GetVisibleOn() OptNilWebServiceVisibleOnArray {
+	return s.VisibleOn
+}
+
+// GetProvider returns the value of Provider.
+func (s *DiscoveryWebServiceDistribution) GetProvider() OptReference {
+	return s.Provider
+}
+
+// SetID sets the value of ID.
+func (s *DiscoveryWebServiceDistribution) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *DiscoveryWebServiceDistribution) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *DiscoveryWebServiceDistribution) SetType(val DiscoveryWebServiceDistributionType) {
+	s.Type = val
+}
+
+// SetWebServiceType sets the value of WebServiceType.
+func (s *DiscoveryWebServiceDistribution) SetWebServiceType(val WebServiceType) {
+	s.WebServiceType = val
+}
+
+// SetVisibleOn sets the value of VisibleOn.
+func (s *DiscoveryWebServiceDistribution) SetVisibleOn(val OptNilWebServiceVisibleOnArray) {
+	s.VisibleOn = val
+}
+
+// SetProvider sets the value of Provider.
+func (s *DiscoveryWebServiceDistribution) SetProvider(val OptReference) {
+	s.Provider = val
+}
+
+type DiscoveryWebServiceDistributionType string
+
+const (
+	DiscoveryWebServiceDistributionTypeWEBSERVICE DiscoveryWebServiceDistributionType = "WEB_SERVICE"
+)
+
+// AllValues returns all DiscoveryWebServiceDistributionType values.
+func (DiscoveryWebServiceDistributionType) AllValues() []DiscoveryWebServiceDistributionType {
+	return []DiscoveryWebServiceDistributionType{
+		DiscoveryWebServiceDistributionTypeWEBSERVICE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DiscoveryWebServiceDistributionType) MarshalText() ([]byte, error) {
+	switch s {
+	case DiscoveryWebServiceDistributionTypeWEBSERVICE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DiscoveryWebServiceDistributionType) UnmarshalText(data []byte) error {
+	switch DiscoveryWebServiceDistributionType(data) {
+	case DiscoveryWebServiceDistributionTypeWEBSERVICE:
+		*s = DiscoveryWebServiceDistributionTypeWEBSERVICE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
