@@ -156,7 +156,7 @@
       <a
         class="app-button membership-request-button"
         routerLink="/memberships"
-        [queryParams]="selectedGroupId ? { groupId: selectedGroupId } : null"
+        [queryParams]="membershipsQueryParams()"
         [class.active]="currentSectionPath === 'memberships'"
         aria-label="Open my memberships"
       >

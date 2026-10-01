@@ -80,6 +80,7 @@ describe('BackofficeHeaderComponent', () => {
     fixture.componentRef.setInput('managementTitle', 'Global Administration');
     fixture.componentRef.setInput('managementSubtitle', 'Choose an area to manage.');
     fixture.componentRef.setInput('managementBackRoute', '/software?groupId=group-id');
+    fixture.componentRef.setInput('headerBackRoute', '/software?groupId=group-id');
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('h1')?.textContent?.trim()).toBe('Global Administration');
@@ -87,5 +88,7 @@ describe('BackofficeHeaderComponent', () => {
     const backLink = fixture.nativeElement.querySelector('.header-manage-back a') as HTMLAnchorElement;
     expect(backLink.getAttribute('href')).toBe('/software?groupId=group-id');
     expect(backLink.classList.contains('app-button--dark')).toBe(true);
+    expect((fixture.nativeElement.querySelector('.header-copy') as HTMLAnchorElement).getAttribute('href')).toBe('/software?groupId=group-id');
+    expect(fixture.nativeElement.querySelector('.header-back-affordance')).toBeTruthy();
   });
 });

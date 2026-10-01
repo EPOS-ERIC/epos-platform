@@ -16,7 +16,7 @@ describe('NavigationSidebarComponent', () => {
 
     const link = fixture.nativeElement.querySelector('.membership-request-button') as HTMLAnchorElement;
     expect(link.textContent).toContain('My memberships');
-    expect(link.getAttribute('href')).toBe('/memberships?groupId=group-id');
+    expect(link.getAttribute('href')).toBe('/memberships?groupId=group-id&returnUrl=%2Fdata');
   });
 
   it('uses the supplied label for comparison navigation', async () => {

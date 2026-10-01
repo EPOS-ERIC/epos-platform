@@ -122,6 +122,21 @@ export class MainContainerComponent {
 
     return this.manageGroup() && !this.manageGroupPanel() ? 'group' : null;
   });
+  protected readonly headerBackRoute = computed(() => {
+    const comparison = this.comparisonContext();
+    if (comparison) {
+      return this.router.serializeUrl(this.router.createUrlTree(
+        ['/', comparison.sectionPath, comparison.resourceId, comparison.sourceVersionId],
+        { queryParams: { groupId: comparison.groupId, dataType: comparison.resourceType } }
+      ));
+    }
+
+    return this.managementHeaderContext()
+      || this.accountPage() === 'memberships'
+      || this.pageLabel() === 'Detail'
+      ? this.manageBackRoute()
+      : null;
+  });
   protected readonly sidebarDetailItems = computed<ResourceDetailNavigationItem[]>(() => {
     const comparison = this.comparisonContext();
     if (!comparison) {

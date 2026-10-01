@@ -47,6 +47,7 @@ export class NavigationSidebarComponent {
   }
   @Input() selectedGroupId = '';
   @Input() globalManageReturnUrl = '/data';
+  @Input() accountReturnUrl = '/data';
   @Output() detailAction = new EventEmitter<ResourceActionKey>();
 
   protected readonly collapsed = signal(false);
@@ -129,6 +130,13 @@ export class NavigationSidebarComponent {
     return item.route === '/global-manage'
       ? { returnUrl: this.globalManageReturnUrl }
       : null;
+  }
+
+  protected membershipsQueryParams(): Record<string, string> {
+    return {
+      ...(this.selectedGroupId ? { groupId: this.selectedGroupId } : {}),
+      returnUrl: this.accountReturnUrl
+    };
   }
 
   protected isNodeExpanded(anchor: string | undefined): boolean {

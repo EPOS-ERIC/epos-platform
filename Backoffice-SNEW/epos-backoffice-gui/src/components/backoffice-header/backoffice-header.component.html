@@ -2,12 +2,26 @@
   class="header-shell"
   [class.header-shell--manage]="managementContext"
 >
-  <div class="header-copy">
+  <a
+    class="header-copy"
+    [class.header-copy--back]="headerBackRoute"
+    [class.header-copy--back-pill]="headerBackRoute && !managementIconPath"
+    [routerLink]="headerBackRouteTree"
+    [attr.aria-label]="headerBackRoute ? 'Back to previous page' : null"
+  >
     @if (managementContext) {
       <p class="management-eyebrow app-badge app-badge--primary" [class.management-eyebrow--global]="managementContext === 'global'">{{ managementEyebrow }}</p>
       <div class="management-heading">
         @if (managementIconPath) {
-          <img class="management-icon" [src]="managementIconPath" alt="" aria-hidden="true" />
+          <span class="management-icon-shell">
+            <img class="management-icon" [src]="managementIconPath" alt="" aria-hidden="true" />
+            @if (headerBackRoute) {
+              <span class="management-icon-back" aria-hidden="true">
+                <app-icon name="arrow-left-alt" [size]="17" />
+                <span>Back</span>
+              </span>
+            }
+          </span>
         }
         <div>
           <h1>{{ managementTitle }}</h1>
@@ -21,7 +35,13 @@
         <p class="app-muted">Placheholder Text.</p>
       </div>
     }
-  </div>
+    @if (headerBackRoute && !managementIconPath) {
+      <span class="header-back-affordance" aria-hidden="true">
+        <app-icon name="arrow-left-alt" [size]="16" />
+        <span>Back</span>
+      </span>
+    }
+  </a>
 
   <div class="header-actions header-actions--top">
     <button type="button" class="app-button app-button--ghost app-button--icon" (click)="toggleTheme.emit()" [attr.aria-label]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">

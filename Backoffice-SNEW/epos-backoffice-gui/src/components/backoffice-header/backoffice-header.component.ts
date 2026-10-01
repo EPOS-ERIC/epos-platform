@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, HostListener, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 
 import type { DiscoveryResourceType, VersioningStatus } from '../../../generated/backofficeSchemas';
 import { DISCOVERY_VERSIONING_STATUSES, type ResultsFilters } from '../../models/results-filters';
@@ -12,13 +13,14 @@ export type ManagementHeaderContext = 'global' | 'group';
 
 @Component({
   selector: 'app-backoffice-header',
-  imports: [AppIconComponent, BackButtonComponent, FormsModule],
+  imports: [AppIconComponent, BackButtonComponent, FormsModule, RouterLink],
   templateUrl: './backoffice-header.component.html',
   styleUrl: './backoffice-header.component.css'
 })
 export class BackofficeHeaderComponent {
   private readonly authService = inject(AuthService);
   private readonly currentUserStore = inject(CurrentUserStore);
+  private readonly router = inject(Router);
 
   protected readonly userMenuOpen = signal(false);
   protected readonly filterMenuOpen = signal(false);
@@ -50,10 +52,15 @@ export class BackofficeHeaderComponent {
   @Input() managementSubtitle = '';
   @Input() managementIconPath = '';
   @Input() managementBackRoute = '/data';
+  @Input() headerBackRoute: string | null = null;
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() addNewResource = new EventEmitter<void>();
   @Output() searchQueryChange = new EventEmitter<string>();
   @Output() filtersChange = new EventEmitter<ResultsFilters>();
+
+  protected get headerBackRouteTree() {
+    return this.headerBackRoute ? this.router.parseUrl(this.headerBackRoute) : null;
+  }
 
   @HostListener('document:click')
   protected closeUserMenu(): void {
