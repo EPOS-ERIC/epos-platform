@@ -114,7 +114,7 @@ func TestProblemResponseUsesSharedErrorAndTrace(t *testing.T) {
 	if !problem.Target.Set || problem.Target.Value != "metadata.title" {
 		t.Fatalf("Target = %+v", problem.Target)
 	}
-	if !problem.Instance.Set || problem.Instance.Value != "traces/0102030405060708090a0b0c0d0e0f10" {
+	if !problem.Instance.Set || problem.Instance.Value != "0102030405060708090a0b0c0d0e0f10" {
 		t.Fatalf("Instance = %+v", problem.Instance)
 	}
 }

@@ -1877,7 +1877,7 @@ components:
                 type: "validation_failed"
                 title: "Bad Request"
                 status: 400
-                detail: "unsupported search type: concept"
+                detail: "The request is invalid."
 
     Unauthorized:
       description: Bearer token missing or invalid
@@ -1892,14 +1892,14 @@ components:
                 type: "unauthenticated"
                 title: "Unauthorized"
                 status: 401
-                detail: "token is invalid"
+                detail: "Authentication is required."
             missingToken:
               summary: Missing bearer token
               value:
                 type: "unauthenticated"
                 title: "Unauthorized"
                 status: 401
-                detail: "bearer token required"
+                detail: "Authentication is required."
 
     Forbidden:
       description: Authenticated user lacks permission
@@ -1914,7 +1914,7 @@ components:
                 type: "permission_denied"
                 title: "Forbidden"
                 status: 403
-                detail: "user access denied"
+                detail: "You are not permitted to perform this operation."
 
     NotFound:
       description: Resource not found
@@ -1929,7 +1929,7 @@ components:
                 type: "not_found"
                 title: "Not Found"
                 status: 404
-                detail: "dataset not found"
+                detail: "The requested resource was not found."
 
     Conflict:
       description: Request conflicts with current resource state
@@ -1944,7 +1944,7 @@ components:
                 type: "conflict"
                 title: "Conflict"
                 status: 409
-                detail: "resource is not in draft state"
+                detail: "The operation conflicts with the current state."
 
     InternalServerError:
       description: Internal server error
@@ -1959,6 +1959,7 @@ components:
                 type: "internal"
                 title: "Internal Server Error"
                 status: 500
+                detail: "An unexpected error occurred."
 
     GatewayTimeout:
       description: Request could not be completed before timeout
@@ -1973,7 +1974,7 @@ components:
                 type: "upstream_timeout"
                 title: "Gateway Timeout"
                 status: 504
-                detail: "metadata search timed out"
+                detail: "The request timed out."
 
     ServiceUnavailable:
       description: Metadata Lifecycle service unavailable
@@ -1988,7 +1989,7 @@ components:
                 type: "upstream_unavailable"
                 title: "Service Unavailable"
                 status: 503
-                detail: "metadata-lifecycle service unavailable"
+                detail: "A required service is unavailable."
 
   schemas:
     # -------------------------------------------------------------------------
@@ -4059,9 +4060,8 @@ components:
           example: "The requested resource was not found"
         instance:
           type: string
-          format: uri-reference
-          description: Optional URI reference identifying this specific problem occurrence
-          example: "requests/req-123"
+          description: Optional OpenTelemetry trace ID associated with this request
+          example: "132c7c05d8f744d596e15a2620cacfeb"
         target:
           type: string
           description: Optional dotted path identifying the request field related to the problem

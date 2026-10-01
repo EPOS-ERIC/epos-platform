@@ -8343,7 +8343,7 @@ type Problem struct {
 	Status int `json:"status"`
 	// Optional human-readable explanation specific to this occurrence.
 	Detail OptString `json:"detail"`
-	// Optional URI reference identifying this specific problem occurrence.
+	// Optional OpenTelemetry trace ID associated with this request.
 	Instance OptString `json:"instance"`
 	// Optional dotted path identifying the request field related to the problem.
 	Target OptString `json:"target"`

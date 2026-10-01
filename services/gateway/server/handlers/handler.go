@@ -62,7 +62,7 @@ func problemResponse(ctx context.Context, err error) (int, gatewayapi.Problem) {
 	}
 	spanContext := trace.SpanContextFromContext(ctx)
 	if spanContext.TraceID().IsValid() {
-		problem.Instance = gatewayapi.NewOptString("traces/" + spanContext.TraceID().String())
+		problem.Instance = gatewayapi.NewOptString(spanContext.TraceID().String())
 	}
 	return status, problem
 }
