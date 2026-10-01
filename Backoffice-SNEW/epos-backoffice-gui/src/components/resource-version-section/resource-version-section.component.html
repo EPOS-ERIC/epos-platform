@@ -73,9 +73,9 @@
     }
     @case ('Categories') {
       @if (datasetForm; as form) {
-        <app-categories [model]="form.categories" [disabled]="true" />
+        <app-categories [model]="form.categories" [disabled]="true" [neutralAppearance]="true" />
       } @else if (softwareMetadata; as metadata) {
-        <app-categories [model]="metadata.categories" [disabled]="true" />
+        <app-categories [model]="metadata.categories" [disabled]="true" [neutralAppearance]="true" />
       }
     }
     @case ('Distributions') {

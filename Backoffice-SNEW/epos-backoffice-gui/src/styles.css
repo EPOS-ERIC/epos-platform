@@ -1027,17 +1027,40 @@ app-categories .categories-box-header .app-badge::before {
 app-identifiers .detail-section-card--neutral .identifiers-box,
 app-providers .detail-section-card--neutral .providers-box,
 app-providers .detail-section-card--neutral .provider-row--selected,
-app-contact-points .detail-section-card--neutral .contact-point-row--selected {
+app-contact-points .detail-section-card--neutral .contact-points-box,
+app-contact-points .detail-section-card--neutral .contact-point-row--selected,
+app-categories .detail-section-card--neutral .categories-box,
+app-categories .detail-section-card--neutral .category-row--selected,
+app-categories .detail-section-card--neutral .identifier-item {
   border-color: var(--line);
   background: var(--surface-2);
+  box-shadow: none;
 }
 
 app-identifiers .detail-section-card--neutral .identifier-list-badge,
 app-identifiers .detail-section-card--neutral .identifier-number,
 app-providers .detail-section-card--neutral .provider-badge--available,
-app-providers .detail-section-card--neutral .provider-badge--selected {
+app-providers .detail-section-card--neutral .provider-badge--selected,
+app-contact-points .detail-section-card--neutral .app-badge--blue,
+app-contact-points .detail-section-card--neutral .app-badge--green,
+app-categories .detail-section-card--neutral .category-badge--available,
+app-categories .detail-section-card--neutral .category-badge--selected {
+  border-color: var(--line);
   background: var(--surface-hover);
   color: var(--text);
+}
+
+app-providers .detail-section-card--neutral .provider-state,
+app-contact-points .detail-section-card--neutral .contact-point-state,
+app-categories .detail-section-card--neutral .category-state,
+app-providers .detail-section-card--neutral .provider-remove,
+app-categories .detail-section-card--neutral .category-remove {
+  color: var(--text-muted);
+}
+
+app-categories .detail-section-card--neutral .identifier-item::before {
+  background: var(--text-muted);
+  box-shadow: none;
 }
 
 app-identifiers .detail-section-card--neutral .identifier-remove,

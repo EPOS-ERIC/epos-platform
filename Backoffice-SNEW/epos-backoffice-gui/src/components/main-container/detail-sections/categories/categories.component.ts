@@ -31,6 +31,7 @@ export class CategoriesComponent {
 
   @Input() model: ResourceVersionReference[] = [];
   @Input() disabled = false;
+  @Input() neutralAppearance = false;
   @Output() modelChange = new EventEmitter<ResourceVersionReference[]>();
 
   @Input()
