@@ -1,12 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
+import { of } from 'rxjs';
 
+import { ApiService } from '../../services/api.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
 import { GlobalManagePageComponent } from './global-manage-page.component';
 
 describe('GlobalManagePageComponent', () => {
   const currentUserStore = { hasGlobalPermission: vi.fn() };
+  const apiService = { getContactPoints: vi.fn(() => of([])) };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -14,6 +17,7 @@ describe('GlobalManagePageComponent', () => {
       imports: [GlobalManagePageComponent],
       providers: [
         { provide: CurrentUserStore, useValue: currentUserStore },
+        { provide: ApiService, useValue: apiService },
         provideRouter([])
       ]
     });
@@ -39,7 +43,7 @@ describe('GlobalManagePageComponent', () => {
     expect(destinationTitles(fixture.nativeElement)).toEqual(['Categories']);
   });
 
-  it('opens the contact point placeholder from a deep link', () => {
+  it('opens contact point management from a deep link', () => {
     currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
       permission === 'global.contact_point.manage'
     );
@@ -48,7 +52,8 @@ describe('GlobalManagePageComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.management-landing')).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Contact point management will be defined');
+    expect(fixture.nativeElement.textContent).toContain('Create and manage reusable contact points');
+    expect(apiService.getContactPoints).toHaveBeenCalled();
   });
 
   function destinationTitles(element: HTMLElement): string[] {

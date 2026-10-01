@@ -7,6 +7,7 @@ import type {
   Category,
   ContactPoint,
   CreateCategoryRequest,
+  CreateContactPointRequest,
   CreateMembershipRequest,
   CreateRoleRequest,
   CreateOrganizationRequest,
@@ -27,6 +28,7 @@ import type {
   ResourceVersion,
   RejectResourceRequest,
   ReplaceCategoryRequest,
+  ReplaceContactPointRequest,
   ReplaceOrganizationRequest,
   WriteResult,
   DatasetDraftMetadata,
@@ -249,6 +251,30 @@ export class ApiService {
 
   getContactPoints(): Observable<ContactPoint[]> {
     return this.http.get<ContactPoint[]>(`${this.baseUrl}/contact-points`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  createContactPoint(payload: CreateContactPointRequest): Observable<ContactPoint> {
+    return this.http.post<ContactPoint>(`${this.baseUrl}/contact-points`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  replaceContactPoint(id: string, payload: ReplaceContactPointRequest): Observable<ContactPoint> {
+    return this.http.put<ContactPoint>(`${this.baseUrl}/contact-points/${encodeURIComponent(id)}`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  deleteContactPoint(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/contact-points/${encodeURIComponent(id)}`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
       }

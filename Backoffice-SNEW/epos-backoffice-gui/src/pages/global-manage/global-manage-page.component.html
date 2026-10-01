@@ -29,14 +29,7 @@
 }
 
 @if (isPanelActive('contact-points')) {
-  <section class="future-panel app-card">
-    <span class="management-destination-icon"><app-icon name="user" [size]="22" /></span>
-    <div>
-      <p class="eyebrow app-badge app-badge--primary">Global Administration</p>
-      <h2>Contact Points</h2>
-      <p class="subtitle app-muted">Contact point management will be defined in the next refinement.</p>
-    </div>
-  </section>
+  <app-global-contact-points-panel />
 }
 
 @if (isPanelActive('categories')) {

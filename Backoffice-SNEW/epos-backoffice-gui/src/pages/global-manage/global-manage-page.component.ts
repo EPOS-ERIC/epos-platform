@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import type { Group } from '../../../generated/backofficeSchemas';
 import { CurrentUserStore } from '../../stores/current-user.store';
 import { CategoriesPanelComponent } from '../../panels/categories/categories-panel.component';
+import { GlobalContactPointsPanelComponent } from '../../panels/global-contact-points/global-contact-points-panel.component';
 import { GlobalMembersPanelComponent } from '../../panels/global-members/global-members-panel.component';
 import { GlobalOrganizationsComponent } from '../../panels/global-organizations/global-organizations.component';
 import { GlobalRequestsPanelComponent } from '../../panels/global-requests/global-requests-panel.component';
@@ -21,14 +22,14 @@ type GlobalManageDestination = {
 const GLOBAL_MANAGE_DESTINATIONS: readonly GlobalManageDestination[] = [
   { panel: 'requests', title: 'Requests', description: 'Review membership and role requests across all groups.', icon: 'inbox' },
   { panel: 'members', title: 'Members', description: 'Manage users, group access, permissions, and global notifications.', icon: 'users' },
-  { panel: 'contact-points', title: 'Contact Points', description: 'Manage the contact points available across the platform.', icon: 'user' },
+  { panel: 'contact-points', title: 'Contact Points', description: 'Manage the contact points available across the platform.', icon: 'at-sign' },
   { panel: 'categories', title: 'Categories', description: 'Manage category schemes and their category hierarchies.', icon: 'tags' },
   { panel: 'organizations', title: 'Organizations', description: 'Maintain the canonical organizations used by resources.', icon: 'building' }
 ];
 
 @Component({
   selector: 'app-global-manage-page',
-  imports: [AppIconComponent, CategoriesPanelComponent, GlobalMembersPanelComponent, GlobalOrganizationsComponent, GlobalRequestsPanelComponent, RouterLink],
+  imports: [AppIconComponent, CategoriesPanelComponent, GlobalContactPointsPanelComponent, GlobalMembersPanelComponent, GlobalOrganizationsComponent, GlobalRequestsPanelComponent, RouterLink],
   templateUrl: './global-manage-page.component.html',
   styleUrl: './global-manage-page.component.css'
 })

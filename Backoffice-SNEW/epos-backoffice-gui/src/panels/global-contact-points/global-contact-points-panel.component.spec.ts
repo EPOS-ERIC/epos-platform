@@ -1,0 +1,119 @@
+import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { vi } from 'vitest';
+
+import type { ContactPoint } from '../../../generated/backofficeSchemas';
+import { ApiService } from '../../services/api.service';
+import { GlobalContactPointsPanelComponent } from './global-contact-points-panel.component';
+
+describe('GlobalContactPointsPanelComponent', () => {
+  const contactPoint: ContactPoint = {
+    id: 'contact-1',
+    email: 'data@example.org',
+    role: 'Data support'
+  };
+  const apiService = {
+    getContactPoints: vi.fn(),
+    createContactPoint: vi.fn(),
+    replaceContactPoint: vi.fn(),
+    deleteContactPoint: vi.fn()
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    apiService.getContactPoints.mockReturnValue(of([contactPoint]));
+    TestBed.configureTestingModule({
+      imports: [GlobalContactPointsPanelComponent],
+      providers: [{ provide: ApiService, useValue: apiService }]
+    });
+  });
+
+  it('loads and filters contact points by email or role', () => {
+    const fixture = TestBed.createComponent(GlobalContactPointsPanelComponent);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.textContent).toContain('data@example.org');
+
+    const search = element.querySelector<HTMLInputElement>('input[type="search"]')!;
+    search.value = 'unrelated';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(element.textContent).not.toContain('data@example.org');
+    expect(element.textContent).toContain('No contact points match the search.');
+  });
+
+  it('creates a contact point from the add dialog', async () => {
+    const created: ContactPoint = { id: 'contact-2', email: 'help@example.org', role: 'Help desk' };
+    apiService.createContactPoint.mockReturnValue(of(created));
+    const fixture = TestBed.createComponent(GlobalContactPointsPanelComponent);
+    fixture.detectChanges();
+
+    clickButton(fixture.nativeElement, 'Add New Contact Point');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    setInput(fixture.nativeElement, 'email', created.email);
+    setInput(fixture.nativeElement, 'role', created.role);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    submitForm(fixture.nativeElement);
+    fixture.detectChanges();
+
+    expect(apiService.createContactPoint).toHaveBeenCalledWith({ email: created.email, role: created.role });
+    expect(fixture.nativeElement.textContent).toContain(created.email);
+  });
+
+  it('updates an existing contact point from the edit dialog', async () => {
+    const updated: ContactPoint = { ...contactPoint, role: 'Updated support' };
+    apiService.replaceContactPoint.mockReturnValue(of(updated));
+    const fixture = TestBed.createComponent(GlobalContactPointsPanelComponent);
+    fixture.detectChanges();
+
+    clickButton(fixture.nativeElement, 'Edit');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    setInput(fixture.nativeElement, 'role', updated.role);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    submitForm(fixture.nativeElement);
+    fixture.detectChanges();
+
+    expect(apiService.replaceContactPoint).toHaveBeenCalledWith(contactPoint.id, {
+      email: contactPoint.email,
+      role: updated.role
+    });
+    expect(fixture.nativeElement.textContent).toContain(updated.role);
+  });
+
+  it('deletes a contact point after confirmation', () => {
+    apiService.deleteContactPoint.mockReturnValue(of(undefined));
+    const fixture = TestBed.createComponent(GlobalContactPointsPanelComponent);
+    fixture.detectChanges();
+
+    clickButton(fixture.nativeElement, 'Remove');
+    fixture.detectChanges();
+    clickButton(fixture.nativeElement, 'Remove contact point');
+    fixture.detectChanges();
+
+    expect(apiService.deleteContactPoint).toHaveBeenCalledWith(contactPoint.id);
+    expect(fixture.nativeElement.textContent).not.toContain(contactPoint.email);
+  });
+
+  function clickButton(element: HTMLElement, label: string): void {
+    const button = Array.from(element.querySelectorAll<HTMLButtonElement>('button'))
+      .find((candidate) => candidate.textContent?.replace(/\s+/g, ' ').trim().includes(label));
+    expect(button).toBeDefined();
+    button!.click();
+  }
+
+  function setInput(element: HTMLElement, name: string, value: string): void {
+    const input = element.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
+    input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function submitForm(element: HTMLElement): void {
+    element.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+  }
+});
