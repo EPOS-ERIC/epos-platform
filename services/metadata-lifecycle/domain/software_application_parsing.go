@@ -31,14 +31,14 @@ func NewSoftwareApplicationInput(value SoftwareApplicationInput) (SoftwareApplic
 		return SoftwareApplicationInput{}, invalidField("keywords", "Keywords must not be blank and may contain only letters, numbers, spaces, colon, hyphen, and underscore.", err)
 	}
 	value.Keywords = keywords
-	if err := validateUUIDList(value.CreatorIDs, "creator"); err != nil {
-		return SoftwareApplicationInput{}, invalidField("creators", "Each creator must be a valid UUID.", err)
+	if err := validateUUIDListField(value.CreatorIDs, "creators", "Creator"); err != nil {
+		return SoftwareApplicationInput{}, err
 	}
-	if err := validateUUIDList(value.ContactPointIDs, "contact point"); err != nil {
-		return SoftwareApplicationInput{}, invalidField("contact_points", "Each contact point must be a valid UUID.", err)
+	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
+		return SoftwareApplicationInput{}, err
 	}
-	if err := validateUUIDList(value.CategoryIDs, "category"); err != nil {
-		return SoftwareApplicationInput{}, invalidField("categories", "Each category must be a valid UUID.", err)
+	if err := validateUUIDListField(value.CategoryIDs, "categories", "Category"); err != nil {
+		return SoftwareApplicationInput{}, err
 	}
 
 	identifiers := make([]IdentifierInput, len(value.Identifiers))

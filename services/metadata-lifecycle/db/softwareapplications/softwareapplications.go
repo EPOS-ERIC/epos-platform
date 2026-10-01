@@ -31,12 +31,12 @@ func New(pool *pgxpool.Pool) *Repo {
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.SoftwareApplicationInput) (domain.SoftwareApplicationVersion, error) {
 	var result domain.SoftwareApplicationVersion
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
-		valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
+		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
 		if err != nil {
 			return fmt.Errorf("validate application categories: %w", err)
 		}
-		if !valid {
-			return apperror.Default(apperror.CodeValidationFailed)
+		if invalidIndex >= 0 {
+			return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
 		}
 
 		application, err := q.CreateLifecycleSoftwareApplication(ctx, sqlc.CreateLifecycleSoftwareApplicationParams{
@@ -67,12 +67,12 @@ func (r *Repo) ReplaceDraft(ctx context.Context, applicationID, versionID uuid.U
 			if err != nil {
 				return fmt.Errorf("get application for category validation: %w", err)
 			}
-			valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, application.GroupID, value.Metadata.CategoryIDs)
+			invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, application.GroupID, value.Metadata.CategoryIDs)
 			if err != nil {
 				return fmt.Errorf("validate application categories: %w", err)
 			}
-			if !valid {
-				return apperror.Default(apperror.CodeValidationFailed)
+			if invalidIndex >= 0 {
+				return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
 			}
 		}
 

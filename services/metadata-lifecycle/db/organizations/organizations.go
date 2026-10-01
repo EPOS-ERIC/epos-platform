@@ -37,16 +37,16 @@ func (r *Repo) Create(
 		if err != nil {
 			return fmt.Errorf("check organization parents: %w", err)
 		}
-		if len(parentRows) != len(input.Parents) {
-			return apperror.Default(apperror.CodeNotFound)
+		if err := missingReferenceError(input.Parents, organizationIDs(parentRows), "parents", "Parent organization"); err != nil {
+			return err
 		}
 
 		contactRows, err := q.ListContactPointIDs(ctx, input.ContactPoints)
 		if err != nil {
 			return fmt.Errorf("check contact points: %w", err)
 		}
-		if len(contactRows) != len(input.ContactPoints) {
-			return apperror.Default(apperror.CodeNotFound)
+		if err := missingReferenceError(input.ContactPoints, contactRows, "contact_point_ids", "Contact point"); err != nil {
+			return err
 		}
 
 		organizationID := uuid.New()
@@ -133,16 +133,16 @@ func (r *Repo) Replace(
 		if err != nil {
 			return fmt.Errorf("check organization parents: %w", err)
 		}
-		if len(parentRows) != len(input.Parents) {
-			return apperror.Default(apperror.CodeNotFound)
+		if err := missingReferenceError(input.Parents, organizationIDs(parentRows), "parents", "Parent organization"); err != nil {
+			return err
 		}
 
 		contactRows, err := q.ListContactPointIDs(ctx, input.ContactPoints)
 		if err != nil {
 			return fmt.Errorf("check contact points: %w", err)
 		}
-		if len(contactRows) != len(input.ContactPoints) {
-			return apperror.Default(apperror.CodeNotFound)
+		if err := missingReferenceError(input.ContactPoints, contactRows, "contact_point_ids", "Contact point"); err != nil {
+			return err
 		}
 
 		_, err = q.ReplaceOrganization(ctx, toReplaceOrganizationParams(id, input))
@@ -244,6 +244,29 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 		}
 	}
 
+	return nil
+}
+
+func organizationIDs(rows []sqlc.Organization) []uuid.UUID {
+	ids := make([]uuid.UUID, len(rows))
+	for i, row := range rows {
+		ids[i] = row.ID
+	}
+	return ids
+}
+
+func missingReferenceError(input, found []uuid.UUID, field, label string) error {
+	foundIDs := make(map[uuid.UUID]struct{}, len(found))
+	for _, id := range found {
+		foundIDs[id] = struct{}{}
+	}
+	for i, id := range input {
+		if _, ok := foundIDs[id]; !ok {
+			err := apperror.New(apperror.CodeNotFound, label+" was not found.")
+			err.Target = fmt.Sprintf("%s[%d]", field, i)
+			return err
+		}
+	}
 	return nil
 }
 

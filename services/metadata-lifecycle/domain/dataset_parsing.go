@@ -35,14 +35,14 @@ func NewDatasetInput(value DatasetInput) (DatasetInput, error) {
 		}
 		return DatasetInput{}, invalidField(target, detail, err)
 	}
-	if err := validateUUIDList(value.ContactPointIDs, "contact point"); err != nil {
-		return DatasetInput{}, invalidField("contact_points", "Each contact point must be a valid UUID.", err)
+	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
+		return DatasetInput{}, err
 	}
-	if err := validateUUIDList(value.ProviderIDs, "provider"); err != nil {
-		return DatasetInput{}, invalidField("providers", "Each provider must be a valid UUID.", err)
+	if err := validateUUIDListField(value.ProviderIDs, "providers", "Provider"); err != nil {
+		return DatasetInput{}, err
 	}
-	if err := validateUUIDList(value.CategoryIDs, "category"); err != nil {
-		return DatasetInput{}, invalidField("categories", "Each category must be a valid UUID.", err)
+	if err := validateUUIDListField(value.CategoryIDs, "categories", "Category"); err != nil {
+		return DatasetInput{}, err
 	}
 
 	identifiers := make([]IdentifierInput, len(value.PersistentIdentifiers))

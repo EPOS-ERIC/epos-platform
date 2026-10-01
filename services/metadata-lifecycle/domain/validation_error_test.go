@@ -39,6 +39,15 @@ func TestNewDatasetDraftInputPrefixesMetadataTarget(t *testing.T) {
 	}
 }
 
+func TestValidateUUIDListFieldTargetsFirstRepeatedValue(t *testing.T) {
+	id := uuid.New()
+	err := validateUUIDListField([]uuid.UUID{id, id}, "categories", "Category")
+	appErr, ok := errors.AsType[*apperror.AppError](err)
+	if !ok || appErr.Code != apperror.CodeValidationFailed || appErr.Target != "categories[1]" {
+		t.Fatalf("error = %+v, want validation_failed target categories[1]", err)
+	}
+}
+
 func TestNewGroupKeepsPersistedValidationInternal(t *testing.T) {
 	_, err := NewGroup(uuid.New(), GroupInput{Name: "name"})
 	if appErr, ok := errors.AsType[*apperror.AppError](err); !ok || appErr.Code != apperror.CodeInternal {

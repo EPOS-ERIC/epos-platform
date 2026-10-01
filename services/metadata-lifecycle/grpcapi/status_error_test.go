@@ -45,3 +45,13 @@ func TestNormalizeErrorEncodesApplicationCode(t *testing.T) {
 		t.Fatalf("decoded error = %+v, ok = %v", decoded, ok)
 	}
 }
+
+func TestNormalizeErrorPreservesValidationTargetAndDetail(t *testing.T) {
+	const target = "metadata.categories[2]"
+	const detail = "Category must belong to this group and appear only once."
+	err := NormalizeError(apperror.Field(target, detail, nil))
+	decoded, ok := apperrorgrpc.FromStatus(err)
+	if !ok || decoded.Code != apperror.CodeValidationFailed || decoded.Target != target || decoded.Detail != detail {
+		t.Fatalf("decoded error = %+v, ok = %v", decoded, ok)
+	}
+}

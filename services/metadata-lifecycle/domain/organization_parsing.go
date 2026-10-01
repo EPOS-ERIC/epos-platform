@@ -23,11 +23,11 @@ func NewOrganizationInput(value OrganizationInput) (OrganizationInput, error) {
 	if value.Name == "" {
 		return OrganizationInput{}, invalidField("name", "Name must not be blank.", nil)
 	}
-	if err := validateUUIDList(value.Parents, "parent"); err != nil {
-		return OrganizationInput{}, invalidField("parents", "Each parent must be a valid UUID.", err)
+	if err := validateUUIDListField(value.Parents, "parents", "Parent organization"); err != nil {
+		return OrganizationInput{}, err
 	}
-	if err := validateUUIDList(value.ContactPoints, "contact point"); err != nil {
-		return OrganizationInput{}, invalidField("contact_points", "Each contact point must be a valid UUID.", err)
+	if err := validateUUIDListField(value.ContactPoints, "contact_point_ids", "Contact point"); err != nil {
+		return OrganizationInput{}, err
 	}
 	for i := range value.Identifiers {
 		identifierInput, err := NewOrganizationIdentifierInput(value.Identifiers[i])

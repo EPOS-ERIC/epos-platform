@@ -62,8 +62,8 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	if value.ProviderID != nil && *value.ProviderID == uuid.Nil {
 		return WebServiceInput{}, invalidField("provider", "Provider must be a valid UUID.", nil)
 	}
-	if err := validateUUIDList(value.ContactPointIDs, "web service contact point"); err != nil {
-		return WebServiceInput{}, invalidField("contact_points", "Each contact point must be a valid UUID.", err)
+	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
+		return WebServiceInput{}, err
 	}
 	if value.Documentation != nil {
 		value.Documentation.Title = optionalTrimmedString(value.Documentation.Title)
