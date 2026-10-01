@@ -41,7 +41,7 @@ type DiscoveryRelations struct {
 	Providers     []DiscoveryReference
 	Creators      []DiscoveryReference
 	Categories    []DiscoveryReference
-	Distributions []DiscoveryReference
+	Distributions []DiscoveryDistribution
 }
 
 // DiscoveryItem is a resource summary returned by discovery.
@@ -58,7 +58,17 @@ type DiscoveryItem struct {
 	Providers     []DiscoveryReference
 	Creators      []DiscoveryReference
 	Categories    []DiscoveryReference
-	Distributions []DiscoveryReference
+	Distributions []DiscoveryDistribution
+}
+
+// DiscoveryDistribution is a typed distribution summary for discovery.
+type DiscoveryDistribution struct {
+	ID             uuid.UUID
+	Name           string
+	Type           DistributionType
+	WebServiceType WebServiceType
+	VisibleOn      []WebServiceVisibleOn
+	Provider       *DiscoveryReference
 }
 
 // DiscoveryReference identifies related metadata attached to a resource.

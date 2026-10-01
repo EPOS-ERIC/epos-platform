@@ -99,13 +99,41 @@ func (r *Repo) DatasetRelations(ctx context.Context, versionIDs []uuid.UUID) (ma
 	if err != nil {
 		return nil, fmt.Errorf("list dataset distributions: %w", err)
 	}
-	distributionRows := discoveryRelationRows(distributions, func(row sqlc.ListDiscoveryDatasetDistributionsRow) discoveryRelationRow {
-		return discoveryRelationRow{versionID: row.VersionID, id: row.ID, name: row.Name}
-	})
-	if err := addDiscoveryReferences(result, distributionRows, func(relations *domain.DiscoveryRelations, reference domain.DiscoveryReference) {
-		relations.Distributions = append(relations.Distributions, reference)
-	}, "dataset distribution"); err != nil {
-		return nil, err
+
+	for _, row := range distributions {
+		distribution := domain.DiscoveryDistribution{
+			ID:   row.ID,
+			Name: row.Name,
+			Type: domain.DistributionType(row.Type),
+		}
+
+		if row.WebServiceType != nil {
+			distribution.WebServiceType = domain.WebServiceType(*row.WebServiceType)
+		}
+
+		if row.VisibleOn != nil {
+			distribution.VisibleOn = make([]domain.WebServiceVisibleOn, len(row.VisibleOn))
+			for i, visibleOn := range row.VisibleOn {
+				distribution.VisibleOn[i] = domain.WebServiceVisibleOn(visibleOn)
+			}
+		}
+
+		if row.ProviderID != nil {
+			provider, err := domain.NewDiscoveryReference(*row.ProviderID, row.ProviderName)
+			if err != nil {
+				return nil, fmt.Errorf("construct web service provider: %w", err)
+			}
+			distribution.Provider = &provider
+		}
+
+		distribution, err := domain.NewDiscoveryDistribution(distribution)
+		if err != nil {
+			return nil, fmt.Errorf("construct dataset distribution: %w", err)
+		}
+
+		relations := result[row.VersionID]
+		relations.Distributions = append(relations.Distributions, distribution)
+		result[row.VersionID] = relations
 	}
 
 	return result, nil

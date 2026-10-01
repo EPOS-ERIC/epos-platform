@@ -3535,7 +3535,42 @@ components:
           items: { $ref: "#/components/schemas/Reference" }
         distributions:
           type: array
-          items: { $ref: "#/components/schemas/Reference" }
+          items: { $ref: "#/components/schemas/DiscoveryDistribution" }
+
+    DiscoveryDistribution:
+      oneOf:
+        - $ref: "#/components/schemas/DiscoveryWebServiceDistribution"
+        - $ref: "#/components/schemas/DiscoveryDownloadableFileDistribution"
+      discriminator:
+        propertyName: type
+        mapping:
+          "WEB_SERVICE": "#/components/schemas/DiscoveryWebServiceDistribution"
+          "DOWNLOADABLE_FILE": "#/components/schemas/DiscoveryDownloadableFileDistribution"
+
+    DiscoveryWebServiceDistribution:
+      type: object
+      additionalProperties: false
+      required: [id, name, type, web_service_type]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string, enum: ["WEB_SERVICE"] }
+        web_service_type: { $ref: "#/components/schemas/WebServiceType" }
+        visible_on:
+          type: array
+          nullable: true
+          minItems: 1
+          items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
+        provider: { $ref: "#/components/schemas/Reference" }
+
+    DiscoveryDownloadableFileDistribution:
+      type: object
+      additionalProperties: false
+      required: [id, name, type]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string, enum: ["DOWNLOADABLE_FILE"] }
 
     SoftwareApplicationDiscoveryItem:
       type: object

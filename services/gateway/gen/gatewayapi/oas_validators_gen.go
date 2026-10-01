@@ -1197,6 +1197,31 @@ func (s *DatasetDiscoveryItem) Validate() error {
 			Error: err,
 		})
 	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.Distributions {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "distributions",
+			Error: err,
+		})
+	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -1817,6 +1842,55 @@ func (s DiscoveryConcept) Validate() error {
 	}
 }
 
+func (s DiscoveryDistribution) Validate() error {
+	switch s.Type {
+	case DiscoveryWebServiceDistributionDiscoveryDistribution:
+		if err := s.DiscoveryWebServiceDistribution.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case DiscoveryDownloadableFileDistributionDiscoveryDistribution:
+		if err := s.DiscoveryDownloadableFileDistribution.Validate(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.Errorf("invalid type %q", s.Type)
+	}
+}
+
+func (s *DiscoveryDownloadableFileDistribution) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s DiscoveryDownloadableFileDistributionType) Validate() error {
+	switch s {
+	case "DOWNLOADABLE_FILE":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s DiscoveryItem) Validate() error {
 	switch s.Type {
 	case DatasetDiscoveryItemDiscoveryItem:
@@ -1846,6 +1920,92 @@ func (s DiscoveryResourceType) Validate() error {
 	case "software-application":
 		return nil
 	case "software-source-code":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *DiscoveryWebServiceDistribution) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.WebServiceType.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "web_service_type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s DiscoveryWebServiceDistributionType) Validate() error {
+	switch s {
+	case "WEB_SERVICE":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
