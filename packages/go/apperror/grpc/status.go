@@ -22,7 +22,7 @@ func Code(code apperror.Code) codes.Code {
 	case apperror.CodeNotFound:
 		return codes.NotFound
 	case apperror.CodeConflict:
-		return codes.AlreadyExists
+		return codes.FailedPrecondition
 	case apperror.CodeInvalidTransition:
 		return codes.FailedPrecondition
 	case apperror.CodeUpstreamTimeout:

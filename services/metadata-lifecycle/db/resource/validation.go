@@ -2,10 +2,15 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // invalidCategoryIndex returns the first category ID not found in the group,
@@ -42,4 +47,27 @@ func CategoriesBelongToGroup(ctx context.Context, q *sqlc.Queries, groupID uuid.
 		return -1, fmt.Errorf("list category references: %w", err)
 	}
 	return invalidCategoryIndex(categoryIDs, rows), nil
+}
+
+// LifecycleError classifies PostgreSQL errors from resource lifecycle writes.
+func LifecycleError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return apperror.Default(apperror.CodeConflict)
+	}
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+		switch pgErr.Code {
+		case "23514":
+			return fmt.Errorf("database validation: %w", apperror.Wrap(apperror.CodeValidationFailed, "", err))
+		case "23001", "23505", "23P01", "P0001":
+			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, apperror.Wrap(apperror.CodeConflict, "", err))
+		default:
+			if strings.HasPrefix(pgErr.Code, "23") {
+				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, apperror.Wrap(apperror.CodeInternal, "", err))
+			}
+		}
+	}
+	return err
 }

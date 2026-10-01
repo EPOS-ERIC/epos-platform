@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
@@ -15,7 +14,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -67,7 +65,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 		}
 		return nil
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) ReplaceDraft(
@@ -114,7 +112,7 @@ func (r *Repo) ReplaceDraft(
 		}
 		return nil
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 // Get returns one selected version with all version-owned metadata and canonical references.
@@ -264,7 +262,7 @@ func (r *Repo) Publish(ctx context.Context, actorID string, datasetID, versionID
 		return err
 	})
 	if err != nil {
-		return domain.DatasetVersion{}, lifecycleError(err)
+		return domain.DatasetVersion{}, resourcedb.LifecycleError(err)
 	}
 	return result, nil
 }
@@ -351,7 +349,7 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetI
 		}
 		return nil
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) clone(
@@ -399,7 +397,7 @@ func (r *Repo) clone(
 		}
 		return nil
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) ensureVersion(ctx context.Context, datasetID, versionID uuid.UUID) error {
@@ -582,28 +580,6 @@ func visibleOnValues(values []domain.WebServiceVisibleOn) []sqlc.WebServiceVisib
 		result[i] = sqlc.WebServiceVisibleOn(value)
 	}
 	return result
-}
-
-func lifecycleError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if errors.Is(err, pgx.ErrNoRows) {
-		return apperror.Default(apperror.CodeConflict)
-	}
-	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-		switch pgErr.Code {
-		case "23514":
-			return fmt.Errorf("database validation: %w", apperror.Wrap(apperror.CodeValidationFailed, "", err))
-		case "23001", "23505", "23P01", "P0001":
-			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, apperror.Wrap(apperror.CodeConflict, "", err))
-		default:
-			if strings.HasPrefix(pgErr.Code, "23") {
-				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, apperror.Wrap(apperror.CodeInternal, "", err))
-			}
-		}
-	}
-	return err
 }
 
 func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetLifecycleDatasetVersionRow) (domain.DatasetMetadata, error) {

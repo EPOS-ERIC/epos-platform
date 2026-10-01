@@ -18,7 +18,7 @@ func TestCodeMapping(t *testing.T) {
 		{apperror.CodeUnauthenticated, codes.Unauthenticated},
 		{apperror.CodePermissionDenied, codes.PermissionDenied},
 		{apperror.CodeNotFound, codes.NotFound},
-		{apperror.CodeConflict, codes.AlreadyExists},
+		{apperror.CodeConflict, codes.FailedPrecondition},
 		{apperror.CodeInvalidTransition, codes.FailedPrecondition},
 		{apperror.CodeInternal, codes.Internal},
 		{apperror.CodeUpstreamTimeout, codes.DeadlineExceeded},
