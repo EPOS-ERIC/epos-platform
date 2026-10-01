@@ -29,6 +29,14 @@
 - Keep URL construction such as `href` in `server/handlers/`.
 - Validate new configuration fields and behavior in `config/Validate`.
 
+## Error Handling
+
+- Use the shared `packages/go/apperror` contract.
+- Gateway clients own gRPC-status decoding and classify upstream availability/deadline failures. Handlers map application errors to documented HTTP responses.
+- Keep HTTP Problem fields safe: the type identifies the application outcome, title follows the HTTP reason phrase, detail is client-safe, and target is included only when known. Never expose upstream diagnostics or error causes.
+- Preserve nested validation paths and array indices when mapping ogen validation errors. Use actionable safe details for known validation failures; use generic safe detail for unknown validator errors.
+- Log/report errors at the HTTP boundary: expected client errors at debug level; 5xx errors at error level and on the active trace.
+
 ## Mapping Rules
 
 - Map exactly once at each transport boundary. For a pure proxy: `api request -> protobuf request` in the handler, then `protobuf response -> api response` in the handler. Do not introduce a Gateway domain type between those mappings.

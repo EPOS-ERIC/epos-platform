@@ -43,7 +43,7 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 	identitySvc := identity.NewService(baseLog, metadataLifecycleClient)
 	membershipSvc := membership.NewService(baseLog, metadataLifecycleClient)
 	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
-	handler := handlers.NewTimeoutHandler(baseLog, router, cfg.Server.RequestTimeout)
+	handler := handlers.RequestTimeout(router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{
 		BaseContext:  func(net.Listener) context.Context { return ctx },

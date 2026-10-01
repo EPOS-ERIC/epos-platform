@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
@@ -64,7 +65,7 @@ func (r *Repo) ListUsers(ctx context.Context) ([]domain.UserSummary, error) {
 func (r *Repo) GetUserByID(ctx context.Context, userID string) (domain.User, error) {
 	user, err := r.Queries.GetUserByID(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.User{}, domain.ErrUserNotFound
+		return domain.User{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.User{}, fmt.Errorf("get user by id: %w", err)
@@ -192,7 +193,7 @@ func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain
 	})
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return domain.User{}, domain.ErrUserConflict
+			return domain.User{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("create user: %w", err))
 		}
 		return domain.User{}, fmt.Errorf("create user: %w", err)
 	}
@@ -215,7 +216,7 @@ func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain
 func (r *Repo) GrantGlobalPermission(ctx context.Context, userID string, permission domain.GlobalPermission, grantedBy string) (bool, error) {
 	_, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return false, domain.ErrUserNotFound
+		return false, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return false, fmt.Errorf("check target user: %w", err)
@@ -223,14 +224,14 @@ func (r *Repo) GrantGlobalPermission(ctx context.Context, userID string, permiss
 
 	scope, err := r.GetPermissionScope(ctx, string(permission))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return false, domain.ErrInvalidUser
+		return false, apperror.Default(apperror.CodeValidationFailed)
 	}
 	if err != nil {
 		return false, fmt.Errorf("check permission: %w", err)
 	}
 
 	if scope != sqlc.PermissionScopeGLOBAL {
-		return false, domain.ErrInvalidUser
+		return false, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	rows, err := r.Queries.GrantGlobalPermission(ctx, sqlc.GrantGlobalPermissionParams{
@@ -248,7 +249,7 @@ func (r *Repo) GrantGlobalPermission(ctx context.Context, userID string, permiss
 func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID string, permission domain.GlobalPermission) error {
 	_, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrUserNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return fmt.Errorf("check target user: %w", err)
@@ -256,14 +257,14 @@ func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID string, permis
 
 	scope, err := r.GetPermissionScope(ctx, string(permission))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrInvalidUser
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 	if err != nil {
 		return fmt.Errorf("check permission: %w", err)
 	}
 
 	if scope != sqlc.PermissionScopeGLOBAL {
-		return domain.ErrInvalidUser
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	if err := r.Queries.RevokeGlobalPermission(ctx, sqlc.RevokeGlobalPermissionParams{
@@ -278,11 +279,11 @@ func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID string, permis
 
 func (r *Repo) AssignGlobalRole(ctx context.Context, userID, assignedBy, role string) (bool, error) {
 	if role != "ADMIN" {
-		return false, domain.ErrInvalidUser
+		return false, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	if _, err := r.GetAuthorizationUser(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return false, domain.ErrUserNotFound
+		return false, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return false, fmt.Errorf("check target user: %w", err)
 	}
@@ -317,11 +318,11 @@ func (r *Repo) AssignGlobalRole(ctx context.Context, userID, assignedBy, role st
 
 func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error {
 	if role != "ADMIN" {
-		return domain.ErrInvalidUser
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	if _, err := r.GetAuthorizationUser(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrUserNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return fmt.Errorf("check target user: %w", err)
 	}
@@ -344,7 +345,7 @@ func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error 
 				return fmt.Errorf("count active global admins: %w", err)
 			}
 			if admins == 0 {
-				return domain.ErrUserConflict
+				return apperror.Default(apperror.CodeConflict)
 			}
 		}
 		return nil
@@ -367,7 +368,7 @@ func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) er
 
 		_, err := queries.GetAuthorizationUser(ctx, userID)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrUserNotFound
+			return apperror.Default(apperror.CodeNotFound)
 		}
 		if err != nil {
 			return fmt.Errorf("check target user: %w", err)
@@ -390,7 +391,7 @@ func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) er
 			return fmt.Errorf("count active global admins: %w", err)
 		}
 		if admins == 0 {
-			return domain.ErrUserConflict
+			return apperror.Default(apperror.CodeConflict)
 		}
 
 		return nil
@@ -414,7 +415,7 @@ func (r *Repo) UnblockUser(ctx context.Context, userID string) error {
 
 		_, err := queries.GetAuthorizationUser(ctx, userID)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrUserNotFound
+			return apperror.Default(apperror.CodeNotFound)
 		}
 		if err != nil {
 			return fmt.Errorf("check target user: %w", err)

@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from auth import get_token
 from client import SCHEMA, GatewayClient
+from fixtures import assert_problem
 
 
 class ResourceLifecycleContractTest(unittest.TestCase):
@@ -160,13 +161,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
                 },
             },
         )
-        self.assertEqual(stale.status_code, 409)
-        problem = stale.json()
-        self.assertEqual(problem["title"], "conflict")
-        self.assertEqual(
-            problem["detail"],
-            "operation conflicts with existing data",
-        )
+        assert_problem(self, stale, 409, "conflict")
 
         submitted = self.gateway.post(
             "/resources/{resourceType}/{id}/versions/{versionId}/submit",

@@ -3,11 +3,10 @@ package grpcapi
 import (
 	"testing"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func TestToProtoNotificationEventKind(t *testing.T) {
@@ -159,12 +158,12 @@ func TestNotificationTopicKeyMappings(t *testing.T) {
 
 func TestNotificationTopicKeyMappingsRejectInvalidValues(t *testing.T) {
 	_, err := toDomainNotificationTopicKey(metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_UNSPECIFIED)
-	if status.Code(err) != codes.InvalidArgument {
-		t.Fatalf("invalid proto topic key error code = %s, want %s", status.Code(err), codes.InvalidArgument)
+	if !apperror.IsCode(err, apperror.CodeValidationFailed) {
+		t.Fatalf("invalid proto topic key error = %v, want validation_failed", err)
 	}
 
 	_, err = toProtoNotificationTopicKey(domain.NotificationTopicDirectResourcePublished)
-	if status.Code(err) != codes.Internal {
-		t.Fatalf("direct topic key error code = %s, want %s", status.Code(err), codes.Internal)
+	if !apperror.IsCode(err, apperror.CodeInternal) {
+		t.Fatalf("direct topic key error = %v, want internal", err)
 	}
 }

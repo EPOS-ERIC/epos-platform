@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from auth import get_token
 from client import SCHEMA, GatewayClient
+from fixtures import assert_problem
 
 
 class GroupAndCategoryContractTest(unittest.TestCase):
@@ -160,13 +161,7 @@ class GroupAndCategoryContractTest(unittest.TestCase):
             groupId=group_id,
             json={"name": root_name.upper()},
         )
-        self.assertEqual(duplicate_response.status_code, 409)
-        problem = duplicate_response.json()
-        self.assertEqual(problem["title"], "conflict")
-        self.assertEqual(
-            problem["detail"],
-            "operation conflicts with existing data",
-        )
+        assert_problem(self, duplicate_response, 409, "conflict")
 
         deleted_root_response = self.gateway.delete(
             "/groups/{groupId}/categories/{categoryId}",

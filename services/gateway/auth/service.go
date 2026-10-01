@@ -11,13 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/urlutil"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-)
-
-var (
-	ErrUnauthorized        = errors.New("unauthorized")
-	ErrProviderUnavailable = errors.New("auth provider unavailable")
 )
 
 type Identity struct {
@@ -59,26 +55,29 @@ func NewService(log *slog.Logger, baseURL string) (*Service, error) {
 func (s *Service) Authenticate(ctx context.Context, token string) (Identity, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
-		return Identity{}, ErrUnauthorized
+		return Identity{}, apperror.Default(apperror.CodeUnauthenticated)
 	}
 
 	result, err := s.Validate(ctx, token)
 	if err != nil {
 		s.log.ErrorContext(ctx, "auth token validation failed", "error", err)
-		if errors.Is(err, ErrUnauthorized) {
-			return Identity{}, ErrUnauthorized
+		if apperror.IsCode(err, apperror.CodeUnauthenticated) {
+			return Identity{}, err
 		}
-		return Identity{}, fmt.Errorf("%w: validate access token: %v", ErrProviderUnavailable, err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			return Identity{}, apperror.Wrap(apperror.CodeUpstreamTimeout, "", fmt.Errorf("validate access token: %w", err))
+		}
+		return Identity{}, apperror.Wrap(apperror.CodeUpstreamUnavailable, "", fmt.Errorf("validate access token: %w", err))
 	}
 
 	if !result.Active {
 		s.log.WarnContext(ctx, "auth token rejected")
-		return Identity{}, ErrUnauthorized
+		return Identity{}, apperror.Default(apperror.CodeUnauthenticated)
 	}
 
 	if strings.TrimSpace(result.Identity.AuthIdentifier) == "" {
 		s.log.WarnContext(ctx, "auth token missing identity")
-		return Identity{}, ErrUnauthorized
+		return Identity{}, apperror.Default(apperror.CodeUnauthenticated)
 	}
 
 	return result.Identity, nil
@@ -100,7 +99,7 @@ func (s *Service) Validate(ctx context.Context, token string) (ValidationResult,
 
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusUnauthorized {
-			return ValidationResult{}, ErrUnauthorized
+			return ValidationResult{}, apperror.Default(apperror.CodeUnauthenticated)
 		}
 		return ValidationResult{}, fmt.Errorf("auth validation request failed: %s", resp.Status)
 	}

@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -34,7 +33,7 @@ func (u *UserServer) GetUser(ctx context.Context, request *metadatalifecyclev1.G
 
 	user, err := u.users.GetByID(ctx, actor, request.UserId)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	userStatus, err := toProtoUserStatus(user.Status)
@@ -83,7 +82,7 @@ func (u *UserServer) ListUsers(ctx context.Context, _ *metadatalifecyclev1.ListU
 
 	users, err := u.users.List(ctx, actor)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	result, err := mapSliceErr(users, toProtoUserListItem)
@@ -101,12 +100,12 @@ func (u *UserServer) GrantGlobalPermission(ctx context.Context, request *metadat
 	}
 	permission, err := toDomainGlobalPermission(request.GetPermission())
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	notifications, err := u.users.GrantGlobalPermission(ctx, actor, request.GetUserId(), permission)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
@@ -124,11 +123,11 @@ func (u *UserServer) RevokeGlobalPermission(ctx context.Context, request *metada
 	}
 	permission, err := toDomainGlobalPermission(request.GetPermission())
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	if err := u.users.RevokeGlobalPermission(ctx, actor, request.GetUserId(), permission); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.RevokeGlobalPermissionResponse{}, nil
@@ -147,7 +146,7 @@ func (u *UserServer) AssignGlobalRole(ctx context.Context, request *metadatalife
 
 	notifications, err := u.users.AssignGlobalRole(ctx, actor, request.GetUserId(), string(role))
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
@@ -170,7 +169,7 @@ func (u *UserServer) RemoveGlobalRole(ctx context.Context, request *metadatalife
 	}
 
 	if err := u.users.RemoveGlobalRole(ctx, actor, request.GetUserId(), string(role)); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.RemoveGlobalRoleResponse{}, nil
@@ -183,7 +182,7 @@ func (u *UserServer) BlockUser(ctx context.Context, request *metadatalifecyclev1
 	}
 
 	if err := u.users.BlockUser(ctx, actor, request.GetUserId(), request.GetReason()); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.BlockUserResponse{}, nil
@@ -196,7 +195,7 @@ func (u *UserServer) UnblockUser(ctx context.Context, request *metadatalifecycle
 	}
 
 	if err := u.users.UnblockUser(ctx, actor, request.GetUserId()); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.UnblockUserResponse{}, nil
@@ -205,17 +204,17 @@ func (u *UserServer) UnblockUser(ctx context.Context, request *metadatalifecycle
 func actorFromContext(ctx context.Context) (domain.Actor, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", status.Error(codes.Unauthenticated, "actor required")
+		return "", apperror.New(apperror.CodeUnauthenticated, "actor required")
 	}
 
 	values := md.Get(actorMetadataKey)
 	if len(values) != 1 {
-		return "", status.Error(codes.Unauthenticated, "actor required")
+		return "", apperror.New(apperror.CodeUnauthenticated, "actor required")
 	}
 
 	actor, err := domain.NewActor(values[0])
 	if err != nil {
-		return "", status.Error(codes.InvalidArgument, "invalid actor")
+		return "", apperror.New(apperror.CodeValidationFailed, "invalid actor")
 	}
 
 	return actor, nil
@@ -452,7 +451,7 @@ func toDomainGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domai
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE:
 		return domain.GlobalPermissionCategoryManage, nil
 	default:
-		return "", domain.ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }
 
@@ -461,7 +460,7 @@ func toDomainGlobalRole(value metadatalifecyclev1.GlobalRole) (domain.GlobalRole
 	case metadatalifecyclev1.GlobalRole_GLOBAL_ROLE_ADMIN:
 		return domain.GlobalRoleAdmin, nil
 	default:
-		return "", domain.ErrInvalidUser
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }
 

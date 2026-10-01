@@ -14941,6 +14941,10 @@ func (s *Problem) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Problem) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("type")
+		e.Str(s.Type)
+	}
+	{
 		e.FieldStart("title")
 		e.Str(s.Title)
 	}
@@ -14960,13 +14964,21 @@ func (s *Problem) encodeFields(e *jx.Encoder) {
 			s.Instance.Encode(e)
 		}
 	}
+	{
+		if s.Target.Set {
+			e.FieldStart("target")
+			s.Target.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfProblem = [4]string{
-	0: "title",
-	1: "status",
-	2: "detail",
-	3: "instance",
+var jsonFieldsNameOfProblem = [6]string{
+	0: "type",
+	1: "title",
+	2: "status",
+	3: "detail",
+	4: "instance",
+	5: "target",
 }
 
 // Decode decodes Problem from json.
@@ -14978,8 +14990,20 @@ func (s *Problem) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "title":
+		case "type":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.Type = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "title":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := d.Str()
 				s.Title = string(v)
@@ -14991,7 +15015,7 @@ func (s *Problem) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"title\"")
 			}
 		case "status":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int()
 				s.Status = int(v)
@@ -15022,6 +15046,16 @@ func (s *Problem) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"instance\"")
 			}
+		case "target":
+			if err := func() error {
+				s.Target.Reset()
+				if err := s.Target.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"target\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -15032,7 +15066,7 @@ func (s *Problem) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

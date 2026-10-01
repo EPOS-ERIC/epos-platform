@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 )
 
@@ -64,7 +65,7 @@ func TestNewWebServiceDescriptionIsOptionalButNotEmpty(t *testing.T) {
 	}
 
 	empty := " "
-	if _, err := NewWebServiceInput(base(&empty)); !errors.Is(err, ErrInvalidDataset) {
+	if _, err := NewWebServiceInput(base(&empty)); !apperror.IsCode(err, apperror.CodeValidationFailed) {
 		t.Fatalf("empty description error = %v, want invalid dataset", err)
 	}
 }
@@ -81,9 +82,7 @@ func TestNewWebServiceInputRejectsDuplicateNamesAcrossLocations(t *testing.T) {
 			{Name: "value", Label: "Value", Schema: StringSchema{}, Location: ParameterLocationHeader},
 		},
 	})
-	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), `duplicate parameter name "value"`) {
-		t.Fatalf("error = %v, want duplicate parameter error", err)
-	}
+	assertInputValidation(t, err, "parameters[1].name")
 }
 
 func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
@@ -144,7 +143,7 @@ func TestNewWebServiceParameterInputRejectsDuplicateEnumValues(t *testing.T) {
 		},
 		Location: ParameterLocationQuery,
 	})
-	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "duplicated") {
+	if !apperror.IsCode(err, apperror.CodeValidationFailed) || !strings.Contains(err.Error(), "duplicated") {
 		t.Fatalf("error = %v, want duplicate enum error", err)
 	}
 }
@@ -168,9 +167,7 @@ func TestNewWebServiceParameterInputRejectsInvalidExplode(t *testing.T) {
 				Location: test.location,
 				Explode:  true,
 			})
-			if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "parameter explode requires query location and multiple values") {
-				t.Fatalf("error = %v, want explode validation error", err)
-			}
+			assertInputValidation(t, err, "explode")
 		})
 	}
 }
@@ -182,9 +179,7 @@ func TestNewWebServiceParameterInputRejectsMultipleValuesWithoutEnum(t *testing.
 		Schema:   StringSchema{MultipleValues: true},
 		Location: ParameterLocationQuery,
 	})
-	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "multiple values require a non-empty enum schema") {
-		t.Fatalf("error = %v, want multiple-values enum error", err)
-	}
+	assertInputValidation(t, err, "schema.enum")
 }
 
 func TestNewWebServiceInputRejectsInvalidType(t *testing.T) {
@@ -195,15 +190,13 @@ func TestNewWebServiceInputRejectsInvalidType(t *testing.T) {
 		Type:        "KML",
 		Format:      "application/json",
 	})
-	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "web service type is invalid") {
-		t.Fatalf("error = %v, want invalid type error", err)
-	}
+	assertInputValidation(t, err, "type")
 }
 
 func TestNormalizeMediaTypeIncludesInvalidInputInError(t *testing.T) {
 	for _, value := range []string{"not a media type", "json"} {
 		_, err := normalizeMediaType(value)
-		if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), `"`+value+`"`) {
+		if !apperror.IsCode(err, apperror.CodeValidationFailed) || !strings.Contains(err.Error(), `"`+value+`"`) {
 			t.Errorf("normalizeMediaType(%q) error = %v, want invalid dataset error containing input", value, err)
 		}
 	}
@@ -228,10 +221,22 @@ func TestNewWebServiceInputRejectsInvalidVisibleOn(t *testing.T) {
 				VisibleOn:   test.visibleOn,
 				Format:      "application/json",
 			})
-			if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "web service visible on") {
-				t.Fatalf("error = %v, want invalid visible-on error", err)
-			}
+			assertInputValidation(t, err, "visible_on")
 		})
+	}
+}
+
+func assertInputValidation(t *testing.T, err error, target string) {
+	t.Helper()
+	var appErr *apperror.AppError
+	if !errors.As(err, &appErr) {
+		t.Fatalf("error = %T, want *apperror.AppError: %v", err, err)
+	}
+	if !apperror.IsCode(err, apperror.CodeValidationFailed) {
+		t.Fatalf("error = %v, want validation_failed", err)
+	}
+	if appErr.Target != target {
+		t.Fatalf("AppError target = %q, want %q", appErr.Target, target)
 	}
 }
 
@@ -272,7 +277,7 @@ func TestNewWebServiceInputValidatesBodyAgainstMethod(t *testing.T) {
 		Format:      "application/json",
 		Body:        body,
 	})
-	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "body is not allowed") {
+	if !apperror.IsCode(err, apperror.CodeValidationFailed) || !strings.Contains(err.Error(), "body is not allowed") {
 		t.Fatalf("error = %v, want method body error", err)
 	}
 
@@ -302,7 +307,7 @@ func TestNewRequestBodyRejectsUndeclaredTemplateReference(t *testing.T) {
 			Schema: StringSchema{},
 		}},
 	})
-	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "undeclared parameter") {
+	if !apperror.IsCode(err, apperror.CodeValidationFailed) || !strings.Contains(err.Error(), "undeclared parameter") {
 		t.Fatalf("error = %v, want undeclared reference error", err)
 	}
 }
@@ -322,7 +327,7 @@ func TestParseTemplateSchemaDisallowsNestedTemplates(t *testing.T) {
 			},
 		}},
 	})
-	if !errors.Is(err, ErrInvalidDataset) || !strings.Contains(err.Error(), "template schema is not allowed") {
+	if !apperror.IsCode(err, apperror.CodeValidationFailed) || !strings.Contains(err.Error(), "template schema is not allowed") {
 		t.Fatalf("error = %v, want nested template error", err)
 	}
 }
@@ -331,7 +336,7 @@ func TestDateTimeLayout(t *testing.T) {
 	if err := validateDateTimeLayout("YYYY-MM-DDThh:mm:ssZ"); err != nil {
 		t.Fatalf("validateDateTimeLayout() error = %v", err)
 	}
-	if err := validateDateTimeLayout("yyyy-MM-DD"); !errors.Is(err, ErrInvalidDataset) {
+	if err := validateDateTimeLayout("yyyy-MM-DD"); !apperror.IsCode(err, apperror.CodeValidationFailed) {
 		t.Fatalf("unsupported layout error = %v", err)
 	}
 }

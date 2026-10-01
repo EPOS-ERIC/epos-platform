@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import assert_problem
 
 
 class MembershipContractTest(unittest.TestCase):
@@ -72,13 +73,7 @@ class MembershipContractTest(unittest.TestCase):
             groupId=group_id,
             json={"roles": []},
         )
-        self.assertEqual(duplicate_request_response.status_code, 409)
-        duplicate_problem = duplicate_request_response.json()
-        self.assertEqual(duplicate_problem["title"], "conflict")
-        self.assertEqual(
-            duplicate_problem["detail"],
-            "operation conflicts with existing data",
-        )
+        assert_problem(self, duplicate_request_response, 409, "conflict")
 
         self_decision_response = applicant.post(
             "/groups/{groupId}/memberships/{userId}/{decision}",
@@ -86,13 +81,7 @@ class MembershipContractTest(unittest.TestCase):
             userId=user_id,
             decision="accept",
         )
-        self.assertEqual(self_decision_response.status_code, 403)
-        self_decision_problem = self_decision_response.json()
-        self.assertEqual(self_decision_problem["title"], "forbidden")
-        self.assertEqual(
-            self_decision_problem["detail"],
-            "operation is not permitted",
-        )
+        assert_problem(self, self_decision_response, 403, "permission_denied")
 
         rejected_response = self.gateway.post(
             "/groups/{groupId}/memberships/{userId}/{decision}",
@@ -140,13 +129,7 @@ class MembershipContractTest(unittest.TestCase):
             userId=user_id,
             decision="accept",
         )
-        self.assertEqual(repeated_accept_response.status_code, 409)
-        repeated_accept_problem = repeated_accept_response.json()
-        self.assertEqual(repeated_accept_problem["title"], "conflict")
-        self.assertEqual(
-            repeated_accept_problem["detail"],
-            "operation conflicts with existing data",
-        )
+        assert_problem(self, repeated_accept_response, 409, "conflict")
 
         user_response = applicant.get(
             "/users/{id}",

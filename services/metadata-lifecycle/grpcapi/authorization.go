@@ -3,6 +3,7 @@ package grpcapi
 import (
 	"context"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
@@ -20,7 +21,7 @@ func NewAuthorization(authorizer *authz.Authorizer) *AuthorizationServer {
 func (s *AuthorizationServer) ListPermissions(ctx context.Context, _ *metadatalifecyclev1.ListPermissionsRequest) (*metadatalifecyclev1.ListPermissionsResponse, error) {
 	permissions, err := s.authorizer.ListPermissions(ctx)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	result, err := mapSliceErr(permissions, toProtoPermission)
@@ -52,6 +53,6 @@ func toProtoPermissionScope(value domain.PermissionScope) (metadatalifecyclev1.P
 	case domain.PermissionScopeGroup:
 		return metadatalifecyclev1.PermissionScope_PERMISSION_SCOPE_GROUP, nil
 	default:
-		return 0, domain.ErrInvalidAuthorization
+		return 0, apperror.Default(apperror.CodeValidationFailed)
 	}
 }

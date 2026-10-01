@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
@@ -36,23 +37,23 @@ func (r *Repo) Create(
 		if err != nil {
 			return fmt.Errorf("check organization parents: %w", err)
 		}
-		if len(parentRows) != len(input.Parents) {
-			return domain.ErrOrganizationNotFound
+		if err := missingReferenceError(input.Parents, organizationIDs(parentRows), "parents", "Parent organization"); err != nil {
+			return err
 		}
 
 		contactRows, err := q.ListContactPointIDs(ctx, input.ContactPoints)
 		if err != nil {
 			return fmt.Errorf("check contact points: %w", err)
 		}
-		if len(contactRows) != len(input.ContactPoints) {
-			return domain.ErrOrganizationNotFound
+		if err := missingReferenceError(input.ContactPoints, contactRows, "contact_point_ids", "Contact point"); err != nil {
+			return err
 		}
 
 		organizationID := uuid.New()
 		_, err = q.CreateOrganization(ctx, toCreateOrganizationParams(organizationID, input))
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-				return domain.ErrOrganizationConflict
+				return apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert organization: %w", err))
 			}
 			return fmt.Errorf("insert organization: %w", err)
 		}
@@ -67,7 +68,7 @@ func (r *Repo) Create(
 			})
 			if err != nil {
 				if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-					return domain.ErrOrganizationConflict
+					return apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert organization identifier: %w", err))
 				}
 
 				return fmt.Errorf("insert organization identifier: %w", err)
@@ -122,7 +123,7 @@ func (r *Repo) Replace(
 	err := dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
 		_, err := q.GetOrganizationForUpdate(ctx, id)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrOrganizationNotFound
+			return apperror.Default(apperror.CodeNotFound)
 		}
 		if err != nil {
 			return fmt.Errorf("lock organization: %w", err)
@@ -132,22 +133,22 @@ func (r *Repo) Replace(
 		if err != nil {
 			return fmt.Errorf("check organization parents: %w", err)
 		}
-		if len(parentRows) != len(input.Parents) {
-			return domain.ErrOrganizationNotFound
+		if err := missingReferenceError(input.Parents, organizationIDs(parentRows), "parents", "Parent organization"); err != nil {
+			return err
 		}
 
 		contactRows, err := q.ListContactPointIDs(ctx, input.ContactPoints)
 		if err != nil {
 			return fmt.Errorf("check contact points: %w", err)
 		}
-		if len(contactRows) != len(input.ContactPoints) {
-			return domain.ErrOrganizationNotFound
+		if err := missingReferenceError(input.ContactPoints, contactRows, "contact_point_ids", "Contact point"); err != nil {
+			return err
 		}
 
 		_, err = q.ReplaceOrganization(ctx, toReplaceOrganizationParams(id, input))
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-				return domain.ErrOrganizationConflict
+				return apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("update organization: %w", err))
 			}
 
 			return fmt.Errorf("update organization: %w", err)
@@ -196,7 +197,7 @@ func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete organization: %w", err)
 	}
 	if deleted == 0 {
-		return domain.ErrOrganizationNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 
 	return nil
@@ -213,7 +214,7 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 		})
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-				return domain.ErrOrganizationConflict
+				return apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert organization identifier: %w", err))
 			}
 
 			return fmt.Errorf("insert organization identifier: %w", err)
@@ -227,7 +228,7 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 		})
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && (pgErr.Code == "23514" || pgErr.Code == "P0001") {
-				return domain.ErrInvalidOrganization
+				return apperror.Wrap(apperror.CodeValidationFailed, "", fmt.Errorf("link organization parent: %w", err))
 			}
 			return fmt.Errorf("link organization parent: %w", err)
 		}
@@ -246,6 +247,29 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 	return nil
 }
 
+func organizationIDs(rows []sqlc.Organization) []uuid.UUID {
+	ids := make([]uuid.UUID, len(rows))
+	for i, row := range rows {
+		ids[i] = row.ID
+	}
+	return ids
+}
+
+func missingReferenceError(input, found []uuid.UUID, field, label string) error {
+	foundIDs := make(map[uuid.UUID]struct{}, len(found))
+	for _, id := range found {
+		foundIDs[id] = struct{}{}
+	}
+	for i, id := range input {
+		if _, ok := foundIDs[id]; !ok {
+			err := apperror.New(apperror.CodeNotFound, label+" was not found.")
+			err.Target = fmt.Sprintf("%s[%d]", field, i)
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *Repo) List(ctx context.Context) ([]domain.Organization, error) {
 	rows, err := r.ListOrganizations(ctx)
 	if err != nil {
@@ -258,7 +282,7 @@ func (r *Repo) List(ctx context.Context) ([]domain.Organization, error) {
 func (r *Repo) Get(ctx context.Context, id uuid.UUID) (domain.Organization, error) {
 	row, err := r.GetOrganization(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Organization{}, domain.ErrOrganizationNotFound
+		return domain.Organization{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.Organization{}, fmt.Errorf("get organization: %w", err)

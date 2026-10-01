@@ -3,10 +3,10 @@ package users
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 )
 
@@ -57,8 +57,8 @@ func (s *Service) GetByID(ctx context.Context, actorID domain.Actor, userID stri
 	var err error
 	if string(actorID) == userID {
 		self, err = s.store.GetUserByID(ctx, userID)
-		if errors.Is(err, domain.ErrUserNotFound) {
-			return domain.User{}, domain.ErrUserNotFound
+		if apperror.IsCode(err, apperror.CodeNotFound) {
+			return domain.User{}, apperror.Default(apperror.CodeNotFound)
 		}
 		if err != nil {
 			return domain.User{}, fmt.Errorf("get user by id: %w", err)
@@ -71,7 +71,7 @@ func (s *Service) GetByID(ctx context.Context, actorID domain.Actor, userID stri
 	}
 
 	if !allowed.Allowed {
-		return domain.User{}, domain.ErrUserForbidden
+		return domain.User{}, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	if string(actorID) == userID {
@@ -93,7 +93,7 @@ func (s *Service) List(ctx context.Context, actorID domain.Actor) ([]domain.User
 	}
 
 	if !allowed.Allowed {
-		return nil, domain.ErrUserForbidden
+		return nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	users, err := s.store.ListUsers(ctx)
@@ -111,7 +111,7 @@ func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Acto
 	}
 
 	if !allowed.Allowed {
-		return nil, domain.ErrUserForbidden
+		return nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	changed, err := s.store.GrantGlobalPermission(ctx, userID, permission, string(actorID))
@@ -144,7 +144,7 @@ func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID domain.Act
 	}
 
 	if !allowed.Allowed {
-		return domain.ErrUserForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	err = s.store.RevokeGlobalPermission(ctx, userID, permission)
@@ -161,7 +161,7 @@ func (s *Service) AssignGlobalRole(ctx context.Context, actorID domain.Actor, us
 		return nil, fmt.Errorf("authorize global role assignment: %w", err)
 	}
 	if !allowed.Allowed {
-		return nil, domain.ErrUserForbidden
+		return nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	changed, err := s.store.AssignGlobalRole(ctx, userID, string(actorID), role)
@@ -193,7 +193,7 @@ func (s *Service) RemoveGlobalRole(ctx context.Context, actorID domain.Actor, us
 		return fmt.Errorf("authorize global role removal: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrUserForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	err = s.store.RemoveGlobalRole(ctx, userID, role)
@@ -210,7 +210,7 @@ func (s *Service) BlockUser(ctx context.Context, actorID domain.Actor, userID, r
 		return fmt.Errorf("authorize user blocking: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrUserForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	err = s.store.BlockUser(ctx, string(actorID), userID, reason)
@@ -227,7 +227,7 @@ func (s *Service) UnblockUser(ctx context.Context, actorID domain.Actor, userID 
 		return fmt.Errorf("authorize user unblocking: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrUserForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	err = s.store.UnblockUser(ctx, userID)

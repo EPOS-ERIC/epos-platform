@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 )
 
 func (h *ogenHandler) ListUsers(ctx context.Context) ([]gatewayapi.UserListItem, error) {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	response, err := h.metadataLifecycle.ListUsers(ctx, actor)
 	if err != nil {
@@ -225,9 +227,9 @@ func toAPIUser(v domain.User) (gatewayapi.User, error) {
 }
 
 func (h *ogenHandler) GetUser(ctx context.Context, p gatewayapi.GetUserParams) (*gatewayapi.User, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	v, err := h.identity.GetUser(ctx, a, p.ID)
 	if err != nil {
@@ -241,9 +243,9 @@ func (h *ogenHandler) GetUser(ctx context.Context, p gatewayapi.GetUserParams) (
 }
 
 func (h *ogenHandler) GrantGlobalPermission(ctx context.Context, p gatewayapi.GrantGlobalPermissionParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	permission, err := domain.NewGlobalPermission(string(p.Permission))
 	if err != nil {
@@ -256,9 +258,9 @@ func (h *ogenHandler) GrantGlobalPermission(ctx context.Context, p gatewayapi.Gr
 }
 
 func (h *ogenHandler) RevokeGlobalPermission(ctx context.Context, p gatewayapi.RevokeGlobalPermissionParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	permission, err := domain.NewGlobalPermission(string(p.Permission))
 	if err != nil {
@@ -271,9 +273,9 @@ func (h *ogenHandler) RevokeGlobalPermission(ctx context.Context, p gatewayapi.R
 }
 
 func (h *ogenHandler) AssignGlobalRole(ctx context.Context, p gatewayapi.AssignGlobalRoleParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	role, err := toProtoGlobalRole(p.Role)
 	if err != nil {
@@ -286,9 +288,9 @@ func (h *ogenHandler) AssignGlobalRole(ctx context.Context, p gatewayapi.AssignG
 }
 
 func (h *ogenHandler) RemoveGlobalRole(ctx context.Context, p gatewayapi.RemoveGlobalRoleParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	role, err := toProtoGlobalRole(p.Role)
 	if err != nil {
@@ -301,9 +303,9 @@ func (h *ogenHandler) RemoveGlobalRole(ctx context.Context, p gatewayapi.RemoveG
 }
 
 func (h *ogenHandler) BlockUser(ctx context.Context, q *gatewayapi.BlockUserRequest, p gatewayapi.BlockUserParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	if err := h.metadataLifecycle.BlockUser(ctx, a, p.ID, string(q.Reason)); err != nil {
 		return fmt.Errorf("block user: %w", err)
@@ -312,9 +314,9 @@ func (h *ogenHandler) BlockUser(ctx context.Context, q *gatewayapi.BlockUserRequ
 }
 
 func (h *ogenHandler) UnblockUser(ctx context.Context, p gatewayapi.UnblockUserParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	if err := h.metadataLifecycle.UnblockUser(ctx, a, p.ID); err != nil {
 		return fmt.Errorf("unblock user: %w", err)

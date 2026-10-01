@@ -5,15 +5,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
 	resourcedb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -30,12 +29,12 @@ func New(pool *pgxpool.Pool) *Repo {
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.SoftwareApplicationInput) (domain.SoftwareApplicationVersion, error) {
 	var result domain.SoftwareApplicationVersion
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
-		valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
+		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
 		if err != nil {
 			return fmt.Errorf("validate application categories: %w", err)
 		}
-		if !valid {
-			return domain.ErrSoftwareApplicationInvalid
+		if invalidIndex >= 0 {
+			return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
 		}
 
 		application, err := q.CreateLifecycleSoftwareApplication(ctx, sqlc.CreateLifecycleSoftwareApplicationParams{
@@ -55,7 +54,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 		result, err = applicationResult(ctx, q, application.ID, version.ID)
 		return err
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) ReplaceDraft(ctx context.Context, applicationID, versionID uuid.UUID, value domain.SoftwareApplicationDraftInput) (domain.SoftwareApplicationVersion, error) {
@@ -66,12 +65,12 @@ func (r *Repo) ReplaceDraft(ctx context.Context, applicationID, versionID uuid.U
 			if err != nil {
 				return fmt.Errorf("get application for category validation: %w", err)
 			}
-			valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, application.GroupID, value.Metadata.CategoryIDs)
+			invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, application.GroupID, value.Metadata.CategoryIDs)
 			if err != nil {
 				return fmt.Errorf("validate application categories: %w", err)
 			}
-			if !valid {
-				return domain.ErrSoftwareApplicationInvalid
+			if invalidIndex >= 0 {
+				return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
 			}
 		}
 
@@ -88,13 +87,13 @@ func (r *Repo) ReplaceDraft(ctx context.Context, applicationID, versionID uuid.U
 		result, err = applicationResult(ctx, q, applicationID, version.ID)
 		return err
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) Get(ctx context.Context, applicationID, versionID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	result, err := applicationResult(ctx, sqlc.New(r.db), applicationID, versionID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareApplicationVersion{}, domain.ErrSoftwareApplicationNotFound
+		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	return result, err
 }
@@ -115,7 +114,7 @@ func (r *Repo) List(ctx context.Context, applicationID uuid.UUID) ([]domain.Reso
 func (r *Repo) GetPublished(ctx context.Context, applicationID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	version, err := sqlc.New(r.db).GetPublishedLifecycleSoftwareApplicationVersion(ctx, applicationID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareApplicationVersion{}, domain.ErrSoftwareApplicationNotFound
+		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareApplicationVersion{}, fmt.Errorf("get published application version: %w", err)
@@ -126,7 +125,7 @@ func (r *Repo) GetPublished(ctx context.Context, applicationID uuid.UUID) (domai
 func (r *Repo) GetActive(ctx context.Context, applicationID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	version, err := sqlc.New(r.db).GetActiveLifecycleSoftwareApplicationVersion(ctx, applicationID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareApplicationVersion{}, domain.ErrSoftwareApplicationNotFound
+		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareApplicationVersion{}, fmt.Errorf("get active application version: %w", err)
@@ -201,18 +200,18 @@ func (r *Repo) transition(
 			SoftwareApplicationID: applicationID,
 		}); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrSoftwareApplicationNotFound
+				return apperror.Default(apperror.CodeNotFound)
 			}
 			return fmt.Errorf("ensure application version: %w", err)
 		}
 		version, err := fn(q)
 		if err != nil {
-			return lifecycleError(err)
+			return resourcedb.LifecycleError(err)
 		}
 		result, err = applicationResult(ctx, q, applicationID, version.ID)
 		return err
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) Discard(ctx context.Context, applicationID, versionID uuid.UUID) error {
@@ -222,7 +221,7 @@ func (r *Repo) Discard(ctx context.Context, applicationID, versionID uuid.UUID) 
 			SoftwareApplicationID: applicationID,
 		}); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrSoftwareApplicationNotFound
+				return apperror.Default(apperror.CodeNotFound)
 			}
 			return fmt.Errorf("ensure application version: %w", err)
 		}
@@ -232,7 +231,7 @@ func (r *Repo) Discard(ctx context.Context, applicationID, versionID uuid.UUID) 
 		}
 		return q.DeleteEmptyLifecycleSoftwareApplication(ctx, id)
 	})
-	return lifecycleError(err)
+	return resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) DraftFromPublication(ctx context.Context, actorID string, applicationID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
@@ -271,7 +270,7 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceApplicat
 		result, err = applicationResult(ctx, q, application.ID, version.ID)
 		return err
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) clone(
@@ -316,29 +315,7 @@ func (r *Repo) clone(
 		return nil
 	})
 	if err != nil {
-		return domain.SoftwareApplicationVersion{}, lifecycleError(err)
+		return domain.SoftwareApplicationVersion{}, resourcedb.LifecycleError(err)
 	}
 	return r.Get(ctx, targetID, versionID)
-}
-
-func lifecycleError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrSoftwareApplicationConflict
-	}
-	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-		switch pgErr.Code {
-		case "23514":
-			return fmt.Errorf("database validation: %w", domain.ErrSoftwareApplicationInvalid)
-		case "23001", "23505", "23P01", "P0001":
-			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, domain.ErrSoftwareApplicationConflict)
-		default:
-			if strings.HasPrefix(pgErr.Code, "23") {
-				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, domain.ErrSoftwareApplicationInternal)
-			}
-		}
-	}
-	return err
 }

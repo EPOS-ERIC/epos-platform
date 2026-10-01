@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
@@ -26,7 +27,7 @@ func New(db *pgxpool.Pool) *Repo {
 
 func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain.GroupMembership, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return nil, domain.ErrAccessNotFound
+		return nil, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return nil, fmt.Errorf("check group: %w", err)
 	}
@@ -118,14 +119,14 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 
 func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID string, roles []domain.GroupRole) (domain.GroupMembership, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.GroupMembership{}, domain.ErrAccessNotFound
+		return domain.GroupMembership{}, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return domain.GroupMembership{}, fmt.Errorf("check group: %w", err)
 	}
 
 	user, err := r.GetUserByID(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.GroupMembership{}, domain.ErrAccessNotFound
+		return domain.GroupMembership{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.GroupMembership{}, fmt.Errorf("check user: %w", err)
@@ -138,7 +139,7 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 			GroupID: groupID,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrAccessConflict
+			return apperror.Default(apperror.CodeConflict)
 		}
 		if err != nil {
 			return fmt.Errorf("request membership: %w", err)
@@ -198,7 +199,7 @@ func (r *Repo) WithdrawMembershipRequest(ctx context.Context, groupID uuid.UUID,
 	}
 
 	if rows == 0 {
-		return domain.ErrAccessNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 
 	return nil
@@ -206,13 +207,13 @@ func (r *Repo) WithdrawMembershipRequest(ctx context.Context, groupID uuid.UUID,
 
 func (r *Repo) RevokeMembership(ctx context.Context, groupID uuid.UUID, userID string) error {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrAccessNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return fmt.Errorf("check group: %w", err)
 	}
 
 	if _, err := r.GetUserByID(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrAccessNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return fmt.Errorf("check user: %w", err)
 	}
@@ -225,7 +226,7 @@ func (r *Repo) RevokeMembership(ctx context.Context, groupID uuid.UUID, userID s
 		return fmt.Errorf("revoke membership: %w", err)
 	}
 	if rows == 0 {
-		return domain.ErrAccessNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 
 	return nil
@@ -233,7 +234,7 @@ func (r *Repo) RevokeMembership(ctx context.Context, groupID uuid.UUID, userID s
 
 func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole) (domain.RoleRequest, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.RoleRequest{}, domain.ErrAccessNotFound
+		return domain.RoleRequest{}, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("check group: %w", err)
 	}
@@ -242,7 +243,7 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string
 		GroupID: groupID,
 		UserID:  userID,
 	}); errors.Is(err, pgx.ErrNoRows) {
-		return domain.RoleRequest{}, domain.ErrAccessNotFound
+		return domain.RoleRequest{}, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("check membership: %w", err)
 	}
@@ -253,10 +254,10 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string
 		RoleKey: string(role),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.RoleRequest{}, domain.ErrAccessConflict
+		return domain.RoleRequest{}, apperror.Default(apperror.CodeConflict)
 	}
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-		return domain.RoleRequest{}, domain.ErrAccessConflict
+		return domain.RoleRequest{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("create role request: %w", err))
 	}
 	if err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("create role request: %w", err)
@@ -275,7 +276,7 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string
 // then returns the target user's updated membership.
 func (r *Repo) DecideRoleRequest(ctx context.Context, groupID, requestID uuid.UUID, decision domain.Decision, actorID string) (domain.RoleRequestDecision, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.RoleRequestDecision{}, domain.ErrAccessNotFound
+		return domain.RoleRequestDecision{}, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return domain.RoleRequestDecision{}, fmt.Errorf("check group: %w", err)
 	}
@@ -289,7 +290,7 @@ func (r *Repo) DecideRoleRequest(ctx context.Context, groupID, requestID uuid.UU
 			GroupID:   groupID,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrAccessConflict
+			return apperror.Default(apperror.CodeConflict)
 		}
 		if err != nil {
 			return fmt.Errorf("update role request: %w", err)
@@ -326,7 +327,7 @@ func (r *Repo) DecideRoleRequest(ctx context.Context, groupID, requestID uuid.UU
 
 func (r *Repo) WithdrawRoleRequest(ctx context.Context, groupID, requestID uuid.UUID, userID string) error {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrAccessNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return fmt.Errorf("check group: %w", err)
 	}
@@ -340,7 +341,7 @@ func (r *Repo) WithdrawRoleRequest(ctx context.Context, groupID, requestID uuid.
 		return fmt.Errorf("withdraw role request: %w", err)
 	}
 	if rows == 0 {
-		return domain.ErrAccessNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 
 	return nil
@@ -365,7 +366,7 @@ func (r *Repo) AssignRole(ctx context.Context, groupID uuid.UUID, userID string,
 		return false, fmt.Errorf("assign role: %w", err)
 	}
 	if rows == 0 {
-		return false, domain.ErrAccessConflict
+		return false, apperror.Default(apperror.CodeConflict)
 	}
 
 	return true, nil
@@ -423,7 +424,7 @@ func (r *Repo) RevokePermission(ctx context.Context, groupID uuid.UUID, userID s
 	case "GRANTED", "ABSENT":
 		return nil
 	case "ROLE":
-		return domain.ErrAccessConflict
+		return apperror.Default(apperror.CodeConflict)
 	default:
 		return fmt.Errorf("revoke permission: unexpected outcome %q", outcome)
 	}
@@ -431,13 +432,13 @@ func (r *Repo) RevokePermission(ctx context.Context, groupID uuid.UUID, userID s
 
 func (r *Repo) checkPermissionTarget(ctx context.Context, groupID uuid.UUID, userID string, permission domain.GroupPermission) error {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrAccessNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return fmt.Errorf("check group: %w", err)
 	}
 
 	if _, err := r.GetUserByID(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrAccessNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return fmt.Errorf("check user: %w", err)
 	}
@@ -447,24 +448,24 @@ func (r *Repo) checkPermissionTarget(ctx context.Context, groupID uuid.UUID, use
 		UserID:  userID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrAccessNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return fmt.Errorf("check membership: %w", err)
 	}
 	if membership.GroupMembership.Status != sqlc.MembershipStatusACTIVE {
-		return domain.ErrAccessConflict
+		return apperror.Default(apperror.CodeConflict)
 	}
 
 	scope, err := r.GetPermissionScope(ctx, string(permission))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrInvalidAccess
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 	if err != nil {
 		return fmt.Errorf("check permission: %w", err)
 	}
 	if scope != sqlc.PermissionScopeGROUP {
-		return domain.ErrInvalidAccess
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	return nil
@@ -474,13 +475,13 @@ func (r *Repo) checkPermissionTarget(ctx context.Context, groupID uuid.UUID, use
 // It reports whether the requested role is already assigned.
 func (r *Repo) checkRoleTarget(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole) (bool, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return false, domain.ErrAccessNotFound
+		return false, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return false, fmt.Errorf("check group: %w", err)
 	}
 
 	if _, err := r.GetUserByID(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return false, domain.ErrAccessNotFound
+		return false, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return false, fmt.Errorf("check user: %w", err)
 	}
@@ -490,13 +491,13 @@ func (r *Repo) checkRoleTarget(ctx context.Context, groupID uuid.UUID, userID st
 		UserID:  userID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return false, domain.ErrAccessNotFound
+		return false, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return false, fmt.Errorf("check membership: %w", err)
 	}
 	if membership.GroupMembership.Status != sqlc.MembershipStatusACTIVE {
-		return false, domain.ErrAccessConflict
+		return false, apperror.Default(apperror.CodeConflict)
 	}
 
 	_, err = r.GetPendingGroupRoleRequest(ctx, sqlc.GetPendingGroupRoleRequestParams{
@@ -505,7 +506,7 @@ func (r *Repo) checkRoleTarget(ctx context.Context, groupID uuid.UUID, userID st
 		RoleKey: string(role),
 	})
 	if err == nil {
-		return false, domain.ErrAccessConflict
+		return false, apperror.Default(apperror.CodeConflict)
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return false, fmt.Errorf("check pending role request: %w", err)
@@ -530,13 +531,13 @@ func (r *Repo) checkRoleTarget(ctx context.Context, groupID uuid.UUID, userID st
 // Rejection also marks its pending role requests as rejected in the same transaction.
 func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID string, decision domain.Decision, actorID string) (domain.GroupMembership, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.GroupMembership{}, domain.ErrAccessNotFound
+		return domain.GroupMembership{}, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return domain.GroupMembership{}, fmt.Errorf("check group: %w", err)
 	}
 
 	if _, err := r.GetUserByID(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.GroupMembership{}, domain.ErrAccessNotFound
+		return domain.GroupMembership{}, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
 		return domain.GroupMembership{}, fmt.Errorf("check user: %w", err)
 	}
@@ -549,7 +550,7 @@ func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID s
 			UserID:   userID,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrAccessConflict
+			return apperror.Default(apperror.CodeConflict)
 		}
 		if err != nil {
 			return fmt.Errorf("update membership: %w", err)

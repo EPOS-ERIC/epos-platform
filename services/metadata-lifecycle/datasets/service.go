@@ -3,10 +3,10 @@ package datasets
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -86,14 +86,14 @@ func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, datasetI
 
 func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, versionID uuid.UUID) (domain.DatasetVersion, error) {
 	result, err := s.authorizer.CanReadDatasetVersion(ctx, actor.OptionalString(), datasetID, versionID)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
-		return domain.DatasetVersion{}, domain.ErrDatasetNotFound
+	if apperror.IsCode(err, apperror.CodeNotFound) {
+		return domain.DatasetVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.DatasetVersion{}, operationError("authorize dataset read", err)
 	}
 	if !result.Allowed {
-		return domain.DatasetVersion{}, fmt.Errorf("%w: %s", domain.ErrDatasetForbidden, result.Reason)
+		return domain.DatasetVersion{}, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 
 	dataset, err := s.store.Get(ctx, datasetID, versionID)
@@ -111,9 +111,9 @@ func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, datasetI
 	}
 	if !result.Allowed {
 		if result.Reason == "resource not found" {
-			return nil, domain.ErrDatasetNotFound
+			return nil, apperror.Default(apperror.CodeNotFound)
 		}
-		return nil, fmt.Errorf("%w: %s", domain.ErrDatasetForbidden, result.Reason)
+		return nil, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 
 	versions, err := s.store.List(ctx, datasetID)
@@ -128,6 +128,13 @@ func (s *Service) Submit(ctx context.Context, actor domain.Actor, datasetID, ver
 
 	dataset, err := s.store.Submit(ctx, string(actor), datasetID, versionID)
 	if err != nil {
+		if apperror.IsCode(err, apperror.CodeConflict) {
+			return domain.DatasetVersion{}, nil, apperror.Wrap(
+				apperror.CodeInvalidTransition,
+				"The resource cannot be submitted from its current state.",
+				err,
+			)
+		}
 		return domain.DatasetVersion{}, nil, operationError("submit draft", err)
 	}
 
@@ -285,7 +292,7 @@ func (s *Service) authorizeGroup(ctx context.Context, actor domain.Actor, groupI
 		return fmt.Errorf("authorize group: %w", err)
 	}
 	if !result.Allowed {
-		return fmt.Errorf("%w: %s", domain.ErrDatasetForbidden, result.Reason)
+		return fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 	return nil
 }
@@ -296,7 +303,7 @@ func (s *Service) authorizeResource(ctx context.Context, actor domain.Actor, dat
 		return fmt.Errorf("authorize dataset: %w", err)
 	}
 	if !result.Allowed {
-		return fmt.Errorf("%w: %s", domain.ErrDatasetForbidden, result.Reason)
+		return fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 	return nil
 }
@@ -305,8 +312,8 @@ func operationError(operation string, err error) error {
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, domain.ErrDatasetForbidden) || errors.Is(err, domain.ErrDatasetConflict) || errors.Is(err, domain.ErrDatasetNotFound) || errors.Is(err, domain.ErrInvalidDataset) {
+	if apperror.IsCode(err, apperror.CodePermissionDenied) || apperror.IsCode(err, apperror.CodeConflict) || apperror.IsCode(err, apperror.CodeNotFound) || apperror.IsCode(err, apperror.CodeValidationFailed) {
 		return fmt.Errorf("%s: %w", operation, err)
 	}
-	return fmt.Errorf("%s: %w: %w", operation, domain.ErrDatasetInternal, err)
+	return apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("%s: %w", operation, err))
 }

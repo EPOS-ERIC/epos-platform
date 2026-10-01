@@ -8335,14 +8335,23 @@ func (s *PermissionScope) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/Problem
 type Problem struct {
-	// Short, human-readable summary of problem.
+	// Stable application error code used by clients.
+	Type string `json:"type"`
+	// HTTP status reason phrase.
 	Title string `json:"title"`
 	// HTTP status code for this problem occurrence.
 	Status int `json:"status"`
 	// Optional human-readable explanation specific to this occurrence.
 	Detail OptString `json:"detail"`
-	// Optional URI reference identifying this specific problem occurrence.
+	// Optional OpenTelemetry trace ID associated with this request.
 	Instance OptString `json:"instance"`
+	// Optional dotted path identifying the request field related to the problem.
+	Target OptString `json:"target"`
+}
+
+// GetType returns the value of Type.
+func (s *Problem) GetType() string {
+	return s.Type
 }
 
 // GetTitle returns the value of Title.
@@ -8365,6 +8374,16 @@ func (s *Problem) GetInstance() OptString {
 	return s.Instance
 }
 
+// GetTarget returns the value of Target.
+func (s *Problem) GetTarget() OptString {
+	return s.Target
+}
+
+// SetType sets the value of Type.
+func (s *Problem) SetType(val string) {
+	s.Type = val
+}
+
 // SetTitle sets the value of Title.
 func (s *Problem) SetTitle(val string) {
 	s.Title = val
@@ -8383,6 +8402,11 @@ func (s *Problem) SetDetail(val OptString) {
 // SetInstance sets the value of Instance.
 func (s *Problem) SetInstance(val OptString) {
 	s.Instance = val
+}
+
+// SetTarget sets the value of Target.
+func (s *Problem) SetTarget(val OptString) {
+	s.Target = val
 }
 
 // ProblemStatusCode wraps Problem with StatusCode.

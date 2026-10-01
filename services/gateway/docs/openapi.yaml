@@ -1874,9 +1874,10 @@ components:
             invalidQuery:
               summary: Invalid query parameter
               value:
-                title: "invalid_query_parameter"
+                type: "validation_failed"
+                title: "Bad Request"
                 status: 400
-                detail: "unsupported search type: concept"
+                detail: "The request is invalid."
 
     Unauthorized:
       description: Bearer token missing or invalid
@@ -1888,16 +1889,10 @@ components:
             invalidToken:
               summary: Invalid bearer token
               value:
-                title: "invalid_token"
+                type: "unauthenticated"
+                title: "Unauthorized"
                 status: 401
-                detail: "token is invalid"
-            missingToken:
-              summary: Missing bearer token
-              value:
-                title: "missing_token"
-                status: 401
-                detail: "bearer token required"
-
+                detail: "Authentication is required."
     Forbidden:
       description: Authenticated user lacks permission
       content:
@@ -1908,9 +1903,10 @@ components:
             forbidden:
               summary: Access denied
               value:
-                title: "forbidden"
+                type: "permission_denied"
+                title: "Forbidden"
                 status: 403
-                detail: "user access denied"
+                detail: "You are not permitted to perform this operation."
 
     NotFound:
       description: Resource not found
@@ -1922,9 +1918,10 @@ components:
             resourceNotFound:
               summary: Missing resource
               value:
-                title: "resource_not_found"
+                type: "not_found"
+                title: "Not Found"
                 status: 404
-                detail: "dataset not found"
+                detail: "The requested resource was not found."
 
     Conflict:
       description: Request conflicts with current resource state
@@ -1936,9 +1933,10 @@ components:
             resourceConflict:
               summary: Conflicting resource state
               value:
-                title: "resource_conflict"
+                type: "conflict"
+                title: "Conflict"
                 status: 409
-                detail: "resource is not in draft state"
+                detail: "The operation conflicts with the current state."
 
     InternalServerError:
       description: Internal server error
@@ -1950,8 +1948,10 @@ components:
             internalError:
               summary: Unexpected server failure
               value:
-                title: "Internal server error"
+                type: "internal"
+                title: "Internal Server Error"
                 status: 500
+                detail: "An unexpected error occurred."
 
     GatewayTimeout:
       description: Request could not be completed before timeout
@@ -1963,9 +1963,10 @@ components:
             upstreamTimeout:
               summary: Request timed out
               value:
-                title: "upstream_timeout"
+                type: "upstream_timeout"
+                title: "Gateway Timeout"
                 status: 504
-                detail: "metadata search timed out"
+                detail: "The request timed out."
 
     ServiceUnavailable:
       description: Metadata Lifecycle service unavailable
@@ -1977,9 +1978,10 @@ components:
             metadataLifecycleUnavailable:
               summary: Metadata Lifecycle unavailable
               value:
-                title: "metadata_lifecycle_unavailable"
+                type: "upstream_unavailable"
+                title: "Service Unavailable"
                 status: 503
-                detail: "metadata-lifecycle service unavailable"
+                detail: "A required service is unavailable."
 
   schemas:
     # -------------------------------------------------------------------------
@@ -4027,13 +4029,19 @@ components:
     Problem:
       type: object
       required:
+        - type
         - title
         - status
       properties:
+        type:
+          type: string
+          format: uri-reference
+          description: Stable application error code used by clients
+          example: "not_found"
         title:
           type: string
-          description: Short, human-readable summary of problem
-          example: "Resource not found"
+          description: HTTP status reason phrase
+          example: "Not Found"
         status:
           type: integer
           description: HTTP status code for this problem occurrence
@@ -4044,6 +4052,9 @@ components:
           example: "The requested resource was not found"
         instance:
           type: string
-          format: uri-reference
-          description: Optional URI reference identifying this specific problem occurrence
-          example: "requests/req-123"
+          description: Optional OpenTelemetry trace ID associated with this request
+          example: "132c7c05d8f744d596e15a2620cacfeb"
+        target:
+          type: string
+          description: Optional dotted path identifying the request field related to the problem
+          example: "metadata.title"

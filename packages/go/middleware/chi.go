@@ -69,15 +69,23 @@ func CORSAllowOrigin(allowOrigin string) func(http.Handler) http.Handler {
 
 // Recoverer handles panics and returns an internal server error response.
 func Recoverer(log *slog.Logger) func(http.Handler) http.Handler {
+	return RecovererWithResponse(log, func(w http.ResponseWriter, _ *http.Request) error {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, err := w.Write([]byte(`{"error": "Internal Server Error"}`))
+		return err
+	})
+}
+
+// RecovererWithResponse handles panics and writes an application-specific response.
+func RecovererWithResponse(log *slog.Logger, writeResponse func(http.ResponseWriter, *http.Request) error) func(http.Handler) http.Handler {
 	log = log.With("component", "recovery")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if err := recover(); err != nil {
 					log.ErrorContext(r.Context(), "panic recovered", "error", err)
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusInternalServerError)
-					if _, err := w.Write([]byte(`{"error": "Internal Server Error"}`)); err != nil {
+					if err := writeResponse(w, r); err != nil {
 						log.ErrorContext(r.Context(), "failed to write error response", "error", err)
 					}
 				}

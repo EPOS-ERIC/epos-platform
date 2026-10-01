@@ -3,10 +3,10 @@ package metadataimport
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 )
 
@@ -40,7 +40,7 @@ func (s *Service) Import(ctx context.Context, actor domain.Actor, batch domain.I
 		return domain.ImportResult{}, operationError("authorize import", err)
 	}
 	if !decision.Allowed {
-		return domain.ImportResult{}, fmt.Errorf("%w: %s", domain.ErrImportForbidden, decision.Reason)
+		return domain.ImportResult{}, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), decision.Reason)
 	}
 
 	result, err := s.repository.Import(ctx, string(actor), batch)
@@ -51,8 +51,8 @@ func operationError(operation string, err error) error {
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, domain.ErrImportForbidden) || errors.Is(err, domain.ErrImportConflict) || errors.Is(err, domain.ErrInvalidImport) {
+	if apperror.IsCode(err, apperror.CodePermissionDenied) || apperror.IsCode(err, apperror.CodeConflict) || apperror.IsCode(err, apperror.CodeValidationFailed) {
 		return fmt.Errorf("%s: %w", operation, err)
 	}
-	return fmt.Errorf("%s: %w: %w", operation, domain.ErrImportInternal, err)
+	return apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("%s: %w", operation, err))
 }

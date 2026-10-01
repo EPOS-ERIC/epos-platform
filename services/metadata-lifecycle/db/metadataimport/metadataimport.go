@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dataset"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
 	softwareapplicationsdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwareapplications"
@@ -108,7 +109,7 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 	}
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && (strings.HasPrefix(pgErr.Code, "23") || pgErr.Code == "P0001") {
-		return domain.ImportResult{}, fmt.Errorf("database invariant: %s: %w", pgErr.ConstraintName, errors.Join(domain.ErrImportConflict, pgErr))
+		return domain.ImportResult{}, fmt.Errorf("database invariant: %s: %w", pgErr.ConstraintName, errors.Join(apperror.Default(apperror.CodeConflict), pgErr))
 	}
 	return domain.ImportResult{}, fmt.Errorf("metadata import transaction: %w", err)
 }
@@ -158,7 +159,7 @@ func savepointName(kind, subject string) string {
 }
 
 func recoverableImportError(err error) bool {
-	if errors.Is(err, domain.ErrInvalidImport) || errors.Is(err, domain.ErrImportConflict) {
+	if apperror.IsCode(err, apperror.CodeValidationFailed) || apperror.IsCode(err, apperror.CodeConflict) {
 		return true
 	}
 	var pgErr *pgconn.PgError
@@ -195,7 +196,7 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID str
 		return fmt.Errorf("load imported application: %w", err)
 	}
 	if existing.GroupID != groupID {
-		return fmt.Errorf("application %q belongs to another group: %w", value.ID, domain.ErrImportConflict)
+		return fmt.Errorf("application %q belongs to another group: %w", value.ID, apperror.Default(apperror.CodeConflict))
 	}
 	if existing.ActiveVersionID == nil {
 		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwareapplicationsdb.ToCreateVersionParams(existing.ID, actorID, value.Input()))
@@ -208,7 +209,7 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID str
 		return nil
 	}
 	if *existing.ActiveStatus != sqlc.ResourceStatusDRAFT {
-		return fmt.Errorf("application %q has non-draft active change: %w", value.ID, domain.ErrImportConflict)
+		return fmt.Errorf("application %q has non-draft active change: %w", value.ID, apperror.Default(apperror.CodeConflict))
 	}
 	version, err := q.ReplaceLifecycleSoftwareApplicationDraft(ctx, softwareapplicationsdb.ToReplaceDraftParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, value.Input()))
 	if err != nil {
@@ -253,7 +254,7 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 		return fmt.Errorf("load imported source code: %w", err)
 	}
 	if existing.GroupID != groupID {
-		return fmt.Errorf("source code %q belongs to another group: %w", value.ID, domain.ErrImportConflict)
+		return fmt.Errorf("source code %q belongs to another group: %w", value.ID, apperror.Default(apperror.CodeConflict))
 	}
 	if existing.ActiveVersionID == nil {
 		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaresourcecodesdb.ToCreateVersionParams(existing.ID, actorID, value.Input()))
@@ -266,7 +267,7 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 		return nil
 	}
 	if *existing.ActiveStatus != sqlc.ResourceStatusDRAFT {
-		return fmt.Errorf("source code %q has non-draft active change: %w", value.ID, domain.ErrImportConflict)
+		return fmt.Errorf("source code %q has non-draft active change: %w", value.ID, apperror.Default(apperror.CodeConflict))
 	}
 	version, err := q.ReplaceLifecycleSoftwareSourceCodeDraft(ctx, softwaresourcecodesdb.ToReplaceDraftParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, value.Input()))
 	if err != nil {
@@ -283,11 +284,11 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 
 func softwareGroupID(categories []domain.CategoryMetadata, groupIDs map[uuid.UUID]uuid.UUID) (uuid.UUID, error) {
 	if len(categories) == 0 {
-		return uuid.Nil, fmt.Errorf("no category group: %w", domain.ErrInvalidImport)
+		return uuid.Nil, fmt.Errorf("no category group: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	groupID, ok := groupIDs[categories[0].Scheme.ID]
 	if !ok {
-		return uuid.Nil, fmt.Errorf("unknown category scheme: %w", domain.ErrInvalidImport)
+		return uuid.Nil, fmt.Errorf("unknown category scheme: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	return groupID, nil
 }
@@ -591,7 +592,7 @@ func importCategories(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, batch dom
 				return fmt.Errorf("upsert category %q: %w", category.ID, err)
 			}
 			if row.GroupID != groupID {
-				return fmt.Errorf("category %q belongs to another group: %w", category.ID, domain.ErrImportConflict)
+				return fmt.Errorf("category %q belongs to another group: %w", category.ID, apperror.Default(apperror.CodeConflict))
 			}
 			return nil
 		})
@@ -811,11 +812,11 @@ func importDataset(
 	categoryIDs map[uuid.UUID]uuid.UUID,
 ) error {
 	if len(value.Categories) == 0 {
-		return fmt.Errorf("dataset %q has no category group: %w", value.ID, domain.ErrInvalidImport)
+		return fmt.Errorf("dataset %q has no category group: %w", value.ID, apperror.Default(apperror.CodeValidationFailed))
 	}
 	groupID, ok := groupIDs[value.Categories[0].Scheme.ID]
 	if !ok {
-		return fmt.Errorf("dataset %q references unknown category scheme: %w", value.ID, domain.ErrInvalidImport)
+		return fmt.Errorf("dataset %q references unknown category scheme: %w", value.ID, apperror.Default(apperror.CodeValidationFailed))
 	}
 	valueInput := value.Input()
 	remapDatasetReferences(&valueInput, organizationIDs, contactIDs, categoryIDs)
@@ -850,7 +851,7 @@ func importDataset(
 	case err != nil:
 		return fmt.Errorf("load imported dataset %q: %w", value.ID, err)
 	case existing.GroupID != groupID:
-		return fmt.Errorf("dataset %q belongs to another group: %w", value.ID, domain.ErrImportConflict)
+		return fmt.Errorf("dataset %q belongs to another group: %w", value.ID, apperror.Default(apperror.CodeConflict))
 	case existing.ActiveVersionID == nil:
 		params, buildErr := datasetdb.ToCreateVersionParams(existing.ID, actorID, valueInput)
 		if buildErr != nil {
@@ -865,7 +866,7 @@ func importDataset(
 		}
 		return nil
 	case *existing.ActiveStatus != sqlc.ResourceStatusDRAFT:
-		return fmt.Errorf("dataset %q has non-draft active change: %w", value.ID, domain.ErrImportConflict)
+		return fmt.Errorf("dataset %q has non-draft active change: %w", value.ID, apperror.Default(apperror.CodeConflict))
 	default:
 		params, buildErr := datasetdb.ToReplaceDraftParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, valueInput)
 		if buildErr != nil {

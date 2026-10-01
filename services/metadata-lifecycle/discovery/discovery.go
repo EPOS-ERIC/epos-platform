@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -106,7 +107,7 @@ func (s *Service) loadRelations(ctx context.Context, candidates []domain.Discove
 		case domain.SoftwareSourceCode:
 			sourceCodeVersionIDs = append(sourceCodeVersionIDs, candidate.VersionID)
 		default:
-			return nil, fmt.Errorf("unsupported resource type %q: %w", candidate.Type, domain.ErrInvalidDiscovery)
+			return nil, fmt.Errorf("unsupported resource type %q: %w", candidate.Type, apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 

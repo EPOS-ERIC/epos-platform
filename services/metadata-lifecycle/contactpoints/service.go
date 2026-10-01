@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -52,7 +53,7 @@ func (s *Service) List(ctx context.Context, actorID domain.Actor) ([]domain.Cont
 
 func (s *Service) Get(ctx context.Context, actorID domain.Actor, id uuid.UUID) (domain.ContactPoint, error) {
 	if id == uuid.Nil {
-		return domain.ContactPoint{}, domain.ErrInvalidContactPoint
+		return domain.ContactPoint{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 	if err := s.authorize(ctx, actorID); err != nil {
 		return domain.ContactPoint{}, err
@@ -81,7 +82,7 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain
 
 func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUID, input domain.ContactPointInput) (domain.ContactPoint, error) {
 	if id == uuid.Nil {
-		return domain.ContactPoint{}, domain.ErrInvalidContactPoint
+		return domain.ContactPoint{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	if err := s.authorizeManage(ctx, actorID); err != nil {
@@ -98,7 +99,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 
 func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID) error {
 	if id == uuid.Nil {
-		return domain.ErrInvalidContactPoint
+		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	if err := s.authorizeManage(ctx, actorID); err != nil {
@@ -118,7 +119,7 @@ func (s *Service) authorizeManage(ctx context.Context, actorID domain.Actor) err
 		return fmt.Errorf("authorize contact point management: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrContactPointForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 	return nil
 }
@@ -129,7 +130,7 @@ func (s *Service) authorize(ctx context.Context, actorID domain.Actor) error {
 		return fmt.Errorf("authorize contact point read: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.ErrContactPointForbidden
+		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
 	return nil

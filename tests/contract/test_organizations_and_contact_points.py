@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from auth import get_token
 from client import SCHEMA, GatewayClient
+from fixtures import assert_problem
 
 
 class OrganizationsAndContactPointsContractTest(unittest.TestCase):
@@ -108,13 +109,7 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
             "/contact-points",
             json=contact_payload,
         )
-        self.assertEqual(duplicate_contact_response.status_code, 409)
-        duplicate_contact_problem = duplicate_contact_response.json()
-        self.assertEqual(duplicate_contact_problem["title"], "conflict")
-        self.assertEqual(
-            duplicate_contact_problem["detail"],
-            "operation conflicts with existing data",
-        )
+        assert_problem(self, duplicate_contact_response, 409, "conflict")
 
         parent_name = f"contract-parent-{suffix}"
         parent_payload = {
@@ -146,13 +141,7 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
             "/organizations",
             json=parent_payload,
         )
-        self.assertEqual(duplicate_parent_response.status_code, 409)
-        duplicate_parent_problem = duplicate_parent_response.json()
-        self.assertEqual(duplicate_parent_problem["title"], "conflict")
-        self.assertEqual(
-            duplicate_parent_problem["detail"],
-            "operation conflicts with existing data",
-        )
+        assert_problem(self, duplicate_parent_response, 409, "conflict")
 
         child_name = f"contract-child-{suffix}"
         child_payload = {
