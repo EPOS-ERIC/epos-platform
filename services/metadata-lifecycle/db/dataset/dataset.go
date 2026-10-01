@@ -594,12 +594,12 @@ func lifecycleError(err error) error {
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		switch pgErr.Code {
 		case "23514":
-			return fmt.Errorf("database validation: %w", apperror.Default(apperror.CodeValidationFailed))
+			return fmt.Errorf("database validation: %w", apperror.Wrap(apperror.CodeValidationFailed, "", err))
 		case "23001", "23505", "23P01", "P0001":
-			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, apperror.Default(apperror.CodeConflict))
+			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, apperror.Wrap(apperror.CodeConflict, "", err))
 		default:
 			if strings.HasPrefix(pgErr.Code, "23") {
-				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, apperror.Default(apperror.CodeInternal))
+				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, apperror.Wrap(apperror.CodeInternal, "", err))
 			}
 		}
 	}

@@ -64,7 +64,7 @@ func (r *Repo) Create(ctx context.Context, input domain.GroupInput) (domain.Grou
 	if err != nil {
 		pgErr, ok := errors.AsType[*pgconn.PgError](err)
 		if ok && pgErr.Code == "23505" {
-			return domain.Group{}, apperror.Default(apperror.CodeConflict)
+			return domain.Group{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert group: %w", err))
 		}
 
 		return domain.Group{}, fmt.Errorf("insert group: %w", err)
@@ -86,7 +86,7 @@ func (r *Repo) Replace(ctx context.Context, id uuid.UUID, input domain.GroupInpu
 	if err != nil {
 		pgErr, ok := errors.AsType[*pgconn.PgError](err)
 		if ok && pgErr.Code == "23505" {
-			return domain.Group{}, apperror.Default(apperror.CodeConflict)
+			return domain.Group{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("update group: %w", err))
 		}
 
 		return domain.Group{}, fmt.Errorf("update group: %w", err)

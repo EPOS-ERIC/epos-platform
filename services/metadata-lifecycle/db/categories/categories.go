@@ -76,11 +76,11 @@ func (r *Repo) Create(ctx context.Context, groupID uuid.UUID, input domain.Categ
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			switch pgErr.Code {
 			case "23505":
-				return domain.Category{}, apperror.Default(apperror.CodeConflict)
+				return domain.Category{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert category: %w", err))
 			case "23503":
-				return domain.Category{}, apperror.Default(apperror.CodeNotFound)
+				return domain.Category{}, apperror.Wrap(apperror.CodeNotFound, "", fmt.Errorf("insert category: %w", err))
 			case "P0001":
-				return domain.Category{}, apperror.Default(apperror.CodeValidationFailed)
+				return domain.Category{}, apperror.Wrap(apperror.CodeValidationFailed, "", fmt.Errorf("insert category: %w", err))
 			}
 		}
 		return domain.Category{}, fmt.Errorf("insert category: %w", err)
@@ -103,11 +103,11 @@ func (r *Repo) Replace(ctx context.Context, groupID, categoryID uuid.UUID, input
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			switch pgErr.Code {
 			case "23505":
-				return domain.Category{}, apperror.Default(apperror.CodeConflict)
+				return domain.Category{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("update category: %w", err))
 			case "23503":
-				return domain.Category{}, apperror.Default(apperror.CodeNotFound)
+				return domain.Category{}, apperror.Wrap(apperror.CodeNotFound, "", fmt.Errorf("update category: %w", err))
 			case "23514", "P0001":
-				return domain.Category{}, apperror.Default(apperror.CodeValidationFailed)
+				return domain.Category{}, apperror.Wrap(apperror.CodeValidationFailed, "", fmt.Errorf("update category: %w", err))
 			}
 		}
 		return domain.Category{}, fmt.Errorf("update category: %w", err)

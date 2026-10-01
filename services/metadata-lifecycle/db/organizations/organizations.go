@@ -53,7 +53,7 @@ func (r *Repo) Create(
 		_, err = q.CreateOrganization(ctx, toCreateOrganizationParams(organizationID, input))
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-				return apperror.Default(apperror.CodeConflict)
+				return apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert organization: %w", err))
 			}
 			return fmt.Errorf("insert organization: %w", err)
 		}
@@ -68,7 +68,7 @@ func (r *Repo) Create(
 			})
 			if err != nil {
 				if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-					return apperror.Default(apperror.CodeConflict)
+					return apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert organization identifier: %w", err))
 				}
 
 				return fmt.Errorf("insert organization identifier: %w", err)
@@ -148,7 +148,7 @@ func (r *Repo) Replace(
 		_, err = q.ReplaceOrganization(ctx, toReplaceOrganizationParams(id, input))
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-				return apperror.Default(apperror.CodeConflict)
+				return apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("update organization: %w", err))
 			}
 
 			return fmt.Errorf("update organization: %w", err)
@@ -214,7 +214,7 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 		})
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-				return apperror.Default(apperror.CodeConflict)
+				return apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert organization identifier: %w", err))
 			}
 
 			return fmt.Errorf("insert organization identifier: %w", err)
@@ -228,7 +228,7 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 		})
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && (pgErr.Code == "23514" || pgErr.Code == "P0001") {
-				return apperror.Default(apperror.CodeValidationFailed)
+				return apperror.Wrap(apperror.CodeValidationFailed, "", fmt.Errorf("link organization parent: %w", err))
 			}
 			return fmt.Errorf("link organization parent: %w", err)
 		}

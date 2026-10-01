@@ -63,7 +63,7 @@ func (r *Repo) Create(ctx context.Context, input domain.ContactPointInput) (doma
 	row, err := r.CreateContactPoint(ctx, toCreateContactPointParams(id, input))
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return domain.ContactPoint{}, apperror.Default(apperror.CodeConflict)
+			return domain.ContactPoint{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert contact point: %w", err))
 		}
 
 		return domain.ContactPoint{}, fmt.Errorf("insert contact point: %w", err)
@@ -85,7 +85,7 @@ func (r *Repo) Replace(ctx context.Context, id uuid.UUID, input domain.ContactPo
 	if err != nil {
 		// TODO: maybe we can create an helper to do this check and reuse in the various db packages?
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return domain.ContactPoint{}, apperror.Default(apperror.CodeConflict)
+			return domain.ContactPoint{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("update contact point: %w", err))
 		}
 
 		return domain.ContactPoint{}, fmt.Errorf("update contact point: %w", err)

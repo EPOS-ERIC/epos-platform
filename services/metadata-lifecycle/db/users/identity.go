@@ -193,7 +193,7 @@ func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain
 	})
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return domain.User{}, apperror.Default(apperror.CodeConflict)
+			return domain.User{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("create user: %w", err))
 		}
 		return domain.User{}, fmt.Errorf("create user: %w", err)
 	}

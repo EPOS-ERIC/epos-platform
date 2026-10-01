@@ -257,7 +257,7 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string
 		return domain.RoleRequest{}, apperror.Default(apperror.CodeConflict)
 	}
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-		return domain.RoleRequest{}, apperror.Default(apperror.CodeConflict)
+		return domain.RoleRequest{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("create role request: %w", err))
 	}
 	if err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("create role request: %w", err)
