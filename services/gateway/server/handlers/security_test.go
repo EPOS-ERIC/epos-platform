@@ -55,3 +55,13 @@ func TestSecurityAuthAndBlockedUserKeepTheirStatus(t *testing.T) {
 		}
 	}
 }
+
+func TestSecurityFailurePreservesCallerCancellation(t *testing.T) {
+	err := fmt.Errorf("provision user: %w", securityFailure(context.Canceled))
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("security failure = %v, want caller cancellation", err)
+	}
+	if apperror.IsCode(err, apperror.CodeUpstreamUnavailable) || apperror.IsCode(err, apperror.CodeUpstreamTimeout) {
+		t.Fatalf("security failure = %v, must not classify caller cancellation as upstream failure", err)
+	}
+}

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -39,6 +40,9 @@ func writeError(log *slog.Logger, ctx context.Context, w http.ResponseWriter, er
 }
 
 func reportHTTPError(log *slog.Logger, ctx context.Context, err error, status int) {
+	if errors.Is(ctx.Err(), context.Canceled) {
+		return
+	}
 	if status < http.StatusInternalServerError {
 		log.DebugContext(ctx, "gateway request failed", "status", status, "error", err)
 		return

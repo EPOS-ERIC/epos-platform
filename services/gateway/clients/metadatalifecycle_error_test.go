@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	apperrorgrpc "github.com/EPOS-ERIC/epos-platform/packages/go/apperror/grpc"
@@ -56,6 +57,32 @@ func TestWrapErrorMapsLocalTransportFailures(t *testing.T) {
 				t.Fatalf("error = %v, want AppError code %q", err, test.code)
 			}
 		})
+	}
+}
+
+func TestWrapErrorDistinguishesCancellationAndDeadline(t *testing.T) {
+	client := testMetadataLifecycleClient()
+
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+	err := client.wrapError(canceledCtx, "operation", status.Error(codes.Canceled, "canceled"))
+	if !errors.Is(err, context.Canceled) || apperror.IsCode(err, apperror.CodeUpstreamTimeout) {
+		t.Fatalf("canceled request error = %v, want caller cancellation without timeout code", err)
+	}
+
+	deadlineCtx, cancelDeadline := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancelDeadline()
+	err = client.wrapError(deadlineCtx, "operation", status.Error(codes.Canceled, "deadline"))
+	if !apperror.IsCode(err, apperror.CodeUpstreamTimeout) {
+		t.Fatalf("expired request error = %v, want upstream timeout", err)
+	}
+}
+
+func TestWrapErrorTreatsUnexpectedGRPCCancellationAsInternal(t *testing.T) {
+	client := testMetadataLifecycleClient()
+	err := client.wrapError(context.Background(), "operation", status.Error(codes.Canceled, "canceled"))
+	if !apperror.IsCode(err, apperror.CodeInternal) {
+		t.Fatalf("active-context gRPC cancellation error = %v, want internal", err)
 	}
 }
 

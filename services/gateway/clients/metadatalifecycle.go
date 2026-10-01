@@ -3,6 +3,7 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -74,6 +75,13 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher Notificat
 }
 
 func (c *MetadataLifecycle) wrapError(ctx context.Context, operation string, err error) error {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		if errors.Is(ctxErr, context.DeadlineExceeded) {
+			return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeUpstreamTimeout, "", err))
+		}
+		return fmt.Errorf("%s: %w", operation, ctxErr)
+	}
+
 	if appErr, ok := apperrorgrpc.FromStatus(err); ok {
 		return fmt.Errorf("%s: %w", operation, appErr)
 	}
@@ -82,9 +90,10 @@ func (c *MetadataLifecycle) wrapError(ctx context.Context, operation string, err
 	case codes.Unavailable:
 		c.log.ErrorContext(ctx, "metadata-lifecycle request failed", "operation", operation, "code", status.Code(err), "error", err)
 		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeUpstreamUnavailable, "", err))
-	case codes.DeadlineExceeded, codes.Canceled:
+	case codes.DeadlineExceeded:
 		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeUpstreamTimeout, "", err))
 	case codes.OK,
+		codes.Canceled,
 		codes.Unknown,
 		codes.InvalidArgument,
 		codes.NotFound,
@@ -98,9 +107,10 @@ func (c *MetadataLifecycle) wrapError(ctx context.Context, operation string, err
 		codes.Internal,
 		codes.DataLoss,
 		codes.Unauthenticated:
+		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeInternal, "", err))
 	default:
+		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeInternal, "", err))
 	}
-	return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeInternal, "", err))
 }
 
 func (c *MetadataLifecycle) ListGroups(ctx context.Context) (*metadatalifecyclev1.ListGroupsResponse, error) {

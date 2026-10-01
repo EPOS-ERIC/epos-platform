@@ -74,6 +74,24 @@ func TestWriteErrorRecordsServerFailureOnTrace(t *testing.T) {
 	}
 }
 
+func TestReportHTTPErrorIgnoresCallerCancellation(t *testing.T) {
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	defer func() { _ = provider.Shutdown(context.Background()) }()
+	ctx, span := provider.Tracer("gateway-test").Start(context.Background(), "request")
+	canceledCtx, cancel := context.WithCancel(ctx)
+	cancel()
+
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	reportHTTPError(log, canceledCtx, context.Canceled, http.StatusInternalServerError)
+	span.End()
+
+	ended := recorder.Ended()
+	if len(ended) != 1 || ended[0].Status().Code != codes.Unset || len(ended[0].Events()) != 0 {
+		t.Fatalf("recorded span = %+v, want no error status or events for caller cancellation", ended)
+	}
+}
+
 func TestProblemResponseUsesSharedErrorAndTrace(t *testing.T) {
 	traceID, err := trace.TraceIDFromHex("0102030405060708090a0b0c0d0e0f10")
 	if err != nil {

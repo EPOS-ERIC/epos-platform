@@ -57,6 +57,9 @@ func (s *securityHandler) HandleBearerAuth(ctx context.Context, _ gatewayapi.Ope
 }
 
 func securityFailure(err error) error {
+	if errors.Is(err, context.Canceled) {
+		return err
+	}
 	if errors.Is(err, context.DeadlineExceeded) || apperror.IsCode(err, apperror.CodeUpstreamTimeout) {
 		return apperror.Wrap(apperror.CodeUpstreamTimeout, "", err)
 	}
