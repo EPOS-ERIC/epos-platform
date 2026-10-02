@@ -26,7 +26,7 @@
       [sectionTitle]="sectionTitle()"
       [pageLabel]="pageLabel()"
       [darkMode]="darkMode()"
-      [showSearchActions]="pageLabel() === 'Results'"
+      [showSearchActions]="pageLabel() === 'Results' && !!selectedGroupId()"
       [canAddNewResource]="canCreateResource()"
       [searchQuery]="searchQuery()"
       [selectedDataTypes]="selectedDataTypes()"
@@ -75,6 +75,14 @@
         } @else {
           <section class="comparison-route-error app-card">Select two valid resource versions to compare.</section>
         }
+      } @else if (!allGroups() && !selectedGroupId()) {
+        <app-group-selection
+          [groups]="groups()"
+          [groupsLoading]="groupsLoading()"
+          [concept]="currentConcept()"
+          [sectionPath]="sectionPath()"
+          [sectionTitle]="sectionTitle()"
+        />
       } @else {
         <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [allGroups]="allGroups()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [returnUrl]="currentUrl()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" />
       }

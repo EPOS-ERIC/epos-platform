@@ -43,7 +43,7 @@ describe('GlobalManagePageComponent', () => {
     const fixture = TestBed.createComponent(GlobalManagePageComponent);
     fixture.detectChanges();
 
-    expect(destinationTitles(fixture.nativeElement)).toEqual(['Categories']);
+    expect(destinationTitles(fixture.nativeElement)).toEqual(['Groups & Categories']);
   });
 
   it('shows the categories destination only to a category manager', () => {
@@ -53,7 +53,7 @@ describe('GlobalManagePageComponent', () => {
     const fixture = TestBed.createComponent(GlobalManagePageComponent);
     fixture.detectChanges();
 
-    expect(destinationTitles(fixture.nativeElement)).toEqual(['Categories']);
+    expect(destinationTitles(fixture.nativeElement)).toEqual(['Groups & Categories']);
   });
 
   it('opens groups management within categories from a deep link', () => {

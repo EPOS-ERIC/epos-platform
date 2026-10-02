@@ -25,6 +25,7 @@ import { MembershipsPageComponent } from '../../pages/memberships/memberships-pa
 import { ResourceDetailPageComponent } from '../../pages/resource-detail/resource-detail-page.component';
 import { ResourceVersionComparisonPageComponent } from '../../pages/resource-version-comparison/resource-version-comparison-page.component';
 import { BackofficeHeaderComponent, type ManagementHeaderContext } from '../backoffice-header/backoffice-header.component';
+import { GroupSelectionComponent } from '../group-selection/group-selection.component';
 import { NavigationSidebarComponent } from '../navigation-sidebar/navigation-sidebar.component';
 import { ResultsTableComponent } from '../results-table/results-table.component';
 
@@ -57,6 +58,7 @@ const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
   imports: [
     BackofficeHeaderComponent,
     GlobalManagePageComponent,
+    GroupSelectionComponent,
     MembershipsPageComponent,
     ManageGroupPageComponent,
     NavigationSidebarComponent,
@@ -107,6 +109,14 @@ export class MainContainerComponent {
   protected readonly searchQuery = signal(this.initialResultsFilters.searchQuery);
   protected readonly selectedDataTypes = signal(this.initialResultsFilters.dataTypes);
   protected readonly selectedVersioningStatuses = signal(this.initialResultsFilters.versioningStatuses);
+  protected readonly currentConcept = computed<DiscoveryConcept>(() => {
+    const concepts: Record<string, DiscoveryConcept> = {
+      data: 'DATA',
+      software: 'SOFTWARE',
+      facilities: 'FACILITIES'
+    };
+    return concepts[this.sectionPath()] ?? 'DATA';
+  });
   protected readonly canCreateResource = computed(() =>
     this.currentUserStore.hasGroupPermission(this.selectedGroupId(), 'group.resource.create')
   );

@@ -109,4 +109,23 @@ describe('NavigationSidebarComponent', () => {
     expect(allTreeItem.querySelector('.main-tree-toggle-button')).toBeNull();
     expect(allTreeItem.querySelector('.main-tree-panel')).toBeNull();
   });
+
+  it('marks the URL-selected group as active', async () => {
+    await TestBed.configureTestingModule({
+      imports: [NavigationSidebarComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(NavigationSidebarComponent);
+    fixture.componentRef.setInput('groups', [
+      { id: 'group-1', name: 'First Group', position: 1, concept: 'DATA' },
+      { id: 'group-2', name: 'Second Group', position: 2, concept: 'DATA' }
+    ]);
+    fixture.componentRef.setInput('currentSectionPath', 'data');
+    fixture.componentRef.setInput('selectedGroupId', 'group-2');
+    fixture.detectChanges();
+
+    const selected = fixture.nativeElement.querySelector('.nav-item--sub.active') as HTMLAnchorElement;
+    expect(selected.textContent).toContain('Second Group');
+    expect(selected.getAttribute('href')).toBe('/data?groupId=group-2');
+  });
 });
