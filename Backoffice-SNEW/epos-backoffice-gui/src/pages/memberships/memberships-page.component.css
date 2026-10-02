@@ -177,6 +177,11 @@
   overflow-y: auto;
 }
 
+.membership-notifications[open] .membership-notification-list {
+  height: 180px;
+  overflow-y: auto;
+}
+
 .membership-permission {
   display: grid;
   gap: 2px;
@@ -189,6 +194,62 @@
 
 .membership-permission small {
   color: var(--text-muted);
+}
+
+.membership-notification-list {
+  margin-top: 8px;
+}
+
+.membership-notification-options {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.membership-notification-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.membership-notification-option input {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  accent-color: var(--olive-600);
+}
+
+.membership-notification-option > span {
+  display: grid;
+  gap: 2px;
+  font-size: 0.8rem;
+}
+
+.membership-notification-option small,
+.membership-notification-message {
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.membership-notification-option--unavailable {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.membership-notification-message {
+  display: block;
+  font-size: 0.8rem;
+}
+
+.membership-notification-message.memberships-message--error {
+  margin-bottom: 7px;
+  color: #b91c1c;
 }
 
 .membership-summary-footer {

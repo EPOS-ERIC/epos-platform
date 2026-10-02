@@ -38,7 +38,8 @@ describe('GlobalMembersPanelComponent', () => {
     removeGroupMember: vi.fn(),
     listNotificationTopics: vi.fn(),
     listUserNotificationSubscriptions: vi.fn(),
-    setUserNotificationSubscription: vi.fn()
+    setUserNotificationSubscription: vi.fn(),
+    setGroupUserNotificationSubscription: vi.fn()
   };
   const dialog = { confirm: vi.fn() };
   const toast = { success: vi.fn() };
@@ -55,15 +56,25 @@ describe('GlobalMembersPanelComponent', () => {
     apiService.setGroupMembershipRole.mockReturnValue(of(undefined));
     apiService.setGroupMembershipPermission.mockReturnValue(of(undefined));
     apiService.removeGroupMember.mockReturnValue(of(undefined));
-    apiService.listNotificationTopics.mockReturnValue(of([{
-      key: 'global.resource.published',
-      label: 'Global resource publications',
-      description: 'Email this user when a resource is published.',
-      scope: 'GLOBAL',
-      required_permissions: []
-    }]));
+    apiService.listNotificationTopics.mockReturnValue(of([
+      {
+        key: 'global.resource.published',
+        label: 'Global resource publications',
+        description: 'Email this user when a resource is published.',
+        scope: 'GLOBAL',
+        required_permissions: []
+      },
+      {
+        key: 'group.resource.published',
+        label: 'Group resource publications',
+        description: 'Email this user when a group resource is published.',
+        scope: 'GROUP',
+        required_permissions: []
+      }
+    ]));
     apiService.listUserNotificationSubscriptions.mockReturnValue(of([]));
     apiService.setUserNotificationSubscription.mockReturnValue(of(undefined));
+    apiService.setGroupUserNotificationSubscription.mockReturnValue(of(undefined));
     dialog.confirm.mockResolvedValue(true);
     TestBed.configureTestingModule({
       imports: [GlobalMembersPanelComponent],
@@ -90,11 +101,24 @@ describe('GlobalMembersPanelComponent', () => {
     expect(apiService.listPermissions).not.toHaveBeenCalled();
   });
 
-  it('manages global notifications from the user dialog for a notification-only manager', () => {
+  it('manages global and group notifications from the user dialog for a notification-only manager', () => {
     currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
       permission === 'global.notification.manage'
     );
     apiService.getUsers.mockReturnValue(of([userSummary]));
+    apiService.getUser.mockReturnValue(of({
+      ...user,
+      memberships: [{
+        group: { id: group.id, name: group.name },
+        status: 'ACTIVE',
+        roles: [],
+        granted_permissions: [],
+        role_permissions: [],
+        role_requests: [],
+        created_at: '2026-09-14T08:00:00Z',
+        updated_at: '2026-09-14T08:00:00Z'
+      }]
+    }));
     const fixture = TestBed.createComponent(GlobalMembersPanelComponent);
     fixture.detectChanges();
 
@@ -102,15 +126,25 @@ describe('GlobalMembersPanelComponent', () => {
     fixture.detectChanges();
 
     const membershipDialog = fixture.nativeElement.querySelector('.membership-dialog') as HTMLElement;
-    expect(membershipDialog.textContent).toContain('Notifications');
-    expect(membershipDialog.querySelector('.membership-list')).toBeNull();
+    expect(membershipDialog.textContent).toContain('Global Notifications');
+    expect(membershipDialog.querySelector('.membership-list')).not.toBeNull();
+    expect(membershipDialog.querySelector('.membership-notifications')?.textContent).toContain('Group resource publications');
     expect(apiService.listUserNotificationSubscriptions).toHaveBeenCalledWith('user-id');
 
-    (membershipDialog.querySelector('.notification-option input') as HTMLInputElement).click();
+    (membershipDialog.querySelector('.global-notifications .notification-option input') as HTMLInputElement).click();
 
     expect(apiService.setUserNotificationSubscription).toHaveBeenCalledWith(
       'user-id',
       'global.resource.published',
+      true
+    );
+
+    (membershipDialog.querySelector('.membership-notifications .notification-option input') as HTMLInputElement).click();
+
+    expect(apiService.setGroupUserNotificationSubscription).toHaveBeenCalledWith(
+      'group-id',
+      'user-id',
+      'group.resource.published',
       true
     );
   });

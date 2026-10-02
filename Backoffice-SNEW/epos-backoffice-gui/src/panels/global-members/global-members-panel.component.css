@@ -211,6 +211,39 @@ tbody tr:hover {
   margin: 16px 0 0;
 }
 
+.membership-notifications {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.membership-notifications summary {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.membership-notifications summary small {
+  margin-left: 8px;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.membership-notification-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 0;
+}
+
 .global-notifications {
   margin-top: 18px;
   padding-top: 16px;
@@ -310,7 +343,8 @@ tbody tr:hover {
     padding: 16px;
   }
 
-  .notification-options {
+  .notification-options,
+  .membership-notification-options {
     grid-template-columns: 1fr;
   }
 }

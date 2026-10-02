@@ -99,6 +99,48 @@
               </div>
             </details>
 
+            @if (membership.status === 'ACTIVE') {
+              <details class="membership-permissions membership-notifications">
+                <summary>
+                  <span>Notifications</span>
+                  <small>{{ notificationSubscriptionCount(membership.group.id) }} selected</small>
+                </summary>
+                <div class="membership-notification-list">
+                  @if (notificationError()) {
+                    <span class="membership-notification-message memberships-message--error">{{ notificationError() }}</span>
+                  }
+
+                  @if (notificationsLoading()) {
+                    <span class="membership-notification-message app-muted">Loading notification settings...</span>
+                  } @else {
+                    <fieldset class="membership-notification-options" [disabled]="!!notificationMutation()">
+                      @for (topic of notificationTopics(); track topic.key) {
+                        <label class="membership-notification-option" [class.membership-notification-option--unavailable]="!canReceiveNotification(membership, topic)">
+                          <input
+                            type="checkbox"
+                            [checked]="isNotificationSubscribed(membership.group.id, topic.key)"
+                            [disabled]="!canReceiveNotification(membership, topic)"
+                            (change)="toggleNotification(membership, topic)"
+                          />
+                          <span>
+                            <strong>{{ topic.label }}</strong>
+                            <small>{{ topic.description }}</small>
+                            @if (!canReceiveNotification(membership, topic)) {
+                              <small>Unavailable until you receive a required permission.</small>
+                            } @else if (notificationMutation() === membership.group.id + ':' + topic.key) {
+                              <small>Saving...</small>
+                            }
+                          </span>
+                        </label>
+                      } @empty {
+                        <span class="membership-notification-message app-muted">No group notification topics are available.</span>
+                      }
+                    </fieldset>
+                  }
+                </div>
+              </details>
+            }
+
             @if (membership.status === 'PENDING') {
               <footer class="membership-summary-footer">
                 <button

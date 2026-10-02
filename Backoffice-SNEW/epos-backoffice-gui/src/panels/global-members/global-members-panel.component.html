@@ -77,7 +77,7 @@
       @if (selectedUserLoading()) {
         <div class="users-message">Loading memberships...</div>
       } @else if (selectedUser(); as user) {
-        @if (canManageMemberships() || canManageRoles() || canManagePermissions()) {
+        @if (canManageMemberships() || canManageRoles() || canManagePermissions() || canManageNotifications()) {
         <div class="membership-list">
           @for (membership of user.memberships; track membership.group.id) {
             <article class="membership-card">
@@ -115,8 +115,45 @@
                   (roleChange)="toggleRole(membership, $event)"
                   (permissionChange)="togglePermission(membership, $event)"
                 />
+              }
+
+              @if (membership.status === 'ACTIVE' && canManageNotifications()) {
+                <details class="membership-notifications">
+                  <summary>
+                    <span>Notifications</span>
+                    <small>{{ groupNotificationSubscriptionCount(membership.group.id) }} selected</small>
+                  </summary>
+
+                  @if (groupNotificationErrors()[membership.group.id]) {
+                    <div class="notification-message users-message--error">{{ groupNotificationErrors()[membership.group.id] }}</div>
+                  }
+
+                  <fieldset class="membership-notification-options" [disabled]="!!notificationMutation()">
+                    @for (topic of groupNotificationTopics(); track topic.key) {
+                      <label class="notification-option" [class.notification-option--unavailable]="!canReceiveGroupNotification(user, membership, topic)">
+                        <input
+                          type="checkbox"
+                          [checked]="isGroupNotificationSubscribed(membership.group.id, topic.key)"
+                          [disabled]="!canReceiveGroupNotification(user, membership, topic)"
+                          (change)="toggleGroupNotification(user, membership, topic)"
+                        />
+                        <span>
+                          <strong>{{ topic.label }}</strong>
+                          <small>{{ topic.description }}</small>
+                          @if (!canReceiveGroupNotification(user, membership, topic)) {
+                            <small>Unavailable until this user receives a required permission.</small>
+                          } @else if (notificationMutation() === membership.group.id + ':' + topic.key) {
+                            <small>Saving...</small>
+                          }
+                        </span>
+                      </label>
+                    } @empty {
+                      <span class="notification-message app-muted">No group notification topics are available.</span>
+                    }
+                  </fieldset>
+                </details>
               } @else if (membership.status !== 'ACTIVE') {
-                <p class="membership-note app-muted">Roles and permissions can only be modified for active memberships.</p>
+                <p class="membership-note app-muted">Roles, permissions, and notifications can only be modified for active memberships.</p>
               }
             </article>
           } @empty {
@@ -129,7 +166,7 @@
           <section class="global-notifications">
             <div class="global-notifications-heading">
               <div>
-                <h3><app-icon class="notification-bell" name="bell" [size]="18" /> Notifications</h3>
+                <h3><app-icon class="notification-bell" name="bell" [size]="18" /> Global Notifications</h3>
                 <p class="app-muted">Choose which platform events are emailed to this user.</p>
               </div>
               <span class="app-badge app-badge--green">Email</span>
@@ -153,7 +190,7 @@
                     <small>{{ topic.description }}</small>
                     @if (!canReceiveNotification(user, topic)) {
                       <small>Unavailable until this user receives a required permission.</small>
-                    } @else if (notificationMutation() === topic.key) {
+                    } @else if (notificationMutation() === 'global:' + topic.key) {
                       <small>Saving...</small>
                     }
                   </span>

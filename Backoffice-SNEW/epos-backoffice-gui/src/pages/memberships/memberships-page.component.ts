@@ -1,10 +1,10 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { catchError, finalize, forkJoin, from, map, of, switchMap } from 'rxjs';
+import { catchError, EMPTY, finalize, forkJoin, from, map, of, switchMap } from 'rxjs';
 
-import type { CreateRoleRequest, GroupPermission, Permission, UserMembershipSummary } from '../../../generated/backofficeSchemas';
+import type { CreateRoleRequest, GroupNotificationTopicKey, GroupPermission, NotificationSubscription, NotificationTopic, Permission, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
@@ -15,6 +15,10 @@ import { CurrentUserStore } from '../../stores/current-user.store';
 import { GroupsStore } from '../../stores/groups.store';
 
 type RequestableRole = CreateRoleRequest['role'];
+type GroupNotificationTopic = NotificationTopic & {
+  key: GroupNotificationTopicKey;
+  scope: 'GROUP';
+};
 
 @Component({
   selector: 'app-memberships-page',
@@ -41,7 +45,13 @@ export class MembershipsPageComponent {
   protected readonly roleRequestSaving = signal(false);
   protected readonly roleRequestError = signal('');
   protected readonly groupPermissions = signal<GroupPermissionCatalogItem[]>([]);
+  protected readonly notificationTopics = signal<GroupNotificationTopic[]>([]);
+  protected readonly notificationSubscriptions = signal<NotificationSubscription[]>([]);
+  protected readonly notificationsLoading = signal(false);
+  protected readonly notificationMutation = signal('');
+  protected readonly notificationError = signal('');
   protected readonly requestableRoles: readonly RequestableRole[] = ['EDITOR', 'REVIEWER'];
+  private loadedNotificationUserId = '';
   protected readonly roleRequestMembership = computed(() => {
     const groupId = this.roleRequestGroupId();
     return this.user()?.memberships.find((membership) => membership.group.id === groupId && membership.status === 'ACTIVE') ?? null;
@@ -57,6 +67,13 @@ export class MembershipsPageComponent {
     ).subscribe((permissions) => this.groupPermissions.set(
       permissions.filter(isGroupPermissionCatalogItem)
     ));
+
+    effect(() => {
+      const userId = this.user()?.id ?? '';
+      if (userId && userId !== this.loadedNotificationUserId) {
+        this.loadNotificationSettings(userId);
+      }
+    });
   }
 
   protected permissionDetails(permission: GroupPermission): GroupPermissionCatalogItem | undefined {
@@ -82,6 +99,54 @@ export class MembershipsPageComponent {
       default:
         return null;
     }
+  }
+
+  protected notificationSubscriptionCount(groupId: string): number {
+    return this.notificationTopics().filter((topic) => this.isNotificationSubscribed(groupId, topic.key)).length;
+  }
+
+  protected isNotificationSubscribed(groupId: string, topic: GroupNotificationTopicKey): boolean {
+    return this.notificationSubscriptions().some((subscription) =>
+      subscription.group_id === groupId && subscription.topic_key === topic && subscription.channel === 'EMAIL'
+    );
+  }
+
+  protected canReceiveNotification(membership: UserMembershipSummary, topic: GroupNotificationTopic): boolean {
+    const permissions = this.currentUserStore.groupPermissions(membership.group.id);
+    return !topic.required_permissions.length || topic.required_permissions.some((permission) =>
+      permissions.includes(permission as GroupPermission)
+    );
+  }
+
+  protected toggleNotification(membership: UserMembershipSummary, topic: GroupNotificationTopic): void {
+    const userId = this.user()?.id;
+    if (!userId || membership.status !== 'ACTIVE' || !this.canReceiveNotification(membership, topic) || this.notificationMutation()) return;
+
+    const groupId = membership.group.id;
+    const enabled = !this.isNotificationSubscribed(groupId, topic.key);
+    this.notificationMutation.set(`${groupId}:${topic.key}`);
+    this.notificationError.set('');
+    this.apiService.setGroupUserNotificationSubscription(groupId, userId, topic.key, enabled).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.notificationMutation.set('')),
+      catchError((error) => {
+        console.error('Failed to update group notification subscription', error);
+        this.notificationError.set('Failed to update this notification subscription.');
+        return EMPTY;
+      })
+    ).subscribe(() => {
+      this.notificationSubscriptions.update((subscriptions) => enabled
+        ? [...subscriptions, {
+            user_id: userId,
+            group_id: groupId,
+            topic_key: topic.key,
+            channel: 'EMAIL'
+          }]
+        : subscriptions.filter((subscription) =>
+            subscription.group_id !== groupId || subscription.topic_key !== topic.key || subscription.channel !== 'EMAIL'
+          )
+      );
+    });
   }
 
   protected async cancelMembershipRequest(membership: UserMembershipSummary): Promise<void> {
@@ -168,6 +233,28 @@ export class MembershipsPageComponent {
     this.roleRequestError.set('');
   }
 
+  private loadNotificationSettings(userId: string): void {
+    this.loadedNotificationUserId = userId;
+    this.notificationsLoading.set(true);
+    this.notificationError.set('');
+    forkJoin({
+      topics: this.apiService.listNotificationTopics(),
+      subscriptions: this.apiService.listUserNotificationSubscriptions(userId)
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.notificationsLoading.set(false)),
+      catchError((error) => {
+        console.error('Failed to load notification settings', error);
+        this.notificationError.set('Failed to load notification settings.');
+        return of(null);
+      })
+    ).subscribe((result) => {
+      if (!result || this.user()?.id !== userId) return;
+      this.notificationTopics.set(result.topics.filter(isGroupNotificationTopic));
+      this.notificationSubscriptions.set(result.subscriptions);
+    });
+  }
+
   private async confirmAndDeleteOwnMembership(
     membership: UserMembershipSummary,
     action: 'cancel' | 'leave'
@@ -212,4 +299,8 @@ export class MembershipsPageComponent {
         }
       });
   }
+}
+
+function isGroupNotificationTopic(topic: NotificationTopic): topic is GroupNotificationTopic {
+  return topic.scope === 'GROUP' && topic.key.startsWith('group.');
 }

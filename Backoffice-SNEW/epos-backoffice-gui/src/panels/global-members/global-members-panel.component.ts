@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { EMPTY, catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 
-import type { GlobalNotificationTopicKey, GroupPermission, MembershipRole, NotificationSubscription, NotificationTopic, Permission, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
+import type { GlobalNotificationTopicKey, GroupNotificationTopicKey, GroupPermission, MembershipRole, NotificationSubscription, NotificationTopic, Permission, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
@@ -17,6 +17,11 @@ import { AppIconComponent } from '../../shared/ui/app-icon.component';
 type GlobalNotificationTopic = NotificationTopic & {
   key: GlobalNotificationTopicKey;
   scope: 'GLOBAL';
+};
+
+type GroupNotificationTopic = NotificationTopic & {
+  key: GroupNotificationTopicKey;
+  scope: 'GROUP';
 };
 
 @Component({
@@ -58,9 +63,11 @@ export class GlobalMembersPanelComponent implements OnInit {
   protected readonly membershipMutation = signal('');
   protected readonly removingMembershipGroupId = signal('');
   protected readonly notificationTopics = signal<GlobalNotificationTopic[]>([]);
+  protected readonly groupNotificationTopics = signal<GroupNotificationTopic[]>([]);
   protected readonly notificationSubscriptions = signal<NotificationSubscription[]>([]);
   protected readonly notificationMutation = signal('');
   protected readonly notificationError = signal('');
+  protected readonly groupNotificationErrors = signal<Record<string, string>>({});
   protected readonly groupIconPath = groupIconPath;
   protected readonly groupRoles: MembershipRole[] = ['EDITOR', 'REVIEWER', 'GROUP_ADMIN'];
   protected readonly groupPermissions = signal<GroupPermissionCatalogItem[]>([]);
@@ -134,6 +141,7 @@ export class GlobalMembersPanelComponent implements OnInit {
         if (!result) return;
         this.selectedUser.set(result.user);
         this.notificationTopics.set(result.topics.filter(isGlobalNotificationTopic));
+        this.groupNotificationTopics.set(result.topics.filter(isGroupNotificationTopic));
         this.notificationSubscriptions.set(result.subscriptions);
       });
   }
@@ -145,8 +153,10 @@ export class GlobalMembersPanelComponent implements OnInit {
     this.selectedUser.set(null);
     this.membershipError.set('');
     this.notificationTopics.set([]);
+    this.groupNotificationTopics.set([]);
     this.notificationSubscriptions.set([]);
     this.notificationError.set('');
+    this.groupNotificationErrors.set({});
   }
 
   protected canReceiveNotification(user: User, topic: GlobalNotificationTopic): boolean {
@@ -166,7 +176,7 @@ export class GlobalMembersPanelComponent implements OnInit {
   protected toggleNotification(user: User, topic: GlobalNotificationTopic): void {
     if (!this.canManageNotifications() || !this.canReceiveNotification(user, topic) || this.notificationMutation()) return;
     const enabled = !this.isNotificationSubscribed(topic.key);
-    this.notificationMutation.set(topic.key);
+    this.notificationMutation.set(`global:${topic.key}`);
     this.notificationError.set('');
     this.apiService.setUserNotificationSubscription(user.id, topic.key, enabled).pipe(
       takeUntilDestroyed(this.destroyRef),
@@ -180,6 +190,76 @@ export class GlobalMembersPanelComponent implements OnInit {
       this.notificationSubscriptions.update((subscriptions) => enabled
         ? [...subscriptions, { user_id: user.id, topic_key: topic.key, channel: 'EMAIL' }]
         : subscriptions.filter((subscription) => subscription.group_id || subscription.topic_key !== topic.key || subscription.channel !== 'EMAIL'));
+    });
+  }
+
+  protected groupNotificationSubscriptionCount(groupId: string): number {
+    return this.groupNotificationTopics().filter((topic) => this.isGroupNotificationSubscribed(groupId, topic.key)).length;
+  }
+
+  protected isGroupNotificationSubscribed(groupId: string, topic: GroupNotificationTopicKey): boolean {
+    return this.notificationSubscriptions().some((subscription) =>
+      subscription.group_id === groupId && subscription.topic_key === topic && subscription.channel === 'EMAIL'
+    );
+  }
+
+  protected canReceiveGroupNotification(
+    user: User,
+    membership: UserMembershipSummary,
+    topic: GroupNotificationTopic
+  ): boolean {
+    const groupPermissions = new Set<string>([
+      ...membership.granted_permissions,
+      ...membership.role_permissions
+    ]);
+    const globalPermissions = new Set<string>([
+      ...user.global_granted_permissions,
+      ...user.global_role_permissions
+    ]);
+    return !topic.required_permissions.length || topic.required_permissions.some((permission) =>
+      groupPermissions.has(permission) || globalPermissions.has(permission.replace(/^group\./, 'global.'))
+    );
+  }
+
+  protected toggleGroupNotification(
+    user: User,
+    membership: UserMembershipSummary,
+    topic: GroupNotificationTopic
+  ): void {
+    if (
+      !this.canManageNotifications()
+      || membership.status !== 'ACTIVE'
+      || !this.canReceiveGroupNotification(user, membership, topic)
+      || this.notificationMutation()
+    ) return;
+
+    const groupId = membership.group.id;
+    const enabled = !this.isGroupNotificationSubscribed(groupId, topic.key);
+    this.notificationMutation.set(`${groupId}:${topic.key}`);
+    this.groupNotificationErrors.update((errors) => ({ ...errors, [groupId]: '' }));
+    this.apiService.setGroupUserNotificationSubscription(groupId, user.id, topic.key, enabled).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.notificationMutation.set('')),
+      catchError((error) => {
+        console.error('Failed to update group notification subscription', error);
+        this.groupNotificationErrors.update((errors) => ({
+          ...errors,
+          [groupId]: 'Failed to update this notification subscription.'
+        }));
+        return EMPTY;
+      })
+    ).subscribe(() => {
+      this.notificationSubscriptions.update((subscriptions) => enabled
+        ? [...subscriptions, {
+            user_id: user.id,
+            group_id: groupId,
+            topic_key: topic.key,
+            channel: 'EMAIL'
+          }]
+        : subscriptions.filter((subscription) =>
+            subscription.group_id !== groupId || subscription.topic_key !== topic.key || subscription.channel !== 'EMAIL'
+          )
+      );
     });
   }
 
@@ -284,4 +364,8 @@ export class GlobalMembersPanelComponent implements OnInit {
 
 function isGlobalNotificationTopic(topic: NotificationTopic): topic is GlobalNotificationTopic {
   return topic.scope === 'GLOBAL' && topic.key.startsWith('global.');
+}
+
+function isGroupNotificationTopic(topic: NotificationTopic): topic is GroupNotificationTopic {
+  return topic.scope === 'GROUP' && topic.key.startsWith('group.');
 }

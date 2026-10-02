@@ -42,10 +42,14 @@ describe('MembershipsPageComponent', () => {
     user: currentUser,
     loading: signal(false),
     error: signal<string | null>(null),
-    refresh: vi.fn()
+    refresh: vi.fn(),
+    groupPermissions: vi.fn()
   };
   const apiService = {
     listPermissions: vi.fn(),
+    listNotificationTopics: vi.fn(),
+    listUserNotificationSubscriptions: vi.fn(),
+    setGroupUserNotificationSubscription: vi.fn(),
     requestGroupRole: vi.fn(),
     withdrawGroupMembershipRequest: vi.fn(),
     leaveOwnGroupMembership: vi.fn()
@@ -61,6 +65,16 @@ describe('MembershipsPageComponent', () => {
       { key: 'group.resource.create', label: 'Create resources', description: 'Create resources in this group.', scope: 'GROUP' },
       { key: 'group.resource.edit', label: 'Edit resources', description: 'Edit resources in this group.', scope: 'GROUP' }
     ]));
+    apiService.listNotificationTopics.mockReturnValue(of([{
+      key: 'group.resource.published',
+      label: 'Group resource publications',
+      description: 'Email me when a group resource is published.',
+      scope: 'GROUP',
+      required_permissions: ['group.resource.create']
+    }]));
+    apiService.listUserNotificationSubscriptions.mockReturnValue(of([]));
+    apiService.setGroupUserNotificationSubscription.mockReturnValue(of(undefined));
+    currentUserStore.groupPermissions.mockReturnValue([]);
     apiService.requestGroupRole.mockReturnValue(of({
       id: 'role-request-id',
       role: 'EDITOR',
@@ -121,6 +135,59 @@ describe('MembershipsPageComponent', () => {
     expect(directPermissions.textContent).toContain('1 assigned');
     expect(directPermissions.textContent).toContain('Edit resources');
     expect(directPermissions.textContent).toContain('Edit resources in this group.');
+  });
+
+  it('lets an active member subscribe to an available group notification', () => {
+    currentUserStore.groupPermissions.mockReturnValue(['group.resource.create']);
+    currentUser.set({
+      ...user,
+      memberships: [{ ...user.memberships[0], status: 'ACTIVE', role_permissions: ['group.resource.create'] }]
+    });
+    const fixture = TestBed.createComponent(MembershipsPageComponent);
+    fixture.detectChanges();
+
+    const notifications = fixture.nativeElement.querySelector('.membership-notifications') as HTMLDetailsElement;
+    expect(notifications.textContent).toContain('Group resource publications');
+    expect(notifications.textContent).toContain('0 selected');
+    expect(apiService.listUserNotificationSubscriptions).toHaveBeenCalledWith('user-id');
+
+    (notifications.querySelector('input') as HTMLInputElement).click();
+
+    expect(apiService.setGroupUserNotificationSubscription).toHaveBeenCalledWith(
+      '1375500a-fc04-5831-a7f5-39ea5fcb0445',
+      'user-id',
+      'group.resource.published',
+      true
+    );
+    fixture.detectChanges();
+    expect(notifications.textContent).toContain('1 selected');
+  });
+
+  it('lets an active member unsubscribe from a group notification', () => {
+    currentUserStore.groupPermissions.mockReturnValue(['group.resource.create']);
+    apiService.listUserNotificationSubscriptions.mockReturnValue(of([{
+      user_id: 'user-id',
+      group_id: '1375500a-fc04-5831-a7f5-39ea5fcb0445',
+      topic_key: 'group.resource.published',
+      channel: 'EMAIL'
+    }]));
+    currentUser.set({
+      ...user,
+      memberships: [{ ...user.memberships[0], status: 'ACTIVE', role_permissions: ['group.resource.create'] }]
+    });
+    const fixture = TestBed.createComponent(MembershipsPageComponent);
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('.membership-notifications input') as HTMLInputElement;
+    expect(input.checked).toBe(true);
+    input.click();
+
+    expect(apiService.setGroupUserNotificationSubscription).toHaveBeenCalledWith(
+      '1375500a-fc04-5831-a7f5-39ea5fcb0445',
+      'user-id',
+      'group.resource.published',
+      false
+    );
   });
 
   it('cancels a pending membership request after confirmation', async () => {
