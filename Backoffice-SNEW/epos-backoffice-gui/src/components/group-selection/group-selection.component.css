@@ -45,10 +45,12 @@
 }
 
 .group-selection-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 280px));
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 18px;
+  max-width: calc(4 * 280px + 3 * 18px);
+  margin: 0 auto;
   padding: 0 clamp(18px, 5vw, 72px);
 }
 
@@ -56,9 +58,11 @@
   --group-card-accent: var(--olive-600);
   position: relative;
   display: flex;
+  flex: 1 1 240px;
   flex-direction: column;
   align-items: center;
   gap: 18px;
+  max-width: 280px;
   aspect-ratio: 1.08;
   min-height: 240px;
   padding: 26px;
@@ -182,19 +186,14 @@
   }
 }
 
-@media (max-width: 850px) {
-  .group-selection-grid {
-    grid-template-columns: repeat(2, minmax(0, 280px));
-  }
-}
-
 @media (max-width: 600px) {
   .group-selection-grid {
-    grid-template-columns: minmax(0, 320px);
     padding: 0;
   }
 
   .group-selection-card {
+    flex-basis: 100%;
+    max-width: 320px;
     aspect-ratio: auto;
     min-height: 190px;
   }
