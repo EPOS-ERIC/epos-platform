@@ -19,6 +19,7 @@ export type IconName =
   | 'user'
   | 'search'
   | 'bell'
+  | 'block'
   | 'warning'
   | 'sun'
   | 'moon';

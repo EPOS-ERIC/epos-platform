@@ -4,7 +4,7 @@
     <div>
       <p class="eyebrow app-badge app-badge--primary">Administration</p>
       <h2>Users and Group Memberships</h2>
-      <p class="subtitle app-muted">Manage group-scoped roles and permissions for platform users.</p>
+      <p class="subtitle app-muted">Manage user access, group-scoped roles, permissions, and notifications.</p>
     </div>
 
     <label class="user-search">
@@ -19,6 +19,10 @@
       />
     </label>
   </div>
+
+  @if (userStatusError()) {
+    <div class="users-message users-message--error">{{ userStatusError() }}</div>
+  }
 
   @if (usersError()) {
     <div class="users-message users-message--error">{{ usersError() }}</div>
@@ -44,7 +48,22 @@
               <td><span class="status-pill" [attr.data-status]="user.status.toLowerCase()">{{ user.status }}</span></td>
               <td>{{ user.global_roles.length ? user.global_roles.join(', ') : 'None' }}</td>
               <td class="actions-column">
-                <button type="button" class="app-button app-button--ghost" (click)="openUserMemberships(user)">Manage</button>
+                <div class="user-actions">
+                  <button type="button" class="app-button app-button--ghost" [disabled]="userStatusMutation().startsWith(user.id + ':')" (click)="openUserMemberships(user)">Manage</button>
+                  @if (canChangeStatusFor(user)) {
+                    @if (user.status === 'ACTIVE') {
+                      <button type="button" class="app-button app-button--ghost user-status-button user-status-button--block" [disabled]="!!userStatusMutation()" (click)="blockUser(user)">
+                        <app-icon name="block" [size]="16" />
+                        {{ userStatusMutation() === user.id + ':block' ? 'Blocking...' : 'Block' }}
+                      </button>
+                    } @else if (user.status === 'BLOCKED') {
+                      <button type="button" class="app-button app-button--ghost user-status-button" [disabled]="!!userStatusMutation()" (click)="unblockUser(user)">
+                        <app-icon name="block" [size]="16" />
+                        {{ userStatusMutation() === user.id + ':unblock' ? 'Unblocking...' : 'Unblock' }}
+                      </button>
+                    }
+                  }
+                </div>
               </td>
             </tr>
           }

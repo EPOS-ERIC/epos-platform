@@ -102,6 +102,23 @@ tbody tr:hover {
   text-align: right;
 }
 
+.user-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.user-status-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-status-button--block {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
 .status-pill {
   display: inline-flex;
   padding: 0.28rem 0.6rem;

@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import type {
+  BlockUserRequest,
   CanonicalOrganization,
   Category,
   ContactPoint,
@@ -496,6 +497,18 @@ export class ApiService {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
       }
+    });
+  }
+
+  blockUser(id: string, request: BlockUserRequest): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/users/${encodeURIComponent(id)}/block`, request, {
+      headers: { Authorization: `Bearer ${this.bearerToken}` }
+    });
+  }
+
+  unblockUser(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/users/${encodeURIComponent(id)}/unblock`, undefined, {
+      headers: { Authorization: `Bearer ${this.bearerToken}` }
     });
   }
 

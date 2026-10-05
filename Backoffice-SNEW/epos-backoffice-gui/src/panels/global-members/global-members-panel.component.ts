@@ -49,12 +49,18 @@ export class GlobalMembersPanelComponent implements OnInit {
   protected readonly canManageNotifications = computed(() =>
     this.currentUserStore.hasGlobalPermission('global.notification.manage')
   );
+  protected readonly canChangeUserStatus = computed(() => {
+    const currentUser = this.currentUserStore.user();
+    return currentUser?.status === 'ACTIVE' && currentUser.global_roles.includes('ADMIN');
+  });
   protected readonly canManageMembers = computed(() =>
-    this.canManageMemberships() || this.canManageRoles() || this.canManagePermissions() || this.canManageNotifications()
+    this.canManageMemberships() || this.canManageRoles() || this.canManagePermissions() || this.canManageNotifications() || this.canChangeUserStatus()
   );
   protected readonly users = signal<UserListItem[]>([]);
   protected readonly usersLoading = signal(true);
   protected readonly usersError = signal('');
+  protected readonly userStatusError = signal('');
+  protected readonly userStatusMutation = signal('');
   protected readonly searchQuery = signal('');
   protected readonly selectedUserSummary = signal<UserListItem | null>(null);
   protected readonly selectedUser = signal<User | null>(null);
@@ -144,6 +150,42 @@ export class GlobalMembersPanelComponent implements OnInit {
         this.groupNotificationTopics.set(result.topics.filter(isGroupNotificationTopic));
         this.notificationSubscriptions.set(result.subscriptions);
       });
+  }
+
+  protected canChangeStatusFor(user: UserListItem): boolean {
+    return this.canChangeUserStatus() && this.currentUserStore.user()?.id !== user.id;
+  }
+
+  protected async blockUser(user: UserListItem): Promise<void> {
+    if (!this.canChangeStatusFor(user) || user.status !== 'ACTIVE' || this.userStatusMutation()) return;
+
+    const reason = await this.dialog.prompt({
+      eyebrow: 'User Access',
+      title: `Block ${this.userName(user)}?`,
+      message: 'This user will no longer be able to access the platform. Existing memberships and permissions will remain stored.',
+      inputLabel: 'Reason',
+      placeholder: 'Explain why this user is being blocked',
+      confirmLabel: 'Block User',
+      destructive: true,
+      required: true
+    });
+    if (!reason?.trim()) return;
+
+    this.runUserStatusMutation(user.id, 'block', this.apiService.blockUser(user.id, { reason: reason.trim() }));
+  }
+
+  protected async unblockUser(user: UserListItem): Promise<void> {
+    if (!this.canChangeStatusFor(user) || user.status !== 'BLOCKED' || this.userStatusMutation()) return;
+
+    const confirmed = await this.dialog.confirm({
+      eyebrow: 'User Access',
+      title: `Unblock ${this.userName(user)}?`,
+      message: 'This user will regain access to the platform with their stored memberships and permissions.',
+      confirmLabel: 'Unblock User'
+    });
+    if (!confirmed) return;
+
+    this.runUserStatusMutation(user.id, 'unblock', this.apiService.unblockUser(user.id));
   }
 
   protected closeUserMemberships(): void {
@@ -336,6 +378,28 @@ export class GlobalMembersPanelComponent implements OnInit {
         })
       )
       .subscribe((users) => this.users.set(users));
+  }
+
+  private runUserStatusMutation(
+    userId: string,
+    action: 'block' | 'unblock',
+    request: ReturnType<ApiService['blockUser']>
+  ): void {
+    this.userStatusMutation.set(`${userId}:${action}`);
+    this.userStatusError.set('');
+    request.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.userStatusMutation.set('')),
+      catchError((error) => {
+        console.error(`Failed to ${action} user`, error);
+        this.userStatusError.set(`Failed to ${action} this user.`);
+        return EMPTY;
+      })
+    ).subscribe(() => {
+      const status = action === 'block' ? 'BLOCKED' : 'ACTIVE';
+      this.users.update((users) => users.map((user) => user.id === userId ? { ...user, status } : user));
+      this.toast.success(action === 'block' ? 'User blocked.' : 'User unblocked.');
+    });
   }
 
   private runMembershipMutation(key: string, request: ReturnType<ApiService['setGroupMembershipRole']>): void {

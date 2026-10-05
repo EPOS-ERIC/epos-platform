@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
@@ -29,6 +30,12 @@ describe('GlobalMembersPanelComponent', () => {
     updated_at: '2026-09-14T08:00:00Z'
   };
   const user: User = { ...userSummary, memberships: [] };
+  const currentAdmin = signal<User | null>({
+    ...user,
+    id: 'admin-id',
+    email: 'admin@example.org',
+    global_roles: ['ADMIN']
+  });
   const apiService = {
     getUsers: vi.fn(),
     getUser: vi.fn(),
@@ -39,14 +46,22 @@ describe('GlobalMembersPanelComponent', () => {
     listNotificationTopics: vi.fn(),
     listUserNotificationSubscriptions: vi.fn(),
     setUserNotificationSubscription: vi.fn(),
-    setGroupUserNotificationSubscription: vi.fn()
+    setGroupUserNotificationSubscription: vi.fn(),
+    blockUser: vi.fn(),
+    unblockUser: vi.fn()
   };
-  const dialog = { confirm: vi.fn() };
+  const dialog = { confirm: vi.fn(), prompt: vi.fn() };
   const toast = { success: vi.fn() };
-  const currentUserStore = { hasGlobalPermission: vi.fn() };
+  const currentUserStore = { hasGlobalPermission: vi.fn(), user: currentAdmin };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    currentAdmin.set({
+      ...user,
+      id: 'admin-id',
+      email: 'admin@example.org',
+      global_roles: ['ADMIN']
+    });
     currentUserStore.hasGlobalPermission.mockReturnValue(true);
     apiService.getUsers.mockReturnValue(of([]));
     apiService.getUser.mockReturnValue(of(user));
@@ -75,7 +90,10 @@ describe('GlobalMembersPanelComponent', () => {
     apiService.listUserNotificationSubscriptions.mockReturnValue(of([]));
     apiService.setUserNotificationSubscription.mockReturnValue(of(undefined));
     apiService.setGroupUserNotificationSubscription.mockReturnValue(of(undefined));
+    apiService.blockUser.mockReturnValue(of(undefined));
+    apiService.unblockUser.mockReturnValue(of(undefined));
     dialog.confirm.mockResolvedValue(true);
+    dialog.prompt.mockResolvedValue('Policy violation');
     TestBed.configureTestingModule({
       imports: [GlobalMembersPanelComponent],
       providers: [
@@ -147,6 +165,46 @@ describe('GlobalMembersPanelComponent', () => {
       'group.resource.published',
       true
     );
+  });
+
+  it('blocks an active user with a required reason as an active global administrator', async () => {
+    apiService.getUsers.mockReturnValue(of([userSummary]));
+    const fixture = TestBed.createComponent(GlobalMembersPanelComponent);
+    fixture.detectChanges();
+
+    const blockButton = fixture.nativeElement.querySelector('.user-status-button--block') as HTMLButtonElement;
+    expect(blockButton.textContent).toContain('Block');
+    expect(blockButton.querySelector('app-icon')).not.toBeNull();
+    blockButton.click();
+
+    await vi.waitFor(() => expect(apiService.blockUser).toHaveBeenCalledWith('user-id', { reason: 'Policy violation' }));
+    expect(dialog.prompt).toHaveBeenCalledWith(expect.objectContaining({ required: true, destructive: true }));
+    expect(toast.success).toHaveBeenCalledWith('User blocked.');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.status-pill')?.textContent).toContain('BLOCKED');
+  });
+
+  it('unblocks a blocked user after confirmation as an active global administrator', async () => {
+    apiService.getUsers.mockReturnValue(of([{ ...userSummary, status: 'BLOCKED' }]));
+    const fixture = TestBed.createComponent(GlobalMembersPanelComponent);
+    fixture.detectChanges();
+
+    const unblockButton = fixture.nativeElement.querySelector('.user-status-button') as HTMLButtonElement;
+    expect(unblockButton.textContent).toContain('Unblock');
+    unblockButton.click();
+
+    await vi.waitFor(() => expect(apiService.unblockUser).toHaveBeenCalledWith('user-id'));
+    expect(dialog.confirm).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith('User unblocked.');
+  });
+
+  it('does not expose block actions to users without an active global administrator role', () => {
+    currentAdmin.set({ ...user, id: 'manager-id', global_roles: [] });
+    apiService.getUsers.mockReturnValue(of([userSummary]));
+    const fixture = TestBed.createComponent(GlobalMembersPanelComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.user-status-button')).toBeNull();
   });
 
   it('removes an active group membership as a global membership manager', async () => {
