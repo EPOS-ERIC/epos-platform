@@ -6,13 +6,14 @@ import type {
   SoftwareSourceCodeResourceMetadata,
   ResourceVersionReference
 } from '../../../../../generated/backofficeSchemas';
+import { KeywordChipsComponent } from '../../../../shared/ui/keyword-chips.component';
 
 type SoftwareResourceType = 'software-application' | 'software-source-code';
 type SoftwareMetadata = SoftwareApplicationResourceMetadata | SoftwareSourceCodeResourceMetadata;
 
 @Component({
   selector: 'app-software-general-information',
-  imports: [FormsModule],
+  imports: [FormsModule, KeywordChipsComponent],
   templateUrl: './software-general-information.component.html',
   styleUrl: './software-general-information.component.css'
 })
@@ -36,12 +37,9 @@ export class SoftwareGeneralInformationComponent {
     }
   }
 
-  protected updateKeywords(value: string): void {
-    if (!this.model) {
-      return;
-    }
-
-    this.model.keywords = value.split(',').map((keyword) => keyword.trim()).filter(Boolean);
+  protected updateKeywords(keywords: string[]): void {
+    if (!this.model) return;
+    this.model.keywords = keywords;
     this.emitModelChange();
   }
 

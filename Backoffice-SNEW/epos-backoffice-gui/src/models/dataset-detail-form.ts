@@ -187,7 +187,7 @@ export type DatasetDistributionForm = DatasetDistributionCommonForm &
 export type DatasetDetailForm = {
   title: string;
   description: string;
-  keywords: string;
+  keywords: string[];
   accrualPeriodicity: string;
   qualityAnnotation: string;
   created: string;

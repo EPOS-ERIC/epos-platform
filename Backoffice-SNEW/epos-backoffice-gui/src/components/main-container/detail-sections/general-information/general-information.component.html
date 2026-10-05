@@ -20,10 +20,10 @@
       <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="model.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required></textarea>
     </label>
 
-    <label class="detail-field">
+    <div class="detail-field">
       <span class="detail-label">Keywords</span>
-      <input class="app-input" type="text" [(ngModel)]="model.keywords" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
-    </label>
+      <app-keyword-chips [keywords]="model.keywords" [disabled]="disabled" (keywordsChange)="updateKeywords($event)" />
+    </div>
 
     <label class="detail-field">
       <span class="detail-label">Accrual periodicity</span>

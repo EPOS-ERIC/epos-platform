@@ -145,7 +145,7 @@ function emptyDatasetForm(): DatasetDetailForm {
   return {
     title: '',
     description: '',
-    keywords: '',
+    keywords: [],
     accrualPeriodicity: '',
     qualityAnnotation: '',
     created: '',
@@ -248,7 +248,7 @@ describe('toDatasetDetailForm', () => {
     expect(form).toMatchObject({
       title: 'Dataset title',
       description: 'Dataset description',
-      keywords: 'seismic, catalogue',
+      keywords: ['seismic', 'catalogue'],
       accrualPeriodicity: '',
       qualityAnnotation: 'reviewed',
       created: 'invalid-created',

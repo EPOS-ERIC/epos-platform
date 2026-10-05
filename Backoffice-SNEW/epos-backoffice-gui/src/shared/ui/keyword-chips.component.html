@@ -1,0 +1,25 @@
+<div class="keyword-chips" [class.keyword-chips--readonly]="disabled">
+  @for (keyword of keywords; track keyword) {
+    <span class="keyword-chip app-chip">
+      <span>{{ keyword }}</span>
+      @if (!disabled) {
+        <button type="button" (click)="removeKeyword($index)" [attr.aria-label]="'Remove keyword ' + keyword">&times;</button>
+      }
+    </span>
+  }
+
+  @if (!disabled) {
+    <input
+      class="keyword-input"
+      type="text"
+      [(ngModel)]="draft"
+      [ngModelOptions]="{ standalone: true }"
+      placeholder="Add keyword"
+      aria-label="Add keyword"
+      (keydown)="handleKeydown($event)"
+      (blur)="commitDraft()"
+    />
+  } @else if (!keywords.length) {
+    <span class="keyword-empty app-muted">No keywords</span>
+  }
+</div>

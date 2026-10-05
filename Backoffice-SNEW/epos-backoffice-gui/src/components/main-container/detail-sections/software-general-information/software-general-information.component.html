@@ -25,10 +25,10 @@
           <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="model.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea>
         </label>
 
-        <label class="detail-field">
+        <div class="detail-field">
           <span class="detail-label">Keywords</span>
-          <input class="app-input" type="text" [value]="model.keywords.join(', ')" (change)="updateKeywords($any($event.target).value)" />
-        </label>
+          <app-keyword-chips [keywords]="model.keywords" [disabled]="disabled" (keywordsChange)="updateKeywords($event)" />
+        </div>
 
         <label class="detail-field detail-field--full">
           <span class="detail-label">Webpage</span>
@@ -105,10 +105,10 @@
           <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="model.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea>
         </label>
 
-        <label class="detail-field">
+        <div class="detail-field">
           <span class="detail-label">Keywords</span>
-          <input class="app-input" type="text" [value]="model.keywords.join(', ')" (change)="updateKeywords($any($event.target).value)" />
-        </label>
+          <app-keyword-chips [keywords]="model.keywords" [disabled]="disabled" (keywordsChange)="updateKeywords($event)" />
+        </div>
 
         <label class="detail-field detail-field--full">
           <span class="detail-label">Webpage</span>

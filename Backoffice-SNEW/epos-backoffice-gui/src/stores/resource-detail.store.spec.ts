@@ -96,8 +96,9 @@ describe('ResourceDetailStore', () => {
     expect(store.datasetVersion()?.status).toBe('DRAFT');
     expect(store.resourceVersion()).toBeNull();
     expect(store.datasetForm()?.title).toBe('Mapped dataset');
-    expect(store.datasetForm()?.keywords).toBe('earth, science');
+    expect(store.datasetForm()?.keywords).toEqual(['earth', 'science']);
     expect(store.title()).toBe('Mapped dataset');
+    expect(store.keywords()).toEqual(['earth', 'science']);
     expect(store.navigationItems()[1]?.anchor).toBe('spatial-coverage');
   });
 

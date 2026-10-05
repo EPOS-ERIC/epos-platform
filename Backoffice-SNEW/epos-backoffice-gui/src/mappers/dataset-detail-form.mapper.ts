@@ -36,7 +36,7 @@ export function toDatasetDetailForm(metadata: DatasetResourceMetadata): DatasetD
   return {
     title: metadata.title ?? '',
     description: metadata.description ?? '',
-    keywords: metadata.keywords.join(', '),
+    keywords: [...metadata.keywords],
     accrualPeriodicity: metadata.accrual_periodicity ?? '',
     qualityAnnotation: metadata.quality_annotation ?? '',
     created: metadata.created ? toDateTimeLocalValue(metadata.created) : '',
@@ -84,7 +84,7 @@ export function toDatasetSaveRequest(
     metadata: {
       title: form.title || 'Untitled dataset',
       description: form.description.trim(),
-      keywords: parseKeywords(form.keywords),
+      keywords: [...form.keywords],
       accrual_periodicity: undefinedIfBlank(form.accrualPeriodicity),
       quality_annotation: undefinedIfBlank(form.qualityAnnotation),
       access_right: preservedMetadata.access_right ?? undefined,
@@ -822,13 +822,6 @@ function undefinedIfBlank(value: string | null | undefined): string | undefined 
   }
 
   return hasIdentifierValue(value) ? value : undefined;
-}
-
-function parseKeywords(value: string): string[] {
-  return value
-    .split(',')
-    .map((keyword) => keyword.trim())
-    .filter(Boolean);
 }
 
 function hasIdentifierValue(value: string | number | null | undefined): value is string {

@@ -225,7 +225,7 @@ export class ResourceDetailStore {
   });
   readonly keywords = computed(() => {
     const keywords = (this.datasetVersion() ?? this.resourceVersion())?.metadata.keywords;
-    return keywords?.length ? keywords.join(', ') : 'None';
+    return keywords ? [...keywords] : [];
   });
   readonly distributionCount = computed(() => {
     const metadata = (this.datasetVersion() ?? this.resourceVersion())?.metadata as
