@@ -3769,6 +3769,10 @@ components:
               description: Membership previews for this user.
               items:
                 $ref: "#/components/schemas/UserMembershipSummary"
+            block_reason:
+              type: string
+              nullable: true
+              description: Reason supplied when this user was blocked.
 
     UserListItem:
       type: object

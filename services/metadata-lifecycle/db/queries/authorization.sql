@@ -23,6 +23,7 @@ SELECT
     given_name,
     family_name,
     STATUS,
+    block_reason,
     created_at,
     updated_at
 FROM

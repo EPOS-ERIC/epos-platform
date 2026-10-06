@@ -24233,9 +24233,15 @@ func (s *User) encodeFields(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
+	{
+		if s.BlockReason.Set {
+			e.FieldStart("block_reason")
+			s.BlockReason.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfUser = [11]string{
+var jsonFieldsNameOfUser = [12]string{
 	0:  "id",
 	1:  "email",
 	2:  "given_name",
@@ -24247,6 +24253,7 @@ var jsonFieldsNameOfUser = [11]string{
 	8:  "created_at",
 	9:  "updated_at",
 	10: "memberships",
+	11: "block_reason",
 }
 
 // Decode decodes User from json.
@@ -24413,6 +24420,16 @@ func (s *User) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"memberships\"")
+			}
+		case "block_reason":
+			if err := func() error {
+				s.BlockReason.Reset()
+				if err := s.BlockReason.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"block_reason\"")
 			}
 		default:
 			return d.Skip()

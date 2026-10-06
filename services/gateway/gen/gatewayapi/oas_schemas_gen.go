@@ -12775,6 +12775,8 @@ type User struct {
 	UpdatedAt                time.Time          `json:"updated_at"`
 	// Membership previews for this user.
 	Memberships []UserMembershipSummary `json:"memberships"`
+	// Reason supplied when this user was blocked.
+	BlockReason OptNilString `json:"block_reason"`
 }
 
 // GetID returns the value of ID.
@@ -12832,6 +12834,11 @@ func (s *User) GetMemberships() []UserMembershipSummary {
 	return s.Memberships
 }
 
+// GetBlockReason returns the value of BlockReason.
+func (s *User) GetBlockReason() OptNilString {
+	return s.BlockReason
+}
+
 // SetID sets the value of ID.
 func (s *User) SetID(val string) {
 	s.ID = val
@@ -12885,6 +12892,11 @@ func (s *User) SetUpdatedAt(val time.Time) {
 // SetMemberships sets the value of Memberships.
 func (s *User) SetMemberships(val []UserMembershipSummary) {
 	s.Memberships = val
+}
+
+// SetBlockReason sets the value of BlockReason.
+func (s *User) SetBlockReason(val OptNilString) {
+	s.BlockReason = val
 }
 
 // User record returned by the user list endpoint.

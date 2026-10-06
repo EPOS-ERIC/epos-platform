@@ -50,6 +50,7 @@ message GetUserResponse {
   google.protobuf.Timestamp updated_at = 9;
   repeated UserMembership memberships = 10;
   repeated GlobalPermission global_role_permissions = 11 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  optional string block_reason = 12;
 }
 
 message GrantGlobalPermissionRequest {

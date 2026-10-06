@@ -71,7 +71,7 @@ func (r *Repo) GetUserByID(ctx context.Context, userID string) (domain.User, err
 		return domain.User{}, fmt.Errorf("get user by id: %w", err)
 	}
 
-	return r.loadUser(ctx, user.ID, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt)
+	return r.loadUser(ctx, user.ID, user.Email, user.GivenName, user.FamilyName, user.Status, user.BlockReason, user.CreatedAt, user.UpdatedAt)
 }
 
 func (r *Repo) loadUser(
@@ -81,6 +81,7 @@ func (r *Repo) loadUser(
 	givenName,
 	familyName string,
 	status sqlc.UserStatus,
+	blockReason *string,
 	createdAt,
 	updatedAt time.Time,
 ) (domain.User, error) {
@@ -181,7 +182,7 @@ func (r *Repo) loadUser(
 		userMemberships = append(userMemberships, value)
 	}
 
-	return toDomainUser(id, email, givenName, familyName, status, createdAt, updatedAt, globalRoles, globalGrantedPermissionValues, globalRolePermissionValues, userMemberships)
+	return toDomainUser(id, email, givenName, familyName, status, blockReason, createdAt, updatedAt, globalRoles, globalGrantedPermissionValues, globalRolePermissionValues, userMemberships)
 }
 
 func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain.User, error) {
@@ -204,6 +205,7 @@ func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain
 		user.GivenName,
 		user.FamilyName,
 		user.Status,
+		nil,
 		user.CreatedAt,
 		user.UpdatedAt,
 		[]string{},

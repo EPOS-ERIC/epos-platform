@@ -68,6 +68,7 @@ func (u *UserServer) GetUser(ctx context.Context, request *metadatalifecyclev1.G
 		GlobalRoles:              globalRoles,
 		GlobalGrantedPermissions: globalGrantedPermissions,
 		GlobalRolePermissions:    globalRolePermissions,
+		BlockReason:              user.BlockReason,
 		CreatedAt:                timestamppb.New(user.CreatedAt),
 		UpdatedAt:                timestamppb.New(user.UpdatedAt),
 		Memberships:              memberships,

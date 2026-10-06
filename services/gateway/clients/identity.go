@@ -61,6 +61,7 @@ func (c *MetadataLifecycle) GetUser(ctx context.Context, actorID, id string) (do
 		GivenName:                user.GivenName,
 		FamilyName:               user.FamilyName,
 		Status:                   status,
+		BlockReason:              user.BlockReason,
 		GlobalRoles:              globalRoles,
 		GlobalGrantedPermissions: globalGrantedPermissions,
 		GlobalRolePermissions:    globalRolePermissions,
