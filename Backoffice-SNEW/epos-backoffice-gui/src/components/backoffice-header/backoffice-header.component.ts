@@ -7,13 +7,12 @@ import { DISCOVERY_VERSIONING_STATUSES, type ResultsFilters } from '../../models
 import { AuthService } from '../../services/auth.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
 import { AppIconComponent } from '../../shared/ui/app-icon.component';
-import { BackButtonComponent } from '../../shared/ui/back-button.component';
 
 export type ManagementHeaderContext = 'global' | 'group';
 
 @Component({
   selector: 'app-backoffice-header',
-  imports: [AppIconComponent, BackButtonComponent, FormsModule, RouterLink],
+  imports: [AppIconComponent, FormsModule, RouterLink],
   templateUrl: './backoffice-header.component.html',
   styleUrl: './backoffice-header.component.css'
 })
