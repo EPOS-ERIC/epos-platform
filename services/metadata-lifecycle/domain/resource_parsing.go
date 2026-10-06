@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 )
 
@@ -25,18 +26,21 @@ func normalizeKeywords(values []string) ([]string, error) {
 func NewIdentifierInput(value IdentifierInput) (IdentifierInput, error) {
 	value.Type = IdentifierType(strings.TrimSpace(string(value.Type)))
 	value.Value = strings.TrimSpace(value.Value)
-	if value.Type == "" || value.Value == "" {
-		return IdentifierInput{}, fmt.Errorf("identifier type and value are required: %w", ErrInvalidResource)
+	if value.Type == "" {
+		return IdentifierInput{}, invalidField("type", "Type must not be blank.", nil)
+	}
+	if value.Value == "" {
+		return IdentifierInput{}, invalidField("value", "Value must not be blank.", nil)
 	}
 	return value, nil
 }
 
 func validateIdentifier(value Identifier, requireID bool) error {
 	if requireID && value.ID == uuid.Nil {
-		return fmt.Errorf("identifier ID is required: %w", ErrInvalidResource)
+		return fmt.Errorf("identifier ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if strings.TrimSpace(string(value.Type)) == "" || strings.TrimSpace(value.Value) == "" {
-		return fmt.Errorf("identifier type and value are required: %w", ErrInvalidResource)
+		return fmt.Errorf("identifier type and value are required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	return nil
 }
@@ -45,26 +49,12 @@ func validateContactPoints(values []ContactPoint, label string) error {
 	seen := make(map[uuid.UUID]struct{}, len(values))
 	for _, value := range values {
 		if value.ID == uuid.Nil || strings.TrimSpace(value.Email) == "" || strings.TrimSpace(value.Role) == "" {
-			return fmt.Errorf("%s requires ID, email, and role: %w", label, ErrInvalidResource)
+			return fmt.Errorf("%s requires ID, email, and role: %w", label, apperror.Default(apperror.CodeValidationFailed))
 		}
 		if _, exists := seen[value.ID]; exists {
-			return fmt.Errorf("duplicate %s %q: %w", label, value.ID, ErrInvalidResource)
+			return fmt.Errorf("duplicate %s %q: %w", label, value.ID, apperror.Default(apperror.CodeValidationFailed))
 		}
 		seen[value.ID] = struct{}{}
-	}
-	return nil
-}
-
-func validateUUIDList(values []uuid.UUID, label string) error {
-	seen := make(map[uuid.UUID]struct{}, len(values))
-	for _, value := range values {
-		if value == uuid.Nil {
-			return fmt.Errorf("%s ID is required: %w", label, ErrInvalidResource)
-		}
-		if _, exists := seen[value]; exists {
-			return fmt.Errorf("duplicate %s %q: %w", label, value, ErrInvalidResource)
-		}
-		seen[value] = struct{}{}
 	}
 	return nil
 }
@@ -76,7 +66,7 @@ func validateOrganizations(values []OrganizationMetadata, relation string) error
 			return fmt.Errorf("resource %s: %w", relation, err)
 		}
 		if _, exists := seen[value.ID]; exists {
-			return fmt.Errorf("duplicate resource %s %q: %w", relation, value.ID, ErrInvalidResource)
+			return fmt.Errorf("duplicate resource %s %q: %w", relation, value.ID, apperror.Default(apperror.CodeValidationFailed))
 		}
 		seen[value.ID] = struct{}{}
 	}
@@ -85,7 +75,7 @@ func validateOrganizations(values []OrganizationMetadata, relation string) error
 
 func validateOrganization(value OrganizationMetadata) error {
 	if value.ID == uuid.Nil || strings.TrimSpace(value.Name) == "" {
-		return fmt.Errorf("organization requires ID and name: %w", ErrInvalidResource)
+		return fmt.Errorf("organization requires ID and name: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	seen := make(map[uuid.UUID]struct{}, len(value.Identifiers))
 	for _, identifier := range value.Identifiers {
@@ -93,7 +83,7 @@ func validateOrganization(value OrganizationMetadata) error {
 			return fmt.Errorf("organization identifier: %w", err)
 		}
 		if _, exists := seen[identifier.ID]; exists {
-			return fmt.Errorf("duplicate organization identifier %q: %w", identifier.ID, ErrInvalidResource)
+			return fmt.Errorf("duplicate organization identifier %q: %w", identifier.ID, apperror.Default(apperror.CodeValidationFailed))
 		}
 		seen[identifier.ID] = struct{}{}
 	}
@@ -112,7 +102,7 @@ func validateCategories(values []CategoryMetadata, relation string) error {
 			return fmt.Errorf("resource %s: %w", relation, err)
 		}
 		if _, exists := seen[value.ID]; exists {
-			return fmt.Errorf("duplicate resource %s %q: %w", relation, value.ID, ErrInvalidResource)
+			return fmt.Errorf("duplicate resource %s %q: %w", relation, value.ID, apperror.Default(apperror.CodeValidationFailed))
 		}
 		seen[value.ID] = struct{}{}
 	}
@@ -121,7 +111,7 @@ func validateCategories(values []CategoryMetadata, relation string) error {
 
 func validateCategory(value CategoryMetadata) error {
 	if value.ID == uuid.Nil || strings.TrimSpace(value.Name) == "" {
-		return fmt.Errorf("category requires ID and name: %w", ErrInvalidResource)
+		return fmt.Errorf("category requires ID and name: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if value.Scheme.ID != uuid.Nil || value.Scheme.Name != "" || value.Scheme.Concept != "" {
 		if _, err := NewGroup(value.Scheme.ID, GroupInput{
@@ -134,7 +124,7 @@ func validateCategory(value CategoryMetadata) error {
 			Position:    value.Scheme.Position,
 			Concept:     value.Scheme.Concept,
 		}); err != nil {
-			return fmt.Errorf("category scheme: %w: %w", err, ErrInvalidResource)
+			return fmt.Errorf("category scheme: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	for _, child := range value.Children {

@@ -6,21 +6,16 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	"github.com/ogen-go/ogen/ogenerrors"
+	"github.com/ogen-go/ogen/validate"
 	"go.opentelemetry.io/otel/trace"
-)
-
-var (
-	errAuthUnavailable         = errors.New("authentication unavailable")
-	errProvisioningUnavailable = errors.New("user provisioning unavailable")
 )
 
 // ogenHandler is the HTTP boundary. Pure proxy operations call the concrete
@@ -44,104 +39,110 @@ func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycl
 var _ gatewayapi.Handler = (*ogenHandler)(nil)
 
 func (h *ogenHandler) NewError(ctx context.Context, err error) *gatewayapi.ProblemStatusCode {
-	status, title, detail := problemDetails(err)
-	if status >= http.StatusInternalServerError {
-		trace.SpanFromContext(ctx).RecordError(err)
-		h.log.ErrorContext(ctx, "gateway request failed", "status", status, "error", err)
-	}
-	response := gatewayapi.Problem{
-		Title:  title,
-		Status: status,
-	}
-	if detail != "" {
-		response.Detail = gatewayapi.NewOptString(detail)
-	}
+	status, response := problemResponse(ctx, err)
+	reportHTTPError(h.log, ctx, err, status)
 	return &gatewayapi.ProblemStatusCode{
 		StatusCode: status,
 		Response:   response,
 	}
 }
 
-var errMissingActor = errors.New("bearer token required")
-
-func actorID(ctx context.Context) (string, bool) {
-	return authcontext.ActorID(ctx)
+// problemResponse maps an error to the Gateway HTTP status and Problem body.
+func problemResponse(ctx context.Context, err error) (int, gatewayapi.Problem) {
+	appErr := applicationError(err)
+	status := apperror.HTTPStatus(appErr.Code)
+	problem := gatewayapi.Problem{
+		Type:   string(appErr.Code),
+		Title:  http.StatusText(status),
+		Status: status,
+		Detail: gatewayapi.NewOptString(appErr.Detail),
+	}
+	if appErr.Target != "" {
+		problem.Target = gatewayapi.NewOptString(appErr.Target)
+	}
+	spanContext := trace.SpanContextFromContext(ctx)
+	if spanContext.TraceID().IsValid() {
+		problem.Instance = gatewayapi.NewOptString(spanContext.TraceID().String())
+	}
+	return status, problem
 }
 
-func toClientStringPtr(v gatewayapi.OptNilString) *string {
-	if !v.Set || v.Null {
-		return nil
-	}
-	return &v.Value
-}
-
-func problemStatus(err error) int {
-	if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
-		return http.StatusRequestEntityTooLarge
-	}
-
-	switch {
-	case errors.Is(err, errMissingActor),
-		errors.Is(err, auth.ErrUnauthorized),
-		errors.Is(err, ogenerrors.ErrSecurityRequirementIsNotSatisfied):
-		return http.StatusUnauthorized
-	case errors.Is(err, domain.ErrBadRequest):
-		return http.StatusBadRequest
-	case errors.Is(err, domain.ErrUnauthorized):
-		return http.StatusUnauthorized
-	case errors.Is(err, domain.ErrForbidden):
-		return http.StatusForbidden
-	case errors.Is(err, domain.ErrNotFound):
-		return http.StatusNotFound
-	case errors.Is(err, domain.ErrConflict):
-		return http.StatusConflict
-	case errors.Is(err, domain.ErrUpstreamTimeout):
-		return http.StatusGatewayTimeout
-	case errors.Is(err, domain.ErrUpstreamUnavailable):
-		return http.StatusServiceUnavailable
-	case errors.Is(err, errAuthUnavailable), errors.Is(err, errProvisioningUnavailable):
-		return http.StatusServiceUnavailable
-	default:
-		if upstream, ok := errors.AsType[*domain.UpstreamError](err); ok {
-			return upstream.StatusCode
+// applicationError normalizes transport and application errors to a safe AppError.
+func applicationError(err error) *apperror.AppError {
+	if appErr, ok := errors.AsType[*apperror.AppError](err); ok {
+		if !apperror.Known(appErr.Code) {
+			return apperror.Default(apperror.CodeInternal)
 		}
-		return http.StatusInternalServerError
+		safe := apperror.New(appErr.Code, appErr.Detail)
+		safe.Target = appErr.Target
+		return safe
 	}
-}
 
-func problemDetails(err error) (int, string, string) {
-	status := problemStatus(err)
-	if metadata, ok := domain.ErrorMetadataFrom(err); ok {
-		return status, metadata.Title, metadata.Detail
-	}
 	if maxBytesErr, ok := errors.AsType[*http.MaxBytesError](err); ok {
-		return status, "request_too_large", fmt.Sprintf("request body exceeds %d bytes", maxBytesErr.Limit)
+		return apperror.New(apperror.CodeRequestTooLarge, fmt.Sprintf("Request body exceeds %d bytes.", maxBytesErr.Limit))
 	}
+
+	if _, ok := errors.AsType[*validate.InvalidContentTypeError](err); ok {
+		return apperror.Default(apperror.CodeUnsupportedMedia)
+	}
+
+	validationErr, ok := errors.AsType[*validate.Error](err)
+	if ok && len(validationErr.Fields) > 0 {
+		target, fieldErr := validationLeaf(err, "")
+		return apperror.Field(target, validationDetail(fieldErr), err)
+	}
+
+	_, decodeRequest := errors.AsType[*ogenerrors.DecodeRequestError](err)
+	_, decodeParams := errors.AsType[*ogenerrors.DecodeParamsError](err)
+	if decodeRequest || decodeParams {
+		return apperror.New(apperror.CodeValidationFailed, "The request is invalid.")
+	}
+
 	switch {
 	case errors.Is(err, ogenerrors.ErrSecurityRequirementIsNotSatisfied):
-		return http.StatusUnauthorized, "missing_token", "bearer token required"
-	case errors.Is(err, auth.ErrUnauthorized), errors.Is(err, errMissingActor):
-		return http.StatusUnauthorized, "invalid_token", "token is invalid"
-	case errors.Is(err, errAuthUnavailable):
-		return status, "authentication_failed", "authentication failed"
-	case errors.Is(err, errProvisioningUnavailable):
-		return status, "user_provisioning_failed", "user provisioning failed"
-	case errors.Is(err, domain.ErrBadRequest):
-		return status, "invalid_request", "invalid request"
-	case errors.Is(err, domain.ErrForbidden):
-		return status, "forbidden", "operation is not permitted"
-	case errors.Is(err, domain.ErrNotFound):
-		return status, "not_found", "resource not found"
-	case errors.Is(err, domain.ErrConflict):
-		return status, "conflict", "operation conflicts with existing data"
-	case errors.Is(err, domain.ErrUpstreamTimeout):
-		return status, "upstream_timeout", "request timed out"
-	case errors.Is(err, domain.ErrUpstreamUnavailable):
-		return status, "upstream_unavailable", "upstream service is unavailable"
+		return apperror.Default(apperror.CodeUnauthenticated)
+	case errors.Is(err, context.DeadlineExceeded):
+		return apperror.Default(apperror.CodeUpstreamTimeout)
 	default:
-		if status == http.StatusGatewayTimeout {
-			return status, "upstream_timeout", "request timed out"
-		}
-		return status, "request_failed", "request failed"
+		return apperror.Default(apperror.CodeInternal)
 	}
+}
+
+func validationLeaf(err error, target string) (string, error) {
+	validationErr, ok := errors.AsType[*validate.Error](err)
+	if !ok || len(validationErr.Fields) == 0 {
+		return target, err
+	}
+	field := validationErr.Fields[0]
+	switch {
+	case strings.HasPrefix(field.Name, "["):
+		target += field.Name
+	case target == "":
+		target = field.Name
+	default:
+		target += "." + field.Name
+	}
+	return validationLeaf(field.Error, target)
+}
+
+func validationDetail(err error) string {
+	if errors.Is(err, validate.ErrFieldRequired) {
+		return "Field is required."
+	}
+	if minLengthErr, ok := errors.AsType[*validate.MinLengthError](err); ok {
+		if minLengthErr.Len == 0 {
+			return "Field must not be blank."
+		}
+		return fmt.Sprintf("Must contain at least %d characters.", minLengthErr.MinLength)
+	}
+	if maxLengthErr, ok := errors.AsType[*validate.MaxLengthError](err); ok {
+		return fmt.Sprintf("Must contain no more than %d characters.", maxLengthErr.MaxLength)
+	}
+	if _, ok := errors.AsType[*validate.NoRegexMatchError](err); ok {
+		return "Value has an invalid format."
+	}
+	if _, ok := errors.AsType[*validate.DuplicateItemsError](err); ok {
+		return "Items must be unique."
+	}
+	return "Value is invalid."
 }

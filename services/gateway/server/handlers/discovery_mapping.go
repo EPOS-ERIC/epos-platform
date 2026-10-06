@@ -179,7 +179,7 @@ func toAPIDiscovery(value *metadatalifecyclev1.DiscoveryItem) (gatewayapi.Discov
 		if err != nil {
 			return gatewayapi.DiscoveryItem{}, err
 		}
-		distributions, err := toAPIDiscoveryReferences(item.Distributions)
+		distributions, err := toAPIDiscoveryDistributions(item.Distributions)
 		if err != nil {
 			return gatewayapi.DiscoveryItem{}, err
 		}
@@ -293,6 +293,59 @@ func toAPIDiscoveryReferences(values []*metadatalifecyclev1.EntityReference) ([]
 			return nil, err
 		}
 		result = append(result, mapped)
+	}
+	return result, nil
+}
+
+func toAPIDiscoveryDistributions(values []*metadatalifecyclev1.DiscoveryDistribution) ([]gatewayapi.DiscoveryDistribution, error) {
+	result := make([]gatewayapi.DiscoveryDistribution, 0, len(values))
+	for _, value := range values {
+		if value == nil {
+			return nil, errors.New("discovery distribution is required")
+		}
+		if service := value.GetWebService(); service != nil {
+			id, err := parseUUID("discovery distribution.id", service.Id)
+			if err != nil {
+				return nil, err
+			}
+			serviceType, err := toAPIWebServiceType(service.WebServiceType)
+			if err != nil {
+				return nil, err
+			}
+			visibleOn, err := toAPIWebServiceVisibleOn(service.VisibleOn)
+			if err != nil {
+				return nil, err
+			}
+			mapped := gatewayapi.DiscoveryWebServiceDistribution{
+				ID:             id,
+				Name:           service.Name,
+				Type:           gatewayapi.DiscoveryWebServiceDistributionTypeWEBSERVICE,
+				WebServiceType: serviceType,
+				VisibleOn:      visibleOn,
+			}
+			if service.Provider != nil {
+				provider, err := toAPIDiscoveryReference(service.Provider)
+				if err != nil {
+					return nil, err
+				}
+				mapped.Provider = gatewayapi.NewOptReference(provider)
+			}
+			result = append(result, gatewayapi.NewDiscoveryWebServiceDistributionDiscoveryDistribution(mapped))
+			continue
+		}
+		if file := value.GetDownloadableFile(); file != nil {
+			id, err := parseUUID("discovery distribution.id", file.Id)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, gatewayapi.NewDiscoveryDownloadableFileDistributionDiscoveryDistribution(gatewayapi.DiscoveryDownloadableFileDistribution{
+				ID:   id,
+				Name: file.Name,
+				Type: gatewayapi.DiscoveryDownloadableFileDistributionTypeDOWNLOADABLEFILE,
+			}))
+			continue
+		}
+		return nil, errors.New("discovery distribution delivery is required")
 	}
 	return result, nil
 }

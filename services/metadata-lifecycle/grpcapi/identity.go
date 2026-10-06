@@ -27,12 +27,12 @@ func (i *IdentityServer) ProvisionUser(ctx context.Context, req *metadatalifecyc
 		FamilyName: req.GetFamilyName(),
 	})
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	user, err := i.users.Create(ctx, claims)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.ProvisionUserResponse{

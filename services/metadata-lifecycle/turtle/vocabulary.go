@@ -67,6 +67,7 @@ const (
 	locnGeometry               = "http://www.w3.org/ns/locn#geometry"
 	gspWKTLiteral              = "http://www.opengis.net/ont/geosparql#wktLiteral"
 	hydraEntrypoint            = "http://www.w3.org/ns/hydra/core#entrypoint"
+	hydraReturns               = "http://www.w3.org/ns/hydra/core#returns"
 	hydraTitle                 = "http://www.w3.org/ns/hydra/core#title"
 	hydraDescription           = "http://www.w3.org/ns/hydra/core#description"
 	hydraAPIDocumentation      = "http://www.w3.org/ns/hydra/core#ApiDocumentation"

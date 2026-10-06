@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	rdf "github.com/deiu/rdf2go"
 	"github.com/google/uuid"
@@ -541,7 +542,7 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 		if !hasService {
 			return domain.Distribution{}, fmt.Errorf("web service distribution requires %s", dctConformsTo)
 		}
-		webService, err := m.webServiceForDistribution(source, serviceSource, distribution.ID, m.optionalString(source, dctFormat))
+		webService, err := m.webServiceForDistribution(source, serviceSource, distribution.ID)
 		if err != nil {
 			m.recordInvalid("web service", serviceSource, err)
 			return domain.Distribution{}, fmt.Errorf("web service %q: %w", serviceSource, err)
@@ -551,7 +552,7 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 		distribution.DownloadableFile = downloadableFile(m, source)
 	case "":
 		if hasService && m.graph.hasType(serviceSource, "https://www.epos-eu.org/epos-dcat-ap#WebService") {
-			webService, err := m.webServiceForDistribution(source, serviceSource, distribution.ID, m.optionalString(source, dctFormat))
+			webService, err := m.webServiceForDistribution(source, serviceSource, distribution.ID)
 			if err != nil {
 				m.recordInvalid("web service", serviceSource, err)
 				return domain.Distribution{}, fmt.Errorf("web service %q: %w", serviceSource, err)
@@ -561,7 +562,7 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 			distribution.DownloadableFile = downloadableFile(m, source)
 		}
 	default:
-		return domain.Distribution{}, fmt.Errorf("unsupported distribution type %q: %w", distributionType, domain.ErrInvalidDataset)
+		return domain.Distribution{}, fmt.Errorf("unsupported distribution type %q: %w", distributionType, apperror.Default(apperror.CodeValidationFailed))
 	}
 
 	typeValue, err := distribution.DeliveryType()
@@ -608,18 +609,21 @@ func downloadableFile(m *mapper, source string) *domain.DownloadableFile {
 	return &domain.DownloadableFile{URL: url, Format: m.optionalString(source, dctFormat)}
 }
 
-func (m *mapper) webServiceForDistribution(distribution, source string, owner uuid.UUID, format string) (domain.WebService, error) {
+func (m *mapper) webServiceForDistribution(distribution, source string, owner uuid.UUID) (domain.WebService, error) {
 	operation, ok := m.firstString(distribution, dcatAccessURL)
 	if !ok || strings.TrimSpace(operation) == "" {
 		return domain.WebService{}, fmt.Errorf("web service distribution requires %s", dcatAccessURL)
 	}
-	return m.webService(source, owner, format, operation)
+	return m.webService(source, owner, operation)
 }
 
-func (m *mapper) webService(source string, owner uuid.UUID, format, operationSource string) (domain.WebService, error) {
+func (m *mapper) webService(source string, owner uuid.UUID, operationSource string) (domain.WebService, error) {
 	if err := m.checkSingleValues(source,
 		schemaName, schemaDescription, dctTitle, dctTemporal, dctSpatial,
 	); err != nil {
+		return domain.WebService{}, err
+	}
+	if err := m.checkSingleValues(operationSource, hydraReturns); err != nil {
 		return domain.WebService{}, err
 	}
 	service := domain.WebService{
@@ -634,7 +638,7 @@ func (m *mapper) webService(source string, owner uuid.UUID, format, operationSou
 		VisibleOn:        nil,
 		Body:             nil,
 		Parameters:       nil,
-		Format:           format,
+		Format:           m.optionalString(operationSource, hydraReturns),
 		Provider:         nil,
 		Documentation:    nil,
 		SpatialCoverage:  nil,

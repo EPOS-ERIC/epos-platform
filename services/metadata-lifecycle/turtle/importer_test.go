@@ -246,7 +246,7 @@ func TestParserMergesCanonicalContactPoints(t *testing.T) {
 }
 
 func TestParserUsesDistributionTypeForWebService(t *testing.T) {
-	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
+	turtle := importPrefixes + `
 <category:dataset> a skos:ConceptScheme;
     dct:title "Dataset categories";
     skos:hasTopConcept <category:facets/dataset-theme>.
@@ -264,11 +264,14 @@ func TestParserUsesDistributionTypeForWebService(t *testing.T) {
     dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
     dct:conformsTo <service:one>;
     dcat:accessURL <operation:one>;
-    dct:format "application/json".
+    dct:format "text/plain".
 <service:one> schema:name "Service one";
     hydra:supportedOperation <operation:one>.
-<operation:one> hydra:template "https://example.com/data{?id}".
-`))
+<operation:one> hydra:template "https://example.com/data{?id}";
+    hydra:returns "application/json".
+
+`
+	batch, err := (Parser{}).Parse(strings.NewReader(turtle))
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -282,6 +285,18 @@ func TestParserUsesDistributionTypeForWebService(t *testing.T) {
 	}
 	if distribution.DownloadableFile != nil {
 		t.Fatal("web-service distribution has downloadable file delivery")
+	}
+	if distribution.WebService.Format != "application/json" {
+		t.Fatalf("web-service format = %q, want hydra:returns value", distribution.WebService.Format)
+	}
+
+	multipleReturns := strings.Replace(turtle, `hydra:returns "application/json"`, `hydra:returns "application/json", "text/plain"`, 1)
+	batch, err = (Parser{}).Parse(strings.NewReader(multipleReturns))
+	if err != nil {
+		t.Fatalf("Parse() with multiple hydra:returns values error = %v", err)
+	}
+	if len(batch.Datasets) != 1 || len(batch.Datasets[0].Distributions) != 0 {
+		t.Fatalf("distributions with multiple hydra:returns = %+v, want rejected distribution", batch.Datasets)
 	}
 }
 
@@ -308,6 +323,7 @@ func TestParserAllowsNumericParametersWithoutAllowedValues(t *testing.T) {
 <service:one> schema:name "Service one";
     hydra:supportedOperation <operation:one>.
 <operation:one> hydra:template "https://example.com/data{?count,ratio}";
+    hydra:returns "application/json";
     hydra:property <property:one>.
 <property:one> hydra:mapping <parameter:count>, <parameter:ratio>.
 <parameter:count> hydra:variable "count";
@@ -367,6 +383,7 @@ func TestParserMapsMultipleValuesForEnumParameters(t *testing.T) {
 <service:one> schema:name "Service one";
     hydra:supportedOperation <operation:one>.
 <operation:one> hydra:template "https://example.com/data{?value}";
+    hydra:returns "application/json";
     hydra:property <property:one>.
 <property:one> hydra:mapping <parameter:one>.
 <parameter:one> hydra:variable "value";
@@ -429,6 +446,7 @@ func TestParserUsesDistributionOperationOnly(t *testing.T) {
     schema:name "Service one";
     hydra:supportedOperation <operation:other>, <operation:selected>.
 <operation:selected> hydra:template "https://example.com/selected{?selected}";
+    hydra:returns "application/json";
     hydra:property <property:selected>.
 <property:selected> hydra:mapping <parameter:selected>.
 <parameter:selected> hydra:variable "selected";
@@ -593,6 +611,7 @@ func TestParserDiagnosesIncompatibleParameterKinds(t *testing.T) {
     schema:name "Service one";
     hydra:supportedOperation <operation:one>.
 <operation:one> hydra:template "https://example.com/data{?value}";
+    hydra:returns "application/json";
     hydra:property <property:one>.
 <property:one> hydra:mapping <parameter:string>, <parameter:boolean>.
 <parameter:string> hydra:variable "value";

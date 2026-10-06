@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 )
 
@@ -27,10 +28,11 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 		GlobalPermissionResourceReject,
 		GlobalPermissionResourcePublish,
 		GlobalPermissionResourceUnpublish,
-		GlobalPermissionCategoryManage:
+		GlobalPermissionCategoryManage,
+		GlobalPermissionActivityRead:
 		return permission, nil
 	default:
-		return "", ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeInternal)
 	}
 }
 
@@ -71,32 +73,15 @@ func NewGroupPermission(value string) (GroupPermission, error) {
 		GroupPermissionCategoryManage:
 		return permission, nil
 	default:
-		return "", ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeInternal)
 	}
-}
-
-// NewGroupPermissions validates and normalizes group permission keys.
-func NewGroupPermissions(values []string) ([]GroupPermission, error) {
-	if values == nil {
-		return nil, nil
-	}
-
-	permissions := make([]GroupPermission, len(values))
-	for i, value := range values {
-		permission, err := NewGroupPermission(value)
-		if err != nil {
-			return nil, err
-		}
-		permissions[i] = permission
-	}
-	return permissions, nil
 }
 
 // NewGroupRole validates and normalizes a role path value.
 func NewGroupRole(value string) (GroupRole, error) {
 	role := GroupRole(strings.TrimSpace(value))
 	if role != GroupRoleEditor && role != GroupRoleReviewer && role != GroupRoleAdmin {
-		return "", ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeInternal)
 	}
 	return role, nil
 }
@@ -105,20 +90,9 @@ func NewGroupRole(value string) (GroupRole, error) {
 func NewRequestedGroupRole(value string) (GroupRole, error) {
 	role, err := NewGroupRole(value)
 	if err != nil || role == GroupRoleAdmin {
-		return "", ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 	return role, nil
-}
-
-// NewDecision validates and normalizes a request decision.
-func NewDecision(value string) (Decision, error) {
-	decision := Decision(strings.TrimSpace(value))
-	switch decision {
-	case DecisionAccept, DecisionReject:
-		return decision, nil
-	default:
-		return "", ErrInvalidAccess
-	}
 }
 
 // NewPersistedMembershipStatus validates a status loaded from storage.
@@ -128,7 +102,7 @@ func NewPersistedMembershipStatus(value string) (MembershipStatus, error) {
 	case MembershipPending, MembershipActive, MembershipRejected:
 		return status, nil
 	default:
-		return "", ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeInternal)
 	}
 }
 
@@ -139,7 +113,7 @@ func NewPersistedRoleRequestStatus(value string) (RoleRequestStatus, error) {
 	case RoleRequestPending, RoleRequestAccepted, RoleRequestRejected:
 		return status, nil
 	default:
-		return "", ErrInvalidAccess
+		return "", apperror.Default(apperror.CodeInternal)
 	}
 }
 
@@ -147,7 +121,7 @@ func NewPersistedRoleRequestStatus(value string) (RoleRequestStatus, error) {
 func NewMembershipUser(value MembershipUser) (MembershipUser, error) {
 	value.ID = strings.TrimSpace(value.ID)
 	if value.ID == "" {
-		return MembershipUser{}, ErrInvalidAccess
+		return MembershipUser{}, apperror.Default(apperror.CodeInternal)
 	}
 	return value, nil
 }
@@ -155,10 +129,10 @@ func NewMembershipUser(value MembershipUser) (MembershipUser, error) {
 // NewRoleRequest creates a valid role request projection.
 func NewRoleRequest(value RoleRequest) (RoleRequest, error) {
 	if value.ID == uuid.Nil {
-		return RoleRequest{}, ErrInvalidAccess
+		return RoleRequest{}, apperror.Default(apperror.CodeInternal)
 	}
 	if value.Role != GroupRoleEditor && value.Role != GroupRoleReviewer && value.Role != GroupRoleAdmin {
-		return RoleRequest{}, ErrInvalidAccess
+		return RoleRequest{}, apperror.Default(apperror.CodeInternal)
 	}
 	if _, err := NewPersistedRoleRequestStatus(string(value.Status)); err != nil {
 		return RoleRequest{}, err
@@ -180,7 +154,7 @@ func NewGroupMembership(value GroupMembership) (GroupMembership, error) {
 	roles := slices.Clone(value.Roles)
 	for _, role := range roles {
 		if role != GroupRoleEditor && role != GroupRoleReviewer && role != GroupRoleAdmin {
-			return GroupMembership{}, ErrInvalidAccess
+			return GroupMembership{}, apperror.Default(apperror.CodeInternal)
 		}
 	}
 	grantedPermissions, err := normalizeGroupPermissions(value.GrantedPermissions)

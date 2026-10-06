@@ -460,8 +460,8 @@
 				rdfs:range "xsd:float";
 				rdfs:label "Circular search center latitude" ;
 				schema:minValue "33.0000";
-                http:paramValue "1.0000";
-				http:paramValue "2.0000";
+                http:paramValue "33.0000";
+				http:paramValue "34.0000";
                 schema:multipleValues "true"^^xsd:boolean ;
 				schema:maxValue "74.0000";
 				hydra:required "false"^^xsd:boolean;

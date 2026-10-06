@@ -3,10 +3,10 @@ package identity
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
@@ -29,7 +29,7 @@ func (s *Service) GetUser(ctx context.Context, actorID, id string) (domain.User,
 	}
 
 	if id == "" {
-		return domain.User{}, fmt.Errorf("invalid user id: %w", domain.ErrBadRequest)
+		return domain.User{}, fmt.Errorf("invalid user id: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 
 	user, err := s.metadataLifecycle.GetUser(ctx, actorID, id)
@@ -42,9 +42,9 @@ func (s *Service) GetUser(ctx context.Context, actorID, id string) (domain.User,
 
 func (s *Service) EnsureUser(ctx context.Context, identity domain.ActorIdentity) (domain.User, error) {
 	user, err := s.metadataLifecycle.GetUser(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
-	if errors.Is(err, domain.ErrNotFound) {
+	if apperror.IsCode(err, apperror.CodeNotFound) {
 		err = s.metadataLifecycle.ProvisionUser(ctx, identity)
-		if err == nil || errors.Is(err, domain.ErrConflict) {
+		if err == nil || apperror.IsCode(err, apperror.CodeConflict) {
 			user, err = s.GetUser(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 		}
 	}

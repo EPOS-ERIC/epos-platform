@@ -25,7 +25,6 @@ linters:
     - contextcheck
     - containedctx
     - copyloopvar
-    - wrapcheck
     - exhaustive
   exclusions:
     paths:

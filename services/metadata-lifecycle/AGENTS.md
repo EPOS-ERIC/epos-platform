@@ -21,6 +21,8 @@
 - Mapping validates only transport representation: missing nested messages, malformed UUIDs or timestamps, unknown enums, and protobuf presence. Domain constructors own business validation and normalization.
 - Parse required actor metadata once at the gRPC transport boundary. Pass the typed `domain.Actor` to services; do not reparse it in services or encode it into protobuf business messages.
 - Convert domain errors to gRPC status errors at the gRPC boundary. Do not return raw domain errors or database errors from RPC methods.
+- Use `packages/go/apperror` for client-safe application errors shared with Gateway. Create field-specific validation errors at the first layer that can identify the failed field; retain causes only for internal logging.
+- Keep shared application-error to gRPC status conversion and protobuf validation-error mapping in `grpcapi/`. Server interceptors may invoke these boundary helpers but must not own mapping policy.
 
 ## SQLC
 
@@ -40,7 +42,14 @@
 
 - Use typed `domain.Actor`. Parse at transport boundary with `NewActor`; services trust parsed actors and skip trim/empty checks.
 - Optional actor: absent is allowed, malformed metadata returns `InvalidArgument`; required actor returns `Unauthenticated` when absent. Convert `domain.Actor` to `string` at adapter boundaries when string required.
-- Handler package use shared service-error mapping function. Match wrapped sentinels with `errors.Is`, keep status/code pairs consistent.
+- Use `packages/go/apperror` for domain and service errors. Match wrapped application errors by `AppError.Code`; do not add sentinel errors for application outcomes.
+- Keep transport conversion in `grpcapi/`: encode known `AppError` values with the shared gRPC adapter and map unknown errors to safe `internal`.
+- See `packages/go/apperror` for shared error classification, safe detail, target, cause, and transport principles.
+- Caller-input validation returns client validation outcomes; include a field target and actionable detail as soon as the failing field is known.
+- Persisted-data validation revalidates and canonicalizes reads; invalid stored data is a server error, not a client validation failure. Convert reused input-validation errors once at this boundary.
+- Preserve existing nested targets when adding parent paths. Keep causes for internal diagnostics, never for wire details.
+- gRPC handlers return errors directly. `grpcapi/` owns application-error-to-status conversion and fails closed on unknown errors; server interceptors may invoke this boundary mapping and own request logging/tracing.
+- Protobuf validation violations are mapped to `AppError` in `grpcapi/`, including the most specific field path available.
 
 ## Workflow
 

@@ -7,6 +7,7 @@ docker_build(
     dockerfile='services/gateway/Dockerfile.dev',
     only=[
         'services/gateway',
+        'packages/go/apperror',
         'packages/go/logging',
         'packages/go/observability',
 		'packages/protobuf',
@@ -20,6 +21,7 @@ docker_build(
     ],
     live_update=[
         sync('services/gateway', '/workspace/services/gateway'),
+        sync('packages/go/apperror', '/workspace/packages/go/apperror'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/middleware', '/workspace/packages/go/middleware'),
@@ -37,6 +39,7 @@ docker_build(
     dockerfile='services/metadata-lifecycle/Dockerfile.dev',
     only=[
         'services/metadata-lifecycle',
+        'packages/go/apperror',
         'packages/go/logging',
         'packages/go/observability',
         'packages/protobuf',
@@ -47,6 +50,7 @@ docker_build(
     ],
     live_update=[
         sync('services/metadata-lifecycle', '/workspace/services/metadata-lifecycle'),
+        sync('packages/go/apperror', '/workspace/packages/go/apperror'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/protobuf', '/workspace/packages/protobuf'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),

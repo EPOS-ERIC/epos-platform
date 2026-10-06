@@ -371,6 +371,7 @@ type GetUserResponse struct {
 	UpdatedAt                *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	Memberships              []*UserMembership      `protobuf:"bytes,10,rep,name=memberships,proto3" json:"memberships,omitempty"`
 	GlobalRolePermissions    []GlobalPermission     `protobuf:"varint,11,rep,packed,name=global_role_permissions,json=globalRolePermissions,proto3,enum=metadata_lifecycle.v1.GlobalPermission" json:"global_role_permissions,omitempty"`
+	BlockReason              *string                `protobuf:"bytes,12,opt,name=block_reason,json=blockReason,proto3,oneof" json:"block_reason,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -480,6 +481,13 @@ func (x *GetUserResponse) GetGlobalRolePermissions() []GlobalPermission {
 		return x.GlobalRolePermissions
 	}
 	return nil
+}
+
+func (x *GetUserResponse) GetBlockReason() string {
+	if x != nil && x.BlockReason != nil {
+		return *x.BlockReason
+	}
+	return ""
 }
 
 type GrantGlobalPermissionRequest struct {
@@ -1214,7 +1222,7 @@ const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"\x11ListUsersResponse\x129\n" +
 	"\x05users\x18\x01 \x03(\v2#.metadata_lifecycle.v1.UserListItemR\x05users\"2\n" +
 	"\x0eGetUserRequest\x12 \n" +
-	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\xda\x05\n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\x93\x06\n" +
 	"\x0fGetUserResponse\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12\x1d\n" +
 	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12&\n" +
@@ -1234,7 +1242,9 @@ const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"\vmemberships\x18\n" +
 	" \x03(\v2%.metadata_lifecycle.v1.UserMembershipR\vmemberships\x12n\n" +
 	"\x17global_role_permissions\x18\v \x03(\x0e2'.metadata_lifecycle.v1.GlobalPermissionB\r\xbaH\n" +
-	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x15globalRolePermissions\"\x93\x01\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\x15globalRolePermissions\x12&\n" +
+	"\fblock_reason\x18\f \x01(\tH\x00R\vblockReason\x88\x01\x01B\x0f\n" +
+	"\r_block_reason\"\x93\x01\n" +
 	"\x1cGrantGlobalPermissionRequest\x12 \n" +
 	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12Q\n" +
 	"\n" +
@@ -1411,6 +1421,7 @@ func file_metadata_lifecycle_v1_user_proto_init() {
 	}
 	file_metadata_lifecycle_v1_annotations_proto_init()
 	file_metadata_lifecycle_v1_common_proto_init()
+	file_metadata_lifecycle_v1_user_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

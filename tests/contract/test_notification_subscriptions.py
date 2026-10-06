@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
-from fixtures import create_group
+from fixtures import assert_problem, create_group
 
 
 class NotificationSubscriptionsContractTest(unittest.TestCase):
@@ -128,8 +128,7 @@ class NotificationSubscriptionsContractTest(unittest.TestCase):
             "/users/{userId}/notification-subscriptions",
             userId=target_id,
         )
-        self.assertEqual(denied_response.status_code, 403)
-        self.assertEqual(denied_response.json()["title"], "forbidden")
+        assert_problem(self, denied_response, 403, "permission_denied")
 
         self_response = target.get(
             "/users/{userId}/notification-subscriptions",

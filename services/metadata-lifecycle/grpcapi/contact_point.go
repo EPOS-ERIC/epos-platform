@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ContactPointServer struct {
@@ -28,7 +27,7 @@ func (c *ContactPointServer) ListContactPoints(ctx context.Context, _ *metadatal
 	}
 	values, err := c.contactPoints.List(ctx, actor)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	result := make([]*metadatalifecyclev1.ContactPoint, len(values))
 	for i, value := range values {
@@ -48,7 +47,7 @@ func (c *ContactPointServer) GetContactPoint(ctx context.Context, request *metad
 	}
 	value, err := c.contactPoints.Get(ctx, actor, id)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.GetContactPointResponse{ContactPoint: toProtoContactPoint(value)}, nil
 }
@@ -64,7 +63,7 @@ func (c *ContactPointServer) CreateContactPoint(ctx context.Context, request *me
 	}
 	value, err := c.contactPoints.Create(ctx, actor, input)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.CreateContactPointResponse{ContactPoint: toProtoContactPoint(value)}, nil
 }
@@ -84,7 +83,7 @@ func (c *ContactPointServer) ReplaceContactPoint(ctx context.Context, request *m
 	}
 	value, err := c.contactPoints.Replace(ctx, actor, id, input)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.ReplaceContactPointResponse{ContactPoint: toProtoContactPoint(value)}, nil
 }
@@ -99,7 +98,7 @@ func (c *ContactPointServer) DeleteContactPoint(ctx context.Context, request *me
 		return nil, err
 	}
 	if err := c.contactPoints.Delete(ctx, actor, id); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 	return &metadatalifecyclev1.DeleteContactPointResponse{}, nil
 }
@@ -115,7 +114,7 @@ func contactPointInput(email, role string) (domain.ContactPointInput, error) {
 func parseContactPointID(value string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		return uuid.Nil, status.Error(codes.InvalidArgument, "invalid contact point id")
+		return uuid.Nil, apperror.New(apperror.CodeValidationFailed, "invalid contact point id")
 	}
 	return id, nil
 }

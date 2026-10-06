@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
+	apperrorgrpc "github.com/EPOS-ERIC/epos-platform/packages/go/apperror/grpc"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -30,6 +32,7 @@ type MetadataLifecycle struct {
 	access        metadatalifecyclev1.GroupAccessServiceClient
 	resources     metadatalifecyclev1.ResourceServiceClient
 	discovery     metadatalifecyclev1.DiscoveryServiceClient
+	activity      metadatalifecyclev1.ActivityServiceClient
 	import_       metadatalifecyclev1.ImportServiceClient
 	identity      metadatalifecyclev1.IdentityServiceClient
 	notifications metadatalifecyclev1.NotificationServiceClient
@@ -64,6 +67,7 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher Notificat
 		access:        metadatalifecyclev1.NewGroupAccessServiceClient(conn),
 		resources:     metadatalifecyclev1.NewResourceServiceClient(conn),
 		discovery:     metadatalifecyclev1.NewDiscoveryServiceClient(conn),
+		activity:      metadatalifecyclev1.NewActivityServiceClient(conn),
 		import_:       metadatalifecyclev1.NewImportServiceClient(conn),
 		identity:      metadatalifecyclev1.NewIdentityServiceClient(conn),
 		notifications: metadatalifecyclev1.NewNotificationServiceClient(conn),
@@ -73,35 +77,41 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher Notificat
 }
 
 func (c *MetadataLifecycle) wrapError(ctx context.Context, operation string, err error) error {
-	// Metadata-lifecycle logs handled errors; gateway logs only when it was unavailable.
-	if status.Code(err) == codes.Unavailable {
-		c.log.ErrorContext(ctx, "metadata-lifecycle request failed", "operation", operation, "code", status.Code(err), "error", err)
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		if errors.Is(ctxErr, context.DeadlineExceeded) {
+			return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeUpstreamTimeout, "", err))
+		}
+		return fmt.Errorf("%s: %w", operation, ctxErr)
 	}
 
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
+	if appErr, ok := apperrorgrpc.FromStatus(err); ok {
+		return fmt.Errorf("%s: %w", operation, appErr)
 	}
 
 	switch status.Code(err) {
-	case codes.InvalidArgument, codes.FailedPrecondition, codes.OutOfRange:
-		return fmt.Errorf("%s: %w", operation, domain.ErrBadRequest)
-	case codes.NotFound:
-		return fmt.Errorf("%s: %w", operation, domain.ErrNotFound)
-	case codes.AlreadyExists, codes.Aborted:
-		return fmt.Errorf("%s: %w", operation, domain.ErrConflict)
-	case codes.PermissionDenied:
-		return fmt.Errorf("%s: %w", operation, domain.ErrForbidden)
-	case codes.Unauthenticated:
-		return fmt.Errorf("%s: %w", operation, domain.ErrUnauthorized)
-	case codes.DeadlineExceeded, codes.Canceled:
-		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
 	case codes.Unavailable:
-		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamUnavailable)
-	case codes.OK, codes.Unknown, codes.ResourceExhausted, codes.Unimplemented, codes.Internal, codes.DataLoss:
-		// Internal, Unknown, ResourceExhausted, and Unimplemented are upstream errors.
-		return fmt.Errorf("%s: %w", operation, err)
+		c.log.ErrorContext(ctx, "metadata-lifecycle request failed", "operation", operation, "code", status.Code(err), "error", err)
+		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeUpstreamUnavailable, "", err))
+	case codes.DeadlineExceeded:
+		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeUpstreamTimeout, "", err))
+	case codes.OK,
+		codes.Canceled,
+		codes.Unknown,
+		codes.InvalidArgument,
+		codes.NotFound,
+		codes.AlreadyExists,
+		codes.PermissionDenied,
+		codes.ResourceExhausted,
+		codes.FailedPrecondition,
+		codes.Aborted,
+		codes.OutOfRange,
+		codes.Unimplemented,
+		codes.Internal,
+		codes.DataLoss,
+		codes.Unauthenticated:
+		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeInternal, "", err))
 	default:
-		return fmt.Errorf("%s: %w", operation, err)
+		return fmt.Errorf("%s: %w", operation, apperror.Wrap(apperror.CodeInternal, "", err))
 	}
 }
 

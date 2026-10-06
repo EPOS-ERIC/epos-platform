@@ -4,12 +4,14 @@ import (
 	"cmp"
 	"fmt"
 	"math"
+	"mime"
 	"regexp"
 	"slices"
 	"strings"
 	"text/template"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 )
 
@@ -23,75 +25,90 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	value.Name = strings.TrimSpace(value.Name)
 	description, err := optionalWebServiceDescription(value.Description)
 	if err != nil {
-		return WebServiceInput{}, err
+		return WebServiceInput{}, prefixOrField(err, "description", "description", "Description must not be blank.")
 	}
 	value.Description = description
 	value.TemplateURL = strings.TrimSpace(value.TemplateURL)
 	value.Format = strings.TrimSpace(value.Format)
 	value.Method = HTTPMethod(strings.ToUpper(strings.TrimSpace(string(value.Method))))
 	value.Type = WebServiceType(strings.ToUpper(strings.TrimSpace(string(value.Type))))
-	if value.Name == "" || value.TemplateURL == "" || value.Format == "" {
-		return WebServiceInput{}, fmt.Errorf("name, template URL, and format are required: %w", ErrInvalidDataset)
+	if value.Name == "" {
+		return WebServiceInput{}, invalidField("name", "Name must not be blank.", nil)
+	}
+	if value.TemplateURL == "" {
+		return WebServiceInput{}, invalidField("template_url", "Template URL must not be blank.", nil)
+	}
+	if value.Format == "" {
+		return WebServiceInput{}, invalidField("format", "Format must not be blank.", nil)
+	}
+	value.Format, err = normalizeMediaType(value.Format)
+	if err != nil {
+		return WebServiceInput{}, invalidField("format", "Format must be a valid media type.", err)
 	}
 	if !value.Method.Valid() {
-		return WebServiceInput{}, fmt.Errorf("web service method is invalid: %w", ErrInvalidDataset)
+		return WebServiceInput{}, invalidField("method", "Method is not supported.", nil)
 	}
 	if !value.Type.Valid() {
-		return WebServiceInput{}, fmt.Errorf("web service type is invalid: %w", ErrInvalidDataset)
+		return WebServiceInput{}, invalidField("type", "Type is not supported.", nil)
 	}
 	visibleOn, err := normalizeWebServiceVisibleOn(value.VisibleOn)
 	if err != nil {
-		return WebServiceInput{}, fmt.Errorf("web service visible on: %w", err)
+		return WebServiceInput{}, invalidField("visible_on", "Audience selection must contain supported values.", err)
 	}
 	value.VisibleOn = visibleOn
 	if err := validateTemporal(value.TemporalCoverage); err != nil {
-		return WebServiceInput{}, fmt.Errorf("web service temporal coverage: %w", err)
+		return WebServiceInput{}, invalidField("temporal_coverage", "Start must not be after end.", err)
 	}
 	if value.ProviderID != nil && *value.ProviderID == uuid.Nil {
-		return WebServiceInput{}, fmt.Errorf("web service provider ID is required: %w", ErrInvalidDataset)
+		return WebServiceInput{}, invalidField("provider", "Provider must be a valid UUID.", nil)
 	}
-	if err := validateUUIDList(value.ContactPointIDs, "web service contact point"); err != nil {
-		return WebServiceInput{}, fmt.Errorf("web service contact points: %w: %w", err, ErrInvalidDataset)
+	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
+		return WebServiceInput{}, err
 	}
 	if value.Documentation != nil {
 		value.Documentation.Title = optionalTrimmedString(value.Documentation.Title)
 		value.Documentation.Description = optionalTrimmedString(value.Documentation.Description)
 		value.Documentation.URI = strings.TrimSpace(value.Documentation.URI)
 		if value.Documentation.URI == "" {
-			return WebServiceInput{}, fmt.Errorf("documentation URI is required: %w", ErrInvalidDataset)
+			return WebServiceInput{}, invalidField("documentation.uri", "URI must not be blank.", nil)
 		}
 	}
 
 	parameters, err := parseWebServiceParameterInputs(value.Parameters)
 	if err != nil {
-		return WebServiceInput{}, fmt.Errorf("web service parameters: %w", err)
+		return WebServiceInput{}, err
 	}
 	value.Parameters = parameters
 	if value.Body != nil {
 		body, err := NewRequestBody(*value.Body)
 		if err != nil {
-			return WebServiceInput{}, fmt.Errorf("web service body: %w", err)
+			return WebServiceInput{}, err
 		}
 		value.Body = &body
 	}
 	if err := validateMethodBody(value.Method, value.Body); err != nil {
-		return WebServiceInput{}, fmt.Errorf("web service body: %w", err)
+		return WebServiceInput{}, invalidField("body_template", "This method does not support a request body.", err)
 	}
 	if err := validatePathParameters(value.TemplateURL, pathParameterNames(parameters)); err != nil {
-		return WebServiceInput{}, fmt.Errorf("web service path parameters: %w", err)
+		return WebServiceInput{}, invalidField("template_url", "Template URL placeholders must match declared path parameters.", err)
 	}
 	return value, nil
 }
 
 // NewWebService parses and validates persisted web-service metadata.
-func NewWebService(value WebService) (WebService, error) {
+func NewWebService(value WebService) (result WebService, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	if value.ID == uuid.Nil {
-		return WebService{}, fmt.Errorf("web service ID is required: %w", ErrInvalidDataset)
+		return WebService{}, fmt.Errorf("web service ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	parameterIDs := make(map[string]uuid.UUID, len(value.Parameters))
 	for _, parameter := range value.Parameters {
 		if parameter.ID == uuid.Nil {
-			return WebService{}, fmt.Errorf("parameter ID is required: %w", ErrInvalidDataset)
+			return WebService{}, fmt.Errorf("parameter ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 		parameterIDs[strings.TrimSpace(parameter.Name)] = parameter.ID
 	}
@@ -119,11 +136,11 @@ func NewWebService(value WebService) (WebService, error) {
 	}
 	if value.Provider != nil {
 		if err := validateOrganization(*value.Provider); err != nil {
-			return WebService{}, fmt.Errorf("provider: %w: %w", err, ErrInvalidDataset)
+			return WebService{}, fmt.Errorf("provider: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	if err := validateContactPoints(value.ContactPoints, "web service contact point"); err != nil {
-		return WebService{}, fmt.Errorf("contact points: %w: %w", err, ErrInvalidDataset)
+		return WebService{}, fmt.Errorf("contact points: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	return value, nil
 }
@@ -133,7 +150,7 @@ func normalizeWebServiceVisibleOn(values []WebServiceVisibleOn) ([]WebServiceVis
 		return nil, nil
 	}
 	if len(values) == 0 {
-		return nil, fmt.Errorf("visible on must contain at least one value: %w", ErrInvalidDataset)
+		return nil, fmt.Errorf("visible on must contain at least one value: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 
 	result := make([]WebServiceVisibleOn, 0, len(values))
@@ -141,7 +158,7 @@ func normalizeWebServiceVisibleOn(values []WebServiceVisibleOn) ([]WebServiceVis
 	for _, value := range values {
 		value = WebServiceVisibleOn(strings.ToUpper(strings.TrimSpace(string(value))))
 		if !value.Valid() {
-			return nil, fmt.Errorf("visible on value %q is invalid: %w", value, ErrInvalidDataset)
+			return nil, fmt.Errorf("visible on value %q is invalid: %w", value, apperror.Default(apperror.CodeValidationFailed))
 		}
 		if _, exists := seen[value]; exists {
 			continue
@@ -162,32 +179,11 @@ func NewWebServiceParameterInput(value WebServiceParameterInput) (WebServicePara
 	value.Property = optionalTrimmedString(value.Property)
 	value.Location = ParameterLocation(strings.ToUpper(strings.TrimSpace(string(value.Location))))
 	if !value.Location.Valid() {
-		return WebServiceParameterInput{}, fmt.Errorf("parameter location is invalid: %w", ErrInvalidDataset)
+		return WebServiceParameterInput{}, invalidField("location", "Location is not supported.", nil)
 	}
 	if value.Explode && (value.Location != ParameterLocationQuery || !schemaHasMultipleValues(value.Schema)) {
-		return WebServiceParameterInput{}, fmt.Errorf("parameter explode requires query location and multiple values: %w", ErrInvalidDataset)
+		return WebServiceParameterInput{}, invalidField("explode", "Explode requires a query parameter with multiple values.", nil)
 	}
-	return value, nil
-}
-
-// NewWebServiceParameter parses persisted top-level parameter metadata.
-func NewWebServiceParameter(value WebServiceParameter) (WebServiceParameter, error) {
-	if value.ID == uuid.Nil {
-		return WebServiceParameter{}, fmt.Errorf("parameter ID is required: %w", ErrInvalidDataset)
-	}
-	parsed, err := NewWebServiceParameterInput(WebServiceParameterInput{
-		Parameter: value.Parameter,
-		Property:  value.Property,
-		Location:  value.Location,
-		Explode:   value.Explode,
-	})
-	if err != nil {
-		return WebServiceParameter{}, err
-	}
-	value.Parameter = parsed.Parameter
-	value.Property = parsed.Property
-	value.Location = parsed.Location
-	value.Explode = parsed.Explode
 	return value, nil
 }
 
@@ -195,25 +191,52 @@ func NewWebServiceParameter(value WebServiceParameter) (WebServiceParameter, err
 func NewRequestBody(value RequestBody) (RequestBody, error) {
 	value.ContentType = strings.TrimSpace(value.ContentType)
 	value.Template = strings.TrimSpace(value.Template)
+
 	if value.ContentType == "" {
-		return RequestBody{}, fmt.Errorf("body content type and template are required: %w", ErrInvalidDataset)
+		return RequestBody{}, invalidField("body_content_type", "Content type must not be blank.", nil)
 	}
+
+	contentType, err := normalizeMediaType(value.ContentType)
+	if err != nil {
+		return RequestBody{}, invalidField("body_content_type", "Content type must be a valid media type.", err)
+	}
+	value.ContentType = contentType
+
 	templateValue, parameters, err := parseTemplateDefinition(value.Template, value.Parameters)
 	if err != nil {
-		return RequestBody{}, fmt.Errorf("body template: %w", err)
+		return RequestBody{}, prefixOrField(err, "body_parameters", "body_template", "Template must be valid and reference declared parameters.")
 	}
 	value.Template = templateValue
 	value.Parameters = parameters
+
 	return value, nil
+}
+
+func normalizeMediaType(value string) (string, error) {
+	mediaType, parameters, err := mime.ParseMediaType(value)
+	if err != nil {
+		return "", fmt.Errorf("parse MIME media type %q: %w: %w", value, err, apperror.Default(apperror.CodeValidationFailed))
+	}
+
+	if !strings.Contains(mediaType, "/") {
+		return "", fmt.Errorf("MIME media type %q must contain type and subtype: %w", value, apperror.Default(apperror.CodeValidationFailed))
+	}
+
+	normalized := mime.FormatMediaType(mediaType, parameters)
+	if normalized == "" {
+		return "", fmt.Errorf("format MIME media type %q: %w", value, apperror.Default(apperror.CodeValidationFailed))
+	}
+
+	return normalized, nil
 }
 
 func parseTemplateDefinition(source string, values []Parameter) (string, []Parameter, error) {
 	source = strings.TrimSpace(source)
 	if source == "" {
-		return "", nil, fmt.Errorf("template is required: %w", ErrInvalidDataset)
+		return "", nil, fmt.Errorf("template is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if _, err := template.New("parameter").Option("missingkey=error").Parse(source); err != nil {
-		return "", nil, fmt.Errorf("parse template: %w: %w", err, ErrInvalidDataset)
+		return "", nil, fmt.Errorf("parse template: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	parameters, err := parseParameters(values)
 	if err != nil {
@@ -228,13 +251,13 @@ func parseTemplateDefinition(source string, values []Parameter) (string, []Param
 func parseWebServiceParameterInputs(values []WebServiceParameterInput) ([]WebServiceParameterInput, error) {
 	result := make([]WebServiceParameterInput, 0, len(values))
 	seen := make(map[string]struct{}, len(values))
-	for _, value := range values {
+	for i, value := range values {
 		parsed, err := NewWebServiceParameterInput(value)
 		if err != nil {
-			return nil, fmt.Errorf("parse parameter: %w", err)
+			return nil, fmt.Errorf("validate web service parameter: %w", apperror.PrefixTarget(err, fmt.Sprintf("parameters[%d]", i)))
 		}
 		if _, exists := seen[parsed.Name]; exists {
-			return nil, fmt.Errorf("duplicate parameter name %q: %w", parsed.Name, ErrInvalidDataset)
+			return nil, invalidField(fmt.Sprintf("parameters[%d].name", i), "Parameter names must be unique.", nil)
 		}
 		seen[parsed.Name] = struct{}{}
 		result = append(result, parsed)
@@ -265,21 +288,24 @@ func parseParameter(value Parameter, allowTemplate, allowMultipleValues bool) (P
 	value.Name = strings.TrimSpace(value.Name)
 	value.Label = strings.TrimSpace(value.Label)
 	value.Description = optionalTrimmedString(value.Description)
-	if value.Name == "" || value.Label == "" {
-		return Parameter{}, fmt.Errorf("parameter name and label are required: %w", ErrInvalidDataset)
+	if value.Name == "" {
+		return Parameter{}, invalidField("name", "Name must not be blank.", nil)
+	}
+	if value.Label == "" {
+		return Parameter{}, invalidField("label", "Label must not be blank.", nil)
 	}
 	if value.Schema == nil {
-		return Parameter{}, fmt.Errorf("parameter schema is required: %w", ErrInvalidDataset)
+		return Parameter{}, invalidField("schema", "Schema is required.", nil)
 	}
 	schema, err := parseParameterSchema(value.Schema, allowTemplate)
 	if err != nil {
-		return Parameter{}, err
+		return Parameter{}, prefixOrField(err, "schema", "schema", "Schema definition is invalid.")
 	}
 	if !allowMultipleValues && schemaHasMultipleValues(schema) {
-		return Parameter{}, fmt.Errorf("multiple values are not allowed for scalar parameters: %w", ErrInvalidDataset)
+		return Parameter{}, invalidField("schema.multiple_values", "Multiple values are not allowed here.", nil)
 	}
 	if schemaHasMultipleValues(schema) && !parameterSchemaHasEnum(schema) {
-		return Parameter{}, fmt.Errorf("multiple values require a non-empty enum schema: %w", ErrInvalidDataset)
+		return Parameter{}, invalidField("schema.enum", "Multiple values require at least one allowed value.", nil)
 	}
 	value.Schema = schema
 	return value, nil
@@ -288,16 +314,16 @@ func parseParameter(value Parameter, allowTemplate, allowMultipleValues bool) (P
 func parseParameters(values []Parameter) ([]Parameter, error) {
 	result := make([]Parameter, 0, len(values))
 	seen := make(map[string]struct{}, len(values))
-	for _, value := range values {
+	for i, value := range values {
 		parsed, err := parseParameter(value, false, false)
 		if err != nil {
-			return nil, fmt.Errorf("parse parameter: %w", err)
+			return nil, fmt.Errorf("validate nested parameter: %w", apperror.PrefixTarget(err, fmt.Sprintf("[%d]", i)))
 		}
 		if !templateParameterNamePattern.MatchString(parsed.Name) {
-			return nil, fmt.Errorf("nested parameter name %q is invalid: %w", parsed.Name, ErrInvalidDataset)
+			return nil, invalidField(fmt.Sprintf("[%d].name", i), "Name must start with a letter or underscore and contain only letters, numbers, and underscores.", nil)
 		}
 		if _, exists := seen[parsed.Name]; exists {
-			return nil, fmt.Errorf("duplicate parameter name %q: %w", parsed.Name, ErrInvalidDataset)
+			return nil, invalidField(fmt.Sprintf("[%d].name", i), "Parameter names must be unique.", nil)
 		}
 		seen[parsed.Name] = struct{}{}
 		result = append(result, parsed)
@@ -325,11 +351,11 @@ func parseParameterSchema(value ParameterSchema, allowTemplate bool) (ParameterS
 		return parseDateTimeSchema(schema)
 	case TemplateSchema:
 		if !allowTemplate {
-			return nil, fmt.Errorf("template schema is not allowed here: %w", ErrInvalidDataset)
+			return nil, fmt.Errorf("template schema is not allowed here: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 		return parseTemplateSchema(schema)
 	default:
-		return nil, fmt.Errorf("unsupported parameter schema %T: %w", value, ErrInvalidDataset)
+		return nil, fmt.Errorf("unsupported parameter schema %T: %w", value, apperror.Default(apperror.CodeValidationFailed))
 	}
 }
 
@@ -363,44 +389,44 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 	value.Pattern = optionalTrimmedString(value.Pattern)
 	if value.Pattern != nil {
 		if _, err := regexp.Compile(*value.Pattern); err != nil {
-			return StringSchema{}, fmt.Errorf("invalid string pattern: %w: %w", err, ErrInvalidDataset)
+			return StringSchema{}, fmt.Errorf("invalid string pattern: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	if value.Enum != nil && len(value.Enum) == 0 {
-		return StringSchema{}, fmt.Errorf("string enum cannot be empty: %w", ErrInvalidDataset)
+		return StringSchema{}, fmt.Errorf("string enum cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	seen := make(map[string]struct{}, len(value.Enum))
 	for i := range value.Enum {
 		item := &value.Enum[i]
 		if item.Value == "" {
-			return StringSchema{}, fmt.Errorf("string enum values cannot be empty: %w", ErrInvalidDataset)
+			return StringSchema{}, fmt.Errorf("string enum values cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 		if _, exists := seen[item.Value]; exists {
-			return StringSchema{}, fmt.Errorf("string enum value %q is duplicated: %w", item.Value, ErrInvalidDataset)
+			return StringSchema{}, fmt.Errorf("string enum value %q is duplicated: %w", item.Value, apperror.Default(apperror.CodeValidationFailed))
 		}
 		seen[item.Value] = struct{}{}
 		if item.Label != nil {
 			label := strings.TrimSpace(*item.Label)
 			if label == "" {
-				return StringSchema{}, fmt.Errorf("string enum label cannot be empty: %w", ErrInvalidDataset)
+				return StringSchema{}, fmt.Errorf("string enum label cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 			}
 			item.Label = &label
 		}
 		if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(item.Value) {
-			return StringSchema{}, fmt.Errorf("string enum value %q does not match pattern: %w", item.Value, ErrInvalidDataset)
+			return StringSchema{}, fmt.Errorf("string enum value %q does not match pattern: %w", item.Value, apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	if value.Default != nil {
 		if strings.TrimSpace(*value.Default) == "" {
-			return StringSchema{}, fmt.Errorf("string default cannot be empty: %w", ErrInvalidDataset)
+			return StringSchema{}, fmt.Errorf("string default cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 		if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(*value.Default) {
-			return StringSchema{}, fmt.Errorf("string default does not match pattern: %w", ErrInvalidDataset)
+			return StringSchema{}, fmt.Errorf("string default does not match pattern: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item StringEnumOption) bool {
 			return item.Value == *value.Default
 		}) {
-			return StringSchema{}, fmt.Errorf("string default is not an allowed value: %w", ErrInvalidDataset)
+			return StringSchema{}, fmt.Errorf("string default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	return value, nil
@@ -408,37 +434,37 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 
 func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 	if value.Enum != nil && len(value.Enum) == 0 {
-		return IntegerSchema{}, fmt.Errorf("integer enum cannot be empty: %w", ErrInvalidDataset)
+		return IntegerSchema{}, fmt.Errorf("integer enum cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if value.Minimum != nil && value.Maximum != nil && *value.Minimum > *value.Maximum {
-		return IntegerSchema{}, fmt.Errorf("integer minimum must not exceed maximum: %w", ErrInvalidDataset)
+		return IntegerSchema{}, fmt.Errorf("integer minimum must not exceed maximum: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	seen := make(map[int64]struct{}, len(value.Enum))
 	for i := range value.Enum {
 		item := &value.Enum[i]
 		if _, exists := seen[item.Value]; exists {
-			return IntegerSchema{}, fmt.Errorf("integer enum value %d is duplicated: %w", item.Value, ErrInvalidDataset)
+			return IntegerSchema{}, fmt.Errorf("integer enum value %d is duplicated: %w", item.Value, apperror.Default(apperror.CodeValidationFailed))
 		}
 		seen[item.Value] = struct{}{}
 		if item.Label != nil {
 			label := strings.TrimSpace(*item.Label)
 			if label == "" {
-				return IntegerSchema{}, fmt.Errorf("integer enum label cannot be empty: %w", ErrInvalidDataset)
+				return IntegerSchema{}, fmt.Errorf("integer enum label cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 			}
 			item.Label = &label
 		}
 		if !integerInRange(item.Value, value.Minimum, value.Maximum) {
-			return IntegerSchema{}, fmt.Errorf("integer enum value is outside allowed range: %w", ErrInvalidDataset)
+			return IntegerSchema{}, fmt.Errorf("integer enum value is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	if value.Default != nil {
 		if !integerInRange(*value.Default, value.Minimum, value.Maximum) {
-			return IntegerSchema{}, fmt.Errorf("integer default is outside allowed range: %w", ErrInvalidDataset)
+			return IntegerSchema{}, fmt.Errorf("integer default is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item IntegerEnumOption) bool {
 			return item.Value == *value.Default
 		}) {
-			return IntegerSchema{}, fmt.Errorf("integer default is not an allowed value: %w", ErrInvalidDataset)
+			return IntegerSchema{}, fmt.Errorf("integer default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	return value, nil
@@ -446,40 +472,40 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 
 func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
 	if value.Enum != nil && len(value.Enum) == 0 {
-		return FloatSchema{}, fmt.Errorf("float enum cannot be empty: %w", ErrInvalidDataset)
+		return FloatSchema{}, fmt.Errorf("float enum cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if !finiteFloat(value.Minimum) || !finiteFloat(value.Maximum) || !finiteFloat(value.Default) {
-		return FloatSchema{}, fmt.Errorf("float values must be finite: %w", ErrInvalidDataset)
+		return FloatSchema{}, fmt.Errorf("float values must be finite: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	seen := make(map[float64]struct{}, len(value.Enum))
 	for i := range value.Enum {
 		item := &value.Enum[i]
 		if _, exists := seen[item.Value]; exists {
-			return FloatSchema{}, fmt.Errorf("float enum value %v is duplicated: %w", item.Value, ErrInvalidDataset)
+			return FloatSchema{}, fmt.Errorf("float enum value %v is duplicated: %w", item.Value, apperror.Default(apperror.CodeValidationFailed))
 		}
 		seen[item.Value] = struct{}{}
 		if item.Label != nil {
 			label := strings.TrimSpace(*item.Label)
 			if label == "" {
-				return FloatSchema{}, fmt.Errorf("float enum label cannot be empty: %w", ErrInvalidDataset)
+				return FloatSchema{}, fmt.Errorf("float enum label cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 			}
 			item.Label = &label
 		}
 		if math.IsNaN(item.Value) || math.IsInf(item.Value, 0) || !floatInRange(item.Value, value.Minimum, value.Maximum) {
-			return FloatSchema{}, fmt.Errorf("float enum value is invalid or outside allowed range: %w", ErrInvalidDataset)
+			return FloatSchema{}, fmt.Errorf("float enum value is invalid or outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	if value.Minimum != nil && value.Maximum != nil && *value.Minimum > *value.Maximum {
-		return FloatSchema{}, fmt.Errorf("float minimum must not exceed maximum: %w", ErrInvalidDataset)
+		return FloatSchema{}, fmt.Errorf("float minimum must not exceed maximum: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if value.Default != nil {
 		if !floatInRange(*value.Default, value.Minimum, value.Maximum) {
-			return FloatSchema{}, fmt.Errorf("float default is outside allowed range: %w", ErrInvalidDataset)
+			return FloatSchema{}, fmt.Errorf("float default is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item FloatEnumOption) bool {
 			return item.Value == *value.Default
 		}) {
-			return FloatSchema{}, fmt.Errorf("float default is not an allowed value: %w", ErrInvalidDataset)
+			return FloatSchema{}, fmt.Errorf("float default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	return value, nil
@@ -494,10 +520,10 @@ func parseDateTimeSchema(value DateTimeSchema) (DateTimeSchema, error) {
 		}
 	}
 	if value.Minimum != nil && value.Maximum != nil && value.Minimum.After(*value.Maximum) {
-		return DateTimeSchema{}, fmt.Errorf("date-time minimum must not be after maximum: %w", ErrInvalidDataset)
+		return DateTimeSchema{}, fmt.Errorf("date-time minimum must not be after maximum: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if value.Default != nil && !timeInRange(*value.Default, value.Minimum, value.Maximum) {
-		return DateTimeSchema{}, fmt.Errorf("date-time default is outside allowed range: %w", ErrInvalidDataset)
+		return DateTimeSchema{}, fmt.Errorf("date-time default is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	return value, nil
 }
@@ -505,7 +531,7 @@ func parseDateTimeSchema(value DateTimeSchema) (DateTimeSchema, error) {
 func parseTemplateSchema(value TemplateSchema) (TemplateSchema, error) {
 	templateValue, parameters, err := parseTemplateDefinition(value.Template, value.Parameters)
 	if err != nil {
-		return TemplateSchema{}, err
+		return TemplateSchema{}, fmt.Errorf("validate template parameters: %w", apperror.PrefixTarget(err, "parameters"))
 	}
 	value.Template = templateValue
 	value.Parameters = parameters
@@ -519,7 +545,7 @@ func validateTemplateReferences(source string, parameters []Parameter) error {
 	}
 	for _, match := range templateReferencePattern.FindAllStringSubmatch(source, -1) {
 		if _, exists := allowed[match[1]]; !exists {
-			return fmt.Errorf("template references undeclared parameter %q: %w", match[1], ErrInvalidDataset)
+			return fmt.Errorf("template references undeclared parameter %q: %w", match[1], apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	return nil
@@ -532,13 +558,13 @@ func validatePathParameters(templateURL string, pathParameters map[string]struct
 	}
 	for name := range pathParameters {
 		if _, exists := placeholders[name]; !exists {
-			return fmt.Errorf("path parameter %q has no URL placeholder: %w", name, ErrInvalidDataset)
+			return fmt.Errorf("path parameter %q has no URL placeholder: %w", name, apperror.Default(apperror.CodeValidationFailed))
 		}
 		delete(placeholders, name)
 	}
 	if len(placeholders) != 0 {
 		for name := range placeholders {
-			return fmt.Errorf("URL placeholder %q has no path parameter: %w", name, ErrInvalidDataset)
+			return fmt.Errorf("URL placeholder %q has no path parameter: %w", name, apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 	return nil
@@ -556,14 +582,14 @@ func pathParameterNames(parameters []WebServiceParameterInput) map[string]struct
 
 func validateMethodBody(method HTTPMethod, body *RequestBody) error {
 	if body != nil && (method == HTTPMethodGet || method == HTTPMethodDelete) {
-		return fmt.Errorf("body is not allowed for %s: %w", method, ErrInvalidDataset)
+		return fmt.Errorf("body is not allowed for %s: %w", method, apperror.Default(apperror.CodeValidationFailed))
 	}
 	return nil
 }
 
 func validateDateTimeLayout(layout string) error {
 	if strings.TrimSpace(layout) == "" {
-		return fmt.Errorf("date-time layout cannot be empty: %w", ErrInvalidDataset)
+		return fmt.Errorf("date-time layout cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	tokens := []struct {
 		name    string
@@ -589,7 +615,7 @@ func validateDateTimeLayout(layout string) error {
 			continue
 		}
 		if strings.ContainsRune("YyMDHhms", rune(layout[index])) {
-			return fmt.Errorf("unsupported date-time layout token near %q: %w", layout[index:], ErrInvalidDataset)
+			return fmt.Errorf("unsupported date-time layout token near %q: %w", layout[index:], apperror.Default(apperror.CodeValidationFailed))
 		}
 		index++
 	}
@@ -613,7 +639,7 @@ func optionalWebServiceDescription(value *string) (*string, error) {
 	}
 	trimmed := strings.TrimSpace(*value)
 	if trimmed == "" {
-		return nil, fmt.Errorf("web service description cannot be empty: %w", ErrInvalidDataset)
+		return nil, fmt.Errorf("web service description cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	return &trimmed, nil
 }

@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from auth import get_token
 from client import SCHEMA, GatewayClient
-from fixtures import create_group
+from fixtures import assert_problem, create_group
 
 
 class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
@@ -253,10 +253,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
             self.assertEqual([item["id"] for item in metadata["creators"]], [organization_id])
 
     def delete_problem(self, response: Any) -> None:
-        self.assertEqual(response.status_code, 409)
-        problem = response.json()
-        self.assertEqual(problem["title"], "conflict")
-        self.assertEqual(problem["detail"], "operation conflicts with existing data")
+        assert_problem(self, response, 409, "conflict")
 
     def test_canonical_deletion_unlinks_all_resource_references(self) -> None:
         """Verify canonical deletion unlinks published and archived references."""

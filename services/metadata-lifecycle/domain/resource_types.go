@@ -1,10 +1,10 @@
 package domain
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 )
 
@@ -62,11 +62,11 @@ func NewRejectionNote(status Status, note *string) (*string, error) {
 	switch status {
 	case Published, Archived:
 		if note != nil {
-			return nil, errors.New("rejection note is not allowed for published or archived resource")
+			return nil, apperror.Default(apperror.CodeInternal)
 		}
 	case Rejected:
 		if note == nil {
-			return nil, errors.New("rejection note is required for rejected resource")
+			return nil, apperror.Default(apperror.CodeInternal)
 		}
 	case Draft, Submitted:
 		// No rejection-note constraint, it's optional here

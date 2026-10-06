@@ -6,6 +6,7 @@ import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "metadata_lifecycle/v1/annotations.proto";
 import "metadata_lifecycle/v1/common.proto";
+import "metadata_lifecycle/v1/resource.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
 
@@ -47,7 +48,28 @@ message DatasetDiscoveryItem {
   EntityReference group = 8;
   repeated EntityReference providers = 9;
   repeated EntityReference categories = 10;
-  repeated EntityReference distributions = 11;
+  repeated DiscoveryDistribution distributions = 11;
+}
+
+message DiscoveryDistribution {
+  oneof delivery {
+    option (buf.validate.oneof).required = true;
+    DiscoveryWebServiceDistribution web_service = 1;
+    DiscoveryDownloadableFileDistribution downloadable_file = 2;
+  }
+}
+
+message DiscoveryWebServiceDistribution {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  WebServiceType web_service_type = 3 [(buf.validate.field).enum.defined_only = true];
+  repeated WebServiceVisibleOn visible_on = 4 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  EntityReference provider = 5;
+}
+
+message DiscoveryDownloadableFileDistribution {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
 }
 
 message SoftwareApplicationDiscoveryItem {

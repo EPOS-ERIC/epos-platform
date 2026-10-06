@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 )
 
@@ -13,11 +14,11 @@ import (
 func NewSoftwareApplicationInput(value SoftwareApplicationInput) (SoftwareApplicationInput, error) {
 	value.Name = strings.TrimSpace(value.Name)
 	if value.Name == "" {
-		return SoftwareApplicationInput{}, fmt.Errorf("software application name is required: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationInput{}, invalidField("name", "Name must not be blank.", nil)
 	}
 	value.Description = strings.TrimSpace(value.Description)
 	if value.Description == "" {
-		return SoftwareApplicationInput{}, fmt.Errorf("software application description is required: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationInput{}, invalidField("description", "Description must not be blank.", nil)
 	}
 	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
 	value.License = optionalTrimmedString(value.License)
@@ -27,17 +28,17 @@ func NewSoftwareApplicationInput(value SoftwareApplicationInput) (SoftwareApplic
 	value.OperatingSystem = optionalTrimmedString(value.OperatingSystem)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
-		return SoftwareApplicationInput{}, fmt.Errorf("software application keywords: %w: %w", err, ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationInput{}, invalidField("keywords", "Keywords must not be blank and may contain only letters, numbers, spaces, colon, hyphen, and underscore.", err)
 	}
 	value.Keywords = keywords
-	if err := validateUUIDList(value.CreatorIDs, "creator"); err != nil {
-		return SoftwareApplicationInput{}, fmt.Errorf("software application creators: %w: %w", err, ErrSoftwareApplicationInvalid)
+	if err := validateUUIDListField(value.CreatorIDs, "creators", "Creator"); err != nil {
+		return SoftwareApplicationInput{}, err
 	}
-	if err := validateUUIDList(value.ContactPointIDs, "contact point"); err != nil {
-		return SoftwareApplicationInput{}, fmt.Errorf("software application contact points: %w: %w", err, ErrSoftwareApplicationInvalid)
+	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
+		return SoftwareApplicationInput{}, err
 	}
-	if err := validateUUIDList(value.CategoryIDs, "category"); err != nil {
-		return SoftwareApplicationInput{}, fmt.Errorf("software application categories: %w: %w", err, ErrSoftwareApplicationInvalid)
+	if err := validateUUIDListField(value.CategoryIDs, "categories", "Category"); err != nil {
+		return SoftwareApplicationInput{}, err
 	}
 
 	identifiers := make([]IdentifierInput, len(value.Identifiers))
@@ -45,11 +46,11 @@ func NewSoftwareApplicationInput(value SoftwareApplicationInput) (SoftwareApplic
 	for i, identifier := range value.Identifiers {
 		identifier, err := NewIdentifierInput(identifier)
 		if err != nil {
-			return SoftwareApplicationInput{}, fmt.Errorf("software application identifier: %w: %w", err, ErrSoftwareApplicationInvalid)
+			return SoftwareApplicationInput{}, fmt.Errorf("validate software application identifier: %w", apperror.PrefixTarget(err, fmt.Sprintf("identifiers[%d]", i)))
 		}
 		key := string(identifier.Type) + "\x00" + identifier.Value
 		if _, exists := seen[key]; exists {
-			return SoftwareApplicationInput{}, fmt.Errorf("duplicate software application identifier %q: %w", key, ErrSoftwareApplicationInvalid)
+			return SoftwareApplicationInput{}, invalidField(fmt.Sprintf("identifiers[%d]", i), "Identifier must be unique.", nil)
 		}
 		seen[key] = struct{}{}
 		identifiers[i] = identifier
@@ -61,11 +62,11 @@ func NewSoftwareApplicationInput(value SoftwareApplicationInput) (SoftwareApplic
 // NewSoftwareApplicationDraftInput validates a draft replacement command.
 func NewSoftwareApplicationDraftInput(value SoftwareApplicationDraftInput) (SoftwareApplicationDraftInput, error) {
 	if value.Revision < 1 {
-		return SoftwareApplicationDraftInput{}, fmt.Errorf("revision must be positive: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationDraftInput{}, invalidField("revision", "Revision must be positive.", nil)
 	}
 	metadata, err := NewSoftwareApplicationInput(value.Metadata)
 	if err != nil {
-		return SoftwareApplicationDraftInput{}, err
+		return SoftwareApplicationDraftInput{}, fmt.Errorf("validate software application draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
 	}
 	value.Metadata = metadata
 	return value, nil
@@ -75,23 +76,28 @@ func NewSoftwareApplicationDraftInput(value SoftwareApplicationDraftInput) (Soft
 func NewSoftwareApplicationRejectionInput(value SoftwareApplicationRejectionInput) (SoftwareApplicationRejectionInput, error) {
 	value.Note = strings.TrimSpace(value.Note)
 	if value.Note == "" {
-		return SoftwareApplicationRejectionInput{}, fmt.Errorf("rejection note is required: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationRejectionInput{}, invalidField("note", "Rejection note must not be blank.", nil)
 	}
 	return value, nil
 }
 
 // NewSoftwareApplicationMetadata validates persisted or imported metadata.
-func NewSoftwareApplicationMetadata(value SoftwareApplicationMetadata) (SoftwareApplicationMetadata, error) {
+func NewSoftwareApplicationMetadata(value SoftwareApplicationMetadata) (result SoftwareApplicationMetadata, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	if value.ID == uuid.Nil {
-		return SoftwareApplicationMetadata{}, fmt.Errorf("software application metadata ID is required: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationMetadata{}, fmt.Errorf("software application metadata ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.Name = strings.TrimSpace(value.Name)
 	if value.Name == "" {
-		return SoftwareApplicationMetadata{}, fmt.Errorf("software application name is required: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationMetadata{}, fmt.Errorf("software application name is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.Description = strings.TrimSpace(value.Description)
 	if value.Description == "" {
-		return SoftwareApplicationMetadata{}, fmt.Errorf("software application description is required: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationMetadata{}, fmt.Errorf("software application description is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
 	value.License = optionalTrimmedString(value.License)
@@ -101,28 +107,28 @@ func NewSoftwareApplicationMetadata(value SoftwareApplicationMetadata) (Software
 	value.OperatingSystem = optionalTrimmedString(value.OperatingSystem)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
-		return SoftwareApplicationMetadata{}, fmt.Errorf("software application keywords: %w: %w", err, ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationMetadata{}, fmt.Errorf("software application keywords: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.Keywords = keywords
 
 	seenIdentifiers := make(map[uuid.UUID]struct{}, len(value.Identifiers))
 	for _, identifier := range value.Identifiers {
 		if err := validateIdentifier(identifier, true); err != nil {
-			return SoftwareApplicationMetadata{}, fmt.Errorf("software application identifier: %w: %w", err, ErrSoftwareApplicationInvalid)
+			return SoftwareApplicationMetadata{}, fmt.Errorf("software application identifier: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 		}
 		if _, exists := seenIdentifiers[identifier.ID]; exists {
-			return SoftwareApplicationMetadata{}, fmt.Errorf("duplicate software application identifier %q: %w", identifier.ID, ErrSoftwareApplicationInvalid)
+			return SoftwareApplicationMetadata{}, fmt.Errorf("duplicate software application identifier %q: %w", identifier.ID, apperror.Default(apperror.CodeValidationFailed))
 		}
 		seenIdentifiers[identifier.ID] = struct{}{}
 	}
 	if err := validateContactPoints(value.ContactPoints, "software application contact point"); err != nil {
-		return SoftwareApplicationMetadata{}, fmt.Errorf("software application contact points: %w: %w", err, ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationMetadata{}, fmt.Errorf("software application contact points: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	if err := validateOrganizations(value.Creators, "creator"); err != nil {
-		return SoftwareApplicationMetadata{}, fmt.Errorf("software application creators: %w: %w", err, ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationMetadata{}, fmt.Errorf("software application creators: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	if err := validateCategories(value.Categories, "category"); err != nil {
-		return SoftwareApplicationMetadata{}, fmt.Errorf("software application categories: %w: %w", err, ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationMetadata{}, fmt.Errorf("software application categories: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	return value, nil
 }
@@ -142,25 +148,30 @@ func NewSoftwareApplicationVersion(
 	rejectedAt *time.Time,
 	rejectionNote *string,
 	metadata SoftwareApplicationMetadata,
-) (SoftwareApplicationVersion, error) {
+) (result SoftwareApplicationVersion, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	if softwareApplicationID == uuid.Nil || versionID == uuid.Nil {
-		return SoftwareApplicationVersion{}, fmt.Errorf("software application and version IDs are required: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationVersion{}, fmt.Errorf("software application and version IDs are required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if revision < 1 {
-		return SoftwareApplicationVersion{}, fmt.Errorf("revision must be positive: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationVersion{}, fmt.Errorf("revision must be positive: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if !status.Valid() {
-		return SoftwareApplicationVersion{}, fmt.Errorf("software application status %q is invalid: %w", status, ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationVersion{}, fmt.Errorf("software application status %q is invalid: %w", status, apperror.Default(apperror.CodeValidationFailed))
 	}
 	actor, err := NewActor(string(createdBy))
 	if err != nil {
-		return SoftwareApplicationVersion{}, fmt.Errorf("software application creator: %w: %w", err, ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationVersion{}, fmt.Errorf("software application creator: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	var submittedByActor *Actor
 	if submittedBy != nil {
 		value, err := NewActor(*submittedBy)
 		if err != nil {
-			return SoftwareApplicationVersion{}, fmt.Errorf("software application submitter: %w: %w", err, ErrSoftwareApplicationInvalid)
+			return SoftwareApplicationVersion{}, fmt.Errorf("software application submitter: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 		}
 		submittedByActor = &value
 	}
@@ -175,18 +186,18 @@ func NewSoftwareApplicationVersion(
 		Concept:     group.Concept,
 	})
 	if err != nil {
-		return SoftwareApplicationVersion{}, fmt.Errorf("software application group: %w: %w", err, ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationVersion{}, fmt.Errorf("software application group: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	metadata, err = NewSoftwareApplicationMetadata(metadata)
 	if err != nil {
 		return SoftwareApplicationVersion{}, err
 	}
 	if createdAt.IsZero() || updatedAt.IsZero() {
-		return SoftwareApplicationVersion{}, fmt.Errorf("software application timestamps are required: %w", ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationVersion{}, fmt.Errorf("software application timestamps are required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	rejectionNote, err = NewRejectionNote(status, rejectionNote)
 	if err != nil {
-		return SoftwareApplicationVersion{}, fmt.Errorf("software application rejection note: %w: %w", err, ErrSoftwareApplicationInvalid)
+		return SoftwareApplicationVersion{}, fmt.Errorf("software application rejection note: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	return SoftwareApplicationVersion{
 		SoftwareApplicationID: softwareApplicationID,

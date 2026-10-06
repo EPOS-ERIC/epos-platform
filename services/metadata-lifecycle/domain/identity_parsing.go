@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 )
 
@@ -16,24 +17,34 @@ func NewUserClaims(value UserClaims) (UserClaims, error) {
 		value.FamilyName,
 	)
 	if value.ID == "" || value.Email == "" || value.GivenName == "" || value.FamilyName == "" {
-		return UserClaims{}, ErrInvalidUser
+		return UserClaims{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	return value, nil
 }
 
 // NewGroupReference validates and normalizes a persisted group reference.
-func NewGroupReference(value GroupSummary) (GroupSummary, error) {
+func NewGroupReference(value GroupSummary) (result GroupSummary, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	value.Name = strings.TrimSpace(value.Name)
 	if value.ID == uuid.Nil || value.Name == "" {
-		return GroupSummary{}, ErrInvalidUser
+		return GroupSummary{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	return value, nil
 }
 
 // NewUserMembership validates and normalizes a persisted user membership.
-func NewUserMembership(value Membership) (Membership, error) {
+func NewUserMembership(value Membership) (result Membership, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	group, err := NewGroupReference(value.Group)
 	if err != nil {
 		return Membership{}, err
@@ -79,7 +90,12 @@ func NewUserMembership(value Membership) (Membership, error) {
 }
 
 // NewUser validates and normalizes a persisted user projection.
-func NewUser(value User) (User, error) {
+func NewUser(value User) (result User, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	value.ID, value.Email, value.GivenName, value.FamilyName = normalizeUserFields(
 		value.ID,
 		value.Email,
@@ -87,7 +103,7 @@ func NewUser(value User) (User, error) {
 		value.FamilyName,
 	)
 	if value.ID == "" || value.Email == "" || value.GivenName == "" || value.FamilyName == "" {
-		return User{}, ErrInvalidUser
+		return User{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	status, err := NewPersistedUserStatus(string(value.Status))
@@ -121,7 +137,12 @@ func NewUser(value User) (User, error) {
 }
 
 // NewUserSummary validates and normalizes a persisted user summary.
-func NewUserSummary(value UserSummary) (UserSummary, error) {
+func NewUserSummary(value UserSummary) (result UserSummary, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
 	value.ID, value.Email, value.GivenName, value.FamilyName = normalizeUserFields(
 		value.ID,
 		value.Email,
@@ -129,7 +150,7 @@ func NewUserSummary(value UserSummary) (UserSummary, error) {
 		value.FamilyName,
 	)
 	if value.ID == "" || value.Email == "" || value.GivenName == "" || value.FamilyName == "" {
-		return UserSummary{}, ErrInvalidUser
+		return UserSummary{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
 	status, err := NewPersistedUserStatus(string(value.Status))

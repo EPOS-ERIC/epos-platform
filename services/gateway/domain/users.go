@@ -19,6 +19,7 @@ type UserSummary struct {
 
 type User struct {
 	UserSummary
+	BlockReason *string
 	Memberships []Membership
 }
 

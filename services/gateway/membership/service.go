@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
 type Service struct {
@@ -27,7 +27,7 @@ func (s *Service) RevokeMembership(ctx context.Context, actorID, groupID, userID
 		userID = actorID
 	}
 	if userID == "" {
-		return fmt.Errorf("invalid user id: %w", domain.ErrBadRequest)
+		return fmt.Errorf("invalid user id: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 
 	if err := s.metadataLifecycle.RevokeMembership(ctx, groupID, userID, actorID); err != nil {

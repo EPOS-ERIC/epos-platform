@@ -358,6 +358,7 @@ SELECT
     given_name,
     family_name,
     STATUS,
+    block_reason,
     created_at,
     updated_at
 FROM
@@ -367,13 +368,14 @@ WHERE
 `
 
 type GetUserByIDRow struct {
-	ID         string
-	Email      string
-	GivenName  string
-	FamilyName string
-	Status     UserStatus
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID          string
+	Email       string
+	GivenName   string
+	FamilyName  string
+	Status      UserStatus
+	BlockReason *string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error) {
@@ -385,6 +387,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, e
 		&i.GivenName,
 		&i.FamilyName,
 		&i.Status,
+		&i.BlockReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

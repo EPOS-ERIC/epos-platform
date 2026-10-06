@@ -1,19 +1,15 @@
 package grpcapi
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/twpayne/go-geom"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-var ErrInvalidDiscoveryFilter = errors.New("invalid discovery filter")
 
 func toDomainDiscoveryFilter(value *metadatalifecyclev1.SearchResourcesRequest) (domain.DiscoveryFilter, error) {
 	query, err := optionalDiscoveryString(value.Query, "query")
@@ -36,7 +32,7 @@ func toDomainDiscoveryFilter(value *metadatalifecyclev1.SearchResourcesRequest) 
 	if err != nil {
 		return domain.DiscoveryFilter{}, err
 	}
-	providers, err := resourceParseUUIDs(value.ProviderIds, "provider id")
+	providers, err := resourceParseUUIDs(value.ProviderIds, "provider id", "providerIds")
 	if err != nil {
 		return domain.DiscoveryFilter{}, err
 	}
@@ -72,7 +68,7 @@ func toDomainDiscoveryFilter(value *metadatalifecyclev1.SearchResourcesRequest) 
 		VersioningStatuses: statuses,
 	})
 	if err != nil {
-		return domain.DiscoveryFilter{}, discoveryInvalidError(err)
+		return domain.DiscoveryFilter{}, err
 	}
 	return filter, nil
 }
@@ -82,7 +78,7 @@ func optionalDiscoveryString(value *string, field string) (*string, error) {
 		return nil, nil
 	}
 	if *value == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "%s must not be empty", field)
+		return nil, apperror.New(apperror.CodeValidationFailed, fmt.Sprintf("%s must not be empty", field))
 	}
 	return value, nil
 }
@@ -93,7 +89,7 @@ func optionalDiscoveryUUID(value *string, field string) (*uuid.UUID, error) {
 	}
 	id, err := uuid.Parse(*value)
 	if err != nil || id == uuid.Nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid %s", field)
+		return nil, apperror.New(apperror.CodeValidationFailed, fmt.Sprintf("invalid %s", field))
 	}
 	return &id, nil
 }
@@ -104,7 +100,7 @@ func optionalDiscoverySpatialFilter(value *string) (geom.T, error) {
 	}
 	filter, err := domain.NewSpatialFilter(*value)
 	if err != nil {
-		return nil, discoveryInvalidError(err)
+		return nil, err
 	}
 	return filter, nil
 }
@@ -120,7 +116,8 @@ func toDomainDiscoveryResourceTypes(values []metadatalifecyclev1.ResourceType) (
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
 			result = append(result, domain.SoftwareSourceCode)
 		default:
-			return nil, discoveryInvalidError(fmt.Errorf("unsupported resource type %q", value))
+			cause := fmt.Errorf("unsupported resource type %q", value)
+			return nil, apperror.Wrap(apperror.CodeValidationFailed, "", cause)
 		}
 	}
 	return result, nil
@@ -137,7 +134,8 @@ func toDomainDiscoveryConcepts(values []metadatalifecyclev1.TopLevelConcept) ([]
 		case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE:
 			result = append(result, domain.TopLevelConceptSoftware)
 		default:
-			return nil, discoveryInvalidError(fmt.Errorf("unsupported discovery concept %q", value))
+			cause := fmt.Errorf("unsupported discovery concept %q", value)
+			return nil, apperror.Wrap(apperror.CodeValidationFailed, "", cause)
 		}
 	}
 	return result, nil
@@ -158,14 +156,11 @@ func toDomainDiscoveryStatuses(values []metadatalifecyclev1.VersioningStatus) ([
 		case metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_REJECTED:
 			result = append(result, domain.Rejected)
 		default:
-			return nil, discoveryInvalidError(fmt.Errorf("unsupported discovery status %q", value))
+			cause := fmt.Errorf("unsupported discovery status %q", value)
+			return nil, apperror.Wrap(apperror.CodeValidationFailed, "", cause)
 		}
 	}
 	return result, nil
-}
-
-func discoveryInvalidError(err error) error {
-	return fmt.Errorf("%w: %w", ErrInvalidDiscoveryFilter, err)
 }
 
 func toProtoDiscoveryResponse(values []domain.DiscoveryItem) (*metadatalifecyclev1.SearchResourcesResponse, error) {
@@ -191,6 +186,10 @@ func toProtoDiscoveryItem(value domain.DiscoveryItem) (*metadatalifecyclev1.Disc
 	group := toProtoDiscoveryReference(value.Group)
 	switch value.Type {
 	case domain.Dataset:
+		distributions, err := toProtoDiscoveryDistributions(value.Distributions)
+		if err != nil {
+			return nil, err
+		}
 		return &metadatalifecyclev1.DiscoveryItem{
 			Resource: &metadatalifecyclev1.DiscoveryItem_Dataset{
 				Dataset: &metadatalifecyclev1.DatasetDiscoveryItem{
@@ -204,7 +203,7 @@ func toProtoDiscoveryItem(value domain.DiscoveryItem) (*metadatalifecyclev1.Disc
 					Group:         group,
 					Providers:     toProtoDiscoveryReferences(value.Providers),
 					Categories:    toProtoDiscoveryReferences(value.Categories),
-					Distributions: toProtoDiscoveryReferences(value.Distributions),
+					Distributions: distributions,
 				},
 			},
 		}, nil
@@ -243,7 +242,8 @@ func toProtoDiscoveryItem(value domain.DiscoveryItem) (*metadatalifecyclev1.Disc
 			},
 		}, nil
 	default:
-		return nil, discoveryInvalidError(fmt.Errorf("unsupported resource type %q", value.Type))
+		cause := fmt.Errorf("unsupported resource type %q", value.Type)
+		return nil, apperror.Wrap(apperror.CodeInternal, "", cause)
 	}
 }
 
@@ -277,4 +277,32 @@ func toProtoDiscoveryReferences(values []domain.DiscoveryReference) []*metadatal
 		result = append(result, toProtoDiscoveryReference(value))
 	}
 	return result
+}
+
+func toProtoDiscoveryDistributions(values []domain.DiscoveryDistribution) ([]*metadatalifecyclev1.DiscoveryDistribution, error) {
+	result := make([]*metadatalifecyclev1.DiscoveryDistribution, 0, len(values))
+	for _, value := range values {
+		var distribution *metadatalifecyclev1.DiscoveryDistribution
+		switch value.Type {
+		case domain.DistributionTypeWebService:
+			service := &metadatalifecyclev1.DiscoveryWebServiceDistribution{
+				Id:             value.ID.String(),
+				Name:           value.Name,
+				WebServiceType: webServiceTypeOutput(value.WebServiceType),
+				VisibleOn:      webServiceVisibleOnOutput(value.VisibleOn),
+			}
+			if value.Provider != nil {
+				service.Provider = toProtoDiscoveryReference(*value.Provider)
+			}
+			distribution = &metadatalifecyclev1.DiscoveryDistribution{Delivery: &metadatalifecyclev1.DiscoveryDistribution_WebService{WebService: service}}
+		case domain.DistributionTypeDownloadableFile:
+			distribution = &metadatalifecyclev1.DiscoveryDistribution{Delivery: &metadatalifecyclev1.DiscoveryDistribution_DownloadableFile{
+				DownloadableFile: &metadatalifecyclev1.DiscoveryDownloadableFileDistribution{Id: value.ID.String(), Name: value.Name},
+			}}
+		default:
+			return nil, apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("unsupported distribution type %q", value.Type))
+		}
+		result = append(result, distribution)
+	}
+	return result, nil
 }

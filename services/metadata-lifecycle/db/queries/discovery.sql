@@ -298,16 +298,23 @@ ORDER BY
 
 -- name: ListDiscoveryDatasetDistributions :many
 SELECT
-    dataset_version_id AS version_id,
-    id,
-    title AS name
+    distribution.dataset_version_id AS version_id,
+    distribution.id,
+    distribution.title AS name,
+    distribution.type,
+    service.type AS web_service_type,
+    service.visible_on,
+    organization.id AS provider_id,
+    coalesce(organization.name, '')::text AS provider_name
 FROM
-    distributions
+    distributions AS distribution
+    LEFT JOIN web_services AS service ON service.id = distribution.web_service_id
+    LEFT JOIN organizations AS organization ON organization.id = service.provider_organization_id
 WHERE
-    dataset_version_id = ANY(sqlc.arg(version_ids)::uuid [])
+    distribution.dataset_version_id = ANY(sqlc.arg(version_ids)::uuid [])
 ORDER BY
-    dataset_version_id,
-    id;
+    distribution.dataset_version_id,
+    distribution.id;
 
 -- name: ListDiscoveryApplicationCreators :many
 SELECT

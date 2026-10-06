@@ -13,6 +13,8 @@ Public HTTP API for the EPOS Platform. The gateway exposes a stable `/v1` contra
 
 The OpenAPI contract is the source of truth for operations, request bodies, authentication requirements, and response schemas.
 
+Gateway `/v1` errors use the OpenAPI `Problem` response shape.
+
 ## Configuration
 
 The gateway requires a YAML configuration file. Pass it with `-config`; the default path is `/etc/gateway/config.yaml`.

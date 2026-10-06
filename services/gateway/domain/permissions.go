@@ -1,5 +1,7 @@
 package domain
 
+import "github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
+
 // GlobalPermission is a permission that applies across all groups.
 type GlobalPermission string
 
@@ -21,6 +23,7 @@ const (
 	GlobalPermissionResourcePublish      GlobalPermission = "global.resource.publish"
 	GlobalPermissionResourceUnpublish    GlobalPermission = "global.resource.unpublish"
 	GlobalPermissionCategoryManage       GlobalPermission = "global.category.manage"
+	GlobalPermissionActivityRead         GlobalPermission = "global.activity.read"
 )
 
 // GroupPermission is a permission evaluated within a group's scope.
@@ -62,10 +65,11 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 		GlobalPermissionResourceReject,
 		GlobalPermissionResourcePublish,
 		GlobalPermissionResourceUnpublish,
-		GlobalPermissionCategoryManage:
+		GlobalPermissionCategoryManage,
+		GlobalPermissionActivityRead:
 		return permission, nil
 	default:
-		return "", ErrBadRequest
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }
 
@@ -88,6 +92,6 @@ func NewGroupPermission(value string) (GroupPermission, error) {
 		GroupPermissionCategoryManage:
 		return permission, nil
 	default:
-		return "", ErrBadRequest
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }

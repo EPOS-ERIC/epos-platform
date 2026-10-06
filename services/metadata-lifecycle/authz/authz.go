@@ -3,10 +3,10 @@ package authz
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -620,7 +620,7 @@ func (a *Authorizer) AuthorizeResource(
 	}()
 
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
+	if apperror.IsCode(err, apperror.CodeNotFound) {
 		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
 	}
 	if err != nil {
@@ -713,7 +713,7 @@ func (a *Authorizer) CanReadResource(ctx context.Context, userID *string, resour
 	}()
 
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
+	if apperror.IsCode(err, apperror.CodeNotFound) {
 		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
 	}
 	if err != nil {
@@ -741,7 +741,7 @@ func (a *Authorizer) CanReadResourceVersions(ctx context.Context, userID string,
 	}()
 
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
+	if apperror.IsCode(err, apperror.CodeNotFound) {
 		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
 	}
 	if err != nil {
@@ -836,7 +836,7 @@ func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *domain.Actor
 		switch c.Type {
 		case domain.Dataset, domain.SoftwareApplication, domain.SoftwareSourceCode:
 		default:
-			return domain.DiscoveryAuthorization{}, fmt.Errorf("unsupported resource type %q: %w", c.Type, domain.ErrInvalidDiscovery)
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("unsupported resource type %q: %w", c.Type, apperror.Default(apperror.CodeValidationFailed))
 		}
 	}
 
@@ -928,7 +928,7 @@ func (a *Authorizer) resourcePublished(ctx context.Context, typ domain.ResourceT
 
 func (a *Authorizer) activeUser(ctx context.Context, userID string) (domain.AuthorizationUser, domain.Result, error) {
 	user, err := a.repository.User(ctx, userID)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
+	if apperror.IsCode(err, apperror.CodeNotFound) {
 		return domain.AuthorizationUser{ID: "", Status: ""}, domain.Result{Allowed: false, Reason: "user not found"}, nil
 	}
 	if err != nil {

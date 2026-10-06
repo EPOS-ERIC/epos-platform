@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -82,7 +83,7 @@ func (r *Repo) ListSubscriptions(ctx context.Context, userID string) ([]domain.N
 func (r *Repo) GetNotificationUserContext(ctx context.Context, userID string) (domain.UserSummary, error) {
 	row, err := r.GetUserByID(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.UserSummary{}, domain.ErrNotificationNotFound
+		return domain.UserSummary{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.UserSummary{}, fmt.Errorf("get notification user context: %w", err)
@@ -100,7 +101,7 @@ func (r *Repo) GetNotificationUserContext(ctx context.Context, userID string) (d
 func (r *Repo) GetNotificationGroupContext(ctx context.Context, groupID uuid.UUID) (domain.Group, error) {
 	row, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Group{}, domain.ErrNotificationNotFound
+		return domain.Group{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.Group{}, fmt.Errorf("get notification group context: %w", err)
@@ -116,7 +117,7 @@ func (r *Repo) GetNotificationGroupContext(ctx context.Context, groupID uuid.UUI
 func (r *Repo) Recipient(ctx context.Context, userID string) (domain.NotificationRecipient, error) {
 	row, err := r.GetNotificationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.NotificationRecipient{}, domain.ErrNotificationNotFound
+		return domain.NotificationRecipient{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.NotificationRecipient{}, fmt.Errorf("get notification recipient: %w", err)
@@ -158,7 +159,7 @@ func (r *Repo) CreateGlobalSubscription(ctx context.Context, userID string, topi
 		Channel:   sqlc.NotificationChannel(channel),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrNotificationNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return fmt.Errorf("create global notification subscription: %w", err)
@@ -174,7 +175,7 @@ func (r *Repo) CreateGroupSubscription(ctx context.Context, userID string, group
 		Channel:   sqlc.NotificationChannel(channel),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrNotificationNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return fmt.Errorf("create group notification subscription: %w", err)
@@ -192,7 +193,7 @@ func (r *Repo) DeleteGlobalSubscription(ctx context.Context, userID string, topi
 		return fmt.Errorf("delete global notification subscription: %w", err)
 	}
 	if rows == 0 {
-		return domain.ErrNotificationNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 	return nil
 }
@@ -208,7 +209,7 @@ func (r *Repo) DeleteGroupSubscription(ctx context.Context, userID string, group
 		return fmt.Errorf("delete group notification subscription: %w", err)
 	}
 	if rows == 0 {
-		return domain.ErrNotificationNotFound
+		return apperror.Default(apperror.CodeNotFound)
 	}
 	return nil
 }

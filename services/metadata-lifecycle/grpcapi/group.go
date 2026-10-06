@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type GroupServer struct {
@@ -24,7 +23,7 @@ func NewGroup(groups *groups.Service) *GroupServer {
 func (g *GroupServer) ListGroups(ctx context.Context, _ *metadatalifecyclev1.ListGroupsRequest) (*metadatalifecyclev1.ListGroupsResponse, error) {
 	values, err := g.groups.List(ctx)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	result := make([]*metadatalifecyclev1.Group, len(values))
@@ -42,12 +41,12 @@ func (g *GroupServer) ListGroups(ctx context.Context, _ *metadatalifecyclev1.Lis
 func (g *GroupServer) GetGroup(ctx context.Context, request *metadatalifecyclev1.GetGroupRequest) (*metadatalifecyclev1.GetGroupResponse, error) {
 	id, err := uuid.Parse(request.GetGroupId())
 	if err != nil || id == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid group id")
 	}
 
 	value, err := g.groups.Get(ctx, id)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	group, err := toProtoGroup(value)
@@ -74,7 +73,7 @@ func (g *GroupServer) CreateGroup(ctx context.Context, request *metadatalifecycl
 	}
 	group, err := g.groups.Create(ctx, actor, input)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	result, err := toProtoGroup(group)
@@ -92,7 +91,7 @@ func (g *GroupServer) ReplaceGroup(ctx context.Context, request *metadatalifecyc
 	}
 	id, err := uuid.Parse(request.GetGroupId())
 	if err != nil || id == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid group id")
 	}
 
 	concept, err := toDomainTopLevelConcept(request.GetConcept())
@@ -105,7 +104,7 @@ func (g *GroupServer) ReplaceGroup(ctx context.Context, request *metadatalifecyc
 	}
 	group, err := g.groups.Replace(ctx, actor, id, input)
 	if err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	result, err := toProtoGroup(group)
@@ -142,7 +141,7 @@ func toDomainTopLevelConcept(value metadatalifecyclev1.TopLevelConcept) (string,
 	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE:
 		return string(domain.TopLevelConceptSoftware), nil
 	default:
-		return "", domain.ErrInvalidGroup
+		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 }
 
@@ -153,11 +152,11 @@ func (g *GroupServer) DeleteGroup(ctx context.Context, request *metadatalifecycl
 	}
 	id, err := uuid.Parse(request.GetGroupId())
 	if err != nil || id == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid group id")
 	}
 
 	if err := g.groups.Delete(ctx, actor, id); err != nil {
-		return nil, wrapHandlerError(err)
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.DeleteGroupResponse{}, nil

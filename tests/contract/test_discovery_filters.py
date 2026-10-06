@@ -197,6 +197,43 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
             "title": dataset_name,
             "description": f"dataset description {suffix}",
             "keywords": [f"dataset-keyword-{suffix}", "shared-keyword"],
+            "distributions": [
+                {
+                    "title": f"discovery-service-{suffix}",
+                    "description": "Discovery web service with display metadata",
+                    "type": "WEB_SERVICE",
+                    "web_service": {
+                        "name": f"discovery-service-{suffix}",
+                        "template_url": "https://example.org/discovery",
+                        "method": "GET",
+                        "type": "COVJSON",
+                        "visible_on": ["MAP", "TABLE"],
+                        "format": "application/json",
+                        "provider": provider_id,
+                    },
+                },
+                {
+                    "title": f"discovery-service-optional-{suffix}",
+                    "description": "Discovery web service without optional metadata",
+                    "type": "WEB_SERVICE",
+                    "web_service": {
+                        "name": f"discovery-service-optional-{suffix}",
+                        "template_url": "https://example.org/discovery/optional",
+                        "method": "GET",
+                        "type": "GEOJSON",
+                        "format": "application/geo+json",
+                    },
+                },
+                {
+                    "title": f"discovery-file-{suffix}",
+                    "description": "Discovery downloadable file",
+                    "type": "DOWNLOADABLE_FILE",
+                    "downloadable_file": {
+                        "url": "https://example.org/discovery.csv",
+                        "format": "text/csv",
+                    },
+                },
+            ],
             "providers": [provider_id],
             "spatial_coverage": "POINT (12.5 41.9)",
             "temporal_coverage": {
@@ -208,6 +245,20 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
             self.gateway, data_group, "dataset", dataset_metadata
         )
         self.publish("dataset", dataset_id, dataset_version_id)
+        dataset_details_response = self.gateway.get(
+            "/resources/{resourceType}/{id}/versions/{versionId}",
+            resourceType="dataset",
+            id=dataset_id,
+            versionId=dataset_version_id,
+        )
+        self.assertEqual(dataset_details_response.status_code, 200)
+        distributions_by_title = {
+            distribution["title"]: distribution
+            for distribution in dataset_details_response.json()["metadata"]["distributions"]
+        }
+        service_id = distributions_by_title[f"discovery-service-{suffix}"]["id"]
+        optional_service_id = distributions_by_title[f"discovery-service-optional-{suffix}"]["id"]
+        file_id = distributions_by_title[f"discovery-file-{suffix}"]["id"]
 
         draft_name = f"discovery-draft-{suffix}"
         draft_id, draft_version_id = self.create_resource(
@@ -258,6 +309,43 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         admin_items = self.search(self.gateway, q=suffix)
         self.assert_ids(admin_items, {dataset_id, application_id, source_id})
         self.assertTrue(all("created_by" in item for item in admin_items))
+        dataset_distributions = {
+            distribution["id"]: distribution
+            for distribution in next(
+                item for item in admin_items if item["resource_id"] == dataset_id
+            )["distributions"]
+        }
+        self.assertEqual(
+            dataset_distributions[service_id],
+            {
+                "id": service_id,
+                "name": f"discovery-service-{suffix}",
+                "type": "WEB_SERVICE",
+                "web_service_type": "COVJSON",
+                "visible_on": ["MAP", "TABLE"],
+                "provider": {
+                    "id": provider_id,
+                    "name": f"Discovery Provider {suffix}",
+                },
+            },
+        )
+        self.assertEqual(
+            dataset_distributions[optional_service_id],
+            {
+                "id": optional_service_id,
+                "name": f"discovery-service-optional-{suffix}",
+                "type": "WEB_SERVICE",
+                "web_service_type": "GEOJSON",
+            },
+        )
+        self.assertEqual(
+            dataset_distributions[file_id],
+            {
+                "id": file_id,
+                "name": f"discovery-file-{suffix}",
+                "type": "DOWNLOADABLE_FILE",
+            },
+        )
 
         member_items = self.search(
             editor,

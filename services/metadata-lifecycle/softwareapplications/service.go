@@ -3,10 +3,10 @@ package softwareapplications
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -83,14 +83,14 @@ func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, applicat
 
 func (s *Service) Read(ctx context.Context, actor *domain.Actor, applicationID, versionID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	result, err := s.authorizer.CanReadSoftwareApplicationVersion(ctx, actor.OptionalString(), applicationID, versionID)
-	if errors.Is(err, domain.ErrAuthorizationNotFound) {
-		return domain.SoftwareApplicationVersion{}, domain.ErrSoftwareApplicationNotFound
+	if apperror.IsCode(err, apperror.CodeNotFound) {
+		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareApplicationVersion{}, operationError("authorize application read", err)
 	}
 	if !result.Allowed {
-		return domain.SoftwareApplicationVersion{}, fmt.Errorf("%w: %s", domain.ErrSoftwareApplicationForbidden, result.Reason)
+		return domain.SoftwareApplicationVersion{}, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 
 	application, err := s.store.Get(ctx, applicationID, versionID)
@@ -107,9 +107,9 @@ func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, applicat
 	}
 	if !result.Allowed {
 		if result.Reason == "resource not found" {
-			return nil, domain.ErrSoftwareApplicationNotFound
+			return nil, apperror.Default(apperror.CodeNotFound)
 		}
-		return nil, fmt.Errorf("%w: %s", domain.ErrSoftwareApplicationForbidden, result.Reason)
+		return nil, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 
 	versions, err := s.store.List(ctx, applicationID)
@@ -281,7 +281,7 @@ func (s *Service) authorizeGroup(ctx context.Context, actor domain.Actor, groupI
 		return fmt.Errorf("authorize group: %w", err)
 	}
 	if !result.Allowed {
-		return fmt.Errorf("%w: %s", domain.ErrSoftwareApplicationForbidden, result.Reason)
+		return fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 	return nil
 }
@@ -292,7 +292,7 @@ func (s *Service) authorizeResource(ctx context.Context, actor domain.Actor, app
 		return fmt.Errorf("authorize application: %w", err)
 	}
 	if !result.Allowed {
-		return fmt.Errorf("%w: %s", domain.ErrSoftwareApplicationForbidden, result.Reason)
+		return fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
 	}
 	return nil
 }
@@ -301,8 +301,8 @@ func operationError(operation string, err error) error {
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, domain.ErrSoftwareApplicationForbidden) || errors.Is(err, domain.ErrSoftwareApplicationConflict) || errors.Is(err, domain.ErrSoftwareApplicationNotFound) || errors.Is(err, domain.ErrSoftwareApplicationInvalid) {
+	if apperror.IsCode(err, apperror.CodePermissionDenied) || apperror.IsCode(err, apperror.CodeConflict) || apperror.IsCode(err, apperror.CodeNotFound) || apperror.IsCode(err, apperror.CodeValidationFailed) {
 		return fmt.Errorf("%s: %w", operation, err)
 	}
-	return fmt.Errorf("%s: %w: %w", operation, domain.ErrSoftwareApplicationInternal, err)
+	return apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("%s: %w", operation, err))
 }

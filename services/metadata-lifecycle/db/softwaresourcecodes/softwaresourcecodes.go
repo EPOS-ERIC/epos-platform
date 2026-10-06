@@ -5,15 +5,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
 	resourcedb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -30,12 +29,12 @@ func New(pool *pgxpool.Pool) *Repo {
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeVersion, error) {
 	var result domain.SoftwareSourceCodeVersion
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
-		valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
+		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
 		if err != nil {
 			return fmt.Errorf("validate source code categories: %w", err)
 		}
-		if !valid {
-			return domain.ErrSoftwareSourceCodeInvalid
+		if invalidIndex >= 0 {
+			return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
 		}
 
 		sourceCode, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{
@@ -55,7 +54,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 		result, err = sourceCodeResult(ctx, q, sourceCode.ID, version.ID)
 		return err
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeDraftInput) (domain.SoftwareSourceCodeVersion, error) {
@@ -66,12 +65,12 @@ func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UU
 			if err != nil {
 				return fmt.Errorf("get source code for category validation: %w", err)
 			}
-			valid, err := resourcedb.CategoriesBelongToGroup(ctx, q, sourceCode.GroupID, value.Metadata.CategoryIDs)
+			invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, sourceCode.GroupID, value.Metadata.CategoryIDs)
 			if err != nil {
 				return fmt.Errorf("validate source code categories: %w", err)
 			}
-			if !valid {
-				return domain.ErrSoftwareSourceCodeInvalid
+			if invalidIndex >= 0 {
+				return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
 			}
 		}
 
@@ -88,13 +87,13 @@ func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UU
 		result, err = sourceCodeResult(ctx, q, sourceCodeID, version.ID)
 		return err
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) Get(ctx context.Context, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	result, err := sourceCodeResult(ctx, sqlc.New(r.db), sourceCodeID, versionID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareSourceCodeVersion{}, domain.ErrSoftwareSourceCodeNotFound
+		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	return result, err
 }
@@ -115,7 +114,7 @@ func (r *Repo) List(ctx context.Context, sourceCodeID uuid.UUID) ([]domain.Resou
 func (r *Repo) GetPublished(ctx context.Context, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	version, err := sqlc.New(r.db).GetPublishedLifecycleSoftwareSourceCodeVersion(ctx, sourceCodeID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareSourceCodeVersion{}, domain.ErrSoftwareSourceCodeNotFound
+		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, fmt.Errorf("get published source code version: %w", err)
@@ -126,7 +125,7 @@ func (r *Repo) GetPublished(ctx context.Context, sourceCodeID uuid.UUID) (domain
 func (r *Repo) GetActive(ctx context.Context, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	version, err := sqlc.New(r.db).GetActiveLifecycleSoftwareSourceCodeVersion(ctx, sourceCodeID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.SoftwareSourceCodeVersion{}, domain.ErrSoftwareSourceCodeNotFound
+		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, fmt.Errorf("get active source code version: %w", err)
@@ -201,18 +200,18 @@ func (r *Repo) transition(
 			SoftwareSourceCodeID: sourceCodeID,
 		}); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrSoftwareSourceCodeNotFound
+				return apperror.Default(apperror.CodeNotFound)
 			}
 			return fmt.Errorf("ensure source code version: %w", err)
 		}
 		version, err := fn(q)
 		if err != nil {
-			return lifecycleError(err)
+			return resourcedb.LifecycleError(err)
 		}
 		result, err = sourceCodeResult(ctx, q, sourceCodeID, version.ID)
 		return err
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) Discard(ctx context.Context, sourceCodeID, versionID uuid.UUID) error {
@@ -222,7 +221,7 @@ func (r *Repo) Discard(ctx context.Context, sourceCodeID, versionID uuid.UUID) e
 			SoftwareSourceCodeID: sourceCodeID,
 		}); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrSoftwareSourceCodeNotFound
+				return apperror.Default(apperror.CodeNotFound)
 			}
 			return fmt.Errorf("ensure source code version: %w", err)
 		}
@@ -232,7 +231,7 @@ func (r *Repo) Discard(ctx context.Context, sourceCodeID, versionID uuid.UUID) e
 		}
 		return q.DeleteEmptyLifecycleSoftwareSourceCode(ctx, id)
 	})
-	return lifecycleError(err)
+	return resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) DraftFromPublication(ctx context.Context, actorID string, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
@@ -271,7 +270,7 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceSourceCo
 		result, err = sourceCodeResult(ctx, q, sourceCode.ID, version.ID)
 		return err
 	})
-	return result, lifecycleError(err)
+	return result, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) clone(
@@ -316,29 +315,7 @@ func (r *Repo) clone(
 		return nil
 	})
 	if err != nil {
-		return domain.SoftwareSourceCodeVersion{}, lifecycleError(err)
+		return domain.SoftwareSourceCodeVersion{}, resourcedb.LifecycleError(err)
 	}
 	return r.Get(ctx, targetID, versionID)
-}
-
-func lifecycleError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrSoftwareSourceCodeConflict
-	}
-	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-		switch pgErr.Code {
-		case "23514":
-			return fmt.Errorf("database validation: %w", domain.ErrSoftwareSourceCodeInvalid)
-		case "23001", "23505", "23P01", "P0001":
-			return fmt.Errorf("database invariant %q: %w", pgErr.ConstraintName, domain.ErrSoftwareSourceCodeConflict)
-		default:
-			if strings.HasPrefix(pgErr.Code, "23") {
-				return fmt.Errorf("database integrity error %q: %w", pgErr.Code, domain.ErrSoftwareSourceCodeInternal)
-			}
-		}
-	}
-	return err
 }

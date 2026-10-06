@@ -8,8 +8,10 @@ import (
 	"runtime/debug"
 
 	"buf.build/go/protovalidate"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/activity"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
@@ -67,8 +69,10 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	groupsSvc := groups.New(log, db.Groups, authorizer)
 	categoriesSvc := categories.New(log, db.Categories, authorizer)
 	contactPointsSvc := contactpoints.New(log, db.ContactPoints, authorizer)
+	activitySvc := activity.New(log, db.Activity, authorizer)
 
 	metadatalifecyclev1.RegisterIdentityServiceServer(server, grpcapi.NewIdentity(usersSvc))
+	metadatalifecyclev1.RegisterActivityServiceServer(server, grpcapi.NewActivity(activitySvc))
 	metadatalifecyclev1.RegisterUserServiceServer(server, grpcapi.NewUser(usersSvc))
 	metadatalifecyclev1.RegisterAuthorizationServiceServer(server, grpcapi.NewAuthorization(authorizer))
 	metadatalifecyclev1.RegisterImportServiceServer(server, grpcapi.NewImport(importSvc, turtler))
@@ -148,11 +152,14 @@ func validateUnaryRPC(validator protovalidate.Validator) grpc.UnaryServerInterce
 	) (any, error) {
 		message, ok := req.(proto.Message)
 		if !ok {
-			return nil, status.Error(codes.Internal, "request is not a protobuf message")
+			return nil, apperror.Default(apperror.CodeInternal)
 		}
 
 		if err := validator.Validate(message); err != nil {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
+			if appErr := grpcapi.ValidationAppError(info.FullMethod, err); appErr != nil {
+				return nil, appErr
+			}
+			return nil, apperror.Wrap(apperror.CodeValidationFailed, "The request is invalid.", err)
 		}
 
 		return handler(ctx, req)
@@ -170,7 +177,8 @@ func logUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {
 		if err == nil {
 			return response, nil
 		}
-		err = NormalizeError(info.FullMethod, err)
+		cause := err
+		err = grpcapi.NormalizeError(cause)
 
 		code := status.Code(err)
 		level := slog.LevelDebug
@@ -198,11 +206,11 @@ func logUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {
 		if level == slog.LevelError {
 			span := trace.SpanFromContext(ctx)
 			if span.IsRecording() {
-				span.RecordError(status.Error(code, err.Error()))
+				span.RecordError(status.Error(code, cause.Error()))
 			}
 		}
 
-		log.Log(ctx, level, "grpc request failed", "method", info.FullMethod, "code", code.String(), "error", err)
+		log.Log(ctx, level, "grpc request failed", "method", info.FullMethod, "code", code.String(), "error", cause)
 		return response, err
 	}
 }

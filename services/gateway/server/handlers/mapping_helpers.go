@@ -7,6 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
+func toClientStringPtr(v gatewayapi.OptNilString) *string {
+	if !v.Set || v.Null {
+		return nil
+	}
+	return &v.Value
+}
+
 func parseUUID(field, value string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil {

@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
-from fixtures import create_group
+from fixtures import assert_problem, create_group
 
 
 class ValidationErrorsContractTest(unittest.TestCase):
@@ -106,17 +106,11 @@ class ValidationErrorsContractTest(unittest.TestCase):
         submitted_version = self.get_version(resource_id, "SUBMITTED")
         return resource_id, submitted_version["version_id"]
 
-    def assert_problem(self, response: Any, status: int, title: str) -> None:
-        self.assertEqual(response.status_code, status)
-        problem = response.json()
-        self.assertEqual(problem["status"], status)
-        self.assertEqual(problem["title"], title)
-
     def assert_bad_request(self, response: Any) -> None:
-        self.assert_problem(response, 400, "invalid_request")
+        assert_problem(self, response, 400, "validation_failed")
 
     def assert_unsupported_media_type(self, response: Any) -> None:
-        self.assert_problem(response, 415, "unsupported_media_type")
+        assert_problem(self, response, 415, "unsupported_media_type")
 
     def test_request_shape_validation(self) -> None:
         """Verify representative JSON body and path validation errors."""

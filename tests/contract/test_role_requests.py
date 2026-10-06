@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from fixtures import assert_problem
 
 
 class RoleRequestContractTest(unittest.TestCase):
@@ -87,13 +88,7 @@ class RoleRequestContractTest(unittest.TestCase):
             groupId=group_id,
             json={"role": "EDITOR"},
         )
-        self.assertEqual(duplicate_role_request_response.status_code, 409)
-        duplicate_problem = duplicate_role_request_response.json()
-        self.assertEqual(duplicate_problem["title"], "conflict")
-        self.assertEqual(
-            duplicate_problem["detail"],
-            "operation conflicts with existing data",
-        )
+        assert_problem(self, duplicate_role_request_response, 409, "conflict")
 
         rejected_response = self.gateway.post(
             "/groups/{groupId}/role-requests/{requestId}/{decision}",

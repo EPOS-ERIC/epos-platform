@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 )
 
 func toProtoLifecycleResourceType(value gatewayapi.LifecycleResourceType) (metadatalifecyclev1.ResourceType, error) {
@@ -24,7 +25,7 @@ func toProtoLifecycleResourceType(value gatewayapi.LifecycleResourceType) (metad
 }
 
 func (h *ogenHandler) GetResourceVersion(ctx context.Context, q gatewayapi.GetResourceVersionParams) (*gatewayapi.ResourceVersion, error) {
-	actor, _ := actorID(ctx)
+	actor, _ := authcontext.ActorID(ctx)
 	resourceType, err := toProtoLifecycleResourceType(q.ResourceType)
 	if err != nil {
 		return nil, err
@@ -41,9 +42,9 @@ func (h *ogenHandler) GetResourceVersion(ctx context.Context, q gatewayapi.GetRe
 }
 
 func (h *ogenHandler) ListResourceVersions(ctx context.Context, q gatewayapi.ListResourceVersionsParams) ([]gatewayapi.ResourceVersionSummary, error) {
-	actor, ok := actorID(ctx)
+	actor, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(q.ResourceType)
 	if err != nil {
@@ -77,9 +78,9 @@ func toAPIWriteResult(v *metadatalifecyclev1.ResourceRecord, resourceType gatewa
 }
 
 func (h *ogenHandler) CopyResource(ctx context.Context, p gatewayapi.CopyResourceParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -93,9 +94,9 @@ func (h *ogenHandler) CopyResource(ctx context.Context, p gatewayapi.CopyResourc
 }
 
 func (h *ogenHandler) DraftFromPublication(ctx context.Context, p gatewayapi.DraftFromPublicationParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -109,9 +110,9 @@ func (h *ogenHandler) DraftFromPublication(ctx context.Context, p gatewayapi.Dra
 }
 
 func (h *ogenHandler) DraftFromArchive(ctx context.Context, p gatewayapi.DraftFromArchiveParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -125,9 +126,9 @@ func (h *ogenHandler) DraftFromArchive(ctx context.Context, p gatewayapi.DraftFr
 }
 
 func (h *ogenHandler) DiscardResourceDraftVersion(ctx context.Context, p gatewayapi.DiscardResourceDraftVersionParams) error {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return authMissing()
+		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -140,9 +141,9 @@ func (h *ogenHandler) DiscardResourceDraftVersion(ctx context.Context, p gateway
 }
 
 func (h *ogenHandler) SubmitResourceVersion(ctx context.Context, p gatewayapi.SubmitResourceVersionParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -156,9 +157,9 @@ func (h *ogenHandler) SubmitResourceVersion(ctx context.Context, p gatewayapi.Su
 }
 
 func (h *ogenHandler) WithdrawResourceVersion(ctx context.Context, p gatewayapi.WithdrawResourceVersionParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -172,9 +173,9 @@ func (h *ogenHandler) WithdrawResourceVersion(ctx context.Context, p gatewayapi.
 }
 
 func (h *ogenHandler) ReopenResourceVersion(ctx context.Context, p gatewayapi.ReopenResourceVersionParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -188,9 +189,9 @@ func (h *ogenHandler) ReopenResourceVersion(ctx context.Context, p gatewayapi.Re
 }
 
 func (h *ogenHandler) PublishResourceVersion(ctx context.Context, p gatewayapi.PublishResourceVersionParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -204,9 +205,9 @@ func (h *ogenHandler) PublishResourceVersion(ctx context.Context, p gatewayapi.P
 }
 
 func (h *ogenHandler) UnpublishResourceVersion(ctx context.Context, p gatewayapi.UnpublishResourceVersionParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -220,9 +221,9 @@ func (h *ogenHandler) UnpublishResourceVersion(ctx context.Context, p gatewayapi
 }
 
 func (h *ogenHandler) RejectResourceVersion(ctx context.Context, q *gatewayapi.RejectResourceRequest, p gatewayapi.RejectResourceVersionParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
 	if err != nil {
@@ -236,13 +237,13 @@ func (h *ogenHandler) RejectResourceVersion(ctx context.Context, q *gatewayapi.R
 }
 
 func (h *ogenHandler) CreateResource(ctx context.Context, q gatewayapi.CreateResourceDraftRequest, p gatewayapi.CreateResourceParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	in, typ, err := toProtoCreateResource(p.GroupId.String(), q)
 	if err != nil {
-		return nil, errors.Join(domain.ErrBadRequest, err)
+		return nil, apperror.Wrap(apperror.CodeValidationFailed, "", err)
 	}
 	v, err := h.metadataLifecycle.CreateResourceDraft(ctx, a, in)
 	if err != nil {
@@ -263,13 +264,13 @@ func (h *ogenHandler) CreateResource(ctx context.Context, q gatewayapi.CreateRes
 }
 
 func (h *ogenHandler) ReplaceResourceDraftVersion(ctx context.Context, q gatewayapi.ReplaceResourceDraftRequest, p gatewayapi.ReplaceResourceDraftVersionParams) (*gatewayapi.WriteResult, error) {
-	a, ok := actorID(ctx)
+	a, ok := authcontext.ActorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	typ, in, err := toProtoReplaceResourceDraft(q)
 	if err != nil {
-		return nil, errors.Join(domain.ErrBadRequest, err)
+		return nil, apperror.Wrap(apperror.CodeValidationFailed, "", err)
 	}
 	v, err := h.metadataLifecycle.ReplaceResourceDraft(ctx, a, p.ID.String(), p.VersionId.String(), in)
 	if err != nil {
