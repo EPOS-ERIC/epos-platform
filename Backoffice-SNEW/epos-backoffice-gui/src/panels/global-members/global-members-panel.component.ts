@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { EMPTY, catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 
-import type { GlobalNotificationTopicKey, GroupNotificationTopicKey, GroupPermission, MembershipRole, NotificationSubscription, NotificationTopic, Permission, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
+import type { GlobalNotificationTopicKey, GlobalPermission, GroupNotificationTopicKey, GroupPermission, MembershipRole, NotificationSubscription, NotificationTopic, Permission, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
@@ -22,6 +22,10 @@ type GlobalNotificationTopic = NotificationTopic & {
 type GroupNotificationTopic = NotificationTopic & {
   key: GroupNotificationTopicKey;
   scope: 'GROUP';
+};
+
+type GlobalPermissionCatalogItem = Omit<Permission, 'key'> & {
+  key: GlobalPermission;
 };
 
 @Component({
@@ -66,6 +70,8 @@ export class GlobalMembersPanelComponent implements OnInit {
   protected readonly selectedUser = signal<User | null>(null);
   protected readonly selectedUserLoading = signal(false);
   protected readonly membershipError = signal('');
+  protected readonly globalAccessMutation = signal('');
+  protected readonly globalAccessError = signal('');
   protected readonly membershipMutation = signal('');
   protected readonly removingMembershipGroupId = signal('');
   protected readonly notificationTopics = signal<GlobalNotificationTopic[]>([]);
@@ -76,6 +82,7 @@ export class GlobalMembersPanelComponent implements OnInit {
   protected readonly groupNotificationErrors = signal<Record<string, string>>({});
   protected readonly groupIconPath = groupIconPath;
   protected readonly groupRoles: MembershipRole[] = ['EDITOR', 'REVIEWER', 'GROUP_ADMIN'];
+  protected readonly globalPermissions = signal<GlobalPermissionCatalogItem[]>([]);
   protected readonly groupPermissions = signal<GroupPermissionCatalogItem[]>([]);
   protected readonly filteredUsers = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
@@ -96,9 +103,10 @@ export class GlobalMembersPanelComponent implements OnInit {
         console.error('Failed to load permission catalog', error);
         return of([] as Permission[]);
       })
-    ).subscribe((permissions) => this.groupPermissions.set(
-      permissions.filter(isGroupPermissionCatalogItem)
-    ));
+    ).subscribe((permissions) => {
+      this.globalPermissions.set(permissions.filter(isGlobalPermissionCatalogItem));
+      this.groupPermissions.set(permissions.filter(isGroupPermissionCatalogItem));
+    });
   }
 
   @HostListener('document:keydown.escape')
@@ -110,6 +118,7 @@ export class GlobalMembersPanelComponent implements OnInit {
     this.selectedUserSummary.set(user);
     this.selectedUser.set(null);
     this.membershipError.set('');
+    this.globalAccessError.set('');
     this.selectedUserLoading.set(true);
 
     this.notificationError.set('');
@@ -189,11 +198,12 @@ export class GlobalMembersPanelComponent implements OnInit {
   }
 
   protected closeUserMemberships(): void {
-    if (this.membershipMutation() || this.notificationMutation() || this.removingMembershipGroupId()) return;
+    if (this.globalAccessMutation() || this.membershipMutation() || this.notificationMutation() || this.removingMembershipGroupId()) return;
 
     this.selectedUserSummary.set(null);
     this.selectedUser.set(null);
     this.membershipError.set('');
+    this.globalAccessError.set('');
     this.notificationTopics.set([]);
     this.groupNotificationTopics.set([]);
     this.notificationSubscriptions.set([]);
@@ -303,6 +313,31 @@ export class GlobalMembersPanelComponent implements OnInit {
           )
       );
     });
+  }
+
+  protected toggleGlobalRole(): void {
+    const user = this.selectedUser();
+    if (!this.canChangeUserStatus() || !user || this.globalAccessMutation()) return;
+
+    const enabled = !user.global_roles.includes('ADMIN');
+    this.runGlobalAccessMutation(
+      'role:ADMIN',
+      this.apiService.setGlobalRole(user.id, 'ADMIN', enabled),
+      enabled ? 'Global administrator role assigned.' : 'Global administrator role removed.',
+      true
+    );
+  }
+
+  protected toggleGlobalPermission(permission: GlobalPermission): void {
+    const user = this.selectedUser();
+    if (!this.canManagePermissions() || !user || this.globalAccessMutation()) return;
+
+    const enabled = !user.global_granted_permissions.includes(permission);
+    this.runGlobalAccessMutation(
+      `permission:${permission}`,
+      this.apiService.setGlobalPermission(user.id, permission, enabled),
+      enabled ? 'Global permission granted.' : 'Global permission revoked.'
+    );
   }
 
   protected toggleRole(membership: UserMembershipSummary, role: MembershipRole): void {
@@ -424,6 +459,51 @@ export class GlobalMembersPanelComponent implements OnInit {
         if (user) this.selectedUser.set(user);
       });
   }
+
+  private runGlobalAccessMutation(
+    key: string,
+    request: ReturnType<ApiService['setGlobalRole']>,
+    successMessage: string,
+    refreshNotificationSubscriptions = false
+  ): void {
+    const userId = this.selectedUser()?.id;
+    if (!userId) return;
+
+    this.globalAccessMutation.set(key);
+    this.globalAccessError.set('');
+    request.pipe(
+      switchMap(() => forkJoin({
+        user: this.apiService.getUser(userId),
+        subscriptions: refreshNotificationSubscriptions && this.canManageNotifications()
+          ? this.apiService.listUserNotificationSubscriptions(userId)
+          : of(null)
+      })),
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.globalAccessMutation.set('')),
+      catchError((error) => {
+        console.error('Failed to update global access', error);
+        this.globalAccessError.set('Failed to update global access.');
+        return of(null);
+      })
+    ).subscribe((result) => {
+      if (!result) return;
+      const { user, subscriptions } = result;
+      this.selectedUser.set(user);
+      if (subscriptions) this.notificationSubscriptions.set(subscriptions);
+      this.users.update((users) => users.map((item) => item.id === user.id ? {
+        ...item,
+        global_roles: user.global_roles,
+        global_granted_permissions: user.global_granted_permissions,
+        global_role_permissions: user.global_role_permissions,
+        updated_at: user.updated_at
+      } : item));
+      this.toast.success(successMessage);
+    });
+  }
+}
+
+function isGlobalPermissionCatalogItem(permission: Permission): permission is GlobalPermissionCatalogItem {
+  return permission.scope === 'GLOBAL' && permission.key.startsWith('global.');
 }
 
 function isGlobalNotificationTopic(topic: NotificationTopic): topic is GlobalNotificationTopic {

@@ -21,6 +21,7 @@ import type {
   GroupMembership,
   GroupNotificationTopicKey,
   GroupPermission,
+  GlobalPermission,
   GlobalNotificationTopicKey,
   NotificationSubscription,
   NotificationTopic,
@@ -49,6 +50,7 @@ import type {
   DateFrom,
   DateTo,
   Decision,
+  GlobalRole,
   GroupFilter,
   Keywords,
   Provider,
@@ -510,6 +512,18 @@ export class ApiService {
     return this.http.post<void>(`${this.baseUrl}/users/${encodeURIComponent(id)}/unblock`, undefined, {
       headers: { Authorization: `Bearer ${this.bearerToken}` }
     });
+  }
+  // Grant or revoke global role
+  setGlobalRole(userId: string, role: GlobalRole, enabled: boolean): Observable<void> {
+    const url = `${this.baseUrl}/users/${encodeURIComponent(userId)}/global-roles/${encodeURIComponent(role)}`;
+    const options = { headers: { Authorization: `Bearer ${this.bearerToken}` } };
+    return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
+  }
+  // Grant or revoke global permission
+  setGlobalPermission(userId: string, permission: GlobalPermission, enabled: boolean): Observable<void> {
+    const url = `${this.baseUrl}/users/${encodeURIComponent(userId)}/global-permissions/${encodeURIComponent(permission)}`;
+    const options = { headers: { Authorization: `Bearer ${this.bearerToken}` } };
+    return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
   }
 
   setGroupMembershipRole(groupId: string, userId: string, role: MembershipRole, enabled: boolean): Observable<void> {

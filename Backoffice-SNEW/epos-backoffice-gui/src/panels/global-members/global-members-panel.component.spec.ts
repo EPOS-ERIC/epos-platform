@@ -40,6 +40,8 @@ describe('GlobalMembersPanelComponent', () => {
     getUsers: vi.fn(),
     getUser: vi.fn(),
     listPermissions: vi.fn(),
+    setGlobalRole: vi.fn(),
+    setGlobalPermission: vi.fn(),
     setGroupMembershipRole: vi.fn(),
     setGroupMembershipPermission: vi.fn(),
     removeGroupMember: vi.fn(),
@@ -66,8 +68,11 @@ describe('GlobalMembersPanelComponent', () => {
     apiService.getUsers.mockReturnValue(of([]));
     apiService.getUser.mockReturnValue(of(user));
     apiService.listPermissions.mockReturnValue(of([
+      { key: 'global.resource.create', label: 'Create global resources', description: 'Create resources platform-wide.', scope: 'GLOBAL' },
       { key: 'group.resource.create', label: 'Create resources', description: 'Create resources.', scope: 'GROUP' }
     ]));
+    apiService.setGlobalRole.mockReturnValue(of(undefined));
+    apiService.setGlobalPermission.mockReturnValue(of(undefined));
     apiService.setGroupMembershipRole.mockReturnValue(of(undefined));
     apiService.setGroupMembershipPermission.mockReturnValue(of(undefined));
     apiService.removeGroupMember.mockReturnValue(of(undefined));
@@ -205,6 +210,84 @@ describe('GlobalMembersPanelComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.user-status-button')).toBeNull();
+  });
+
+  it('assigns and removes the global administrator role', () => {
+    const permission = 'global.resource.publish' as const;
+    const topic = {
+      key: 'global.resource.submitted' as const,
+      label: 'Global resource submissions',
+      description: 'Email this user when a resource is submitted.',
+      scope: 'GLOBAL' as const,
+      required_permissions: [permission]
+    };
+    const subscription = {
+      user_id: user.id,
+      topic_key: topic.key,
+      channel: 'EMAIL' as const
+    };
+    const administrator = {
+      ...user,
+      global_roles: ['ADMIN'],
+      global_role_permissions: [permission]
+    };
+    apiService.getUsers.mockReturnValue(of([userSummary]));
+    apiService.listNotificationTopics.mockReturnValue(of([topic]));
+    apiService.listUserNotificationSubscriptions
+      .mockReturnValueOnce(of([]))
+      .mockReturnValueOnce(of([subscription]))
+      .mockReturnValueOnce(of([subscription]));
+    apiService.getUser
+      .mockReturnValueOnce(of(user))
+      .mockReturnValueOnce(of(administrator))
+      .mockReturnValueOnce(of(user));
+    const fixture = TestBed.createComponent(GlobalMembersPanelComponent);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.users-card tbody .app-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    let roleInput = fixture.nativeElement.querySelector('.global-access-group .global-access-option input') as HTMLInputElement;
+    roleInput.click();
+    expect(apiService.setGlobalRole).toHaveBeenNthCalledWith(1, 'user-id', 'ADMIN', true);
+
+    fixture.detectChanges();
+    let notificationInput = fixture.nativeElement.querySelector('.global-notifications input') as HTMLInputElement;
+    expect(notificationInput.checked).toBe(true);
+    expect(notificationInput.disabled).toBe(false);
+
+    roleInput = fixture.nativeElement.querySelector('.global-access-group .global-access-option input') as HTMLInputElement;
+    roleInput.click();
+    expect(apiService.setGlobalRole).toHaveBeenNthCalledWith(2, 'user-id', 'ADMIN', false);
+
+    fixture.detectChanges();
+    notificationInput = fixture.nativeElement.querySelector('.global-notifications input') as HTMLInputElement;
+    expect(notificationInput.checked).toBe(false);
+    expect(notificationInput.disabled).toBe(true);
+    expect(apiService.listUserNotificationSubscriptions).toHaveBeenCalledTimes(3);
+  });
+
+  it('grants and revokes a direct global permission', () => {
+    const grantedUser = { ...user, global_granted_permissions: ['global.resource.create' as const] };
+    apiService.getUsers.mockReturnValue(of([userSummary]));
+    apiService.getUser
+      .mockReturnValueOnce(of(user))
+      .mockReturnValueOnce(of(grantedUser))
+      .mockReturnValueOnce(of(user));
+    const fixture = TestBed.createComponent(GlobalMembersPanelComponent);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.users-card tbody .app-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    let permissionInput = fixture.nativeElement.querySelector('.global-access-permissions input') as HTMLInputElement;
+    permissionInput.click();
+    expect(apiService.setGlobalPermission).toHaveBeenNthCalledWith(1, 'user-id', 'global.resource.create', true);
+
+    fixture.detectChanges();
+    permissionInput = fixture.nativeElement.querySelector('.global-access-permissions input') as HTMLInputElement;
+    permissionInput.click();
+    expect(apiService.setGlobalPermission).toHaveBeenNthCalledWith(2, 'user-id', 'global.resource.create', false);
   });
 
   it('removes an active group membership as a global membership manager', async () => {

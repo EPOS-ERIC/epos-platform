@@ -82,11 +82,11 @@
     <section class="membership-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="membership-dialog-title" (click)="$event.stopPropagation()">
       <div class="membership-dialog-header">
         <div>
-          <p class="eyebrow app-badge app-badge--primary">Group Memberships</p>
+          <p class="eyebrow app-badge app-badge--primary">User Access</p>
           <h2 id="membership-dialog-title">{{ userName(userSummary) }}</h2>
           <p class="subtitle app-muted">{{ userSummary.email }}</p>
         </div>
-        <button type="button" class="app-button app-button--ghost" (click)="closeUserMemberships()" [disabled]="!!membershipMutation() || !!notificationMutation() || !!removingMembershipGroupId()">Close</button>
+        <button type="button" class="app-button app-button--ghost" (click)="closeUserMemberships()" [disabled]="!!globalAccessMutation() || !!membershipMutation() || !!notificationMutation() || !!removingMembershipGroupId()">Close</button>
       </div>
 
       @if (membershipError()) {
@@ -96,6 +96,72 @@
       @if (selectedUserLoading()) {
         <div class="users-message">Loading memberships...</div>
       } @else if (selectedUser(); as user) {
+        @if (canChangeUserStatus() || canManagePermissions()) {
+          <section class="global-access">
+            <div class="global-access-heading">
+              <h3>Global Access</h3>
+              <p class="app-muted">Manage platform-wide roles and direct permissions for this user.</p>
+            </div>
+
+            @if (globalAccessError()) {
+              <div class="notification-message users-message--error">{{ globalAccessError() }}</div>
+            }
+
+            @if (canChangeUserStatus()) {
+              <div class="global-access-group">
+                <h4>Roles</h4>
+                <label class="global-access-option">
+                  <input
+                    type="checkbox"
+                    [checked]="user.global_roles.includes('ADMIN')"
+                    [disabled]="!!globalAccessMutation()"
+                    (change)="toggleGlobalRole()"
+                  />
+                  <span>
+                    <strong>Administrator</strong>
+                    <small>Full platform administration access.</small>
+                    @if (globalAccessMutation() === 'role:ADMIN') {
+                      <small>Saving...</small>
+                    }
+                  </span>
+                </label>
+              </div>
+            }
+
+            @if (canManagePermissions()) {
+              <details class="global-access-group global-access-permissions">
+                <summary>
+                  <span>Direct Permissions</span>
+                  <small>{{ user.global_granted_permissions.length }} granted</small>
+                </summary>
+                <fieldset class="global-access-options" [disabled]="!!globalAccessMutation()">
+                  @for (permission of globalPermissions(); track permission.key) {
+                    <label class="global-access-option" [class.global-access-option--inherited]="user.global_role_permissions.includes(permission.key) && !user.global_granted_permissions.includes(permission.key)">
+                      <input
+                        type="checkbox"
+                        [checked]="user.global_granted_permissions.includes(permission.key) || user.global_role_permissions.includes(permission.key)"
+                        [disabled]="user.global_role_permissions.includes(permission.key) && !user.global_granted_permissions.includes(permission.key)"
+                        (change)="toggleGlobalPermission(permission.key)"
+                      />
+                      <span>
+                        <strong>{{ permission.label }}</strong>
+                        <small>{{ permission.description }}</small>
+                        @if (user.global_role_permissions.includes(permission.key) && !user.global_granted_permissions.includes(permission.key)) {
+                          <small>Provided by a global role.</small>
+                        } @else if (globalAccessMutation() === 'permission:' + permission.key) {
+                          <small>Saving...</small>
+                        }
+                      </span>
+                    </label>
+                  } @empty {
+                    <span class="notification-message app-muted">No global permissions are available.</span>
+                  }
+                </fieldset>
+              </details>
+            }
+          </section>
+        }
+
         @if (canManageMemberships() || canManageRoles() || canManagePermissions() || canManageNotifications()) {
         <div class="membership-list">
           @for (membership of user.memberships; track membership.group.id) {
@@ -200,7 +266,7 @@
                 <label class="notification-option" [class.notification-option--unavailable]="!canReceiveNotification(user, topic)">
                   <input
                     type="checkbox"
-                    [checked]="isNotificationSubscribed(topic.key)"
+                    [checked]="canReceiveNotification(user, topic) && isNotificationSubscribed(topic.key)"
                     [disabled]="!canReceiveNotification(user, topic)"
                     (change)="toggleNotification(user, topic)"
                   />
