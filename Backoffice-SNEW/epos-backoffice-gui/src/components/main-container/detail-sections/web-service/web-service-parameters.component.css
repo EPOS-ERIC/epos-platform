@@ -28,6 +28,35 @@
   color: #b91c1c;
 }
 
+.parameter-list-item:has(.parameter-drag-handle) {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.parameter-list-item-content {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.parameter-drag-handle {
+  display: grid;
+  align-self: stretch;
+  place-items: center;
+  padding-right: 8px;
+  color: #aebbc5;
+  cursor: grab;
+}
+
+.parameter-drag-handle:active {
+  cursor: grabbing;
+}
+
+.parameter-list-item--drag-over {
+  outline: 2px solid var(--olive-600);
+  outline-offset: -2px;
+}
+
 .parameter-dialog {
   width: min(520px, 100%);
 }

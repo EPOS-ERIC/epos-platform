@@ -42,6 +42,8 @@ export class WebServiceParametersComponent {
   protected selectedParameterKind: ParameterFormKind | '' = '';
   protected parameterKindRequired = false;
   protected parameterListCollapsed = false;
+  protected draggedParameterIndex: number | null = null;
+  protected dragOverParameterIndex: number | null = null;
 
   protected toggleParameterList(): void {
     this.parameterListCollapsed = !this.parameterListCollapsed;
@@ -150,6 +152,52 @@ export class WebServiceParametersComponent {
 
   protected selectParameter(globalIndex: number): void {
     this.selectedParameterIndex = globalIndex;
+  }
+
+  protected startParameterDrag(event: DragEvent, globalIndex: number): void {
+    if (this.disabled || this.comparisonMode) {
+      event.preventDefault();
+      return;
+    }
+
+    this.draggedParameterIndex = globalIndex;
+    this.dragOverParameterIndex = globalIndex;
+    event.dataTransfer?.setData('text/plain', String(globalIndex));
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  protected dragParameterOver(event: DragEvent, globalIndex: number): void {
+    if (this.draggedParameterIndex === null || this.disabled || this.comparisonMode) return;
+
+    event.preventDefault();
+    this.dragOverParameterIndex = globalIndex;
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  }
+
+  protected dropParameter(event: DragEvent, targetIndex: number): void {
+    event.preventDefault();
+    const sourceIndex = this.draggedParameterIndex;
+    if (sourceIndex === null || sourceIndex === targetIndex || this.disabled || this.comparisonMode) {
+      this.endParameterDrag();
+      return;
+    }
+
+    const selectedParameter = this.selectedParameter();
+    const reordered = [...this.model];
+    const [movedParameter] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, movedParameter);
+    const nextModel = reordered.map((parameter, position) => ({ ...parameter, position }));
+
+    if (selectedParameter) {
+      this.selectedParameterIndex = reordered.indexOf(selectedParameter);
+    }
+    this.modelChange.emit(nextModel);
+    this.endParameterDrag();
+  }
+
+  protected endParameterDrag(): void {
+    this.draggedParameterIndex = null;
+    this.dragOverParameterIndex = null;
   }
 
   protected onParameterSearch(query: string): void {

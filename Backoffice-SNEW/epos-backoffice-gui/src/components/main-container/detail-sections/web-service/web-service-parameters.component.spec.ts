@@ -124,6 +124,35 @@ describe('WebServiceParametersComponent', () => {
     expect(fixture.nativeElement.querySelector('.webservice-parameters--comparison')).not.toBeNull();
   });
 
+  it('reorders parameters from the drag handle and updates every position', async () => {
+    await TestBed.configureTestingModule({
+      imports: [WebServiceParametersComponent]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(WebServiceParametersComponent);
+    const parameters: DatasetWebServiceParameterForm[] = [
+      createStringParameter('First parameter', 'first', 7),
+      createStringParameter('Second parameter', 'second', 3)
+    ];
+    const modelChange = vi.fn();
+    fixture.componentInstance.modelChange.subscribe(modelChange);
+
+    fixture.componentRef.setInput('model', parameters);
+    fixture.detectChanges();
+
+    const handles = fixture.nativeElement.querySelectorAll('.parameter-drag-handle') as NodeListOf<HTMLElement>;
+    const items = fixture.nativeElement.querySelectorAll('.parameter-list-item') as NodeListOf<HTMLButtonElement>;
+    expect(handles.length).toBe(2);
+
+    handles[0].dispatchEvent(new Event('dragstart', { bubbles: true, cancelable: true }));
+    items[1].dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    items[1].dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+
+    expect(modelChange).toHaveBeenCalledOnce();
+    const reordered = modelChange.mock.calls[0][0] as DatasetWebServiceParameterForm[];
+    expect(reordered.map((parameter) => parameter.name)).toEqual(['second', 'first']);
+    expect(reordered.map((parameter) => parameter.position)).toEqual([0, 1]);
+  });
+
   it('only enables explode for supported multiple-value query parameters', async () => {
     await TestBed.configureTestingModule({
       imports: [WebServiceParametersComponent]
@@ -188,3 +217,23 @@ describe('WebServiceParametersComponent', () => {
       .some((label) => label.textContent?.trim() === 'Explode')).toBe(false);
   });
 });
+
+function createStringParameter(label: string, name: string, position: number): DatasetWebServiceParameterForm {
+  return {
+    kind: 'STRING',
+    id: `${name}-id`,
+    position,
+    label,
+    name,
+    description: '',
+    property: '',
+    location: 'QUERY',
+    explode: false,
+    required: false,
+    multipleValues: false,
+    readOnly: false,
+    defaultValue: null,
+    allowedValues: [],
+    pattern: ''
+  };
+}

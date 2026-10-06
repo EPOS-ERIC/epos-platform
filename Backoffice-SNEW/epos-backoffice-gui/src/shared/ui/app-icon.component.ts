@@ -8,6 +8,7 @@ export type IconName =
   | 'chevron-right'
   | 'chevron-down'
   | 'code'
+  | 'drag-indicator'
   | 'menu-open'
   | 'menu-close'
   | 'inbox'

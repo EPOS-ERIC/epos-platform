@@ -69,20 +69,35 @@
                     [class.parameter-list-item--selected]="isParameterSelected(item.globalIndex)"
                     [class.parameter-list-item--positive]="parameterHasPositiveDiff(parameter)"
                     [class.parameter-list-item--negative]="parameterHasNegativeDiff(parameter)"
+                    [class.parameter-list-item--drag-over]="dragOverParameterIndex === item.globalIndex && draggedParameterIndex !== item.globalIndex"
                     [attr.aria-selected]="isParameterSelected(item.globalIndex)"
+                    (dragover)="dragParameterOver($event, item.globalIndex)"
+                    (drop)="dropParameter($event, item.globalIndex)"
                     (click)="selectParameter(item.globalIndex)"
                   >
-                    <span class="parameter-list-item-heading">
-                      <span class="parameter-kind">{{ parameter.kind }}</span>
-                      <span class="parameter-list-item-indicators">
-                        @if (parameterComparisonStatus(parameter) !== 'unchanged') {
-                          <span class="parameter-change-badge">{{ parameterStatusLabel(parameter) }}</span>
-                        }
-                        <app-icon [name]="reversed ? 'menu-open' : 'menu-close'" [size]="14" />
+                    @if (!disabled && !comparisonMode) {
+                      <span
+                        class="parameter-drag-handle"
+                        draggable="true"
+                        title="Drag to reorder"
+                        (dragstart)="startParameterDrag($event, item.globalIndex)"
+                        (dragend)="endParameterDrag()"
+                      >
+                        <app-icon name="drag-indicator" [size]="18" />
                       </span>
+                    }
+                    <span class="parameter-list-item-content">
+                      <span class="parameter-list-item-heading">
+                        <span class="parameter-kind">{{ parameter.kind }}</span>
+                        @if (parameterComparisonStatus(parameter) !== 'unchanged') {
+                          <span class="parameter-list-item-indicators">
+                            <span class="parameter-change-badge">{{ parameterStatusLabel(parameter) }}</span>
+                          </span>
+                        }
+                      </span>
+                      <strong>{{ parameter.label || 'Unnamed parameter' }}</strong>
+                      <span class="parameter-list-item-meta">{{ parameter.name || 'No name' }}</span>
                     </span>
-                    <strong>{{ parameter.label || 'Unnamed parameter' }}</strong>
-                    <span class="parameter-list-item-meta">{{ parameter.name || 'No name' }}</span>
                   </button>
                 } @empty {
                   <p class="parameter-search-empty">No parameters match your search.</p>
