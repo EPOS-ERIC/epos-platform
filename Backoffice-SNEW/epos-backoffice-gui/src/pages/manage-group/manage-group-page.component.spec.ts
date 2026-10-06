@@ -109,7 +109,7 @@ describe('ManageGroupPageComponent', () => {
     });
   });
 
-  it('offers only EDITOR and REVIEWER when managing a member', () => {
+  it('offers GROUP_ADMIN when managing a member with role management permission', () => {
     const fixture = TestBed.createComponent(ManageGroupPageComponent);
     fixture.componentRef.setInput('groupId', 'group-id');
     fixture.componentRef.setInput('groupName', 'Data Group');
@@ -123,7 +123,13 @@ describe('ManageGroupPageComponent', () => {
     const dialogText = (fixture.nativeElement.querySelector('.membership-dialog') as HTMLElement).textContent;
     expect(dialogText).toContain('EDITOR');
     expect(dialogText).toContain('REVIEWER');
-    expect(dialogText).not.toContain('GROUP_ADMIN');
+    expect(dialogText).toContain('GROUP_ADMIN');
+
+    const groupAdminOption = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.membership-dialog label.membership-option'))
+      .find((option) => option.textContent?.includes('GROUP_ADMIN'))!;
+    (groupAdminOption.querySelector('input') as HTMLInputElement).click();
+
+    expect(apiService.setGroupMembershipRole).toHaveBeenCalledWith('group-id', 'member-id', 'GROUP_ADMIN', true);
   });
 
   it('shows requested role options and applies the selected roles when role management is granted', async () => {
@@ -139,6 +145,7 @@ describe('ManageGroupPageComponent', () => {
     const roleLabels = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.request-role-picker label'));
     const editor = roleLabels.find((label) => label.textContent?.includes('EDITOR'))!;
     expect(editor.textContent).toContain('Requested');
+    expect(roleLabels.some((label) => label.textContent?.includes('GROUP_ADMIN'))).toBe(false);
 
     (editor.querySelector('input') as HTMLInputElement).click();
     fixture.detectChanges();

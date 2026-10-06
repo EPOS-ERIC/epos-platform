@@ -107,7 +107,8 @@ export class ManageGroupPageComponent {
   protected readonly notificationMutation = signal('');
   protected readonly notificationError = signal('');
   protected readonly groupIconPath = groupIconPath;
-  protected readonly groupRoles: MembershipRole[] = ['EDITOR', 'REVIEWER'];
+  protected readonly requestableGroupRoles: MembershipRole[] = ['EDITOR', 'REVIEWER'];
+  protected readonly groupRoles: MembershipRole[] = ['EDITOR', 'REVIEWER', 'GROUP_ADMIN'];
   protected readonly groupPermissions = signal<GroupPermissionCatalogItem[]>([]);
   protected readonly canManageMemberships = computed(() =>
     this.currentUserStore.hasGroupPermission(this.groupIdValue(), 'group.membership.manage')
