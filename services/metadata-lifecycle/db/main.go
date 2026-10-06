@@ -11,6 +11,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
 	accessdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/access"
+	activitydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/activity"
 	authdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/authz"
 	categorydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/categories"
 	contactpointdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/contactpoints"
@@ -36,6 +37,7 @@ var embedMigrations embed.FS
 
 type PostgresDB struct {
 	db                   *pgxpool.Pool
+	Activity             *activitydb.Repo
 	Authorization        *authdb.Repo
 	Users                *usersdb.Repo
 	Groups               *groupdb.Repo
@@ -122,6 +124,7 @@ func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 	// TODO: align the initialization of the db packages
 	return &PostgresDB{
 		db:                   db,
+		Activity:             activitydb.New(log, db),
 		Authorization:        authdb.New(db),
 		Users:                usersdb.New(db),
 		Groups:               groupdb.New(db),
@@ -175,16 +178,5 @@ func (d *PostgresDB) Close() error {
 		return nil
 	}
 	d.db.Close()
-	return nil
-}
-
-// PingContext checks PostgreSQL using ctx.
-func (d *PostgresDB) PingContext(ctx context.Context) error {
-	if d.db == nil {
-		return fmt.Errorf("database connection is nil")
-	}
-	if err := d.db.Ping(ctx); err != nil {
-		return fmt.Errorf("ping database: %w", err)
-	}
 	return nil
 }

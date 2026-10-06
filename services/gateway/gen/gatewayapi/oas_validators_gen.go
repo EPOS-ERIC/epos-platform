@@ -9,6 +9,86 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
+func (s ActivityAction) Validate() error {
+	switch s {
+	case "RESOURCE_CREATED":
+		return nil
+	case "RESOURCE_VERSION_CREATED":
+		return nil
+	case "RESOURCE_SUBMITTED":
+		return nil
+	case "RESOURCE_REJECTED":
+		return nil
+	case "RESOURCE_PUBLISHED":
+		return nil
+	case "RESOURCE_ARCHIVED":
+		return nil
+	case "ROLE_REQUESTED":
+		return nil
+	case "ROLE_REQUEST_ACCEPTED":
+		return nil
+	case "ROLE_REQUEST_REJECTED":
+		return nil
+	case "ROLE_ASSIGNED":
+		return nil
+	case "PERMISSION_GRANTED":
+		return nil
+	case "USER_REGISTERED":
+		return nil
+	case "USER_BLOCKED":
+		return nil
+	case "GROUP_CREATED":
+		return nil
+	case "CATEGORY_CREATED":
+		return nil
+	case "MEMBERSHIP_CREATED":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *ActivityEvent) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Action.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "action",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.ResourceType.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "resource_type",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *BlockUserRequest) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -2970,6 +3050,8 @@ func (s GlobalPermission) Validate() error {
 	case "global.resource.unpublish":
 		return nil
 	case "global.category.manage":
+		return nil
+	case "global.activity.read":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

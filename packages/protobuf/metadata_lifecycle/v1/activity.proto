@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "metadata_lifecycle/v1/common.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+enum ActivityAction {
+  ACTIVITY_ACTION_UNSPECIFIED = 0;
+  ACTIVITY_ACTION_RESOURCE_CREATED = 1;
+  ACTIVITY_ACTION_RESOURCE_VERSION_CREATED = 2;
+  ACTIVITY_ACTION_RESOURCE_SUBMITTED = 3;
+  ACTIVITY_ACTION_RESOURCE_REJECTED = 4;
+  ACTIVITY_ACTION_RESOURCE_PUBLISHED = 5;
+  ACTIVITY_ACTION_RESOURCE_ARCHIVED = 6;
+  ACTIVITY_ACTION_ROLE_REQUESTED = 7;
+  ACTIVITY_ACTION_ROLE_REQUEST_ACCEPTED = 8;
+  ACTIVITY_ACTION_ROLE_REQUEST_REJECTED = 9;
+  ACTIVITY_ACTION_ROLE_ASSIGNED = 10;
+  ACTIVITY_ACTION_PERMISSION_GRANTED = 11;
+  ACTIVITY_ACTION_USER_REGISTERED = 12;
+  ACTIVITY_ACTION_USER_BLOCKED = 13;
+  ACTIVITY_ACTION_GROUP_CREATED = 14;
+  ACTIVITY_ACTION_CATEGORY_CREATED = 15;
+  ACTIVITY_ACTION_MEMBERSHIP_CREATED = 16;
+}
+
+message ListActivityRequest {
+  optional string group_id = 1 [(buf.validate.field).string.uuid = true];
+  google.protobuf.Timestamp date_from = 2;
+  google.protobuf.Timestamp date_to = 3;
+}
+
+message ActivityEvent {
+  ActivityAction action = 1 [(buf.validate.field).enum.defined_only = true];
+  google.protobuf.Timestamp occurred_at = 2;
+  optional string actor_id = 3;
+  optional string group_id = 4 [(buf.validate.field).string.uuid = true];
+  optional ResourceType resource_type = 5 [(buf.validate.field).enum.defined_only = true];
+  optional string resource_id = 6 [(buf.validate.field).string.uuid = true];
+  optional string version_id = 7 [(buf.validate.field).string.uuid = true];
+  optional string target_user_id = 8;
+  optional string role = 9;
+  optional string permission = 10;
+  optional string note = 11;
+  optional string reason = 12;
+}
+
+message ListActivityResponse {
+  repeated ActivityEvent items = 1;
+}
+
+service ActivityService {
+  rpc ListActivity(ListActivityRequest) returns (ListActivityResponse);
+}

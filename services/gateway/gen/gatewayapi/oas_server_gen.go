@@ -197,6 +197,12 @@ type Handler interface {
 	//
 	// POST /imports/turtle
 	ImportTurtleMetadata(ctx context.Context, req ImportTurtleMetadataReq) (*ImportResult, error)
+	// ListActivity implements listActivity operation.
+	//
+	// Returns activity visible to users with `global.activity.read`. Date bounds are inclusive.
+	//
+	// GET /activity
+	ListActivity(ctx context.Context, params ListActivityParams) ([]ActivityEvent, error)
 	// ListContactPoints implements listContactPoints operation.
 	//
 	// List reusable contact points.

@@ -11,6 +11,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/activity"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
@@ -68,8 +69,10 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	groupsSvc := groups.New(log, db.Groups, authorizer)
 	categoriesSvc := categories.New(log, db.Categories, authorizer)
 	contactPointsSvc := contactpoints.New(log, db.ContactPoints, authorizer)
+	activitySvc := activity.New(log, db.Activity, authorizer)
 
 	metadatalifecyclev1.RegisterIdentityServiceServer(server, grpcapi.NewIdentity(usersSvc))
+	metadatalifecyclev1.RegisterActivityServiceServer(server, grpcapi.NewActivity(activitySvc))
 	metadatalifecyclev1.RegisterUserServiceServer(server, grpcapi.NewUser(usersSvc))
 	metadatalifecyclev1.RegisterAuthorizationServiceServer(server, grpcapi.NewAuthorization(authorizer))
 	metadatalifecyclev1.RegisterImportServiceServer(server, grpcapi.NewImport(importSvc, turtler))
