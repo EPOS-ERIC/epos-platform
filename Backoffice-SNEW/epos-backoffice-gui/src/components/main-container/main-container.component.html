@@ -26,7 +26,7 @@
       [sectionTitle]="sectionTitle()"
       [pageLabel]="pageLabel()"
       [darkMode]="darkMode()"
-      [showSearchActions]="pageLabel() === 'Results' && !!selectedGroupId()"
+      [showSearchActions]="pageLabel() === 'Results' && (!!selectedGroupId() || allGroups())"
       [canAddNewResource]="canCreateResource()"
       [searchQuery]="searchQuery()"
       [selectedDataTypes]="selectedDataTypes()"
