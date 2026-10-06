@@ -156,6 +156,7 @@ class AuthorizationContractTest(unittest.TestCase):
             "global.category_scheme.manage": "GLOBAL",
             "group.category.manage": "GROUP",
             "global.category.manage": "GLOBAL",
+            "global.activity.read": "GLOBAL",
         }
 
         response = self.gateway.get("/permissions", headers=NO_AUTH_HEADERS)
@@ -376,6 +377,7 @@ class AuthorizationContractTest(unittest.TestCase):
                 "global.resource.publish",
                 "global.resource.unpublish",
                 "global.category.manage",
+                "global.activity.read",
             ],
         )
 

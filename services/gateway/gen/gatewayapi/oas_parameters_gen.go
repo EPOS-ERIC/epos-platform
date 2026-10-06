@@ -3538,6 +3538,175 @@ func decodeGrantGroupPermissionParams(args [3]string, argsEscaped bool, r *http.
 	return params, nil
 }
 
+// ListActivityParams is parameters of listActivity operation.
+type ListActivityParams struct {
+	// Filter activity to the specified group. Global events without a group are excluded.
+	GroupId OptUUID `json:",omitempty,omitzero"`
+	// Inclusive lower bound for event occurrence time; must not be after `dateTo`.
+	DateFrom OptDateTime `json:",omitempty,omitzero"`
+	// Inclusive upper bound for event occurrence time; must not be before `dateFrom`.
+	DateTo OptDateTime `json:",omitempty,omitzero"`
+}
+
+func unpackListActivityParams(packed middleware.Parameters) (params ListActivityParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "groupId",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.GroupId = v.(OptUUID)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "dateFrom",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.DateFrom = v.(OptDateTime)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "dateTo",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.DateTo = v.(OptDateTime)
+		}
+	}
+	return params
+}
+
+func decodeListActivityParams(args [0]string, argsEscaped bool, r *http.Request) (params ListActivityParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: groupId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "groupId",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotGroupIdVal uuid.UUID
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToUUID(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotGroupIdVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.GroupId.SetTo(paramsDotGroupIdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "groupId",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: dateFrom.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "dateFrom",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotDateFromVal time.Time
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToDateTime(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotDateFromVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.DateFrom.SetTo(paramsDotDateFromVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "dateFrom",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: dateTo.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "dateTo",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotDateToVal time.Time
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToDateTime(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotDateToVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.DateTo.SetTo(paramsDotDateToVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "dateTo",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ListGroupCategoriesParams is parameters of listGroupCategories operation.
 type ListGroupCategoriesParams struct {
 	// Group identifier.

@@ -32,6 +32,7 @@ type MetadataLifecycle struct {
 	access        metadatalifecyclev1.GroupAccessServiceClient
 	resources     metadatalifecyclev1.ResourceServiceClient
 	discovery     metadatalifecyclev1.DiscoveryServiceClient
+	activity      metadatalifecyclev1.ActivityServiceClient
 	import_       metadatalifecyclev1.ImportServiceClient
 	identity      metadatalifecyclev1.IdentityServiceClient
 	notifications metadatalifecyclev1.NotificationServiceClient
@@ -66,6 +67,7 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher Notificat
 		access:        metadatalifecyclev1.NewGroupAccessServiceClient(conn),
 		resources:     metadatalifecyclev1.NewResourceServiceClient(conn),
 		discovery:     metadatalifecyclev1.NewDiscoveryServiceClient(conn),
+		activity:      metadatalifecyclev1.NewActivityServiceClient(conn),
 		import_:       metadatalifecyclev1.NewImportServiceClient(conn),
 		identity:      metadatalifecyclev1.NewIdentityServiceClient(conn),
 		notifications: metadatalifecyclev1.NewNotificationServiceClient(conn),

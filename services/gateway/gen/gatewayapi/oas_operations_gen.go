@@ -35,6 +35,7 @@ const (
 	GrantGlobalPermissionOperation             OperationName = "GrantGlobalPermission"
 	GrantGroupPermissionOperation              OperationName = "GrantGroupPermission"
 	ImportTurtleMetadataOperation              OperationName = "ImportTurtleMetadata"
+	ListActivityOperation                      OperationName = "ListActivity"
 	ListContactPointsOperation                 OperationName = "ListContactPoints"
 	ListGroupCategoriesOperation               OperationName = "ListGroupCategories"
 	ListGroupMembershipsOperation              OperationName = "ListGroupMemberships"

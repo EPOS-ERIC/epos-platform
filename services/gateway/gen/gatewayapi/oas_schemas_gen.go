@@ -16,6 +16,283 @@ func (s *ProblemStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
+// Reconstructable activity action.
+// Ref: #/components/schemas/ActivityAction
+type ActivityAction string
+
+const (
+	ActivityActionRESOURCECREATED        ActivityAction = "RESOURCE_CREATED"
+	ActivityActionRESOURCEVERSIONCREATED ActivityAction = "RESOURCE_VERSION_CREATED"
+	ActivityActionRESOURCESUBMITTED      ActivityAction = "RESOURCE_SUBMITTED"
+	ActivityActionRESOURCEREJECTED       ActivityAction = "RESOURCE_REJECTED"
+	ActivityActionRESOURCEPUBLISHED      ActivityAction = "RESOURCE_PUBLISHED"
+	ActivityActionRESOURCEARCHIVED       ActivityAction = "RESOURCE_ARCHIVED"
+	ActivityActionROLEREQUESTED          ActivityAction = "ROLE_REQUESTED"
+	ActivityActionROLEREQUESTACCEPTED    ActivityAction = "ROLE_REQUEST_ACCEPTED"
+	ActivityActionROLEREQUESTREJECTED    ActivityAction = "ROLE_REQUEST_REJECTED"
+	ActivityActionROLEASSIGNED           ActivityAction = "ROLE_ASSIGNED"
+	ActivityActionPERMISSIONGRANTED      ActivityAction = "PERMISSION_GRANTED"
+	ActivityActionUSERREGISTERED         ActivityAction = "USER_REGISTERED"
+	ActivityActionUSERBLOCKED            ActivityAction = "USER_BLOCKED"
+	ActivityActionGROUPCREATED           ActivityAction = "GROUP_CREATED"
+	ActivityActionCATEGORYCREATED        ActivityAction = "CATEGORY_CREATED"
+	ActivityActionMEMBERSHIPCREATED      ActivityAction = "MEMBERSHIP_CREATED"
+)
+
+// AllValues returns all ActivityAction values.
+func (ActivityAction) AllValues() []ActivityAction {
+	return []ActivityAction{
+		ActivityActionRESOURCECREATED,
+		ActivityActionRESOURCEVERSIONCREATED,
+		ActivityActionRESOURCESUBMITTED,
+		ActivityActionRESOURCEREJECTED,
+		ActivityActionRESOURCEPUBLISHED,
+		ActivityActionRESOURCEARCHIVED,
+		ActivityActionROLEREQUESTED,
+		ActivityActionROLEREQUESTACCEPTED,
+		ActivityActionROLEREQUESTREJECTED,
+		ActivityActionROLEASSIGNED,
+		ActivityActionPERMISSIONGRANTED,
+		ActivityActionUSERREGISTERED,
+		ActivityActionUSERBLOCKED,
+		ActivityActionGROUPCREATED,
+		ActivityActionCATEGORYCREATED,
+		ActivityActionMEMBERSHIPCREATED,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ActivityAction) MarshalText() ([]byte, error) {
+	switch s {
+	case ActivityActionRESOURCECREATED:
+		return []byte(s), nil
+	case ActivityActionRESOURCEVERSIONCREATED:
+		return []byte(s), nil
+	case ActivityActionRESOURCESUBMITTED:
+		return []byte(s), nil
+	case ActivityActionRESOURCEREJECTED:
+		return []byte(s), nil
+	case ActivityActionRESOURCEPUBLISHED:
+		return []byte(s), nil
+	case ActivityActionRESOURCEARCHIVED:
+		return []byte(s), nil
+	case ActivityActionROLEREQUESTED:
+		return []byte(s), nil
+	case ActivityActionROLEREQUESTACCEPTED:
+		return []byte(s), nil
+	case ActivityActionROLEREQUESTREJECTED:
+		return []byte(s), nil
+	case ActivityActionROLEASSIGNED:
+		return []byte(s), nil
+	case ActivityActionPERMISSIONGRANTED:
+		return []byte(s), nil
+	case ActivityActionUSERREGISTERED:
+		return []byte(s), nil
+	case ActivityActionUSERBLOCKED:
+		return []byte(s), nil
+	case ActivityActionGROUPCREATED:
+		return []byte(s), nil
+	case ActivityActionCATEGORYCREATED:
+		return []byte(s), nil
+	case ActivityActionMEMBERSHIPCREATED:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ActivityAction) UnmarshalText(data []byte) error {
+	switch ActivityAction(data) {
+	case ActivityActionRESOURCECREATED:
+		*s = ActivityActionRESOURCECREATED
+		return nil
+	case ActivityActionRESOURCEVERSIONCREATED:
+		*s = ActivityActionRESOURCEVERSIONCREATED
+		return nil
+	case ActivityActionRESOURCESUBMITTED:
+		*s = ActivityActionRESOURCESUBMITTED
+		return nil
+	case ActivityActionRESOURCEREJECTED:
+		*s = ActivityActionRESOURCEREJECTED
+		return nil
+	case ActivityActionRESOURCEPUBLISHED:
+		*s = ActivityActionRESOURCEPUBLISHED
+		return nil
+	case ActivityActionRESOURCEARCHIVED:
+		*s = ActivityActionRESOURCEARCHIVED
+		return nil
+	case ActivityActionROLEREQUESTED:
+		*s = ActivityActionROLEREQUESTED
+		return nil
+	case ActivityActionROLEREQUESTACCEPTED:
+		*s = ActivityActionROLEREQUESTACCEPTED
+		return nil
+	case ActivityActionROLEREQUESTREJECTED:
+		*s = ActivityActionROLEREQUESTREJECTED
+		return nil
+	case ActivityActionROLEASSIGNED:
+		*s = ActivityActionROLEASSIGNED
+		return nil
+	case ActivityActionPERMISSIONGRANTED:
+		*s = ActivityActionPERMISSIONGRANTED
+		return nil
+	case ActivityActionUSERREGISTERED:
+		*s = ActivityActionUSERREGISTERED
+		return nil
+	case ActivityActionUSERBLOCKED:
+		*s = ActivityActionUSERBLOCKED
+		return nil
+	case ActivityActionGROUPCREATED:
+		*s = ActivityActionGROUPCREATED
+		return nil
+	case ActivityActionCATEGORYCREATED:
+		*s = ActivityActionCATEGORYCREATED
+		return nil
+	case ActivityActionMEMBERSHIPCREATED:
+		*s = ActivityActionMEMBERSHIPCREATED
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ActivityEvent
+type ActivityEvent struct {
+	Action       ActivityAction              `json:"action"`
+	OccurredAt   time.Time                   `json:"occurred_at"`
+	ActorID      OptNilString                `json:"actor_id"`
+	GroupID      OptNilUUID                  `json:"group_id"`
+	ResourceType OptNilDiscoveryResourceType `json:"resource_type"`
+	ResourceID   OptNilUUID                  `json:"resource_id"`
+	VersionID    OptNilUUID                  `json:"version_id"`
+	TargetUserID OptNilString                `json:"target_user_id"`
+	Role         OptNilString                `json:"role"`
+	Permission   OptNilString                `json:"permission"`
+	Note         OptNilString                `json:"note"`
+	Reason       OptNilString                `json:"reason"`
+}
+
+// GetAction returns the value of Action.
+func (s *ActivityEvent) GetAction() ActivityAction {
+	return s.Action
+}
+
+// GetOccurredAt returns the value of OccurredAt.
+func (s *ActivityEvent) GetOccurredAt() time.Time {
+	return s.OccurredAt
+}
+
+// GetActorID returns the value of ActorID.
+func (s *ActivityEvent) GetActorID() OptNilString {
+	return s.ActorID
+}
+
+// GetGroupID returns the value of GroupID.
+func (s *ActivityEvent) GetGroupID() OptNilUUID {
+	return s.GroupID
+}
+
+// GetResourceType returns the value of ResourceType.
+func (s *ActivityEvent) GetResourceType() OptNilDiscoveryResourceType {
+	return s.ResourceType
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *ActivityEvent) GetResourceID() OptNilUUID {
+	return s.ResourceID
+}
+
+// GetVersionID returns the value of VersionID.
+func (s *ActivityEvent) GetVersionID() OptNilUUID {
+	return s.VersionID
+}
+
+// GetTargetUserID returns the value of TargetUserID.
+func (s *ActivityEvent) GetTargetUserID() OptNilString {
+	return s.TargetUserID
+}
+
+// GetRole returns the value of Role.
+func (s *ActivityEvent) GetRole() OptNilString {
+	return s.Role
+}
+
+// GetPermission returns the value of Permission.
+func (s *ActivityEvent) GetPermission() OptNilString {
+	return s.Permission
+}
+
+// GetNote returns the value of Note.
+func (s *ActivityEvent) GetNote() OptNilString {
+	return s.Note
+}
+
+// GetReason returns the value of Reason.
+func (s *ActivityEvent) GetReason() OptNilString {
+	return s.Reason
+}
+
+// SetAction sets the value of Action.
+func (s *ActivityEvent) SetAction(val ActivityAction) {
+	s.Action = val
+}
+
+// SetOccurredAt sets the value of OccurredAt.
+func (s *ActivityEvent) SetOccurredAt(val time.Time) {
+	s.OccurredAt = val
+}
+
+// SetActorID sets the value of ActorID.
+func (s *ActivityEvent) SetActorID(val OptNilString) {
+	s.ActorID = val
+}
+
+// SetGroupID sets the value of GroupID.
+func (s *ActivityEvent) SetGroupID(val OptNilUUID) {
+	s.GroupID = val
+}
+
+// SetResourceType sets the value of ResourceType.
+func (s *ActivityEvent) SetResourceType(val OptNilDiscoveryResourceType) {
+	s.ResourceType = val
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *ActivityEvent) SetResourceID(val OptNilUUID) {
+	s.ResourceID = val
+}
+
+// SetVersionID sets the value of VersionID.
+func (s *ActivityEvent) SetVersionID(val OptNilUUID) {
+	s.VersionID = val
+}
+
+// SetTargetUserID sets the value of TargetUserID.
+func (s *ActivityEvent) SetTargetUserID(val OptNilString) {
+	s.TargetUserID = val
+}
+
+// SetRole sets the value of Role.
+func (s *ActivityEvent) SetRole(val OptNilString) {
+	s.Role = val
+}
+
+// SetPermission sets the value of Permission.
+func (s *ActivityEvent) SetPermission(val OptNilString) {
+	s.Permission = val
+}
+
+// SetNote sets the value of Note.
+func (s *ActivityEvent) SetNote(val OptNilString) {
+	s.Note = val
+}
+
+// SetReason sets the value of Reason.
+func (s *ActivityEvent) SetReason(val OptNilString) {
+	s.Reason = val
+}
+
 // AssignGlobalRoleNoContent is response for AssignGlobalRole operation.
 type AssignGlobalRoleNoContent struct{}
 
@@ -4668,6 +4945,7 @@ const (
 	GlobalPermissionGlobalResourcePublish      GlobalPermission = "global.resource.publish"
 	GlobalPermissionGlobalResourceUnpublish    GlobalPermission = "global.resource.unpublish"
 	GlobalPermissionGlobalCategoryManage       GlobalPermission = "global.category.manage"
+	GlobalPermissionGlobalActivityRead         GlobalPermission = "global.activity.read"
 )
 
 // AllValues returns all GlobalPermission values.
@@ -4690,6 +4968,7 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalResourcePublish,
 		GlobalPermissionGlobalResourceUnpublish,
 		GlobalPermissionGlobalCategoryManage,
+		GlobalPermissionGlobalActivityRead,
 	}
 }
 
@@ -4729,6 +5008,8 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 	case GlobalPermissionGlobalResourceUnpublish:
 		return []byte(s), nil
 	case GlobalPermissionGlobalCategoryManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalActivityRead:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -4788,6 +5069,9 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 		return nil
 	case GlobalPermissionGlobalCategoryManage:
 		*s = GlobalPermissionGlobalCategoryManage
+		return nil
+	case GlobalPermissionGlobalActivityRead:
+		*s = GlobalPermissionGlobalActivityRead
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -7253,6 +7537,74 @@ func (o OptNilDateTime) Get() (v time.Time, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilDiscoveryResourceType returns new OptNilDiscoveryResourceType with value set to v.
+func NewOptNilDiscoveryResourceType(v DiscoveryResourceType) OptNilDiscoveryResourceType {
+	return OptNilDiscoveryResourceType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilDiscoveryResourceType is optional nullable DiscoveryResourceType.
+type OptNilDiscoveryResourceType struct {
+	Value DiscoveryResourceType
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilDiscoveryResourceType was set.
+func (o OptNilDiscoveryResourceType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilDiscoveryResourceType) Reset() {
+	var v DiscoveryResourceType
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilDiscoveryResourceType) SetTo(v DiscoveryResourceType) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilDiscoveryResourceType) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilDiscoveryResourceType) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v DiscoveryResourceType
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilDiscoveryResourceType) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilDiscoveryResourceType) Get() (v DiscoveryResourceType, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilDiscoveryResourceType) Or(d DiscoveryResourceType) DiscoveryResourceType {
 	if v, ok := o.Get(); ok {
 		return v
 	}

@@ -187,32 +187,6 @@ func NewWebServiceParameterInput(value WebServiceParameterInput) (WebServicePara
 	return value, nil
 }
 
-// NewWebServiceParameter parses persisted top-level parameter metadata.
-func NewWebServiceParameter(value WebServiceParameter) (result WebServiceParameter, err error) {
-	defer func() {
-		if err != nil {
-			err = internalValidationError(err)
-		}
-	}()
-	if value.ID == uuid.Nil {
-		return WebServiceParameter{}, fmt.Errorf("parameter ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
-	}
-	parsed, err := NewWebServiceParameterInput(WebServiceParameterInput{
-		Parameter: value.Parameter,
-		Property:  value.Property,
-		Location:  value.Location,
-		Explode:   value.Explode,
-	})
-	if err != nil {
-		return WebServiceParameter{}, err
-	}
-	value.Parameter = parsed.Parameter
-	value.Property = parsed.Property
-	value.Location = parsed.Location
-	value.Explode = parsed.Explode
-	return value, nil
-}
-
 // NewRequestBody parses and validates an optional request-body definition.
 func NewRequestBody(value RequestBody) (RequestBody, error) {
 	value.ContentType = strings.TrimSpace(value.ContentType)
