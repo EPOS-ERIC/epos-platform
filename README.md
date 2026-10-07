@@ -87,7 +87,6 @@ make test-integration
 
 - Gateway server code and its Metadata Lifecycle client: run `make generate` in `services/gateway`.
 - Metadata Lifecycle SQLC code: run `make generate` in `services/metadata-lifecycle`.
-- Frontend API types: run `make codegen` in `apps/platform`.
 
 Do not edit generated files directly. Change the owning OpenAPI specification or SQL source and regenerate.
 
@@ -99,7 +98,6 @@ Run the CI stack locally with `make ci`; it builds production images and leaves 
 
 ## Component documentation
 
-- [Platform app](apps/platform/README.md)
 - [Gateway](services/gateway/README.md)
 - [Metadata Lifecycle](services/metadata-lifecycle/README.md)
 - [Data Retriever](services/data-retriever/README.md)
