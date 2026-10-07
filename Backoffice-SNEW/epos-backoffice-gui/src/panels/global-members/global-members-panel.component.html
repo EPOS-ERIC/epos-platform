@@ -286,6 +286,94 @@
             </fieldset>
           </section>
         }
+
+        @if (canReadActivity()) {
+          <details class="activity-history" (toggle)="loadActivity($event, user.id)">
+            <summary>
+              <span class="activity-history-title"><app-icon class="activity-history-icon" name="history" [size]="22" /> Actions History</span>
+              <small>
+                @if (activityLoading()) {
+                  Loading...
+                } @else if (activityLoaded()) {
+                  {{ activityEvents().length }} events
+                } @else {
+                  Expand to load
+                }
+              </small>
+            </summary>
+
+            @if (activityError()) {
+              <div class="activity-history-message users-message--error">{{ activityError() }}</div>
+            } @else if (activityLoading()) {
+              <div class="activity-history-message app-muted">Loading action history...</div>
+            } @else if (activityLoaded()) {
+              <label class="activity-history-search">
+                <span class="visually-hidden">Search action history</span>
+                <app-icon name="search" [size]="16" />
+                <input
+                  class="app-input"
+                  type="search"
+                  placeholder="Search actions"
+                  [ngModel]="activitySearchQuery()"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="activitySearchQuery.set($event)"
+                />
+              </label>
+              <div class="activity-history-list">
+                @for (activity of filteredActivityEvents(); track $index) {
+                  <article class="activity-history-item">
+                    <header>
+                      <strong>{{ activityActionLabel(activity.action) }}</strong>
+                      <time class="activity-history-date" [attr.datetime]="activity.occurred_at">{{ activity.occurred_at | date:'medium' }}</time>
+                    </header>
+                    <div class="activity-history-details">
+                      @if (activity.group_id) {
+                        @if (activityGroup(activity.group_id); as group) {
+                          <span class="activity-history-group">
+                            @if (activityGroupLogo(group); as logoPath) {
+                              <img [src]="logoPath" alt="" aria-hidden="true" />
+                            }
+                            <b>Group</b> {{ group.name }}
+                          </span>
+                        } @else {
+                          <span><b>Group</b> {{ activity.group_id }}</span>
+                        }
+                      }
+                      @if (activity.resource_type) {
+                        <span><b>Resource type</b> {{ activity.resource_type }}</span>
+                      }
+                      @if (activity.resource_id) {
+                        <span><b>Resource</b> {{ activity.resource_id }}</span>
+                      }
+                      @if (activity.version_id) {
+                        <span><b>Version</b> {{ activity.version_id }}</span>
+                      }
+                      @if (activity.target_user_id) {
+                        <span><b>Target user</b> {{ activityUserLabel(activity.target_user_id) }}</span>
+                      }
+                      @if (activity.role) {
+                        <span><b>Role</b> {{ activity.role }}</span>
+                      }
+                      @if (activity.permission) {
+                        <span><b>Permission</b> {{ activity.permission }}</span>
+                      }
+                    </div>
+                    @if (activity.note) {
+                      <p><b>Note:</b> {{ activity.note }}</p>
+                    }
+                    @if (activity.reason) {
+                      <p><b>Reason:</b> {{ activity.reason }}</p>
+                    }
+                  </article>
+                } @empty {
+                  <div class="activity-history-message app-muted">
+                    {{ activityEvents().length ? 'No actions match your search.' : 'No actions recorded for this user.' }}
+                  </div>
+                }
+              </div>
+            }
+          </details>
+        }
       }
     </section>
   </div>

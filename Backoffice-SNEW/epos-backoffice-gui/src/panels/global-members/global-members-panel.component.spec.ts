@@ -39,6 +39,7 @@ describe('GlobalMembersPanelComponent', () => {
   const apiService = {
     getUsers: vi.fn(),
     getUser: vi.fn(),
+    listActivity: vi.fn(),
     listPermissions: vi.fn(),
     setGlobalRole: vi.fn(),
     setGlobalPermission: vi.fn(),
@@ -67,6 +68,7 @@ describe('GlobalMembersPanelComponent', () => {
     currentUserStore.hasGlobalPermission.mockReturnValue(true);
     apiService.getUsers.mockReturnValue(of([]));
     apiService.getUser.mockReturnValue(of(user));
+    apiService.listActivity.mockReturnValue(of([]));
     apiService.listPermissions.mockReturnValue(of([
       { key: 'global.resource.create', label: 'Create global resources', description: 'Create resources platform-wide.', scope: 'GLOBAL' },
       { key: 'group.resource.create', label: 'Create resources', description: 'Create resources.', scope: 'GROUP' }
@@ -122,6 +124,85 @@ describe('GlobalMembersPanelComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('user@example.org');
     expect(apiService.getUsers).toHaveBeenCalled();
     expect(apiService.listPermissions).not.toHaveBeenCalled();
+
+    (fixture.nativeElement.querySelector('.users-card tbody .app-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.activity-history')).toBeNull();
+  });
+
+  it('loads, filters, and searches only the selected actor activity', async () => {
+    const activityGroupId = '23b9b58a-9f1c-5d18-85f9-73842733835c';
+    const targetUser = {
+      ...userSummary,
+      id: 'target-user-id',
+      email: 'target@example.org',
+      given_name: 'Target',
+      family_name: 'User'
+    };
+    currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
+      permission === 'global.activity.read'
+    );
+    apiService.getUsers.mockReturnValue(of([userSummary, targetUser]));
+    apiService.listActivity.mockReturnValue(of([
+      {
+        action: 'RESOURCE_CREATED',
+        occurred_at: '2026-09-14T08:00:00Z',
+        actor_id: 'user-id',
+        group_id: activityGroupId,
+        resource_type: 'dataset',
+        resource_id: 'resource-id'
+      },
+      {
+        action: 'GROUP_CREATED',
+        occurred_at: '2026-09-16T08:00:00Z',
+        actor_id: 'another-user-id',
+        group_id: activityGroupId
+      },
+      {
+        action: 'RESOURCE_PUBLISHED',
+        occurred_at: '2026-09-15T08:00:00Z',
+        actor_id: 'user-id',
+        target_user_id: targetUser.id,
+        note: 'Published after review'
+      }
+    ]));
+    const fixture = TestBed.createComponent(GlobalMembersPanelComponent);
+    fixture.componentRef.setInput('groups', [{ ...group, id: activityGroupId }]);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.users-card tbody .app-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const activityHistory = fixture.nativeElement.querySelector('.activity-history') as HTMLDetailsElement;
+    expect(activityHistory).not.toBeNull();
+    expect(apiService.listActivity).not.toHaveBeenCalled();
+
+    activityHistory.open = true;
+    activityHistory.dispatchEvent(new Event('toggle'));
+    fixture.detectChanges();
+
+    expect(apiService.listActivity).toHaveBeenCalledOnce();
+    const actions = Array.from<HTMLElement>(activityHistory.querySelectorAll('.activity-history-item strong'))
+      .map((action) => action.textContent?.trim());
+    expect(actions).toEqual(['Resource Published', 'Resource Created']);
+    expect(activityHistory.textContent).toContain('Published after review');
+    expect(activityHistory.textContent).toContain('Data Group');
+    expect(activityHistory.textContent).toContain('Target User');
+    expect(activityHistory.textContent).not.toContain('target-user-id');
+    expect(activityHistory.textContent).not.toContain(activityGroupId);
+    expect((activityHistory.querySelector('.activity-history-group img') as HTMLImageElement).getAttribute('src'))
+      .toBe(`/group-icons/${activityGroupId}.png`);
+    expect(activityHistory.textContent).not.toContain('Group Created');
+
+    const searchInput = activityHistory.querySelector('.activity-history-search input') as HTMLInputElement;
+    searchInput.value = 'created';
+    searchInput.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(activityHistory.querySelectorAll('.activity-history-item').length).toBe(1);
+    expect(activityHistory.textContent).toContain('Resource Created');
+    expect(activityHistory.textContent).not.toContain('Resource Published');
   });
 
   it('manages global and group notifications from the user dialog for a notification-only manager', () => {

@@ -48,6 +48,7 @@ export class GlobalManagePageComponent {
   protected readonly canManageRoles = computed(() => this.hasPermission('global.role.manage'));
   protected readonly canManagePermissions = computed(() => this.hasPermission('global.permission.manage'));
   protected readonly canManageNotifications = computed(() => this.hasPermission('global.notification.manage'));
+  protected readonly canReadActivity = computed(() => this.hasPermission('global.activity.read'));
   protected readonly canManageContactPoints = computed(() => this.hasPermission('global.contact_point.manage'));
   protected readonly canManageCategories = computed(() => this.hasPermission('global.category.manage'));
   protected readonly canManageGroups = computed(() => this.hasPermission('global.category_scheme.manage'));
@@ -66,7 +67,7 @@ export class GlobalManagePageComponent {
   private canAccessPanel(panel: GlobalManagePanel): boolean {
     switch (panel) {
       case 'requests': return this.canManageMemberships() || this.canManageRoles();
-      case 'members': return this.canManageMemberships() || this.canManageRoles() || this.canManagePermissions() || this.canManageNotifications();
+      case 'members': return this.canManageMemberships() || this.canManageRoles() || this.canManagePermissions() || this.canManageNotifications() || this.canReadActivity();
       case 'contact-points': return this.canManageContactPoints();
       case 'categories': return this.canManageGroups() || this.canManageCategories();
       case 'organizations': return this.canManageOrganizations();

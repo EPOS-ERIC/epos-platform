@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import type {
+  ActivityEvent,
   BlockUserRequest,
   CanonicalOrganization,
   Category,
@@ -396,6 +397,12 @@ export class ApiService {
 
   listPermissions(): Observable<Permission[]> {
     return this.http.get<Permission[]>(`${this.baseUrl}/permissions`);
+  }
+
+  listActivity(): Observable<ActivityEvent[]> {
+    return this.http.get<ActivityEvent[]>(`${this.baseUrl}/activity`, {
+      headers: { Authorization: `Bearer ${this.bearerToken}` }
+    });
   }
 
   listNotificationTopics(): Observable<NotificationTopic[]> {
