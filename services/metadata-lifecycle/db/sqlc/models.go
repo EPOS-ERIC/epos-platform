@@ -886,32 +886,6 @@ type Permission struct {
 	Scope       PermissionScope
 }
 
-type ResourceVersionsAll struct {
-	ResourceType  string
-	VersionID     uuid.UUID
-	ResourceID    uuid.UUID
-	GroupID       uuid.UUID
-	CreatedAt     time.Time
-	CreatedBy     string
-	SubmittedAt   *time.Time
-	SubmittedBy   *string
-	RejectedAt    *time.Time
-	RejectedBy    *string
-	RejectionNote *string
-	PublishedAt   *time.Time
-	PublishedBy   *string
-	ArchivedAt    *time.Time
-	ArchivedBy    *string
-}
-
-type ResourcesAll struct {
-	ResourceType string
-	ID           uuid.UUID
-	GroupID      uuid.UUID
-	CreatedAt    time.Time
-	CreatedBy    string
-}
-
 type Role struct {
 	Key   string
 	Scope PermissionScope

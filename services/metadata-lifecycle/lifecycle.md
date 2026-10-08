@@ -158,12 +158,12 @@ Authorization uses fixed composable roles plus additive granted permissions. Def
 
 Permissions have one of these scopes:
 
-| Scope             | Meaning                              | Example                 |
-| ----------------- | ------------------------------------ | ----------------------- |
-| Global role       | Applies across system                | `ADMIN`                 |
-| Global permission | Applies across system                | `global.activity.read`  |
-| Group role        | Applies within one active membership | `EDITOR`                |
-| Group permission  | Applies within one active membership | `group.category.manage` |
+| Scope             | Meaning                              | Example                  |
+| ----------------- | ------------------------------------ | ------------------------ |
+| Global role       | Applies across system                | `ADMIN`                  |
+| Global permission | Applies across system                | `global.category.manage` |
+| Group role        | Applies within one active membership | `EDITOR`                 |
+| Group permission  | Applies within one active membership | `group.category.manage`  |
 
 ### Fixed Roles
 
@@ -209,7 +209,6 @@ Users may hold both `EDITOR` and `REVIEWER` in same group. Active membership its
 | `global.category_scheme.manage` | Global | Manage groups' category-scheme metadata.                                                                                                       |
 | `group.category.manage`         | Group  | Manage canonical categories in owning group.                                                                                                   |
 | `global.category.manage`        | Global | Manage canonical categories in any group without membership.                                                                                   |
-| `global.activity.read`          | Global | Read reconstructed resource-lifecycle and administrative activity across all groups. No group-scoped counterpart.                              |
 
 An active user with `global.permission.manage` grants and revokes globally scoped permissions. An active member with a `group.*` permission performs that action only in their group. A user with the corresponding `global.*` permission performs that action in every group without membership. Group role managers may assign or remove `EDITOR` and `REVIEWER` only; a user with `global.role.manage` may also assign or remove `GROUP_ADMIN`. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires `global.membership.manage`. Group permission managers grant and revoke group-scoped granted permissions in their group. `GROUP_ADMIN` includes all three group management permissions. Users with `global.organization.manage`, `global.contact_point.manage`, `global.category_scheme.manage`, or `global.category.manage` manage corresponding canonical entities globally. A user with `group.category.manage` manages canonical categories only in the group where permission is granted. Group creation and deletion, metadata import, global `ADMIN` assignment, user blocking, and non-public read/discovery retain explicit `AuthorizeAdmin` behavior for now; future permission-specific replacements are listed below.
 

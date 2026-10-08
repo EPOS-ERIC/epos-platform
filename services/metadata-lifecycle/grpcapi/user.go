@@ -410,8 +410,6 @@ func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_UNPUBLISH, nil
 	case domain.GlobalPermissionCategoryManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE, nil
-	case domain.GlobalPermissionActivityRead:
-		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ACTIVITY_READ, nil
 	default:
 		return 0, fmt.Errorf("unknown global permission: %q", value)
 	}
@@ -453,8 +451,6 @@ func toDomainGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domai
 		return domain.GlobalPermissionResourceUnpublish, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE:
 		return domain.GlobalPermissionCategoryManage, nil
-	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ACTIVITY_READ:
-		return domain.GlobalPermissionActivityRead, nil
 	default:
 		return "", apperror.Default(apperror.CodeValidationFailed)
 	}

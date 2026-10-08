@@ -60,7 +60,6 @@ var operationRolesBearerAuth = map[string][]string{
 	GrantGlobalPermissionOperation:             []string{},
 	GrantGroupPermissionOperation:              []string{},
 	ImportTurtleMetadataOperation:              []string{},
-	ListActivityOperation:                      []string{},
 	ListContactPointsOperation:                 []string{},
 	ListGroupMembershipsOperation:              []string{},
 	ListResourceVersionsOperation:              []string{},

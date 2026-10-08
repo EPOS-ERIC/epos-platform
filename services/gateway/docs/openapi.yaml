@@ -49,54 +49,8 @@ tags:
     description: Import RDF Turtle metadata into draft resources.
   - name: Notifications
     description: Manage notification topics and email subscriptions.
-  - name: Activity
-    description: Read reconstructed resource and administrative activity.
 
 paths:
-  /activity:
-    get:
-      tags: [Activity]
-      summary: List activity
-      description: Returns activity visible to users with `global.activity.read`. Date bounds are inclusive.
-      operationId: listActivity
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: groupId
-          in: query
-          required: false
-          description: Filter activity to the specified group. Global events without a group are excluded.
-          schema:
-            type: string
-            format: uuid
-        - name: dateFrom
-          in: query
-          required: false
-          description: Inclusive lower bound for event occurrence time; must not be after `dateTo`.
-          schema:
-            type: string
-            format: date-time
-            example: "2026-01-01T00:00:00Z"
-        - name: dateTo
-          in: query
-          required: false
-          description: Inclusive upper bound for event occurrence time; must not be before `dateFrom`.
-          schema:
-            type: string
-            format: date-time
-            example: "2026-12-31T23:59:59Z"
-      responses:
-        "200":
-          description: Activity events returned
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/ActivityEvent" }
-        default:
-          description: Gateway error
-          content:
-            application/problem+json:
-              schema: { $ref: "#/components/schemas/Problem" }
   /permissions:
     get:
       tags:
@@ -433,7 +387,7 @@ paths:
                       family_name: "Rossi"
                       global_roles: [ADMIN]
                       global_granted_permissions: []
-                      global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage, global.activity.read]
+                      global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage]
                       status: "ACTIVE"
                       created_at: "2026-06-17T12:48:45.574Z"
                       updated_at: "2026-06-17T12:48:45.574Z"
@@ -1068,7 +1022,7 @@ paths:
                     family_name: "Rossi"
                     global_roles: [ADMIN]
                     global_granted_permissions: []
-                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage, global.activity.read]
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -1091,7 +1045,7 @@ paths:
                     family_name: "Rossi"
                     global_roles: [ADMIN]
                     global_granted_permissions: []
-                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage, global.activity.read]
+                    global_role_permissions: [global.membership.manage, global.role.manage, global.permission.manage, global.organization.manage, global.contact_point.manage, global.category_scheme.manage, global.resource.create, global.resource.edit, global.resource.submit, global.resource.withdraw, global.resource.reopen, global.resource.discard, global.resource.reject, global.resource.publish, global.resource.unpublish, global.category.manage]
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -2089,47 +2043,6 @@ components:
         - global.resource.publish
         - global.resource.unpublish
         - global.category.manage
-        - global.activity.read
-
-    ActivityAction:
-      type: string
-      description: Reconstructable activity action.
-      enum:
-        - RESOURCE_CREATED
-        - RESOURCE_VERSION_CREATED
-        - RESOURCE_SUBMITTED
-        - RESOURCE_REJECTED
-        - RESOURCE_PUBLISHED
-        - RESOURCE_ARCHIVED
-        - ROLE_REQUESTED
-        - ROLE_REQUEST_ACCEPTED
-        - ROLE_REQUEST_REJECTED
-        - ROLE_ASSIGNED
-        - PERMISSION_GRANTED
-        - USER_REGISTERED
-        - USER_BLOCKED
-        - GROUP_CREATED
-        - CATEGORY_CREATED
-        - MEMBERSHIP_CREATED
-
-    ActivityEvent:
-      type: object
-      required: [action, occurred_at]
-      properties:
-        action: { $ref: "#/components/schemas/ActivityAction" }
-        occurred_at: { type: string, format: date-time }
-        actor_id: { type: string, nullable: true }
-        group_id: { type: string, format: uuid, nullable: true }
-        resource_type:
-          allOf: [{ $ref: "#/components/schemas/DiscoveryResourceType" }]
-          nullable: true
-        resource_id: { type: string, format: uuid, nullable: true }
-        version_id: { type: string, format: uuid, nullable: true }
-        target_user_id: { type: string, nullable: true }
-        role: { type: string, nullable: true }
-        permission: { type: string, nullable: true }
-        note: { type: string, nullable: true }
-        reason: { type: string, nullable: true }
 
     GroupPermission:
       type: string
