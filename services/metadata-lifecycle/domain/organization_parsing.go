@@ -79,6 +79,19 @@ func NewOrganization(id uuid.UUID, value OrganizationInput, identifiers []Organi
 	}, nil
 }
 
+// NewOrganizationReference creates a valid relationship projection.
+func NewOrganizationReference(id uuid.UUID, name string) (result OrganizationReference, err error) {
+	defer func() {
+		if err != nil {
+			err = internalValidationError(err)
+		}
+	}()
+	if id == uuid.Nil {
+		return OrganizationReference{}, apperror.Default(apperror.CodeValidationFailed)
+	}
+	return OrganizationReference{ID: id, Name: name}, nil
+}
+
 // NewOrganizationIdentifierInput validates caller-supplied identifier fields.
 func NewOrganizationIdentifierInput(value OrganizationIdentifierInput) (OrganizationIdentifierInput, error) {
 	value.Type = strings.TrimSpace(value.Type)

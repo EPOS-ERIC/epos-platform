@@ -93,9 +93,9 @@ type NotificationTopic struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Key                 NotificationTopicKey   `protobuf:"varint,1,opt,name=key,proto3,enum=metadata_lifecycle.v1.NotificationTopicKey" json:"key,omitempty"`
 	Scope               NotificationScope      `protobuf:"varint,2,opt,name=scope,proto3,enum=metadata_lifecycle.v1.NotificationScope" json:"scope,omitempty"`
-	RequiredPermissions []string               `protobuf:"bytes,3,rep,name=required_permissions,json=requiredPermissions,proto3" json:"required_permissions,omitempty"`
-	Label               string                 `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
-	Description         string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	RequiredPermissions []string               `protobuf:"bytes,4,rep,name=required_permissions,json=requiredPermissions,proto3" json:"required_permissions,omitempty"`
+	Label               string                 `protobuf:"bytes,5,opt,name=label,proto3" json:"label,omitempty"`
+	Description         string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -625,9 +625,9 @@ const file_metadata_lifecycle_v1_notification_proto_rawDesc = "" +
 	"\x11NotificationTopic\x12G\n" +
 	"\x03key\x18\x01 \x01(\x0e2+.metadata_lifecycle.v1.NotificationTopicKeyB\b\xbaH\x05\x82\x01\x02\x10\x01R\x03key\x12H\n" +
 	"\x05scope\x18\x02 \x01(\x0e2(.metadata_lifecycle.v1.NotificationScopeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x05scope\x121\n" +
-	"\x14required_permissions\x18\x03 \x03(\tR\x13requiredPermissions\x12\x1d\n" +
-	"\x05label\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05label\x12)\n" +
-	"\vdescription\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\"\xfb\x01\n" +
+	"\x14required_permissions\x18\x04 \x03(\tR\x13requiredPermissions\x12\x1d\n" +
+	"\x05label\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05label\x12)\n" +
+	"\vdescription\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\"\xfb\x01\n" +
 	"\x18NotificationSubscription\x12 \n" +
 	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12\x19\n" +
 	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12R\n" +

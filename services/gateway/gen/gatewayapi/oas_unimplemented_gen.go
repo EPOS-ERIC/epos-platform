@@ -289,15 +289,6 @@ func (UnimplementedHandler) ImportTurtleMetadata(ctx context.Context, req Import
 	return r, ht.ErrNotImplemented
 }
 
-// ListActivity implements listActivity operation.
-//
-// Returns activity visible to users with `global.activity.read`. Date bounds are inclusive.
-//
-// GET /activity
-func (UnimplementedHandler) ListActivity(ctx context.Context, params ListActivityParams) (r []ActivityEvent, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // ListContactPoints implements listContactPoints operation.
 //
 // List reusable contact points.

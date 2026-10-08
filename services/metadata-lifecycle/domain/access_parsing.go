@@ -28,8 +28,7 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 		GlobalPermissionResourceReject,
 		GlobalPermissionResourcePublish,
 		GlobalPermissionResourceUnpublish,
-		GlobalPermissionCategoryManage,
-		GlobalPermissionActivityRead:
+		GlobalPermissionCategoryManage:
 		return permission, nil
 	default:
 		return "", apperror.Default(apperror.CodeInternal)
@@ -77,6 +76,23 @@ func NewGroupPermission(value string) (GroupPermission, error) {
 	}
 }
 
+// NewGroupPermissions validates and normalizes group permission keys.
+func NewGroupPermissions(values []string) ([]GroupPermission, error) {
+	if values == nil {
+		return nil, nil
+	}
+
+	permissions := make([]GroupPermission, len(values))
+	for i, value := range values {
+		permission, err := NewGroupPermission(value)
+		if err != nil {
+			return nil, err
+		}
+		permissions[i] = permission
+	}
+	return permissions, nil
+}
+
 // NewGroupRole validates and normalizes a role path value.
 func NewGroupRole(value string) (GroupRole, error) {
 	role := GroupRole(strings.TrimSpace(value))
@@ -93,6 +109,17 @@ func NewRequestedGroupRole(value string) (GroupRole, error) {
 		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
 	return role, nil
+}
+
+// NewDecision validates and normalizes a request decision.
+func NewDecision(value string) (Decision, error) {
+	decision := Decision(strings.TrimSpace(value))
+	switch decision {
+	case DecisionAccept, DecisionReject:
+		return decision, nil
+	default:
+		return "", apperror.Default(apperror.CodeValidationFailed)
+	}
 }
 
 // NewPersistedMembershipStatus validates a status loaded from storage.
