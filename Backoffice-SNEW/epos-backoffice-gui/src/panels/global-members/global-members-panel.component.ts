@@ -1,10 +1,10 @@
 import { DatePipe } from '@angular/common';
-import { Component, DestroyRef, HostListener, Input, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { EMPTY, catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 
-import type { ActivityAction, ActivityEvent, GlobalNotificationTopicKey, GlobalPermission, Group, GroupNotificationTopicKey, GroupPermission, MembershipRole, NotificationSubscription, NotificationTopic, Permission, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
+import type { GlobalNotificationTopicKey, GlobalPermission, GroupNotificationTopicKey, GroupPermission, MembershipRole, NotificationSubscription, NotificationTopic, Permission, User, UserListItem, UserMembershipSummary } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
@@ -41,8 +41,6 @@ export class GlobalMembersPanelComponent implements OnInit {
   private readonly dialog = inject(DialogService);
   private readonly toast = inject(ToastService);
 
-  @Input() groups: Group[] = [];
-
   protected readonly canManageMemberships = computed(() =>
     this.currentUserStore.hasGlobalPermission('global.membership.manage')
   );
@@ -55,15 +53,12 @@ export class GlobalMembersPanelComponent implements OnInit {
   protected readonly canManageNotifications = computed(() =>
     this.currentUserStore.hasGlobalPermission('global.notification.manage')
   );
-  protected readonly canReadActivity = computed(() =>
-    this.currentUserStore.hasGlobalPermission('global.activity.read')
-  );
   protected readonly canChangeUserStatus = computed(() => {
     const currentUser = this.currentUserStore.user();
     return currentUser?.status === 'ACTIVE' && currentUser.global_roles.includes('ADMIN');
   });
   protected readonly canManageMembers = computed(() =>
-    this.canManageMemberships() || this.canManageRoles() || this.canManagePermissions() || this.canManageNotifications() || this.canReadActivity() || this.canChangeUserStatus()
+    this.canManageMemberships() || this.canManageRoles() || this.canManagePermissions() || this.canManageNotifications() || this.canChangeUserStatus()
   );
   protected readonly users = signal<UserListItem[]>([]);
   protected readonly usersLoading = signal(true);
@@ -85,33 +80,6 @@ export class GlobalMembersPanelComponent implements OnInit {
   protected readonly notificationMutation = signal('');
   protected readonly notificationError = signal('');
   protected readonly groupNotificationErrors = signal<Record<string, string>>({});
-  protected readonly activityEvents = signal<ActivityEvent[]>([]);
-  protected readonly activityLoading = signal(false);
-  protected readonly activityLoaded = signal(false);
-  protected readonly activityError = signal('');
-  protected readonly activitySearchQuery = signal('');
-  protected readonly filteredActivityEvents = computed(() => {
-    const query = this.activitySearchQuery().trim().toLowerCase();
-    if (!query) return this.activityEvents();
-
-    return this.activityEvents().filter((activity) => {
-      const group = activity.group_id ? this.activityGroup(activity.group_id) : null;
-      return [
-        this.activityActionLabel(activity.action),
-        activity.occurred_at,
-        group?.name,
-        activity.group_id,
-        activity.resource_type,
-        activity.resource_id,
-        activity.version_id,
-        activity.target_user_id ? this.activityUserLabel(activity.target_user_id) : null,
-        activity.role,
-        activity.permission,
-        activity.note,
-        activity.reason
-      ].some((value) => value?.toLowerCase().includes(query));
-    });
-  });
   protected readonly groupIconPath = groupIconPath;
   protected readonly groupRoles: MembershipRole[] = ['EDITOR', 'REVIEWER', 'GROUP_ADMIN'];
   protected readonly globalPermissions = signal<GlobalPermissionCatalogItem[]>([]);
@@ -151,7 +119,6 @@ export class GlobalMembersPanelComponent implements OnInit {
     this.selectedUser.set(null);
     this.membershipError.set('');
     this.globalAccessError.set('');
-    this.resetActivity();
     this.selectedUserLoading.set(true);
 
     this.notificationError.set('');
@@ -242,52 +209,6 @@ export class GlobalMembersPanelComponent implements OnInit {
     this.notificationSubscriptions.set([]);
     this.notificationError.set('');
     this.groupNotificationErrors.set({});
-    this.resetActivity();
-  }
-
-  protected loadActivity(event: Event, userId: string): void {
-    const details = event.currentTarget as HTMLDetailsElement;
-    if (!details.open || !this.canReadActivity() || this.activityLoading() || this.activityLoaded()) return;
-
-    this.activityLoading.set(true);
-    this.activityError.set('');
-    this.apiService.listActivity().pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => this.activityLoading.set(false)),
-      catchError((error) => {
-        console.error('Failed to load user activity', error);
-        this.activityError.set('Failed to load action history for this user.');
-        return EMPTY;
-      })
-    ).subscribe((events) => {
-      if (this.selectedUser()?.id !== userId) return;
-      this.activityEvents.set(events
-        .filter((activity) => activity.actor_id === userId)
-        .sort((left, right) => right.occurred_at.localeCompare(left.occurred_at))
-      );
-      this.activityLoaded.set(true);
-    });
-  }
-
-  protected activityActionLabel(action: ActivityAction): string {
-    return action
-      .toLowerCase()
-      .split('_')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
-  }
-
-  protected activityGroup(groupId: string): Group | null {
-    return this.groups.find((group) => group.id === groupId) ?? null;
-  }
-
-  protected activityGroupLogo(group: Group): string | null {
-    return groupIconPath(group.id) || null;
-  }
-
-  protected activityUserLabel(userId: string): string {
-    const user = this.users().find((candidate) => candidate.id === userId);
-    return user ? `${this.userName(user)}` : userId;
   }
 
   protected canReceiveNotification(user: User, topic: GlobalNotificationTopic): boolean {
@@ -578,14 +499,6 @@ export class GlobalMembersPanelComponent implements OnInit {
       } : item));
       this.toast.success(successMessage);
     });
-  }
-
-  private resetActivity(): void {
-    this.activityEvents.set([]);
-    this.activityLoading.set(false);
-    this.activityLoaded.set(false);
-    this.activityError.set('');
-    this.activitySearchQuery.set('');
   }
 }
 

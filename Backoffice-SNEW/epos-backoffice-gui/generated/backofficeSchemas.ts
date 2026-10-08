@@ -68,59 +68,7 @@ export type GlobalPermission =
   | "global.resource.reject"
   | "global.resource.publish"
   | "global.resource.unpublish"
-  | "global.category.manage"
-  | "global.activity.read";
-
-/**
- * Reconstructable activity action.
- */
-export type ActivityAction =
-  | "RESOURCE_CREATED"
-  | "RESOURCE_VERSION_CREATED"
-  | "RESOURCE_SUBMITTED"
-  | "RESOURCE_REJECTED"
-  | "RESOURCE_PUBLISHED"
-  | "RESOURCE_ARCHIVED"
-  | "ROLE_REQUESTED"
-  | "ROLE_REQUEST_ACCEPTED"
-  | "ROLE_REQUEST_REJECTED"
-  | "ROLE_ASSIGNED"
-  | "PERMISSION_GRANTED"
-  | "USER_REGISTERED"
-  | "USER_BLOCKED"
-  | "GROUP_CREATED"
-  | "CATEGORY_CREATED"
-  | "MEMBERSHIP_CREATED";
-
-export type ActivityEvent = {
-  action: ActivityAction;
-  /**
-   * @format date-time
-   */
-  occurred_at: string;
-  actor_id?: string | null;
-  /**
-   * @format uuid
-   */
-  group_id?: string | null;
-  /**
-   * Resource type identifier used in discovery results.
-   */
-  resource_type?: DiscoveryResourceType;
-  /**
-   * @format uuid
-   */
-  resource_id?: string | null;
-  /**
-   * @format uuid
-   */
-  version_id?: string | null;
-  target_user_id?: string | null;
-  role?: string | null;
-  permission?: string | null;
-  note?: string | null;
-  reason?: string | null;
-};
+  | "global.category.manage";
 
 /**
  * Group-scoped permission key.
@@ -1448,34 +1396,7 @@ export type DatasetDiscoveryItem = {
   group: Reference;
   providers?: Reference[];
   categories?: Reference[];
-  distributions?: DiscoveryDistribution[];
-};
-
-export type DiscoveryDistribution =
-  DiscoveryWebServiceDistribution | DiscoveryDownloadableFileDistribution;
-
-export type DiscoveryWebServiceDistribution = {
-  /**
-   * @format uuid
-   */
-  id: string;
-  name: string;
-  type: "WEB_SERVICE";
-  web_service_type: WebServiceType;
-  /**
-   * @minItems 1
-   */
-  visible_on?: WebServiceVisibleOn[] | null;
-  provider?: Reference;
-};
-
-export type DiscoveryDownloadableFileDistribution = {
-  /**
-   * @format uuid
-   */
-  id: string;
-  name: string;
-  type: "DOWNLOADABLE_FILE";
+  distributions?: Reference[];
 };
 
 export type SoftwareApplicationDiscoveryItem = {
@@ -1554,10 +1475,6 @@ export type User = UserListItem & {
    * Membership previews for this user.
    */
   memberships: UserMembershipSummary[];
-  /**
-   * Reason supplied when this user was blocked.
-   */
-  block_reason?: string | null;
 };
 
 /**
@@ -1937,16 +1854,9 @@ export type CreateMembershipRequest = {
 
 export type Problem = {
   /**
-   * Stable application error code used by clients
+   * Short, human-readable summary of problem
    *
-   * @format uri-reference
-   * @example not_found
-   */
-  type: string;
-  /**
-   * HTTP status reason phrase
-   *
-   * @example Not Found
+   * @example Resource not found
    */
   title: string;
   /**
@@ -1962,15 +1872,10 @@ export type Problem = {
    */
   detail?: string;
   /**
-   * Optional OpenTelemetry trace ID associated with this request
+   * Optional URI reference identifying this specific problem occurrence
    *
-   * @example 132c7c05d8f744d596e15a2620cacfeb
+   * @format uri-reference
+   * @example requests/req-123
    */
   instance?: string;
-  /**
-   * Optional dotted path identifying the request field related to the problem
-   *
-   * @example metadata.title
-   */
-  target?: string;
 };

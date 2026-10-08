@@ -16,6 +16,5 @@ export const GLOBAL_MANAGEMENT_PERMISSIONS = [
   'global.role.manage',
   'global.permission.manage',
   'global.notification.manage',
-  'global.organization.manage',
-  'global.activity.read'
+  'global.organization.manage'
 ] as const satisfies readonly GlobalPermission[];

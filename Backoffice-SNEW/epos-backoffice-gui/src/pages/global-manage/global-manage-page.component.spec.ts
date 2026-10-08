@@ -36,16 +36,6 @@ describe('GlobalManagePageComponent', () => {
     expect(destinationTitles(fixture.nativeElement)).toEqual(['Requests', 'Members']);
   });
 
-  it('shows members to an activity reader', () => {
-    currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
-      permission === 'global.activity.read'
-    );
-    const fixture = TestBed.createComponent(GlobalManagePageComponent);
-    fixture.detectChanges();
-
-    expect(destinationTitles(fixture.nativeElement)).toEqual(['Members']);
-  });
-
   it('shows the categories destination to a category scheme manager', () => {
     currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
       permission === 'global.category_scheme.manage'
