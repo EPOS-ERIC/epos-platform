@@ -298,7 +298,8 @@ UPDATE
     configurations
 SET
     is_official = $1,
-    is_public = $1::boolean OR is_public,
+    is_public = $1::boolean
+    OR is_public,
     updated_at = NOW()
 WHERE
     id = $2
@@ -364,7 +365,8 @@ SET
     title = $2::text::nonblank_text,
     description = $3::text::nonblank_text_opt,
     list_of_services = $4::text []::nonblank_text [],
-    is_public = is_official OR COALESCE($5::boolean, FALSE),
+    is_public = is_official
+    OR COALESCE($5::boolean, FALSE),
     updated_at = NOW()
 WHERE
     id = $6
