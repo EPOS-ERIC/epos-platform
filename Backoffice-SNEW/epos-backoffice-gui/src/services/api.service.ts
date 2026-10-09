@@ -546,6 +546,14 @@ export class ApiService {
     });
   }
 
+  copyResource(groupId: string, resourceType: DiscoveryResourceType, resourceId: string): Observable<WriteResult> {
+    return this.http.post<WriteResult>(
+      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(resourceId)}/copy`,
+      undefined,
+      { headers: { Authorization: `Bearer ${this.bearerToken}` } }
+    );
+  }
+
   private toHttpParams(params: DiscoverySearchParams): HttpParams {
     let httpParams = new HttpParams();
 

@@ -33,4 +33,10 @@ describe('resourceCapabilities', () => {
     expect(resourceCapabilities('REJECTED', ['group.resource.reopen']).reopen).toBe(true);
     expect(Object.values(resourceCapabilities(null, ['group.resource.publish'])).some(Boolean)).toBe(false);
   });
+
+  it('allows copy only for a published resource with at least one writable target group', () => {
+    expect(resourceCapabilities('PUBLISHED', [], true).copy).toBe(true);
+    expect(resourceCapabilities('PUBLISHED', [], false).copy).toBe(false);
+    expect(resourceCapabilities('DRAFT', [], true).copy).toBe(false);
+  });
 });

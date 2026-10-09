@@ -1,6 +1,7 @@
 import { Component, HostListener, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { groupIconPath } from '../../group-icons';
 import { ResourceCreationDialogService } from '../../services/resource-creation-dialog.service';
 
 @Component({
@@ -11,6 +12,10 @@ import { ResourceCreationDialogService } from '../../services/resource-creation-
 })
 export class ResourceCreationDialogComponent {
   protected readonly dialog = inject(ResourceCreationDialogService);
+
+  protected selectedGroupIconPath(): string | undefined {
+    return groupIconPath(this.dialog.groupId());
+  }
 
   @HostListener('document:keydown.escape')
   protected closeOnEscape(): void {

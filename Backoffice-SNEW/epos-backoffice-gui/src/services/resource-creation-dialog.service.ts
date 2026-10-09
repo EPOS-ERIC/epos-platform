@@ -18,8 +18,11 @@ export class ResourceCreationDialogService {
   private readonly resourceActions = inject(ResourceActionsService);
   private readonly router = inject(Router);
   private fallbackSectionPath = 'data';
+  private sourceResourceId = '';
 
   readonly openState = signal(false);
+  readonly mode = signal<'create' | 'copy'>('create');
+  readonly isCopy = computed(() => this.mode() === 'copy');
   readonly title = signal('');
   readonly description = signal('');
   readonly resourceType = signal<DiscoveryResourceType>('dataset');
@@ -41,9 +44,31 @@ export class ResourceCreationDialogService {
     if (!groups.length) return;
 
     this.fallbackSectionPath = fallbackSectionPath;
+    this.mode.set('create');
+    this.sourceResourceId = '';
     this.title.set('');
     this.description.set('');
     this.resourceType.set('dataset');
+    this.groupId.set(groups.some((group) => group.id === preferredGroupId) ? preferredGroupId : groups[0].id);
+    this.error.set('');
+    this.openState.set(true);
+  }
+
+  openCopy(
+    resourceType: DiscoveryResourceType,
+    resourceId: string,
+    preferredGroupId = '',
+    fallbackSectionPath = 'data'
+  ): void {
+    const groups = this.groups();
+    if (!groups.length || !resourceId) return;
+
+    this.fallbackSectionPath = fallbackSectionPath;
+    this.mode.set('copy');
+    this.sourceResourceId = resourceId;
+    this.title.set('');
+    this.description.set('');
+    this.resourceType.set(resourceType);
     this.groupId.set(groups.some((group) => group.id === preferredGroupId) ? preferredGroupId : groups[0].id);
     this.error.set('');
     this.openState.set(true);
@@ -55,6 +80,8 @@ export class ResourceCreationDialogService {
     }
 
     this.openState.set(false);
+    this.mode.set('create');
+    this.sourceResourceId = '';
     this.title.set('');
     this.description.set('');
     this.resourceType.set('dataset');
@@ -66,35 +93,40 @@ export class ResourceCreationDialogService {
     const description = this.description().trim();
     const resourceType = this.resourceType();
     const groupId = this.groupId();
+    const isCopy = this.isCopy();
 
     if (
       this.saving()
       || !groupId
       || !this.currentUserStore.hasGroupPermission(groupId, 'group.resource.create')
-      || !title
-      || !description
+      || (!isCopy && (!title || !description))
+      || (isCopy && !this.sourceResourceId)
     ) {
       return;
     }
 
-    const payload = this.buildRequest(resourceType, title, description);
     this.saving.set(true);
     this.error.set('');
-    this.apiService
-      .createResourceDraft(groupId, payload)
+    const request = isCopy
+      ? this.apiService.copyResource(groupId, resourceType, this.sourceResourceId)
+      : this.apiService.createResourceDraft(groupId, this.buildRequest(resourceType, title, description));
+    request
       .pipe(
         switchMap((result) => this.resourceActions.resolveCreatedResourceRoute(result, groupId, this.fallbackSectionPath)),
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.saving.set(false)),
         catchError((error) => {
-          console.error('Failed to create resource draft', error);
-          this.error.set('Failed to create resource draft.');
+          console.error(isCopy ? 'Failed to copy resource' : 'Failed to create resource draft', error);
+          this.error.set(isCopy ? 'Failed to copy resource.' : 'Failed to create resource draft.');
           return of(null);
         })
       )
       .subscribe((route) => {
         if (!route) {
-          this.error.set('Created resource, but could not open its detail page.');
+          this.error.set(isCopy
+            ? 'Resource copied, but its detail page could not be opened.'
+            : 'Created resource, but could not open its detail page.'
+          );
           return;
         }
 

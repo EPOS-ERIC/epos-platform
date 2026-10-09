@@ -50,6 +50,7 @@ import { orderVersionsByCreatedAt } from '../models/resource-version-comparison'
 import { ApiService, type ResourceVersionResponse } from '../services/api.service';
 import { DialogService } from '../services/dialog.service';
 import { ResourceActionsService } from '../services/resource-actions.service';
+import { ResourceCreationDialogService } from '../services/resource-creation-dialog.service';
 import { CurrentUserStore } from './current-user.store';
 
 export type ResourceDetailRouteContext = {
@@ -155,6 +156,7 @@ export class ResourceDetailStore {
   private readonly apiService = inject(ApiService);
   private readonly dialogService = inject(DialogService);
   private readonly resourceActions = inject(ResourceActionsService);
+  private readonly resourceCreationDialog = inject(ResourceCreationDialogService);
   private readonly currentUserStore = inject(CurrentUserStore);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -246,9 +248,14 @@ export class ResourceDetailStore {
     const groupId = version?.group_id ?? this.context()?.groupId ?? '';
     return this.currentUserStore.groupPermissions(groupId);
   });
-  readonly capabilities = computed(() => resourceCapabilities(this.status(), this.groupPermissions()));
+  readonly capabilities = computed(() => resourceCapabilities(
+    this.status(),
+    this.groupPermissions(),
+    this.resourceCreationDialog.groups().length > 0
+  ));
   readonly canEdit = computed(() => this.capabilities().edit);
   readonly canDelete = computed(() => this.capabilities().delete && Boolean(this.versionContext()));
+  readonly canCopy = computed(() => this.capabilities().copy && Boolean(this.versionContext()));
   readonly canViewHistory = computed(() => this.capabilities().viewHistory);
   readonly historyOpen = this.historyOpenState.asReadonly();
   readonly historyLoading = this.historyLoadingState.asReadonly();
@@ -637,6 +644,21 @@ export class ResourceDetailStore {
       return;
     }
     this.runAndReload((context) => this.resourceActions.archive(context, this.title()));
+  }
+
+  copy(): void {
+    if (!this.capabilities().copy) return;
+
+    const versionContext = this.versionContext();
+    const routeContext = this.context();
+    if (!versionContext || !routeContext) return;
+
+    this.resourceCreationDialog.openCopy(
+      versionContext.resourceType,
+      versionContext.resourceId,
+      versionContext.groupId,
+      routeContext.sectionPath
+    );
   }
 
   reopen(): void {

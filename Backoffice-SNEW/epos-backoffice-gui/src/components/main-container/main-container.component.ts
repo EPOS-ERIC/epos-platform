@@ -120,10 +120,20 @@ export class MainContainerComponent {
   protected readonly canCreateResource = computed(() =>
     this.currentUserStore.hasGroupPermission(this.selectedGroupId(), 'group.resource.create')
   );
+  protected readonly canCopyResources = computed(() => this.resourceCreationDialog.groups().length > 0);
   protected readonly canManageSelectedGroup = computed(() => {
     const groupId = this.selectedGroupId();
     return !!groupId && this.currentUserStore.canManageGroup(groupId);
   });
+
+  protected openCopyResource(item: DiscoveryItem): void {
+    this.resourceCreationDialog.openCopy(
+      item.type,
+      item.resource_id,
+      item.group.id,
+      item.concept === 'DATA' ? 'data' : item.concept === 'SOFTWARE' ? 'software' : 'facilities'
+    );
+  }
   protected readonly comparisonContext = signal<ResourceVersionComparisonContext | null>(null);
   protected readonly managementHeaderContext = computed<ManagementHeaderContext | null>(() => {
     if (this.globalManage() && !this.globalManagePanel()) {

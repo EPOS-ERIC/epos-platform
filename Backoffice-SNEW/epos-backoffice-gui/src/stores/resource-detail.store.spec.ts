@@ -7,6 +7,7 @@ import { vi } from 'vitest';
 import type {
   DatasetResourceMetadata,
   DiscoveryResourceType,
+  Group,
   ResourceVersion,
   ResourceVersionSummary,
   SoftwareApplicationResourceMetadata,
@@ -15,6 +16,7 @@ import type {
 import { ApiService, type ResourceVersionResponse } from '../services/api.service';
 import { DialogService } from '../services/dialog.service';
 import { ResourceActionsService } from '../services/resource-actions.service';
+import { ResourceCreationDialogService } from '../services/resource-creation-dialog.service';
 import { CurrentUserStore } from './current-user.store';
 import { ResourceDetailStore, type ResourceDetailRouteContext } from './resource-detail.store';
 
@@ -68,11 +70,14 @@ describe('ResourceDetailStore', () => {
     createDraft: vi.fn(),
     delete: vi.fn()
   };
+  const copyGroups = signal<Group[]>([]);
+  const resourceCreationDialog = { groups: copyGroups, openCopy: vi.fn() };
   let store: ResourceDetailStore;
 
   beforeEach(() => {
     vi.clearAllMocks();
     actionError.set('');
+    copyGroups.set([]);
     apiService.getResourceVersion.mockReturnValue(of(datasetVersion()));
     apiService.getUser.mockReturnValue(of(user()));
     apiService.listResourceVersions.mockReturnValue(of([]));
@@ -82,6 +87,7 @@ describe('ResourceDetailStore', () => {
         { provide: ApiService, useValue: apiService },
         { provide: DialogService, useValue: dialogService },
         { provide: ResourceActionsService, useValue: resourceActions },
+        { provide: ResourceCreationDialogService, useValue: resourceCreationDialog },
         { provide: CurrentUserStore, useValue: currentUserStore },
         { provide: Router, useValue: router }
       ]
@@ -218,6 +224,26 @@ describe('ResourceDetailStore', () => {
     expect(store.canEdit()).toBe(false);
     expect(store.sidebarActions()).toEqual([]);
     expect(resourceActions.sidebarActions).toHaveBeenCalledWith('SUBMITTED', ['group.resource.publish', 'group.resource.reject']);
+  });
+
+  it('opens copy selection for a published resource when a writable target exists', () => {
+    copyGroups.set([{ id: 'target-group', name: 'Target Group', position: 0, concept: 'DATA' }]);
+    apiService.getResourceVersion.mockReturnValue(of(datasetVersion({
+      status: 'PUBLISHED',
+      resource_id: 'published-resource',
+      group_id: 'source-group'
+    })));
+    store.load({ ...context('dataset', 'published-resource'), groupId: 'source-group', sectionPath: 'data' });
+
+    expect(store.canCopy()).toBe(true);
+    store.copy();
+
+    expect(resourceCreationDialog.openCopy).toHaveBeenCalledWith(
+      'dataset',
+      'published-resource',
+      'source-group',
+      'data'
+    );
   });
 
   it('enables version history for loaded draft and submitted versions', () => {

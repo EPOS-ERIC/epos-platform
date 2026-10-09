@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 
 import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
 import { ResultsTableComponent } from './results-table.component';
@@ -65,6 +66,42 @@ describe('ResultsTableComponent', () => {
     const link = fixture.nativeElement.querySelector('.toolbar a') as HTMLAnchorElement;
     expect(link.textContent?.trim()).toBe('Manage Group');
     expect(link.getAttribute('href')).toBe('/software/manage-group?groupId=group-id&returnUrl=%2Fsoftware%3FgroupId%3Dgroup-id%26dataType%3Dsoftware-application');
+  });
+
+  it('offers Copy only for published rows when a writable target group exists', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResultsTableComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ResultsTableComponent);
+    const published: DiscoveryItem = {
+      type: 'dataset',
+      resource_id: 'published-resource',
+      version_id: 'published-version',
+      name: 'Published dataset',
+      status: 'PUBLISHED',
+      updated_at: '2026-09-10T07:34:26.486Z',
+      concept: 'DATA',
+      group: { id: 'source-group', name: 'Source Group' }
+    };
+    const draft: DiscoveryItem = {
+      ...published,
+      resource_id: 'draft-resource',
+      version_id: 'draft-version',
+      name: 'Draft dataset',
+      status: 'DRAFT'
+    };
+    const copyResource = vi.fn();
+    fixture.componentInstance.copyResource.subscribe(copyResource);
+    fixture.componentRef.setInput('selectedGroupId', 'source-group');
+    fixture.componentRef.setInput('canCopyResources', true);
+    fixture.componentRef.setInput('discoveryItems', [published, draft]);
+    fixture.detectChanges();
+
+    const copyButtons = fixture.nativeElement.querySelectorAll('.copy-resource-button') as NodeListOf<HTMLButtonElement>;
+    expect(copyButtons).toHaveLength(1);
+    copyButtons[0].click();
+    expect(copyResource).toHaveBeenCalledWith(published);
   });
 
   it('shows the selected group logo in the heading and group column', async () => {

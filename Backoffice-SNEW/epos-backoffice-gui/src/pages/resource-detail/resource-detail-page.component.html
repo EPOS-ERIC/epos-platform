@@ -25,8 +25,11 @@
 
         <div class="detail-context-actions">
           <!-- <app-back-button [route]="backLink()" label="Back" appearance="dark" /> -->
-          @if (store.canViewHistory() || store.canDelete()) {
+          @if (store.canCopy() || store.canViewHistory() || store.canDelete()) {
             <div class="detail-context-resource-actions">
+              @if (store.canCopy()) {
+                <button type="button" class="app-button app-button--ghost detail-copy-button" (click)="store.copy()">Copy Resource</button>
+              }
               @if (store.canViewHistory()) {
                 <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
               }
@@ -126,8 +129,11 @@
 
         <div class="detail-context-actions">
           <app-back-button [route]="backLink()" label="Back" appearance="dark" />
-          @if (store.canViewHistory() || store.canDelete()) {
+          @if (store.canCopy() || store.canViewHistory() || store.canDelete()) {
             <div class="detail-context-resource-actions">
+              @if (store.canCopy()) {
+                <button type="button" class="app-button app-button--ghost detail-copy-button" (click)="store.copy()">Copy Resource</button>
+              }
               @if (store.canViewHistory()) {
                 <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
               }
@@ -201,8 +207,11 @@
 
         <div class="detail-context-actions">
           <!-- <app-back-button [route]="backLink()" label="Back" appearance="dark" /> -->
-          @if (store.canViewHistory() || store.canDelete()) {
+          @if (store.canCopy() || store.canViewHistory() || store.canDelete()) {
             <div class="detail-context-resource-actions">
+              @if (store.canCopy()) {
+                <button type="button" class="app-button app-button--ghost detail-copy-button" (click)="store.copy()">Copy Resource</button>
+              }
               @if (store.canViewHistory()) {
                 <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
               }

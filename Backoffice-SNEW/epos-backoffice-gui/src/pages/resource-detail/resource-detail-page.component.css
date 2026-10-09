@@ -86,6 +86,11 @@
   gap: 10px;
 }
 
+.detail-copy-button {
+  border-color: rgba(89, 133, 225, 0.45);
+  color: #476fca;
+}
+
 .rejection-note {
   grid-column: 1 / -1;
   max-height: 260px;

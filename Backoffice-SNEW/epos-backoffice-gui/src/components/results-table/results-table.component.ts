@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
@@ -21,6 +21,8 @@ export class ResultsTableComponent implements OnChanges {
   @Input() returnUrl = '/data';
   @Input() discoveryItems: DiscoveryItem[] | null = null;
   @Input() discoveryLoading = false;
+  @Input() canCopyResources = false;
+  @Output() copyResource = new EventEmitter<DiscoveryItem>();
 
   protected currentPage = 1;
   protected pageSize = 10;
@@ -58,6 +60,10 @@ export class ResultsTableComponent implements OnChanges {
 
   protected discoveryLastChange(item: DiscoveryItem): string {
     return item.updated_at;
+  }
+
+  protected canCopy(item: DiscoveryItem): boolean {
+    return this.canCopyResources && item.status === 'PUBLISHED';
   }
 
   protected detailLink(item: DiscoveryItem): string[] {

@@ -10,13 +10,15 @@ export type ResourceCapabilities = {
   reject: boolean;
   reopen: boolean;
   archive: boolean;
+  copy: boolean;
   createDraft: boolean;
   viewHistory: boolean;
 };
 
 export function resourceCapabilities(
   status: VersioningStatus | null,
-  permissions: readonly GroupPermission[]
+  permissions: readonly GroupPermission[],
+  canCopyToTargetGroup = false
 ): ResourceCapabilities {
   const isDraft = status === 'DRAFT';
   const hasPermission = (permission: GroupPermission): boolean => permissions.includes(permission);
@@ -30,6 +32,7 @@ export function resourceCapabilities(
     reject: status === 'SUBMITTED' && hasPermission(RESOURCE_ACTION_PERMISSIONS.reject),
     reopen: status === 'REJECTED' && hasPermission(RESOURCE_ACTION_PERMISSIONS['revert-to-draft']),
     archive: status === 'PUBLISHED' && hasPermission(RESOURCE_ACTION_PERMISSIONS.archive),
+    copy: status === 'PUBLISHED' && canCopyToTargetGroup,
     createDraft: (status === 'PUBLISHED' || status === 'ARCHIVED')
       && hasPermission(RESOURCE_ACTION_PERMISSIONS['create-new-draft']),
     viewHistory: isDraft || status === 'SUBMITTED'

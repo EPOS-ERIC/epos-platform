@@ -24,6 +24,40 @@
   grid-column: 1 / -1;
 }
 
+.copy-resource-type {
+  min-height: 42px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.group-select {
+  position: relative;
+}
+
+.group-select .app-input {
+  width: 100%;
+}
+
+.group-select:has(.group-select-logo) .app-input {
+  padding-left: 48px;
+}
+
+.group-select-logo {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
 textarea {
   resize: vertical;
 }

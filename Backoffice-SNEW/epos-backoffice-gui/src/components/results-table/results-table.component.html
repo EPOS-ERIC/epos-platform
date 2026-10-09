@@ -95,7 +95,12 @@
                 <span class="status-pill" [class]="discoveryStatusClass(item.status)">{{ item.status }}</span>
               </td>
               <td class="actions-col">
-                <a class="app-button app-button--ghost" [routerLink]="detailLink(item)" [queryParams]="detailQueryParams(item)">View</a>
+                <div class="row-actions">
+                  <a class="app-button app-button--ghost" [routerLink]="detailLink(item)" [queryParams]="detailQueryParams(item)">View</a>
+                  @if (canCopy(item)) {
+                    <button type="button" class="app-button app-button--ghost copy-resource-button" (click)="copyResource.emit(item)">Copy</button>
+                  }
+                </div>
               </td>
             </tr>
           }
