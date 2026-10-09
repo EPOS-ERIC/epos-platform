@@ -730,6 +730,10 @@ func (s *BooleanScalarParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *BooleanScalarParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
@@ -767,15 +771,16 @@ func (s *BooleanScalarParameter) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfBooleanScalarParameter = [8]string{
-	0: "kind",
-	1: "position",
-	2: "name",
-	3: "label",
-	4: "description",
-	5: "required",
-	6: "read_only",
-	7: "default",
+var jsonFieldsNameOfBooleanScalarParameter = [9]string{
+	0: "id",
+	1: "kind",
+	2: "position",
+	3: "name",
+	4: "label",
+	5: "description",
+	6: "required",
+	7: "read_only",
+	8: "default",
 }
 
 // Decode decodes BooleanScalarParameter from json.
@@ -783,12 +788,24 @@ func (s *BooleanScalarParameter) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode BooleanScalarParameter to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -798,7 +815,7 @@ func (s *BooleanScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
 		case "position":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int32()
 				s.Position = int32(v)
@@ -810,7 +827,7 @@ func (s *BooleanScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"position\"")
 			}
 		case "name":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.Name.Decode(d); err != nil {
 					return err
@@ -820,7 +837,7 @@ func (s *BooleanScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "label":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				if err := s.Label.Decode(d); err != nil {
 					return err
@@ -840,7 +857,7 @@ func (s *BooleanScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"description\"")
 			}
 		case "required":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				v, err := d.Bool()
 				s.Required = bool(v)
@@ -852,7 +869,7 @@ func (s *BooleanScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"required\"")
 			}
 		case "read_only":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
 				v, err := d.Bool()
 				s.ReadOnly = bool(v)
@@ -882,8 +899,9 @@ func (s *BooleanScalarParameter) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b01101111,
+	for i, mask := range [2]uint8{
+		0b11011111,
+		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -6024,6 +6042,10 @@ func (s *DateTimeScalarParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *DateTimeScalarParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
@@ -6079,18 +6101,19 @@ func (s *DateTimeScalarParameter) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfDateTimeScalarParameter = [11]string{
-	0:  "kind",
-	1:  "position",
-	2:  "name",
-	3:  "label",
-	4:  "description",
-	5:  "required",
-	6:  "read_only",
-	7:  "minimum",
-	8:  "maximum",
-	9:  "default",
-	10: "layout",
+var jsonFieldsNameOfDateTimeScalarParameter = [12]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "read_only",
+	8:  "minimum",
+	9:  "maximum",
+	10: "default",
+	11: "layout",
 }
 
 // Decode decodes DateTimeScalarParameter from json.
@@ -6102,8 +6125,20 @@ func (s *DateTimeScalarParameter) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -6113,7 +6148,7 @@ func (s *DateTimeScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
 		case "position":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int32()
 				s.Position = int32(v)
@@ -6125,7 +6160,7 @@ func (s *DateTimeScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"position\"")
 			}
 		case "name":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.Name.Decode(d); err != nil {
 					return err
@@ -6135,7 +6170,7 @@ func (s *DateTimeScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "label":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				if err := s.Label.Decode(d); err != nil {
 					return err
@@ -6155,7 +6190,7 @@ func (s *DateTimeScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"description\"")
 			}
 		case "required":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				v, err := d.Bool()
 				s.Required = bool(v)
@@ -6167,7 +6202,7 @@ func (s *DateTimeScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"required\"")
 			}
 		case "read_only":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
 				v, err := d.Bool()
 				s.ReadOnly = bool(v)
@@ -6228,7 +6263,7 @@ func (s *DateTimeScalarParameter) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b01101111,
+		0b11011111,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
@@ -9471,6 +9506,10 @@ func (s *FloatScalarParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *FloatScalarParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
@@ -9530,18 +9569,19 @@ func (s *FloatScalarParameter) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfFloatScalarParameter = [11]string{
-	0:  "kind",
-	1:  "position",
-	2:  "name",
-	3:  "label",
-	4:  "description",
-	5:  "required",
-	6:  "read_only",
-	7:  "minimum",
-	8:  "maximum",
-	9:  "default",
-	10: "enum",
+var jsonFieldsNameOfFloatScalarParameter = [12]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "read_only",
+	8:  "minimum",
+	9:  "maximum",
+	10: "default",
+	11: "enum",
 }
 
 // Decode decodes FloatScalarParameter from json.
@@ -9553,8 +9593,20 @@ func (s *FloatScalarParameter) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -9564,7 +9616,7 @@ func (s *FloatScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
 		case "position":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int32()
 				s.Position = int32(v)
@@ -9576,7 +9628,7 @@ func (s *FloatScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"position\"")
 			}
 		case "name":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.Name.Decode(d); err != nil {
 					return err
@@ -9586,7 +9638,7 @@ func (s *FloatScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "label":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				if err := s.Label.Decode(d); err != nil {
 					return err
@@ -9606,7 +9658,7 @@ func (s *FloatScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"description\"")
 			}
 		case "required":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				v, err := d.Bool()
 				s.Required = bool(v)
@@ -9618,7 +9670,7 @@ func (s *FloatScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"required\"")
 			}
 		case "read_only":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
 				v, err := d.Bool()
 				s.ReadOnly = bool(v)
@@ -9686,7 +9738,7 @@ func (s *FloatScalarParameter) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b01101111,
+		0b11011111,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
@@ -12324,6 +12376,10 @@ func (s *IntegerScalarParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *IntegerScalarParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
@@ -12383,18 +12439,19 @@ func (s *IntegerScalarParameter) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfIntegerScalarParameter = [11]string{
-	0:  "kind",
-	1:  "position",
-	2:  "name",
-	3:  "label",
-	4:  "description",
-	5:  "required",
-	6:  "read_only",
-	7:  "minimum",
-	8:  "maximum",
-	9:  "default",
-	10: "enum",
+var jsonFieldsNameOfIntegerScalarParameter = [12]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "read_only",
+	8:  "minimum",
+	9:  "maximum",
+	10: "default",
+	11: "enum",
 }
 
 // Decode decodes IntegerScalarParameter from json.
@@ -12406,8 +12463,20 @@ func (s *IntegerScalarParameter) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -12417,7 +12486,7 @@ func (s *IntegerScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
 		case "position":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int32()
 				s.Position = int32(v)
@@ -12429,7 +12498,7 @@ func (s *IntegerScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"position\"")
 			}
 		case "name":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.Name.Decode(d); err != nil {
 					return err
@@ -12439,7 +12508,7 @@ func (s *IntegerScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "label":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				if err := s.Label.Decode(d); err != nil {
 					return err
@@ -12459,7 +12528,7 @@ func (s *IntegerScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"description\"")
 			}
 		case "required":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				v, err := d.Bool()
 				s.Required = bool(v)
@@ -12471,7 +12540,7 @@ func (s *IntegerScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"required\"")
 			}
 		case "read_only":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
 				v, err := d.Bool()
 				s.ReadOnly = bool(v)
@@ -12539,7 +12608,7 @@ func (s *IntegerScalarParameter) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b01101111,
+		0b11011111,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
@@ -19512,6 +19581,10 @@ func (s ScalarParameter) encodeFields(e *jx.Encoder) {
 		{
 			s := s.StringScalarParameter
 			{
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
+			}
+			{
 				e.FieldStart("position")
 				e.Int32(s.Position)
 			}
@@ -19566,6 +19639,10 @@ func (s ScalarParameter) encodeFields(e *jx.Encoder) {
 		{
 			s := s.BooleanScalarParameter
 			{
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
+			}
+			{
 				e.FieldStart("position")
 				e.Int32(s.Position)
 			}
@@ -19603,6 +19680,10 @@ func (s ScalarParameter) encodeFields(e *jx.Encoder) {
 		e.Str("INTEGER")
 		{
 			s := s.IntegerScalarParameter
+			{
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
+			}
 			{
 				e.FieldStart("position")
 				e.Int32(s.Position)
@@ -19664,6 +19745,10 @@ func (s ScalarParameter) encodeFields(e *jx.Encoder) {
 		{
 			s := s.FloatScalarParameter
 			{
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
+			}
+			{
 				e.FieldStart("position")
 				e.Int32(s.Position)
 			}
@@ -19723,6 +19808,10 @@ func (s ScalarParameter) encodeFields(e *jx.Encoder) {
 		e.Str("DATETIME")
 		{
 			s := s.DateTimeScalarParameter
+			{
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
+			}
 			{
 				e.FieldStart("position")
 				e.Int32(s.Position)
@@ -23449,6 +23538,10 @@ func (s *StringScalarParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *StringScalarParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
@@ -23502,17 +23595,18 @@ func (s *StringScalarParameter) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfStringScalarParameter = [10]string{
-	0: "kind",
-	1: "position",
-	2: "name",
-	3: "label",
-	4: "description",
-	5: "required",
-	6: "read_only",
-	7: "default",
-	8: "enum",
-	9: "pattern",
+var jsonFieldsNameOfStringScalarParameter = [11]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "read_only",
+	8:  "default",
+	9:  "enum",
+	10: "pattern",
 }
 
 // Decode decodes StringScalarParameter from json.
@@ -23524,8 +23618,20 @@ func (s *StringScalarParameter) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -23535,7 +23641,7 @@ func (s *StringScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
 		case "position":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int32()
 				s.Position = int32(v)
@@ -23547,7 +23653,7 @@ func (s *StringScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"position\"")
 			}
 		case "name":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.Name.Decode(d); err != nil {
 					return err
@@ -23557,7 +23663,7 @@ func (s *StringScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "label":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				if err := s.Label.Decode(d); err != nil {
 					return err
@@ -23577,7 +23683,7 @@ func (s *StringScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"description\"")
 			}
 		case "required":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				v, err := d.Bool()
 				s.Required = bool(v)
@@ -23589,7 +23695,7 @@ func (s *StringScalarParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"required\"")
 			}
 		case "read_only":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
 				v, err := d.Bool()
 				s.ReadOnly = bool(v)
@@ -23647,7 +23753,7 @@ func (s *StringScalarParameter) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b01101111,
+		0b11011111,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {

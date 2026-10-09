@@ -22,11 +22,11 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 	layout := "YYYY-MM-DD"
 	tests := []struct {
 		name  string
-		value domain.Parameter
+		value domain.ParameterInput
 	}{
 		{
 			name: "string",
-			value: domain.Parameter{
+			value: domain.ParameterInput{
 				Position:    -1,
 				Name:        "string-value",
 				Label:       "String value",
@@ -42,7 +42,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 		},
 		{
 			name: "boolean",
-			value: domain.Parameter{
+			value: domain.ParameterInput{
 				Position: 2,
 				Name:     "enabled",
 				Label:    "Enabled",
@@ -51,7 +51,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 		},
 		{
 			name: "integer",
-			value: domain.Parameter{
+			value: domain.ParameterInput{
 				Position: 3,
 				Name:     "count",
 				Label:    "Count",
@@ -60,7 +60,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 		},
 		{
 			name: "float",
-			value: domain.Parameter{
+			value: domain.ParameterInput{
 				Position: 4,
 				Name:     "ratio",
 				Label:    "Ratio",
@@ -69,7 +69,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 		},
 		{
 			name: "datetime",
-			value: domain.Parameter{
+			value: domain.ParameterInput{
 				Position: 5,
 				Name:     "when",
 				Label:    "When",
@@ -78,13 +78,13 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 		},
 		{
 			name: "template",
-			value: domain.Parameter{
+			value: domain.ParameterInput{
 				Position: 6,
 				Name:     "filter",
 				Label:    "Filter",
-				Schema: domain.TemplateSchema{
+				Schema: domain.TemplateSchemaInput{
 					Template: "{{.value}}",
-					Parameters: []domain.Parameter{{
+					Parameters: []domain.ParameterInput{{
 						Position: 0,
 						Name:     "value",
 						Label:    "Value",
@@ -104,20 +104,20 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 			row := parameterRow(params)
 			var template *sqlc.ParameterTemplate
 			var children []sqlc.Parameter
-			if schema, ok := test.value.Schema.(domain.TemplateSchema); ok {
+			if schema, ok := test.value.Schema.(domain.TemplateSchemaInput); ok {
 				template = &sqlc.ParameterTemplate{ParameterID: row.ID, Template: schema.Template}
 				children = []sqlc.Parameter{parameterRowForSchema(schema.Parameters[0], row.ID)}
 			}
 			schemas := map[uuid.UUID]parameterSchemas{row.ID: parameterSchemaRow(test.value, row.ID)}
 			if len(children) > 0 {
-				schemas[children[0].ID] = parameterSchemaRow(test.value.Schema.(domain.TemplateSchema).Parameters[0], children[0].ID)
+				schemas[children[0].ID] = parameterSchemaRow(test.value.Schema.(domain.TemplateSchemaInput).Parameters[0], children[0].ID)
 			}
 			got, err := domainParameter(row, template, children, schemas)
 			if err != nil {
 				t.Fatalf("domainParameter() error = %v", err)
 			}
-			if !reflect.DeepEqual(got, test.value) {
-				t.Fatalf("parameter = %#v, want %#v", got, test.value)
+			if !reflect.DeepEqual(got.Input(), test.value) {
+				t.Fatalf("parameter = %#v, want %#v", got.Input(), test.value)
 			}
 		})
 	}
@@ -141,7 +141,7 @@ func parameterRow(value sqlc.AddLifecycleParameterParams) sqlc.Parameter {
 	}
 }
 
-func parameterRowForSchema(value domain.Parameter, parentID uuid.UUID) sqlc.Parameter {
+func parameterRowForSchema(value domain.ParameterInput, parentID uuid.UUID) sqlc.Parameter {
 	params, err := parameterParams(value, nil, nil, &parentID, nil, nil, false)
 	if err != nil {
 		panic(err)
@@ -149,7 +149,7 @@ func parameterRowForSchema(value domain.Parameter, parentID uuid.UUID) sqlc.Para
 	return parameterRow(params)
 }
 
-func parameterSchemaRow(value domain.Parameter, id uuid.UUID) parameterSchemas {
+func parameterSchemaRow(value domain.ParameterInput, id uuid.UUID) parameterSchemas {
 	result := parameterSchemas{}
 	switch schema := value.Schema.(type) {
 	case domain.StringSchema:
@@ -174,7 +174,7 @@ func parameterSchemaRow(value domain.Parameter, id uuid.UUID) parameterSchemas {
 func TestParameterParamsPreservesWebServiceOwner(t *testing.T) {
 	serviceID := uuid.New()
 	location := domain.ParameterLocationQuery
-	params, err := parameterParams(domain.Parameter{
+	params, err := parameterParams(domain.ParameterInput{
 		Name:   "value",
 		Label:  "Value",
 		Schema: domain.StringSchema{},

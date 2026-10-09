@@ -902,6 +902,7 @@ func scalarParameterOutput(value domain.Parameter) *metadatalifecyclev1.ScalarPa
 		Description: value.Description,
 		Required:    value.Required,
 		ReadOnly:    value.ReadOnly,
+		Id:          value.ID.String(),
 	}
 	switch item := value.Schema.(type) {
 	case domain.StringSchema:
@@ -1170,12 +1171,12 @@ func webServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServ
 	if err != nil {
 		return domain.WebServiceInput{}, err
 	}
-	var body *domain.RequestBody
+	var body *domain.RequestBodyInput
 	if value.BodyContentType != nil || value.BodyTemplate != nil || len(value.GetBodyParameters()) > 0 {
 		if value.BodyContentType == nil || value.BodyTemplate == nil {
 			return domain.WebServiceInput{}, apperror.New(apperror.CodeValidationFailed, "web service body content type and template are required") //nolint:wrapcheck
 		}
-		bodyParameters := make([]domain.Parameter, 0, len(value.GetBodyParameters()))
+		bodyParameters := make([]domain.ParameterInput, 0, len(value.GetBodyParameters()))
 		for _, item := range value.GetBodyParameters() {
 			mapped, err := scalarParameterInput(item)
 			if err != nil {
@@ -1183,7 +1184,7 @@ func webServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServ
 			}
 			bodyParameters = append(bodyParameters, mapped)
 		}
-		body = &domain.RequestBody{ContentType: value.GetBodyContentType(), Template: value.GetBodyTemplate(), Parameters: bodyParameters}
+		body = &domain.RequestBodyInput{ContentType: value.GetBodyContentType(), Template: value.GetBodyTemplate(), Parameters: bodyParameters}
 	}
 	return domain.WebServiceInput{Name: value.GetName(), Description: value.Description, TemplateURL: value.GetTemplateUrl(), Method: method, Type: serviceType, VisibleOn: visibleOn, Body: body, Parameters: parameters, Format: value.GetFormat(), ProviderID: provider, Documentation: documentation, SpatialCoverage: spatial, TemporalCoverage: temporal, ContactPointIDs: contactPoints}, nil
 }
@@ -1296,7 +1297,7 @@ func webServiceVisibleOnOutput(values []domain.WebServiceVisibleOn) []metadatali
 	return result
 }
 
-func webServiceParameterInput(value *metadatalifecyclev1.Parameter) (domain.WebServiceParameterInput, error) {
+func webServiceParameterInput(value *metadatalifecyclev1.ParameterInput) (domain.WebServiceParameterInput, error) {
 	if value == nil {
 		return domain.WebServiceParameterInput{}, apperror.New(apperror.CodeValidationFailed, "web service parameter is required") //nolint:wrapcheck
 	}
@@ -1308,7 +1309,7 @@ func webServiceParameterInput(value *metadatalifecyclev1.Parameter) (domain.WebS
 	if err != nil {
 		return domain.WebServiceParameterInput{}, err
 	}
-	return domain.WebServiceParameterInput{Parameter: parameter, Property: value.Property, Location: location, Explode: value.GetExplode()}, nil
+	return domain.WebServiceParameterInput{ParameterInput: parameter, Property: value.Property, Location: location, Explode: value.GetExplode()}, nil
 }
 
 func webServiceParameterLocationInput(value metadatalifecyclev1.WebServiceParameterLocation) (domain.ParameterLocation, error) {
@@ -1337,137 +1338,137 @@ func webServiceParameterLocationOutput(value domain.ParameterLocation) metadatal
 	}
 }
 
-func parameterInput(value *metadatalifecyclev1.Parameter) (domain.Parameter, error) {
+func parameterInput(value *metadatalifecyclev1.ParameterInput) (domain.ParameterInput, error) {
 	if value == nil {
-		return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "parameter is required") //nolint:wrapcheck
+		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "parameter is required") //nolint:wrapcheck
 	}
-	parameter := domain.Parameter{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
+	parameter := domain.ParameterInput{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
 	switch v := value.GetValue().(type) {
-	case *metadatalifecyclev1.Parameter_String_:
+	case *metadatalifecyclev1.ParameterInput_String_:
 		if v.String_ == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "string parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "string parameter is required") //nolint:wrapcheck
 		}
 		enum, err := stringEnumInput(v.String_.GetEnum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: enum, Pattern: v.String_.Pattern, MultipleValues: v.String_.MultipleValues}
-	case *metadatalifecyclev1.Parameter_Boolean:
+	case *metadatalifecyclev1.ParameterInput_Boolean:
 		if v.Boolean == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "boolean parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "boolean parameter is required") //nolint:wrapcheck
 		}
 		parameter.Schema = domain.BooleanSchema{Default: v.Boolean.Default}
-	case *metadatalifecyclev1.Parameter_Integer:
+	case *metadatalifecyclev1.ParameterInput_Integer:
 		if v.Integer == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "integer parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "integer parameter is required") //nolint:wrapcheck
 		}
 		enum, err := integerEnumInput(v.Integer.GetEnum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: enum, MultipleValues: v.Integer.MultipleValues}
-	case *metadatalifecyclev1.Parameter_Float:
+	case *metadatalifecyclev1.ParameterInput_Float:
 		if v.Float == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "float parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "float parameter is required") //nolint:wrapcheck
 		}
 		enum, err := floatEnumInput(v.Float.GetEnum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: enum, MultipleValues: v.Float.MultipleValues}
-	case *metadatalifecyclev1.Parameter_DateTime:
+	case *metadatalifecyclev1.ParameterInput_DateTime:
 		if v.DateTime == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "date-time parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "date-time parameter is required") //nolint:wrapcheck
 		}
 		minimum, err := timestampInput(v.DateTime.GetMinimum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		maximum, err := timestampInput(v.DateTime.GetMaximum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		def, err := timestampInput(v.DateTime.GetDefault())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		parameter.Schema = domain.DateTimeSchema{Minimum: minimum, Maximum: maximum, Default: def, Layout: v.DateTime.Layout}
-	case *metadatalifecyclev1.Parameter_Template:
+	case *metadatalifecyclev1.ParameterInput_Template:
 		if v.Template == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "template parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "template parameter is required") //nolint:wrapcheck
 		}
-		parameters := make([]domain.Parameter, 0, len(v.Template.GetParameters()))
+		parameters := make([]domain.ParameterInput, 0, len(v.Template.GetParameters()))
 		for _, item := range v.Template.GetParameters() {
 			mapped, err := scalarParameterInput(item)
 			if err != nil {
-				return domain.Parameter{}, err
+				return domain.ParameterInput{}, err
 			}
 			parameters = append(parameters, mapped)
 		}
-		parameter.Schema = domain.TemplateSchema{Template: v.Template.GetTemplate(), Parameters: parameters}
+		parameter.Schema = domain.TemplateSchemaInput{Template: v.Template.GetTemplate(), Parameters: parameters}
 	default:
-		return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "parameter value is required") //nolint:wrapcheck
+		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "parameter value is required") //nolint:wrapcheck
 	}
 	return parameter, nil
 }
 
-func scalarParameterInput(value *metadatalifecyclev1.ScalarParameter) (domain.Parameter, error) {
+func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (domain.ParameterInput, error) {
 	if value == nil {
-		return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter is required") //nolint:wrapcheck
+		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter is required") //nolint:wrapcheck
 	}
-	parameter := domain.Parameter{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
+	parameter := domain.ParameterInput{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
 	switch v := value.GetValue().(type) {
-	case *metadatalifecyclev1.ScalarParameter_String_:
+	case *metadatalifecyclev1.ScalarParameterInput_String_:
 		if v.String_ == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "string parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "string parameter is required") //nolint:wrapcheck
 		}
 		enum, err := stringEnumInput(v.String_.GetEnum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: enum, Pattern: v.String_.Pattern}
-	case *metadatalifecyclev1.ScalarParameter_Boolean:
+	case *metadatalifecyclev1.ScalarParameterInput_Boolean:
 		if v.Boolean == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "boolean parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "boolean parameter is required") //nolint:wrapcheck
 		}
 		parameter.Schema = domain.BooleanSchema{Default: v.Boolean.Default}
-	case *metadatalifecyclev1.ScalarParameter_Integer:
+	case *metadatalifecyclev1.ScalarParameterInput_Integer:
 		if v.Integer == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "integer parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "integer parameter is required") //nolint:wrapcheck
 		}
 		enum, err := integerEnumInput(v.Integer.GetEnum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: enum}
-	case *metadatalifecyclev1.ScalarParameter_Float:
+	case *metadatalifecyclev1.ScalarParameterInput_Float:
 		if v.Float == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "float parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "float parameter is required") //nolint:wrapcheck
 		}
 		enum, err := floatEnumInput(v.Float.GetEnum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: enum}
-	case *metadatalifecyclev1.ScalarParameter_DateTime:
+	case *metadatalifecyclev1.ScalarParameterInput_DateTime:
 		if v.DateTime == nil {
-			return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "date-time parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "date-time parameter is required") //nolint:wrapcheck
 		}
 		minimum, err := timestampInput(v.DateTime.GetMinimum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		maximum, err := timestampInput(v.DateTime.GetMaximum())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		def, err := timestampInput(v.DateTime.GetDefault())
 		if err != nil {
-			return domain.Parameter{}, err
+			return domain.ParameterInput{}, err
 		}
 		parameter.Schema = domain.DateTimeSchema{Minimum: minimum, Maximum: maximum, Default: def, Layout: v.DateTime.Layout}
 	default:
-		return domain.Parameter{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter value is required") //nolint:wrapcheck
+		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter value is required") //nolint:wrapcheck
 	}
 	return parameter, nil
 }

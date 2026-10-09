@@ -397,6 +397,7 @@ func (s *BooleanParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/BooleanScalarParameter
 type BooleanScalarParameter struct {
+	ID          uuid.UUID                  `json:"id"`
 	Kind        BooleanScalarParameterKind `json:"kind"`
 	Position    int32                      `json:"position"`
 	Name        NonBlankString             `json:"name"`
@@ -405,6 +406,11 @@ type BooleanScalarParameter struct {
 	Required    bool                       `json:"required"`
 	ReadOnly    bool                       `json:"read_only"`
 	Default     OptNilBool                 `json:"default"`
+}
+
+// GetID returns the value of ID.
+func (s *BooleanScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -445,6 +451,11 @@ func (s *BooleanScalarParameter) GetReadOnly() bool {
 // GetDefault returns the value of Default.
 func (s *BooleanScalarParameter) GetDefault() OptNilBool {
 	return s.Default
+}
+
+// SetID sets the value of ID.
+func (s *BooleanScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -2804,6 +2815,7 @@ func (s *DateTimeParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/DateTimeScalarParameter
 type DateTimeScalarParameter struct {
+	ID          uuid.UUID                   `json:"id"`
 	Kind        DateTimeScalarParameterKind `json:"kind"`
 	Position    int32                       `json:"position"`
 	Name        NonBlankString              `json:"name"`
@@ -2815,6 +2827,11 @@ type DateTimeScalarParameter struct {
 	Maximum     OptNilDateTime              `json:"maximum"`
 	Default     OptNilDateTime              `json:"default"`
 	Layout      OptNilString                `json:"layout"`
+}
+
+// GetID returns the value of ID.
+func (s *DateTimeScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -2870,6 +2887,11 @@ func (s *DateTimeScalarParameter) GetDefault() OptNilDateTime {
 // GetLayout returns the value of Layout.
 func (s *DateTimeScalarParameter) GetLayout() OptNilString {
 	return s.Layout
+}
+
+// SetID sets the value of ID.
+func (s *DateTimeScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -4536,6 +4558,7 @@ func (s *FloatParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/FloatScalarParameter
 type FloatScalarParameter struct {
+	ID          uuid.UUID                `json:"id"`
 	Kind        FloatScalarParameterKind `json:"kind"`
 	Position    int32                    `json:"position"`
 	Name        NonBlankString           `json:"name"`
@@ -4547,6 +4570,11 @@ type FloatScalarParameter struct {
 	Maximum     OptNilFloat64            `json:"maximum"`
 	Default     OptNilFloat64            `json:"default"`
 	Enum        []FloatEnumOption        `json:"enum"`
+}
+
+// GetID returns the value of ID.
+func (s *FloatScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -4602,6 +4630,11 @@ func (s *FloatScalarParameter) GetDefault() OptNilFloat64 {
 // GetEnum returns the value of Enum.
 func (s *FloatScalarParameter) GetEnum() []FloatEnumOption {
 	return s.Enum
+}
+
+// SetID sets the value of ID.
+func (s *FloatScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -6269,6 +6302,7 @@ func (s *IntegerParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/IntegerScalarParameter
 type IntegerScalarParameter struct {
+	ID          uuid.UUID                  `json:"id"`
 	Kind        IntegerScalarParameterKind `json:"kind"`
 	Position    int32                      `json:"position"`
 	Name        NonBlankString             `json:"name"`
@@ -6280,6 +6314,11 @@ type IntegerScalarParameter struct {
 	Maximum     OptNilInt64                `json:"maximum"`
 	Default     OptNilInt64                `json:"default"`
 	Enum        []IntegerEnumOption        `json:"enum"`
+}
+
+// GetID returns the value of ID.
+func (s *IntegerScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -6335,6 +6374,11 @@ func (s *IntegerScalarParameter) GetDefault() OptNilInt64 {
 // GetEnum returns the value of Enum.
 func (s *IntegerScalarParameter) GetEnum() []IntegerEnumOption {
 	return s.Enum
+}
+
+// SetID sets the value of ID.
+func (s *IntegerScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -12205,6 +12249,7 @@ func (s *StringParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/StringScalarParameter
 type StringScalarParameter struct {
+	ID          uuid.UUID                 `json:"id"`
 	Kind        StringScalarParameterKind `json:"kind"`
 	Position    int32                     `json:"position"`
 	Name        NonBlankString            `json:"name"`
@@ -12215,6 +12260,11 @@ type StringScalarParameter struct {
 	Default     OptNilString              `json:"default"`
 	Enum        []StringEnumOption        `json:"enum"`
 	Pattern     OptNilString              `json:"pattern"`
+}
+
+// GetID returns the value of ID.
+func (s *StringScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -12265,6 +12315,11 @@ func (s *StringScalarParameter) GetEnum() []StringEnumOption {
 // GetPattern returns the value of Pattern.
 func (s *StringScalarParameter) GetPattern() OptNilString {
 	return s.Pattern
+}
+
+// SetID sets the value of ID.
+func (s *StringScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
