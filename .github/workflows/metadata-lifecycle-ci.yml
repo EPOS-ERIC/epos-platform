@@ -4,10 +4,14 @@ on:
   pull_request:
     paths:
       - services/metadata-lifecycle/**
-      - packages/go/logging**
+      - packages/go/apperror/**
+      - packages/go/grpcserver/**
+      - packages/go/logging/**
       - packages/go/observability/**
       - packages/go/middleware/**
       - packages/go/apidocs/**
+      - packages/go/postgres/**
+      - packages/protobuf/**
       - packages/scripts/epos-banner.sh
       - Makefile
       - .github/workflows/metadata-lifecycle-ci.yml
@@ -20,10 +24,14 @@ on:
       - "v*"
     paths:
       - services/metadata-lifecycle/**
-      - packages/go/logging**
+      - packages/go/apperror/**
+      - packages/go/grpcserver/**
+      - packages/go/logging/**
       - packages/go/observability/**
       - packages/go/middleware/**
       - packages/go/apidocs/**
+      - packages/go/postgres/**
+      - packages/protobuf/**
       - packages/scripts/epos-banner.sh
       - Makefile
       - .github/workflows/metadata-lifecycle-ci.yml

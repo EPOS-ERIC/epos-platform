@@ -5,9 +5,8 @@
 - Keep business logic in the owning domain package like `identity/`, `authz/`, `groups/`.
 - Keep domain packages independent from `grpcapi/`, `server/`, protobuf-generated packages, and PostgreSQL implementation packages. Depend on interfaces where an adapter is required.
 - Keep RDF/Turtle parsing and mapping in `turtle/`; do not put parser-specific behavior in domain or transport packages.
-- Keep gRPC registration, request validation, metadata extraction, status mapping, and protobuf/domain conversion in `grpcapi/`. gRPC handlers must be thin and delegate use-case behavior to domain services.
-- Keep server startup, shutdown, runtime lifecycle, and dependency wiring in `server/` and `main.go`. Do not put business logic there.
-- Keep PostgreSQL bootstrap, migrations, repositories, and persistence adapters in `db/`. Do not leak database or SQLC types into transport contracts or domain types.
+- Keep protobuf/domain conversion, metadata extraction, and service-specific validation/status mapping in `grpcapi/`. Use `packages/go/grpcserver` for generic validation mechanics and server runtime; keep service registration and dependency wiring in `server/` and process lifecycle in `main.go`.
+- Keep migration embedding, service-specific pool codecs, repositories, and persistence adapters in `db/`. Do not leak database or SQLC types into transport contracts or domain types.
 - Define API transport types separately from domain types. Map explicitly instead of aliasing types across boundaries.
 - Extend the package that owns a responsibility. Add a new package only for a distinct domain or adapter boundary.
 
@@ -22,7 +21,7 @@
 - Parse required actor metadata once at the gRPC transport boundary. Pass the typed `domain.Actor` to services; do not reparse it in services or encode it into protobuf business messages.
 - Convert domain errors to gRPC status errors at the gRPC boundary. Do not return raw domain errors or database errors from RPC methods.
 - Use `packages/go/apperror` for client-safe application errors shared with Gateway. Create field-specific validation errors at the first layer that can identify the failed field; retain causes only for internal logging.
-- Keep shared application-error to gRPC status conversion and protobuf validation-error mapping in `grpcapi/`. Server interceptors may invoke these boundary helpers but must not own mapping policy.
+- Keep protobuf validation-error mapping in `grpcapi/`. The shared server runtime invokes these boundary helpers but does not own mapping policy.
 
 ## SQLC
 
@@ -43,12 +42,12 @@
 - Use typed `domain.Actor`. Parse at transport boundary with `NewActor`; services trust parsed actors and skip trim/empty checks.
 - Optional actor: absent is allowed, malformed metadata returns `InvalidArgument`; required actor returns `Unauthenticated` when absent. Convert `domain.Actor` to `string` at adapter boundaries when string required.
 - Use `packages/go/apperror` for domain and service errors. Match wrapped application errors by `AppError.Code`; do not add sentinel errors for application outcomes.
-- Keep transport conversion in `grpcapi/`: encode known `AppError` values with the shared gRPC adapter and map unknown errors to safe `internal`.
+- Use `packages/go/apperror/grpc` for status encoding; keep service-specific validation target mapping in `grpcapi/`.
 - See `packages/go/apperror` for shared error classification, safe detail, target, cause, and transport principles.
 - Caller-input validation returns client validation outcomes; include a field target and actionable detail as soon as the failing field is known.
 - Persisted-data validation revalidates and canonicalizes reads; invalid stored data is a server error, not a client validation failure. Convert reused input-validation errors once at this boundary.
 - Preserve existing nested targets when adding parent paths. Keep causes for internal diagnostics, never for wire details.
-- gRPC handlers return errors directly. `grpcapi/` owns application-error-to-status conversion and fails closed on unknown errors; server interceptors may invoke this boundary mapping and own request logging/tracing.
+- gRPC handlers return errors directly. `packages/go/apperror/grpc` owns application-error-to-status conversion and fails closed on unknown errors; `grpcapi/` owns validation mapping. `packages/go/grpcserver` invokes those boundary helpers and owns generic request logging/tracing and recovery.
 - Protobuf validation violations are mapped to `AppError` in `grpcapi/`, including the most specific field path available.
 
 ## Workflow

@@ -14,6 +14,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
+	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -22,6 +23,7 @@ func NewRouter(
 	identityService *identity.Service,
 	membershipService *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
+	sharingService *sharingservice.Service,
 	authService *auth.Service,
 	corsAllowOrigin string,
 ) http.Handler {
@@ -55,6 +57,7 @@ func NewRouter(
 		identityService,
 		membershipService,
 		metadataLifecycleClient,
+		sharingService,
 		log,
 	)
 	generatedServer, err := gatewayapi.NewServer(

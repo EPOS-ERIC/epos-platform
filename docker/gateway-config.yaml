@@ -15,5 +15,7 @@ upstream:
 services:
   metadata-lifecycle:
     url: "metadata-lifecycle:5000"
+  sharing:
+    url: "sharing:8200"
   auth:
     url: "http://oss-aai-service:8080/"

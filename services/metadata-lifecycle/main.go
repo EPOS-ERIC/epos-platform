@@ -38,7 +38,7 @@ func main() {
 
 	log.Info("metadata-lifecycle service started")
 
-	database, err := db.Open(log, cfg)
+	database, err := db.Open(ctx, log, cfg)
 	if err != nil {
 		panic(err)
 	}

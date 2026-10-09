@@ -154,6 +154,7 @@ class AuthorizationContractTest(unittest.TestCase):
             "global.organization.manage": "GLOBAL",
             "global.contact_point.manage": "GLOBAL",
             "global.category_scheme.manage": "GLOBAL",
+            "global.configuration.manage": "GLOBAL",
             "group.category.manage": "GROUP",
             "global.category.manage": "GLOBAL",
         }
@@ -366,6 +367,7 @@ class AuthorizationContractTest(unittest.TestCase):
                 "global.organization.manage",
                 "global.contact_point.manage",
                 "global.category_scheme.manage",
+                "global.configuration.manage",
                 "global.resource.create",
                 "global.resource.edit",
                 "global.resource.submit",

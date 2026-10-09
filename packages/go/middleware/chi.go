@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// TODO: we don't need a dedicated package for this since only the gateway has an http server, we can move the middleware there
 type responseWriter struct {
 	http.ResponseWriter
 	status int

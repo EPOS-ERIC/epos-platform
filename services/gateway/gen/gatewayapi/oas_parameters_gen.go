@@ -1070,6 +1070,71 @@ func decodeDecideGroupRoleRequestParams(args [3]string, argsEscaped bool, r *htt
 	return params, nil
 }
 
+// DeleteConfigurationParams is parameters of deleteConfiguration operation.
+type DeleteConfigurationParams struct {
+	ConfigurationId uuid.UUID
+}
+
+func unpackDeleteConfigurationParams(packed middleware.Parameters) (params DeleteConfigurationParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "configurationId",
+			In:   "path",
+		}
+		params.ConfigurationId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeDeleteConfigurationParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteConfigurationParams, _ error) {
+	// Decode path: configurationId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "configurationId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConfigurationId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "configurationId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DeleteContactPointParams is parameters of deleteContactPoint operation.
 type DeleteContactPointParams struct {
 	ContactPointId uuid.UUID
@@ -2664,6 +2729,71 @@ func decodeDraftFromPublicationParams(args [2]string, argsEscaped bool, r *http.
 	return params, nil
 }
 
+// GetConfigurationParams is parameters of getConfiguration operation.
+type GetConfigurationParams struct {
+	ConfigurationId uuid.UUID
+}
+
+func unpackGetConfigurationParams(packed middleware.Parameters) (params GetConfigurationParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "configurationId",
+			In:   "path",
+		}
+		params.ConfigurationId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetConfigurationParams(args [1]string, argsEscaped bool, r *http.Request) (params GetConfigurationParams, _ error) {
+	// Decode path: configurationId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "configurationId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConfigurationId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "configurationId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetContactPointParams is parameters of getContactPoint operation.
 type GetContactPointParams struct {
 	ContactPointId uuid.UUID
@@ -3532,6 +3662,165 @@ func decodeGrantGroupPermissionParams(args [3]string, argsEscaped bool, r *http.
 		return params, &ogenerrors.DecodeParamError{
 			Name: "permission",
 			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListConfigurationsParams is parameters of listConfigurations operation.
+type ListConfigurationsParams struct {
+	// Manager-only creator filter.
+	OwnerID OptString `json:",omitempty,omitzero"`
+	// Set to `all` to list every configuration; manager-only.
+	Scope OptListConfigurationsScope `json:",omitempty,omitzero"`
+}
+
+func unpackListConfigurationsParams(packed middleware.Parameters) (params ListConfigurationsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "owner_id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.OwnerID = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "scope",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Scope = v.(OptListConfigurationsScope)
+		}
+	}
+	return params
+}
+
+func decodeListConfigurationsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListConfigurationsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: owner_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "owner_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotOwnerIDVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOwnerIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.OwnerID.SetTo(paramsDotOwnerIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.OwnerID.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     1,
+							MinLengthSet:  true,
+							MaxLength:     0,
+							MaxLengthSet:  false,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "owner_id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: scope.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "scope",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotScopeVal ListConfigurationsScope
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotScopeVal = ListConfigurationsScope(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Scope.SetTo(paramsDotScopeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Scope.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "scope",
+			In:   "query",
 			Err:  err,
 		}
 	}
@@ -4740,6 +5029,71 @@ func decodeReopenResourceVersionParams(args [3]string, argsEscaped bool, r *http
 	return params, nil
 }
 
+// ReplaceConfigurationParams is parameters of replaceConfiguration operation.
+type ReplaceConfigurationParams struct {
+	ConfigurationId uuid.UUID
+}
+
+func unpackReplaceConfigurationParams(packed middleware.Parameters) (params ReplaceConfigurationParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "configurationId",
+			In:   "path",
+		}
+		params.ConfigurationId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeReplaceConfigurationParams(args [1]string, argsEscaped bool, r *http.Request) (params ReplaceConfigurationParams, _ error) {
+	// Decode path: configurationId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "configurationId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConfigurationId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "configurationId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ReplaceContactPointParams is parameters of replaceContactPoint operation.
 type ReplaceContactPointParams struct {
 	ContactPointId uuid.UUID
@@ -5611,6 +5965,71 @@ func decodeRevokeGroupPermissionParams(args [3]string, argsEscaped bool, r *http
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "permission",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SetConfigurationOfficialStatusParams is parameters of setConfigurationOfficialStatus operation.
+type SetConfigurationOfficialStatusParams struct {
+	ConfigurationId uuid.UUID
+}
+
+func unpackSetConfigurationOfficialStatusParams(packed middleware.Parameters) (params SetConfigurationOfficialStatusParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "configurationId",
+			In:   "path",
+		}
+		params.ConfigurationId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeSetConfigurationOfficialStatusParams(args [1]string, argsEscaped bool, r *http.Request) (params SetConfigurationOfficialStatusParams, _ error) {
+	// Decode path: configurationId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "configurationId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConfigurationId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "configurationId",
 			In:   "path",
 			Err:  err,
 		}

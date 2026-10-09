@@ -178,39 +178,42 @@ Users may hold both `EDITOR` and `REVIEWER` in same group. Active membership its
 
 ### Permission Catalog
 
-| Permission                      | Scope  | Meaning                                                                                                                                        |
-| ------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `group.resource.create`         | Group  | Create logical dataset or software resource, draft, or copy in member group.                                                                   |
-| `global.resource.create`        | Global | Create logical dataset or software resource, draft, or copy in any group without membership.                                                   |
-| `group.resource.edit`           | Group  | Modify group resource draft.                                                                                                                   |
-| `global.resource.edit`          | Global | Modify resource drafts in any group without membership.                                                                                        |
-| `group.resource.submit`         | Group  | Submit group resource draft.                                                                                                                   |
-| `global.resource.submit`        | Global | Submit resource drafts in any group without membership.                                                                                        |
-| `group.resource.withdraw`       | Group  | Return submitted resource version to draft.                                                                                                    |
-| `global.resource.withdraw`      | Global | Return submitted resource versions to draft in any group without membership.                                                                   |
-| `group.resource.reopen`         | Group  | Return rejected resource version to draft.                                                                                                     |
-| `global.resource.reopen`        | Global | Return rejected resource versions to draft in any group without membership.                                                                    |
-| `group.resource.discard`        | Group  | Delete resource draft or rejected version.                                                                                                     |
-| `global.resource.discard`       | Global | Delete resource drafts or rejected versions in any group without membership.                                                                   |
-| `group.resource.reject`         | Group  | Reject submitted resource version.                                                                                                             |
-| `global.resource.reject`        | Global | Reject submitted resource versions in any group without membership.                                                                            |
-| `group.resource.publish`        | Group  | Publish submitted resource version.                                                                                                            |
-| `global.resource.publish`       | Global | Publish submitted resource versions in any group without membership.                                                                           |
-| `group.resource.unpublish`      | Group  | Archive current published resource version without replacement.                                                                                |
-| `global.resource.unpublish`     | Global | Archive published resource versions in any group without membership.                                                                           |
-| `group.membership.manage`       | Group  | View group membership roster and accept, reject, or revoke memberships.                                                                        |
-| `group.role.manage`             | Group  | View group membership roster; accept or reject role requests and assign or remove fixed group roles.                                           |
-| `group.permission.manage`       | Group  | View group membership roster and grant or revoke group-scoped granted permissions.                                                             |
-| `global.membership.manage`      | Global | List and read users; view every group membership roster and accept, reject, or revoke memberships in every group.                              |
-| `global.role.manage`            | Global | List and read users; view every group membership roster; accept or reject role requests and assign or remove fixed group roles in every group. |
-| `global.permission.manage`      | Global | List and read users; grant or revoke globally scoped permissions.                                                                              |
-| `global.organization.manage`    | Global | Manage canonical organizations, identifiers, and hierarchy.                                                                                    |
-| `global.contact_point.manage`   | Global | Manage canonical contact points.                                                                                                               |
-| `global.category_scheme.manage` | Global | Manage groups' category-scheme metadata.                                                                                                       |
-| `group.category.manage`         | Group  | Manage canonical categories in owning group.                                                                                                   |
-| `global.category.manage`        | Global | Manage canonical categories in any group without membership.                                                                                   |
+| Permission                      | Scope  | Meaning                                                                                                                                             |
+| ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `group.resource.create`         | Group  | Create logical dataset or software resource, draft, or copy in member group.                                                                        |
+| `global.resource.create`        | Global | Create logical dataset or software resource, draft, or copy in any group without membership.                                                        |
+| `group.resource.edit`           | Group  | Modify group resource draft.                                                                                                                        |
+| `global.resource.edit`          | Global | Modify resource drafts in any group without membership.                                                                                             |
+| `group.resource.submit`         | Group  | Submit group resource draft.                                                                                                                        |
+| `global.resource.submit`        | Global | Submit resource drafts in any group without membership.                                                                                             |
+| `group.resource.withdraw`       | Group  | Return submitted resource version to draft.                                                                                                         |
+| `global.resource.withdraw`      | Global | Return submitted resource versions to draft in any group without membership.                                                                        |
+| `group.resource.reopen`         | Group  | Return rejected resource version to draft.                                                                                                          |
+| `global.resource.reopen`        | Global | Return rejected resource versions to draft in any group without membership.                                                                         |
+| `group.resource.discard`        | Group  | Delete resource draft or rejected version.                                                                                                          |
+| `global.resource.discard`       | Global | Delete resource drafts or rejected versions in any group without membership.                                                                        |
+| `group.resource.reject`         | Group  | Reject submitted resource version.                                                                                                                  |
+| `global.resource.reject`        | Global | Reject submitted resource versions in any group without membership.                                                                                 |
+| `group.resource.publish`        | Group  | Publish submitted resource version.                                                                                                                 |
+| `global.resource.publish`       | Global | Publish submitted resource versions in any group without membership.                                                                                |
+| `group.resource.unpublish`      | Group  | Archive current published resource version without replacement.                                                                                     |
+| `global.resource.unpublish`     | Global | Archive published resource versions in any group without membership.                                                                                |
+| `group.membership.manage`       | Group  | View group membership roster and accept, reject, or revoke memberships.                                                                             |
+| `group.role.manage`             | Group  | View group membership roster; accept or reject role requests and assign or remove fixed group roles.                                                |
+| `group.permission.manage`       | Group  | View group membership roster and grant or revoke group-scoped granted permissions.                                                                  |
+| `global.membership.manage`      | Global | List and read users; view every group membership roster and accept, reject, or revoke memberships in every group.                                   |
+| `global.role.manage`            | Global | List and read users; view every group membership roster; accept or reject role requests and assign or remove fixed group roles in every group.      |
+| `global.permission.manage`      | Global | List and read users; grant or revoke globally scoped permissions.                                                                                   |
+| `global.organization.manage`    | Global | Manage canonical organizations, identifiers, and hierarchy.                                                                                         |
+| `global.contact_point.manage`   | Global | Manage canonical contact points.                                                                                                                    |
+| `global.category_scheme.manage` | Global | Manage groups' category-scheme metadata.                                                                                                            |
+| `group.category.manage`         | Group  | Manage canonical categories in owning group.                                                                                                        |
+| `global.category.manage`        | Global | Manage canonical categories in any group without membership.                                                                                        |
+| `global.configuration.manage`   | Global | Manage official configurations and every user's personal configurations in the Sharing service. See [Sharing authorization](../sharing/sharing.md). |
 
 An active user with `global.permission.manage` grants and revokes globally scoped permissions. An active member with a `group.*` permission performs that action only in their group. A user with the corresponding `global.*` permission performs that action in every group without membership. Group role managers may assign or remove `EDITOR` and `REVIEWER` only; a user with `global.role.manage` may also assign or remove `GROUP_ADMIN`. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires `global.membership.manage`. Group permission managers grant and revoke group-scoped granted permissions in their group. `GROUP_ADMIN` includes all three group management permissions. Users with `global.organization.manage`, `global.contact_point.manage`, `global.category_scheme.manage`, or `global.category.manage` manage corresponding canonical entities globally. A user with `group.category.manage` manages canonical categories only in the group where permission is granted. Group creation and deletion, metadata import, global `ADMIN` assignment, user blocking, and non-public read/discovery retain explicit `AuthorizeAdmin` behavior for now; future permission-specific replacements are listed below.
+
+`global.configuration.manage` is the permission for Sharing administration. It is granted to global `ADMIN` through `role_permissions` and may also be granted directly by a user with `global.permission.manage`. Its Sharing authorization flow is specified in [sharing.md](../sharing/sharing.md).
 
 Groups and categories are publicly readable without authentication. A group is also its canonical category scheme for authorization and API purposes. Public group metadata never includes memberships, roles, granted permissions, or role requests. A user with a global management permission may list users and read any user detail; users may also read their own detail. Group membership roster access requires a global membership/role management permission or an active membership with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` in that group. Roster entries expose member ID, given name, family name, email, membership status, assigned roles, granted group permissions, role-derived group permissions, and pending role requests. A user may read the same assigned roles, granted group permissions, and role-derived group permissions for their own memberships.
 

@@ -24,6 +24,7 @@ func NewService(log *slog.Logger, metadataLifecycle *clients.MetadataLifecycle) 
 }
 
 func (s *Service) GetUser(ctx context.Context, actorID, id string) (domain.User, error) {
+	// TODO: move the self resolution in the metadataLifecycle
 	if id == "self" {
 		id = actorID
 	}

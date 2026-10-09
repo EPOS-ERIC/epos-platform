@@ -1,0 +1,144 @@
+syntax = "proto3";
+
+package configuration.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/configuration/v1;configurationv1";
+
+enum ConfigurationListScope {
+  CONFIGURATION_LIST_SCOPE_UNSPECIFIED = 0;
+  CONFIGURATION_LIST_SCOPE_OWN = 1;
+  CONFIGURATION_LIST_SCOPE_OWNER = 2;
+  CONFIGURATION_LIST_SCOPE_ALL = 3;
+  CONFIGURATION_LIST_SCOPE_OFFICIAL = 4;
+}
+
+message Configuration {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  bytes configuration = 2 [
+    (buf.validate.field).bytes.min_len = 1,
+    (buf.validate.field).bytes.max_len = 8388608
+  ];
+  string title = 3 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 500
+  }];
+  optional string description = 4 [(buf.validate.field).string.max_len = 10000];
+  repeated string list_of_services = 5 [
+    (buf.validate.field).repeated.max_items = 100,
+    (buf.validate.field).repeated.items.string.min_len = 1,
+    (buf.validate.field).repeated.items.string.max_len = 500
+  ];
+  bool is_official = 6;
+  bool is_public = 7;
+  string owner_id = 8 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message ConfigurationSummary {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string title = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 500
+  }];
+  optional string description = 3 [(buf.validate.field).string.max_len = 10000];
+  repeated string list_of_services = 4 [
+    (buf.validate.field).repeated.max_items = 100,
+    (buf.validate.field).repeated.items.string.min_len = 1,
+    (buf.validate.field).repeated.items.string.max_len = 500
+  ];
+  bool is_official = 5;
+  bool is_public = 6;
+  optional string owner_id = 7 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message CreateConfigurationRequest {
+  bytes configuration = 1 [
+    (buf.validate.field).bytes.min_len = 1,
+    (buf.validate.field).bytes.max_len = 8388608
+  ];
+  string title = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 500
+  }];
+  optional string description = 3 [(buf.validate.field).string.max_len = 10000];
+  repeated string list_of_services = 4 [
+    (buf.validate.field).repeated.max_items = 100,
+    (buf.validate.field).repeated.items.string.min_len = 1,
+    (buf.validate.field).repeated.items.string.max_len = 500
+  ];
+  bool is_public = 5;
+}
+
+message CreateConfigurationResponse {
+  Configuration configuration = 1;
+}
+
+message GetConfigurationRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message GetConfigurationResponse {
+  Configuration configuration = 1;
+}
+
+message ListConfigurationsRequest {
+  ConfigurationListScope scope = 1 [(buf.validate.field).enum.defined_only = true];
+  optional string owner_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message ListConfigurationsResponse {
+  repeated ConfigurationSummary configurations = 1;
+}
+
+message UpdateConfigurationRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  bytes configuration = 2 [
+    (buf.validate.field).bytes.min_len = 1,
+    (buf.validate.field).bytes.max_len = 8388608
+  ];
+  string title = 3 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 500
+  }];
+  optional string description = 4 [(buf.validate.field).string.max_len = 10000];
+  repeated string list_of_services = 5 [
+    (buf.validate.field).repeated.max_items = 100,
+    (buf.validate.field).repeated.items.string.min_len = 1,
+    (buf.validate.field).repeated.items.string.max_len = 500
+  ];
+  optional bool is_public = 6;
+}
+
+message UpdateConfigurationResponse {
+  Configuration configuration = 1;
+}
+
+message DeleteConfigurationRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message DeleteConfigurationResponse {}
+
+message SetConfigurationOfficialStatusRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  optional bool is_official = 2;
+}
+
+message SetConfigurationOfficialStatusResponse {
+  Configuration configuration = 1;
+}
+
+service ConfigurationService {
+  rpc CreateConfiguration(CreateConfigurationRequest) returns (CreateConfigurationResponse);
+  rpc GetConfiguration(GetConfigurationRequest) returns (GetConfigurationResponse);
+  rpc ListConfigurations(ListConfigurationsRequest) returns (ListConfigurationsResponse);
+  rpc UpdateConfiguration(UpdateConfigurationRequest) returns (UpdateConfigurationResponse);
+  rpc DeleteConfiguration(DeleteConfigurationRequest) returns (DeleteConfigurationResponse);
+  rpc SetConfigurationOfficialStatus(SetConfigurationOfficialStatusRequest) returns (SetConfigurationOfficialStatusResponse);
+}

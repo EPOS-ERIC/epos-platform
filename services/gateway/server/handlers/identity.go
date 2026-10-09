@@ -154,6 +154,8 @@ func toAPIProtoGlobalPermissions(values []metadatalifecyclev1.GlobalPermission) 
 			permission = gatewayapi.GlobalPermissionGlobalResourceUnpublish
 		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE:
 			permission = gatewayapi.GlobalPermissionGlobalCategoryManage
+		case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONFIGURATION_MANAGE:
+			permission = gatewayapi.GlobalPermissionGlobalConfigurationManage
 		default:
 			return nil, fmt.Errorf("metadata-lifecycle returned unknown global permission: %v", value)
 		}

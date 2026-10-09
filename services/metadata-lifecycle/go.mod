@@ -5,18 +5,17 @@ go 1.27
 require (
 	buf.build/go/protovalidate v1.3.0
 	github.com/EPOS-ERIC/epos-platform/packages/go/apperror v0.0.0
+	github.com/EPOS-ERIC/epos-platform/packages/go/grpcserver v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
+	github.com/EPOS-ERIC/epos-platform/packages/go/postgres v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/protobuf v0.0.0
 	github.com/deiu/rdf2go v0.0.0-20241212211204-b661ba0dfd25
-	github.com/exaring/otelpgx v0.11.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/pressly/goose/v3 v3.27.3
 	github.com/twpayne/go-geom v1.6.1
 	github.com/twpayne/pgx-geom v1.0.0
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0
 	go.opentelemetry.io/otel v1.46.0
 	go.opentelemetry.io/otel/trace v1.46.0
 	google.golang.org/grpc v1.83.2
@@ -34,6 +33,7 @@ require (
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deiu/gon3 v0.0.0-20241212124032-93153c038193 // indirect
+	github.com/exaring/otelpgx v0.11.1 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
@@ -55,6 +55,7 @@ require (
 	github.com/pingcap/failpoint v0.0.0-20240528011301-b51a646c7c86 // indirect
 	github.com/pingcap/log v1.1.0 // indirect
 	github.com/pingcap/tidb/pkg/parser v0.0.0-20260418072757-ce92298d1124 // indirect
+	github.com/pressly/goose/v3 v3.27.3 // indirect
 	github.com/riza-io/grpc-go v0.2.0 // indirect
 	github.com/rychipman/easylex v0.0.0-20160129204217-49ee7767142f // indirect
 	github.com/sethvargo/go-retry v0.4.0 // indirect
@@ -67,6 +68,7 @@ require (
 	github.com/wasilibs/wazero-helpers v0.0.0-20240620070341-3dff1577cd52 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/bridges/otelslog v0.19.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.20.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.44.0 // indirect
@@ -97,7 +99,11 @@ replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => ../../packages
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/apperror => ../../packages/go/apperror
 
+replace github.com/EPOS-ERIC/epos-platform/packages/go/grpcserver => ../../packages/go/grpcserver
+
 replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => ../../packages/go/observability
+
+replace github.com/EPOS-ERIC/epos-platform/packages/go/postgres => ../../packages/go/postgres
 
 replace github.com/EPOS-ERIC/epos-platform/packages/protobuf => ../../packages/protobuf
 

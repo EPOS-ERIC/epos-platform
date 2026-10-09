@@ -13,6 +13,7 @@ import (
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
+	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/validate"
 	"go.opentelemetry.io/otel/trace"
@@ -22,14 +23,16 @@ import (
 // Metadata Lifecycle client; identity orchestration remains in identity.Service.
 type ogenHandler struct {
 	metadataLifecycle *clients.MetadataLifecycle
+	sharing           *sharingservice.Service
 	identity          *identity.Service
 	membership        *membership.Service
 	log               *slog.Logger
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, log *slog.Logger) *ogenHandler {
+func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, sharing *sharingservice.Service, log *slog.Logger) *ogenHandler {
 	return &ogenHandler{
 		metadataLifecycle: metadataLifecycle,
+		sharing:           sharing,
 		identity:          i,
 		membership:        m,
 		log:               log,

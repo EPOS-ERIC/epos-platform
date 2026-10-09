@@ -44,6 +44,24 @@ services:
       timeout: 5s
       retries: 20
 
+  sharing-db:
+    image: postgres:18-alpine
+    environment:
+      - POSTGRES_DB=sharing
+      - POSTGRES_USER=sharing
+      - POSTGRES_PASSWORD=sharing
+    ports:
+      - "5435:5432"
+    volumes:
+      - sharing-db-data:/var/lib/postgresql
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sharing -d sharing || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
   gateway-service:
     image: epos-gateway-dev:local
     ports:
@@ -106,6 +124,41 @@ services:
       - epos-network
     healthcheck:
       test: ["CMD", "grpc-health-probe", "-addr=localhost:5000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  sharing-service:
+    image: epos-sharing-dev:local
+    depends_on:
+      sharing-db:
+        condition: service_healthy
+    ports:
+      - "8200:8200"
+    environment:
+      - LOG_LEVEL=DEBUG
+      - SERVER_PORT=8200
+      - DB_HOST=sharing-db
+      - DB_PORT=5432
+      - DB_NAME=sharing
+      - DB_USER=sharing
+      - DB_PASSWORD=sharing
+      - OTEL_SERVICE_NAME=sharing
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
+    user: 0:0
+    volumes:
+      - type: bind
+        source: ${HOME}/go/pkg/mod
+        target: /go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    restart: on-failure
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD", "grpc-health-probe", "-addr=localhost:8200"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -195,6 +248,7 @@ volumes:
   go-build-cache:
   metadata-lifecycle-db-data:
   data-retriever-db-data:
+  sharing-db-data:
   oss-aai-data:
 
 networks:
