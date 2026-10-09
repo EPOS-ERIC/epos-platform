@@ -531,7 +531,7 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 		}
 		for _, parameter := range service.Parameters {
 			location := parameter.Location
-			if _, err := persistParameter(ctx, q, parameter.Parameter, &created.ID, nil, nil, parameter.Property, &location, parameter.Explode); err != nil {
+			if _, err := persistParameter(ctx, q, parameter.ParameterInput, &created.ID, nil, nil, parameter.Property, &location, parameter.Explode); err != nil {
 				return fmt.Errorf("add web service parameter: %w", err)
 			}
 		}
@@ -787,7 +787,6 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 				location = domain.ParameterLocation(*item.Location)
 			}
 			service.Parameters = append(service.Parameters, domain.WebServiceParameter{
-				ID:        item.ID,
 				Parameter: parameter,
 				Property:  item.Property,
 				Location:  location,

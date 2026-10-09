@@ -3044,8 +3044,9 @@ components:
     StringScalarParameter:
       type: object
       additionalProperties: false
-      required: [kind, position, name, label, required, read_only]
+      required: [id, kind, position, name, label, required, read_only]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3060,8 +3061,9 @@ components:
     BooleanScalarParameter:
       type: object
       additionalProperties: false
-      required: [kind, position, name, label, required, read_only]
+      required: [id, kind, position, name, label, required, read_only]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3074,8 +3076,9 @@ components:
     IntegerScalarParameter:
       type: object
       additionalProperties: false
-      required: [kind, position, name, label, required, read_only]
+      required: [id, kind, position, name, label, required, read_only]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3091,8 +3094,9 @@ components:
     FloatScalarParameter:
       type: object
       additionalProperties: false
-      required: [kind, position, name, label, required, read_only]
+      required: [id, kind, position, name, label, required, read_only]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3108,8 +3112,9 @@ components:
     DateTimeScalarParameter:
       type: object
       additionalProperties: false
-      required: [kind, position, name, label, required, read_only]
+      required: [id, kind, position, name, label, required, read_only]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }

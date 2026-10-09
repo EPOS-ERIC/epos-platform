@@ -114,14 +114,3 @@ func (d *PostgresDB) Close() error {
 	d.db.Close()
 	return nil
 }
-
-// PingContext checks PostgreSQL using ctx.
-func (d *PostgresDB) PingContext(ctx context.Context) error {
-	if d.db == nil {
-		return fmt.Errorf("database connection is nil")
-	}
-	if err := d.db.Ping(ctx); err != nil {
-		return fmt.Errorf("ping database: %w", err)
-	}
-	return nil
-}

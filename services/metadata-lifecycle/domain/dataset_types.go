@@ -94,7 +94,7 @@ type WebServiceInput struct {
 	Method           HTTPMethod
 	Type             WebServiceType
 	VisibleOn        []WebServiceVisibleOn
-	Body             *RequestBody
+	Body             *RequestBodyInput
 	Parameters       []WebServiceParameterInput
 	Format           string
 	ProviderID       *uuid.UUID
@@ -216,8 +216,8 @@ func (l ParameterLocation) Valid() bool {
 	}
 }
 
-// Parameter is a scalar body or template parameter.
-type Parameter struct {
+// ParameterInput contains caller-controlled scalar or template parameter fields.
+type ParameterInput struct {
 	Position    int
 	Name        string
 	Label       string
@@ -227,19 +227,30 @@ type Parameter struct {
 	Schema      ParameterSchema
 }
 
+// Parameter is persisted scalar or template parameter metadata.
+type Parameter struct {
+	ParameterInput
+	ID uuid.UUID
+}
+
 type WebServiceParameterInput struct {
-	Parameter
+	ParameterInput
 	Property *string
 	Location ParameterLocation
 	Explode  bool
 }
 
 type WebServiceParameter struct {
-	ID uuid.UUID
 	Parameter
 	Property *string
 	Location ParameterLocation
 	Explode  bool
+}
+
+type RequestBodyInput struct {
+	ContentType string
+	Template    string
+	Parameters  []ParameterInput
 }
 
 type RequestBody struct {
@@ -335,6 +346,14 @@ type TemplateSchema struct {
 
 func (TemplateSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindTemplate }
 func (TemplateSchema) parameterSchema()          {}
+
+type TemplateSchemaInput struct {
+	Template   string
+	Parameters []ParameterInput
+}
+
+func (TemplateSchemaInput) Kind() ParameterSchemaKind { return ParameterSchemaKindTemplate }
+func (TemplateSchemaInput) parameterSchema()          {}
 
 type DistributionType string
 

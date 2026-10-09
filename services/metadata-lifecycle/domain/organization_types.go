@@ -20,12 +20,6 @@ type Organization struct {
 	ContactPoints []uuid.UUID
 }
 
-// OrganizationReference identifies an organization used by another resource.
-type OrganizationReference struct {
-	ID   uuid.UUID
-	Name string
-}
-
 // OrganizationIdentifier is a persisted organization identifier.
 type OrganizationIdentifier struct {
 	ID    uuid.UUID

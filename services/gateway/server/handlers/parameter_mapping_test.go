@@ -22,10 +22,12 @@ func TestScalarParameterMappingsOmitTopLevelFields(t *testing.T) {
 	}
 
 	label := "One"
+	id := uuid.New()
 	apiValue, err := toAPIScalarParameter(&metadatalifecyclev1.ScalarParameter{
 		Position: 1,
 		Name:     "value",
 		Label:    "Value",
+		Id:       id.String(),
 		Value: &metadatalifecyclev1.ScalarParameter_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
 			Enum: []*metadatalifecyclev1.StringEnumOption{{Value: "one", Label: &label}, {Value: "two"}},
 		}},

@@ -718,11 +718,11 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 			}
 			parameterValue.Position = len(service.Parameters)
 			parameter := domain.WebServiceParameter{
-				ID:        ownedID(service.ID.String(), "parameter", mapping),
-				Parameter: parameterValue,
-				Property:  stringPtr(m.optionalString(mapping, hydraProperty)),
-				Location:  hydraParameterLocation(serviceTemplate, parameterValue.Name),
-				Explode:   false,
+				ParameterInput: parameterValue,
+				ID:             ownedID(service.ID.String(), "parameter", mapping),
+				Property:       stringPtr(m.optionalString(mapping, hydraProperty)),
+				Location:       hydraParameterLocation(serviceTemplate, parameterValue.Name),
+				Explode:        false,
 			}
 			parameters, mergeErr := appendUniqueParameter(service.Parameters, parameter)
 			if mergeErr != nil {
@@ -737,14 +737,14 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 	return service, nil
 }
 
-func (m *mapper) parameter(source string) (domain.Parameter, error) {
+func (m *mapper) parameter(source string) (domain.ParameterInput, error) {
 	if err := m.checkSingleValues(source,
 		hydraVariable, "http://www.w3.org/2000/01/rdf-schema#label", hydraProperty,
 		hydraRequired, schemaMultipleValues, schemaReadonlyValue,
 		rdfsRange, schemaDefaultValue, schemaMinValue, schemaMaxValue,
 		schemaValuePattern,
 	); err != nil {
-		return domain.Parameter{}, err
+		return domain.ParameterInput{}, err
 	}
 	name := m.requiredString(source, hydraVariable)
 	label := m.optionalString(source, "http://www.w3.org/2000/01/rdf-schema#label")
@@ -752,9 +752,9 @@ func (m *mapper) parameter(source string) (domain.Parameter, error) {
 		label = name
 	}
 	if name == "" {
-		return domain.Parameter{}, fmt.Errorf("parameter %q has no variable", source)
+		return domain.ParameterInput{}, fmt.Errorf("parameter %q has no variable", source)
 	}
-	parameter := domain.Parameter{
+	parameter := domain.ParameterInput{
 		Name:     name,
 		Label:    label,
 		Required: m.bool(source, hydraRequired),
@@ -770,7 +770,7 @@ func (m *mapper) parameter(source string) (domain.Parameter, error) {
 		defaultText, hasDefault := m.firstString(source, schemaDefaultValue)
 		defaultValue := strings.EqualFold(defaultText, "true")
 		if hasDefault && !strings.EqualFold(defaultText, "false") && !defaultValue {
-			return domain.Parameter{}, fmt.Errorf("invalid boolean default %q", defaultText)
+			return domain.ParameterInput{}, fmt.Errorf("invalid boolean default %q", defaultText)
 		}
 		var defaultPointer *bool
 		if hasDefault {
@@ -1414,13 +1414,13 @@ func appendUniqueParameter(values []domain.WebServiceParameter, value domain.Web
 		if existing.Schema == nil || value.Schema == nil || existing.Schema.Kind() != value.Schema.Kind() {
 			return values, fmt.Errorf("parameter %q has incompatible kinds %q and %q", value.Name, schemaKind(existing.Schema), schemaKind(value.Schema))
 		}
-		values[i].Parameter = mergeParameter(existing.Parameter, value.Parameter)
+		values[i].ParameterInput = mergeParameter(existing.ParameterInput, value.ParameterInput)
 		return values, nil
 	}
 	return append(values, value), nil
 }
 
-func mergeParameter(existing, incoming domain.Parameter) domain.Parameter {
+func mergeParameter(existing, incoming domain.ParameterInput) domain.ParameterInput {
 	merged := existing
 	merged.Description = mergeStringDefault(existing.Description, incoming.Description)
 	merged.Required = existing.Required || incoming.Required
