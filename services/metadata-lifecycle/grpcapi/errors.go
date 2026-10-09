@@ -6,22 +6,7 @@ import (
 
 	"buf.build/go/protovalidate"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
-	apperrorgrpc "github.com/EPOS-ERIC/epos-platform/packages/go/apperror/grpc"
 )
-
-// NormalizeError maps a handler error to a client-safe gRPC status.
-func NormalizeError(cause error) error {
-	if cause == nil {
-		return nil
-	}
-
-	appErr, ok := errors.AsType[*apperror.AppError](cause)
-	if !ok {
-		appErr = apperror.Wrap(apperror.CodeInternal, "", cause)
-	}
-
-	return apperrorgrpc.ToStatus(appErr)
-}
 
 // ValidationAppError converts the first protobuf validation violation to the
 // shared client-safe application error contract.

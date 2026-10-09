@@ -23,6 +23,7 @@ func NewService(log *slog.Logger, metadataLifecycle *clients.MetadataLifecycle) 
 }
 
 func (s *Service) RevokeMembership(ctx context.Context, actorID, groupID, userID string) error {
+	// TODO: move the self resolution in the metadataLifecycle and remove this useless service
 	if userID == "self" {
 		userID = actorID
 	}

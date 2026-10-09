@@ -53,6 +53,7 @@ const (
 	GlobalPermissionResourcePublish      GlobalPermission = "global.resource.publish"
 	GlobalPermissionResourceUnpublish    GlobalPermission = "global.resource.unpublish"
 	GlobalPermissionCategoryManage       GlobalPermission = "global.category.manage"
+	GlobalPermissionConfigurationManage  GlobalPermission = "global.configuration.manage"
 )
 
 // GroupPermission is a permission evaluated within a group's scope.

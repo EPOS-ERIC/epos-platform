@@ -47,6 +47,8 @@ tags:
     description: Request, review, and administer group membership and access.
   - name: Imports
     description: Import RDF Turtle metadata into draft resources.
+  - name: Sharing
+    description: Store and retrieve shared workspace configurations.
   - name: Notifications
     description: Manage notification topics and email subscriptions.
 
@@ -103,6 +105,174 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /configurations:
+    get:
+      tags: [Sharing]
+      summary: List configurations
+      description: Lists your configurations, including official ones you created. Managers can filter by `owner_id` or use `scope=all` (not both). Requires authentication.
+      operationId: listConfigurations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: owner_id
+          in: query
+          required: false
+          schema: { type: string, minLength: 1 }
+          description: Manager-only creator filter.
+        - name: scope
+          in: query
+          required: false
+          schema: { type: string, enum: [all] }
+          description: Set to `all` to list every configuration; manager-only.
+      responses:
+        "200":
+          description: Configuration summaries returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ConfigurationSummary" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    post:
+      tags: [Sharing]
+      summary: Create personal configuration
+      description: Creates a personal configuration for the authenticated user. Omitted or null `is_public` makes it private. Each user may create up to 50 non-official configurations; managers share this limit.
+      operationId: createConfiguration
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConfigurationWriteRequest" }
+      responses:
+        "201":
+          description: Personal configuration created; no Location header is returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigurationDetail" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /configurations/{configurationId}:
+    parameters:
+      - {
+          name: configurationId,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
+    get:
+      tags: [Sharing]
+      summary: Get configuration
+      description: Returns configuration details by ID. Public configurations, including official ones, are readable without login. Private configurations require the creator or a manager.
+      operationId: getConfiguration
+      security:
+        - {}
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Configuration details returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigurationDetail" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    put:
+      tags: [Sharing]
+      summary: Replace configuration
+      description: Replaces configuration content and metadata. Creators or managers may replace non-official configurations; official configurations require manager permission and remain public. Setting `is_public` to `false` on an official configuration is rejected.
+      operationId: replaceConfiguration
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConfigurationWriteRequest" }
+      responses:
+        "200":
+          description: Configuration replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigurationDetail" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    delete:
+      tags: [Sharing]
+      summary: Delete configuration
+      description: Deletes a configuration by ID. Creators may delete non-official configurations; managers may delete any configuration.
+      operationId: deleteConfiguration
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Shared configuration deleted }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /official-configurations:
+    get:
+      tags: [Sharing]
+      summary: List official configurations
+      description: Lists public summaries of official configurations. Owner IDs and configuration documents are omitted.
+      operationId: listOfficialConfigurations
+      security: [{}]
+      responses:
+        "200":
+          description: Official configuration summaries returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OfficialConfigurationSummary" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /configurations/{configurationId}/official-status:
+    parameters:
+      - name: configurationId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [Sharing]
+      summary: Set official status
+      description: Sets whether a configuration is official. Requires `global.configuration.manage`; promotion makes it public, and demotion keeps it public. Repeating the current status has no effect.
+      operationId: setConfigurationOfficialStatus
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SetConfigurationOfficialStatusRequest" }
+      responses:
+        "200":
+          description: Configuration status updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigurationDetail" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /search:
     get:
       tags:
@@ -2043,6 +2213,7 @@ components:
         - global.resource.publish
         - global.resource.unpublish
         - global.category.manage
+        - global.configuration.manage
 
     GroupPermission:
       type: string
@@ -4065,6 +4236,72 @@ components:
             type: string
             enum: [EDITOR, REVIEWER]
 
+    ConfigurationSummary:
+      type: object
+      required: [id, title, description, list_of_services, is_official, is_public, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: string, nullable: true, maxLength: 10000 }
+        list_of_services:
+          type: array
+          maxItems: 100
+          items: { type: string, minLength: 1, maxLength: 500 }
+        is_official: { type: boolean }
+        is_public: { type: boolean }
+        owner_id:
+          type: string
+          minLength: 1
+          description: Included only for authenticated callers with `global.configuration.manage`; never included in the public official list.
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    OfficialConfigurationSummary:
+      type: object
+      additionalProperties: false
+      required: [id, title, description, list_of_services, is_official, is_public, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: string, nullable: true, maxLength: 10000 }
+        list_of_services:
+          type: array
+          maxItems: 100
+          items: { type: string, minLength: 1, maxLength: 500 }
+        is_official: { type: boolean }
+        is_public: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ConfigurationDetail:
+      allOf:
+        - $ref: "#/components/schemas/ConfigurationSummary"
+        - type: object
+          required: [configuration]
+          properties:
+            configuration:
+              description: Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+    ConfigurationWriteRequest:
+      type: object
+      required: [configuration, title]
+      additionalProperties: false
+      properties:
+        configuration:
+          description: Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { type: string, nullable: true, maxLength: 10000 }
+        list_of_services:
+          type: array
+          maxItems: 100
+          items: { type: string, minLength: 1, maxLength: 500 }
+        is_public:
+          type: boolean
+          nullable: true
+          description: Visibility flag. Creation defaults absent/null to private. Replacement defaults non-official configurations to private; official configurations stay public and reject false.
+    SetConfigurationOfficialStatusRequest:
+      type: object
+      required: [is_official]
+      additionalProperties: false
+      properties:
+        is_official: { type: boolean }
     Problem:
       type: object
       required:

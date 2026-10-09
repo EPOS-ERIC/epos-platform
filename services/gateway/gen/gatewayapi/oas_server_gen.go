@@ -35,6 +35,13 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/resources/{resourceType}/{id}/copy
 	CopyResource(ctx context.Context, params CopyResourceParams) (*WriteResult, error)
+	// CreateConfiguration implements createConfiguration operation.
+	//
+	// Creates a personal configuration for the authenticated user. Omitted or null `is_public` makes it
+	// private. Each user may create up to 50 non-official configurations; managers share this limit.
+	//
+	// POST /configurations
+	CreateConfiguration(ctx context.Context, req *ConfigurationWriteRequest) (*ConfigurationDetail, error)
 	// CreateContactPoint implements createContactPoint operation.
 	//
 	// Create reusable contact point.
@@ -79,6 +86,13 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/role-requests/{requestId}/{decision}
 	DecideGroupRoleRequest(ctx context.Context, params DecideGroupRoleRequestParams) (*GroupMembership, error)
+	// DeleteConfiguration implements deleteConfiguration operation.
+	//
+	// Deletes a configuration by ID. Creators may delete non-official configurations; managers may delete
+	// any configuration.
+	//
+	// DELETE /configurations/{configurationId}
+	DeleteConfiguration(ctx context.Context, params DeleteConfigurationParams) error
 	// DeleteContactPoint implements deleteContactPoint operation.
 	//
 	// Delete contact point.
@@ -140,6 +154,13 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/draft-from-publication
 	DraftFromPublication(ctx context.Context, params DraftFromPublicationParams) (*WriteResult, error)
+	// GetConfiguration implements getConfiguration operation.
+	//
+	// Returns configuration details by ID. Public configurations, including official ones, are readable
+	// without login. Private configurations require the creator or a manager.
+	//
+	// GET /configurations/{configurationId}
+	GetConfiguration(ctx context.Context, params GetConfigurationParams) (*ConfigurationDetail, error)
 	// GetContactPoint implements getContactPoint operation.
 	//
 	// Get contact point.
@@ -197,6 +218,13 @@ type Handler interface {
 	//
 	// POST /imports/turtle
 	ImportTurtleMetadata(ctx context.Context, req ImportTurtleMetadataReq) (*ImportResult, error)
+	// ListConfigurations implements listConfigurations operation.
+	//
+	// Lists your configurations, including official ones you created. Managers can filter by `owner_id` or
+	// use `scope=all` (not both). Requires authentication.
+	//
+	// GET /configurations
+	ListConfigurations(ctx context.Context, params ListConfigurationsParams) ([]ConfigurationSummary, error)
 	// ListContactPoints implements listContactPoints operation.
 	//
 	// List reusable contact points.
@@ -228,6 +256,13 @@ type Handler interface {
 	//
 	// GET /notification-topics
 	ListNotificationTopics(ctx context.Context) ([]NotificationTopic, error)
+	// ListOfficialConfigurations implements listOfficialConfigurations operation.
+	//
+	// Lists public summaries of official configurations. Owner IDs and configuration documents are
+	// omitted.
+	//
+	// GET /official-configurations
+	ListOfficialConfigurations(ctx context.Context) ([]OfficialConfigurationSummary, error)
 	// ListOrganizations implements listOrganizations operation.
 	//
 	// List reusable organizations.
@@ -293,6 +328,14 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/versions/{versionId}/reopen
 	ReopenResourceVersion(ctx context.Context, params ReopenResourceVersionParams) (*WriteResult, error)
+	// ReplaceConfiguration implements replaceConfiguration operation.
+	//
+	// Replaces configuration content and metadata. Creators or managers may replace non-official
+	// configurations; official configurations require manager permission and remain public. Setting
+	// `is_public` to `false` on an official configuration is rejected.
+	//
+	// PUT /configurations/{configurationId}
+	ReplaceConfiguration(ctx context.Context, req *ConfigurationWriteRequest, params ReplaceConfigurationParams) (*ConfigurationDetail, error)
 	// ReplaceContactPoint implements replaceContactPoint operation.
 	//
 	// Replace contact point.
@@ -349,6 +392,13 @@ type Handler interface {
 	//
 	// DELETE /groups/{groupId}/memberships/{userId}/permissions/{permission}
 	RevokeGroupPermission(ctx context.Context, params RevokeGroupPermissionParams) error
+	// SetConfigurationOfficialStatus implements setConfigurationOfficialStatus operation.
+	//
+	// Sets whether a configuration is official. Requires `global.configuration.manage`; promotion makes it
+	// public, and demotion keeps it public. Repeating the current status has no effect.
+	//
+	// PUT /configurations/{configurationId}/official-status
+	SetConfigurationOfficialStatus(ctx context.Context, req *SetConfigurationOfficialStatusRequest, params SetConfigurationOfficialStatusParams) (*ConfigurationDetail, error)
 	// SubmitResourceVersion implements submitResourceVersion operation.
 	//
 	// Submit resource version.

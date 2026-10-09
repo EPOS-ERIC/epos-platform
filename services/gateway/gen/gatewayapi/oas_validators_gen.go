@@ -461,6 +461,405 @@ func (s *Category) Validate() error {
 	return nil
 }
 
+func (s *ConfigurationDetail) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     1,
+			MinLengthSet:  true,
+			MaxLength:     500,
+			MaxLengthSet:  true,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.Title)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "title",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Description.Get(); ok {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     10000,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(value)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "description",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.ListOfServices == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    0,
+			MinLengthSet: false,
+			MaxLength:    100,
+			MaxLengthSet: true,
+		}).ValidateLength(len(s.ListOfServices)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.ListOfServices {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     1,
+					MinLengthSet:  true,
+					MaxLength:     500,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(elem)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "list_of_services",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.OwnerID.Get(); ok {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     1,
+					MinLengthSet:  true,
+					MaxLength:     0,
+					MaxLengthSet:  false,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(value)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "owner_id",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *ConfigurationSummary) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     1,
+			MinLengthSet:  true,
+			MaxLength:     500,
+			MaxLengthSet:  true,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.Title)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "title",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Description.Get(); ok {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     10000,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(value)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "description",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.ListOfServices == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    0,
+			MinLengthSet: false,
+			MaxLength:    100,
+			MaxLengthSet: true,
+		}).ValidateLength(len(s.ListOfServices)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.ListOfServices {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     1,
+					MinLengthSet:  true,
+					MaxLength:     500,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(elem)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "list_of_services",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.OwnerID.Get(); ok {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     1,
+					MinLengthSet:  true,
+					MaxLength:     0,
+					MaxLengthSet:  false,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(value)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "owner_id",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *ConfigurationWriteRequest) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     1,
+			MinLengthSet:  true,
+			MaxLength:     500,
+			MaxLengthSet:  true,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.Title)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "title",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Description.Get(); ok {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     10000,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(value)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "description",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.ListOfServices == nil {
+			return nil // optional
+		}
+		if err := (validate.Array{
+			MinLength:    0,
+			MinLengthSet: false,
+			MaxLength:    100,
+			MaxLengthSet: true,
+		}).ValidateLength(len(s.ListOfServices)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.ListOfServices {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     1,
+					MinLengthSet:  true,
+					MaxLength:     500,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(elem)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "list_of_services",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *ContactPoint) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -2971,6 +3370,8 @@ func (s GlobalPermission) Validate() error {
 		return nil
 	case "global.category.manage":
 		return nil
+	case "global.configuration.manage":
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -3931,6 +4332,15 @@ func (s LifecycleResourceType) Validate() error {
 	}
 }
 
+func (s ListConfigurationsScope) Validate() error {
+	switch s {
+	case "all":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s MembershipRole) Validate() error {
 	switch s {
 	case "EDITOR":
@@ -4230,6 +4640,119 @@ func (s NotificationTopicKey) Validate() error {
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
+}
+
+func (s *OfficialConfigurationSummary) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     1,
+			MinLengthSet:  true,
+			MaxLength:     500,
+			MaxLengthSet:  true,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.Title)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "title",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Description.Get(); ok {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     0,
+					MinLengthSet:  false,
+					MaxLength:     10000,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(value)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "description",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.ListOfServices == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    0,
+			MinLengthSet: false,
+			MaxLength:    100,
+			MaxLengthSet: true,
+		}).ValidateLength(len(s.ListOfServices)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.ListOfServices {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     1,
+					MinLengthSet:  true,
+					MaxLength:     500,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(elem)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "list_of_services",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
 }
 
 func (s *OrganizationAddress) Validate() error {
