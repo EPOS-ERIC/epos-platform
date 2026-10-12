@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -27,6 +28,16 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 		return size, fmt.Errorf("write response body: %w", err)
 	}
 	return size, nil
+}
+
+func (rw *responseWriter) Flush() {
+	if flusher, ok := rw.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+func (rw *responseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
 }
 
 func Logger(log *slog.Logger) func(http.Handler) http.Handler {
@@ -63,6 +74,17 @@ func CORSAllowOrigin(allowOrigin string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func ExposeHeaders(headers ...string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if len(headers) > 0 {
+				w.Header().Set("Access-Control-Expose-Headers", strings.Join(headers, ", "))
+			}
 			next.ServeHTTP(w, r)
 		})
 	}

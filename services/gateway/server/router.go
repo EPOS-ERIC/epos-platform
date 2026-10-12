@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
@@ -23,9 +24,11 @@ func NewRouter(
 	identityService *identity.Service,
 	membershipService *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
+	dataRetrieverClient *clients.DataRetriever,
 	sharingService *sharingservice.Service,
 	authService *auth.Service,
 	corsAllowOrigin string,
+	requestTimeout time.Duration,
 ) http.Handler {
 	log = log.With("component", "http")
 	log.Info("creating HTTP handler")
@@ -35,6 +38,7 @@ func NewRouter(
 	if corsAllowOrigin != "" {
 		r.Use(middleware.CORSAllowOrigin(corsAllowOrigin))
 	}
+	r.Use(middleware.ExposeHeaders("Content-Disposition", "Location", "X-Retrieval-Id"))
 	r.Use(middleware.Logger(log))
 	r.Use(middleware.RecovererWithResponse(log, handlers.WritePanicProblem))
 
@@ -57,6 +61,7 @@ func NewRouter(
 		identityService,
 		membershipService,
 		metadataLifecycleClient,
+		dataRetrieverClient,
 		sharingService,
 		log,
 	)
@@ -69,7 +74,7 @@ func NewRouter(
 	if err != nil {
 		panic(fmt.Sprintf("create generated gateway server: %v", err))
 	}
-	r.Mount("/v1", requestBodyLimit(generatedServer))
+	r.Mount("/v1", requestBodyLimit(handlers.AccessProxyMiddleware(dataRetrieverClient, log)(handlers.RequestTimeout(generatedServer, requestTimeout))))
 
 	return observability.NewHTTPHandler(r, "/")
 }

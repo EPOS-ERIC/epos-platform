@@ -10,6 +10,7 @@ import (
 	"runtime/debug"
 
 	"buf.build/go/protovalidate"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	apperrorgrpc "github.com/EPOS-ERIC/epos-platform/packages/go/apperror/grpc"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	otelcodes "go.opentelemetry.io/otel/codes"
@@ -24,12 +25,14 @@ import (
 
 // Config supplies service-specific registration and transport error policy.
 type Config struct {
-	Address         string
-	Logger          *slog.Logger
-	Options         []grpc.ServerOption
-	Interceptors    []grpc.UnaryServerInterceptor
-	ValidationError func(*grpc.UnaryServerInfo, error) error
-	Register        func(*grpc.Server)
+	Address               string
+	Logger                *slog.Logger
+	Options               []grpc.ServerOption
+	Interceptors          []grpc.UnaryServerInterceptor
+	StreamInterceptors    []grpc.StreamServerInterceptor
+	ValidationError       func(*grpc.UnaryServerInfo, error) error
+	StreamValidationError func(*grpc.StreamServerInfo, error) error
+	Register              func(*grpc.Server)
 }
 
 // Run starts the gRPC server, registers health and service handlers, and stops
@@ -60,9 +63,16 @@ func Run(ctx context.Context, cfg Config) error {
 		logAndNormalizeUnaryRPC(log),
 		validateUnaryRPC(validator, cfg.ValidationError),
 	)
+	streamInterceptors := []grpc.StreamServerInterceptor{recoverStreamRPC(log)}
+	streamInterceptors = append(streamInterceptors, cfg.StreamInterceptors...)
+	streamInterceptors = append(streamInterceptors,
+		logAndNormalizeStreamRPC(log),
+		validateStreamRPC(validator, cfg.StreamValidationError),
+	)
 	options := []grpc.ServerOption{
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(interceptors...),
+		grpc.ChainStreamInterceptor(streamInterceptors...),
 	}
 	options = append(options, cfg.Options...)
 	server := grpc.NewServer(options...)
@@ -136,38 +146,91 @@ func logAndNormalizeUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {
 		}
 
 		err := apperrorgrpc.NormalizeError(cause)
-		code := status.Code(err)
-		level := slog.LevelDebug
-		switch code {
-		case grpcCodes.Unknown,
-			grpcCodes.ResourceExhausted,
-			grpcCodes.Unimplemented,
-			grpcCodes.Internal,
-			grpcCodes.Unavailable,
-			grpcCodes.DataLoss,
-			grpcCodes.DeadlineExceeded:
-			level = slog.LevelError
-		case grpcCodes.OK,
-			grpcCodes.Canceled,
-			grpcCodes.InvalidArgument,
-			grpcCodes.NotFound,
-			grpcCodes.AlreadyExists,
-			grpcCodes.PermissionDenied,
-			grpcCodes.FailedPrecondition,
-			grpcCodes.Aborted,
-			grpcCodes.OutOfRange,
-			grpcCodes.Unauthenticated:
-		default:
-		}
-		if level == slog.LevelError {
-			span := trace.SpanFromContext(ctx)
-			if span.IsRecording() {
-				span.RecordError(status.Error(code, cause.Error()))
-			}
-		}
-		log.Log(ctx, level, "grpc request failed", "method", info.FullMethod, "code", code.String(), "error", cause)
+		logRPCError(ctx, log, info.FullMethod, cause, err)
 		return response, err
 	}
+}
+
+func recoverStreamRPC(log *slog.Logger) grpc.StreamServerInterceptor {
+	return func(
+		server any,
+		stream grpc.ServerStream,
+		info *grpc.StreamServerInfo,
+		handler grpc.StreamHandler,
+	) (err error) {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				ctx := stream.Context()
+				log.ErrorContext(ctx, "grpc handler panicked", "method", info.FullMethod, "panic", recovered, "stack", string(debug.Stack()))
+
+				span := trace.SpanFromContext(ctx)
+				if span.IsRecording() {
+					span.RecordError(fmt.Errorf("grpc handler panic: %v", recovered))
+					span.SetStatus(otelcodes.Error, "internal server error")
+				}
+
+				err = apperror.Default(apperror.CodeInternal)
+			}
+		}()
+
+		return handler(server, stream)
+	}
+}
+
+func logAndNormalizeStreamRPC(log *slog.Logger) grpc.StreamServerInterceptor {
+	return func(
+		server any,
+		stream grpc.ServerStream,
+		info *grpc.StreamServerInfo,
+		handler grpc.StreamHandler,
+	) error {
+		cause := handler(server, stream)
+		if cause == nil {
+			return nil
+		}
+
+		err := apperrorgrpc.NormalizeError(cause)
+		if errors.Is(cause, context.Canceled) {
+			err = status.Error(grpcCodes.Canceled, "context canceled")
+		} else if errors.Is(cause, context.DeadlineExceeded) {
+			err = status.Error(grpcCodes.DeadlineExceeded, "deadline exceeded")
+		}
+		logRPCError(stream.Context(), log, info.FullMethod, cause, err)
+		return err
+	}
+}
+
+func logRPCError(ctx context.Context, log *slog.Logger, method string, cause, err error) {
+	code := status.Code(err)
+	level := slog.LevelDebug
+	switch code {
+	case grpcCodes.Unknown,
+		grpcCodes.ResourceExhausted,
+		grpcCodes.Unimplemented,
+		grpcCodes.Internal,
+		grpcCodes.Unavailable,
+		grpcCodes.DataLoss,
+		grpcCodes.DeadlineExceeded:
+		level = slog.LevelError
+	case grpcCodes.OK,
+		grpcCodes.Canceled,
+		grpcCodes.InvalidArgument,
+		grpcCodes.NotFound,
+		grpcCodes.AlreadyExists,
+		grpcCodes.PermissionDenied,
+		grpcCodes.FailedPrecondition,
+		grpcCodes.Aborted,
+		grpcCodes.OutOfRange,
+		grpcCodes.Unauthenticated:
+	default:
+	}
+	if level == slog.LevelError {
+		span := trace.SpanFromContext(ctx)
+		if span.IsRecording() {
+			span.RecordError(status.Error(code, cause.Error()))
+		}
+	}
+	log.Log(ctx, level, "grpc request failed", "method", method, "code", code.String(), "error", cause)
 }
 
 func validateUnaryRPC(
@@ -193,4 +256,51 @@ func validateUnaryRPC(
 		}
 		return handler(ctx, request)
 	}
+}
+
+func validateStreamRPC(
+	validator protovalidate.Validator,
+	validationError func(*grpc.StreamServerInfo, error) error,
+) grpc.StreamServerInterceptor {
+	return func(
+		server any,
+		stream grpc.ServerStream,
+		info *grpc.StreamServerInfo,
+		handler grpc.StreamHandler,
+	) error {
+		return handler(server, &validatingServerStream{
+			ServerStream:    stream,
+			validator:       validator,
+			info:            info,
+			validationError: validationError,
+		})
+	}
+}
+
+type validatingServerStream struct {
+	grpc.ServerStream
+	validator       protovalidate.Validator
+	info            *grpc.StreamServerInfo
+	validationError func(*grpc.StreamServerInfo, error) error
+}
+
+func (s *validatingServerStream) RecvMsg(message any) error {
+	if err := s.ServerStream.RecvMsg(message); err != nil {
+		return err
+	}
+	protoMessage, ok := message.(proto.Message)
+	if !ok {
+		return fmt.Errorf("gRPC request %s is not a protobuf message", s.info.FullMethod)
+	}
+	if err := s.validator.Validate(protoMessage); err != nil {
+		if s.validationError == nil {
+			return fmt.Errorf("validate gRPC request %s: %w", s.info.FullMethod, err)
+		}
+		appErr := s.validationError(s.info, err)
+		if appErr == nil {
+			return fmt.Errorf("convert validation error for %s: %w", s.info.FullMethod, err)
+		}
+		return appErr
+	}
+	return nil
 }

@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package data_retriever.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/data_retriever/v1;dataretrieverv1";
+
+enum HTTPMethod {
+  HTTP_METHOD_UNSPECIFIED = 0;
+  HTTP_METHOD_GET = 1;
+  HTTP_METHOD_POST = 2;
+  HTTP_METHOD_PUT = 3;
+  HTTP_METHOD_DELETE = 4;
+}
+
+enum RetrieveMode {
+  RETRIEVE_MODE_UNSPECIFIED = 0;
+  RETRIEVE_MODE_DRY = 1;
+  RETRIEVE_MODE_EXECUTE = 2;
+}
+
+enum OutputParameterKind {
+  OUTPUT_PARAMETER_KIND_UNSPECIFIED = 0;
+  OUTPUT_PARAMETER_KIND_STRING = 1;
+  OUTPUT_PARAMETER_KIND_BOOLEAN = 2;
+  OUTPUT_PARAMETER_KIND_INTEGER = 3;
+  OUTPUT_PARAMETER_KIND_FLOAT = 4;
+  OUTPUT_PARAMETER_KIND_DATETIME = 5;
+  OUTPUT_PARAMETER_KIND_JSON = 6;
+  OUTPUT_PARAMETER_KIND_BINARY = 7;
+}
+
+message OutputParameter {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  OutputParameterKind kind = 2 [(buf.validate.field).enum.defined_only = true];
+}
+
+message RequestBody {
+  string content_type = 1 [(buf.validate.field).string.min_len = 1];
+  oneof content {
+    option (buf.validate.oneof).required = true;
+    string raw = 2 [(buf.validate.field).string.min_len = 1];
+    bytes json_payload = 3 [(buf.validate.field).bytes.min_len = 1];
+  }
+}
+
+message RetrieveStreamRequest {
+  HTTPMethod method = 1 [(buf.validate.field).enum.defined_only = true];
+  string url_template = 2 [(buf.validate.field).string.min_len = 1];
+  map<string, string> path_params = 3;
+  map<string, string> query_params = 4;
+  map<string, string> headers = 5;
+  string bearer_token = 6;
+  RequestBody body = 7;
+  string resource_id = 8 [(buf.validate.field).string.uuid = true];
+  string version_id = 9 [(buf.validate.field).string.uuid = true];
+  RetrieveMode mode = 10 [(buf.validate.field).enum.defined_only = true];
+}
+
+message RetrievalRecord {
+  int64 id = 1;
+  string method = 2;
+  string url_template = 3;
+  string generated_url = 4;
+  int32 http_status = 5;
+  string content_type = 6;
+  bool is_binary = 7;
+  string payload_hash = 8;
+  int64 payload_size_bytes = 9;
+  bool used_auth = 10;
+  google.protobuf.Timestamp fetched_at = 11;
+  google.protobuf.Timestamp created_at = 12;
+  string resource_id = 13;
+  string version_id = 14;
+  repeated OutputParameter output_parameters = 15;
+}
+
+message RetrieveStreamHeaders {
+  RetrievalRecord record = 1;
+  int32 upstream_status = 2;
+  string content_type = 3;
+  string content_disposition = 4;
+  string redirect_url = 5 [(buf.validate.field).string.uri_ref = true];
+  string curl_command = 6 [(buf.validate.field).string.min_len = 1];
+}
+
+message RetrieveStreamResponse {
+  oneof event {
+    option (buf.validate.oneof).required = true;
+    RetrieveStreamHeaders headers = 1;
+    bytes chunk = 2 [(buf.validate.field).bytes.min_len = 1];
+  }
+}
+
+message GetRetrievalRequest {
+  int64 id = 1 [(buf.validate.field).int64.gt = 0];
+}
+
+message GetRetrievalResponse {
+  RetrievalRecord record = 1;
+}
+
+service DataRetrieverService {
+  rpc RetrieveStream(RetrieveStreamRequest) returns (stream RetrieveStreamResponse);
+  rpc GetRetrieval(GetRetrievalRequest) returns (GetRetrievalResponse);
+}

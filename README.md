@@ -8,7 +8,7 @@ Monorepo for the EPOS Platform web application, backend services, shared Go pack
 | ----------------------------- | -------------------------------------------------------------- | ------------------------ |
 | `services/gateway`            | Public API, authentication, and backend aggregation            | `http://localhost:32000` |
 | `services/metadata-lifecycle` | Metadata, users, groups, authorization, and resource lifecycle | `http://localhost:33000` |
-| `services/data-retriever`     | Outbound retrieval, payload caching, and cached-text search    | `http://localhost:8100`  |
+| `services/data-retriever`     | Outbound retrieval and metadata persistence                    | `grpc://localhost:8100`  |
 | `services/oss-aai-service`    | Local web login and OAuth2/OIDC provider                       | `http://localhost:8110`  |
 
 The development stack also includes PostgreSQL databases for Metadata Lifecycle and Data Retriever, plus Grafana's OpenTelemetry LGTM stack for logs, metrics, traces, and profiles.
@@ -49,7 +49,7 @@ Stop the stack with `make down`. Pass the same `KUBE_CONTEXT` when stopping a Ku
 - Gateway Scalar UI: `http://localhost:32000/scalar/`
 - Gateway Swagger UI: `http://localhost:32000/swagger/`
 - Metadata Lifecycle API: `http://localhost:33000/api/v1`
-- Data Retriever API: `http://localhost:8100/api/v2`
+- Data Retriever gRPC: `localhost:8100` (use Gateway `/v1/access` for HTTP access)
 - OSS AAI: `http://localhost:8110`
 - Grafana: `http://localhost:3000`
 - Prometheus: `http://localhost:9090`
@@ -87,6 +87,7 @@ make test-integration
 
 - Gateway server code and its Metadata Lifecycle client: run `make generate` in `services/gateway`.
 - Metadata Lifecycle SQLC code: run `make generate` in `services/metadata-lifecycle`.
+- Data Retriever protobuf and SQLC code: run `make generate` at repository root.
 
 Do not edit generated files directly. Change the owning OpenAPI specification or SQL source and regenerate.
 

@@ -1,70 +1,46 @@
 # EPOS Data Retriever Service
 
-Service that executes structured outbound HTTP requests, stores retrieval metadata, caches non-binary payloads, and offers free-text search on cached payload text.
+Data Retriever executes structured outbound HTTP requests, streams response bodies, records retrieval metadata, and discovers output parameters from supported text formats.
 
-The service uses shared Go packages from `packages/go/` for structured logging, PostgreSQL connection bootstrap, and SQL migrations.
+## gRPC API
 
-## API version
+- Listen address: `GRPC_LISTEN_ADDR` (default `:8100`)
+- Contract: `packages/protobuf/data_retriever/v1/data_retriever.proto`
+- `RetrieveStream` supports `DRY` curl generation and `EXECUTE` streaming.
+- `GetRetrieval` returns persisted retrieval metadata and discovered output parameters.
+- Standard gRPC health service is enabled for readiness checks.
+- Public HTTP access goes through Gateway `POST /v1/access`.
 
-- Base path: `/api/v2`
+In execute mode, Data Retriever sends response headers first, then bounded chunks. It does not follow redirects. Gateway relays upstream status and response content. Output parameters update only after a complete supported JSON, XML, or CSV body parses within `SCHEMA_MAX_BYTES`.
 
-## Build and run
+## Build, test, and run
 
 Run commands from `services/data-retriever/`:
 
 ```bash
+make generate
 make build
 make test
-make fmt
 make lint
 ```
 
-Run service binary:
+`make dev` generates SQLC code and runs the service. Database migrations are embedded from `db/migrations/` and applied on startup through the shared PostgreSQL package.
 
-```bash
-DATA_RETRIEVER_LISTEN_ADDR=:8100 ./data-retriever
-```
+## Configuration
 
-Logging environment variables:
+- `GRPC_LISTEN_ADDR` (default `:8100`)
+- `DB_HOST` (default `localhost`)
+- `DB_PORT` (default `5432`)
+- `DB_NAME` (default `data_retriever`)
+- `DB_USER` (default `data_retriever`)
+- `DB_PASSWORD` (default `data_retriever`)
+- `HTTP_TIMEOUT` (default `30s`): upstream response-header timeout; response bodies have no overall timeout.
+- `SCHEMA_MAX_BYTES` (default `2097152`): maximum response bytes sampled for schema discovery; `0` disables discovery.
 
-- `LOG_LEVEL` (optional: `DEBUG`, `INFO`, `WARN`, `ERROR`; default `INFO`)
+## Sensitive data
 
-Database environment variables:
+Request body text is persisted verbatim, including credentials. Request body text is never returned or logged. Dedicated bearer tokens remain in memory only. `Authorization`, `Cookie`, and `Set-Cookie` request headers are redacted before persistence; credential values are never logged.
 
-- `DATA_RETRIEVER_DB_HOST` (default `localhost`)
-- `DATA_RETRIEVER_DB_PORT` (default `5432`)
-- `DATA_RETRIEVER_DB_NAME` (default `data_retriever`)
-- `DATA_RETRIEVER_DB_USER` (default `data_retriever`)
-- `DATA_RETRIEVER_DB_PASSWORD` (default `data_retriever`)
+## Development stack
 
-Runtime environment variables:
-
-- `DATA_RETRIEVER_HTTP_TIMEOUT` (default `30s`): outbound HTTP request timeout
-- `DATA_RETRIEVER_MIGRATIONS_DIR` (default `migrations`): SQL migration directory
-- `DATA_RETRIEVER_DB_CONNECT_MAX_ATTEMPTS` (default `20`)
-- `DATA_RETRIEVER_DB_CONNECT_RETRY_DELAY` (default `2s`)
-
-Standard OpenTelemetry SDK environment variables configure telemetry export. The repository development stack sends OTLP data to the local LGTM container.
-
-## OpenAPI
-
-- Contract: `swagger/openapi.yaml`
-- Runtime spec: `GET /openapi.yaml`
-- Swagger UI: `GET /swagger`
-
-## Health check
-
-- Endpoint: `GET /health`
-- Returns `200` with `{"status":"ok"}` when the service is healthy and database is reachable.
-- Returns `503` with `{"status":"degraded","reason":"database unreachable"}` when database ping fails.
-
-## Database migrations
-
-- SQL migrations: `migrations/`
-- Runtime migration runner is shared via `packages/go/migrations`.
-
-Migrations are applied automatically when the service starts.
-
-## Docker
-
-Build the production image from this directory with `make docker`. Set `IMAGE` to override the default image name and tag.
+Run the repository stack with `make up`. Data Retriever listens on gRPC port `8100`; its PostgreSQL database is exposed locally on port `5433`.

@@ -11,7 +11,7 @@ down:
 	tilt down $(TILT_CONTEXT_ARG)
 
 clean: down
-	docker volume rm -f docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data docker_sharing-db-data
+	docker volume rm -f docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data docker_sharing-db-data docker_data-retriever-db-data
 
 populate:
 	./packages/scripts/populatescript.sh
@@ -20,12 +20,14 @@ populate-metadatone:
 	./packages/scripts/metadatone.sh
 
 ci:
-	+$(MAKE) -j ci-gateway-image ci-metadata-lifecycle-image ci-sharing-image ci-oss-aai-image
-	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle sharing oss-aai-service
+	+$(MAKE) -j ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-sharing-image ci-oss-aai-image
+	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle data-retriever sharing oss-aai-service
 ci-gateway-image:
 	+$(MAKE) -C $(GATEWAY_DIR) docker
 ci-metadata-lifecycle-image:
 	+$(MAKE) -C $(METADATA_LIFECYCLE_DIR) docker
+ci-data-retriever-image:
+	+$(MAKE) -C $(DATA_RETRIEVER_DIR) docker
 ci-sharing-image:
 	+$(MAKE) -C $(SHARING_DIR) docker
 ci-oss-aai-image:
@@ -58,13 +60,17 @@ lint-sharing:
 	$(MAKE) -C $(SHARING_DIR) lint
 
 generate:
-	+$(MAKE) -j generate-gateway generate-metadata-lifecycle generate-sharing
+	+$(MAKE) -j generate-gateway generate-metadata-lifecycle generate-data-retriever generate-protobuf generate-sharing
 generate-gateway:
 	$(MAKE) -C $(GATEWAY_DIR) generate
 generate-metadata-lifecycle:
 	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) generate
 generate-sharing:
 	$(MAKE) -C $(SHARING_DIR) generate
+generate-data-retriever:
+	$(MAKE) -C $(DATA_RETRIEVER_DIR) generate
+generate-protobuf:
+	$(MAKE) -C packages/protobuf generate
 
 test-integration:
 	docker run --rm \
@@ -84,4 +90,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle lint-sharing test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing
+.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle lint-sharing test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing generate-data-retriever generate-protobuf

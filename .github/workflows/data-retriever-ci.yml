@@ -1,0 +1,58 @@
+name: Data Retriever Pipeline
+
+on:
+  pull_request:
+    paths:
+      - services/data-retriever/**
+      - packages/go/apperror/**
+      - packages/go/grpcserver/**
+      - packages/go/logging/**
+      - packages/go/observability/**
+      - packages/go/postgres/**
+      - packages/protobuf/**
+      - packages/scripts/epos-banner.sh
+      - Makefile
+      - .github/workflows/data-retriever-ci.yml
+      - .github/workflows/_go-service-ci.yml
+      - .github/workflows/_go-service-cd.yml
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+    paths:
+      - services/data-retriever/**
+      - packages/go/apperror/**
+      - packages/go/grpcserver/**
+      - packages/go/logging/**
+      - packages/go/observability/**
+      - packages/go/postgres/**
+      - packages/protobuf/**
+      - packages/scripts/epos-banner.sh
+      - Makefile
+      - .github/workflows/data-retriever-ci.yml
+      - .github/workflows/_go-service-ci.yml
+      - .github/workflows/_go-service-cd.yml
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_go-service-ci.yml
+    secrets: inherit
+    with:
+      service: services/data-retriever
+
+  publish:
+    needs: ci
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_go-service-cd.yml
+    secrets: inherit
+    with:
+      service: services/data-retriever
+      image: data-retriever

@@ -4,4 +4,3 @@
 
 - Keep business logic in domain-oriented packages.
 - Keep transport layer thin and validation explicit.
-- Store credentials only in-memory. Never persist them.

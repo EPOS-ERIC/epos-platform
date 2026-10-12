@@ -4,7 +4,7 @@ WORKDIR /workspace/services/data-retriever
 
 ENV CGO_ENABLED=0
 
-RUN apk add curl
+RUN apk add --no-cache make
 
 COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
 COPY . /workspace
@@ -15,4 +15,4 @@ ENV EPOS_SERVICE_NAME="Data Retriever" \
     EPOS_PORT="8100"
 
 ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
-CMD ["go", "run", "."]
+CMD ["make", "dev"]

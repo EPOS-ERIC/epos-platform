@@ -9,6 +9,8 @@ server:
 services:
   metadata-lifecycle:
     url: "metadata-lifecycle-service:5000"
+  data-retriever:
+    url: "data-retriever-service:8100"
   sharing:
     url: "sharing-service:8200"
   auth:

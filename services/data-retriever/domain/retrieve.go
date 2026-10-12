@@ -4,91 +4,194 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
+	"maps"
+	"net/textproto"
 	"net/url"
 	"regexp"
 	"slices"
 	"strings"
+	"time"
+
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
+	"github.com/google/uuid"
 )
 
 var placeholderRegex = regexp.MustCompile(`\{([A-Za-z0-9_]+)\}`)
 
+const (
+	methodGet    = "GET"
+	methodPost   = "POST"
+	methodPut    = "PUT"
+	methodDelete = "DELETE"
+)
+
+type RetrieveMode string
+
+const (
+	RetrieveModeDry     RetrieveMode = "DRY"
+	RetrieveModeExecute RetrieveMode = "EXECUTE"
+)
+
 type RequestBody struct {
-	ContentType string          `json:"content_type"`
-	Raw         string          `json:"raw,omitempty"`
-	JSON        json.RawMessage `json:"json,omitempty"`
+	ContentType string
+	Raw         string
+	JSON        json.RawMessage
 }
 
-type RetrieveRequest struct {
-	SourceID    string            `json:"source_id"`
-	Method      string            `json:"method"`
-	URLTemplate string            `json:"url_template"`
-	PathParams  map[string]string `json:"path_params"`
-	QueryParams map[string]string `json:"query_params,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty"`
-	BearerToken string            `json:"bearer_token,omitempty"`
-	Body        *RequestBody      `json:"body,omitempty"`
+type RetrievalInput struct {
+	Mode        RetrieveMode
+	ResourceID  uuid.UUID
+	VersionID   uuid.UUID
+	Method      string
+	URLTemplate string
+	PathParams  map[string]string
+	QueryParams map[string]string
+	Headers     map[string]string
+	BearerToken string
+	Body        *RequestBody
 }
 
-type ValidatedRequest struct {
-	RetrieveRequest
+type OutputParameter struct {
+	Name string
+	Kind string
+}
+
+type ResponseHead struct {
+	StatusCode         int
+	ContentType        string
+	ContentLength      int64
+	Location           string
+	ContentDisposition string
+	IsBinary           bool
+}
+
+type RetrievalRecord struct {
+	ID               int64
+	ResourceID       uuid.UUID
+	VersionID        uuid.UUID
+	Method           string
+	URLTemplate      string
+	GeneratedURL     string
+	HTTPStatus       int
+	ContentType      string
+	IsBinary         bool
+	PayloadHash      string
+	PayloadSize      int64
+	UsedAuth         bool
+	FetchedAt        time.Time
+	CreatedAt        time.Time
+	RequestBodyText  string
+	OutputParameters []OutputParameter
+}
+
+type PreparedRetrieval struct {
+	RetrievalInput
 	GeneratedURL string
 	BodyBytes    []byte
 }
 
-func (r RetrieveRequest) Validate() (ValidatedRequest, error) {
-	if strings.TrimSpace(r.SourceID) == "" {
-		return ValidatedRequest{}, errors.New("source_id is required")
+// NewPreparedRetrieval validates and normalizes input before upstream execution.
+func NewPreparedRetrieval(input RetrievalInput) (PreparedRetrieval, error) {
+	if input.Mode == "" {
+		input.Mode = RetrieveModeExecute
+	}
+	if !slices.Contains([]RetrieveMode{RetrieveModeDry, RetrieveModeExecute}, input.Mode) {
+		return PreparedRetrieval{}, apperror.Field("mode", "Value is invalid.", errors.New("mode must be DRY or EXECUTE"))
+	}
+	if input.ResourceID == uuid.Nil {
+		return PreparedRetrieval{}, apperror.Field("resource_id", "Value is invalid.", errors.New("resource_id must be a non-zero UUID"))
+	}
+	if input.VersionID == uuid.Nil {
+		return PreparedRetrieval{}, apperror.Field("version_id", "Value is invalid.", errors.New("version_id must be a non-zero UUID"))
 	}
 
-	method := strings.ToUpper(strings.TrimSpace(r.Method))
-	if !slices.Contains([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}, method) {
-		return ValidatedRequest{}, errors.New("method must be one of GET, POST, PUT, DELETE")
+	method := strings.ToUpper(strings.TrimSpace(input.Method))
+	if !slices.Contains([]string{methodGet, methodPost, methodPut, methodDelete}, method) {
+		return PreparedRetrieval{}, apperror.Field("method", "Value is invalid.", errors.New("method must be one of GET, POST, PUT, DELETE"))
 	}
-	r.Method = method
+	input.Method = method
 
-	if strings.TrimSpace(r.URLTemplate) == "" {
-		return ValidatedRequest{}, errors.New("url_template is required")
+	if strings.TrimSpace(input.URLTemplate) == "" {
+		return PreparedRetrieval{}, apperror.Field("url_template", "Value is invalid.", errors.New("url_template is required"))
 	}
-	parsedTemplate, err := url.Parse(r.URLTemplate)
+	parsedTemplate, err := url.Parse(input.URLTemplate)
 	if err != nil {
-		return ValidatedRequest{}, fmt.Errorf("invalid url_template: %w", err)
+		return PreparedRetrieval{}, apperror.Field("url_template", "Value is invalid.", err)
 	}
 	if !parsedTemplate.IsAbs() || parsedTemplate.Host == "" {
-		return ValidatedRequest{}, errors.New("url_template must be an absolute URL")
+		return PreparedRetrieval{}, apperror.Field("url_template", "Value is invalid.", errors.New("url_template must be an absolute URL"))
 	}
 	if parsedTemplate.Scheme != "http" && parsedTemplate.Scheme != "https" {
-		return ValidatedRequest{}, errors.New("url_template scheme must be http or https")
+		return PreparedRetrieval{}, apperror.Field("url_template", "Value is invalid.", errors.New("url_template scheme must be http or https"))
 	}
 
-	if _, exists := r.Headers["Authorization"]; exists && strings.TrimSpace(r.BearerToken) != "" {
-		return ValidatedRequest{}, errors.New("headers.Authorization cannot be set when bearer_token is provided")
+	if hasHeader(input.Headers, "Authorization") && strings.TrimSpace(input.BearerToken) != "" {
+		return PreparedRetrieval{}, apperror.Field("headers.Authorization", "Value is invalid.", errors.New("headers.Authorization cannot be set when bearer_token is provided"))
 	}
-	if _, exists := r.Headers["Host"]; exists {
-		return ValidatedRequest{}, errors.New("headers.Host is not allowed")
+	if hasHeader(input.Headers, "Host") {
+		return PreparedRetrieval{}, apperror.Field("headers.Host", "Value is invalid.", errors.New("headers.Host is not allowed"))
 	}
-	if _, exists := r.Headers["Content-Length"]; exists {
-		return ValidatedRequest{}, errors.New("headers.Content-Length is not allowed")
+	if hasHeader(input.Headers, "Content-Length") {
+		return PreparedRetrieval{}, apperror.Field("headers.Content-Length", "Value is invalid.", errors.New("headers.Content-Length is not allowed"))
 	}
 
-	generatedURL, err := buildURL(r.URLTemplate, r.PathParams, r.QueryParams)
+	generatedURL, err := buildURL(input.URLTemplate, input.PathParams, input.QueryParams)
 	if err != nil {
-		return ValidatedRequest{}, err
+		return PreparedRetrieval{}, apperror.Field("path_params", "Value is invalid.", err)
 	}
-
-	bodyBytes, err := validateBody(method, r.Body)
+	bodyBytes, err := validateBody(method, input.Body)
 	if err != nil {
-		return ValidatedRequest{}, err
+		return PreparedRetrieval{}, apperror.Field("body", "Value is invalid.", err)
 	}
-
-	return ValidatedRequest{RetrieveRequest: r, GeneratedURL: generatedURL, BodyBytes: bodyBytes}, nil
+	return PreparedRetrieval{RetrievalInput: input, GeneratedURL: generatedURL, BodyBytes: bodyBytes}, nil
 }
 
-func buildURL(template string, pathParams map[string]string, queryParams map[string]string) (string, error) {
+func hasHeader(headers map[string]string, name string) bool {
+	for key := range headers {
+		if textproto.CanonicalMIMEHeaderKey(key) == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (r PreparedRetrieval) CurlCommand() string {
+	arguments := []string{"curl", "--request", r.Method, "--url", shellQuote(r.GeneratedURL)}
+	for _, name := range slices.Sorted(maps.Keys(r.Headers)) {
+		canonical := textproto.CanonicalMIMEHeaderKey(name)
+		if r.Body != nil && canonical == "Content-Type" {
+			continue
+		}
+		switch canonical {
+		case "Authorization":
+			arguments = append(arguments, "--header", `"Authorization: ${AUTHORIZATION}"`)
+		case "Cookie", "Set-Cookie":
+			arguments = append(arguments, "--header", shellQuote(name+": [redacted]"))
+		default:
+			arguments = append(arguments, "--header", shellQuote(name+": "+r.Headers[name]))
+		}
+	}
+	if r.Body != nil {
+		arguments = append(arguments, "--header", shellQuote("Content-Type: "+r.Body.ContentType))
+	}
+	if strings.TrimSpace(r.BearerToken) != "" {
+		arguments = append(arguments, "--oauth2-bearer", `"${BEARER_TOKEN}"`)
+	}
+	if len(r.BodyBytes) > 0 {
+		arguments = append(arguments, "--data-binary", `"${REQUEST_BODY}"`)
+	}
+	return strings.Join(arguments, " ")
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+}
+
+func buildURL(template string, pathParams, queryParams map[string]string) (string, error) {
 	matches := placeholderRegex.FindAllStringSubmatch(template, -1)
 	placeholders := make(map[string]struct{}, len(matches))
-	for _, m := range matches {
-		placeholders[m[1]] = struct{}{}
+	for _, match := range matches {
+		placeholders[match[1]] = struct{}{}
 	}
 
 	for key := range placeholders {
@@ -106,30 +209,25 @@ func buildURL(template string, pathParams map[string]string, queryParams map[str
 	for key, value := range pathParams {
 		generated = strings.ReplaceAll(generated, "{"+key+"}", url.PathEscape(value))
 	}
-
-	u, err := url.Parse(generated)
+	parsedURL, err := url.Parse(generated)
 	if err != nil {
 		return "", fmt.Errorf("generated URL is invalid: %w", err)
 	}
-
-	query := u.Query()
+	query := parsedURL.Query()
 	for key, value := range queryParams {
 		query.Set(key, value)
 	}
-	u.RawQuery = query.Encode()
-
-	return u.String(), nil
+	parsedURL.RawQuery = query.Encode()
+	return parsedURL.String(), nil
 }
 
 func validateBody(method string, body *RequestBody) ([]byte, error) {
 	if body == nil {
 		return nil, nil
 	}
-
-	if method == http.MethodGet || method == http.MethodDelete {
+	if method == methodGet || method == methodDelete {
 		return nil, fmt.Errorf("body is not allowed for %s", method)
 	}
-
 	contentType := strings.ToLower(strings.TrimSpace(body.ContentType))
 	if contentType == "" {
 		return nil, errors.New("body.content_type is required when body is provided")
@@ -140,33 +238,25 @@ func validateBody(method string, body *RequestBody) ([]byte, error) {
 	if hasRaw == hasJSON {
 		return nil, errors.New("exactly one of body.raw or body.json must be provided")
 	}
-
 	if hasJSON {
 		if !isJSONContentType(contentType) {
 			return nil, errors.New("body.content_type must be application/json or application/*+json when body.json is provided")
 		}
-		if !json.Valid(body.JSON) {
-			return nil, errors.New("body.json must be valid JSON")
-		}
-
 		var decoded any
 		if err := json.Unmarshal(body.JSON, &decoded); err != nil {
 			return nil, errors.New("body.json must be valid JSON")
 		}
-
 		canonicalJSON, err := json.Marshal(decoded)
 		if err != nil {
 			return nil, errors.New("body.json cannot be serialized")
 		}
-
 		return canonicalJSON, nil
 	}
-
 	return []byte(body.Raw), nil
 }
 
 func isJSONContentType(contentType string) bool {
-	base := strings.Split(contentType, ";")[0]
+	base, _, _ := strings.Cut(contentType, ";")
 	base = strings.TrimSpace(base)
 	if base == "application/json" {
 		return true
