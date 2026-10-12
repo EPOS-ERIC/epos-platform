@@ -28,7 +28,10 @@
           @if (store.canCopy() || store.canViewHistory() || store.canDelete()) {
             <div class="detail-context-resource-actions">
               @if (store.canCopy()) {
-                <button type="button" class="app-button app-button--ghost detail-copy-button" (click)="store.copy()">Copy Resource</button>
+                <button type="button" class="app-button app-button--dark app-button--copy" (click)="store.copy()">
+                  <app-icon name="content-copy" [size]="16" />
+                  <span>Copy Resource</span>
+                </button>
               }
               @if (store.canViewHistory()) {
                 <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
@@ -132,7 +135,10 @@
           @if (store.canCopy() || store.canViewHistory() || store.canDelete()) {
             <div class="detail-context-resource-actions">
               @if (store.canCopy()) {
-                <button type="button" class="app-button app-button--ghost detail-copy-button" (click)="store.copy()">Copy Resource</button>
+                <button type="button" class="app-button app-button--dark app-button--copy" (click)="store.copy()">
+                  <app-icon name="content-copy" [size]="16" />
+                  <span>Copy Resource</span>
+                </button>
               }
               @if (store.canViewHistory()) {
                 <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
@@ -210,7 +216,10 @@
           @if (store.canCopy() || store.canViewHistory() || store.canDelete()) {
             <div class="detail-context-resource-actions">
               @if (store.canCopy()) {
-                <button type="button" class="app-button app-button--ghost detail-copy-button" (click)="store.copy()">Copy Resource</button>
+                <button type="button" class="app-button app-button--dark app-button--copy" (click)="store.copy()">
+                  <app-icon name="content-copy" [size]="16" />
+                  <span>Copy Resource</span>
+                </button>
               }
               @if (store.canViewHistory()) {
                 <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>

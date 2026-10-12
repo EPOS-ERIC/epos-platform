@@ -3,11 +3,12 @@ import { RouterLink } from '@angular/router';
 
 import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
+import { AppIconComponent } from '../../shared/ui/app-icon.component';
 import { ListPaginationComponent } from '../../shared/ui/list-pagination.component';
 
 @Component({
   selector: 'app-results-table',
-  imports: [ListPaginationComponent, RouterLink],
+  imports: [AppIconComponent, ListPaginationComponent, RouterLink],
   templateUrl: './results-table.component.html',
   styleUrl: './results-table.component.css'
 })

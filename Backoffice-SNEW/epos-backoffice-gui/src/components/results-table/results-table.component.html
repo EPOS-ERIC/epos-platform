@@ -96,9 +96,14 @@
               </td>
               <td class="actions-col">
                 <div class="row-actions">
-                  <a class="app-button app-button--ghost" [routerLink]="detailLink(item)" [queryParams]="detailQueryParams(item)">View</a>
+                  <a class="app-button app-button--ghost" [routerLink]="detailLink(item)" [queryParams]="detailQueryParams(item)">
+                    View
+                  </a>
                   @if (canCopy(item)) {
-                    <button type="button" class="app-button app-button--ghost copy-resource-button" (click)="copyResource.emit(item)">Copy</button>
+                    <button type="button" class="app-button app-button--dark app-button--copy copy-resource-button" (click)="copyResource.emit(item)">
+                      <app-icon name="content-copy" [size]="15" />
+                      <span>Copy</span>
+                    </button>
                   }
                 </div>
               </td>

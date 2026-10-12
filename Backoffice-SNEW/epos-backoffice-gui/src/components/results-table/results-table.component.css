@@ -82,11 +82,6 @@ h2 {
   gap: 6px;
 }
 
-.copy-resource-button {
-  border-color: rgba(89, 133, 225, 0.4);
-  color: #476fca;
-}
-
 .action-button,
 .ghost-button {
   border: 1px solid var(--line);

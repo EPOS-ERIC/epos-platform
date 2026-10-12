@@ -1293,6 +1293,31 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
   background: #475569;
 }
 
+.app-button--copy {
+  gap: 0.4rem;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.app-button--copy:hover {
+  background: #1e293b;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
+  transform: translateY(-1px);
+}
+
+.app-button--copy:active {
+  background: #0f172a;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+  transform: translateY(1px);
+}
+
+:root[data-theme='dark'] .app-button--copy:hover {
+  background: #1e293b;
+}
+
+:root[data-theme='dark'] .app-button--copy:active {
+  background: #0f172a;
+}
+
 .app-button--ghost {
   background: var(--surface);
 }
