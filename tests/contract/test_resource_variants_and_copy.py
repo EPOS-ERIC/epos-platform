@@ -19,9 +19,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         )
 
     def create_user(self, label: str, suffix: str) -> tuple[GatewayClient, str]:
-        aai_url = os.getenv("AAI_URL", "http://localhost:8110")
         credentials = register_user(
-            aai_url,
             name="Variants",
             surname=f"{label.title()} {suffix}",
             email=f"variants-{uuid4().hex}@example.org",
@@ -31,7 +29,6 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             SCHEMA,
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(
-                aai_url=aai_url,
                 username=credentials.username,
                 password=credentials.password,
             ),

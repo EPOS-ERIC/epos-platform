@@ -6,7 +6,7 @@ from html.parser import HTMLParser
 
 import requests
 
-DEFAULT_AAI_URL = "http://localhost:8110"
+DEFAULT_AAI_URL = "http://localhost:35000"
 DEFAULT_TIMEOUT = 30
 
 
@@ -30,6 +30,10 @@ class _CSRFTokenParser(HTMLParser):
             self.token = attributes.get("value")
 
 
+def get_aai_url(aai_url: str | None = None) -> str:
+    return _setting(aai_url, "AAI_URL", DEFAULT_AAI_URL).rstrip("/")
+
+
 def get_token(
     *,
     aai_url: str | None = None,
@@ -39,7 +43,7 @@ def get_token(
     client_secret: str | None = None,
     timeout: int = DEFAULT_TIMEOUT,
 ) -> str:
-    aai_url = _setting(aai_url, "AAI_URL", DEFAULT_AAI_URL).rstrip("/")
+    aai_url = get_aai_url(aai_url)
     username = _setting(username, "AUTH_USERNAME", "admin@admin.org")
     password = _setting(password, "AUTH_PASSWORD", "adminadmin", strip=False)
     client_id = _setting(client_id, "AUTH_CLIENT_ID", "local-dev-client")
@@ -76,7 +80,7 @@ def get_token(
 
 
 def register_user(
-    aai_url: str,
+    aai_url: str | None = None,
     *,
     name: str,
     surname: str,
@@ -84,9 +88,9 @@ def register_user(
     password: str,
     timeout: int = DEFAULT_TIMEOUT,
 ) -> UserCredentials:
-    aai_url = aai_url.strip().rstrip("/")
-    if not aai_url:
+    if aai_url is not None and not aai_url.strip():
         raise ValueError("AAI URL must not be empty")
+    aai_url = get_aai_url(aai_url)
     if not name.strip() or not surname.strip() or not email.strip() or not password:
         raise ValueError(
             "AAI user registration requires name, surname, email, and password"
