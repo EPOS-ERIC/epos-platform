@@ -30,11 +30,9 @@ class RoleRequestContractTest(unittest.TestCase):
         self.assertEqual(group_response.status_code, 201)
         group_id = group_response.json()["id"]
 
-        aai_url = os.getenv("AAI_URL", "http://localhost:8110")
         email = f"contract-role-applicant-{suffix}@example.org"
         password = uuid4().hex
         credentials = register_user(
-            aai_url,
             name="Role",
             surname=f"Applicant {suffix}",
             email=email,
@@ -44,7 +42,6 @@ class RoleRequestContractTest(unittest.TestCase):
             SCHEMA,
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(
-                aai_url=aai_url,
                 username=credentials.username,
                 password=credentials.password,
             ),

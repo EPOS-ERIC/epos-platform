@@ -13,7 +13,7 @@ trap cleanup EXIT
 
 HOST_ALIAS=${HOST_ALIAS:-localhost}
 GATEWAY_API_URL=${GATEWAY_API_URL:-http://localhost:32000/v1}
-AAI_URL=${AAI_URL:-http://localhost:8110}
+AAI_URL=${AAI_URL:-http://localhost:35000}
 AUTH_CLIENT_ID=${AUTH_CLIENT_ID:-local-dev-client}
 AUTH_CLIENT_SECRET=${AUTH_CLIENT_SECRET:-dev-secret}
 AUTH_USERNAME=${AUTH_USERNAME:-admin@admin.org}

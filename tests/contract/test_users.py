@@ -11,18 +11,15 @@ class UserContractTest(unittest.TestCase):
         """Regression: shared not_found must trigger metadata-lifecycle user provisioning."""
 
         suffix = str(uuid4())
-        aai_url = os.getenv("AAI_URL", "http://localhost:8110")
         email = f"contract-user-{suffix}@example.org"
         password = uuid4().hex
         credentials = register_user(
-            aai_url,
             name="Contract",
             surname=f"User {suffix}",
             email=email,
             password=password,
         )
         token = get_token(
-            aai_url=aai_url,
             username=credentials.username,
             password=credentials.password,
         )

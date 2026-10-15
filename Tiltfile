@@ -131,6 +131,25 @@ docker_build(
     ],
 )
 
+docker_build(
+    'epos-platform-legacy-dev:local',
+    '.',
+    dockerfile='apps/platform-legacy/Dockerfile.dev',
+    only=[
+        'apps/platform-legacy',
+        'packages/scripts/epos-banner.sh',
+    ],
+    ignore=[
+        'apps/platform-legacy/.angular',
+        'apps/platform-legacy/cypress',
+        'apps/platform-legacy/dist',
+        'apps/platform-legacy/node_modules',
+    ],
+    live_update=[
+        sync('apps/platform-legacy/src', '/workspace/apps/platform-legacy/src'),
+    ],
+)
+
 dc_resource('data-retriever-db', labels=['infra'])
 dc_resource('metadata-lifecycle-db', labels=['infra'])
 dc_resource('sharing-db', labels=['infra'])
@@ -140,3 +159,4 @@ dc_resource('gateway-service', labels=['app'])
 dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['metadata-lifecycle-db'])
 dc_resource('sharing-service', labels=['app'], resource_deps=['sharing-db'])
 dc_resource('otel-lgtm', labels=['observability'])
+dc_resource('platform-legacy', labels=['app'])

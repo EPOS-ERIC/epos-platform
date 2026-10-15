@@ -1,0 +1,11 @@
+{
+  "/testpath/api": {
+    "target": "https://www.ics-c.epos-eu.org/",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/testpath": ""
+    }
+  }
+}
