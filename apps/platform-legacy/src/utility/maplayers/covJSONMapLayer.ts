@@ -1,0 +1,441 @@
+import * as L from 'leaflet';
+import {
+  EposLeafletComponent, GeoJsonLayerFeatureItemGenerator, Legend, MapLayer
+} from 'utility/eposLeaflet/eposLeaflet';
+import * as JP from 'jsonpath';
+import { ObjectHelper } from './objectHelper';
+import { Stylable } from 'utility/styler/stylable.interface';
+import { Injector } from '@angular/core';
+import { Feature, GeoJsonObject, GeoJsonProperties, GeometryObject, Point } from 'geojson';
+import { FeatureCollection } from '@turf/turf';
+import { PopupProperty } from './popupProperty';
+import { JsonMapLayer, Marker } from './jsonMapLayer';
+import { CovJSONHelper } from './covJSONHelper';
+import { JsonHelper } from './jsonHelper';
+import { GeoJSONHelper } from './geoJSONHelper';
+import { GeoJSONMapLayer } from './geoJSONMapLayer';
+import { HttpClient } from '@angular/common/http';
+
+
+export class CovJSONMapLayer extends JsonMapLayer {
+
+  private hiddenSyncedWithBaseLayer = false;
+
+  constructor(
+    injector: Injector,
+    id: string,
+    name: string,
+    protected stylable: Stylable,
+    getDataFunction: () => Promise<GeoJsonObject>,
+    mapConfig: EposLeafletComponent,
+  ) {
+    super(injector, id, name, stylable);
+
+    const baseId = id.replace(CovJSONHelper.COVJSON_ID_SUFFIX, '');
+    this.options.set('pane', baseId);
+    this.markerLayer.options.set('pane', baseId);
+
+    this.setPreLayerAddFunction(() => {
+      return getDataFunction()
+        .then((data: GeoJsonObject) => {
+
+          this.setLayerClickFeatureItemGenerator(
+            new GeoJsonLayerFeatureItemGenerator(
+              this,
+              this.processForFeatureIdentification(data),
+              (feature: Feature<GeometryObject, Record<string, unknown>>) => {
+                return CovJSONHelper.getPopupContentFromProperties(feature.properties, this.layerName);
+              },
+              (ev: MouseEvent, feature: Feature<GeometryObject, Record<string, unknown>>) => {
+                JsonHelper.popupClick(ev, this.executionService, this.authenticatedClickService);
+              })
+          );
+
+          this.setGeoJsonData(data);
+
+          // add GeoJSONHelper.STYLE_ATTR on data
+          this.addStyle();
+
+          this.initData();
+
+          // CoverageCollection is not valid GeoJSON —so you make it become a feature collection
+          const covAsFC = this.geoJsonData as unknown as FeatureCollection;
+          const extractedFeatures = (covAsFC && Array.isArray(covAsFC.features)) ? covAsFC.features : [];
+          const styleAttr = (this.geoJsonData as unknown as Record<string, unknown>)[GeoJSONHelper.STYLE_ATTR];
+          this.setGeoJsonData({
+            type: 'FeatureCollection',
+            features: extractedFeatures,
+            [GeoJSONHelper.STYLE_ATTR]: styleAttr,
+          } as unknown as GeoJsonObject);
+
+          // check if cluster options is true on layer stylable
+          if (stylable !== null) {
+            const clustering = stylable.getStyle()!.getClustering() ?? false;
+            this.tryAddClustering(mapConfig, stylable, clustering);
+          }
+        })
+        .catch((r) => {
+          console.warn(`Failed to populate GeoJson data of '${name}' layer.`);
+          console.warn(r);
+        });
+
+    })
+      .setTooltipFunction((feature: Feature<GeometryObject, Record<string, unknown>>): string => {
+        return JsonHelper.getLabelFromProperties(feature.properties, this.layerName);
+      })
+      .setPointToLayerFunction(this.pointToLayer.bind(this) as null | ((geoJsonPoint: Feature<Point, Record<string, unknown>>, latlng: L.LatLng) => L.Layer))
+      .setFeatureDisplayContentFunc((feature: Feature<GeometryObject, Record<string, unknown>>) => {
+        return CovJSONHelper.getPopupContentFromProperties(feature.properties, this.layerName);
+      })
+      .setFeatureContentClickFunc((ev: MouseEvent, feature: Feature<GeometryObject, Record<string, unknown>>) => {
+        JsonHelper.popupClick(ev, this.executionService, this.authenticatedClickService);
+      })
+      .setStylingFunction(() => {
+        this.options.customLayerOptionOpacity.set(this.getStylableOpacity(this.stylable));
+        this.options.customLayerOptionColor.set(this.getStylableColor1(this.stylable));
+        this.options.customLayerOptionFillColor.set(this.getStylableColor2(this.stylable));
+        this.options.customLayerOptionFillColorOpacity.set(this.getStylableFillOpacity(this.stylable));
+        this.options.customLayerOptionWeight.set(this.getWeight(this.stylable));
+        this.options.customLayerOptionMarkerIconSize.set(this.getStylableSize(this.stylable));
+
+        this.options.customLayerOptionStylable.set(stylable as Stylable);
+
+        return {
+          color: this.getStylableColor1(this.stylable),
+        };
+      })
+      .setLegendCreatorFunction((layer: MapLayer, http: HttpClient): Promise<null | Array<Legend>> => {
+        return this.getBaseGeoJsonLayer(baseId) == null
+          ? this.createLegend(layer, http)
+          : Promise.resolve([] as Array<Legend>);
+      })
+
+      /*
+      .setPostLayerAddFunction(() => {
+        (this.getLayerClickFeatureItemGenerator() as CovJsonLayerFeatureItemGenerator)
+          .setFixedZoomBufferPx(this.CIRCLE_MARKER_RADIUS_PX);
+        return Promise.resolve();
+      })
+      */
+      ;
+
+  }
+
+  public setZOffset(index?: number): void {
+    const baseId = this.id.replace(CovJSONHelper.COVJSON_ID_SUFFIX, '');
+    super.setZOffset(this.getBaseGeoJsonLayer(baseId) == null
+      ? index
+      : index == null ? -1 : index - 1);
+  }
+
+
+  /**
+   * The function creates a Leaflet marker with specified styling and position.
+   * @param {Stylable} stylable - Stylable is an object that contains information about the style of
+   * the marker, such as color, size, and shape.
+   * @param {null | Marker} marker - The `marker` parameter in the `createLeafletMarker` function is a
+   * variable that can hold either a `null` value or an instance of the `Marker` class. It is used to
+   * specify the marker that will be created on the map at the specified `latlng` coordinates.
+   * @param latlng - The `latlng` parameter in the `createLeafletMarker` function represents the
+   * geographical coordinates (latitude and longitude) where the marker will be placed on the map. It
+   * is of type `L.LatLng`, which is a Leaflet class representing a geographical point.
+   * @returns The `createLeafletMarker` method is being called with the parameters `stylable`,
+   * `marker`, and `latlng`, and the boolean value `false`. The method is expected to return a
+   * `L.Layer` object.
+   */
+  protected createLeafletMarker(stylable: Stylable, marker: null | Marker, latlng: L.LatLng): L.Layer {
+    const layer = super.createLeafletMarker(stylable, marker, latlng, false);
+    const baseId = this.id.replace(CovJSONHelper.COVJSON_ID_SUFFIX, '');
+    (layer as L.Marker).options.pane = baseId;
+    return layer;
+  }
+
+  protected preLayerAdd(): Promise<void> {
+    const baseId = this.id.replace(CovJSONHelper.COVJSON_ID_SUFFIX, '');
+    const baseLayer = this.getBaseGeoJsonLayer(baseId);
+    this.visibleOnLayerControl.set(baseLayer == null);
+    this.setZOffset();
+    this.syncHiddenWithBaseLayer(baseLayer);
+    return Promise.resolve().then(() => this.getEposLeaflet().ensurePaneExists(baseId));
+  }
+
+  private getBaseGeoJsonLayer(baseId: string): null | GeoJSONMapLayer {
+    const baseLayer = this.getEposLeaflet().getLayers().find((layer: MapLayer) => layer.id === baseId);
+    return baseLayer instanceof GeoJSONMapLayer ? baseLayer : null;
+  }
+
+  private syncHiddenWithBaseLayer(baseLayer: null | GeoJSONMapLayer): void {
+    if (this.hiddenSyncedWithBaseLayer) {
+      return;
+    }
+
+    if (baseLayer != null) {
+      this.hidden.set(baseLayer.hidden.get() === true);
+      this.options.customLayerOptionOpacity.set(baseLayer.options.customLayerOptionOpacity.get());
+      baseLayer.hidden.watch().subscribe((hidden: boolean) => {
+        this.hidden.set(hidden === true);
+      });
+      baseLayer.options.customLayerOptionOpacity.watch().subscribe((opacity: number) => {
+        this.options.customLayerOptionOpacity.set(opacity);
+      });
+      this.hiddenSyncedWithBaseLayer = true;
+    }
+  }
+
+  private addStyle() {
+    const style = {
+      event: {
+        label: 'event',
+        marker: {
+          anchor: 'C',
+          clustering: false,
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          fontawesome_class: 'fas fa-circle',
+          pin: false,
+        }
+      }
+    };
+    this.geoJsonData[GeoJSONHelper.STYLE_ATTR] = style;
+
+  }
+
+  // filter out the image features that don't have any geometry (badly formed?)
+  private filterOutImageLayers(data: GeoJsonObject): GeoJsonObject {
+    // clone so's not to affect the original object
+    data = JSON.parse(JSON.stringify(data)) as GeoJsonObject;
+    if (data.type === 'FeatureCollection') {
+      const featureCollection = data as FeatureCollection;
+      featureCollection.features = featureCollection.features.filter(feature => null != feature.geometry);
+    }
+    return data;
+  }
+
+  // TEST CHANGE <--------
+
+  private initData(): void {
+    // Color comes from Style obj
+    // e.g. style.getColor1String()    (background/main)
+    // e.g. style.getColor2String()    (contrast colour)
+
+    // Read the geo json to construct the legend and styling callbacks
+    // ----------------------------------------------------------------------------------
+
+    // The plan is to use jsonpath to locate objects of interest,
+    // but there is some weird behaviour in that it doesn't' treat
+    // root objects the same way as more deeply nested objects.
+    // Hence the data object will be arificially nested to allow
+    // all objects to be viable results from jsonpath.query().
+
+    const root: Record<string, unknown> = {};
+    root.root = [this.geoJsonData];
+
+
+    // ----------------------------------------------------------------------------------
+    // Styling Algorithm:
+    // 1. look for Coverage
+    // 3. create style objects that can be assigned to features based on type
+    // 4. iterate through features
+    // 5. does Feature have a type - look up the style | default
+    // 6. assign feature a style ID
+    // 7. map ID to style
+    // 8. in the styling callback use the id to pickup the style to use.
+    // 9. in the legend callback use the id to pickup the styles to list.
+
+
+    const styleIdGenerator = 0;
+    let styleTypeToId = new Map<null | string, number>();
+
+    // start from FeatureCollection
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let jsonRoot: any[];
+
+    const jsonRootCC = JP.query(root, '$..*[?(@.type=="CoverageCollection")]');
+
+    const jsonRootC = JP.query(root, '$..*[?(@.type=="Coverage")]');
+
+    let isCoverageCollection = false;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (jsonRootCC.length > 0) {
+      isCoverageCollection = true;
+      jsonRoot = jsonRootCC;
+    }
+    else {
+      jsonRoot = jsonRootC;
+    }
+
+
+
+    if (jsonRoot.length > 0) {
+
+      if (isCoverageCollection) {
+        // For CoverageCollection: iterate through ALL coverages, not just by forEach index
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const coverages: unknown[] = jsonRoot[0].coverages ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        jsonRoot[0].features = jsonRoot[0].features ? jsonRoot[0].features : [];
+
+        coverages.forEach((coverage: unknown) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const cov = coverage as Record<string, any>;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const yValues = cov.domain?.axes?.y?.values;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const xValues = cov.domain?.axes?.x?.values;
+
+          // Skip coverages with null/missing coordinates
+          if (yValues == null || xValues == null) {
+            return;
+          }
+
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const lat = Number(yValues[0]);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const long = Number(xValues[0]);
+
+          if (lat == null || long == null) {
+            return;
+          }
+
+          const point = {
+            geometry: {
+              coordinates: [long, lat],
+              type: 'Point'
+            },
+            properties: {
+              [GeoJSONHelper.STYLE_ID_ATTR]: 'event',
+              [GeoJSONHelper.TYPE_ATTR]: 'event',
+              [GeoJSONHelper.MAP_KEYS_ATTR]: ['Latitude', 'Longitude'],
+              ['Latitude']: String(lat),
+              ['Longitude']: String(long),
+            },
+            type: 'Feature',
+          };
+
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          jsonRoot[0].features.push(point);
+        });
+
+      } else {
+        // Single Coverage: extract coordinates with null-safety
+        jsonRoot.forEach((item, index: number) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const yValues = jsonRoot[index].domain?.axes?.y?.values;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const xValues = jsonRoot[index].domain?.axes?.x?.values;
+
+          // Skip if coordinates are null
+          if (yValues == null || xValues == null) {
+            return;
+          }
+
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const lat = Number(yValues[0]);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const long = Number(xValues[0]);
+
+          if (lat == null || long == null) {
+            return;
+          }
+
+          const point = {
+            geometry: {
+              coordinates: [long, lat],
+              type: 'Point'
+            },
+            properties: {
+              [GeoJSONHelper.STYLE_ID_ATTR]: 'event',
+              [GeoJSONHelper.TYPE_ATTR]: 'event',
+              [GeoJSONHelper.MAP_KEYS_ATTR]: ['Latitude', 'Longitude'],
+              ['Latitude']: String(lat),
+              ['Longitude']: String(long),
+            },
+            type: 'Feature',
+          };
+
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          jsonRoot[0].features = [point];
+        });
+      }
+      /* // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const lat = jsonRoot[0].domain.axes.y.values[0];
+      // For Future Reference: value should arrive in the right range from Json
+      // check for lat: if not in -90, 90 range -> const lat = '0'; and then check that everything else works fine
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const long = jsonRoot[0].domain.axes.x.values[0];
+      // For Future Reference: value should arrive in the right range from Json
+      // check for long: if not in -180, 180 range -> const lng = '0'; and then check that everything else works fine
+
+      const point = {
+        geometry: {
+          coordinates: [long, lat],
+          type: 'Point'
+        },
+        properties: {
+          [GeoJSONHelper.STYLE_ID_ATTR]: 'event',
+          [GeoJSONHelper.TYPE_ATTR]: 'event',
+          [GeoJSONHelper.MAP_KEYS_ATTR]: ['Latitude', 'Longitude'],
+          ['Latitude']: lat as string,
+          ['Longitude']: long as string,
+        },
+        type: 'Feature',
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      jsonRoot[0].features = [point]; */
+    }
+
+    // See if there is an GeoJSONHelper.STYLE_ATTR object (if there isn't any point continuing)
+    const externalStyle = ObjectHelper.getObjectValue<Record<string, unknown>>(jsonRoot[0] as Record<string, unknown>, GeoJSONHelper.STYLE_ATTR);
+    if (null != externalStyle) {
+      styleTypeToId = this.setStyleFromPayload(externalStyle, styleIdGenerator);
+    }
+
+    // Features
+    // if featureCollection contains features otherwise it looks for features from root
+    jsonRoot = JP.query(jsonRoot.length === 0 ? root : jsonRoot, '$..*[?(@.type=="Feature")]');
+
+    jsonRoot.forEach((feature: Feature<GeometryObject, GeoJsonProperties>, index: number) => {
+      const featureType = (feature.geometry != null) ? feature.geometry.type : '';
+      const externalType = (feature.properties != null) ? ObjectHelper.getObjectValue<string>(feature.properties, GeoJSONHelper.TYPE_ATTR) : null;
+      // See if there is an GeoJSONHelper.TYPE_ATTR object (if there isn't no point continuing)
+      const styleId = styleTypeToId.get(externalType);
+      if (null != styleId) {
+        if (null == feature.properties) {
+          feature.properties = {};
+        }
+        feature.properties[GeoJSONHelper.STYLE_ID_ATTR] = styleId;
+        this.options.customLayerOptionHasMarker.set(true);
+      } else if (null != featureType) {
+        this.options.customLayerOptionHasMarker.set(true);
+        switch (featureType.toLowerCase()) {
+          case ('point'): {
+            this.options.customLayerOptionMarkerType.set(MapLayer.MARKERTYPE_POINT);
+            break;
+          }
+          case ('linestring'):
+          case ('multilinestring'): {
+            this.options.customLayerOptionMarkerType.set(MapLayer.MARKERTYPE_LINE);
+            break;
+          }
+          case ('geometrycollection'): {
+            // GeometryCollection contains mixed geometry types
+            // Treat as polygon for marker type purposes
+            this.options.customLayerOptionMarkerType.set(MapLayer.MARKERTYPE_POLYGON);
+            break;
+          }
+          default: {
+            this.options.customLayerOptionMarkerType.set(MapLayer.MARKERTYPE_POLYGON);
+            break;
+          }
+        }
+      }
+
+      // add feature identifier
+      if (feature.properties !== null) {
+        feature.properties[PopupProperty.PROPERTY_ID] = this.id + '#' + index.toString() + '#';
+      }
+    });
+  }
+
+}
