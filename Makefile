@@ -11,7 +11,7 @@ down:
 	tilt down $(TILT_CONTEXT_ARG)
 
 clean: down
-	docker volume rm -f docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data docker_sharing-db-data docker_data-retriever-db-data
+	docker volume rm -f docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data docker_sharing-db-data docker_data-retriever-db-data docker_platform-legacy-node-modules
 
 populate:
 	./packages/scripts/populatescript.sh
@@ -78,13 +78,13 @@ test-integration:
 		-v "$(CURDIR):/work:ro" \
 		-w /work \
 		-e GATEWAY_API_URL=http://host.docker.internal:32000/v1 \
-		-e AAI_URL=http://host.docker.internal:8110 \
+		-e AAI_URL=http://host.docker.internal:35000 \
 		--entrypoint python \
 		ghcr.io/schemathesis/schemathesis:latest \
 		-m unittest discover -s /work/tests/contract -p 'test_*.py' -v
 
 get-dev-token:
-	curl -s -X POST http://localhost:8110/oauth/token \
+	curl -s -X POST http://localhost:35000/oauth/token \
 		-u local-dev-client:dev-secret \
 		-d grant_type=password \
 		-d username=admin@admin.org \

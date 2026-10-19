@@ -132,9 +132,9 @@ services:
     environment:
       - OSS_AAI_LISTEN_ADDR=:8080
       - APP_CORS_ALLOW_ORIGIN=*
-      - OIDC_ISSUER=http://localhost:8110/oauth2
+      - OIDC_ISSUER=http://localhost:35000/oauth2
     ports:
-      - "8110:8080"
+      - "35000:8080"
     networks:
       - epos-network
     healthcheck:

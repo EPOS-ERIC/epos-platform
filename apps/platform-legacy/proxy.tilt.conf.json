@@ -1,0 +1,11 @@
+{
+  "/testpath/api": {
+    "target": "http://gateway-service:5000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/testpath": ""
+    }
+  }
+}

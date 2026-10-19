@@ -205,11 +205,11 @@ services:
   oss-aai-service:
     image: epos-oss-aai-dev:local
     ports:
-      - "8110:8080"
+      - "35000:8080"
     environment:
       - OSS_AAI_LISTEN_ADDR=:8080
       - APP_CORS_ALLOW_ORIGIN=*
-      - OIDC_ISSUER=http://localhost:8110/oauth2
+      - OIDC_ISSUER=http://localhost:35000/oauth2
     volumes:
       - type: bind
         source: ${HOME}/go/pkg/mod
@@ -230,6 +230,17 @@ services:
       retries: 20
       start_period: 20s
 
+  platform-legacy:
+    image: epos-platform-legacy-dev:local
+    ports:
+      - "4200:4200"
+    volumes:
+      - platform-legacy-node-modules:/workspace/apps/platform-legacy/node_modules
+      - platform-legacy-angular-cache:/workspace/apps/platform-legacy/.angular
+    restart: on-failure
+    networks:
+      - epos-network
+
   otel-lgtm:
     image: grafana/otel-lgtm
     ports:
@@ -246,6 +257,8 @@ services:
 
 volumes:
   go-build-cache:
+  platform-legacy-angular-cache:
+  platform-legacy-node-modules:
   metadata-lifecycle-db-data:
   data-retriever-db-data:
   sharing-db-data:

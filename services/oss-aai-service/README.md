@@ -16,7 +16,7 @@ make run
 
 Open: `http://localhost:8080`
 
-The repository Tilt stack publishes the same service at `http://localhost:8110`.
+The repository Tilt stack publishes the same service at `http://localhost:35000`.
 
 ## Run with Docker
 
