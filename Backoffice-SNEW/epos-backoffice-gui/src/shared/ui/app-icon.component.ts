@@ -23,8 +23,9 @@ export type IconName =
   | 'bell'
   | 'block'
   | 'warning'
-  | 'sun'
-  | 'moon';
+  | 'sun'  
+  | 'moon'
+  | 'join-group';
 
 @Component({
   selector: 'app-icon',

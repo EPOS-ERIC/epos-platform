@@ -125,6 +125,10 @@ export class MainContainerComponent {
     const groupId = this.selectedGroupId();
     return !!groupId && this.currentUserStore.canManageGroup(groupId);
   });
+  protected readonly belongsToGroup = computed(() => {
+    const groupId = this.selectedGroupId();
+    return this.currentUserStore.belongsToGroup(groupId);
+  });
 
   protected openCopyResource(item: DiscoveryItem): void {
     this.resourceCreationDialog.openCopy(

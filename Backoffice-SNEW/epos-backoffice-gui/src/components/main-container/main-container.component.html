@@ -84,7 +84,7 @@
           [sectionTitle]="sectionTitle()"
         />
       } @else {
-        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [allGroups]="allGroups()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [canCopyResources]="canCopyResources()" [returnUrl]="currentUrl()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" (copyResource)="openCopyResource($event)" />
+        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [allGroups]="allGroups()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [belongsToGroup]="belongsToGroup()" [canCopyResources]="canCopyResources()" [returnUrl]="currentUrl()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" (copyResource)="openCopyResource($event)" />
       }
     </div>
   </section>

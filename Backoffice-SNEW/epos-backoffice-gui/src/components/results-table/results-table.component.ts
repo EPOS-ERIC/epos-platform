@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import { AppIconComponent } from '../../shared/ui/app-icon.component';
 import { ListPaginationComponent } from '../../shared/ui/list-pagination.component';
+import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
 
 @Component({
   selector: 'app-results-table',
@@ -19,12 +20,14 @@ export class ResultsTableComponent implements OnChanges {
   @Input() selectedGroupId = '';
   @Input() selectedGroupName = '';
   @Input() canManageGroup = false;
+  @Input() belongsToGroup: {status: string} = {status: 'null'};
   @Input() returnUrl = '/data';
   @Input() discoveryItems: DiscoveryItem[] | null = null;
   @Input() discoveryLoading = false;
   @Input() canCopyResources = false;
   @Output() copyResource = new EventEmitter<DiscoveryItem>();
-
+  
+  protected readonly requestDialog = inject(MembershipRequestDialogService);
   protected currentPage = 1;
   protected pageSize = 10;
   protected readonly pageSizeOptions = [10, 25, 50];
@@ -35,6 +38,10 @@ export class ResultsTableComponent implements OnChanges {
     if (changes['selectedGroupId'] || changes['discoveryItems']) {
       this.currentPage = 1;
     }
+  }
+  
+  protected openJoinGroupDialog() {
+    this.requestDialog.open(this.selectedGroupId);
   }
 
   protected get paginatedItems(): DiscoveryItem[] {

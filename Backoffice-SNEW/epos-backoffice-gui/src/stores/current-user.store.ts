@@ -35,6 +35,19 @@ export class CurrentUserStore {
     return GROUP_MANAGEMENT_PERMISSIONS.some((permission) => this.hasGroupPermission(groupId, permission));
   }
 
+  belongsToGroup(groupId: string): { status: string } {
+    const belongsToGroup = this.user()?.memberships.find((item) => item.group.id === groupId)
+    if(belongsToGroup !== undefined && belongsToGroup.status.toUpperCase() === 'ACTIVE'){
+      return { status: 'ACTIVE'};
+    }
+    else if(belongsToGroup !== undefined && belongsToGroup.status.toUpperCase() !== 'ACTIVE'){
+      return { status: belongsToGroup.status };
+    }
+    else{
+      return { status: 'null' };
+    }
+  }
+
   groupPermissions(groupId: string): GroupPermission[] {
     const user = this.user();
     if (!user || !groupId) return [];

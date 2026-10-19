@@ -34,8 +34,13 @@ export class MembershipRequestDialogService {
   readonly groupsLoading = this.groupsStore.loading;
   readonly roles: readonly RequestableMembershipRole[] = ['EDITOR', 'REVIEWER'];
 
-  open(): void {
-    this.groupId.set(this.groups()[0]?.id ?? '');
+  open(groupId?: string): void {
+    if(groupId){
+      this.groupId.set(groupId);  
+    }
+    else{
+      this.groupId.set(this.groups()[0]?.id ?? '');
+    }
     this.role.set('EDITOR');
     this.error.set('');
     this.openState.set(true);

@@ -196,6 +196,30 @@ tbody tr:hover {
   color: var(--text-muted);
 }
 
+.user-belong-status{
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.user-belong-status[data-status='active'] {
+  background: var(--olive-100);
+  color: var(--olive-700);
+}
+
+.user-belong-status[data-status='pending'] {
+  background: var(--amber-100);
+  color: var(--amber-600);
+}
+
+.user-belong-status[data-status='rejected'] {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
