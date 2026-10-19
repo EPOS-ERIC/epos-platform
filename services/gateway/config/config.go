@@ -19,9 +19,6 @@ type Server struct {
 	Listen          string        `yaml:"listen"`
 	CORSAllowOrigin string        `yaml:"cors_allow_origin"`
 	RequestTimeout  time.Duration `yaml:"request_timeout"`
-	ReadTimeout     time.Duration `yaml:"read_timeout"`
-	WriteTimeout    time.Duration `yaml:"write_timeout"`
-	IdleTimeout     time.Duration `yaml:"idle_timeout"`
 }
 
 type Service struct {
@@ -30,6 +27,7 @@ type Service struct {
 
 type Services struct {
 	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
+	Sharing           Service `yaml:"sharing"`
 	Auth              Service `yaml:"auth"`
 }
 
@@ -50,13 +48,11 @@ func Default() Config {
 		Server: Server{
 			Listen:          ":5000",
 			RequestTimeout:  30 * time.Second,
-			ReadTimeout:     15 * time.Second,
-			WriteTimeout:    30 * time.Second,
-			IdleTimeout:     60 * time.Second,
 			CORSAllowOrigin: "",
 		},
 		Services: Services{
 			MetadataLifecycle: Service{URL: ""},
+			Sharing:           Service{URL: ""},
 			Auth:              Service{URL: ""},
 		},
 		Notifications: Notifications{Mailgun: Mailgun{
@@ -101,20 +97,12 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("server.request_timeout must be greater than zero")
 	}
 
-	if c.Server.ReadTimeout <= 0 {
-		return fmt.Errorf("server.read_timeout must be greater than zero")
-	}
-
-	if c.Server.WriteTimeout <= 0 {
-		return fmt.Errorf("server.write_timeout must be greater than zero")
-	}
-
-	if c.Server.IdleTimeout <= 0 {
-		return fmt.Errorf("server.idle_timeout must be greater than zero")
-	}
-
 	if c.Services.MetadataLifecycle.URL == "" {
 		return fmt.Errorf("services.metadata-lifecycle.url is required")
+	}
+
+	if c.Services.Sharing.URL == "" {
+		return fmt.Errorf("services.sharing.url is required")
 	}
 
 	if c.Services.Auth.URL == "" {

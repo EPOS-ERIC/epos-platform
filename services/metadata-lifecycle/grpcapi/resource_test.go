@@ -15,6 +15,7 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 		Name:   "value",
 		Label:  "Value",
 		Schema: domain.StringSchema{Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}},
+		ID:     uuid.New(),
 	}
 	value := domain.Parameter{
 		Name:  "filter",
@@ -23,6 +24,7 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 			Template:   "{{.value}}",
 			Parameters: []domain.Parameter{child},
 		},
+		ID: uuid.New(),
 	}
 
 	proto := parameterOutput(domain.WebServiceParameter{Parameter: value, Location: domain.ParameterLocationQuery})
@@ -33,12 +35,25 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 	if template.Parameters[0].GetString_() == nil || len(template.Parameters[0].GetString_().GetEnum()) != 2 {
 		t.Fatalf("template child = %+v, want scalar string parameter", template.Parameters[0])
 	}
-
-	mapped, err := parameterInput(proto)
+	inputProto := &metadatalifecyclev1.ParameterInput{
+		Name:  "filter",
+		Label: "Filter",
+		Value: &metadatalifecyclev1.ParameterInput_Template{Template: &metadatalifecyclev1.TemplateParameterInput{
+			Template: "{{.value}}",
+			Parameters: []*metadatalifecyclev1.ScalarParameterInput{{
+				Name:  "value",
+				Label: "Value",
+				Value: &metadatalifecyclev1.ScalarParameterInput_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
+					Enum: []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
+				}},
+			}},
+		}},
+	}
+	mapped, err := parameterInput(inputProto)
 	if err != nil {
 		t.Fatalf("parameterInput() error = %v", err)
 	}
-	mappedTemplate, ok := mapped.Schema.(domain.TemplateSchema)
+	mappedTemplate, ok := mapped.Schema.(domain.TemplateSchemaInput)
 	if !ok || len(mappedTemplate.Parameters) != 1 || len(mappedTemplate.Parameters[0].Schema.(domain.StringSchema).Enum) != 2 {
 		t.Fatalf("mapped template = %+v, want one scalar child", mapped.Schema)
 	}
@@ -53,7 +68,13 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 		Format:          "application/json",
 		BodyContentType: &contentType,
 		BodyTemplate:    &bodyTemplate,
-		BodyParameters:  []*metadatalifecyclev1.ScalarParameter{template.Parameters[0]},
+		BodyParameters: []*metadatalifecyclev1.ScalarParameterInput{{
+			Name:  "value",
+			Label: "Value",
+			Value: &metadatalifecyclev1.ScalarParameterInput_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
+				Enum: []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
+			}},
+		}},
 	})
 	if err != nil {
 		t.Fatalf("webServiceInput() error = %v", err)
@@ -64,10 +85,10 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 }
 
 func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
-	parameter := &metadatalifecyclev1.Parameter{
+	parameter := &metadatalifecyclev1.ParameterInput{
 		Name:  "value",
 		Label: "Value",
-		Value: &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{
+		Value: &metadatalifecyclev1.ParameterInput_String_{String_: &metadatalifecyclev1.StringParameter{
 			Enum:           []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
 			MultipleValues: true,
 		}},
@@ -84,7 +105,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP,
 		},
 		Format:     "application/json",
-		Parameters: []*metadatalifecyclev1.Parameter{parameter},
+		Parameters: []*metadatalifecyclev1.ParameterInput{parameter},
 	})
 	if err != nil {
 		t.Fatalf("webServiceInput() error = %v", err)
@@ -107,10 +128,10 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		VisibleOn:   []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnGraph, domain.WebServiceVisibleOnMap},
 		Format:      "application/json",
 		Parameters: []domain.WebServiceParameter{{
-			ID:       id,
 			Name:     "value",
 			Label:    "Value",
 			Schema:   domain.StringSchema{Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: true},
+			ID:       id,
 			Property: &property,
 			Location: domain.ParameterLocationQuery,
 			Explode:  true,
@@ -156,10 +177,10 @@ func TestWebServiceInputRejectsUnspecifiedEnums(t *testing.T) {
 	}
 
 	parameter := base()
-	parameter.Parameters = []*metadatalifecyclev1.Parameter{{
+	parameter.Parameters = []*metadatalifecyclev1.ParameterInput{{
 		Name:  "value",
 		Label: "Value",
-		Value: &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{}},
+		Value: &metadatalifecyclev1.ParameterInput_String_{String_: &metadatalifecyclev1.StringParameter{}},
 	}}
 	if _, err := webServiceInput(parameter); !apperror.IsCode(err, apperror.CodeValidationFailed) {
 		t.Fatalf("unspecified parameter location error = %v, want validation_failed", err)

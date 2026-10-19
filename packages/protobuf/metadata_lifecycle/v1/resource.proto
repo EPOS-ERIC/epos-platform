@@ -245,7 +245,7 @@ message WebServiceInput {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   optional string description = 2 [(buf.validate.field).string.min_len = 1];
   string template_url = 3 [(buf.validate.field).string.min_len = 1];
-  repeated Parameter parameters = 4;
+  repeated ParameterInput parameters = 4;
   string format = 5 [(buf.validate.field).string.min_len = 1];
   optional string provider_id = 6 [(buf.validate.field).string.uuid = true];
   Documentation documentation = 7;
@@ -255,7 +255,7 @@ message WebServiceInput {
   WebServiceMethod method = 11 [(buf.validate.field).enum.defined_only = true];
   optional string body_content_type = 12 [(buf.validate.field).string.min_len = 1];
   optional string body_template = 13 [(buf.validate.field).string.min_len = 1];
-  repeated ScalarParameter body_parameters = 14;
+  repeated ScalarParameterInput body_parameters = 14;
   WebServiceType type = 15 [(buf.validate.field).enum.defined_only = true];
   repeated WebServiceVisibleOn visible_on = 16 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }
@@ -291,6 +291,27 @@ message Documentation {
   string uri = 3 [(buf.validate.field).string.uri = true];
 }
 
+message ParameterInput {
+  int32 position = 1;
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string label = 3 [(buf.validate.field).string.min_len = 1];
+  optional string description = 4 [(buf.validate.field).string.min_len = 1];
+  bool required = 5;
+  bool read_only = 6;
+  oneof value {
+    option (buf.validate.oneof).required = true;
+    StringParameter string = 7;
+    BooleanParameter boolean = 8;
+    IntegerParameter integer = 9;
+    FloatParameter float = 10;
+    DateTimeParameter date_time = 11;
+    TemplateParameterInput template = 12;
+  }
+  optional string property = 13;
+  WebServiceParameterLocation location = 14 [(buf.validate.field).enum.defined_only = true];
+  bool explode = 15;
+}
+
 message Parameter {
   int32 position = 1;
   string name = 2 [(buf.validate.field).string.min_len = 1];
@@ -312,6 +333,23 @@ message Parameter {
   bool explode = 15;
 }
 
+message ScalarParameterInput {
+  int32 position = 1;
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string label = 3 [(buf.validate.field).string.min_len = 1];
+  optional string description = 4 [(buf.validate.field).string.min_len = 1];
+  bool required = 5;
+  bool read_only = 6;
+  oneof value {
+    option (buf.validate.oneof).required = true;
+    ScalarStringParameter string = 7;
+    ScalarBooleanParameter boolean = 8;
+    ScalarIntegerParameter integer = 9;
+    ScalarFloatParameter float = 10;
+    ScalarDateTimeParameter date_time = 11;
+  }
+}
+
 message ScalarParameter {
   int32 position = 1;
   string name = 2 [(buf.validate.field).string.min_len = 1];
@@ -327,6 +365,7 @@ message ScalarParameter {
     ScalarFloatParameter float = 10;
     ScalarDateTimeParameter date_time = 11;
   }
+  string id = 12 [(buf.validate.field).string.uuid = true];
 }
 
 message WebServiceParameter {
@@ -386,6 +425,11 @@ message DateTimeParameter {
 message TemplateParameter {
   string template = 1 [(buf.validate.field).string.min_len = 1];
   repeated ScalarParameter parameters = 2;
+}
+
+message TemplateParameterInput {
+  string template = 1 [(buf.validate.field).string.min_len = 1];
+  repeated ScalarParameterInput parameters = 2;
 }
 
 message ScalarStringParameter {

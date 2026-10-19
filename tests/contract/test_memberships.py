@@ -31,11 +31,9 @@ class MembershipContractTest(unittest.TestCase):
         group = created_group_response.json()
         group_id = group["id"]
 
-        aai_url = os.getenv("AAI_URL", "http://localhost:8110")
         email = f"contract-applicant-{suffix}@example.org"
         password = uuid4().hex
         credentials = register_user(
-            aai_url,
             name="Membership",
             surname=f"Applicant {suffix}",
             email=email,
@@ -45,7 +43,6 @@ class MembershipContractTest(unittest.TestCase):
             SCHEMA,
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(
-                aai_url=aai_url,
                 username=credentials.username,
                 password=credentials.password,
             ),

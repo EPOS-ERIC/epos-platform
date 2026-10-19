@@ -30,13 +30,10 @@ class GroupRoleContractTest(unittest.TestCase):
         self.assertEqual(group_response.status_code, 201)
         group_id = group_response.json()["id"]
 
-        aai_url = os.getenv("AAI_URL", "http://localhost:8110")
-
         def create_user(label: str) -> GatewayClient:
             email = f"contract-{label}-{suffix}@example.org"
             password = uuid4().hex
             credentials = register_user(
-                aai_url,
                 name="Contract",
                 surname=f"{label.title()} {suffix}",
                 email=email,
@@ -46,7 +43,6 @@ class GroupRoleContractTest(unittest.TestCase):
                 SCHEMA,
                 os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
                 get_token(
-                    aai_url=aai_url,
                     username=credentials.username,
                     password=credentials.password,
                 ),

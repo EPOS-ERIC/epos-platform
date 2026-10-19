@@ -18,9 +18,7 @@ class ValidationErrorsContractTest(unittest.TestCase):
         )
 
     def create_user(self, suffix: str) -> tuple[GatewayClient, str]:
-        aai_url = os.getenv("AAI_URL", "http://localhost:8110")
         credentials = register_user(
-            aai_url,
             name="Validation",
             surname=f"User {suffix}",
             email=f"validation-{uuid4().hex}@example.org",
@@ -30,7 +28,6 @@ class ValidationErrorsContractTest(unittest.TestCase):
             SCHEMA,
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(
-                aai_url=aai_url,
                 username=credentials.username,
                 password=credentials.password,
             ),

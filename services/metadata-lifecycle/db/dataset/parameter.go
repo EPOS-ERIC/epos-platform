@@ -11,7 +11,7 @@ import (
 )
 
 func parameterParams(
-	value domain.Parameter,
+	value domain.ParameterInput,
 	webServiceID, webServiceBodyID, templateParameterID *uuid.UUID,
 	property *string,
 	location *domain.ParameterLocation,
@@ -46,7 +46,7 @@ func parameterParams(
 func persistParameter(
 	ctx context.Context,
 	q *sqlc.Queries,
-	value domain.Parameter,
+	value domain.ParameterInput,
 	webServiceID, webServiceBodyID, templateParameterID *uuid.UUID,
 	property *string,
 	location *domain.ParameterLocation,
@@ -102,7 +102,7 @@ func persistParameter(
 			DefaultValue: schema.Default,
 			Layout:       schema.Layout,
 		})
-	case domain.TemplateSchema:
+	case domain.TemplateSchemaInput:
 		schemaErr = q.AddLifecycleParameterTemplate(ctx, sqlc.AddLifecycleParameterTemplateParams{
 			ParameterID: created.ID,
 			Template:    schema.Template,
@@ -340,5 +340,6 @@ func domainParameter(value sqlc.Parameter, template *sqlc.ParameterTemplate, chi
 		Required:    value.Required,
 		ReadOnly:    value.ReadOnly,
 		Schema:      schema,
+		ID:          value.ID,
 	}, nil
 }

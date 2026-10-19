@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 )
 
@@ -396,6 +397,7 @@ func (s *BooleanParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/BooleanScalarParameter
 type BooleanScalarParameter struct {
+	ID          uuid.UUID                  `json:"id"`
 	Kind        BooleanScalarParameterKind `json:"kind"`
 	Position    int32                      `json:"position"`
 	Name        NonBlankString             `json:"name"`
@@ -404,6 +406,11 @@ type BooleanScalarParameter struct {
 	Required    bool                       `json:"required"`
 	ReadOnly    bool                       `json:"read_only"`
 	Default     OptNilBool                 `json:"default"`
+}
+
+// GetID returns the value of ID.
+func (s *BooleanScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -444,6 +451,11 @@ func (s *BooleanScalarParameter) GetReadOnly() bool {
 // GetDefault returns the value of Default.
 func (s *BooleanScalarParameter) GetDefault() OptNilBool {
 	return s.Default
+}
+
+// SetID sets the value of ID.
+func (s *BooleanScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -806,6 +818,291 @@ func (s *Category) SetParentCategoryID(val NilUUID) {
 // SetName sets the value of Name.
 func (s *Category) SetName(val string) {
 	s.Name = val
+}
+
+// Merged schema.
+// Ref: #/components/schemas/ConfigurationDetail
+type ConfigurationDetail struct {
+	ID             uuid.UUID `json:"id"`
+	Title          string    `json:"title"`
+	Description    NilString `json:"description"`
+	ListOfServices []string  `json:"list_of_services"`
+	IsOfficial     bool      `json:"is_official"`
+	IsPublic       bool      `json:"is_public"`
+	// Included only for authenticated callers with `global.configuration.manage`; never included in the
+	// public official list.
+	OwnerID   OptString `json:"owner_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	// Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+	Configuration jx.Raw `json:"configuration"`
+}
+
+// GetID returns the value of ID.
+func (s *ConfigurationDetail) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetTitle returns the value of Title.
+func (s *ConfigurationDetail) GetTitle() string {
+	return s.Title
+}
+
+// GetDescription returns the value of Description.
+func (s *ConfigurationDetail) GetDescription() NilString {
+	return s.Description
+}
+
+// GetListOfServices returns the value of ListOfServices.
+func (s *ConfigurationDetail) GetListOfServices() []string {
+	return s.ListOfServices
+}
+
+// GetIsOfficial returns the value of IsOfficial.
+func (s *ConfigurationDetail) GetIsOfficial() bool {
+	return s.IsOfficial
+}
+
+// GetIsPublic returns the value of IsPublic.
+func (s *ConfigurationDetail) GetIsPublic() bool {
+	return s.IsPublic
+}
+
+// GetOwnerID returns the value of OwnerID.
+func (s *ConfigurationDetail) GetOwnerID() OptString {
+	return s.OwnerID
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ConfigurationDetail) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *ConfigurationDetail) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// GetConfiguration returns the value of Configuration.
+func (s *ConfigurationDetail) GetConfiguration() jx.Raw {
+	return s.Configuration
+}
+
+// SetID sets the value of ID.
+func (s *ConfigurationDetail) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetTitle sets the value of Title.
+func (s *ConfigurationDetail) SetTitle(val string) {
+	s.Title = val
+}
+
+// SetDescription sets the value of Description.
+func (s *ConfigurationDetail) SetDescription(val NilString) {
+	s.Description = val
+}
+
+// SetListOfServices sets the value of ListOfServices.
+func (s *ConfigurationDetail) SetListOfServices(val []string) {
+	s.ListOfServices = val
+}
+
+// SetIsOfficial sets the value of IsOfficial.
+func (s *ConfigurationDetail) SetIsOfficial(val bool) {
+	s.IsOfficial = val
+}
+
+// SetIsPublic sets the value of IsPublic.
+func (s *ConfigurationDetail) SetIsPublic(val bool) {
+	s.IsPublic = val
+}
+
+// SetOwnerID sets the value of OwnerID.
+func (s *ConfigurationDetail) SetOwnerID(val OptString) {
+	s.OwnerID = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ConfigurationDetail) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *ConfigurationDetail) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// SetConfiguration sets the value of Configuration.
+func (s *ConfigurationDetail) SetConfiguration(val jx.Raw) {
+	s.Configuration = val
+}
+
+// Ref: #/components/schemas/ConfigurationSummary
+type ConfigurationSummary struct {
+	ID             uuid.UUID `json:"id"`
+	Title          string    `json:"title"`
+	Description    NilString `json:"description"`
+	ListOfServices []string  `json:"list_of_services"`
+	IsOfficial     bool      `json:"is_official"`
+	IsPublic       bool      `json:"is_public"`
+	// Included only for authenticated callers with `global.configuration.manage`; never included in the
+	// public official list.
+	OwnerID   OptString `json:"owner_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *ConfigurationSummary) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetTitle returns the value of Title.
+func (s *ConfigurationSummary) GetTitle() string {
+	return s.Title
+}
+
+// GetDescription returns the value of Description.
+func (s *ConfigurationSummary) GetDescription() NilString {
+	return s.Description
+}
+
+// GetListOfServices returns the value of ListOfServices.
+func (s *ConfigurationSummary) GetListOfServices() []string {
+	return s.ListOfServices
+}
+
+// GetIsOfficial returns the value of IsOfficial.
+func (s *ConfigurationSummary) GetIsOfficial() bool {
+	return s.IsOfficial
+}
+
+// GetIsPublic returns the value of IsPublic.
+func (s *ConfigurationSummary) GetIsPublic() bool {
+	return s.IsPublic
+}
+
+// GetOwnerID returns the value of OwnerID.
+func (s *ConfigurationSummary) GetOwnerID() OptString {
+	return s.OwnerID
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ConfigurationSummary) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *ConfigurationSummary) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ConfigurationSummary) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetTitle sets the value of Title.
+func (s *ConfigurationSummary) SetTitle(val string) {
+	s.Title = val
+}
+
+// SetDescription sets the value of Description.
+func (s *ConfigurationSummary) SetDescription(val NilString) {
+	s.Description = val
+}
+
+// SetListOfServices sets the value of ListOfServices.
+func (s *ConfigurationSummary) SetListOfServices(val []string) {
+	s.ListOfServices = val
+}
+
+// SetIsOfficial sets the value of IsOfficial.
+func (s *ConfigurationSummary) SetIsOfficial(val bool) {
+	s.IsOfficial = val
+}
+
+// SetIsPublic sets the value of IsPublic.
+func (s *ConfigurationSummary) SetIsPublic(val bool) {
+	s.IsPublic = val
+}
+
+// SetOwnerID sets the value of OwnerID.
+func (s *ConfigurationSummary) SetOwnerID(val OptString) {
+	s.OwnerID = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ConfigurationSummary) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *ConfigurationSummary) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// Ref: #/components/schemas/ConfigurationWriteRequest
+type ConfigurationWriteRequest struct {
+	// Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+	Configuration  jx.Raw       `json:"configuration"`
+	Title          string       `json:"title"`
+	Description    OptNilString `json:"description"`
+	ListOfServices []string     `json:"list_of_services"`
+	// Visibility flag. Creation defaults absent/null to private. Replacement defaults non-official
+	// configurations to private; official configurations stay public and reject false.
+	IsPublic OptNilBool `json:"is_public"`
+}
+
+// GetConfiguration returns the value of Configuration.
+func (s *ConfigurationWriteRequest) GetConfiguration() jx.Raw {
+	return s.Configuration
+}
+
+// GetTitle returns the value of Title.
+func (s *ConfigurationWriteRequest) GetTitle() string {
+	return s.Title
+}
+
+// GetDescription returns the value of Description.
+func (s *ConfigurationWriteRequest) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetListOfServices returns the value of ListOfServices.
+func (s *ConfigurationWriteRequest) GetListOfServices() []string {
+	return s.ListOfServices
+}
+
+// GetIsPublic returns the value of IsPublic.
+func (s *ConfigurationWriteRequest) GetIsPublic() OptNilBool {
+	return s.IsPublic
+}
+
+// SetConfiguration sets the value of Configuration.
+func (s *ConfigurationWriteRequest) SetConfiguration(val jx.Raw) {
+	s.Configuration = val
+}
+
+// SetTitle sets the value of Title.
+func (s *ConfigurationWriteRequest) SetTitle(val string) {
+	s.Title = val
+}
+
+// SetDescription sets the value of Description.
+func (s *ConfigurationWriteRequest) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetListOfServices sets the value of ListOfServices.
+func (s *ConfigurationWriteRequest) SetListOfServices(val []string) {
+	s.ListOfServices = val
+}
+
+// SetIsPublic sets the value of IsPublic.
+func (s *ConfigurationWriteRequest) SetIsPublic(val OptNilBool) {
+	s.IsPublic = val
 }
 
 // Ref: #/components/schemas/ContactPoint
@@ -2518,6 +2815,7 @@ func (s *DateTimeParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/DateTimeScalarParameter
 type DateTimeScalarParameter struct {
+	ID          uuid.UUID                   `json:"id"`
 	Kind        DateTimeScalarParameterKind `json:"kind"`
 	Position    int32                       `json:"position"`
 	Name        NonBlankString              `json:"name"`
@@ -2529,6 +2827,11 @@ type DateTimeScalarParameter struct {
 	Maximum     OptNilDateTime              `json:"maximum"`
 	Default     OptNilDateTime              `json:"default"`
 	Layout      OptNilString                `json:"layout"`
+}
+
+// GetID returns the value of ID.
+func (s *DateTimeScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -2584,6 +2887,11 @@ func (s *DateTimeScalarParameter) GetDefault() OptNilDateTime {
 // GetLayout returns the value of Layout.
 func (s *DateTimeScalarParameter) GetLayout() OptNilString {
 	return s.Layout
+}
+
+// SetID sets the value of ID.
+func (s *DateTimeScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -2874,6 +3182,9 @@ func (s *Decision) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// DeleteConfigurationNoContent is response for DeleteConfiguration operation.
+type DeleteConfigurationNoContent struct{}
 
 // DeleteContactPointNoContent is response for DeleteContactPoint operation.
 type DeleteContactPointNoContent struct{}
@@ -4247,6 +4558,7 @@ func (s *FloatParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/FloatScalarParameter
 type FloatScalarParameter struct {
+	ID          uuid.UUID                `json:"id"`
 	Kind        FloatScalarParameterKind `json:"kind"`
 	Position    int32                    `json:"position"`
 	Name        NonBlankString           `json:"name"`
@@ -4258,6 +4570,11 @@ type FloatScalarParameter struct {
 	Maximum     OptNilFloat64            `json:"maximum"`
 	Default     OptNilFloat64            `json:"default"`
 	Enum        []FloatEnumOption        `json:"enum"`
+}
+
+// GetID returns the value of ID.
+func (s *FloatScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -4313,6 +4630,11 @@ func (s *FloatScalarParameter) GetDefault() OptNilFloat64 {
 // GetEnum returns the value of Enum.
 func (s *FloatScalarParameter) GetEnum() []FloatEnumOption {
 	return s.Enum
+}
+
+// SetID sets the value of ID.
+func (s *FloatScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -4668,6 +4990,7 @@ const (
 	GlobalPermissionGlobalResourcePublish      GlobalPermission = "global.resource.publish"
 	GlobalPermissionGlobalResourceUnpublish    GlobalPermission = "global.resource.unpublish"
 	GlobalPermissionGlobalCategoryManage       GlobalPermission = "global.category.manage"
+	GlobalPermissionGlobalConfigurationManage  GlobalPermission = "global.configuration.manage"
 )
 
 // AllValues returns all GlobalPermission values.
@@ -4690,6 +5013,7 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalResourcePublish,
 		GlobalPermissionGlobalResourceUnpublish,
 		GlobalPermissionGlobalCategoryManage,
+		GlobalPermissionGlobalConfigurationManage,
 	}
 }
 
@@ -4729,6 +5053,8 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 	case GlobalPermissionGlobalResourceUnpublish:
 		return []byte(s), nil
 	case GlobalPermissionGlobalCategoryManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalConfigurationManage:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -4788,6 +5114,9 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 		return nil
 	case GlobalPermissionGlobalCategoryManage:
 		*s = GlobalPermissionGlobalCategoryManage
+		return nil
+	case GlobalPermissionGlobalConfigurationManage:
+		*s = GlobalPermissionGlobalConfigurationManage
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -5973,6 +6302,7 @@ func (s *IntegerParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/IntegerScalarParameter
 type IntegerScalarParameter struct {
+	ID          uuid.UUID                  `json:"id"`
 	Kind        IntegerScalarParameterKind `json:"kind"`
 	Position    int32                      `json:"position"`
 	Name        NonBlankString             `json:"name"`
@@ -5984,6 +6314,11 @@ type IntegerScalarParameter struct {
 	Maximum     OptNilInt64                `json:"maximum"`
 	Default     OptNilInt64                `json:"default"`
 	Enum        []IntegerEnumOption        `json:"enum"`
+}
+
+// GetID returns the value of ID.
+func (s *IntegerScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -6039,6 +6374,11 @@ func (s *IntegerScalarParameter) GetDefault() OptNilInt64 {
 // GetEnum returns the value of Enum.
 func (s *IntegerScalarParameter) GetEnum() []IntegerEnumOption {
 	return s.Enum
+}
+
+// SetID sets the value of ID.
+func (s *IntegerScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.
@@ -6333,6 +6673,40 @@ func (s *LifecycleResourceType) UnmarshalText(data []byte) error {
 		return nil
 	case LifecycleResourceTypeSoftwareSourceCode:
 		*s = LifecycleResourceTypeSoftwareSourceCode
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ListConfigurationsScope string
+
+const (
+	ListConfigurationsScopeAll ListConfigurationsScope = "all"
+)
+
+// AllValues returns all ListConfigurationsScope values.
+func (ListConfigurationsScope) AllValues() []ListConfigurationsScope {
+	return []ListConfigurationsScope{
+		ListConfigurationsScopeAll,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ListConfigurationsScope) MarshalText() ([]byte, error) {
+	switch s {
+	case ListConfigurationsScopeAll:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ListConfigurationsScope) UnmarshalText(data []byte) error {
+	switch ListConfigurationsScope(data) {
+	case ListConfigurationsScopeAll:
+		*s = ListConfigurationsScopeAll
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -6939,6 +7313,98 @@ func (s *NotificationTopicKey) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/OfficialConfigurationSummary
+type OfficialConfigurationSummary struct {
+	ID             uuid.UUID `json:"id"`
+	Title          string    `json:"title"`
+	Description    NilString `json:"description"`
+	ListOfServices []string  `json:"list_of_services"`
+	IsOfficial     bool      `json:"is_official"`
+	IsPublic       bool      `json:"is_public"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *OfficialConfigurationSummary) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetTitle returns the value of Title.
+func (s *OfficialConfigurationSummary) GetTitle() string {
+	return s.Title
+}
+
+// GetDescription returns the value of Description.
+func (s *OfficialConfigurationSummary) GetDescription() NilString {
+	return s.Description
+}
+
+// GetListOfServices returns the value of ListOfServices.
+func (s *OfficialConfigurationSummary) GetListOfServices() []string {
+	return s.ListOfServices
+}
+
+// GetIsOfficial returns the value of IsOfficial.
+func (s *OfficialConfigurationSummary) GetIsOfficial() bool {
+	return s.IsOfficial
+}
+
+// GetIsPublic returns the value of IsPublic.
+func (s *OfficialConfigurationSummary) GetIsPublic() bool {
+	return s.IsPublic
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *OfficialConfigurationSummary) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *OfficialConfigurationSummary) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *OfficialConfigurationSummary) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetTitle sets the value of Title.
+func (s *OfficialConfigurationSummary) SetTitle(val string) {
+	s.Title = val
+}
+
+// SetDescription sets the value of Description.
+func (s *OfficialConfigurationSummary) SetDescription(val NilString) {
+	s.Description = val
+}
+
+// SetListOfServices sets the value of ListOfServices.
+func (s *OfficialConfigurationSummary) SetListOfServices(val []string) {
+	s.ListOfServices = val
+}
+
+// SetIsOfficial sets the value of IsOfficial.
+func (s *OfficialConfigurationSummary) SetIsOfficial(val bool) {
+	s.IsOfficial = val
+}
+
+// SetIsPublic sets the value of IsPublic.
+func (s *OfficialConfigurationSummary) SetIsPublic(val bool) {
+	s.IsPublic = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *OfficialConfigurationSummary) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *OfficialConfigurationSummary) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
 // NewOptDateTime returns new OptDateTime with value set to v.
 func NewOptDateTime(v time.Time) OptDateTime {
 	return OptDateTime{
@@ -7117,6 +7583,52 @@ func (o OptInt32) Get() (v int32, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptListConfigurationsScope returns new OptListConfigurationsScope with value set to v.
+func NewOptListConfigurationsScope(v ListConfigurationsScope) OptListConfigurationsScope {
+	return OptListConfigurationsScope{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptListConfigurationsScope is optional ListConfigurationsScope.
+type OptListConfigurationsScope struct {
+	Value ListConfigurationsScope
+	Set   bool
+}
+
+// IsSet returns true if OptListConfigurationsScope was set.
+func (o OptListConfigurationsScope) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptListConfigurationsScope) Reset() {
+	var v ListConfigurationsScope
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptListConfigurationsScope) SetTo(v ListConfigurationsScope) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptListConfigurationsScope) Get() (v ListConfigurationsScope, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptListConfigurationsScope) Or(d ListConfigurationsScope) ListConfigurationsScope {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -10257,6 +10769,21 @@ func NewDateTimeScalarParameterDraftScalarParameterDraft(v DateTimeScalarParamet
 	return s
 }
 
+// Ref: #/components/schemas/SetConfigurationOfficialStatusRequest
+type SetConfigurationOfficialStatusRequest struct {
+	IsOfficial bool `json:"is_official"`
+}
+
+// GetIsOfficial returns the value of IsOfficial.
+func (s *SetConfigurationOfficialStatusRequest) GetIsOfficial() bool {
+	return s.IsOfficial
+}
+
+// SetIsOfficial sets the value of IsOfficial.
+func (s *SetConfigurationOfficialStatusRequest) SetIsOfficial(val bool) {
+	s.IsOfficial = val
+}
+
 // Ref: #/components/schemas/SoftwareApplicationDiscoveryItem
 type SoftwareApplicationDiscoveryItem struct {
 	Type       SoftwareApplicationDiscoveryItemType `json:"type"`
@@ -11722,6 +12249,7 @@ func (s *StringParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/StringScalarParameter
 type StringScalarParameter struct {
+	ID          uuid.UUID                 `json:"id"`
 	Kind        StringScalarParameterKind `json:"kind"`
 	Position    int32                     `json:"position"`
 	Name        NonBlankString            `json:"name"`
@@ -11732,6 +12260,11 @@ type StringScalarParameter struct {
 	Default     OptNilString              `json:"default"`
 	Enum        []StringEnumOption        `json:"enum"`
 	Pattern     OptNilString              `json:"pattern"`
+}
+
+// GetID returns the value of ID.
+func (s *StringScalarParameter) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetKind returns the value of Kind.
@@ -11782,6 +12315,11 @@ func (s *StringScalarParameter) GetEnum() []StringEnumOption {
 // GetPattern returns the value of Pattern.
 func (s *StringScalarParameter) GetPattern() OptNilString {
 	return s.Pattern
+}
+
+// SetID sets the value of ID.
+func (s *StringScalarParameter) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetKind sets the value of Kind.

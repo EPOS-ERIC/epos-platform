@@ -48,13 +48,19 @@ func main() {
 		panic("invalid metadata-lifecycle service configuration")
 	}
 
+	sharingClient, err := clients.NewSharing(log, cfg.Services.Sharing.URL)
+	if err != nil {
+		log.Error("invalid sharing service configuration", "error", err)
+		panic("invalid sharing service configuration")
+	}
+
 	authService, err := auth.NewService(log, cfg.Services.Auth.URL)
 	if err != nil {
 		log.Error("invalid auth service configuration", "error", err)
 		panic("invalid auth service configuration")
 	}
 
-	if err := server.Run(*cfg, log, metadataLifecycleClient, authService); err != nil {
+	if err := server.Run(*cfg, log, metadataLifecycleClient, sharingClient, authService); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}

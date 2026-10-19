@@ -9,6 +9,8 @@ server:
 services:
   metadata-lifecycle:
     url: "metadata-lifecycle-service:5000"
+  sharing:
+    url: "sharing-service:8200"
   auth:
     url: "http://oss-aai-service:8080/"
 

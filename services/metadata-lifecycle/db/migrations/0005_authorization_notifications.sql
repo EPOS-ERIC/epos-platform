@@ -144,7 +144,8 @@ INSERT INTO permissions (key, label, description, scope) VALUES
     ('global.resource.reject',        'Reject submissions',       'Reject submitted resource versions from any group and provide a rejection note.',                           'GLOBAL'),
     ('global.resource.publish',       'Publish resources',        'Publish submitted resource versions from any group. Existing publications are archived.',                   'GLOBAL'),
     ('global.resource.unpublish',     'Unpublish resources',      'Archive currently published resource versions from any group without publishing a replacement.',            'GLOBAL'),
-    ('global.category.manage',        'Manage categories',        'Create, edit, reparent, and delete canonical categories in any group.',                                     'GLOBAL');
+    ('global.category.manage',        'Manage categories',        'Create, edit, reparent, and delete canonical categories in any group.',                                     'GLOBAL'),
+    ('global.configuration.manage',   'Manage configurations',    'Manage official configurations and every user''s personal configurations.',                                 'GLOBAL');
 INSERT INTO roles (key, scope) VALUES
     ('EDITOR',      'GROUP'),
     ('REVIEWER',    'GROUP'),
@@ -189,7 +190,8 @@ INSERT INTO role_permissions (role_key, permission_key) VALUES
     ('ADMIN',       'global.resource.reject'),
     ('ADMIN',       'global.resource.publish'),
     ('ADMIN',       'global.resource.unpublish'),
-    ('ADMIN',       'global.category.manage');
+    ('ADMIN',       'global.category.manage'),
+    ('ADMIN',       'global.configuration.manage');
 INSERT INTO notification_event_types (key, label, description, scope, default_on) VALUES
     ('direct.membership.accepted',    'Membership accepted',          'Notifies a user when their membership request is accepted.',                                  'DIRECT', false),
     ('direct.membership.rejected',    'Membership rejected',          'Notifies a user when their membership request is rejected.',                                  'DIRECT', false),

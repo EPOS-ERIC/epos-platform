@@ -1,0 +1,502 @@
+@import 'src/sassFramework/variables.scss';
+
+:host {
+  display: block;
+
+  .mat-icon {
+    color: $color-primary;
+
+    &.pointer {
+      cursor: pointer;
+      padding: 4px;
+      transition: background-color 0.15s ease;
+
+      &:hover:not(.disabled) {
+        background-color: rgba($color-primary, 0.1);
+      }
+    }
+
+    &.disabled {
+      color: $color-text-bg-dark;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.wrapper {
+  width: 100%;
+  background-color: $color-background-panel;
+  padding: $padding-background-panel;
+  padding-top: 0;
+  margin-left: 5px;
+}
+
+// Header
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: $results-item-height;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid $color-borders;
+  overflow: visible;
+
+  .title p {
+    margin: 0;
+    margin-left: 10px;
+    font-size: $results-title-font-size;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .beta-tag {
+    font-size: 9px;
+    background-color: $color-secondary;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    overflow: visible;
+
+    .env-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+      background-color: $color-primary;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-right: 4px;
+    }
+
+    .mat-icon.pointer {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+      line-height: 22px;
+      padding: 4px;
+      box-sizing: content-box;
+    }
+  }
+}
+
+// Loading
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+// Container
+.container {
+  width: 100%;
+}
+
+// Login State
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background-color: white;
+  border: 1px solid $color-borders;
+  text-align: center;
+  gap: 8px;
+
+  .login-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: $color-text-bg-dark;
+    margin-bottom: 8px;
+  }
+
+  .login-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $color-dark-text;
+  }
+
+  .login-subtitle {
+    font-size: 13px;
+    color: $color-text-bg-dark;
+    margin-bottom: 8px;
+  }
+}
+
+// Empty State
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background-color: white;
+  border: 1px solid $color-borders;
+  text-align: center;
+  gap: 8px;
+
+  .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: $color-text-bg-dark;
+    margin-bottom: 8px;
+  }
+
+  .empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $color-dark-text;
+  }
+
+  .empty-subtitle {
+    font-size: 13px;
+    color: $color-text-bg-dark;
+    margin-bottom: 8px;
+  }
+
+  button {
+    margin-top: 8px;
+
+    mat-icon {
+      color: white;
+      margin-right: 4px;
+    }
+  }
+
+  .limit-info-text {
+    font-size: 11px;
+    color: $color-text-bg-dark;
+    font-style: italic;
+    margin-top: 8px;
+  }
+}
+
+// Environment List
+.environment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// Environment Card
+.environment-card {
+  background-color: white;
+  overflow: hidden;
+
+  // Card Header
+  .card-header {
+    padding: 12px 16px;
+    cursor: pointer;
+    background: white;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: $color-text-bg;
+    }
+
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: $color-primary;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: $color-dark-text;
+      line-height: 1.4;
+    }
+  }
+
+  // Status Badge
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+    overflow: visible;
+
+    .status-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    &.ready {
+      background-color: rgba($color-primary, 0.12);
+      color: $color-primary;
+
+      .status-icon {
+        color: $color-primary;
+      }
+    }
+
+    &.not_ready {
+      background-color: rgba($color-text-bg-dark, 0.12);
+      color: $color-dark-text;
+
+      .status-icon {
+        color: $color-text-bg-dark;
+      }
+    }
+
+    &.creating, &.updating {
+      background-color: rgba($color-secondary, 0.12);
+      color: darken($color-secondary, 10%);
+
+      .status-icon {
+        color: $color-secondary;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+    }
+  }
+
+  // Card Meta (now inside card-header)
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: rgba($color-primary, 0.08);
+    border-radius: 4px;
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: $color-text-bg-dark;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        line-height: 16px;
+        color: $color-text-bg-dark;
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  // Card Actions
+  .card-actions {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    background-color: rgba(0, 0, 0, 0.02);
+    overflow: visible;
+
+    button.mat-mdc-icon-button,
+    button[mat-icon-button] {
+      width: 36px;
+      height: 36px;
+      padding: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      .mat-mdc-button-touch-target {
+        width: 36px;
+        height: 36px;
+      }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        color: $color-primary;
+      }
+
+      &:hover:not(:disabled) {
+        mat-icon {
+          color: $color-primary-l;
+        }
+      }
+
+      &:disabled {
+        mat-icon {
+          color: $color-text-bg-dark;
+        }
+      }
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .expand-btn {
+      mat-icon {
+        transition: transform 0.2s ease;
+
+        &.rotated {
+          transform: rotate(180deg);
+        }
+      }
+    }
+  }
+
+  // Card Content (Expanded)
+  .card-content {
+    padding: 16px;
+    background-color: rgba($color-primary, 0.02);
+    animation: slideDown 0.2s ease-out;
+
+    .resources-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+
+      .resources-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: $color-dark-text;
+      }
+
+      .resources-count {
+        font-size: 11px;
+        font-weight: 600;
+        color: white;
+        background-color: $color-primary;
+        padding: 1px 6px;
+      }
+    }
+
+    .resources-list {
+      margin-bottom: 12px;
+    }
+
+    .drag-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px 16px;
+      border: 2px dashed $color-borders;
+      background-color: white;
+      color: $color-text-bg-dark;
+      text-align: center;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+
+      &:hover {
+        border-color: $color-tertiary;
+        background-color: rgba($color-tertiary, 0.02);
+      }
+
+      .drag-icon {
+        font-size: 36px;
+        width: 36px;
+        height: 36px;
+        color: $color-tertiary;
+        line-height: 1;
+      }
+
+      .drag-text {
+        font-size: 13px;
+        line-height: 1.5;
+        color: $color-text-bg-dark;
+
+        .inline-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          color: $color-tertiary;
+          vertical-align: middle;
+          display: inline-block;
+          margin: 0 2px;
+        }
+      }
+    }
+
+    .resources-actions {
+      display: flex;
+      justify-content: flex-end;
+
+      button {
+        mat-icon {
+          color: white;
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Accessibility
+@media (prefers-reduced-motion: reduce) {
+  .environment-card {
+    transition: none;
+
+    .card-header {
+      transition: none;
+    }
+
+    .card-actions .expand-btn mat-icon {
+      transition: none;
+    }
+
+    .card-content {
+      animation: none;
+    }
+
+    .status-badge .status-icon {
+      animation: none;
+    }
+  }
+
+  .drag-area {
+    transition: none;
+  }
+}

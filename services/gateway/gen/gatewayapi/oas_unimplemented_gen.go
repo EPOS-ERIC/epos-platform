@@ -52,6 +52,16 @@ func (UnimplementedHandler) CopyResource(ctx context.Context, params CopyResourc
 	return r, ht.ErrNotImplemented
 }
 
+// CreateConfiguration implements createConfiguration operation.
+//
+// Creates a personal configuration for the authenticated user. Omitted or null `is_public` makes it
+// private. Each user may create up to 50 non-official configurations; managers share this limit.
+//
+// POST /configurations
+func (UnimplementedHandler) CreateConfiguration(ctx context.Context, req *ConfigurationWriteRequest) (r *ConfigurationDetail, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateContactPoint implements createContactPoint operation.
 //
 // Create reusable contact point.
@@ -115,6 +125,16 @@ func (UnimplementedHandler) DecideGroupMembership(ctx context.Context, params De
 // POST /groups/{groupId}/role-requests/{requestId}/{decision}
 func (UnimplementedHandler) DecideGroupRoleRequest(ctx context.Context, params DecideGroupRoleRequestParams) (r *GroupMembership, _ error) {
 	return r, ht.ErrNotImplemented
+}
+
+// DeleteConfiguration implements deleteConfiguration operation.
+//
+// Deletes a configuration by ID. Creators may delete non-official configurations; managers may delete
+// any configuration.
+//
+// DELETE /configurations/{configurationId}
+func (UnimplementedHandler) DeleteConfiguration(ctx context.Context, params DeleteConfigurationParams) error {
+	return ht.ErrNotImplemented
 }
 
 // DeleteContactPoint implements deleteContactPoint operation.
@@ -205,6 +225,16 @@ func (UnimplementedHandler) DraftFromPublication(ctx context.Context, params Dra
 	return r, ht.ErrNotImplemented
 }
 
+// GetConfiguration implements getConfiguration operation.
+//
+// Returns configuration details by ID. Public configurations, including official ones, are readable
+// without login. Private configurations require the creator or a manager.
+//
+// GET /configurations/{configurationId}
+func (UnimplementedHandler) GetConfiguration(ctx context.Context, params GetConfigurationParams) (r *ConfigurationDetail, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetContactPoint implements getContactPoint operation.
 //
 // Get contact point.
@@ -289,6 +319,16 @@ func (UnimplementedHandler) ImportTurtleMetadata(ctx context.Context, req Import
 	return r, ht.ErrNotImplemented
 }
 
+// ListConfigurations implements listConfigurations operation.
+//
+// Lists your configurations, including official ones you created. Managers can filter by `owner_id` or
+// use `scope=all` (not both). Requires authentication.
+//
+// GET /configurations
+func (UnimplementedHandler) ListConfigurations(ctx context.Context, params ListConfigurationsParams) (r []ConfigurationSummary, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListContactPoints implements listContactPoints operation.
 //
 // List reusable contact points.
@@ -332,6 +372,16 @@ func (UnimplementedHandler) ListGroups(ctx context.Context) (r []Group, _ error)
 //
 // GET /notification-topics
 func (UnimplementedHandler) ListNotificationTopics(ctx context.Context) (r []NotificationTopic, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListOfficialConfigurations implements listOfficialConfigurations operation.
+//
+// Lists public summaries of official configurations. Owner IDs and configuration documents are
+// omitted.
+//
+// GET /official-configurations
+func (UnimplementedHandler) ListOfficialConfigurations(ctx context.Context) (r []OfficialConfigurationSummary, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -430,6 +480,17 @@ func (UnimplementedHandler) ReopenResourceVersion(ctx context.Context, params Re
 	return r, ht.ErrNotImplemented
 }
 
+// ReplaceConfiguration implements replaceConfiguration operation.
+//
+// Replaces configuration content and metadata. Creators or managers may replace non-official
+// configurations; official configurations require manager permission and remain public. Setting
+// `is_public` to `false` on an official configuration is rejected.
+//
+// PUT /configurations/{configurationId}
+func (UnimplementedHandler) ReplaceConfiguration(ctx context.Context, req *ConfigurationWriteRequest, params ReplaceConfigurationParams) (r *ConfigurationDetail, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ReplaceContactPoint implements replaceContactPoint operation.
 //
 // Replace contact point.
@@ -511,6 +572,16 @@ func (UnimplementedHandler) RevokeGlobalPermission(ctx context.Context, params R
 // DELETE /groups/{groupId}/memberships/{userId}/permissions/{permission}
 func (UnimplementedHandler) RevokeGroupPermission(ctx context.Context, params RevokeGroupPermissionParams) error {
 	return ht.ErrNotImplemented
+}
+
+// SetConfigurationOfficialStatus implements setConfigurationOfficialStatus operation.
+//
+// Sets whether a configuration is official. Requires `global.configuration.manage`; promotion makes it
+// public, and demotion keeps it public. Repeating the current status has no effect.
+//
+// PUT /configurations/{configurationId}/official-status
+func (UnimplementedHandler) SetConfigurationOfficialStatus(ctx context.Context, req *SetConfigurationOfficialStatusRequest, params SetConfigurationOfficialStatusParams) (r *ConfigurationDetail, _ error) {
+	return r, ht.ErrNotImplemented
 }
 
 // SubmitResourceVersion implements submitResourceVersion operation.

@@ -37,7 +37,6 @@ func (s *securityHandler) HandleBearerAuth(ctx context.Context, _ gatewayapi.Ope
 		return nil, fmt.Errorf("authenticate bearer token: %w", err)
 	}
 
-	ctx = authcontext.WithActorID(ctx, identity.AuthIdentifier)
 	observability.SetActorID(ctx, identity.AuthIdentifier)
 
 	user, err := s.identity.EnsureUser(ctx, domain.ActorIdentity{
@@ -52,6 +51,7 @@ func (s *securityHandler) HandleBearerAuth(ctx context.Context, _ gatewayapi.Ope
 	if user.Status == domain.UserStatusBlocked {
 		return nil, apperror.Default(apperror.CodePermissionDenied)
 	}
+	ctx = authcontext.WithUser(ctx, user)
 
 	return ctx, nil
 }

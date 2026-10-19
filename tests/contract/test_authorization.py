@@ -21,11 +21,9 @@ class AuthorizationContractTest(unittest.TestCase):
         )
 
     def create_user(self, label: str, suffix: str) -> tuple[GatewayClient, str]:
-        aai_url = os.getenv("AAI_URL", "http://localhost:8110")
         email = f"ca-{uuid4().hex}@example.org"
         password = uuid4().hex
         credentials = register_user(
-            aai_url,
             name="Authorization",
             surname=f"{label.title()} {suffix}",
             email=email,
@@ -35,7 +33,6 @@ class AuthorizationContractTest(unittest.TestCase):
             SCHEMA,
             os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
             get_token(
-                aai_url=aai_url,
                 username=credentials.username,
                 password=credentials.password,
             ),
@@ -154,6 +151,7 @@ class AuthorizationContractTest(unittest.TestCase):
             "global.organization.manage": "GLOBAL",
             "global.contact_point.manage": "GLOBAL",
             "global.category_scheme.manage": "GLOBAL",
+            "global.configuration.manage": "GLOBAL",
             "group.category.manage": "GROUP",
             "global.category.manage": "GLOBAL",
         }
@@ -366,6 +364,7 @@ class AuthorizationContractTest(unittest.TestCase):
                 "global.organization.manage",
                 "global.contact_point.manage",
                 "global.category_scheme.manage",
+                "global.configuration.manage",
                 "global.resource.create",
                 "global.resource.edit",
                 "global.resource.submit",

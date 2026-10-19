@@ -352,6 +352,10 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	if value == nil {
 		return gatewayapi.ScalarParameter{}, fmt.Errorf("upstream scalar parameter is nil")
 	}
+	id, err := parseUUID("web_service.scalar_parameter.id", value.Id)
+	if err != nil {
+		return gatewayapi.ScalarParameter{}, err
+	}
 	description := toAPINilString(value.Description)
 	switch {
 	case value.GetString_() != nil:
@@ -361,6 +365,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			return gatewayapi.ScalarParameter{}, err
 		}
 		return gatewayapi.NewStringScalarParameterScalarParameter(gatewayapi.StringScalarParameter{
+			ID:          id,
 			Kind:        gatewayapi.StringScalarParameterKindSTRING,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -375,6 +380,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	case value.GetBoolean() != nil:
 		v := value.GetBoolean()
 		return gatewayapi.NewBooleanScalarParameterScalarParameter(gatewayapi.BooleanScalarParameter{
+			ID:          id,
 			Kind:        gatewayapi.BooleanScalarParameterKindBOOLEAN,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -391,6 +397,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			return gatewayapi.ScalarParameter{}, err
 		}
 		return gatewayapi.NewIntegerScalarParameterScalarParameter(gatewayapi.IntegerScalarParameter{
+			ID:          id,
 			Kind:        gatewayapi.IntegerScalarParameterKindINTEGER,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -410,6 +417,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			return gatewayapi.ScalarParameter{}, err
 		}
 		return gatewayapi.NewFloatScalarParameterScalarParameter(gatewayapi.FloatScalarParameter{
+			ID:          id,
 			Kind:        gatewayapi.FloatScalarParameterKindFLOAT,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -425,6 +433,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	case value.GetDateTime() != nil:
 		v := value.GetDateTime()
 		return gatewayapi.NewDateTimeScalarParameterScalarParameter(gatewayapi.DateTimeScalarParameter{
+			ID:          id,
 			Kind:        gatewayapi.DateTimeScalarParameterKindDATETIME,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),

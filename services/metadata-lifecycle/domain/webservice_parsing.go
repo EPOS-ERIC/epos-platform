@@ -80,7 +80,7 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	}
 	value.Parameters = parameters
 	if value.Body != nil {
-		body, err := NewRequestBody(*value.Body)
+		body, err := NewRequestBodyInput(*value.Body)
 		if err != nil {
 			return WebServiceInput{}, err
 		}
@@ -105,12 +105,17 @@ func NewWebService(value WebService) (result WebService, err error) {
 	if value.ID == uuid.Nil {
 		return WebService{}, fmt.Errorf("web service ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	parameterIDs := make(map[string]uuid.UUID, len(value.Parameters))
+	parameterIDs := make(map[string]Parameter, len(value.Parameters))
 	for _, parameter := range value.Parameters {
-		if parameter.ID == uuid.Nil {
-			return WebService{}, fmt.Errorf("parameter ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
+		if err := validatePersistedParameter(parameter.Parameter); err != nil {
+			return WebService{}, err
 		}
-		parameterIDs[strings.TrimSpace(parameter.Name)] = parameter.ID
+		parameterIDs[strings.TrimSpace(parameter.Name)] = parameter.Parameter
+	}
+	if value.Body != nil {
+		if err := validatePersistedParameters(value.Body.Parameters); err != nil {
+			return WebService{}, fmt.Errorf("request body parameters: %w", err)
+		}
 	}
 
 	input, err := NewWebServiceInput(value.Input())
@@ -123,12 +128,23 @@ func NewWebService(value WebService) (result WebService, err error) {
 	value.Method = input.Method
 	value.Type = input.Type
 	value.VisibleOn = input.VisibleOn
-	value.Body = input.Body
+	if input.Body == nil {
+		value.Body = nil
+	} else {
+		body, err := restoreRequestBody(*input.Body, *value.Body)
+		if err != nil {
+			return WebService{}, fmt.Errorf("restore request body parameter IDs: %w", err)
+		}
+		value.Body = &body
+	}
 	value.Parameters = make([]WebServiceParameter, len(input.Parameters))
 	for i, parameter := range input.Parameters {
+		persisted, err := restoreParameter(parameter.ParameterInput, parameterIDs[parameter.Name])
+		if err != nil {
+			return WebService{}, fmt.Errorf("restore parameter %q ID: %w", parameter.Name, err)
+		}
 		value.Parameters[i] = WebServiceParameter{
-			ID:        parameterIDs[parameter.Name],
-			Parameter: parameter.Parameter,
+			Parameter: persisted,
 			Property:  parameter.Property,
 			Location:  parameter.Location,
 			Explode:   parameter.Explode,
@@ -171,11 +187,11 @@ func normalizeWebServiceVisibleOn(values []WebServiceVisibleOn) ([]WebServiceVis
 
 // NewWebServiceParameterInput parses a caller-controlled top-level parameter.
 func NewWebServiceParameterInput(value WebServiceParameterInput) (WebServiceParameterInput, error) {
-	parameter, err := parseParameter(value.Parameter, true, true)
+	parameter, err := parseParameter(value.ParameterInput, true, true)
 	if err != nil {
 		return WebServiceParameterInput{}, err
 	}
-	value.Parameter = parameter
+	value.ParameterInput = parameter
 	value.Property = optionalTrimmedString(value.Property)
 	value.Location = ParameterLocation(strings.ToUpper(strings.TrimSpace(string(value.Location))))
 	if !value.Location.Valid() {
@@ -187,50 +203,24 @@ func NewWebServiceParameterInput(value WebServiceParameterInput) (WebServicePara
 	return value, nil
 }
 
-// NewWebServiceParameter parses persisted top-level parameter metadata.
-func NewWebServiceParameter(value WebServiceParameter) (result WebServiceParameter, err error) {
-	defer func() {
-		if err != nil {
-			err = internalValidationError(err)
-		}
-	}()
-	if value.ID == uuid.Nil {
-		return WebServiceParameter{}, fmt.Errorf("parameter ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
-	}
-	parsed, err := NewWebServiceParameterInput(WebServiceParameterInput{
-		Parameter: value.Parameter,
-		Property:  value.Property,
-		Location:  value.Location,
-		Explode:   value.Explode,
-	})
-	if err != nil {
-		return WebServiceParameter{}, err
-	}
-	value.Parameter = parsed.Parameter
-	value.Property = parsed.Property
-	value.Location = parsed.Location
-	value.Explode = parsed.Explode
-	return value, nil
-}
-
-// NewRequestBody parses and validates an optional request-body definition.
-func NewRequestBody(value RequestBody) (RequestBody, error) {
+// NewRequestBodyInput parses and validates caller-controlled request-body fields.
+func NewRequestBodyInput(value RequestBodyInput) (RequestBodyInput, error) {
 	value.ContentType = strings.TrimSpace(value.ContentType)
 	value.Template = strings.TrimSpace(value.Template)
 
 	if value.ContentType == "" {
-		return RequestBody{}, invalidField("body_content_type", "Content type must not be blank.", nil)
+		return RequestBodyInput{}, invalidField("body_content_type", "Content type must not be blank.", nil)
 	}
 
 	contentType, err := normalizeMediaType(value.ContentType)
 	if err != nil {
-		return RequestBody{}, invalidField("body_content_type", "Content type must be a valid media type.", err)
+		return RequestBodyInput{}, invalidField("body_content_type", "Content type must be a valid media type.", err)
 	}
 	value.ContentType = contentType
 
 	templateValue, parameters, err := parseTemplateDefinition(value.Template, value.Parameters)
 	if err != nil {
-		return RequestBody{}, prefixOrField(err, "body_parameters", "body_template", "Template must be valid and reference declared parameters.")
+		return RequestBodyInput{}, prefixOrField(err, "body_parameters", "body_template", "Template must be valid and reference declared parameters.")
 	}
 	value.Template = templateValue
 	value.Parameters = parameters
@@ -256,7 +246,7 @@ func normalizeMediaType(value string) (string, error) {
 	return normalized, nil
 }
 
-func parseTemplateDefinition(source string, values []Parameter) (string, []Parameter, error) {
+func parseTemplateDefinition(source string, values []ParameterInput) (string, []ParameterInput, error) {
 	source = strings.TrimSpace(source)
 	if source == "" {
 		return "", nil, fmt.Errorf("template is required: %w", apperror.Default(apperror.CodeValidationFailed))
@@ -301,44 +291,143 @@ func webServiceParameterInputs(values []WebServiceParameter) []WebServiceParamet
 	result := make([]WebServiceParameterInput, len(values))
 	for i, value := range values {
 		result[i] = WebServiceParameterInput{
-			Parameter: value.Parameter,
-			Property:  value.Property,
-			Location:  value.Location,
-			Explode:   value.Explode,
+			ParameterInput: value.Input(),
+			Property:       value.Property,
+			Location:       value.Location,
+			Explode:        value.Explode,
 		}
 	}
 	return result
 }
 
-func parseParameter(value Parameter, allowTemplate, allowMultipleValues bool) (Parameter, error) {
+func (value Parameter) Input() ParameterInput {
+	input := value.ParameterInput
+	input.Schema = parameterSchemaInput(input.Schema)
+	return input
+}
+
+func parameterSchemaInput(value ParameterSchema) ParameterSchema {
+	switch schema := value.(type) {
+	case TemplateSchema:
+		return TemplateSchemaInput{Template: schema.Template, Parameters: parameterInputs(schema.Parameters)}
+	default:
+		return value
+	}
+}
+
+func parameterInputs(values []Parameter) []ParameterInput {
+	result := make([]ParameterInput, len(values))
+	for i, value := range values {
+		result[i] = value.Input()
+	}
+	return result
+}
+
+func requestBodyInput(value *RequestBody) *RequestBodyInput {
+	if value == nil {
+		return nil
+	}
+	return &RequestBodyInput{
+		ContentType: value.ContentType,
+		Template:    value.Template,
+		Parameters:  parameterInputs(value.Parameters),
+	}
+}
+
+func validatePersistedParameter(value Parameter) error {
+	if value.ID == uuid.Nil {
+		return fmt.Errorf("parameter ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
+	}
+	if schema, ok := value.Schema.(TemplateSchema); ok {
+		return validatePersistedParameters(schema.Parameters)
+	}
+	if _, ok := value.Schema.(TemplateSchemaInput); ok {
+		return fmt.Errorf("input template schema in persisted parameter: %w", apperror.Default(apperror.CodeValidationFailed))
+	}
+	return nil
+}
+
+func validatePersistedParameters(values []Parameter) error {
+	for _, value := range values {
+		if err := validatePersistedParameter(value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func restoreParameter(value ParameterInput, existing Parameter) (Parameter, error) {
+	if existing.ID == uuid.Nil {
+		return Parameter{}, fmt.Errorf("parameter ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
+	}
+	result := Parameter{ParameterInput: value, ID: existing.ID}
+	if schema, ok := value.Schema.(TemplateSchemaInput); ok {
+		existingSchema, ok := existing.Schema.(TemplateSchema)
+		if !ok {
+			return Parameter{}, fmt.Errorf("persisted parameter template is missing: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		parameters, err := restoreParameters(schema.Parameters, existingSchema.Parameters)
+		if err != nil {
+			return Parameter{}, err
+		}
+		result.Schema = TemplateSchema{Template: schema.Template, Parameters: parameters}
+	}
+	return result, nil
+}
+
+func restoreParameters(values []ParameterInput, existing []Parameter) ([]Parameter, error) {
+	byName := make(map[string]Parameter, len(existing))
+	for _, value := range existing {
+		byName[value.Name] = value
+	}
+	result := make([]Parameter, len(values))
+	for i, value := range values {
+		persisted, err := restoreParameter(value, byName[value.Name])
+		if err != nil {
+			return nil, fmt.Errorf("restore parameter %q: %w", value.Name, err)
+		}
+		result[i] = persisted
+	}
+	return result, nil
+}
+
+func restoreRequestBody(value RequestBodyInput, existing RequestBody) (RequestBody, error) {
+	parameters, err := restoreParameters(value.Parameters, existing.Parameters)
+	if err != nil {
+		return RequestBody{}, err
+	}
+	return RequestBody{ContentType: value.ContentType, Template: value.Template, Parameters: parameters}, nil
+}
+
+func parseParameter(value ParameterInput, allowTemplate, allowMultipleValues bool) (ParameterInput, error) {
 	value.Name = strings.TrimSpace(value.Name)
 	value.Label = strings.TrimSpace(value.Label)
 	value.Description = optionalTrimmedString(value.Description)
 	if value.Name == "" {
-		return Parameter{}, invalidField("name", "Name must not be blank.", nil)
+		return ParameterInput{}, invalidField("name", "Name must not be blank.", nil)
 	}
 	if value.Label == "" {
-		return Parameter{}, invalidField("label", "Label must not be blank.", nil)
+		return ParameterInput{}, invalidField("label", "Label must not be blank.", nil)
 	}
 	if value.Schema == nil {
-		return Parameter{}, invalidField("schema", "Schema is required.", nil)
+		return ParameterInput{}, invalidField("schema", "Schema is required.", nil)
 	}
 	schema, err := parseParameterSchema(value.Schema, allowTemplate)
 	if err != nil {
-		return Parameter{}, prefixOrField(err, "schema", "schema", "Schema definition is invalid.")
+		return ParameterInput{}, prefixOrField(err, "schema", "schema", "Schema definition is invalid.")
 	}
 	if !allowMultipleValues && schemaHasMultipleValues(schema) {
-		return Parameter{}, invalidField("schema.multiple_values", "Multiple values are not allowed here.", nil)
+		return ParameterInput{}, invalidField("schema.multiple_values", "Multiple values are not allowed here.", nil)
 	}
 	if schemaHasMultipleValues(schema) && !parameterSchemaHasEnum(schema) {
-		return Parameter{}, invalidField("schema.enum", "Multiple values require at least one allowed value.", nil)
+		return ParameterInput{}, invalidField("schema.enum", "Multiple values require at least one allowed value.", nil)
 	}
 	value.Schema = schema
 	return value, nil
 }
 
-func parseParameters(values []Parameter) ([]Parameter, error) {
-	result := make([]Parameter, 0, len(values))
+func parseParameters(values []ParameterInput) ([]ParameterInput, error) {
+	result := make([]ParameterInput, 0, len(values))
 	seen := make(map[string]struct{}, len(values))
 	for i, value := range values {
 		parsed, err := parseParameter(value, false, false)
@@ -354,7 +443,7 @@ func parseParameters(values []Parameter) ([]Parameter, error) {
 		seen[parsed.Name] = struct{}{}
 		result = append(result, parsed)
 	}
-	slices.SortFunc(result, func(a, b Parameter) int {
+	slices.SortFunc(result, func(a, b ParameterInput) int {
 		if order := cmp.Compare(a.Position, b.Position); order != 0 {
 			return order
 		}
@@ -375,7 +464,7 @@ func parseParameterSchema(value ParameterSchema, allowTemplate bool) (ParameterS
 		return parseFloatSchema(schema)
 	case DateTimeSchema:
 		return parseDateTimeSchema(schema)
-	case TemplateSchema:
+	case TemplateSchemaInput:
 		if !allowTemplate {
 			return nil, fmt.Errorf("template schema is not allowed here: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
@@ -554,17 +643,17 @@ func parseDateTimeSchema(value DateTimeSchema) (DateTimeSchema, error) {
 	return value, nil
 }
 
-func parseTemplateSchema(value TemplateSchema) (TemplateSchema, error) {
+func parseTemplateSchema(value TemplateSchemaInput) (TemplateSchemaInput, error) {
 	templateValue, parameters, err := parseTemplateDefinition(value.Template, value.Parameters)
 	if err != nil {
-		return TemplateSchema{}, fmt.Errorf("validate template parameters: %w", apperror.PrefixTarget(err, "parameters"))
+		return TemplateSchemaInput{}, fmt.Errorf("validate template parameters: %w", apperror.PrefixTarget(err, "parameters"))
 	}
 	value.Template = templateValue
 	value.Parameters = parameters
 	return value, nil
 }
 
-func validateTemplateReferences(source string, parameters []Parameter) error {
+func validateTemplateReferences(source string, parameters []ParameterInput) error {
 	allowed := make(map[string]struct{}, len(parameters))
 	for _, parameter := range parameters {
 		allowed[parameter.Name] = struct{}{}
@@ -606,7 +695,7 @@ func pathParameterNames(parameters []WebServiceParameterInput) map[string]struct
 	return result
 }
 
-func validateMethodBody(method HTTPMethod, body *RequestBody) error {
+func validateMethodBody(method HTTPMethod, body *RequestBodyInput) error {
 	if body != nil && (method == HTTPMethodGet || method == HTTPMethodDelete) {
 		return fmt.Errorf("body is not allowed for %s: %w", method, apperror.Default(apperror.CodeValidationFailed))
 	}

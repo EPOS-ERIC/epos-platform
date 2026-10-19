@@ -2,6 +2,8 @@
 package grpc
 
 import (
+	"errors"
+
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -9,6 +11,20 @@ import (
 )
 
 const ErrorInfoDomain = "epos-platform"
+
+// NormalizeError maps application errors to client-safe gRPC statuses and
+// fails closed for unclassified errors.
+func NormalizeError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	appErr, ok := errors.AsType[*apperror.AppError](err)
+	if !ok || appErr == nil {
+		appErr = apperror.Wrap(apperror.CodeInternal, "", err)
+	}
+	return ToStatus(appErr)
+}
 
 // Code returns the gRPC status code used for an application code.
 func Code(code apperror.Code) codes.Code {

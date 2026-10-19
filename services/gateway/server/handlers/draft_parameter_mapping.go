@@ -8,8 +8,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Parameter {
-	result := &metadatalifecyclev1.Parameter{}
+func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.ParameterInput {
+	result := &metadatalifecyclev1.ParameterInput{}
 	switch {
 	case v.IsStringParameterDraft():
 		x := v.StringParameterDraft
@@ -22,7 +22,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{
+		result.Value = &metadatalifecyclev1.ParameterInput_String_{String_: &metadatalifecyclev1.StringParameter{
 			Default:        protoOptionalString(x.Default),
 			Enum:           toProtoStringEnumOptions(x.Enum),
 			Pattern:        protoOptionalString(x.Pattern),
@@ -39,7 +39,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.Parameter_Boolean{Boolean: &metadatalifecyclev1.BooleanParameter{Default: protoOptionalBool(x.Default)}}
+		result.Value = &metadatalifecyclev1.ParameterInput_Boolean{Boolean: &metadatalifecyclev1.BooleanParameter{Default: protoOptionalBool(x.Default)}}
 	case v.IsIntegerParameterDraft():
 		x := v.IntegerParameterDraft
 		result.Position = x.Position
@@ -51,7 +51,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.Parameter_Integer{Integer: &metadatalifecyclev1.IntegerParameter{
+		result.Value = &metadatalifecyclev1.ParameterInput_Integer{Integer: &metadatalifecyclev1.IntegerParameter{
 			Minimum:        protoOptionalInt64(x.Minimum),
 			Maximum:        protoOptionalInt64(x.Maximum),
 			Default:        protoOptionalInt64(x.Default),
@@ -69,7 +69,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.Parameter_Float{Float: &metadatalifecyclev1.FloatParameter{
+		result.Value = &metadatalifecyclev1.ParameterInput_Float{Float: &metadatalifecyclev1.FloatParameter{
 			Minimum:        protoOptionalFloat(x.Minimum),
 			Maximum:        protoOptionalFloat(x.Maximum),
 			Default:        protoOptionalFloat(x.Default),
@@ -87,7 +87,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.Parameter_DateTime{DateTime: &metadatalifecyclev1.DateTimeParameter{
+		result.Value = &metadatalifecyclev1.ParameterInput_DateTime{DateTime: &metadatalifecyclev1.DateTimeParameter{
 			Minimum: protoOptionalTime(x.Minimum),
 			Maximum: protoOptionalTime(x.Maximum),
 			Default: protoOptionalTime(x.Default),
@@ -104,19 +104,19 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
-		template := &metadatalifecyclev1.TemplateParameter{Template: x.Template}
+		template := &metadatalifecyclev1.TemplateParameterInput{Template: x.Template}
 		for _, parameter := range x.Parameters {
 			template.Parameters = append(template.Parameters, toProtoScalarParameterDraft(parameter))
 		}
-		result.Value = &metadatalifecyclev1.Parameter_Template{Template: template}
+		result.Value = &metadatalifecyclev1.ParameterInput_Template{Template: template}
 	default:
 		return nil
 	}
 	return result
 }
 
-func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalifecyclev1.ScalarParameter {
-	result := &metadatalifecyclev1.ScalarParameter{}
+func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalifecyclev1.ScalarParameterInput {
+	result := &metadatalifecyclev1.ScalarParameterInput{}
 	switch {
 	case v.IsStringScalarParameterDraft():
 		x := v.StringScalarParameterDraft
@@ -126,7 +126,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.ScalarParameter_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
+		result.Value = &metadatalifecyclev1.ScalarParameterInput_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
 			Default: protoOptionalString(x.Default),
 			Enum:    toProtoStringEnumOptions(x.Enum),
 			Pattern: protoOptionalString(x.Pattern),
@@ -139,7 +139,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.ScalarParameter_Boolean{Boolean: &metadatalifecyclev1.ScalarBooleanParameter{Default: protoOptionalBool(x.Default)}}
+		result.Value = &metadatalifecyclev1.ScalarParameterInput_Boolean{Boolean: &metadatalifecyclev1.ScalarBooleanParameter{Default: protoOptionalBool(x.Default)}}
 	case v.IsIntegerScalarParameterDraft():
 		x := v.IntegerScalarParameterDraft
 		result.Position = x.Position
@@ -148,7 +148,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.ScalarParameter_Integer{Integer: &metadatalifecyclev1.ScalarIntegerParameter{
+		result.Value = &metadatalifecyclev1.ScalarParameterInput_Integer{Integer: &metadatalifecyclev1.ScalarIntegerParameter{
 			Minimum: protoOptionalInt64(x.Minimum),
 			Maximum: protoOptionalInt64(x.Maximum),
 			Default: protoOptionalInt64(x.Default),
@@ -162,7 +162,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Required = x.Required
 		result.Description = protoOptionalString(x.Description)
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.ScalarParameter_Float{Float: &metadatalifecyclev1.ScalarFloatParameter{
+		result.Value = &metadatalifecyclev1.ScalarParameterInput_Float{Float: &metadatalifecyclev1.ScalarFloatParameter{
 			Minimum: protoOptionalFloat(x.Minimum),
 			Maximum: protoOptionalFloat(x.Maximum),
 			Default: protoOptionalFloat(x.Default),
@@ -176,7 +176,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
-		result.Value = &metadatalifecyclev1.ScalarParameter_DateTime{DateTime: &metadatalifecyclev1.ScalarDateTimeParameter{
+		result.Value = &metadatalifecyclev1.ScalarParameterInput_DateTime{DateTime: &metadatalifecyclev1.ScalarDateTimeParameter{
 			Minimum: protoOptionalTime(x.Minimum),
 			Maximum: protoOptionalTime(x.Maximum),
 			Default: protoOptionalTime(x.Default),

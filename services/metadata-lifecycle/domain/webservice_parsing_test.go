@@ -260,10 +260,10 @@ func TestNewWebServiceNormalizesTypeAndVisibleOn(t *testing.T) {
 }
 
 func TestNewWebServiceInputValidatesBodyAgainstMethod(t *testing.T) {
-	body := &RequestBody{
+	body := &RequestBodyInput{
 		ContentType: "application/json",
 		Template:    `{"value": {{.value}}}`,
-		Parameters: []Parameter{{
+		Parameters: []ParameterInput{{
 			Name:   "value",
 			Label:  "Value",
 			Schema: StringSchema{},
@@ -298,10 +298,10 @@ func TestNewWebServiceInputValidatesBodyAgainstMethod(t *testing.T) {
 }
 
 func TestNewRequestBodyRejectsUndeclaredTemplateReference(t *testing.T) {
-	_, err := NewRequestBody(RequestBody{
+	_, err := NewRequestBodyInput(RequestBodyInput{
 		ContentType: "application/json",
 		Template:    `{"value": {{.missing}}}`,
-		Parameters: []Parameter{{
+		Parameters: []ParameterInput{{
 			Name:   "value",
 			Label:  "Value",
 			Schema: StringSchema{},
@@ -313,15 +313,15 @@ func TestNewRequestBodyRejectsUndeclaredTemplateReference(t *testing.T) {
 }
 
 func TestParseTemplateSchemaDisallowsNestedTemplates(t *testing.T) {
-	_, err := NewRequestBody(RequestBody{
+	_, err := NewRequestBodyInput(RequestBodyInput{
 		ContentType: "application/json",
 		Template:    `{"value": {{.value}}}`,
-		Parameters: []Parameter{{
+		Parameters: []ParameterInput{{
 			Name:  "value",
 			Label: "Value",
-			Schema: TemplateSchema{
+			Schema: TemplateSchemaInput{
 				Template: "{{.nested}}",
-				Parameters: []Parameter{{
+				Parameters: []ParameterInput{{
 					Name: "nested", Label: "Nested", Schema: StringSchema{},
 				}},
 			},
