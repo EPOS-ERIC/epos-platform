@@ -20,6 +20,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.HTTPTimeout != 30*time.Second || cfg.SchemaMaxBytes != 2<<20 {
 		t.Fatalf("numeric defaults = timeout %s, schema budget %d", cfg.HTTPTimeout, cfg.SchemaMaxBytes)
 	}
+	if cfg.MaxResponseBytes != 1<<30 {
+		t.Fatalf("response size default = %d, want %d", cfg.MaxResponseBytes, 1<<30)
+	}
 }
 
 func TestLoadOverridesAndClampsSchemaBudget(t *testing.T) {
@@ -45,6 +48,7 @@ func TestLoadRejectsInvalidConfiguration(t *testing.T) {
 	}{
 		{name: "invalid timeout", key: "HTTP_TIMEOUT", value: "soon", want: "HTTP_TIMEOUT"},
 		{name: "invalid schema budget", key: "SCHEMA_MAX_BYTES", value: "large", want: "SCHEMA_MAX_BYTES"},
+		{name: "invalid response size", key: "MAX_RESPONSE_BYTES", value: "0", want: "MAX_RESPONSE_BYTES must be greater than zero"},
 		{name: "empty database host", key: "DB_HOST", value: "", want: "DB_HOST is required"},
 	}
 	for _, test := range tests {
@@ -62,7 +66,7 @@ func TestLoadRejectsInvalidConfiguration(t *testing.T) {
 func clearEnvironment(t *testing.T) {
 	t.Helper()
 	for _, key := range []string{
-		"GRPC_LISTEN_ADDR", "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "HTTP_TIMEOUT", "SCHEMA_MAX_BYTES",
+		"GRPC_LISTEN_ADDR", "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "HTTP_TIMEOUT", "SCHEMA_MAX_BYTES", "MAX_RESPONSE_BYTES",
 	} {
 		value, exists := os.LookupEnv(key)
 		if err := os.Unsetenv(key); err != nil {

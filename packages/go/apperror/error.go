@@ -19,6 +19,7 @@ const (
 	CodeInternal            Code = "internal"
 	CodeUpstreamTimeout     Code = "upstream_timeout"
 	CodeUpstreamUnavailable Code = "upstream_unavailable"
+	CodeUpstreamHTTPFailure Code = "upstream_http_failure"
 	CodeUnsupportedMedia    Code = "unsupported_media_type"
 	CodeRequestTooLarge     Code = "request_too_large"
 )
@@ -33,6 +34,7 @@ var defaultDetails = map[Code]string{
 	CodeInternal:            "An unexpected error occurred.",
 	CodeUpstreamTimeout:     "The request timed out.",
 	CodeUpstreamUnavailable: "A required service is unavailable.",
+	CodeUpstreamHTTPFailure: "Upstream service returned an HTTP failure.",
 	CodeUnsupportedMedia:    "The request media type is not supported.",
 	CodeRequestTooLarge:     "The request body is too large.",
 }
@@ -135,7 +137,7 @@ func HTTPStatus(code Code) int {
 		return http.StatusConflict
 	case CodeUpstreamTimeout:
 		return http.StatusGatewayTimeout
-	case CodeUpstreamUnavailable:
+	case CodeUpstreamUnavailable, CodeUpstreamHTTPFailure:
 		return http.StatusServiceUnavailable
 	case CodeRequestTooLarge:
 		return http.StatusRequestEntityTooLarge

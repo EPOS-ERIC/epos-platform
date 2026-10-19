@@ -15,13 +15,9 @@ func (s streamSink) SendDry(command string) error {
 
 func (s streamSink) SendHeaders(record domain.RetrievalRecord, head domain.ResponseHead) error {
 	headers := &dataretrieverv1.RetrieveStreamHeaders{
-		Record:             toProtoRetrievalRecord(record),
-		UpstreamStatus:     int32(head.StatusCode),
-		ContentType:        head.ContentType,
-		ContentDisposition: head.ContentDisposition,
-	}
-	if head.StatusCode >= 300 && head.StatusCode < 400 && head.Location != "" {
-		headers.RedirectUrl = head.Location
+		Record:         toProtoRetrievalRecord(record),
+		UpstreamStatus: int32(head.StatusCode),
+		ContentType:    head.ContentType,
 	}
 	return s.stream.Send(headersEvent(headers))
 }

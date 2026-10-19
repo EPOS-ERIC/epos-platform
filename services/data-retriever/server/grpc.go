@@ -13,8 +13,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-func Run(ctx context.Context, cfg config.Config, log *slog.Logger, repo retrieval.Repository, client *upstream.Client, schemaBudget uint64) error {
-	service := retrieval.New(repo, client, log, schemaBudget)
+func Run(ctx context.Context, cfg config.Config, log *slog.Logger, repo retrieval.Repository, client *upstream.Client) error {
+	service := retrieval.New(repo, client, log, uint64(cfg.SchemaMaxBytes), uint64(cfg.MaxResponseBytes))
 	api := grpcapi.New(service)
 	return sharedgrpc.Run(ctx, sharedgrpc.Config{
 		Address: cfg.GRPCListenAddr,

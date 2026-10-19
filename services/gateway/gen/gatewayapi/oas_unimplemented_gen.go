@@ -207,6 +207,22 @@ func (UnimplementedHandler) DiscoverResources(ctx context.Context, params Discov
 	return r, ht.ErrNotImplemented
 }
 
+// DownloadDistribution implements downloadDistribution operation.
+//
+// Resolves a downloadable-file distribution and its owning dataset version by distribution ID.
+// Published versions allow anonymous access; all other states require authenticated access under
+// existing dataset permissions. No query parameters or request body are supported. Web-service
+// distributions cannot be downloaded through this endpoint.
+//
+// Successful upstream status and body are streamed to the client. Upstream HTTP failures return a 503
+// Gateway Problem with the original upstream status and body in `upstream_response`; its body is
+// treated as text. The Problem `instance` contains the request trace ID.
+//
+// GET /distributions/{distributionId}/download
+func (UnimplementedHandler) DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (r *DownloadDistribution2XXStatusCodeWithHeaders, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // DraftFromArchive implements draftFromArchive operation.
 //
 // Create draft from archive.
@@ -552,22 +568,6 @@ func (UnimplementedHandler) RequestGroupMembership(ctx context.Context, req *Cre
 //
 // POST /groups/{groupId}/role-requests
 func (UnimplementedHandler) RequestGroupRole(ctx context.Context, req *CreateRoleRequest, params RequestGroupRoleParams) (r *RoleRequest, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// RetrieveResourceVersion implements retrieveResourceVersion operation.
-//
-// Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses
-// never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a
-// generated command that needs authentication.
-//
-// In `EXECUTE` mode the gateway transparently streams the upstream status, Content-Type, and body,
-// including large downloads. A 3xx response also relays `Location`. Upstream `Content-Disposition` is
-// forwarded; when absent, a file name from the request URL is used when available. The persisted
-// retrieval identifier is exposed in `X-Retrieval-Id`.
-//
-// POST /access
-func (UnimplementedHandler) RetrieveResourceVersion(ctx context.Context, req *RetrieveResourceVersionRequest) (r *RetrieveResourceVersionResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

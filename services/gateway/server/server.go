@@ -45,7 +45,7 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 	sharingSvc := sharingservice.NewService(sharingClient)
 	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, dataRetrieverClient, sharingSvc, authService, cfg.Server.CORSAllowOrigin, cfg.Server.RequestTimeout)
 
-	// WriteTimeout stays disabled because /v1/access streams unbounded downloads.
+	// WriteTimeout stays disabled because distribution downloads stream large responses.
 	srv := &http.Server{
 		BaseContext:  func(net.Listener) context.Context { return ctx },
 		Addr:         cfg.Server.Listen,

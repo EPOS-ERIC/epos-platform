@@ -34,7 +34,7 @@ tags:
   - name: Resources
     description: Read resource versions and manage their draft-to-publication lifecycle.
   - name: Access
-    description: Retrieve resource data or generate executable retrieval commands.
+    description: Access distribution data through the platform.
   - name: Users
     description: Read user profiles and administer global access.
   - name: Authorization
@@ -79,36 +79,47 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
-  /access:
-    post:
+  /distributions/{distributionId}/download:
+    get:
       tags: [Access]
-      summary: Access a resource version
+      summary: Download a distribution
       description: |-
-        Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a generated command that needs authentication.
+        Resolves a downloadable-file distribution and its owning dataset version by distribution ID. Published versions allow anonymous access; all other states require authenticated access under existing dataset permissions. No query parameters or request body are supported. Web-service distributions cannot be downloaded through this endpoint.
 
-        In `EXECUTE` mode the gateway transparently streams the upstream status, Content-Type, and body, including large downloads. A 3xx response also relays `Location`. Upstream `Content-Disposition` is forwarded; when absent, a file name from the request URL is used when available. The persisted retrieval identifier is exposed in `X-Retrieval-Id`.
-      operationId: retrieveResourceVersion
+        Successful upstream status and body are streamed to the client. Upstream HTTP failures return a 503 Gateway Problem with the original upstream status and body in `upstream_response`; its body is treated as text. The Problem `instance` contains the request trace ID.
+      operationId: downloadDistribution
       security:
+        - bearerAuth: []
         - {}
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RetrieveResourceVersionRequest"
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
       responses:
-        "200":
-          description: DRY curl command returned as JSON. EXECUTE responses stream the upstream status, headers, and body.
+        "2XX":
+          description: Successful upstream response, streamed without buffering.
           content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RetrieveResourceVersionResponse"
+            "*/*":
+              schema: { type: string, format: binary }
         default:
-          description: Gateway error
+          description: Gateway Problem. Upstream HTTP failures return 503 and preserve the upstream status and body in `upstream_response`.
           content:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+              examples:
+                upstreamHTTPFailure:
+                  summary: Upstream HTTP failure
+                  value:
+                    type: upstream_http_failure
+                    title: Service Unavailable
+                    status: 503
+                    detail: Upstream service returned an HTTP failure.
+                    instance: 132c7c05d8f744d596e15a2620cacfeb
+                    upstream_response:
+                      status: 404
+                      body: Requested station was not found.
   /imports/turtle:
     post:
       tags:
@@ -2186,70 +2197,6 @@ components:
                 detail: "A required service is unavailable."
 
   schemas:
-    RetrieveMode:
-      type: string
-      enum: [DRY, EXECUTE]
-      default: EXECUTE
-
-    RetrievalHTTPMethod:
-      type: string
-      enum: [GET, POST, PUT, DELETE]
-
-    RetrievalRequestBody:
-      type: object
-      additionalProperties: false
-      required: [content_type]
-      properties:
-        content_type: { $ref: "#/components/schemas/NonBlankString" }
-        raw: { type: string, nullable: true, minLength: 1 }
-        json_payload:
-          type: string
-          nullable: true
-          minLength: 1
-          description: Serialized JSON document. Requires a JSON content type.
-
-    RetrieveResourceVersionRequest:
-      type: object
-      additionalProperties: false
-      required: [resource_id, version_id, method, url_template]
-      properties:
-        resource_id: { type: string, format: uuid }
-        version_id: { type: string, format: uuid }
-        mode: { $ref: "#/components/schemas/RetrieveMode" }
-        method: { $ref: "#/components/schemas/RetrievalHTTPMethod" }
-        url_template:
-          type: string
-          minLength: 1
-          description: Absolute HTTP(S) URL template. Path placeholders use `{name}` syntax.
-        path_params:
-          type: object
-          additionalProperties: { type: string }
-        query_params:
-          type: object
-          additionalProperties: { type: string }
-        headers:
-          type: object
-          additionalProperties: { type: string }
-        bearer_token:
-          type: string
-          nullable: true
-          minLength: 1
-          description: Upstream credential. Never persisted or returned.
-        body:
-          allOf:
-            - $ref: "#/components/schemas/RetrievalRequestBody"
-          nullable: true
-
-    RetrieveResourceVersionResponse:
-      type: object
-      additionalProperties: false
-      required: [mode]
-      properties:
-        mode: { type: string, enum: [DRY] }
-        curl_command:
-          type: string
-          minLength: 1
-
     # -------------------------------------------------------------------------
     # Shared enums
     # -------------------------------------------------------------------------
@@ -4435,3 +4382,17 @@ components:
           type: string
           description: Optional dotted path identifying the request field related to the problem
           example: "metadata.title"
+        upstream_response:
+          type: object
+          description: Present only when an upstream HTTP failure response exists.
+          required: [status, body]
+          additionalProperties: false
+          properties:
+            status:
+              type: integer
+              minimum: 100
+              maximum: 599
+              description: Original upstream HTTP status.
+            body:
+              type: string
+              description: Original upstream failure body, treated as text.

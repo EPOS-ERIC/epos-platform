@@ -1506,6 +1506,29 @@ func (q *Queries) GetActiveLifecycleDatasetVersion(ctx context.Context, datasetI
 	return i, err
 }
 
+const getDownloadLifecycleDatasetVersion = `-- name: GetDownloadLifecycleDatasetVersion :one
+SELECT
+    dataset_versions.dataset_id,
+    dataset_versions.id AS version_id
+FROM
+    distributions
+    JOIN dataset_versions ON dataset_versions.id = distributions.dataset_version_id
+WHERE
+    distributions.id = $1
+`
+
+type GetDownloadLifecycleDatasetVersionRow struct {
+	DatasetID uuid.UUID
+	VersionID uuid.UUID
+}
+
+func (q *Queries) GetDownloadLifecycleDatasetVersion(ctx context.Context, distributionID uuid.UUID) (GetDownloadLifecycleDatasetVersionRow, error) {
+	row := q.db.QueryRow(ctx, getDownloadLifecycleDatasetVersion, distributionID)
+	var i GetDownloadLifecycleDatasetVersionRow
+	err := row.Scan(&i.DatasetID, &i.VersionID)
+	return i, err
+}
+
 const getLatestArchivedLifecycleDatasetVersion = `-- name: GetLatestArchivedLifecycleDatasetVersion :one
 SELECT
     id, dataset_id, status, revision, title, description, keywords, accrual_periodicity, quality_annotation, access_right, source_created_at, source_updated_at, spatial_coverage, temporal_start, temporal_end, geological_temporal_start_mya, geological_temporal_end_mya, created_by, created_at, updated_at, submitted_by, submitted_at, published_by, published_at, archived_by, archived_at, rejected_by, rejected_at, rejection_note

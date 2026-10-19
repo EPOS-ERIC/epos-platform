@@ -2473,6 +2473,71 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 	return params, nil
 }
 
+// DownloadDistributionParams is parameters of downloadDistribution operation.
+type DownloadDistributionParams struct {
+	DistributionId uuid.UUID
+}
+
+func unpackDownloadDistributionParams(packed middleware.Parameters) (params DownloadDistributionParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "distributionId",
+			In:   "path",
+		}
+		params.DistributionId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeDownloadDistributionParams(args [1]string, argsEscaped bool, r *http.Request) (params DownloadDistributionParams, _ error) {
+	// Decode path: distributionId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "distributionId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.DistributionId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "distributionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DraftFromArchiveParams is parameters of draftFromArchive operation.
 type DraftFromArchiveParams struct {
 	// Resource type identifier accepted by lifecycle endpoints.

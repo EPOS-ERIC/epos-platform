@@ -137,6 +137,29 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 	return &metadatalifecyclev1.GetResourceVersionResponse{Resource: response}, nil
 }
 
+func (s *ResourceServer) PrepareDistributionDownload(ctx context.Context, request *metadatalifecyclev1.PrepareDistributionDownloadRequest) (*metadatalifecyclev1.PrepareDistributionDownloadResponse, error) {
+	if request == nil {
+		return nil, apperror.New(apperror.CodeValidationFailed, "distribution download request is required")
+	}
+
+	distributionID, err := parseUUIDAt(request.GetDistributionId(), "distribution id", "distributionId")
+	if err != nil {
+		return nil, err
+	}
+
+	actor, err := optionalActorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	download, err := s.datasets.PrepareDownload(ctx, actor, distributionID)
+	if err != nil {
+		return nil, err
+	}
+
+	return toProtoDistributionDownload(download), nil
+}
+
 func (s *ResourceServer) ListResourceVersions(ctx context.Context, request *metadatalifecyclev1.ListResourceVersionsRequest) (*metadatalifecyclev1.ListResourceVersionsResponse, error) {
 	if request == nil {
 		return nil, apperror.New(apperror.CodeValidationFailed, "resource versions request is required")

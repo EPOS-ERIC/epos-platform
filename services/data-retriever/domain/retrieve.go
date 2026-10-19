@@ -57,12 +57,10 @@ type OutputParameter struct {
 }
 
 type ResponseHead struct {
-	StatusCode         int
-	ContentType        string
-	ContentLength      int64
-	Location           string
-	ContentDisposition string
-	IsBinary           bool
+	StatusCode    int
+	ContentType   string
+	ContentLength int64
+	IsBinary      bool
 }
 
 type RetrievalRecord struct {
@@ -80,7 +78,6 @@ type RetrievalRecord struct {
 	UsedAuth         bool
 	FetchedAt        time.Time
 	CreatedAt        time.Time
-	RequestBodyText  string
 	OutputParameters []OutputParameter
 }
 

@@ -43,17 +43,18 @@ type UpstreamResponse struct {
 }
 
 type Service struct {
-	repo         Repository
-	client       UpstreamClient
-	log          *slog.Logger
-	schemaBudget uint64
+	repo             Repository
+	client           UpstreamClient
+	log              *slog.Logger
+	schemaBudget     uint64
+	maxResponseBytes uint64
 }
 
-func New(repo Repository, client UpstreamClient, log *slog.Logger, schemaBudget uint64) *Service {
+func New(repo Repository, client UpstreamClient, log *slog.Logger, schemaBudget, maxResponseBytes uint64) *Service {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Service{repo: repo, client: client, log: log, schemaBudget: schemaBudget}
+	return &Service{repo: repo, client: client, log: log, schemaBudget: schemaBudget, maxResponseBytes: maxResponseBytes}
 }
 
 func (s *Service) Get(ctx context.Context, id int64) (domain.RetrievalRecord, error) {
@@ -80,20 +81,13 @@ func (s *Service) Retrieve(ctx context.Context, input domain.RetrievalInput, sin
 		return upstreamError(ctx, err)
 	}
 	defer func() { _ = response.Body.Close() }()
+	if response.Head.ContentLength >= 0 && uint64(response.Head.ContentLength) > s.maxResponseBytes {
+		return apperror.Default(apperror.CodeInternal)
+	}
 
 	record, err := s.repo.CreatePlaceholder(ctx, prepared, response.Head)
 	if err != nil {
 		return apperror.Wrap(apperror.CodeInternal, "", err)
-	}
-	if isRedirect(response.Head) {
-		if err := sink.SendHeaders(record, response.Head); err != nil {
-			return s.streamError(ctx, record.ID)
-		}
-		size := response.Head.ContentLength
-		if size < 0 {
-			size = -1
-		}
-		return s.finalize(ctx, record.ID, "", size)
 	}
 	if err := sink.SendHeaders(record, response.Head); err != nil {
 		return s.streamError(ctx, record.ID)
@@ -107,6 +101,10 @@ func (s *Service) Retrieve(ctx context.Context, input domain.RetrievalInput, sin
 	for {
 		count, readErr := response.Body.Read(buffer)
 		if count > 0 {
+			if uint64(size)+uint64(count) > s.maxResponseBytes {
+				s.markIncomplete(ctx, record.ID)
+				return apperror.Default(apperror.CodeInternal)
+			}
 			_, _ = hash.Write(buffer[:count])
 			size += int64(count)
 			if !overBudget {
@@ -128,21 +126,10 @@ func (s *Service) Retrieve(ctx context.Context, input domain.RetrievalInput, sin
 			return s.readError(ctx, record.ID, readErr)
 		}
 	}
-	if err := s.finalize(ctx, record.ID, hex.EncodeToString(hash.Sum(nil)), size); err != nil {
-		return err
-	}
-	s.discoverOutputSchema(ctx, prepared, response.Head.ContentType, sample, overBudget)
-	return nil
-}
-
-func isRedirect(head domain.ResponseHead) bool {
-	return head.StatusCode >= 300 && head.StatusCode < 400 && head.Location != ""
-}
-
-func (s *Service) finalize(ctx context.Context, id int64, payloadHash string, payloadSize int64) error {
-	if err := s.repo.FinalizeRetrieval(ctx, id, payloadHash, payloadSize); err != nil {
+	if err := s.repo.FinalizeRetrieval(ctx, record.ID, hex.EncodeToString(hash.Sum(nil)), size); err != nil {
 		return apperror.Wrap(apperror.CodeInternal, "", err)
 	}
+	s.discoverOutputSchema(ctx, prepared, response.Head.ContentType, sample)
 	return nil
 }
 
@@ -151,7 +138,7 @@ func (s *Service) streamError(ctx context.Context, id int64) error {
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		return ctxErr
 	}
-	return apperror.Default(apperror.CodeUpstreamUnavailable)
+	return apperror.Default(apperror.CodeInternal)
 }
 
 func (s *Service) readError(ctx context.Context, id int64, cause error) error {
@@ -163,7 +150,7 @@ func (s *Service) readError(ctx context.Context, id int64, cause error) error {
 	if errors.As(cause, &networkError) && networkError.Timeout() {
 		return apperror.Default(apperror.CodeUpstreamTimeout)
 	}
-	return apperror.Default(apperror.CodeUpstreamUnavailable)
+	return apperror.Default(apperror.CodeInternal)
 }
 
 func (s *Service) markIncomplete(ctx context.Context, id int64) {
@@ -185,11 +172,11 @@ func upstreamError(ctx context.Context, err error) error {
 	if errors.As(err, &networkError) && networkError.Timeout() {
 		return apperror.Default(apperror.CodeUpstreamTimeout)
 	}
-	return apperror.Default(apperror.CodeUpstreamUnavailable)
+	return apperror.Default(apperror.CodeInternal)
 }
 
-func (s *Service) discoverOutputSchema(ctx context.Context, request domain.PreparedRetrieval, contentType string, payload []byte, overBudget bool) {
-	if overBudget || len(payload) == 0 {
+func (s *Service) discoverOutputSchema(ctx context.Context, request domain.PreparedRetrieval, contentType string, payload []byte) {
+	if len(payload) == 0 {
 		return
 	}
 	parameters, parsed := schema.Extract(contentType, payload)

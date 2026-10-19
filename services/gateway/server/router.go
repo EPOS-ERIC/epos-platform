@@ -10,6 +10,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
@@ -38,7 +39,6 @@ func NewRouter(
 	if corsAllowOrigin != "" {
 		r.Use(middleware.CORSAllowOrigin(corsAllowOrigin))
 	}
-	r.Use(middleware.ExposeHeaders("Content-Disposition", "Location", "X-Retrieval-Id"))
 	r.Use(middleware.Logger(log))
 	r.Use(middleware.RecovererWithResponse(log, handlers.WritePanicProblem))
 
@@ -57,33 +57,29 @@ func NewRouter(
 	r.Handle("/scalar/*", http.StripPrefix("/scalar", http.FileServer(http.FS(docs.GetScalarUI()))))
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
+	securityHandler := handlers.NewSecurityHandler(authService, identityService)
+	downloadService := distributionaccess.NewService(metadataLifecycleClient, dataRetrieverClient)
 	generatedHandler := handlers.NewOgenHandler(
 		identityService,
 		membershipService,
 		metadataLifecycleClient,
-		dataRetrieverClient,
 		sharingService,
+		downloadService,
 		log,
 	)
 	generatedServer, err := gatewayapi.NewServer(
 		generatedHandler,
-		handlers.NewSecurityHandler(authService, identityService),
+		securityHandler,
 		gatewayapi.WithPathPrefix("/v1"),
 		gatewayapi.WithErrorHandler(handlers.NewErrorHandler(log)),
 	)
 	if err != nil {
 		panic(fmt.Sprintf("create generated gateway server: %v", err))
 	}
-	r.Mount("/v1", requestBodyLimit(handlers.AccessProxyMiddleware(dataRetrieverClient, log)(handlers.RequestTimeout(generatedServer, requestTimeout))))
+
+	r.Mount("/v1", handlers.RequestTimeout(generatedServer, requestTimeout))
 
 	return observability.NewHTTPHandler(r, "/")
-}
-
-func requestBodyLimit(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
-		next.ServeHTTP(w, r)
-	})
 }
 
 func serveOpenAPISpec(log *slog.Logger) http.HandlerFunc {

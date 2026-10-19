@@ -11,7 +11,7 @@ down:
 	tilt down $(TILT_CONTEXT_ARG)
 
 clean: down
-	docker volume rm -f docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data docker_sharing-db-data docker_data-retriever-db-data docker_platform-legacy-node-modules
+	docker volume rm -f docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data docker_sharing-db-data docker_platform-legacy-node-modules
 
 populate:
 	./packages/scripts/populatescript.sh

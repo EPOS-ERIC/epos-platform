@@ -221,6 +221,16 @@ WHERE
     dataset_id = sqlc.arg(dataset_id)
     AND STATUS = 'PUBLISHED';
 
+-- name: GetDownloadLifecycleDatasetVersion :one
+SELECT
+    dataset_versions.dataset_id,
+    dataset_versions.id AS version_id
+FROM
+    distributions
+    JOIN dataset_versions ON dataset_versions.id = distributions.dataset_version_id
+WHERE
+    distributions.id = sqlc.arg(distribution_id);
+
 -- name: GetActiveLifecycleDatasetVersion :one
 SELECT
     *

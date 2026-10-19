@@ -606,15 +606,13 @@ func (x *RetrievalRecord) GetOutputParameters() []*OutputParameter {
 }
 
 type RetrieveStreamHeaders struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	Record             *RetrievalRecord       `protobuf:"bytes,1,opt,name=record,proto3" json:"record,omitempty"`
-	UpstreamStatus     int32                  `protobuf:"varint,2,opt,name=upstream_status,json=upstreamStatus,proto3" json:"upstream_status,omitempty"`
-	ContentType        string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
-	ContentDisposition string                 `protobuf:"bytes,4,opt,name=content_disposition,json=contentDisposition,proto3" json:"content_disposition,omitempty"`
-	RedirectUrl        string                 `protobuf:"bytes,5,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url,omitempty"`
-	CurlCommand        string                 `protobuf:"bytes,6,opt,name=curl_command,json=curlCommand,proto3" json:"curl_command,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Record         *RetrievalRecord       `protobuf:"bytes,1,opt,name=record,proto3" json:"record,omitempty"`
+	UpstreamStatus int32                  `protobuf:"varint,2,opt,name=upstream_status,json=upstreamStatus,proto3" json:"upstream_status,omitempty"`
+	ContentType    string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	CurlCommand    string                 `protobuf:"bytes,6,opt,name=curl_command,json=curlCommand,proto3" json:"curl_command,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RetrieveStreamHeaders) Reset() {
@@ -664,20 +662,6 @@ func (x *RetrieveStreamHeaders) GetUpstreamStatus() int32 {
 func (x *RetrieveStreamHeaders) GetContentType() string {
 	if x != nil {
 		return x.ContentType
-	}
-	return ""
-}
-
-func (x *RetrieveStreamHeaders) GetContentDisposition() string {
-	if x != nil {
-		return x.ContentDisposition
-	}
-	return ""
-}
-
-func (x *RetrieveStreamHeaders) GetRedirectUrl() string {
-	if x != nil {
-		return x.RedirectUrl
 	}
 	return ""
 }
@@ -917,13 +901,11 @@ const file_data_retriever_v1_data_retriever_proto_rawDesc = "" +
 	"resourceId\x12\x1d\n" +
 	"\n" +
 	"version_id\x18\x0e \x01(\tR\tversionId\x12O\n" +
-	"\x11output_parameters\x18\x0f \x03(\v2\".data_retriever.v1.OutputParameterR\x10outputParameters\"\xa9\x02\n" +
+	"\x11output_parameters\x18\x0f \x03(\v2\".data_retriever.v1.OutputParameterR\x10outputParameters\"\xcb\x01\n" +
 	"\x15RetrieveStreamHeaders\x12:\n" +
 	"\x06record\x18\x01 \x01(\v2\".data_retriever.v1.RetrievalRecordR\x06record\x12'\n" +
 	"\x0fupstream_status\x18\x02 \x01(\x05R\x0eupstreamStatus\x12!\n" +
-	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\x12/\n" +
-	"\x13content_disposition\x18\x04 \x01(\tR\x12contentDisposition\x12+\n" +
-	"\fredirect_url\x18\x05 \x01(\tB\b\xbaH\x05r\x03\x90\x01\x01R\vredirectUrl\x12*\n" +
+	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\x12*\n" +
 	"\fcurl_command\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vcurlCommand\"\x8f\x01\n" +
 	"\x16RetrieveStreamResponse\x12D\n" +
 	"\aheaders\x18\x01 \x01(\v2(.data_retriever.v1.RetrieveStreamHeadersH\x00R\aheaders\x12\x1f\n" +

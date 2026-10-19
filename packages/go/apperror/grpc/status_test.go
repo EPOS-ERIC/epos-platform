@@ -23,6 +23,7 @@ func TestCodeMapping(t *testing.T) {
 		{apperror.CodeInternal, codes.Internal},
 		{apperror.CodeUpstreamTimeout, codes.DeadlineExceeded},
 		{apperror.CodeUpstreamUnavailable, codes.Unavailable},
+		{apperror.CodeUpstreamHTTPFailure, codes.Unavailable},
 		{apperror.CodeUnsupportedMedia, codes.InvalidArgument},
 		{apperror.CodeRequestTooLarge, codes.InvalidArgument},
 	}

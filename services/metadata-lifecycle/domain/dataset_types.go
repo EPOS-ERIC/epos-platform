@@ -128,6 +128,13 @@ type DownloadableFile struct {
 	Format string
 }
 
+// DistributionDownload is an authorized downloadable-file request target.
+type DistributionDownload struct {
+	ResourceID uuid.UUID
+	VersionID  uuid.UUID
+	URL        string
+}
+
 type Documentation struct {
 	Title       *string
 	Description *string

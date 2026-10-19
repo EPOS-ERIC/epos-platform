@@ -9,9 +9,7 @@ Data Retriever executes structured outbound HTTP requests, streams response bodi
 - `RetrieveStream` supports `DRY` curl generation and `EXECUTE` streaming.
 - `GetRetrieval` returns persisted retrieval metadata and discovered output parameters.
 - Standard gRPC health service is enabled for readiness checks.
-- Public HTTP access goes through Gateway `POST /v1/access`.
 
-In execute mode, Data Retriever sends response headers first, then bounded chunks. It does not follow redirects. Gateway relays upstream status and response content. Output parameters update only after a complete supported JSON, XML, or CSV body parses within `SCHEMA_MAX_BYTES`.
 
 ## Build, test, and run
 
@@ -34,8 +32,9 @@ make lint
 - `DB_NAME` (default `data_retriever`)
 - `DB_USER` (default `data_retriever`)
 - `DB_PASSWORD` (default `data_retriever`)
-- `HTTP_TIMEOUT` (default `30s`): upstream response-header timeout; response bodies have no overall timeout.
+- `HTTP_TIMEOUT` (default `30s`): upstream response-header timeout
 - `SCHEMA_MAX_BYTES` (default `2097152`): maximum response bytes sampled for schema discovery; `0` disables discovery.
+- `MAX_RESPONSE_BYTES` (default `1073741824`): maximum response body bytes streamed from upstream.
 
 ## Sensitive data
 

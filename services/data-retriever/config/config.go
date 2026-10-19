@@ -9,14 +9,15 @@ import (
 )
 
 type Config struct {
-	GRPCListenAddr string        `envconfig:"GRPC_LISTEN_ADDR" default:":8100"`
-	DBHost         string        `envconfig:"DB_HOST" default:"localhost"`
-	DBPort         string        `envconfig:"DB_PORT" default:"5432"`
-	DBName         string        `envconfig:"DB_NAME" default:"data_retriever"`
-	DBUser         string        `envconfig:"DB_USER" default:"data_retriever"`
-	DBPassword     string        `envconfig:"DB_PASSWORD" default:"data_retriever"`
-	HTTPTimeout    time.Duration `envconfig:"HTTP_TIMEOUT" default:"30s"`
-	SchemaMaxBytes int           `envconfig:"SCHEMA_MAX_BYTES" default:"2097152"`
+	GRPCListenAddr   string        `envconfig:"GRPC_LISTEN_ADDR" default:":8100"`
+	DBHost           string        `envconfig:"DB_HOST" default:"localhost"`
+	DBPort           string        `envconfig:"DB_PORT" default:"5432"`
+	DBName           string        `envconfig:"DB_NAME" default:"data_retriever"`
+	DBUser           string        `envconfig:"DB_USER" default:"data_retriever"`
+	DBPassword       string        `envconfig:"DB_PASSWORD" default:"data_retriever"`
+	HTTPTimeout      time.Duration `envconfig:"HTTP_TIMEOUT" default:"30s"`
+	SchemaMaxBytes   int           `envconfig:"SCHEMA_MAX_BYTES" default:"2097152"`
+	MaxResponseBytes int64         `envconfig:"MAX_RESPONSE_BYTES" default:"1073741824"`
 }
 
 // Load reads, normalizes, and validates environment configuration.
@@ -36,6 +37,10 @@ func Load() (Config, error) {
 
 // Validate checks required configuration values.
 func (c *Config) Validate() error {
+	if c.MaxResponseBytes <= 0 {
+		return fmt.Errorf("MAX_RESPONSE_BYTES must be greater than zero")
+	}
+
 	fields := []struct {
 		name  string
 		value string

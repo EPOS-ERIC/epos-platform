@@ -9,7 +9,6 @@ Provide distribution-oriented access without requiring clients to construct outb
 For web-service access, clients supply:
 
 - Distribution identifier.
-- Optional metadata version.
 - Parameter values.
 - Optional native format selection or configured conversion selection.
 
@@ -42,25 +41,23 @@ This endpoint is for web-service distributions. Downloadable-file distributions 
 
 | Parameter       | Required | Meaning                                                    |
 | --------------- | -------: | ---------------------------------------------------------- |
-| `version_id`    |       No | Parent resource metadata version identifier.               |
 | `output_format` |       No | Native format selector, scoped to distribution.            |
 | `conversion_id` |       No | Stored plugin-distribution conversion relation identifier. |
 
-`version_id` and `conversion_id` are UUIDs; `output_format` is a non-empty string. Each query parameter may occur at most once; empty or repeated selectors are invalid input.
+`conversion_id` is a UUID; `output_format` is a non-empty string. Each query parameter may occur at most once; empty or repeated selectors are invalid input.
 
 This is the complete target OpenAPI query contract. Initial implementation supports native formats only; add a TODO to connect `conversion_id` when converter and conversion-relation support are implemented. Do not build plugin registries, relation persistence or conversion clients as part of initial access.
 
 ### Selection rules
 
-1. Without `version_id`, resolve distribution against current published metadata only.
-2. Never fall back to draft, archived or other unpublished metadata.
-3. With `version_id`, resolve exact requested metadata version.
-4. Verify distribution belongs to selected version.
-5. Apply existing metadata visibility and authorization rules.
-6. `output_format` and `conversion_id` are mutually exclusive; supplying both fails validation.
-7. Without either format selector, use native default output without conversion.
-8. `conversion_id` determines plugin, source format and output format; client does not repeat those values.
-9. Format selectors match declared values exactly after normal URL decoding. No case folding, MIME normalization or aliases.
+1. Resolve the specific distribution and its owning dataset version by distribution ID.
+2. Distribution IDs are globally unique and version-owned; no separate version selector is needed.
+3. Published dataset versions allow anonymous access. Every other state requires an authenticated actor with access under existing dataset permissions.
+4. Unknown or deleted distribution IDs return 404. Never fall back to another version or remap stale IDs.
+5. `output_format` and `conversion_id` are mutually exclusive; supplying both fails validation.
+6. Without either format selector, use native default output without conversion.
+7. `conversion_id` determines plugin, source format and output format; client does not repeat those values.
+8. Format selectors match declared values exactly after normal URL decoding. No case folding, MIME normalization or aliases.
 
 ### Examples
 
@@ -74,14 +71,9 @@ POST /distributions/{distributionId}/access?output_format=xml_dc
 # Published distribution, selected conversion
 POST /distributions/{distributionId}/access?conversion_id={conversionId}
 
-# Explicit metadata version
-POST /distributions/{distributionId}/access?version_id={versionId}
-
-# Explicit version and conversion
-POST /distributions/{distributionId}/access?version_id={versionId}&conversion_id={conversionId}
 ```
 
-Metadata version selection does not freeze upstream data. Draft metadata may also remain mutable.
+Distribution identity does not freeze upstream data. Draft metadata may also remain mutable.
 
 ### Request body
 
@@ -155,9 +147,8 @@ No cross-version identity preservation or automatic conversion-relation remappin
 
 Platform authentication follows existing visibility rules:
 
-- Public/published metadata may permit anonymous access.
-- Restricted metadata requires authenticated, authorized actor.
-- Explicit-version access follows existing version visibility rules.
+- Distributions owned by published dataset versions permit anonymous access.
+- Distributions in any other state require an authenticated actor with access to the owning dataset under existing permissions.
 - Inaccessible metadata must not be disclosed through errors.
 
 Platform authentication credentials must never be forwarded upstream automatically.
@@ -433,7 +424,7 @@ OpenAPI shape requirements:
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Gateway            | Public API, orchestration, combined format discovery, error responses and final streaming.                                                |
 | Metadata Lifecycle | Distribution/version resolution, visibility enforcement, value validation, defaults, template rendering and outbound request preparation. |
-| Data Retriever     | Execute prepared HTTP request and stream response. No metadata interpretation.                                                            |
+| Data Retriever     | Execute prepared HTTP request and stream response.                                                                                        |
 | Future Converter   | Execute selected configured transformation and provide converted response metadata/content.                                               |
 
 No separate service is introduced.
@@ -474,14 +465,13 @@ Validate inputs and resolve executable selection before outbound retrieval.
 
 ```http
 GET /distributions/{distributionId}/download
-GET /distributions/{distributionId}/download?version_id={versionId}
 ```
 
-This endpoint supports downloadable-file distributions only. It has no request body, `output_format` or `conversion_id`.
+This endpoint supports downloadable-file distributions only. It has no request body or query parameters.
 
 ### Resolution and execution
 
-Apply the same version-resolution rules as web-service access: without `version_id`, resolve the current published metadata only; with `version_id`, resolve that exact version, subject to existing visibility and authorization rules. Verify that the downloadable-file distribution belongs to the selected version.
+Resolve the specific downloadable-file distribution and its owning dataset version by distribution ID. Published versions permit anonymous access; every other state requires authentication and existing dataset access permissions. Unknown or deleted distribution IDs return 404; never fall back to another version or remap stale IDs.
 
 Metadata Lifecycle prepares:
 
@@ -501,7 +491,7 @@ Requirements:
 
 ### Credential support
 
-All upstream inputs use the same generic parameter mechanism; there is no dedicated credential field, sensitivity flag or custom per-parameter handling. Do not log parameter values or include them in returned errors.
+All upstream inputs use the same generic parameter mechanism; there is no dedicated credential field, sensitivity flag or custom per-parameter handling. Do not log parameter values or add them to Gateway-generated Problem details. Upstream failure bodies are returned verbatim and may contain values echoed by the upstream service.
 
 Platform authentication is separate and never copied upstream automatically.
 
@@ -509,30 +499,23 @@ Follow the HTTP client's standard redirect behavior for sensitive headers; no cu
 
 Backend owns HTTP framing and must not allow caller input to bypass destination or transport safeguards.
 
-### SSRF policy
+### Destination policy
 
-Use best-effort destination protection in Data Retriever:
+Enforce destination restrictions with Kubernetes network egress controls for Data Retriever pods, not with application-level IP lists, DNS checks or direct-IP dialing.
 
-- Accept HTTP(S) URLs only.
-- Resolve and check destination IPs at connection time.
-- Reject loopback, private, link-local, unspecified, multicast and other recognized non-public addresses.
-- Connect directly to checked IP, avoiding a second DNS lookup.
-- Apply checks to redirects through the same HTTP transport.
+- Egress policy must block cluster and deployment-internal networks while allowing required public Internet access.
+- Policy must account for cluster-specific internal networks and be enforced by the cluster networking layer.
 - Do not use environment-configured proxies.
-
-No configurable destination-policy framework or internal allowlist is required initially. Special-purpose address coverage is best-effort; this guard is not a replacement for network-level egress controls.
 
 ### Redirects
 
-- Follow validated redirects.
-- Maximum five redirects.
-- Apply destination checks at every hop.
-- Reject HTTPS → HTTP downgrade.
+- Follow redirects using standard Go `http.Client` behavior.
+- Maximum 10 redirects (go http client default).
+- Kubernetes egress policy applies to every connection, including redirect hops.
 - Use standard HTTP-client method semantics:
   - 301/302/303 may become GET and drop body.
   - 307/308 preserve method/body when replayable.
 - Do not add automatic retries beyond redirect handling.
-- Redirect-limit and redirect-policy failures produce platform execution errors.
 
 ---
 
@@ -541,8 +524,8 @@ No configurable destination-policy framework or internal allowlist is required i
 ### Native streaming behavior
 
 - Data Retriever sends bounded chunks.
-- Gateway reads and writes chunks sequentially, flushing each chunk to the client.
-- Gateway does not buffer the complete response; sequential I/O uses existing transport flow control for backpressure.
+- Gateway uses ogen's native `io.Reader` response streaming, reading and writing incrementally without explicit per-chunk flushing.
+- Gateway does not buffer successful response bodies; sequential I/O uses existing transport flow control for backpressure.
 - No custom queues, worker pools or idle-progress tracking are required.
 - Client disconnect cancels retrieval and any active conversion.
 
@@ -569,12 +552,6 @@ Count bytes incrementally as they pass through each stage. No separate wire-byte
 - Gateway does not buffer the response to determine size.
 - Converter's complete-input buffer is subject to the same input size cap; its storage strategy and memory ceiling are deferred.
 
-### Client request size
-
-Reuse existing Gateway **10 MiB** request-body cap.
-
-No new access-specific request-size setting.
-
 ### Failure after streaming starts
 
 Before response headers are committed, return Gateway Problem.
@@ -584,9 +561,6 @@ After success headers/body start:
 - Abort stream.
 - Cancel remaining pipeline.
 - Record failure in telemetry.
-- Do not append JSON error or pretend response completed successfully.
-
-Cannot change committed HTTP status or replace partial body with Problem response.
 
 ---
 
@@ -621,7 +595,7 @@ Use standard Gateway Problem response:
 - Machine-readable `type`.
 - Standard `title`.
 - Client-safe `detail`.
-- `trace_id`.
+- `instance`, containing the request trace ID.
 
 Use a dedicated machine-readable Problem `type` for upstream HTTP failures. Other server-side failures use the standard internal-error Problem type; do not add a new type for every failure cause.
 
@@ -629,17 +603,19 @@ Use a dedicated machine-readable Problem `type` for upstream HTTP failures. Othe
 
 Upstream 4xx/5xx responses:
 
-- Preserve original HTTP status.
+- Return HTTP 503 and preserve original upstream status in `upstream_response`.
 - Return Gateway Problem, not raw upstream body.
 - Use dedicated upstream-HTTP-failure type.
-- Include structured original failure information.
+- Include original upstream status and body in `upstream_response`.
+- Buffer the upstream failure body before returning the Problem; include it in full, subject to the response-size limit.
 
 ```json
 {
-  "type": "<upstream-http-failure-type-tbd>",
-  "title": "Not Found",
+  "type": "upstream_http_failure",
+  "title": "Service Unavailable",
+  "status": 503,
   "detail": "Upstream service returned an HTTP failure.",
-  "trace_id": "<trace-id>",
+  "instance": "<trace-id>",
   "upstream_response": {
     "status": 404,
     "body": "Requested station was not found."
@@ -649,7 +625,7 @@ Upstream 4xx/5xx responses:
 
 `upstream_response` appears only when an upstream HTTP failure response exists.
 
-Assume upstream error bodies are text. No binary detection or special binary response is required. Do not parse upstream content as Gateway Problem or include request values/internal transport diagnostics.
+Assume upstream error bodies are text. No binary detection or special binary response is required. Do not parse upstream content as Gateway Problem or add request values/internal transport diagnostics to the Problem.
 
 Do not log parameter values. Use safe generic details for server-side Problems.
 
@@ -659,14 +635,13 @@ Do not log parameter values. Use safe generic details for server-side Problems.
 | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------: |
 | Invalid input, invalid selector or wrong distribution type                                     |                                                       400 |
 | Authentication, authorization and not-found outcomes                                           | Reuse existing Metadata Lifecycle mappings (401/403/404). |
-| Client JSON exceeds existing body cap                                                          |                                                       413 |
-| Upstream HTTP failure                                                                          |                                 Original upstream 4xx/5xx |
+| Upstream HTTP failure                                                                          |                                                       503 |
 | Total execution timeout                                                                        |                                                       504 |
 | Other server-side failures, including retrieval, destination-policy and response-size failures |                                                       500 |
 
 Existing visibility conventions take precedence over revealing inaccessible entities.
 
-Other server-side failures use a safe generic detail and trace ID. Do not introduce exhaustive cause-specific HTTP mappings initially. If a failure occurs after streaming starts, abort the stream instead of returning Problem.
+Other server-side failures use a safe generic detail and trace ID. Do not introduce exhaustive cause-specific HTTP mappings initially.
 
 ---
 
@@ -694,7 +669,6 @@ Keep the OpenAPI specification, generated transport types, implementation and do
 | Converter implementation              | Native access ships first; conversion contracts prepared for future integration.                                         |
 | Converter buffering implementation    | Full-input buffering is required; storage strategy and memory ceiling are decided with converter design.                 |
 | Detailed converter protocol           | Success metadata/status rules, plugin execution and operational limits finalized with converter.                         |
-| Prepared outbound-body limit          | Existing client cap retained; separate rendering/output cap not selected.                                                |
 | Stable cross-version identities       | Existing metadata-instance IDs retained; stale IDs fail.                                                                 |
 | Conversion-relation copying/remapping | No automatic cross-version carry-forward defined.                                                                        |
 | Successful response-header forwarding | No access-specific response-header forwarding initially; `Content-Type` and `Content-Disposition` are deferred.          |
@@ -702,30 +676,3 @@ Keep the OpenAPI specification, generated transport types, implementation and do
 | Conversion chaining                   | Unsupported; one native input → one converter only.                                                                      |
 
 No conversion-relation description field, generated available-format ID, public plugin selector or MIME mapping is required by this design.
-
----
-
-## 16. Verification requirements
-
-Implementation checks must cover:
-
-- Published-only lookup and explicit-version membership/visibility.
-- Stale, unknown, duplicate and backend-managed parameter IDs.
-- JSON types, unknown fields, nulls, empty arrays, defaults and constraints.
-- Scalar serialization, URL escaping, multi-value encoding and `explode` behavior.
-- RFC 3339 datetime conversion.
-- Required/optional request-body rendering, optional PATH/QUERY/HEADER template activation, incomplete input and raw text/template interpolation.
-- Encoding-format constraints on top-level PATH/QUERY/HEADER parameters; reject TEMPLATE controllers.
-- Native/default and conversion selection exclusivity.
-- Resource-version GET exposes `available_formats` only on web-service distributions; OpenAPI discriminates ORIGINAL/CONVERTED, initial response emits ORIGINAL only.
-- Web-service access and downloadable-file download routes.
-- Rejection of web-service access for files and download access for web services.
-- Parameter values are absent from logs and returned errors; redirects use standard HTTP-client credential behavior.
-- Public-destination checks, redirect limit and HTTPS downgrade rejection.
-- Timeout, cancellation, bounded streaming and byte-limit enforcement.
-- Upstream Problem wrapping, failure sampling and source-specific types.
-- No-content responses.
-- Failure before headers versus interrupted stream afterward.
-- Absence of public generic access, DRY mode and request export in the initial API.
-
-**Initial native-access requirements are defined. Deferred items remain explicit scope exclusions—not implied implementation work.**

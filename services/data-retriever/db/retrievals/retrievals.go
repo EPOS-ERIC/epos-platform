@@ -56,7 +56,7 @@ func (r *Repo) CreatePlaceholder(ctx context.Context, req domain.PreparedRetriev
 	if err := tx.Commit(ctx); err != nil {
 		return domain.RetrievalRecord{}, fmt.Errorf("commit retrieval transaction: %w", err)
 	}
-	return toRetrievalRecordFromUpsert(retrieval), nil
+	return toRetrievalRecordFromGet(retrievalsqlc.GetRetrievalByIDRow(retrieval)), nil
 }
 
 func (r *Repo) FinalizeRetrieval(ctx context.Context, id int64, payloadHash string, payloadSize int64) error {
@@ -187,43 +187,22 @@ func upsertRetrievalParams(req domain.PreparedRetrieval, head domain.ResponseHea
 	}, nil
 }
 
-func toRetrievalRecordFromUpsert(retrieval retrievalsqlc.UpsertRetrievalRow) domain.RetrievalRecord {
-	return domain.RetrievalRecord{
-		ID:              retrieval.ID,
-		ResourceID:      uuidValue(retrieval.ResourceID),
-		VersionID:       uuidValue(retrieval.VersionID),
-		Method:          retrieval.Method,
-		URLTemplate:     retrieval.UrlTemplate,
-		GeneratedURL:    retrieval.GeneratedUrl,
-		HTTPStatus:      int(retrieval.HttpStatus),
-		ContentType:     retrieval.ContentType,
-		IsBinary:        retrieval.IsBinary,
-		PayloadHash:     retrieval.PayloadHash,
-		PayloadSize:     retrieval.PayloadSizeBytes,
-		UsedAuth:        retrieval.UsedAuth,
-		FetchedAt:       retrieval.FetchedAt,
-		CreatedAt:       retrieval.CreatedAt,
-		RequestBodyText: stringValue(retrieval.RequestBodyText),
-	}
-}
-
 func toRetrievalRecordFromGet(retrieval retrievalsqlc.GetRetrievalByIDRow) domain.RetrievalRecord {
 	return domain.RetrievalRecord{
-		ID:              retrieval.ID,
-		ResourceID:      uuidValue(retrieval.ResourceID),
-		VersionID:       uuidValue(retrieval.VersionID),
-		Method:          retrieval.Method,
-		URLTemplate:     retrieval.UrlTemplate,
-		GeneratedURL:    retrieval.GeneratedUrl,
-		HTTPStatus:      int(retrieval.HttpStatus),
-		ContentType:     retrieval.ContentType,
-		IsBinary:        retrieval.IsBinary,
-		PayloadHash:     retrieval.PayloadHash,
-		PayloadSize:     retrieval.PayloadSizeBytes,
-		UsedAuth:        retrieval.UsedAuth,
-		FetchedAt:       retrieval.FetchedAt,
-		CreatedAt:       retrieval.CreatedAt,
-		RequestBodyText: stringValue(retrieval.RequestBodyText),
+		ID:           retrieval.ID,
+		ResourceID:   uuidValue(retrieval.ResourceID),
+		VersionID:    uuidValue(retrieval.VersionID),
+		Method:       retrieval.Method,
+		URLTemplate:  retrieval.UrlTemplate,
+		GeneratedURL: retrieval.GeneratedUrl,
+		HTTPStatus:   int(retrieval.HttpStatus),
+		ContentType:  retrieval.ContentType,
+		IsBinary:     retrieval.IsBinary,
+		PayloadHash:  retrieval.PayloadHash,
+		PayloadSize:  retrieval.PayloadSizeBytes,
+		UsedAuth:     retrieval.UsedAuth,
+		FetchedAt:    retrieval.FetchedAt,
+		CreatedAt:    retrieval.CreatedAt,
 	}
 }
 
@@ -238,13 +217,6 @@ func toDomainOutputParameters(parameters []retrievalsqlc.GetOutputParametersRow)
 func uuidValue(value *uuid.UUID) uuid.UUID {
 	if value == nil {
 		return uuid.Nil
-	}
-	return *value
-}
-
-func stringValue(value *string) string {
-	if value == nil {
-		return ""
 	}
 	return *value
 }

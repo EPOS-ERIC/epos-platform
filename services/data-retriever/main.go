@@ -49,7 +49,7 @@ func run(log *slog.Logger) error {
 	defer database.Close()
 
 	log.Info("starting data-retriever gRPC server", "addr", cfg.GRPCListenAddr, "header_timeout", cfg.HTTPTimeout.String())
-	if err := server.Run(ctx, cfg, log, database.Retrievals, upstream.NewClient(cfg.HTTPTimeout), uint64(cfg.SchemaMaxBytes)); err != nil {
+	if err := server.Run(ctx, cfg, log, database.Retrievals, upstream.NewClient(cfg.HTTPTimeout)); err != nil {
 		return fmt.Errorf("run data-retriever gRPC server: %w", err)
 	}
 	return nil

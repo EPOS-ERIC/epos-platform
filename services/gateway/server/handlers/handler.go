@@ -10,6 +10,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
@@ -23,20 +24,20 @@ import (
 // Metadata Lifecycle client; identity orchestration remains in identity.Service.
 type ogenHandler struct {
 	metadataLifecycle *clients.MetadataLifecycle
-	dataRetriever     *clients.DataRetriever
 	sharing           *sharingservice.Service
 	identity          *identity.Service
 	membership        *membership.Service
+	downloads         *distributionaccess.Service
 	log               *slog.Logger
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, dataRetriever *clients.DataRetriever, sharing *sharingservice.Service, log *slog.Logger) *ogenHandler {
+func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, sharing *sharingservice.Service, d *distributionaccess.Service, log *slog.Logger) *ogenHandler {
 	return &ogenHandler{
 		metadataLifecycle: metadataLifecycle,
-		dataRetriever:     dataRetriever,
 		sharing:           sharing,
 		identity:          i,
 		membership:        m,
+		downloads:         d,
 		log:               log,
 	}
 }

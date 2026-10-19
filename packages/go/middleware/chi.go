@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -74,17 +73,6 @@ func CORSAllowOrigin(allowOrigin string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-func ExposeHeaders(headers ...string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if len(headers) > 0 {
-				w.Header().Set("Access-Control-Expose-Headers", strings.Join(headers, ", "))
-			}
 			next.ServeHTTP(w, r)
 		})
 	}

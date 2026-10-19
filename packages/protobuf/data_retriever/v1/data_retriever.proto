@@ -81,9 +81,7 @@ message RetrieveStreamHeaders {
   RetrievalRecord record = 1;
   int32 upstream_status = 2;
   string content_type = 3;
-  string content_disposition = 4;
-  string redirect_url = 5 [(buf.validate.field).string.uri_ref = true];
-  string curl_command = 6 [(buf.validate.field).string.min_len = 1];
+  string curl_command = 4 [(buf.validate.field).string.min_len = 1];
 }
 
 message RetrieveStreamResponse {

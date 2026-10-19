@@ -1,6 +1,15 @@
 package config
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
+
+func TestDefaultRequestTimeout(t *testing.T) {
+	if got := Default().Server.RequestTimeout; got != 60*time.Second {
+		t.Fatalf("default request timeout = %s, want 60s", got)
+	}
+}
 
 func TestValidateMailgunRequiresAPIKeyEnv(t *testing.T) {
 	cfg := Default()

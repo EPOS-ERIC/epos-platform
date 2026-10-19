@@ -33,6 +33,16 @@ message GetResourceVersionResponse {
   ResourceVersion resource = 1;
 }
 
+message PrepareDistributionDownloadRequest {
+  string distribution_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message PrepareDistributionDownloadResponse {
+  string resource_id = 1 [(buf.validate.field).string.uuid = true];
+  string version_id = 2 [(buf.validate.field).string.uuid = true];
+  string url = 3 [(buf.validate.field).string.min_len = 1];
+}
+
 message ListResourceVersionsRequest {
   ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
   string resource_id = 2 [(buf.validate.field).string.uuid = true];
@@ -608,6 +618,9 @@ service ResourceService {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
   }
   rpc GetResourceVersion(GetResourceVersionRequest) returns (GetResourceVersionResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_OPTIONAL;
+  }
+  rpc PrepareDistributionDownload(PrepareDistributionDownloadRequest) returns (PrepareDistributionDownloadResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_OPTIONAL;
   }
   rpc ListResourceVersions(ListResourceVersionsRequest) returns (ListResourceVersionsResponse) {

@@ -101,7 +101,7 @@ func TestServiceStreamsAndFinalizesCompletePayload(t *testing.T) {
 	service := New(repo, &stubUpstreamClient{response: &UpstreamResponse{
 		Head: domain.ResponseHead{StatusCode: 200, ContentType: "application/json", ContentLength: int64(len(payload))},
 		Body: io.NopCloser(strings.NewReader(payload)),
-	}}, slog.Default(), 1024)
+	}}, slog.Default(), 1024, 1024)
 	sink := &recordingSink{}
 	input := domain.RetrievalInput{
 		ResourceID:  resourceID,
@@ -128,7 +128,7 @@ func TestServiceStreamsAndFinalizesCompletePayload(t *testing.T) {
 func TestServiceDryRunSkipsUpstreamAndPersistence(t *testing.T) {
 	client := &stubUpstreamClient{}
 	repo := &stubRepository{}
-	service := New(repo, client, slog.Default(), 1024)
+	service := New(repo, client, slog.Default(), 1024, 1024)
 	sink := &recordingSink{}
 	input := domain.RetrievalInput{
 		Mode:        domain.RetrieveModeDry,
@@ -146,13 +146,14 @@ func TestServiceDryRunSkipsUpstreamAndPersistence(t *testing.T) {
 	}
 }
 
-func TestServiceRedirectSkipsBodyReadAndFinalizesKnownSize(t *testing.T) {
+func TestServiceStreamsResponseWhenRedirectHasNoLocation(t *testing.T) {
+	const body = "not redirected"
 	client := &stubUpstreamClient{response: &UpstreamResponse{
-		Head: domain.ResponseHead{StatusCode: 302, Location: "https://example.test/next", ContentLength: 17},
-		Body: failingBody{},
+		Head: domain.ResponseHead{StatusCode: 302, ContentLength: int64(len(body))},
+		Body: io.NopCloser(strings.NewReader(body)),
 	}}
 	repo := &stubRepository{}
-	service := New(repo, client, slog.Default(), 1024)
+	service := New(repo, client, slog.Default(), 1024, 1024)
 	sink := &recordingSink{}
 	input := domain.RetrievalInput{
 		ResourceID:  uuid.New(),
@@ -164,8 +165,8 @@ func TestServiceRedirectSkipsBodyReadAndFinalizesKnownSize(t *testing.T) {
 	if err := service.Retrieve(t.Context(), input, sink); err != nil {
 		t.Fatalf("Retrieve() error = %v", err)
 	}
-	if len(sink.events) != 1 || sink.events[0] != "headers" || repo.hash != "" || repo.size != 17 {
-		t.Fatalf("redirect handling = events %v, finalized %q/%d", sink.events, repo.hash, repo.size)
+	if len(sink.events) != 2 || sink.head.StatusCode != 302 || string(sink.chunks[0]) != body || repo.size != int64(len(body)) {
+		t.Fatalf("response handling = events %v, status %d, body %q, size %d", sink.events, sink.head.StatusCode, sink.chunks, repo.size)
 	}
 }
 
@@ -175,7 +176,7 @@ func TestServiceReadFailureMarksRetrievalIncomplete(t *testing.T) {
 		Body: failingBody{},
 	}}
 	repo := &stubRepository{}
-	service := New(repo, client, slog.Default(), 1024)
+	service := New(repo, client, slog.Default(), 1024, 1024)
 	input := domain.RetrievalInput{
 		ResourceID:  uuid.New(),
 		VersionID:   uuid.New(),
@@ -184,8 +185,8 @@ func TestServiceReadFailureMarksRetrievalIncomplete(t *testing.T) {
 	}
 
 	err := service.Retrieve(t.Context(), input, &recordingSink{})
-	if !apperror.IsCode(err, apperror.CodeUpstreamUnavailable) {
-		t.Fatalf("Retrieve() error = %v, want upstream unavailable", err)
+	if !apperror.IsCode(err, apperror.CodeInternal) {
+		t.Fatalf("Retrieve() error = %v, want internal error", err)
 	}
 	if repo.hash != "" || repo.size != -1 {
 		t.Fatalf("incomplete retrieval finalized as %q/%d", repo.hash, repo.size)

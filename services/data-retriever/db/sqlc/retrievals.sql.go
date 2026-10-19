@@ -122,8 +122,7 @@ SELECT
     payload_size_bytes,
     used_auth,
     fetched_at,
-    created_at,
-    request_body_text
+    created_at
 FROM retrievals
 WHERE id = $1
 `
@@ -143,7 +142,6 @@ type GetRetrievalByIDRow struct {
 	UsedAuth         bool
 	FetchedAt        time.Time
 	CreatedAt        time.Time
-	RequestBodyText  *string
 }
 
 func (q *Queries) GetRetrievalByID(ctx context.Context, id int64) (GetRetrievalByIDRow, error) {
@@ -164,7 +162,6 @@ func (q *Queries) GetRetrievalByID(ctx context.Context, id int64) (GetRetrievalB
 		&i.UsedAuth,
 		&i.FetchedAt,
 		&i.CreatedAt,
-		&i.RequestBodyText,
 	)
 	return i, err
 }
@@ -256,8 +253,7 @@ RETURNING
     payload_size_bytes,
     used_auth,
     fetched_at,
-    created_at,
-    request_body_text
+    created_at
 `
 
 type UpsertRetrievalParams struct {
@@ -296,7 +292,6 @@ type UpsertRetrievalRow struct {
 	UsedAuth         bool
 	FetchedAt        time.Time
 	CreatedAt        time.Time
-	RequestBodyText  *string
 }
 
 func (q *Queries) UpsertRetrieval(ctx context.Context, arg UpsertRetrievalParams) (UpsertRetrievalRow, error) {
@@ -336,7 +331,6 @@ func (q *Queries) UpsertRetrieval(ctx context.Context, arg UpsertRetrievalParams
 		&i.UsedAuth,
 		&i.FetchedAt,
 		&i.CreatedAt,
-		&i.RequestBodyText,
 	)
 	return i, err
 }

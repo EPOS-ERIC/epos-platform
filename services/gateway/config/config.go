@@ -48,7 +48,7 @@ func Default() Config {
 	return Config{
 		Server: Server{
 			Listen:          ":5000",
-			RequestTimeout:  30 * time.Second,
+			RequestTimeout:  60 * time.Second,
 			CORSAllowOrigin: "",
 		},
 		Services: Services{

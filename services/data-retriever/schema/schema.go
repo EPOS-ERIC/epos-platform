@@ -24,7 +24,6 @@ const (
 
 var datetimeLayouts = []string{
 	time.RFC3339Nano,
-	time.RFC3339,
 	"2006-01-02T15:04:05",
 	"2006-01-02 15:04:05",
 	"2006-01-02",
@@ -33,7 +32,8 @@ var datetimeLayouts = []string{
 // Extract reports whether payload parsed as a supported format separately
 // from its parameters, so valid empty schemas can replace prior values.
 func Extract(contentType string, payload []byte) ([]domain.OutputParameter, bool) {
-	base := strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
+	base, _, _ := strings.Cut(contentType, ";")
+	base = strings.ToLower(strings.TrimSpace(base))
 	switch {
 	case base == "application/json" || strings.HasSuffix(base, "+json"):
 		return extractJSON(payload)
@@ -84,9 +84,7 @@ func walkJSON(value any, prefix string, depth int, output *collector) {
 				path = prefix + "." + key
 			}
 			field := typed[key]
-			if kind, ok := jsonKind(field); ok {
-				output.add(path, kind)
-			}
+			output.add(path, jsonKind(field))
 			if depth < maxDepth {
 				walkJSON(field, path, depth+1, output)
 			}
@@ -103,26 +101,26 @@ func walkJSON(value any, prefix string, depth int, output *collector) {
 	}
 }
 
-func jsonKind(value any) (string, bool) {
+func jsonKind(value any) string {
 	switch typed := value.(type) {
 	case nil:
-		return "", false
+		return ""
 	case bool:
-		return "BOOLEAN", true
+		return "BOOLEAN"
 	case string:
 		if isDatetime(typed) {
-			return "DATETIME", true
+			return "DATETIME"
 		}
-		return "STRING", true
+		return "STRING"
 	case float64:
 		if typed == math.Trunc(typed) && math.Abs(typed) < 9e15 {
-			return "INTEGER", true
+			return "INTEGER"
 		}
-		return "FLOAT", true
+		return "FLOAT"
 	case map[string]any, []any:
-		return "JSON", true
+		return "JSON"
 	default:
-		return "", false
+		return ""
 	}
 }
 

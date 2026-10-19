@@ -142,6 +142,19 @@ type Handler interface {
 	//
 	// GET /search
 	DiscoverResources(ctx context.Context, params DiscoverResourcesParams) ([]DiscoveryItem, error)
+	// DownloadDistribution implements downloadDistribution operation.
+	//
+	// Resolves a downloadable-file distribution and its owning dataset version by distribution ID.
+	// Published versions allow anonymous access; all other states require authenticated access under
+	// existing dataset permissions. No query parameters or request body are supported. Web-service
+	// distributions cannot be downloaded through this endpoint.
+	//
+	// Successful upstream status and body are streamed to the client. Upstream HTTP failures return a 503
+	// Gateway Problem with the original upstream status and body in `upstream_response`; its body is
+	// treated as text. The Problem `instance` contains the request trace ID.
+	//
+	// GET /distributions/{distributionId}/download
+	DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (*DownloadDistribution2XXStatusCodeWithHeaders, error)
 	// DraftFromArchive implements draftFromArchive operation.
 	//
 	// Create draft from archive.
@@ -379,19 +392,6 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/role-requests
 	RequestGroupRole(ctx context.Context, req *CreateRoleRequest, params RequestGroupRoleParams) (*RoleRequest, error)
-	// RetrieveResourceVersion implements retrieveResourceVersion operation.
-	//
-	// Executes a resource retrieval or generates an equivalent curl command in `DRY` mode. Dry responses
-	// never include supplied credentials; provide `BEARER_TOKEN` or `AUTHORIZATION` when running a
-	// generated command that needs authentication.
-	//
-	// In `EXECUTE` mode the gateway transparently streams the upstream status, Content-Type, and body,
-	// including large downloads. A 3xx response also relays `Location`. Upstream `Content-Disposition` is
-	// forwarded; when absent, a file name from the request URL is used when available. The persisted
-	// retrieval identifier is exposed in `X-Retrieval-Id`.
-	//
-	// POST /access
-	RetrieveResourceVersion(ctx context.Context, req *RetrieveResourceVersionRequest) (*RetrieveResourceVersionResponse, error)
 	// RevokeGlobalPermission implements revokeGlobalPermission operation.
 	//
 	// Revoke a global permission from a user. Requires global.permission.manage or global ADMIN.

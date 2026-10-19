@@ -29,7 +29,6 @@ type Config struct {
 	Logger                *slog.Logger
 	Options               []grpc.ServerOption
 	Interceptors          []grpc.UnaryServerInterceptor
-	StreamInterceptors    []grpc.StreamServerInterceptor
 	ValidationError       func(*grpc.UnaryServerInfo, error) error
 	StreamValidationError func(*grpc.StreamServerInfo, error) error
 	Register              func(*grpc.Server)
@@ -64,7 +63,6 @@ func Run(ctx context.Context, cfg Config) error {
 		validateUnaryRPC(validator, cfg.ValidationError),
 	)
 	streamInterceptors := []grpc.StreamServerInterceptor{recoverStreamRPC(log)}
-	streamInterceptors = append(streamInterceptors, cfg.StreamInterceptors...)
 	streamInterceptors = append(streamInterceptors,
 		logAndNormalizeStreamRPC(log),
 		validateStreamRPC(validator, cfg.StreamValidationError),

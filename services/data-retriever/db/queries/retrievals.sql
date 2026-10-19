@@ -83,8 +83,7 @@ RETURNING
     payload_size_bytes,
     used_auth,
     fetched_at,
-    created_at,
-    request_body_text;
+    created_at;
 
 -- name: FinalizeRetrieval :exec
 UPDATE retrievals
@@ -108,8 +107,7 @@ SELECT
     payload_size_bytes,
     used_auth,
     fetched_at,
-    created_at,
-    request_body_text
+    created_at
 FROM retrievals
 WHERE id = sqlc.arg(id);
 

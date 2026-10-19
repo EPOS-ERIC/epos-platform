@@ -54,6 +54,7 @@ var operationRolesBearerAuth = map[string][]string{
 	DeleteOrganizationOperation:                []string{},
 	DiscardResourceDraftVersionOperation:       []string{},
 	DiscoverResourcesOperation:                 []string{},
+	DownloadDistributionOperation:              []string{},
 	DraftFromArchiveOperation:                  []string{},
 	DraftFromPublicationOperation:              []string{},
 	GetConfigurationOperation:                  []string{},

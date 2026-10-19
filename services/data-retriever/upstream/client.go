@@ -4,15 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"mime"
 	"net/http"
-	"net/url"
-	"path"
 	"strings"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/retrieval"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type Client struct {
@@ -21,13 +19,11 @@ type Client struct {
 
 func NewClient(headerTimeout time.Duration) *Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
 	transport.ResponseHeaderTimeout = headerTimeout
 	return &Client{
 		httpClient: &http.Client{
-			Transport: transport,
-			CheckRedirect: func(*http.Request, []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
+			Transport: otelhttp.NewTransport(transport),
 		},
 	}
 }
@@ -54,58 +50,19 @@ func (c *Client) ExecuteStream(ctx context.Context, req domain.PreparedRetrieval
 	}
 
 	contentType := response.Header.Get("Content-Type")
-	disposition := strings.TrimSpace(response.Header.Get("Content-Disposition"))
-	if disposition == "" {
-		disposition = syntheticDisposition(req.GeneratedURL)
-	}
 	return &retrieval.UpstreamResponse{
 		Head: domain.ResponseHead{
-			StatusCode:         response.StatusCode,
-			ContentType:        contentType,
-			ContentLength:      response.ContentLength,
-			Location:           response.Header.Get("Location"),
-			ContentDisposition: disposition,
-			IsBinary:           isBinaryPayload(contentType),
+			StatusCode:    response.StatusCode,
+			ContentType:   contentType,
+			ContentLength: response.ContentLength,
+			IsBinary:      isBinaryPayload(contentType),
 		},
 		Body: response.Body,
 	}, nil
 }
 
-func syntheticDisposition(generatedURL string) string {
-	name := urlFileName(generatedURL)
-	if name == "" {
-		return ""
-	}
-	return mime.FormatMediaType("inline", map[string]string{"filename": name})
-}
-
-func urlFileName(rawURL string) string {
-	parsed, err := url.Parse(rawURL)
-	if err != nil || parsed.Path == "" {
-		return ""
-	}
-	base := path.Base(strings.TrimSuffix(parsed.Path, "/"))
-	if base == "" || base == "." || base == "/" {
-		return ""
-	}
-	name, err := url.PathUnescape(base)
-	if err != nil {
-		return ""
-	}
-	name = strings.TrimSpace(name)
-	if name == "" || name == "." || name == ".." || strings.ContainsAny(name, `/\`) {
-		return ""
-	}
-	if !strings.Contains(strings.TrimSuffix(name, "."), ".") {
-		return ""
-	}
-	return name
-}
-
 func isBinaryPayload(contentType string) bool {
-	base := strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
-	if strings.HasPrefix(base, "text/") || base == "application/json" || base == "application/xml" || base == "application/x-www-form-urlencoded" || strings.HasSuffix(base, "+json") || strings.HasSuffix(base, "+xml") {
-		return false
-	}
-	return true
+	base, _, _ := strings.Cut(contentType, ";")
+	base = strings.ToLower(strings.TrimSpace(base))
+	return !strings.HasPrefix(base, "text/") && base != "application/json" && base != "application/xml" && base != "application/x-www-form-urlencoded" && !strings.HasSuffix(base, "+json") && !strings.HasSuffix(base, "+xml")
 }

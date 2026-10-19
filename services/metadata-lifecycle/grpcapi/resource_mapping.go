@@ -24,6 +24,14 @@ func toProtoDatasetVersion(value domain.DatasetVersion) *metadatalifecyclev1.Res
 	}
 }
 
+func toProtoDistributionDownload(value domain.DistributionDownload) *metadatalifecyclev1.PrepareDistributionDownloadResponse {
+	return &metadatalifecyclev1.PrepareDistributionDownloadResponse{
+		ResourceId: value.ResourceID.String(),
+		VersionId:  value.VersionID.String(),
+		Url:        value.URL,
+	}
+}
+
 func toProtoSoftwareApplicationVersion(value domain.SoftwareApplicationVersion) *metadatalifecyclev1.ResourceVersion {
 	return &metadatalifecyclev1.ResourceVersion{
 		ResourceId:    value.SoftwareApplicationID.String(),
