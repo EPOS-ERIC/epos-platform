@@ -5,7 +5,7 @@ import { LocalStorageService } from './local-storage.service';
 
 const LIVE_AUTH_ISSUER = 'https://aaai.epos-eu.org/oauth2';
 const LIVE_AUTHORIZATION_ENDPOINT = 'https://aaai.epos-eu.org/oauth2-as/oauth2-authz';
-const LOCAL_AUTH_ISSUER = 'http://localhost:8110/oauth2';
+const LOCAL_AUTH_ISSUER = 'http://localhost:35000/oauth2';
 const LOCAL_AUTHORIZATION_ENDPOINT = `${LOCAL_AUTH_ISSUER}/authorize`;
 const LOCAL_OAUTH_BASE_PATH = '/testpath/';
 const AUTH_ISSUER_KEY = 'epos-backoffice-auth-issuer';

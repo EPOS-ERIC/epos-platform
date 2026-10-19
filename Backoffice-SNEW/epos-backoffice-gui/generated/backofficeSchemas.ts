@@ -68,7 +68,8 @@ export type GlobalPermission =
   | "global.resource.reject"
   | "global.resource.publish"
   | "global.resource.unpublish"
-  | "global.category.manage";
+  | "global.category.manage"
+  | "global.configuration.manage";
 
 /**
  * Group-scoped permission key.
@@ -810,6 +811,10 @@ export type DateTimeScalarParameterDraft = {
 };
 
 export type StringScalarParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
   kind: "STRING";
   /**
    * @format int32
@@ -826,6 +831,10 @@ export type StringScalarParameter = {
 };
 
 export type BooleanScalarParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
   kind: "BOOLEAN";
   /**
    * @format int32
@@ -840,6 +849,10 @@ export type BooleanScalarParameter = {
 };
 
 export type IntegerScalarParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
   kind: "INTEGER";
   /**
    * @format int32
@@ -866,6 +879,10 @@ export type IntegerScalarParameter = {
 };
 
 export type FloatScalarParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
   kind: "FLOAT";
   /**
    * @format int32
@@ -892,6 +909,10 @@ export type FloatScalarParameter = {
 };
 
 export type DateTimeScalarParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
   kind: "DATETIME";
   /**
    * @format int32
@@ -1881,6 +1902,107 @@ export type CreateMembershipRequest = {
    * @uniqueItems true
    */
   roles: ("EDITOR" | "REVIEWER")[];
+};
+
+export type ConfigurationSummary = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @minLength 1
+   * @maxLength 500
+   */
+  title: string;
+  /**
+   * @maxLength 10000
+   */
+  description: string | null;
+  /**
+   * @maxItems 100
+   */
+  list_of_services: string[];
+  is_official: boolean;
+  is_public: boolean;
+  /**
+   * Included only for authenticated callers with `global.configuration.manage`; never included in the public official list.
+   *
+   * @minLength 1
+   */
+  owner_id?: string;
+  /**
+   * @format date-time
+   */
+  created_at: string;
+  /**
+   * @format date-time
+   */
+  updated_at: string;
+};
+
+export type OfficialConfigurationSummary = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @minLength 1
+   * @maxLength 500
+   */
+  title: string;
+  /**
+   * @maxLength 10000
+   */
+  description: string | null;
+  /**
+   * @maxItems 100
+   */
+  list_of_services: string[];
+  is_official: boolean;
+  is_public: boolean;
+  /**
+   * @format date-time
+   */
+  created_at: string;
+  /**
+   * @format date-time
+   */
+  updated_at: string;
+};
+
+export type ConfigurationDetail = ConfigurationSummary & {
+  /**
+   * Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+   */
+  configuration: void;
+};
+
+export type ConfigurationWriteRequest = {
+  /**
+   * Opaque workspace configuration document, stored as canonical JSON. Any JSON value is accepted.
+   */
+  configuration: void;
+  /**
+   * @minLength 1
+   * @maxLength 500
+   */
+  title: string;
+  /**
+   * @maxLength 10000
+   */
+  description?: string | null;
+  /**
+   * @maxItems 100
+   */
+  list_of_services?: string[];
+  /**
+   * Visibility flag. Creation defaults absent/null to private. Replacement defaults non-official configurations to private; official configurations stay public and reject false.
+   */
+  is_public?: boolean | null;
+};
+
+export type SetConfigurationOfficialStatusRequest = {
+  is_official: boolean;
 };
 
 export type Problem = {
