@@ -28,13 +28,13 @@
         }
         <!-- Rejected group subscription -->
         @case ('REJECTED') {
-          <button class="user-belong-status" [attr.data-status]="'rejected'">
+          <button class="user-belong-status" [attr.data-status]="'rejected'" title="Your membership request has been rejected.">
             {{ belongsToGroup.status.toUpperCase() }}
           </button>
         }
         <!-- Pending Group Subscription -->
         @case ('PENDING') {
-          <button class="user-belong-status" [attr.data-status]="'pending'" >
+          <button class="user-belong-status" [attr.data-status]="'pending'" title="Your membership request is awaiting approval.">
             {{ belongsToGroup.status.toUpperCase() }}
           </button>
         }
