@@ -41,20 +41,46 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 		if err != nil {
 			return gatewayapi.Distribution{}, err
 		}
+		formats, err := toAPIAvailableFormats(value.NativeFormats)
+		if err != nil {
+			return gatewayapi.Distribution{}, err
+		}
 		return gatewayapi.NewWebServiceDistributionDistribution(gatewayapi.WebServiceDistribution{
-			ID:          id,
-			Title:       value.Title,
-			Description: value.Description,
-			License:     toAPINilString(value.License),
-			Type:        gatewayapi.WebServiceDistributionType(value.Type),
-			Issued:      toAPINilTime(value.Issued),
-			Modified:    toAPINilTime(value.Modified),
-			ByteSize:    toAPINilInt64(value.ByteSize),
-			WebService:  webService,
+			ID:               id,
+			Title:            value.Title,
+			Description:      value.Description,
+			License:          toAPINilString(value.License),
+			Type:             gatewayapi.WebServiceDistributionType(value.Type),
+			Issued:           toAPINilTime(value.Issued),
+			Modified:         toAPINilTime(value.Modified),
+			ByteSize:         toAPINilInt64(value.ByteSize),
+			WebService:       webService,
+			AvailableFormats: formats,
 		}), nil
 	default:
 		return gatewayapi.Distribution{}, fmt.Errorf("unsupported upstream distribution type")
 	}
+}
+
+func toAPIAvailableFormats(values []*metadatalifecyclev1.NativeFormat) ([]gatewayapi.AvailableFormat, error) {
+	if len(values) == 0 {
+		return nil, fmt.Errorf("upstream web-service native formats are missing")
+	}
+
+	result := make([]gatewayapi.AvailableFormat, 0, len(values))
+	for _, value := range values {
+		if value == nil {
+			return nil, fmt.Errorf("upstream native format is nil")
+		}
+		result = append(result, gatewayapi.NewOriginalFormatAvailableFormat(gatewayapi.OriginalFormat{
+			Kind:         gatewayapi.OriginalFormatKindORIGINAL,
+			OutputFormat: value.OutputFormat,
+			Label:        value.Label,
+		}))
+	}
+
+	// TODO: combine native capabilities with configured CONVERTED entries when conversion support exists.
+	return result, nil
 }
 
 func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.WebService, error) {

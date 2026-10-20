@@ -216,6 +216,9 @@ CREATE TABLE parameters (
     template_parameter_id uuid REFERENCES parameters(id) ON DELETE CASCADE,
 
     schema_kind           parameter_schema_kind NOT NULL,
+
+	-- TODO: add a dedicated "role" column with an enum: FORMAT, START_DATE, END_DATE, MIN_LON, MAX_LON, MIN_LAT, MAX_LAT that identifies the role of this parameter. Keep property field for other semantic metadata (unused basically)
+	-- TODO: add validation for parameters with role to make sure they are valid for that role (eg. FORMAT should be string, read_only, ...)
     property              nonblank_text_opt,
     location              web_service_parameter_location,
     explode               boolean NOT NULL DEFAULT false,

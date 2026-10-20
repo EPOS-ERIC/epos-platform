@@ -217,6 +217,12 @@ message Distribution {
     DownloadableFile downloadable_file = 9;
   }
   string id = 10 [(buf.validate.field).string.uuid = true];
+  repeated NativeFormat native_formats = 11;
+}
+
+message NativeFormat {
+  string output_format = 1 [(buf.validate.field).string.min_len = 1];
+  string label = 2 [(buf.validate.field).string.min_len = 1];
 }
 
 enum WebServiceMethod {

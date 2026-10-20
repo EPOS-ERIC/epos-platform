@@ -9,6 +9,23 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
+func (s AvailableFormat) Validate() error {
+	switch s.Type {
+	case OriginalFormatAvailableFormat:
+		if err := s.OriginalFormat.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case ConvertedFormatAvailableFormat:
+		if err := s.ConvertedFormat.Validate(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.Errorf("invalid type %q", s.Type)
+	}
+}
+
 func (s *BlockUserRequest) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -916,6 +933,38 @@ func (s *ContactPoint) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
+}
+
+func (s *ConvertedFormat) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Kind.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "kind",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s ConvertedFormatKind) Validate() error {
+	switch s {
+	case "CONVERTED":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
 }
 
 func (s *CreateCategoryRequest) Validate() error {
@@ -4887,6 +4936,38 @@ func (s *OrganizationAddress) Validate() error {
 	return nil
 }
 
+func (s *OriginalFormat) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Kind.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "kind",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s OriginalFormatKind) Validate() error {
+	switch s {
+	case "ORIGINAL":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s Parameter) Validate() error {
 	switch s.Type {
 	case StringParameterParameter:
@@ -6980,6 +7061,17 @@ func (s *StringParameterDraft) Validate() error {
 		})
 	}
 	if err := func() error {
+		if s.Enum == nil {
+			return nil // optional
+		}
+		if err := (validate.Array{
+			MinLength:    1,
+			MinLengthSet: true,
+			MaxLength:    0,
+			MaxLengthSet: false,
+		}).ValidateLength(len(s.Enum)); err != nil {
+			return errors.Wrap(err, "array")
+		}
 		var failures []validate.FieldError
 		for i, elem := range s.Enum {
 			if err := func() error {
@@ -8047,6 +8139,34 @@ func (s *WebServiceDistribution) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "web_service",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.AvailableFormats == nil {
+			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.AvailableFormats {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "available_formats",
 			Error: err,
 		})
 	}

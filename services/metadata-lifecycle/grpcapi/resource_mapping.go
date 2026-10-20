@@ -6,6 +6,17 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func toProtoNativeFormats(values []domain.NativeFormat) []*metadatalifecyclev1.NativeFormat {
+	result := make([]*metadatalifecyclev1.NativeFormat, 0, len(values))
+	for _, value := range values {
+		result = append(result, &metadatalifecyclev1.NativeFormat{
+			OutputFormat: value.OutputFormat,
+			Label:        value.Label,
+		})
+	}
+	return result
+}
+
 func toProtoDatasetVersion(value domain.DatasetVersion) *metadatalifecyclev1.ResourceVersion {
 	return &metadatalifecyclev1.ResourceVersion{
 		ResourceId:    value.DatasetID.String(),

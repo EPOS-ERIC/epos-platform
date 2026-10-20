@@ -27,7 +27,7 @@ func TestNewWebServiceInputNormalizesAndOrdersParameters(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewWebServiceInput() error = %v", err)
 	}
-	if input.Name != "service" || input.TemplateURL != "https://example.test/items/{item-id}" || input.Method != HTTPMethodPost || input.Type != WebServiceTypeGeoJSON || input.Format != "application/json; charset=UTF-8" {
+	if input.Name != "service" || input.TemplateURL != "https://example.test/items/{item-id}" || input.Method != HTTPMethodPost || input.Type != WebServiceTypeGeoJSON || input.Format != "Application/JSON ; Charset=UTF-8" {
 		t.Fatalf("normalized web service = %+v", input)
 	}
 	if got := input.VisibleOn; !slices.Equal(got, []WebServiceVisibleOn{WebServiceVisibleOnMap, WebServiceVisibleOnGraph}) {

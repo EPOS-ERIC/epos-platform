@@ -2665,7 +2665,7 @@ components:
         multiple_values: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
+        enum: { type: array, minItems: 1, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanParameterDraft:
@@ -3548,7 +3548,7 @@ components:
     WebServiceDistribution:
       type: object
       additionalProperties: false
-      required: [id, title, description, type, web_service]
+      required: [id, title, description, type, web_service, available_formats]
       properties:
         id: { type: string, format: uuid }
         title: { type: string }
@@ -3562,6 +3562,49 @@ components:
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         web_service: { $ref: "#/components/schemas/WebService" }
+        available_formats:
+          type: array
+          description: Computed formats for this distribution in the selected resource version. Currently returns ORIGINAL entries only.
+          items: { $ref: "#/components/schemas/AvailableFormat" }
+
+    AvailableFormat:
+      oneOf:
+        - $ref: "#/components/schemas/OriginalFormat"
+        - $ref: "#/components/schemas/ConvertedFormat"
+      discriminator:
+        propertyName: kind
+        mapping:
+          ORIGINAL: "#/components/schemas/OriginalFormat"
+          CONVERTED: "#/components/schemas/ConvertedFormat"
+
+    OriginalFormat:
+      type: object
+      additionalProperties: false
+      required: [kind, output_format, label]
+      properties:
+        kind: { type: string, enum: [ORIGINAL] }
+        output_format: { type: string }
+        label: { type: string }
+
+    ConvertedFormat:
+      type: object
+      additionalProperties: false
+      required: [kind, conversion_id, input_format, output_format, plugin]
+      properties:
+        kind: { type: string, enum: [CONVERTED] }
+        conversion_id: { type: string, format: uuid }
+        input_format: { type: string }
+        output_format: { type: string }
+        plugin: { $ref: "#/components/schemas/ConversionPlugin" }
+
+    ConversionPlugin:
+      type: object
+      additionalProperties: false
+      required: [id, name, description]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
 
     DownloadableFileDistribution:
       type: object

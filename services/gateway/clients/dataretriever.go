@@ -45,12 +45,12 @@ func (c *DataRetriever) RetrieveDownload(ctx context.Context, target domain.Down
 	streamCtx, cancel := context.WithCancel(ctx)
 
 	stream, err := c.retrieval.RetrieveStream(streamCtx, &dataretrieverv1.RetrieveStreamRequest{
-		Method:          dataretrieverv1.HTTPMethod_HTTP_METHOD_GET,
-		UrlTemplate:     target.URL,
-		ResourceId:      target.ResourceID.String(),
-		VersionId:       target.VersionID.String(),
-		Mode:            dataretrieverv1.RetrieveMode_RETRIEVE_MODE_EXECUTE,
-		// Skip database persistance for downloadable files
+		Method:      dataretrieverv1.HTTPMethod_HTTP_METHOD_GET,
+		UrlTemplate: target.URL,
+		ResourceId:  target.ResourceID.String(),
+		VersionId:   target.VersionID.String(),
+		Mode:        dataretrieverv1.RetrieveMode_RETRIEVE_MODE_EXECUTE,
+		// Skip database persistence for downloadable files
 		SkipPersistence: true,
 	})
 	if err != nil {

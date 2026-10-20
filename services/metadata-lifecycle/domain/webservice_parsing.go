@@ -41,10 +41,6 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	if value.Format == "" {
 		return WebServiceInput{}, invalidField("format", "Format must not be blank.", nil)
 	}
-	value.Format, err = normalizeMediaType(value.Format)
-	if err != nil {
-		return WebServiceInput{}, invalidField("format", "Format must be a valid media type.", err)
-	}
 	if !value.Method.Valid() {
 		return WebServiceInput{}, invalidField("method", "Method is not supported.", nil)
 	}
@@ -78,7 +74,14 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	if err != nil {
 		return WebServiceInput{}, err
 	}
+
+	err = validateFormatParameter(parameters)
+	if err != nil {
+		return WebServiceInput{}, err
+	}
+
 	value.Parameters = parameters
+
 	if value.Body != nil {
 		body, err := NewRequestBodyInput(*value.Body)
 		if err != nil {

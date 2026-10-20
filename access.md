@@ -263,7 +263,7 @@ Only exact property value is recognized:
 schema:encodingFormat
 ```
 
-### Controller constraints
+### Format parameter constraints
 
 A web service may contain **at most one** format-control parameter across:
 
@@ -284,18 +284,18 @@ Format-control parameter must:
 | Fixed format       | Default present; no enum.                              |
 | Selectable formats | Non-empty enum; default present and belonging to enum. |
 
-Multiple controllers, a TEMPLATE controller, other types, multi-value controllers, unrestricted definitions and invalid defaults are metadata validation errors.
+Multiple format parameters, a TEMPLATE format parameter, other types, multi-value format parameters, unrestricted definitions and invalid defaults are metadata validation errors.
 
 ### Native format derivation
 
-When controller exists:
+When a format parameter exists:
 
 - Fixed definition produces one native option.
 - Enum definition produces declared native options.
 - Default identifies native default selection.
 - `web_service.format` is not added as another option.
 
-When no controller exists:
+When no format parameter exists:
 
 - `web_service.format` is sole native/default option.
 - Explicit matching `output_format` is accepted without changing outbound request.
@@ -340,13 +340,13 @@ Native and converted outputs remain separate choices even when output format str
 
 ## 7. Available-format discovery
 
-Add computed `available_formats` to the web-service metadata shape returned by:
+Add computed `available_formats` to the distributions metadata shape returned by:
 
 ```http
 GET /resources/{resourceType}/{id}/versions/{versionId}
 ```
 
-Require the field on each web-service distribution's `web_service` object, including when only one native format is available. Compute it from the exact resource version returned by this endpoint. Do not add it to list, search or other detail endpoints.
+Require the field on each distribution object, including when only one native format is available. Compute it from the exact resource version returned by this endpoint. Do not add it to list, search or other detail endpoints.
 
 Do not include `available_formats` for downloadable-file distributions. They retain their existing `format` metadata and never have conversions.
 
@@ -365,15 +365,13 @@ Initially, Gateway returns only native capabilities obtained from Metadata Lifec
 {
   "kind": "ORIGINAL",
   "output_format": "geojson",
-  "label": "GeoJSON",
-  "is_default": true
+  "label": "GeoJSON"
 }
 ```
 
 - Enum label reused when available.
 - Otherwise raw format value is display label.
-- Fixed/default-only and controller-free choices use raw value.
-- Exactly one ORIGINAL option, the native default, has `is_default=true`; all other ORIGINAL options have `is_default=false`.
+- Fixed/default-only choices and choices without a format parameter use raw value.
 
 ### CONVERTED entry
 
@@ -400,8 +398,8 @@ No separate available-format database IDs or opaque selection keys are needed:
 
 OpenAPI shape requirements:
 
-- `available_formats` is a required, non-null array on the web-service object.
-- ORIGINAL: require `kind`, `output_format`, `label` and `is_default`; `kind` is `ORIGINAL`; formats/label are strings and `is_default` is boolean.
+- `available_formats` is a required, non-null array on the web-service distribution object, alongside `web_service`, not inside it.
+- ORIGINAL: require `kind`, `output_format` and `label`; `kind` is `ORIGINAL`; formats/label are strings.
 - CONVERTED: require `kind`, `conversion_id`, `input_format`, `output_format` and `plugin`; `kind` is `CONVERTED`; IDs are UUID strings and format values are strings.
 - `plugin` requires UUID string `id` and string `name`/`description`.
 - Disallow additional properties in both entries and the plugin object.

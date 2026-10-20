@@ -815,6 +815,7 @@ func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribu
 	}
 	if value.WebService != nil {
 		result.Delivery = &metadatalifecyclev1.Distribution_WebService{WebService: webServiceOutput(*value.WebService)}
+		result.NativeFormats = toProtoNativeFormats(value.NativeFormats)
 	}
 	return result
 }

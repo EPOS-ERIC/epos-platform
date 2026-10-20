@@ -23,6 +23,72 @@ type AssignGlobalRoleNoContent struct{}
 // AssignGroupRoleNoContent is response for AssignGroupRole operation.
 type AssignGroupRoleNoContent struct{}
 
+// Ref: #/components/schemas/AvailableFormat
+// AvailableFormat represents sum type.
+type AvailableFormat struct {
+	// Type selects the active sum variant, switch on this field.
+	Type            AvailableFormatType
+	OriginalFormat  OriginalFormat
+	ConvertedFormat ConvertedFormat
+}
+
+// AvailableFormatType is oneOf type of AvailableFormat.
+type AvailableFormatType string
+
+// Possible values for AvailableFormatType.
+const (
+	OriginalFormatAvailableFormat  AvailableFormatType = "ORIGINAL"
+	ConvertedFormatAvailableFormat AvailableFormatType = "CONVERTED"
+)
+
+// IsOriginalFormat reports whether AvailableFormat is OriginalFormat.
+func (s AvailableFormat) IsOriginalFormat() bool { return s.Type == OriginalFormatAvailableFormat }
+
+// IsConvertedFormat reports whether AvailableFormat is ConvertedFormat.
+func (s AvailableFormat) IsConvertedFormat() bool { return s.Type == ConvertedFormatAvailableFormat }
+
+// SetOriginalFormat sets AvailableFormat to OriginalFormat.
+func (s *AvailableFormat) SetOriginalFormat(v OriginalFormat) {
+	s.Type = OriginalFormatAvailableFormat
+	s.OriginalFormat = v
+}
+
+// GetOriginalFormat returns OriginalFormat and true boolean if AvailableFormat is OriginalFormat.
+func (s AvailableFormat) GetOriginalFormat() (v OriginalFormat, ok bool) {
+	if !s.IsOriginalFormat() {
+		return v, false
+	}
+	return s.OriginalFormat, true
+}
+
+// NewOriginalFormatAvailableFormat returns new AvailableFormat from OriginalFormat.
+func NewOriginalFormatAvailableFormat(v OriginalFormat) AvailableFormat {
+	var s AvailableFormat
+	s.SetOriginalFormat(v)
+	return s
+}
+
+// SetConvertedFormat sets AvailableFormat to ConvertedFormat.
+func (s *AvailableFormat) SetConvertedFormat(v ConvertedFormat) {
+	s.Type = ConvertedFormatAvailableFormat
+	s.ConvertedFormat = v
+}
+
+// GetConvertedFormat returns ConvertedFormat and true boolean if AvailableFormat is ConvertedFormat.
+func (s AvailableFormat) GetConvertedFormat() (v ConvertedFormat, ok bool) {
+	if !s.IsConvertedFormat() {
+		return v, false
+	}
+	return s.ConvertedFormat, true
+}
+
+// NewConvertedFormatAvailableFormat returns new AvailableFormat from ConvertedFormat.
+func NewConvertedFormatAvailableFormat(v ConvertedFormat) AvailableFormat {
+	var s AvailableFormat
+	s.SetConvertedFormat(v)
+	return s
+}
+
 type BearerAuth struct {
 	Token string
 	Roles []string
@@ -1140,6 +1206,136 @@ func (s *ContactPoint) SetEmail(val string) {
 // SetRole sets the value of Role.
 func (s *ContactPoint) SetRole(val string) {
 	s.Role = val
+}
+
+// Ref: #/components/schemas/ConversionPlugin
+type ConversionPlugin struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+}
+
+// GetID returns the value of ID.
+func (s *ConversionPlugin) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *ConversionPlugin) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *ConversionPlugin) GetDescription() string {
+	return s.Description
+}
+
+// SetID sets the value of ID.
+func (s *ConversionPlugin) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *ConversionPlugin) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *ConversionPlugin) SetDescription(val string) {
+	s.Description = val
+}
+
+// Ref: #/components/schemas/ConvertedFormat
+type ConvertedFormat struct {
+	Kind         ConvertedFormatKind `json:"kind"`
+	ConversionID uuid.UUID           `json:"conversion_id"`
+	InputFormat  string              `json:"input_format"`
+	OutputFormat string              `json:"output_format"`
+	Plugin       ConversionPlugin    `json:"plugin"`
+}
+
+// GetKind returns the value of Kind.
+func (s *ConvertedFormat) GetKind() ConvertedFormatKind {
+	return s.Kind
+}
+
+// GetConversionID returns the value of ConversionID.
+func (s *ConvertedFormat) GetConversionID() uuid.UUID {
+	return s.ConversionID
+}
+
+// GetInputFormat returns the value of InputFormat.
+func (s *ConvertedFormat) GetInputFormat() string {
+	return s.InputFormat
+}
+
+// GetOutputFormat returns the value of OutputFormat.
+func (s *ConvertedFormat) GetOutputFormat() string {
+	return s.OutputFormat
+}
+
+// GetPlugin returns the value of Plugin.
+func (s *ConvertedFormat) GetPlugin() ConversionPlugin {
+	return s.Plugin
+}
+
+// SetKind sets the value of Kind.
+func (s *ConvertedFormat) SetKind(val ConvertedFormatKind) {
+	s.Kind = val
+}
+
+// SetConversionID sets the value of ConversionID.
+func (s *ConvertedFormat) SetConversionID(val uuid.UUID) {
+	s.ConversionID = val
+}
+
+// SetInputFormat sets the value of InputFormat.
+func (s *ConvertedFormat) SetInputFormat(val string) {
+	s.InputFormat = val
+}
+
+// SetOutputFormat sets the value of OutputFormat.
+func (s *ConvertedFormat) SetOutputFormat(val string) {
+	s.OutputFormat = val
+}
+
+// SetPlugin sets the value of Plugin.
+func (s *ConvertedFormat) SetPlugin(val ConversionPlugin) {
+	s.Plugin = val
+}
+
+type ConvertedFormatKind string
+
+const (
+	ConvertedFormatKindCONVERTED ConvertedFormatKind = "CONVERTED"
+)
+
+// AllValues returns all ConvertedFormatKind values.
+func (ConvertedFormatKind) AllValues() []ConvertedFormatKind {
+	return []ConvertedFormatKind{
+		ConvertedFormatKindCONVERTED,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ConvertedFormatKind) MarshalText() ([]byte, error) {
+	switch s {
+	case ConvertedFormatKindCONVERTED:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ConvertedFormatKind) UnmarshalText(data []byte) error {
+	switch ConvertedFormatKind(data) {
+	case ConvertedFormatKindCONVERTED:
+		*s = ConvertedFormatKindCONVERTED
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Ref: #/components/schemas/CreateCategoryRequest
@@ -8692,6 +8888,77 @@ func (s *OrganizationAddress) SetCountry(val NilString) {
 	s.Country = val
 }
 
+// Ref: #/components/schemas/OriginalFormat
+type OriginalFormat struct {
+	Kind         OriginalFormatKind `json:"kind"`
+	OutputFormat string             `json:"output_format"`
+	Label        string             `json:"label"`
+}
+
+// GetKind returns the value of Kind.
+func (s *OriginalFormat) GetKind() OriginalFormatKind {
+	return s.Kind
+}
+
+// GetOutputFormat returns the value of OutputFormat.
+func (s *OriginalFormat) GetOutputFormat() string {
+	return s.OutputFormat
+}
+
+// GetLabel returns the value of Label.
+func (s *OriginalFormat) GetLabel() string {
+	return s.Label
+}
+
+// SetKind sets the value of Kind.
+func (s *OriginalFormat) SetKind(val OriginalFormatKind) {
+	s.Kind = val
+}
+
+// SetOutputFormat sets the value of OutputFormat.
+func (s *OriginalFormat) SetOutputFormat(val string) {
+	s.OutputFormat = val
+}
+
+// SetLabel sets the value of Label.
+func (s *OriginalFormat) SetLabel(val string) {
+	s.Label = val
+}
+
+type OriginalFormatKind string
+
+const (
+	OriginalFormatKindORIGINAL OriginalFormatKind = "ORIGINAL"
+)
+
+// AllValues returns all OriginalFormatKind values.
+func (OriginalFormatKind) AllValues() []OriginalFormatKind {
+	return []OriginalFormatKind{
+		OriginalFormatKindORIGINAL,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s OriginalFormatKind) MarshalText() ([]byte, error) {
+	switch s {
+	case OriginalFormatKindORIGINAL:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *OriginalFormatKind) UnmarshalText(data []byte) error {
+	switch OriginalFormatKind(data) {
+	case OriginalFormatKindORIGINAL:
+		*s = OriginalFormatKindORIGINAL
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/Parameter
 // Parameter represents sum type.
 type Parameter struct {
@@ -13740,6 +14007,9 @@ type WebServiceDistribution struct {
 	Modified    OptNilDateTime             `json:"modified"`
 	ByteSize    OptNilInt64                `json:"byte_size"`
 	WebService  WebService                 `json:"web_service"`
+	// Computed formats for this distribution in the selected resource version. Currently returns ORIGINAL
+	// entries only.
+	AvailableFormats []AvailableFormat `json:"available_formats"`
 }
 
 // GetID returns the value of ID.
@@ -13787,6 +14057,11 @@ func (s *WebServiceDistribution) GetWebService() WebService {
 	return s.WebService
 }
 
+// GetAvailableFormats returns the value of AvailableFormats.
+func (s *WebServiceDistribution) GetAvailableFormats() []AvailableFormat {
+	return s.AvailableFormats
+}
+
 // SetID sets the value of ID.
 func (s *WebServiceDistribution) SetID(val uuid.UUID) {
 	s.ID = val
@@ -13830,6 +14105,11 @@ func (s *WebServiceDistribution) SetByteSize(val OptNilInt64) {
 // SetWebService sets the value of WebService.
 func (s *WebServiceDistribution) SetWebService(val WebService) {
 	s.WebService = val
+}
+
+// SetAvailableFormats sets the value of AvailableFormats.
+func (s *WebServiceDistribution) SetAvailableFormats(val []AvailableFormat) {
+	s.AvailableFormats = val
 }
 
 // Ref: #/components/schemas/WebServiceDistributionDraft

@@ -102,6 +102,17 @@ func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, vers
 		return domain.DatasetVersion{}, operationError("get dataset version", err)
 	}
 
+	// compute the available formats for each distribution
+	for i := range dataset.Metadata.Distributions {
+		distribution := &dataset.Metadata.Distributions[i]
+
+		if distribution.WebService == nil {
+			continue
+		}
+
+		distribution.NativeFormats = distribution.WebService.NativeFormats()
+	}
+
 	return dataset, nil
 }
 

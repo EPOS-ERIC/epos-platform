@@ -84,6 +84,7 @@ type Distribution struct {
 	ByteSize         *int64
 	WebService       *WebService
 	DownloadableFile *DownloadableFile
+	NativeFormats    []NativeFormat
 }
 
 // WebServiceInput contains caller-controlled web-service fields.

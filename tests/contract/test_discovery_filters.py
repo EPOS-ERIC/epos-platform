@@ -256,6 +256,19 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         service_id = distributions_by_title[f"discovery-service-{suffix}"]["id"]
         optional_service_id = distributions_by_title[f"discovery-service-optional-{suffix}"]["id"]
         file_id = distributions_by_title[f"discovery-file-{suffix}"]["id"]
+        for title, format_value in (
+            (f"discovery-service-{suffix}", "application/json"),
+            (f"discovery-service-optional-{suffix}", "application/geo+json"),
+        ):
+            distribution = distributions_by_title[title]
+            self.assertEqual(
+                distribution["available_formats"],
+                [{"kind": "ORIGINAL", "output_format": format_value, "label": format_value}],
+            )
+            self.assertNotIn("available_formats", distribution["web_service"])
+        self.assertNotIn(
+            "available_formats", distributions_by_title[f"discovery-file-{suffix}"]
+        )
 
         draft_name = f"discovery-draft-{suffix}"
         draft_id, draft_version_id = self.create_resource(
