@@ -164,7 +164,8 @@ export class ResourceActionsService {
         .saveResourceVersionDraft(context.resourceId, context.versionId, context.targetStatus, context.payload)
         .pipe(switchMap(() => this.apiService.getResourceVersion(context.resourceType, context.resourceId, context.versionId) as Observable<ResourceVersion>)),
       'Failed to save resource version.',
-      'Failed to save resource version'
+      'Failed to save resource version',
+      'Resource changes saved successfully.'
     );
   }
 
@@ -225,6 +226,7 @@ export class ResourceActionsService {
         catchError((error) => {
           console.error(logMessage, error);
           this.errorState.set(errorMessage);
+          this.toastService.error(errorMessage);
           return of(null);
         }),
         finalize(() => this.pendingActionState.set(null))

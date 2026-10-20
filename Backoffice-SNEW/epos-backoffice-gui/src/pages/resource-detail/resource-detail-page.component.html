@@ -9,10 +9,6 @@
 } @else if (store.datasetVersion(); as version) {
   @if (store.datasetForm(); as form) {
     <div class="detail-page">
-      @if (store.actionError()) {
-        <div class="detail-action-error detail-overview-error">{{ store.actionError() }}</div>
-      }
-
       <section class="detail-overview detail-card app-card">
         <div class="detail-context-copy">
           <span class="detail-label">Title</span>
@@ -116,10 +112,6 @@
 } @else if (store.softwareApplicationForm(); as form) {
   @if (store.resourceVersion(); as version) {
     <div class="detail-page">
-      @if (store.actionError()) {
-        <div class="detail-action-error detail-overview-error">{{ store.actionError() }}</div>
-      }
-
       <section class="detail-overview detail-card app-card">
         <div class="detail-context-copy">
           <span class="detail-label">Title</span>
@@ -197,10 +189,6 @@
 } @else if (store.softwareSourceCodeForm(); as form) {
   @if (store.resourceVersion(); as version) {
     <div class="detail-page">
-      @if (store.actionError()) {
-        <div class="detail-action-error detail-overview-error">{{ store.actionError() }}</div>
-      }
-
       <section class="detail-overview detail-card app-card">
         <div class="detail-context-copy">
           <span class="detail-label">Title</span>

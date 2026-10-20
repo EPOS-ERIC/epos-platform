@@ -1203,10 +1203,6 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
   max-width: 340px;
 }
 
-.detail-overview-error {
-  margin-bottom: 12px;
-}
-
 .detail-header-actions {
   display: flex;
   align-items: center;

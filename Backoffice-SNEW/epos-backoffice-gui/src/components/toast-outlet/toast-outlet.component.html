@@ -6,7 +6,25 @@
     role="status"
     aria-live="polite"
   >
-    <span class="toast-message">{{ toast.message }}</span>
+    <span class="toast-icon" aria-hidden="true">
+      @switch (toast.tone) {
+        @case ('success') {
+          <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg>
+        }
+        @case ('error') {
+          <svg viewBox="0 0 24 24"><path d="M6 6 18 18M18 6 6 18"></path></svg>
+        }
+        @default {
+          <svg viewBox="0 0 24 24"><path d="M12 11v6M12 7h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>
+        }
+      }
+    </span>
+    <span class="toast-content">
+      <strong class="toast-title">
+        {{ toast.tone === 'success' ? 'Success' : toast.tone === 'error' ? 'Something went wrong' : 'Notice' }}
+      </strong>
+      <span class="toast-message">{{ toast.message }}</span>
+    </span>
     <button type="button" class="toast-close" (click)="toastService.dismiss()" aria-label="Dismiss notification">×</button>
   </div>
 }

@@ -1,10 +1,10 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Subject, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
-import type { WriteResult } from '../../generated/backofficeSchemas';
-import type { ResourceVersionContext } from '../models/resource-actions';
+import type { ResourceVersion, WriteResult } from '../../generated/backofficeSchemas';
+import type { ResourceVersionContext, SaveResourceContext } from '../models/resource-actions';
 import { ApiService } from './api.service';
 import { GroupsStore } from '../stores/groups.store';
 import { ResourceActionsService } from './resource-actions.service';
@@ -18,9 +18,12 @@ describe('ResourceActionsService', () => {
     groupId: 'group-id'
   };
   const apiService = {
+    getResourceVersion: vi.fn(),
+    saveResourceVersionDraft: vi.fn(),
     submitResourceVersion: vi.fn()
   };
   const toastService = {
+    error: vi.fn(),
     success: vi.fn()
   };
   let service: ResourceActionsService;
@@ -74,6 +77,49 @@ describe('ResourceActionsService', () => {
 
     expect(service.error()).toBe('Failed to submit resource version.');
     expect(service.saving()).toBe(false);
+    expect(toastService.error).toHaveBeenCalledWith('Failed to submit resource version.');
     expect(toastService.success).not.toHaveBeenCalled();
+  });
+
+  it('shows a success notification after saving resource changes', () => {
+    const saveContext: SaveResourceContext = {
+      resourceType: 'software-application',
+      resourceId: context.resourceId,
+      versionId: context.versionId,
+      targetStatus: 'draft',
+      payload: {
+        resource_type: 'software-application',
+        revision: 1,
+        metadata: { name: 'Application', description: 'Description' }
+      }
+    };
+    const savedVersion: ResourceVersion = {
+      resource_id: context.resourceId,
+      version_id: context.versionId,
+      revision: 1,
+      status: 'DRAFT',
+      created_by: 'user-id',
+      group_id: context.groupId,
+      group_name: 'Group',
+      created_at: '2026-10-20T08:00:00Z',
+      updated_at: '2026-10-20T08:00:00Z',
+      metadata: {
+        resource_type: 'software-application',
+        id: context.resourceId,
+        name: 'Application',
+        description: 'Description',
+        keywords: [],
+        creators: [],
+        identifiers: [],
+        contact_points: [],
+        categories: []
+      }
+    };
+    apiService.saveResourceVersionDraft.mockReturnValue(of(undefined));
+    apiService.getResourceVersion.mockReturnValue(of(savedVersion));
+
+    service.save(saveContext).subscribe();
+
+    expect(toastService.success).toHaveBeenCalledWith('Resource changes saved successfully.');
   });
 });
