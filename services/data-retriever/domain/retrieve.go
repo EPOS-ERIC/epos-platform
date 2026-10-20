@@ -39,16 +39,17 @@ type RequestBody struct {
 }
 
 type RetrievalInput struct {
-	Mode        RetrieveMode
-	ResourceID  uuid.UUID
-	VersionID   uuid.UUID
-	Method      string
-	URLTemplate string
-	PathParams  map[string]string
-	QueryParams map[string]string
-	Headers     map[string]string
-	BearerToken string
-	Body        *RequestBody
+	Mode            RetrieveMode
+	ResourceID      uuid.UUID
+	VersionID       uuid.UUID
+	Method          string
+	URLTemplate     string
+	PathParams      map[string]string
+	QueryParams     map[string]string
+	Headers         map[string]string
+	BearerToken     string
+	Body            *RequestBody
+	SkipPersistence bool
 }
 
 type OutputParameter struct {

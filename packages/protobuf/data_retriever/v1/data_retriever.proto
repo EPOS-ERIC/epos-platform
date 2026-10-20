@@ -57,6 +57,7 @@ message RetrieveStreamRequest {
   string resource_id = 8 [(buf.validate.field).string.uuid = true];
   string version_id = 9 [(buf.validate.field).string.uuid = true];
   RetrieveMode mode = 10 [(buf.validate.field).enum.defined_only = true];
+  bool skip_persistence = 11;
 }
 
 message RetrievalRecord {

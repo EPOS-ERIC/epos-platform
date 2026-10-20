@@ -13,11 +13,13 @@ func (s streamSink) SendDry(command string) error {
 	return s.stream.Send(headersEvent(&dataretrieverv1.RetrieveStreamHeaders{CurlCommand: command}))
 }
 
-func (s streamSink) SendHeaders(record domain.RetrievalRecord, head domain.ResponseHead) error {
+func (s streamSink) SendHeaders(record *domain.RetrievalRecord, head domain.ResponseHead) error {
 	headers := &dataretrieverv1.RetrieveStreamHeaders{
-		Record:         toProtoRetrievalRecord(record),
 		UpstreamStatus: int32(head.StatusCode),
 		ContentType:    head.ContentType,
+	}
+	if record != nil {
+		headers.Record = toProtoRetrievalRecord(*record)
 	}
 	return s.stream.Send(headersEvent(headers))
 }

@@ -68,7 +68,7 @@ func (failingBody) Close() error             { return nil }
 
 type recordingSink struct {
 	events  []string
-	record  domain.RetrievalRecord
+	record  *domain.RetrievalRecord
 	head    domain.ResponseHead
 	command string
 	chunks  [][]byte
@@ -80,7 +80,7 @@ func (s *recordingSink) SendDry(command string) error {
 	return nil
 }
 
-func (s *recordingSink) SendHeaders(record domain.RetrievalRecord, head domain.ResponseHead) error {
+func (s *recordingSink) SendHeaders(record *domain.RetrievalRecord, head domain.ResponseHead) error {
 	s.events = append(s.events, "headers")
 	s.record = record
 	s.head = head

@@ -334,19 +334,20 @@ func (*RequestBody_Raw) isRequestBody_Content() {}
 func (*RequestBody_JsonPayload) isRequestBody_Content() {}
 
 type RetrieveStreamRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Method        HTTPMethod             `protobuf:"varint,1,opt,name=method,proto3,enum=data_retriever.v1.HTTPMethod" json:"method,omitempty"`
-	UrlTemplate   string                 `protobuf:"bytes,2,opt,name=url_template,json=urlTemplate,proto3" json:"url_template,omitempty"`
-	PathParams    map[string]string      `protobuf:"bytes,3,rep,name=path_params,json=pathParams,proto3" json:"path_params,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	QueryParams   map[string]string      `protobuf:"bytes,4,rep,name=query_params,json=queryParams,proto3" json:"query_params,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Headers       map[string]string      `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	BearerToken   string                 `protobuf:"bytes,6,opt,name=bearer_token,json=bearerToken,proto3" json:"bearer_token,omitempty"`
-	Body          *RequestBody           `protobuf:"bytes,7,opt,name=body,proto3" json:"body,omitempty"`
-	ResourceId    string                 `protobuf:"bytes,8,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
-	VersionId     string                 `protobuf:"bytes,9,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
-	Mode          RetrieveMode           `protobuf:"varint,10,opt,name=mode,proto3,enum=data_retriever.v1.RetrieveMode" json:"mode,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Method          HTTPMethod             `protobuf:"varint,1,opt,name=method,proto3,enum=data_retriever.v1.HTTPMethod" json:"method,omitempty"`
+	UrlTemplate     string                 `protobuf:"bytes,2,opt,name=url_template,json=urlTemplate,proto3" json:"url_template,omitempty"`
+	PathParams      map[string]string      `protobuf:"bytes,3,rep,name=path_params,json=pathParams,proto3" json:"path_params,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	QueryParams     map[string]string      `protobuf:"bytes,4,rep,name=query_params,json=queryParams,proto3" json:"query_params,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Headers         map[string]string      `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	BearerToken     string                 `protobuf:"bytes,6,opt,name=bearer_token,json=bearerToken,proto3" json:"bearer_token,omitempty"`
+	Body            *RequestBody           `protobuf:"bytes,7,opt,name=body,proto3" json:"body,omitempty"`
+	ResourceId      string                 `protobuf:"bytes,8,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	VersionId       string                 `protobuf:"bytes,9,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	Mode            RetrieveMode           `protobuf:"varint,10,opt,name=mode,proto3,enum=data_retriever.v1.RetrieveMode" json:"mode,omitempty"`
+	SkipPersistence bool                   `protobuf:"varint,11,opt,name=skip_persistence,json=skipPersistence,proto3" json:"skip_persistence,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *RetrieveStreamRequest) Reset() {
@@ -447,6 +448,13 @@ func (x *RetrieveStreamRequest) GetMode() RetrieveMode {
 		return x.Mode
 	}
 	return RetrieveMode_RETRIEVE_MODE_UNSPECIFIED
+}
+
+func (x *RetrieveStreamRequest) GetSkipPersistence() bool {
+	if x != nil {
+		return x.SkipPersistence
+	}
+	return false
 }
 
 type RetrievalRecord struct {
@@ -610,7 +618,7 @@ type RetrieveStreamHeaders struct {
 	Record         *RetrievalRecord       `protobuf:"bytes,1,opt,name=record,proto3" json:"record,omitempty"`
 	UpstreamStatus int32                  `protobuf:"varint,2,opt,name=upstream_status,json=upstreamStatus,proto3" json:"upstream_status,omitempty"`
 	ContentType    string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
-	CurlCommand    string                 `protobuf:"bytes,6,opt,name=curl_command,json=curlCommand,proto3" json:"curl_command,omitempty"`
+	CurlCommand    string                 `protobuf:"bytes,4,opt,name=curl_command,json=curlCommand,proto3" json:"curl_command,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -855,7 +863,7 @@ const file_data_retriever_v1_data_retriever_proto_rawDesc = "" +
 	"\fcontent_type\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vcontentType\x12\x1b\n" +
 	"\x03raw\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x03raw\x12,\n" +
 	"\fjson_payload\x18\x03 \x01(\fB\a\xbaH\x04z\x02\x10\x01H\x00R\vjsonPayloadB\x10\n" +
-	"\acontent\x12\x05\xbaH\x02\b\x01\"\xb3\x06\n" +
+	"\acontent\x12\x05\xbaH\x02\b\x01\"\xde\x06\n" +
 	"\x15RetrieveStreamRequest\x12?\n" +
 	"\x06method\x18\x01 \x01(\x0e2\x1d.data_retriever.v1.HTTPMethodB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06method\x12*\n" +
 	"\furl_template\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vurlTemplate\x12Y\n" +
@@ -870,7 +878,8 @@ const file_data_retriever_v1_data_retriever_proto_rawDesc = "" +
 	"\n" +
 	"version_id\x18\t \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\x12=\n" +
 	"\x04mode\x18\n" +
-	" \x01(\x0e2\x1f.data_retriever.v1.RetrieveModeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04mode\x1a=\n" +
+	" \x01(\x0e2\x1f.data_retriever.v1.RetrieveModeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04mode\x12)\n" +
+	"\x10skip_persistence\x18\v \x01(\bR\x0fskipPersistence\x1a=\n" +
 	"\x0fPathParamsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
@@ -906,7 +915,7 @@ const file_data_retriever_v1_data_retriever_proto_rawDesc = "" +
 	"\x06record\x18\x01 \x01(\v2\".data_retriever.v1.RetrievalRecordR\x06record\x12'\n" +
 	"\x0fupstream_status\x18\x02 \x01(\x05R\x0eupstreamStatus\x12!\n" +
 	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\x12*\n" +
-	"\fcurl_command\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vcurlCommand\"\x8f\x01\n" +
+	"\fcurl_command\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vcurlCommand\"\x8f\x01\n" +
 	"\x16RetrieveStreamResponse\x12D\n" +
 	"\aheaders\x18\x01 \x01(\v2(.data_retriever.v1.RetrieveStreamHeadersH\x00R\aheaders\x12\x1f\n" +
 	"\x05chunk\x18\x02 \x01(\fB\a\xbaH\x04z\x02\x10\x01H\x00R\x05chunkB\x0e\n" +

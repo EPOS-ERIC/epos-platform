@@ -31,15 +31,16 @@ func toDomainRetrievalInput(request *dataretrieverv1.RetrieveStreamRequest) (dom
 		return domain.RetrievalInput{}, apperror.Field("version_id", "Value is invalid.", err)
 	}
 	retrievalInput := domain.RetrievalInput{
-		Mode:        mode,
-		ResourceID:  resourceID,
-		VersionID:   versionID,
-		Method:      method,
-		URLTemplate: request.GetUrlTemplate(),
-		PathParams:  request.GetPathParams(),
-		QueryParams: request.GetQueryParams(),
-		Headers:     request.GetHeaders(),
-		BearerToken: request.GetBearerToken(),
+		Mode:            mode,
+		ResourceID:      resourceID,
+		VersionID:       versionID,
+		Method:          method,
+		URLTemplate:     request.GetUrlTemplate(),
+		PathParams:      request.GetPathParams(),
+		QueryParams:     request.GetQueryParams(),
+		Headers:         request.GetHeaders(),
+		BearerToken:     request.GetBearerToken(),
+		SkipPersistence: request.GetSkipPersistence(),
 	}
 	if body := request.GetBody(); body != nil {
 		retrievalInput.Body = &domain.RequestBody{ContentType: body.GetContentType()}

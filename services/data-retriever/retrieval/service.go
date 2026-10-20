@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"log/slog"
 	"net"
@@ -33,7 +34,7 @@ type UpstreamClient interface {
 
 type StreamSink interface {
 	SendDry(string) error
-	SendHeaders(domain.RetrievalRecord, domain.ResponseHead) error
+	SendHeaders(*domain.RetrievalRecord, domain.ResponseHead) error
 	SendChunk([]byte) error
 }
 
@@ -85,18 +86,26 @@ func (s *Service) Retrieve(ctx context.Context, input domain.RetrievalInput, sin
 		return apperror.Default(apperror.CodeInternal)
 	}
 
-	record, err := s.repo.CreatePlaceholder(ctx, prepared, response.Head)
-	if err != nil {
-		return apperror.Wrap(apperror.CodeInternal, "", err)
+	var record domain.RetrievalRecord
+	var headerRecord *domain.RetrievalRecord
+	if !prepared.SkipPersistence {
+		record, err = s.repo.CreatePlaceholder(ctx, prepared, response.Head)
+		if err != nil {
+			return apperror.Wrap(apperror.CodeInternal, "", err)
+		}
+		headerRecord = &record
 	}
-	if err := sink.SendHeaders(record, response.Head); err != nil {
+	if err := sink.SendHeaders(headerRecord, response.Head); err != nil {
 		return s.streamError(ctx, record.ID)
 	}
 
-	hash := sha256.New()
+	var payloadHash hash.Hash
+	if !prepared.SkipPersistence {
+		payloadHash = sha256.New()
+	}
 	var size int64
 	var sample []byte
-	overBudget := s.schemaBudget == 0
+	overBudget := prepared.SkipPersistence || s.schemaBudget == 0
 	buffer := make([]byte, streamChunkSize)
 	for {
 		count, readErr := response.Body.Read(buffer)
@@ -105,7 +114,9 @@ func (s *Service) Retrieve(ctx context.Context, input domain.RetrievalInput, sin
 				s.markIncomplete(ctx, record.ID)
 				return apperror.Default(apperror.CodeInternal)
 			}
-			_, _ = hash.Write(buffer[:count])
+			if payloadHash != nil {
+				_, _ = payloadHash.Write(buffer[:count])
+			}
 			size += int64(count)
 			if !overBudget {
 				if uint64(size) > s.schemaBudget {
@@ -126,7 +137,10 @@ func (s *Service) Retrieve(ctx context.Context, input domain.RetrievalInput, sin
 			return s.readError(ctx, record.ID, readErr)
 		}
 	}
-	if err := s.repo.FinalizeRetrieval(ctx, record.ID, hex.EncodeToString(hash.Sum(nil)), size); err != nil {
+	if payloadHash == nil {
+		return nil
+	}
+	if err := s.repo.FinalizeRetrieval(ctx, record.ID, hex.EncodeToString(payloadHash.Sum(nil)), size); err != nil {
 		return apperror.Wrap(apperror.CodeInternal, "", err)
 	}
 	s.discoverOutputSchema(ctx, prepared, response.Head.ContentType, sample)
@@ -154,6 +168,9 @@ func (s *Service) readError(ctx context.Context, id int64, cause error) error {
 }
 
 func (s *Service) markIncomplete(ctx context.Context, id int64) {
+	if id <= 0 {
+		return
+	}
 	finalizeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
 	if err := s.repo.FinalizeRetrieval(finalizeCtx, id, "", -1); err != nil {
