@@ -82,6 +82,12 @@ h2 {
   gap: 6px;
 }
 
+.row-action-button {
+  padding: 0.42rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
 .action-button,
 .ghost-button {
   border: 1px solid var(--line);
