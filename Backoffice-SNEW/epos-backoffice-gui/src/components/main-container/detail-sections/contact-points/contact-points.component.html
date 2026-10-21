@@ -1,10 +1,19 @@
-<section id="contact-points" class="detail-section-card app-card" [class.detail-section-card--neutral]="neutralAppearance">
-  <div class="detail-section-header">
-    <div>
-      <h2>Contact Points</h2>
-      <p class="subtitle app-muted">Search the catalog, filter by role, then add the contact points you need.</p>
+<section
+  [attr.id]="embedded ? null : 'contact-points'"
+  [attr.aria-label]="embedded ? 'Contact Points' : null"
+  class="detail-section-card"
+  [class.app-card]="!embedded"
+  [class.detail-section-card--embedded]="embedded"
+  [class.detail-section-card--neutral]="neutralAppearance"
+>
+  @if (!embedded) {
+    <div class="detail-section-header">
+      <div>
+        <h2>Contact Points</h2>
+        <p class="subtitle app-muted">Search the catalog, filter by role, then add the contact points you need.</p>
+      </div>
     </div>
-  </div>
+  }
 
   @if (loading()) {
     <div class="detail-empty">Loading contact points...</div>

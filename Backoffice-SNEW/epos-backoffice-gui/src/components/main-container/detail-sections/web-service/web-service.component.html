@@ -84,6 +84,7 @@
           [model]="model.provider"
           [single]="true"
           [disabled]="disabled"
+          [embedded]="true"
           [readonlyView]="comparisonMode"
           [neutralAppearance]="comparisonMode"
           (modelChange)="onProviderChange($any($event))"
@@ -101,6 +102,7 @@
           [model]="model.contactPoints"
           [editable]="!comparisonMode"
           [disabled]="disabled"
+          [embedded]="true"
           [readonlyView]="comparisonMode"
           [neutralAppearance]="comparisonMode"
           (modelChange)="onContactPointsChange($event)"
@@ -114,7 +116,7 @@
         <span class="webservice-summary-hint">Closed</span>
       </summary>
       <div class="webservice-subsection-body">
-        <app-spatial-coverage [model]="model.spatialCoverage" [disabled]="disabled" (modelChange)="onSpatialChange($event)" />
+        <app-spatial-coverage [model]="model.spatialCoverage" [disabled]="disabled" [embedded]="true" (modelChange)="onSpatialChange($event)" />
       </div>
     </details>
 
@@ -124,7 +126,7 @@
         <span class="webservice-summary-hint">Closed</span>
       </summary>
       <div class="webservice-subsection-body">
-        <app-temporal-coverage [model]="model.temporalCoverage" [disabled]="disabled" (modelChange)="onTemporalChange($event)"></app-temporal-coverage>
+        <app-temporal-coverage [model]="model.temporalCoverage" [disabled]="disabled" [embedded]="true" (modelChange)="onTemporalChange($event)"></app-temporal-coverage>
       </div>
     </details>
 

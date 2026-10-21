@@ -1,5 +1,10 @@
 @import '../detail-shared.css';
 
+.detail-section-card--embedded {
+  padding: 0;
+  scroll-margin-top: 0;
+}
+
 .contact-points-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);

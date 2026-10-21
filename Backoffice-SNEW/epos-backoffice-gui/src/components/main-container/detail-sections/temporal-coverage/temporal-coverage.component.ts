@@ -16,6 +16,7 @@ export class TemporalCoverageComponent {
   @Input() mode: 'calendar' | 'geological' = 'calendar';
   @Input() allowGeological = false;
   @Input() disabled = false;
+  @Input() embedded = false;
   @Input() warningKind: 'none' | 'warning' | 'error' = 'none';
   @Input() warningMessage = '';
   @Output() modelChange = new EventEmitter<DatasetTemporalForm>();

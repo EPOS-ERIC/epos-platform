@@ -44,6 +44,7 @@ export class ContactPointsComponent implements OnInit {
   });
 
   @Input() disabled = false;
+  @Input() embedded = false;
   @Input() editable = false;
   @Input() readonlyView = false;
   @Input() neutralAppearance = false;

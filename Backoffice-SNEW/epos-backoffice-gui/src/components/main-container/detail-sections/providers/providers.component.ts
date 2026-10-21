@@ -39,6 +39,7 @@ export class ProvidersComponent implements OnInit {
 
   @Input() single = false;
   @Input() disabled = false;
+  @Input() embedded = false;
   @Input() readonlyView = false;
   @Input() neutralAppearance = false;
   @Output() modelChange = new EventEmitter<DatasetProviderForm[] | DatasetProviderForm>();

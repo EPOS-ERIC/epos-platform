@@ -1,10 +1,18 @@
-<section id="temporal-coverage" class="detail-section-card app-card">
-  <div class="detail-section-header">
-    <div>
-      <h2>Temporal Coverage</h2>
-      <p class="subtitle app-muted">Calendar dates or geological ages.</p>
+<section
+  [attr.id]="embedded ? null : 'temporal-coverage'"
+  [attr.aria-label]="embedded ? 'Temporal Coverage' : null"
+  class="detail-section-card"
+  [class.app-card]="!embedded"
+  [class.detail-section-card--embedded]="embedded"
+>
+  @if (!embedded) {
+    <div class="detail-section-header">
+      <div>
+        <h2>Temporal Coverage</h2>
+        <p class="subtitle app-muted">Calendar dates or geological ages.</p>
+      </div>
     </div>
-  </div>
+  }
 
   @if (warningKind !== 'none') {
     <div class="temporal-warning" [class.temporal-warning--error]="warningKind === 'error'" [class.temporal-warning--warning]="warningKind === 'warning'">

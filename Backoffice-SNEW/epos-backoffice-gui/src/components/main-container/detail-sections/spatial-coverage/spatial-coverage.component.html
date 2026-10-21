@@ -1,10 +1,18 @@
-<section id="spatial-coverage" class="detail-section-card app-card">
-  <div class="detail-section-header">
-    <div>
-      <h2>Spatial Coverage</h2>
-      <p class="subtitle app-muted">WKT geometry in EPSG:4326 with map preview.</p>
+<section
+  [attr.id]="embedded ? null : 'spatial-coverage'"
+  [attr.aria-label]="embedded ? 'Spatial Coverage' : null"
+  class="detail-section-card"
+  [class.app-card]="!embedded"
+  [class.detail-section-card--embedded]="embedded"
+>
+  @if (!embedded) {
+    <div class="detail-section-header">
+      <div>
+        <h2>Spatial Coverage</h2>
+        <p class="subtitle app-muted">WKT geometry in EPSG:4326 with map preview.</p>
+      </div>
     </div>
-  </div>
+  }
 
   <fieldset class="detail-fieldset spatial-layout" [disabled]="disabled">
     <div class="spatial-map-panel">

@@ -1,14 +1,19 @@
 <section
-  [attr.id]="single ? null : 'providers'"
-  class="detail-section-card app-card"
+  [attr.id]="embedded || single ? null : 'providers'"
+  [attr.aria-label]="embedded ? (single ? 'Provider' : 'Providers') : null"
+  class="detail-section-card"
+  [class.app-card]="!embedded"
+  [class.detail-section-card--embedded]="embedded"
   [class.detail-section-card--neutral]="neutralAppearance"
 >
-  <div class="detail-section-header">
-    <div>
-      <h2>{{ single ? 'Provider' : 'Providers' }}</h2>
-      <p class="subtitle app-muted">Choose {{ single ? 'one provider' : 'the providers' }} from the available catalog.</p>
+  @if (!embedded) {
+    <div class="detail-section-header">
+      <div>
+        <h2>{{ single ? 'Provider' : 'Providers' }}</h2>
+        <p class="subtitle app-muted">Choose {{ single ? 'one provider' : 'the providers' }} from the available catalog.</p>
+      </div>
     </div>
-  </div>
+  }
 
   @if (readonlyView) {
     @if (selectedProviders().length) {

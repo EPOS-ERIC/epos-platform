@@ -14,6 +14,7 @@ import type { DatasetSpatialForm } from '../../../../models/dataset-detail-form'
 export class SpatialCoverageComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() model: DatasetSpatialForm = null;
   @Input() disabled = false;
+  @Input() embedded = false;
   @Output() modelChange = new EventEmitter<DatasetSpatialForm>();
 
   @ViewChild('spatialMapContainer') private spatialMapContainerRef?: ElementRef<HTMLDivElement>;

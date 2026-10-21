@@ -1,5 +1,10 @@
 @import '../detail-shared.css';
 
+.detail-section-card--embedded {
+  padding: 0;
+  scroll-margin-top: 0;
+}
+
 .spatial-layout {
   display: grid;
   grid-template-columns: minmax(320px, 1.2fr) minmax(280px, 0.8fr);
