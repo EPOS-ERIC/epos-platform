@@ -25,4 +25,27 @@ describe('ToastService', () => {
     vi.advanceTimersByTime(180);
     expect(service.state()).toBeNull();
   });
+
+  it('keeps persistent error details visible until they are dismissed', () => {
+    const service = TestBed.inject(ToastService);
+    const issues = [{
+      label: 'Spatial coverage',
+      message: 'Value must be valid WKT geometry.',
+      target: 'metadata.spatial_coverage'
+    }];
+
+    service.error('Failed to save resource version.', { duration: null, issues });
+    vi.advanceTimersByTime(10_000);
+
+    expect(service.state()).toEqual({
+      message: 'Failed to save resource version.',
+      tone: 'error',
+      visible: true,
+      issues
+    });
+
+    service.dismiss();
+    vi.advanceTimersByTime(180);
+    expect(service.state()).toBeNull();
+  });
 });

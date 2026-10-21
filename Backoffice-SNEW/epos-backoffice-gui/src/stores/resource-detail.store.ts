@@ -492,44 +492,59 @@ export class ResourceDetailStore {
 
     if (datasetVersion && datasetForm) {
       if (!datasetForm.description.trim()) {
-        this.resourceActions.setError('Dataset description is required.');
+        this.resourceActions.setValidationError('Dataset description is required.', 'General information');
         return null;
       }
 
       const geologicalTemporalError = geologicalTemporalValidationError(datasetForm);
       if (geologicalTemporalError) {
-        this.resourceActions.setError(geologicalTemporalError);
+        this.resourceActions.setValidationError(geologicalTemporalError, 'Temporal coverage');
         return null;
       }
 
       const distributionError = distributionValidationError(datasetForm);
       if (distributionError) {
-        this.resourceActions.setError(distributionError);
+        this.resourceActions.setValidationError(distributionError, 'Distributions');
         return null;
       }
 
       if (hasInvalidExplodeParameter(datasetForm)) {
-        this.resourceActions.setError('Explode requires a QUERY parameter with Multiple values enabled.');
+        this.resourceActions.setValidationError(
+          'Explode requires a QUERY parameter with Multiple values enabled.',
+          'Web service parameters'
+        );
         return null;
       }
 
       if (hasMultipleParameterWithoutAllowedValues(datasetForm)) {
-        this.resourceActions.setError('Every multiple-value web service parameter must define at least one allowed value.');
+        this.resourceActions.setValidationError(
+          'Every multiple-value web service parameter must define at least one allowed value.',
+          'Web service parameters'
+        );
         return null;
       }
 
       if (hasParameterDefaultOutsideAllowedValues(datasetForm)) {
-        this.resourceActions.setError('A web service parameter default value must be included in its allowed values.');
+        this.resourceActions.setValidationError(
+          'A web service parameter default value must be included in its allowed values.',
+          'Web service parameters'
+        );
         return null;
       }
 
       if (hasIncompleteWebServiceBody(datasetForm)) {
-        this.resourceActions.setError('Request body content type and template are both required.');
+        this.resourceActions.setValidationError(
+          'Request body content type and template are both required.',
+          'Web service request body'
+        );
         return null;
       }
 
       if (hasBodyOnUnsupportedMethod(datasetForm)) {
-        this.resourceActions.setError('Request bodies are supported only for POST and PUT web services.');
+        this.resourceActions.setValidationError(
+          'Request bodies are supported only for POST and PUT web services.',
+          'Web service request body'
+        );
         return null;
       }
 
@@ -546,7 +561,7 @@ export class ResourceDetailStore {
     const applicationForm = this.softwareApplicationForm();
     if (resourceVersion && applicationForm) {
       if (!isSoftwareDescriptionValid(applicationForm)) {
-        this.resourceActions.setError('Software description is required.');
+        this.resourceActions.setValidationError('Software description is required.', 'General information');
         return null;
       }
 
@@ -562,7 +577,7 @@ export class ResourceDetailStore {
     const sourceCodeForm = this.softwareSourceCodeForm();
     if (resourceVersion && sourceCodeForm) {
       if (!isSoftwareDescriptionValid(sourceCodeForm)) {
-        this.resourceActions.setError('Software description is required.');
+        this.resourceActions.setValidationError('Software description is required.', 'General information');
         return null;
       }
 

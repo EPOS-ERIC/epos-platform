@@ -84,6 +84,71 @@
   line-height: 1.4;
 }
 
+.toast-issues {
+  margin-top: 8px;
+  border: 1px solid color-mix(in srgb, var(--toast-accent) 24%, var(--line));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--toast-soft) 38%, var(--surface));
+  overflow: hidden;
+}
+
+.toast-issues summary {
+  position: relative;
+  padding: 9px 34px 9px 11px;
+  color: var(--text-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toast-issues summary::-webkit-details-marker {
+  display: none;
+}
+
+.toast-issues summary::after {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--toast-accent);
+  border-bottom: 2px solid var(--toast-accent);
+  content: '';
+  transform: translateY(-65%) rotate(45deg);
+  transition: transform 140ms ease;
+}
+
+.toast-issues[open] summary::after {
+  transform: translateY(-30%) rotate(225deg);
+}
+
+.toast-issue-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(240px, 38vh);
+  margin: 0;
+  padding: 0 11px 11px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.toast-issue {
+  display: grid;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--toast-accent) 18%, transparent);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.toast-issue strong {
+  color: var(--text-strong);
+  font-size: 0.76rem;
+}
+
 .toast-close {
   display: grid;
   place-items: center;

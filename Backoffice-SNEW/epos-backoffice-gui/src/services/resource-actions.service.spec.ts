@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
@@ -23,6 +24,7 @@ describe('ResourceActionsService', () => {
     submitResourceVersion: vi.fn()
   };
   const toastService = {
+    dismiss: vi.fn(),
     error: vi.fn(),
     success: vi.fn()
   };
@@ -121,5 +123,55 @@ describe('ResourceActionsService', () => {
     service.save(saveContext).subscribe();
 
     expect(toastService.success).toHaveBeenCalledWith('Resource changes saved successfully.');
+  });
+
+  it('keeps save validation errors visible and includes backend problem details', () => {
+    const saveContext: SaveResourceContext = {
+      resourceType: 'dataset',
+      resourceId: context.resourceId,
+      versionId: context.versionId,
+      targetStatus: 'draft',
+      payload: {
+        resource_type: 'dataset',
+        revision: 1,
+        metadata: { title: 'Dataset', description: 'Description' }
+      }
+    };
+    apiService.saveResourceVersionDraft.mockReturnValue(throwError(() => new HttpErrorResponse({
+      status: 400,
+      error: {
+        type: 'validation_failed',
+        title: 'Bad Request',
+        status: 400,
+        detail: 'Value must be valid WKT geometry.',
+        instance: 'trace-id',
+        target: 'metadata.spatial_coverage'
+      }
+    })));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    service.save(saveContext).subscribe();
+
+    expect(toastService.error).toHaveBeenCalledWith('Failed to save resource version.', {
+      duration: null,
+      issues: [{
+        label: 'Spatial coverage',
+        message: 'Value must be valid WKT geometry.',
+        target: 'metadata.spatial_coverage'
+      }]
+    });
+  });
+
+  it('shows frontend validation failures as persistent issues', () => {
+    service.setValidationError('Distribution 1: title is required.', 'Distributions');
+
+    expect(service.error()).toBe('Distribution 1: title is required.');
+    expect(toastService.error).toHaveBeenCalledWith('Resource could not be saved.', {
+      duration: null,
+      issues: [{
+        label: 'Distributions',
+        message: 'Distribution 1: title is required.'
+      }]
+    });
   });
 });

@@ -2,10 +2,22 @@ import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 
 export type ToastTone = 'success' | 'error' | 'info';
 
+export type ToastIssue = {
+  message: string;
+  label?: string;
+  target?: string;
+};
+
+export type ToastOptions = {
+  duration?: number | null;
+  issues?: readonly ToastIssue[];
+};
+
 export type ToastState = {
   message: string;
   tone: ToastTone;
   visible: boolean;
+  issues?: readonly ToastIssue[];
 };
 
 @Injectable({ providedIn: 'root' })
@@ -24,18 +36,28 @@ export class ToastService {
     this.show(message, 'success');
   }
 
-  error(message: string): void {
-    this.show(message, 'error');
+  error(message: string, options?: ToastOptions): void {
+    this.show(message, 'error', options);
   }
 
   info(message: string): void {
     this.show(message, 'info');
   }
 
-  show(message: string, tone: ToastTone = 'info', duration = 3500): void {
+  show(message: string, tone: ToastTone = 'info', options: ToastOptions = {}): void {
     this.clearTimeout();
-    this.toastState.set({ message, tone, visible: true });
-    this.timeout = setTimeout(() => this.dismiss(), duration);
+    const issues = options.issues?.filter((issue) => issue.message.trim());
+    this.toastState.set({
+      message,
+      tone,
+      visible: true,
+      ...(issues?.length ? { issues } : {})
+    });
+
+    const duration = options.duration === undefined ? 3500 : options.duration;
+    if (duration !== null) {
+      this.timeout = setTimeout(() => this.dismiss(), duration);
+    }
   }
 
   dismiss(): void {

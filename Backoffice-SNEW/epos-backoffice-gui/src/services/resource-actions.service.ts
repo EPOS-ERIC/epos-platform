@@ -1,8 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, defer, finalize, map, of, switchMap, tap } from 'rxjs';
 
 import type {
   GroupPermission,
+  Problem,
   RejectResourceRequest,
   ResourceVersion,
   VersioningStatus,
@@ -12,7 +14,12 @@ import type { ResourceActionItem, ResourceActionKey, ResourceVersionContext, Sav
 import { resourceCapabilities } from '../models/resource-capabilities';
 import { ApiService } from './api.service';
 import { GroupsStore } from '../stores/groups.store';
-import { ToastService } from './toast.service';
+import { ToastService, type ToastIssue } from './toast.service';
+
+type RunOptions = {
+  includeProblemDetail?: boolean;
+  persistentError?: boolean;
+};
 
 @Injectable({ providedIn: 'root' })
 export class ResourceActionsService {
@@ -38,6 +45,14 @@ export class ResourceActionsService {
 
   setError(message: string): void {
     this.errorState.set(message);
+  }
+
+  setValidationError(message: string, label: string): void {
+    this.errorState.set(message);
+    this.toastService.error('Resource could not be saved.', {
+      duration: null,
+      issues: [{ label, message }]
+    });
   }
 
   sidebarActions(status: VersioningStatus | null, permissions: readonly GroupPermission[]): ResourceActionItem[] {
@@ -158,6 +173,7 @@ export class ResourceActionsService {
   }
 
   save(context: SaveResourceContext): Observable<ResourceVersion | null> {
+    this.toastService.dismiss();
     return this.run(
       'save',
       () => this.apiService
@@ -165,7 +181,8 @@ export class ResourceActionsService {
         .pipe(switchMap(() => this.apiService.getResourceVersion(context.resourceType, context.resourceId, context.versionId) as Observable<ResourceVersion>)),
       'Failed to save resource version.',
       'Failed to save resource version',
-      'Resource changes saved successfully.'
+      'Resource changes saved successfully.',
+      { includeProblemDetail: true, persistentError: true }
     );
   }
 
@@ -208,7 +225,8 @@ export class ResourceActionsService {
     request: () => Observable<T>,
     errorMessage: string,
     logMessage: string,
-    successMessage?: string
+    successMessage?: string,
+    options: RunOptions = {}
   ): Observable<T | null> {
     return defer(() => {
       if (this.pendingActionState()) {
@@ -226,12 +244,65 @@ export class ResourceActionsService {
         catchError((error) => {
           console.error(logMessage, error);
           this.errorState.set(errorMessage);
-          this.toastService.error(errorMessage);
+          if (options.persistentError) {
+            const issue = options.includeProblemDetail ? this.problemIssue(error) : null;
+            this.toastService.error(errorMessage, {
+              duration: null,
+              ...(issue ? { issues: [issue] } : {})
+            });
+          } else {
+            this.toastService.error(errorMessage);
+          }
           return of(null);
         }),
         finalize(() => this.pendingActionState.set(null))
       );
     });
+  }
+
+  private problemIssue(error: unknown): ToastIssue | null {
+    const problem = this.problemFrom(error);
+    if (!problem?.detail?.trim()) {
+      return null;
+    }
+
+    return {
+      message: problem.detail.trim(),
+      ...(problem.target ? {
+        label: this.problemTargetLabel(problem.target),
+        target: problem.target
+      } : { label: 'Validation issue' })
+    };
+  }
+
+  private problemFrom(error: unknown): Problem | null {
+    const body: unknown = error instanceof HttpErrorResponse ? error.error : null;
+    if (!body || typeof body !== 'object') {
+      return null;
+    }
+
+    const candidate = body as Record<string, unknown>;
+    if (
+      typeof candidate['type'] !== 'string'
+      || typeof candidate['title'] !== 'string'
+      || typeof candidate['status'] !== 'number'
+    ) {
+      return null;
+    }
+
+    return {
+      type: candidate['type'],
+      title: candidate['title'],
+      status: candidate['status'],
+      ...(typeof candidate['detail'] === 'string' ? { detail: candidate['detail'] } : {}),
+      ...(typeof candidate['instance'] === 'string' ? { instance: candidate['instance'] } : {}),
+      ...(typeof candidate['target'] === 'string' ? { target: candidate['target'] } : {})
+    };
+  }
+
+  private problemTargetLabel(target: string): string {
+    const field = target.split('.').at(-1)?.replaceAll('_', ' ').trim();
+    return field ? `${field.charAt(0).toUpperCase()}${field.slice(1)}` : 'Validation issue';
   }
 
   private sectionPathForGroup(groupId: string, fallbackSectionPath: string): string {

@@ -60,6 +60,7 @@ describe('ResourceDetailStore', () => {
     deleting: signal(false),
     clearError: vi.fn(() => actionError.set('')),
     setError: vi.fn((message: string) => actionError.set(message)),
+    setValidationError: vi.fn((message: string) => actionError.set(message)),
     sidebarActions: vi.fn(() => []),
     save: vi.fn(),
     submit: vi.fn(),
@@ -165,7 +166,10 @@ describe('ResourceDetailStore', () => {
     }]);
 
     expect(store.buildSaveContext()).toBeNull();
-    expect(resourceActions.setError).toHaveBeenCalledWith('Distribution 1: title is required.');
+    expect(resourceActions.setValidationError).toHaveBeenCalledWith(
+      'Distribution 1: title is required.',
+      'Distributions'
+    );
   });
 
   it('cancels the first request when a second load starts', () => {

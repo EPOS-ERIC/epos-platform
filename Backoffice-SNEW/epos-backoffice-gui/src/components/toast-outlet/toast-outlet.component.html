@@ -19,12 +19,27 @@
         }
       }
     </span>
-    <span class="toast-content">
+    <div class="toast-content">
       <strong class="toast-title">
         {{ toast.tone === 'success' ? 'Success' : toast.tone === 'error' ? 'Something went wrong' : 'Notice' }}
       </strong>
       <span class="toast-message">{{ toast.message }}</span>
-    </span>
+      @if (toast.issues; as issues) {
+        <details class="toast-issues">
+          <summary>{{ issues.length }} {{ issues.length === 1 ? 'issue' : 'issues' }} to fix</summary>
+          <ul class="toast-issue-list">
+            @for (issue of issues; track issue.target ?? issue.message) {
+              <li class="toast-issue">
+                @if (issue.label) {
+                  <strong>{{ issue.label }}</strong>
+                }
+                <span>{{ issue.message }}</span>
+              </li>
+            }
+          </ul>
+        </details>
+      }
+    </div>
     <button type="button" class="toast-close" (click)="toastService.dismiss()" aria-label="Dismiss notification">×</button>
   </div>
 }
