@@ -114,7 +114,9 @@
                 <div class="relation-text">{{ discoveryAuthor(item) }}</div>
               </td>
               <td>
-                <div class="relation-text">{{ discoveryLastChange(item) }}</div>
+                <time class="relation-text" [attr.datetime]="discoveryLastChange(item)">
+                  {{ discoveryLastChange(item) | date: "MMM d, y, HH:mm 'UTC'" : 'UTC' }}
+                </time>
               </td>
               <td>
                 <span class="status-pill" [class]="discoveryStatusClass(item.status)">{{ item.status }}</span>

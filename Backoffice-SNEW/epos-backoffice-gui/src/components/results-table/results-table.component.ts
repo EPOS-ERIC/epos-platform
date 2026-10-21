@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -9,7 +10,7 @@ import { MembershipRequestDialogService } from '../../services/membership-reques
 
 @Component({
   selector: 'app-results-table',
-  imports: [AppIconComponent, ListPaginationComponent, RouterLink],
+  imports: [AppIconComponent, DatePipe, ListPaginationComponent, RouterLink],
   templateUrl: './results-table.component.html',
   styleUrl: './results-table.component.css'
 })

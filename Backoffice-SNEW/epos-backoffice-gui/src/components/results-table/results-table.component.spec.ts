@@ -22,7 +22,7 @@ describe('ResultsTableComponent', () => {
     expect(fixture.nativeElement.querySelector('[role="status"]').textContent).toContain('Loading discovery results');
   });
 
-  it('renders the API timestamp without converting it to local time', async () => {
+  it('renders the API timestamp in a readable UTC format', async () => {
     await TestBed.configureTestingModule({
       imports: [ResultsTableComponent],
       providers: [provideRouter([])]
@@ -46,7 +46,8 @@ describe('ResultsTableComponent', () => {
     fixture.detectChanges();
 
     const cells = fixture.nativeElement.querySelectorAll('tbody td') as NodeListOf<HTMLTableCellElement>;
-    expect(cells[4]?.textContent?.trim()).toBe(timestamp);
+    expect(cells[4]?.textContent?.trim()).toBe('Sep 10, 2026, 07:34 UTC');
+    expect((cells[4]?.querySelector('time') as HTMLTimeElement).dateTime).toBe(timestamp);
     expect((fixture.nativeElement.querySelector('.item-link') as HTMLAnchorElement).getAttribute('href')).toBe('/data/resource-id/version-id?groupId=group-id&dataType=dataset&returnUrl=%2Fdata%3FgroupId%3Dgroup-id');
   });
 
