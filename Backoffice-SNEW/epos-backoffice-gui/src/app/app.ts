@@ -1,4 +1,4 @@
-import { Component, DOCUMENT, effect, inject, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { ToastOutletComponent } from '../components/toast-outlet/toast-outlet.component';
@@ -13,15 +13,5 @@ import { ResourceCreationDialogComponent } from '../dialogs/resource-creation/re
   styleUrl: './app.css'
 })
 export class App {
-  private readonly document = inject(DOCUMENT);
-  private readonly useScalarVariant = false;
-
   protected readonly title = signal('epos-backoffice-gui');
-
-  constructor() {
-    effect(() => {
-      const variant = this.useScalarVariant ? 'scalar' : 'current';
-      this.document.documentElement.setAttribute('data-ui-variant', variant);
-    });
-  }
 }

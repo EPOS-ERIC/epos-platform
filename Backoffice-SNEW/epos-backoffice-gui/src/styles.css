@@ -20,25 +20,6 @@
   color-scheme: light;
 }
 
-:root[data-ui-variant='scalar'] {
-  --app-bg: #f4f7fb;
-  --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --surface-hover: #eef2ff;
-  --line: #d7dfea;
-  --text-strong: #0f172a;
-  --text: #334155;
-  --text-muted: #64748b;
-  --focus-ring: rgba(59, 130, 246, 0.18);
-  --olive-700: #1d4ed8;
-  --olive-600: #2563eb;
-  --olive-100: #dbeafe;
-  --amber-600: #b45309;
-  --amber-100: #fef3c7;
-  --sand-100: #e2e8f0;
-  color-scheme: light;
-}
-
 :root[data-theme='dark'] {
   --app-bg: #020617;
   --surface: #0f172a;
@@ -250,11 +231,6 @@ app-navigation-sidebar .sidebar.is-collapsed .nav-item {
   border-radius: 14px;
   background: var(--surface);
   box-shadow: 0 8px 24px rgba(2, 6, 23, 0.05);
-}
-
-:root[data-ui-variant='scalar'] .app-card {
-  border-radius: 18px;
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
 }
 
 .app-badge {
@@ -1237,10 +1213,6 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
   transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
 }
 
-:root[data-ui-variant='scalar'] .app-button {
-  border-radius: 999px;
-}
-
 .app-button:hover {
   background: var(--surface-2);
 }
@@ -1325,11 +1297,6 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
   border-radius: 10px;
 }
 
-:root[data-ui-variant='scalar'] .app-button--icon {
-  width: 34px;
-  height: 34px;
-}
-
 .app-chip {
   display: inline-flex;
   align-items: center;
@@ -1338,90 +1305,6 @@ app-navigation-sidebar .sidebar.is-collapsed .membership-request-button {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-}
-
-:root[data-ui-variant='scalar'] .app-chip {
-  border-radius: 999px;
-}
-
-:root[data-ui-variant='scalar'] .app-avatar {
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-}
-
-:root[data-ui-variant='scalar'] .app-badge {
-  border-radius: 999px;
-}
-
-:root[data-ui-variant='scalar'] .app-input {
-  border-radius: 12px;
-}
-
-:root[data-ui-variant='scalar'] .main-container-layout {
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.06), transparent 28%),
-    radial-gradient(circle at top right, rgba(15, 118, 110, 0.05), transparent 22%),
-    var(--app-bg);
-}
-
-:root[data-ui-variant='scalar'] .content {
-  padding: 0 28px 28px;
-}
-
-:root[data-ui-variant='scalar'] .content-spacer {
-  margin-top: 20px;
-}
-
-:root[data-ui-variant='scalar'] .sidebar {
-  background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
-  border-right-color: rgba(148, 163, 184, 0.16);
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04), 0 18px 36px rgba(15, 23, 42, 0.22);
-}
-
-:root[data-ui-variant='scalar'] .brand-mark {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-:root[data-ui-variant='scalar'] .nav-item {
-  border-radius: 12px;
-}
-
-:root[data-ui-variant='scalar'] .nav-item:hover,
-:root[data-ui-variant='scalar'] .nav-item.active {
-  background: rgba(59, 130, 246, 0.1);
-}
-
-:root[data-ui-variant='scalar'] .nav-item::after {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(96, 165, 250, 0.9), rgba(255, 255, 255, 0));
-}
-
-:root[data-ui-variant='scalar'] .sidebar-toggle-button,
-:root[data-ui-variant='scalar'] .tree-toggle-button {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-:root[data-ui-variant='scalar'] .header-shell {
-  border-bottom-color: rgba(148, 163, 184, 0.18);
-}
-
-:root[data-ui-variant='scalar'] .table-card,
-:root[data-ui-variant='scalar'] .detail-card,
-:root[data-ui-variant='scalar'] .detail-section-card {
-  border-radius: 18px;
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
-}
-
-:root[data-ui-variant='scalar'] .table-header,
-:root[data-ui-variant='scalar'] .table-footer,
-:root[data-ui-variant='scalar'] thead th,
-:root[data-ui-variant='scalar'] tbody td {
-  border-color: rgba(148, 163, 184, 0.18);
-}
-
-:root[data-ui-variant='scalar'] tbody tr:hover {
-  background: rgba(59, 130, 246, 0.04);
 }
 
 .app-avatar {
