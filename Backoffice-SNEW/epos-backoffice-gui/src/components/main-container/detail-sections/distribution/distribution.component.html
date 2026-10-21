@@ -38,10 +38,13 @@
           <fieldset class="detail-fieldset" [disabled]="disabled">
             <div class="detail-form-grid">
               @for (field of distributionFields; track field) {
-                <label class="detail-field" [class.detail-field--full]="field === 'type'">
-                  <span class="detail-label">{{ distributionFieldLabel(field) }}{{ field === 'title' || field === 'description' ? ' *' : '' }}</span>
-                  <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [readonly]="field === 'type'" [required]="field === 'title' || field === 'description'" />
-                </label>
+                <!-- Render distribution fields but not "type" (= no need to expose it as an input field) -->
+                @if (field !== 'type') {
+                  <label class="detail-field">
+                    <span class="detail-label">{{ distributionFieldLabel(field) }}{{ field === 'title' || field === 'description' ? ' *' : '' }}</span>
+                    <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="field === 'title' || field === 'description'" />
+                  </label>
+                }
               }
             </div>
           </fieldset>
