@@ -92,6 +92,11 @@ func applicationError(err error) *apperror.AppError {
 		return apperror.Default(apperror.CodeUnsupportedMedia)
 	}
 
+	if paramErr, ok := errors.AsType[*ogenerrors.DecodeParamError](err); ok {
+		target, fieldErr := validationLeaf(paramErr.Err, paramErr.Name)
+		return apperror.Field(target, validationDetail(fieldErr), err)
+	}
+
 	validationErr, ok := errors.AsType[*validate.Error](err)
 	if ok && len(validationErr.Fields) > 0 {
 		target, fieldErr := validationLeaf(err, "")

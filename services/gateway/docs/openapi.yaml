@@ -129,6 +129,67 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /distributions/{distributionId}/prepare:
+    post:
+      tags: [Access]
+      summary: Prepare a web-service request without executing it
+      description: |-
+        Prepares a web-service distribution request using parameter IDs and values, with optional native format selection. Published versions allow anonymous access; other states require existing dataset permissions. Returns the provider request without executing it. Downloadable-file distributions are not supported.
+      operationId: prepareDistribution
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: output_format
+          in: query
+          description: Exact native format selector. Cannot be repeated or combined with conversion_id.
+          schema: { type: string, minLength: 1 }
+        - name: conversion_id
+          in: query
+          description: Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for future conversion support; currently returns an internal error, matching access.
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributionAccessRequest"
+            examples:
+              defaults:
+                value: { parameters: [] }
+              parameter:
+                value:
+                  parameters:
+                    - id: 9cf1103f-2e90-4742-a64a-d973e7d32e7d
+                      value: mystation
+      responses:
+        "200":
+          description: Fully prepared provider request. No provider request has been executed.
+          headers:
+            Cache-Control:
+              description: Prepared requests must not be cached.
+              required: true
+              schema: { type: string, enum: [no-store] }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreparedDistributionRequest"
+              example:
+                method: POST
+                url: https://provider.example/query?format=json
+                headers:
+                  Content-Type: application/json
+                body: '{"station":"ABC"}'
+        default:
+          description: Gateway Problem. Preparation errors match access; provider execution errors do not apply.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /distributions/{distributionId}/download:
     get:
       tags: [Access]
@@ -2247,6 +2308,27 @@ components:
                 detail: "A required service is unavailable."
 
   schemas:
+    PreparedDistributionRequest:
+      type: object
+      additionalProperties: false
+      required: [method, url, headers, body]
+      properties:
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE]
+        url:
+          type: string
+          format: uri
+          description: Fully rendered provider URL, including the encoded query string. Do not encode it again.
+        headers:
+          type: object
+          description: Prepared provider headers; empty object when no headers are defined. Content-Type is never inferred.
+          additionalProperties: { type: string }
+        body:
+          type: string
+          nullable: true
+          description: Rendered request body as text. Null means absent; an empty string means explicitly empty.
+
     DistributionAccessRequest:
       type: object
       additionalProperties: false

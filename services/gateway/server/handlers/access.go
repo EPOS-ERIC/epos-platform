@@ -8,7 +8,7 @@ import (
 )
 
 func (h *ogenHandler) AccessDistribution(ctx context.Context, request *gatewayapi.DistributionAccessRequest, params gatewayapi.AccessDistributionParams) (*gatewayapi.AccessDistribution2XXStatusCode, error) {
-	input, err := fromAPIDistributionAccess(request, params)
+	input, err := fromAPIDistributionAccess(request, params.DistributionId, params.OutputFormat, params.ConversionID)
 	if err != nil {
 		return nil, err
 	}
@@ -31,4 +31,28 @@ func (h *ogenHandler) AccessDistribution(ctx context.Context, request *gatewayap
 	}
 
 	return response, nil
+}
+
+func (h *ogenHandler) PrepareDistribution(ctx context.Context, request *gatewayapi.DistributionAccessRequest, params gatewayapi.PrepareDistributionParams) (*gatewayapi.PrepareDistributionOKHeaders, error) {
+	input, err := fromAPIDistributionAccess(request, params.DistributionId, params.OutputFormat, params.ConversionID)
+	if err != nil {
+		return nil, err
+	}
+
+	actorID, _ := authcontext.ActorID(ctx)
+
+	prepared, err := h.distributionAccess.Prepare(ctx, actorID, input)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := toAPIPreparedDistributionRequest(prepared)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gatewayapi.PrepareDistributionOKHeaders{
+		CacheControl: gatewayapi.PrepareDistributionOKCacheControlNoStore,
+		Response:     response,
+	}, nil
 }

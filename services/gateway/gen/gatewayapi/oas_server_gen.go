@@ -319,6 +319,15 @@ type Handler interface {
 	//
 	// GET /users
 	ListUsers(ctx context.Context) ([]UserListItem, error)
+	// PrepareDistribution implements prepareDistribution operation.
+	//
+	// Prepares a web-service distribution request using parameter IDs and values, with optional native
+	// format selection. Published versions allow anonymous access; other states require existing dataset
+	// permissions. Returns the provider request without executing it. Downloadable-file distributions are
+	// not supported.
+	//
+	// POST /distributions/{distributionId}/prepare
+	PrepareDistribution(ctx context.Context, req *DistributionAccessRequest, params PrepareDistributionParams) (*PrepareDistributionOKHeaders, error)
 	// PublishResourceVersion implements publishResourceVersion operation.
 	//
 	// Publish resource version.

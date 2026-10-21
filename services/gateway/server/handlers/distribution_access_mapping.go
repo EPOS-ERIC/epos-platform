@@ -1,28 +1,37 @@
 package handlers
 
 import (
+	"maps"
 	"math"
+	"net/url"
+	"unicode/utf8"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	"github.com/google/uuid"
 )
 
-func fromAPIDistributionAccess(request *gatewayapi.DistributionAccessRequest, params gatewayapi.AccessDistributionParams) (domain.AccessRequest, error) {
+func fromAPIDistributionAccess(
+	request *gatewayapi.DistributionAccessRequest,
+	distributionID uuid.UUID,
+	outputFormat gatewayapi.OptString,
+	conversionID gatewayapi.OptUUID,
+) (domain.AccessRequest, error) {
 	if request == nil {
 		return domain.AccessRequest{}, apperror.Field("parameters", "Field is required.", nil)
 	}
 
 	input := domain.AccessRequest{
-		DistributionID: params.DistributionId,
+		DistributionID: distributionID,
 		Parameters:     make([]domain.AccessParameter, len(request.Parameters)),
 	}
 
-	if value, ok := params.OutputFormat.Get(); ok {
+	if value, ok := outputFormat.Get(); ok {
 		input.OutputFormat = new(value)
 	}
 
-	if value, ok := params.ConversionID.Get(); ok {
+	if value, ok := conversionID.Get(); ok {
 		input.ConversionID = new(value)
 	}
 
@@ -35,6 +44,39 @@ func fromAPIDistributionAccess(request *gatewayapi.DistributionAccessRequest, pa
 	}
 
 	return input, nil
+}
+
+func toAPIPreparedDistributionRequest(request domain.PreparedRequest) (gatewayapi.PreparedDistributionRequest, error) {
+	endpoint, err := url.Parse(request.URL)
+	if err != nil || endpoint.Host == "" || (endpoint.Scheme != "http" && endpoint.Scheme != "https") {
+		return gatewayapi.PreparedDistributionRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+
+	if !utf8.Valid(request.Body) {
+		return gatewayapi.PreparedDistributionRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+
+	method := gatewayapi.PreparedDistributionRequestMethod(request.Method)
+	if err := method.Validate(); err != nil {
+		return gatewayapi.PreparedDistributionRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+
+	result := gatewayapi.PreparedDistributionRequest{
+		Method:  method,
+		URL:     *endpoint,
+		Headers: make(gatewayapi.PreparedDistributionRequestHeaders, len(request.Headers)),
+	}
+
+	maps.Copy(result.Headers, request.Headers)
+
+	var body *string
+	if request.Body != nil {
+		body = new(string(request.Body))
+	}
+
+	result.Body = toAPIRequiredNilString(body)
+
+	return result, nil
 }
 
 func fromAPIAccessValue(value gatewayapi.DistributionAccessParameterValue) (domain.AccessValue, error) {

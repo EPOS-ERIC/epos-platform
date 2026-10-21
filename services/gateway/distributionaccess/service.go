@@ -29,23 +29,32 @@ func NewService(metadataLifecycle metadataLifecycle, dataRetriever dataRetriever
 	return &Service{metadataLifecycle: metadataLifecycle, dataRetriever: dataRetriever}
 }
 
-func (s *Service) Access(ctx context.Context, actorID string, request domain.AccessRequest) (domain.RetrievalResponse, error) {
+func (s *Service) Prepare(ctx context.Context, actorID string, request domain.AccessRequest) (domain.PreparedRequest, error) {
 	if err := ctx.Err(); err != nil {
-		return domain.RetrievalResponse{}, err
+		return domain.PreparedRequest{}, err
 	}
 
 	if request.OutputFormat != nil && request.ConversionID != nil {
-		return domain.RetrievalResponse{}, apperror.Field("conversion_id", "Format selectors are mutually exclusive.", nil)
+		return domain.PreparedRequest{}, apperror.Field("conversion_id", "Format selectors are mutually exclusive.", nil)
 	}
 
 	// TODO: Connect conversion_id when converter and conversion-relation support exist.
 	if request.ConversionID != nil {
-		return domain.RetrievalResponse{}, apperror.Default(apperror.CodeInternal)
+		return domain.PreparedRequest{}, apperror.Default(apperror.CodeInternal)
 	}
 
 	target, err := s.metadataLifecycle.PrepareDistributionAccess(ctx, actorID, request)
 	if err != nil {
-		return domain.RetrievalResponse{}, fmt.Errorf("prepare distribution access: %w", err)
+		return domain.PreparedRequest{}, fmt.Errorf("prepare distribution access: %w", err)
+	}
+
+	return target, nil
+}
+
+func (s *Service) Access(ctx context.Context, actorID string, request domain.AccessRequest) (domain.RetrievalResponse, error) {
+	target, err := s.Prepare(ctx, actorID, request)
+	if err != nil {
+		return domain.RetrievalResponse{}, err
 	}
 
 	return s.dataRetriever.RetrieveAccess(ctx, target)

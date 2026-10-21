@@ -462,6 +462,18 @@ func (UnimplementedHandler) ListUsers(ctx context.Context) (r []UserListItem, _ 
 	return r, ht.ErrNotImplemented
 }
 
+// PrepareDistribution implements prepareDistribution operation.
+//
+// Prepares a web-service distribution request using parameter IDs and values, with optional native
+// format selection. Published versions allow anonymous access; other states require existing dataset
+// permissions. Returns the provider request without executing it. Downloadable-file distributions are
+// not supported.
+//
+// POST /distributions/{distributionId}/prepare
+func (UnimplementedHandler) PrepareDistribution(ctx context.Context, req *DistributionAccessRequest, params PrepareDistributionParams) (r *PrepareDistributionOKHeaders, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // PublishResourceVersion implements publishResourceVersion operation.
 //
 // Publish resource version.

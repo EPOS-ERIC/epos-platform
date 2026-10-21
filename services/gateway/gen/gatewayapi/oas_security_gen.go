@@ -71,6 +71,7 @@ var operationRolesBearerAuth = map[string][]string{
 	ListResourceVersionsOperation:              []string{},
 	ListUserNotificationSubscriptionsOperation: []string{},
 	ListUsersOperation:                         []string{},
+	PrepareDistributionOperation:               []string{},
 	PublishResourceVersionOperation:            []string{},
 	RejectResourceVersionOperation:             []string{},
 	RemoveGlobalRoleOperation:                  []string{},

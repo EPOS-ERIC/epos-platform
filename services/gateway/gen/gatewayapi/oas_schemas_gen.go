@@ -9731,6 +9731,184 @@ func (s *PermissionScope) UnmarshalText(data []byte) error {
 	}
 }
 
+type PrepareDistributionOKCacheControl string
+
+const (
+	PrepareDistributionOKCacheControlNoStore PrepareDistributionOKCacheControl = "no-store"
+)
+
+// AllValues returns all PrepareDistributionOKCacheControl values.
+func (PrepareDistributionOKCacheControl) AllValues() []PrepareDistributionOKCacheControl {
+	return []PrepareDistributionOKCacheControl{
+		PrepareDistributionOKCacheControlNoStore,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PrepareDistributionOKCacheControl) MarshalText() ([]byte, error) {
+	switch s {
+	case PrepareDistributionOKCacheControlNoStore:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PrepareDistributionOKCacheControl) UnmarshalText(data []byte) error {
+	switch PrepareDistributionOKCacheControl(data) {
+	case PrepareDistributionOKCacheControlNoStore:
+		*s = PrepareDistributionOKCacheControlNoStore
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// PrepareDistributionOKHeaders wraps PreparedDistributionRequest with response headers.
+type PrepareDistributionOKHeaders struct {
+	CacheControl PrepareDistributionOKCacheControl
+	Response     PreparedDistributionRequest
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *PrepareDistributionOKHeaders) GetCacheControl() PrepareDistributionOKCacheControl {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *PrepareDistributionOKHeaders) GetResponse() PreparedDistributionRequest {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *PrepareDistributionOKHeaders) SetCacheControl(val PrepareDistributionOKCacheControl) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *PrepareDistributionOKHeaders) SetResponse(val PreparedDistributionRequest) {
+	s.Response = val
+}
+
+// Ref: #/components/schemas/PreparedDistributionRequest
+type PreparedDistributionRequest struct {
+	Method PreparedDistributionRequestMethod `json:"method"`
+	// Fully rendered provider URL, including the encoded query string. Do not encode it again.
+	URL url.URL `json:"url"`
+	// Prepared provider headers; empty object when no headers are defined. Content-Type is never inferred.
+	Headers PreparedDistributionRequestHeaders `json:"headers"`
+	// Rendered request body as text. Null means absent; an empty string means explicitly empty.
+	Body NilString `json:"body"`
+}
+
+// GetMethod returns the value of Method.
+func (s *PreparedDistributionRequest) GetMethod() PreparedDistributionRequestMethod {
+	return s.Method
+}
+
+// GetURL returns the value of URL.
+func (s *PreparedDistributionRequest) GetURL() url.URL {
+	return s.URL
+}
+
+// GetHeaders returns the value of Headers.
+func (s *PreparedDistributionRequest) GetHeaders() PreparedDistributionRequestHeaders {
+	return s.Headers
+}
+
+// GetBody returns the value of Body.
+func (s *PreparedDistributionRequest) GetBody() NilString {
+	return s.Body
+}
+
+// SetMethod sets the value of Method.
+func (s *PreparedDistributionRequest) SetMethod(val PreparedDistributionRequestMethod) {
+	s.Method = val
+}
+
+// SetURL sets the value of URL.
+func (s *PreparedDistributionRequest) SetURL(val url.URL) {
+	s.URL = val
+}
+
+// SetHeaders sets the value of Headers.
+func (s *PreparedDistributionRequest) SetHeaders(val PreparedDistributionRequestHeaders) {
+	s.Headers = val
+}
+
+// SetBody sets the value of Body.
+func (s *PreparedDistributionRequest) SetBody(val NilString) {
+	s.Body = val
+}
+
+// Prepared provider headers; empty object when no headers are defined. Content-Type is never inferred.
+type PreparedDistributionRequestHeaders map[string]string
+
+func (s *PreparedDistributionRequestHeaders) init() PreparedDistributionRequestHeaders {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type PreparedDistributionRequestMethod string
+
+const (
+	PreparedDistributionRequestMethodGET    PreparedDistributionRequestMethod = "GET"
+	PreparedDistributionRequestMethodPOST   PreparedDistributionRequestMethod = "POST"
+	PreparedDistributionRequestMethodPUT    PreparedDistributionRequestMethod = "PUT"
+	PreparedDistributionRequestMethodDELETE PreparedDistributionRequestMethod = "DELETE"
+)
+
+// AllValues returns all PreparedDistributionRequestMethod values.
+func (PreparedDistributionRequestMethod) AllValues() []PreparedDistributionRequestMethod {
+	return []PreparedDistributionRequestMethod{
+		PreparedDistributionRequestMethodGET,
+		PreparedDistributionRequestMethodPOST,
+		PreparedDistributionRequestMethodPUT,
+		PreparedDistributionRequestMethodDELETE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PreparedDistributionRequestMethod) MarshalText() ([]byte, error) {
+	switch s {
+	case PreparedDistributionRequestMethodGET:
+		return []byte(s), nil
+	case PreparedDistributionRequestMethodPOST:
+		return []byte(s), nil
+	case PreparedDistributionRequestMethodPUT:
+		return []byte(s), nil
+	case PreparedDistributionRequestMethodDELETE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PreparedDistributionRequestMethod) UnmarshalText(data []byte) error {
+	switch PreparedDistributionRequestMethod(data) {
+	case PreparedDistributionRequestMethodGET:
+		*s = PreparedDistributionRequestMethodGET
+		return nil
+	case PreparedDistributionRequestMethodPOST:
+		*s = PreparedDistributionRequestMethodPOST
+		return nil
+	case PreparedDistributionRequestMethodPUT:
+		*s = PreparedDistributionRequestMethodPUT
+		return nil
+	case PreparedDistributionRequestMethodDELETE:
+		*s = PreparedDistributionRequestMethodDELETE
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/Problem
 type Problem struct {
 	// Stable application error code used by clients.

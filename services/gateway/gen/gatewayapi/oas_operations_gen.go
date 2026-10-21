@@ -52,6 +52,7 @@ const (
 	ListResourceVersionsOperation              OperationName = "ListResourceVersions"
 	ListUserNotificationSubscriptionsOperation OperationName = "ListUserNotificationSubscriptions"
 	ListUsersOperation                         OperationName = "ListUsers"
+	PrepareDistributionOperation               OperationName = "PrepareDistribution"
 	PublishResourceVersionOperation            OperationName = "PublishResourceVersion"
 	RejectResourceVersionOperation             OperationName = "RejectResourceVersion"
 	RemoveGlobalRoleOperation                  OperationName = "RemoveGlobalRole"
