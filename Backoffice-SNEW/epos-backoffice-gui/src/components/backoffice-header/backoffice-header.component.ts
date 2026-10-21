@@ -10,6 +10,17 @@ import { AppIconComponent } from '../../shared/ui/app-icon.component';
 
 export type ManagementHeaderContext = 'global' | 'group';
 
+const SECTION_SUBTITLES: Record<string, string> = {
+  Data: 'Manage resources and related metadata.',
+  Software: 'Manage resources and related metadata.',
+  Facilities: 'Manage resources and related metadata.',
+  'All Resources': 'Browse resources across all your groups.',
+  Dataset: 'Review dataset metadata and lifecycle.',
+  'Software Application': 'Review application metadata and lifecycle.',
+  'Software Source Code': 'Review source code metadata and lifecycle.',
+  'My Account': 'Review your memberships and access.'
+};
+
 @Component({
   selector: 'app-backoffice-header',
   imports: [AppIconComponent, FormsModule, RouterLink],
@@ -59,6 +70,10 @@ export class BackofficeHeaderComponent {
 
   protected get headerBackRouteTree() {
     return this.headerBackRoute ? this.router.parseUrl(this.headerBackRoute) : null;
+  }
+
+  protected sectionSubtitle(): string {
+    return SECTION_SUBTITLES[this.sectionTitle] ?? 'Manage resources and related metadata.';
   }
 
   @HostListener('document:click')

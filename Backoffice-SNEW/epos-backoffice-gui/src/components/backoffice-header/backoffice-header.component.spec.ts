@@ -73,6 +73,21 @@ describe('BackofficeHeaderComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Add New Resource');
   });
 
+  it('shows concise copy for each main resource section', () => {
+    const fixture = TestBed.createComponent(BackofficeHeaderComponent);
+    const cases = [
+      ['Data', 'Manage resources and related metadata.'],
+      ['Software', 'Manage resources and related metadata.'],
+      ['Facilities', 'Manage resources and related metadata.']
+    ];
+
+    for (const [title, subtitle] of cases) {
+      fixture.componentRef.setInput('sectionTitle', title);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.section-subtitle')?.textContent?.trim()).toBe(subtitle);
+    }
+  });
+
   it('renders the management context and complete back route in a single header', () => {
     const fixture = TestBed.createComponent(BackofficeHeaderComponent);
     fixture.componentRef.setInput('managementContext', 'global');
