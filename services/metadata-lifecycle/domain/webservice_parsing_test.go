@@ -20,7 +20,7 @@ func TestNewWebServiceInputNormalizesAndOrdersParameters(t *testing.T) {
 		Format:      " Application/JSON ; Charset=UTF-8 ",
 		Parameters: []WebServiceParameterInput{
 			{Position: 1, Name: "z", Label: " Z ", Schema: StringSchema{}, Location: ParameterLocationQuery},
-			{Position: 0, Name: "item-id", Label: " Item ", Schema: StringSchema{}, Location: ParameterLocationPath},
+			{Position: 0, Name: "item-id", Label: " Item ", Required: true, Schema: StringSchema{}, Location: ParameterLocationPath},
 			{Position: 1, Name: "a", Label: " A ", Schema: StringSchema{}, Location: ParameterLocationQuery},
 		},
 	})
@@ -107,7 +107,7 @@ func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
 			if err != nil {
 				t.Fatalf("NewWebServiceParameterInput() error = %v", err)
 			}
-			if !schemaHasMultipleValues(input.Schema) {
+			if !input.Schema.AllowsMultipleValues() {
 				t.Fatal("schema multiple values = false, want true")
 			}
 		})

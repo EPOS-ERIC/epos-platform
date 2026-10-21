@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"mime"
+	"net/textproto"
 	"regexp"
 	"slices"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
+	"golang.org/x/net/http/httpguts"
 )
 
 var (
@@ -200,14 +202,30 @@ func NewWebServiceParameterInput(value WebServiceParameterInput) (WebServicePara
 	if !value.Location.Valid() {
 		return WebServiceParameterInput{}, invalidField("location", "Location is not supported.", nil)
 	}
-	if value.Explode && (value.Location != ParameterLocationQuery || !schemaHasMultipleValues(value.Schema)) {
+	if value.Explode && (value.Location != ParameterLocationQuery || !value.Schema.AllowsMultipleValues()) {
 		return WebServiceParameterInput{}, invalidField("explode", "Explode requires a query parameter with multiple values.", nil)
+	}
+	if value.Location == ParameterLocationPath && !value.Required {
+		return WebServiceParameterInput{}, invalidField("required", "Path parameters must be required.", nil)
+	}
+	if value.Location == ParameterLocationHeader {
+		if !httpguts.ValidHeaderFieldName(value.Name) {
+			return WebServiceParameterInput{}, invalidField("name", "Header name must be a valid HTTP field name.", nil)
+		}
+		switch textproto.CanonicalMIMEHeaderKey(value.Name) {
+		case "Host", "Content-Length", "Transfer-Encoding", "Connection", "Trailer", "Te", "Upgrade", "Proxy-Connection", "Keep-Alive":
+			return WebServiceParameterInput{}, invalidField("name", "Headers must not override destination or HTTP framing.", nil)
+		default:
+		}
 	}
 	return value, nil
 }
 
 // NewRequestBodyInput parses and validates caller-controlled request-body fields.
 func NewRequestBodyInput(value RequestBodyInput) (RequestBodyInput, error) {
+	if value.Required == nil {
+		value.Required = new(true)
+	}
 	value.ContentType = strings.TrimSpace(value.ContentType)
 	value.Template = strings.TrimSpace(value.Template)
 
@@ -270,6 +288,7 @@ func parseTemplateDefinition(source string, values []ParameterInput) (string, []
 func parseWebServiceParameterInputs(values []WebServiceParameterInput) ([]WebServiceParameterInput, error) {
 	result := make([]WebServiceParameterInput, 0, len(values))
 	seen := make(map[string]struct{}, len(values))
+	seenHeaders := make(map[string]struct{})
 	for i, value := range values {
 		parsed, err := NewWebServiceParameterInput(value)
 		if err != nil {
@@ -277,6 +296,13 @@ func parseWebServiceParameterInputs(values []WebServiceParameterInput) ([]WebSer
 		}
 		if _, exists := seen[parsed.Name]; exists {
 			return nil, invalidField(fmt.Sprintf("parameters[%d].name", i), "Parameter names must be unique.", nil)
+		}
+		if parsed.Location == ParameterLocationHeader {
+			name := textproto.CanonicalMIMEHeaderKey(parsed.Name)
+			if _, exists := seenHeaders[name]; exists {
+				return nil, invalidField(fmt.Sprintf("parameters[%d].name", i), "Header names must be unique ignoring case.", nil)
+			}
+			seenHeaders[name] = struct{}{}
 		}
 		seen[parsed.Name] = struct{}{}
 		result = append(result, parsed)
@@ -331,6 +357,7 @@ func requestBodyInput(value *RequestBody) *RequestBodyInput {
 		return nil
 	}
 	return &RequestBodyInput{
+		Required:    new(value.Required),
 		ContentType: value.ContentType,
 		Template:    value.Template,
 		Parameters:  parameterInputs(value.Parameters),
@@ -399,7 +426,12 @@ func restoreRequestBody(value RequestBodyInput, existing RequestBody) (RequestBo
 	if err != nil {
 		return RequestBody{}, err
 	}
-	return RequestBody{ContentType: value.ContentType, Template: value.Template, Parameters: parameters}, nil
+	return RequestBody{
+		Required:    *value.Required,
+		ContentType: value.ContentType,
+		Template:    value.Template,
+		Parameters:  parameters,
+	}, nil
 }
 
 func parseParameter(value ParameterInput, allowTemplate, allowMultipleValues bool) (ParameterInput, error) {
@@ -419,10 +451,10 @@ func parseParameter(value ParameterInput, allowTemplate, allowMultipleValues boo
 	if err != nil {
 		return ParameterInput{}, prefixOrField(err, "schema", "schema", "Schema definition is invalid.")
 	}
-	if !allowMultipleValues && schemaHasMultipleValues(schema) {
+	if !allowMultipleValues && schema.AllowsMultipleValues() {
 		return ParameterInput{}, invalidField("schema.multiple_values", "Multiple values are not allowed here.", nil)
 	}
-	if schemaHasMultipleValues(schema) && !parameterSchemaHasEnum(schema) {
+	if schema.AllowsMultipleValues() && !schema.HasEnum() {
 		return ParameterInput{}, invalidField("schema.enum", "Multiple values require at least one allowed value.", nil)
 	}
 	value.Schema = schema
@@ -474,32 +506,6 @@ func parseParameterSchema(value ParameterSchema, allowTemplate bool) (ParameterS
 		return parseTemplateSchema(schema)
 	default:
 		return nil, fmt.Errorf("unsupported parameter schema %T: %w", value, apperror.Default(apperror.CodeValidationFailed))
-	}
-}
-
-func parameterSchemaHasEnum(value ParameterSchema) bool {
-	switch schema := value.(type) {
-	case StringSchema:
-		return len(schema.Enum) > 0
-	case IntegerSchema:
-		return len(schema.Enum) > 0
-	case FloatSchema:
-		return len(schema.Enum) > 0
-	default:
-		return false
-	}
-}
-
-func schemaHasMultipleValues(value ParameterSchema) bool {
-	switch schema := value.(type) {
-	case StringSchema:
-		return schema.MultipleValues
-	case IntegerSchema:
-		return schema.MultipleValues
-	case FloatSchema:
-		return schema.MultipleValues
-	default:
-		return false
 	}
 }
 
@@ -591,9 +597,6 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
 	if value.Enum != nil && len(value.Enum) == 0 {
 		return FloatSchema{}, fmt.Errorf("float enum cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
-	}
-	if !finiteFloat(value.Minimum) || !finiteFloat(value.Maximum) || !finiteFloat(value.Default) {
-		return FloatSchema{}, fmt.Errorf("float values must be finite: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	seen := make(map[float64]struct{}, len(value.Enum))
 	for i := range value.Enum {
@@ -760,10 +763,6 @@ func optionalWebServiceDescription(value *string) (*string, error) {
 		return nil, fmt.Errorf("web service description cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	return &trimmed, nil
-}
-
-func finiteFloat(value *float64) bool {
-	return value == nil || (!math.IsNaN(*value) && !math.IsInf(*value, 0))
 }
 
 func integerInRange(value int64, minimum, maximum *int64) bool {

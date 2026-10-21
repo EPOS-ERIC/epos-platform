@@ -18,27 +18,35 @@ type AccessParameter struct {
 	Value AccessValue
 }
 
-type AccessValue struct {
-	Scalar *AccessScalar
-	Array  []AccessScalar
+// AccessValue preserves scalar types and scalar/array shape at the transport boundary.
+type AccessValue interface {
+	accessValue()
 }
 
-type AccessScalarKind string
+// AccessScalar restricts array elements and template children to scalar values.
+type AccessScalar interface {
+	AccessValue
+	accessScalar()
+}
 
-const (
-	AccessScalarString  AccessScalarKind = "STRING"
-	AccessScalarBoolean AccessScalarKind = "BOOLEAN"
-	AccessScalarInteger AccessScalarKind = "INTEGER"
-	AccessScalarFloat   AccessScalarKind = "FLOAT"
+type (
+	AccessString  string
+	AccessBoolean bool
+	AccessInteger int64
+	AccessFloat   float64
+	AccessArray   []AccessScalar
 )
 
-type AccessScalar struct {
-	Kind    AccessScalarKind
-	String  string
-	Boolean bool
-	Integer int64
-	Float   float64
-}
+func (AccessString) accessValue()  {}
+func (AccessBoolean) accessValue() {}
+func (AccessInteger) accessValue() {}
+func (AccessFloat) accessValue()   {}
+func (AccessArray) accessValue()   {}
+
+func (AccessString) accessScalar()  {}
+func (AccessBoolean) accessScalar() {}
+func (AccessInteger) accessScalar() {}
+func (AccessFloat) accessScalar()   {}
 
 // DownloadTarget is a metadata-authorized file request for Data Retriever.
 type DownloadTarget struct {

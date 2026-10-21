@@ -256,12 +256,14 @@ type WebServiceParameter struct {
 }
 
 type RequestBodyInput struct {
+	Required    *bool
 	ContentType string
 	Template    string
 	Parameters  []ParameterInput
 }
 
 type RequestBody struct {
+	Required    bool
 	ContentType string
 	Template    string
 	Parameters  []Parameter
@@ -280,6 +282,11 @@ const (
 
 type ParameterSchema interface {
 	Kind() ParameterSchemaKind
+	HasEnum() bool
+	AllowsMultipleValues() bool
+	// DefaultValue returns the typed default with schema multiplicity, or nil if absent.
+	// The result still needs value validation and datetime layout formatting.
+	DefaultValue() AccessValue
 	parameterSchema()
 }
 
@@ -298,12 +305,44 @@ type StringSchema struct {
 func (StringSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindString }
 func (StringSchema) parameterSchema()          {}
 
+// HasEnum reports whether the schema declares allowed values.
+func (value StringSchema) HasEnum() bool { return len(value.Enum) > 0 }
+
+// AllowsMultipleValues reports whether the schema expects an array.
+func (value StringSchema) AllowsMultipleValues() bool { return value.MultipleValues }
+
+// DefaultValue returns the string default, wrapped in an array for multi-value schemas.
+func (value StringSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	result := AccessString(*value.Default)
+	if value.MultipleValues {
+		return AccessArray{result}
+	}
+	return result
+}
+
 type BooleanSchema struct {
 	Default *bool
 }
 
 func (BooleanSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindBoolean }
 func (BooleanSchema) parameterSchema()          {}
+
+// HasEnum reports false because boolean schemas do not declare enums.
+func (BooleanSchema) HasEnum() bool { return false }
+
+// AllowsMultipleValues reports false because boolean parameters are scalar.
+func (BooleanSchema) AllowsMultipleValues() bool { return false }
+
+// DefaultValue returns the boolean default, or nil when none is configured.
+func (value BooleanSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	return AccessBoolean(*value.Default)
+}
 
 type IntegerEnumOption struct {
 	Value int64
@@ -321,6 +360,24 @@ type IntegerSchema struct {
 func (IntegerSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindInteger }
 func (IntegerSchema) parameterSchema()          {}
 
+// HasEnum reports whether the schema declares allowed values.
+func (value IntegerSchema) HasEnum() bool { return len(value.Enum) > 0 }
+
+// AllowsMultipleValues reports whether the schema expects an array.
+func (value IntegerSchema) AllowsMultipleValues() bool { return value.MultipleValues }
+
+// DefaultValue returns the integer default, wrapped in an array for multi-value schemas.
+func (value IntegerSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	result := AccessInteger(*value.Default)
+	if value.MultipleValues {
+		return AccessArray{result}
+	}
+	return result
+}
+
 type FloatEnumOption struct {
 	Value float64
 	Label *string
@@ -337,6 +394,24 @@ type FloatSchema struct {
 func (FloatSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindFloat }
 func (FloatSchema) parameterSchema()          {}
 
+// HasEnum reports whether the schema declares allowed values.
+func (value FloatSchema) HasEnum() bool { return len(value.Enum) > 0 }
+
+// AllowsMultipleValues reports whether the schema expects an array.
+func (value FloatSchema) AllowsMultipleValues() bool { return value.MultipleValues }
+
+// DefaultValue returns the float default, wrapped in an array for multi-value schemas.
+func (value FloatSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	result := AccessFloat(*value.Default)
+	if value.MultipleValues {
+		return AccessArray{result}
+	}
+	return result
+}
+
 type DateTimeSchema struct {
 	Minimum *time.Time
 	Maximum *time.Time
@@ -347,6 +422,21 @@ type DateTimeSchema struct {
 func (DateTimeSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindDateTime }
 func (DateTimeSchema) parameterSchema()          {}
 
+// HasEnum reports false because datetime schemas do not declare enums.
+func (DateTimeSchema) HasEnum() bool { return false }
+
+// AllowsMultipleValues reports false because datetime parameters are scalar.
+func (DateTimeSchema) AllowsMultipleValues() bool { return false }
+
+// DefaultValue returns the datetime default as RFC 3339 text, or nil if absent.
+// Value resolution applies UTC normalization and the configured layout afterward.
+func (value DateTimeSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	return AccessString(value.Default.Format(time.RFC3339Nano))
+}
+
 type TemplateSchema struct {
 	Template   string
 	Parameters []Parameter
@@ -355,6 +445,15 @@ type TemplateSchema struct {
 func (TemplateSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindTemplate }
 func (TemplateSchema) parameterSchema()          {}
 
+// HasEnum reports false because template schemas do not declare enums.
+func (TemplateSchema) HasEnum() bool { return false }
+
+// AllowsMultipleValues reports false because a template renders a single value.
+func (TemplateSchema) AllowsMultipleValues() bool { return false }
+
+// DefaultValue returns nil because templates resolve through their child parameters.
+func (TemplateSchema) DefaultValue() AccessValue { return nil }
+
 type TemplateSchemaInput struct {
 	Template   string
 	Parameters []ParameterInput
@@ -362,6 +461,15 @@ type TemplateSchemaInput struct {
 
 func (TemplateSchemaInput) Kind() ParameterSchemaKind { return ParameterSchemaKindTemplate }
 func (TemplateSchemaInput) parameterSchema()          {}
+
+// HasEnum reports false because template schemas do not declare enums.
+func (TemplateSchemaInput) HasEnum() bool { return false }
+
+// AllowsMultipleValues reports false because a template renders a single value.
+func (TemplateSchemaInput) AllowsMultipleValues() bool { return false }
+
+// DefaultValue returns nil because templates resolve through their child parameters.
+func (TemplateSchemaInput) DefaultValue() AccessValue { return nil }
 
 type DistributionType string
 

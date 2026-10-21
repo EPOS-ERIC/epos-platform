@@ -226,7 +226,8 @@ Propagate `body_required` through web-service metadata CRUD: POST/PUT inputs acc
 **Required templates (`required=true` TEMPLATE parameter or `body_required=true`):**
 
 - Always evaluated.
-- Every referenced child must resolve from client input or a metadata default; otherwise return 400.
+- Children marked `required=true` must resolve from client input or a metadata default; otherwise return 400.
+- Rendering must succeed. Missing optional children are allowed in branches that do not execute; evaluating a missing key returns 400.
 
 **Optional templates (`required=false` TEMPLATE parameter or `body_required=false`):**
 

@@ -174,13 +174,13 @@ func upstreamError(ctx context.Context, err error) error {
 		return ctxErr
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
-		return apperror.Default(apperror.CodeUpstreamTimeout)
+		return apperror.Wrap(apperror.CodeUpstreamTimeout, "", err)
 	}
 	var networkError net.Error
 	if errors.As(err, &networkError) && networkError.Timeout() {
-		return apperror.Default(apperror.CodeUpstreamTimeout)
+		return apperror.Wrap(apperror.CodeUpstreamTimeout, "", err)
 	}
-	return apperror.Default(apperror.CodeInternal)
+	return apperror.Wrap(apperror.CodeUpstreamUnavailable, "", err)
 }
 
 func (s *Service) discoverOutputSchema(ctx context.Context, request domain.PreparedRetrieval, contentType string, payload []byte) {

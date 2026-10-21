@@ -40,40 +40,36 @@ func fromAPIDistributionAccess(request *gatewayapi.DistributionAccessRequest, pa
 func fromAPIAccessValue(value gatewayapi.DistributionAccessParameterValue) (domain.AccessValue, error) {
 	switch value.Type {
 	case gatewayapi.DistributionAccessScalarDistributionAccessParameterValue:
-		scalar, err := fromAPIAccessScalar(value.DistributionAccessScalar)
-		if err != nil {
-			return domain.AccessValue{}, err
-		}
-		return domain.AccessValue{Scalar: &scalar}, nil
+		return fromAPIAccessScalar(value.DistributionAccessScalar)
 	case gatewayapi.DistributionAccessScalarArrayDistributionAccessParameterValue:
-		items := make([]domain.AccessScalar, len(value.DistributionAccessScalarArray))
+		items := make(domain.AccessArray, len(value.DistributionAccessScalarArray))
 		for i, item := range value.DistributionAccessScalarArray {
 			scalar, err := fromAPIAccessScalar(item)
 			if err != nil {
-				return domain.AccessValue{}, err
+				return nil, err
 			}
 			items[i] = scalar
 		}
-		return domain.AccessValue{Array: items}, nil
+		return items, nil
 	default:
-		return domain.AccessValue{}, apperror.Default(apperror.CodeInternal)
+		return nil, apperror.Default(apperror.CodeInternal)
 	}
 }
 
 func fromAPIAccessScalar(value gatewayapi.DistributionAccessScalar) (domain.AccessScalar, error) {
 	switch value.Type {
 	case gatewayapi.StringDistributionAccessScalar:
-		return domain.AccessScalar{Kind: domain.AccessScalarString, String: value.String}, nil
+		return domain.AccessString(value.String), nil
 	case gatewayapi.BoolDistributionAccessScalar:
-		return domain.AccessScalar{Kind: domain.AccessScalarBoolean, Boolean: value.Bool}, nil
+		return domain.AccessBoolean(value.Bool), nil
 	case gatewayapi.Float64DistributionAccessScalar:
 		number := value.Float64
 		// MaxInt64 rounds up to 2^63 as float64, so the upper bound is exclusive.
 		if math.Trunc(number) == number && number >= math.MinInt64 && number < -float64(math.MinInt64) {
-			return domain.AccessScalar{Kind: domain.AccessScalarInteger, Integer: int64(number)}, nil
+			return domain.AccessInteger(number), nil
 		}
-		return domain.AccessScalar{Kind: domain.AccessScalarFloat, Float: number}, nil
+		return domain.AccessFloat(number), nil
 	default:
-		return domain.AccessScalar{}, apperror.Default(apperror.CodeInternal)
+		return nil, apperror.Default(apperror.CodeInternal)
 	}
 }

@@ -87,6 +87,9 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 	if v.Provider.Set {
 		r.ProviderId = new(v.Provider.Value.String())
 	}
+	if v.BodyRequired.Set {
+		r.BodyRequired = new(v.BodyRequired.Value)
+	}
 	for _, parameter := range v.Parameters {
 		r.Parameters = append(r.Parameters, toProtoParameterDraft(parameter))
 	}

@@ -196,7 +196,8 @@ CREATE TABLE web_service_bodies (
     id             uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     web_service_id uuid NOT NULL UNIQUE REFERENCES web_services(id) ON DELETE CASCADE,
     content_type   nonblank_text NOT NULL,
-    template       nonblank_text NOT NULL
+    template       nonblank_text NOT NULL,
+    body_required  boolean NOT NULL DEFAULT TRUE
 );
 CREATE TABLE web_service_contact_points (
     web_service_id   uuid NOT NULL REFERENCES web_services(id) ON DELETE CASCADE,
@@ -229,6 +230,7 @@ CREATE TABLE parameters (
         OR (web_service_id IS NULL AND location IS NULL AND property IS NULL AND NOT explode)
     ),
     CHECK (NOT explode OR (web_service_id IS NOT NULL AND location = 'QUERY')),
+    CHECK (location <> 'PATH' OR required),
     CHECK (schema_kind <> 'TEMPLATE' OR web_service_id IS NOT NULL),
     CHECK (template_parameter_id IS NULL OR schema_kind <> 'TEMPLATE'),
     UNIQUE (id, schema_kind)

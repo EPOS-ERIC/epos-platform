@@ -54,22 +54,20 @@ func toProtoDistributionAccess(request domain.AccessRequest) (*metadatalifecycle
 
 func toProtoAccessParameter(parameter domain.AccessParameter) (*metadatalifecyclev1.DistributionAccessParameterInput, error) {
 	result := &metadatalifecyclev1.DistributionAccessParameterInput{Id: parameter.ID.String()}
-	if parameter.Value.Scalar != nil {
-		if parameter.Value.Array != nil {
-			return nil, apperror.Default(apperror.CodeInternal)
-		}
-		scalar, err := toProtoAccessScalar(*parameter.Value.Scalar)
+	if value, ok := parameter.Value.(domain.AccessScalar); ok {
+		scalar, err := toProtoAccessScalar(value)
 		if err != nil {
 			return nil, err
 		}
 		result.Value = &metadatalifecyclev1.DistributionAccessParameterInput_Scalar{Scalar: scalar}
 		return result, nil
 	}
-	if len(parameter.Value.Array) == 0 {
+	items, ok := parameter.Value.(domain.AccessArray)
+	if !ok || len(items) == 0 {
 		return nil, apperror.Default(apperror.CodeInternal)
 	}
-	values := make([]*metadatalifecyclev1.DistributionAccessScalarValue, len(parameter.Value.Array))
-	for i, item := range parameter.Value.Array {
+	values := make([]*metadatalifecyclev1.DistributionAccessScalarValue, len(items))
+	for i, item := range items {
 		scalar, err := toProtoAccessScalar(item)
 		if err != nil {
 			return nil, err
@@ -84,15 +82,15 @@ func toProtoAccessParameter(parameter domain.AccessParameter) (*metadatalifecycl
 
 func toProtoAccessScalar(scalar domain.AccessScalar) (*metadatalifecyclev1.DistributionAccessScalarValue, error) {
 	result := &metadatalifecyclev1.DistributionAccessScalarValue{}
-	switch scalar.Kind {
-	case domain.AccessScalarString:
-		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_StringValue{StringValue: scalar.String}
-	case domain.AccessScalarBoolean:
-		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_BooleanValue{BooleanValue: scalar.Boolean}
-	case domain.AccessScalarInteger:
-		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_IntegerValue{IntegerValue: scalar.Integer}
-	case domain.AccessScalarFloat:
-		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_FloatValue{FloatValue: scalar.Float}
+	switch value := scalar.(type) {
+	case domain.AccessString:
+		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_StringValue{StringValue: string(value)}
+	case domain.AccessBoolean:
+		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_BooleanValue{BooleanValue: bool(value)}
+	case domain.AccessInteger:
+		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_IntegerValue{IntegerValue: int64(value)}
+	case domain.AccessFloat:
+		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_FloatValue{FloatValue: float64(value)}
 	default:
 		return nil, apperror.Default(apperror.CodeInternal)
 	}

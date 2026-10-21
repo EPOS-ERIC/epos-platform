@@ -2274,8 +2274,11 @@ components:
     DistributionAccessScalar:
       oneOf:
         - type: string
+          title: String
         - type: boolean
+          title: Boolean
         - type: number
+          title: Number
 
     # -------------------------------------------------------------------------
     # Shared enums
@@ -2634,6 +2637,9 @@ components:
           items: { $ref: "#/components/schemas/ParameterDraft" }
         body_content_type: { $ref: "#/components/schemas/NonBlankString" }
         body_template: { $ref: "#/components/schemas/NonBlankString" }
+        body_required:
+          type: boolean
+          description: Defaults to true when a request body is configured. Must be omitted when no body is configured. Optional bodies are omitted only when unresolved and no child values were supplied.
         body_parameters:
           type: array
           items: { $ref: "#/components/schemas/ScalarParameterDraft" }
@@ -3725,6 +3731,9 @@ components:
         format: { type: string }
         body_content_type: { type: string, nullable: true }
         body_template: { type: string, nullable: true }
+        body_required:
+          type: boolean
+          description: Whether the configured request body must be rendered. Omitted when no request body is configured.
         body_parameters:
           type: array
           items: { $ref: "#/components/schemas/ScalarParameter" }

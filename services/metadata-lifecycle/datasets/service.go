@@ -13,7 +13,7 @@ import (
 
 type Store interface {
 	Get(context.Context, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
-	GetDownloadDatasetVersion(context.Context, uuid.UUID) (uuid.UUID, uuid.UUID, error)
+	GetDistributionDatasetVersion(context.Context, uuid.UUID) (uuid.UUID, uuid.UUID, error)
 	List(context.Context, uuid.UUID) ([]domain.ResourceVersionSummary, error)
 	GetPublished(context.Context, uuid.UUID) (domain.DatasetVersion, error)
 	GetActive(context.Context, uuid.UUID) (domain.DatasetVersion, error)
@@ -117,37 +117,20 @@ func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, vers
 }
 
 func (s *Service) PrepareDownload(ctx context.Context, actor *domain.Actor, distributionID uuid.UUID) (domain.DistributionDownload, error) {
-	if distributionID == uuid.Nil {
-		return domain.DistributionDownload{}, apperror.Field("distribution_id", "Distribution ID must be a UUID.", nil)
-	}
-
-	datasetID, versionID, err := s.store.GetDownloadDatasetVersion(ctx, distributionID)
-	if err != nil {
-		return domain.DistributionDownload{}, operationError("resolve downloadable distribution", err)
-	}
-
-	dataset, err := s.Read(ctx, actor, datasetID, versionID)
+	datasetID, versionID, distribution, err := s.readDistribution(ctx, actor, distributionID)
 	if err != nil {
 		return domain.DistributionDownload{}, err
 	}
 
-	for _, distribution := range dataset.Metadata.Distributions {
-		if distribution.ID != distributionID {
-			continue
-		}
-
-		if distribution.Type != domain.DistributionTypeDownloadableFile || distribution.DownloadableFile == nil {
-			return domain.DistributionDownload{}, apperror.Field("distributionId", "Distribution is not a downloadable file.", nil)
-		}
-
-		return domain.DistributionDownload{
-			ResourceID: datasetID,
-			VersionID:  versionID,
-			URL:        distribution.DownloadableFile.URL,
-		}, nil
+	if distribution.Type != domain.DistributionTypeDownloadableFile || distribution.DownloadableFile == nil {
+		return domain.DistributionDownload{}, apperror.Field("distributionId", "Distribution is not a downloadable file.", nil)
 	}
 
-	return domain.DistributionDownload{}, apperror.Default(apperror.CodeNotFound)
+	return domain.DistributionDownload{
+		ResourceID: datasetID,
+		VersionID:  versionID,
+		URL:        distribution.DownloadableFile.URL,
+	}, nil
 }
 
 func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, datasetID uuid.UUID) ([]domain.ResourceVersionSummary, error) {

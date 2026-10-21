@@ -123,7 +123,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         """Verify native choices, labels, exact property matching and file exclusion."""
         group_id = create_group(self.gateway, f"formats-{uuid4().hex}")
         fixed = self.distribution(
-            "fixed", "unused-format", [self.format_parameter(location="PATH")]
+            "fixed", "unused-format", [self.format_parameter(location="PATH", required=True)]
         )
         fixed["web_service"]["template_url"] += "/{format}"
         distributions = [

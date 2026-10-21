@@ -549,31 +549,39 @@ func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWe
 
 const addLifecycleWebServiceBody = `-- name: AddLifecycleWebServiceBody :one
 INSERT INTO
-    web_service_bodies (web_service_id, content_type, template)
+    web_service_bodies (web_service_id, content_type, template, body_required)
 VALUES
     (
         $1,
         $2,
-        $3
+        $3,
+        $4
     )
 RETURNING
-    id, web_service_id, content_type, template
+    id, web_service_id, content_type, template, body_required
 `
 
 type AddLifecycleWebServiceBodyParams struct {
 	WebServiceID uuid.UUID
 	ContentType  string
 	Template     string
+	BodyRequired bool
 }
 
 func (q *Queries) AddLifecycleWebServiceBody(ctx context.Context, arg AddLifecycleWebServiceBodyParams) (WebServiceBody, error) {
-	row := q.db.QueryRow(ctx, addLifecycleWebServiceBody, arg.WebServiceID, arg.ContentType, arg.Template)
+	row := q.db.QueryRow(ctx, addLifecycleWebServiceBody,
+		arg.WebServiceID,
+		arg.ContentType,
+		arg.Template,
+		arg.BodyRequired,
+	)
 	var i WebServiceBody
 	err := row.Scan(
 		&i.ID,
 		&i.WebServiceID,
 		&i.ContentType,
 		&i.Template,
+		&i.BodyRequired,
 	)
 	return i, err
 }
@@ -797,12 +805,13 @@ inserted_web_services AS (
 ),
 inserted_web_service_bodies AS (
     INSERT INTO
-        web_service_bodies (id, web_service_id, content_type, template)
+        web_service_bodies (id, web_service_id, content_type, template, body_required)
     SELECT
         uuid_generate_v5(target.id, source.id::text),
         target.id,
         source.content_type,
-        source.template
+        source.template,
+        source.body_required
     FROM
         web_service_bodies AS source
         JOIN web_services AS source_service ON source_service.id = source.web_service_id
@@ -1506,7 +1515,7 @@ func (q *Queries) GetActiveLifecycleDatasetVersion(ctx context.Context, datasetI
 	return i, err
 }
 
-const getDownloadLifecycleDatasetVersion = `-- name: GetDownloadLifecycleDatasetVersion :one
+const getDistributionLifecycleDatasetVersion = `-- name: GetDistributionLifecycleDatasetVersion :one
 SELECT
     dataset_versions.dataset_id,
     dataset_versions.id AS version_id
@@ -1517,14 +1526,14 @@ WHERE
     distributions.id = $1
 `
 
-type GetDownloadLifecycleDatasetVersionRow struct {
+type GetDistributionLifecycleDatasetVersionRow struct {
 	DatasetID uuid.UUID
 	VersionID uuid.UUID
 }
 
-func (q *Queries) GetDownloadLifecycleDatasetVersion(ctx context.Context, distributionID uuid.UUID) (GetDownloadLifecycleDatasetVersionRow, error) {
-	row := q.db.QueryRow(ctx, getDownloadLifecycleDatasetVersion, distributionID)
-	var i GetDownloadLifecycleDatasetVersionRow
+func (q *Queries) GetDistributionLifecycleDatasetVersion(ctx context.Context, distributionID uuid.UUID) (GetDistributionLifecycleDatasetVersionRow, error) {
+	row := q.db.QueryRow(ctx, getDistributionLifecycleDatasetVersion, distributionID)
+	var i GetDistributionLifecycleDatasetVersionRow
 	err := row.Scan(&i.DatasetID, &i.VersionID)
 	return i, err
 }
@@ -2491,7 +2500,7 @@ func (q *Queries) ListLifecycleTemplateParameters(ctx context.Context, parameter
 
 const listLifecycleWebServiceBodies = `-- name: ListLifecycleWebServiceBodies :many
 SELECT
-    id, web_service_id, content_type, template
+    id, web_service_id, content_type, template, body_required
 FROM
     web_service_bodies
 WHERE
@@ -2514,6 +2523,7 @@ func (q *Queries) ListLifecycleWebServiceBodies(ctx context.Context, webServiceI
 			&i.WebServiceID,
 			&i.ContentType,
 			&i.Template,
+			&i.BodyRequired,
 		); err != nil {
 			return nil, err
 		}

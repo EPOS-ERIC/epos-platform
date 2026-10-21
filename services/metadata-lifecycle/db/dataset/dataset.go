@@ -132,14 +132,14 @@ func (r *Repo) Get(ctx context.Context, datasetID, versionID uuid.UUID) (domain.
 	return datasetResultFromRow(ctx, q, version)
 }
 
-func (r *Repo) GetDownloadDatasetVersion(ctx context.Context, distributionID uuid.UUID) (uuid.UUID, uuid.UUID, error) {
-	row, err := r.q.GetDownloadLifecycleDatasetVersion(ctx, distributionID)
+func (r *Repo) GetDistributionDatasetVersion(ctx context.Context, distributionID uuid.UUID) (uuid.UUID, uuid.UUID, error) {
+	row, err := r.q.GetDistributionLifecycleDatasetVersion(ctx, distributionID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return uuid.Nil, uuid.Nil, apperror.Default(apperror.CodeNotFound)
 		}
 
-		return uuid.Nil, uuid.Nil, fmt.Errorf("get dataset version for download distribution: %w", err)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("get dataset version for distribution: %w", err)
 	}
 
 	return row.DatasetID, row.VersionID, nil
@@ -532,6 +532,7 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				WebServiceID: created.ID,
 				ContentType:  service.Body.ContentType,
 				Template:     service.Body.Template,
+				BodyRequired: *service.Body.Required,
 			})
 			if err != nil {
 				return fmt.Errorf("add web service body: %w", err)
@@ -744,7 +745,11 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		}
 		bodyByID[body.ID] = body
 		service := result[body.WebServiceID]
-		service.Body = &domain.RequestBody{ContentType: body.ContentType, Template: body.Template}
+		service.Body = &domain.RequestBody{
+			Required:    body.BodyRequired,
+			ContentType: body.ContentType,
+			Template:    body.Template,
+		}
 		result[body.WebServiceID] = service
 	}
 	parameters, err := q.ListLifecycleWebServiceParameters(ctx, ids)

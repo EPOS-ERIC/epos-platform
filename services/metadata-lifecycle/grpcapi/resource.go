@@ -165,24 +165,34 @@ func (s *ResourceServer) PrepareDistributionAccess(ctx context.Context, request 
 		return nil, apperror.New(apperror.CodeValidationFailed, "distribution access request is required")
 	}
 
-	if _, err := parseUUIDAt(request.GetDistributionId(), "distribution id", "distributionId"); err != nil {
+	distributionID, err := parseUUIDAt(request.GetDistributionId(), "distribution id", "distributionId")
+	if err != nil {
 		return nil, err
 	}
 
-	if _, err := optionalActorFromContext(ctx); err != nil {
+	input, err := toDomainDistributionAccessInput(request)
+	if err != nil {
 		return nil, err
 	}
 
-	if err := ctx.Err(); err != nil {
+	actor, err := optionalActorFromContext(ctx)
+	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Map protobuf input to domain types and call datasets.Service.PrepareAccess
-	// in datasets/distribution_access.go. Resolve the owning dataset version through
-	// db/dataset and reuse dataset read authorization. Keep parameter validation,
-	// defaults, native format selection and request rendering in domain/; map the
-	// prepared domain result back to protobuf here.
-	return nil, apperror.Default(apperror.CodeInternal)
+	prepared, err := s.datasets.PrepareAccess(ctx, actor, distributionID, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.PrepareDistributionAccessResponse{
+		ResourceId: prepared.ResourceID.String(),
+		VersionId:  prepared.VersionID.String(),
+		Method:     webServiceMethodOutput(prepared.Method),
+		Url:        prepared.URL,
+		Headers:    prepared.Headers,
+		Body:       prepared.Body,
+	}, nil
 }
 
 func (s *ResourceServer) ListResourceVersions(ctx context.Context, request *metadatalifecyclev1.ListResourceVersionsRequest) (*metadatalifecyclev1.ListResourceVersionsResponse, error) {
@@ -850,6 +860,7 @@ func webServiceOutput(value domain.WebService) *metadatalifecyclev1.WebService {
 	if value.Body != nil {
 		result.BodyContentType = &value.Body.ContentType
 		result.BodyTemplate = &value.Body.Template
+		result.BodyRequired = &value.Body.Required
 		for _, parameter := range value.Body.Parameters {
 			result.BodyParameters = append(result.BodyParameters, scalarParameterOutput(parameter))
 		}
@@ -1221,6 +1232,9 @@ func webServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServ
 		return domain.WebServiceInput{}, err
 	}
 	var body *domain.RequestBodyInput
+	if value.BodyRequired != nil && value.BodyContentType == nil && value.BodyTemplate == nil && len(value.GetBodyParameters()) == 0 {
+		return domain.WebServiceInput{}, apperror.Field("body_required", "Body required is only allowed with a configured request body.", nil)
+	}
 	if value.BodyContentType != nil || value.BodyTemplate != nil || len(value.GetBodyParameters()) > 0 {
 		if value.BodyContentType == nil || value.BodyTemplate == nil {
 			return domain.WebServiceInput{}, apperror.New(apperror.CodeValidationFailed, "web service body content type and template are required") //nolint:wrapcheck
@@ -1233,7 +1247,12 @@ func webServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServ
 			}
 			bodyParameters = append(bodyParameters, mapped)
 		}
-		body = &domain.RequestBodyInput{ContentType: value.GetBodyContentType(), Template: value.GetBodyTemplate(), Parameters: bodyParameters}
+		body = &domain.RequestBodyInput{
+			Required:    value.BodyRequired,
+			ContentType: value.GetBodyContentType(),
+			Template:    value.GetBodyTemplate(),
+			Parameters:  bodyParameters,
+		}
 	}
 	return domain.WebServiceInput{Name: value.GetName(), Description: value.Description, TemplateURL: value.GetTemplateUrl(), Method: method, Type: serviceType, VisibleOn: visibleOn, Body: body, Parameters: parameters, Format: value.GetFormat(), ProviderID: provider, Documentation: documentation, SpatialCoverage: spatial, TemporalCoverage: temporal, ContactPointIDs: contactPoints}, nil
 }

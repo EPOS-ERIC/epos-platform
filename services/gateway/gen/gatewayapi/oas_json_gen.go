@@ -14956,6 +14956,41 @@ func (s *OfficialConfigurationSummary) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes bool as json.
+func (o OptBool) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Bool(bool(o.Value))
+}
+
+// Decode decodes bool from json.
+func (o *OptBool) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptBool to nil")
+	}
+	o.Set = true
+	v, err := d.Bool()
+	if err != nil {
+		return err
+	}
+	o.Value = bool(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptBool) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptBool) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes time.Time as json.
 func (o OptDateTime) Encode(e *jx.Encoder, format func(*jx.Encoder, time.Time)) {
 	if !o.Set {
@@ -27002,6 +27037,12 @@ func (s *WebService) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.BodyRequired.Set {
+			e.FieldStart("body_required")
+			s.BodyRequired.Encode(e)
+		}
+	}
+	{
 		if s.BodyParameters != nil {
 			e.FieldStart("body_parameters")
 			e.ArrStart()
@@ -27047,7 +27088,7 @@ func (s *WebService) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWebService = [17]string{
+var jsonFieldsNameOfWebService = [18]string{
 	0:  "id",
 	1:  "name",
 	2:  "description",
@@ -27059,12 +27100,13 @@ var jsonFieldsNameOfWebService = [17]string{
 	8:  "format",
 	9:  "body_content_type",
 	10: "body_template",
-	11: "body_parameters",
-	12: "provider",
-	13: "documentation",
-	14: "spatial_coverage",
-	15: "temporal_coverage",
-	16: "contact_points",
+	11: "body_required",
+	12: "body_parameters",
+	13: "provider",
+	14: "documentation",
+	15: "spatial_coverage",
+	16: "temporal_coverage",
+	17: "contact_points",
 }
 
 // Decode decodes WebService from json.
@@ -27200,6 +27242,16 @@ func (s *WebService) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"body_template\"")
+			}
+		case "body_required":
+			if err := func() error {
+				s.BodyRequired.Reset()
+				if err := s.BodyRequired.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_required\"")
 			}
 		case "body_parameters":
 			if err := func() error {
@@ -27938,6 +27990,12 @@ func (s *WebServiceDraft) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.BodyRequired.Set {
+			e.FieldStart("body_required")
+			s.BodyRequired.Encode(e)
+		}
+	}
+	{
 		if s.BodyParameters != nil {
 			e.FieldStart("body_parameters")
 			e.ArrStart()
@@ -27987,7 +28045,7 @@ func (s *WebServiceDraft) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWebServiceDraft = [16]string{
+var jsonFieldsNameOfWebServiceDraft = [17]string{
 	0:  "name",
 	1:  "description",
 	2:  "template_url",
@@ -27997,13 +28055,14 @@ var jsonFieldsNameOfWebServiceDraft = [16]string{
 	6:  "parameters",
 	7:  "body_content_type",
 	8:  "body_template",
-	9:  "body_parameters",
-	10: "format",
-	11: "provider",
-	12: "documentation",
-	13: "spatial_coverage",
-	14: "temporal_coverage",
-	15: "contact_points",
+	9:  "body_required",
+	10: "body_parameters",
+	11: "format",
+	12: "provider",
+	13: "documentation",
+	14: "spatial_coverage",
+	15: "temporal_coverage",
+	16: "contact_points",
 }
 
 // Decode decodes WebServiceDraft from json.
@@ -28011,7 +28070,7 @@ func (s *WebServiceDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode WebServiceDraft to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -28112,6 +28171,16 @@ func (s *WebServiceDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"body_template\"")
 			}
+		case "body_required":
+			if err := func() error {
+				s.BodyRequired.Reset()
+				if err := s.BodyRequired.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_required\"")
+			}
 		case "body_parameters":
 			if err := func() error {
 				s.BodyParameters = make([]ScalarParameterDraft, 0)
@@ -28130,7 +28199,7 @@ func (s *WebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"body_parameters\"")
 			}
 		case "format":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				if err := s.Format.Decode(d); err != nil {
 					return err
@@ -28207,9 +28276,10 @@ func (s *WebServiceDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
+	for i, mask := range [3]uint8{
 		0b00011101,
-		0b00000100,
+		0b00001000,
+		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

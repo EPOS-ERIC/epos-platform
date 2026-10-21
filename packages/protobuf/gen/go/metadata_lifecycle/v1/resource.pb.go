@@ -2699,6 +2699,7 @@ type WebServiceInput struct {
 	BodyParameters   []*ScalarParameterInput `protobuf:"bytes,14,rep,name=body_parameters,json=bodyParameters,proto3" json:"body_parameters,omitempty"`
 	Type             WebServiceType          `protobuf:"varint,15,opt,name=type,proto3,enum=metadata_lifecycle.v1.WebServiceType" json:"type,omitempty"`
 	VisibleOn        []WebServiceVisibleOn   `protobuf:"varint,16,rep,packed,name=visible_on,json=visibleOn,proto3,enum=metadata_lifecycle.v1.WebServiceVisibleOn" json:"visible_on,omitempty"`
+	BodyRequired     *bool                   `protobuf:"varint,17,opt,name=body_required,json=bodyRequired,proto3,oneof" json:"body_required,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -2845,6 +2846,13 @@ func (x *WebServiceInput) GetVisibleOn() []WebServiceVisibleOn {
 	return nil
 }
 
+func (x *WebServiceInput) GetBodyRequired() bool {
+	if x != nil && x.BodyRequired != nil {
+		return *x.BodyRequired
+	}
+	return false
+}
+
 type WebService struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -2864,6 +2872,7 @@ type WebService struct {
 	BodyParameters    []*ScalarParameter     `protobuf:"bytes,17,rep,name=body_parameters,json=bodyParameters,proto3" json:"body_parameters,omitempty"`
 	Type              WebServiceType         `protobuf:"varint,18,opt,name=type,proto3,enum=metadata_lifecycle.v1.WebServiceType" json:"type,omitempty"`
 	VisibleOn         []WebServiceVisibleOn  `protobuf:"varint,19,rep,packed,name=visible_on,json=visibleOn,proto3,enum=metadata_lifecycle.v1.WebServiceVisibleOn" json:"visible_on,omitempty"`
+	BodyRequired      *bool                  `protobuf:"varint,20,opt,name=body_required,json=bodyRequired,proto3,oneof" json:"body_required,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -3015,6 +3024,13 @@ func (x *WebService) GetVisibleOn() []WebServiceVisibleOn {
 		return x.VisibleOn
 	}
 	return nil
+}
+
+func (x *WebService) GetBodyRequired() bool {
+	if x != nil && x.BodyRequired != nil {
+		return *x.BodyRequired
+	}
+	return false
 }
 
 type DownloadableFile struct {
@@ -6413,13 +6429,14 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x1aGetResourceVersionResponse\x12B\n" +
 	"\bresource\x18\x01 \x01(\v2&.metadata_lifecycle.v1.ResourceVersionR\bresource\"W\n" +
 	"\"PrepareDistributionDownloadRequest\x121\n" +
-	"\x0fdistribution_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0edistributionId\"\x94\x01\n" +
+	"\x0fdistribution_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0edistributionId\"\x97\x01\n" +
 	"#PrepareDistributionDownloadResponse\x12)\n" +
 	"\vresource_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"resourceId\x12'\n" +
 	"\n" +
-	"version_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\x12\x19\n" +
-	"\x03url\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x03url\"\xe9\x01\n" +
+	"version_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\x12\x1c\n" +
+	"\x03url\x18\x03 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x88\x01\x01R\x03url\"\xe9\x01\n" +
 	" DistributionAccessParameterInput\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12N\n" +
 	"\x06scalar\x18\x02 \x01(\v24.metadata_lifecycle.v1.DistributionAccessScalarValueH\x00R\x06scalar\x12K\n" +
@@ -6692,7 +6709,7 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"_byte_size\"[\n" +
 	"\fNativeFormat\x12,\n" +
 	"\routput_format\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\foutputFormat\x12\x1d\n" +
-	"\x05label\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05label\"\xb5\b\n" +
+	"\x05label\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05label\"\xf1\b\n" +
 	"\x0fWebServiceInput\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12.\n" +
 	"\vdescription\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\vdescription\x88\x01\x01\x12*\n" +
@@ -6716,12 +6733,14 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x04type\x18\x0f \x01(\x0e2%.metadata_lifecycle.v1.WebServiceTypeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04type\x12X\n" +
 	"\n" +
 	"visible_on\x18\x10 \x03(\x0e2*.metadata_lifecycle.v1.WebServiceVisibleOnB\r\xbaH\n" +
-	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\tvisibleOnB\x0e\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\tvisibleOn\x12(\n" +
+	"\rbody_required\x18\x11 \x01(\bH\x05R\fbodyRequired\x88\x01\x01B\x0e\n" +
 	"\f_descriptionB\x0e\n" +
 	"\f_provider_idB\x13\n" +
 	"\x11_spatial_coverageB\x14\n" +
 	"\x12_body_content_typeB\x10\n" +
-	"\x0e_body_template\"\xe1\b\n" +
+	"\x0e_body_templateB\x10\n" +
+	"\x0e_body_required\"\x9d\t\n" +
 	"\n" +
 	"WebService\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12.\n" +
@@ -6746,11 +6765,13 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x04type\x18\x12 \x01(\x0e2%.metadata_lifecycle.v1.WebServiceTypeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04type\x12X\n" +
 	"\n" +
 	"visible_on\x18\x13 \x03(\x0e2*.metadata_lifecycle.v1.WebServiceVisibleOnB\r\xbaH\n" +
-	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\tvisibleOnB\x0e\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\tvisibleOn\x12(\n" +
+	"\rbody_required\x18\x14 \x01(\bH\x04R\fbodyRequired\x88\x01\x01B\x0e\n" +
 	"\f_descriptionB\x13\n" +
 	"\x11_spatial_coverageB\x14\n" +
 	"\x12_body_content_typeB\x10\n" +
-	"\x0e_body_template\"O\n" +
+	"\x0e_body_templateB\x10\n" +
+	"\x0e_body_required\"O\n" +
 	"\x10DownloadableFile\x12\x1a\n" +
 	"\x03url\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01R\x03url\x12\x1f\n" +
 	"\x06format\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06format\"\x99\x01\n" +

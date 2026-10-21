@@ -1052,6 +1052,7 @@ type WebServiceBody struct {
 	WebServiceID uuid.UUID
 	ContentType  string
 	Template     string
+	BodyRequired bool
 }
 
 type WebServiceContactPoint struct {

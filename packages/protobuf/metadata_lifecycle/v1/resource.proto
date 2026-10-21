@@ -40,7 +40,10 @@ message PrepareDistributionDownloadRequest {
 message PrepareDistributionDownloadResponse {
   string resource_id = 1 [(buf.validate.field).string.uuid = true];
   string version_id = 2 [(buf.validate.field).string.uuid = true];
-  string url = 3 [(buf.validate.field).string.min_len = 1];
+  string url = 3 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.uri = true
+  ];
 }
 
 message DistributionAccessParameterInput {
@@ -76,7 +79,10 @@ message PrepareDistributionAccessResponse {
   string resource_id = 1 [(buf.validate.field).string.uuid = true];
   string version_id = 2 [(buf.validate.field).string.uuid = true];
   WebServiceMethod method = 3 [(buf.validate.field).enum.defined_only = true];
-  string url = 4 [(buf.validate.field).string.min_len = 1, (buf.validate.field).string.uri = true];
+  string url = 4 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.uri = true
+  ];
   map<string, string> headers = 5;
   optional bytes body = 6;
 }
@@ -312,6 +318,7 @@ message WebServiceInput {
   repeated ScalarParameterInput body_parameters = 14;
   WebServiceType type = 15 [(buf.validate.field).enum.defined_only = true];
   repeated WebServiceVisibleOn visible_on = 16 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  optional bool body_required = 17;
 }
 
 message WebService {
@@ -332,6 +339,7 @@ message WebService {
   repeated ScalarParameter body_parameters = 17;
   WebServiceType type = 18 [(buf.validate.field).enum.defined_only = true];
   repeated WebServiceVisibleOn visible_on = 19 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  optional bool body_required = 20;
 }
 
 message DownloadableFile {

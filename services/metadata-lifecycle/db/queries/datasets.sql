@@ -221,7 +221,7 @@ WHERE
     dataset_id = sqlc.arg(dataset_id)
     AND STATUS = 'PUBLISHED';
 
--- name: GetDownloadLifecycleDatasetVersion :one
+-- name: GetDistributionLifecycleDatasetVersion :one
 SELECT
     dataset_versions.dataset_id,
     dataset_versions.id AS version_id
@@ -445,12 +445,13 @@ inserted_web_services AS (
 ),
 inserted_web_service_bodies AS (
     INSERT INTO
-        web_service_bodies (id, web_service_id, content_type, template)
+        web_service_bodies (id, web_service_id, content_type, template, body_required)
     SELECT
         uuid_generate_v5(target.id, source.id::text),
         target.id,
         source.content_type,
-        source.template
+        source.template,
+        source.body_required
     FROM
         web_service_bodies AS source
         JOIN web_services AS source_service ON source_service.id = source.web_service_id
@@ -910,12 +911,13 @@ RETURNING
 
 -- name: AddLifecycleWebServiceBody :one
 INSERT INTO
-    web_service_bodies (web_service_id, content_type, template)
+    web_service_bodies (web_service_id, content_type, template, body_required)
 VALUES
     (
         sqlc.arg(web_service_id),
         sqlc.arg(content_type),
-        sqlc.arg(template)
+        sqlc.arg(template),
+        sqlc.arg(body_required)
     )
 RETURNING
     *;

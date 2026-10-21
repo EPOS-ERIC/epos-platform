@@ -7883,6 +7883,52 @@ func (s *OfficialConfigurationSummary) SetUpdatedAt(val time.Time) {
 	s.UpdatedAt = val
 }
 
+// NewOptBool returns new OptBool with value set to v.
+func NewOptBool(v bool) OptBool {
+	return OptBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptBool is optional bool.
+type OptBool struct {
+	Value bool
+	Set   bool
+}
+
+// IsSet returns true if OptBool was set.
+func (o OptBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptBool) SetTo(v bool) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptBool) Get() (v bool, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptDateTime returns new OptDateTime with value set to v.
 func NewOptDateTime(v time.Time) OptDateTime {
 	return OptDateTime{
@@ -14048,9 +14094,11 @@ type WebService struct {
 	Format          string                         `json:"format"`
 	BodyContentType OptNilString                   `json:"body_content_type"`
 	BodyTemplate    OptNilString                   `json:"body_template"`
-	BodyParameters  []ScalarParameter              `json:"body_parameters"`
-	Provider        OptResourceVersionReference    `json:"provider"`
-	Documentation   OptDocumentation               `json:"documentation"`
+	// Whether the configured request body must be rendered. Omitted when no request body is configured.
+	BodyRequired   OptBool                     `json:"body_required"`
+	BodyParameters []ScalarParameter           `json:"body_parameters"`
+	Provider       OptResourceVersionReference `json:"provider"`
+	Documentation  OptDocumentation            `json:"documentation"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
@@ -14110,6 +14158,11 @@ func (s *WebService) GetBodyContentType() OptNilString {
 // GetBodyTemplate returns the value of BodyTemplate.
 func (s *WebService) GetBodyTemplate() OptNilString {
 	return s.BodyTemplate
+}
+
+// GetBodyRequired returns the value of BodyRequired.
+func (s *WebService) GetBodyRequired() OptBool {
+	return s.BodyRequired
 }
 
 // GetBodyParameters returns the value of BodyParameters.
@@ -14195,6 +14248,11 @@ func (s *WebService) SetBodyContentType(val OptNilString) {
 // SetBodyTemplate sets the value of BodyTemplate.
 func (s *WebService) SetBodyTemplate(val OptNilString) {
 	s.BodyTemplate = val
+}
+
+// SetBodyRequired sets the value of BodyRequired.
+func (s *WebService) SetBodyRequired(val OptBool) {
+	s.BodyRequired = val
 }
 
 // SetBodyParameters sets the value of BodyParameters.
@@ -14514,10 +14572,13 @@ type WebServiceDraft struct {
 	Parameters      []ParameterDraft               `json:"parameters"`
 	BodyContentType OptNonBlankString              `json:"body_content_type"`
 	BodyTemplate    OptNonBlankString              `json:"body_template"`
-	BodyParameters  []ScalarParameterDraft         `json:"body_parameters"`
-	Format          NonBlankString                 `json:"format"`
-	Provider        OptUUID                        `json:"provider"`
-	Documentation   OptDocumentation               `json:"documentation"`
+	// Defaults to true when a request body is configured. Must be omitted when no body is configured.
+	// Optional bodies are omitted only when unresolved and no child values were supplied.
+	BodyRequired   OptBool                `json:"body_required"`
+	BodyParameters []ScalarParameterDraft `json:"body_parameters"`
+	Format         NonBlankString         `json:"format"`
+	Provider       OptUUID                `json:"provider"`
+	Documentation  OptDocumentation       `json:"documentation"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
@@ -14567,6 +14628,11 @@ func (s *WebServiceDraft) GetBodyContentType() OptNonBlankString {
 // GetBodyTemplate returns the value of BodyTemplate.
 func (s *WebServiceDraft) GetBodyTemplate() OptNonBlankString {
 	return s.BodyTemplate
+}
+
+// GetBodyRequired returns the value of BodyRequired.
+func (s *WebServiceDraft) GetBodyRequired() OptBool {
+	return s.BodyRequired
 }
 
 // GetBodyParameters returns the value of BodyParameters.
@@ -14647,6 +14713,11 @@ func (s *WebServiceDraft) SetBodyContentType(val OptNonBlankString) {
 // SetBodyTemplate sets the value of BodyTemplate.
 func (s *WebServiceDraft) SetBodyTemplate(val OptNonBlankString) {
 	s.BodyTemplate = val
+}
+
+// SetBodyRequired sets the value of BodyRequired.
+func (s *WebServiceDraft) SetBodyRequired(val OptBool) {
+	s.BodyRequired = val
 }
 
 // SetBodyParameters sets the value of BodyParameters.

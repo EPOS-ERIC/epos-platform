@@ -157,7 +157,10 @@ func (r *retrievalBody) Close() error {
 
 func retrievalRPCError(log *slog.Logger, ctx context.Context, err error) error {
 	wrapped := wrapRPCError(log, ctx, "data-retriever", "retrieve distribution response", err)
-	if ctx.Err() != nil || apperror.IsCode(wrapped, apperror.CodeInternal) {
+	if ctx.Err() != nil ||
+		apperror.IsCode(wrapped, apperror.CodeInternal) ||
+		apperror.IsCode(wrapped, apperror.CodeUpstreamUnavailable) ||
+		apperror.IsCode(wrapped, apperror.CodeUpstreamTimeout) {
 		return wrapped
 	}
 

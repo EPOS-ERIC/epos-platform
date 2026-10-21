@@ -195,16 +195,14 @@ func (x *OutputParameter) GetKind() OutputParameterKind {
 }
 
 type RetrieveStreamRequest struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Method HTTPMethod             `protobuf:"varint,1,opt,name=method,proto3,enum=data_retriever.v1.HTTPMethod" json:"method,omitempty"`
-	// Fully prepared URL, including escaped path and query values. Never re-encode it.
-	Url     string            `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	Headers map[string]string `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Raw rendered body. Presence distinguishes an empty body from no body.
-	Body            []byte `protobuf:"bytes,4,opt,name=body,proto3,oneof" json:"body,omitempty"`
-	ResourceId      string `protobuf:"bytes,5,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
-	VersionId       string `protobuf:"bytes,6,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
-	SkipPersistence bool   `protobuf:"varint,7,opt,name=skip_persistence,json=skipPersistence,proto3" json:"skip_persistence,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Method          HTTPMethod             `protobuf:"varint,1,opt,name=method,proto3,enum=data_retriever.v1.HTTPMethod" json:"method,omitempty"`
+	Url             string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	Headers         map[string]string      `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Body            []byte                 `protobuf:"bytes,4,opt,name=body,proto3,oneof" json:"body,omitempty"`
+	ResourceId      string                 `protobuf:"bytes,5,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	VersionId       string                 `protobuf:"bytes,6,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	SkipPersistence bool                   `protobuf:"varint,7,opt,name=skip_persistence,json=skipPersistence,proto3" json:"skip_persistence,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -681,10 +679,11 @@ const file_data_retriever_v1_data_retriever_proto_rawDesc = "" +
 	"&data_retriever/v1/data_retriever.proto\x12\x11data_retriever.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"t\n" +
 	"\x0fOutputParameter\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12D\n" +
-	"\x04kind\x18\x02 \x01(\x0e2&.data_retriever.v1.OutputParameterKindB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04kind\"\xa1\x03\n" +
+	"\x04kind\x18\x02 \x01(\x0e2&.data_retriever.v1.OutputParameterKindB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04kind\"\xa4\x03\n" +
 	"\x15RetrieveStreamRequest\x12?\n" +
-	"\x06method\x18\x01 \x01(\x0e2\x1d.data_retriever.v1.HTTPMethodB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06method\x12\x19\n" +
-	"\x03url\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x03url\x12O\n" +
+	"\x06method\x18\x01 \x01(\x0e2\x1d.data_retriever.v1.HTTPMethodB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06method\x12\x1c\n" +
+	"\x03url\x18\x02 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x88\x01\x01R\x03url\x12O\n" +
 	"\aheaders\x18\x03 \x03(\v25.data_retriever.v1.RetrieveStreamRequest.HeadersEntryR\aheaders\x12\x17\n" +
 	"\x04body\x18\x04 \x01(\fH\x00R\x04body\x88\x01\x01\x12)\n" +
 	"\vresource_id\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +

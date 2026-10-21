@@ -2,6 +2,7 @@ package domain
 
 import "fmt"
 
+// TODO: use a dedicated column for "role" of a parameter
 const encodingFormatProperty = "schema:encodingFormat"
 
 type NativeFormat struct {

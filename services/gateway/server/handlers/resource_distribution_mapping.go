@@ -115,6 +115,9 @@ func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.WebServi
 		TemporalCoverage: toAPITemporalCoverage(value.TemporalCoverage),
 		ContactPoints:    make([]uuid.UUID, 0, len(value.ContactPoints)),
 	}
+	if value.BodyRequired != nil {
+		result.BodyRequired.SetTo(*value.BodyRequired)
+	}
 	for _, parameter := range value.Parameters {
 		if parameter == nil {
 			continue
