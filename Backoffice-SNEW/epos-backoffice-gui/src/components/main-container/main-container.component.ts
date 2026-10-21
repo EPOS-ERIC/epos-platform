@@ -52,6 +52,7 @@ type RouteState = {
 };
 
 const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
+const THEME_STORAGE_KEY = 'epos-backoffice-theme';
 
 @Component({
   selector: 'app-main-container',
@@ -98,7 +99,7 @@ export class MainContainerComponent {
   protected readonly globalManagePanel = signal('');
   protected readonly manageBackRoute = signal('/data');
   protected readonly sectionPath = signal('data');
-  protected readonly darkMode = signal(false);
+  protected readonly darkMode = signal(this.localStorage.get(THEME_STORAGE_KEY) === 'dark');
   protected readonly discoveryItems = signal<DiscoveryItem[] | null>(null);
   protected readonly discoveryLoading = signal(false);
   protected readonly groups = this.groupsStore.groups;
@@ -208,7 +209,10 @@ export class MainContainerComponent {
       });
 
     effect(() => {
-      this.document.documentElement.setAttribute('data-theme', this.darkMode() ? 'dark' : 'light');
+      // Check and set theme
+      const theme = this.darkMode() ? 'dark' : 'light';
+      this.document.documentElement.setAttribute('data-theme', theme);
+      this.localStorage.set(THEME_STORAGE_KEY, theme);
     });
   }
 
