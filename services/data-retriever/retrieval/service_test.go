@@ -67,17 +67,10 @@ func (failingBody) Read([]byte) (int, error) { return 0, errors.New("upstream re
 func (failingBody) Close() error             { return nil }
 
 type recordingSink struct {
-	events  []string
-	record  *domain.RetrievalRecord
-	head    domain.ResponseHead
-	command string
-	chunks  [][]byte
-}
-
-func (s *recordingSink) SendDry(command string) error {
-	s.events = append(s.events, "dry")
-	s.command = command
-	return nil
+	events []string
+	record *domain.RetrievalRecord
+	head   domain.ResponseHead
+	chunks [][]byte
 }
 
 func (s *recordingSink) SendHeaders(record *domain.RetrievalRecord, head domain.ResponseHead) error {
@@ -104,10 +97,10 @@ func TestServiceStreamsAndFinalizesCompletePayload(t *testing.T) {
 	}}, slog.Default(), 1024, 1024)
 	sink := &recordingSink{}
 	input := domain.RetrievalInput{
-		ResourceID:  resourceID,
-		VersionID:   versionID,
-		Method:      "GET",
-		URLTemplate: "https://example.test/data",
+		ResourceID: resourceID,
+		VersionID:  versionID,
+		Method:     "GET",
+		URL:        "https://example.test/data",
 	}
 
 	if err := service.Retrieve(t.Context(), input, sink); err != nil {
@@ -125,27 +118,6 @@ func TestServiceStreamsAndFinalizesCompletePayload(t *testing.T) {
 	}
 }
 
-func TestServiceDryRunSkipsUpstreamAndPersistence(t *testing.T) {
-	client := &stubUpstreamClient{}
-	repo := &stubRepository{}
-	service := New(repo, client, slog.Default(), 1024, 1024)
-	sink := &recordingSink{}
-	input := domain.RetrievalInput{
-		Mode:        domain.RetrieveModeDry,
-		ResourceID:  uuid.New(),
-		VersionID:   uuid.New(),
-		Method:      "GET",
-		URLTemplate: "https://example.test/data",
-	}
-
-	if err := service.Retrieve(t.Context(), input, sink); err != nil {
-		t.Fatalf("Retrieve() error = %v", err)
-	}
-	if client.calls != 0 || repo.creates != 0 || len(sink.events) != 1 || sink.events[0] != "dry" || sink.command == "" {
-		t.Fatalf("dry run touched upstream/storage or sent wrong event: calls=%d creates=%d sink=%+v", client.calls, repo.creates, sink)
-	}
-}
-
 func TestServiceStreamsResponseWhenRedirectHasNoLocation(t *testing.T) {
 	const body = "not redirected"
 	client := &stubUpstreamClient{response: &UpstreamResponse{
@@ -156,10 +128,10 @@ func TestServiceStreamsResponseWhenRedirectHasNoLocation(t *testing.T) {
 	service := New(repo, client, slog.Default(), 1024, 1024)
 	sink := &recordingSink{}
 	input := domain.RetrievalInput{
-		ResourceID:  uuid.New(),
-		VersionID:   uuid.New(),
-		Method:      "GET",
-		URLTemplate: "https://example.test/data",
+		ResourceID: uuid.New(),
+		VersionID:  uuid.New(),
+		Method:     "GET",
+		URL:        "https://example.test/data",
 	}
 
 	if err := service.Retrieve(t.Context(), input, sink); err != nil {
@@ -178,10 +150,10 @@ func TestServiceReadFailureMarksRetrievalIncomplete(t *testing.T) {
 	repo := &stubRepository{}
 	service := New(repo, client, slog.Default(), 1024, 1024)
 	input := domain.RetrievalInput{
-		ResourceID:  uuid.New(),
-		VersionID:   uuid.New(),
-		Method:      "GET",
-		URLTemplate: "https://example.test/data",
+		ResourceID: uuid.New(),
+		VersionID:  uuid.New(),
+		Method:     "GET",
+		URL:        "https://example.test/data",
 	}
 
 	err := service.Retrieve(t.Context(), input, &recordingSink{})

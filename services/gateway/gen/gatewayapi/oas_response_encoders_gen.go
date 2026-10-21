@@ -8,12 +8,36 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
-	"github.com/ogen-go/ogen/conv"
 	ht "github.com/ogen-go/ogen/http"
-	"github.com/ogen-go/ogen/uri"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
+
+func encodeAccessDistributionResponse(response *AccessDistribution2XXStatusCode, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	code := response.StatusCode
+	if code == 0 {
+		// Set default status code.
+		code = http.StatusOK
+	}
+	w.WriteHeader(code)
+	if code >= http.StatusInternalServerError {
+		span.SetStatus(codes.Error, http.StatusText(code))
+	}
+
+	writer := w
+	if closer, ok := response.Response.Data.(io.Closer); ok {
+		defer closer.Close()
+	}
+	if _, err := io.Copy(writer, response.Response); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	if code >= http.StatusInternalServerError {
+		return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
+	}
+	return nil
+}
 
 func encodeAssignGlobalRoleResponse(response *AssignGlobalRoleNoContent, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(204)
@@ -209,23 +233,8 @@ func encodeDiscoverResourcesResponse(response []DiscoveryItem, w http.ResponseWr
 	return nil
 }
 
-func encodeDownloadDistributionResponse(response *DownloadDistribution2XXStatusCodeWithHeaders, w http.ResponseWriter, span trace.Span) error {
-	// Encoding response headers.
-	{
-		h := uri.NewHeaderEncoder(w.Header())
-		// Encode "Content-Type" header.
-		{
-			cfg := uri.HeaderParameterEncodingConfig{
-				Name:    "Content-Type",
-				Explode: false,
-			}
-			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-				return e.EncodeValue(conv.StringToString(response.ContentType))
-			}); err != nil {
-				return errors.Wrap(err, "encode Content-Type header")
-			}
-		}
-	}
+func encodeDownloadDistributionResponse(response *DownloadDistribution2XXStatusCode, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/octet-stream")
 	code := response.StatusCode
 	if code == 0 {
 		// Set default status code.

@@ -13,6 +13,18 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// AccessDistribution implements accessDistribution operation.
+//
+// Executes a web-service distribution using parameter IDs and values, with optional native format
+// selection. Published versions allow anonymous access; other states require existing dataset
+// permissions. Successful responses are streamed; upstream HTTP failures return a 503 Gateway Problem
+// with upstream_response. Downloadable-file distributions use the download endpoint.
+//
+// POST /distributions/{distributionId}/access
+func (UnimplementedHandler) AccessDistribution(ctx context.Context, req *DistributionAccessRequest, params AccessDistributionParams) (r *AccessDistribution2XXStatusCode, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // AssignGlobalRole implements assignGlobalRole operation.
 //
 // Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
@@ -219,7 +231,7 @@ func (UnimplementedHandler) DiscoverResources(ctx context.Context, params Discov
 // treated as text. The Problem `instance` contains the request trace ID.
 //
 // GET /distributions/{distributionId}/download
-func (UnimplementedHandler) DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (r *DownloadDistribution2XXStatusCodeWithHeaders, _ error) {
+func (UnimplementedHandler) DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (r *DownloadDistribution2XXStatusCode, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

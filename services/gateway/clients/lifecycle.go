@@ -49,6 +49,23 @@ func (c *MetadataLifecycle) PrepareDistributionDownload(ctx context.Context, act
 	return fromProtoPreparedDistributionDownload(response)
 }
 
+func (c *MetadataLifecycle) PrepareDistributionAccess(ctx context.Context, actorID string, request domain.AccessRequest) (domain.PreparedRequest, error) {
+	if actorID != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	}
+
+	input, err := toProtoDistributionAccess(request)
+	if err != nil {
+		return domain.PreparedRequest{}, err
+	}
+	response, err := c.resources.PrepareDistributionAccess(ctx, input)
+	if err != nil {
+		return domain.PreparedRequest{}, c.wrapError(ctx, "prepare distribution access", err)
+	}
+
+	return fromProtoPreparedDistributionAccess(response)
+}
+
 func (c *MetadataLifecycle) ListResourceVersions(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID string) (*metadatalifecyclev1.ListResourceVersionsResponse, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	response, err := c.resources.ListResourceVersions(ctx, &metadatalifecyclev1.ListResourceVersionsRequest{

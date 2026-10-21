@@ -160,6 +160,31 @@ func (s *ResourceServer) PrepareDistributionDownload(ctx context.Context, reques
 	return toProtoDistributionDownload(download), nil
 }
 
+func (s *ResourceServer) PrepareDistributionAccess(ctx context.Context, request *metadatalifecyclev1.PrepareDistributionAccessRequest) (*metadatalifecyclev1.PrepareDistributionAccessResponse, error) {
+	if request == nil {
+		return nil, apperror.New(apperror.CodeValidationFailed, "distribution access request is required")
+	}
+
+	if _, err := parseUUIDAt(request.GetDistributionId(), "distribution id", "distributionId"); err != nil {
+		return nil, err
+	}
+
+	if _, err := optionalActorFromContext(ctx); err != nil {
+		return nil, err
+	}
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	// TODO: Map protobuf input to domain types and call datasets.Service.PrepareAccess
+	// in datasets/distribution_access.go. Resolve the owning dataset version through
+	// db/dataset and reuse dataset read authorization. Keep parameter validation,
+	// defaults, native format selection and request rendering in domain/; map the
+	// prepared domain result back to protobuf here.
+	return nil, apperror.Default(apperror.CodeInternal)
+}
+
 func (s *ResourceServer) ListResourceVersions(ctx context.Context, request *metadatalifecyclev1.ListResourceVersionsRequest) (*metadatalifecyclev1.ListResourceVersionsResponse, error) {
 	if request == nil {
 		return nil, apperror.New(apperror.CodeValidationFailed, "resource versions request is required")

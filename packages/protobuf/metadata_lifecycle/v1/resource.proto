@@ -43,6 +43,44 @@ message PrepareDistributionDownloadResponse {
   string url = 3 [(buf.validate.field).string.min_len = 1];
 }
 
+message DistributionAccessParameterInput {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  oneof value {
+    option (buf.validate.oneof).required = true;
+    DistributionAccessScalarValue scalar = 2;
+    DistributionAccessArrayValue array = 3;
+  }
+}
+
+message DistributionAccessScalarValue {
+  oneof value {
+    option (buf.validate.oneof).required = true;
+    string string_value = 1;
+    bool boolean_value = 2;
+    int64 integer_value = 3;
+    double float_value = 4 [(buf.validate.field).double.finite = true];
+  }
+}
+
+message DistributionAccessArrayValue {
+  repeated DistributionAccessScalarValue values = 1 [(buf.validate.field).repeated.min_items = 1];
+}
+
+message PrepareDistributionAccessRequest {
+  string distribution_id = 1 [(buf.validate.field).string.uuid = true];
+  repeated DistributionAccessParameterInput parameters = 2;
+  optional string output_format = 3 [(buf.validate.field).string.min_len = 1];
+}
+
+message PrepareDistributionAccessResponse {
+  string resource_id = 1 [(buf.validate.field).string.uuid = true];
+  string version_id = 2 [(buf.validate.field).string.uuid = true];
+  WebServiceMethod method = 3 [(buf.validate.field).enum.defined_only = true];
+  string url = 4 [(buf.validate.field).string.min_len = 1, (buf.validate.field).string.uri = true];
+  map<string, string> headers = 5;
+  optional bytes body = 6;
+}
+
 message ListResourceVersionsRequest {
   ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
   string resource_id = 2 [(buf.validate.field).string.uuid = true];
@@ -627,6 +665,9 @@ service ResourceService {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_OPTIONAL;
   }
   rpc PrepareDistributionDownload(PrepareDistributionDownloadRequest) returns (PrepareDistributionDownloadResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_OPTIONAL;
+  }
+  rpc PrepareDistributionAccess(PrepareDistributionAccessRequest) returns (PrepareDistributionAccessResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_OPTIONAL;
   }
   rpc ListResourceVersions(ListResourceVersionsRequest) returns (ListResourceVersionsResponse) {

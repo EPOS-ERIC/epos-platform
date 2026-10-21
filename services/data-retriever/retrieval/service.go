@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"hash"
 	"io"
 	"log/slog"
@@ -33,7 +32,6 @@ type UpstreamClient interface {
 }
 
 type StreamSink interface {
-	SendDry(string) error
 	SendHeaders(*domain.RetrievalRecord, domain.ResponseHead) error
 	SendChunk([]byte) error
 }
@@ -70,13 +68,6 @@ func (s *Service) Retrieve(ctx context.Context, input domain.RetrievalInput, sin
 	if err != nil {
 		return err
 	}
-	if prepared.Mode == domain.RetrieveModeDry {
-		if err := sink.SendDry(prepared.CurlCommand()); err != nil {
-			return fmt.Errorf("send dry-run response: %w", err)
-		}
-		return nil
-	}
-
 	response, err := s.client.ExecuteStream(ctx, prepared)
 	if err != nil {
 		return upstreamError(ctx, err)

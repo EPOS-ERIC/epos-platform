@@ -6,6 +6,7 @@ package api
 type OperationName = string
 
 const (
+	AccessDistributionOperation                OperationName = "AccessDistribution"
 	AssignGlobalRoleOperation                  OperationName = "AssignGlobalRole"
 	AssignGroupRoleOperation                   OperationName = "AssignGroupRole"
 	BlockUserOperation                         OperationName = "BlockUser"

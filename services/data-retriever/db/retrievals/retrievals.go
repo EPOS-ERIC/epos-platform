@@ -146,43 +146,35 @@ func replaceOutputSchema(ctx context.Context, queries *retrievalsqlc.Queries, re
 }
 
 func upsertRetrievalParams(req domain.PreparedRetrieval, head domain.ResponseHead, payloadSize int64) (retrievalsqlc.UpsertRetrievalParams, error) {
-	pathParamsJSON, err := json.Marshal(req.PathParams)
-	if err != nil {
-		return retrievalsqlc.UpsertRetrievalParams{}, fmt.Errorf("marshal path parameters: %w", err)
-	}
-	queryParamsJSON, err := json.Marshal(req.QueryParams)
-	if err != nil {
-		return retrievalsqlc.UpsertRetrievalParams{}, fmt.Errorf("marshal query parameters: %w", err)
-	}
 	headersJSON, err := json.Marshal(redactHeaders(req.Headers))
 	if err != nil {
 		return retrievalsqlc.UpsertRetrievalParams{}, fmt.Errorf("marshal request headers: %w", err)
 	}
 
-	bodyHash := sha256.Sum256(req.BodyBytes)
+	bodyHash := sha256.Sum256(req.Body)
 	var requestBodyText *string
-	if len(req.BodyBytes) > 0 {
-		bodyText := string(req.BodyBytes)
+	if req.Body != nil {
+		bodyText := string(req.Body)
 		requestBodyText = &bodyText
 	}
 	return retrievalsqlc.UpsertRetrievalParams{
 		ResourceID:        &req.ResourceID,
 		VersionID:         &req.VersionID,
 		Method:            req.Method,
-		UrlTemplate:       req.URLTemplate,
-		GeneratedUrl:      req.GeneratedURL,
-		PathParamsJson:    pathParamsJSON,
-		QueryParamsJson:   queryParamsJSON,
+		UrlTemplate:       req.URL,
+		GeneratedUrl:      req.URL,
+		PathParamsJson:    []byte(`{}`),
+		QueryParamsJson:   []byte(`{}`),
 		HeadersJson:       headersJSON,
 		RequestBodyText:   requestBodyText,
 		RequestBodyHash:   hex.EncodeToString(bodyHash[:]),
-		RequestBodyIsJson: req.Body != nil && len(req.Body.JSON) > 0,
+		RequestBodyIsJson: false,
 		HttpStatus:        int32(head.StatusCode),
 		ContentType:       head.ContentType,
 		IsBinary:          head.IsBinary,
 		PayloadHash:       "",
 		PayloadSizeBytes:  payloadSize,
-		UsedAuth:          strings.TrimSpace(req.BearerToken) != "" || hasAuthorizationHeader(req.Headers),
+		UsedAuth:          hasAuthorizationHeader(req.Headers),
 		FetchedAt:         time.Now().UTC(),
 	}, nil
 }

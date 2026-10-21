@@ -58,13 +58,13 @@ func NewRouter(
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
 	securityHandler := handlers.NewSecurityHandler(authService, identityService)
-	downloadService := distributionaccess.NewService(metadataLifecycleClient, dataRetrieverClient)
+	accessService := distributionaccess.NewService(metadataLifecycleClient, dataRetrieverClient)
 	generatedHandler := handlers.NewOgenHandler(
 		identityService,
 		membershipService,
 		metadataLifecycleClient,
 		sharingService,
-		downloadService,
+		accessService,
 		log,
 	)
 	generatedServer, err := gatewayapi.NewServer(

@@ -1,12 +1,14 @@
 # EPOS Data Retriever Service
 
-Data Retriever executes structured outbound HTTP requests, streams response bodies, records retrieval metadata, and discovers output parameters from supported text formats.
+Data Retriever executes prepared outbound HTTP requests, streams response bodies, records retrieval metadata, and discovers output parameters from supported text formats.
 
 ## gRPC API
 
 - Listen address: `GRPC_LISTEN_ADDR` (default `:8100`)
 - Contract: `packages/protobuf/data_retriever/v1/data_retriever.proto`
-- `RetrieveStream` supports `DRY` curl generation and `EXECUTE` streaming.
+- `RetrieveStream` executes a fully prepared HTTP method, URL, headers and optional raw body. It preserves URL encoding, repeated query keys and body bytes. No template rendering, DRY mode, curl generation or dedicated bearer-token field is supported.
+- GET and DELETE bodies are rejected, including explicitly empty bodies.
+- Web-service access persists retrieval records and discovers output parameters. Downloads set `skip_persistence` to skip both.
 - `GetRetrieval` returns persisted retrieval metadata and discovered output parameters.
 - Standard gRPC health service is enabled for readiness checks.
 
@@ -38,7 +40,7 @@ make lint
 
 ## Sensitive data
 
-Request body text is persisted verbatim, including credentials. Request body text is never returned or logged. Dedicated bearer tokens remain in memory only. `Authorization`, `Cookie`, and `Set-Cookie` request headers are redacted before persistence; credential values are never logged.
+Request body text is persisted verbatim, including credentials. Request body text is never returned or logged. `Authorization`, `Cookie`, and `Set-Cookie` request headers are redacted before persistence; credential values are never logged..
 
 ## Development stack
 

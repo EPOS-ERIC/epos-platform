@@ -18,10 +18,6 @@ func toDomainRetrievalInput(request *dataretrieverv1.RetrieveStreamRequest) (dom
 	if err != nil {
 		return domain.RetrievalInput{}, err
 	}
-	mode, err := toDomainRetrieveMode(request.GetMode())
-	if err != nil {
-		return domain.RetrievalInput{}, err
-	}
 	resourceID, err := uuid.Parse(request.GetResourceId())
 	if err != nil {
 		return domain.RetrievalInput{}, apperror.Field("resource_id", "Value is invalid.", err)
@@ -31,42 +27,15 @@ func toDomainRetrievalInput(request *dataretrieverv1.RetrieveStreamRequest) (dom
 		return domain.RetrievalInput{}, apperror.Field("version_id", "Value is invalid.", err)
 	}
 	retrievalInput := domain.RetrievalInput{
-		Mode:            mode,
 		ResourceID:      resourceID,
 		VersionID:       versionID,
 		Method:          method,
-		URLTemplate:     request.GetUrlTemplate(),
-		PathParams:      request.GetPathParams(),
-		QueryParams:     request.GetQueryParams(),
+		URL:             request.GetUrl(),
 		Headers:         request.GetHeaders(),
-		BearerToken:     request.GetBearerToken(),
+		Body:            request.GetBody(),
 		SkipPersistence: request.GetSkipPersistence(),
 	}
-	if body := request.GetBody(); body != nil {
-		retrievalInput.Body = &domain.RequestBody{ContentType: body.GetContentType()}
-		switch content := body.GetContent().(type) {
-		case *dataretrieverv1.RequestBody_Raw:
-			retrievalInput.Body.Raw = content.Raw
-		case *dataretrieverv1.RequestBody_JsonPayload:
-			retrievalInput.Body.JSON = content.JsonPayload
-		default:
-			return domain.RetrievalInput{}, apperror.Field("body", "Value is invalid.", fmt.Errorf("body content is required"))
-		}
-	}
 	return retrievalInput, nil
-}
-
-func toDomainRetrieveMode(mode dataretrieverv1.RetrieveMode) (domain.RetrieveMode, error) {
-	switch mode {
-	case dataretrieverv1.RetrieveMode_RETRIEVE_MODE_UNSPECIFIED:
-		return "", nil
-	case dataretrieverv1.RetrieveMode_RETRIEVE_MODE_EXECUTE:
-		return domain.RetrieveModeExecute, nil
-	case dataretrieverv1.RetrieveMode_RETRIEVE_MODE_DRY:
-		return domain.RetrieveModeDry, nil
-	default:
-		return "", apperror.Field("mode", "Value is invalid.", fmt.Errorf("mode is invalid"))
-	}
 }
 
 func toDomainHTTPMethod(method dataretrieverv1.HTTPMethod) (string, error) {

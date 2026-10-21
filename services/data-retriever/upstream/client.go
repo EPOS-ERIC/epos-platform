@@ -30,18 +30,12 @@ func NewClient(headerTimeout time.Duration) *Client {
 
 // ExecuteStream performs the request and returns its unbuffered response body.
 func (c *Client) ExecuteStream(ctx context.Context, req domain.PreparedRetrieval) (*retrieval.UpstreamResponse, error) {
-	httpReq, err := http.NewRequestWithContext(ctx, req.Method, req.GeneratedURL, bytes.NewReader(req.BodyBytes))
+	httpReq, err := http.NewRequestWithContext(ctx, req.Method, req.URL, bytes.NewReader(req.Body))
 	if err != nil {
 		return nil, fmt.Errorf("create upstream request: %w", err)
 	}
 	for key, value := range req.Headers {
 		httpReq.Header.Set(key, value)
-	}
-	if req.Body != nil {
-		httpReq.Header.Set("Content-Type", req.Body.ContentType)
-	}
-	if strings.TrimSpace(req.BearerToken) != "" {
-		httpReq.Header.Set("Authorization", "Bearer "+req.BearerToken)
 	}
 
 	response, err := c.httpClient.Do(httpReq)

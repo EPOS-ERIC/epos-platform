@@ -11,7 +11,7 @@ info:
 
     Authentication:
     - Public catalogue reads do not require credentials.
-    - Supply an OAuth2 bearer token for authenticated reads and all write operations.
+    - Supply an OAuth2 bearer token for authenticated reads and metadata write operations. Published distribution access permits anonymous requests.
     - JSON request bodies must use `Content-Type: application/json`; other media types receive `415`.
     - Error responses use `application/problem+json` unless noted otherwise.
     - Operations backed by Metadata Lifecycle can return `503` when it is unavailable or `504` when a request times out.
@@ -79,6 +79,56 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /distributions/{distributionId}/access:
+    post:
+      tags: [Access]
+      summary: Access a web-service distribution
+      description: |-
+        Executes a web-service distribution using parameter IDs and values, with optional native format selection. Published versions allow anonymous access; other states require existing dataset permissions. Successful responses are streamed; upstream HTTP failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use the download endpoint.
+      operationId: accessDistribution
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: output_format
+          in: query
+          description: Exact native format selector. Cannot be repeated or combined with conversion_id.
+          schema: { type: string, minLength: 1 }
+        - name: conversion_id
+          in: query
+          description: Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for future conversion support.
+          schema: { type: string, format: uuid }
+      # TODO: Connect conversion_id when converter and conversion-relation support exist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributionAccessRequest"
+            examples:
+              defaults:
+                value: { parameters: [] }
+              parameter:
+                value:
+                  parameters:
+                    - id: 9cf1103f-2e90-4742-a64a-d973e7d32e7d
+                      value: mystation
+      responses:
+        "2XX":
+          description: Successful upstream response, streamed without buffering.
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        default:
+          description: Gateway Problem. Upstream HTTP failures return 503 with upstream_response; execution timeout returns 504.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /distributions/{distributionId}/download:
     get:
       tags: [Access]
@@ -100,7 +150,7 @@ paths:
         "2XX":
           description: Successful upstream response, streamed without buffering.
           content:
-            "*/*":
+            application/octet-stream:
               schema: { type: string, format: binary }
         default:
           description: Gateway Problem. Upstream HTTP failures return 503 and preserve the upstream status and body in `upstream_response`.
@@ -2197,6 +2247,36 @@ components:
                 detail: "A required service is unavailable."
 
   schemas:
+    DistributionAccessRequest:
+      type: object
+      additionalProperties: false
+      required: [parameters]
+      properties:
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/DistributionAccessParameter"
+
+    DistributionAccessParameter:
+      type: object
+      additionalProperties: false
+      required: [id, value]
+      properties:
+        id: { type: string, format: uuid }
+        value:
+          oneOf:
+            - $ref: "#/components/schemas/DistributionAccessScalar"
+            - type: array
+              minItems: 1
+              items:
+                $ref: "#/components/schemas/DistributionAccessScalar"
+
+    DistributionAccessScalar:
+      oneOf:
+        - type: string
+        - type: boolean
+        - type: number
+
     # -------------------------------------------------------------------------
     # Shared enums
     # -------------------------------------------------------------------------

@@ -17,6 +17,46 @@ func (s *ProblemStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
+type AccessDistribution2XX struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s AccessDistribution2XX) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+// AccessDistribution2XXStatusCode wraps AccessDistribution2XX with StatusCode.
+type AccessDistribution2XXStatusCode struct {
+	StatusCode int
+	Response   AccessDistribution2XX
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *AccessDistribution2XXStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *AccessDistribution2XXStatusCode) GetResponse() AccessDistribution2XX {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *AccessDistribution2XXStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *AccessDistribution2XXStatusCode) SetResponse(val AccessDistribution2XX) {
+	s.Response = val
+}
+
 // AssignGlobalRoleNoContent is response for AssignGlobalRole operation.
 type AssignGlobalRoleNoContent struct{}
 
@@ -3913,6 +3953,208 @@ func NewDownloadableFileDistributionDistribution(v DownloadableFileDistribution)
 	return s
 }
 
+// Ref: #/components/schemas/DistributionAccessParameter
+type DistributionAccessParameter struct {
+	ID    uuid.UUID                        `json:"id"`
+	Value DistributionAccessParameterValue `json:"value"`
+}
+
+// GetID returns the value of ID.
+func (s *DistributionAccessParameter) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetValue returns the value of Value.
+func (s *DistributionAccessParameter) GetValue() DistributionAccessParameterValue {
+	return s.Value
+}
+
+// SetID sets the value of ID.
+func (s *DistributionAccessParameter) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetValue sets the value of Value.
+func (s *DistributionAccessParameter) SetValue(val DistributionAccessParameterValue) {
+	s.Value = val
+}
+
+// DistributionAccessParameterValue represents sum type.
+type DistributionAccessParameterValue struct {
+	// Type selects the active sum variant, switch on this field.
+	Type                          DistributionAccessParameterValueType
+	DistributionAccessScalar      DistributionAccessScalar
+	DistributionAccessScalarArray []DistributionAccessScalar
+}
+
+// DistributionAccessParameterValueType is oneOf type of DistributionAccessParameterValue.
+type DistributionAccessParameterValueType string
+
+// Possible values for DistributionAccessParameterValueType.
+const (
+	DistributionAccessScalarDistributionAccessParameterValue      DistributionAccessParameterValueType = "DistributionAccessScalar"
+	DistributionAccessScalarArrayDistributionAccessParameterValue DistributionAccessParameterValueType = "[]DistributionAccessScalar"
+)
+
+// IsDistributionAccessScalar reports whether DistributionAccessParameterValue is DistributionAccessScalar.
+func (s DistributionAccessParameterValue) IsDistributionAccessScalar() bool {
+	return s.Type == DistributionAccessScalarDistributionAccessParameterValue
+}
+
+// IsDistributionAccessScalarArray reports whether DistributionAccessParameterValue is []DistributionAccessScalar.
+func (s DistributionAccessParameterValue) IsDistributionAccessScalarArray() bool {
+	return s.Type == DistributionAccessScalarArrayDistributionAccessParameterValue
+}
+
+// SetDistributionAccessScalar sets DistributionAccessParameterValue to DistributionAccessScalar.
+func (s *DistributionAccessParameterValue) SetDistributionAccessScalar(v DistributionAccessScalar) {
+	s.Type = DistributionAccessScalarDistributionAccessParameterValue
+	s.DistributionAccessScalar = v
+}
+
+// GetDistributionAccessScalar returns DistributionAccessScalar and true boolean if DistributionAccessParameterValue is DistributionAccessScalar.
+func (s DistributionAccessParameterValue) GetDistributionAccessScalar() (v DistributionAccessScalar, ok bool) {
+	if !s.IsDistributionAccessScalar() {
+		return v, false
+	}
+	return s.DistributionAccessScalar, true
+}
+
+// NewDistributionAccessScalarDistributionAccessParameterValue returns new DistributionAccessParameterValue from DistributionAccessScalar.
+func NewDistributionAccessScalarDistributionAccessParameterValue(v DistributionAccessScalar) DistributionAccessParameterValue {
+	var s DistributionAccessParameterValue
+	s.SetDistributionAccessScalar(v)
+	return s
+}
+
+// SetDistributionAccessScalarArray sets DistributionAccessParameterValue to []DistributionAccessScalar.
+func (s *DistributionAccessParameterValue) SetDistributionAccessScalarArray(v []DistributionAccessScalar) {
+	s.Type = DistributionAccessScalarArrayDistributionAccessParameterValue
+	s.DistributionAccessScalarArray = v
+}
+
+// GetDistributionAccessScalarArray returns []DistributionAccessScalar and true boolean if DistributionAccessParameterValue is []DistributionAccessScalar.
+func (s DistributionAccessParameterValue) GetDistributionAccessScalarArray() (v []DistributionAccessScalar, ok bool) {
+	if !s.IsDistributionAccessScalarArray() {
+		return v, false
+	}
+	return s.DistributionAccessScalarArray, true
+}
+
+// NewDistributionAccessScalarArrayDistributionAccessParameterValue returns new DistributionAccessParameterValue from []DistributionAccessScalar.
+func NewDistributionAccessScalarArrayDistributionAccessParameterValue(v []DistributionAccessScalar) DistributionAccessParameterValue {
+	var s DistributionAccessParameterValue
+	s.SetDistributionAccessScalarArray(v)
+	return s
+}
+
+// Ref: #/components/schemas/DistributionAccessRequest
+type DistributionAccessRequest struct {
+	Parameters []DistributionAccessParameter `json:"parameters"`
+}
+
+// GetParameters returns the value of Parameters.
+func (s *DistributionAccessRequest) GetParameters() []DistributionAccessParameter {
+	return s.Parameters
+}
+
+// SetParameters sets the value of Parameters.
+func (s *DistributionAccessRequest) SetParameters(val []DistributionAccessParameter) {
+	s.Parameters = val
+}
+
+// Ref: #/components/schemas/DistributionAccessScalar
+// DistributionAccessScalar represents sum type.
+type DistributionAccessScalar struct {
+	// Type selects the active sum variant, switch on this field.
+	Type    DistributionAccessScalarType
+	String  string
+	Bool    bool
+	Float64 float64
+}
+
+// DistributionAccessScalarType is oneOf type of DistributionAccessScalar.
+type DistributionAccessScalarType string
+
+// Possible values for DistributionAccessScalarType.
+const (
+	StringDistributionAccessScalar  DistributionAccessScalarType = "string"
+	BoolDistributionAccessScalar    DistributionAccessScalarType = "bool"
+	Float64DistributionAccessScalar DistributionAccessScalarType = "float64"
+)
+
+// IsString reports whether DistributionAccessScalar is string.
+func (s DistributionAccessScalar) IsString() bool { return s.Type == StringDistributionAccessScalar }
+
+// IsBool reports whether DistributionAccessScalar is bool.
+func (s DistributionAccessScalar) IsBool() bool { return s.Type == BoolDistributionAccessScalar }
+
+// IsFloat64 reports whether DistributionAccessScalar is float64.
+func (s DistributionAccessScalar) IsFloat64() bool { return s.Type == Float64DistributionAccessScalar }
+
+// SetString sets DistributionAccessScalar to string.
+func (s *DistributionAccessScalar) SetString(v string) {
+	s.Type = StringDistributionAccessScalar
+	s.String = v
+}
+
+// GetString returns string and true boolean if DistributionAccessScalar is string.
+func (s DistributionAccessScalar) GetString() (v string, ok bool) {
+	if !s.IsString() {
+		return v, false
+	}
+	return s.String, true
+}
+
+// NewStringDistributionAccessScalar returns new DistributionAccessScalar from string.
+func NewStringDistributionAccessScalar(v string) DistributionAccessScalar {
+	var s DistributionAccessScalar
+	s.SetString(v)
+	return s
+}
+
+// SetBool sets DistributionAccessScalar to bool.
+func (s *DistributionAccessScalar) SetBool(v bool) {
+	s.Type = BoolDistributionAccessScalar
+	s.Bool = v
+}
+
+// GetBool returns bool and true boolean if DistributionAccessScalar is bool.
+func (s DistributionAccessScalar) GetBool() (v bool, ok bool) {
+	if !s.IsBool() {
+		return v, false
+	}
+	return s.Bool, true
+}
+
+// NewBoolDistributionAccessScalar returns new DistributionAccessScalar from bool.
+func NewBoolDistributionAccessScalar(v bool) DistributionAccessScalar {
+	var s DistributionAccessScalar
+	s.SetBool(v)
+	return s
+}
+
+// SetFloat64 sets DistributionAccessScalar to float64.
+func (s *DistributionAccessScalar) SetFloat64(v float64) {
+	s.Type = Float64DistributionAccessScalar
+	s.Float64 = v
+}
+
+// GetFloat64 returns float64 and true boolean if DistributionAccessScalar is float64.
+func (s DistributionAccessScalar) GetFloat64() (v float64, ok bool) {
+	if !s.IsFloat64() {
+		return v, false
+	}
+	return s.Float64, true
+}
+
+// NewFloat64DistributionAccessScalar returns new DistributionAccessScalar from float64.
+func NewFloat64DistributionAccessScalar(v float64) DistributionAccessScalar {
+	var s DistributionAccessScalar
+	s.SetFloat64(v)
+	return s
+}
+
 // Ref: #/components/schemas/DistributionDraft
 // DistributionDraft represents sum type.
 type DistributionDraft struct {
@@ -4034,40 +4276,29 @@ func (s DownloadDistribution2XX) Read(p []byte) (n int, err error) {
 	return s.Data.Read(p)
 }
 
-// DownloadDistribution2XXStatusCodeWithHeaders wraps DownloadDistribution2XX with status code and response headers.
-type DownloadDistribution2XXStatusCodeWithHeaders struct {
-	StatusCode  int
-	ContentType string
-	Response    DownloadDistribution2XX
+// DownloadDistribution2XXStatusCode wraps DownloadDistribution2XX with StatusCode.
+type DownloadDistribution2XXStatusCode struct {
+	StatusCode int
+	Response   DownloadDistribution2XX
 }
 
 // GetStatusCode returns the value of StatusCode.
-func (s *DownloadDistribution2XXStatusCodeWithHeaders) GetStatusCode() int {
+func (s *DownloadDistribution2XXStatusCode) GetStatusCode() int {
 	return s.StatusCode
 }
 
-// GetContentType returns the value of ContentType.
-func (s *DownloadDistribution2XXStatusCodeWithHeaders) GetContentType() string {
-	return s.ContentType
-}
-
 // GetResponse returns the value of Response.
-func (s *DownloadDistribution2XXStatusCodeWithHeaders) GetResponse() DownloadDistribution2XX {
+func (s *DownloadDistribution2XXStatusCode) GetResponse() DownloadDistribution2XX {
 	return s.Response
 }
 
 // SetStatusCode sets the value of StatusCode.
-func (s *DownloadDistribution2XXStatusCodeWithHeaders) SetStatusCode(val int) {
+func (s *DownloadDistribution2XXStatusCode) SetStatusCode(val int) {
 	s.StatusCode = val
 }
 
-// SetContentType sets the value of ContentType.
-func (s *DownloadDistribution2XXStatusCodeWithHeaders) SetContentType(val string) {
-	s.ContentType = val
-}
-
 // SetResponse sets the value of Response.
-func (s *DownloadDistribution2XXStatusCodeWithHeaders) SetResponse(val DownloadDistribution2XX) {
+func (s *DownloadDistribution2XXStatusCode) SetResponse(val DownloadDistribution2XX) {
 	s.Response = val
 }
 

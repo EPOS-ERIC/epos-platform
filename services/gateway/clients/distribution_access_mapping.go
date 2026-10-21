@@ -36,7 +36,108 @@ func fromProtoPreparedDistributionDownload(response *metadatalifecyclev1.Prepare
 	}, nil
 }
 
-func fromProtoDownloadStreamHeaders(response *dataretrieverv1.RetrieveStreamResponse) (int, error) {
+func toProtoDistributionAccess(request domain.AccessRequest) (*metadatalifecyclev1.PrepareDistributionAccessRequest, error) {
+	parameters := make([]*metadatalifecyclev1.DistributionAccessParameterInput, len(request.Parameters))
+	for i, parameter := range request.Parameters {
+		value, err := toProtoAccessParameter(parameter)
+		if err != nil {
+			return nil, err
+		}
+		parameters[i] = value
+	}
+	return &metadatalifecyclev1.PrepareDistributionAccessRequest{
+		DistributionId: request.DistributionID.String(),
+		Parameters:     parameters,
+		OutputFormat:   request.OutputFormat,
+	}, nil
+}
+
+func toProtoAccessParameter(parameter domain.AccessParameter) (*metadatalifecyclev1.DistributionAccessParameterInput, error) {
+	result := &metadatalifecyclev1.DistributionAccessParameterInput{Id: parameter.ID.String()}
+	if parameter.Value.Scalar != nil {
+		if parameter.Value.Array != nil {
+			return nil, apperror.Default(apperror.CodeInternal)
+		}
+		scalar, err := toProtoAccessScalar(*parameter.Value.Scalar)
+		if err != nil {
+			return nil, err
+		}
+		result.Value = &metadatalifecyclev1.DistributionAccessParameterInput_Scalar{Scalar: scalar}
+		return result, nil
+	}
+	if len(parameter.Value.Array) == 0 {
+		return nil, apperror.Default(apperror.CodeInternal)
+	}
+	values := make([]*metadatalifecyclev1.DistributionAccessScalarValue, len(parameter.Value.Array))
+	for i, item := range parameter.Value.Array {
+		scalar, err := toProtoAccessScalar(item)
+		if err != nil {
+			return nil, err
+		}
+		values[i] = scalar
+	}
+	result.Value = &metadatalifecyclev1.DistributionAccessParameterInput_Array{
+		Array: &metadatalifecyclev1.DistributionAccessArrayValue{Values: values},
+	}
+	return result, nil
+}
+
+func toProtoAccessScalar(scalar domain.AccessScalar) (*metadatalifecyclev1.DistributionAccessScalarValue, error) {
+	result := &metadatalifecyclev1.DistributionAccessScalarValue{}
+	switch scalar.Kind {
+	case domain.AccessScalarString:
+		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_StringValue{StringValue: scalar.String}
+	case domain.AccessScalarBoolean:
+		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_BooleanValue{BooleanValue: scalar.Boolean}
+	case domain.AccessScalarInteger:
+		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_IntegerValue{IntegerValue: scalar.Integer}
+	case domain.AccessScalarFloat:
+		result.Value = &metadatalifecyclev1.DistributionAccessScalarValue_FloatValue{FloatValue: scalar.Float}
+	default:
+		return nil, apperror.Default(apperror.CodeInternal)
+	}
+	return result, nil
+}
+
+func fromProtoPreparedDistributionAccess(response *metadatalifecyclev1.PrepareDistributionAccessResponse) (domain.PreparedRequest, error) {
+	if response == nil {
+		return domain.PreparedRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+	resourceID, err := uuid.Parse(response.GetResourceId())
+	if err != nil || resourceID == uuid.Nil {
+		return domain.PreparedRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+	versionID, err := uuid.Parse(response.GetVersionId())
+	if err != nil || versionID == uuid.Nil {
+		return domain.PreparedRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+	if response.GetUrl() == "" {
+		return domain.PreparedRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+	var method domain.HTTPMethod
+	switch response.GetMethod() {
+	case metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET:
+		method = domain.HTTPMethodGET
+	case metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_POST:
+		method = domain.HTTPMethodPOST
+	case metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_PUT:
+		method = domain.HTTPMethodPUT
+	case metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_DELETE:
+		method = domain.HTTPMethodDELETE
+	default:
+		return domain.PreparedRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+	return domain.PreparedRequest{
+		ResourceID: resourceID,
+		VersionID:  versionID,
+		Method:     method,
+		URL:        response.GetUrl(),
+		Headers:    response.GetHeaders(),
+		Body:       response.GetBody(),
+	}, nil
+}
+
+func fromProtoRetrievalStreamHeaders(response *dataretrieverv1.RetrieveStreamResponse) (int, error) {
 	if response == nil || response.GetHeaders() == nil {
 		return 0, apperror.Default(apperror.CodeInternal)
 	}

@@ -42,4 +42,4 @@ linters:
         - "true"
     exhaustive:
       default-case-required: true
-      ignore-enum-members: "(_UNSPECIFIED|Unspecified)$"
+      ignore-constants: "(_UNSPECIFIED|Unspecified)$"

@@ -250,6 +250,7 @@ Request templates use existing Go `text/template` behavior and interpolate value
 - Escape each PATH/QUERY value for its URL component before joining values; keep the comma separator unescaped. Do not URL-encode HEADER values; reject header values containing CR or LF.
 - Do not coerce strings into numbers or booleans.
 - No Content-Type is inferred from format selectors or request-body metadata. An outbound `Content-Type` is sent only when declared as a HEADER parameter.
+- GET and DELETE upstream requests must not have a configured request body; Data Retriever rejects prepared requests containing a body for either method, including an explicitly empty body.
 
 ---
 
@@ -571,6 +572,8 @@ Stream upstream success status and body. Gateway owns HTTP framing.
 No access-specific response-header forwarding is required initially. Do not derive headers from format selectors or infer download filenames.
 
 Retrieval records remain internal; no public `X-Retrieval-Id`.
+
+Web-service access persists retrieval records and uses existing output-schema discovery. Downloadable-file retrieval skips both. Data Retriever accepts only a fully prepared method, URL, headers and optional raw body; it does not render templates, generate curl commands or accept a dedicated bearer-token field.
 
 ### Future converted responses
 

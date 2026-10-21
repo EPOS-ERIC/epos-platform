@@ -8,6 +8,15 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// AccessDistribution implements accessDistribution operation.
+	//
+	// Executes a web-service distribution using parameter IDs and values, with optional native format
+	// selection. Published versions allow anonymous access; other states require existing dataset
+	// permissions. Successful responses are streamed; upstream HTTP failures return a 503 Gateway Problem
+	// with upstream_response. Downloadable-file distributions use the download endpoint.
+	//
+	// POST /distributions/{distributionId}/access
+	AccessDistribution(ctx context.Context, req *DistributionAccessRequest, params AccessDistributionParams) (*AccessDistribution2XXStatusCode, error)
 	// AssignGlobalRole implements assignGlobalRole operation.
 	//
 	// Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
@@ -154,7 +163,7 @@ type Handler interface {
 	// treated as text. The Problem `instance` contains the request trace ID.
 	//
 	// GET /distributions/{distributionId}/download
-	DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (*DownloadDistribution2XXStatusCodeWithHeaders, error)
+	DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (*DownloadDistribution2XXStatusCode, error)
 	// DraftFromArchive implements draftFromArchive operation.
 	//
 	// Create draft from archive.

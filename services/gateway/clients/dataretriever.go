@@ -37,67 +37,95 @@ func NewDataRetriever(log *slog.Logger, address string) (*DataRetriever, error) 
 	}, nil
 }
 
-func (c *DataRetriever) RetrieveDownload(ctx context.Context, target domain.DownloadTarget) (domain.DownloadResponse, error) {
-	if target.ResourceID == uuid.Nil || target.VersionID == uuid.Nil || target.URL == "" {
-		return domain.DownloadResponse{}, apperror.Default(apperror.CodeInternal)
+func (c *DataRetriever) RetrieveDownload(ctx context.Context, target domain.DownloadTarget) (domain.RetrievalResponse, error) {
+	return c.retrieve(ctx, &dataretrieverv1.RetrieveStreamRequest{
+		Method:     dataretrieverv1.HTTPMethod_HTTP_METHOD_GET,
+		Url:        target.URL,
+		ResourceId: target.ResourceID.String(),
+		VersionId:  target.VersionID.String(),
+		// Skip database persistence for downloadable files
+		SkipPersistence: true,
+	})
+}
+
+func (c *DataRetriever) RetrieveAccess(ctx context.Context, request domain.PreparedRequest) (domain.RetrievalResponse, error) {
+	var method dataretrieverv1.HTTPMethod
+	switch request.Method {
+	case domain.HTTPMethodGET:
+		method = dataretrieverv1.HTTPMethod_HTTP_METHOD_GET
+	case domain.HTTPMethodPOST:
+		method = dataretrieverv1.HTTPMethod_HTTP_METHOD_POST
+	case domain.HTTPMethodPUT:
+		method = dataretrieverv1.HTTPMethod_HTTP_METHOD_PUT
+	case domain.HTTPMethodDELETE:
+		method = dataretrieverv1.HTTPMethod_HTTP_METHOD_DELETE
+	default:
+		return domain.RetrievalResponse{}, apperror.Default(apperror.CodeInternal)
+	}
+
+	return c.retrieve(ctx, &dataretrieverv1.RetrieveStreamRequest{
+		Method:     method,
+		Url:        request.URL,
+		Headers:    request.Headers,
+		Body:       request.Body,
+		ResourceId: request.ResourceID.String(),
+		VersionId:  request.VersionID.String(),
+	})
+}
+
+func (c *DataRetriever) retrieve(ctx context.Context, request *dataretrieverv1.RetrieveStreamRequest) (domain.RetrievalResponse, error) {
+	if request.ResourceId == uuid.Nil.String() || request.VersionId == uuid.Nil.String() || request.Url == "" {
+		return domain.RetrievalResponse{}, apperror.Default(apperror.CodeInternal)
 	}
 
 	streamCtx, cancel := context.WithCancel(ctx)
 
-	stream, err := c.retrieval.RetrieveStream(streamCtx, &dataretrieverv1.RetrieveStreamRequest{
-		Method:      dataretrieverv1.HTTPMethod_HTTP_METHOD_GET,
-		UrlTemplate: target.URL,
-		ResourceId:  target.ResourceID.String(),
-		VersionId:   target.VersionID.String(),
-		Mode:        dataretrieverv1.RetrieveMode_RETRIEVE_MODE_EXECUTE,
-		// Skip database persistence for downloadable files
-		SkipPersistence: true,
-	})
+	stream, err := c.retrieval.RetrieveStream(streamCtx, request)
 	if err != nil {
-		rpcErr := downloadRPCError(c.log, streamCtx, err)
+		rpcErr := retrievalRPCError(c.log, streamCtx, err)
 		cancel()
-		return domain.DownloadResponse{}, rpcErr
+		return domain.RetrievalResponse{}, rpcErr
 	}
 
 	first, err := stream.Recv()
 	if err != nil {
 		if errors.Is(err, io.EOF) {
 			cancel()
-			return domain.DownloadResponse{}, apperror.Default(apperror.CodeInternal)
+			return domain.RetrievalResponse{}, apperror.Default(apperror.CodeInternal)
 		}
 
-		rpcErr := downloadRPCError(c.log, streamCtx, err)
+		rpcErr := retrievalRPCError(c.log, streamCtx, err)
 		cancel()
 
-		return domain.DownloadResponse{}, rpcErr
+		return domain.RetrievalResponse{}, rpcErr
 	}
 
-	status, err := fromProtoDownloadStreamHeaders(first)
+	status, err := fromProtoRetrievalStreamHeaders(first)
 	if err != nil {
 		cancel()
-		return domain.DownloadResponse{}, err
+		return domain.RetrievalResponse{}, err
 	}
 
-	return domain.DownloadResponse{
+	return domain.RetrievalResponse{
 		StatusCode: status,
-		Body: &downloadBody{
+		Body: &retrievalBody{
 			recv: stream.Recv,
 			mapError: func(err error) error {
-				return downloadRPCError(c.log, streamCtx, err)
+				return retrievalRPCError(c.log, streamCtx, err)
 			},
 			cancel: cancel,
 		},
 	}, nil
 }
 
-type downloadBody struct {
+type retrievalBody struct {
 	recv     func() (*dataretrieverv1.RetrieveStreamResponse, error)
 	mapError func(error) error
 	cancel   context.CancelFunc
 	pending  []byte
 }
 
-func (r *downloadBody) Read(p []byte) (int, error) {
+func (r *retrievalBody) Read(p []byte) (int, error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
@@ -122,13 +150,13 @@ func (r *downloadBody) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-func (r *downloadBody) Close() error {
+func (r *retrievalBody) Close() error {
 	r.cancel()
 	return nil
 }
 
-func downloadRPCError(log *slog.Logger, ctx context.Context, err error) error {
-	wrapped := wrapRPCError(log, ctx, "data-retriever", "retrieve distribution download", err)
+func retrievalRPCError(log *slog.Logger, ctx context.Context, err error) error {
+	wrapped := wrapRPCError(log, ctx, "data-retriever", "retrieve distribution response", err)
 	if ctx.Err() != nil || apperror.IsCode(wrapped, apperror.CodeInternal) {
 		return wrapped
 	}

@@ -11,15 +11,15 @@ import (
 func TestUpsertRetrievalParamsPersistsBodyAndRedactsAuth(t *testing.T) {
 	bodyText := `{"password":"secret"}`
 	request, err := domain.NewPreparedRetrieval(domain.RetrievalInput{
-		ResourceID:  uuid.New(),
-		VersionID:   uuid.New(),
-		URLTemplate: "https://example.test",
-		Method:      "POST",
+		ResourceID: uuid.New(),
+		VersionID:  uuid.New(),
+		URL:        "https://example.test",
+		Method:     "POST",
 		Headers: map[string]string{
 			"aUtHoRiZaTiOn": "Bearer header-secret",
 			"Cookie":        "cookie-secret",
 		},
-		Body: &domain.RequestBody{ContentType: "application/json", JSON: []byte(bodyText)},
+		Body: []byte(bodyText),
 	})
 	if err != nil {
 		t.Fatalf("NewPreparedRetrieval() error = %v", err)
