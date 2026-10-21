@@ -43,6 +43,14 @@
   display: none;
 }
 
+.sidebar.is-collapsed .nav-tree-row {
+  display: block;
+}
+
+.sidebar.is-collapsed .nav-tree-row .nav-item {
+  width: 100%;
+}
+
 .sidebar-top {
   display: flex;
   flex-direction: column;
@@ -415,6 +423,10 @@
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 6px;
+}
+
+.nav-tree-row--leaf {
+  grid-template-columns: 1fr;
 }
 
 .nav-tree-row--child {

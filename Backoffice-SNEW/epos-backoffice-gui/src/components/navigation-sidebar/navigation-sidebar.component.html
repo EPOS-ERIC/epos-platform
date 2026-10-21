@@ -18,7 +18,7 @@
     @if (!detailItems.length) {
       @for (item of items; track item.route) {
         <div class="nav-tree-item" [class.nav-tree-item--expanded]="!collapsed() && isMainItemExpanded(item)">
-          <div class="nav-tree-row nav-tree-row--main" [class.active]="isMainSectionActive(item)">
+          <div class="nav-tree-row nav-tree-row--main" [class.nav-tree-row--leaf]="!item.concept" [class.active]="isMainSectionActive(item)">
             <a class="nav-item nav-item--main" [routerLink]="item.route" (click)="expandMainItem(item)" [class.active]="isMainSectionActive(item)" [class.centered]="collapsed()">
               @if (item.icon) {
                 <span class="nav-icon"><app-icon [name]="item.icon!" [size]="16" /></span>
