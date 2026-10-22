@@ -153,6 +153,43 @@ describe('WebServiceParametersComponent', () => {
     expect(reordered.map((parameter) => parameter.position)).toEqual([0, 1]);
   });
 
+  it('moves a parameter from a later page to the first position', async () => {
+    await TestBed.configureTestingModule({
+      imports: [WebServiceParametersComponent]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(WebServiceParametersComponent);
+    const parameters = Array.from({ length: 12 }, (_, index) =>
+      createStringParameter(`Parameter ${index + 1}`, `parameter-${index + 1}`, index)
+    );
+    let reordered = parameters;
+    fixture.componentInstance.modelChange.subscribe((value) => {
+      reordered = value;
+      fixture.componentRef.setInput('model', value);
+    });
+    fixture.componentRef.setInput('model', parameters);
+    fixture.detectChanges();
+
+    const pagerButtons = fixture.nativeElement.querySelectorAll('.parameter-page-button') as NodeListOf<HTMLButtonElement>;
+    pagerButtons[1].click();
+    fixture.detectChanges();
+    const pageTwoItems = fixture.nativeElement.querySelectorAll('.parameter-list-item') as NodeListOf<HTMLButtonElement>;
+    pageTwoItems[1].click();
+    fixture.detectChanges();
+
+    const positionField = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.detail-field'))
+      .find((field) => field.querySelector('.detail-label')?.textContent?.trim() === 'Position');
+    const positionInput = positionField?.querySelector('input') as HTMLInputElement;
+    positionInput.value = '1';
+    positionInput.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(reordered[0].name).toBe('parameter-12');
+    expect(reordered.map((parameter) => parameter.position)).toEqual(parameters.map((_, index) => index));
+    expect(fixture.nativeElement.querySelector('.parameter-editor h3')?.textContent?.trim()).toBe('Parameter 12');
+    expect(fixture.nativeElement.querySelector('.parameter-list-footer')?.textContent).toContain('Page 1 of 2');
+  });
+
   it('only enables explode for supported multiple-value query parameters', async () => {
     await TestBed.configureTestingModule({
       imports: [WebServiceParametersComponent]

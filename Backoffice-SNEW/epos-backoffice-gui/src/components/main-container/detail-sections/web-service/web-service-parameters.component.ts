@@ -154,6 +154,32 @@ export class WebServiceParametersComponent {
     this.selectedParameterIndex = globalIndex;
   }
 
+  protected moveParameterToPosition(
+    parameter: DatasetWebServiceParameterForm,
+    displayedPosition: number | null
+  ): void {
+    if (displayedPosition === null || !Number.isFinite(displayedPosition)) {
+      return;
+    }
+
+    const sourceIndex = this.model.indexOf(parameter);
+    if (sourceIndex < 0) {
+      return;
+    }
+
+    const targetIndex = Math.min(
+      this.model.length - 1,
+      Math.max(0, Math.trunc(displayedPosition) - 1)
+    );
+    const reordered = [...this.model];
+    const [movedParameter] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, movedParameter);
+
+    this.selectedParameterIndex = targetIndex;
+    this.parameterPage = Math.floor(targetIndex / this.parameterPageSize);
+    this.modelChange.emit(reordered.map((item, position) => ({ ...item, position })));
+  }
+
   protected startParameterDrag(event: DragEvent, globalIndex: number): void {
     if (this.disabled || this.comparisonMode) {
       event.preventDefault();

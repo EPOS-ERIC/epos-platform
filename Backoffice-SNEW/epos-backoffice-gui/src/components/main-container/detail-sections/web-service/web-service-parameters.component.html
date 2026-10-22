@@ -166,6 +166,21 @@
                         </label>
 
                         <label class="detail-field">
+                          <span class="detail-label">Position</span>
+                          <input
+                            class="app-input"
+                            type="number"
+                            min="1"
+                            [max]="model.length"
+                            step="1"
+                            [ngModel]="parameter.position + 1"
+                            [ngModelOptions]="{ standalone: true }"
+                            (ngModelChange)="moveParameterToPosition(parameter, $event)"
+                          />
+                          <span class="parameter-position-help">Controls the order in which parameters are rendered. Position 1 appears first.</span>
+                        </label>
+
+                        <label class="detail-field">
                           <span class="detail-label">Required</span>
                           <span class="parameter-switch-control">
                             <input
