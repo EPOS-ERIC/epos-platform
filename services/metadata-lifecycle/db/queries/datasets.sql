@@ -445,7 +445,13 @@ inserted_web_services AS (
 ),
 inserted_web_service_bodies AS (
     INSERT INTO
-        web_service_bodies (id, web_service_id, content_type, template, body_required)
+        web_service_bodies (
+            id,
+            web_service_id,
+            content_type,
+            template,
+            body_required
+        )
     SELECT
         uuid_generate_v5(target.id, source.id::text),
         target.id,
@@ -510,6 +516,7 @@ inserted_parameters AS (
             required,
             READ_ONLY,
             property,
+            role,
             location,
             explode,
             schema_kind,
@@ -537,6 +544,7 @@ inserted_parameters AS (
         parameter.required,
         parameter.read_only,
         parameter.property,
+        parameter.role,
         parameter.location,
         parameter.explode,
         parameter.schema_kind,
@@ -914,7 +922,12 @@ RETURNING
 
 -- name: AddLifecycleWebServiceBody :one
 INSERT INTO
-    web_service_bodies (web_service_id, content_type, template, body_required)
+    web_service_bodies (
+        web_service_id,
+        content_type,
+        template,
+        body_required
+    )
 VALUES
     (
         sqlc.arg(web_service_id),
@@ -947,6 +960,7 @@ INSERT INTO
         required,
         READ_ONLY,
         property,
+        role,
         location,
         explode,
         schema_kind
@@ -963,6 +977,7 @@ VALUES
         sqlc.arg(required),
         sqlc.arg(READ_ONLY),
         sqlc.narg(property),
+        sqlc.narg(role),
         sqlc.narg(location),
         sqlc.arg(explode),
         sqlc.arg(schema_kind)

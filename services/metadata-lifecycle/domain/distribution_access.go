@@ -189,7 +189,7 @@ func (service WebService) selectAccessFormat(selected *string) (uuid.UUID, Acces
 	}
 
 	for _, parameter := range service.Parameters {
-		if parameter.Property != nil && *parameter.Property == encodingFormatProperty {
+		if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
 			resolved, err := resolveAccessValue(parameter.Schema, AccessString(*selected))
 			if err != nil {
 				return uuid.Nil, nil, internalValidationError(err)

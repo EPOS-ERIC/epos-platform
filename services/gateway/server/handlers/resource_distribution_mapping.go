@@ -236,6 +236,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 	}
 	description := toAPINilString(value.Description)
 	property := toAPINilString(value.Property)
+	role, err := toAPIParameterRole(value.Role)
+	if err != nil {
+		return gatewayapi.Parameter{}, err
+	}
 	location, err := toAPIParameterLocation(value.Location)
 	if err != nil {
 		return gatewayapi.Parameter{}, err
@@ -256,6 +260,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 			Description:    description,
 			Required:       value.Required,
 			Property:       property,
+			Role:           role,
 			Location:       location,
 			Explode:        value.Explode,
 			MultipleValues: v.MultipleValues,
@@ -275,6 +280,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 			Description: description,
 			Required:    value.Required,
 			Property:    property,
+			Role:        role,
 			Location:    location,
 			Explode:     value.Explode,
 			ReadOnly:    value.ReadOnly,
@@ -295,6 +301,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 			Description:    description,
 			Required:       value.Required,
 			Property:       property,
+			Role:           role,
 			Location:       location,
 			Explode:        value.Explode,
 			MultipleValues: v.MultipleValues,
@@ -319,6 +326,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 			Description:    description,
 			Required:       value.Required,
 			Property:       property,
+			Role:           role,
 			Location:       location,
 			Explode:        value.Explode,
 			MultipleValues: v.MultipleValues,
@@ -339,6 +347,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 			Description: description,
 			Required:    value.Required,
 			Property:    property,
+			Role:        role,
 			Location:    location,
 			Explode:     value.Explode,
 			ReadOnly:    value.ReadOnly,
@@ -366,6 +375,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter, id uuid.UUID) (gateway
 			Description: description,
 			Required:    value.Required,
 			Property:    property,
+			Role:        role,
 			Location:    location,
 			Explode:     value.Explode,
 			ReadOnly:    value.ReadOnly,
@@ -541,4 +551,29 @@ func toAPIParameterLocation(value metadatalifecyclev1.WebServiceParameterLocatio
 	default:
 		return "", fmt.Errorf("unsupported upstream parameter location %q", value)
 	}
+}
+
+func toAPIParameterRole(value metadatalifecyclev1.WebServiceParameterRole) (gatewayapi.OptNilParameterRole, error) {
+	result := gatewayapi.OptNilParameterRole{}
+	switch value {
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED:
+		return result, nil
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_FORMAT:
+		result.SetTo(gatewayapi.ParameterRoleFORMAT)
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_START_DATE:
+		result.SetTo(gatewayapi.ParameterRoleSTARTDATE)
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_END_DATE:
+		result.SetTo(gatewayapi.ParameterRoleENDDATE)
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LON:
+		result.SetTo(gatewayapi.ParameterRoleMINLON)
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LON:
+		result.SetTo(gatewayapi.ParameterRoleMAXLON)
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LAT:
+		result.SetTo(gatewayapi.ParameterRoleMINLAT)
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT:
+		result.SetTo(gatewayapi.ParameterRoleMAXLAT)
+	default:
+		return gatewayapi.OptNilParameterRole{}, fmt.Errorf("unsupported upstream parameter role %q", value)
+	}
+	return result, nil
 }

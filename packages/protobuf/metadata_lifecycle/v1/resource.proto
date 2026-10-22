@@ -301,6 +301,17 @@ enum WebServiceParameterLocation {
   WEB_SERVICE_PARAMETER_LOCATION_HEADER = 3;
 }
 
+enum WebServiceParameterRole {
+  WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED = 0;
+  WEB_SERVICE_PARAMETER_ROLE_FORMAT = 1;
+  WEB_SERVICE_PARAMETER_ROLE_START_DATE = 2;
+  WEB_SERVICE_PARAMETER_ROLE_END_DATE = 3;
+  WEB_SERVICE_PARAMETER_ROLE_MIN_LON = 4;
+  WEB_SERVICE_PARAMETER_ROLE_MAX_LON = 5;
+  WEB_SERVICE_PARAMETER_ROLE_MIN_LAT = 6;
+  WEB_SERVICE_PARAMETER_ROLE_MAX_LAT = 7;
+}
+
 message WebServiceInput {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   optional string description = 2 [(buf.validate.field).string.min_len = 1];
@@ -372,6 +383,7 @@ message ParameterInput {
   optional string property = 13;
   WebServiceParameterLocation location = 14 [(buf.validate.field).enum.defined_only = true];
   bool explode = 15;
+  WebServiceParameterRole role = 16 [(buf.validate.field).enum.defined_only = true];
 }
 
 message Parameter {
@@ -393,6 +405,7 @@ message Parameter {
   optional string property = 13;
   WebServiceParameterLocation location = 14 [(buf.validate.field).enum.defined_only = true];
   bool explode = 15;
+  WebServiceParameterRole role = 16 [(buf.validate.field).enum.defined_only = true];
 }
 
 message ScalarParameterInput {

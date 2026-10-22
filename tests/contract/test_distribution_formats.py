@@ -30,6 +30,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
             "explode": False,
             "multiple_values": False,
             "property": "schema:encodingFormat",
+            "role": "FORMAT",
             "default": "xml_dc",
             **overrides,
         }
@@ -120,7 +121,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         return self.details(detail["resource_id"], detail["version_id"])
 
     def test_native_format_discovery(self) -> None:
-        """Verify native choices, labels, exact property matching and file exclusion."""
+        """Verify explicit format roles, labels, generic properties, and file exclusion."""
         group_id = create_group(self.gateway, f"formats-{uuid4().hex}")
         fixed = self.distribution(
             "fixed", "unused-format", [self.format_parameter(location="PATH", required=True)]
@@ -143,7 +144,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
             ),
             self.distribution(
                 "other-property", "fallback-format",
-                [self.format_parameter(property="schema:encodingformat")],
+                [self.format_parameter(property="schema:encodingFormat", role=None)],
             ),
             {
                 "title": "file", "description": "Contract downloadable file",
@@ -197,6 +198,9 @@ class DistributionFormatsContractTest(unittest.TestCase):
         version = self.version(resource_id, "DRAFT")
         self.assertNotEqual(version["version_id"], published_version_id)
         draft = self.details(resource_id, version["version_id"])
+        copied_parameter = draft["metadata"]["distributions"][0]["web_service"]["parameters"][0]
+        self.assertEqual(copied_parameter["role"], "FORMAT")
+        self.assertEqual(copied_parameter["property"], "schema:encodingFormat")
         metadata["distributions"][0]["web_service"]["parameters"] = [
             self.format_parameter(
                 default="format-C",

@@ -532,6 +532,53 @@ func (ns NullWebServiceParameterLocation) Value() (driver.Value, error) {
 	return string(ns.WebServiceParameterLocation), nil
 }
 
+type WebServiceParameterRole string
+
+const (
+	WebServiceParameterRoleFORMAT    WebServiceParameterRole = "FORMAT"
+	WebServiceParameterRoleSTARTDATE WebServiceParameterRole = "START_DATE"
+	WebServiceParameterRoleENDDATE   WebServiceParameterRole = "END_DATE"
+	WebServiceParameterRoleMINLON    WebServiceParameterRole = "MIN_LON"
+	WebServiceParameterRoleMAXLON    WebServiceParameterRole = "MAX_LON"
+	WebServiceParameterRoleMINLAT    WebServiceParameterRole = "MIN_LAT"
+	WebServiceParameterRoleMAXLAT    WebServiceParameterRole = "MAX_LAT"
+)
+
+func (e *WebServiceParameterRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WebServiceParameterRole(s)
+	case string:
+		*e = WebServiceParameterRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WebServiceParameterRole: %T", src)
+	}
+	return nil
+}
+
+type NullWebServiceParameterRole struct {
+	WebServiceParameterRole WebServiceParameterRole
+	Valid                   bool // Valid is true if WebServiceParameterRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWebServiceParameterRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.WebServiceParameterRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WebServiceParameterRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWebServiceParameterRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WebServiceParameterRole), nil
+}
+
 type WebServiceType string
 
 const (
@@ -868,6 +915,7 @@ type Parameter struct {
 	WebServiceBodyID    *uuid.UUID
 	TemplateParameterID *uuid.UUID
 	SchemaKind          ParameterSchemaKind
+	Role                *WebServiceParameterRole
 	Property            *string
 	Location            *WebServiceParameterLocation
 	Explode             bool

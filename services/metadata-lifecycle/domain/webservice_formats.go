@@ -2,9 +2,6 @@ package domain
 
 import "fmt"
 
-// TODO: use a dedicated column for "role" of a parameter
-const encodingFormatProperty = "schema:encodingFormat"
-
 type NativeFormat struct {
 	OutputFormat string
 	Label        string
@@ -14,7 +11,7 @@ type NativeFormat struct {
 func (value WebService) NativeFormats() []NativeFormat {
 	var formatSchema *StringSchema
 	for _, parameter := range value.Parameters {
-		if parameter.Property != nil && *parameter.Property == encodingFormatProperty {
+		if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
 			schema := parameter.Schema.(StringSchema)
 			formatSchema = &schema
 			break
@@ -44,30 +41,53 @@ func (value WebService) NativeFormats() []NativeFormat {
 	return result
 }
 
-func validateFormatParameter(parameters []WebServiceParameterInput) error {
-	found := false
+func validateWebServiceParameterRoles(parameters []WebServiceParameterInput) error {
+	seen := make(map[WebServiceParameterRole]struct{})
 	for i, parameter := range parameters {
-		if parameter.Property == nil || *parameter.Property != encodingFormatProperty {
+		if parameter.Role == nil {
 			continue
 		}
 		target := fmt.Sprintf("parameters[%d]", i)
-		if found {
-			return invalidField(target+".property", "Only one encoding-format parameter is allowed.", nil)
+		role := *parameter.Role
+		if _, exists := seen[role]; exists {
+			return invalidField(target+".role", "Only one parameter per role is allowed.", nil)
 		}
-		schema, ok := parameter.Schema.(StringSchema)
-		if !ok {
-			return invalidField(target+".kind", "Encoding-format parameter must be STRING.", nil)
+		seen[role] = struct{}{}
+		if parameter.Schema.Kind() == ParameterSchemaKindTemplate {
+			return invalidField(target+".role", "Roles are only supported on non-template parameters.", nil)
 		}
-		if schema.MultipleValues {
-			return invalidField(target+".multiple_values", "Encoding-format parameter must be single-value.", nil)
+		switch role {
+		case WebServiceParameterRoleFormat:
+			schema, ok := parameter.Schema.(StringSchema)
+			if !ok {
+				return invalidField(target+".kind", "FORMAT role requires a STRING parameter.", nil)
+			}
+			if schema.MultipleValues {
+				return invalidField(target+".multiple_values", "FORMAT role requires a single-value parameter.", nil)
+			}
+			if !parameter.ReadOnly {
+				return invalidField(target+".read_only", "FORMAT role requires a read-only parameter.", nil)
+			}
+			if schema.Default == nil {
+				return invalidField(target+".default", "FORMAT role requires a default.", nil)
+			}
+		case WebServiceParameterRoleStartDate, WebServiceParameterRoleEndDate:
+			if _, ok := parameter.Schema.(DateTimeSchema); !ok {
+				return invalidField(target+".kind", "Date roles require a DATETIME parameter.", nil)
+			}
+		case WebServiceParameterRoleMinLon, WebServiceParameterRoleMaxLon,
+			WebServiceParameterRoleMinLat, WebServiceParameterRoleMaxLat:
+			switch parameter.Schema.(type) {
+			case IntegerSchema, FloatSchema:
+				if parameter.Schema.AllowsMultipleValues() {
+					return invalidField(target+".multiple_values", "Coordinate roles require a single-value parameter.", nil)
+				}
+			default:
+				return invalidField(target+".kind", "Coordinate roles require an INTEGER or FLOAT parameter.", nil)
+			}
+		default:
+			return invalidField(target+".role", "Role is not supported.", nil)
 		}
-		if !parameter.ReadOnly {
-			return invalidField(target+".read_only", "Encoding-format parameter must be read only.", nil)
-		}
-		if schema.Default == nil {
-			return invalidField(target+".default", "Encoding-format parameter requires a default.", nil)
-		}
-		found = true
 	}
 	return nil
 }

@@ -896,6 +896,7 @@ func parameterOutput(value domain.WebServiceParameter) *metadatalifecyclev1.Para
 		Required:    value.Required,
 		ReadOnly:    value.ReadOnly,
 		Property:    value.Property,
+		Role:        webServiceParameterRoleOutput(value.Role),
 		Location:    webServiceParameterLocationOutput(value.Location),
 		Explode:     value.Explode,
 	}
@@ -1377,7 +1378,60 @@ func webServiceParameterInput(value *metadatalifecyclev1.ParameterInput) (domain
 	if err != nil {
 		return domain.WebServiceParameterInput{}, err
 	}
-	return domain.WebServiceParameterInput{ParameterInput: parameter, Property: value.Property, Location: location, Explode: value.GetExplode()}, nil
+	role, err := webServiceParameterRoleInput(value.GetRole())
+	if err != nil {
+		return domain.WebServiceParameterInput{}, err
+	}
+	return domain.WebServiceParameterInput{ParameterInput: parameter, Property: value.Property, Role: role, Location: location, Explode: value.GetExplode()}, nil
+}
+
+func webServiceParameterRoleInput(value metadatalifecyclev1.WebServiceParameterRole) (*domain.WebServiceParameterRole, error) {
+	var role domain.WebServiceParameterRole
+	switch value {
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED:
+		return nil, nil
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_FORMAT:
+		role = domain.WebServiceParameterRoleFormat
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_START_DATE:
+		role = domain.WebServiceParameterRoleStartDate
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_END_DATE:
+		role = domain.WebServiceParameterRoleEndDate
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LON:
+		role = domain.WebServiceParameterRoleMinLon
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LON:
+		role = domain.WebServiceParameterRoleMaxLon
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LAT:
+		role = domain.WebServiceParameterRoleMinLat
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT:
+		role = domain.WebServiceParameterRoleMaxLat
+	default:
+		return nil, apperror.New(apperror.CodeValidationFailed, "parameter role is invalid") //nolint:wrapcheck
+	}
+	return &role, nil
+}
+
+func webServiceParameterRoleOutput(value *domain.WebServiceParameterRole) metadatalifecyclev1.WebServiceParameterRole {
+	if value == nil {
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED
+	}
+	switch *value {
+	case domain.WebServiceParameterRoleFormat:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_FORMAT
+	case domain.WebServiceParameterRoleStartDate:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_START_DATE
+	case domain.WebServiceParameterRoleEndDate:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_END_DATE
+	case domain.WebServiceParameterRoleMinLon:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LON
+	case domain.WebServiceParameterRoleMaxLon:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LON
+	case domain.WebServiceParameterRoleMinLat:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LAT
+	case domain.WebServiceParameterRoleMaxLat:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT
+	default:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED
+	}
 }
 
 func webServiceParameterLocationInput(value metadatalifecyclev1.WebServiceParameterLocation) (domain.ParameterLocation, error) {

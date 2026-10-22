@@ -314,6 +314,7 @@ INSERT INTO
         required,
         READ_ONLY,
         property,
+        role,
         location,
         explode,
         schema_kind
@@ -332,10 +333,11 @@ VALUES
         $10,
         $11,
         $12,
-        $13
+        $13,
+        $14
     )
 RETURNING
-    id, position, name, label, description, required, read_only, web_service_id, web_service_body_id, template_parameter_id, schema_kind, property, location, explode
+    id, position, name, label, description, required, read_only, web_service_id, web_service_body_id, template_parameter_id, schema_kind, role, property, location, explode
 `
 
 type AddLifecycleParameterParams struct {
@@ -349,6 +351,7 @@ type AddLifecycleParameterParams struct {
 	Required            bool
 	ReadOnly            bool
 	Property            *string
+	Role                *WebServiceParameterRole
 	Location            *WebServiceParameterLocation
 	Explode             bool
 	SchemaKind          ParameterSchemaKind
@@ -366,6 +369,7 @@ func (q *Queries) AddLifecycleParameter(ctx context.Context, arg AddLifecyclePar
 		arg.Required,
 		arg.ReadOnly,
 		arg.Property,
+		arg.Role,
 		arg.Location,
 		arg.Explode,
 		arg.SchemaKind,
@@ -383,6 +387,7 @@ func (q *Queries) AddLifecycleParameter(ctx context.Context, arg AddLifecyclePar
 		&i.WebServiceBodyID,
 		&i.TemplateParameterID,
 		&i.SchemaKind,
+		&i.Role,
 		&i.Property,
 		&i.Location,
 		&i.Explode,
@@ -549,7 +554,12 @@ func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWe
 
 const addLifecycleWebServiceBody = `-- name: AddLifecycleWebServiceBody :one
 INSERT INTO
-    web_service_bodies (web_service_id, content_type, template, body_required)
+    web_service_bodies (
+        web_service_id,
+        content_type,
+        template,
+        body_required
+    )
 VALUES
     (
         $1,
@@ -805,7 +815,13 @@ inserted_web_services AS (
 ),
 inserted_web_service_bodies AS (
     INSERT INTO
-        web_service_bodies (id, web_service_id, content_type, template, body_required)
+        web_service_bodies (
+            id,
+            web_service_id,
+            content_type,
+            template,
+            body_required
+        )
     SELECT
         uuid_generate_v5(target.id, source.id::text),
         target.id,
@@ -870,6 +886,7 @@ inserted_parameters AS (
             required,
             READ_ONLY,
             property,
+            role,
             location,
             explode,
             schema_kind,
@@ -897,6 +914,7 @@ inserted_parameters AS (
         parameter.required,
         parameter.read_only,
         parameter.property,
+        parameter.role,
         parameter.location,
         parameter.explode,
         parameter.schema_kind,
@@ -2455,7 +2473,7 @@ func (q *Queries) ListLifecycleStringParameterSchemas(ctx context.Context, param
 
 const listLifecycleTemplateParameters = `-- name: ListLifecycleTemplateParameters :many
 SELECT
-    id, position, name, label, description, required, read_only, web_service_id, web_service_body_id, template_parameter_id, schema_kind, property, location, explode
+    id, position, name, label, description, required, read_only, web_service_id, web_service_body_id, template_parameter_id, schema_kind, role, property, location, explode
 FROM
     parameters
 WHERE
@@ -2487,6 +2505,7 @@ func (q *Queries) ListLifecycleTemplateParameters(ctx context.Context, parameter
 			&i.WebServiceBodyID,
 			&i.TemplateParameterID,
 			&i.SchemaKind,
+			&i.Role,
 			&i.Property,
 			&i.Location,
 			&i.Explode,
@@ -2584,7 +2603,7 @@ func (q *Queries) ListLifecycleWebServiceContactPoints(ctx context.Context, webS
 
 const listLifecycleWebServiceParameters = `-- name: ListLifecycleWebServiceParameters :many
 SELECT
-    parameter.id, parameter.position, parameter.name, parameter.label, parameter.description, parameter.required, parameter.read_only, parameter.web_service_id, parameter.web_service_body_id, parameter.template_parameter_id, parameter.schema_kind, parameter.property, parameter.location, parameter.explode
+    parameter.id, parameter.position, parameter.name, parameter.label, parameter.description, parameter.required, parameter.read_only, parameter.web_service_id, parameter.web_service_body_id, parameter.template_parameter_id, parameter.schema_kind, parameter.role, parameter.property, parameter.location, parameter.explode
 FROM
     parameters AS parameter
     LEFT JOIN web_service_bodies AS body ON body.id = parameter.web_service_body_id
@@ -2618,6 +2637,7 @@ func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServ
 			&i.WebServiceBodyID,
 			&i.TemplateParameterID,
 			&i.SchemaKind,
+			&i.Role,
 			&i.Property,
 			&i.Location,
 			&i.Explode,

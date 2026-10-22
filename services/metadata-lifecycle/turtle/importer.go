@@ -717,10 +717,12 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 				continue
 			}
 			parameterValue.Position = len(service.Parameters)
+			propertyValue := m.optionalString(mapping, hydraProperty)
 			parameter := domain.WebServiceParameter{
 				ParameterInput: parameterValue,
 				ID:             ownedID(service.ID.String(), "parameter", mapping),
-				Property:       stringPtr(m.optionalString(mapping, hydraProperty)),
+				Property:       stringPtr(propertyValue),
+				Role:           webServiceParameterRole(propertyValue),
 				Location:       hydraParameterLocation(serviceTemplate, parameterValue.Name),
 				Explode:        false,
 			}
@@ -735,6 +737,30 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 	}
 
 	return service, nil
+}
+
+func webServiceParameterRole(property string) *domain.WebServiceParameterRole {
+	property = strings.TrimSpace(property)
+	var role domain.WebServiceParameterRole
+	switch property {
+	case "schema:encodingFormat":
+		role = domain.WebServiceParameterRoleFormat
+	case "schema:startDate":
+		role = domain.WebServiceParameterRoleStartDate
+	case "schema:endDate":
+		role = domain.WebServiceParameterRoleEndDate
+	case "epos:westernmostLongitude":
+		role = domain.WebServiceParameterRoleMinLon
+	case "epos:easternmostLongitude":
+		role = domain.WebServiceParameterRoleMaxLon
+	case "epos:southernmostLatitude":
+		role = domain.WebServiceParameterRoleMinLat
+	case "epos:northernmostLatitude":
+		role = domain.WebServiceParameterRoleMaxLat
+	default:
+		return nil
+	}
+	return &role
 }
 
 func (m *mapper) parameter(source string) (domain.ParameterInput, error) {
@@ -1414,7 +1440,13 @@ func appendUniqueParameter(values []domain.WebServiceParameter, value domain.Web
 		if existing.Schema == nil || value.Schema == nil || existing.Schema.Kind() != value.Schema.Kind() {
 			return values, fmt.Errorf("parameter %q has incompatible kinds %q and %q", value.Name, schemaKind(existing.Schema), schemaKind(value.Schema))
 		}
+		if existing.Role != nil && value.Role != nil && *existing.Role != *value.Role {
+			return values, fmt.Errorf("parameter %q has conflicting roles %q and %q", value.Name, *existing.Role, *value.Role)
+		}
 		values[i].ParameterInput = mergeParameter(existing.ParameterInput, value.ParameterInput)
+		if values[i].Role == nil {
+			values[i].Role = value.Role
+		}
 		return values, nil
 	}
 	return append(values, value), nil

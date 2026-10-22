@@ -5,6 +5,7 @@ CREATE TYPE web_service_type AS ENUM ('WMS', 'GEOJSON', 'DYNAMIC', 'WMTS', 'WFS'
 CREATE TYPE web_service_visible_on AS ENUM ('GRAPH', 'TABLE', 'MAP');
 CREATE TYPE web_service_parameter_location AS ENUM ('PATH', 'QUERY', 'HEADER');
 CREATE TYPE parameter_schema_kind AS ENUM ('STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME', 'TEMPLATE');
+CREATE TYPE web_service_parameter_role AS ENUM ('FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT');
 
 CREATE TYPE string_parameter_enum_option AS (
     value text,
@@ -218,8 +219,7 @@ CREATE TABLE parameters (
 
     schema_kind           parameter_schema_kind NOT NULL,
 
-	-- TODO: add a dedicated "role" column with an enum: FORMAT, START_DATE, END_DATE, MIN_LON, MAX_LON, MIN_LAT, MAX_LAT that identifies the role of this parameter. Keep property field for other semantic metadata (unused basically)
-	-- TODO: add validation for parameters with role to make sure they are valid for that role (eg. FORMAT should be string, read_only, ...)
+    role                  web_service_parameter_role,
     property              nonblank_text_opt,
     location              web_service_parameter_location,
     explode               boolean NOT NULL DEFAULT false,
@@ -229,10 +229,12 @@ CREATE TABLE parameters (
         (web_service_id IS NOT NULL AND location IS NOT NULL)
         OR (web_service_id IS NULL AND location IS NULL AND property IS NULL AND NOT explode)
     ),
+    CHECK (role IS NULL OR (web_service_id IS NOT NULL AND schema_kind <> 'TEMPLATE')),
     CHECK (NOT explode OR (web_service_id IS NOT NULL AND location = 'QUERY')),
     CHECK (location <> 'PATH' OR required),
     CHECK (schema_kind <> 'TEMPLATE' OR web_service_id IS NOT NULL),
     CHECK (template_parameter_id IS NULL OR schema_kind <> 'TEMPLATE'),
+    UNIQUE (web_service_id, role),
     UNIQUE (id, schema_kind)
 );
 

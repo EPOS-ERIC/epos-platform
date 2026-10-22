@@ -2828,6 +2828,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -2849,6 +2850,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -2877,6 +2879,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -2909,6 +2912,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -2931,6 +2935,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -2964,6 +2969,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -2996,6 +3002,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -3026,6 +3033,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -3060,6 +3068,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -3093,6 +3102,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -3125,6 +3135,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -3161,6 +3172,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -3341,6 +3353,11 @@ components:
     ParameterLocation:
       type: string
       enum: [PATH, QUERY, HEADER]
+
+    ParameterRole:
+      type: string
+      nullable: true
+      enum: [FORMAT, START_DATE, END_DATE, MIN_LON, MAX_LON, MIN_LAT, MAX_LAT]
 
     WebServiceMethod:
       type: string

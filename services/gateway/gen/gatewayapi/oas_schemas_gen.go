@@ -182,6 +182,7 @@ type BooleanParameter struct {
 	Description OptNilString         `json:"description"`
 	Required    bool                 `json:"required"`
 	Property    OptNilString         `json:"property"`
+	Role        OptNilParameterRole  `json:"role"`
 	Location    ParameterLocation    `json:"location"`
 	Explode     bool                 `json:"explode"`
 	ReadOnly    bool                 `json:"read_only"`
@@ -226,6 +227,11 @@ func (s *BooleanParameter) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *BooleanParameter) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *BooleanParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -288,6 +294,11 @@ func (s *BooleanParameter) SetProperty(val OptNilString) {
 	s.Property = val
 }
 
+// SetRole sets the value of Role.
+func (s *BooleanParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetLocation sets the value of Location.
 func (s *BooleanParameter) SetLocation(val ParameterLocation) {
 	s.Location = val
@@ -317,6 +328,7 @@ type BooleanParameterDraft struct {
 	Description OptNilString              `json:"description"`
 	Required    bool                      `json:"required"`
 	Property    OptNilString              `json:"property"`
+	Role        OptNilParameterRole       `json:"role"`
 	Location    ParameterLocation         `json:"location"`
 	Explode     bool                      `json:"explode"`
 	ReadOnly    bool                      `json:"read_only"`
@@ -356,6 +368,11 @@ func (s *BooleanParameterDraft) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *BooleanParameterDraft) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *BooleanParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -411,6 +428,11 @@ func (s *BooleanParameterDraft) SetRequired(val bool) {
 // SetProperty sets the value of Property.
 func (s *BooleanParameterDraft) SetProperty(val OptNilString) {
 	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *BooleanParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetLocation sets the value of Location.
@@ -2664,6 +2686,7 @@ type DateTimeParameter struct {
 	Description OptNilString          `json:"description"`
 	Required    bool                  `json:"required"`
 	Property    OptNilString          `json:"property"`
+	Role        OptNilParameterRole   `json:"role"`
 	Location    ParameterLocation     `json:"location"`
 	Explode     bool                  `json:"explode"`
 	ReadOnly    bool                  `json:"read_only"`
@@ -2711,6 +2734,11 @@ func (s *DateTimeParameter) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *DateTimeParameter) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *DateTimeParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -2788,6 +2816,11 @@ func (s *DateTimeParameter) SetProperty(val OptNilString) {
 	s.Property = val
 }
 
+// SetRole sets the value of Role.
+func (s *DateTimeParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetLocation sets the value of Location.
 func (s *DateTimeParameter) SetLocation(val ParameterLocation) {
 	s.Location = val
@@ -2832,6 +2865,7 @@ type DateTimeParameterDraft struct {
 	Description OptNilString               `json:"description"`
 	Required    bool                       `json:"required"`
 	Property    OptNilString               `json:"property"`
+	Role        OptNilParameterRole        `json:"role"`
 	Location    ParameterLocation          `json:"location"`
 	Explode     bool                       `json:"explode"`
 	ReadOnly    bool                       `json:"read_only"`
@@ -2874,6 +2908,11 @@ func (s *DateTimeParameterDraft) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *DateTimeParameterDraft) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *DateTimeParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -2944,6 +2983,11 @@ func (s *DateTimeParameterDraft) SetRequired(val bool) {
 // SetProperty sets the value of Property.
 func (s *DateTimeParameterDraft) SetProperty(val OptNilString) {
 	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *DateTimeParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetLocation sets the value of Location.
@@ -4619,22 +4663,23 @@ func (s *FloatEnumOption) SetLabel(val OptString) {
 
 // Ref: #/components/schemas/FloatParameter
 type FloatParameter struct {
-	ID             uuid.UUID          `json:"id"`
-	Kind           FloatParameterKind `json:"kind"`
-	Position       int32              `json:"position"`
-	Name           NonBlankString     `json:"name"`
-	Label          NonBlankString     `json:"label"`
-	Description    OptNilString       `json:"description"`
-	Required       bool               `json:"required"`
-	Property       OptNilString       `json:"property"`
-	Location       ParameterLocation  `json:"location"`
-	Explode        bool               `json:"explode"`
-	MultipleValues bool               `json:"multiple_values"`
-	ReadOnly       bool               `json:"read_only"`
-	Minimum        OptNilFloat64      `json:"minimum"`
-	Maximum        OptNilFloat64      `json:"maximum"`
-	Default        OptNilFloat64      `json:"default"`
-	Enum           []FloatEnumOption  `json:"enum"`
+	ID             uuid.UUID           `json:"id"`
+	Kind           FloatParameterKind  `json:"kind"`
+	Position       int32               `json:"position"`
+	Name           NonBlankString      `json:"name"`
+	Label          NonBlankString      `json:"label"`
+	Description    OptNilString        `json:"description"`
+	Required       bool                `json:"required"`
+	Property       OptNilString        `json:"property"`
+	Role           OptNilParameterRole `json:"role"`
+	Location       ParameterLocation   `json:"location"`
+	Explode        bool                `json:"explode"`
+	MultipleValues bool                `json:"multiple_values"`
+	ReadOnly       bool                `json:"read_only"`
+	Minimum        OptNilFloat64       `json:"minimum"`
+	Maximum        OptNilFloat64       `json:"maximum"`
+	Default        OptNilFloat64       `json:"default"`
+	Enum           []FloatEnumOption   `json:"enum"`
 }
 
 // GetID returns the value of ID.
@@ -4675,6 +4720,11 @@ func (s *FloatParameter) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *FloatParameter) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *FloatParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -4757,6 +4807,11 @@ func (s *FloatParameter) SetProperty(val OptNilString) {
 	s.Property = val
 }
 
+// SetRole sets the value of Role.
+func (s *FloatParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetLocation sets the value of Location.
 func (s *FloatParameter) SetLocation(val ParameterLocation) {
 	s.Location = val
@@ -4806,6 +4861,7 @@ type FloatParameterDraft struct {
 	Description    OptNilString            `json:"description"`
 	Required       bool                    `json:"required"`
 	Property       OptNilString            `json:"property"`
+	Role           OptNilParameterRole     `json:"role"`
 	Location       ParameterLocation       `json:"location"`
 	Explode        bool                    `json:"explode"`
 	MultipleValues bool                    `json:"multiple_values"`
@@ -4849,6 +4905,11 @@ func (s *FloatParameterDraft) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *FloatParameterDraft) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *FloatParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -4924,6 +4985,11 @@ func (s *FloatParameterDraft) SetRequired(val bool) {
 // SetProperty sets the value of Property.
 func (s *FloatParameterDraft) SetProperty(val OptNilString) {
 	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *FloatParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetLocation sets the value of Location.
@@ -6371,6 +6437,7 @@ type IntegerParameter struct {
 	Description    OptNilString         `json:"description"`
 	Required       bool                 `json:"required"`
 	Property       OptNilString         `json:"property"`
+	Role           OptNilParameterRole  `json:"role"`
 	Location       ParameterLocation    `json:"location"`
 	Explode        bool                 `json:"explode"`
 	MultipleValues bool                 `json:"multiple_values"`
@@ -6419,6 +6486,11 @@ func (s *IntegerParameter) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *IntegerParameter) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *IntegerParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -6501,6 +6573,11 @@ func (s *IntegerParameter) SetProperty(val OptNilString) {
 	s.Property = val
 }
 
+// SetRole sets the value of Role.
+func (s *IntegerParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetLocation sets the value of Location.
 func (s *IntegerParameter) SetLocation(val ParameterLocation) {
 	s.Location = val
@@ -6550,6 +6627,7 @@ type IntegerParameterDraft struct {
 	Description    OptNilString              `json:"description"`
 	Required       bool                      `json:"required"`
 	Property       OptNilString              `json:"property"`
+	Role           OptNilParameterRole       `json:"role"`
 	Location       ParameterLocation         `json:"location"`
 	Explode        bool                      `json:"explode"`
 	MultipleValues bool                      `json:"multiple_values"`
@@ -6593,6 +6671,11 @@ func (s *IntegerParameterDraft) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *IntegerParameterDraft) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *IntegerParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -6668,6 +6751,11 @@ func (s *IntegerParameterDraft) SetRequired(val bool) {
 // SetProperty sets the value of Property.
 func (s *IntegerParameterDraft) SetProperty(val OptNilString) {
 	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *IntegerParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetLocation sets the value of Location.
@@ -8431,6 +8519,74 @@ func (o OptNilInt64) Or(d int64) int64 {
 	return d
 }
 
+// NewOptNilParameterRole returns new OptNilParameterRole with value set to v.
+func NewOptNilParameterRole(v ParameterRole) OptNilParameterRole {
+	return OptNilParameterRole{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilParameterRole is optional nullable ParameterRole.
+type OptNilParameterRole struct {
+	Value ParameterRole
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilParameterRole was set.
+func (o OptNilParameterRole) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilParameterRole) Reset() {
+	var v ParameterRole
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilParameterRole) SetTo(v ParameterRole) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilParameterRole) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilParameterRole) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v ParameterRole
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilParameterRole) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilParameterRole) Get() (v ParameterRole, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilParameterRole) Or(d ParameterRole) ParameterRole {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilString returns new OptNilString with value set to v.
 func NewOptNilString(v string) OptNilString {
 	return OptNilString{
@@ -9631,6 +9787,83 @@ func (s *ParameterLocation) UnmarshalText(data []byte) error {
 		return nil
 	case ParameterLocationHEADER:
 		*s = ParameterLocationHEADER
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ParameterRole
+type ParameterRole string
+
+const (
+	ParameterRoleFORMAT    ParameterRole = "FORMAT"
+	ParameterRoleSTARTDATE ParameterRole = "START_DATE"
+	ParameterRoleENDDATE   ParameterRole = "END_DATE"
+	ParameterRoleMINLON    ParameterRole = "MIN_LON"
+	ParameterRoleMAXLON    ParameterRole = "MAX_LON"
+	ParameterRoleMINLAT    ParameterRole = "MIN_LAT"
+	ParameterRoleMAXLAT    ParameterRole = "MAX_LAT"
+)
+
+// AllValues returns all ParameterRole values.
+func (ParameterRole) AllValues() []ParameterRole {
+	return []ParameterRole{
+		ParameterRoleFORMAT,
+		ParameterRoleSTARTDATE,
+		ParameterRoleENDDATE,
+		ParameterRoleMINLON,
+		ParameterRoleMAXLON,
+		ParameterRoleMINLAT,
+		ParameterRoleMAXLAT,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ParameterRole) MarshalText() ([]byte, error) {
+	switch s {
+	case ParameterRoleFORMAT:
+		return []byte(s), nil
+	case ParameterRoleSTARTDATE:
+		return []byte(s), nil
+	case ParameterRoleENDDATE:
+		return []byte(s), nil
+	case ParameterRoleMINLON:
+		return []byte(s), nil
+	case ParameterRoleMAXLON:
+		return []byte(s), nil
+	case ParameterRoleMINLAT:
+		return []byte(s), nil
+	case ParameterRoleMAXLAT:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ParameterRole) UnmarshalText(data []byte) error {
+	switch ParameterRole(data) {
+	case ParameterRoleFORMAT:
+		*s = ParameterRoleFORMAT
+		return nil
+	case ParameterRoleSTARTDATE:
+		*s = ParameterRoleSTARTDATE
+		return nil
+	case ParameterRoleENDDATE:
+		*s = ParameterRoleENDDATE
+		return nil
+	case ParameterRoleMINLON:
+		*s = ParameterRoleMINLON
+		return nil
+	case ParameterRoleMAXLON:
+		*s = ParameterRoleMAXLON
+		return nil
+	case ParameterRoleMINLAT:
+		*s = ParameterRoleMINLAT
+		return nil
+	case ParameterRoleMAXLAT:
+		*s = ParameterRoleMAXLAT
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -12721,6 +12954,7 @@ type StringParameter struct {
 	Description    OptNilString        `json:"description"`
 	Required       bool                `json:"required"`
 	Property       OptNilString        `json:"property"`
+	Role           OptNilParameterRole `json:"role"`
 	Location       ParameterLocation   `json:"location"`
 	Explode        bool                `json:"explode"`
 	MultipleValues bool                `json:"multiple_values"`
@@ -12768,6 +13002,11 @@ func (s *StringParameter) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *StringParameter) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *StringParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -12845,6 +13084,11 @@ func (s *StringParameter) SetProperty(val OptNilString) {
 	s.Property = val
 }
 
+// SetRole sets the value of Role.
+func (s *StringParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetLocation sets the value of Location.
 func (s *StringParameter) SetLocation(val ParameterLocation) {
 	s.Location = val
@@ -12889,6 +13133,7 @@ type StringParameterDraft struct {
 	Description    OptNilString             `json:"description"`
 	Required       bool                     `json:"required"`
 	Property       OptNilString             `json:"property"`
+	Role           OptNilParameterRole      `json:"role"`
 	Location       ParameterLocation        `json:"location"`
 	Explode        bool                     `json:"explode"`
 	MultipleValues bool                     `json:"multiple_values"`
@@ -12931,6 +13176,11 @@ func (s *StringParameterDraft) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *StringParameterDraft) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *StringParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -13001,6 +13251,11 @@ func (s *StringParameterDraft) SetRequired(val bool) {
 // SetProperty sets the value of Property.
 func (s *StringParameterDraft) SetProperty(val OptNilString) {
 	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *StringParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetLocation sets the value of Location.
@@ -13429,6 +13684,7 @@ type TemplateParameter struct {
 	Description OptNilString          `json:"description"`
 	Required    bool                  `json:"required"`
 	Property    OptNilString          `json:"property"`
+	Role        OptNilParameterRole   `json:"role"`
 	Location    ParameterLocation     `json:"location"`
 	Explode     bool                  `json:"explode"`
 	ReadOnly    bool                  `json:"read_only"`
@@ -13474,6 +13730,11 @@ func (s *TemplateParameter) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *TemplateParameter) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *TemplateParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -13541,6 +13802,11 @@ func (s *TemplateParameter) SetProperty(val OptNilString) {
 	s.Property = val
 }
 
+// SetRole sets the value of Role.
+func (s *TemplateParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetLocation sets the value of Location.
 func (s *TemplateParameter) SetLocation(val ParameterLocation) {
 	s.Location = val
@@ -13575,6 +13841,7 @@ type TemplateParameterDraft struct {
 	Description OptNilString               `json:"description"`
 	Required    bool                       `json:"required"`
 	Property    OptNilString               `json:"property"`
+	Role        OptNilParameterRole        `json:"role"`
 	Location    ParameterLocation          `json:"location"`
 	Explode     bool                       `json:"explode"`
 	ReadOnly    bool                       `json:"read_only"`
@@ -13615,6 +13882,11 @@ func (s *TemplateParameterDraft) GetRequired() bool {
 // GetProperty returns the value of Property.
 func (s *TemplateParameterDraft) GetProperty() OptNilString {
 	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *TemplateParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetLocation returns the value of Location.
@@ -13675,6 +13947,11 @@ func (s *TemplateParameterDraft) SetRequired(val bool) {
 // SetProperty sets the value of Property.
 func (s *TemplateParameterDraft) SetProperty(val OptNilString) {
 	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *TemplateParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetLocation sets the value of Location.

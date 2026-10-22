@@ -14,6 +14,7 @@ func parameterParams(
 	value domain.ParameterInput,
 	webServiceID, webServiceBodyID, templateParameterID *uuid.UUID,
 	property *string,
+	role *domain.WebServiceParameterRole,
 	location *domain.ParameterLocation,
 	explode bool,
 ) (sqlc.AddLifecycleParameterParams, error) {
@@ -34,6 +35,9 @@ func parameterParams(
 		Property:            property,
 		Explode:             explode,
 	}
+	if role != nil {
+		params.Role = new(sqlc.WebServiceParameterRole(*role))
+	}
 	if location != nil {
 		converted := sqlc.WebServiceParameterLocation(*location)
 		params.Location = &converted
@@ -49,10 +53,11 @@ func persistParameter(
 	value domain.ParameterInput,
 	webServiceID, webServiceBodyID, templateParameterID *uuid.UUID,
 	property *string,
+	role *domain.WebServiceParameterRole,
 	location *domain.ParameterLocation,
 	explode bool,
 ) (sqlc.Parameter, error) {
-	params, err := parameterParams(value, webServiceID, webServiceBodyID, templateParameterID, property, location, explode)
+	params, err := parameterParams(value, webServiceID, webServiceBodyID, templateParameterID, property, role, location, explode)
 	if err != nil {
 		return sqlc.Parameter{}, err
 	}
@@ -111,7 +116,7 @@ func persistParameter(
 			break
 		}
 		for _, child := range schema.Parameters {
-			if _, err := persistParameter(ctx, q, child, nil, nil, &created.ID, nil, nil, false); err != nil {
+			if _, err := persistParameter(ctx, q, child, nil, nil, &created.ID, nil, nil, nil, false); err != nil {
 				return sqlc.Parameter{}, fmt.Errorf("add template parameter: %w", err)
 			}
 		}

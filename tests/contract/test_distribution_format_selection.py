@@ -10,7 +10,7 @@ class DistributionFormatSelectionContractTest(DistributionContractTestCase):
         for location in ("PATH", "QUERY", "HEADER"):
             distribution = web_distribution([parameter(
                 "format", location=location, required=location == "PATH", read_only=True,
-                property="schema:encodingFormat", default="xml",
+                property="custom:format-metadata", role="FORMAT", default="xml",
                 enum=[{"value": "xml"}, {"value": "json"}],
             )], template_url=(
                 "https://provider.invalid/{format}" if location == "PATH"
@@ -45,9 +45,17 @@ class DistributionFormatSelectionContractTest(DistributionContractTestCase):
 
     def test_fixed_formats_and_selector_validation(self) -> None:
         """Regression: malformed selectors must identify their field, not return generic Problems."""
-        fixed_parameter = web_distribution([parameter(
-            "format", read_only=True, property="schema:encodingFormat", default="xml",
-        )])
+        fixed_parameter = web_distribution(
+            [
+                parameter(
+                    "format",
+                    read_only=True,
+                    property="custom:format-metadata",
+                    role="FORMAT",
+                    default="xml",
+                )
+            ]
+        )
         fixed_parameter["title"] = "fixed-parameter"
         fixed_service = web_distribution(format="Application/JSON")
         fixed_service["title"] = "fixed-service"

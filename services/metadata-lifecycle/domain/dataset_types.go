@@ -224,6 +224,33 @@ func (l ParameterLocation) Valid() bool {
 	}
 }
 
+type WebServiceParameterRole string
+
+const (
+	WebServiceParameterRoleFormat    WebServiceParameterRole = "FORMAT"
+	WebServiceParameterRoleStartDate WebServiceParameterRole = "START_DATE"
+	WebServiceParameterRoleEndDate   WebServiceParameterRole = "END_DATE"
+	WebServiceParameterRoleMinLon    WebServiceParameterRole = "MIN_LON"
+	WebServiceParameterRoleMaxLon    WebServiceParameterRole = "MAX_LON"
+	WebServiceParameterRoleMinLat    WebServiceParameterRole = "MIN_LAT"
+	WebServiceParameterRoleMaxLat    WebServiceParameterRole = "MAX_LAT"
+)
+
+func (r WebServiceParameterRole) Valid() bool {
+	switch r {
+	case WebServiceParameterRoleFormat,
+		WebServiceParameterRoleStartDate,
+		WebServiceParameterRoleEndDate,
+		WebServiceParameterRoleMinLon,
+		WebServiceParameterRoleMaxLon,
+		WebServiceParameterRoleMinLat,
+		WebServiceParameterRoleMaxLat:
+		return true
+	default:
+		return false
+	}
+}
+
 // ParameterInput contains caller-controlled scalar or template parameter fields.
 type ParameterInput struct {
 	Position    int
@@ -244,6 +271,7 @@ type Parameter struct {
 type WebServiceParameterInput struct {
 	ParameterInput
 	Property *string
+	Role     *WebServiceParameterRole
 	Location ParameterLocation
 	Explode  bool
 }
@@ -251,6 +279,7 @@ type WebServiceParameterInput struct {
 type WebServiceParameter struct {
 	Parameter
 	Property *string
+	Role     *WebServiceParameterRole
 	Location ParameterLocation
 	Explode  bool
 }

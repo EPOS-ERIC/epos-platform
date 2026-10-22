@@ -77,7 +77,7 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 		return WebServiceInput{}, err
 	}
 
-	err = validateFormatParameter(parameters)
+	err = validateWebServiceParameterRoles(parameters)
 	if err != nil {
 		return WebServiceInput{}, err
 	}
@@ -151,6 +151,7 @@ func NewWebService(value WebService) (result WebService, err error) {
 		value.Parameters[i] = WebServiceParameter{
 			Parameter: persisted,
 			Property:  parameter.Property,
+			Role:      parameter.Role,
 			Location:  parameter.Location,
 			Explode:   parameter.Explode,
 		}
@@ -198,6 +199,13 @@ func NewWebServiceParameterInput(value WebServiceParameterInput) (WebServicePara
 	}
 	value.ParameterInput = parameter
 	value.Property = optionalTrimmedString(value.Property)
+	if value.Role != nil {
+		role := WebServiceParameterRole(strings.ToUpper(strings.TrimSpace(string(*value.Role))))
+		if !role.Valid() {
+			return WebServiceParameterInput{}, invalidField("role", "Role is not supported.", nil)
+		}
+		value.Role = &role
+	}
 	value.Location = ParameterLocation(strings.ToUpper(strings.TrimSpace(string(value.Location))))
 	if !value.Location.Valid() {
 		return WebServiceParameterInput{}, invalidField("location", "Location is not supported.", nil)
@@ -322,6 +330,7 @@ func webServiceParameterInputs(values []WebServiceParameter) []WebServiceParamet
 		result[i] = WebServiceParameterInput{
 			ParameterInput: value.Input(),
 			Property:       value.Property,
+			Role:           value.Role,
 			Location:       value.Location,
 			Explode:        value.Explode,
 		}
