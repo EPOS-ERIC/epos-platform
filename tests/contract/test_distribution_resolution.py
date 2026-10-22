@@ -30,7 +30,7 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
             ):
                 self.assert_prepare_problem(
                     self.prepare_response(distribution, gateway=gateway, headers=headers),
-                    403, "permission_denied",
+                    404, "not_found",
                 )
 
         assert_private()

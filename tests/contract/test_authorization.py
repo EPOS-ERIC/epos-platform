@@ -1066,7 +1066,7 @@ class AuthorizationContractTest(unittest.TestCase):
             id=resource_id,
             versionId=version_id,
         )
-        self.assert_forbidden(denied_get)
+        assert_problem(self, denied_get, 404, "not_found")
         editor_get = editor.get(
             "/resources/{resourceType}/{id}/versions/{versionId}",
             resourceType="dataset",

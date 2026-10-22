@@ -93,8 +93,9 @@ func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, vers
 	if err != nil {
 		return domain.DatasetVersion{}, operationError("authorize dataset read", err)
 	}
+
 	if !result.Allowed {
-		return domain.DatasetVersion{}, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
+		return domain.DatasetVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 
 	dataset, err := s.store.Get(ctx, datasetID, versionID)
