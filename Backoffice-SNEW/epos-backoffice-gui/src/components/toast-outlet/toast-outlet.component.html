@@ -34,6 +34,29 @@
                   <strong>{{ issue.label }}</strong>
                 }
                 <span>{{ issue.message }}</span>
+                @if (issue.reference) {
+                  <div class="toast-issue-reference">
+                    <span>Error ID</span>
+                    <div class="toast-reference-value">
+                      <code>{{ issue.reference }}</code>
+                      <button
+                        type="button"
+                        class="toast-reference-copy"
+                        [class.toast-reference-copy--copied]="copiedReference() === issue.reference"
+                        (click)="copyReference(issue.reference)"
+                        [attr.aria-label]="'Copy error ID ' + issue.reference"
+                      >
+                        <app-icon [name]="copiedReference() === issue.reference ? 'check' : 'content-copy'" [size]="13" />
+                        <span>
+                          {{ copiedReference() === issue.reference ? 'Copied' : failedReference() === issue.reference ? 'Select ID' : 'Copy' }}
+                        </span>
+                      </button>
+                    </div>
+                    <span class="toast-reference-help">
+                      Opening an <a href="https://epos-ci.brgm.fr/epos-public/issuetracker/-/issues" target="_blank" rel="noopener noreferrer">issue</a>? Include this error ID in your report.
+                    </span>
+                  </div>
+                }
               </li>
             }
           </ul>

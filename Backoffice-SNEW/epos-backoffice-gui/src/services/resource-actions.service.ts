@@ -268,6 +268,7 @@ export class ResourceActionsService {
 
     return {
       message: problem.detail.trim(),
+      ...(problem.instance ? { reference: problem.instance } : {}),
       ...(problem.target ? {
         label: this.problemTargetLabel(problem.target),
         target: problem.target

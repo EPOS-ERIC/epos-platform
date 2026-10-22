@@ -4,6 +4,7 @@ export type IconName =
   | 'arrow-left-alt'
   | 'at-sign'
   | 'apps'
+  | 'check'
   | 'chevron-left'
   | 'chevron-right'
   | 'chevron-down'
@@ -23,7 +24,7 @@ export type IconName =
   | 'bell'
   | 'block'
   | 'warning'
-  | 'sun'  
+  | 'sun'
   | 'moon'
   | 'join-group';
 

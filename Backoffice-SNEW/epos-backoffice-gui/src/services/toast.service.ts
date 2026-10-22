@@ -5,6 +5,7 @@ export type ToastTone = 'success' | 'error' | 'info';
 export type ToastIssue = {
   message: string;
   label?: string;
+  reference?: string;
   target?: string;
 };
 

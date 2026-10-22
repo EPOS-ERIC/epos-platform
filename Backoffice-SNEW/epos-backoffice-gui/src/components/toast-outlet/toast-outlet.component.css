@@ -8,7 +8,7 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  width: min(440px, calc(100vw - 48px));
+  width: min(520px, calc(100vw - 48px));
   padding: 16px;
   border: 1px solid color-mix(in srgb, var(--toast-accent) 34%, var(--line));
   border-left: 4px solid var(--toast-accent);
@@ -147,6 +147,91 @@
 .toast-issue strong {
   color: var(--text-strong);
   font-size: 0.76rem;
+}
+
+.toast-issue-reference {
+  display: grid;
+  gap: 3px;
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.toast-issue-reference code {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid color-mix(in srgb, var(--toast-accent) 18%, var(--line));
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+  text-transform: none;
+  user-select: all;
+}
+
+.toast-reference-value {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.toast-reference-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 66px;
+  padding: 4px 7px;
+  border: 1px solid color-mix(in srgb, var(--toast-accent) 28%, var(--line));
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #1f2937;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.toast-reference-copy:hover,
+.toast-reference-copy:focus-visible {
+  background: #f1f5f9;
+}
+
+.toast-reference-copy--copied {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #1f2937;
+}
+
+.toast-reference-copy--copied app-icon {
+  color: #16a34a;
+}
+
+.toast-reference-copy--copied:hover,
+.toast-reference-copy--copied:focus-visible {
+  background: #dcfce7;
+}
+
+.toast-reference-help {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  line-height: 1.4;
+  text-transform: none;
+}
+
+.toast-reference-help a {
+  color: var(--toast-accent);
+  font-weight: 700;
 }
 
 .toast-close {

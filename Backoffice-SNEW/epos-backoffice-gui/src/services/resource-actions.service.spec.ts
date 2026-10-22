@@ -157,6 +157,7 @@ describe('ResourceActionsService', () => {
       issues: [{
         label: 'Spatial coverage',
         message: 'Value must be valid WKT geometry.',
+        reference: 'trace-id',
         target: 'metadata.spatial_coverage'
       }]
     });

@@ -20,6 +20,10 @@
   overflow: hidden;
 }
 
+.spatial-map-panel {
+  isolation: isolate;
+}
+
 .spatial-map {
   height: 320px;
 }
