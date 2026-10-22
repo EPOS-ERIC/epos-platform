@@ -72,16 +72,18 @@ generate-data-retriever:
 generate-protobuf:
 	$(MAKE) -C packages/protobuf generate
 
+# Space-separated test files or unittest selectors; empty runs full discovery.
+TESTS ?=
 test-integration:
 	docker run --rm \
 		--add-host host.docker.internal:host-gateway \
 		-v "$(CURDIR):/work:ro" \
-		-w /work \
+		-w /work/tests/contract \
 		-e GATEWAY_API_URL=http://host.docker.internal:32000/v1 \
 		-e AAI_URL=http://host.docker.internal:35000 \
 		--entrypoint python \
 		ghcr.io/schemathesis/schemathesis:latest \
-		-m unittest discover -s /work/tests/contract -p 'test_*.py' -v
+		-m unittest $(if $(strip $(TESTS)),-v $(patsubst %.py,%,$(TESTS)),discover -s . -p 'test_*.py' -v)
 
 get-dev-token:
 	curl -s -X POST http://localhost:35000/oauth/token \

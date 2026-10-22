@@ -64,10 +64,8 @@ func toAPIPreparedDistributionRequest(request domain.PreparedRequest) (gatewayap
 	result := gatewayapi.PreparedDistributionRequest{
 		Method:  method,
 		URL:     *endpoint,
-		Headers: make(gatewayapi.PreparedDistributionRequestHeaders, len(request.Headers)),
+		Headers: maps.Clone(request.Headers),
 	}
-
-	maps.Copy(result.Headers, request.Headers)
 
 	var body *string
 	if request.Body != nil {

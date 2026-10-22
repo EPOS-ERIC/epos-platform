@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from distribution_fixtures import child, web_distribution
 from fixtures import create_group
 
 
@@ -181,6 +182,49 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             [item["id"] if isinstance(item, dict) else item for item in copied_metadata[key]],
             [item["id"] if isinstance(item, dict) else item for item in source_metadata[key]],
         )
+
+    def test_publication_draft_clones_web_service_body_parameters(self) -> None:
+        """Catch clone assigning body parameters both service and body owners."""
+
+        suffix = uuid4().hex
+        group_id = create_group(self.gateway, f"body-parameter-{suffix}")
+        metadata = {
+            "title": f"Dataset {suffix}",
+            "description": "Dataset with web-service body parameter",
+            "distributions": [
+                web_distribution(
+                    method="POST",
+                    body_content_type="text/plain",
+                    body_template="{{.payload}}",
+                    body_parameters=[child("payload")],
+                )
+            ],
+        }
+        resource_id = self.create_and_publish(group_id, "dataset", metadata)
+        published_version = self.version("dataset", resource_id, "PUBLISHED")
+        published_details = self.details(
+            "dataset", resource_id, published_version["version_id"]
+        )
+        source_distribution = published_details["metadata"]["distributions"][0]
+        source_service = source_distribution["web_service"]
+        source_parameter = source_service["body_parameters"][0]
+
+        drafted = self.gateway.post(
+            "/resources/{resourceType}/{id}/draft-from-publication",
+            resourceType="dataset",
+            id=resource_id,
+        )
+        self.assertEqual(drafted.status_code, 201)
+        self.assertEqual(drafted.json()["id"], resource_id)
+        self.assertEqual(drafted.json()["status"], "DRAFT")
+
+        draft_version = self.version("dataset", resource_id, "DRAFT")
+        draft_details = self.details("dataset", resource_id, draft_version["version_id"])
+        draft_service = draft_details["metadata"]["distributions"][0]["web_service"]
+        draft_parameter = draft_service["body_parameters"][0]
+        self.assertEqual(draft_parameter["name"], source_parameter["name"])
+        self.assertNotEqual(draft_parameter["id"], source_parameter["id"])
+        self.assertEqual(draft_service["body_template"], source_service["body_template"])
 
     def test_resource_variants_and_copy(self) -> None:
         """Verify resource variants, copied ownership, and publication drafts."""

@@ -67,9 +67,6 @@ func validateFormatParameter(parameters []WebServiceParameterInput) error {
 		if schema.Default == nil {
 			return invalidField(target+".default", "Encoding-format parameter requires a default.", nil)
 		}
-		if _, err := parseStringSchema(schema); err != nil {
-			return prefixOrField(err, target, target+".default", "Encoding-format parameter definition is invalid.")
-		}
 		found = true
 	}
 	return nil

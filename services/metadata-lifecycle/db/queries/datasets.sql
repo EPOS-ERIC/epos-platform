@@ -525,7 +525,10 @@ inserted_parameters AS (
             ),
             parameter.id::text
         ),
-        target_service.id,
+        CASE
+            WHEN parameter.web_service_id IS NOT NULL THEN target_service.id
+            ELSE NULL
+        END,
         target_body.id,
         parameter.position,
         parameter.name,

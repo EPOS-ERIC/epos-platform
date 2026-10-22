@@ -17,17 +17,13 @@ func (s streamSink) SendHeaders(record *domain.RetrievalRecord, head domain.Resp
 	if record != nil {
 		headers.Record = toProtoRetrievalRecord(*record)
 	}
-	return s.stream.Send(headersEvent(headers))
+	return s.stream.Send(&dataretrieverv1.RetrieveStreamResponse{
+		Event: &dataretrieverv1.RetrieveStreamResponse_Headers{Headers: headers},
+	})
 }
 
 func (s streamSink) SendChunk(chunk []byte) error {
 	return s.stream.Send(&dataretrieverv1.RetrieveStreamResponse{
 		Event: &dataretrieverv1.RetrieveStreamResponse_Chunk{Chunk: chunk},
 	})
-}
-
-func headersEvent(headers *dataretrieverv1.RetrieveStreamHeaders) *dataretrieverv1.RetrieveStreamResponse {
-	return &dataretrieverv1.RetrieveStreamResponse{
-		Event: &dataretrieverv1.RetrieveStreamResponse_Headers{Headers: headers},
-	}
 }

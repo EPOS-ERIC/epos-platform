@@ -26,9 +26,7 @@ func Load() (Config, error) {
 	if err := envconfig.Process("", &cfg); err != nil {
 		return Config{}, fmt.Errorf("load config: %w", err)
 	}
-	if cfg.SchemaMaxBytes < 0 {
-		cfg.SchemaMaxBytes = 0
-	}
+	cfg.SchemaMaxBytes = max(cfg.SchemaMaxBytes, 0)
 	if err := cfg.Validate(); err != nil {
 		return Config{}, fmt.Errorf("validate config: %w", err)
 	}
