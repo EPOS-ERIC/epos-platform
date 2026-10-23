@@ -171,6 +171,62 @@ thead th {
   color: var(--text-muted);
 }
 
+.column-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.active-filter-trigger {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--olive-600);
+  cursor: pointer;
+}
+
+.active-filter-trigger:hover {
+  background: color-mix(in srgb, var(--olive-600) 10%, transparent);
+  color: var(--olive-700);
+}
+
+.active-filter-trigger::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #dc2626;
+  box-shadow: 0 0 0 0 color-mix(in srgb, #dc2626 45%, transparent);
+  animation: active-filter-pulse 2.2s ease-out infinite;
+}
+
+.active-filter-trigger:focus-visible {
+  outline: 2px solid var(--olive-600);
+  outline-offset: 2px;
+}
+
+@keyframes active-filter-pulse {
+  45%,
+  100% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .active-filter-trigger::after {
+    animation: none;
+  }
+}
+
 tbody td {
   padding: 14px 20px;
   border-bottom: 1px solid var(--line);

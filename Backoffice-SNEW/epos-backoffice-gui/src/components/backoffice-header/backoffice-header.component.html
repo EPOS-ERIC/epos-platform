@@ -113,24 +113,77 @@
               <button type="button" class="filter-clear" (click)="clearFilters()" [disabled]="!canClearFilters()">Clear</button>
             </div>
 
-            <fieldset class="filter-group">
-              <legend>Data type</legend>
-              @for (option of dataTypeOptions; track option.value) {
-                <label class="filter-option">
-                  <input type="checkbox" [checked]="selectedDataTypes.includes(option.value)" (change)="toggleDataType(option.value)" />
-                  <span>{{ option.label }}</span>
-                </label>
-              }
+            <fieldset class="filter-group" data-filter-section="author">
+              <legend>Author</legend>
+              <div class="filter-group-content">
+                @if (filterByAuthor) {
+                  <span class="app-chip author-filter-chip">
+                    <span>{{ selectedAuthorName() }}</span>
+                    <button
+                      type="button"
+                      class="filter-clear author-filter-chip-remove"
+                      (click)="clearAuthorFilter()"
+                      [attr.aria-label]="'Remove author filter ' + selectedAuthorName()"
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </span>
+                }
+                <input
+                  class="app-input author-filter-search"
+                  type="search"
+                  placeholder="Search authors"
+                  aria-label="Search available authors"
+                  role="combobox"
+                  aria-controls="author-filter-options"
+                  [attr.aria-expanded]="authorHintsOpen()"
+                  [ngModel]="authorSearchQuery()"
+                  (ngModelChange)="authorSearchQuery.set($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                @if (authorHintsOpen()) {
+                  <div id="author-filter-options" class="author-filter-options" role="listbox" aria-label="Available authors">
+                    @for (author of filteredAuthors(); track author.id) {
+                      <button
+                        type="button"
+                        class="author-filter-option"
+                        role="option"
+                        [class.author-filter-option--selected]="filterByAuthor === author.id"
+                        [attr.aria-selected]="filterByAuthor === author.id"
+                        (click)="selectAuthor(author)"
+                      >
+                        {{ author.name }}
+                      </button>
+                    } @empty {
+                      <span class="author-filter-empty">No matching authors in the current results.</span>
+                    }
+                  </div>
+                }
+              </div>
             </fieldset>
 
-            <fieldset class="filter-group">
+            <fieldset class="filter-group" data-filter-section="data-type">
+              <legend>Data type</legend>
+              <div class="filter-group-content">
+                @for (option of dataTypeOptions; track option.value) {
+                  <label class="filter-option">
+                    <input type="checkbox" [checked]="selectedDataTypes.includes(option.value)" (change)="toggleDataType(option.value)" />
+                    <span>{{ option.label }}</span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+
+            <fieldset class="filter-group" data-filter-section="status">
               <legend>Versioning status</legend>
-              @for (status of versioningStatusOptions; track status) {
-                <label class="filter-option">
-                  <input type="checkbox" [checked]="selectedVersioningStatuses.includes(status)" (change)="toggleVersioningStatus(status)" />
-                  <span>{{ status }}</span>
-                </label>
-              }
+              <div class="filter-group-content">
+                @for (status of versioningStatusOptions; track status) {
+                  <label class="filter-option">
+                    <input type="checkbox" [checked]="selectedVersioningStatuses.includes(status)" (change)="toggleVersioningStatus(status)" />
+                    <span>{{ status }}</span>
+                  </label>
+                }
+              </div>
             </fieldset>
           </div>
         }

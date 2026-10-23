@@ -4,10 +4,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, catchError, combineLatest, debounceTime, distinctUntilChanged, finalize, map, of } from 'rxjs';
 import type { Subscription } from 'rxjs';
 
-import type { DiscoveryConcept, DiscoveryItem, DiscoveryResourceType, Group } from '../../../generated/backofficeSchemas';
+import type { DiscoveryConcept, DiscoveryItem, DiscoveryResourceType, Group, Reference } from '../../../generated/backofficeSchemas';
 import { groupAccentColor, groupIconPath } from '../../group-icons';
 import type { ResourceVersionComparisonContext } from '../../models/resource-version-comparison';
-import { normalizeResultsFilters, type ResultsFilters } from '../../models/results-filters';
+import { normalizeResultsFilters, type ResultsFilterSection, type ResultsFilters } from '../../models/results-filters';
 import { ApiService } from '../../services/api.service';
 import { LocalStorageService } from '../../services/local-storage.service';
 import { ResourceCreationDialogService } from '../../services/resource-creation-dialog.service';
@@ -72,6 +72,7 @@ const THEME_STORAGE_KEY = 'epos-backoffice-theme';
   styleUrl: './main-container.component.css'
 })
 export class MainContainerComponent {
+  @ViewChild(BackofficeHeaderComponent) private backofficeHeader?: BackofficeHeaderComponent;
   @ViewChild('detailScrollContainer') private detailScrollContainerRef?: ElementRef<HTMLElement>;
 
   private readonly apiService = inject(ApiService);
@@ -108,6 +109,8 @@ export class MainContainerComponent {
   protected readonly selectedGroupId = signal('');
   protected readonly selectedGroupName = signal('');
   protected readonly searchQuery = signal(this.initialResultsFilters.searchQuery);
+  protected readonly filterByAuthor = signal(this.initialResultsFilters.filterByAuthor);
+  protected readonly availableAuthors = signal<Reference[]>([]);
   protected readonly selectedDataTypes = signal(this.initialResultsFilters.dataTypes);
   protected readonly selectedVersioningStatuses = signal(this.initialResultsFilters.versioningStatuses);
   protected readonly currentConcept = computed<DiscoveryConcept>(() => {
@@ -262,6 +265,7 @@ export class MainContainerComponent {
             : 'Memberships'
       );
       this.discoveryItems.set(null);
+      this.availableAuthors.set([]);
       this.discoveryLoading.set(false);
       return;
     }
@@ -316,6 +320,7 @@ export class MainContainerComponent {
 
     if (!groupId && !this.allGroups()) {
       this.discoveryItems.set(null);
+      this.availableAuthors.set([]);
       this.discoveryLoading.set(false);
       return;
     }
@@ -325,6 +330,7 @@ export class MainContainerComponent {
       .getDiscovery({
         groupId: groupId || undefined,
         q: this.searchQuery().trim() || undefined,
+        editorId: this.filterByAuthor() || undefined,
         type: this.selectedDataTypes().length ? this.selectedDataTypes() : undefined,
         versioningStatus: this.selectedVersioningStatuses().length ? this.selectedVersioningStatuses() : undefined
       })
@@ -337,7 +343,10 @@ export class MainContainerComponent {
           return of([] as DiscoveryItem[]);
         })
       )
-      .subscribe((items) => this.discoveryItems.set(items));
+      .subscribe((items) => {
+        this.discoveryItems.set(items);
+        this.availableAuthors.set(this.authorsFrom(items));
+      });
   }
 
   protected updateSearchQuery(query: string): void {
@@ -348,6 +357,7 @@ export class MainContainerComponent {
 
   protected updateResultsFilters(filters: ResultsFilters): void {
     this.searchQuery.set(filters.searchQuery);
+    this.filterByAuthor.set(filters.filterByAuthor);
     this.selectedDataTypes.set(filters.dataTypes);
     this.selectedVersioningStatuses.set(filters.versioningStatuses);
     this.persistResultsFilters();
@@ -356,12 +366,27 @@ export class MainContainerComponent {
     }
   }
 
+  protected editResultsFilter(section: ResultsFilterSection): void {
+    this.backofficeHeader?.openFilterSection(section);
+  }
+
   private persistResultsFilters(): void {
     this.localStorage.setJson(RESULTS_FILTERS_STORAGE_KEY, {
       searchQuery: this.searchQuery(),
+      filterByAuthor: this.filterByAuthor(),
       dataTypes: this.selectedDataTypes(),
       versioningStatuses: this.selectedVersioningStatuses()
     } satisfies ResultsFilters);
+  }
+
+  private authorsFrom(items: DiscoveryItem[]): Reference[] {
+    const authors = new Map<string, Reference>();
+    items.forEach((item) => {
+      if (item.created_by) {
+        authors.set(item.created_by.id, item.created_by);
+      }
+    });
+    return Array.from(authors.values()).sort((left, right) => left.name.localeCompare(right.name));
   }
 
   private groupForCurrentSection(groupId: string | null | undefined): Group | undefined {

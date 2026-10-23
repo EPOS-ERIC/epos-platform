@@ -2,8 +2,9 @@ import { DatePipe } from '@angular/common';
 import { Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
+import type { DiscoveryItem, DiscoveryResourceType, VersioningStatus } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
+import type { ResultsFilterSection } from '../../models/results-filters';
 import { AppIconComponent } from '../../shared/ui/app-icon.component';
 import { ListPaginationComponent } from '../../shared/ui/list-pagination.component';
 import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
@@ -26,7 +27,11 @@ export class ResultsTableComponent implements OnChanges {
   @Input() discoveryItems: DiscoveryItem[] | null = null;
   @Input() discoveryLoading = false;
   @Input() canCopyResources = false;
+  @Input() filterByAuthor = '';
+  @Input() selectedDataTypes: DiscoveryResourceType[] = [];
+  @Input() selectedVersioningStatuses: VersioningStatus[] = ['PUBLISHED'];
   @Output() copyResource = new EventEmitter<DiscoveryItem>();
+  @Output() editFilter = new EventEmitter<ResultsFilterSection>();
   
   protected readonly requestDialog = inject(MembershipRequestDialogService);
   protected currentPage = 1;
@@ -73,6 +78,11 @@ export class ResultsTableComponent implements OnChanges {
 
   protected canCopy(item: DiscoveryItem): boolean {
     return this.canCopyResources && item.status === 'PUBLISHED';
+  }
+
+  protected hasNonDefaultStatusFilter(): boolean {
+    return this.selectedVersioningStatuses.length !== 1
+      || this.selectedVersioningStatuses[0] !== 'PUBLISHED';
   }
 
   protected detailLink(item: DiscoveryItem): string[] {

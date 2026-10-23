@@ -51,6 +51,43 @@ describe('ResultsTableComponent', () => {
     expect((fixture.nativeElement.querySelector('.item-link') as HTMLAnchorElement).getAttribute('href')).toBe('/data/resource-id/version-id?groupId=group-id&dataType=dataset&returnUrl=%2Fdata%3FgroupId%3Dgroup-id');
   });
 
+  it('shows active column filters and emits the requested filter section', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResultsTableComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ResultsTableComponent);
+    const item: DiscoveryItem = {
+      type: 'dataset',
+      resource_id: 'resource-id',
+      version_id: 'version-id',
+      name: 'Dataset',
+      status: 'DRAFT',
+      updated_at: '2026-09-10T07:34:26.486Z',
+      concept: 'DATA',
+      group: { id: 'group-id', name: 'Group' },
+      created_by: { id: 'author-id', name: 'Author' }
+    };
+    const editFilter = vi.fn();
+    fixture.componentInstance.editFilter.subscribe(editFilter);
+    fixture.componentRef.setInput('selectedGroupId', 'group-id');
+    fixture.componentRef.setInput('discoveryItems', [item]);
+    fixture.componentRef.setInput('filterByAuthor', 'author-id');
+    fixture.componentRef.setInput('selectedDataTypes', ['dataset']);
+    fixture.componentRef.setInput('selectedVersioningStatuses', ['DRAFT']);
+    fixture.detectChanges();
+
+    const triggers = fixture.nativeElement.querySelectorAll('.active-filter-trigger') as NodeListOf<HTMLButtonElement>;
+    expect(triggers).toHaveLength(3);
+    expect(Array.from(triggers).map((trigger) => trigger.getAttribute('aria-label'))).toEqual([
+      'Edit active Type filter',
+      'Edit active Author filter',
+      'Edit active Status filter'
+    ]);
+    triggers[1].click();
+    expect(editFilter).toHaveBeenCalledWith('author');
+  });
+
   it('links group administrators to the group management route', async () => {
     await TestBed.configureTestingModule({
       imports: [ResultsTableComponent],

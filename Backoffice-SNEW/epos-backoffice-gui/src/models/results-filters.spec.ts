@@ -8,8 +8,13 @@ describe('normalizeResultsFilters', () => {
       versioningStatuses: ['invalid']
     })).toEqual({
       searchQuery: '',
+      filterByAuthor: '',
       dataTypes: ['dataset'],
       versioningStatuses: ['PUBLISHED']
     });
+  });
+
+  it('preserves a valid author filter', () => {
+    expect(normalizeResultsFilters({ filterByAuthor: 'author-id' }).filterByAuthor).toBe('author-id');
   });
 });

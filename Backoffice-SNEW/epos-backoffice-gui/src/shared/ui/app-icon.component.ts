@@ -11,6 +11,7 @@ export type IconName =
   | 'code'
   | 'content-copy'
   | 'drag-indicator'
+  | 'filter'
   | 'menu-open'
   | 'menu-close'
   | 'inbox'

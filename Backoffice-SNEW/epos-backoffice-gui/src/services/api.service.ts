@@ -50,6 +50,7 @@ import type {
   DateFrom,
   DateTo,
   Decision,
+  EditorFilter,
   GlobalRole,
   GroupFilter,
   Keywords,
@@ -63,6 +64,7 @@ import { AuthService } from './auth.service';
 
 export interface DiscoverySearchParams {
   q?: Q;
+  editorId?: EditorFilter;
   groupId?: GroupFilter;
   type?: TypeFilter;
   spatialFilter?: SpatialFilter;
@@ -559,6 +561,10 @@ export class ApiService {
 
     if (params.q) {
       httpParams = httpParams.set('q', params.q);
+    }
+
+    if (params.editorId) {
+      httpParams = httpParams.set('editorId', params.editorId);
     }
 
     if (params.groupId) {

@@ -290,6 +290,34 @@ p {
   border-top: 1px solid var(--line);
 }
 
+.filter-group-content {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  transition: background-color 280ms ease;
+}
+
+.filter-group-content--highlighted {
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: color-mix(in srgb, var(--text-strong) 13%, transparent);
+}
+
+.filter-group-content--highlighted::after {
+  content: '';
+  position: absolute;
+  inset: -60% auto -60% -45%;
+  width: 32%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, #ffffff 34%, transparent), transparent);
+  transform: rotate(-18deg);
+  pointer-events: none;
+  animation: filter-content-shimmer 850ms ease-out;
+}
+
+@keyframes filter-content-shimmer {
+  to { left: 115%; }
+}
+
 .filter-group legend {
   margin-bottom: 8px;
   color: var(--text-muted);
@@ -310,6 +338,61 @@ p {
 
 .filter-option input {
   accent-color: var(--olive-600);
+}
+
+.author-filter-chip {
+  justify-self: start;
+  max-width: 100%;
+  background: #334155;
+  color: #fffdf7;
+}
+
+.author-filter-chip > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.author-filter-chip-remove {
+  flex: 0 0 auto;
+  padding: 0;
+  color: #fffdf7;
+  font-size: 1rem;
+}
+
+.author-filter-options {
+  display: grid;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.author-filter-option {
+  padding: 9px 11px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.author-filter-option:hover,
+.author-filter-option--selected {
+  background: var(--surface-2);
+}
+
+.author-filter-option--selected {
+  color: var(--olive-600);
+  font-weight: 700;
+}
+
+.author-filter-empty {
+  padding: 10px 11px;
 }
 
 .ghost-button,
@@ -462,6 +545,10 @@ p {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .filter-group-content--highlighted::after {
+    display: none;
+  }
+
   .header-copy--back,
   .management-icon,
   .management-icon-back,

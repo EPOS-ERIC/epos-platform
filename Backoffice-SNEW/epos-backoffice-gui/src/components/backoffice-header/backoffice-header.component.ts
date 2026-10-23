@@ -1,9 +1,9 @@
-import { Component, Input, Output, EventEmitter, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, Input, Output, EventEmitter, HostListener, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
-import type { DiscoveryResourceType, VersioningStatus } from '../../../generated/backofficeSchemas';
-import { DISCOVERY_VERSIONING_STATUSES, type ResultsFilters } from '../../models/results-filters';
+import type { DiscoveryResourceType, Reference, VersioningStatus } from '../../../generated/backofficeSchemas';
+import { DISCOVERY_VERSIONING_STATUSES, type ResultsFilterSection, type ResultsFilters } from '../../models/results-filters';
 import { AuthService } from '../../services/auth.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
 import { AppIconComponent } from '../../shared/ui/app-icon.component';
@@ -27,13 +27,18 @@ const SECTION_SUBTITLES: Record<string, string> = {
   templateUrl: './backoffice-header.component.html',
   styleUrl: './backoffice-header.component.css'
 })
-export class BackofficeHeaderComponent {
+export class BackofficeHeaderComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly currentUserStore = inject(CurrentUserStore);
   private readonly router = inject(Router);
+  private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+  private highlightedFilterGroup?: HTMLElement;
+  private filterOpenTimer?: ReturnType<typeof setTimeout>;
+  private filterHighlightTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly userMenuOpen = signal(false);
   protected readonly filterMenuOpen = signal(false);
+  protected readonly authorSearchQuery = signal('');
   protected readonly currentUserName = computed(() => {
     const user = this.currentUserStore.user();
     if (!user) return 'Backoffice user';
@@ -54,6 +59,8 @@ export class BackofficeHeaderComponent {
   @Input() showSearchActions = true;
   @Input() canAddNewResource = false;
   @Input() searchQuery = '';
+  @Input() filterByAuthor = '';
+  @Input() availableAuthors: Reference[] = [];
   @Input() selectedDataTypes: DiscoveryResourceType[] = [];
   @Input() selectedVersioningStatuses: VersioningStatus[] = [];
   @Input() managementContext: ManagementHeaderContext | null = null;
@@ -100,9 +107,80 @@ export class BackofficeHeaderComponent {
     this.filterMenuOpen.update((open) => !open);
   }
 
+  openFilterSection(section: ResultsFilterSection): void {
+    this.userMenuOpen.set(false);
+    this.filterMenuOpen.set(true);
+    if (this.filterOpenTimer) {
+      clearTimeout(this.filterOpenTimer);
+    }
+    this.filterOpenTimer = setTimeout(() => {
+      this.highlightedFilterGroup?.classList.remove('filter-group-content--highlighted');
+      if (this.filterHighlightTimer) {
+        clearTimeout(this.filterHighlightTimer);
+      }
+
+      const filterGroup = this.elementRef.nativeElement
+        .querySelector<HTMLElement>(`[data-filter-section="${section}"]`);
+      filterGroup?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
+      const filterContent = filterGroup?.querySelector<HTMLElement>('.filter-group-content');
+      if (filterContent) {
+        filterContent.classList.add('filter-group-content--highlighted');
+        this.highlightedFilterGroup = filterContent;
+        this.filterHighlightTimer = setTimeout(() => {
+          filterContent.classList.remove('filter-group-content--highlighted');
+          this.highlightedFilterGroup = undefined;
+        }, 1300);
+      }
+    }, 0);
+  }
+
+  ngOnDestroy(): void {
+    if (this.filterOpenTimer) {
+      clearTimeout(this.filterOpenTimer);
+    }
+    if (this.filterHighlightTimer) {
+      clearTimeout(this.filterHighlightTimer);
+    }
+  }
+
+  protected filteredAuthors(): Reference[] {
+    const query = this.authorSearchQuery().trim().toLocaleLowerCase();
+    return query
+      ? this.availableAuthors.filter((author) => author.name.toLocaleLowerCase().includes(query))
+      : this.availableAuthors;
+  }
+
+  protected authorHintsOpen(): boolean {
+    return Boolean(this.authorSearchQuery().trim());
+  }
+
+  protected selectedAuthorName(): string {
+    return this.availableAuthors.find((author) => author.id === this.filterByAuthor)?.name ?? 'Selected author';
+  }
+
+  protected selectAuthor(author: Reference): void {
+    this.authorSearchQuery.set('');
+    this.emitAuthorFilter(author.id);
+  }
+
+  protected clearAuthorFilter(): void {
+    this.authorSearchQuery.set('');
+    this.emitAuthorFilter('');
+  }
+
+  private emitAuthorFilter(authorId: string): void {
+    this.filtersChange.emit({
+      searchQuery: this.searchQuery,
+      filterByAuthor: authorId,
+      dataTypes: this.selectedDataTypes,
+      versioningStatuses: this.selectedVersioningStatuses
+    });
+  }
+
   protected toggleDataType(dataType: DiscoveryResourceType): void {
     this.filtersChange.emit({
       searchQuery: this.searchQuery,
+      filterByAuthor: this.filterByAuthor,
       dataTypes: this.toggleSelection(this.selectedDataTypes, dataType),
       versioningStatuses: this.selectedVersioningStatuses
     });
@@ -113,24 +191,30 @@ export class BackofficeHeaderComponent {
 
     this.filtersChange.emit({
       searchQuery: this.searchQuery,
+      filterByAuthor: this.filterByAuthor,
       dataTypes: this.selectedDataTypes,
       versioningStatuses: versioningStatuses.length ? versioningStatuses : ['PUBLISHED']
     });
   }
 
   protected activeFilterCount(): number {
-    return Number(Boolean(this.searchQuery.trim())) + this.selectedDataTypes.length + this.selectedVersioningStatuses.length;
+    return Number(Boolean(this.searchQuery.trim()))
+      + Number(Boolean(this.filterByAuthor))
+      + this.selectedDataTypes.length
+      + this.selectedVersioningStatuses.length;
   }
 
   protected canClearFilters(): boolean {
     return Boolean(this.searchQuery.trim())
+      || Boolean(this.filterByAuthor)
       || Boolean(this.selectedDataTypes.length)
       || this.selectedVersioningStatuses.length !== 1
       || this.selectedVersioningStatuses[0] !== 'PUBLISHED';
   }
 
   protected clearFilters(): void {
-    this.filtersChange.emit({ searchQuery: '', dataTypes: [], versioningStatuses: ['PUBLISHED'] });
+    this.authorSearchQuery.set('');
+    this.filtersChange.emit({ searchQuery: '', filterByAuthor: '', dataTypes: [], versioningStatuses: ['PUBLISHED'] });
   }
 
   protected logout(): void {

@@ -73,6 +73,53 @@ describe('BackofficeHeaderComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Add New Resource');
   });
 
+  it('searches available authors and emits the selected author filter', async () => {
+    const fixture = TestBed.createComponent(BackofficeHeaderComponent);
+    fixture.componentRef.setInput('availableAuthors', [
+      { id: 'alice-id', name: 'Alice Editor' },
+      { id: 'bob-id', name: 'Bob Reviewer' }
+    ]);
+    fixture.componentRef.setInput('selectedVersioningStatuses', ['PUBLISHED']);
+    const filtersChange = vi.fn();
+    fixture.componentInstance.filtersChange.subscribe(filtersChange);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.filter-menu > button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.author-filter-options')).toBeNull();
+    const authorSearch = fixture.nativeElement.querySelector('.author-filter-search') as HTMLInputElement;
+    authorSearch.value = 'bob';
+    authorSearch.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const authorOptions = Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('.author-filter-option'));
+    expect(authorOptions.map((option) => option.textContent?.trim())).toEqual(['Bob Reviewer']);
+    authorOptions[0].click();
+
+    expect(filtersChange).toHaveBeenCalledWith({
+      searchQuery: '',
+      filterByAuthor: 'bob-id',
+      dataTypes: [],
+      versioningStatuses: ['PUBLISHED']
+    });
+  });
+
+  it('opens the main filter panel on the requested section', async () => {
+    const fixture = TestBed.createComponent(BackofficeHeaderComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.openFilterSection('status');
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(fixture.nativeElement.querySelector('.filter-panel')).not.toBeNull();
+    const statusSection = fixture.nativeElement.querySelector('[data-filter-section="status"]');
+    const statusInput = statusSection.querySelector('input');
+    expect(document.activeElement).toBe(statusInput);
+    expect(statusSection.querySelector('.filter-group-content')?.classList.contains('filter-group-content--highlighted')).toBe(true);
+  });
+
   it('shows concise copy for each main resource section', () => {
     const fixture = TestBed.createComponent(BackofficeHeaderComponent);
     const cases = [

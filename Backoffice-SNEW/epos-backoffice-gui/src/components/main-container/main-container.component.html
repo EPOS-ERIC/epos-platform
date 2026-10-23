@@ -29,6 +29,8 @@
       [showSearchActions]="pageLabel() === 'Results' && (!!selectedGroupId() || allGroups())"
       [canAddNewResource]="canCreateResource()"
       [searchQuery]="searchQuery()"
+      [filterByAuthor]="filterByAuthor()"
+      [availableAuthors]="availableAuthors()"
       [selectedDataTypes]="selectedDataTypes()"
       [selectedVersioningStatuses]="selectedVersioningStatuses()"
       [managementContext]="managementHeaderContext()"
@@ -84,7 +86,7 @@
           [sectionTitle]="sectionTitle()"
         />
       } @else {
-        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [allGroups]="allGroups()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [belongsToGroup]="belongsToGroup()" [canCopyResources]="canCopyResources()" [returnUrl]="currentUrl()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" (copyResource)="openCopyResource($event)" />
+        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [allGroups]="allGroups()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [belongsToGroup]="belongsToGroup()" [canCopyResources]="canCopyResources()" [returnUrl]="currentUrl()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" [filterByAuthor]="filterByAuthor()" [selectedDataTypes]="selectedDataTypes()" [selectedVersioningStatuses]="selectedVersioningStatuses()" (copyResource)="openCopyResource($event)" (editFilter)="editResultsFilter($event)" />
       }
     </div>
   </section>

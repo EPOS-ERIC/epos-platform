@@ -85,11 +85,38 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th>Type</th>
+            <th>
+              <span class="column-heading">
+                Type
+                @if (selectedDataTypes.length) {
+                  <button type="button" class="active-filter-trigger" title="Edit active Type filter" aria-label="Edit active Type filter" (click)="$event.stopPropagation(); editFilter.emit('data-type')">
+                    <app-icon name="filter" [size]="14" />
+                  </button>
+                }
+              </span>
+            </th>
             <th>Group</th>
-            <th>Author</th>
+            <th>
+              <span class="column-heading">
+                Author
+                @if (filterByAuthor) {
+                  <button type="button" class="active-filter-trigger" title="Edit active Author filter" aria-label="Edit active Author filter" (click)="$event.stopPropagation(); editFilter.emit('author')">
+                    <app-icon name="filter" [size]="14" />
+                  </button>
+                }
+              </span>
+            </th>
             <th>Last Change</th>
-            <th>Status</th>
+            <th>
+              <span class="column-heading">
+                Status
+                @if (hasNonDefaultStatusFilter()) {
+                  <button type="button" class="active-filter-trigger" title="Edit active Status filter" aria-label="Edit active Status filter" (click)="$event.stopPropagation(); editFilter.emit('status')">
+                    <app-icon name="filter" [size]="14" />
+                  </button>
+                }
+              </span>
+            </th>
             <th class="actions-col">Actions</th>
           </tr>
         </thead>
