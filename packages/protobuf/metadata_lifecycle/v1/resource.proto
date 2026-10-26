@@ -280,11 +280,9 @@ enum WebServiceMethod {
 enum WebServiceType {
   WEB_SERVICE_TYPE_UNSPECIFIED = 0;
   WEB_SERVICE_TYPE_WMS = 1;
-  WEB_SERVICE_TYPE_GEOJSON = 2;
-  WEB_SERVICE_TYPE_DYNAMIC = 3;
-  WEB_SERVICE_TYPE_WMTS = 4;
-  WEB_SERVICE_TYPE_WFS = 5;
-  WEB_SERVICE_TYPE_COVJSON = 6;
+  WEB_SERVICE_TYPE_WMTS = 2;
+  WEB_SERVICE_TYPE_WFS = 3;
+  WEB_SERVICE_TYPE_HTTP = 4;
 }
 
 enum WebServiceVisibleOn {
@@ -315,42 +313,84 @@ enum WebServiceParameterRole {
 message WebServiceInput {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   optional string description = 2 [(buf.validate.field).string.min_len = 1];
-  string template_url = 3 [(buf.validate.field).string.min_len = 1];
-  repeated ParameterInput parameters = 4;
-  string format = 5 [(buf.validate.field).string.min_len = 1];
-  optional string provider_id = 6 [(buf.validate.field).string.uuid = true];
-  Documentation documentation = 7;
-  optional string spatial_coverage = 8 [(buf.validate.field).string.min_len = 1];
-  Temporal temporal_coverage = 9;
-  repeated string contact_points = 10 [(buf.validate.field).repeated.items.string.uuid = true];
-  WebServiceMethod method = 11 [(buf.validate.field).enum.defined_only = true];
-  optional string body_content_type = 12 [(buf.validate.field).string.min_len = 1];
-  optional string body_template = 13 [(buf.validate.field).string.min_len = 1];
-  repeated ScalarParameterInput body_parameters = 14;
-  WebServiceType type = 15 [(buf.validate.field).enum.defined_only = true];
-  repeated WebServiceVisibleOn visible_on = 16 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  optional bool body_required = 17;
+  optional string provider_id = 3 [(buf.validate.field).string.uuid = true];
+  Documentation documentation = 4;
+  optional string spatial_coverage = 5 [(buf.validate.field).string.min_len = 1];
+  Temporal temporal_coverage = 6;
+  repeated string contact_points = 7 [(buf.validate.field).repeated.items.string.uuid = true];
+  WebServiceType type = 8 [(buf.validate.field).enum.defined_only = true];
+  repeated WebServiceVisibleOn visible_on = 9 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  oneof configuration {
+    option (buf.validate.oneof).required = true;
+    GenericWebServiceConfigurationInput generic = 10;
+    WMSWebServiceConfigurationInput wms = 11;
+  }
 }
 
 message WebService {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   optional string description = 2 [(buf.validate.field).string.min_len = 1];
-  string template_url = 3 [(buf.validate.field).string.min_len = 1];
-  repeated WebServiceParameter parameters = 4;
-  string format = 5 [(buf.validate.field).string.min_len = 1];
-  Documentation documentation = 7;
-  optional string spatial_coverage = 8 [(buf.validate.field).string.min_len = 1];
-  Temporal temporal_coverage = 9;
-  repeated string contact_points = 10 [(buf.validate.field).repeated.items.string.uuid = true];
-  string id = 11 [(buf.validate.field).string.uuid = true];
-  EntityReference provider_reference = 13;
-  WebServiceMethod method = 14 [(buf.validate.field).enum.defined_only = true];
-  optional string body_content_type = 15 [(buf.validate.field).string.min_len = 1];
-  optional string body_template = 16 [(buf.validate.field).string.min_len = 1];
-  repeated ScalarParameter body_parameters = 17;
-  WebServiceType type = 18 [(buf.validate.field).enum.defined_only = true];
-  repeated WebServiceVisibleOn visible_on = 19 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  optional bool body_required = 20;
+  Documentation documentation = 3;
+  optional string spatial_coverage = 4 [(buf.validate.field).string.min_len = 1];
+  Temporal temporal_coverage = 5;
+  repeated string contact_points = 6 [(buf.validate.field).repeated.items.string.uuid = true];
+  string id = 7 [(buf.validate.field).string.uuid = true];
+  EntityReference provider_reference = 8;
+  WebServiceType type = 9 [(buf.validate.field).enum.defined_only = true];
+  repeated WebServiceVisibleOn visible_on = 10 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  oneof configuration {
+    option (buf.validate.oneof).required = true;
+    GenericWebServiceConfiguration generic = 11;
+    WMSWebServiceConfiguration wms = 12;
+  }
+}
+
+message GenericWebServiceConfigurationInput {
+  string template_url = 1 [(buf.validate.field).string.min_len = 1];
+  repeated ParameterInput parameters = 2;
+  string format = 3 [(buf.validate.field).string.min_len = 1];
+  WebServiceMethod method = 4 [(buf.validate.field).enum.defined_only = true];
+  optional string body_content_type = 5 [(buf.validate.field).string.min_len = 1];
+  optional string body_template = 6 [(buf.validate.field).string.min_len = 1];
+  repeated ScalarParameterInput body_parameters = 7;
+  optional bool body_required = 8;
+}
+
+message GenericWebServiceConfiguration {
+  string template_url = 1 [(buf.validate.field).string.min_len = 1];
+  repeated Parameter parameters = 2;
+  string format = 3 [(buf.validate.field).string.min_len = 1];
+  WebServiceMethod method = 4 [(buf.validate.field).enum.defined_only = true];
+  optional string body_content_type = 5 [(buf.validate.field).string.min_len = 1];
+  optional string body_template = 6 [(buf.validate.field).string.min_len = 1];
+  repeated ScalarParameter body_parameters = 7;
+  optional bool body_required = 8;
+}
+
+message WMSWebServiceConfigurationInput {
+  string capabilities_url = 1 [(buf.validate.field).string.uri = true];
+  string default_layer = 2 [(buf.validate.field).string.min_len = 1];
+  repeated WMSLayer layers = 3 [(buf.validate.field).repeated.min_items = 1];
+  bool transparency_editable = 4;
+  bool default_transparency = 5;
+  repeated ParameterInput get_map_parameters = 6;
+  repeated ParameterInput get_feature_info_parameters = 7;
+}
+
+message WMSWebServiceConfiguration {
+  string capabilities_url = 1 [(buf.validate.field).string.uri = true];
+  string default_layer = 2 [(buf.validate.field).string.min_len = 1];
+  repeated WMSLayer layers = 3 [(buf.validate.field).repeated.min_items = 1];
+  bool transparency_editable = 4;
+  bool default_transparency = 5;
+  repeated Parameter get_map_parameters = 6;
+  repeated Parameter get_feature_info_parameters = 7;
+}
+
+message WMSLayer {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string default_style = 2;
+  repeated string styles = 3 [(buf.validate.field).repeated.min_items = 1];
 }
 
 message DownloadableFile {
@@ -406,6 +446,7 @@ message Parameter {
   WebServiceParameterLocation location = 14 [(buf.validate.field).enum.defined_only = true];
   bool explode = 15;
   WebServiceParameterRole role = 16 [(buf.validate.field).enum.defined_only = true];
+  string id = 17 [(buf.validate.field).string.uuid = true];
 }
 
 message ScalarParameterInput {
@@ -441,11 +482,6 @@ message ScalarParameter {
     ScalarDateTimeParameter date_time = 11;
   }
   string id = 12 [(buf.validate.field).string.uuid = true];
-}
-
-message WebServiceParameter {
-  string id = 1 [(buf.validate.field).string.uuid = true];
-  Parameter parameter = 2;
 }
 
 message StringEnumOption {

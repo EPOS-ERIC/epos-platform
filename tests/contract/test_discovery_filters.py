@@ -201,11 +201,13 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                     "type": "WEB_SERVICE",
                     "web_service": {
                         "name": f"discovery-service-{suffix}",
-                        "template_url": "https://example.org/discovery",
-                        "method": "GET",
-                        "type": "COVJSON",
+                        "configuration": {
+                            "template_url": "https://example.org/discovery",
+                            "method": "GET",
+                            "type": "HTTP",
+                            "format": "application/json",
+                        },
                         "visible_on": ["MAP", "TABLE"],
-                        "format": "application/json",
                         "provider": provider_id,
                     },
                 },
@@ -215,10 +217,12 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                     "type": "WEB_SERVICE",
                     "web_service": {
                         "name": f"discovery-service-optional-{suffix}",
-                        "template_url": "https://example.org/discovery/optional",
-                        "method": "GET",
-                        "type": "GEOJSON",
-                        "format": "application/geo+json",
+                        "configuration": {
+                            "template_url": "https://example.org/discovery/optional",
+                            "method": "GET",
+                            "type": "HTTP",
+                            "format": "application/geo+json",
+                        },
                     },
                 },
                 {
@@ -331,7 +335,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                 "id": service_id,
                 "name": f"discovery-service-{suffix}",
                 "type": "WEB_SERVICE",
-                "web_service_type": "COVJSON",
+                "web_service_type": "HTTP",
                 "visible_on": ["MAP", "TABLE"],
                 "provider": {
                     "id": provider_id,
@@ -345,7 +349,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                 "id": optional_service_id,
                 "name": f"discovery-service-optional-{suffix}",
                 "type": "WEB_SERVICE",
-                "web_service_type": "GEOJSON",
+                "web_service_type": "HTTP",
             },
         )
         self.assertEqual(

@@ -40,6 +40,8 @@ func ValidationAppError(method string, err error) *apperror.AppError {
 				target = "metadata." + field
 			}
 		}
+		target = strings.ReplaceAll(target, ".web_service.wms.", ".web_service.configuration.")
+		target = strings.ReplaceAll(target, ".web_service.generic.", ".web_service.configuration.")
 	}
 
 	appErr := apperror.Wrap(apperror.CodeValidationFailed, detail, err)

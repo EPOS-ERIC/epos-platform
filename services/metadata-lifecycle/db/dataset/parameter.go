@@ -10,9 +10,17 @@ import (
 	"github.com/google/uuid"
 )
 
+type parameterOwner struct {
+	webServiceID               *uuid.UUID
+	wmsGetMapServiceID         *uuid.UUID
+	wmsGetFeatureInfoServiceID *uuid.UUID
+	webServiceBodyID           *uuid.UUID
+	templateParameterID        *uuid.UUID
+}
+
 func parameterParams(
 	value domain.ParameterInput,
-	webServiceID, webServiceBodyID, templateParameterID *uuid.UUID,
+	owner parameterOwner,
 	property *string,
 	role *domain.WebServiceParameterRole,
 	location *domain.ParameterLocation,
@@ -23,17 +31,19 @@ func parameterParams(
 	}
 
 	params := sqlc.AddLifecycleParameterParams{
-		WebServiceID:        webServiceID,
-		WebServiceBodyID:    webServiceBodyID,
-		TemplateParameterID: templateParameterID,
-		Position:            int32(value.Position),
-		Name:                value.Name,
-		Label:               value.Label,
-		Description:         value.Description,
-		Required:            value.Required,
-		ReadOnly:            value.ReadOnly,
-		Property:            property,
-		Explode:             explode,
+		WebServiceID:               owner.webServiceID,
+		WmsGetMapServiceID:         owner.wmsGetMapServiceID,
+		WmsGetFeatureInfoServiceID: owner.wmsGetFeatureInfoServiceID,
+		WebServiceBodyID:           owner.webServiceBodyID,
+		TemplateParameterID:        owner.templateParameterID,
+		Position:                   int32(value.Position),
+		Name:                       value.Name,
+		Label:                      value.Label,
+		Description:                value.Description,
+		Required:                   value.Required,
+		ReadOnly:                   value.ReadOnly,
+		Property:                   property,
+		Explode:                    explode,
 	}
 	if role != nil {
 		params.Role = new(sqlc.WebServiceParameterRole(*role))
@@ -51,13 +61,13 @@ func persistParameter(
 	ctx context.Context,
 	q *sqlc.Queries,
 	value domain.ParameterInput,
-	webServiceID, webServiceBodyID, templateParameterID *uuid.UUID,
+	owner parameterOwner,
 	property *string,
 	role *domain.WebServiceParameterRole,
 	location *domain.ParameterLocation,
 	explode bool,
 ) (sqlc.Parameter, error) {
-	params, err := parameterParams(value, webServiceID, webServiceBodyID, templateParameterID, property, role, location, explode)
+	params, err := parameterParams(value, owner, property, role, location, explode)
 	if err != nil {
 		return sqlc.Parameter{}, err
 	}
@@ -116,7 +126,7 @@ func persistParameter(
 			break
 		}
 		for _, child := range schema.Parameters {
-			if _, err := persistParameter(ctx, q, child, nil, nil, &created.ID, nil, nil, nil, false); err != nil {
+			if _, err := persistParameter(ctx, q, child, parameterOwner{templateParameterID: &created.ID}, nil, nil, nil, false); err != nil {
 				return sqlc.Parameter{}, fmt.Errorf("add template parameter: %w", err)
 			}
 		}

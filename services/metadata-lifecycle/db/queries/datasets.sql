@@ -392,11 +392,8 @@ inserted_web_services AS (
             dataset_version_id,
             name,
             description,
-            template_url,
-            method,
             TYPE,
             visible_on,
-            format,
             provider_organization_id,
             documentation_title,
             documentation_description,
@@ -423,11 +420,8 @@ inserted_web_services AS (
         ),
         name,
         description,
-        template_url,
-        method,
         TYPE,
         visible_on,
-        format,
         provider_organization_id,
         documentation_title,
         documentation_description,
@@ -442,6 +436,87 @@ inserted_web_services AS (
     RETURNING
         id,
         dataset_version_id
+),
+inserted_generic_web_services AS (
+    INSERT INTO
+        generic_web_services (web_service_id, template_url, method, format)
+    SELECT
+        target.id,
+        source.template_url,
+        source.method,
+        source.format
+    FROM
+        generic_web_services AS source
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.web_service_id::text
+        )
+    RETURNING
+        web_service_id
+),
+inserted_wms_services AS (
+    INSERT INTO
+        wms_services (
+            web_service_id,
+            capabilities_url,
+            default_layer,
+            transparency_editable,
+            default_transparency
+        )
+    SELECT
+        target.id,
+        source.capabilities_url,
+        source.default_layer,
+        source.transparency_editable,
+        source.default_transparency
+    FROM
+        wms_services AS source
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.web_service_id::text
+        )
+    RETURNING
+        web_service_id
+),
+inserted_wms_layers AS (
+    INSERT INTO
+        wms_layers (
+            web_service_id,
+            name,
+            position,
+            default_style,
+            styles
+        )
+    SELECT
+        target.web_service_id,
+        source.name,
+        source.position,
+        source.default_style,
+        source.styles
+    FROM
+        wms_layers AS source
+        JOIN inserted_wms_services AS target ON target.web_service_id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.web_service_id::text
+        )
+    RETURNING
+        web_service_id,
+        name
 ),
 inserted_web_service_bodies AS (
     INSERT INTO
@@ -470,6 +545,7 @@ inserted_web_service_bodies AS (
             ),
             source_service.id::text
         )
+        JOIN inserted_generic_web_services AS generic_target ON generic_target.web_service_id = target.id
     WHERE
         source_service.dataset_version_id = sqlc.arg(source_version_id)
     RETURNING
@@ -508,6 +584,8 @@ inserted_parameters AS (
         parameters (
             id,
             web_service_id,
+            wms_get_map_service_id,
+            wms_get_feature_info_service_id,
             web_service_body_id,
             position,
             name,
@@ -533,7 +611,15 @@ inserted_parameters AS (
             parameter.id::text
         ),
         CASE
-            WHEN parameter.web_service_id IS NOT NULL THEN target_service.id
+            WHEN parameter.web_service_id IS NOT NULL THEN generic_target.web_service_id
+            ELSE NULL
+        END,
+        CASE
+            WHEN parameter.wms_get_map_service_id IS NOT NULL THEN wms_target.web_service_id
+            ELSE NULL
+        END,
+        CASE
+            WHEN parameter.wms_get_feature_info_service_id IS NOT NULL THEN wms_target.web_service_id
             ELSE NULL
         END,
         target_body.id,
@@ -561,9 +647,13 @@ inserted_parameters AS (
             ),
             COALESCE(
                 parameter.web_service_id,
+                parameter.wms_get_map_service_id,
+                parameter.wms_get_feature_info_service_id,
                 source_body.web_service_id
             )::text
         )
+        LEFT JOIN inserted_generic_web_services AS generic_target ON generic_target.web_service_id = target_service.id
+        LEFT JOIN inserted_wms_services AS wms_target ON wms_target.web_service_id = target_service.id
         LEFT JOIN inserted_web_service_bodies AS target_body ON target_body.id = uuid_generate_v5(
             target_service.id,
             source_body.id::text
@@ -571,7 +661,8 @@ inserted_parameters AS (
     WHERE
         parameter.template_parameter_id IS NULL
         AND (
-            target_service.id IS NOT NULL
+            generic_target.web_service_id IS NOT NULL
+            OR wms_target.web_service_id IS NOT NULL
             OR target_body.id IS NOT NULL
         )
     RETURNING
@@ -886,11 +977,8 @@ INSERT INTO
         dataset_version_id,
         name,
         description,
-        template_url,
-        method,
         TYPE,
         visible_on,
-        format,
         provider_organization_id,
         documentation_title,
         documentation_description,
@@ -904,11 +992,8 @@ VALUES
         sqlc.arg(dataset_version_id),
         sqlc.arg(name),
         sqlc.arg(description),
-        sqlc.arg(template_url),
-        sqlc.arg(method),
         sqlc.arg(TYPE),
         sqlc.arg(visible_on),
-        sqlc.arg(format),
         sqlc.narg(provider_organization_id),
         sqlc.narg(documentation_title),
         sqlc.narg(documentation_description),
@@ -919,6 +1004,53 @@ VALUES
     )
 RETURNING
     *;
+
+-- name: AddLifecycleGenericWebService :exec
+INSERT INTO
+    generic_web_services (web_service_id, template_url, method, format)
+VALUES
+    (
+        sqlc.arg(web_service_id),
+        sqlc.arg(template_url),
+        sqlc.arg(method),
+        sqlc.arg(format)
+    );
+
+-- name: AddLifecycleWMSService :exec
+INSERT INTO
+    wms_services (
+        web_service_id,
+        capabilities_url,
+        default_layer,
+        transparency_editable,
+        default_transparency
+    )
+VALUES
+    (
+        sqlc.arg(web_service_id),
+        sqlc.arg(capabilities_url),
+        sqlc.arg(default_layer),
+        sqlc.arg(transparency_editable),
+        sqlc.arg(default_transparency)
+    );
+
+-- name: AddLifecycleWMSLayer :exec
+INSERT INTO
+    wms_layers (
+        web_service_id,
+        name,
+        position,
+        default_style,
+        styles
+    )
+VALUES
+    (
+        sqlc.arg(web_service_id),
+        sqlc.arg(name),
+        sqlc.arg(position),
+        sqlc.arg(default_style),
+        sqlc.arg(styles)
+    );
 
 -- name: AddLifecycleWebServiceBody :one
 INSERT INTO
@@ -951,6 +1083,8 @@ VALUES
 INSERT INTO
     parameters (
         web_service_id,
+        wms_get_map_service_id,
+        wms_get_feature_info_service_id,
         web_service_body_id,
         template_parameter_id,
         position,
@@ -968,6 +1102,8 @@ INSERT INTO
 VALUES
     (
         sqlc.narg(web_service_id),
+        sqlc.narg(wms_get_map_service_id),
+        sqlc.narg(wms_get_feature_info_service_id),
         sqlc.narg(web_service_body_id),
         sqlc.narg(template_parameter_id),
         sqlc.arg(position),
@@ -1316,6 +1452,44 @@ WHERE
 ORDER BY
     service.id;
 
+-- name: ListLifecycleGenericWebServices :many
+SELECT
+    configuration.web_service_id,
+    configuration.template_url,
+    configuration.method,
+    configuration.format
+FROM
+    generic_web_services AS configuration
+WHERE
+    configuration.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+ORDER BY
+    configuration.web_service_id;
+
+-- name: ListLifecycleWMSServices :many
+SELECT
+    configuration.web_service_id,
+    configuration.capabilities_url,
+    configuration.default_layer,
+    configuration.transparency_editable,
+    configuration.default_transparency
+FROM
+    wms_services AS configuration
+WHERE
+    configuration.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+ORDER BY
+    configuration.web_service_id;
+
+-- name: ListLifecycleWMSLayers :many
+SELECT
+    *
+FROM
+    wms_layers
+WHERE
+    web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+ORDER BY
+    web_service_id,
+    position;
+
 -- name: ListLifecycleWebServiceContactPoints :many
 SELECT
     link.web_service_id,
@@ -1337,9 +1511,16 @@ FROM
     LEFT JOIN web_service_bodies AS body ON body.id = parameter.web_service_body_id
 WHERE
     parameter.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+    OR parameter.wms_get_map_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+    OR parameter.wms_get_feature_info_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
     OR body.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
 ORDER BY
-    COALESCE(parameter.web_service_id, body.web_service_id),
+    COALESCE(
+        parameter.web_service_id,
+        parameter.wms_get_map_service_id,
+        parameter.wms_get_feature_info_service_id,
+        body.web_service_id
+    ),
     parameter.position,
     parameter.name;
 

@@ -19,6 +19,14 @@ import (
 // Unresolved optional values are omitted; a nil body remains distinct from an
 // explicitly empty rendered body. Content-Type is never inferred.
 func (service WebService) PrepareAccess(input DistributionAccessInput) (PreparedHTTPRequest, error) {
+	configuration, ok := service.Configuration.(GenericWebServiceConfiguration)
+	if !ok {
+		return PreparedHTTPRequest{}, invalidField("type", "Prepared HTTP access is not supported for this service configuration.", nil)
+	}
+	return configuration.PrepareAccess(input)
+}
+
+func (service GenericWebServiceConfiguration) PrepareAccess(input DistributionAccessInput) (PreparedHTTPRequest, error) {
 	values, err := service.resolveAccessValues(input)
 	if err != nil {
 		return PreparedHTTPRequest{}, err
@@ -178,7 +186,7 @@ func (service WebService) PrepareAccess(input DistributionAccessInput) (Prepared
 // format parameter UUID and validated values, without changing resolved values.
 // It returns uuid.Nil and nil values when no format is selected or when the service
 // supports that format without a parameter.
-func (service WebService) selectAccessFormat(selected *string) (uuid.UUID, AccessArray, error) {
+func (service GenericWebServiceConfiguration) selectAccessFormat(selected *string) (uuid.UUID, AccessArray, error) {
 	if selected == nil {
 		return uuid.Nil, nil, nil
 	}

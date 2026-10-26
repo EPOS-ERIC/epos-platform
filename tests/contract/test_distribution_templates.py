@@ -47,7 +47,7 @@ class DistributionTemplatesContractTest(DistributionContractTestCase):
             for name, _, _, _, supplied, expected in cases:
                 with self.subTest(location=location, case=name):
                     distribution = by_title[f"{location}-{name}"]
-                    service = distribution["web_service"]
+                    service = distribution["web_service"]["configuration"]
                     children = (
                         service["parameters"][0]["parameters"] if location == "parameter"
                         else service.get("body_parameters", [])
@@ -94,7 +94,7 @@ class DistributionTemplatesContractTest(DistributionContractTestCase):
         text = 'quote"\\backslash\nnext line é'
         for location in ("query", "body"):
             distribution = by_title[f"{location}-template"]
-            service = distribution["web_service"]
+            service = distribution["web_service"]["configuration"]
             children = service["parameters"][0]["parameters"] if location == "query" else service["body_parameters"]
             identifiers = {item["name"]: item["id"] for item in children}
             for enabled in (True, False):

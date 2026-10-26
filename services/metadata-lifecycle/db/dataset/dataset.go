@@ -501,11 +501,8 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			DatasetVersionID:         versionID,
 			Name:                     service.Name,
 			Description:              service.Description,
-			TemplateUrl:              service.TemplateURL,
-			Method:                   sqlc.WebServiceHttpMethod(service.Method),
 			Type:                     sqlc.WebServiceType(service.Type),
 			VisibleOn:                visibleOnValues(service.VisibleOn),
-			Format:                   service.Format,
 			ProviderOrganizationID:   providerID,
 			DocumentationTitle:       title,
 			DocumentationDescription: description,
@@ -526,29 +523,75 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				return fmt.Errorf("add web service contact point: %w", err)
 			}
 		}
-		var bodyID *uuid.UUID
-		if service.Body != nil {
-			body, err := q.AddLifecycleWebServiceBody(ctx, sqlc.AddLifecycleWebServiceBodyParams{
+		switch configuration := service.Configuration.(type) {
+		case domain.GenericWebServiceConfigurationInput:
+			if err := q.AddLifecycleGenericWebService(ctx, sqlc.AddLifecycleGenericWebServiceParams{
 				WebServiceID: created.ID,
-				ContentType:  service.Body.ContentType,
-				Template:     service.Body.Template,
-				BodyRequired: *service.Body.Required,
-			})
-			if err != nil {
-				return fmt.Errorf("add web service body: %w", err)
+				TemplateUrl:  configuration.TemplateURL,
+				Method:       sqlc.WebServiceHttpMethod(configuration.Method),
+				Format:       configuration.Format,
+			}); err != nil {
+				return fmt.Errorf("add generic web service configuration: %w", err)
 			}
-			bodyID = &body.ID
-			for _, parameter := range service.Body.Parameters {
-				if _, err := persistParameter(ctx, q, parameter, nil, bodyID, nil, nil, nil, nil, false); err != nil {
-					return fmt.Errorf("add web service body parameter: %w", err)
+			var bodyID *uuid.UUID
+			if configuration.Body != nil {
+				body, err := q.AddLifecycleWebServiceBody(ctx, sqlc.AddLifecycleWebServiceBodyParams{
+					WebServiceID: created.ID,
+					ContentType:  configuration.Body.ContentType,
+					Template:     configuration.Body.Template,
+					BodyRequired: *configuration.Body.Required,
+				})
+				if err != nil {
+					return fmt.Errorf("add web service body: %w", err)
+				}
+				bodyID = &body.ID
+				for _, parameter := range configuration.Body.Parameters {
+					if _, err := persistParameter(ctx, q, parameter, parameterOwner{webServiceBodyID: bodyID}, nil, nil, nil, false); err != nil {
+						return fmt.Errorf("add web service body parameter: %w", err)
+					}
 				}
 			}
-		}
-		for _, parameter := range service.Parameters {
-			location := parameter.Location
-			if _, err := persistParameter(ctx, q, parameter.ParameterInput, &created.ID, nil, nil, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
-				return fmt.Errorf("add web service parameter: %w", err)
+			for _, parameter := range configuration.Parameters {
+				location := parameter.Location
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{webServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+					return fmt.Errorf("add web service parameter: %w", err)
+				}
 			}
+		case domain.WMSConfigurationInput:
+			if err := q.AddLifecycleWMSService(ctx, sqlc.AddLifecycleWMSServiceParams{
+				WebServiceID:         created.ID,
+				CapabilitiesUrl:      configuration.CapabilitiesURL,
+				DefaultLayer:         configuration.DefaultLayer,
+				TransparencyEditable: configuration.TransparencyEditable,
+				DefaultTransparency:  configuration.DefaultTransparency,
+			}); err != nil {
+				return fmt.Errorf("add WMS configuration: %w", err)
+			}
+			for layerPosition, layer := range configuration.Layers {
+				if err := q.AddLifecycleWMSLayer(ctx, sqlc.AddLifecycleWMSLayerParams{
+					WebServiceID: created.ID,
+					Name:         layer.Name,
+					Position:     int32(layerPosition),
+					DefaultStyle: layer.DefaultStyle,
+					Styles:       layer.Styles,
+				}); err != nil {
+					return fmt.Errorf("add WMS layer %q: %w", layer.Name, err)
+				}
+			}
+			for _, parameter := range configuration.GetMapParameters {
+				location := parameter.Location
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetMapServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+					return fmt.Errorf("add WMS GetMap parameter: %w", err)
+				}
+			}
+			for _, parameter := range configuration.GetFeatureInfoParameters {
+				location := parameter.Location
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetFeatureInfoServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+					return fmt.Errorf("add WMS GetFeatureInfo parameter: %w", err)
+				}
+			}
+		default:
+			return fmt.Errorf("unsupported web service configuration %T", service.Configuration)
 		}
 	}
 	for i, distribution := range value.Distributions {
@@ -696,10 +739,7 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 	result := make(map[uuid.UUID]domain.WebService, len(rows))
 	providerIDs := make([]uuid.UUID, 0, len(rows))
 	for i, row := range rows {
-		service, err := toDomainWebService(row.WebService)
-		if err != nil {
-			return nil, err
-		}
+		service := toDomainWebService(row.WebService)
 		result[service.ID] = service
 		ids[i] = service.ID
 		if row.WebService.ProviderOrganizationID != nil {
@@ -708,6 +748,61 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 	}
 	if len(rows) == 0 {
 		return result, nil
+	}
+	genericConfigurations, err := q.ListLifecycleGenericWebServices(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("list generic web service configurations: %w", err)
+	}
+	for _, row := range genericConfigurations {
+		id := row.WebServiceID
+		service, exists := result[id]
+		if !exists {
+			return nil, fmt.Errorf("generic configuration references missing web service %s", id)
+		}
+		service.Configuration = domain.GenericWebServiceConfiguration{
+			TemplateURL: row.TemplateUrl,
+			Method:      domain.HTTPMethod(row.Method),
+			Format:      row.Format,
+		}
+		result[id] = service
+	}
+	wmsConfigurations, err := q.ListLifecycleWMSServices(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("list WMS configurations: %w", err)
+	}
+	for _, value := range wmsConfigurations {
+		service, exists := result[value.WebServiceID]
+		if !exists {
+			return nil, fmt.Errorf("WMS configuration references missing web service %s", value.WebServiceID)
+		}
+		service.Configuration = domain.WMSConfiguration{
+			CapabilitiesURL:      value.CapabilitiesUrl,
+			DefaultLayer:         value.DefaultLayer,
+			TransparencyEditable: value.TransparencyEditable,
+			DefaultTransparency:  value.DefaultTransparency,
+		}
+		result[value.WebServiceID] = service
+	}
+	wmsLayers, err := q.ListLifecycleWMSLayers(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("list WMS layers: %w", err)
+	}
+	for _, value := range wmsLayers {
+		service, exists := result[value.WebServiceID]
+		if !exists {
+			return nil, fmt.Errorf("WMS layer references missing web service %s", value.WebServiceID)
+		}
+		configuration, ok := service.Configuration.(domain.WMSConfiguration)
+		if !ok {
+			return nil, fmt.Errorf("WMS layer references non-WMS service %s", value.WebServiceID)
+		}
+		configuration.Layers = append(configuration.Layers, domain.WMSLayer{
+			Name:         value.Name,
+			DefaultStyle: value.DefaultStyle,
+			Styles:       value.Styles,
+		})
+		service.Configuration = configuration
+		result[value.WebServiceID] = service
 	}
 	organizations, err := q.ListLifecycleOrganizations(ctx, providerIDs)
 	if err != nil {
@@ -745,11 +840,16 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		}
 		bodyByID[body.ID] = body
 		service := result[body.WebServiceID]
-		service.Body = &domain.RequestBody{
+		configuration, ok := service.Configuration.(domain.GenericWebServiceConfiguration)
+		if !ok {
+			return nil, fmt.Errorf("request body references non-generic web service %s", body.WebServiceID)
+		}
+		configuration.Body = &domain.RequestBody{
 			Required:    body.BodyRequired,
 			ContentType: body.ContentType,
 			Template:    body.Template,
 		}
+		service.Configuration = configuration
 		result[body.WebServiceID] = service
 	}
 	parameters, err := q.ListLifecycleWebServiceParameters(ctx, ids)
@@ -796,10 +896,19 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		if err != nil {
 			return nil, fmt.Errorf("decode web service parameter: %w", err)
 		}
-		if item.WebServiceID != nil {
-			service, exists := result[*item.WebServiceID]
+		if item.WebServiceID != nil || item.WmsGetMapServiceID != nil || item.WmsGetFeatureInfoServiceID != nil {
+			var serviceID uuid.UUID
+			switch {
+			case item.WebServiceID != nil:
+				serviceID = *item.WebServiceID
+			case item.WmsGetMapServiceID != nil:
+				serviceID = *item.WmsGetMapServiceID
+			default:
+				serviceID = *item.WmsGetFeatureInfoServiceID
+			}
+			service, exists := result[serviceID]
 			if !exists {
-				return nil, fmt.Errorf("parameter %s references missing web service %s", item.ID, *item.WebServiceID)
+				return nil, fmt.Errorf("parameter %s references missing web service %s", item.ID, serviceID)
 			}
 			var location domain.ParameterLocation
 			if item.Location != nil {
@@ -810,14 +919,34 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 				converted := domain.WebServiceParameterRole(*item.Role)
 				role = &converted
 			}
-			service.Parameters = append(service.Parameters, domain.WebServiceParameter{
+			parameterValue := domain.WebServiceParameter{
 				Parameter: parameter,
 				Property:  item.Property,
 				Role:      role,
 				Location:  location,
 				Explode:   item.Explode,
-			})
-			result[*item.WebServiceID] = service
+			}
+			switch configuration := service.Configuration.(type) {
+			case domain.GenericWebServiceConfiguration:
+				if item.WebServiceID == nil {
+					return nil, fmt.Errorf("parameter %s references the wrong service configuration", item.ID)
+				}
+				configuration.Parameters = append(configuration.Parameters, parameterValue)
+				service.Configuration = configuration
+			case domain.WMSConfiguration:
+				switch {
+				case item.WmsGetMapServiceID != nil:
+					configuration.GetMapParameters = append(configuration.GetMapParameters, parameterValue)
+				case item.WmsGetFeatureInfoServiceID != nil:
+					configuration.GetFeatureInfoParameters = append(configuration.GetFeatureInfoParameters, parameterValue)
+				default:
+					return nil, fmt.Errorf("parameter %s references the wrong service configuration", item.ID)
+				}
+				service.Configuration = configuration
+			default:
+				return nil, fmt.Errorf("parameter %s references a service without configuration", item.ID)
+			}
+			result[serviceID] = service
 			continue
 		}
 		if item.WebServiceBodyID == nil {
@@ -830,9 +959,14 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 	}
 	for _, body := range bodies {
 		service := result[body.WebServiceID]
-		bodyValue := *service.Body
+		configuration, ok := service.Configuration.(domain.GenericWebServiceConfiguration)
+		if !ok || configuration.Body == nil {
+			return nil, fmt.Errorf("body %s references a missing generic request body", body.ID)
+		}
+		bodyValue := *configuration.Body
 		bodyValue.Parameters = bodyParameters[body.ID]
-		service.Body = &bodyValue
+		configuration.Body = &bodyValue
+		service.Configuration = configuration
 		result[body.WebServiceID] = service
 	}
 	for id, service := range result {

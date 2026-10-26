@@ -2702,18 +2702,49 @@ components:
     WebServiceDraft:
       type: object
       additionalProperties: false
-      required: [name, template_url, method, type, format]
+      required: [name, configuration]
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true, minLength: 1 }
-        template_url: { $ref: "#/components/schemas/NonBlankString" }
-        method: { $ref: "#/components/schemas/WebServiceMethod" }
-        type: { $ref: "#/components/schemas/WebServiceType" }
         visible_on:
           type: array
           nullable: true
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
+        provider: { type: string, format: uuid }
+        documentation: { $ref: "#/components/schemas/Documentation" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
+        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        contact_points: { type: array, items: { type: string, format: uuid } }
+        configuration: { $ref: "#/components/schemas/WebServiceConfigurationDraft" }
+
+    WebServiceConfigurationDraft:
+      oneOf:
+        - $ref: "#/components/schemas/WmsWebServiceConfigurationDraft"
+        - $ref: "#/components/schemas/GenericWebServiceConfigurationDraft"
+      discriminator:
+        propertyName: type
+        mapping:
+          WMS: "#/components/schemas/WmsWebServiceConfigurationDraft"
+          HTTP: "#/components/schemas/GenericWebServiceConfigurationDraft"
+          WMTS: "#/components/schemas/GenericWebServiceConfigurationDraft"
+          WFS: "#/components/schemas/GenericWebServiceConfigurationDraft"
+
+    GenericWebServiceConfigurationDraft:
+      type: object
+      additionalProperties: false
+      required: [type, template_url, method, format]
+      properties:
+        type:
+          type: string
+          enum: [HTTP, WMTS, WFS]
+        template_url: { $ref: "#/components/schemas/NonBlankString" }
+        method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:
           type: array
           items: { $ref: "#/components/schemas/ParameterDraft" }
@@ -2726,16 +2757,56 @@ components:
           type: array
           items: { $ref: "#/components/schemas/ScalarParameterDraft" }
         format: { $ref: "#/components/schemas/NonBlankString" }
-        provider: { type: string, format: uuid }
-        documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage:
+
+    WmsWebServiceConfigurationDraft:
+      type: object
+      additionalProperties: false
+      description: WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+      required:
+        [type, capabilities_url, default_layer, layers, transparency_editable, default_transparency, get_map_parameters, get_feature_info_parameters]
+      properties:
+        type: { type: string, enum: [WMS] }
+        capabilities_url:
           type: string
-          nullable: true
           minLength: 1
-          description: WKT POINT or POLYGON geometry in EPSG:4326.
-          example: POINT (12.5 41.9)
-        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
-        contact_points: { type: array, items: { type: string, format: uuid } }
+          description: Absolute HTTP(S) capabilities URL, including provider query parameters.
+        default_layer:
+          allOf:
+            - $ref: "#/components/schemas/NonBlankString"
+          description: Must name one configured layer.
+        layers:
+          type: array
+          minItems: 1
+          description: Allowed layers in display order. A single layer fixes selection.
+          items: { $ref: "#/components/schemas/WmsLayerDraft" }
+        transparency_editable: { type: boolean }
+        default_transparency:
+          type: boolean
+          description: Fixed when transparency_editable is false.
+        get_map_parameters:
+          type: array
+          description: Custom GetMap parameters. Standard WMS names are reserved, ignoring case.
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+        get_feature_info_parameters:
+          type: array
+          description: Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring case.
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+
+    WmsLayerDraft:
+      type: object
+      additionalProperties: false
+      required: [name, default_style, styles]
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        default_style:
+          type: string
+          description: Default configured style. Empty string uses the provider default.
+        styles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Allowed styles in display order. Empty string uses the provider default; a single style fixes selection.
+          items: { type: string }
 
     Parameter:
       oneOf:
@@ -3365,7 +3436,7 @@ components:
 
     WebServiceType:
       type: string
-      enum: [WMS, GEOJSON, DYNAMIC, WMTS, WFS, COVJSON]
+      enum: [WMS, HTTP, WMTS, WFS]
 
     WebServiceVisibleOn:
       type: string
@@ -3749,7 +3820,7 @@ components:
         web_service: { $ref: "#/components/schemas/WebService" }
         available_formats:
           type: array
-          description: Computed formats for this distribution in the selected resource version. Currently returns ORIGINAL entries only.
+          description: Computed formats for this resource version. Currently ORIGINAL entries only. WMS returns image/png; client must verify provider support.
           items: { $ref: "#/components/schemas/AvailableFormat" }
 
     AvailableFormat:
@@ -3811,31 +3882,16 @@ components:
 
     WebService:
       type: object
-      required: [id, name, template_url, method, type, format]
+      required: [id, name, configuration]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string, nullable: true, minLength: 1 }
-        template_url: { type: string }
-        method: { $ref: "#/components/schemas/WebServiceMethod" }
-        type: { $ref: "#/components/schemas/WebServiceType" }
         visible_on:
           type: array
           nullable: true
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
-        parameters:
-          type: array
-          items: { $ref: "#/components/schemas/Parameter" }
-        format: { type: string }
-        body_content_type: { type: string, nullable: true }
-        body_template: { type: string, nullable: true }
-        body_required:
-          type: boolean
-          description: Whether the configured request body must be rendered. Omitted when no request body is configured.
-        body_parameters:
-          type: array
-          items: { $ref: "#/components/schemas/ScalarParameter" }
         provider: { $ref: "#/components/schemas/ResourceVersionReference" }
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage:
@@ -3848,6 +3904,91 @@ components:
         contact_points:
           type: array
           items: { type: string, format: uuid }
+        configuration: { $ref: "#/components/schemas/WebServiceConfiguration" }
+
+    WebServiceConfiguration:
+      oneOf:
+        - $ref: "#/components/schemas/WmsWebServiceConfiguration"
+        - $ref: "#/components/schemas/GenericWebServiceConfiguration"
+      discriminator:
+        propertyName: type
+        mapping:
+          WMS: "#/components/schemas/WmsWebServiceConfiguration"
+          HTTP: "#/components/schemas/GenericWebServiceConfiguration"
+          WMTS: "#/components/schemas/GenericWebServiceConfiguration"
+          WFS: "#/components/schemas/GenericWebServiceConfiguration"
+
+    GenericWebServiceConfiguration:
+      type: object
+      additionalProperties: false
+      required: [type, template_url, method, format]
+      properties:
+        type:
+          type: string
+          enum: [HTTP, WMTS, WFS]
+        template_url: { type: string }
+        method: { $ref: "#/components/schemas/WebServiceMethod" }
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+        body_content_type: { type: string, nullable: true }
+        body_template: { type: string, nullable: true }
+        body_required:
+          type: boolean
+          description: Whether the configured request body must be rendered. Omitted when no request body is configured.
+        body_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ScalarParameter" }
+        format: { type: string }
+
+    WmsWebServiceConfiguration:
+      type: object
+      additionalProperties: false
+      description: WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+      required:
+        [type, capabilities_url, default_layer, layers, transparency_editable, default_transparency, get_map_parameters, get_feature_info_parameters]
+      properties:
+        type: { type: string, enum: [WMS] }
+        capabilities_url:
+          type: string
+          minLength: 1
+          description: Absolute HTTP(S) capabilities URL, including provider query parameters.
+        default_layer:
+          allOf:
+            - $ref: "#/components/schemas/NonBlankString"
+          description: Must name one configured layer.
+        layers:
+          type: array
+          minItems: 1
+          description: Allowed layers in display order. A single layer fixes selection.
+          items: { $ref: "#/components/schemas/WmsLayer" }
+        transparency_editable: { type: boolean }
+        default_transparency:
+          type: boolean
+          description: Fixed when transparency_editable is false.
+        get_map_parameters:
+          type: array
+          description: Custom GetMap parameters. Standard WMS names are reserved, ignoring case.
+          items: { $ref: "#/components/schemas/Parameter" }
+        get_feature_info_parameters:
+          type: array
+          description: Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring case.
+          items: { $ref: "#/components/schemas/Parameter" }
+
+    WmsLayer:
+      type: object
+      required: [name, default_style, styles]
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        default_style:
+          type: string
+          description: Default configured style. Empty string uses the provider default.
+        styles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Allowed styles in display order. Empty string uses the provider default; a single style fixes selection.
+          items: { type: string }
 
     Identifier:
       type: object

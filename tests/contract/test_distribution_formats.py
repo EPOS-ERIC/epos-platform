@@ -44,11 +44,13 @@ class DistributionFormatsContractTest(unittest.TestCase):
             "type": "WEB_SERVICE",
             "web_service": {
                 "name": title,
-                "template_url": "https://example.org/formats",
-                "method": "GET",
-                "type": "GEOJSON",
-                "format": format_value,
-                "parameters": parameters,
+                "configuration": {
+                    "template_url": "https://example.org/formats",
+                    "method": "GET",
+                    "type": "HTTP",
+                    "format": format_value,
+                    "parameters": parameters,
+                },
             },
         }
 
@@ -126,7 +128,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         fixed = self.distribution(
             "fixed", "unused-format", [self.format_parameter(location="PATH", required=True)]
         )
-        fixed["web_service"]["template_url"] += "/{format}"
+        fixed["web_service"]["configuration"]["template_url"] += "/{format}"
         distributions = [
             self.distribution("fallback", "Application/JSON", []),
             fixed,
@@ -177,7 +179,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         resource_id, draft = self.create_draft(group_id, metadata)
         self.assert_formats(draft["metadata"]["distributions"][0], [("format-A", "format-A")])
 
-        metadata["distributions"][0]["web_service"]["parameters"] = [
+        metadata["distributions"][0]["web_service"]["configuration"]["parameters"] = [
             self.format_parameter(default="format-B")
         ]
         draft = self.replace_draft(draft, metadata)
@@ -198,10 +200,10 @@ class DistributionFormatsContractTest(unittest.TestCase):
         version = self.version(resource_id, "DRAFT")
         self.assertNotEqual(version["version_id"], published_version_id)
         draft = self.details(resource_id, version["version_id"])
-        copied_parameter = draft["metadata"]["distributions"][0]["web_service"]["parameters"][0]
+        copied_parameter = draft["metadata"]["distributions"][0]["web_service"]["configuration"]["parameters"][0]
         self.assertEqual(copied_parameter["role"], "FORMAT")
         self.assertEqual(copied_parameter["property"], "schema:encodingFormat")
-        metadata["distributions"][0]["web_service"]["parameters"] = [
+        metadata["distributions"][0]["web_service"]["configuration"]["parameters"] = [
             self.format_parameter(
                 default="format-C",
                 enum=[{"value": "format-C", "label": "New format"}],
@@ -244,7 +246,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         ]
         for name, parameters in cases:
             invalid = copy.deepcopy(metadata)
-            invalid["distributions"][0]["web_service"]["parameters"] = parameters
+            invalid["distributions"][0]["web_service"]["configuration"]["parameters"] = parameters
             for method in ("POST", "PUT"):
                 with self.subTest(case=name, method=method):
                     if method == "POST":
@@ -265,7 +267,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
                     problem = assert_problem(self, response, 400, "validation_failed")
                     self.assertTrue(
                         problem.get("target", "").startswith(
-                            "metadata.distributions[0].web_service.parameters["
+                            "metadata.distributions[0].web_service.configuration.parameters["
                         ),
                         problem,
                     )

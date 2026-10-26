@@ -18,9 +18,9 @@ class DistributionMetadataContractTest(DistributionContractTestCase):
             distributions.append(distribution)
         detail = self.create_draft(distributions)
         by_title = {item["title"]: item for item in detail["metadata"]["distributions"]}
-        self.assertIs(by_title["default"]["web_service"]["body_required"], True)
-        self.assertIs(by_title["optional"]["web_service"]["body_required"], False)
-        self.assertNotIn("body_required", by_title["absent"]["web_service"])
+        self.assertIs(by_title["default"]["web_service"]["configuration"]["body_required"], True)
+        self.assertIs(by_title["optional"]["web_service"]["configuration"]["body_required"], False)
+        self.assertNotIn("body_required", by_title["absent"]["web_service"]["configuration"])
         self.assertEqual(self.prepare(by_title["default"])["body"], "default")
         self.assertEqual(self.prepare(by_title["optional"])["body"], "optional")
         absent = self.prepare(by_title["absent"])
@@ -38,7 +38,7 @@ class DistributionMetadataContractTest(DistributionContractTestCase):
         updated = self.details(detail["resource_id"], detail["version_id"])
         self.assertEqual(updated["revision"], detail["revision"] + 1)
         distribution = updated["metadata"]["distributions"][0]
-        self.assertIs(distribution["web_service"]["body_required"], False)
+        self.assertIs(distribution["web_service"]["configuration"]["body_required"], False)
         prepared = self.prepare(distribution)
         self.assertEqual(prepared["method"], "PUT")
         self.assertEqual(prepared["url"], "https://provider.invalid/replaced")

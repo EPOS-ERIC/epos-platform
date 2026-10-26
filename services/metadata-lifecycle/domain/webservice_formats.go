@@ -9,6 +9,18 @@ type NativeFormat struct {
 
 // NativeFormats derives capabilities from validated web-service metadata.
 func (value WebService) NativeFormats() []NativeFormat {
+	if value.Configuration == nil {
+		return nil
+	}
+	return value.Configuration.NativeFormats()
+}
+
+func (value WMSConfiguration) NativeFormats() []NativeFormat {
+	// PNG is a platform map requirement; the client checks provider support.
+	return []NativeFormat{{OutputFormat: "image/png", Label: "image/png"}}
+}
+
+func (value GenericWebServiceConfiguration) NativeFormats() []NativeFormat {
 	var formatSchema *StringSchema
 	for _, parameter := range value.Parameters {
 		if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
@@ -41,13 +53,13 @@ func (value WebService) NativeFormats() []NativeFormat {
 	return result
 }
 
-func validateWebServiceParameterRoles(parameters []WebServiceParameterInput) error {
+func validateWebServiceParameterRoles(parameters []WebServiceParameterInput, field string) error {
 	seen := make(map[WebServiceParameterRole]struct{})
 	for i, parameter := range parameters {
 		if parameter.Role == nil {
 			continue
 		}
-		target := fmt.Sprintf("parameters[%d]", i)
+		target := fmt.Sprintf("%s[%d]", field, i)
 		role := *parameter.Role
 		if _, exists := seen[role]; exists {
 			return invalidField(target+".role", "Only one parameter per role is allowed.", nil)

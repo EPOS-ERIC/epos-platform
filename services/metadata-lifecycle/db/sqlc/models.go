@@ -582,12 +582,10 @@ func (ns NullWebServiceParameterRole) Value() (driver.Value, error) {
 type WebServiceType string
 
 const (
-	WebServiceTypeWMS     WebServiceType = "WMS"
-	WebServiceTypeGEOJSON WebServiceType = "GEOJSON"
-	WebServiceTypeDYNAMIC WebServiceType = "DYNAMIC"
-	WebServiceTypeWMTS    WebServiceType = "WMTS"
-	WebServiceTypeWFS     WebServiceType = "WFS"
-	WebServiceTypeCOVJSON WebServiceType = "COVJSON"
+	WebServiceTypeWMS  WebServiceType = "WMS"
+	WebServiceTypeHTTP WebServiceType = "HTTP"
+	WebServiceTypeWMTS WebServiceType = "WMTS"
+	WebServiceTypeWFS  WebServiceType = "WFS"
 )
 
 func (e *WebServiceType) Scan(src interface{}) error {
@@ -778,6 +776,13 @@ type FloatParameterSchema struct {
 	MultipleValues bool
 }
 
+type GenericWebService struct {
+	WebServiceID uuid.UUID
+	TemplateUrl  string
+	Method       WebServiceHttpMethod
+	Format       string
+}
+
 type GlobalNotificationSubscription struct {
 	UserID    string
 	EventType string
@@ -904,21 +909,23 @@ type OrganizationMembership struct {
 }
 
 type Parameter struct {
-	ID                  uuid.UUID
-	Position            int32
-	Name                string
-	Label               string
-	Description         *string
-	Required            bool
-	ReadOnly            bool
-	WebServiceID        *uuid.UUID
-	WebServiceBodyID    *uuid.UUID
-	TemplateParameterID *uuid.UUID
-	SchemaKind          ParameterSchemaKind
-	Role                *WebServiceParameterRole
-	Property            *string
-	Location            *WebServiceParameterLocation
-	Explode             bool
+	ID                         uuid.UUID
+	Position                   int32
+	Name                       string
+	Label                      string
+	Description                *string
+	Required                   bool
+	ReadOnly                   bool
+	WebServiceID               *uuid.UUID
+	WmsGetMapServiceID         *uuid.UUID
+	WmsGetFeatureInfoServiceID *uuid.UUID
+	WebServiceBodyID           *uuid.UUID
+	TemplateParameterID        *uuid.UUID
+	SchemaKind                 ParameterSchemaKind
+	Role                       *WebServiceParameterRole
+	Property                   *string
+	Location                   *WebServiceParameterLocation
+	Explode                    bool
 }
 
 type ParameterTemplate struct {
@@ -1081,11 +1088,8 @@ type WebService struct {
 	DatasetVersionID         uuid.UUID
 	Name                     string
 	Description              *string
-	TemplateUrl              string
-	Method                   WebServiceHttpMethod
 	Type                     WebServiceType
 	VisibleOn                []WebServiceVisibleOn
-	Format                   string
 	ProviderOrganizationID   *uuid.UUID
 	DocumentationTitle       *string
 	DocumentationDescription *string
@@ -1106,4 +1110,20 @@ type WebServiceBody struct {
 type WebServiceContactPoint struct {
 	WebServiceID   uuid.UUID
 	ContactPointID uuid.UUID
+}
+
+type WmsLayer struct {
+	WebServiceID uuid.UUID
+	Name         string
+	Position     int32
+	DefaultStyle string
+	Styles       []string
+}
+
+type WmsService struct {
+	WebServiceID         uuid.UUID
+	CapabilitiesUrl      string
+	DefaultLayer         string
+	TransparencyEditable bool
+	DefaultTransparency  bool
 }

@@ -123,7 +123,7 @@ func geologicalTemporal(start, end *float64) *domain.GeologicalTemporal {
 	return &domain.GeologicalTemporal{StartMYA: start, EndMYA: end}
 }
 
-func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {
+func toDomainWebService(value sqlc.WebService) domain.WebService {
 	var documentation *domain.Documentation
 	if value.DocumentationUri != nil {
 		documentation = &domain.Documentation{
@@ -136,19 +136,15 @@ func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {
 		ID:               value.ID,
 		Name:             value.Name,
 		Description:      value.Description,
-		TemplateURL:      value.TemplateUrl,
-		Method:           domain.HTTPMethod(value.Method),
 		Type:             domain.WebServiceType(value.Type),
+		Configuration:    nil,
 		VisibleOn:        domainVisibleOnValues(value.VisibleOn),
-		Body:             nil,
-		Parameters:       nil,
-		Format:           value.Format,
 		Provider:         nil,
 		Documentation:    documentation,
 		SpatialCoverage:  value.SpatialCoverage,
 		TemporalCoverage: temporal(value.TemporalStart, value.TemporalEnd),
 		ContactPoints:    nil,
-	}, nil
+	}
 }
 
 func domainVisibleOnValues(values []sqlc.WebServiceVisibleOn) []domain.WebServiceVisibleOn {

@@ -626,19 +626,18 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 	if err := m.checkSingleValues(operationSource, hydraReturns); err != nil {
 		return domain.WebService{}, err
 	}
+	configuration := domain.GenericWebServiceConfiguration{
+		Method: domain.HTTPMethodGet,
+		Format: m.optionalString(operationSource, hydraReturns),
+	}
 	service := domain.WebService{
 		ID:          ownedID(owner.String(), "web-service", source),
 		Name:        m.optionalString(source, schemaName),
 		Description: stringPtr(m.optionalString(source, schemaDescription)),
-		TemplateURL: "",
-		Method:      domain.HTTPMethodGet,
-		// TODO: Map schema:serviceType to a supported WebServiceType instead of defaulting to GEOJSON.
-		Type: domain.WebServiceTypeGeoJSON,
+		Type:        domain.WebServiceTypeHTTP,
 		// TODO: Import visible-on targets from source metadata.
 		VisibleOn:        nil,
-		Body:             nil,
-		Parameters:       nil,
-		Format:           m.optionalString(operationSource, hydraReturns),
+		Configuration:    configuration,
 		Provider:         nil,
 		Documentation:    nil,
 		SpatialCoverage:  nil,
@@ -661,8 +660,8 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 	if method == "" {
 		method = string(domain.HTTPMethodGet)
 	}
-	service.Method = domain.HTTPMethod(method)
-	if !service.Method.Valid() {
+	configuration.Method = domain.HTTPMethod(method)
+	if !configuration.Method.Valid() {
 		return domain.WebService{}, fmt.Errorf("unsupported web service method %q", method)
 	}
 
@@ -702,12 +701,12 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 	serviceTemplate := ""
 	if rawTemplate, ok := m.firstString(operationSource, hydraTemplate); ok {
 		serviceTemplate = rawTemplate
-		service.TemplateURL = stripHydraQueryTemplate(rawTemplate)
+		configuration.TemplateURL = stripHydraQueryTemplate(rawTemplate)
 	}
 	for _, property := range m.graph.refs(operationSource, hydraProperty) {
 		if rawTemplate, ok := m.firstString(property, hydraTemplate); ok && serviceTemplate == "" {
 			serviceTemplate = rawTemplate
-			service.TemplateURL = stripHydraQueryTemplate(rawTemplate)
+			configuration.TemplateURL = stripHydraQueryTemplate(rawTemplate)
 		}
 		for _, mapping := range m.graph.refs(property, hydraMapping) {
 			parameterValue, err := m.parameter(mapping)
@@ -716,7 +715,7 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 				m.omitRelation(source, hydraMapping, "parameter", mapping, err)
 				continue
 			}
-			parameterValue.Position = len(service.Parameters)
+			parameterValue.Position = len(configuration.Parameters)
 			propertyValue := m.optionalString(mapping, hydraProperty)
 			parameter := domain.WebServiceParameter{
 				ParameterInput: parameterValue,
@@ -726,15 +725,16 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 				Location:       hydraParameterLocation(serviceTemplate, parameterValue.Name),
 				Explode:        false,
 			}
-			parameters, mergeErr := appendUniqueParameter(service.Parameters, parameter)
+			parameters, mergeErr := appendUniqueParameter(configuration.Parameters, parameter)
 			if mergeErr != nil {
 				m.recordInvalid("parameter", mapping, mergeErr)
 				m.omitRelation(source, hydraMapping, "parameter", mapping, mergeErr)
 				continue
 			}
-			service.Parameters = parameters
+			configuration.Parameters = parameters
 		}
 	}
+	service.Configuration = configuration
 
 	return service, nil
 }

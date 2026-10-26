@@ -190,7 +190,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         self.assertEqual(
             {
                 parameter["name"]: (parameter.get("role"), parameter.get("property"))
-                for parameter in distribution["web_service"]["parameters"]
+                for parameter in distribution["web_service"]["configuration"]["parameters"]
             },
             {
                 "start": ("START_DATE", "custom:start"),
@@ -222,7 +222,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         )
         source_distribution = published_details["metadata"]["distributions"][0]
         source_service = source_distribution["web_service"]
-        source_parameter = source_service["body_parameters"][0]
+        source_parameter = source_service["configuration"]["body_parameters"][0]
 
         drafted = self.gateway.post(
             "/resources/{resourceType}/{id}/draft-from-publication",
@@ -236,10 +236,10 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         draft_version = self.version("dataset", resource_id, "DRAFT")
         draft_details = self.details("dataset", resource_id, draft_version["version_id"])
         draft_service = draft_details["metadata"]["distributions"][0]["web_service"]
-        draft_parameter = draft_service["body_parameters"][0]
+        draft_parameter = draft_service["configuration"]["body_parameters"][0]
         self.assertEqual(draft_parameter["name"], source_parameter["name"])
         self.assertNotEqual(draft_parameter["id"], source_parameter["id"])
-        self.assertEqual(draft_service["body_template"], source_service["body_template"])
+        self.assertEqual(draft_service["configuration"]["body_template"], source_service["configuration"]["body_template"])
 
     def test_resource_variants_and_copy(self) -> None:
         """Verify resource variants, copied ownership, and publication drafts."""

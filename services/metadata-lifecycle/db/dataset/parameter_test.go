@@ -97,7 +97,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			params, err := parameterParams(test.value, nil, nil, nil, nil, nil, nil, false)
+			params, err := parameterParams(test.value, parameterOwner{}, nil, nil, nil, false)
 			if err != nil {
 				t.Fatalf("parameterParams() error = %v", err)
 			}
@@ -125,25 +125,27 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 
 func parameterRow(value sqlc.AddLifecycleParameterParams) sqlc.Parameter {
 	return sqlc.Parameter{
-		ID:                  uuid.New(),
-		Position:            value.Position,
-		Name:                value.Name,
-		Label:               value.Label,
-		Description:         value.Description,
-		Required:            value.Required,
-		ReadOnly:            value.ReadOnly,
-		WebServiceID:        value.WebServiceID,
-		WebServiceBodyID:    value.WebServiceBodyID,
-		TemplateParameterID: value.TemplateParameterID,
-		Role:                value.Role,
-		Location:            value.Location,
-		Explode:             value.Explode,
-		SchemaKind:          value.SchemaKind,
+		ID:                         uuid.New(),
+		Position:                   value.Position,
+		Name:                       value.Name,
+		Label:                      value.Label,
+		Description:                value.Description,
+		Required:                   value.Required,
+		ReadOnly:                   value.ReadOnly,
+		WebServiceID:               value.WebServiceID,
+		WmsGetMapServiceID:         value.WmsGetMapServiceID,
+		WmsGetFeatureInfoServiceID: value.WmsGetFeatureInfoServiceID,
+		WebServiceBodyID:           value.WebServiceBodyID,
+		TemplateParameterID:        value.TemplateParameterID,
+		Role:                       value.Role,
+		Location:                   value.Location,
+		Explode:                    value.Explode,
+		SchemaKind:                 value.SchemaKind,
 	}
 }
 
 func parameterRowForSchema(value domain.ParameterInput, parentID uuid.UUID) sqlc.Parameter {
-	params, err := parameterParams(value, nil, nil, &parentID, nil, nil, nil, false)
+	params, err := parameterParams(value, parameterOwner{templateParameterID: &parentID}, nil, nil, nil, false)
 	if err != nil {
 		panic(err)
 	}
@@ -179,7 +181,7 @@ func TestParameterParamsPreservesWebServiceOwner(t *testing.T) {
 		Name:   "value",
 		Label:  "Value",
 		Schema: domain.StringSchema{},
-	}, &serviceID, nil, nil, nil, nil, &location, true)
+	}, parameterOwner{webServiceID: &serviceID}, nil, nil, &location, true)
 	if err != nil {
 		t.Fatalf("parameterParams() error = %v", err)
 	}
@@ -190,19 +192,13 @@ func TestParameterParamsPreservesWebServiceOwner(t *testing.T) {
 
 func TestWebServicePersistenceMappingPreservesTypeAndVisibleOn(t *testing.T) {
 	id := uuid.New()
-	service, err := toDomainWebService(sqlc.WebService{
-		ID:          id,
-		Name:        "service",
-		TemplateUrl: "https://example.test",
-		Method:      sqlc.WebServiceHttpMethodGET,
-		Type:        sqlc.WebServiceTypeGEOJSON,
-		VisibleOn:   []sqlc.WebServiceVisibleOn{sqlc.WebServiceVisibleOnMAP, sqlc.WebServiceVisibleOnGRAPH},
-		Format:      "application/json",
+	service := toDomainWebService(sqlc.WebService{
+		ID:        id,
+		Name:      "service",
+		Type:      sqlc.WebServiceTypeHTTP,
+		VisibleOn: []sqlc.WebServiceVisibleOn{sqlc.WebServiceVisibleOnMAP, sqlc.WebServiceVisibleOnGRAPH},
 	})
-	if err != nil {
-		t.Fatalf("toDomainWebService() error = %v", err)
-	}
-	if service.Type != domain.WebServiceTypeGeoJSON || !reflect.DeepEqual(service.VisibleOn, []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnMap, domain.WebServiceVisibleOnGraph}) {
+	if service.Type != domain.WebServiceTypeHTTP || !reflect.DeepEqual(service.VisibleOn, []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnMap, domain.WebServiceVisibleOnGraph}) {
 		t.Fatalf("web service fields = type %q, visible on %v", service.Type, service.VisibleOn)
 	}
 	if visibleOnValues(nil) != nil {

@@ -91,13 +91,9 @@ type Distribution struct {
 type WebServiceInput struct {
 	Name             string
 	Description      *string
-	TemplateURL      string
-	Method           HTTPMethod
 	Type             WebServiceType
+	Configuration    WebServiceConfigurationInput
 	VisibleOn        []WebServiceVisibleOn
-	Body             *RequestBodyInput
-	Parameters       []WebServiceParameterInput
-	Format           string
 	ProviderID       *uuid.UUID
 	Documentation    *Documentation
 	SpatialCoverage  geom.T
@@ -110,18 +106,76 @@ type WebService struct {
 	ID               uuid.UUID
 	Name             string
 	Description      *string
-	TemplateURL      string
-	Method           HTTPMethod
 	Type             WebServiceType
+	Configuration    WebServiceConfiguration
 	VisibleOn        []WebServiceVisibleOn
-	Body             *RequestBody
-	Parameters       []WebServiceParameter
-	Format           string
 	Provider         *OrganizationMetadata
 	Documentation    *Documentation
 	SpatialCoverage  geom.T
 	TemporalCoverage *Temporal
 	ContactPoints    []ContactPoint
+}
+
+// WebServiceConfigurationInput is one caller-controlled typed service configuration.
+type WebServiceConfigurationInput interface {
+	webServiceConfigurationInput()
+}
+
+// WebServiceConfiguration is one persisted typed service configuration.
+type WebServiceConfiguration interface {
+	Input() WebServiceConfigurationInput
+	NativeFormats() []NativeFormat
+	webServiceConfiguration()
+}
+
+type GenericWebServiceConfigurationInput struct {
+	TemplateURL string
+	Method      HTTPMethod
+	Body        *RequestBodyInput
+	Parameters  []WebServiceParameterInput
+	Format      string
+}
+
+func (GenericWebServiceConfigurationInput) webServiceConfigurationInput() {}
+
+type GenericWebServiceConfiguration struct {
+	TemplateURL string
+	Method      HTTPMethod
+	Body        *RequestBody
+	Parameters  []WebServiceParameter
+	Format      string
+}
+
+func (GenericWebServiceConfiguration) webServiceConfiguration() {}
+
+type WMSConfigurationInput struct {
+	CapabilitiesURL          string
+	DefaultLayer             string
+	Layers                   []WMSLayer
+	TransparencyEditable     bool
+	DefaultTransparency      bool
+	GetMapParameters         []WebServiceParameterInput
+	GetFeatureInfoParameters []WebServiceParameterInput
+}
+
+func (WMSConfigurationInput) webServiceConfigurationInput() {}
+
+type WMSConfiguration struct {
+	CapabilitiesURL          string
+	DefaultLayer             string
+	Layers                   []WMSLayer
+	TransparencyEditable     bool
+	DefaultTransparency      bool
+	GetMapParameters         []WebServiceParameter
+	GetFeatureInfoParameters []WebServiceParameter
+}
+
+func (WMSConfiguration) webServiceConfiguration() {}
+
+type WMSLayer struct {
+	Name         string
+	DefaultStyle string
+	Styles       []string
 }
 
 type DownloadableFile struct {
@@ -173,17 +227,15 @@ func (m HTTPMethod) Valid() bool {
 type WebServiceType string
 
 const (
-	WebServiceTypeWMS     WebServiceType = "WMS"
-	WebServiceTypeGeoJSON WebServiceType = "GEOJSON"
-	WebServiceTypeDynamic WebServiceType = "DYNAMIC"
-	WebServiceTypeWMTS    WebServiceType = "WMTS"
-	WebServiceTypeWFS     WebServiceType = "WFS"
-	WebServiceTypeCOVJSON WebServiceType = "COVJSON"
+	WebServiceTypeWMS  WebServiceType = "WMS"
+	WebServiceTypeHTTP WebServiceType = "HTTP"
+	WebServiceTypeWMTS WebServiceType = "WMTS"
+	WebServiceTypeWFS  WebServiceType = "WFS"
 )
 
 func (t WebServiceType) Valid() bool {
 	switch t {
-	case WebServiceTypeWMS, WebServiceTypeGeoJSON, WebServiceTypeDynamic, WebServiceTypeWMTS, WebServiceTypeWFS, WebServiceTypeCOVJSON:
+	case WebServiceTypeWMS, WebServiceTypeHTTP, WebServiceTypeWMTS, WebServiceTypeWFS:
 		return true
 	default:
 		return false

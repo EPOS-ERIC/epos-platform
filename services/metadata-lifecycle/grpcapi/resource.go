@@ -849,33 +849,8 @@ func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribu
 		result.Delivery = &metadatalifecyclev1.Distribution_DownloadableFile{DownloadableFile: &metadatalifecyclev1.DownloadableFile{Url: value.DownloadableFile.URL, Format: value.DownloadableFile.Format}}
 	}
 	if value.WebService != nil {
-		result.Delivery = &metadatalifecyclev1.Distribution_WebService{WebService: webServiceOutput(*value.WebService)}
+		result.Delivery = &metadatalifecyclev1.Distribution_WebService{WebService: toProtoWebService(*value.WebService)}
 		result.NativeFormats = toProtoNativeFormats(value.NativeFormats)
-	}
-	return result
-}
-
-func webServiceOutput(value domain.WebService) *metadatalifecyclev1.WebService {
-	result := &metadatalifecyclev1.WebService{Id: value.ID.String(), Name: value.Name, Description: value.Description, TemplateUrl: value.TemplateURL, Method: webServiceMethodOutput(value.Method), Type: webServiceTypeOutput(value.Type), VisibleOn: webServiceVisibleOnOutput(value.VisibleOn), Format: value.Format, Documentation: documentationOutput(value.Documentation), SpatialCoverage: geometryString(value.SpatialCoverage), TemporalCoverage: temporalOutput(value.TemporalCoverage)}
-	if value.Body != nil {
-		result.BodyContentType = &value.Body.ContentType
-		result.BodyTemplate = &value.Body.Template
-		result.BodyRequired = &value.Body.Required
-		for _, parameter := range value.Body.Parameters {
-			result.BodyParameters = append(result.BodyParameters, scalarParameterOutput(parameter))
-		}
-	}
-	if value.Provider != nil {
-		result.ProviderReference = referenceOutput(value.Provider.ID, value.Provider.Name)
-	}
-	for _, item := range value.ContactPoints {
-		result.ContactPoints = append(result.ContactPoints, item.ID.String())
-	}
-	for _, item := range value.Parameters {
-		result.Parameters = append(result.Parameters, &metadatalifecyclev1.WebServiceParameter{
-			Id:        item.ID.String(),
-			Parameter: parameterOutput(item),
-		})
 	}
 	return result
 }
@@ -889,6 +864,7 @@ func documentationOutput(value *domain.Documentation) *metadatalifecyclev1.Docum
 
 func parameterOutput(value domain.WebServiceParameter) *metadatalifecyclev1.Parameter {
 	result := &metadatalifecyclev1.Parameter{
+		Id:          value.ID.String(),
 		Position:    int32(value.Position),
 		Name:        value.Name,
 		Label:       value.Label,
@@ -1104,7 +1080,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 		return domain.DatasetInput{}, fmt.Errorf("map temporal coverage: %w", apperror.PrefixTarget(err, "temporal_coverage"))
 	}
 	geologicalTemporal := geologicalTemporalInput(value.GetGeologicalTemporalCoverage())
-	spatial, err := spatialInput(value.SpatialCoverage)
+	spatial, err := geometryInput(value.SpatialCoverage, "spatial_coverage")
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
@@ -1168,7 +1144,7 @@ func distributionInput(value *metadatalifecyclev1.DistributionInput) (domain.Dis
 	result := domain.DistributionInput{Title: value.GetTitle(), Description: value.GetDescription(), License: value.License, Type: domain.DistributionType(value.GetType()), Issued: issued, Modified: modified, ByteSize: value.ByteSize}
 	switch delivery := value.GetDelivery().(type) {
 	case *metadatalifecyclev1.DistributionInput_WebService:
-		mapped, err := webServiceInput(delivery.WebService)
+		mapped, err := toDomainWebServiceInput(delivery.WebService)
 		if err != nil {
 			return domain.DistributionInput{}, fmt.Errorf("map web service: %w", apperror.PrefixTarget(err, "web_service"))
 		}
@@ -1182,80 +1158,6 @@ func distributionInput(value *metadatalifecyclev1.DistributionInput) (domain.Dis
 		return domain.DistributionInput{}, apperror.New(apperror.CodeValidationFailed, "distribution delivery method is required") //nolint:wrapcheck
 	}
 	return result, nil
-}
-
-func webServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServiceInput, error) {
-	if value == nil {
-		return domain.WebServiceInput{}, apperror.New(apperror.CodeValidationFailed, "web service is required")
-	}
-	contactPoints, err := resourceParseUUIDs(value.GetContactPoints(), "web service contact point", "contact_points")
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	var provider *uuid.UUID
-	if value.ProviderId != nil {
-		id, err := parseUUIDAt(value.GetProviderId(), "web service provider", "provider")
-		if err != nil {
-			return domain.WebServiceInput{}, err
-		}
-		provider = &id
-	}
-	spatial, err := spatialInput(value.SpatialCoverage)
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	temporal, err := temporalInput(value.GetTemporalCoverage())
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	documentation, err := documentationInput(value.GetDocumentation())
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	parameters := make([]domain.WebServiceParameterInput, 0, len(value.GetParameters()))
-	for _, item := range value.GetParameters() {
-		mapped, err := webServiceParameterInput(item)
-		if err != nil {
-			return domain.WebServiceInput{}, err
-		}
-		parameters = append(parameters, mapped)
-	}
-	method, err := webServiceMethodInput(value.GetMethod())
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	serviceType, err := webServiceTypeInput(value.GetType())
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	visibleOn, err := webServiceVisibleOnInput(value.GetVisibleOn())
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	var body *domain.RequestBodyInput
-	if value.BodyRequired != nil && value.BodyContentType == nil && value.BodyTemplate == nil && len(value.GetBodyParameters()) == 0 {
-		return domain.WebServiceInput{}, apperror.Field("body_required", "Body required is only allowed with a configured request body.", nil)
-	}
-	if value.BodyContentType != nil || value.BodyTemplate != nil || len(value.GetBodyParameters()) > 0 {
-		if value.BodyContentType == nil || value.BodyTemplate == nil {
-			return domain.WebServiceInput{}, apperror.New(apperror.CodeValidationFailed, "web service body content type and template are required") //nolint:wrapcheck
-		}
-		bodyParameters := make([]domain.ParameterInput, 0, len(value.GetBodyParameters()))
-		for _, item := range value.GetBodyParameters() {
-			mapped, err := scalarParameterInput(item)
-			if err != nil {
-				return domain.WebServiceInput{}, err
-			}
-			bodyParameters = append(bodyParameters, mapped)
-		}
-		body = &domain.RequestBodyInput{
-			Required:    value.BodyRequired,
-			ContentType: value.GetBodyContentType(),
-			Template:    value.GetBodyTemplate(),
-			Parameters:  bodyParameters,
-		}
-	}
-	return domain.WebServiceInput{Name: value.GetName(), Description: value.Description, TemplateURL: value.GetTemplateUrl(), Method: method, Type: serviceType, VisibleOn: visibleOn, Body: body, Parameters: parameters, Format: value.GetFormat(), ProviderID: provider, Documentation: documentation, SpatialCoverage: spatial, TemporalCoverage: temporal, ContactPointIDs: contactPoints}, nil
 }
 
 func webServiceMethodInput(value metadatalifecyclev1.WebServiceMethod) (domain.HTTPMethod, error) {
@@ -1292,16 +1194,12 @@ func webServiceTypeInput(value metadatalifecyclev1.WebServiceType) (domain.WebSe
 	switch value {
 	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS:
 		return domain.WebServiceTypeWMS, nil
-	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_GEOJSON:
-		return domain.WebServiceTypeGeoJSON, nil
-	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC:
-		return domain.WebServiceTypeDynamic, nil
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP:
+		return domain.WebServiceTypeHTTP, nil
 	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS:
 		return domain.WebServiceTypeWMTS, nil
 	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS:
 		return domain.WebServiceTypeWFS, nil
-	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_COVJSON:
-		return domain.WebServiceTypeCOVJSON, nil
 	default:
 		return "", apperror.New(apperror.CodeValidationFailed, "web service type is invalid") //nolint:wrapcheck
 	}
@@ -1311,16 +1209,12 @@ func webServiceTypeOutput(value domain.WebServiceType) metadatalifecyclev1.WebSe
 	switch value {
 	case domain.WebServiceTypeWMS:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS
-	case domain.WebServiceTypeGeoJSON:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_GEOJSON
-	case domain.WebServiceTypeDynamic:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
+	case domain.WebServiceTypeHTTP:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP
 	case domain.WebServiceTypeWMTS:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
 	case domain.WebServiceTypeWFS:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
-	case domain.WebServiceTypeCOVJSON:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_COVJSON
 	default:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
 	}
@@ -1801,17 +1695,17 @@ func resourceVersionSummaryOutput(value domain.ResourceVersionSummary) *metadata
 	}
 }
 
-func spatialInput(value *string) (geom.T, error) {
+func geometryInput(value *string, target string) (geom.T, error) {
 	if value == nil {
 		return nil, nil
 	}
 	geometry, err := wkt.Unmarshal(strings.TrimSpace(*value))
 	if err != nil {
-		return nil, apperror.Field("spatial_coverage", "Value must be valid WKT geometry.", fmt.Errorf("parse spatial coverage: %w", err))
+		return nil, apperror.Field(target, "Value must be valid WKT geometry.", fmt.Errorf("parse geometry: %w", err))
 	}
 	geometry, err = geom.SetSRID(geometry, 4326)
 	if err != nil {
-		return nil, apperror.Field("spatial_coverage", "Geometry must use EPSG:4326 coordinates.", fmt.Errorf("set spatial coverage SRID: %w", err))
+		return nil, apperror.Field(target, "Geometry must use EPSG:4326 coordinates.", fmt.Errorf("set geometry SRID: %w", err))
 	}
 	return geometry, nil
 }

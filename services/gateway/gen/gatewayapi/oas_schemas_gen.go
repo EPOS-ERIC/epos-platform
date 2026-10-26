@@ -5429,6 +5429,311 @@ func (s *FloatScalarParameterKind) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/GenericWebServiceConfiguration
+type GenericWebServiceConfiguration struct {
+	Type            GenericWebServiceConfigurationType `json:"type"`
+	TemplateURL     string                             `json:"template_url"`
+	Method          WebServiceMethod                   `json:"method"`
+	Parameters      []Parameter                        `json:"parameters"`
+	BodyContentType OptNilString                       `json:"body_content_type"`
+	BodyTemplate    OptNilString                       `json:"body_template"`
+	// Whether the configured request body must be rendered. Omitted when no request body is configured.
+	BodyRequired   OptBool           `json:"body_required"`
+	BodyParameters []ScalarParameter `json:"body_parameters"`
+	Format         string            `json:"format"`
+}
+
+// GetType returns the value of Type.
+func (s *GenericWebServiceConfiguration) GetType() GenericWebServiceConfigurationType {
+	return s.Type
+}
+
+// GetTemplateURL returns the value of TemplateURL.
+func (s *GenericWebServiceConfiguration) GetTemplateURL() string {
+	return s.TemplateURL
+}
+
+// GetMethod returns the value of Method.
+func (s *GenericWebServiceConfiguration) GetMethod() WebServiceMethod {
+	return s.Method
+}
+
+// GetParameters returns the value of Parameters.
+func (s *GenericWebServiceConfiguration) GetParameters() []Parameter {
+	return s.Parameters
+}
+
+// GetBodyContentType returns the value of BodyContentType.
+func (s *GenericWebServiceConfiguration) GetBodyContentType() OptNilString {
+	return s.BodyContentType
+}
+
+// GetBodyTemplate returns the value of BodyTemplate.
+func (s *GenericWebServiceConfiguration) GetBodyTemplate() OptNilString {
+	return s.BodyTemplate
+}
+
+// GetBodyRequired returns the value of BodyRequired.
+func (s *GenericWebServiceConfiguration) GetBodyRequired() OptBool {
+	return s.BodyRequired
+}
+
+// GetBodyParameters returns the value of BodyParameters.
+func (s *GenericWebServiceConfiguration) GetBodyParameters() []ScalarParameter {
+	return s.BodyParameters
+}
+
+// GetFormat returns the value of Format.
+func (s *GenericWebServiceConfiguration) GetFormat() string {
+	return s.Format
+}
+
+// SetType sets the value of Type.
+func (s *GenericWebServiceConfiguration) SetType(val GenericWebServiceConfigurationType) {
+	s.Type = val
+}
+
+// SetTemplateURL sets the value of TemplateURL.
+func (s *GenericWebServiceConfiguration) SetTemplateURL(val string) {
+	s.TemplateURL = val
+}
+
+// SetMethod sets the value of Method.
+func (s *GenericWebServiceConfiguration) SetMethod(val WebServiceMethod) {
+	s.Method = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *GenericWebServiceConfiguration) SetParameters(val []Parameter) {
+	s.Parameters = val
+}
+
+// SetBodyContentType sets the value of BodyContentType.
+func (s *GenericWebServiceConfiguration) SetBodyContentType(val OptNilString) {
+	s.BodyContentType = val
+}
+
+// SetBodyTemplate sets the value of BodyTemplate.
+func (s *GenericWebServiceConfiguration) SetBodyTemplate(val OptNilString) {
+	s.BodyTemplate = val
+}
+
+// SetBodyRequired sets the value of BodyRequired.
+func (s *GenericWebServiceConfiguration) SetBodyRequired(val OptBool) {
+	s.BodyRequired = val
+}
+
+// SetBodyParameters sets the value of BodyParameters.
+func (s *GenericWebServiceConfiguration) SetBodyParameters(val []ScalarParameter) {
+	s.BodyParameters = val
+}
+
+// SetFormat sets the value of Format.
+func (s *GenericWebServiceConfiguration) SetFormat(val string) {
+	s.Format = val
+}
+
+// Ref: #/components/schemas/GenericWebServiceConfigurationDraft
+type GenericWebServiceConfigurationDraft struct {
+	Type            GenericWebServiceConfigurationDraftType `json:"type"`
+	TemplateURL     NonBlankString                          `json:"template_url"`
+	Method          WebServiceMethod                        `json:"method"`
+	Parameters      []ParameterDraft                        `json:"parameters"`
+	BodyContentType OptNonBlankString                       `json:"body_content_type"`
+	BodyTemplate    OptNonBlankString                       `json:"body_template"`
+	// Defaults to true when a request body is configured. Must be omitted when no body is configured.
+	// Optional bodies are omitted only when unresolved and no child values were supplied.
+	BodyRequired   OptBool                `json:"body_required"`
+	BodyParameters []ScalarParameterDraft `json:"body_parameters"`
+	Format         NonBlankString         `json:"format"`
+}
+
+// GetType returns the value of Type.
+func (s *GenericWebServiceConfigurationDraft) GetType() GenericWebServiceConfigurationDraftType {
+	return s.Type
+}
+
+// GetTemplateURL returns the value of TemplateURL.
+func (s *GenericWebServiceConfigurationDraft) GetTemplateURL() NonBlankString {
+	return s.TemplateURL
+}
+
+// GetMethod returns the value of Method.
+func (s *GenericWebServiceConfigurationDraft) GetMethod() WebServiceMethod {
+	return s.Method
+}
+
+// GetParameters returns the value of Parameters.
+func (s *GenericWebServiceConfigurationDraft) GetParameters() []ParameterDraft {
+	return s.Parameters
+}
+
+// GetBodyContentType returns the value of BodyContentType.
+func (s *GenericWebServiceConfigurationDraft) GetBodyContentType() OptNonBlankString {
+	return s.BodyContentType
+}
+
+// GetBodyTemplate returns the value of BodyTemplate.
+func (s *GenericWebServiceConfigurationDraft) GetBodyTemplate() OptNonBlankString {
+	return s.BodyTemplate
+}
+
+// GetBodyRequired returns the value of BodyRequired.
+func (s *GenericWebServiceConfigurationDraft) GetBodyRequired() OptBool {
+	return s.BodyRequired
+}
+
+// GetBodyParameters returns the value of BodyParameters.
+func (s *GenericWebServiceConfigurationDraft) GetBodyParameters() []ScalarParameterDraft {
+	return s.BodyParameters
+}
+
+// GetFormat returns the value of Format.
+func (s *GenericWebServiceConfigurationDraft) GetFormat() NonBlankString {
+	return s.Format
+}
+
+// SetType sets the value of Type.
+func (s *GenericWebServiceConfigurationDraft) SetType(val GenericWebServiceConfigurationDraftType) {
+	s.Type = val
+}
+
+// SetTemplateURL sets the value of TemplateURL.
+func (s *GenericWebServiceConfigurationDraft) SetTemplateURL(val NonBlankString) {
+	s.TemplateURL = val
+}
+
+// SetMethod sets the value of Method.
+func (s *GenericWebServiceConfigurationDraft) SetMethod(val WebServiceMethod) {
+	s.Method = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *GenericWebServiceConfigurationDraft) SetParameters(val []ParameterDraft) {
+	s.Parameters = val
+}
+
+// SetBodyContentType sets the value of BodyContentType.
+func (s *GenericWebServiceConfigurationDraft) SetBodyContentType(val OptNonBlankString) {
+	s.BodyContentType = val
+}
+
+// SetBodyTemplate sets the value of BodyTemplate.
+func (s *GenericWebServiceConfigurationDraft) SetBodyTemplate(val OptNonBlankString) {
+	s.BodyTemplate = val
+}
+
+// SetBodyRequired sets the value of BodyRequired.
+func (s *GenericWebServiceConfigurationDraft) SetBodyRequired(val OptBool) {
+	s.BodyRequired = val
+}
+
+// SetBodyParameters sets the value of BodyParameters.
+func (s *GenericWebServiceConfigurationDraft) SetBodyParameters(val []ScalarParameterDraft) {
+	s.BodyParameters = val
+}
+
+// SetFormat sets the value of Format.
+func (s *GenericWebServiceConfigurationDraft) SetFormat(val NonBlankString) {
+	s.Format = val
+}
+
+type GenericWebServiceConfigurationDraftType string
+
+const (
+	GenericWebServiceConfigurationDraftTypeHTTP GenericWebServiceConfigurationDraftType = "HTTP"
+	GenericWebServiceConfigurationDraftTypeWMTS GenericWebServiceConfigurationDraftType = "WMTS"
+	GenericWebServiceConfigurationDraftTypeWFS  GenericWebServiceConfigurationDraftType = "WFS"
+)
+
+// AllValues returns all GenericWebServiceConfigurationDraftType values.
+func (GenericWebServiceConfigurationDraftType) AllValues() []GenericWebServiceConfigurationDraftType {
+	return []GenericWebServiceConfigurationDraftType{
+		GenericWebServiceConfigurationDraftTypeHTTP,
+		GenericWebServiceConfigurationDraftTypeWMTS,
+		GenericWebServiceConfigurationDraftTypeWFS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GenericWebServiceConfigurationDraftType) MarshalText() ([]byte, error) {
+	switch s {
+	case GenericWebServiceConfigurationDraftTypeHTTP:
+		return []byte(s), nil
+	case GenericWebServiceConfigurationDraftTypeWMTS:
+		return []byte(s), nil
+	case GenericWebServiceConfigurationDraftTypeWFS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GenericWebServiceConfigurationDraftType) UnmarshalText(data []byte) error {
+	switch GenericWebServiceConfigurationDraftType(data) {
+	case GenericWebServiceConfigurationDraftTypeHTTP:
+		*s = GenericWebServiceConfigurationDraftTypeHTTP
+		return nil
+	case GenericWebServiceConfigurationDraftTypeWMTS:
+		*s = GenericWebServiceConfigurationDraftTypeWMTS
+		return nil
+	case GenericWebServiceConfigurationDraftTypeWFS:
+		*s = GenericWebServiceConfigurationDraftTypeWFS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GenericWebServiceConfigurationType string
+
+const (
+	GenericWebServiceConfigurationTypeHTTP GenericWebServiceConfigurationType = "HTTP"
+	GenericWebServiceConfigurationTypeWMTS GenericWebServiceConfigurationType = "WMTS"
+	GenericWebServiceConfigurationTypeWFS  GenericWebServiceConfigurationType = "WFS"
+)
+
+// AllValues returns all GenericWebServiceConfigurationType values.
+func (GenericWebServiceConfigurationType) AllValues() []GenericWebServiceConfigurationType {
+	return []GenericWebServiceConfigurationType{
+		GenericWebServiceConfigurationTypeHTTP,
+		GenericWebServiceConfigurationTypeWMTS,
+		GenericWebServiceConfigurationTypeWFS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GenericWebServiceConfigurationType) MarshalText() ([]byte, error) {
+	switch s {
+	case GenericWebServiceConfigurationTypeHTTP:
+		return []byte(s), nil
+	case GenericWebServiceConfigurationTypeWMTS:
+		return []byte(s), nil
+	case GenericWebServiceConfigurationTypeWFS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GenericWebServiceConfigurationType) UnmarshalText(data []byte) error {
+	switch GenericWebServiceConfigurationType(data) {
+	case GenericWebServiceConfigurationTypeHTTP:
+		*s = GenericWebServiceConfigurationTypeHTTP
+		return nil
+	case GenericWebServiceConfigurationTypeWMTS:
+		*s = GenericWebServiceConfigurationTypeWMTS
+		return nil
+	case GenericWebServiceConfigurationTypeWFS:
+		*s = GenericWebServiceConfigurationTypeWFS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Geological age range in millions of years before present. Start is older than or equal to end.
 // Ref: #/components/schemas/GeologicalTemporalCoverage
 type GeologicalTemporalCoverage struct {
@@ -14538,26 +14843,17 @@ func (s *VersioningStatus) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/WebService
 type WebService struct {
-	ID              uuid.UUID                      `json:"id"`
-	Name            string                         `json:"name"`
-	Description     OptNilString                   `json:"description"`
-	TemplateURL     string                         `json:"template_url"`
-	Method          WebServiceMethod               `json:"method"`
-	Type            WebServiceType                 `json:"type"`
-	VisibleOn       OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Parameters      []Parameter                    `json:"parameters"`
-	Format          string                         `json:"format"`
-	BodyContentType OptNilString                   `json:"body_content_type"`
-	BodyTemplate    OptNilString                   `json:"body_template"`
-	// Whether the configured request body must be rendered. Omitted when no request body is configured.
-	BodyRequired   OptBool                     `json:"body_required"`
-	BodyParameters []ScalarParameter           `json:"body_parameters"`
-	Provider       OptResourceVersionReference `json:"provider"`
-	Documentation  OptDocumentation            `json:"documentation"`
+	ID            uuid.UUID                      `json:"id"`
+	Name          string                         `json:"name"`
+	Description   OptNilString                   `json:"description"`
+	VisibleOn     OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider      OptResourceVersionReference    `json:"provider"`
+	Documentation OptDocumentation               `json:"documentation"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
-	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
-	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
-	ContactPoints    []uuid.UUID         `json:"contact_points"`
+	SpatialCoverage  OptNilString            `json:"spatial_coverage"`
+	TemporalCoverage OptTemporalCoverage     `json:"temporal_coverage"`
+	ContactPoints    []uuid.UUID             `json:"contact_points"`
+	Configuration    WebServiceConfiguration `json:"configuration"`
 }
 
 // GetID returns the value of ID.
@@ -14575,54 +14871,9 @@ func (s *WebService) GetDescription() OptNilString {
 	return s.Description
 }
 
-// GetTemplateURL returns the value of TemplateURL.
-func (s *WebService) GetTemplateURL() string {
-	return s.TemplateURL
-}
-
-// GetMethod returns the value of Method.
-func (s *WebService) GetMethod() WebServiceMethod {
-	return s.Method
-}
-
-// GetType returns the value of Type.
-func (s *WebService) GetType() WebServiceType {
-	return s.Type
-}
-
 // GetVisibleOn returns the value of VisibleOn.
 func (s *WebService) GetVisibleOn() OptNilWebServiceVisibleOnArray {
 	return s.VisibleOn
-}
-
-// GetParameters returns the value of Parameters.
-func (s *WebService) GetParameters() []Parameter {
-	return s.Parameters
-}
-
-// GetFormat returns the value of Format.
-func (s *WebService) GetFormat() string {
-	return s.Format
-}
-
-// GetBodyContentType returns the value of BodyContentType.
-func (s *WebService) GetBodyContentType() OptNilString {
-	return s.BodyContentType
-}
-
-// GetBodyTemplate returns the value of BodyTemplate.
-func (s *WebService) GetBodyTemplate() OptNilString {
-	return s.BodyTemplate
-}
-
-// GetBodyRequired returns the value of BodyRequired.
-func (s *WebService) GetBodyRequired() OptBool {
-	return s.BodyRequired
-}
-
-// GetBodyParameters returns the value of BodyParameters.
-func (s *WebService) GetBodyParameters() []ScalarParameter {
-	return s.BodyParameters
 }
 
 // GetProvider returns the value of Provider.
@@ -14650,6 +14901,11 @@ func (s *WebService) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
 }
 
+// GetConfiguration returns the value of Configuration.
+func (s *WebService) GetConfiguration() WebServiceConfiguration {
+	return s.Configuration
+}
+
 // SetID sets the value of ID.
 func (s *WebService) SetID(val uuid.UUID) {
 	s.ID = val
@@ -14665,54 +14921,9 @@ func (s *WebService) SetDescription(val OptNilString) {
 	s.Description = val
 }
 
-// SetTemplateURL sets the value of TemplateURL.
-func (s *WebService) SetTemplateURL(val string) {
-	s.TemplateURL = val
-}
-
-// SetMethod sets the value of Method.
-func (s *WebService) SetMethod(val WebServiceMethod) {
-	s.Method = val
-}
-
-// SetType sets the value of Type.
-func (s *WebService) SetType(val WebServiceType) {
-	s.Type = val
-}
-
 // SetVisibleOn sets the value of VisibleOn.
 func (s *WebService) SetVisibleOn(val OptNilWebServiceVisibleOnArray) {
 	s.VisibleOn = val
-}
-
-// SetParameters sets the value of Parameters.
-func (s *WebService) SetParameters(val []Parameter) {
-	s.Parameters = val
-}
-
-// SetFormat sets the value of Format.
-func (s *WebService) SetFormat(val string) {
-	s.Format = val
-}
-
-// SetBodyContentType sets the value of BodyContentType.
-func (s *WebService) SetBodyContentType(val OptNilString) {
-	s.BodyContentType = val
-}
-
-// SetBodyTemplate sets the value of BodyTemplate.
-func (s *WebService) SetBodyTemplate(val OptNilString) {
-	s.BodyTemplate = val
-}
-
-// SetBodyRequired sets the value of BodyRequired.
-func (s *WebService) SetBodyRequired(val OptBool) {
-	s.BodyRequired = val
-}
-
-// SetBodyParameters sets the value of BodyParameters.
-func (s *WebService) SetBodyParameters(val []ScalarParameter) {
-	s.BodyParameters = val
 }
 
 // SetProvider sets the value of Provider.
@@ -14740,6 +14951,201 @@ func (s *WebService) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
 }
 
+// SetConfiguration sets the value of Configuration.
+func (s *WebService) SetConfiguration(val WebServiceConfiguration) {
+	s.Configuration = val
+}
+
+// Ref: #/components/schemas/WebServiceConfiguration
+// WebServiceConfiguration represents sum type.
+type WebServiceConfiguration struct {
+	// Type selects the active sum variant, switch on this field.
+	Type                           WebServiceConfigurationType
+	WmsWebServiceConfiguration     WmsWebServiceConfiguration
+	GenericWebServiceConfiguration GenericWebServiceConfiguration
+}
+
+// WebServiceConfigurationType is oneOf type of WebServiceConfiguration.
+type WebServiceConfigurationType string
+
+// Possible values for WebServiceConfigurationType.
+const (
+	WmsWebServiceConfigurationWebServiceConfiguration  WebServiceConfigurationType = "WMS"
+	WebServiceConfigurationHTTPWebServiceConfiguration WebServiceConfigurationType = "HTTP"
+	WebServiceConfigurationWFSWebServiceConfiguration  WebServiceConfigurationType = "WFS"
+	WebServiceConfigurationWMTSWebServiceConfiguration WebServiceConfigurationType = "WMTS"
+)
+
+// IsWmsWebServiceConfiguration reports whether WebServiceConfiguration is WmsWebServiceConfiguration.
+func (s WebServiceConfiguration) IsWmsWebServiceConfiguration() bool {
+	return s.Type == WmsWebServiceConfigurationWebServiceConfiguration
+}
+
+// IsGenericWebServiceConfiguration reports whether WebServiceConfiguration is GenericWebServiceConfiguration.
+func (s WebServiceConfiguration) IsGenericWebServiceConfiguration() bool {
+	switch s.Type {
+	case WebServiceConfigurationHTTPWebServiceConfiguration, WebServiceConfigurationWFSWebServiceConfiguration, WebServiceConfigurationWMTSWebServiceConfiguration:
+		return true
+	default:
+		return false
+	}
+}
+
+// SetWmsWebServiceConfiguration sets WebServiceConfiguration to WmsWebServiceConfiguration.
+func (s *WebServiceConfiguration) SetWmsWebServiceConfiguration(v WmsWebServiceConfiguration) {
+	s.Type = WmsWebServiceConfigurationWebServiceConfiguration
+	s.WmsWebServiceConfiguration = v
+}
+
+// GetWmsWebServiceConfiguration returns WmsWebServiceConfiguration and true boolean if WebServiceConfiguration is WmsWebServiceConfiguration.
+func (s WebServiceConfiguration) GetWmsWebServiceConfiguration() (v WmsWebServiceConfiguration, ok bool) {
+	if !s.IsWmsWebServiceConfiguration() {
+		return v, false
+	}
+	return s.WmsWebServiceConfiguration, true
+}
+
+// NewWmsWebServiceConfigurationWebServiceConfiguration returns new WebServiceConfiguration from WmsWebServiceConfiguration.
+func NewWmsWebServiceConfigurationWebServiceConfiguration(v WmsWebServiceConfiguration) WebServiceConfiguration {
+	var s WebServiceConfiguration
+	s.SetWmsWebServiceConfiguration(v)
+	return s
+}
+
+// SetGenericWebServiceConfiguration sets WebServiceConfiguration to GenericWebServiceConfiguration.
+// panics if `t` is not associated with GenericWebServiceConfiguration
+func (s *WebServiceConfiguration) SetGenericWebServiceConfiguration(t WebServiceConfigurationType, v GenericWebServiceConfiguration) {
+	s.Type = t
+	s.GenericWebServiceConfiguration = v
+	if !s.IsGenericWebServiceConfiguration() {
+		panic(fmt.Errorf("invariant: %v is not GenericWebServiceConfiguration", t))
+	}
+}
+
+// GetGenericWebServiceConfiguration returns GenericWebServiceConfiguration and true boolean if WebServiceConfiguration is GenericWebServiceConfiguration.
+func (s WebServiceConfiguration) GetGenericWebServiceConfiguration() (v GenericWebServiceConfiguration, ok bool) {
+	if !s.IsGenericWebServiceConfiguration() {
+		return v, false
+	}
+	return s.GenericWebServiceConfiguration, true
+}
+
+// NewWebServiceConfigurationHTTPWebServiceConfiguration returns new WebServiceConfiguration from GenericWebServiceConfiguration.
+func NewWebServiceConfigurationHTTPWebServiceConfiguration(v GenericWebServiceConfiguration) WebServiceConfiguration {
+	var s WebServiceConfiguration
+	s.SetGenericWebServiceConfiguration(WebServiceConfigurationHTTPWebServiceConfiguration, v)
+	return s
+}
+
+// NewWebServiceConfigurationWFSWebServiceConfiguration returns new WebServiceConfiguration from GenericWebServiceConfiguration.
+func NewWebServiceConfigurationWFSWebServiceConfiguration(v GenericWebServiceConfiguration) WebServiceConfiguration {
+	var s WebServiceConfiguration
+	s.SetGenericWebServiceConfiguration(WebServiceConfigurationWFSWebServiceConfiguration, v)
+	return s
+}
+
+// NewWebServiceConfigurationWMTSWebServiceConfiguration returns new WebServiceConfiguration from GenericWebServiceConfiguration.
+func NewWebServiceConfigurationWMTSWebServiceConfiguration(v GenericWebServiceConfiguration) WebServiceConfiguration {
+	var s WebServiceConfiguration
+	s.SetGenericWebServiceConfiguration(WebServiceConfigurationWMTSWebServiceConfiguration, v)
+	return s
+}
+
+// Ref: #/components/schemas/WebServiceConfigurationDraft
+// WebServiceConfigurationDraft represents sum type.
+type WebServiceConfigurationDraft struct {
+	// Type selects the active sum variant, switch on this field.
+	Type                                WebServiceConfigurationDraftType
+	WmsWebServiceConfigurationDraft     WmsWebServiceConfigurationDraft
+	GenericWebServiceConfigurationDraft GenericWebServiceConfigurationDraft
+}
+
+// WebServiceConfigurationDraftType is oneOf type of WebServiceConfigurationDraft.
+type WebServiceConfigurationDraftType string
+
+// Possible values for WebServiceConfigurationDraftType.
+const (
+	WmsWebServiceConfigurationDraftWebServiceConfigurationDraft  WebServiceConfigurationDraftType = "WMS"
+	WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft WebServiceConfigurationDraftType = "HTTP"
+	WebServiceConfigurationDraftWFSWebServiceConfigurationDraft  WebServiceConfigurationDraftType = "WFS"
+	WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft WebServiceConfigurationDraftType = "WMTS"
+)
+
+// IsWmsWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is WmsWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) IsWmsWebServiceConfigurationDraft() bool {
+	return s.Type == WmsWebServiceConfigurationDraftWebServiceConfigurationDraft
+}
+
+// IsGenericWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is GenericWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) IsGenericWebServiceConfigurationDraft() bool {
+	switch s.Type {
+	case WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft, WebServiceConfigurationDraftWFSWebServiceConfigurationDraft, WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft:
+		return true
+	default:
+		return false
+	}
+}
+
+// SetWmsWebServiceConfigurationDraft sets WebServiceConfigurationDraft to WmsWebServiceConfigurationDraft.
+func (s *WebServiceConfigurationDraft) SetWmsWebServiceConfigurationDraft(v WmsWebServiceConfigurationDraft) {
+	s.Type = WmsWebServiceConfigurationDraftWebServiceConfigurationDraft
+	s.WmsWebServiceConfigurationDraft = v
+}
+
+// GetWmsWebServiceConfigurationDraft returns WmsWebServiceConfigurationDraft and true boolean if WebServiceConfigurationDraft is WmsWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) GetWmsWebServiceConfigurationDraft() (v WmsWebServiceConfigurationDraft, ok bool) {
+	if !s.IsWmsWebServiceConfigurationDraft() {
+		return v, false
+	}
+	return s.WmsWebServiceConfigurationDraft, true
+}
+
+// NewWmsWebServiceConfigurationDraftWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from WmsWebServiceConfigurationDraft.
+func NewWmsWebServiceConfigurationDraftWebServiceConfigurationDraft(v WmsWebServiceConfigurationDraft) WebServiceConfigurationDraft {
+	var s WebServiceConfigurationDraft
+	s.SetWmsWebServiceConfigurationDraft(v)
+	return s
+}
+
+// SetGenericWebServiceConfigurationDraft sets WebServiceConfigurationDraft to GenericWebServiceConfigurationDraft.
+// panics if `t` is not associated with GenericWebServiceConfigurationDraft
+func (s *WebServiceConfigurationDraft) SetGenericWebServiceConfigurationDraft(t WebServiceConfigurationDraftType, v GenericWebServiceConfigurationDraft) {
+	s.Type = t
+	s.GenericWebServiceConfigurationDraft = v
+	if !s.IsGenericWebServiceConfigurationDraft() {
+		panic(fmt.Errorf("invariant: %v is not GenericWebServiceConfigurationDraft", t))
+	}
+}
+
+// GetGenericWebServiceConfigurationDraft returns GenericWebServiceConfigurationDraft and true boolean if WebServiceConfigurationDraft is GenericWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) GetGenericWebServiceConfigurationDraft() (v GenericWebServiceConfigurationDraft, ok bool) {
+	if !s.IsGenericWebServiceConfigurationDraft() {
+		return v, false
+	}
+	return s.GenericWebServiceConfigurationDraft, true
+}
+
+// NewWebServiceConfigurationDraftHTTPWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from GenericWebServiceConfigurationDraft.
+func NewWebServiceConfigurationDraftHTTPWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) WebServiceConfigurationDraft {
+	var s WebServiceConfigurationDraft
+	s.SetGenericWebServiceConfigurationDraft(WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft, v)
+	return s
+}
+
+// NewWebServiceConfigurationDraftWFSWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from GenericWebServiceConfigurationDraft.
+func NewWebServiceConfigurationDraftWFSWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) WebServiceConfigurationDraft {
+	var s WebServiceConfigurationDraft
+	s.SetGenericWebServiceConfigurationDraft(WebServiceConfigurationDraftWFSWebServiceConfigurationDraft, v)
+	return s
+}
+
+// NewWebServiceConfigurationDraftWMTSWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from GenericWebServiceConfigurationDraft.
+func NewWebServiceConfigurationDraftWMTSWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) WebServiceConfigurationDraft {
+	var s WebServiceConfigurationDraft
+	s.SetGenericWebServiceConfigurationDraft(WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft, v)
+	return s
+}
+
 // Ref: #/components/schemas/WebServiceDistribution
 type WebServiceDistribution struct {
 	ID          uuid.UUID                  `json:"id"`
@@ -14751,8 +15157,8 @@ type WebServiceDistribution struct {
 	Modified    OptNilDateTime             `json:"modified"`
 	ByteSize    OptNilInt64                `json:"byte_size"`
 	WebService  WebService                 `json:"web_service"`
-	// Computed formats for this distribution in the selected resource version. Currently returns ORIGINAL
-	// entries only.
+	// Computed formats for this resource version. Currently ORIGINAL entries only. WMS returns image/png;
+	// client must verify provider support.
 	AvailableFormats []AvailableFormat `json:"available_formats"`
 }
 
@@ -15018,26 +15424,16 @@ func (s *WebServiceDistributionType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/WebServiceDraft
 type WebServiceDraft struct {
-	Name            NonBlankString                 `json:"name"`
-	Description     OptNilString                   `json:"description"`
-	TemplateURL     NonBlankString                 `json:"template_url"`
-	Method          WebServiceMethod               `json:"method"`
-	Type            WebServiceType                 `json:"type"`
-	VisibleOn       OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Parameters      []ParameterDraft               `json:"parameters"`
-	BodyContentType OptNonBlankString              `json:"body_content_type"`
-	BodyTemplate    OptNonBlankString              `json:"body_template"`
-	// Defaults to true when a request body is configured. Must be omitted when no body is configured.
-	// Optional bodies are omitted only when unresolved and no child values were supplied.
-	BodyRequired   OptBool                `json:"body_required"`
-	BodyParameters []ScalarParameterDraft `json:"body_parameters"`
-	Format         NonBlankString         `json:"format"`
-	Provider       OptUUID                `json:"provider"`
-	Documentation  OptDocumentation       `json:"documentation"`
+	Name          NonBlankString                 `json:"name"`
+	Description   OptNilString                   `json:"description"`
+	VisibleOn     OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider      OptUUID                        `json:"provider"`
+	Documentation OptDocumentation               `json:"documentation"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
-	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
-	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
-	ContactPoints    []uuid.UUID         `json:"contact_points"`
+	SpatialCoverage  OptNilString                 `json:"spatial_coverage"`
+	TemporalCoverage OptTemporalCoverage          `json:"temporal_coverage"`
+	ContactPoints    []uuid.UUID                  `json:"contact_points"`
+	Configuration    WebServiceConfigurationDraft `json:"configuration"`
 }
 
 // GetName returns the value of Name.
@@ -15050,54 +15446,9 @@ func (s *WebServiceDraft) GetDescription() OptNilString {
 	return s.Description
 }
 
-// GetTemplateURL returns the value of TemplateURL.
-func (s *WebServiceDraft) GetTemplateURL() NonBlankString {
-	return s.TemplateURL
-}
-
-// GetMethod returns the value of Method.
-func (s *WebServiceDraft) GetMethod() WebServiceMethod {
-	return s.Method
-}
-
-// GetType returns the value of Type.
-func (s *WebServiceDraft) GetType() WebServiceType {
-	return s.Type
-}
-
 // GetVisibleOn returns the value of VisibleOn.
 func (s *WebServiceDraft) GetVisibleOn() OptNilWebServiceVisibleOnArray {
 	return s.VisibleOn
-}
-
-// GetParameters returns the value of Parameters.
-func (s *WebServiceDraft) GetParameters() []ParameterDraft {
-	return s.Parameters
-}
-
-// GetBodyContentType returns the value of BodyContentType.
-func (s *WebServiceDraft) GetBodyContentType() OptNonBlankString {
-	return s.BodyContentType
-}
-
-// GetBodyTemplate returns the value of BodyTemplate.
-func (s *WebServiceDraft) GetBodyTemplate() OptNonBlankString {
-	return s.BodyTemplate
-}
-
-// GetBodyRequired returns the value of BodyRequired.
-func (s *WebServiceDraft) GetBodyRequired() OptBool {
-	return s.BodyRequired
-}
-
-// GetBodyParameters returns the value of BodyParameters.
-func (s *WebServiceDraft) GetBodyParameters() []ScalarParameterDraft {
-	return s.BodyParameters
-}
-
-// GetFormat returns the value of Format.
-func (s *WebServiceDraft) GetFormat() NonBlankString {
-	return s.Format
 }
 
 // GetProvider returns the value of Provider.
@@ -15125,6 +15476,11 @@ func (s *WebServiceDraft) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
 }
 
+// GetConfiguration returns the value of Configuration.
+func (s *WebServiceDraft) GetConfiguration() WebServiceConfigurationDraft {
+	return s.Configuration
+}
+
 // SetName sets the value of Name.
 func (s *WebServiceDraft) SetName(val NonBlankString) {
 	s.Name = val
@@ -15135,54 +15491,9 @@ func (s *WebServiceDraft) SetDescription(val OptNilString) {
 	s.Description = val
 }
 
-// SetTemplateURL sets the value of TemplateURL.
-func (s *WebServiceDraft) SetTemplateURL(val NonBlankString) {
-	s.TemplateURL = val
-}
-
-// SetMethod sets the value of Method.
-func (s *WebServiceDraft) SetMethod(val WebServiceMethod) {
-	s.Method = val
-}
-
-// SetType sets the value of Type.
-func (s *WebServiceDraft) SetType(val WebServiceType) {
-	s.Type = val
-}
-
 // SetVisibleOn sets the value of VisibleOn.
 func (s *WebServiceDraft) SetVisibleOn(val OptNilWebServiceVisibleOnArray) {
 	s.VisibleOn = val
-}
-
-// SetParameters sets the value of Parameters.
-func (s *WebServiceDraft) SetParameters(val []ParameterDraft) {
-	s.Parameters = val
-}
-
-// SetBodyContentType sets the value of BodyContentType.
-func (s *WebServiceDraft) SetBodyContentType(val OptNonBlankString) {
-	s.BodyContentType = val
-}
-
-// SetBodyTemplate sets the value of BodyTemplate.
-func (s *WebServiceDraft) SetBodyTemplate(val OptNonBlankString) {
-	s.BodyTemplate = val
-}
-
-// SetBodyRequired sets the value of BodyRequired.
-func (s *WebServiceDraft) SetBodyRequired(val OptBool) {
-	s.BodyRequired = val
-}
-
-// SetBodyParameters sets the value of BodyParameters.
-func (s *WebServiceDraft) SetBodyParameters(val []ScalarParameterDraft) {
-	s.BodyParameters = val
-}
-
-// SetFormat sets the value of Format.
-func (s *WebServiceDraft) SetFormat(val NonBlankString) {
-	s.Format = val
 }
 
 // SetProvider sets the value of Provider.
@@ -15208,6 +15519,11 @@ func (s *WebServiceDraft) SetTemporalCoverage(val OptTemporalCoverage) {
 // SetContactPoints sets the value of ContactPoints.
 func (s *WebServiceDraft) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
+}
+
+// SetConfiguration sets the value of Configuration.
+func (s *WebServiceDraft) SetConfiguration(val WebServiceConfigurationDraft) {
+	s.Configuration = val
 }
 
 // Ref: #/components/schemas/WebServiceMethod
@@ -15270,23 +15586,19 @@ func (s *WebServiceMethod) UnmarshalText(data []byte) error {
 type WebServiceType string
 
 const (
-	WebServiceTypeWMS     WebServiceType = "WMS"
-	WebServiceTypeGEOJSON WebServiceType = "GEOJSON"
-	WebServiceTypeDYNAMIC WebServiceType = "DYNAMIC"
-	WebServiceTypeWMTS    WebServiceType = "WMTS"
-	WebServiceTypeWFS     WebServiceType = "WFS"
-	WebServiceTypeCOVJSON WebServiceType = "COVJSON"
+	WebServiceTypeWMS  WebServiceType = "WMS"
+	WebServiceTypeHTTP WebServiceType = "HTTP"
+	WebServiceTypeWMTS WebServiceType = "WMTS"
+	WebServiceTypeWFS  WebServiceType = "WFS"
 )
 
 // AllValues returns all WebServiceType values.
 func (WebServiceType) AllValues() []WebServiceType {
 	return []WebServiceType{
 		WebServiceTypeWMS,
-		WebServiceTypeGEOJSON,
-		WebServiceTypeDYNAMIC,
+		WebServiceTypeHTTP,
 		WebServiceTypeWMTS,
 		WebServiceTypeWFS,
-		WebServiceTypeCOVJSON,
 	}
 }
 
@@ -15295,15 +15607,11 @@ func (s WebServiceType) MarshalText() ([]byte, error) {
 	switch s {
 	case WebServiceTypeWMS:
 		return []byte(s), nil
-	case WebServiceTypeGEOJSON:
-		return []byte(s), nil
-	case WebServiceTypeDYNAMIC:
+	case WebServiceTypeHTTP:
 		return []byte(s), nil
 	case WebServiceTypeWMTS:
 		return []byte(s), nil
 	case WebServiceTypeWFS:
-		return []byte(s), nil
-	case WebServiceTypeCOVJSON:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -15316,20 +15624,14 @@ func (s *WebServiceType) UnmarshalText(data []byte) error {
 	case WebServiceTypeWMS:
 		*s = WebServiceTypeWMS
 		return nil
-	case WebServiceTypeGEOJSON:
-		*s = WebServiceTypeGEOJSON
-		return nil
-	case WebServiceTypeDYNAMIC:
-		*s = WebServiceTypeDYNAMIC
+	case WebServiceTypeHTTP:
+		*s = WebServiceTypeHTTP
 		return nil
 	case WebServiceTypeWMTS:
 		*s = WebServiceTypeWMTS
 		return nil
 	case WebServiceTypeWFS:
 		*s = WebServiceTypeWFS
-		return nil
-	case WebServiceTypeCOVJSON:
-		*s = WebServiceTypeCOVJSON
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -15390,6 +15692,356 @@ type WithdrawGroupMembershipRequestNoContent struct{}
 
 // WithdrawGroupRoleRequestNoContent is response for WithdrawGroupRoleRequest operation.
 type WithdrawGroupRoleRequestNoContent struct{}
+
+// Ref: #/components/schemas/WmsLayer
+type WmsLayer struct {
+	Name NonBlankString `json:"name"`
+	// Default configured style. Empty string uses the provider default.
+	DefaultStyle string `json:"default_style"`
+	// Allowed styles in display order. Empty string uses the provider default; a single style fixes
+	// selection.
+	Styles []string `json:"styles"`
+}
+
+// GetName returns the value of Name.
+func (s *WmsLayer) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetDefaultStyle returns the value of DefaultStyle.
+func (s *WmsLayer) GetDefaultStyle() string {
+	return s.DefaultStyle
+}
+
+// GetStyles returns the value of Styles.
+func (s *WmsLayer) GetStyles() []string {
+	return s.Styles
+}
+
+// SetName sets the value of Name.
+func (s *WmsLayer) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetDefaultStyle sets the value of DefaultStyle.
+func (s *WmsLayer) SetDefaultStyle(val string) {
+	s.DefaultStyle = val
+}
+
+// SetStyles sets the value of Styles.
+func (s *WmsLayer) SetStyles(val []string) {
+	s.Styles = val
+}
+
+// Ref: #/components/schemas/WmsLayerDraft
+type WmsLayerDraft struct {
+	Name NonBlankString `json:"name"`
+	// Default configured style. Empty string uses the provider default.
+	DefaultStyle string `json:"default_style"`
+	// Allowed styles in display order. Empty string uses the provider default; a single style fixes
+	// selection.
+	Styles []string `json:"styles"`
+}
+
+// GetName returns the value of Name.
+func (s *WmsLayerDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetDefaultStyle returns the value of DefaultStyle.
+func (s *WmsLayerDraft) GetDefaultStyle() string {
+	return s.DefaultStyle
+}
+
+// GetStyles returns the value of Styles.
+func (s *WmsLayerDraft) GetStyles() []string {
+	return s.Styles
+}
+
+// SetName sets the value of Name.
+func (s *WmsLayerDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetDefaultStyle sets the value of DefaultStyle.
+func (s *WmsLayerDraft) SetDefaultStyle(val string) {
+	s.DefaultStyle = val
+}
+
+// SetStyles sets the value of Styles.
+func (s *WmsLayerDraft) SetStyles(val []string) {
+	s.Styles = val
+}
+
+// WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on
+// write.
+// Ref: #/components/schemas/WmsWebServiceConfiguration
+type WmsWebServiceConfiguration struct {
+	Type WmsWebServiceConfigurationType `json:"type"`
+	// Absolute HTTP(S) capabilities URL, including provider query parameters.
+	CapabilitiesURL string `json:"capabilities_url"`
+	// Must name one configured layer.
+	DefaultLayer NonBlankString `json:"default_layer"`
+	// Allowed layers in display order. A single layer fixes selection.
+	Layers               []WmsLayer `json:"layers"`
+	TransparencyEditable bool       `json:"transparency_editable"`
+	// Fixed when transparency_editable is false.
+	DefaultTransparency bool `json:"default_transparency"`
+	// Custom GetMap parameters. Standard WMS names are reserved, ignoring case.
+	GetMapParameters []Parameter `json:"get_map_parameters"`
+	// Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring
+	// case.
+	GetFeatureInfoParameters []Parameter `json:"get_feature_info_parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *WmsWebServiceConfiguration) GetType() WmsWebServiceConfigurationType {
+	return s.Type
+}
+
+// GetCapabilitiesURL returns the value of CapabilitiesURL.
+func (s *WmsWebServiceConfiguration) GetCapabilitiesURL() string {
+	return s.CapabilitiesURL
+}
+
+// GetDefaultLayer returns the value of DefaultLayer.
+func (s *WmsWebServiceConfiguration) GetDefaultLayer() NonBlankString {
+	return s.DefaultLayer
+}
+
+// GetLayers returns the value of Layers.
+func (s *WmsWebServiceConfiguration) GetLayers() []WmsLayer {
+	return s.Layers
+}
+
+// GetTransparencyEditable returns the value of TransparencyEditable.
+func (s *WmsWebServiceConfiguration) GetTransparencyEditable() bool {
+	return s.TransparencyEditable
+}
+
+// GetDefaultTransparency returns the value of DefaultTransparency.
+func (s *WmsWebServiceConfiguration) GetDefaultTransparency() bool {
+	return s.DefaultTransparency
+}
+
+// GetGetMapParameters returns the value of GetMapParameters.
+func (s *WmsWebServiceConfiguration) GetGetMapParameters() []Parameter {
+	return s.GetMapParameters
+}
+
+// GetGetFeatureInfoParameters returns the value of GetFeatureInfoParameters.
+func (s *WmsWebServiceConfiguration) GetGetFeatureInfoParameters() []Parameter {
+	return s.GetFeatureInfoParameters
+}
+
+// SetType sets the value of Type.
+func (s *WmsWebServiceConfiguration) SetType(val WmsWebServiceConfigurationType) {
+	s.Type = val
+}
+
+// SetCapabilitiesURL sets the value of CapabilitiesURL.
+func (s *WmsWebServiceConfiguration) SetCapabilitiesURL(val string) {
+	s.CapabilitiesURL = val
+}
+
+// SetDefaultLayer sets the value of DefaultLayer.
+func (s *WmsWebServiceConfiguration) SetDefaultLayer(val NonBlankString) {
+	s.DefaultLayer = val
+}
+
+// SetLayers sets the value of Layers.
+func (s *WmsWebServiceConfiguration) SetLayers(val []WmsLayer) {
+	s.Layers = val
+}
+
+// SetTransparencyEditable sets the value of TransparencyEditable.
+func (s *WmsWebServiceConfiguration) SetTransparencyEditable(val bool) {
+	s.TransparencyEditable = val
+}
+
+// SetDefaultTransparency sets the value of DefaultTransparency.
+func (s *WmsWebServiceConfiguration) SetDefaultTransparency(val bool) {
+	s.DefaultTransparency = val
+}
+
+// SetGetMapParameters sets the value of GetMapParameters.
+func (s *WmsWebServiceConfiguration) SetGetMapParameters(val []Parameter) {
+	s.GetMapParameters = val
+}
+
+// SetGetFeatureInfoParameters sets the value of GetFeatureInfoParameters.
+func (s *WmsWebServiceConfiguration) SetGetFeatureInfoParameters(val []Parameter) {
+	s.GetFeatureInfoParameters = val
+}
+
+// WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on
+// write.
+// Ref: #/components/schemas/WmsWebServiceConfigurationDraft
+type WmsWebServiceConfigurationDraft struct {
+	Type WmsWebServiceConfigurationDraftType `json:"type"`
+	// Absolute HTTP(S) capabilities URL, including provider query parameters.
+	CapabilitiesURL string `json:"capabilities_url"`
+	// Must name one configured layer.
+	DefaultLayer NonBlankString `json:"default_layer"`
+	// Allowed layers in display order. A single layer fixes selection.
+	Layers               []WmsLayerDraft `json:"layers"`
+	TransparencyEditable bool            `json:"transparency_editable"`
+	// Fixed when transparency_editable is false.
+	DefaultTransparency bool `json:"default_transparency"`
+	// Custom GetMap parameters. Standard WMS names are reserved, ignoring case.
+	GetMapParameters []ParameterDraft `json:"get_map_parameters"`
+	// Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring
+	// case.
+	GetFeatureInfoParameters []ParameterDraft `json:"get_feature_info_parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *WmsWebServiceConfigurationDraft) GetType() WmsWebServiceConfigurationDraftType {
+	return s.Type
+}
+
+// GetCapabilitiesURL returns the value of CapabilitiesURL.
+func (s *WmsWebServiceConfigurationDraft) GetCapabilitiesURL() string {
+	return s.CapabilitiesURL
+}
+
+// GetDefaultLayer returns the value of DefaultLayer.
+func (s *WmsWebServiceConfigurationDraft) GetDefaultLayer() NonBlankString {
+	return s.DefaultLayer
+}
+
+// GetLayers returns the value of Layers.
+func (s *WmsWebServiceConfigurationDraft) GetLayers() []WmsLayerDraft {
+	return s.Layers
+}
+
+// GetTransparencyEditable returns the value of TransparencyEditable.
+func (s *WmsWebServiceConfigurationDraft) GetTransparencyEditable() bool {
+	return s.TransparencyEditable
+}
+
+// GetDefaultTransparency returns the value of DefaultTransparency.
+func (s *WmsWebServiceConfigurationDraft) GetDefaultTransparency() bool {
+	return s.DefaultTransparency
+}
+
+// GetGetMapParameters returns the value of GetMapParameters.
+func (s *WmsWebServiceConfigurationDraft) GetGetMapParameters() []ParameterDraft {
+	return s.GetMapParameters
+}
+
+// GetGetFeatureInfoParameters returns the value of GetFeatureInfoParameters.
+func (s *WmsWebServiceConfigurationDraft) GetGetFeatureInfoParameters() []ParameterDraft {
+	return s.GetFeatureInfoParameters
+}
+
+// SetType sets the value of Type.
+func (s *WmsWebServiceConfigurationDraft) SetType(val WmsWebServiceConfigurationDraftType) {
+	s.Type = val
+}
+
+// SetCapabilitiesURL sets the value of CapabilitiesURL.
+func (s *WmsWebServiceConfigurationDraft) SetCapabilitiesURL(val string) {
+	s.CapabilitiesURL = val
+}
+
+// SetDefaultLayer sets the value of DefaultLayer.
+func (s *WmsWebServiceConfigurationDraft) SetDefaultLayer(val NonBlankString) {
+	s.DefaultLayer = val
+}
+
+// SetLayers sets the value of Layers.
+func (s *WmsWebServiceConfigurationDraft) SetLayers(val []WmsLayerDraft) {
+	s.Layers = val
+}
+
+// SetTransparencyEditable sets the value of TransparencyEditable.
+func (s *WmsWebServiceConfigurationDraft) SetTransparencyEditable(val bool) {
+	s.TransparencyEditable = val
+}
+
+// SetDefaultTransparency sets the value of DefaultTransparency.
+func (s *WmsWebServiceConfigurationDraft) SetDefaultTransparency(val bool) {
+	s.DefaultTransparency = val
+}
+
+// SetGetMapParameters sets the value of GetMapParameters.
+func (s *WmsWebServiceConfigurationDraft) SetGetMapParameters(val []ParameterDraft) {
+	s.GetMapParameters = val
+}
+
+// SetGetFeatureInfoParameters sets the value of GetFeatureInfoParameters.
+func (s *WmsWebServiceConfigurationDraft) SetGetFeatureInfoParameters(val []ParameterDraft) {
+	s.GetFeatureInfoParameters = val
+}
+
+type WmsWebServiceConfigurationDraftType string
+
+const (
+	WmsWebServiceConfigurationDraftTypeWMS WmsWebServiceConfigurationDraftType = "WMS"
+)
+
+// AllValues returns all WmsWebServiceConfigurationDraftType values.
+func (WmsWebServiceConfigurationDraftType) AllValues() []WmsWebServiceConfigurationDraftType {
+	return []WmsWebServiceConfigurationDraftType{
+		WmsWebServiceConfigurationDraftTypeWMS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WmsWebServiceConfigurationDraftType) MarshalText() ([]byte, error) {
+	switch s {
+	case WmsWebServiceConfigurationDraftTypeWMS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WmsWebServiceConfigurationDraftType) UnmarshalText(data []byte) error {
+	switch WmsWebServiceConfigurationDraftType(data) {
+	case WmsWebServiceConfigurationDraftTypeWMS:
+		*s = WmsWebServiceConfigurationDraftTypeWMS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type WmsWebServiceConfigurationType string
+
+const (
+	WmsWebServiceConfigurationTypeWMS WmsWebServiceConfigurationType = "WMS"
+)
+
+// AllValues returns all WmsWebServiceConfigurationType values.
+func (WmsWebServiceConfigurationType) AllValues() []WmsWebServiceConfigurationType {
+	return []WmsWebServiceConfigurationType{
+		WmsWebServiceConfigurationTypeWMS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WmsWebServiceConfigurationType) MarshalText() ([]byte, error) {
+	switch s {
+	case WmsWebServiceConfigurationTypeWMS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WmsWebServiceConfigurationType) UnmarshalText(data []byte) error {
+	switch WmsWebServiceConfigurationType(data) {
+	case WmsWebServiceConfigurationTypeWMS:
+		*s = WmsWebServiceConfigurationTypeWMS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // Resource type identifier returned by lifecycle write endpoints.
 // Ref: #/components/schemas/WriteResourceType
