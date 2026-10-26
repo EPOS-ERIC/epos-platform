@@ -89,11 +89,13 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS
 		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wms{Wms: toProtoWMSWebServiceConfigurationDraft(configuration)}
 	case gatewayapi.WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft,
-		gatewayapi.WebServiceConfigurationDraftWFSWebServiceConfigurationDraft,
 		gatewayapi.WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft:
 		configuration := v.Configuration.GenericWebServiceConfigurationDraft
 		r.Type = toProtoWebServiceType(gatewayapi.WebServiceType(v.Configuration.Type))
 		r.Configuration = &metadatalifecyclev1.WebServiceInput_Generic{Generic: toProtoGenericWebServiceConfigurationDraft(configuration)}
+	case gatewayapi.WfsWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
+		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wfs{Wfs: toProtoWFSWebServiceConfigurationDraft(v.Configuration.WfsWebServiceConfigurationDraft)}
 	default:
 		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
 	}
@@ -120,6 +122,27 @@ func toProtoGenericWebServiceConfigurationDraft(value gatewayapi.GenericWebServi
 	}
 	for _, parameter := range value.BodyParameters {
 		result.BodyParameters = append(result.BodyParameters, toProtoScalarParameterDraft(parameter))
+	}
+	return result
+}
+
+func toProtoWFSWebServiceConfigurationDraft(value gatewayapi.WfsWebServiceConfigurationDraft) *metadatalifecyclev1.WFSWebServiceConfigurationInput {
+	result := &metadatalifecyclev1.WFSWebServiceConfigurationInput{
+		GetFeatureTemplateUrl: value.GetFeatureTemplateURL,
+		Version:               string(value.Version),
+		DefaultFeatureType:    string(value.DefaultFeatureType),
+		DefaultOutputFormat:   string(value.DefaultOutputFormat),
+		ResultLimit:           protoOptInt64(value.ResultLimit),
+		ResultLimitEditable:   value.ResultLimitEditable,
+	}
+	for _, featureType := range value.FeatureTypes {
+		result.FeatureTypes = append(result.FeatureTypes, string(featureType))
+	}
+	for _, format := range value.OutputFormats {
+		result.OutputFormats = append(result.OutputFormats, string(format))
+	}
+	for _, parameter := range value.Parameters {
+		result.Parameters = append(result.Parameters, toProtoParameterDraft(parameter))
 	}
 	return result
 }

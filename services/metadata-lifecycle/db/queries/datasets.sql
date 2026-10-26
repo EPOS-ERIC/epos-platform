@@ -459,6 +459,43 @@ inserted_generic_web_services AS (
     RETURNING
         web_service_id
 ),
+inserted_wfs_services AS (
+    INSERT INTO
+        wfs_services (
+            web_service_id,
+            get_feature_template_url,
+            version,
+            feature_types,
+            default_feature_type,
+            output_formats,
+            default_output_format,
+            result_limit,
+            result_limit_editable
+        )
+    SELECT
+        target.id,
+        source.get_feature_template_url,
+        source.version,
+        source.feature_types,
+        source.default_feature_type,
+        source.output_formats,
+        source.default_output_format,
+        source.result_limit,
+        source.result_limit_editable
+    FROM
+        wfs_services AS source
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.web_service_id::text
+        )
+    RETURNING
+        web_service_id
+),
 inserted_wms_services AS (
     INSERT INTO
         wms_services (
@@ -584,6 +621,7 @@ inserted_parameters AS (
         parameters (
             id,
             web_service_id,
+            wfs_service_id,
             wms_get_map_service_id,
             wms_get_feature_info_service_id,
             web_service_body_id,
@@ -612,6 +650,10 @@ inserted_parameters AS (
         ),
         CASE
             WHEN parameter.web_service_id IS NOT NULL THEN generic_target.web_service_id
+            ELSE NULL
+        END,
+        CASE
+            WHEN parameter.wfs_service_id IS NOT NULL THEN wfs_target.web_service_id
             ELSE NULL
         END,
         CASE
@@ -647,12 +689,14 @@ inserted_parameters AS (
             ),
             COALESCE(
                 parameter.web_service_id,
+                parameter.wfs_service_id,
                 parameter.wms_get_map_service_id,
                 parameter.wms_get_feature_info_service_id,
                 source_body.web_service_id
             )::text
         )
         LEFT JOIN inserted_generic_web_services AS generic_target ON generic_target.web_service_id = target_service.id
+        LEFT JOIN inserted_wfs_services AS wfs_target ON wfs_target.web_service_id = target_service.id
         LEFT JOIN inserted_wms_services AS wms_target ON wms_target.web_service_id = target_service.id
         LEFT JOIN inserted_web_service_bodies AS target_body ON target_body.id = uuid_generate_v5(
             target_service.id,
@@ -662,6 +706,7 @@ inserted_parameters AS (
         parameter.template_parameter_id IS NULL
         AND (
             generic_target.web_service_id IS NOT NULL
+            OR wfs_target.web_service_id IS NOT NULL
             OR wms_target.web_service_id IS NOT NULL
             OR target_body.id IS NOT NULL
         )
@@ -1016,6 +1061,32 @@ VALUES
         sqlc.arg(format)
     );
 
+-- name: AddLifecycleWFSService :exec
+INSERT INTO
+    wfs_services (
+        web_service_id,
+        get_feature_template_url,
+        version,
+        feature_types,
+        default_feature_type,
+        output_formats,
+        default_output_format,
+        result_limit,
+        result_limit_editable
+    )
+VALUES
+    (
+        sqlc.arg(web_service_id),
+        sqlc.arg(get_feature_template_url),
+        sqlc.arg(version),
+        sqlc.arg(feature_types),
+        sqlc.arg(default_feature_type),
+        sqlc.arg(output_formats),
+        sqlc.arg(default_output_format),
+        sqlc.narg(result_limit),
+        sqlc.arg(result_limit_editable)
+    );
+
 -- name: AddLifecycleWMSService :exec
 INSERT INTO
     wms_services (
@@ -1083,6 +1154,7 @@ VALUES
 INSERT INTO
     parameters (
         web_service_id,
+        wfs_service_id,
         wms_get_map_service_id,
         wms_get_feature_info_service_id,
         web_service_body_id,
@@ -1102,6 +1174,7 @@ INSERT INTO
 VALUES
     (
         sqlc.narg(web_service_id),
+        sqlc.narg(wfs_service_id),
         sqlc.narg(wms_get_map_service_id),
         sqlc.narg(wms_get_feature_info_service_id),
         sqlc.narg(web_service_body_id),
@@ -1465,6 +1538,24 @@ WHERE
 ORDER BY
     configuration.web_service_id;
 
+-- name: ListLifecycleWFSServices :many
+SELECT
+    web_service_id,
+    get_feature_template_url,
+    version,
+    feature_types,
+    default_feature_type,
+    output_formats,
+    default_output_format,
+    result_limit,
+    result_limit_editable
+FROM
+    wfs_services
+WHERE
+    web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+ORDER BY
+    web_service_id;
+
 -- name: ListLifecycleWMSServices :many
 SELECT
     configuration.web_service_id,
@@ -1511,12 +1602,14 @@ FROM
     LEFT JOIN web_service_bodies AS body ON body.id = parameter.web_service_body_id
 WHERE
     parameter.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+    OR parameter.wfs_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
     OR parameter.wms_get_map_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
     OR parameter.wms_get_feature_info_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
     OR body.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
 ORDER BY
     COALESCE(
         parameter.web_service_id,
+        parameter.wfs_service_id,
         parameter.wms_get_map_service_id,
         parameter.wms_get_feature_info_service_id,
         body.web_service_id

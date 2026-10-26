@@ -148,17 +148,27 @@ func toAPIWebServiceConfiguration(value *metadatalifecyclev1.WebService) (gatewa
 			return gatewayapi.WebServiceConfiguration{}, err
 		}
 		switch serviceType {
-		case gatewayapi.WebServiceTypeWMS:
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream generic configuration has WMS web-service type")
+		case gatewayapi.WebServiceTypeWMS, gatewayapi.WebServiceTypeWFS:
+			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream generic configuration has incompatible web-service type %q", serviceType)
 		case gatewayapi.WebServiceTypeHTTP:
 			return gatewayapi.NewWebServiceConfigurationHTTPWebServiceConfiguration(generic), nil
-		case gatewayapi.WebServiceTypeWFS:
-			return gatewayapi.NewWebServiceConfigurationWFSWebServiceConfiguration(generic), nil
 		case gatewayapi.WebServiceTypeWMTS:
 			return gatewayapi.NewWebServiceConfigurationWMTSWebServiceConfiguration(generic), nil
 		default:
 			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("unsupported generic upstream web-service type %q", value.GetType())
 		}
+	case *metadatalifecyclev1.WebService_Wfs:
+		if configuration.Wfs == nil {
+			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WFS configuration is nil")
+		}
+		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS {
+			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WFS configuration has incompatible web-service type %q", value.GetType())
+		}
+		wfs, err := toAPIWFSWebServiceConfiguration(configuration.Wfs)
+		if err != nil {
+			return gatewayapi.WebServiceConfiguration{}, err
+		}
+		return gatewayapi.NewWfsWebServiceConfigurationWebServiceConfiguration(wfs), nil
 	case *metadatalifecyclev1.WebService_Wms:
 		if configuration.Wms == nil {
 			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WMS configuration is nil")
@@ -210,6 +220,40 @@ func toAPIGenericWebServiceConfiguration(value *metadatalifecyclev1.GenericWebSe
 			return gatewayapi.GenericWebServiceConfiguration{}, err
 		}
 		result.BodyParameters = append(result.BodyParameters, mapped)
+	}
+	return result, nil
+}
+
+func toAPIWFSWebServiceConfiguration(value *metadatalifecyclev1.WFSWebServiceConfiguration) (gatewayapi.WfsWebServiceConfiguration, error) {
+	version := gatewayapi.WfsWebServiceConfigurationVersion(value.GetVersion())
+	if err := version.Validate(); err != nil {
+		return gatewayapi.WfsWebServiceConfiguration{}, fmt.Errorf("upstream WFS version is invalid: %w", err)
+	}
+	result := gatewayapi.WfsWebServiceConfiguration{
+		Type:                  gatewayapi.WfsWebServiceConfigurationTypeWFS,
+		GetFeatureTemplateURL: value.GetGetFeatureTemplateUrl(),
+		Version:               version,
+		DefaultFeatureType:    gatewayapi.NonBlankString(value.GetDefaultFeatureType()),
+		DefaultOutputFormat:   gatewayapi.NonBlankString(value.GetDefaultOutputFormat()),
+		ResultLimit:           toAPINilInt64(value.ResultLimit),
+		ResultLimitEditable:   value.GetResultLimitEditable(),
+		Parameters:            make([]gatewayapi.Parameter, 0, len(value.GetParameters())),
+	}
+	for _, featureType := range value.GetFeatureTypes() {
+		result.FeatureTypes = append(result.FeatureTypes, gatewayapi.NonBlankString(featureType))
+	}
+	for _, format := range value.GetOutputFormats() {
+		result.OutputFormats = append(result.OutputFormats, gatewayapi.NonBlankString(format))
+	}
+	for _, parameter := range value.GetParameters() {
+		if parameter == nil {
+			return gatewayapi.WfsWebServiceConfiguration{}, fmt.Errorf("upstream WFS parameter is nil")
+		}
+		mapped, err := toAPIParameter(parameter)
+		if err != nil {
+			return gatewayapi.WfsWebServiceConfiguration{}, err
+		}
+		result.Parameters = append(result.Parameters, mapped)
 	}
 	return result, nil
 }

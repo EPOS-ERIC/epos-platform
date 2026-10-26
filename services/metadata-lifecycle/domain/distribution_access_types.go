@@ -8,8 +8,34 @@ import (
 
 // DistributionAccessInput contains caller-supplied values, not upstream metadata.
 type DistributionAccessInput struct {
-	Parameters   []DistributionAccessParameter
+	Input        WebServiceAccessInput
 	OutputFormat *string
+}
+
+type WebServiceAccessInput interface {
+	webServiceAccessInput()
+}
+
+type HTTPAccessInput struct {
+	Parameters []DistributionAccessParameter
+}
+
+func (HTTPAccessInput) webServiceAccessInput() {}
+
+type WFSAccessInput struct {
+	FeatureType *string
+	ResultLimit *int64
+	BBox        *WFSBoundingBox
+	Parameters  []DistributionAccessParameter
+}
+
+func (WFSAccessInput) webServiceAccessInput() {}
+
+type WFSBoundingBox struct {
+	West  float64
+	South float64
+	East  float64
+	North float64
 }
 
 type DistributionAccessParameter struct {

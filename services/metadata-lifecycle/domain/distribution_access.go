@@ -2,9 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"math"
 	"net/textproto"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -19,20 +21,112 @@ import (
 // Unresolved optional values are omitted; a nil body remains distinct from an
 // explicitly empty rendered body. Content-Type is never inferred.
 func (service WebService) PrepareAccess(input DistributionAccessInput) (PreparedHTTPRequest, error) {
-	configuration, ok := service.Configuration.(GenericWebServiceConfiguration)
-	if !ok {
+	switch configuration := service.Configuration.(type) {
+	case GenericWebServiceConfiguration:
+		return configuration.PrepareAccess(input)
+	case WFSConfiguration:
+		return configuration.PrepareAccess(input)
+	default:
 		return PreparedHTTPRequest{}, invalidField("type", "Prepared HTTP access is not supported for this service configuration.", nil)
 	}
-	return configuration.PrepareAccess(input)
+}
+
+func (service WFSConfiguration) PrepareAccess(input DistributionAccessInput) (PreparedHTTPRequest, error) {
+	wfs, ok := input.Input.(WFSAccessInput)
+	if !ok {
+		return PreparedHTTPRequest{}, invalidField("type", "Request type does not match service configuration.", nil)
+	}
+	featureType := service.DefaultFeatureType
+	if wfs.FeatureType != nil {
+		featureType = *wfs.FeatureType
+	}
+	if !slices.Contains(service.FeatureTypes, featureType) {
+		return PreparedHTTPRequest{}, invalidField("feature_type", "Select a configured feature type.", nil)
+	}
+	format := service.DefaultOutputFormat
+	if input.OutputFormat != nil {
+		format = *input.OutputFormat
+	}
+	if !slices.Contains(service.OutputFormats, format) {
+		return PreparedHTTPRequest{}, invalidField("output_format", "Select a native output format for this distribution.", nil)
+	}
+	limit := service.ResultLimit
+	if wfs.ResultLimit != nil {
+		if !service.ResultLimitEditable && (limit == nil || *wfs.ResultLimit != *limit) {
+			return PreparedHTTPRequest{}, invalidField("result_limit", "Result limit is fixed for this distribution.", nil)
+		}
+		limit = wfs.ResultLimit
+	}
+	if limit != nil && *limit <= 0 {
+		return PreparedHTTPRequest{}, invalidField("result_limit", "Result limit must be positive.", nil)
+	}
+	featureKey, limitKey := "typeName", "maxFeatures"
+	switch service.Version {
+	case "1.1.0":
+	case "2.0.0":
+		featureKey, limitKey = "typeNames", "count"
+	default:
+		return PreparedHTTPRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+	const crs = "urn:ogc:def:crs:OGC:1.3:CRS84"
+	query := url.Values{
+		"SERVICE":      {"WFS"},
+		"REQUEST":      {"GetFeature"},
+		"VERSION":      {service.Version},
+		featureKey:     {featureType},
+		"outputFormat": {format},
+		"srsName":      {crs},
+	}
+	if limit != nil {
+		query.Set(limitKey, strconv.FormatInt(*limit, 10))
+	}
+	if bbox := wfs.BBox; bbox != nil {
+		coordinates := []float64{bbox.West, bbox.South, bbox.East, bbox.North}
+		text := make([]string, 0, 5)
+		for _, coordinate := range coordinates {
+			if math.IsNaN(coordinate) || math.IsInf(coordinate, 0) {
+				return PreparedHTTPRequest{}, invalidField("bbox", "Bounds must contain finite numbers.", nil)
+			}
+			text = append(text, strconv.FormatFloat(coordinate, 'g', -1, 64))
+		}
+		query.Set("BBOX", strings.Join(append(text, crs), ","))
+	}
+	renderer := GenericWebServiceConfiguration{
+		TemplateURL: service.GetFeatureTemplateURL,
+		Method:      HTTPMethodGet,
+		Parameters:  service.Parameters,
+	}
+	request, err := renderer.prepareHTTPRequest(wfs.Parameters, nil)
+	if err != nil {
+		return PreparedHTTPRequest{}, err
+	}
+	endpoint, err := url.Parse(request.URL)
+	if err != nil {
+		return PreparedHTTPRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+	if endpoint.RawQuery != "" {
+		endpoint.RawQuery += "&"
+	}
+	endpoint.RawQuery += query.Encode()
+	request.URL = endpoint.String()
+	return request, nil
 }
 
 func (service GenericWebServiceConfiguration) PrepareAccess(input DistributionAccessInput) (PreparedHTTPRequest, error) {
-	values, err := service.resolveAccessValues(input)
+	httpInput, ok := input.Input.(HTTPAccessInput)
+	if !ok {
+		return PreparedHTTPRequest{}, invalidField("type", "Request type does not match service configuration.", nil)
+	}
+	return service.prepareHTTPRequest(httpInput.Parameters, input.OutputFormat)
+}
+
+func (service GenericWebServiceConfiguration) prepareHTTPRequest(parameters []DistributionAccessParameter, outputFormat *string) (PreparedHTTPRequest, error) {
+	values, err := service.resolveAccessValues(parameters)
 	if err != nil {
 		return PreparedHTTPRequest{}, err
 	}
 
-	formatParameterID, formatValues, err := service.selectAccessFormat(input.OutputFormat)
+	formatParameterID, formatValues, err := service.selectAccessFormat(outputFormat)
 	if err != nil {
 		return PreparedHTTPRequest{}, err
 	}

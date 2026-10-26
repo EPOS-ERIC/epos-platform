@@ -23,6 +23,8 @@ func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService 
 	switch configuration := value.Configuration.(type) {
 	case domain.GenericWebServiceConfiguration:
 		result.Configuration = &metadatalifecyclev1.WebService_Generic{Generic: toProtoGenericWebServiceConfiguration(configuration)}
+	case domain.WFSConfiguration:
+		result.Configuration = &metadatalifecyclev1.WebService_Wfs{Wfs: toProtoWFSWebServiceConfiguration(configuration)}
 	case domain.WMSConfiguration:
 		result.Configuration = &metadatalifecyclev1.WebService_Wms{Wms: toProtoWMSWebServiceConfiguration(configuration)}
 	}
@@ -51,6 +53,23 @@ func toProtoGenericWebServiceConfiguration(value domain.GenericWebServiceConfigu
 		for _, parameter := range value.Body.Parameters {
 			result.BodyParameters = append(result.BodyParameters, scalarParameterOutput(parameter))
 		}
+	}
+	return result
+}
+
+func toProtoWFSWebServiceConfiguration(value domain.WFSConfiguration) *metadatalifecyclev1.WFSWebServiceConfiguration {
+	result := &metadatalifecyclev1.WFSWebServiceConfiguration{
+		GetFeatureTemplateUrl: value.GetFeatureTemplateURL,
+		Version:               value.Version,
+		FeatureTypes:          value.FeatureTypes,
+		DefaultFeatureType:    value.DefaultFeatureType,
+		OutputFormats:         value.OutputFormats,
+		DefaultOutputFormat:   value.DefaultOutputFormat,
+		ResultLimit:           value.ResultLimit,
+		ResultLimitEditable:   value.ResultLimitEditable,
+	}
+	for _, parameter := range value.Parameters {
+		result.Parameters = append(result.Parameters, parameterOutput(parameter))
 	}
 	return result
 }
@@ -140,6 +159,11 @@ func toDomainWebServiceConfigurationInput(value *metadatalifecyclev1.WebServiceI
 			return nil, apperror.Field("", "Generic web service configuration is required.", nil)
 		}
 		return toDomainGenericWebServiceConfigurationInput(configuration.Generic)
+	case *metadatalifecyclev1.WebServiceInput_Wfs:
+		if configuration.Wfs == nil {
+			return nil, apperror.Field("", "WFS configuration is required.", nil)
+		}
+		return toDomainWFSWebServiceConfigurationInput(configuration.Wfs)
 	case *metadatalifecyclev1.WebServiceInput_Wms:
 		if configuration.Wms == nil {
 			return nil, apperror.Field("", "WMS configuration is required.", nil)
@@ -188,6 +212,24 @@ func toDomainGenericWebServiceConfigurationInput(value *metadatalifecyclev1.Gene
 		Body:        body,
 		Parameters:  parameters,
 		Format:      value.GetFormat(),
+	}, nil
+}
+
+func toDomainWFSWebServiceConfigurationInput(value *metadatalifecyclev1.WFSWebServiceConfigurationInput) (domain.WFSConfigurationInput, error) {
+	parameters, err := toDomainWebServiceParameters(value.GetParameters(), "parameters")
+	if err != nil {
+		return domain.WFSConfigurationInput{}, err
+	}
+	return domain.WFSConfigurationInput{
+		GetFeatureTemplateURL: value.GetGetFeatureTemplateUrl(),
+		Version:               value.GetVersion(),
+		FeatureTypes:          value.GetFeatureTypes(),
+		DefaultFeatureType:    value.GetDefaultFeatureType(),
+		OutputFormats:         value.GetOutputFormats(),
+		DefaultOutputFormat:   value.GetDefaultOutputFormat(),
+		ResultLimit:           value.ResultLimit,
+		ResultLimitEditable:   value.GetResultLimitEditable(),
+		Parameters:            parameters,
 	}, nil
 }
 

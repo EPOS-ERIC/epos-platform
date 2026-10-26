@@ -917,6 +917,7 @@ type Parameter struct {
 	Required                   bool
 	ReadOnly                   bool
 	WebServiceID               *uuid.UUID
+	WfsServiceID               *uuid.UUID
 	WmsGetMapServiceID         *uuid.UUID
 	WmsGetFeatureInfoServiceID *uuid.UUID
 	WebServiceBodyID           *uuid.UUID
@@ -1110,6 +1111,18 @@ type WebServiceBody struct {
 type WebServiceContactPoint struct {
 	WebServiceID   uuid.UUID
 	ContactPointID uuid.UUID
+}
+
+type WfsService struct {
+	WebServiceID          uuid.UUID
+	GetFeatureTemplateUrl string
+	Version               string
+	FeatureTypes          []string
+	DefaultFeatureType    string
+	OutputFormats         []string
+	DefaultOutputFormat   string
+	ResultLimit           *int64
+	ResultLimitEditable   bool
 }
 
 type WmsLayer struct {

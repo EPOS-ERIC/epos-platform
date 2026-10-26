@@ -10,11 +10,29 @@ import (
 )
 
 func toDomainDistributionAccessInput(value *metadatalifecyclev1.PrepareDistributionAccessRequest) (domain.DistributionAccessInput, error) {
+	if value == nil {
+		return domain.DistributionAccessInput{}, apperror.Field("type", "Request type is required.", nil)
+	}
+	var parameters []*metadatalifecyclev1.DistributionAccessParameterInput
+	switch input := value.Input.(type) {
+	case *metadatalifecyclev1.PrepareDistributionAccessRequest_Http:
+		if input.Http == nil {
+			return domain.DistributionAccessInput{}, apperror.Field("http", "HTTP input is required.", nil)
+		}
+		parameters = input.Http.Parameters
+	case *metadatalifecyclev1.PrepareDistributionAccessRequest_Wfs:
+		if input.Wfs == nil {
+			return domain.DistributionAccessInput{}, apperror.Field("wfs", "WFS input is required.", nil)
+		}
+		parameters = input.Wfs.Parameters
+	default:
+		return domain.DistributionAccessInput{}, apperror.Field("type", "Request type is required.", nil)
+	}
 	result := domain.DistributionAccessInput{
 		OutputFormat: value.OutputFormat,
-		Parameters:   make([]domain.DistributionAccessParameter, len(value.Parameters)),
 	}
-	for i, parameter := range value.Parameters {
+	mappedParameters := make([]domain.DistributionAccessParameter, len(parameters))
+	for i, parameter := range parameters {
 		target := fmt.Sprintf("parameters[%d]", i)
 		if parameter == nil {
 			return domain.DistributionAccessInput{}, apperror.Field(target, "Parameter is required.", nil)
@@ -52,7 +70,23 @@ func toDomainDistributionAccessInput(value *metadatalifecyclev1.PrepareDistribut
 			return domain.DistributionAccessInput{}, apperror.PrefixTarget(err, target)
 		}
 
-		result.Parameters[i] = domain.DistributionAccessParameter{ID: id, Value: mapped}
+		mappedParameters[i] = domain.DistributionAccessParameter{ID: id, Value: mapped}
+	}
+	switch input := value.Input.(type) {
+	case *metadatalifecyclev1.PrepareDistributionAccessRequest_Http:
+		result.Input = domain.HTTPAccessInput{Parameters: mappedParameters}
+	case *metadatalifecyclev1.PrepareDistributionAccessRequest_Wfs:
+		wfs := domain.WFSAccessInput{
+			FeatureType: input.Wfs.FeatureType,
+			ResultLimit: input.Wfs.ResultLimit,
+			Parameters:  mappedParameters,
+		}
+		if bbox := input.Wfs.Bbox; bbox != nil {
+			wfs.BBox = &domain.WFSBoundingBox{
+				West: bbox.West, South: bbox.South, East: bbox.East, North: bbox.North,
+			}
+		}
+		result.Input = wfs
 	}
 
 	return result, nil

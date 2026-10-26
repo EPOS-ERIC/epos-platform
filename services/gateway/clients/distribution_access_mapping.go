@@ -37,19 +37,46 @@ func fromProtoPreparedDistributionDownload(response *metadatalifecyclev1.Prepare
 }
 
 func toProtoDistributionAccess(request domain.AccessRequest) (*metadatalifecyclev1.PrepareDistributionAccessRequest, error) {
-	parameters := make([]*metadatalifecyclev1.DistributionAccessParameterInput, len(request.Parameters))
-	for i, parameter := range request.Parameters {
+	var assignments []domain.AccessParameter
+	switch input := request.Input.(type) {
+	case domain.HTTPAccessInput:
+		assignments = input.Parameters
+	case domain.WFSAccessInput:
+		assignments = input.Parameters
+	default:
+		return nil, apperror.Default(apperror.CodeInternal)
+	}
+	parameters := make([]*metadatalifecyclev1.DistributionAccessParameterInput, len(assignments))
+	for i, parameter := range assignments {
 		value, err := toProtoAccessParameter(parameter)
 		if err != nil {
 			return nil, err
 		}
 		parameters[i] = value
 	}
-	return &metadatalifecyclev1.PrepareDistributionAccessRequest{
+	result := &metadatalifecyclev1.PrepareDistributionAccessRequest{
 		DistributionId: request.DistributionID.String(),
-		Parameters:     parameters,
 		OutputFormat:   request.OutputFormat,
-	}, nil
+	}
+	switch input := request.Input.(type) {
+	case domain.HTTPAccessInput:
+		result.Input = &metadatalifecyclev1.PrepareDistributionAccessRequest_Http{
+			Http: &metadatalifecyclev1.HTTPDistributionAccessInput{Parameters: parameters},
+		}
+	case domain.WFSAccessInput:
+		wfs := &metadatalifecyclev1.WFSDistributionAccessInput{
+			FeatureType: input.FeatureType,
+			ResultLimit: input.ResultLimit,
+			Parameters:  parameters,
+		}
+		if input.BBox != nil {
+			wfs.Bbox = &metadatalifecyclev1.WFSBoundingBox{
+				West: input.BBox.West, South: input.BBox.South, East: input.BBox.East, North: input.BBox.North,
+			}
+		}
+		result.Input = &metadatalifecyclev1.PrepareDistributionAccessRequest_Wfs{Wfs: wfs}
+	}
+	return result, nil
 }
 
 func toProtoAccessParameter(parameter domain.AccessParameter) (*metadatalifecyclev1.DistributionAccessParameterInput, error) {

@@ -12,6 +12,7 @@ import (
 
 type parameterOwner struct {
 	webServiceID               *uuid.UUID
+	wfsServiceID               *uuid.UUID
 	wmsGetMapServiceID         *uuid.UUID
 	wmsGetFeatureInfoServiceID *uuid.UUID
 	webServiceBodyID           *uuid.UUID
@@ -32,6 +33,7 @@ func parameterParams(
 
 	params := sqlc.AddLifecycleParameterParams{
 		WebServiceID:               owner.webServiceID,
+		WfsServiceID:               owner.wfsServiceID,
 		WmsGetMapServiceID:         owner.wmsGetMapServiceID,
 		WmsGetFeatureInfoServiceID: owner.wmsGetFeatureInfoServiceID,
 		WebServiceBodyID:           owner.webServiceBodyID,

@@ -16,7 +16,7 @@ type Handler interface {
 	// with upstream_response. Downloadable-file distributions use the download endpoint.
 	//
 	// POST /distributions/{distributionId}/access
-	AccessDistribution(ctx context.Context, req *DistributionAccessRequest, params AccessDistributionParams) (*AccessDistribution2XXStatusCode, error)
+	AccessDistribution(ctx context.Context, req DistributionAccessRequest, params AccessDistributionParams) (*AccessDistribution2XXStatusCode, error)
 	// AssignGlobalRole implements assignGlobalRole operation.
 	//
 	// Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
@@ -327,7 +327,7 @@ type Handler interface {
 	// not supported.
 	//
 	// POST /distributions/{distributionId}/prepare
-	PrepareDistribution(ctx context.Context, req *DistributionAccessRequest, params PrepareDistributionParams) (*PrepareDistributionOKHeaders, error)
+	PrepareDistribution(ctx context.Context, req DistributionAccessRequest, params PrepareDistributionParams) (*PrepareDistributionOKHeaders, error)
 	// PublishResourceVersion implements publishResourceVersion operation.
 	//
 	// Publish resource version.

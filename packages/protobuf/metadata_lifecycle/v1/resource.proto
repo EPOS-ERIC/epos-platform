@@ -71,8 +71,30 @@ message DistributionAccessArrayValue {
 
 message PrepareDistributionAccessRequest {
   string distribution_id = 1 [(buf.validate.field).string.uuid = true];
-  repeated DistributionAccessParameterInput parameters = 2;
-  optional string output_format = 3 [(buf.validate.field).string.min_len = 1];
+  optional string output_format = 2 [(buf.validate.field).string.min_len = 1];
+  oneof input {
+    option (buf.validate.oneof).required = true;
+    HTTPDistributionAccessInput http = 3;
+    WFSDistributionAccessInput wfs = 4;
+  }
+}
+
+message HTTPDistributionAccessInput {
+  repeated DistributionAccessParameterInput parameters = 1;
+}
+
+message WFSDistributionAccessInput {
+  optional string feature_type = 1 [(buf.validate.field).string.min_len = 1];
+  optional int64 result_limit = 2 [(buf.validate.field).int64.gt = 0];
+  WFSBoundingBox bbox = 3;
+  repeated DistributionAccessParameterInput parameters = 4;
+}
+
+message WFSBoundingBox {
+  double west = 1 [(buf.validate.field).double.finite = true];
+  double south = 2 [(buf.validate.field).double.finite = true];
+  double east = 3 [(buf.validate.field).double.finite = true];
+  double north = 4 [(buf.validate.field).double.finite = true];
 }
 
 message PrepareDistributionAccessResponse {
@@ -324,6 +346,7 @@ message WebServiceInput {
     option (buf.validate.oneof).required = true;
     GenericWebServiceConfigurationInput generic = 10;
     WMSWebServiceConfigurationInput wms = 11;
+    WFSWebServiceConfigurationInput wfs = 12;
   }
 }
 
@@ -342,6 +365,7 @@ message WebService {
     option (buf.validate.oneof).required = true;
     GenericWebServiceConfiguration generic = 11;
     WMSWebServiceConfiguration wms = 12;
+    WFSWebServiceConfiguration wfs = 13;
   }
 }
 
@@ -365,6 +389,36 @@ message GenericWebServiceConfiguration {
   optional string body_template = 6 [(buf.validate.field).string.min_len = 1];
   repeated ScalarParameter body_parameters = 7;
   optional bool body_required = 8;
+}
+
+message WFSWebServiceConfigurationInput {
+  string get_feature_template_url = 1 [(buf.validate.field).string.min_len = 1];
+  string version = 2 [
+    (buf.validate.field).string.in = "1.1.0",
+    (buf.validate.field).string.in = "2.0.0"
+  ];
+  repeated string feature_types = 3 [(buf.validate.field).repeated.min_items = 1];
+  string default_feature_type = 4 [(buf.validate.field).string.min_len = 1];
+  repeated string output_formats = 5 [(buf.validate.field).repeated.min_items = 1];
+  string default_output_format = 6 [(buf.validate.field).string.min_len = 1];
+  optional int64 result_limit = 7 [(buf.validate.field).int64.gt = 0];
+  bool result_limit_editable = 8;
+  repeated ParameterInput parameters = 9;
+}
+
+message WFSWebServiceConfiguration {
+  string get_feature_template_url = 1 [(buf.validate.field).string.min_len = 1];
+  string version = 2 [
+    (buf.validate.field).string.in = "1.1.0",
+    (buf.validate.field).string.in = "2.0.0"
+  ];
+  repeated string feature_types = 3 [(buf.validate.field).repeated.min_items = 1];
+  string default_feature_type = 4 [(buf.validate.field).string.min_len = 1];
+  repeated string output_formats = 5 [(buf.validate.field).repeated.min_items = 1];
+  string default_output_format = 6 [(buf.validate.field).string.min_len = 1];
+  optional int64 result_limit = 7 [(buf.validate.field).int64.gt = 0];
+  bool result_limit_editable = 8;
+  repeated Parameter parameters = 9;
 }
 
 message WMSWebServiceConfigurationInput {

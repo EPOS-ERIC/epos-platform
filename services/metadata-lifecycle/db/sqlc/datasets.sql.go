@@ -334,6 +334,7 @@ const addLifecycleParameter = `-- name: AddLifecycleParameter :one
 INSERT INTO
     parameters (
         web_service_id,
+        wfs_service_id,
         wms_get_map_service_id,
         wms_get_feature_info_service_id,
         web_service_body_id,
@@ -367,14 +368,16 @@ VALUES
         $13,
         $14,
         $15,
-        $16
+        $16,
+        $17
     )
 RETURNING
-    id, position, name, label, description, required, read_only, web_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, web_service_body_id, template_parameter_id, schema_kind, role, property, location, explode
+    id, position, name, label, description, required, read_only, web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, web_service_body_id, template_parameter_id, schema_kind, role, property, location, explode
 `
 
 type AddLifecycleParameterParams struct {
 	WebServiceID               *uuid.UUID
+	WfsServiceID               *uuid.UUID
 	WmsGetMapServiceID         *uuid.UUID
 	WmsGetFeatureInfoServiceID *uuid.UUID
 	WebServiceBodyID           *uuid.UUID
@@ -395,6 +398,7 @@ type AddLifecycleParameterParams struct {
 func (q *Queries) AddLifecycleParameter(ctx context.Context, arg AddLifecycleParameterParams) (Parameter, error) {
 	row := q.db.QueryRow(ctx, addLifecycleParameter,
 		arg.WebServiceID,
+		arg.WfsServiceID,
 		arg.WmsGetMapServiceID,
 		arg.WmsGetFeatureInfoServiceID,
 		arg.WebServiceBodyID,
@@ -421,6 +425,7 @@ func (q *Queries) AddLifecycleParameter(ctx context.Context, arg AddLifecyclePar
 		&i.Required,
 		&i.ReadOnly,
 		&i.WebServiceID,
+		&i.WfsServiceID,
 		&i.WmsGetMapServiceID,
 		&i.WmsGetFeatureInfoServiceID,
 		&i.WebServiceBodyID,
@@ -488,6 +493,60 @@ func (q *Queries) AddLifecycleStringParameterSchema(ctx context.Context, arg Add
 		arg.DefaultValue,
 		arg.Enum,
 		arg.MultipleValues,
+	)
+	return err
+}
+
+const addLifecycleWFSService = `-- name: AddLifecycleWFSService :exec
+INSERT INTO
+    wfs_services (
+        web_service_id,
+        get_feature_template_url,
+        version,
+        feature_types,
+        default_feature_type,
+        output_formats,
+        default_output_format,
+        result_limit,
+        result_limit_editable
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9
+    )
+`
+
+type AddLifecycleWFSServiceParams struct {
+	WebServiceID          uuid.UUID
+	GetFeatureTemplateUrl string
+	Version               string
+	FeatureTypes          []string
+	DefaultFeatureType    string
+	OutputFormats         []string
+	DefaultOutputFormat   string
+	ResultLimit           *int64
+	ResultLimitEditable   bool
+}
+
+func (q *Queries) AddLifecycleWFSService(ctx context.Context, arg AddLifecycleWFSServiceParams) error {
+	_, err := q.db.Exec(ctx, addLifecycleWFSService,
+		arg.WebServiceID,
+		arg.GetFeatureTemplateUrl,
+		arg.Version,
+		arg.FeatureTypes,
+		arg.DefaultFeatureType,
+		arg.OutputFormats,
+		arg.DefaultOutputFormat,
+		arg.ResultLimit,
+		arg.ResultLimitEditable,
 	)
 	return err
 }
@@ -929,6 +988,43 @@ inserted_generic_web_services AS (
     RETURNING
         web_service_id
 ),
+inserted_wfs_services AS (
+    INSERT INTO
+        wfs_services (
+            web_service_id,
+            get_feature_template_url,
+            version,
+            feature_types,
+            default_feature_type,
+            output_formats,
+            default_output_format,
+            result_limit,
+            result_limit_editable
+        )
+    SELECT
+        target.id,
+        source.get_feature_template_url,
+        source.version,
+        source.feature_types,
+        source.default_feature_type,
+        source.output_formats,
+        source.default_output_format,
+        source.result_limit,
+        source.result_limit_editable
+    FROM
+        wfs_services AS source
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.web_service_id::text
+        )
+    RETURNING
+        web_service_id
+),
 inserted_wms_services AS (
     INSERT INTO
         wms_services (
@@ -1054,6 +1150,7 @@ inserted_parameters AS (
         parameters (
             id,
             web_service_id,
+            wfs_service_id,
             wms_get_map_service_id,
             wms_get_feature_info_service_id,
             web_service_body_id,
@@ -1082,6 +1179,10 @@ inserted_parameters AS (
         ),
         CASE
             WHEN parameter.web_service_id IS NOT NULL THEN generic_target.web_service_id
+            ELSE NULL
+        END,
+        CASE
+            WHEN parameter.wfs_service_id IS NOT NULL THEN wfs_target.web_service_id
             ELSE NULL
         END,
         CASE
@@ -1117,12 +1218,14 @@ inserted_parameters AS (
             ),
             COALESCE(
                 parameter.web_service_id,
+                parameter.wfs_service_id,
                 parameter.wms_get_map_service_id,
                 parameter.wms_get_feature_info_service_id,
                 source_body.web_service_id
             )::text
         )
         LEFT JOIN inserted_generic_web_services AS generic_target ON generic_target.web_service_id = target_service.id
+        LEFT JOIN inserted_wfs_services AS wfs_target ON wfs_target.web_service_id = target_service.id
         LEFT JOIN inserted_wms_services AS wms_target ON wms_target.web_service_id = target_service.id
         LEFT JOIN inserted_web_service_bodies AS target_body ON target_body.id = uuid_generate_v5(
             target_service.id,
@@ -1132,6 +1235,7 @@ inserted_parameters AS (
         parameter.template_parameter_id IS NULL
         AND (
             generic_target.web_service_id IS NOT NULL
+            OR wfs_target.web_service_id IS NOT NULL
             OR wms_target.web_service_id IS NOT NULL
             OR target_body.id IS NOT NULL
         )
@@ -2703,7 +2807,7 @@ func (q *Queries) ListLifecycleStringParameterSchemas(ctx context.Context, param
 
 const listLifecycleTemplateParameters = `-- name: ListLifecycleTemplateParameters :many
 SELECT
-    id, position, name, label, description, required, read_only, web_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, web_service_body_id, template_parameter_id, schema_kind, role, property, location, explode
+    id, position, name, label, description, required, read_only, web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, web_service_body_id, template_parameter_id, schema_kind, role, property, location, explode
 FROM
     parameters
 WHERE
@@ -2732,6 +2836,7 @@ func (q *Queries) ListLifecycleTemplateParameters(ctx context.Context, parameter
 			&i.Required,
 			&i.ReadOnly,
 			&i.WebServiceID,
+			&i.WfsServiceID,
 			&i.WmsGetMapServiceID,
 			&i.WmsGetFeatureInfoServiceID,
 			&i.WebServiceBodyID,
@@ -2741,6 +2846,55 @@ func (q *Queries) ListLifecycleTemplateParameters(ctx context.Context, parameter
 			&i.Property,
 			&i.Location,
 			&i.Explode,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLifecycleWFSServices = `-- name: ListLifecycleWFSServices :many
+SELECT
+    web_service_id,
+    get_feature_template_url,
+    version,
+    feature_types,
+    default_feature_type,
+    output_formats,
+    default_output_format,
+    result_limit,
+    result_limit_editable
+FROM
+    wfs_services
+WHERE
+    web_service_id = ANY($1::uuid [])
+ORDER BY
+    web_service_id
+`
+
+func (q *Queries) ListLifecycleWFSServices(ctx context.Context, webServiceIds []uuid.UUID) ([]WfsService, error) {
+	rows, err := q.db.Query(ctx, listLifecycleWFSServices, webServiceIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []WfsService
+	for rows.Next() {
+		var i WfsService
+		if err := rows.Scan(
+			&i.WebServiceID,
+			&i.GetFeatureTemplateUrl,
+			&i.Version,
+			&i.FeatureTypes,
+			&i.DefaultFeatureType,
+			&i.OutputFormats,
+			&i.DefaultOutputFormat,
+			&i.ResultLimit,
+			&i.ResultLimitEditable,
 		); err != nil {
 			return nil, err
 		}
@@ -2914,18 +3068,20 @@ func (q *Queries) ListLifecycleWebServiceContactPoints(ctx context.Context, webS
 
 const listLifecycleWebServiceParameters = `-- name: ListLifecycleWebServiceParameters :many
 SELECT
-    parameter.id, parameter.position, parameter.name, parameter.label, parameter.description, parameter.required, parameter.read_only, parameter.web_service_id, parameter.wms_get_map_service_id, parameter.wms_get_feature_info_service_id, parameter.web_service_body_id, parameter.template_parameter_id, parameter.schema_kind, parameter.role, parameter.property, parameter.location, parameter.explode
+    parameter.id, parameter.position, parameter.name, parameter.label, parameter.description, parameter.required, parameter.read_only, parameter.web_service_id, parameter.wfs_service_id, parameter.wms_get_map_service_id, parameter.wms_get_feature_info_service_id, parameter.web_service_body_id, parameter.template_parameter_id, parameter.schema_kind, parameter.role, parameter.property, parameter.location, parameter.explode
 FROM
     parameters AS parameter
     LEFT JOIN web_service_bodies AS body ON body.id = parameter.web_service_body_id
 WHERE
     parameter.web_service_id = ANY($1::uuid [])
+    OR parameter.wfs_service_id = ANY($1::uuid [])
     OR parameter.wms_get_map_service_id = ANY($1::uuid [])
     OR parameter.wms_get_feature_info_service_id = ANY($1::uuid [])
     OR body.web_service_id = ANY($1::uuid [])
 ORDER BY
     COALESCE(
         parameter.web_service_id,
+        parameter.wfs_service_id,
         parameter.wms_get_map_service_id,
         parameter.wms_get_feature_info_service_id,
         body.web_service_id
@@ -2952,6 +3108,7 @@ func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServ
 			&i.Required,
 			&i.ReadOnly,
 			&i.WebServiceID,
+			&i.WfsServiceID,
 			&i.WmsGetMapServiceID,
 			&i.WmsGetFeatureInfoServiceID,
 			&i.WebServiceBodyID,

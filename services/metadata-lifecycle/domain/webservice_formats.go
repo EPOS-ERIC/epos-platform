@@ -15,6 +15,14 @@ func (value WebService) NativeFormats() []NativeFormat {
 	return value.Configuration.NativeFormats()
 }
 
+func (value WFSConfiguration) NativeFormats() []NativeFormat {
+	result := make([]NativeFormat, len(value.OutputFormats))
+	for i, format := range value.OutputFormats {
+		result[i] = NativeFormat{OutputFormat: format, Label: format}
+	}
+	return result
+}
+
 func (value WMSConfiguration) NativeFormats() []NativeFormat {
 	// PNG is a platform map requirement; the client checks provider support.
 	return []NativeFormat{{OutputFormat: "image/png", Label: "image/png"}}

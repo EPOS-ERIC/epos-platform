@@ -21,7 +21,7 @@ var _ Handler = UnimplementedHandler{}
 // with upstream_response. Downloadable-file distributions use the download endpoint.
 //
 // POST /distributions/{distributionId}/access
-func (UnimplementedHandler) AccessDistribution(ctx context.Context, req *DistributionAccessRequest, params AccessDistributionParams) (r *AccessDistribution2XXStatusCode, _ error) {
+func (UnimplementedHandler) AccessDistribution(ctx context.Context, req DistributionAccessRequest, params AccessDistributionParams) (r *AccessDistribution2XXStatusCode, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -470,7 +470,7 @@ func (UnimplementedHandler) ListUsers(ctx context.Context) (r []UserListItem, _ 
 // not supported.
 //
 // POST /distributions/{distributionId}/prepare
-func (UnimplementedHandler) PrepareDistribution(ctx context.Context, req *DistributionAccessRequest, params PrepareDistributionParams) (r *PrepareDistributionOKHeaders, _ error) {
+func (UnimplementedHandler) PrepareDistribution(ctx context.Context, req DistributionAccessRequest, params PrepareDistributionParams) (r *PrepareDistributionOKHeaders, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

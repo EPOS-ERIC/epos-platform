@@ -13,19 +13,24 @@ import (
 )
 
 func fromAPIDistributionAccess(
-	request *gatewayapi.DistributionAccessRequest,
+	request gatewayapi.DistributionAccessRequest,
 	distributionID uuid.UUID,
 	outputFormat gatewayapi.OptString,
 	conversionID gatewayapi.OptUUID,
 ) (domain.AccessRequest, error) {
-	if request == nil {
-		return domain.AccessRequest{}, apperror.Field("parameters", "Field is required.", nil)
-	}
-
 	input := domain.AccessRequest{
 		DistributionID: distributionID,
-		Parameters:     make([]domain.AccessParameter, len(request.Parameters)),
 	}
+	var parameters []gatewayapi.DistributionAccessParameter
+	switch request.Type {
+	case gatewayapi.HTTPDistributionAccessRequestDistributionAccessRequest:
+		parameters = request.HTTPDistributionAccessRequest.Parameters
+	case gatewayapi.WFSDistributionAccessRequestDistributionAccessRequest:
+		parameters = request.WFSDistributionAccessRequest.Parameters
+	default:
+		return domain.AccessRequest{}, apperror.Field("type", "Request type is not supported.", nil)
+	}
+	mapped := make([]domain.AccessParameter, len(parameters))
 
 	if value, ok := outputFormat.Get(); ok {
 		input.OutputFormat = new(value)
@@ -35,12 +40,33 @@ func fromAPIDistributionAccess(
 		input.ConversionID = new(value)
 	}
 
-	for i, parameter := range request.Parameters {
+	for i, parameter := range parameters {
 		value, err := fromAPIAccessValue(parameter.Value)
 		if err != nil {
 			return domain.AccessRequest{}, apperror.Default(apperror.CodeInternal)
 		}
-		input.Parameters[i] = domain.AccessParameter{ID: parameter.ID, Value: value}
+		mapped[i] = domain.AccessParameter{ID: parameter.ID, Value: value}
+	}
+	if request.Type == gatewayapi.HTTPDistributionAccessRequestDistributionAccessRequest {
+		input.Input = domain.HTTPAccessInput{Parameters: mapped}
+	} else {
+		value := request.WFSDistributionAccessRequest
+		wfs := domain.WFSAccessInput{Parameters: mapped}
+		if selected, ok := value.FeatureType.Get(); ok {
+			wfs.FeatureType = new(string(selected))
+		}
+		if limit, ok := value.ResultLimit.Get(); ok {
+			wfs.ResultLimit = new(limit)
+		}
+		if value.Bbox != nil {
+			if len(value.Bbox) != 4 {
+				return domain.AccessRequest{}, apperror.Field("bbox", "Bounds must contain west, south, east and north.", nil)
+			}
+			wfs.BBox = &domain.WFSBoundingBox{
+				West: value.Bbox[0], South: value.Bbox[1], East: value.Bbox[2], North: value.Bbox[3],
+			}
+		}
+		input.Input = wfs
 	}
 
 	return input, nil

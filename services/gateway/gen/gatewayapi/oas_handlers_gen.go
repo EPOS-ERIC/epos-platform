@@ -214,7 +214,7 @@ func (s *Server) handleAccessDistributionRequest(args [1]string, argsEscaped boo
 		}
 
 		type (
-			Request  = *DistributionAccessRequest
+			Request  = DistributionAccessRequest
 			Params   = AccessDistributionParams
 			Response = *AccessDistribution2XXStatusCode
 		)
@@ -9115,7 +9115,7 @@ func (s *Server) handlePrepareDistributionRequest(args [1]string, argsEscaped bo
 		}
 
 		type (
-			Request  = *DistributionAccessRequest
+			Request  = DistributionAccessRequest
 			Params   = PrepareDistributionParams
 			Response = *PrepareDistributionOKHeaders
 		)

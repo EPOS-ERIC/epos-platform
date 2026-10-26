@@ -24,7 +24,7 @@ type accessValues struct {
 // metadata, then applies defaults to omitted values. It rejects unknown, duplicate,
 // read-only and direct template assignments. Required-value checks happen during rendering,
 // when optional template and body activation can be determined.
-func (service GenericWebServiceConfiguration) resolveAccessValues(input DistributionAccessInput) (accessValues, error) {
+func (service GenericWebServiceConfiguration) resolveAccessValues(assignments []DistributionAccessParameter) (accessValues, error) {
 	parameters := make(map[uuid.UUID]Parameter)
 	for _, parameter := range service.Parameters {
 		parameters[parameter.ID] = parameter.Parameter
@@ -43,10 +43,10 @@ func (service GenericWebServiceConfiguration) resolveAccessValues(input Distribu
 
 	values := accessValues{
 		resolved: make(map[uuid.UUID]AccessArray, len(parameters)),
-		supplied: make(map[uuid.UUID]bool, len(input.Parameters)),
+		supplied: make(map[uuid.UUID]bool, len(assignments)),
 	}
 
-	for i, assignment := range input.Parameters {
+	for i, assignment := range assignments {
 		target := fmt.Sprintf("parameters[%d]", i)
 		parameter, exists := parameters[assignment.ID]
 		if !exists {

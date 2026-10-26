@@ -467,6 +467,20 @@ func (value GenericWebServiceConfiguration) Input() WebServiceConfigurationInput
 	}
 }
 
+func (value WFSConfiguration) Input() WebServiceConfigurationInput {
+	return WFSConfigurationInput{
+		GetFeatureTemplateURL: value.GetFeatureTemplateURL,
+		Version:               value.Version,
+		FeatureTypes:          value.FeatureTypes,
+		DefaultFeatureType:    value.DefaultFeatureType,
+		OutputFormats:         value.OutputFormats,
+		DefaultOutputFormat:   value.DefaultOutputFormat,
+		ResultLimit:           value.ResultLimit,
+		ResultLimitEditable:   value.ResultLimitEditable,
+		Parameters:            webServiceParameterInputs(value.Parameters),
+	}
+}
+
 func (value WMSConfiguration) Input() WebServiceConfigurationInput {
 	return WMSConfigurationInput{
 		CapabilitiesURL:          value.CapabilitiesURL,

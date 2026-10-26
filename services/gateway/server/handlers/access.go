@@ -7,7 +7,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 )
 
-func (h *ogenHandler) AccessDistribution(ctx context.Context, request *gatewayapi.DistributionAccessRequest, params gatewayapi.AccessDistributionParams) (*gatewayapi.AccessDistribution2XXStatusCode, error) {
+func (h *ogenHandler) AccessDistribution(ctx context.Context, request gatewayapi.DistributionAccessRequest, params gatewayapi.AccessDistributionParams) (*gatewayapi.AccessDistribution2XXStatusCode, error) {
 	input, err := fromAPIDistributionAccess(request, params.DistributionId, params.OutputFormat, params.ConversionID)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (h *ogenHandler) AccessDistribution(ctx context.Context, request *gatewayap
 	return response, nil
 }
 
-func (h *ogenHandler) PrepareDistribution(ctx context.Context, request *gatewayapi.DistributionAccessRequest, params gatewayapi.PrepareDistributionParams) (*gatewayapi.PrepareDistributionOKHeaders, error) {
+func (h *ogenHandler) PrepareDistribution(ctx context.Context, request gatewayapi.DistributionAccessRequest, params gatewayapi.PrepareDistributionParams) (*gatewayapi.PrepareDistributionOKHeaders, error) {
 	input, err := fromAPIDistributionAccess(request, params.DistributionId, params.OutputFormat, params.ConversionID)
 	if err != nil {
 		return nil, err

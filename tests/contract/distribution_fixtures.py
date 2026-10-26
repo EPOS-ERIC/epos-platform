@@ -107,7 +107,7 @@ class DistributionContractTestCase(unittest.TestCase):
     ) -> Any:
         return (gateway or self.gateway).post(
             "/distributions/{distributionId}/prepare", distributionId=distribution["id"],
-            json={"parameters": [{"id": key, "value": value} for key, value in (values or {}).items()]},
+            json={"type": "HTTP", "parameters": [{"id": key, "value": value} for key, value in (values or {}).items()]},
             **kwargs,
         )
 

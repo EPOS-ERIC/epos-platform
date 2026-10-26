@@ -142,6 +142,32 @@ CREATE TABLE generic_web_services (
     format         nonblank_text NOT NULL
 );
 
+-- +goose StatementBegin
+CREATE FUNCTION is_valid_wfs_choices(choices text[]) RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+AS $$
+    SELECT cardinality(choices) > 0
+        AND array_position(choices, NULL) IS NULL
+        AND NOT EXISTS (SELECT 1 FROM unnest(choices) AS choice WHERE btrim(choice) = '' OR btrim(choice) <> choice)
+        AND (SELECT count(DISTINCT choice) FROM unnest(choices) AS choice) = cardinality(choices);
+$$;
+-- +goose StatementEnd
+
+CREATE TABLE wfs_services (
+    web_service_id           uuid PRIMARY KEY REFERENCES web_services(id) ON DELETE CASCADE,
+    get_feature_template_url nonblank_text NOT NULL,
+    version                  nonblank_text NOT NULL CHECK (version IN ('1.1.0', '2.0.0')),
+    feature_types            text[] NOT NULL CHECK (is_valid_wfs_choices(feature_types)),
+    default_feature_type     nonblank_text NOT NULL,
+    output_formats           text[] NOT NULL CHECK (is_valid_wfs_choices(output_formats)),
+    default_output_format    nonblank_text NOT NULL,
+    result_limit             bigint CHECK (result_limit > 0),
+    result_limit_editable    boolean NOT NULL,
+    CHECK (default_feature_type = ANY(feature_types)),
+    CHECK (default_output_format = ANY(output_formats))
+);
+
 CREATE TABLE wms_services (
     web_service_id        uuid PRIMARY KEY REFERENCES web_services(id) ON DELETE CASCADE,
     capabilities_url      nonblank_text NOT NULL,
@@ -193,18 +219,21 @@ CREATE TABLE web_service_contact_points (
     PRIMARY KEY (web_service_id, contact_point_id)
 );
 CREATE TABLE parameters (
-    id                    uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    position              integer NOT NULL,
-    name                  nonblank_text NOT NULL,
-    label                 nonblank_text NOT NULL,
-    description           nonblank_text_opt,
-    required              boolean NOT NULL DEFAULT false,
-    read_only             boolean NOT NULL DEFAULT false,
-    web_service_id        uuid REFERENCES generic_web_services(web_service_id) ON DELETE CASCADE,
+    id                              uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    position                        integer NOT NULL,
+    name                            nonblank_text NOT NULL,
+    label                           nonblank_text NOT NULL,
+    description                     nonblank_text_opt,
+    required                        boolean NOT NULL DEFAULT false,
+    read_only                       boolean NOT NULL DEFAULT false,
+
+    web_service_id                  uuid REFERENCES generic_web_services(web_service_id) ON DELETE CASCADE,
+    wfs_service_id                  uuid REFERENCES wfs_services(web_service_id) ON DELETE CASCADE,
     wms_get_map_service_id          uuid REFERENCES wms_services(web_service_id) ON DELETE CASCADE,
     wms_get_feature_info_service_id uuid REFERENCES wms_services(web_service_id) ON DELETE CASCADE,
-    web_service_body_id   uuid REFERENCES web_service_bodies(id) ON DELETE CASCADE,
-    template_parameter_id uuid REFERENCES parameters(id) ON DELETE CASCADE,
+
+    web_service_body_id             uuid REFERENCES web_service_bodies(id) ON DELETE CASCADE,
+    template_parameter_id           uuid REFERENCES parameters(id) ON DELETE CASCADE,
 
     schema_kind           parameter_schema_kind NOT NULL,
 
@@ -213,15 +242,16 @@ CREATE TABLE parameters (
     location              web_service_parameter_location,
     explode               boolean NOT NULL DEFAULT false,
 
-    CHECK (num_nonnulls(web_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, web_service_body_id, template_parameter_id) = 1),
+    CHECK (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, web_service_body_id, template_parameter_id) = 1),
     CHECK (
-        (num_nonnulls(web_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 1 AND location IS NOT NULL)
-        OR (num_nonnulls(web_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 0 AND location IS NULL AND property IS NULL AND NOT explode)
+        (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 1 AND location IS NOT NULL)
+        OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 0 AND location IS NULL AND property IS NULL AND NOT explode)
     ),
-    CHECK (role IS NULL OR (num_nonnulls(web_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 1 AND schema_kind <> 'TEMPLATE')),
-    CHECK (NOT explode OR (num_nonnulls(web_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 1 AND location = 'QUERY')),
+    CHECK (role IS NULL OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 1 AND schema_kind <> 'TEMPLATE')),
+    CHECK (NOT explode OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 1 AND location = 'QUERY')),
+    CHECK (wfs_service_id IS NULL OR location IN ('PATH', 'QUERY')),
     CHECK (location <> 'PATH' OR required),
-    CHECK (schema_kind <> 'TEMPLATE' OR num_nonnulls(web_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 1),
+    CHECK (schema_kind <> 'TEMPLATE' OR num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id) = 1),
     CHECK (template_parameter_id IS NULL OR schema_kind <> 'TEMPLATE'),
     UNIQUE (web_service_id, role),
     UNIQUE (id, schema_kind)
@@ -312,6 +342,8 @@ CREATE TABLE parameter_templates (
 );
 
 CREATE UNIQUE INDEX parameters_web_service_name_uq ON parameters (web_service_id, name) WHERE web_service_id IS NOT NULL;
+CREATE UNIQUE INDEX parameters_wfs_name_uq ON parameters (wfs_service_id, name) WHERE wfs_service_id IS NOT NULL;
+CREATE UNIQUE INDEX parameters_wfs_role_uq ON parameters (wfs_service_id, role) WHERE wfs_service_id IS NOT NULL AND role IS NOT NULL;
 CREATE UNIQUE INDEX parameters_wms_get_map_name_uq ON parameters (wms_get_map_service_id, name) WHERE wms_get_map_service_id IS NOT NULL;
 CREATE UNIQUE INDEX parameters_wms_get_feature_info_name_uq ON parameters (wms_get_feature_info_service_id, name) WHERE wms_get_feature_info_service_id IS NOT NULL;
 CREATE UNIQUE INDEX parameters_wms_get_map_role_uq ON parameters (wms_get_map_service_id, role) WHERE wms_get_map_service_id IS NOT NULL AND role IS NOT NULL;
@@ -328,6 +360,7 @@ DECLARE
     v_type web_service_type;
     v_has_generic boolean;
     v_has_wms boolean;
+    v_has_wfs boolean;
 BEGIN
     IF TG_TABLE_NAME = 'web_services' THEN
         v_web_service_id := COALESCE(NEW.id, OLD.id);
@@ -342,9 +375,11 @@ BEGIN
 
     SELECT EXISTS (SELECT 1 FROM generic_web_services WHERE web_service_id = v_web_service_id) INTO v_has_generic;
     SELECT EXISTS (SELECT 1 FROM wms_services WHERE web_service_id = v_web_service_id) INTO v_has_wms;
+    SELECT EXISTS (SELECT 1 FROM wfs_services WHERE web_service_id = v_web_service_id) INTO v_has_wfs;
 
-    IF (v_type = 'WMS' AND (v_has_generic OR NOT v_has_wms))
-        OR (v_type <> 'WMS' AND (NOT v_has_generic OR v_has_wms)) THEN
+    IF (v_type = 'WMS' AND (v_has_generic OR v_has_wfs OR NOT v_has_wms))
+        OR (v_type = 'WFS' AND (v_has_generic OR v_has_wms OR NOT v_has_wfs))
+        OR (v_type IN ('HTTP', 'WMTS') AND (NOT v_has_generic OR v_has_wms OR v_has_wfs)) THEN
         RAISE EXCEPTION 'web service % must have exactly one configuration matching type %', v_web_service_id, v_type
             USING ERRCODE = 'check_violation';
     END IF;
@@ -363,6 +398,10 @@ DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW EXECUTE FUNCTION validate_web_service_configuration();
 CREATE CONSTRAINT TRIGGER wms_services_configuration_integrity
 AFTER INSERT OR UPDATE OR DELETE ON wms_services
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_web_service_configuration();
+CREATE CONSTRAINT TRIGGER wfs_services_configuration_integrity
+AFTER INSERT OR UPDATE OR DELETE ON wfs_services
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW EXECUTE FUNCTION validate_web_service_configuration();
 
@@ -476,7 +515,8 @@ FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
 
 -- +goose Down
 
-DROP TABLE IF EXISTS parameter_templates, datetime_parameter_schemas, float_parameter_schemas, integer_parameter_schemas, boolean_parameter_schemas, string_parameter_schemas, parameters, web_service_bodies, web_service_contact_points, generic_web_services, wms_layers, wms_services, web_services;
+DROP TABLE IF EXISTS parameter_templates, datetime_parameter_schemas, float_parameter_schemas, integer_parameter_schemas, boolean_parameter_schemas, string_parameter_schemas, parameters, web_service_bodies, web_service_contact_points, generic_web_services, wms_layers, wms_services, wfs_services, web_services;
+DROP FUNCTION IF EXISTS is_valid_wfs_choices(text[]);
 DROP FUNCTION IF EXISTS is_valid_wms_styles(text[]);
 DROP FUNCTION IF EXISTS validate_web_service_configuration();
 DROP FUNCTION IF EXISTS validate_parameter_schema();

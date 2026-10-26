@@ -148,6 +148,34 @@ type GenericWebServiceConfiguration struct {
 
 func (GenericWebServiceConfiguration) webServiceConfiguration() {}
 
+type WFSConfigurationInput struct {
+	GetFeatureTemplateURL string
+	Version               string
+	FeatureTypes          []string
+	DefaultFeatureType    string
+	OutputFormats         []string
+	DefaultOutputFormat   string
+	ResultLimit           *int64
+	ResultLimitEditable   bool
+	Parameters            []WebServiceParameterInput
+}
+
+func (WFSConfigurationInput) webServiceConfigurationInput() {}
+
+type WFSConfiguration struct {
+	GetFeatureTemplateURL string
+	Version               string
+	FeatureTypes          []string
+	DefaultFeatureType    string
+	OutputFormats         []string
+	DefaultOutputFormat   string
+	ResultLimit           *int64
+	ResultLimitEditable   bool
+	Parameters            []WebServiceParameter
+}
+
+func (WFSConfiguration) webServiceConfiguration() {}
+
 type WMSConfigurationInput struct {
 	CapabilitiesURL          string
 	DefaultLayer             string

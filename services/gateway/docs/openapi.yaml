@@ -111,12 +111,21 @@ paths:
               $ref: "#/components/schemas/DistributionAccessRequest"
             examples:
               defaults:
-                value: { parameters: [] }
+                value: { type: HTTP, parameters: [] }
               parameter:
                 value:
+                  type: HTTP
                   parameters:
                     - id: 9cf1103f-2e90-4742-a64a-d973e7d32e7d
                       value: mystation
+              wfsDefaults:
+                value: { type: WFS, parameters: [] }
+              wfsBounds:
+                value:
+                  type: WFS
+                  feature_type: efsm20_cf_top
+                  bbox: [-46.95161056518555, 15.243962287902832, 53.41323471069336, 82.8685073852539]
+                  parameters: []
       responses:
         "2XX":
           description: Successful upstream response, streamed without buffering.
@@ -160,12 +169,21 @@ paths:
               $ref: "#/components/schemas/DistributionAccessRequest"
             examples:
               defaults:
-                value: { parameters: [] }
+                value: { type: HTTP, parameters: [] }
               parameter:
                 value:
+                  type: HTTP
                   parameters:
                     - id: 9cf1103f-2e90-4742-a64a-d973e7d32e7d
                       value: mystation
+              wfsDefaults:
+                value: { type: WFS, parameters: [] }
+              wfsBounds:
+                value:
+                  type: WFS
+                  feature_type: efsm20_cf_top
+                  bbox: [-46.95161056518555, 15.243962287902832, 53.41323471069336, 82.8685073852539]
+                  parameters: []
       responses:
         "200":
           description: Fully prepared provider request. No provider request has been executed.
@@ -2330,10 +2348,40 @@ components:
           description: Rendered request body as text. Null means absent; an empty string means explicitly empty.
 
     DistributionAccessRequest:
+      oneOf:
+        - $ref: "#/components/schemas/HTTPDistributionAccessRequest"
+        - $ref: "#/components/schemas/WFSDistributionAccessRequest"
+      discriminator:
+        propertyName: type
+        mapping:
+          HTTP: "#/components/schemas/HTTPDistributionAccessRequest"
+          WFS: "#/components/schemas/WFSDistributionAccessRequest"
+
+    HTTPDistributionAccessRequest:
       type: object
       additionalProperties: false
-      required: [parameters]
+      required: [type, parameters]
       properties:
+        type: { type: string, enum: [HTTP] }
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/DistributionAccessParameter"
+
+    WFSDistributionAccessRequest:
+      type: object
+      additionalProperties: false
+      required: [type, parameters]
+      properties:
+        type: { type: string, enum: [WFS] }
+        feature_type: { $ref: "#/components/schemas/NonBlankString" }
+        result_limit: { type: integer, format: int64, minimum: 1 }
+        bbox:
+          type: array
+          minItems: 4
+          maxItems: 4
+          description: Optional CRS84 bounds [west, south, east, north] in degrees, longitude first. Passed to provider without geographic validation or antimeridian handling. Output CRS is always CRS84.
+          items: { type: number, format: double }
         parameters:
           type: array
           items:
@@ -2726,6 +2774,7 @@ components:
     WebServiceConfigurationDraft:
       oneOf:
         - $ref: "#/components/schemas/WmsWebServiceConfigurationDraft"
+        - $ref: "#/components/schemas/WfsWebServiceConfigurationDraft"
         - $ref: "#/components/schemas/GenericWebServiceConfigurationDraft"
       discriminator:
         propertyName: type
@@ -2733,7 +2782,7 @@ components:
           WMS: "#/components/schemas/WmsWebServiceConfigurationDraft"
           HTTP: "#/components/schemas/GenericWebServiceConfigurationDraft"
           WMTS: "#/components/schemas/GenericWebServiceConfigurationDraft"
-          WFS: "#/components/schemas/GenericWebServiceConfigurationDraft"
+          WFS: "#/components/schemas/WfsWebServiceConfigurationDraft"
 
     GenericWebServiceConfigurationDraft:
       type: object
@@ -2742,7 +2791,7 @@ components:
       properties:
         type:
           type: string
-          enum: [HTTP, WMTS, WFS]
+          enum: [HTTP, WMTS]
         template_url: { $ref: "#/components/schemas/NonBlankString" }
         method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:
@@ -2757,6 +2806,44 @@ components:
           type: array
           items: { $ref: "#/components/schemas/ScalarParameterDraft" }
         format: { $ref: "#/components/schemas/NonBlankString" }
+
+    WfsWebServiceConfigurationDraft:
+      type: object
+      additionalProperties: false
+      required:
+        [type, get_feature_template_url, version, feature_types, default_feature_type, output_formats, default_output_format, result_limit_editable, parameters]
+      properties:
+        type: { type: string, enum: [WFS] }
+        get_feature_template_url:
+          type: string
+          minLength: 1
+          description: Absolute HTTP(S) GetFeature URL. Placeholders are allowed only in the path; nonstandard provider query parameters are retained.
+        version: { type: string, enum: ["1.1.0", "2.0.0"] }
+        feature_types:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/NonBlankString" }
+        default_feature_type: { $ref: "#/components/schemas/NonBlankString" }
+        output_formats:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Exact provider outputFormat values, advertised as native formats.
+          items: { $ref: "#/components/schemas/NonBlankString" }
+        default_output_format: { $ref: "#/components/schemas/NonBlankString" }
+        result_limit:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Optional maximum features requested in one upstream request. Omitted or null means no configured limit; count/maxFeatures is omitted unless an editable limit is supplied during access. No automatic pagination.
+        result_limit_editable:
+          type: boolean
+          description: Whether callers may supply a different limit. False with no configured limit prevents callers from adding one.
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ParameterDraft" }
 
     WmsWebServiceConfigurationDraft:
       type: object
@@ -3909,6 +3996,7 @@ components:
     WebServiceConfiguration:
       oneOf:
         - $ref: "#/components/schemas/WmsWebServiceConfiguration"
+        - $ref: "#/components/schemas/WfsWebServiceConfiguration"
         - $ref: "#/components/schemas/GenericWebServiceConfiguration"
       discriminator:
         propertyName: type
@@ -3916,7 +4004,7 @@ components:
           WMS: "#/components/schemas/WmsWebServiceConfiguration"
           HTTP: "#/components/schemas/GenericWebServiceConfiguration"
           WMTS: "#/components/schemas/GenericWebServiceConfiguration"
-          WFS: "#/components/schemas/GenericWebServiceConfiguration"
+          WFS: "#/components/schemas/WfsWebServiceConfiguration"
 
     GenericWebServiceConfiguration:
       type: object
@@ -3925,7 +4013,7 @@ components:
       properties:
         type:
           type: string
-          enum: [HTTP, WMTS, WFS]
+          enum: [HTTP, WMTS]
         template_url: { type: string }
         method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:
@@ -3940,6 +4028,41 @@ components:
           type: array
           items: { $ref: "#/components/schemas/ScalarParameter" }
         format: { type: string }
+
+    WfsWebServiceConfiguration:
+      type: object
+      additionalProperties: false
+      required:
+        [type, get_feature_template_url, version, feature_types, default_feature_type, output_formats, default_output_format, result_limit_editable, parameters]
+      properties:
+        type: { type: string, enum: [WFS] }
+        get_feature_template_url: { type: string, minLength: 1 }
+        version: { type: string, enum: ["1.1.0", "2.0.0"] }
+        feature_types:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/NonBlankString" }
+        default_feature_type: { $ref: "#/components/schemas/NonBlankString" }
+        output_formats:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Exact provider outputFormat values, advertised as native formats.
+          items: { $ref: "#/components/schemas/NonBlankString" }
+        default_output_format: { $ref: "#/components/schemas/NonBlankString" }
+        result_limit:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Optional default feature limit. Omitted or null means no configured limit.
+        result_limit_editable:
+          type: boolean
+          description: Whether callers may supply a different limit. False with no configured limit prevents callers from adding one.
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
 
     WmsWebServiceConfiguration:
       type: object

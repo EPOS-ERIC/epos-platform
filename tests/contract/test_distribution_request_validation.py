@@ -25,10 +25,10 @@ class DistributionRequestValidationContractTest(DistributionContractTestCase):
         malformed = [
             ("missing body", ""), ("invalid JSON", "{"), ("null body", "null"),
             ("array body", "[]"), ("missing parameters", "{}"),
-            ("wrong parameters type", '{"parameters":"wrong"}'),
-            ("null parameters", '{"parameters":null}'),
-            ("object parameters", '{"parameters":{}}'),
-            ("unknown property", '{"parameters":[],"extra":true}'),
+            ("wrong parameters type", '{"type":"HTTP","parameters":"wrong"}'),
+            ("null parameters", '{"type":"HTTP","parameters":null}'),
+            ("object parameters", '{"type":"HTTP","parameters":{}}'),
+            ("unknown property", '{"type":"HTTP","parameters":[],"extra":true}'),
         ]
         invalid_assignments = [
             ("missing ID", [{"value": "value"}]),
@@ -45,7 +45,7 @@ class DistributionRequestValidationContractTest(DistributionContractTestCase):
             ("unknown assignment property", [{"id": identifier, "value": "value", "extra": 1}]),
         ]
         malformed.extend(
-            (name, json.dumps({"parameters": assignments}))
+            (name, json.dumps({"type": "HTTP", "parameters": assignments}))
             for name, assignments in invalid_assignments
         )
         for name, body in malformed:
@@ -68,7 +68,7 @@ class DistributionRequestValidationContractTest(DistributionContractTestCase):
             with self.subTest(case=name):
                 response = self.gateway.post(
                     "/distributions/{distributionId}/prepare", distributionId=distribution["id"],
-                    json={"parameters": assignments},
+                    json={"type": "HTTP", "parameters": assignments},
                 )
                 self.assert_prepare_problem(response, target=target)
 

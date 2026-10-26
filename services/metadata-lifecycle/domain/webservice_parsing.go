@@ -75,10 +75,15 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 func parseWebServiceConfigurationInput(serviceType WebServiceType, value WebServiceConfigurationInput) (WebServiceConfigurationInput, error) {
 	switch configuration := value.(type) {
 	case GenericWebServiceConfigurationInput:
-		if serviceType == WebServiceTypeWMS {
+		if serviceType != WebServiceTypeHTTP && serviceType != WebServiceTypeWMTS {
 			return nil, invalidField("type", "Configuration does not match service type.", nil)
 		}
 		return newGenericWebServiceConfigurationInput(configuration)
+	case WFSConfigurationInput:
+		if serviceType != WebServiceTypeWFS {
+			return nil, invalidField("type", "Configuration does not match service type.", nil)
+		}
+		return NewWFSConfigurationInput(configuration)
 	case WMSConfigurationInput:
 		if serviceType != WebServiceTypeWMS {
 			return nil, invalidField("type", "Configuration does not match service type.", nil)
@@ -125,6 +130,92 @@ func newGenericWebServiceConfigurationInput(value GenericWebServiceConfiguration
 	}
 	return value, nil
 }
+
+func NewWFSConfigurationInput(value WFSConfigurationInput) (WFSConfigurationInput, error) {
+	value.GetFeatureTemplateURL = strings.TrimSpace(value.GetFeatureTemplateURL)
+	if value.Version != "1.1.0" && value.Version != "2.0.0" {
+		return WFSConfigurationInput{}, invalidField("version", "Select WFS version 1.1.0 or 2.0.0.", nil)
+	}
+	if err := validateWFSChoices(value.FeatureTypes, value.DefaultFeatureType, "feature_types", "default_feature_type"); err != nil {
+		return WFSConfigurationInput{}, err
+	}
+	if err := validateWFSChoices(value.OutputFormats, value.DefaultOutputFormat, "output_formats", "default_output_format"); err != nil {
+		return WFSConfigurationInput{}, err
+	}
+	if value.ResultLimit != nil && *value.ResultLimit <= 0 {
+		return WFSConfigurationInput{}, invalidField("result_limit", "Result limit must be positive.", nil)
+	}
+	parameters, err := parseWebServiceParameterInputs(value.Parameters, "parameters")
+	if err != nil {
+		return WFSConfigurationInput{}, err
+	}
+	if err := validateWebServiceParameterRoles(parameters, "parameters"); err != nil {
+		return WFSConfigurationInput{}, err
+	}
+	for i, parameter := range parameters {
+		target := fmt.Sprintf("parameters[%d]", i)
+		if parameter.Location != ParameterLocationPath && parameter.Location != ParameterLocationQuery {
+			return WFSConfigurationInput{}, invalidField(target+".location", "WFS parameters must use PATH or QUERY location.", nil)
+		}
+		if _, reserved := wfsReservedParameters[strings.ToUpper(parameter.Name)]; reserved {
+			return WFSConfigurationInput{}, invalidField(target+".name", "Standard WFS parameters cannot be redefined.", nil)
+		}
+	}
+	value.Parameters = parameters
+	endpoint, err := url.Parse(value.GetFeatureTemplateURL)
+	if err != nil || endpoint.Host == "" || (endpoint.Scheme != "http" && endpoint.Scheme != "https") || endpoint.Fragment != "" {
+		return WFSConfigurationInput{}, invalidField("get_feature_template_url", "URL must be an absolute HTTP(S) URL without a fragment.", err)
+	}
+	if pathPlaceholderPattern.MatchString(endpoint.Host) || pathPlaceholderPattern.MatchString(endpoint.RawQuery) {
+		return WFSConfigurationInput{}, invalidField("get_feature_template_url", "Placeholders are only supported in the URL path.", nil)
+	}
+	if err := validatePathParameters(value.GetFeatureTemplateURL, pathParameterNames(parameters)); err != nil {
+		return WFSConfigurationInput{}, invalidField("get_feature_template_url", "Template URL placeholders must match declared path parameters.", err)
+	}
+	query, err := url.ParseQuery(endpoint.RawQuery)
+	if err != nil {
+		return WFSConfigurationInput{}, invalidField("get_feature_template_url", "URL query must be valid.", err)
+	}
+	for name := range query {
+		if _, reserved := wfsGeneratedParameters[strings.ToUpper(name)]; reserved {
+			return WFSConfigurationInput{}, invalidField("get_feature_template_url", "Platform-generated WFS parameters must not appear in the URL query.", nil)
+		}
+	}
+	return value, nil
+}
+
+func validateWFSChoices(values []string, selected, field, defaultField string) error {
+	if len(values) == 0 {
+		return invalidField(field, "Configure at least one choice.", nil)
+	}
+	seen := make(map[string]struct{}, len(values))
+	for i, value := range values {
+		target := fmt.Sprintf("%s[%d]", field, i)
+		if value == "" || strings.TrimSpace(value) != value {
+			return invalidField(target, "Choices must not be blank or contain surrounding whitespace.", nil)
+		}
+		if _, exists := seen[value]; exists {
+			return invalidField(target, "Choices must be unique.", nil)
+		}
+		seen[value] = struct{}{}
+	}
+	if _, exists := seen[selected]; !exists {
+		return invalidField(defaultField, "Default must match a configured choice.", nil)
+	}
+	return nil
+}
+
+var (
+	wfsGeneratedParameters = reservedParameterNames(
+		"SERVICE", "REQUEST", "VERSION", "TYPENAME", "TYPENAMES", "OUTPUTFORMAT", "MAXFEATURES", "COUNT", "BBOX", "SRSNAME",
+	)
+	wfsReservedParameters = reservedParameterNames(
+		"SERVICE", "REQUEST", "VERSION", "ACCEPTVERSIONS", "ACCEPTFORMATS", "SECTIONS", "UPDATESEQUENCE",
+		"TYPENAME", "TYPENAMES", "OUTPUTFORMAT", "MAXFEATURES", "COUNT", "BBOX", "SRSNAME",
+		"PROPERTYNAME", "FEATUREVERSION", "FEATUREID", "RESOURCEID", "FILTER", "FILTER_LANGUAGE", "SORTBY", "RESULTTYPE", "STARTINDEX",
+		"NAMESPACE", "NAMESPACES", "ALIASES", "RESOLVE", "RESOLVEDEPTH", "RESOLVETIMEOUT", "STOREDQUERY_ID",
+	)
+)
 
 func NewWMSConfigurationInput(value WMSConfigurationInput) (WMSConfigurationInput, error) {
 	value.CapabilitiesURL = strings.TrimSpace(value.CapabilitiesURL)
@@ -313,6 +404,10 @@ func validatePersistedWebServiceConfiguration(value WebServiceConfiguration) err
 				return fmt.Errorf("request body parameters: %w", err)
 			}
 		}
+	case WFSConfiguration:
+		if err := validatePersistedWebServiceParameters(configuration.Parameters); err != nil {
+			return err
+		}
 	case WMSConfiguration:
 		if err := validatePersistedWebServiceParameters(configuration.GetMapParameters); err != nil {
 			return fmt.Errorf("GetMap parameters: %w", err)
@@ -363,6 +458,26 @@ func restoreWebServiceConfiguration(input WebServiceConfigurationInput, existing
 			Body:        body,
 			Parameters:  parameters,
 			Format:      configuration.Format,
+		}, nil
+	case WFSConfigurationInput:
+		persisted, ok := existing.(WFSConfiguration)
+		if !ok {
+			return nil, fmt.Errorf("WFS configuration is missing: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		parameters, err := restoreWebServiceParameters(configuration.Parameters, persisted.Parameters)
+		if err != nil {
+			return nil, err
+		}
+		return WFSConfiguration{
+			GetFeatureTemplateURL: configuration.GetFeatureTemplateURL,
+			Version:               configuration.Version,
+			FeatureTypes:          configuration.FeatureTypes,
+			DefaultFeatureType:    configuration.DefaultFeatureType,
+			OutputFormats:         configuration.OutputFormats,
+			DefaultOutputFormat:   configuration.DefaultOutputFormat,
+			ResultLimit:           configuration.ResultLimit,
+			ResultLimitEditable:   configuration.ResultLimitEditable,
+			Parameters:            parameters,
 		}, nil
 	case WMSConfigurationInput:
 		persisted, ok := existing.(WMSConfiguration)

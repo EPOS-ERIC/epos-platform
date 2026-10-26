@@ -557,6 +557,26 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 					return fmt.Errorf("add web service parameter: %w", err)
 				}
 			}
+		case domain.WFSConfigurationInput:
+			if err := q.AddLifecycleWFSService(ctx, sqlc.AddLifecycleWFSServiceParams{
+				WebServiceID:          created.ID,
+				GetFeatureTemplateUrl: configuration.GetFeatureTemplateURL,
+				Version:               configuration.Version,
+				FeatureTypes:          configuration.FeatureTypes,
+				DefaultFeatureType:    configuration.DefaultFeatureType,
+				OutputFormats:         configuration.OutputFormats,
+				DefaultOutputFormat:   configuration.DefaultOutputFormat,
+				ResultLimit:           configuration.ResultLimit,
+				ResultLimitEditable:   configuration.ResultLimitEditable,
+			}); err != nil {
+				return fmt.Errorf("add WFS configuration: %w", err)
+			}
+			for _, parameter := range configuration.Parameters {
+				location := parameter.Location
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wfsServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+					return fmt.Errorf("add WFS parameter: %w", err)
+				}
+			}
 		case domain.WMSConfigurationInput:
 			if err := q.AddLifecycleWMSService(ctx, sqlc.AddLifecycleWMSServiceParams{
 				WebServiceID:         created.ID,
@@ -766,6 +786,27 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		}
 		result[id] = service
 	}
+	wfsConfigurations, err := q.ListLifecycleWFSServices(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("list WFS configurations: %w", err)
+	}
+	for _, value := range wfsConfigurations {
+		service, exists := result[value.WebServiceID]
+		if !exists {
+			return nil, fmt.Errorf("WFS configuration references missing web service %s", value.WebServiceID)
+		}
+		service.Configuration = domain.WFSConfiguration{
+			GetFeatureTemplateURL: value.GetFeatureTemplateUrl,
+			Version:               value.Version,
+			FeatureTypes:          value.FeatureTypes,
+			DefaultFeatureType:    value.DefaultFeatureType,
+			OutputFormats:         value.OutputFormats,
+			DefaultOutputFormat:   value.DefaultOutputFormat,
+			ResultLimit:           value.ResultLimit,
+			ResultLimitEditable:   value.ResultLimitEditable,
+		}
+		result[value.WebServiceID] = service
+	}
 	wmsConfigurations, err := q.ListLifecycleWMSServices(ctx, ids)
 	if err != nil {
 		return nil, fmt.Errorf("list WMS configurations: %w", err)
@@ -896,11 +937,13 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		if err != nil {
 			return nil, fmt.Errorf("decode web service parameter: %w", err)
 		}
-		if item.WebServiceID != nil || item.WmsGetMapServiceID != nil || item.WmsGetFeatureInfoServiceID != nil {
+		if item.WebServiceID != nil || item.WfsServiceID != nil || item.WmsGetMapServiceID != nil || item.WmsGetFeatureInfoServiceID != nil {
 			var serviceID uuid.UUID
 			switch {
 			case item.WebServiceID != nil:
 				serviceID = *item.WebServiceID
+			case item.WfsServiceID != nil:
+				serviceID = *item.WfsServiceID
 			case item.WmsGetMapServiceID != nil:
 				serviceID = *item.WmsGetMapServiceID
 			default:
@@ -929,6 +972,12 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 			switch configuration := service.Configuration.(type) {
 			case domain.GenericWebServiceConfiguration:
 				if item.WebServiceID == nil {
+					return nil, fmt.Errorf("parameter %s references the wrong service configuration", item.ID)
+				}
+				configuration.Parameters = append(configuration.Parameters, parameterValue)
+				service.Configuration = configuration
+			case domain.WFSConfiguration:
+				if item.WfsServiceID == nil {
 					return nil, fmt.Errorf("parameter %s references the wrong service configuration", item.ID)
 				}
 				configuration.Parameters = append(configuration.Parameters, parameterValue)

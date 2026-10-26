@@ -10,7 +10,33 @@ type AccessRequest struct {
 	DistributionID uuid.UUID
 	OutputFormat   *string
 	ConversionID   *uuid.UUID
-	Parameters     []AccessParameter
+	Input          WebServiceAccessInput
+}
+
+type WebServiceAccessInput interface {
+	webServiceAccessInput()
+}
+
+type HTTPAccessInput struct {
+	Parameters []AccessParameter
+}
+
+func (HTTPAccessInput) webServiceAccessInput() {}
+
+type WFSAccessInput struct {
+	FeatureType *string
+	ResultLimit *int64
+	BBox        *WFSBoundingBox
+	Parameters  []AccessParameter
+}
+
+func (WFSAccessInput) webServiceAccessInput() {}
+
+type WFSBoundingBox struct {
+	West  float64
+	South float64
+	East  float64
+	North float64
 }
 
 type AccessParameter struct {

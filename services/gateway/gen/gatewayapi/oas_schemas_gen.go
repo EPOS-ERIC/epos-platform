@@ -4093,18 +4093,73 @@ func NewDistributionAccessScalarArrayDistributionAccessParameterValue(v []Distri
 }
 
 // Ref: #/components/schemas/DistributionAccessRequest
+// DistributionAccessRequest represents sum type.
 type DistributionAccessRequest struct {
-	Parameters []DistributionAccessParameter `json:"parameters"`
+	// Type selects the active sum variant, switch on this field.
+	Type                          DistributionAccessRequestType
+	HTTPDistributionAccessRequest HTTPDistributionAccessRequest
+	WFSDistributionAccessRequest  WFSDistributionAccessRequest
 }
 
-// GetParameters returns the value of Parameters.
-func (s *DistributionAccessRequest) GetParameters() []DistributionAccessParameter {
-	return s.Parameters
+// DistributionAccessRequestType is oneOf type of DistributionAccessRequest.
+type DistributionAccessRequestType string
+
+// Possible values for DistributionAccessRequestType.
+const (
+	HTTPDistributionAccessRequestDistributionAccessRequest DistributionAccessRequestType = "HTTP"
+	WFSDistributionAccessRequestDistributionAccessRequest  DistributionAccessRequestType = "WFS"
+)
+
+// IsHTTPDistributionAccessRequest reports whether DistributionAccessRequest is HTTPDistributionAccessRequest.
+func (s DistributionAccessRequest) IsHTTPDistributionAccessRequest() bool {
+	return s.Type == HTTPDistributionAccessRequestDistributionAccessRequest
 }
 
-// SetParameters sets the value of Parameters.
-func (s *DistributionAccessRequest) SetParameters(val []DistributionAccessParameter) {
-	s.Parameters = val
+// IsWFSDistributionAccessRequest reports whether DistributionAccessRequest is WFSDistributionAccessRequest.
+func (s DistributionAccessRequest) IsWFSDistributionAccessRequest() bool {
+	return s.Type == WFSDistributionAccessRequestDistributionAccessRequest
+}
+
+// SetHTTPDistributionAccessRequest sets DistributionAccessRequest to HTTPDistributionAccessRequest.
+func (s *DistributionAccessRequest) SetHTTPDistributionAccessRequest(v HTTPDistributionAccessRequest) {
+	s.Type = HTTPDistributionAccessRequestDistributionAccessRequest
+	s.HTTPDistributionAccessRequest = v
+}
+
+// GetHTTPDistributionAccessRequest returns HTTPDistributionAccessRequest and true boolean if DistributionAccessRequest is HTTPDistributionAccessRequest.
+func (s DistributionAccessRequest) GetHTTPDistributionAccessRequest() (v HTTPDistributionAccessRequest, ok bool) {
+	if !s.IsHTTPDistributionAccessRequest() {
+		return v, false
+	}
+	return s.HTTPDistributionAccessRequest, true
+}
+
+// NewHTTPDistributionAccessRequestDistributionAccessRequest returns new DistributionAccessRequest from HTTPDistributionAccessRequest.
+func NewHTTPDistributionAccessRequestDistributionAccessRequest(v HTTPDistributionAccessRequest) DistributionAccessRequest {
+	var s DistributionAccessRequest
+	s.SetHTTPDistributionAccessRequest(v)
+	return s
+}
+
+// SetWFSDistributionAccessRequest sets DistributionAccessRequest to WFSDistributionAccessRequest.
+func (s *DistributionAccessRequest) SetWFSDistributionAccessRequest(v WFSDistributionAccessRequest) {
+	s.Type = WFSDistributionAccessRequestDistributionAccessRequest
+	s.WFSDistributionAccessRequest = v
+}
+
+// GetWFSDistributionAccessRequest returns WFSDistributionAccessRequest and true boolean if DistributionAccessRequest is WFSDistributionAccessRequest.
+func (s DistributionAccessRequest) GetWFSDistributionAccessRequest() (v WFSDistributionAccessRequest, ok bool) {
+	if !s.IsWFSDistributionAccessRequest() {
+		return v, false
+	}
+	return s.WFSDistributionAccessRequest, true
+}
+
+// NewWFSDistributionAccessRequestDistributionAccessRequest returns new DistributionAccessRequest from WFSDistributionAccessRequest.
+func NewWFSDistributionAccessRequestDistributionAccessRequest(v WFSDistributionAccessRequest) DistributionAccessRequest {
+	var s DistributionAccessRequest
+	s.SetWFSDistributionAccessRequest(v)
+	return s
 }
 
 // Ref: #/components/schemas/DistributionAccessScalar
@@ -5643,7 +5698,6 @@ type GenericWebServiceConfigurationDraftType string
 const (
 	GenericWebServiceConfigurationDraftTypeHTTP GenericWebServiceConfigurationDraftType = "HTTP"
 	GenericWebServiceConfigurationDraftTypeWMTS GenericWebServiceConfigurationDraftType = "WMTS"
-	GenericWebServiceConfigurationDraftTypeWFS  GenericWebServiceConfigurationDraftType = "WFS"
 )
 
 // AllValues returns all GenericWebServiceConfigurationDraftType values.
@@ -5651,7 +5705,6 @@ func (GenericWebServiceConfigurationDraftType) AllValues() []GenericWebServiceCo
 	return []GenericWebServiceConfigurationDraftType{
 		GenericWebServiceConfigurationDraftTypeHTTP,
 		GenericWebServiceConfigurationDraftTypeWMTS,
-		GenericWebServiceConfigurationDraftTypeWFS,
 	}
 }
 
@@ -5661,8 +5714,6 @@ func (s GenericWebServiceConfigurationDraftType) MarshalText() ([]byte, error) {
 	case GenericWebServiceConfigurationDraftTypeHTTP:
 		return []byte(s), nil
 	case GenericWebServiceConfigurationDraftTypeWMTS:
-		return []byte(s), nil
-	case GenericWebServiceConfigurationDraftTypeWFS:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -5678,9 +5729,6 @@ func (s *GenericWebServiceConfigurationDraftType) UnmarshalText(data []byte) err
 	case GenericWebServiceConfigurationDraftTypeWMTS:
 		*s = GenericWebServiceConfigurationDraftTypeWMTS
 		return nil
-	case GenericWebServiceConfigurationDraftTypeWFS:
-		*s = GenericWebServiceConfigurationDraftTypeWFS
-		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
@@ -5691,7 +5739,6 @@ type GenericWebServiceConfigurationType string
 const (
 	GenericWebServiceConfigurationTypeHTTP GenericWebServiceConfigurationType = "HTTP"
 	GenericWebServiceConfigurationTypeWMTS GenericWebServiceConfigurationType = "WMTS"
-	GenericWebServiceConfigurationTypeWFS  GenericWebServiceConfigurationType = "WFS"
 )
 
 // AllValues returns all GenericWebServiceConfigurationType values.
@@ -5699,7 +5746,6 @@ func (GenericWebServiceConfigurationType) AllValues() []GenericWebServiceConfigu
 	return []GenericWebServiceConfigurationType{
 		GenericWebServiceConfigurationTypeHTTP,
 		GenericWebServiceConfigurationTypeWMTS,
-		GenericWebServiceConfigurationTypeWFS,
 	}
 }
 
@@ -5709,8 +5755,6 @@ func (s GenericWebServiceConfigurationType) MarshalText() ([]byte, error) {
 	case GenericWebServiceConfigurationTypeHTTP:
 		return []byte(s), nil
 	case GenericWebServiceConfigurationTypeWMTS:
-		return []byte(s), nil
-	case GenericWebServiceConfigurationTypeWFS:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -5725,9 +5769,6 @@ func (s *GenericWebServiceConfigurationType) UnmarshalText(data []byte) error {
 		return nil
 	case GenericWebServiceConfigurationTypeWMTS:
 		*s = GenericWebServiceConfigurationTypeWMTS
-		return nil
-	case GenericWebServiceConfigurationTypeWFS:
-		*s = GenericWebServiceConfigurationTypeWFS
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -6483,6 +6524,66 @@ func (s *GroupRole) UnmarshalText(data []byte) error {
 		return nil
 	case GroupRoleGROUPADMIN:
 		*s = GroupRoleGROUPADMIN
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/HTTPDistributionAccessRequest
+type HTTPDistributionAccessRequest struct {
+	Type       HTTPDistributionAccessRequestType `json:"type"`
+	Parameters []DistributionAccessParameter     `json:"parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *HTTPDistributionAccessRequest) GetType() HTTPDistributionAccessRequestType {
+	return s.Type
+}
+
+// GetParameters returns the value of Parameters.
+func (s *HTTPDistributionAccessRequest) GetParameters() []DistributionAccessParameter {
+	return s.Parameters
+}
+
+// SetType sets the value of Type.
+func (s *HTTPDistributionAccessRequest) SetType(val HTTPDistributionAccessRequestType) {
+	s.Type = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *HTTPDistributionAccessRequest) SetParameters(val []DistributionAccessParameter) {
+	s.Parameters = val
+}
+
+type HTTPDistributionAccessRequestType string
+
+const (
+	HTTPDistributionAccessRequestTypeHTTP HTTPDistributionAccessRequestType = "HTTP"
+)
+
+// AllValues returns all HTTPDistributionAccessRequestType values.
+func (HTTPDistributionAccessRequestType) AllValues() []HTTPDistributionAccessRequestType {
+	return []HTTPDistributionAccessRequestType{
+		HTTPDistributionAccessRequestTypeHTTP,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s HTTPDistributionAccessRequestType) MarshalText() ([]byte, error) {
+	switch s {
+	case HTTPDistributionAccessRequestTypeHTTP:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *HTTPDistributionAccessRequestType) UnmarshalText(data []byte) error {
+	switch HTTPDistributionAccessRequestType(data) {
+	case HTTPDistributionAccessRequestTypeHTTP:
+		*s = HTTPDistributionAccessRequestTypeHTTP
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -8500,6 +8601,52 @@ func (o OptInt32) Get() (v int32, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt64 returns new OptInt64 with value set to v.
+func NewOptInt64(v int64) OptInt64 {
+	return OptInt64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt64 is optional int64.
+type OptInt64 struct {
+	Value int64
+	Set   bool
+}
+
+// IsSet returns true if OptInt64 was set.
+func (o OptInt64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt64) Reset() {
+	var v int64
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt64) SetTo(v int64) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt64) Get() (v int64, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt64) Or(d int64) int64 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -14841,6 +14988,101 @@ func (s *VersioningStatus) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/WFSDistributionAccessRequest
+type WFSDistributionAccessRequest struct {
+	Type        WFSDistributionAccessRequestType `json:"type"`
+	FeatureType OptNonBlankString                `json:"feature_type"`
+	ResultLimit OptInt64                         `json:"result_limit"`
+	// Optional CRS84 bounds [west, south, east, north] in degrees, longitude first. Passed to provider
+	// without geographic validation or antimeridian handling. Output CRS is always CRS84.
+	Bbox       []float64                     `json:"bbox"`
+	Parameters []DistributionAccessParameter `json:"parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *WFSDistributionAccessRequest) GetType() WFSDistributionAccessRequestType {
+	return s.Type
+}
+
+// GetFeatureType returns the value of FeatureType.
+func (s *WFSDistributionAccessRequest) GetFeatureType() OptNonBlankString {
+	return s.FeatureType
+}
+
+// GetResultLimit returns the value of ResultLimit.
+func (s *WFSDistributionAccessRequest) GetResultLimit() OptInt64 {
+	return s.ResultLimit
+}
+
+// GetBbox returns the value of Bbox.
+func (s *WFSDistributionAccessRequest) GetBbox() []float64 {
+	return s.Bbox
+}
+
+// GetParameters returns the value of Parameters.
+func (s *WFSDistributionAccessRequest) GetParameters() []DistributionAccessParameter {
+	return s.Parameters
+}
+
+// SetType sets the value of Type.
+func (s *WFSDistributionAccessRequest) SetType(val WFSDistributionAccessRequestType) {
+	s.Type = val
+}
+
+// SetFeatureType sets the value of FeatureType.
+func (s *WFSDistributionAccessRequest) SetFeatureType(val OptNonBlankString) {
+	s.FeatureType = val
+}
+
+// SetResultLimit sets the value of ResultLimit.
+func (s *WFSDistributionAccessRequest) SetResultLimit(val OptInt64) {
+	s.ResultLimit = val
+}
+
+// SetBbox sets the value of Bbox.
+func (s *WFSDistributionAccessRequest) SetBbox(val []float64) {
+	s.Bbox = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *WFSDistributionAccessRequest) SetParameters(val []DistributionAccessParameter) {
+	s.Parameters = val
+}
+
+type WFSDistributionAccessRequestType string
+
+const (
+	WFSDistributionAccessRequestTypeWFS WFSDistributionAccessRequestType = "WFS"
+)
+
+// AllValues returns all WFSDistributionAccessRequestType values.
+func (WFSDistributionAccessRequestType) AllValues() []WFSDistributionAccessRequestType {
+	return []WFSDistributionAccessRequestType{
+		WFSDistributionAccessRequestTypeWFS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WFSDistributionAccessRequestType) MarshalText() ([]byte, error) {
+	switch s {
+	case WFSDistributionAccessRequestTypeWFS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WFSDistributionAccessRequestType) UnmarshalText(data []byte) error {
+	switch WFSDistributionAccessRequestType(data) {
+	case WFSDistributionAccessRequestTypeWFS:
+		*s = WFSDistributionAccessRequestTypeWFS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/WebService
 type WebService struct {
 	ID            uuid.UUID                      `json:"id"`
@@ -14962,6 +15204,7 @@ type WebServiceConfiguration struct {
 	// Type selects the active sum variant, switch on this field.
 	Type                           WebServiceConfigurationType
 	WmsWebServiceConfiguration     WmsWebServiceConfiguration
+	WfsWebServiceConfiguration     WfsWebServiceConfiguration
 	GenericWebServiceConfiguration GenericWebServiceConfiguration
 }
 
@@ -14971,8 +15214,8 @@ type WebServiceConfigurationType string
 // Possible values for WebServiceConfigurationType.
 const (
 	WmsWebServiceConfigurationWebServiceConfiguration  WebServiceConfigurationType = "WMS"
+	WfsWebServiceConfigurationWebServiceConfiguration  WebServiceConfigurationType = "WFS"
 	WebServiceConfigurationHTTPWebServiceConfiguration WebServiceConfigurationType = "HTTP"
-	WebServiceConfigurationWFSWebServiceConfiguration  WebServiceConfigurationType = "WFS"
 	WebServiceConfigurationWMTSWebServiceConfiguration WebServiceConfigurationType = "WMTS"
 )
 
@@ -14981,10 +15224,15 @@ func (s WebServiceConfiguration) IsWmsWebServiceConfiguration() bool {
 	return s.Type == WmsWebServiceConfigurationWebServiceConfiguration
 }
 
+// IsWfsWebServiceConfiguration reports whether WebServiceConfiguration is WfsWebServiceConfiguration.
+func (s WebServiceConfiguration) IsWfsWebServiceConfiguration() bool {
+	return s.Type == WfsWebServiceConfigurationWebServiceConfiguration
+}
+
 // IsGenericWebServiceConfiguration reports whether WebServiceConfiguration is GenericWebServiceConfiguration.
 func (s WebServiceConfiguration) IsGenericWebServiceConfiguration() bool {
 	switch s.Type {
-	case WebServiceConfigurationHTTPWebServiceConfiguration, WebServiceConfigurationWFSWebServiceConfiguration, WebServiceConfigurationWMTSWebServiceConfiguration:
+	case WebServiceConfigurationHTTPWebServiceConfiguration, WebServiceConfigurationWMTSWebServiceConfiguration:
 		return true
 	default:
 		return false
@@ -15009,6 +15257,27 @@ func (s WebServiceConfiguration) GetWmsWebServiceConfiguration() (v WmsWebServic
 func NewWmsWebServiceConfigurationWebServiceConfiguration(v WmsWebServiceConfiguration) WebServiceConfiguration {
 	var s WebServiceConfiguration
 	s.SetWmsWebServiceConfiguration(v)
+	return s
+}
+
+// SetWfsWebServiceConfiguration sets WebServiceConfiguration to WfsWebServiceConfiguration.
+func (s *WebServiceConfiguration) SetWfsWebServiceConfiguration(v WfsWebServiceConfiguration) {
+	s.Type = WfsWebServiceConfigurationWebServiceConfiguration
+	s.WfsWebServiceConfiguration = v
+}
+
+// GetWfsWebServiceConfiguration returns WfsWebServiceConfiguration and true boolean if WebServiceConfiguration is WfsWebServiceConfiguration.
+func (s WebServiceConfiguration) GetWfsWebServiceConfiguration() (v WfsWebServiceConfiguration, ok bool) {
+	if !s.IsWfsWebServiceConfiguration() {
+		return v, false
+	}
+	return s.WfsWebServiceConfiguration, true
+}
+
+// NewWfsWebServiceConfigurationWebServiceConfiguration returns new WebServiceConfiguration from WfsWebServiceConfiguration.
+func NewWfsWebServiceConfigurationWebServiceConfiguration(v WfsWebServiceConfiguration) WebServiceConfiguration {
+	var s WebServiceConfiguration
+	s.SetWfsWebServiceConfiguration(v)
 	return s
 }
 
@@ -15037,13 +15306,6 @@ func NewWebServiceConfigurationHTTPWebServiceConfiguration(v GenericWebServiceCo
 	return s
 }
 
-// NewWebServiceConfigurationWFSWebServiceConfiguration returns new WebServiceConfiguration from GenericWebServiceConfiguration.
-func NewWebServiceConfigurationWFSWebServiceConfiguration(v GenericWebServiceConfiguration) WebServiceConfiguration {
-	var s WebServiceConfiguration
-	s.SetGenericWebServiceConfiguration(WebServiceConfigurationWFSWebServiceConfiguration, v)
-	return s
-}
-
 // NewWebServiceConfigurationWMTSWebServiceConfiguration returns new WebServiceConfiguration from GenericWebServiceConfiguration.
 func NewWebServiceConfigurationWMTSWebServiceConfiguration(v GenericWebServiceConfiguration) WebServiceConfiguration {
 	var s WebServiceConfiguration
@@ -15057,6 +15319,7 @@ type WebServiceConfigurationDraft struct {
 	// Type selects the active sum variant, switch on this field.
 	Type                                WebServiceConfigurationDraftType
 	WmsWebServiceConfigurationDraft     WmsWebServiceConfigurationDraft
+	WfsWebServiceConfigurationDraft     WfsWebServiceConfigurationDraft
 	GenericWebServiceConfigurationDraft GenericWebServiceConfigurationDraft
 }
 
@@ -15066,8 +15329,8 @@ type WebServiceConfigurationDraftType string
 // Possible values for WebServiceConfigurationDraftType.
 const (
 	WmsWebServiceConfigurationDraftWebServiceConfigurationDraft  WebServiceConfigurationDraftType = "WMS"
+	WfsWebServiceConfigurationDraftWebServiceConfigurationDraft  WebServiceConfigurationDraftType = "WFS"
 	WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft WebServiceConfigurationDraftType = "HTTP"
-	WebServiceConfigurationDraftWFSWebServiceConfigurationDraft  WebServiceConfigurationDraftType = "WFS"
 	WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft WebServiceConfigurationDraftType = "WMTS"
 )
 
@@ -15076,10 +15339,15 @@ func (s WebServiceConfigurationDraft) IsWmsWebServiceConfigurationDraft() bool {
 	return s.Type == WmsWebServiceConfigurationDraftWebServiceConfigurationDraft
 }
 
+// IsWfsWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is WfsWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) IsWfsWebServiceConfigurationDraft() bool {
+	return s.Type == WfsWebServiceConfigurationDraftWebServiceConfigurationDraft
+}
+
 // IsGenericWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is GenericWebServiceConfigurationDraft.
 func (s WebServiceConfigurationDraft) IsGenericWebServiceConfigurationDraft() bool {
 	switch s.Type {
-	case WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft, WebServiceConfigurationDraftWFSWebServiceConfigurationDraft, WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft:
+	case WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft, WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft:
 		return true
 	default:
 		return false
@@ -15107,6 +15375,27 @@ func NewWmsWebServiceConfigurationDraftWebServiceConfigurationDraft(v WmsWebServ
 	return s
 }
 
+// SetWfsWebServiceConfigurationDraft sets WebServiceConfigurationDraft to WfsWebServiceConfigurationDraft.
+func (s *WebServiceConfigurationDraft) SetWfsWebServiceConfigurationDraft(v WfsWebServiceConfigurationDraft) {
+	s.Type = WfsWebServiceConfigurationDraftWebServiceConfigurationDraft
+	s.WfsWebServiceConfigurationDraft = v
+}
+
+// GetWfsWebServiceConfigurationDraft returns WfsWebServiceConfigurationDraft and true boolean if WebServiceConfigurationDraft is WfsWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) GetWfsWebServiceConfigurationDraft() (v WfsWebServiceConfigurationDraft, ok bool) {
+	if !s.IsWfsWebServiceConfigurationDraft() {
+		return v, false
+	}
+	return s.WfsWebServiceConfigurationDraft, true
+}
+
+// NewWfsWebServiceConfigurationDraftWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from WfsWebServiceConfigurationDraft.
+func NewWfsWebServiceConfigurationDraftWebServiceConfigurationDraft(v WfsWebServiceConfigurationDraft) WebServiceConfigurationDraft {
+	var s WebServiceConfigurationDraft
+	s.SetWfsWebServiceConfigurationDraft(v)
+	return s
+}
+
 // SetGenericWebServiceConfigurationDraft sets WebServiceConfigurationDraft to GenericWebServiceConfigurationDraft.
 // panics if `t` is not associated with GenericWebServiceConfigurationDraft
 func (s *WebServiceConfigurationDraft) SetGenericWebServiceConfigurationDraft(t WebServiceConfigurationDraftType, v GenericWebServiceConfigurationDraft) {
@@ -15129,13 +15418,6 @@ func (s WebServiceConfigurationDraft) GetGenericWebServiceConfigurationDraft() (
 func NewWebServiceConfigurationDraftHTTPWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) WebServiceConfigurationDraft {
 	var s WebServiceConfigurationDraft
 	s.SetGenericWebServiceConfigurationDraft(WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft, v)
-	return s
-}
-
-// NewWebServiceConfigurationDraftWFSWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from GenericWebServiceConfigurationDraft.
-func NewWebServiceConfigurationDraftWFSWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) WebServiceConfigurationDraft {
-	var s WebServiceConfigurationDraft
-	s.SetGenericWebServiceConfigurationDraft(WebServiceConfigurationDraftWFSWebServiceConfigurationDraft, v)
 	return s
 }
 
@@ -15681,6 +15963,396 @@ func (s *WebServiceVisibleOn) UnmarshalText(data []byte) error {
 		return nil
 	case WebServiceVisibleOnMAP:
 		*s = WebServiceVisibleOnMAP
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/WfsWebServiceConfiguration
+type WfsWebServiceConfiguration struct {
+	Type                  WfsWebServiceConfigurationType    `json:"type"`
+	GetFeatureTemplateURL string                            `json:"get_feature_template_url"`
+	Version               WfsWebServiceConfigurationVersion `json:"version"`
+	FeatureTypes          []NonBlankString                  `json:"feature_types"`
+	DefaultFeatureType    NonBlankString                    `json:"default_feature_type"`
+	// Exact provider outputFormat values, advertised as native formats.
+	OutputFormats       []NonBlankString `json:"output_formats"`
+	DefaultOutputFormat NonBlankString   `json:"default_output_format"`
+	// Optional default feature limit. Omitted or null means no configured limit.
+	ResultLimit OptNilInt64 `json:"result_limit"`
+	// Whether callers may supply a different limit. False with no configured limit prevents callers from
+	// adding one.
+	ResultLimitEditable bool        `json:"result_limit_editable"`
+	Parameters          []Parameter `json:"parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *WfsWebServiceConfiguration) GetType() WfsWebServiceConfigurationType {
+	return s.Type
+}
+
+// GetGetFeatureTemplateURL returns the value of GetFeatureTemplateURL.
+func (s *WfsWebServiceConfiguration) GetGetFeatureTemplateURL() string {
+	return s.GetFeatureTemplateURL
+}
+
+// GetVersion returns the value of Version.
+func (s *WfsWebServiceConfiguration) GetVersion() WfsWebServiceConfigurationVersion {
+	return s.Version
+}
+
+// GetFeatureTypes returns the value of FeatureTypes.
+func (s *WfsWebServiceConfiguration) GetFeatureTypes() []NonBlankString {
+	return s.FeatureTypes
+}
+
+// GetDefaultFeatureType returns the value of DefaultFeatureType.
+func (s *WfsWebServiceConfiguration) GetDefaultFeatureType() NonBlankString {
+	return s.DefaultFeatureType
+}
+
+// GetOutputFormats returns the value of OutputFormats.
+func (s *WfsWebServiceConfiguration) GetOutputFormats() []NonBlankString {
+	return s.OutputFormats
+}
+
+// GetDefaultOutputFormat returns the value of DefaultOutputFormat.
+func (s *WfsWebServiceConfiguration) GetDefaultOutputFormat() NonBlankString {
+	return s.DefaultOutputFormat
+}
+
+// GetResultLimit returns the value of ResultLimit.
+func (s *WfsWebServiceConfiguration) GetResultLimit() OptNilInt64 {
+	return s.ResultLimit
+}
+
+// GetResultLimitEditable returns the value of ResultLimitEditable.
+func (s *WfsWebServiceConfiguration) GetResultLimitEditable() bool {
+	return s.ResultLimitEditable
+}
+
+// GetParameters returns the value of Parameters.
+func (s *WfsWebServiceConfiguration) GetParameters() []Parameter {
+	return s.Parameters
+}
+
+// SetType sets the value of Type.
+func (s *WfsWebServiceConfiguration) SetType(val WfsWebServiceConfigurationType) {
+	s.Type = val
+}
+
+// SetGetFeatureTemplateURL sets the value of GetFeatureTemplateURL.
+func (s *WfsWebServiceConfiguration) SetGetFeatureTemplateURL(val string) {
+	s.GetFeatureTemplateURL = val
+}
+
+// SetVersion sets the value of Version.
+func (s *WfsWebServiceConfiguration) SetVersion(val WfsWebServiceConfigurationVersion) {
+	s.Version = val
+}
+
+// SetFeatureTypes sets the value of FeatureTypes.
+func (s *WfsWebServiceConfiguration) SetFeatureTypes(val []NonBlankString) {
+	s.FeatureTypes = val
+}
+
+// SetDefaultFeatureType sets the value of DefaultFeatureType.
+func (s *WfsWebServiceConfiguration) SetDefaultFeatureType(val NonBlankString) {
+	s.DefaultFeatureType = val
+}
+
+// SetOutputFormats sets the value of OutputFormats.
+func (s *WfsWebServiceConfiguration) SetOutputFormats(val []NonBlankString) {
+	s.OutputFormats = val
+}
+
+// SetDefaultOutputFormat sets the value of DefaultOutputFormat.
+func (s *WfsWebServiceConfiguration) SetDefaultOutputFormat(val NonBlankString) {
+	s.DefaultOutputFormat = val
+}
+
+// SetResultLimit sets the value of ResultLimit.
+func (s *WfsWebServiceConfiguration) SetResultLimit(val OptNilInt64) {
+	s.ResultLimit = val
+}
+
+// SetResultLimitEditable sets the value of ResultLimitEditable.
+func (s *WfsWebServiceConfiguration) SetResultLimitEditable(val bool) {
+	s.ResultLimitEditable = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *WfsWebServiceConfiguration) SetParameters(val []Parameter) {
+	s.Parameters = val
+}
+
+// Ref: #/components/schemas/WfsWebServiceConfigurationDraft
+type WfsWebServiceConfigurationDraft struct {
+	Type WfsWebServiceConfigurationDraftType `json:"type"`
+	// Absolute HTTP(S) GetFeature URL. Placeholders are allowed only in the path; nonstandard provider
+	// query parameters are retained.
+	GetFeatureTemplateURL string                                 `json:"get_feature_template_url"`
+	Version               WfsWebServiceConfigurationDraftVersion `json:"version"`
+	FeatureTypes          []NonBlankString                       `json:"feature_types"`
+	DefaultFeatureType    NonBlankString                         `json:"default_feature_type"`
+	// Exact provider outputFormat values, advertised as native formats.
+	OutputFormats       []NonBlankString `json:"output_formats"`
+	DefaultOutputFormat NonBlankString   `json:"default_output_format"`
+	// Optional maximum features requested in one upstream request. Omitted or null means no configured
+	// limit; count/maxFeatures is omitted unless an editable limit is supplied during access. No automatic
+	// pagination.
+	ResultLimit OptNilInt64 `json:"result_limit"`
+	// Whether callers may supply a different limit. False with no configured limit prevents callers from
+	// adding one.
+	ResultLimitEditable bool             `json:"result_limit_editable"`
+	Parameters          []ParameterDraft `json:"parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *WfsWebServiceConfigurationDraft) GetType() WfsWebServiceConfigurationDraftType {
+	return s.Type
+}
+
+// GetGetFeatureTemplateURL returns the value of GetFeatureTemplateURL.
+func (s *WfsWebServiceConfigurationDraft) GetGetFeatureTemplateURL() string {
+	return s.GetFeatureTemplateURL
+}
+
+// GetVersion returns the value of Version.
+func (s *WfsWebServiceConfigurationDraft) GetVersion() WfsWebServiceConfigurationDraftVersion {
+	return s.Version
+}
+
+// GetFeatureTypes returns the value of FeatureTypes.
+func (s *WfsWebServiceConfigurationDraft) GetFeatureTypes() []NonBlankString {
+	return s.FeatureTypes
+}
+
+// GetDefaultFeatureType returns the value of DefaultFeatureType.
+func (s *WfsWebServiceConfigurationDraft) GetDefaultFeatureType() NonBlankString {
+	return s.DefaultFeatureType
+}
+
+// GetOutputFormats returns the value of OutputFormats.
+func (s *WfsWebServiceConfigurationDraft) GetOutputFormats() []NonBlankString {
+	return s.OutputFormats
+}
+
+// GetDefaultOutputFormat returns the value of DefaultOutputFormat.
+func (s *WfsWebServiceConfigurationDraft) GetDefaultOutputFormat() NonBlankString {
+	return s.DefaultOutputFormat
+}
+
+// GetResultLimit returns the value of ResultLimit.
+func (s *WfsWebServiceConfigurationDraft) GetResultLimit() OptNilInt64 {
+	return s.ResultLimit
+}
+
+// GetResultLimitEditable returns the value of ResultLimitEditable.
+func (s *WfsWebServiceConfigurationDraft) GetResultLimitEditable() bool {
+	return s.ResultLimitEditable
+}
+
+// GetParameters returns the value of Parameters.
+func (s *WfsWebServiceConfigurationDraft) GetParameters() []ParameterDraft {
+	return s.Parameters
+}
+
+// SetType sets the value of Type.
+func (s *WfsWebServiceConfigurationDraft) SetType(val WfsWebServiceConfigurationDraftType) {
+	s.Type = val
+}
+
+// SetGetFeatureTemplateURL sets the value of GetFeatureTemplateURL.
+func (s *WfsWebServiceConfigurationDraft) SetGetFeatureTemplateURL(val string) {
+	s.GetFeatureTemplateURL = val
+}
+
+// SetVersion sets the value of Version.
+func (s *WfsWebServiceConfigurationDraft) SetVersion(val WfsWebServiceConfigurationDraftVersion) {
+	s.Version = val
+}
+
+// SetFeatureTypes sets the value of FeatureTypes.
+func (s *WfsWebServiceConfigurationDraft) SetFeatureTypes(val []NonBlankString) {
+	s.FeatureTypes = val
+}
+
+// SetDefaultFeatureType sets the value of DefaultFeatureType.
+func (s *WfsWebServiceConfigurationDraft) SetDefaultFeatureType(val NonBlankString) {
+	s.DefaultFeatureType = val
+}
+
+// SetOutputFormats sets the value of OutputFormats.
+func (s *WfsWebServiceConfigurationDraft) SetOutputFormats(val []NonBlankString) {
+	s.OutputFormats = val
+}
+
+// SetDefaultOutputFormat sets the value of DefaultOutputFormat.
+func (s *WfsWebServiceConfigurationDraft) SetDefaultOutputFormat(val NonBlankString) {
+	s.DefaultOutputFormat = val
+}
+
+// SetResultLimit sets the value of ResultLimit.
+func (s *WfsWebServiceConfigurationDraft) SetResultLimit(val OptNilInt64) {
+	s.ResultLimit = val
+}
+
+// SetResultLimitEditable sets the value of ResultLimitEditable.
+func (s *WfsWebServiceConfigurationDraft) SetResultLimitEditable(val bool) {
+	s.ResultLimitEditable = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *WfsWebServiceConfigurationDraft) SetParameters(val []ParameterDraft) {
+	s.Parameters = val
+}
+
+type WfsWebServiceConfigurationDraftType string
+
+const (
+	WfsWebServiceConfigurationDraftTypeWFS WfsWebServiceConfigurationDraftType = "WFS"
+)
+
+// AllValues returns all WfsWebServiceConfigurationDraftType values.
+func (WfsWebServiceConfigurationDraftType) AllValues() []WfsWebServiceConfigurationDraftType {
+	return []WfsWebServiceConfigurationDraftType{
+		WfsWebServiceConfigurationDraftTypeWFS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WfsWebServiceConfigurationDraftType) MarshalText() ([]byte, error) {
+	switch s {
+	case WfsWebServiceConfigurationDraftTypeWFS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WfsWebServiceConfigurationDraftType) UnmarshalText(data []byte) error {
+	switch WfsWebServiceConfigurationDraftType(data) {
+	case WfsWebServiceConfigurationDraftTypeWFS:
+		*s = WfsWebServiceConfigurationDraftTypeWFS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type WfsWebServiceConfigurationDraftVersion string
+
+const (
+	WfsWebServiceConfigurationDraftVersion110 WfsWebServiceConfigurationDraftVersion = "1.1.0"
+	WfsWebServiceConfigurationDraftVersion200 WfsWebServiceConfigurationDraftVersion = "2.0.0"
+)
+
+// AllValues returns all WfsWebServiceConfigurationDraftVersion values.
+func (WfsWebServiceConfigurationDraftVersion) AllValues() []WfsWebServiceConfigurationDraftVersion {
+	return []WfsWebServiceConfigurationDraftVersion{
+		WfsWebServiceConfigurationDraftVersion110,
+		WfsWebServiceConfigurationDraftVersion200,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WfsWebServiceConfigurationDraftVersion) MarshalText() ([]byte, error) {
+	switch s {
+	case WfsWebServiceConfigurationDraftVersion110:
+		return []byte(s), nil
+	case WfsWebServiceConfigurationDraftVersion200:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WfsWebServiceConfigurationDraftVersion) UnmarshalText(data []byte) error {
+	switch WfsWebServiceConfigurationDraftVersion(data) {
+	case WfsWebServiceConfigurationDraftVersion110:
+		*s = WfsWebServiceConfigurationDraftVersion110
+		return nil
+	case WfsWebServiceConfigurationDraftVersion200:
+		*s = WfsWebServiceConfigurationDraftVersion200
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type WfsWebServiceConfigurationType string
+
+const (
+	WfsWebServiceConfigurationTypeWFS WfsWebServiceConfigurationType = "WFS"
+)
+
+// AllValues returns all WfsWebServiceConfigurationType values.
+func (WfsWebServiceConfigurationType) AllValues() []WfsWebServiceConfigurationType {
+	return []WfsWebServiceConfigurationType{
+		WfsWebServiceConfigurationTypeWFS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WfsWebServiceConfigurationType) MarshalText() ([]byte, error) {
+	switch s {
+	case WfsWebServiceConfigurationTypeWFS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WfsWebServiceConfigurationType) UnmarshalText(data []byte) error {
+	switch WfsWebServiceConfigurationType(data) {
+	case WfsWebServiceConfigurationTypeWFS:
+		*s = WfsWebServiceConfigurationTypeWFS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type WfsWebServiceConfigurationVersion string
+
+const (
+	WfsWebServiceConfigurationVersion110 WfsWebServiceConfigurationVersion = "1.1.0"
+	WfsWebServiceConfigurationVersion200 WfsWebServiceConfigurationVersion = "2.0.0"
+)
+
+// AllValues returns all WfsWebServiceConfigurationVersion values.
+func (WfsWebServiceConfigurationVersion) AllValues() []WfsWebServiceConfigurationVersion {
+	return []WfsWebServiceConfigurationVersion{
+		WfsWebServiceConfigurationVersion110,
+		WfsWebServiceConfigurationVersion200,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WfsWebServiceConfigurationVersion) MarshalText() ([]byte, error) {
+	switch s {
+	case WfsWebServiceConfigurationVersion110:
+		return []byte(s), nil
+	case WfsWebServiceConfigurationVersion200:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WfsWebServiceConfigurationVersion) UnmarshalText(data []byte) error {
+	switch WfsWebServiceConfigurationVersion(data) {
+	case WfsWebServiceConfigurationVersion110:
+		*s = WfsWebServiceConfigurationVersion110
+		return nil
+	case WfsWebServiceConfigurationVersion200:
+		*s = WfsWebServiceConfigurationVersion200
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

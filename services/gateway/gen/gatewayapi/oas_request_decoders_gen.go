@@ -15,7 +15,7 @@ import (
 )
 
 func (s *Server) decodeAccessDistributionRequest(r *http.Request) (
-	req *DistributionAccessRequest,
+	req DistributionAccessRequest,
 	rawBody []byte,
 	close func() error,
 	rerr error,
@@ -87,7 +87,7 @@ func (s *Server) decodeAccessDistributionRequest(r *http.Request) (
 		}(); err != nil {
 			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, rawBody, close, nil
+		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
@@ -682,7 +682,7 @@ func (s *Server) decodeImportTurtleMetadataRequest(r *http.Request) (
 }
 
 func (s *Server) decodePrepareDistributionRequest(r *http.Request) (
-	req *DistributionAccessRequest,
+	req DistributionAccessRequest,
 	rawBody []byte,
 	close func() error,
 	rerr error,
@@ -754,7 +754,7 @@ func (s *Server) decodePrepareDistributionRequest(r *http.Request) (
 		}(); err != nil {
 			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, rawBody, close, nil
+		return request, rawBody, close, nil
 	default:
 		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
