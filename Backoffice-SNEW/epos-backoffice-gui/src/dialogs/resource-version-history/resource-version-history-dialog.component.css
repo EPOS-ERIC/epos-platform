@@ -1,0 +1,116 @@
+.history-dialog {
+  width: min(720px, 100%);
+}
+
+.history-eyebrow,
+.history-description {
+  margin: 0;
+}
+
+.history-body {
+  min-height: 220px;
+}
+
+.history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.history-item:hover:not(.history-item--disabled),
+.history-item--selected {
+  border-color: var(--olive-600);
+  background: color-mix(in srgb, var(--olive-100) 45%, var(--surface) 55%);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.history-item--disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.history-item input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--olive-600);
+}
+
+.history-item-content {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.history-item-heading,
+.history-actions,
+.history-action-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.history-item-heading {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.history-date,
+.history-version-id,
+.selection-count,
+.history-state {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.history-version-id {
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-error {
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.history-actions {
+  justify-content: space-between;
+}
+
+.history-action-buttons {
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .history-item-heading,
+  .history-actions,
+  .history-action-buttons {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .history-actions {
+    gap: 12px;
+  }
+
+  .history-date {
+    overflow-wrap: anywhere;
+  }
+}

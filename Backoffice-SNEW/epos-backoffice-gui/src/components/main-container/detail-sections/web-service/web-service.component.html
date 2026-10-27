@@ -1,0 +1,143 @@
+<div id="web-service" class="distribution-subsection" [class.web-service--comparison]="comparisonMode">
+  <h3 class="distribution-root-title">Web Service</h3>
+
+  @if (model) {
+    <fieldset class="detail-fieldset" [disabled]="disabled">
+      <div class="detail-form-grid">
+        <label class="detail-field">
+          <span class="detail-label">Name *</span>
+          <input class="app-input" type="text" [(ngModel)]="model.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
+        </label>
+
+        <label class="detail-field detail-field--full">
+          <span class="detail-label">Description</span>
+          <textarea class="app-input detail-textarea" rows="3" [(ngModel)]="model.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea>
+        </label>
+
+        <label class="detail-field">
+          <span class="detail-label">Template URL *</span>
+          <input class="app-input" type="text" [(ngModel)]="model.templateUrl" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
+        </label>
+
+        <label class="detail-field">
+          <span class="detail-label">Method</span>
+          <select class="app-input" [(ngModel)]="model.method" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()">
+            @for (method of methods; track method) { <option [ngValue]="method">{{ method }}</option> }
+          </select>
+        </label>
+
+        <label class="detail-field">
+          <span class="detail-label">Web service type</span>
+          <select class="app-input" [(ngModel)]="model.type" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()">
+            @for (type of types; track type) { <option [ngValue]="type">{{ type }}</option> }
+          </select>
+        </label>
+
+        <label class="detail-field">
+          <span class="detail-label">Format *</span>
+          <input class="app-input" type="text" [(ngModel)]="model.format" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
+        </label>
+
+        <div class="detail-field detail-field--full">
+          <span class="detail-label">Visible on</span>
+          <div class="web-service-choice-row">
+            @for (option of visibleOnOptions; track option) {
+              <label><input type="checkbox" [checked]="model.visibleOn.includes(option)" (change)="toggleVisibleOn(option, $any($event.target).checked)" /> {{ option }}</label>
+            }
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <details id="webservice-body" class="webservice-subsection">
+        <summary class="webservice-subsection-summary">
+          <span class="distribution-subtitle">Request Body</span>
+          <span class="webservice-summary-hint">Closed</span>
+        </summary>
+        <div class="webservice-subsection-body">
+          <p class="webservice-body-hint">Request bodies are supported for POST and PUT only. Both content type and template are required.</p>
+          <fieldset class="detail-fieldset" [disabled]="disabled">
+            <div class="detail-form-grid">
+              <label class="detail-field">
+                <span class="detail-label">Content type</span>
+                <input class="app-input" [(ngModel)]="model.bodyContentType" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" placeholder="application/json" />
+              </label>
+              <label class="detail-field detail-field--full">
+                <span class="detail-label">Body template</span>
+                <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="model.bodyTemplate" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea>
+              </label>
+            </div>
+          </fieldset>
+          <app-scalar-parameters-editor [model]="model.bodyParameters" [disabled]="disabled" (modelChange)="onBodyParametersChange($event)" />
+        </div>
+      </details>
+
+    <app-web-service-documentation [model]="model.documentation" [disabled]="disabled" (modelChange)="onDocumentationChange($event)"></app-web-service-documentation>
+
+    <details id="webservice-provider" class="webservice-subsection">
+      <summary class="webservice-subsection-summary">
+        <span class="distribution-subtitle">Provider</span>
+        <span class="webservice-summary-hint">Closed</span>
+      </summary>
+      <div class="webservice-subsection-body">
+        <app-providers
+          [model]="model.provider"
+          [single]="true"
+          [disabled]="disabled"
+          [embedded]="true"
+          [readonlyView]="comparisonMode"
+          [neutralAppearance]="comparisonMode"
+          (modelChange)="onProviderChange($any($event))"
+        ></app-providers>
+      </div>
+    </details>
+
+    <details id="webservice-contact-points" class="webservice-subsection">
+      <summary class="webservice-subsection-summary">
+        <span class="distribution-subtitle">Contact Points</span>
+        <span class="webservice-summary-hint">Closed</span>
+      </summary>
+      <div class="webservice-subsection-body">
+        <app-contact-points
+          [model]="model.contactPoints"
+          [editable]="!comparisonMode"
+          [disabled]="disabled"
+          [embedded]="true"
+          [readonlyView]="comparisonMode"
+          [neutralAppearance]="comparisonMode"
+          (modelChange)="onContactPointsChange($event)"
+        ></app-contact-points>
+      </div>
+    </details>
+
+    <details id="webservice-spatial-coverage" class="webservice-subsection">
+      <summary class="webservice-subsection-summary">
+        <span class="distribution-subtitle">Spatial Coverage</span>
+        <span class="webservice-summary-hint">Closed</span>
+      </summary>
+      <div class="webservice-subsection-body">
+        <app-spatial-coverage [model]="model.spatialCoverage" [disabled]="disabled" [embedded]="true" (modelChange)="onSpatialChange($event)" />
+      </div>
+    </details>
+
+    <details id="webservice-temporal-coverage" class="webservice-subsection">
+      <summary class="webservice-subsection-summary">
+        <span class="distribution-subtitle">Temporal Coverage</span>
+        <span class="webservice-summary-hint">Closed</span>
+      </summary>
+      <div class="webservice-subsection-body">
+        <app-temporal-coverage [model]="model.temporalCoverage" [disabled]="disabled" [embedded]="true" (modelChange)="onTemporalChange($event)"></app-temporal-coverage>
+      </div>
+    </details>
+
+    <app-web-service-parameters
+      [model]="model.parameters"
+      [comparisonModel]="comparisonModel?.parameters ?? []"
+      [disabled]="disabled"
+      [comparisonMode]="comparisonMode"
+      [comparisonSide]="comparisonSide"
+      [reversed]="comparisonMode && comparisonSide === 'right'"
+      (modelChange)="onParametersChange($event)"
+    ></app-web-service-parameters>
+  }
+</div>

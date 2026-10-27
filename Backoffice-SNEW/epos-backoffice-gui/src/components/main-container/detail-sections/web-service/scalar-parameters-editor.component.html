@@ -1,0 +1,80 @@
+<section class="scalar-editor">
+  <header class="scalar-editor-header">
+    <div>
+      <strong>Scalar parameters</strong>
+      <span>{{ model.length }}</span>
+    </div>
+    @if (!disabled) {
+      <div class="scalar-editor-add">
+        <select class="app-input" [(ngModel)]="selectedKind" [ngModelOptions]="{ standalone: true }">
+          @for (kind of kinds; track kind) {
+            <option [ngValue]="kind">{{ kind }}</option>
+          }
+        </select>
+        <button type="button" class="app-button app-button--primary" (click)="addParameter()">Add</button>
+      </div>
+    }
+  </header>
+
+  <div class="scalar-editor-list">
+    @for (parameter of model; track $index) {
+      <details class="scalar-item" [open]="$first">
+        <summary>
+          <span><b>{{ parameter.kind }}</b> {{ parameter.label || parameter.name || 'Unnamed parameter' }}</span>
+          @if (!disabled) {
+            <button type="button" class="scalar-remove" (click)="$event.preventDefault(); removeParameter($index)">Remove</button>
+          }
+        </summary>
+
+        <fieldset [disabled]="disabled">
+          <div class="scalar-grid">
+            <label><span>Name *</span><input #scalarNameInput class="app-input" [ngModel]="parameter.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateParameterName(parameter, $event, scalarNameInput)" required /></label>
+            <label><span>Label *</span><input class="app-input" [(ngModel)]="parameter.label" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required /></label>
+            <label class="scalar-full"><span>Description</span><textarea class="app-input" rows="2" [(ngModel)]="parameter.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea></label>
+            <label class="scalar-check"><input type="checkbox" [(ngModel)]="parameter.required" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /> Required</label>
+            <label class="scalar-check"><input type="checkbox" [(ngModel)]="parameter.readOnly" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /> Read only</label>
+          </div>
+
+          @switch (parameter.kind) {
+            @case ('STRING') {
+              <div class="scalar-grid scalar-kind-fields">
+                <label><span>Default</span><input class="app-input" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label><span>Pattern</span><input class="app-input" [(ngModel)]="parameter.pattern" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+              </div>
+              <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
+            }
+            @case ('BOOLEAN') {
+              <label class="scalar-standalone-field"><span>Default</span><select class="app-input" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"><option [ngValue]="null">No default</option><option [ngValue]="true">True</option><option [ngValue]="false">False</option></select></label>
+            }
+            @case ('INTEGER') {
+              <div class="scalar-grid scalar-kind-fields">
+                <label><span>Minimum</span><input class="app-input" type="number" step="1" [(ngModel)]="parameter.minimum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label><span>Maximum</span><input class="app-input" type="number" step="1" [(ngModel)]="parameter.maximum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label class="scalar-full"><span>Default</span><input class="app-input" type="number" step="1" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+              </div>
+              <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
+            }
+            @case ('FLOAT') {
+              <div class="scalar-grid scalar-kind-fields">
+                <label><span>Minimum</span><input class="app-input" type="number" step="any" [(ngModel)]="parameter.minimum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label><span>Maximum</span><input class="app-input" type="number" step="any" [(ngModel)]="parameter.maximum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label class="scalar-full"><span>Default</span><input class="app-input" type="number" step="any" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+              </div>
+              <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
+            }
+            @case ('DATETIME') {
+              <div class="scalar-grid scalar-kind-fields">
+                <label><span>Minimum</span><input class="app-input" type="datetime-local" [(ngModel)]="parameter.minimum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label><span>Maximum</span><input class="app-input" type="datetime-local" [(ngModel)]="parameter.maximum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label><span>Default</span><input class="app-input" type="datetime-local" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label><span>Layout</span><input class="app-input" [(ngModel)]="parameter.layout" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+              </div>
+            }
+          }
+        </fieldset>
+      </details>
+    } @empty {
+      <p class="scalar-empty">No scalar parameters configured.</p>
+    }
+  </div>
+</section>

@@ -1,0 +1,81 @@
+<section class="requests-card app-card">
+  <div class="requests-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">{{ eyebrow }}</p>
+      <h2>{{ context }}</h2>
+      <p class="subtitle app-muted">{{ subtitle }}</p>
+    </div>
+    <span class="request-count">{{ requests.length }} pending</span>
+  </div>
+
+  @if (error) {
+    <div class="requests-message requests-message--error">{{ error }}</div>
+  }
+
+  @if (loading) {
+    <div class="requests-message">Loading membership requests...</div>
+  } @else if (requests.length) {
+    <div class="request-list">
+      @for (item of requests; track item.key) {
+        <article class="request-item" [class.request-item--simple]="!canSelectRoles">
+          <div class="request-identity">
+            <div>
+              <strong>{{ item.userEmail }}</strong>
+              <span>{{ item.userName }}</span>
+            </div>
+            <div>
+              <small>Requested group</small>
+              <span class="request-group-name">
+                @if (item.groupLogoPath) {
+                  <img class="request-group-logo" [src]="item.groupLogoPath" alt="" aria-hidden="true" />
+                }
+                <strong>{{ item.groupName }}</strong>
+              </span>
+            </div>
+            <div>
+              <small>Requested roles</small>
+              <span>{{ item.requestedRoles.length ? item.requestedRoles.join(', ') : 'No role requested' }}</span>
+            </div>
+            <time class="app-muted" [attr.datetime]="item.requestedAt">{{ item.requestedAt | date:'medium' }}</time>
+          </div>
+
+          @if (canSelectRoles) {
+            <fieldset class="request-role-picker" [disabled]="!!decisionKey">
+              <legend>Roles to assign</legend>
+              @for (role of availableRoles; track role) {
+                <label [class.requested-role]="item.requestedRoles.includes(role)">
+                  <input
+                    type="checkbox"
+                    [checked]="item.selectedRoles.includes(role)"
+                    (change)="roleToggle.emit({ item, role })"
+                  />
+                  <span>{{ role }}</span>
+                  @if (item.requestedRoles.includes(role)) {
+                    <small>Requested</small>
+                  }
+                </label>
+              }
+            </fieldset>
+          }
+
+          <div class="request-actions">
+            <button
+              type="button"
+              class="app-button app-button--ghost request-reject"
+              [disabled]="!!decisionKey"
+              (click)="decision.emit({ item, decision: 'reject' })"
+            >Reject</button>
+            <button
+              type="button"
+              class="app-button app-button--primary"
+              [disabled]="!!decisionKey"
+              (click)="decision.emit({ item, decision: 'accept' })"
+            >{{ decisionKey === item.key ? 'Saving...' : (canSelectRoles ? 'Accept and assign' : 'Accept membership') }}</button>
+          </div>
+        </article>
+      }
+    </div>
+  } @else if (!error) {
+    <div class="requests-message">No pending membership requests.</div>
+  }
+</section>

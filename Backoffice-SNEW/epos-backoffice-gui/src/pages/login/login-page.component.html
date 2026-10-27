@@ -1,0 +1,22 @@
+<main class="login-page">
+  <section class="login-shell app-card">
+    <div class="login-logo-wrap">
+      <img class="login-logo" src="/logo.svg" alt="EPOS Backoffice" />
+    </div>
+
+    <p class="eyebrow app-badge app-badge--primary">EPOS Backoffice</p>
+    <h1>EPOS Backoffice</h1>
+    <p class="login-copy">Resource management for datasets, software applications, and source code.</p>
+
+    <div class="login-actions">
+      <a class="app-button app-button--ghost login-action" href="https://aaai.epos-eu.org">Manage accounts</a>
+      <button type="button" class="app-button app-button--primary login-action" (click)="login()">Login</button>
+    </div>
+
+    @if (authService.initializationError()) {
+      <p class="login-footnote">{{ authService.initializationError() }}</p>
+    } @else {
+      <p class="login-footnote">Sign in with your EPOS account to continue.</p>
+    }
+  </section>
+</main>

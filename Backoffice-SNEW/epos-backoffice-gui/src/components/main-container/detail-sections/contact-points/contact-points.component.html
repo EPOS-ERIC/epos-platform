@@ -1,0 +1,111 @@
+<section
+  [attr.id]="embedded ? null : 'contact-points'"
+  [attr.aria-label]="embedded ? 'Contact Points' : null"
+  class="detail-section-card"
+  [class.app-card]="!embedded"
+  [class.detail-section-card--embedded]="embedded"
+  [class.detail-section-card--neutral]="neutralAppearance"
+>
+  @if (!embedded) {
+    <div class="detail-section-header">
+      <div>
+        <h2>Contact Points</h2>
+        <p class="subtitle app-muted">Search the catalog, filter by role, then add the contact points you need.</p>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="detail-empty">Loading contact points...</div>
+  } @else if (error()) {
+    <div class="detail-empty">{{ error() }}</div>
+  } @else if (readonlyView) {
+    @if (hasSelection()) {
+      <ul class="contact-points-list contact-points-list--assigned">
+        @for (contactPoint of selectedContactPoints(); track contactPoint.id) {
+          <li class="contact-point-row contact-point-row--selected">
+            <div class="contact-point-copy">
+              <strong class="contact-point-email">{{ contactPoint.email }}</strong>
+              <span class="contact-point-role">Role: {{ contactPointDescription(contactPoint) }}</span>
+            </div>
+          </li>
+        }
+      </ul>
+    } @else {
+      <div class="detail-empty">No contact points assigned.</div>
+    }
+  } @else {
+    <div class="contact-points-grid">
+      <section class="contact-points-catalog contact-points-box contact-points-box--catalog">
+        <div class="contact-points-panel-header">
+          <h3><span class="app-badge app-badge--blue">Available Contact Points</span></h3>
+          <span class="webservice-summary-hint">{{ availableContactPoints().length }}</span>
+        </div>
+
+        <div class="contact-points-toolbar">
+          <label class="contact-points-control contact-points-control--search">
+            <span class="detail-label">Search contact points</span>
+            <input class="app-input" type="text" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" placeholder="Search by email or role" />
+          </label>
+
+          <label class="contact-points-control contact-points-control--filter">
+            <span class="detail-label">Filter by role</span>
+            <select class="app-input" [ngModel]="roleFilter()" (ngModelChange)="onRoleFilterChange($event)" [ngModelOptions]="{ standalone: true }">
+              <option value="all">All roles</option>
+              @for (role of availableRoles(); track role) {
+                <option [value]="role">{{ role }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        @if (hasAvailableContactPoints()) {
+          <ul class="contact-points-list contact-points-list--available">
+            @for (contactPoint of availableContactPoints(); track contactPoint.id) {
+              <li class="contact-point-row">
+                <div class="contact-point-copy">
+                  <strong class="contact-point-email">{{ contactPoint.email }}</strong>
+                  <span class="contact-point-role">Role: {{ contactPointDescription(contactPoint) }}</span>
+                </div>
+
+                @if (isSelected(contactPoint.id)) {
+                  <span class="contact-point-state"><span aria-hidden="true">&#10003;</span> Added</span>
+                } @else {
+                  <button type="button" class="app-button app-button--ghost contact-point-action" (click)="addContactPoint(contactPoint.id)" [disabled]="disabled || !editable" aria-label="Add contact point">Add Contact Point</button>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="detail-empty">No available contact points match the filters.</div>
+        }
+      </section>
+
+      <section class="contact-points-assigned contact-points-box contact-points-box--assigned">
+        <div class="contact-points-panel-header">
+          <h3><span class="app-badge app-badge--green">Selected Contact Points</span></h3>
+          <span class="webservice-summary-hint">{{ selectedContactPoints().length }}</span>
+        </div>
+
+        @if (hasSelection()) {
+          <ul class="contact-points-list contact-points-list--assigned">
+            @for (contactPoint of selectedContactPoints(); track contactPoint.id) {
+              <li class="contact-point-row contact-point-row--selected">
+                <div class="contact-point-copy">
+                  <strong class="contact-point-email">{{ contactPoint.email }}</strong>
+                  <span class="contact-point-role">Role: {{ contactPointDescription(contactPoint) }}</span>
+                </div>
+
+                @if (editable) {
+                  <button type="button" class="app-button app-button--ghost contact-point-action" (click)="removeContactPoint(contactPoint.id)" [disabled]="disabled" aria-label="Remove contact point">Remove</button>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="detail-empty">No contact points assigned.</div>
+        }
+      </section>
+    </div>
+  }
+</section>

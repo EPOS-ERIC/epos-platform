@@ -1,0 +1,96 @@
+<section
+  [attr.id]="embedded || single ? null : 'providers'"
+  [attr.aria-label]="embedded ? (single ? 'Provider' : 'Providers') : null"
+  class="detail-section-card"
+  [class.app-card]="!embedded"
+  [class.detail-section-card--embedded]="embedded"
+  [class.detail-section-card--neutral]="neutralAppearance"
+>
+  @if (!embedded) {
+    <div class="detail-section-header">
+      <div>
+        <h2>{{ single ? 'Provider' : 'Providers' }}</h2>
+        <p class="subtitle app-muted">Choose {{ single ? 'one provider' : 'the providers' }} from the available catalog.</p>
+      </div>
+    </div>
+  }
+
+  @if (readonlyView) {
+    @if (selectedProviders().length) {
+      <ul class="providers-list">
+        @for (provider of selectedProviders(); track provider.id) {
+          <li class="provider-row provider-row--selected"><strong>{{ provider.name }}</strong></li>
+        }
+      </ul>
+    } @else {
+      <div class="detail-empty">No provider selected.</div>
+    }
+  } @else {
+    <div class="providers-grid">
+    <section class="providers-box">
+      <div class="providers-box-header">
+        <h3><span class="app-badge provider-badge--available">Available Providers</span></h3>
+        <span class="webservice-summary-hint">{{ availableOrganizations().length }}</span>
+      </div>
+
+      <label class="detail-field">
+        <span class="detail-label">Search providers</span>
+        <input class="app-input" type="text" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" placeholder="Search by name" />
+      </label>
+
+      @if (loading()) {
+        <div class="detail-empty">Loading organizations...</div>
+      } @else if (error()) {
+        <div class="detail-empty">{{ error() }}</div>
+      } @else if (availableOrganizations().length) {
+        <ul class="providers-list">
+          @for (organization of availableOrganizations(); track organization.id) {
+            <li class="provider-row">
+              <strong>{{ organization.name }}</strong>
+              @if (isSelected(organization.id)) {
+                <span class="provider-state"><span aria-hidden="true">&#10003;</span> Added</span>
+              } @else {
+                <button
+                  type="button"
+                  class="app-button app-button--ghost provider-action"
+                  (click)="addProvider(organization)"
+                  [disabled]="disabled || selectionLimitReached()"
+                  [attr.aria-label]="'Add provider ' + organization.name"
+                >Add Provider</button>
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="detail-empty">No organizations match the search.</div>
+      }
+    </section>
+
+    <section class="providers-box providers-box--selected">
+      <div class="providers-box-header">
+        <h3><span class="app-badge provider-badge--selected">Selected {{ single ? 'Provider' : 'Providers' }}</span></h3>
+        <span class="webservice-summary-hint">{{ selectedProviders().length }}</span>
+      </div>
+
+      @if (selectedProviders().length) {
+        <ul class="providers-list">
+          @for (provider of selectedProviders(); track provider.id) {
+            <li class="provider-row provider-row--selected">
+              <strong>{{ provider.name }}</strong>
+              <button
+                type="button"
+                class="app-button app-button--ghost provider-action provider-remove"
+                (click)="removeProvider(provider.id)"
+                [disabled]="disabled"
+                [attr.aria-label]="'Remove provider ' + provider.name"
+              >Remove</button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="detail-empty">No provider selected.</div>
+      }
+    </section>
+    </div>
+  }
+</section>

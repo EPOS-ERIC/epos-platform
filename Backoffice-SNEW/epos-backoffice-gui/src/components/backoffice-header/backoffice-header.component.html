@@ -1,0 +1,202 @@
+<header
+  class="header-shell"
+  [class.header-shell--manage]="managementContext"
+>
+  <a
+    class="header-copy"
+    [class.header-copy--back]="headerBackRoute"
+    [class.header-copy--back-pill]="headerBackRoute && !managementIconPath"
+    [routerLink]="headerBackRouteTree"
+    [attr.aria-label]="headerBackRoute ? 'Back to previous page' : null"
+  >
+    @if (managementContext) {
+      <p class="management-eyebrow app-badge app-badge--primary" [class.management-eyebrow--global]="managementContext === 'global'">{{ managementEyebrow }}</p>
+      <div class="management-heading">
+        @if (managementIconPath) {
+          <span class="management-icon-shell">
+            <img class="management-icon" [src]="managementIconPath" alt="" aria-hidden="true" />
+            @if (headerBackRoute) {
+              <span class="management-icon-back" aria-hidden="true">
+                <app-icon name="arrow-left-alt" [size]="17" />
+                <span>Back</span>
+              </span>
+            }
+          </span>
+        }
+        <div>
+          <h1>{{ managementTitle }}</h1>
+          <p class="management-subtitle app-muted">{{ managementSubtitle }}</p>
+        </div>
+      </div>
+    } @else {
+      <p class="breadcrumb app-muted">Backoffice / {{ sectionTitle }} / {{ pageLabel }}</p>
+      <div>
+        <h1>{{ sectionTitle }}</h1>
+        <p class="section-subtitle app-muted">{{ sectionSubtitle() }}</p>
+      </div>
+    }
+    @if (headerBackRoute && !managementIconPath) {
+      <span class="header-back-affordance" aria-hidden="true">
+        <app-icon name="arrow-left-alt" [size]="16" />
+        <span>Back</span>
+      </span>
+    }
+  </a>
+
+  <div class="header-actions header-actions--top">
+    <button type="button" class="app-button app-button--ghost app-button--icon" (click)="toggleTheme.emit()" [attr.aria-label]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+      <app-icon [name]="darkMode ? 'sun' : 'moon'" [size]="16" />
+    </button>
+
+    <div class="user-menu">
+      <button
+        type="button"
+        class="app-chip admin-chip"
+        (click)="toggleUserMenu($event)"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="userMenuOpen()"
+      >
+        <span class="app-avatar"><app-icon name="user" [size]="16" /></span>
+        <span class="admin-copy">
+          <strong>{{ currentUserName() }}</strong>
+          @if (isGlobalAdmin()) {
+            <span class="global-admin-badge">ADMIN</span>
+          } @else {
+            <span class="admin-subtitle app-muted">Backoffice User</span>
+          }
+        </span>
+        <app-icon name="chevron-down" [size]="14" />
+      </button>
+
+      @if (userMenuOpen()) {
+        <div class="user-menu-panel app-card" role="menu" (click)="$event.stopPropagation()">
+          <button type="button" class="app-button user-menu-logout" role="menuitem" (click)="logout()">
+            Logout
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (showSearchActions) {
+    <div class="header-actions header-actions--bottom">
+      <label class="search" aria-label="Search records">
+        <span>⌕</span>
+        <input
+          class="app-input"
+          type="search"
+          placeholder="Search records"
+          [ngModel]="searchQuery"
+          (ngModelChange)="searchQueryChange.emit($event)"
+          [ngModelOptions]="{ standalone: true }"
+        />
+      </label>
+
+      <div class="filter-menu">
+        <button
+          type="button"
+          class="app-button app-button--ghost"
+          (click)="toggleFilterMenu($event)"
+          aria-haspopup="dialog"
+          [attr.aria-expanded]="filterMenuOpen()"
+        >
+          Filters
+          @if (activeFilterCount()) {
+            <span class="filter-count">{{ activeFilterCount() }}</span>
+          }
+        </button>
+
+        @if (filterMenuOpen()) {
+          <div class="filter-panel app-card" role="dialog" aria-label="Filter results" (click)="$event.stopPropagation()">
+            <div class="filter-panel-header">
+              <strong>Filter results</strong>
+              <button type="button" class="filter-clear" (click)="clearFilters()" [disabled]="!canClearFilters()">Clear</button>
+            </div>
+
+            <fieldset class="filter-group" data-filter-section="author">
+              <legend>Author</legend>
+              <div class="filter-group-content">
+                @if (filterByAuthor) {
+                  <span class="app-chip author-filter-chip">
+                    <span>{{ selectedAuthorName() }}</span>
+                    <button
+                      type="button"
+                      class="filter-clear author-filter-chip-remove"
+                      (click)="clearAuthorFilter()"
+                      [attr.aria-label]="'Remove author filter ' + selectedAuthorName()"
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </span>
+                }
+                <input
+                  class="app-input author-filter-search"
+                  type="search"
+                  placeholder="Search authors"
+                  aria-label="Search available authors"
+                  role="combobox"
+                  aria-controls="author-filter-options"
+                  [attr.aria-expanded]="authorHintsOpen()"
+                  [ngModel]="authorSearchQuery()"
+                  (ngModelChange)="authorSearchQuery.set($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                @if (authorHintsOpen()) {
+                  <div id="author-filter-options" class="author-filter-options" role="listbox" aria-label="Available authors">
+                    @for (author of filteredAuthors(); track author.id) {
+                      <button
+                        type="button"
+                        class="author-filter-option"
+                        role="option"
+                        [class.author-filter-option--selected]="filterByAuthor === author.id"
+                        [attr.aria-selected]="filterByAuthor === author.id"
+                        (click)="selectAuthor(author)"
+                      >
+                        {{ author.name }}
+                      </button>
+                    } @empty {
+                      <span class="author-filter-empty">No matching authors in the current results.</span>
+                    }
+                  </div>
+                }
+              </div>
+            </fieldset>
+
+            <fieldset class="filter-group" data-filter-section="data-type">
+              <legend>Data type</legend>
+              <div class="filter-group-content">
+                @for (option of dataTypeOptions; track option.value) {
+                  <label class="filter-option">
+                    <input type="checkbox" [checked]="selectedDataTypes.includes(option.value)" (change)="toggleDataType(option.value)" />
+                    <span>{{ option.label }}</span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+
+            <fieldset class="filter-group" data-filter-section="status">
+              <legend>Versioning status</legend>
+              <div class="filter-group-content">
+                @for (status of versioningStatusOptions; track status) {
+                  <label class="filter-option">
+                    <input type="checkbox" [checked]="selectedVersioningStatuses.includes(status)" (change)="toggleVersioningStatus(status)" />
+                    <span>{{ status }}</span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+          </div>
+        }
+      </div>
+      @if (canAddNewResource) {
+        <button type="button" class="app-button app-button--primary" (click)="addNewResource.emit()">Add New Resource</button>
+      }
+    </div>
+  }
+</header>
+
+<!-- @if (managementContext) {
+  <div class="management-back-row">
+    <app-back-button class="header-manage-back" [route]="managementBackRoute" [appearance]="'dark'" />
+  </div>
+} -->

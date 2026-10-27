@@ -1,0 +1,8 @@
+<a class="back-button app-button" [class.app-button--ghost]="appearance === 'default'" [class.app-button--dark]="appearance === 'dark'" [routerLink]="routeTree" [attr.aria-label]="label">
+  @if (appearance === 'dark') {
+    <app-icon name="arrow-left-alt" [size]="18" />
+  } @else {
+    <app-icon name="chevron-left" [size]="15" />
+  }
+  <span>{{ label }}</span>
+</a>

@@ -1,0 +1,24 @@
+<div class="list-pagination">
+  @if (pageSizeOptions.length) {
+    <label class="page-size-control">
+      <span>{{ pageSizeLabel }}</span>
+      <select [value]="pageSize" (change)="changePageSize($event)">
+        @for (option of pageSizeOptions; track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select>
+    </label>
+  }
+  <span>Showing {{ firstItem }}-{{ lastItem }} of {{ totalItems }} {{ itemLabel }}</span>
+  <nav class="list-pagination-controls" [attr.aria-label]="ariaLabel">
+    <button type="button" class="app-button app-button--ghost list-pagination-button list-pagination-button--icon" aria-label="First page" title="First page" [disabled]="currentPage === 1" (click)="setPage(1)">
+      <span aria-hidden="true">&laquo;</span>
+    </button>
+    <button type="button" class="app-button app-button--ghost list-pagination-button" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
+    <span class="page-indicator" aria-live="polite">Page {{ currentPage }} of {{ totalPages }}</span>
+    <button type="button" class="app-button app-button--ghost list-pagination-button" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+    <button type="button" class="app-button app-button--ghost list-pagination-button list-pagination-button--icon" aria-label="Last page" title="Last page" [disabled]="currentPage === totalPages" (click)="setPage(totalPages)">
+      <span aria-hidden="true">&raquo;</span>
+    </button>
+  </nav>
+</div>

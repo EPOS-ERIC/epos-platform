@@ -1,0 +1,271 @@
+@if (store.loading()) {
+  <section class="detail-card app-card">
+    <div class="detail-empty">Loading detail...</div>
+  </section>
+} @else if (store.loadError()) {
+  <section class="detail-card app-card">
+    <div class="detail-empty detail-action-error">{{ store.loadError() }}</div>
+  </section>
+} @else if (store.datasetVersion(); as version) {
+  @if (store.datasetForm(); as form) {
+    <div class="detail-page">
+      <section class="detail-overview detail-card app-card">
+        <div class="detail-context-copy">
+          <span class="detail-label">Title</span>
+          <strong class="detail-context-title">{{ store.title() }}</strong>
+          <div class="detail-context-meta">
+            <span class="detail-context-id"><span class="detail-label">Resource ID</span><code>{{ version.resource_id }}</code></span>
+            <span class="detail-context-status" [attr.data-status]="version.status.toLowerCase()"><span>Status</span><strong>{{ version.status.toUpperCase() }}</strong></span>
+          </div>
+        </div>
+
+        <div class="detail-context-actions">
+          @if (store.canCopy() || store.canViewHistory() || store.canDelete()) {
+            <div class="detail-context-resource-actions">
+              @if (store.canCopy()) {
+                <button type="button" class="app-button app-button--dark app-button--copy" (click)="store.copy()">
+                  <app-icon name="content-copy" [size]="16" />
+                  <span>Copy Resource</span>
+                </button>
+              }
+              @if (store.canViewHistory()) {
+                <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
+              }
+              @if (store.canDelete()) {
+                <button type="button" class="app-button detail-delete-button" (click)="store.openDeleteDialog()" [disabled]="store.deleting() || store.saving()">
+                  {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (version.rejection_note != null) {
+          <div class="rejection-note">
+            <span class="detail-label">Rejection Note</span>
+            <div class="rejection-note-meta">
+              @if (store.rejectionAuthorName(); as authorName) {
+                <span>Rejected by: {{ authorName }}</span>
+              }
+              @if (version.rejected_at) {
+                <span>Rejected at: {{ version.rejected_at | date: 'medium' }}</span>
+              }
+            </div>
+            <p>{{ version.rejection_note }}</p>
+          </div>
+        }
+      </section>
+
+      <app-general-information
+        [model]="form"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.setDatasetForm($event)"
+      />
+      <app-spatial-coverage
+        [model]="form.spatial"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetSpatial($event)"
+      />
+      <app-temporal-coverage
+        [model]="form.temporal"
+        [geologicalModel]="form.geologicalTemporal"
+        [mode]="form.temporalMode"
+        [allowGeological]="true"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetTemporal($event)"
+        (geologicalModelChange)="store.updateDatasetGeologicalTemporal($event)"
+        (modeChange)="store.updateDatasetTemporalMode($event)"
+        [warningKind]="store.temporalWarningKind()"
+        [warningMessage]="store.temporalWarningMessage()"
+      />
+      <app-identifiers
+        [model]="form.persistentIdentifiers"
+        [disabled]="!store.canEdit()"
+        title="Persistent Identifiers"
+        subtitle="Type and identifier value pairs."
+      />
+      <app-contact-points
+        [model]="form.contactPoints"
+        [editable]="store.canEdit()"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetContactPoints($event)"
+      />
+      <app-providers
+        [model]="form.providers"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetProviders($any($event))"
+      />
+      <app-categories
+        [groupId]="version.group_id"
+        [model]="form.categories"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetCategories($event)"
+      />
+      <app-distribution
+        [model]="form.distributions"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetDistributions($event)"
+      />
+    </div>
+  }
+} @else if (store.softwareApplicationForm(); as form) {
+  @if (store.resourceVersion(); as version) {
+    <div class="detail-page">
+      <section class="detail-overview detail-card app-card">
+        <div class="detail-context-copy">
+          <span class="detail-label">Title</span>
+          <strong class="detail-context-title">{{ store.title() }}</strong>
+          <div class="detail-context-meta">
+            <span class="detail-context-id"><span class="detail-label">Resource ID</span><code>{{ version.resource_id }}</code></span>
+            <span class="detail-context-status" [attr.data-status]="version.status.toLowerCase()"><span>Status</span><strong>{{ version.status.toUpperCase() }}</strong></span>
+          </div>
+        </div>
+
+        <div class="detail-context-actions">
+          @if (store.canCopy() || store.canViewHistory() || store.canDelete()) {
+            <div class="detail-context-resource-actions">
+              @if (store.canCopy()) {
+                <button type="button" class="app-button app-button--dark app-button--copy" (click)="store.copy()">
+                  <app-icon name="content-copy" [size]="16" />
+                  <span>Copy Resource</span>
+                </button>
+              }
+              @if (store.canViewHistory()) {
+                <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
+              }
+              @if (store.canDelete()) {
+                <button type="button" class="app-button detail-delete-button" (click)="store.openDeleteDialog()" [disabled]="store.deleting() || store.saving()">
+                  {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (version.rejection_note != null) {
+          <div class="rejection-note">
+            <span class="detail-label">Rejection Note</span>
+            <div class="rejection-note-meta">
+              @if (store.rejectionAuthorName(); as authorName) {
+                <span>Rejected by: {{ authorName }}</span>
+              }
+              @if (version.rejected_at) {
+                <span>Rejected at: {{ version.rejected_at | date: 'medium' }}</span>
+              }
+            </div>
+            <p>{{ version.rejection_note }}</p>
+          </div>
+        }
+      </section>
+
+      <app-software-general-information
+        [model]="form"
+        [disabled]="!store.canEdit()"
+        resourceType="software-application"
+        (modelChange)="store.updateSoftwareApplicationForm($event)"
+      />
+      <app-identifiers
+        [model]="form.identifiers"
+        [disabled]="!store.canEdit()"
+        title="Persistent Identifiers"
+        subtitle="Type and identifier value pairs."
+      />
+      <app-contact-points
+        [model]="form.contact_points ?? []"
+        [editable]="store.canEdit()"
+        [disabled]="!store.canEdit()"
+        (modelChange)="updateSoftwareApplicationContactPoints($event)"
+      />
+      <app-categories
+        [groupId]="version.group_id"
+        [model]="form.categories"
+        [disabled]="!store.canEdit()"
+        (modelChange)="updateSoftwareApplicationCategories($event)"
+      />
+    </div>
+  }
+} @else if (store.softwareSourceCodeForm(); as form) {
+  @if (store.resourceVersion(); as version) {
+    <div class="detail-page">
+      <section class="detail-overview detail-card app-card">
+        <div class="detail-context-copy">
+          <span class="detail-label">Title</span>
+          <strong class="detail-context-title">{{ store.title() }}</strong>
+          <div class="detail-context-meta">
+            <span class="detail-context-id"><span class="detail-label">Resource ID</span><code>{{ version.resource_id }}</code></span>
+            <span class="detail-context-status" [attr.data-status]="version.status.toLowerCase()"><span>Status</span><strong>{{ version.status.toUpperCase() }}</strong></span>
+          </div>
+        </div>
+
+        <div class="detail-context-actions">
+          @if (store.canCopy() || store.canViewHistory() || store.canDelete()) {
+            <div class="detail-context-resource-actions">
+              @if (store.canCopy()) {
+                <button type="button" class="app-button app-button--dark app-button--copy" (click)="store.copy()">
+                  <app-icon name="content-copy" [size]="16" />
+                  <span>Copy Resource</span>
+                </button>
+              }
+              @if (store.canViewHistory()) {
+                <button type="button" class="app-button app-button--ghost" (click)="store.openVersionHistory()">Version History</button>
+              }
+              @if (store.canDelete()) {
+                <button type="button" class="app-button detail-delete-button" (click)="store.openDeleteDialog()" [disabled]="store.deleting() || store.saving()">
+                  {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (version.rejection_note != null) {
+          <div class="rejection-note">
+            <span class="detail-label">Rejection Note</span>
+            <div class="rejection-note-meta">
+              @if (store.rejectionAuthorName(); as authorName) {
+                <span>Rejected by: {{ authorName }}</span>
+              }
+              @if (version.rejected_at) {
+                <span>Rejected at: {{ version.rejected_at | date: 'medium' }}</span>
+              }
+            </div>
+            <p>{{ version.rejection_note }}</p>
+          </div>
+        }
+      </section>
+
+      <app-software-general-information
+        [model]="form"
+        [disabled]="!store.canEdit()"
+        resourceType="software-source-code"
+        (modelChange)="store.updateSoftwareSourceCodeForm($event)"
+      />
+      <app-identifiers
+        [model]="form.identifiers"
+        [disabled]="!store.canEdit()"
+        title="Persistent Identifiers"
+        subtitle="Type and identifier value pairs."
+      />
+      <app-contact-points
+        [model]="form.contact_points ?? []"
+        [editable]="store.canEdit()"
+        [disabled]="!store.canEdit()"
+        (modelChange)="updateSoftwareSourceCodeContactPoints($event)"
+      />
+      <app-categories
+        [groupId]="version.group_id"
+        [model]="form.categories"
+        [disabled]="!store.canEdit()"
+        (modelChange)="updateSoftwareSourceCodeCategories($event)"
+      />
+    </div>
+  }
+} @else {
+  <section class="detail-card app-card">
+    <div class="detail-empty">No resource detail available.</div>
+  </section>
+}
+
+@defer (when store.historyOpen()) {
+  <app-resource-version-history-dialog />
+}

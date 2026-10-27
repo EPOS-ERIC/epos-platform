@@ -1,0 +1,79 @@
+@if (dialog.openState()) {
+  <div class="app-dialog-backdrop" (click)="dialog.close()">
+    <section class="app-dialog app-dialog--wide app-card" role="dialog" aria-modal="true" aria-labelledby="resource-creation-title" aria-describedby="resource-creation-description" (click)="$event.stopPropagation()">
+      <header class="app-dialog-header">
+        <p class="eyebrow app-badge app-badge--primary">{{ dialog.isCopy() ? 'Copy Published Resource' : 'Create Resource Draft' }}</p>
+        <h2 id="resource-creation-title">{{ dialog.isCopy() ? 'Copy Resource' : 'Add New Resource' }}</h2>
+        <p id="resource-creation-description" class="subtitle app-muted">
+          {{ dialog.isCopy() ? 'Choose the group where the draft copy will be created.' : 'Choose a resource type and target group.' }}
+        </p>
+      </header>
+
+      <div class="app-dialog-body">
+        <div class="resource-form">
+          @if (!dialog.isCopy()) {
+          <label class="form-field form-field--wide">
+            <span>Title</span>
+            <input class="app-input" type="text" [ngModel]="dialog.title()" (ngModelChange)="dialog.title.set($event)" placeholder="Enter resource title" />
+          </label>
+
+          <label class="form-field">
+            <span>Resource type</span>
+            <select class="app-input" [ngModel]="dialog.resourceType()" (ngModelChange)="dialog.resourceType.set($event)">
+              @for (item of dialog.resourceTypes; track item.value) {
+                <option [ngValue]="item.value">{{ item.label }}</option>
+              }
+            </select>
+          </label>
+          } @else {
+            <div class="form-field">
+              <span>Resource type</span>
+              <strong class="copy-resource-type">{{ dialog.resourceType() }}</strong>
+            </div>
+          }
+
+          <label class="form-field">
+            <span>{{ dialog.isCopy() ? 'Target group' : 'Group' }}</span>
+            <div class="group-select">
+              @if (selectedGroupIconPath(); as iconPath) {
+                <img class="group-select-logo" [src]="iconPath" alt="" aria-hidden="true" />
+              }
+              <select class="app-input" [ngModel]="dialog.groupId()" (ngModelChange)="dialog.groupId.set($event)" [disabled]="dialog.groupsLoading() || !dialog.groups().length">
+                @if (dialog.groupsLoading()) {
+                  <option value="">Loading groups...</option>
+                } @else {
+                  @for (group of dialog.groups(); track group.id) {
+                    <option [ngValue]="group.id">{{ group.name }}</option>
+                  }
+                }
+              </select>
+            </div>
+          </label>
+
+          @if (!dialog.isCopy()) {
+          <label class="form-field form-field--wide">
+            <span>Description</span>
+            <textarea class="app-input" rows="4" [ngModel]="dialog.description()" (ngModelChange)="dialog.description.set($event)" placeholder="Enter resource description" required></textarea>
+          </label>
+          }
+        </div>
+
+        @if (dialog.error()) {
+          <div class="dialog-error" role="alert">{{ dialog.error() }}</div>
+        }
+      </div>
+
+      <footer class="app-dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="dialog.close()" [disabled]="dialog.saving()">Cancel</button>
+        <button
+          type="button"
+          class="app-button app-button--primary"
+          (click)="dialog.submit()"
+          [disabled]="dialog.saving() || !dialog.groupId() || dialog.groupsLoading() || (!dialog.isCopy() && (!dialog.title().trim() || !dialog.description().trim()))"
+        >
+          {{ dialog.saving() ? (dialog.isCopy() ? 'Copying...' : 'Creating...') : (dialog.isCopy() ? 'Copy Resource' : 'Create') }}
+        </button>
+      </footer>
+    </section>
+  </div>
+}

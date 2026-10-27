@@ -1,0 +1,85 @@
+<section id="categories" class="detail-section-card app-card" [class.detail-section-card--neutral]="neutralAppearance">
+  <div class="detail-section-header">
+    <div>
+      <h2>Categories</h2>
+      <p class="subtitle app-muted">Choose categories from the resource group.</p>
+    </div>
+  </div>
+
+  @if (groupId) {
+    <div class="categories-grid">
+      <section class="categories-box">
+        <div class="categories-box-header">
+          <h3><span class="app-badge category-badge--available">Available Categories</span></h3>
+          <span class="webservice-summary-hint">{{ availableCategories().length }}</span>
+        </div>
+
+        <label class="detail-field">
+          <span class="detail-label">Search categories</span>
+          <input class="app-input" type="text" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" placeholder="Search by name" />
+        </label>
+
+        @if (loading()) {
+          <div class="detail-empty">Loading categories...</div>
+        } @else if (error()) {
+          <div class="detail-empty">{{ error() }}</div>
+        } @else if (availableCategories().length) {
+          <ul class="categories-list">
+            @for (category of availableCategories(); track category.id) {
+              <li class="category-row">
+                <strong>{{ category.name }}</strong>
+                @if (isSelected(category.id)) {
+                  <span class="category-state"><span aria-hidden="true">&#10003;</span> Added</span>
+                } @else {
+                  <button
+                    type="button"
+                    class="app-button app-button--ghost category-action"
+                    (click)="addCategory(category)"
+                    [disabled]="disabled"
+                    [attr.aria-label]="'Add category ' + category.name"
+                  >Add Category</button>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="detail-empty">No categories match the search.</div>
+        }
+      </section>
+
+      <section class="categories-box categories-box--selected">
+        <div class="categories-box-header">
+          <h3><span class="app-badge category-badge--selected">Selected Categories</span></h3>
+          <span class="webservice-summary-hint">{{ selectedCategories().length }}</span>
+        </div>
+
+        @if (selectedCategories().length) {
+          <ul class="categories-list">
+            @for (category of selectedCategories(); track category.id) {
+              <li class="category-row category-row--selected">
+                <strong>{{ category.name }}</strong>
+                <button
+                  type="button"
+                  class="app-button app-button--ghost category-action category-remove"
+                  (click)="removeCategory(category.id)"
+                  [disabled]="disabled"
+                  [attr.aria-label]="'Remove category ' + category.name"
+                >Remove</button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="detail-empty">No category selected.</div>
+        }
+      </section>
+    </div>
+  } @else if (model.length) {
+    <ul class="identifier-list">
+      @for (category of model; track category.id) {
+        <li class="identifier-item"><strong>{{ category.name }}</strong></li>
+      }
+    </ul>
+  } @else {
+    <div class="detail-empty">Empty for now.</div>
+  }
+</section>

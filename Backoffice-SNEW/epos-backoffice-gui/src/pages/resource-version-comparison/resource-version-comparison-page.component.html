@@ -1,0 +1,91 @@
+<div class="comparison-page">
+  <header class="comparison-heading">
+    <div>
+      <p class="comparison-eyebrow">Resource Versions</p>
+      <h1>Compare versions</h1>
+      <p class="comparison-subtitle">{{ store.changedCount() }} changed fields across both versions.</p>
+    </div>
+
+    @if (comparisonContext; as context) {
+      <a
+        class="app-button app-button--ghost"
+        [routerLink]="['/', context.sectionPath, context.resourceId, context.sourceVersionId]"
+        [queryParams]="{ groupId: context.groupId, dataType: context.resourceType }"
+      >
+        Back to resource detail
+      </a>
+    }
+  </header>
+
+  @if (store.loading()) {
+    <section class="comparison-state app-card" aria-live="polite">Loading versions...</section>
+  } @else if (store.error()) {
+    <section class="comparison-state comparison-error app-card" role="alert">{{ store.error() }}</section>
+  } @else if (store.leftVersion(); as leftVersion) {
+    @if (store.rightVersion(); as rightVersion) {
+      <section class="version-summaries" aria-label="Compared versions">
+        <article class="version-card app-card">
+          <span class="version-side">Left version</span>
+          <dl>
+            <div><dt>Status</dt><dd>{{ leftVersion.status }}</dd></div>
+            <div><dt>Updated</dt><dd>{{ leftVersion.updated_at }}</dd></div>
+          </dl>
+        </article>
+
+        <article class="version-card app-card">
+          <span class="version-side">Right version</span>
+          <dl>
+            <div><dt>Status</dt><dd>{{ rightVersion.status }}</dd></div>
+            <div><dt>Updated</dt><dd>{{ rightVersion.updated_at }}</dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <section class="diff-list" aria-label="Version differences by section">
+        <div class="diff-heading app-card">
+          <div>
+            <p class="comparison-eyebrow">Field by field</p>
+            <h2>Version differences</h2>
+          </div>
+          <span class="change-count">{{ store.changedCount() }} changed</span>
+        </div>
+
+        @for (section of store.diffSections(); track section.title) {
+          <article class="diff-card app-card" [id]="sectionAnchor(section.title)">
+            <div class="version-section-grid" [appComparisonFields]="section.changedCount">
+              <div class="section-change-summary">
+                <span class="section-change-count">{{ section.changedCount }} changed</span>
+              </div>
+
+              <section class="version-section-pane version-section-pane--left" [class.version-section-pane--changed]="section.changedCount > 0">
+                <div class="version-section-side">
+                  <strong>Left</strong>
+                  <span>Revision {{ leftVersion.revision }}</span>
+                </div>
+                <app-resource-version-section
+                  [sectionTitle]="section.title"
+                  [version]="leftVersion"
+                  [comparisonVersion]="rightVersion"
+                  comparisonSide="left"
+                />
+              </section>
+
+              <section class="version-section-pane version-section-pane--right" [class.version-section-pane--changed]="section.changedCount > 0">
+                <div class="version-section-side">
+                  <strong>Right</strong>
+                  <span>Revision {{ rightVersion.revision }}</span>
+                </div>
+                <app-resource-version-section
+                  [sectionTitle]="section.title"
+                  [version]="rightVersion"
+                  [comparisonVersion]="leftVersion"
+                  comparisonSide="right"
+                />
+              </section>
+            </div>
+          </article>
+        }
+      </section>
+    }
+  }
+</div>

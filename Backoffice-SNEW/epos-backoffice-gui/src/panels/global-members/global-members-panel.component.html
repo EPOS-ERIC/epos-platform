@@ -1,0 +1,292 @@
+@if (canManageMembers()) {
+<section class="users-card app-card">
+  <div class="users-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">Administration</p>
+      <h2>Users and Group Memberships</h2>
+      <p class="subtitle app-muted">Manage user access, group-scoped roles, permissions, and notifications.</p>
+    </div>
+
+    <label class="user-search">
+      <span class="visually-hidden">Search users</span>
+      <input
+        class="app-input"
+        type="search"
+        placeholder="Search users"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    </label>
+  </div>
+
+  @if (userStatusError()) {
+    <div class="users-message users-message--error">{{ userStatusError() }}</div>
+  }
+
+  @if (usersError()) {
+    <div class="users-message users-message--error">{{ usersError() }}</div>
+  } @else if (usersLoading()) {
+    <div class="users-message">Loading users...</div>
+  } @else if (filteredUsers().length) {
+    <div class="users-table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Global roles</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers(); track user.id) {
+            <tr>
+              <td><strong>{{ userName(user) }}</strong></td>
+              <td>{{ user.email }}</td>
+              <td><span class="status-pill" [attr.data-status]="user.status.toLowerCase()">{{ user.status }}</span></td>
+              <td>{{ user.global_roles.length ? user.global_roles.join(', ') : 'None' }}</td>
+              <td class="actions-column">
+                <div class="user-actions">
+                  <button type="button" class="app-button app-button--ghost" [disabled]="userStatusMutation().startsWith(user.id + ':')" (click)="openUserMemberships(user)">Manage</button>
+                  @if (canChangeStatusFor(user)) {
+                    @if (user.status === 'ACTIVE') {
+                      <button type="button" class="app-button app-button--ghost user-status-button user-status-button--block" [disabled]="!!userStatusMutation()" (click)="blockUser(user)">
+                        <app-icon name="block" [size]="16" />
+                        {{ userStatusMutation() === user.id + ':block' ? 'Blocking...' : 'Block' }}
+                      </button>
+                    } @else if (user.status === 'BLOCKED') {
+                      <button type="button" class="app-button app-button--ghost user-status-button" [disabled]="!!userStatusMutation()" (click)="unblockUser(user)">
+                        <app-icon name="block" [size]="16" />
+                        {{ userStatusMutation() === user.id + ':unblock' ? 'Unblocking...' : 'Unblock' }}
+                      </button>
+                    }
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="users-footer">Showing {{ filteredUsers().length }} of {{ users().length }} users</div>
+  } @else {
+    <div class="users-message">No users found.</div>
+  }
+</section>
+}
+
+@if (selectedUserSummary(); as userSummary) {
+  <div class="membership-backdrop" (click)="closeUserMemberships()">
+    <section class="membership-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="membership-dialog-title" (click)="$event.stopPropagation()">
+      <div class="membership-dialog-header">
+        <div>
+          <p class="eyebrow app-badge app-badge--primary">User Access</p>
+          <h2 id="membership-dialog-title">{{ userName(userSummary) }}</h2>
+          <p class="subtitle app-muted">{{ userSummary.email }}</p>
+        </div>
+        <button type="button" class="app-button app-button--ghost" (click)="closeUserMemberships()" [disabled]="!!globalAccessMutation() || !!membershipMutation() || !!notificationMutation() || !!removingMembershipGroupId()">Close</button>
+      </div>
+
+      @if (membershipError()) {
+        <div class="users-message users-message--error">{{ membershipError() }}</div>
+      }
+
+      @if (selectedUserLoading()) {
+        <div class="users-message">Loading memberships...</div>
+      } @else if (selectedUser(); as user) {
+        @if (canChangeUserStatus() || canManagePermissions()) {
+          <section class="global-access">
+            <div class="global-access-heading">
+              <h3>Global Access</h3>
+              <p class="app-muted">Manage platform-wide roles and direct permissions for this user.</p>
+            </div>
+
+            @if (globalAccessError()) {
+              <div class="notification-message users-message--error">{{ globalAccessError() }}</div>
+            }
+
+            @if (canChangeUserStatus()) {
+              <div class="global-access-group">
+                <h4>Roles</h4>
+                <label class="global-access-option">
+                  <input
+                    type="checkbox"
+                    [checked]="user.global_roles.includes('ADMIN')"
+                    [disabled]="!!globalAccessMutation()"
+                    (change)="toggleGlobalRole()"
+                  />
+                  <span>
+                    <strong>Administrator</strong>
+                    <small>Full platform administration access.</small>
+                    @if (globalAccessMutation() === 'role:ADMIN') {
+                      <small>Saving...</small>
+                    }
+                  </span>
+                </label>
+              </div>
+            }
+
+            @if (canManagePermissions()) {
+              <details class="global-access-group global-access-permissions">
+                <summary>
+                  <span>Direct Permissions</span>
+                  <small>{{ user.global_granted_permissions.length }} granted</small>
+                </summary>
+                <fieldset class="global-access-options" [disabled]="!!globalAccessMutation()">
+                  @for (permission of globalPermissions(); track permission.key) {
+                    <label class="global-access-option" [class.global-access-option--inherited]="user.global_role_permissions.includes(permission.key) && !user.global_granted_permissions.includes(permission.key)">
+                      <input
+                        type="checkbox"
+                        [checked]="user.global_granted_permissions.includes(permission.key) || user.global_role_permissions.includes(permission.key)"
+                        [disabled]="user.global_role_permissions.includes(permission.key) && !user.global_granted_permissions.includes(permission.key)"
+                        (change)="toggleGlobalPermission(permission.key)"
+                      />
+                      <span>
+                        <strong>{{ permission.label }}</strong>
+                        <small>{{ permission.description }}</small>
+                        @if (user.global_role_permissions.includes(permission.key) && !user.global_granted_permissions.includes(permission.key)) {
+                          <small>Provided by a global role.</small>
+                        } @else if (globalAccessMutation() === 'permission:' + permission.key) {
+                          <small>Saving...</small>
+                        }
+                      </span>
+                    </label>
+                  } @empty {
+                    <span class="notification-message app-muted">No global permissions are available.</span>
+                  }
+                </fieldset>
+              </details>
+            }
+          </section>
+        }
+
+        @if (canManageMemberships() || canManageRoles() || canManagePermissions() || canManageNotifications()) {
+        <div class="membership-list">
+          @for (membership of user.memberships; track membership.group.id) {
+            <article class="membership-card">
+              <div class="membership-card-header">
+                <div class="membership-group-heading">
+                  @if (groupIconPath(membership.group.id); as iconPath) {
+                    <img class="membership-group-logo" [src]="iconPath" alt="" aria-hidden="true" />
+                  }
+                  <div>
+                    <h3>{{ membership.group.name }}</h3>
+                    <span class="status-pill" [attr.data-status]="membership.status.toLowerCase()">{{ membership.status }}</span>
+                  </div>
+                </div>
+                <div class="membership-card-controls">
+                  <span class="membership-updated app-muted">Updated {{ membership.updated_at | date:'medium' }}</span>
+                  @if (canManageMemberships() && membership.status === 'ACTIVE' && !membership.roles.includes('GROUP_ADMIN')) {
+                    <button type="button" class="app-button app-button--ghost membership-remove-button" [disabled]="!!removingMembershipGroupId() || !!membershipMutation()" (click)="removeMembership(membership)">
+                      {{ removingMembershipGroupId() === membership.group.id ? 'Removing...' : 'Remove' }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (membership.status === 'ACTIVE' && (canManageRoles() || canManagePermissions())) {
+                <app-group-membership-access-editor
+                  [groupId]="membership.group.id"
+                  [roles]="membership.roles"
+                  [grantedPermissions]="membership.granted_permissions"
+                  [rolePermissions]="membership.role_permissions"
+                  [allowedRoles]="groupRoles"
+                  [allowedPermissions]="groupPermissions()"
+                  [mutationKey]="membershipMutation()"
+                  [canManageRoles]="canManageRoles()"
+                  [canManagePermissions]="canManagePermissions()"
+                  (roleChange)="toggleRole(membership, $event)"
+                  (permissionChange)="togglePermission(membership, $event)"
+                />
+              }
+
+              @if (membership.status === 'ACTIVE' && canManageNotifications()) {
+                <details class="membership-notifications">
+                  <summary>
+                    <span>Notifications</span>
+                    <small>{{ groupNotificationSubscriptionCount(membership.group.id) }} selected</small>
+                  </summary>
+
+                  @if (groupNotificationErrors()[membership.group.id]) {
+                    <div class="notification-message users-message--error">{{ groupNotificationErrors()[membership.group.id] }}</div>
+                  }
+
+                  <fieldset class="membership-notification-options" [disabled]="!!notificationMutation()">
+                    @for (topic of groupNotificationTopics(); track topic.key) {
+                      <label class="notification-option" [class.notification-option--unavailable]="!canReceiveGroupNotification(user, membership, topic)">
+                        <input
+                          type="checkbox"
+                          [checked]="isGroupNotificationSubscribed(membership.group.id, topic.key)"
+                          [disabled]="!canReceiveGroupNotification(user, membership, topic)"
+                          (change)="toggleGroupNotification(user, membership, topic)"
+                        />
+                        <span>
+                          <strong>{{ topic.label }}</strong>
+                          <small>{{ topic.description }}</small>
+                          @if (!canReceiveGroupNotification(user, membership, topic)) {
+                            <small>Unavailable until this user receives a required permission.</small>
+                          } @else if (notificationMutation() === membership.group.id + ':' + topic.key) {
+                            <small>Saving...</small>
+                          }
+                        </span>
+                      </label>
+                    } @empty {
+                      <span class="notification-message app-muted">No group notification topics are available.</span>
+                    }
+                  </fieldset>
+                </details>
+              } @else if (membership.status !== 'ACTIVE') {
+                <p class="membership-note app-muted">Roles, permissions, and notifications can only be modified for active memberships.</p>
+              }
+            </article>
+          } @empty {
+            <div class="users-message">This user has no group memberships.</div>
+          }
+        </div>
+        }
+
+        @if (canManageNotifications()) {
+          <section class="global-notifications">
+            <div class="global-notifications-heading">
+              <div>
+                <h3><app-icon class="notification-bell" name="bell" [size]="18" /> Global Notifications</h3>
+                <p class="app-muted">Choose which platform events are emailed to this user.</p>
+              </div>
+              <span class="app-badge app-badge--green">Email</span>
+            </div>
+
+            @if (notificationError()) {
+              <div class="notification-message users-message--error">{{ notificationError() }}</div>
+            }
+
+            <fieldset class="notification-options" [disabled]="!!notificationMutation()">
+              @for (topic of notificationTopics(); track topic.key) {
+                <label class="notification-option" [class.notification-option--unavailable]="!canReceiveNotification(user, topic)">
+                  <input
+                    type="checkbox"
+                    [checked]="canReceiveNotification(user, topic) && isNotificationSubscribed(topic.key)"
+                    [disabled]="!canReceiveNotification(user, topic)"
+                    (change)="toggleNotification(user, topic)"
+                  />
+                  <span>
+                    <strong>{{ topic.label }}</strong>
+                    <small>{{ topic.description }}</small>
+                    @if (!canReceiveNotification(user, topic)) {
+                      <small>Unavailable until this user receives a required permission.</small>
+                    } @else if (notificationMutation() === 'global:' + topic.key) {
+                      <small>Saving...</small>
+                    }
+                  </span>
+                </label>
+              } @empty {
+                <span class="notification-message app-muted">No global notification topics are available.</span>
+              }
+            </fieldset>
+          </section>
+        }
+      }
+    </section>
+  </div>
+}

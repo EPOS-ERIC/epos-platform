@@ -1,0 +1,46 @@
+@if (showLanding()) {
+  <section class="management-landing">
+    <div class="management-grid">
+      @for (destination of destinations(); track destination.panel) {
+        <a class="management-destination app-card" [routerLink]="[]" [queryParams]="{ panel: destination.panel }" queryParamsHandling="merge">
+          <span class="management-destination-icon"><app-icon [name]="destination.icon" [size]="22" /></span>
+          <div>
+            <span class="management-status">Open section</span>
+            <h3>{{ destination.title }}</h3>
+            <p>{{ destination.description }}</p>
+          </div>
+          <span class="management-arrow" aria-hidden="true">→</span>
+        </a>
+      }
+    </div>
+  </section>
+} @else {
+  <nav class="panel-navigation" aria-label="Global management navigation">
+    <a class="app-button app-button--ghost" [routerLink]="[]" [queryParams]="{ panel: null }" queryParamsHandling="merge">← All management areas</a>
+  </nav>
+}
+
+@if (isPanelActive('requests')) {
+  <app-global-requests-panel />
+}
+
+@if (isPanelActive('members')) {
+  <app-global-members-panel />
+}
+
+@if (isPanelActive('contact-points')) {
+  <app-global-contact-points-panel />
+}
+
+@if (isPanelActive('categories')) {
+  @if (canManageGroups()) {
+    <app-global-groups-panel />
+  }
+  @if (canManageCategories()) {
+    <app-categories-panel [groups]="groups" [groupsLoading]="groupsLoading" heading="Categories" />
+  }
+}
+
+@if (isPanelActive('organizations')) {
+  <app-global-organizations />
+}

@@ -1,0 +1,35 @@
+.dialog-eyebrow {
+  margin: 0;
+}
+
+.dialog-eyebrow--destructive {
+  border-color: #fecaca;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.dialog-message {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dialog-field {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.dialog-field textarea {
+  resize: vertical;
+}
+
+.dialog-confirm--destructive {
+  border-color: #b91c1c;
+  background: #dc2626;
+}
+
+.dialog-confirm--destructive:hover:not(:disabled) {
+  background: #b91c1c;
+}

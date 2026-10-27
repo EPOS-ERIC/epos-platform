@@ -235,6 +235,7 @@ func (a *Authorizer) canManageUserDirectory(ctx context.Context, userID string) 
 		domain.GlobalPermissionMembershipManage,
 		domain.GlobalPermissionRoleManage,
 		domain.GlobalPermissionPermissionManage,
+		domain.GlobalPermissionNotificationManage,
 	} {
 		allowed, err := a.repository.HasGlobalPermission(ctx, userID, permission)
 		if err != nil {
@@ -294,6 +295,7 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 	for _, permission := range []domain.GlobalPermission{
 		domain.GlobalPermissionMembershipManage,
 		domain.GlobalPermissionRoleManage,
+		domain.GlobalPermissionNotificationManage,
 	} {
 		allowed, err := a.repository.HasGlobalPermission(ctx, userID, permission)
 		if err != nil {
@@ -318,6 +320,7 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 		domain.GroupPermissionMembershipManage,
 		domain.GroupPermissionRoleManage,
 		domain.GroupPermissionPermissionManage,
+		domain.GroupPermissionNotificationManage,
 	} {
 		allowed, err := a.repository.HasGroupPermission(ctx, userID, groupID, permission)
 		if err != nil {

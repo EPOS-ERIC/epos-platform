@@ -1,0 +1,106 @@
+<section class="allowed-values">
+  <header class="allowed-values-header">
+    <div>
+      <span class="allowed-values-title">Allowed values</span>
+      <span class="allowed-values-count">{{ filteredValues().length === values.length ? values.length : filteredValues().length + ' / ' + values.length }}</span>
+    </div>
+
+    @if (!disabled) {
+      <div class="allowed-values-add">
+        <button type="button" class="allowed-values-add-main" (click)="addOption()">Add option</button>
+        <button type="button" class="allowed-values-add-toggle" aria-label="More add options" [attr.aria-expanded]="addMenuOpen" (click)="toggleAddMenu()">
+          <app-icon name="chevron-down" [size]="14" />
+        </button>
+        @if (addMenuOpen) {
+          <div class="allowed-values-add-menu">
+            <button type="button" (click)="openBulkDialog()">Add multiple options</button>
+          </div>
+        }
+      </div>
+    }
+  </header>
+
+  <div class="allowed-values-search">
+    <app-icon class="allowed-values-search-icon" name="search" [size]="15" />
+    <input
+      type="search"
+      placeholder="Search options"
+      aria-label="Search allowed values"
+      [ngModel]="searchQuery"
+      [ngModelOptions]="{ standalone: true }"
+      (ngModelChange)="searchQuery = $event"
+    />
+  </div>
+
+  <div class="allowed-values-list">
+    @for (item of filteredValues(); track item.index) {
+      <div class="allowed-value-row">
+        <input
+          #optionInput
+          class="app-input allowed-value-input"
+          [type]="kind === 'STRING' ? 'text' : 'number'"
+          [attr.step]="kind === 'INTEGER' ? '1' : kind === 'FLOAT' ? 'any' : null"
+          [ngModel]="item.option.value"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="updateValue(item.index, $event, optionInput)"
+          [disabled]="disabled"
+          placeholder="Value"
+        />
+        <input
+          class="app-input allowed-value-label-input"
+          type="text"
+          [ngModel]="item.option.label"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="updateLabel(item.index, $event)"
+          [disabled]="disabled"
+          placeholder="Label (optional)"
+        />
+        @if (!disabled) {
+          <button type="button" class="allowed-value-remove" (click)="removeValue(item.index)">Remove</button>
+        }
+      </div>
+    } @empty {
+      <p class="allowed-values-empty">{{ values.length ? 'No options match your search.' : 'No allowed values configured.' }}</p>
+    }
+  </div>
+
+  @if (defaultOutsideAllowedValues()) {
+    <p class="allowed-values-warning">The default value must be included in the allowed values.</p>
+  }
+</section>
+
+@if (bulkDialogOpen) {
+  <div class="resource-dialog-backdrop" (click)="closeBulkDialog()">
+    <section class="resource-dialog app-card allowed-values-dialog" (click)="$event.stopPropagation()">
+      <div class="allowed-values-dialog-header">
+        <div>
+          <p class="eyebrow app-badge app-badge--primary">Allowed values</p>
+          <h2>Add multiple options</h2>
+          <p class="subtitle app-muted">Enter comma-separated values or place each value on a new line.</p>
+        </div>
+      </div>
+
+      <label class="allowed-values-dialog-field">
+        <span class="allowed-values-dialog-label">Options</span>
+        <textarea
+          class="app-input allowed-values-textarea"
+          [class.app-input--invalid]="bulkValuesError"
+          rows="8"
+          [(ngModel)]="bulkValues"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="bulkValuesError = ''"
+          placeholder="Option one, Option two&#10;Option three"
+        ></textarea>
+      </label>
+
+      @if (bulkValuesError) {
+        <div class="allowed-values-error" role="alert">{{ bulkValuesError }}</div>
+      }
+
+      <div class="resource-dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="closeBulkDialog()">Cancel</button>
+        <button type="button" class="app-button app-button--primary" (click)="addMultipleOptions()">Add options</button>
+      </div>
+    </section>
+  </div>
+}

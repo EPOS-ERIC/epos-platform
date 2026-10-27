@@ -1,0 +1,93 @@
+<main class="main-container-layout">
+  <app-navigation-sidebar
+    [canAccessGlobalManage]="canAccessGlobalManage()"
+    [groups]="groups()"
+    [groupsLoading]="groupsLoading()"
+    [currentSectionPath]="sectionPath()"
+    [selectedGroupId]="selectedGroupId()"
+    [globalManageReturnUrl]="globalManageReturnUrl()"
+    [accountReturnUrl]="currentUrl()"
+    [detailItems]="sidebarDetailItems()"
+    [detailSectionLabel]="pageLabel() === 'Compare' ? 'Compare' : 'Detail'"
+    [detailRootLabel]="sidebarDetailRootLabel()"
+    [detailActions]="detailStore.sidebarActions()"
+    (detailAction)="detailStore.handleSidebarAction($event)"
+  />
+
+  <section
+    class="content"
+    [class.content--management-landing]="managementHeaderContext()"
+    [class.content--global-management]="managementHeaderContext() === 'global'"
+    [class.content--group-management]="managementHeaderContext() === 'group'"
+    [style.--management-accent]="managementHeaderContext() === 'group' ? groupAccentColor(selectedGroupId()) : null"
+    #detailScrollContainer
+  >
+    <app-backoffice-header
+      [sectionTitle]="sectionTitle()"
+      [pageLabel]="pageLabel()"
+      [darkMode]="darkMode()"
+      [showSearchActions]="pageLabel() === 'Results' && (!!selectedGroupId() || allGroups())"
+      [canAddNewResource]="canCreateResource()"
+      [searchQuery]="searchQuery()"
+      [filterByAuthor]="filterByAuthor()"
+      [availableAuthors]="availableAuthors()"
+      [selectedDataTypes]="selectedDataTypes()"
+      [selectedVersioningStatuses]="selectedVersioningStatuses()"
+      [managementContext]="managementHeaderContext()"
+      [managementEyebrow]="managementHeaderContext() === 'global' ? 'Platform Administration' : 'Group Administration · ' + sectionTitle()"
+      [managementTitle]="managementHeaderContext() === 'global' ? 'Global Administration' : (selectedGroupName() || 'Manage group')"
+      [managementSubtitle]="managementHeaderContext() === 'global' ? 'Choose an area to manage. Only sections available to your global permissions are shown.' : 'Choose an area to manage. Only sections available to your permissions are shown.'"
+    [managementIconPath]="managementHeaderContext() === 'group' ? (groupIconPath(selectedGroupId()) ?? '') : ''"
+    [managementBackRoute]="manageBackRoute()"
+    [headerBackRoute]="headerBackRoute()"
+    (searchQueryChange)="updateSearchQuery($event)"
+      (filtersChange)="updateResultsFilters($event)"
+      (toggleTheme)="toggleTheme()"
+      (addNewResource)="openCreateResourceDialog()"
+    />
+
+    @if (pageLabel() === 'Detail' || pageLabel() === 'Compare') {
+      <div class="detail-page-actions">
+        <button type="button" class="app-button app-button--icon detail-back-to-top" (click)="scrollContentToTop()" title="Back to top" aria-label="Back to top">
+          <span aria-hidden="true" class="detail-back-to-top-icon">⌃</span>
+        </button>
+      </div>
+    }
+
+    <div class="content-spacer">
+      @if (accountPage() === 'memberships') {
+        <app-memberships-page />
+      } @else if (manageGroup()) {
+        <app-manage-group-page [groupId]="selectedGroupId()" [groupName]="selectedGroupName()" [groups]="groups()" [panel]="manageGroupPanel()" />
+      } @else if (globalManage()) {
+        <app-global-manage-page [groups]="groups()" [groupsLoading]="groupsLoading()" [panel]="globalManagePanel()" />
+      } @else if (pageLabel() === 'Detail') {
+        @defer {
+          <app-resource-detail-page />
+        } @placeholder {
+          <section class="comparison-route-error app-card">Loading resource detail...</section>
+        }
+      } @else if (pageLabel() === 'Compare') {
+        @if (comparisonContext(); as context) {
+          @defer {
+            <app-resource-version-comparison-page [context]="context" />
+          } @placeholder {
+            <section class="comparison-route-error app-card">Loading version comparison...</section>
+          }
+        } @else {
+          <section class="comparison-route-error app-card">Select two valid resource versions to compare.</section>
+        }
+      } @else if (!allGroups() && !selectedGroupId()) {
+        <app-group-selection
+          [groups]="groups()"
+          [groupsLoading]="groupsLoading()"
+          [concept]="currentConcept()"
+          [sectionPath]="sectionPath()"
+          [sectionTitle]="sectionTitle()"
+        />
+      } @else {
+        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [allGroups]="allGroups()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [canManageGroup]="canManageSelectedGroup()" [belongsToGroup]="belongsToGroup()" [canCopyResources]="canCopyResources()" [returnUrl]="currentUrl()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" [filterByAuthor]="filterByAuthor()" [selectedDataTypes]="selectedDataTypes()" [selectedVersioningStatuses]="selectedVersioningStatuses()" (copyResource)="openCopyResource($event)" (editFilter)="editResultsFilter($event)" />
+      }
+    </div>
+  </section>
+</main>

@@ -1,0 +1,110 @@
+<section class="contact-points-card app-card">
+  <div class="contact-points-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">Administration</p>
+      <h2>Contact Points</h2>
+      <p class="subtitle app-muted">Create and manage reusable contact points available across platform resources.</p>
+    </div>
+
+    <div class="contact-points-header-actions">
+      <label class="contact-point-search">
+        <span class="app-visually-hidden">Search contact points</span>
+        <input class="app-input" type="search" placeholder="Search by email or role" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" />
+      </label>
+      <button type="button" class="app-button app-button--primary add-contact-point-button" (click)="openCreateEditor()">
+        <span aria-hidden="true">+</span>
+        Add New Contact Point
+      </button>
+    </div>
+  </div>
+
+  @if (loadError()) {
+    <div class="contact-points-message contact-points-message--error">{{ loadError() }}</div>
+  } @else if (loading()) {
+    <div class="contact-points-message">Loading contact points...</div>
+  } @else if (filteredContactPoints().length) {
+    <ul class="contact-point-list">
+      @for (contactPoint of paginatedContactPoints(); track contactPoint.id) {
+        <li class="contact-point-item">
+          <div class="contact-point-summary">
+            <span class="contact-point-mark"><app-icon name="at-sign" [size]="22" /></span>
+            <div>
+              <h3>{{ contactPoint.email }}</h3>
+              <p>Role: {{ contactPoint.role }}</p>
+            </div>
+          </div>
+          <div class="contact-point-actions">
+            <button type="button" class="app-button app-button--ghost" (click)="openEditEditor(contactPoint)">Edit</button>
+            <button type="button" class="app-button contact-point-delete-button" (click)="openDeleteDialog(contactPoint)">Remove</button>
+          </div>
+        </li>
+      }
+    </ul>
+    <app-list-pagination
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      [totalItems]="filteredContactPoints().length"
+      itemLabel="contact points"
+      ariaLabel="Contact points pagination"
+      (currentPageChange)="setPage($event)"
+      (pageSizeChange)="changePageSize($event)"
+    />
+  } @else {
+    <div class="contact-points-message">{{ contactPoints().length ? 'No contact points match the search.' : 'No contact points found.' }}</div>
+  }
+</section>
+
+@if (editorOpen()) {
+  <div class="contact-point-backdrop" (click)="closeEditor()">
+    <section class="contact-point-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="contact-point-dialog-title" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow app-badge app-badge--primary">{{ editingContactPoint() ? 'Edit contact point' : 'New contact point' }}</p>
+          <h2 id="contact-point-dialog-title">{{ editingContactPoint() ? 'Edit reusable contact point' : 'Add reusable contact point' }}</h2>
+        </div>
+        <button type="button" class="app-button app-button--ghost" (click)="closeEditor()" [disabled]="editorSaving()">Close</button>
+      </div>
+
+      @if (editorError()) {
+        <div class="contact-points-message contact-points-message--error">{{ editorError() }}</div>
+      }
+
+      <form class="contact-point-form" #contactPointEditorForm="ngForm" (ngSubmit)="saveContactPoint()">
+        <label class="form-field">
+          <span>Email *</span>
+          <input class="app-input" name="email" type="email" required email [(ngModel)]="contactPointForm.email" />
+        </label>
+        <label class="form-field">
+          <span>Role *</span>
+          <input class="app-input" name="role" required [(ngModel)]="contactPointForm.role" />
+        </label>
+        <div class="dialog-actions">
+          <button type="button" class="app-button app-button--ghost" (click)="closeEditor()" [disabled]="editorSaving()">Cancel</button>
+          <button type="submit" class="app-button app-button--primary" [disabled]="contactPointEditorForm.invalid || editorSaving()">
+            {{ editorSaving() ? 'Saving...' : (editingContactPoint() ? 'Save changes' : 'Create contact point') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
+
+@if (pendingDelete(); as contactPoint) {
+  <div class="contact-point-backdrop" (click)="closeDeleteDialog()">
+    <section class="contact-point-dialog delete-dialog app-card" role="alertdialog" aria-modal="true" aria-labelledby="delete-contact-point-title" (click)="$event.stopPropagation()">
+      <p class="eyebrow app-badge app-badge--danger">Remove contact point</p>
+      <h2 id="delete-contact-point-title">Remove {{ contactPoint.email }}?</h2>
+      <p class="subtitle app-muted">This operation cannot be undone and may fail if the contact point is still referenced.</p>
+      @if (deleteError()) {
+        <div class="contact-points-message contact-points-message--error">{{ deleteError() }}</div>
+      }
+      <div class="dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="closeDeleteDialog()" [disabled]="!!deletingContactPointId()">Cancel</button>
+        <button type="button" class="app-button contact-point-delete-button" (click)="deleteContactPoint()" [disabled]="!!deletingContactPointId()">
+          {{ deletingContactPointId() ? 'Removing...' : 'Remove contact point' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

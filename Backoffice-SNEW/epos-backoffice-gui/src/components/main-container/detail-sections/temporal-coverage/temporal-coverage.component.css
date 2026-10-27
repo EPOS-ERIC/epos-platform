@@ -1,0 +1,6 @@
+@import '../detail-shared.css';
+
+.detail-section-card--embedded {
+  padding: 0;
+  scroll-margin-top: 0;
+}

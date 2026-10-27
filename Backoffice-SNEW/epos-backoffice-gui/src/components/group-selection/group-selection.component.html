@@ -1,0 +1,43 @@
+<section class="group-selection" aria-labelledby="group-selection-title">
+  <header class="group-selection-header">
+    <p class="eyebrow app-badge app-badge--primary">{{ sectionTitle }} Groups</p>
+    <h2 id="group-selection-title">Select a Group to explore results</h2>
+    <p class="app-muted">Choose a group to browse the resources available in {{ sectionTitle.toLowerCase() }}.</p>
+  </header>
+
+  @if (groupsLoading) {
+    <div class="group-selection-message app-card">Loading groups...</div>
+  } @else {
+    <div class="group-selection-grid">
+      @for (group of visibleGroups; track group.id) {
+        <a
+          class="group-selection-card app-card"
+          [routerLink]="['/', sectionPath]"
+          [queryParams]="{ groupId: group.id }"
+          [style.--group-card-accent]="group.color || null"
+        >
+          <div class="group-selection-logo">
+            @if (groupLogo(group); as logoPath) {
+              <img [src]="logoPath" alt="" />
+            } @else {
+              <span aria-hidden="true">{{ group.name.charAt(0).toUpperCase() }}</span>
+            }
+          </div>
+          <div class="group-selection-copy">
+            <span class="group-selection-status">Open group</span>
+            <h3>{{ group.label || group.name }}</h3>
+            @if (group.label && group.label !== group.name) {
+              <span class="group-selection-name">{{ group.name }}</span>
+            }
+            @if (group.description) {
+              <p class="group-selection-description">{{ group.description }}</p>
+            }
+          </div>
+          <span class="group-selection-arrow" aria-hidden="true">→</span>
+        </a>
+      } @empty {
+        <div class="group-selection-message app-card">No {{ sectionTitle.toLowerCase() }} groups are available.</div>
+      }
+    </div>
+  }
+</section>

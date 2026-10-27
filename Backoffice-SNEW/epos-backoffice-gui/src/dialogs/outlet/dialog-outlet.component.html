@@ -1,0 +1,53 @@
+@if (dialogService.state(); as dialog) {
+  <div class="app-dialog-backdrop" (click)="dialogService.dismiss()">
+    <section
+      class="app-dialog app-dialog--compact app-card"
+      [class.dialog--destructive]="dialog.destructive"
+      [attr.role]="dialog.destructive ? 'alertdialog' : 'dialog'"
+      aria-modal="true"
+      aria-labelledby="shared-dialog-title"
+      [attr.aria-describedby]="dialog.message ? 'shared-dialog-description' : null"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="app-dialog-header">
+        <div>
+          @if (dialog.eyebrow) {
+            <p class="dialog-eyebrow app-badge" [class.dialog-eyebrow--destructive]="dialog.destructive">{{ dialog.eyebrow }}</p>
+          }
+          <h2 id="shared-dialog-title">{{ dialog.title }}</h2>
+          @if (dialog.message) {
+            <p id="shared-dialog-description" class="dialog-message app-muted">{{ dialog.message }}</p>
+          }
+        </div>
+      </header>
+
+      @if (dialog.kind === 'prompt') {
+        <div class="app-dialog-body">
+          <label class="dialog-field">
+            <span>{{ dialog.inputLabel }}</span>
+            <textarea
+              class="app-input"
+              rows="5"
+              autofocus
+              [(ngModel)]="promptValue"
+              [placeholder]="dialog.placeholder || ''"
+            ></textarea>
+          </label>
+        </div>
+      }
+
+      <footer class="app-dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="dialogService.dismiss()">{{ dialog.cancelLabel || 'Cancel' }}</button>
+        <button
+          type="button"
+          class="app-button app-button--primary"
+          [class.dialog-confirm--destructive]="dialog.destructive"
+          [disabled]="dialog.kind === 'prompt' && dialog.required && !promptValue.trim()"
+          (click)="dialogService.accept(promptValue.trim())"
+        >
+          {{ dialog.confirmLabel || 'Confirm' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+}

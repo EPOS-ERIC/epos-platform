@@ -1,0 +1,241 @@
+<section class="memberships-page">
+  <header class="memberships-page-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">My Account</p>
+      <h2>My Memberships</h2>
+      <p class="subtitle app-muted">Review your group access, assigned roles and pending requests.</p>
+    </div>
+    <button
+      type="button"
+      class="app-button app-button--primary"
+      (click)="requestDialog.open()"
+      [disabled]="requestDialog.groupsLoading() || !requestDialog.groups().length"
+    >Request membership</button>
+  </header>
+
+  @if (membershipActionError()) {
+    <div class="memberships-message memberships-message--error">{{ membershipActionError() }}</div>
+  }
+
+  @if (error()) {
+    <div class="memberships-message memberships-message--error">{{ error() }}</div>
+  } @else if (loading()) {
+    <div class="memberships-message">Loading memberships...</div>
+  } @else if (user(); as currentUser) {
+    @if (currentUser.memberships.length) {
+      <div class="membership-grid">
+        @for (membership of currentUser.memberships; track membership.group.id) {
+          @let route = groupRoute(membership);
+          <article class="membership-summary app-card">
+            <a
+              class="membership-summary-header"
+              [class.membership-summary-header--clickable]="membership.status === 'ACTIVE' && route !== null"
+              [routerLink]="membership.status === 'ACTIVE' ? route : null"
+              [queryParams]="membership.status === 'ACTIVE' && route ? { groupId: membership.group.id } : null"
+              [attr.aria-label]="membership.status === 'ACTIVE' && route ? 'Open ' + membership.group.name : null"
+            >
+              <div class="membership-group-heading">
+                @if (groupIconPath(membership.group.id); as iconPath) {
+                  <img class="membership-group-logo" [src]="iconPath" alt="" aria-hidden="true" />
+                }
+                <div>
+                  <span class="membership-group-label">Group</span>
+                  <h3>{{ membership.group.name }}</h3>
+                </div>
+              </div>
+              <span class="status-pill" [attr.data-status]="membership.status.toLowerCase()">{{ membership.status }}</span>
+            </a>
+
+            <dl>
+              <div>
+                <dt>Assigned roles</dt>
+                <dd>{{ membership.roles.length ? membership.roles.join(', ') : 'None' }}</dd>
+              </div>
+              <div>
+                <dt>Pending role requests</dt>
+                <dd>{{ pendingRoleNames(membership) }}</dd>
+              </div>
+              <div>
+                <dt>Last updated</dt>
+                <dd>{{ membership.updated_at | date:'medium' }}</dd>
+              </div>
+            </dl>
+
+            <details class="membership-permissions membership-direct-permissions">
+              <summary>
+                <span>Direct permissions</span>
+                <small>{{ membership.granted_permissions.length }} assigned</small>
+              </summary>
+              <div class="membership-permission-list">
+                @for (permission of membership.granted_permissions; track permission) {
+                  @if (permissionDetails(permission); as details) {
+                    <div class="membership-permission">
+                      <strong>{{ details.label }}</strong>
+                      <small>{{ details.description }}</small>
+                    </div>
+                  }
+                } @empty {
+                  <span class="app-muted">No direct permissions assigned.</span>
+                }
+              </div>
+            </details>
+
+            <details class="membership-permissions membership-role-permissions">
+              <summary>
+                <span>Role permissions</span>
+                <small>{{ membership.role_permissions.length }} inherited</small>
+              </summary>
+              <div class="membership-permission-list">
+                @for (permission of membership.role_permissions; track permission) {
+                  @if (permissionDetails(permission); as details) {
+                    <div class="membership-permission">
+                      <strong>{{ details.label }}</strong>
+                      <small>{{ details.description }}</small>
+                    </div>
+                  }
+                } @empty {
+                  <span class="app-muted">No permissions inherited from roles.</span>
+                }
+              </div>
+            </details>
+
+            @if (membership.status === 'ACTIVE') {
+              <details class="membership-permissions membership-notifications">
+                <summary>
+                  <span>Notifications</span>
+                  <small>{{ notificationSubscriptionCount(membership.group.id) }} selected</small>
+                </summary>
+                <div class="membership-notification-list">
+                  @if (notificationError()) {
+                    <span class="membership-notification-message memberships-message--error">{{ notificationError() }}</span>
+                  }
+
+                  @if (notificationsLoading()) {
+                    <span class="membership-notification-message app-muted">Loading notification settings...</span>
+                  } @else {
+                    <fieldset class="membership-notification-options" [disabled]="!!notificationMutation()">
+                      @for (topic of notificationTopics(); track topic.key) {
+                        <label class="membership-notification-option" [class.membership-notification-option--unavailable]="!canReceiveNotification(membership, topic)">
+                          <input
+                            type="checkbox"
+                            [checked]="isNotificationSubscribed(membership.group.id, topic.key)"
+                            [disabled]="!canReceiveNotification(membership, topic)"
+                            (change)="toggleNotification(membership, topic)"
+                          />
+                          <span>
+                            <strong>{{ topic.label }}</strong>
+                            <small>{{ topic.description }}</small>
+                            @if (!canReceiveNotification(membership, topic)) {
+                              <small>Unavailable until you receive a required permission.</small>
+                            } @else if (notificationMutation() === membership.group.id + ':' + topic.key) {
+                              <small>Saving...</small>
+                            }
+                          </span>
+                        </label>
+                      } @empty {
+                        <span class="membership-notification-message app-muted">No group notification topics are available.</span>
+                      }
+                    </fieldset>
+                  }
+                </div>
+              </details>
+            }
+
+            @if (membership.status === 'PENDING') {
+              <footer class="membership-summary-footer">
+                <button
+                  type="button"
+                  class="app-button membership-remove-button"
+                  [disabled]="!!membershipMutation()"
+                  (click)="cancelMembershipRequest(membership)"
+                >
+                  @if (membershipMutation() === membership.group.id) {
+                    Cancelling...
+                  } @else {
+                    Cancel Request
+                  }
+                </button>
+              </footer>
+            } @else if (membership.status === 'ACTIVE') {
+              <footer class="membership-summary-footer">
+                <button
+                  type="button"
+                  class="app-button app-button--ghost membership-role-request-button"
+                  [disabled]="!!membershipMutation()"
+                  (click)="openRoleRequestDialog(membership)"
+                >Request role</button>
+                <button
+                  type="button"
+                  class="app-button membership-remove-button"
+                  [disabled]="!!membershipMutation()"
+                  (click)="leaveOwnMembership(membership)"
+                >{{ membershipMutation() === membership.group.id ? 'Leaving...' : 'Leave' }}</button>
+              </footer>
+            }
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="memberships-empty app-card">
+        <h3>No memberships yet</h3>
+        <p class="app-muted">Request access to a group to start contributing to Backoffice resources.</p>
+      </div>
+    }
+  }
+</section>
+
+@if (roleRequestMembership(); as membership) {
+  <div class="app-dialog-backdrop" (click)="closeRoleRequestDialog()">
+    <section class="app-dialog app-card role-request-dialog" role="dialog" aria-modal="true" aria-labelledby="role-request-title" aria-describedby="role-request-description" (click)="$event.stopPropagation()">
+      <header class="app-dialog-header">
+        <p class="eyebrow app-badge app-badge--primary">Group Access</p>
+        <h2 id="role-request-title">Request roles</h2>
+        <p id="role-request-description" class="subtitle app-muted">Request additional roles in {{ membership.group.name }}.</p>
+      </header>
+
+      <div class="app-dialog-body role-request-body">
+        <section>
+          <h3>Current roles</h3>
+          <div class="role-chip-list">
+            @for (role of membership.roles; track role) {
+              <span class="app-chip">{{ role }}</span>
+            } @empty {
+              <span class="app-muted">No roles currently assigned.</span>
+            }
+          </div>
+        </section>
+
+        <fieldset class="role-request-options" [disabled]="roleRequestSaving()">
+          <legend>Roles to request</legend>
+          @for (role of requestableRoles; track role) {
+            <label class="role-request-option">
+              <input
+                type="checkbox"
+                [checked]="hasRole(membership, role) || hasPendingRoleRequest(membership, role) || selectedRoles().includes(role)"
+                [disabled]="hasRole(membership, role) || hasPendingRoleRequest(membership, role)"
+                (change)="toggleRequestedRole(membership, role)"
+              />
+              <span>{{ role }}</span>
+              @if (hasRole(membership, role)) {
+                <small>Current role</small>
+              } @else if (hasPendingRoleRequest(membership, role)) {
+                <small>Request pending</small>
+              }
+            </label>
+          }
+        </fieldset>
+
+        @if (roleRequestError()) {
+          <div class="dialog-error" role="alert">{{ roleRequestError() }}</div>
+        }
+      </div>
+
+      <footer class="app-dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="closeRoleRequestDialog()" [disabled]="roleRequestSaving()">Cancel</button>
+        <button type="button" class="app-button app-button--primary" (click)="submitRoleRequests()" [disabled]="roleRequestSaving() || !selectedRoles().length">
+          {{ roleRequestSaving() ? 'Submitting...' : 'Submit request' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+}

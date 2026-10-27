@@ -1,0 +1,85 @@
+<section id="distributions" class="detail-section-card app-card" [class.distribution--comparison]="comparisonMode">
+  <div class="detail-section-header">
+    <div>
+      <h2>Distributions</h2>
+      <p class="subtitle app-muted">Multiple distributions with typed internal payloads.</p>
+    </div>
+    @if (!comparisonMode) {
+      <div class="distribution-actions">
+        <label>
+          <span class="visually-hidden">Distribution type</span>
+          <select class="app-input" [(ngModel)]="newDistributionKind" [ngModelOptions]="{ standalone: true }" [disabled]="disabled">
+            <option value="web-service">Web service</option>
+            <option value="downloadable-file">Downloadable file</option>
+          </select>
+        </label>
+        <button type="button" class="app-button app-button--primary" (click)="addDistribution()" [disabled]="disabled">Add distribution</button>
+      </div>
+    }
+  </div>
+
+  @if (model.length) {
+    <div class="detail-fieldset">
+      <div class="tab-bar">
+        @for (distribution of model; track $index) {
+          <button type="button" class="tab-button" [class.active]="distributionTabs === $index" (click)="selectDistributionTab($index)">
+            {{ distribution.title || 'Distribution ' + ($index + 1) }}
+          </button>
+        }
+      </div>
+
+      @if (selectedDistribution(); as distribution) {
+        <div class="distribution-body">
+          <div class="distribution-level-heading">
+            <span class="app-badge app-badge--blue">Distribution</span>
+            <strong>{{ distribution.title || 'Selected distribution' }}</strong>
+          </div>
+
+          <fieldset class="detail-fieldset" [disabled]="disabled">
+            <div class="detail-form-grid">
+              @for (field of distributionFields; track field) {
+                <!-- Render distribution fields but not "type" (= no need to expose it as an input field) -->
+                @if (field !== 'type') {
+                  <label class="detail-field">
+                    <span class="detail-label">{{ distributionFieldLabel(field) }}{{ field === 'title' || field === 'description' ? ' *' : '' }}</span>
+                    <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="field === 'title' || field === 'description'" />
+                  </label>
+                }
+              }
+            </div>
+          </fieldset>
+
+          @if (distribution.kind === 'web-service') {
+            <app-web-service
+              [model]="distribution.webService"
+              [comparisonModel]="selectedComparisonWebService()"
+              [disabled]="disabled"
+              [comparisonMode]="comparisonMode"
+              [comparisonSide]="comparisonSide"
+              (modelChange)="emitModelChange()"
+            ></app-web-service>
+          } @else if (distribution.kind === 'downloadable-file') {
+            <div class="distribution-subsection">
+              <h3>Downloadable File</h3>
+              <fieldset class="detail-fieldset" [disabled]="disabled">
+                <div class="detail-form-grid">
+                  <label class="detail-field detail-field--full">
+                    <span class="detail-label">URL *</span>
+                    <input class="app-input" type="text" [(ngModel)]="distribution.downloadableFile.url" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
+                  </label>
+
+                  <label class="detail-field">
+                    <span class="detail-label">Format *</span>
+                    <input class="app-input" type="text" [(ngModel)]="distribution.downloadableFile.format" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
+                  </label>
+                </div>
+              </fieldset>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="detail-empty">No distributions added yet.</div>
+  }
+</section>
