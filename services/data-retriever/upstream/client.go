@@ -58,5 +58,14 @@ func (c *Client) ExecuteStream(ctx context.Context, req domain.PreparedRetrieval
 func isBinaryPayload(contentType string) bool {
 	base, _, _ := strings.Cut(contentType, ";")
 	base = strings.ToLower(strings.TrimSpace(base))
-	return !strings.HasPrefix(base, "text/") && base != "application/json" && base != "application/xml" && base != "application/x-www-form-urlencoded" && !strings.HasSuffix(base, "+json") && !strings.HasSuffix(base, "+xml")
+	if strings.HasPrefix(base, "text/") {
+		return false
+	}
+	if base == "application/json" || base == "application/xml" || base == "application/x-www-form-urlencoded" {
+		return false
+	}
+	if strings.HasSuffix(base, "+json") || strings.HasSuffix(base, "+xml") {
+		return false
+	}
+	return true
 }
