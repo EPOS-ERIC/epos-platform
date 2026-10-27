@@ -12,32 +12,35 @@ import (
 
 func TestNewWebServiceInputNormalizesAndOrdersParameters(t *testing.T) {
 	input, err := NewWebServiceInput(WebServiceInput{
-		Name:        " service ",
-		TemplateURL: " https://example.test/items/{item-id} ",
-		Method:      " post ",
-		Type:        " geojson ",
-		VisibleOn:   []WebServiceVisibleOn{" map ", "GRAPH", "map"},
-		Format:      " Application/JSON ; Charset=UTF-8 ",
-		Parameters: []WebServiceParameterInput{
-			{Position: 1, Name: "z", Label: " Z ", Schema: StringSchema{}, Location: ParameterLocationQuery},
-			{Position: 0, Name: "item-id", Label: " Item ", Schema: StringSchema{}, Location: ParameterLocationPath},
-			{Position: 1, Name: "a", Label: " A ", Schema: StringSchema{}, Location: ParameterLocationQuery},
+		Name: " service ",
+		Type: " http ",
+		Configuration: GenericWebServiceConfigurationInput{
+			TemplateURL: " https://example.test/items/{item-id} ",
+			Method:      " post ",
+			Format:      " Application/JSON ; Charset=UTF-8 ",
+			Parameters: []WebServiceParameterInput{
+				{Position: 1, Name: "z", Label: " Z ", Schema: StringSchema{}, Location: ParameterLocationQuery},
+				{Position: 0, Name: "item-id", Label: " Item ", Required: true, Schema: StringSchema{}, Location: ParameterLocationPath},
+				{Position: 1, Name: "a", Label: " A ", Schema: StringSchema{}, Location: ParameterLocationQuery},
+			},
 		},
+		VisibleOn: []WebServiceVisibleOn{" map ", "GRAPH", "map"},
 	})
 	if err != nil {
 		t.Fatalf("NewWebServiceInput() error = %v", err)
 	}
-	if input.Name != "service" || input.TemplateURL != "https://example.test/items/{item-id}" || input.Method != HTTPMethodPost || input.Type != WebServiceTypeGeoJSON || input.Format != "application/json; charset=UTF-8" {
+	configuration := input.Configuration.(GenericWebServiceConfigurationInput)
+	if input.Name != "service" || configuration.TemplateURL != "https://example.test/items/{item-id}" || configuration.Method != HTTPMethodPost || input.Type != WebServiceTypeHTTP || configuration.Format != "Application/JSON ; Charset=UTF-8" {
 		t.Fatalf("normalized web service = %+v", input)
 	}
 	if got := input.VisibleOn; !slices.Equal(got, []WebServiceVisibleOn{WebServiceVisibleOnMap, WebServiceVisibleOnGraph}) {
 		t.Fatalf("visible on = %v, want [MAP GRAPH]", got)
 	}
-	if got := []string{input.Parameters[0].Name, input.Parameters[1].Name, input.Parameters[2].Name}; !slices.Equal(got, []string{"item-id", "a", "z"}) {
+	if got := []string{configuration.Parameters[0].Name, configuration.Parameters[1].Name, configuration.Parameters[2].Name}; !slices.Equal(got, []string{"item-id", "a", "z"}) {
 		t.Fatalf("parameter order = %v", got)
 	}
-	if input.Parameters[0].Label != "Item" {
-		t.Fatalf("parameter label = %q, want Item", input.Parameters[0].Label)
+	if configuration.Parameters[0].Label != "Item" {
+		t.Fatalf("parameter label = %q, want Item", configuration.Parameters[0].Label)
 	}
 }
 
@@ -46,10 +49,12 @@ func TestNewWebServiceDescriptionIsOptionalButNotEmpty(t *testing.T) {
 		return WebServiceInput{
 			Name:        "service",
 			Description: description,
-			TemplateURL: "https://example.test",
-			Method:      HTTPMethodGet,
-			Type:        WebServiceTypeGeoJSON,
-			Format:      "application/json",
+			Type:        WebServiceTypeHTTP,
+			Configuration: GenericWebServiceConfigurationInput{
+				TemplateURL: "https://example.test",
+				Method:      HTTPMethodGet,
+				Format:      "application/json",
+			},
 		}
 	}
 
@@ -72,17 +77,19 @@ func TestNewWebServiceDescriptionIsOptionalButNotEmpty(t *testing.T) {
 
 func TestNewWebServiceInputRejectsDuplicateNamesAcrossLocations(t *testing.T) {
 	_, err := NewWebServiceInput(WebServiceInput{
-		Name:        "service",
-		TemplateURL: "https://example.test",
-		Method:      HTTPMethodGet,
-		Type:        WebServiceTypeGeoJSON,
-		Format:      "application/json",
-		Parameters: []WebServiceParameterInput{
-			{Name: "value", Label: "Value", Schema: StringSchema{}, Location: ParameterLocationQuery},
-			{Name: "value", Label: "Value", Schema: StringSchema{}, Location: ParameterLocationHeader},
+		Name: "service",
+		Type: WebServiceTypeHTTP,
+		Configuration: GenericWebServiceConfigurationInput{
+			TemplateURL: "https://example.test",
+			Method:      HTTPMethodGet,
+			Format:      "application/json",
+			Parameters: []WebServiceParameterInput{
+				{Name: "value", Label: "Value", Schema: StringSchema{}, Location: ParameterLocationQuery},
+				{Name: "value", Label: "Value", Schema: StringSchema{}, Location: ParameterLocationHeader},
+			},
 		},
 	})
-	assertInputValidation(t, err, "parameters[1].name")
+	assertInputValidation(t, err, "configuration.parameters[1].name")
 }
 
 func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
@@ -107,7 +114,7 @@ func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
 			if err != nil {
 				t.Fatalf("NewWebServiceParameterInput() error = %v", err)
 			}
-			if !schemaHasMultipleValues(input.Schema) {
+			if !input.Schema.AllowsMultipleValues() {
 				t.Fatal("schema multiple values = false, want true")
 			}
 		})
@@ -184,11 +191,8 @@ func TestNewWebServiceParameterInputRejectsMultipleValuesWithoutEnum(t *testing.
 
 func TestNewWebServiceInputRejectsInvalidType(t *testing.T) {
 	_, err := NewWebServiceInput(WebServiceInput{
-		Name:        "service",
-		TemplateURL: "https://example.test",
-		Method:      HTTPMethodGet,
-		Type:        "KML",
-		Format:      "application/json",
+		Name: "service",
+		Type: "KML",
 	})
 	assertInputValidation(t, err, "type")
 }
@@ -214,12 +218,14 @@ func TestNewWebServiceInputRejectsInvalidVisibleOn(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			_, err := NewWebServiceInput(WebServiceInput{
-				Name:        "service",
-				TemplateURL: "https://example.test",
-				Method:      HTTPMethodGet,
-				Type:        WebServiceTypeGeoJSON,
-				VisibleOn:   test.visibleOn,
-				Format:      "application/json",
+				Name:      "service",
+				Type:      WebServiceTypeHTTP,
+				VisibleOn: test.visibleOn,
+				Configuration: GenericWebServiceConfigurationInput{
+					TemplateURL: "https://example.test",
+					Method:      HTTPMethodGet,
+					Format:      "application/json",
+				},
 			})
 			assertInputValidation(t, err, "visible_on")
 		})
@@ -243,13 +249,17 @@ func assertInputValidation(t *testing.T, err error, target string) {
 func TestNewWebServiceNormalizesTypeAndVisibleOn(t *testing.T) {
 	id := uuid.New()
 	service, err := NewWebService(WebService{
-		ID:          id,
-		Name:        "service",
-		TemplateURL: "https://example.test",
-		Method:      HTTPMethodGet,
-		Type:        " wms ",
-		VisibleOn:   []WebServiceVisibleOn{"TABLE", "table", " graph "},
-		Format:      "application/json",
+		ID:        id,
+		Name:      "service",
+		Type:      " wms ",
+		VisibleOn: []WebServiceVisibleOn{"TABLE", "table", " graph "},
+		Configuration: WMSConfiguration{
+			CapabilitiesURL: "https://example.test/wms?SERVICE=WMS&REQUEST=GetCapabilities",
+			DefaultLayer:    "layer",
+			Layers: []WMSLayer{{
+				Name: "layer", DefaultStyle: "", Styles: []string{""},
+			}},
+		},
 	})
 	if err != nil {
 		t.Fatalf("NewWebService() error = %v", err)
@@ -270,30 +280,35 @@ func TestNewWebServiceInputValidatesBodyAgainstMethod(t *testing.T) {
 		}},
 	}
 	_, err := NewWebServiceInput(WebServiceInput{
-		Name:        "service",
-		TemplateURL: "https://example.test",
-		Method:      HTTPMethodGet,
-		Type:        WebServiceTypeGeoJSON,
-		Format:      "application/json",
-		Body:        body,
+		Name: "service",
+		Type: WebServiceTypeHTTP,
+		Configuration: GenericWebServiceConfigurationInput{
+			TemplateURL: "https://example.test",
+			Method:      HTTPMethodGet,
+			Format:      "application/json",
+			Body:        body,
+		},
 	})
 	if !apperror.IsCode(err, apperror.CodeValidationFailed) || !strings.Contains(err.Error(), "body is not allowed") {
 		t.Fatalf("error = %v, want method body error", err)
 	}
 
 	input, err := NewWebServiceInput(WebServiceInput{
-		Name:        "service",
-		TemplateURL: "https://example.test",
-		Method:      HTTPMethodPost,
-		Type:        WebServiceTypeGeoJSON,
-		Format:      "application/json",
-		Body:        body,
+		Name: "service",
+		Type: WebServiceTypeHTTP,
+		Configuration: GenericWebServiceConfigurationInput{
+			TemplateURL: "https://example.test",
+			Method:      HTTPMethodPost,
+			Format:      "application/json",
+			Body:        body,
+		},
 	})
 	if err != nil {
 		t.Fatalf("POST NewWebServiceInput() error = %v", err)
 	}
-	if input.Body == nil || input.Body.Parameters[0].Name != "value" {
-		t.Fatalf("body = %+v", input.Body)
+	configuration := input.Configuration.(GenericWebServiceConfigurationInput)
+	if configuration.Body == nil || configuration.Body.Parameters[0].Name != "value" {
+		t.Fatalf("body = %+v", configuration.Body)
 	}
 }
 

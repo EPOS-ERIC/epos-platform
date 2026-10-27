@@ -19,6 +19,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.Property = protoOptionalString(x.Property)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
@@ -36,6 +37,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.Property = protoOptionalString(x.Property)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
@@ -48,6 +50,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.Property = protoOptionalString(x.Property)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
@@ -66,6 +69,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.Property = protoOptionalString(x.Property)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
@@ -84,6 +88,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.Property = protoOptionalString(x.Property)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
@@ -101,6 +106,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.Property = protoOptionalString(x.Property)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
@@ -292,6 +298,31 @@ func toProtoParameterLocation(value gatewayapi.ParameterLocation) metadatalifecy
 		return metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_HEADER
 	default:
 		return metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_UNSPECIFIED
+	}
+}
+
+func toProtoParameterRole(value gatewayapi.OptNilParameterRole) metadatalifecyclev1.WebServiceParameterRole {
+	role, ok := value.Get()
+	if !ok {
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED
+	}
+	switch role {
+	case gatewayapi.ParameterRoleFORMAT:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_FORMAT
+	case gatewayapi.ParameterRoleSTARTDATE:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_START_DATE
+	case gatewayapi.ParameterRoleENDDATE:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_END_DATE
+	case gatewayapi.ParameterRoleMINLON:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LON
+	case gatewayapi.ParameterRoleMAXLON:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LON
+	case gatewayapi.ParameterRoleMINLAT:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LAT
+	case gatewayapi.ParameterRoleMAXLAT:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT
+	default:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED
 	}
 }
 

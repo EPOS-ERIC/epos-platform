@@ -6,6 +6,7 @@ package api
 type OperationName = string
 
 const (
+	AccessDistributionOperation                OperationName = "AccessDistribution"
 	AssignGlobalRoleOperation                  OperationName = "AssignGlobalRole"
 	AssignGroupRoleOperation                   OperationName = "AssignGroupRole"
 	BlockUserOperation                         OperationName = "BlockUser"
@@ -26,6 +27,7 @@ const (
 	DeleteOrganizationOperation                OperationName = "DeleteOrganization"
 	DiscardResourceDraftVersionOperation       OperationName = "DiscardResourceDraftVersion"
 	DiscoverResourcesOperation                 OperationName = "DiscoverResources"
+	DownloadDistributionOperation              OperationName = "DownloadDistribution"
 	DraftFromArchiveOperation                  OperationName = "DraftFromArchive"
 	DraftFromPublicationOperation              OperationName = "DraftFromPublication"
 	GetConfigurationOperation                  OperationName = "GetConfiguration"
@@ -50,6 +52,7 @@ const (
 	ListResourceVersionsOperation              OperationName = "ListResourceVersions"
 	ListUserNotificationSubscriptionsOperation OperationName = "ListUserNotificationSubscriptions"
 	ListUsersOperation                         OperationName = "ListUsers"
+	PrepareDistributionOperation               OperationName = "PrepareDistribution"
 	PublishResourceVersionOperation            OperationName = "PublishResourceVersion"
 	RejectResourceVersionOperation             OperationName = "RejectResourceVersion"
 	RemoveGlobalRoleOperation                  OperationName = "RemoveGlobalRole"

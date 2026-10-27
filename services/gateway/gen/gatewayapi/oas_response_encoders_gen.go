@@ -3,14 +3,43 @@
 package api
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
+	"github.com/ogen-go/ogen/conv"
 	ht "github.com/ogen-go/ogen/http"
+	"github.com/ogen-go/ogen/uri"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
+
+func encodeAccessDistributionResponse(response *AccessDistribution2XXStatusCode, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	code := response.StatusCode
+	if code == 0 {
+		// Set default status code.
+		code = http.StatusOK
+	}
+	w.WriteHeader(code)
+	if code >= http.StatusInternalServerError {
+		span.SetStatus(codes.Error, http.StatusText(code))
+	}
+
+	writer := w
+	if closer, ok := response.Response.Data.(io.Closer); ok {
+		defer closer.Close()
+	}
+	if _, err := io.Copy(writer, response.Response); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	if code >= http.StatusInternalServerError {
+		return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
+	}
+	return nil
+}
 
 func encodeAssignGlobalRoleResponse(response *AssignGlobalRoleNoContent, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(204)
@@ -203,6 +232,32 @@ func encodeDiscoverResourcesResponse(response []DiscoveryItem, w http.ResponseWr
 		return errors.Wrap(err, "write")
 	}
 
+	return nil
+}
+
+func encodeDownloadDistributionResponse(response *DownloadDistribution2XXStatusCode, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	code := response.StatusCode
+	if code == 0 {
+		// Set default status code.
+		code = http.StatusOK
+	}
+	w.WriteHeader(code)
+	if code >= http.StatusInternalServerError {
+		span.SetStatus(codes.Error, http.StatusText(code))
+	}
+
+	writer := w
+	if closer, ok := response.Response.Data.(io.Closer); ok {
+		defer closer.Close()
+	}
+	if _, err := io.Copy(writer, response.Response); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	if code >= http.StatusInternalServerError {
+		return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
+	}
 	return nil
 }
 
@@ -545,6 +600,35 @@ func encodeListUsersResponse(response []UserListItem, w http.ResponseWriter, spa
 		elem.Encode(e)
 	}
 	e.ArrEnd()
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodePrepareDistributionResponse(response *PrepareDistributionOKHeaders, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Cache-Control" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Cache-Control",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				return e.EncodeValue(conv.StringToString(string(response.CacheControl)))
+			}); err != nil {
+				return errors.Wrap(err, "encode Cache-Control header")
+			}
+		}
+	}
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	response.Response.Encode(e)
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}

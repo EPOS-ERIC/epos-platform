@@ -4,7 +4,6 @@ RUN apk upgrade --no-cache
 
 WORKDIR /
 COPY services/data-retriever/data-retriever /data-retriever
-COPY services/data-retriever/migrations /migrations
 COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
 
 ENV EPOS_SERVICE_NAME="Data Retriever" \

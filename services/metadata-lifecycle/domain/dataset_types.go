@@ -84,19 +84,16 @@ type Distribution struct {
 	ByteSize         *int64
 	WebService       *WebService
 	DownloadableFile *DownloadableFile
+	NativeFormats    []NativeFormat
 }
 
 // WebServiceInput contains caller-controlled web-service fields.
 type WebServiceInput struct {
 	Name             string
 	Description      *string
-	TemplateURL      string
-	Method           HTTPMethod
 	Type             WebServiceType
+	Configuration    WebServiceConfigurationInput
 	VisibleOn        []WebServiceVisibleOn
-	Body             *RequestBodyInput
-	Parameters       []WebServiceParameterInput
-	Format           string
 	ProviderID       *uuid.UUID
 	Documentation    *Documentation
 	SpatialCoverage  geom.T
@@ -109,13 +106,9 @@ type WebService struct {
 	ID               uuid.UUID
 	Name             string
 	Description      *string
-	TemplateURL      string
-	Method           HTTPMethod
 	Type             WebServiceType
+	Configuration    WebServiceConfiguration
 	VisibleOn        []WebServiceVisibleOn
-	Body             *RequestBody
-	Parameters       []WebServiceParameter
-	Format           string
 	Provider         *OrganizationMetadata
 	Documentation    *Documentation
 	SpatialCoverage  geom.T
@@ -123,9 +116,132 @@ type WebService struct {
 	ContactPoints    []ContactPoint
 }
 
+// WebServiceConfigurationInput is one caller-controlled typed service configuration.
+type WebServiceConfigurationInput interface {
+	webServiceConfigurationInput()
+}
+
+// WebServiceConfiguration is one persisted typed service configuration.
+type WebServiceConfiguration interface {
+	Input() WebServiceConfigurationInput
+	NativeFormats() []NativeFormat
+	webServiceConfiguration()
+}
+
+type GenericWebServiceConfigurationInput struct {
+	TemplateURL string
+	Method      HTTPMethod
+	Body        *RequestBodyInput
+	Parameters  []WebServiceParameterInput
+	Format      string
+}
+
+func (GenericWebServiceConfigurationInput) webServiceConfigurationInput() {}
+
+type GenericWebServiceConfiguration struct {
+	TemplateURL string
+	Method      HTTPMethod
+	Body        *RequestBody
+	Parameters  []WebServiceParameter
+	Format      string
+}
+
+func (GenericWebServiceConfiguration) webServiceConfiguration() {}
+
+type WFSConfigurationInput struct {
+	GetFeatureTemplateURL string
+	Version               string
+	FeatureTypes          []string
+	DefaultFeatureType    string
+	OutputFormats         []string
+	DefaultOutputFormat   string
+	ResultLimit           *int64
+	ResultLimitEditable   bool
+	Parameters            []WebServiceParameterInput
+}
+
+func (WFSConfigurationInput) webServiceConfigurationInput() {}
+
+type WFSConfiguration struct {
+	GetFeatureTemplateURL string
+	Version               string
+	FeatureTypes          []string
+	DefaultFeatureType    string
+	OutputFormats         []string
+	DefaultOutputFormat   string
+	ResultLimit           *int64
+	ResultLimitEditable   bool
+	Parameters            []WebServiceParameter
+}
+
+func (WFSConfiguration) webServiceConfiguration() {}
+
+type WMSConfigurationInput struct {
+	CapabilitiesURL          string
+	DefaultLayer             string
+	Layers                   []WMSLayer
+	TransparencyEditable     bool
+	DefaultTransparency      bool
+	GetMapParameters         []WebServiceParameterInput
+	GetFeatureInfoParameters []WebServiceParameterInput
+}
+
+func (WMSConfigurationInput) webServiceConfigurationInput() {}
+
+type WMSConfiguration struct {
+	CapabilitiesURL          string
+	DefaultLayer             string
+	Layers                   []WMSLayer
+	TransparencyEditable     bool
+	DefaultTransparency      bool
+	GetMapParameters         []WebServiceParameter
+	GetFeatureInfoParameters []WebServiceParameter
+}
+
+func (WMSConfiguration) webServiceConfiguration() {}
+
+type WMSLayer struct {
+	Name         string
+	DefaultStyle string
+	Styles       []string
+}
+
+type WMTSConfigurationInput struct {
+	CapabilitiesURL          string
+	DefaultLayer             string
+	Layers                   []WMTSLayer
+	GetTileParameters        []WebServiceParameterInput
+	GetFeatureInfoParameters []WebServiceParameterInput
+}
+
+func (WMTSConfigurationInput) webServiceConfigurationInput() {}
+
+type WMTSConfiguration struct {
+	CapabilitiesURL          string
+	DefaultLayer             string
+	Layers                   []WMTSLayer
+	GetTileParameters        []WebServiceParameter
+	GetFeatureInfoParameters []WebServiceParameter
+}
+
+func (WMTSConfiguration) webServiceConfiguration() {}
+
+type WMTSLayer struct {
+	Name         string
+	DefaultStyle *string
+	Styles       []string
+}
+
 type DownloadableFile struct {
 	URL    string
 	Format string
+}
+
+// DistributionDownload is an authorized downloadable-file request target.
+type DistributionDownload struct {
+	ResourceID uuid.UUID
+	VersionID  uuid.UUID
+	URL        string
 }
 
 type Documentation struct {
@@ -165,17 +281,15 @@ func (m HTTPMethod) Valid() bool {
 type WebServiceType string
 
 const (
-	WebServiceTypeWMS     WebServiceType = "WMS"
-	WebServiceTypeGeoJSON WebServiceType = "GEOJSON"
-	WebServiceTypeDynamic WebServiceType = "DYNAMIC"
-	WebServiceTypeWMTS    WebServiceType = "WMTS"
-	WebServiceTypeWFS     WebServiceType = "WFS"
-	WebServiceTypeCOVJSON WebServiceType = "COVJSON"
+	WebServiceTypeWMS  WebServiceType = "WMS"
+	WebServiceTypeHTTP WebServiceType = "HTTP"
+	WebServiceTypeWMTS WebServiceType = "WMTS"
+	WebServiceTypeWFS  WebServiceType = "WFS"
 )
 
 func (t WebServiceType) Valid() bool {
 	switch t {
-	case WebServiceTypeWMS, WebServiceTypeGeoJSON, WebServiceTypeDynamic, WebServiceTypeWMTS, WebServiceTypeWFS, WebServiceTypeCOVJSON:
+	case WebServiceTypeWMS, WebServiceTypeHTTP, WebServiceTypeWMTS, WebServiceTypeWFS:
 		return true
 	default:
 		return false
@@ -216,6 +330,33 @@ func (l ParameterLocation) Valid() bool {
 	}
 }
 
+type WebServiceParameterRole string
+
+const (
+	WebServiceParameterRoleFormat    WebServiceParameterRole = "FORMAT"
+	WebServiceParameterRoleStartDate WebServiceParameterRole = "START_DATE"
+	WebServiceParameterRoleEndDate   WebServiceParameterRole = "END_DATE"
+	WebServiceParameterRoleMinLon    WebServiceParameterRole = "MIN_LON"
+	WebServiceParameterRoleMaxLon    WebServiceParameterRole = "MAX_LON"
+	WebServiceParameterRoleMinLat    WebServiceParameterRole = "MIN_LAT"
+	WebServiceParameterRoleMaxLat    WebServiceParameterRole = "MAX_LAT"
+)
+
+func (r WebServiceParameterRole) Valid() bool {
+	switch r {
+	case WebServiceParameterRoleFormat,
+		WebServiceParameterRoleStartDate,
+		WebServiceParameterRoleEndDate,
+		WebServiceParameterRoleMinLon,
+		WebServiceParameterRoleMaxLon,
+		WebServiceParameterRoleMinLat,
+		WebServiceParameterRoleMaxLat:
+		return true
+	default:
+		return false
+	}
+}
+
 // ParameterInput contains caller-controlled scalar or template parameter fields.
 type ParameterInput struct {
 	Position    int
@@ -236,6 +377,7 @@ type Parameter struct {
 type WebServiceParameterInput struct {
 	ParameterInput
 	Property *string
+	Role     *WebServiceParameterRole
 	Location ParameterLocation
 	Explode  bool
 }
@@ -243,17 +385,20 @@ type WebServiceParameterInput struct {
 type WebServiceParameter struct {
 	Parameter
 	Property *string
+	Role     *WebServiceParameterRole
 	Location ParameterLocation
 	Explode  bool
 }
 
 type RequestBodyInput struct {
+	Required    *bool
 	ContentType string
 	Template    string
 	Parameters  []ParameterInput
 }
 
 type RequestBody struct {
+	Required    bool
 	ContentType string
 	Template    string
 	Parameters  []Parameter
@@ -272,6 +417,11 @@ const (
 
 type ParameterSchema interface {
 	Kind() ParameterSchemaKind
+	HasEnum() bool
+	AllowsMultipleValues() bool
+	// DefaultValue returns the typed default with schema multiplicity, or nil if absent.
+	// The result still needs value validation and datetime layout formatting.
+	DefaultValue() AccessValue
 	parameterSchema()
 }
 
@@ -290,12 +440,44 @@ type StringSchema struct {
 func (StringSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindString }
 func (StringSchema) parameterSchema()          {}
 
+// HasEnum reports whether the schema declares allowed values.
+func (value StringSchema) HasEnum() bool { return len(value.Enum) > 0 }
+
+// AllowsMultipleValues reports whether the schema expects an array.
+func (value StringSchema) AllowsMultipleValues() bool { return value.MultipleValues }
+
+// DefaultValue returns the string default, wrapped in an array for multi-value schemas.
+func (value StringSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	result := AccessString(*value.Default)
+	if value.MultipleValues {
+		return AccessArray{result}
+	}
+	return result
+}
+
 type BooleanSchema struct {
 	Default *bool
 }
 
 func (BooleanSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindBoolean }
 func (BooleanSchema) parameterSchema()          {}
+
+// HasEnum reports false because boolean schemas do not declare enums.
+func (BooleanSchema) HasEnum() bool { return false }
+
+// AllowsMultipleValues reports false because boolean parameters are scalar.
+func (BooleanSchema) AllowsMultipleValues() bool { return false }
+
+// DefaultValue returns the boolean default, or nil when none is configured.
+func (value BooleanSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	return AccessBoolean(*value.Default)
+}
 
 type IntegerEnumOption struct {
 	Value int64
@@ -313,6 +495,24 @@ type IntegerSchema struct {
 func (IntegerSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindInteger }
 func (IntegerSchema) parameterSchema()          {}
 
+// HasEnum reports whether the schema declares allowed values.
+func (value IntegerSchema) HasEnum() bool { return len(value.Enum) > 0 }
+
+// AllowsMultipleValues reports whether the schema expects an array.
+func (value IntegerSchema) AllowsMultipleValues() bool { return value.MultipleValues }
+
+// DefaultValue returns the integer default, wrapped in an array for multi-value schemas.
+func (value IntegerSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	result := AccessInteger(*value.Default)
+	if value.MultipleValues {
+		return AccessArray{result}
+	}
+	return result
+}
+
 type FloatEnumOption struct {
 	Value float64
 	Label *string
@@ -329,6 +529,24 @@ type FloatSchema struct {
 func (FloatSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindFloat }
 func (FloatSchema) parameterSchema()          {}
 
+// HasEnum reports whether the schema declares allowed values.
+func (value FloatSchema) HasEnum() bool { return len(value.Enum) > 0 }
+
+// AllowsMultipleValues reports whether the schema expects an array.
+func (value FloatSchema) AllowsMultipleValues() bool { return value.MultipleValues }
+
+// DefaultValue returns the float default, wrapped in an array for multi-value schemas.
+func (value FloatSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	result := AccessFloat(*value.Default)
+	if value.MultipleValues {
+		return AccessArray{result}
+	}
+	return result
+}
+
 type DateTimeSchema struct {
 	Minimum *time.Time
 	Maximum *time.Time
@@ -339,6 +557,21 @@ type DateTimeSchema struct {
 func (DateTimeSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindDateTime }
 func (DateTimeSchema) parameterSchema()          {}
 
+// HasEnum reports false because datetime schemas do not declare enums.
+func (DateTimeSchema) HasEnum() bool { return false }
+
+// AllowsMultipleValues reports false because datetime parameters are scalar.
+func (DateTimeSchema) AllowsMultipleValues() bool { return false }
+
+// DefaultValue returns the datetime default as RFC 3339 text, or nil if absent.
+// Value resolution applies UTC normalization and the configured layout afterward.
+func (value DateTimeSchema) DefaultValue() AccessValue {
+	if value.Default == nil {
+		return nil
+	}
+	return AccessString(value.Default.Format(time.RFC3339Nano))
+}
+
 type TemplateSchema struct {
 	Template   string
 	Parameters []Parameter
@@ -347,6 +580,15 @@ type TemplateSchema struct {
 func (TemplateSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindTemplate }
 func (TemplateSchema) parameterSchema()          {}
 
+// HasEnum reports false because template schemas do not declare enums.
+func (TemplateSchema) HasEnum() bool { return false }
+
+// AllowsMultipleValues reports false because a template renders a single value.
+func (TemplateSchema) AllowsMultipleValues() bool { return false }
+
+// DefaultValue returns nil because templates resolve through their child parameters.
+func (TemplateSchema) DefaultValue() AccessValue { return nil }
+
 type TemplateSchemaInput struct {
 	Template   string
 	Parameters []ParameterInput
@@ -354,6 +596,15 @@ type TemplateSchemaInput struct {
 
 func (TemplateSchemaInput) Kind() ParameterSchemaKind { return ParameterSchemaKindTemplate }
 func (TemplateSchemaInput) parameterSchema()          {}
+
+// HasEnum reports false because template schemas do not declare enums.
+func (TemplateSchemaInput) HasEnum() bool { return false }
+
+// AllowsMultipleValues reports false because a template renders a single value.
+func (TemplateSchemaInput) AllowsMultipleValues() bool { return false }
+
+// DefaultValue returns nil because templates resolve through their child parameters.
+func (TemplateSchemaInput) DefaultValue() AccessValue { return nil }
 
 type DistributionType string
 

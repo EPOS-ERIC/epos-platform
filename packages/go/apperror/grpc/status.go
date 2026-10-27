@@ -41,7 +41,7 @@ func Code(code apperror.Code) codes.Code {
 		return codes.FailedPrecondition
 	case apperror.CodeUpstreamTimeout:
 		return codes.DeadlineExceeded
-	case apperror.CodeUpstreamUnavailable:
+	case apperror.CodeUpstreamUnavailable, apperror.CodeUpstreamHTTPFailure:
 		return codes.Unavailable
 	default:
 		return codes.Internal

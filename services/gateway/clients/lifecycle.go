@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
 )
@@ -31,6 +32,38 @@ func (c *MetadataLifecycle) GetResourceVersion(ctx context.Context, actorID stri
 		return nil, c.wrapError(ctx, "get metadata-lifecycle resource version", err)
 	}
 	return response, nil
+}
+
+func (c *MetadataLifecycle) PrepareDistributionDownload(ctx context.Context, actorID string, distributionID uuid.UUID) (domain.DownloadTarget, error) {
+	if actorID != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	}
+
+	response, err := c.resources.PrepareDistributionDownload(ctx, &metadatalifecyclev1.PrepareDistributionDownloadRequest{
+		DistributionId: distributionID.String(),
+	})
+	if err != nil {
+		return domain.DownloadTarget{}, c.wrapError(ctx, "prepare distribution download", err)
+	}
+
+	return fromProtoPreparedDistributionDownload(response)
+}
+
+func (c *MetadataLifecycle) PrepareDistributionAccess(ctx context.Context, actorID string, request domain.AccessRequest) (domain.PreparedRequest, error) {
+	if actorID != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	}
+
+	input, err := toProtoDistributionAccess(request)
+	if err != nil {
+		return domain.PreparedRequest{}, err
+	}
+	response, err := c.resources.PrepareDistributionAccess(ctx, input)
+	if err != nil {
+		return domain.PreparedRequest{}, c.wrapError(ctx, "prepare distribution access", err)
+	}
+
+	return fromProtoPreparedDistributionAccess(response)
 }
 
 func (c *MetadataLifecycle) ListResourceVersions(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID string) (*metadatalifecyclev1.ListResourceVersionsResponse, error) {

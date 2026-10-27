@@ -4,13 +4,12 @@ Monorepo for the EPOS Platform web application, backend services, shared Go pack
 
 ## Components
 
-| Component                     | Purpose                                                        | Local URL                        |
-| ----------------------------- | -------------------------------------------------------------- | -------------------------------- |
-| `apps/platform-legacy`        | Legacy Angular platform GUI                                    | `http://localhost:4200/testpath` |
-| `services/gateway`            | Public API, authentication, and backend aggregation            | `http://localhost:32000`         |
-| `services/metadata-lifecycle` | Metadata, users, groups, authorization, and resource lifecycle | `http://localhost:33000`         |
-| `services/data-retriever`     | Outbound retrieval, payload caching, and cached-text search    | `http://localhost:8100`          |
-| `services/oss-aai-service`    | Local web login and OAuth2/OIDC provider                       | `http://localhost:35000`         |
+| Component                     | Purpose                                                        | Local URL                |
+| ----------------------------- | -------------------------------------------------------------- | ------------------------ |
+| `services/gateway`            | Public API, authentication, and backend aggregation            | `http://localhost:32000` |
+| `services/metadata-lifecycle` | Metadata, users, groups, authorization, and resource lifecycle | `http://localhost:33000` |
+| `services/data-retriever`     | Outbound retrieval and metadata persistence                    | `grpc://localhost:8100`  |
+| `services/oss-aai-service`    | Local web login and OAuth2/OIDC provider                       | `http://localhost:8110`  |
 
 The development stack also includes PostgreSQL databases for Metadata Lifecycle and Data Retriever, plus Grafana's OpenTelemetry LGTM stack for logs, metrics, traces, and profiles.
 
@@ -89,6 +88,7 @@ make test-integration
 
 - Gateway server code and its Metadata Lifecycle client: run `make generate` in `services/gateway`.
 - Metadata Lifecycle SQLC code: run `make generate` in `services/metadata-lifecycle`.
+- Data Retriever protobuf and SQLC code: run `make generate` at repository root.
 
 Do not edit generated files directly. Change the owning OpenAPI specification or SQL source and regenerate.
 

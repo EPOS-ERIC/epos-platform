@@ -34,6 +34,7 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 
 // operationRolesBearerAuth is a private map storing roles per operation.
 var operationRolesBearerAuth = map[string][]string{
+	AccessDistributionOperation:                []string{},
 	AssignGlobalRoleOperation:                  []string{},
 	AssignGroupRoleOperation:                   []string{},
 	BlockUserOperation:                         []string{},
@@ -54,6 +55,7 @@ var operationRolesBearerAuth = map[string][]string{
 	DeleteOrganizationOperation:                []string{},
 	DiscardResourceDraftVersionOperation:       []string{},
 	DiscoverResourcesOperation:                 []string{},
+	DownloadDistributionOperation:              []string{},
 	DraftFromArchiveOperation:                  []string{},
 	DraftFromPublicationOperation:              []string{},
 	GetConfigurationOperation:                  []string{},
@@ -69,6 +71,7 @@ var operationRolesBearerAuth = map[string][]string{
 	ListResourceVersionsOperation:              []string{},
 	ListUserNotificationSubscriptionsOperation: []string{},
 	ListUsersOperation:                         []string{},
+	PrepareDistributionOperation:               []string{},
 	PublishResourceVersionOperation:            []string{},
 	RejectResourceVersionOperation:             []string{},
 	RemoveGlobalRoleOperation:                  []string{},

@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from distribution_fixtures import child, parameter, web_distribution
 from fixtures import create_group
 
 
@@ -182,6 +183,64 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             [item["id"] if isinstance(item, dict) else item for item in source_metadata[key]],
         )
 
+    def assert_web_service_roles(self, metadata: dict[str, Any]) -> None:
+        distribution = next(
+            item for item in metadata["distributions"] if item["title"].startswith("Role metadata")
+        )
+        self.assertEqual(
+            {
+                parameter["name"]: (parameter.get("role"), parameter.get("property"))
+                for parameter in distribution["web_service"]["configuration"]["parameters"]
+            },
+            {
+                "start": ("START_DATE", "custom:start"),
+                "west": ("MIN_LON", "custom:west"),
+            },
+        )
+
+    def test_publication_draft_clones_web_service_body_parameters(self) -> None:
+        """Catch clone assigning body parameters both service and body owners."""
+
+        suffix = uuid4().hex
+        group_id = create_group(self.gateway, f"body-parameter-{suffix}")
+        metadata = {
+            "title": f"Dataset {suffix}",
+            "description": "Dataset with web-service body parameter",
+            "distributions": [
+                web_distribution(
+                    method="POST",
+                    body_content_type="text/plain",
+                    body_template="{{.payload}}",
+                    body_parameters=[child("payload")],
+                )
+            ],
+        }
+        resource_id = self.create_and_publish(group_id, "dataset", metadata)
+        published_version = self.version("dataset", resource_id, "PUBLISHED")
+        published_details = self.details(
+            "dataset", resource_id, published_version["version_id"]
+        )
+        source_distribution = published_details["metadata"]["distributions"][0]
+        source_service = source_distribution["web_service"]
+        source_parameter = source_service["configuration"]["body_parameters"][0]
+
+        drafted = self.gateway.post(
+            "/resources/{resourceType}/{id}/draft-from-publication",
+            resourceType="dataset",
+            id=resource_id,
+        )
+        self.assertEqual(drafted.status_code, 201)
+        self.assertEqual(drafted.json()["id"], resource_id)
+        self.assertEqual(drafted.json()["status"], "DRAFT")
+
+        draft_version = self.version("dataset", resource_id, "DRAFT")
+        draft_details = self.details("dataset", resource_id, draft_version["version_id"])
+        draft_service = draft_details["metadata"]["distributions"][0]["web_service"]
+        draft_parameter = draft_service["configuration"]["body_parameters"][0]
+        self.assertEqual(draft_parameter["name"], source_parameter["name"])
+        self.assertNotEqual(draft_parameter["id"], source_parameter["id"])
+        self.assertEqual(draft_service["configuration"]["body_template"], source_service["configuration"]["body_template"])
+
     def test_resource_variants_and_copy(self) -> None:
         """Verify resource variants, copied ownership, and publication drafts."""
 
@@ -223,6 +282,13 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             "providers": [organization_id],
             "categories": [source_category_id],
         }
+        role_distribution = web_distribution([
+            parameter("start", "DATETIME", role="START_DATE", property="custom:start"),
+            parameter("west", "FLOAT", position=1, role="MIN_LON", property="custom:west"),
+        ])
+        role_distribution["title"] = f"Role metadata {suffix}"
+        role_distribution["web_service"]["name"] = f"Role metadata {suffix}"
+        dataset_metadata["distributions"].append(role_distribution)
         application_metadata = {
             "name": f"Application {suffix}",
             "description": "Representative application metadata",
@@ -307,18 +373,27 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             )
             self.assertEqual(copied_metadata["categories"], [])
             if resource_type == "dataset":
-                self.assertEqual(
-                    copied_metadata["distributions"][0]["title"],
-                    source_result_metadata["distributions"][0]["title"],
+                self.assert_web_service_roles(source_result_metadata)
+                source_download = next(
+                    item for item in source_result_metadata["distributions"]
+                    if item["title"] == "Dataset download"
+                )
+                copied_download = next(
+                    item for item in copied_metadata["distributions"]
+                    if item["title"] == "Dataset download"
                 )
                 self.assertEqual(
-                    copied_metadata["distributions"][0]["downloadable_file"]["url"],
-                    source_result_metadata["distributions"][0]["downloadable_file"]["url"],
+                    copied_download["title"], source_download["title"],
+                )
+                self.assertEqual(
+                    copied_download["downloadable_file"]["url"],
+                    source_download["downloadable_file"]["url"],
                 )
                 self.assertEqual(
                     copied_metadata["geological_temporal_coverage"],
                     source_result_metadata["geological_temporal_coverage"],
                 )
+                self.assert_web_service_roles(copied_metadata)
             self.assert_identifier_clones(
                 source_result_metadata, copied_metadata, identifier_key
             )
@@ -399,6 +474,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                     publication_metadata["geological_temporal_coverage"],
                     source_result_metadata["geological_temporal_coverage"],
                 )
+                self.assert_web_service_roles(publication_metadata)
 
             unauthorized = source_only.post(
                 "/groups/{groupId}/resources/{resourceType}/{id}/copy",

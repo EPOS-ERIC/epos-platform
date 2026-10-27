@@ -13,6 +13,7 @@ import (
 
 type Store interface {
 	Get(context.Context, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
+	GetDistributionDatasetVersion(context.Context, uuid.UUID) (uuid.UUID, uuid.UUID, error)
 	List(context.Context, uuid.UUID) ([]domain.ResourceVersionSummary, error)
 	GetPublished(context.Context, uuid.UUID) (domain.DatasetVersion, error)
 	GetActive(context.Context, uuid.UUID) (domain.DatasetVersion, error)
@@ -92,8 +93,9 @@ func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, vers
 	if err != nil {
 		return domain.DatasetVersion{}, operationError("authorize dataset read", err)
 	}
+
 	if !result.Allowed {
-		return domain.DatasetVersion{}, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), result.Reason)
+		return domain.DatasetVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
 
 	dataset, err := s.store.Get(ctx, datasetID, versionID)
@@ -101,7 +103,35 @@ func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, vers
 		return domain.DatasetVersion{}, operationError("get dataset version", err)
 	}
 
+	// compute the available formats for each distribution
+	for i := range dataset.Metadata.Distributions {
+		distribution := &dataset.Metadata.Distributions[i]
+
+		if distribution.WebService == nil {
+			continue
+		}
+
+		distribution.NativeFormats = distribution.WebService.NativeFormats()
+	}
+
 	return dataset, nil
+}
+
+func (s *Service) PrepareDownload(ctx context.Context, actor *domain.Actor, distributionID uuid.UUID) (domain.DistributionDownload, error) {
+	datasetID, versionID, distribution, err := s.readDistribution(ctx, actor, distributionID)
+	if err != nil {
+		return domain.DistributionDownload{}, err
+	}
+
+	if distribution.Type != domain.DistributionTypeDownloadableFile || distribution.DownloadableFile == nil {
+		return domain.DistributionDownload{}, apperror.Field("distributionId", "Distribution is not a downloadable file.", nil)
+	}
+
+	return domain.DistributionDownload{
+		ResourceID: datasetID,
+		VersionID:  versionID,
+		URL:        distribution.DownloadableFile.URL,
+	}, nil
 }
 
 func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, datasetID uuid.UUID) ([]domain.ResourceVersionSummary, error) {

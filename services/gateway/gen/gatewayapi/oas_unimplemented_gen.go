@@ -13,6 +13,20 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// AccessDistribution implements accessDistribution operation.
+//
+// Executes an HTTP or WFS web-service distribution using parameter IDs and values, with optional
+// native format selection. WMS and WMTS clients must access providers directly using the distribution
+// configuration; these endpoints do not support them. Published versions allow anonymous access; other
+// states require existing dataset permissions. Successful responses are streamed; upstream HTTP
+// failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use
+// the download endpoint.
+//
+// POST /distributions/{distributionId}/access
+func (UnimplementedHandler) AccessDistribution(ctx context.Context, req DistributionAccessRequest, params AccessDistributionParams) (r *AccessDistribution2XXStatusCode, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // AssignGlobalRole implements assignGlobalRole operation.
 //
 // Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
@@ -204,6 +218,22 @@ func (UnimplementedHandler) DiscardResourceDraftVersion(ctx context.Context, par
 //
 // GET /search
 func (UnimplementedHandler) DiscoverResources(ctx context.Context, params DiscoverResourcesParams) (r []DiscoveryItem, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// DownloadDistribution implements downloadDistribution operation.
+//
+// Resolves a downloadable-file distribution and its owning dataset version by distribution ID.
+// Published versions allow anonymous access; all other states require authenticated access under
+// existing dataset permissions. No query parameters or request body are supported. Web-service
+// distributions cannot be downloaded through this endpoint.
+//
+// Successful upstream status and body are streamed to the client. Upstream HTTP failures return a 503
+// Gateway Problem with the original upstream status and body in `upstream_response`; its body is
+// treated as text. The Problem `instance` contains the request trace ID.
+//
+// GET /distributions/{distributionId}/download
+func (UnimplementedHandler) DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (r *DownloadDistribution2XXStatusCode, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -431,6 +461,19 @@ func (UnimplementedHandler) ListUserNotificationSubscriptions(ctx context.Contex
 //
 // GET /users
 func (UnimplementedHandler) ListUsers(ctx context.Context) (r []UserListItem, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PrepareDistribution implements prepareDistribution operation.
+//
+// Prepares an HTTP or WFS web-service distribution request using parameter IDs and values, with
+// optional native format selection. WMS and WMTS clients must access providers directly using the
+// distribution configuration; these endpoints do not support them. Published versions allow anonymous
+// access; other states require existing dataset permissions. Returns the provider request without
+// executing it. Downloadable-file distributions are not supported.
+//
+// POST /distributions/{distributionId}/prepare
+func (UnimplementedHandler) PrepareDistribution(ctx context.Context, req DistributionAccessRequest, params PrepareDistributionParams) (r *PrepareDistributionOKHeaders, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

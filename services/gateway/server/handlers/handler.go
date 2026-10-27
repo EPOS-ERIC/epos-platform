@@ -10,6 +10,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
@@ -22,20 +23,22 @@ import (
 // ogenHandler is the HTTP boundary. Pure proxy operations call the concrete
 // Metadata Lifecycle client; identity orchestration remains in identity.Service.
 type ogenHandler struct {
-	metadataLifecycle *clients.MetadataLifecycle
-	sharing           *sharingservice.Service
-	identity          *identity.Service
-	membership        *membership.Service
-	log               *slog.Logger
+	metadataLifecycle  *clients.MetadataLifecycle
+	sharing            *sharingservice.Service
+	identity           *identity.Service
+	membership         *membership.Service
+	distributionAccess *distributionaccess.Service
+	log                *slog.Logger
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, sharing *sharingservice.Service, log *slog.Logger) *ogenHandler {
+func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, sharing *sharingservice.Service, d *distributionaccess.Service, log *slog.Logger) *ogenHandler {
 	return &ogenHandler{
-		metadataLifecycle: metadataLifecycle,
-		sharing:           sharing,
-		identity:          i,
-		membership:        m,
-		log:               log,
+		metadataLifecycle:  metadataLifecycle,
+		sharing:            sharing,
+		identity:           i,
+		membership:         m,
+		distributionAccess: d,
+		log:                log,
 	}
 }
 
@@ -87,6 +90,11 @@ func applicationError(err error) *apperror.AppError {
 
 	if _, ok := errors.AsType[*validate.InvalidContentTypeError](err); ok {
 		return apperror.Default(apperror.CodeUnsupportedMedia)
+	}
+
+	if paramErr, ok := errors.AsType[*ogenerrors.DecodeParamError](err); ok {
+		target, fieldErr := validationLeaf(paramErr.Err, paramErr.Name)
+		return apperror.Field(target, validationDetail(fieldErr), err)
 	}
 
 	validationErr, ok := errors.AsType[*validate.Error](err)

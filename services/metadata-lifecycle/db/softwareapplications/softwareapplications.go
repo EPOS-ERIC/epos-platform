@@ -19,16 +19,17 @@ import (
 // Repo persists software application lifecycle operations.
 type Repo struct {
 	db *pgxpool.Pool
+	q  *sqlc.Queries
 }
 
 // New creates a software application repository.
 func New(pool *pgxpool.Pool) *Repo {
-	return &Repo{db: pool}
+	return &Repo{db: pool, q: sqlc.New(pool)}
 }
 
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.SoftwareApplicationInput) (domain.SoftwareApplicationVersion, error) {
 	var result domain.SoftwareApplicationVersion
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
 		if err != nil {
 			return fmt.Errorf("validate application categories: %w", err)
@@ -59,7 +60,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 
 func (r *Repo) ReplaceDraft(ctx context.Context, applicationID, versionID uuid.UUID, value domain.SoftwareApplicationDraftInput) (domain.SoftwareApplicationVersion, error) {
 	var result domain.SoftwareApplicationVersion
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		if len(value.Metadata.CategoryIDs) > 0 {
 			application, err := q.GetLifecycleSoftwareApplication(ctx, applicationID)
 			if err != nil {
@@ -91,7 +92,7 @@ func (r *Repo) ReplaceDraft(ctx context.Context, applicationID, versionID uuid.U
 }
 
 func (r *Repo) Get(ctx context.Context, applicationID, versionID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
-	result, err := applicationResult(ctx, sqlc.New(r.db), applicationID, versionID)
+	result, err := applicationResult(ctx, r.q, applicationID, versionID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
@@ -99,7 +100,7 @@ func (r *Repo) Get(ctx context.Context, applicationID, versionID uuid.UUID) (dom
 }
 
 func (r *Repo) List(ctx context.Context, applicationID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
-	rows, err := sqlc.New(r.db).ListLifecycleSoftwareApplicationVersionSummaries(ctx, applicationID)
+	rows, err := r.q.ListLifecycleSoftwareApplicationVersionSummaries(ctx, applicationID)
 	if err != nil {
 		return nil, fmt.Errorf("list application version summaries: %w", err)
 	}
@@ -112,7 +113,7 @@ func (r *Repo) List(ctx context.Context, applicationID uuid.UUID) ([]domain.Reso
 }
 
 func (r *Repo) GetPublished(ctx context.Context, applicationID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
-	version, err := sqlc.New(r.db).GetPublishedLifecycleSoftwareApplicationVersion(ctx, applicationID)
+	version, err := r.q.GetPublishedLifecycleSoftwareApplicationVersion(ctx, applicationID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
@@ -123,7 +124,7 @@ func (r *Repo) GetPublished(ctx context.Context, applicationID uuid.UUID) (domai
 }
 
 func (r *Repo) GetActive(ctx context.Context, applicationID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
-	version, err := sqlc.New(r.db).GetActiveLifecycleSoftwareApplicationVersion(ctx, applicationID)
+	version, err := r.q.GetActiveLifecycleSoftwareApplicationVersion(ctx, applicationID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.SoftwareApplicationVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
@@ -194,7 +195,7 @@ func (r *Repo) transition(
 	fn func(*sqlc.Queries) (sqlc.SoftwareApplicationVersion, error),
 ) (domain.SoftwareApplicationVersion, error) {
 	var result domain.SoftwareApplicationVersion
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		if _, err := q.EnsureLifecycleSoftwareApplicationVersion(ctx, sqlc.EnsureLifecycleSoftwareApplicationVersionParams{
 			VersionID:             versionID,
 			SoftwareApplicationID: applicationID,
@@ -215,7 +216,7 @@ func (r *Repo) transition(
 }
 
 func (r *Repo) Discard(ctx context.Context, applicationID, versionID uuid.UUID) error {
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		if _, err := q.EnsureLifecycleSoftwareApplicationVersion(ctx, sqlc.EnsureLifecycleSoftwareApplicationVersionParams{
 			VersionID:             versionID,
 			SoftwareApplicationID: applicationID,
@@ -244,7 +245,7 @@ func (r *Repo) DraftFromLatestArchive(ctx context.Context, actorID string, appli
 
 func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceApplicationID, targetGroupID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	var result domain.SoftwareApplicationVersion
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		source, err := q.GetPublishedLifecycleSoftwareApplicationVersion(ctx, sourceApplicationID)
 		if err != nil {
 			return fmt.Errorf("get published application version: %w", err)
@@ -282,7 +283,7 @@ func (r *Repo) clone(
 	copyCategories bool,
 ) (domain.SoftwareApplicationVersion, error) {
 	var versionID uuid.UUID
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		var source sqlc.SoftwareApplicationVersion
 		var err error
 		if status == sqlc.ResourceStatusPUBLISHED {

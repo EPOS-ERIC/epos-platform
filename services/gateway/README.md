@@ -1,6 +1,6 @@
 # EPOS Gateway
 
-Public HTTP API for the EPOS Platform. The gateway exposes a stable `/v1` contract, validates bearer tokens through OSS AAI, and maps requests to the Metadata Lifecycle service. It also owns public error responses and API documentation.
+Public HTTP API for the EPOS Platform. The gateway exposes a stable `/v1` contract, validates bearer tokens through OSS AAI, and orchestrates Metadata Lifecycle and Data Retriever requests. It also owns public error responses and API documentation.
 
 ## API and documentation
 
@@ -23,7 +23,7 @@ The gateway requires a YAML configuration file. Pass it with `-config`; the defa
 ./gateway -config config/example.yaml
 ```
 
-The configuration controls the server listen address and timeouts, CORS, upstream caching and timeouts, and the Metadata Lifecycle and authentication service URLs. See `config/example.yaml` for the complete schema. `docker/gateway-config.dev.yaml` contains the Tilt stack values.
+The configuration controls the server listen address and timeouts, CORS, upstream caching and timeouts, and the Metadata Lifecycle and authentication service URLs. `server.request_timeout` defaults to 60 seconds and covers complete download streaming. See `config/example.yaml` for the complete schema. `docker/gateway-config.dev.yaml` contains the Tilt stack values.
 
 `LOG_LEVEL` optionally sets shared structured logging to `DEBUG`, `INFO`, `WARN`, or `ERROR`. Standard OpenTelemetry SDK environment variables configure telemetry export.
 

@@ -18,6 +18,11 @@ func TestDefaultUsesCodeDetail(t *testing.T) {
 	if err.Detail != defaultDetails[CodeNotFound] {
 		t.Fatalf("Detail = %q, want %q", err.Detail, defaultDetails[CodeNotFound])
 	}
+
+	upstreamErr := Default(CodeUpstreamHTTPFailure)
+	if upstreamErr.Detail != "Upstream service returned an HTTP failure." {
+		t.Fatalf("upstream HTTP failure detail = %q", upstreamErr.Detail)
+	}
 }
 
 func TestWrapPreservesCauseAndCode(t *testing.T) {
@@ -74,6 +79,7 @@ func TestHTTPStatusMapping(t *testing.T) {
 		{CodeInvalidTransition, 409},
 		{CodeUpstreamTimeout, 504},
 		{CodeUpstreamUnavailable, 503},
+		{CodeUpstreamHTTPFailure, 503},
 		{CodeUnsupportedMedia, 415},
 		{CodeRequestTooLarge, 413},
 		{Code("unknown"), 500},

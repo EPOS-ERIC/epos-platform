@@ -27,6 +27,7 @@ type Service struct {
 
 type Services struct {
 	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
+	DataRetriever     Service `yaml:"data-retriever"`
 	Sharing           Service `yaml:"sharing"`
 	Auth              Service `yaml:"auth"`
 }
@@ -47,11 +48,12 @@ func Default() Config {
 	return Config{
 		Server: Server{
 			Listen:          ":5000",
-			RequestTimeout:  30 * time.Second,
+			RequestTimeout:  60 * time.Second,
 			CORSAllowOrigin: "",
 		},
 		Services: Services{
 			MetadataLifecycle: Service{URL: ""},
+			DataRetriever:     Service{URL: ""},
 			Sharing:           Service{URL: ""},
 			Auth:              Service{URL: ""},
 		},
@@ -99,6 +101,9 @@ func (c *Config) Validate() error {
 
 	if c.Services.MetadataLifecycle.URL == "" {
 		return fmt.Errorf("services.metadata-lifecycle.url is required")
+	}
+	if c.Services.DataRetriever.URL == "" {
+		return fmt.Errorf("services.data-retriever.url is required")
 	}
 
 	if c.Services.Sharing.URL == "" {

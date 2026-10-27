@@ -29,6 +29,16 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 	return size, nil
 }
 
+func (rw *responseWriter) Flush() {
+	if flusher, ok := rw.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+func (rw *responseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
 func Logger(log *slog.Logger) func(http.Handler) http.Handler {
 	log = log.With("component", "request")
 	return func(next http.Handler) http.Handler {

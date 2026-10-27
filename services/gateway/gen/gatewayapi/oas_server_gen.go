@@ -8,6 +8,17 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// AccessDistribution implements accessDistribution operation.
+	//
+	// Executes an HTTP or WFS web-service distribution using parameter IDs and values, with optional
+	// native format selection. WMS and WMTS clients must access providers directly using the distribution
+	// configuration; these endpoints do not support them. Published versions allow anonymous access; other
+	// states require existing dataset permissions. Successful responses are streamed; upstream HTTP
+	// failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use
+	// the download endpoint.
+	//
+	// POST /distributions/{distributionId}/access
+	AccessDistribution(ctx context.Context, req DistributionAccessRequest, params AccessDistributionParams) (*AccessDistribution2XXStatusCode, error)
 	// AssignGlobalRole implements assignGlobalRole operation.
 	//
 	// Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
@@ -142,6 +153,19 @@ type Handler interface {
 	//
 	// GET /search
 	DiscoverResources(ctx context.Context, params DiscoverResourcesParams) ([]DiscoveryItem, error)
+	// DownloadDistribution implements downloadDistribution operation.
+	//
+	// Resolves a downloadable-file distribution and its owning dataset version by distribution ID.
+	// Published versions allow anonymous access; all other states require authenticated access under
+	// existing dataset permissions. No query parameters or request body are supported. Web-service
+	// distributions cannot be downloaded through this endpoint.
+	//
+	// Successful upstream status and body are streamed to the client. Upstream HTTP failures return a 503
+	// Gateway Problem with the original upstream status and body in `upstream_response`; its body is
+	// treated as text. The Problem `instance` contains the request trace ID.
+	//
+	// GET /distributions/{distributionId}/download
+	DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (*DownloadDistribution2XXStatusCode, error)
 	// DraftFromArchive implements draftFromArchive operation.
 	//
 	// Create draft from archive.
@@ -297,6 +321,16 @@ type Handler interface {
 	//
 	// GET /users
 	ListUsers(ctx context.Context) ([]UserListItem, error)
+	// PrepareDistribution implements prepareDistribution operation.
+	//
+	// Prepares an HTTP or WFS web-service distribution request using parameter IDs and values, with
+	// optional native format selection. WMS and WMTS clients must access providers directly using the
+	// distribution configuration; these endpoints do not support them. Published versions allow anonymous
+	// access; other states require existing dataset permissions. Returns the provider request without
+	// executing it. Downloadable-file distributions are not supported.
+	//
+	// POST /distributions/{distributionId}/prepare
+	PrepareDistribution(ctx context.Context, req DistributionAccessRequest, params PrepareDistributionParams) (*PrepareDistributionOKHeaders, error)
 	// PublishResourceVersion implements publishResourceVersion operation.
 	//
 	// Publish resource version.

@@ -17,6 +17,204 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
+// AccessDistributionParams is parameters of accessDistribution operation.
+type AccessDistributionParams struct {
+	DistributionId uuid.UUID
+	// Exact native format selector. Cannot be repeated or combined with conversion_id.
+	OutputFormat OptString `json:",omitempty,omitzero"`
+	// Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for
+	// future conversion support.
+	ConversionID OptUUID `json:",omitempty,omitzero"`
+}
+
+func unpackAccessDistributionParams(packed middleware.Parameters) (params AccessDistributionParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "distributionId",
+			In:   "path",
+		}
+		params.DistributionId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "output_format",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.OutputFormat = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "conversion_id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ConversionID = v.(OptUUID)
+		}
+	}
+	return params
+}
+
+func decodeAccessDistributionParams(args [1]string, argsEscaped bool, r *http.Request) (params AccessDistributionParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: distributionId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "distributionId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.DistributionId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "distributionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: output_format.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "output_format",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotOutputFormatVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOutputFormatVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.OutputFormat.SetTo(paramsDotOutputFormatVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.OutputFormat.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     1,
+							MinLengthSet:  true,
+							MaxLength:     0,
+							MaxLengthSet:  false,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "output_format",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: conversion_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "conversion_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotConversionIDVal uuid.UUID
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToUUID(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotConversionIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ConversionID.SetTo(paramsDotConversionIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "conversion_id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // AssignGlobalRoleParams is parameters of assignGlobalRole operation.
 type AssignGlobalRoleParams struct {
 	// User identifier.
@@ -2473,6 +2671,71 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 	return params, nil
 }
 
+// DownloadDistributionParams is parameters of downloadDistribution operation.
+type DownloadDistributionParams struct {
+	DistributionId uuid.UUID
+}
+
+func unpackDownloadDistributionParams(packed middleware.Parameters) (params DownloadDistributionParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "distributionId",
+			In:   "path",
+		}
+		params.DistributionId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeDownloadDistributionParams(args [1]string, argsEscaped bool, r *http.Request) (params DownloadDistributionParams, _ error) {
+	// Decode path: distributionId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "distributionId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.DistributionId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "distributionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DraftFromArchiveParams is parameters of draftFromArchive operation.
 type DraftFromArchiveParams struct {
 	// Resource type identifier accepted by lifecycle endpoints.
@@ -4167,6 +4430,204 @@ func decodeListUserNotificationSubscriptionsParams(args [1]string, argsEscaped b
 		return params, &ogenerrors.DecodeParamError{
 			Name: "userId",
 			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// PrepareDistributionParams is parameters of prepareDistribution operation.
+type PrepareDistributionParams struct {
+	DistributionId uuid.UUID
+	// Exact native format selector. Cannot be repeated or combined with conversion_id.
+	OutputFormat OptString `json:",omitempty,omitzero"`
+	// Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for
+	// future conversion support; currently returns an internal error, matching access.
+	ConversionID OptUUID `json:",omitempty,omitzero"`
+}
+
+func unpackPrepareDistributionParams(packed middleware.Parameters) (params PrepareDistributionParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "distributionId",
+			In:   "path",
+		}
+		params.DistributionId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "output_format",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.OutputFormat = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "conversion_id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ConversionID = v.(OptUUID)
+		}
+	}
+	return params
+}
+
+func decodePrepareDistributionParams(args [1]string, argsEscaped bool, r *http.Request) (params PrepareDistributionParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: distributionId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "distributionId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.DistributionId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "distributionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: output_format.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "output_format",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotOutputFormatVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOutputFormatVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.OutputFormat.SetTo(paramsDotOutputFormatVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.OutputFormat.Get(); ok {
+					if err := func() error {
+						if err := (validate.String{
+							MinLength:     1,
+							MinLengthSet:  true,
+							MaxLength:     0,
+							MaxLengthSet:  false,
+							Email:         false,
+							Hostname:      false,
+							Regex:         nil,
+							MinNumeric:    0,
+							MinNumericSet: false,
+							MaxNumeric:    0,
+							MaxNumericSet: false,
+						}).Validate(string(value)); err != nil {
+							return errors.Wrap(err, "string")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "output_format",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: conversion_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "conversion_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotConversionIDVal uuid.UUID
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToUUID(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotConversionIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ConversionID.SetTo(paramsDotConversionIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "conversion_id",
+			In:   "query",
 			Err:  err,
 		}
 	}

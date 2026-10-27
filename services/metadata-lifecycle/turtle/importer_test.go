@@ -286,8 +286,9 @@ func TestParserUsesDistributionTypeForWebService(t *testing.T) {
 	if distribution.DownloadableFile != nil {
 		t.Fatal("web-service distribution has downloadable file delivery")
 	}
-	if distribution.WebService.Format != "application/json" {
-		t.Fatalf("web-service format = %q, want hydra:returns value", distribution.WebService.Format)
+	configuration := genericWebServiceConfiguration(t, distribution.WebService)
+	if configuration.Format != "application/json" {
+		t.Fatalf("web-service format = %q, want hydra:returns value", configuration.Format)
 	}
 
 	multipleReturns := strings.Replace(turtle, `hydra:returns "application/json"`, `hydra:returns "application/json", "text/plain"`, 1)
@@ -341,10 +342,11 @@ func TestParserAllowsNumericParametersWithoutAllowedValues(t *testing.T) {
 		t.Fatalf("dataset distributions = %+v, want one distribution", batch.Datasets)
 	}
 	service := batch.Datasets[0].Distributions[0].WebService
-	if service == nil || len(service.Parameters) != 2 {
-		t.Fatalf("service parameters = %+v, want two parameters; warnings = %+v", service, batch.Warnings)
+	configuration := genericWebServiceConfiguration(t, service)
+	if len(configuration.Parameters) != 2 {
+		t.Fatalf("service parameters = %+v, want two parameters; warnings = %+v", configuration.Parameters, batch.Warnings)
 	}
-	for _, parameter := range service.Parameters {
+	for _, parameter := range configuration.Parameters {
 		switch schema := parameter.Schema.(type) {
 		case domain.IntegerSchema:
 			if schema.Enum != nil {
@@ -400,25 +402,26 @@ func TestParserMapsMultipleValuesForEnumParameters(t *testing.T) {
 		t.Fatalf("dataset distributions = %+v, want one distribution", batch.Datasets)
 	}
 	service := batch.Datasets[0].Distributions[0].WebService
-	if service == nil || len(service.Parameters) != 1 {
-		t.Fatalf("service parameters = %+v, want one parameter", service)
+	configuration := genericWebServiceConfiguration(t, service)
+	if len(configuration.Parameters) != 1 {
+		t.Fatalf("service parameters = %+v, want one parameter", configuration.Parameters)
 	}
-	schema, ok := service.Parameters[0].Schema.(domain.StringSchema)
+	schema, ok := configuration.Parameters[0].Schema.(domain.StringSchema)
 	if !ok || !schema.MultipleValues {
 		t.Fatal("MultipleValues = false, want true")
 	}
-	if service.Parameters[0].Explode {
+	if configuration.Parameters[0].Explode {
 		t.Fatal("Explode = true, want false for imported parameters")
 	}
-	if service.Type != domain.WebServiceTypeGeoJSON {
-		t.Fatalf("web service type = %q, want GEOJSON", service.Type)
+	if service.Type != domain.WebServiceTypeHTTP {
+		t.Fatalf("web service type = %q, want HTTP", service.Type)
 	}
 	if service.VisibleOn != nil {
 		t.Fatalf("visible on = %v, want nil", service.VisibleOn)
 	}
-	schema, ok = service.Parameters[0].Schema.(domain.StringSchema)
+	schema, ok = configuration.Parameters[0].Schema.(domain.StringSchema)
 	if !ok || len(schema.Enum) != 2 {
-		t.Fatalf("schema = %#v, want two enum values", service.Parameters[0].Schema)
+		t.Fatalf("schema = %#v, want two enum values", configuration.Parameters[0].Schema)
 	}
 }
 
@@ -467,14 +470,12 @@ func TestParserUsesDistributionOperationOnly(t *testing.T) {
 		t.Fatalf("dataset distributions = %+v, want one distribution", batch.Datasets)
 	}
 	service := batch.Datasets[0].Distributions[0].WebService
-	if service == nil {
-		t.Fatal("distribution web service = nil")
+	configuration := genericWebServiceConfiguration(t, service)
+	if configuration.TemplateURL != "https://example.com/selected" {
+		t.Fatalf("template URL = %q, want selected operation template", configuration.TemplateURL)
 	}
-	if service.TemplateURL != "https://example.com/selected" {
-		t.Fatalf("template URL = %q, want selected operation template", service.TemplateURL)
-	}
-	if len(service.Parameters) != 1 || service.Parameters[0].Name != "selected" {
-		t.Fatalf("parameters = %+v, want selected operation parameter only", service.Parameters)
+	if len(configuration.Parameters) != 1 || configuration.Parameters[0].Name != "selected" {
+		t.Fatalf("parameters = %+v, want selected operation parameter only", configuration.Parameters)
 	}
 }
 
@@ -628,8 +629,21 @@ func TestParserDiagnosesIncompatibleParameterKinds(t *testing.T) {
 		t.Fatalf("datasets = %+v, want one dataset and distribution", batch.Datasets)
 	}
 	service := batch.Datasets[0].Distributions[0].WebService
-	if service == nil || len(service.Parameters) != 1 {
-		t.Fatalf("service parameters = %+v, want one retained parameter", service)
+	configuration := genericWebServiceConfiguration(t, service)
+	if len(configuration.Parameters) != 1 {
+		t.Fatalf("service parameters = %+v, want one retained parameter", configuration.Parameters)
 	}
 	assertDiagnostic(t, batch.Warnings, "service:one", hydraMapping, "incompatible kinds")
+}
+
+func genericWebServiceConfiguration(t *testing.T, service *domain.WebService) domain.GenericWebServiceConfiguration {
+	t.Helper()
+	if service == nil {
+		t.Fatal("distribution web service = nil")
+	}
+	configuration, ok := service.Configuration.(domain.GenericWebServiceConfiguration)
+	if !ok {
+		t.Fatalf("web service configuration = %T, want generic", service.Configuration)
+	}
+	return configuration
 }

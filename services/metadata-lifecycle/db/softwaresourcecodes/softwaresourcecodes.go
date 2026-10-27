@@ -19,16 +19,17 @@ import (
 // Repo persists software source-code lifecycle operations.
 type Repo struct {
 	db *pgxpool.Pool
+	q  *sqlc.Queries
 }
 
 // New creates a software source-code repository.
 func New(pool *pgxpool.Pool) *Repo {
-	return &Repo{db: pool}
+	return &Repo{db: pool, q: sqlc.New(pool)}
 }
 
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeVersion, error) {
 	var result domain.SoftwareSourceCodeVersion
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
 		if err != nil {
 			return fmt.Errorf("validate source code categories: %w", err)
@@ -59,7 +60,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 
 func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeDraftInput) (domain.SoftwareSourceCodeVersion, error) {
 	var result domain.SoftwareSourceCodeVersion
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		if len(value.Metadata.CategoryIDs) > 0 {
 			sourceCode, err := q.GetLifecycleSoftwareSourceCode(ctx, sourceCodeID)
 			if err != nil {
@@ -91,7 +92,7 @@ func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UU
 }
 
 func (r *Repo) Get(ctx context.Context, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	result, err := sourceCodeResult(ctx, sqlc.New(r.db), sourceCodeID, versionID)
+	result, err := sourceCodeResult(ctx, r.q, sourceCodeID, versionID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
@@ -99,7 +100,7 @@ func (r *Repo) Get(ctx context.Context, sourceCodeID, versionID uuid.UUID) (doma
 }
 
 func (r *Repo) List(ctx context.Context, sourceCodeID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
-	rows, err := sqlc.New(r.db).ListLifecycleSoftwareSourceCodeVersionSummaries(ctx, sourceCodeID)
+	rows, err := r.q.ListLifecycleSoftwareSourceCodeVersionSummaries(ctx, sourceCodeID)
 	if err != nil {
 		return nil, fmt.Errorf("list source code version summaries: %w", err)
 	}
@@ -112,7 +113,7 @@ func (r *Repo) List(ctx context.Context, sourceCodeID uuid.UUID) ([]domain.Resou
 }
 
 func (r *Repo) GetPublished(ctx context.Context, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	version, err := sqlc.New(r.db).GetPublishedLifecycleSoftwareSourceCodeVersion(ctx, sourceCodeID)
+	version, err := r.q.GetPublishedLifecycleSoftwareSourceCodeVersion(ctx, sourceCodeID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
@@ -123,7 +124,7 @@ func (r *Repo) GetPublished(ctx context.Context, sourceCodeID uuid.UUID) (domain
 }
 
 func (r *Repo) GetActive(ctx context.Context, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	version, err := sqlc.New(r.db).GetActiveLifecycleSoftwareSourceCodeVersion(ctx, sourceCodeID)
+	version, err := r.q.GetActiveLifecycleSoftwareSourceCodeVersion(ctx, sourceCodeID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
@@ -194,7 +195,7 @@ func (r *Repo) transition(
 	fn func(*sqlc.Queries) (sqlc.SoftwareSourceCodeVersion, error),
 ) (domain.SoftwareSourceCodeVersion, error) {
 	var result domain.SoftwareSourceCodeVersion
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		if _, err := q.EnsureLifecycleSoftwareSourceCodeVersion(ctx, sqlc.EnsureLifecycleSoftwareSourceCodeVersionParams{
 			VersionID:            versionID,
 			SoftwareSourceCodeID: sourceCodeID,
@@ -215,7 +216,7 @@ func (r *Repo) transition(
 }
 
 func (r *Repo) Discard(ctx context.Context, sourceCodeID, versionID uuid.UUID) error {
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		if _, err := q.EnsureLifecycleSoftwareSourceCodeVersion(ctx, sqlc.EnsureLifecycleSoftwareSourceCodeVersionParams{
 			VersionID:            versionID,
 			SoftwareSourceCodeID: sourceCodeID,
@@ -244,7 +245,7 @@ func (r *Repo) DraftFromLatestArchive(ctx context.Context, actorID string, sourc
 
 func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceSourceCodeID, targetGroupID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	var result domain.SoftwareSourceCodeVersion
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		source, err := q.GetPublishedLifecycleSoftwareSourceCodeVersion(ctx, sourceSourceCodeID)
 		if err != nil {
 			return fmt.Errorf("get published source code version: %w", err)
@@ -282,7 +283,7 @@ func (r *Repo) clone(
 	copyCategories bool,
 ) (domain.SoftwareSourceCodeVersion, error) {
 	var versionID uuid.UUID
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		var source sqlc.SoftwareSourceCodeVersion
 		var err error
 		if status == sqlc.ResourceStatusPUBLISHED {

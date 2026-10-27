@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"mime"
+	"net/textproto"
+	"net/url"
 	"regexp"
 	"slices"
 	"strings"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
+	"golang.org/x/net/http/httpguts"
 )
 
 var (
@@ -28,29 +31,21 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 		return WebServiceInput{}, prefixOrField(err, "description", "description", "Description must not be blank.")
 	}
 	value.Description = description
-	value.TemplateURL = strings.TrimSpace(value.TemplateURL)
-	value.Format = strings.TrimSpace(value.Format)
-	value.Method = HTTPMethod(strings.ToUpper(strings.TrimSpace(string(value.Method))))
 	value.Type = WebServiceType(strings.ToUpper(strings.TrimSpace(string(value.Type))))
 	if value.Name == "" {
 		return WebServiceInput{}, invalidField("name", "Name must not be blank.", nil)
 	}
-	if value.TemplateURL == "" {
-		return WebServiceInput{}, invalidField("template_url", "Template URL must not be blank.", nil)
-	}
-	if value.Format == "" {
-		return WebServiceInput{}, invalidField("format", "Format must not be blank.", nil)
-	}
-	value.Format, err = normalizeMediaType(value.Format)
-	if err != nil {
-		return WebServiceInput{}, invalidField("format", "Format must be a valid media type.", err)
-	}
-	if !value.Method.Valid() {
-		return WebServiceInput{}, invalidField("method", "Method is not supported.", nil)
-	}
 	if !value.Type.Valid() {
 		return WebServiceInput{}, invalidField("type", "Type is not supported.", nil)
 	}
+	if value.Configuration == nil {
+		return WebServiceInput{}, invalidField("configuration", "Configuration is required.", nil)
+	}
+	configuration, err := parseWebServiceConfigurationInput(value.Type, value.Configuration)
+	if err != nil {
+		return WebServiceInput{}, fmt.Errorf("validate configuration: %w", apperror.PrefixTarget(err, "configuration"))
+	}
+	value.Configuration = configuration
 	visibleOn, err := normalizeWebServiceVisibleOn(value.VisibleOn)
 	if err != nil {
 		return WebServiceInput{}, invalidField("visible_on", "Audience selection must contain supported values.", err)
@@ -74,25 +69,376 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 		}
 	}
 
-	parameters, err := parseWebServiceParameterInputs(value.Parameters)
+	return value, nil
+}
+
+func parseWebServiceConfigurationInput(serviceType WebServiceType, value WebServiceConfigurationInput) (WebServiceConfigurationInput, error) {
+	switch configuration := value.(type) {
+	case GenericWebServiceConfigurationInput:
+		if serviceType != WebServiceTypeHTTP {
+			return nil, invalidField("type", "Configuration does not match service type.", nil)
+		}
+		return newGenericWebServiceConfigurationInput(configuration)
+	case WFSConfigurationInput:
+		if serviceType != WebServiceTypeWFS {
+			return nil, invalidField("type", "Configuration does not match service type.", nil)
+		}
+		return NewWFSConfigurationInput(configuration)
+	case WMSConfigurationInput:
+		if serviceType != WebServiceTypeWMS {
+			return nil, invalidField("type", "Configuration does not match service type.", nil)
+		}
+		return NewWMSConfigurationInput(configuration)
+	case WMTSConfigurationInput:
+		if serviceType != WebServiceTypeWMTS {
+			return nil, invalidField("type", "Configuration does not match service type.", nil)
+		}
+		return NewWMTSConfigurationInput(configuration)
+	default:
+		return nil, invalidField("configuration", "Configuration type is not supported.", nil)
+	}
+}
+
+func newGenericWebServiceConfigurationInput(value GenericWebServiceConfigurationInput) (GenericWebServiceConfigurationInput, error) {
+	value.TemplateURL = strings.TrimSpace(value.TemplateURL)
+	value.Format = strings.TrimSpace(value.Format)
+	value.Method = HTTPMethod(strings.ToUpper(strings.TrimSpace(string(value.Method))))
+	if value.TemplateURL == "" {
+		return GenericWebServiceConfigurationInput{}, invalidField("template_url", "Template URL must not be blank.", nil)
+	}
+	if value.Format == "" {
+		return GenericWebServiceConfigurationInput{}, invalidField("format", "Format must not be blank.", nil)
+	}
+	if !value.Method.Valid() {
+		return GenericWebServiceConfigurationInput{}, invalidField("method", "Method is not supported.", nil)
+	}
+	parameters, err := parseWebServiceParameterInputs(value.Parameters, "parameters")
 	if err != nil {
-		return WebServiceInput{}, err
+		return GenericWebServiceConfigurationInput{}, err
+	}
+	if err := validateWebServiceParameterRoles(parameters, "parameters"); err != nil {
+		return GenericWebServiceConfigurationInput{}, err
 	}
 	value.Parameters = parameters
 	if value.Body != nil {
 		body, err := NewRequestBodyInput(*value.Body)
 		if err != nil {
-			return WebServiceInput{}, err
+			return GenericWebServiceConfigurationInput{}, err
 		}
 		value.Body = &body
 	}
 	if err := validateMethodBody(value.Method, value.Body); err != nil {
-		return WebServiceInput{}, invalidField("body_template", "This method does not support a request body.", err)
+		return GenericWebServiceConfigurationInput{}, invalidField("body_template", "This method does not support a request body.", err)
 	}
 	if err := validatePathParameters(value.TemplateURL, pathParameterNames(parameters)); err != nil {
-		return WebServiceInput{}, invalidField("template_url", "Template URL placeholders must match declared path parameters.", err)
+		return GenericWebServiceConfigurationInput{}, invalidField("template_url", "Template URL placeholders must match declared path parameters.", err)
 	}
 	return value, nil
+}
+
+func NewWFSConfigurationInput(value WFSConfigurationInput) (WFSConfigurationInput, error) {
+	value.GetFeatureTemplateURL = strings.TrimSpace(value.GetFeatureTemplateURL)
+	if value.Version != "1.1.0" && value.Version != "2.0.0" {
+		return WFSConfigurationInput{}, invalidField("version", "Select WFS version 1.1.0 or 2.0.0.", nil)
+	}
+	if err := validateWFSChoices(value.FeatureTypes, value.DefaultFeatureType, "feature_types", "default_feature_type"); err != nil {
+		return WFSConfigurationInput{}, err
+	}
+	if err := validateWFSChoices(value.OutputFormats, value.DefaultOutputFormat, "output_formats", "default_output_format"); err != nil {
+		return WFSConfigurationInput{}, err
+	}
+	if value.ResultLimit != nil && *value.ResultLimit <= 0 {
+		return WFSConfigurationInput{}, invalidField("result_limit", "Result limit must be positive.", nil)
+	}
+	parameters, err := parseWebServiceParameterInputs(value.Parameters, "parameters")
+	if err != nil {
+		return WFSConfigurationInput{}, err
+	}
+	if err := validateWebServiceParameterRoles(parameters, "parameters"); err != nil {
+		return WFSConfigurationInput{}, err
+	}
+	for i, parameter := range parameters {
+		target := fmt.Sprintf("parameters[%d]", i)
+		if parameter.Location != ParameterLocationPath && parameter.Location != ParameterLocationQuery {
+			return WFSConfigurationInput{}, invalidField(target+".location", "WFS parameters must use PATH or QUERY location.", nil)
+		}
+		if _, reserved := wfsReservedParameters[strings.ToUpper(parameter.Name)]; reserved {
+			return WFSConfigurationInput{}, invalidField(target+".name", "Standard WFS parameters cannot be redefined.", nil)
+		}
+	}
+	value.Parameters = parameters
+	endpoint, err := url.Parse(value.GetFeatureTemplateURL)
+	if err != nil || endpoint.Host == "" || (endpoint.Scheme != "http" && endpoint.Scheme != "https") || endpoint.Fragment != "" {
+		return WFSConfigurationInput{}, invalidField("get_feature_template_url", "URL must be an absolute HTTP(S) URL without a fragment.", err)
+	}
+	if pathPlaceholderPattern.MatchString(endpoint.Host) || pathPlaceholderPattern.MatchString(endpoint.RawQuery) {
+		return WFSConfigurationInput{}, invalidField("get_feature_template_url", "Placeholders are only supported in the URL path.", nil)
+	}
+	if err := validatePathParameters(value.GetFeatureTemplateURL, pathParameterNames(parameters)); err != nil {
+		return WFSConfigurationInput{}, invalidField("get_feature_template_url", "Template URL placeholders must match declared path parameters.", err)
+	}
+	query, err := url.ParseQuery(endpoint.RawQuery)
+	if err != nil {
+		return WFSConfigurationInput{}, invalidField("get_feature_template_url", "URL query must be valid.", err)
+	}
+	for name := range query {
+		if _, reserved := wfsGeneratedParameters[strings.ToUpper(name)]; reserved {
+			return WFSConfigurationInput{}, invalidField("get_feature_template_url", "Platform-generated WFS parameters must not appear in the URL query.", nil)
+		}
+	}
+	return value, nil
+}
+
+func validateWFSChoices(values []string, selected, field, defaultField string) error {
+	if len(values) == 0 {
+		return invalidField(field, "Configure at least one choice.", nil)
+	}
+	seen := make(map[string]struct{}, len(values))
+	for i, value := range values {
+		target := fmt.Sprintf("%s[%d]", field, i)
+		if value == "" || strings.TrimSpace(value) != value {
+			return invalidField(target, "Choices must not be blank or contain surrounding whitespace.", nil)
+		}
+		if _, exists := seen[value]; exists {
+			return invalidField(target, "Choices must be unique.", nil)
+		}
+		seen[value] = struct{}{}
+	}
+	if _, exists := seen[selected]; !exists {
+		return invalidField(defaultField, "Default must match a configured choice.", nil)
+	}
+	return nil
+}
+
+var (
+	wfsGeneratedParameters = reservedParameterNames(
+		"SERVICE", "REQUEST", "VERSION", "TYPENAME", "TYPENAMES", "OUTPUTFORMAT", "MAXFEATURES", "COUNT", "BBOX", "SRSNAME",
+	)
+	wfsReservedParameters = reservedParameterNames(
+		"SERVICE", "REQUEST", "VERSION", "ACCEPTVERSIONS", "ACCEPTFORMATS", "SECTIONS", "UPDATESEQUENCE",
+		"TYPENAME", "TYPENAMES", "OUTPUTFORMAT", "MAXFEATURES", "COUNT", "BBOX", "SRSNAME",
+		"PROPERTYNAME", "FEATUREVERSION", "FEATUREID", "RESOURCEID", "FILTER", "FILTER_LANGUAGE", "SORTBY", "RESULTTYPE", "STARTINDEX",
+		"NAMESPACE", "NAMESPACES", "ALIASES", "RESOLVE", "RESOLVEDEPTH", "RESOLVETIMEOUT", "STOREDQUERY_ID",
+	)
+)
+
+func NewWMTSConfigurationInput(value WMTSConfigurationInput) (WMTSConfigurationInput, error) {
+	value.CapabilitiesURL = strings.TrimSpace(value.CapabilitiesURL)
+	if err := validateWMSURL("capabilities_url", value.CapabilitiesURL); err != nil {
+		return WMTSConfigurationInput{}, err
+	}
+	if len(value.Layers) == 0 {
+		return WMTSConfigurationInput{}, invalidField("layers", "At least one layer is required.", nil)
+	}
+	layers := make(map[string]struct{}, len(value.Layers))
+	for i, layer := range value.Layers {
+		path := fmt.Sprintf("layers[%d]", i)
+		if strings.TrimSpace(layer.Name) == "" {
+			return WMTSConfigurationInput{}, invalidField(path+".name", "Layer name must not be blank.", nil)
+		}
+		if _, exists := layers[layer.Name]; exists {
+			return WMTSConfigurationInput{}, invalidField(path+".name", "Layer names must be unique.", nil)
+		}
+		layers[layer.Name] = struct{}{}
+		if layer.DefaultStyle != nil && (*layer.DefaultStyle == "" || strings.TrimSpace(*layer.DefaultStyle) != *layer.DefaultStyle) {
+			return WMTSConfigurationInput{}, invalidField(path+".default_style", "Default style must not be blank or contain surrounding whitespace.", nil)
+		}
+		styles := make(map[string]struct{}, len(layer.Styles))
+		for j, style := range layer.Styles {
+			if strings.TrimSpace(style) == "" {
+				return WMTSConfigurationInput{}, invalidField(fmt.Sprintf("%s.styles[%d]", path, j), "Style name must not be blank.", nil)
+			}
+			if _, exists := styles[style]; exists {
+				return WMTSConfigurationInput{}, invalidField(fmt.Sprintf("%s.styles[%d]", path, j), "Style names must be unique within a layer.", nil)
+			}
+			styles[style] = struct{}{}
+		}
+		if layer.DefaultStyle != nil {
+			if _, exists := styles[*layer.DefaultStyle]; !exists {
+				return WMTSConfigurationInput{}, invalidField(path+".default_style", "Default style must be one of the configured styles.", nil)
+			}
+		}
+	}
+	if _, exists := layers[value.DefaultLayer]; !exists || strings.TrimSpace(value.DefaultLayer) != value.DefaultLayer {
+		return WMTSConfigurationInput{}, invalidField("default_layer", "Default layer must be one of the configured layers.", nil)
+	}
+	var err error
+	value.GetTileParameters, err = parseWMTSParameters(value.GetTileParameters, "get_tile_parameters", wmtsGetTileReservedParameters)
+	if err != nil {
+		return WMTSConfigurationInput{}, err
+	}
+	value.GetFeatureInfoParameters, err = parseWMTSParameters(value.GetFeatureInfoParameters, "get_feature_info_parameters", wmtsGetFeatureInfoReservedParameters)
+	if err != nil {
+		return WMTSConfigurationInput{}, err
+	}
+	return value, nil
+}
+
+var (
+	wmtsGetTileReservedParameters        = reservedParameterNames("SERVICE", "REQUEST", "VERSION", "LAYER", "STYLE", "FORMAT", "TILEMATRIXSET", "TILEMATRIX", "TILEROW", "TILECOL")
+	wmtsGetFeatureInfoReservedParameters = reservedParameterNames("SERVICE", "REQUEST", "VERSION", "LAYER", "STYLE", "FORMAT", "TILEMATRIXSET", "TILEMATRIX", "TILEROW", "TILECOL", "INFOFORMAT", "I", "J")
+)
+
+func parseWMTSParameters(values []WebServiceParameterInput, field string, reserved map[string]struct{}) ([]WebServiceParameterInput, error) {
+	parameters, err := parseWebServiceParameterInputs(values, field)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateWebServiceParameterRoles(parameters, field); err != nil {
+		return nil, err
+	}
+	for i, parameter := range parameters {
+		path := fmt.Sprintf("%s[%d]", field, i)
+		if parameter.Location != ParameterLocationQuery {
+			return nil, invalidField(path+".location", "WMTS operation parameters must use QUERY location.", nil)
+		}
+		if _, exists := reserved[strings.ToUpper(parameter.Name)]; exists {
+			return nil, invalidField(path+".name", "Standard WMTS parameters cannot be redefined.", nil)
+		}
+	}
+	if err := validateWMSRequiredDefaults(field, parameters); err != nil {
+		return nil, err
+	}
+	return parameters, nil
+}
+
+func NewWMSConfigurationInput(value WMSConfigurationInput) (WMSConfigurationInput, error) {
+	value.CapabilitiesURL = strings.TrimSpace(value.CapabilitiesURL)
+	if err := validateWMSURL("capabilities_url", value.CapabilitiesURL); err != nil {
+		return WMSConfigurationInput{}, err
+	}
+	if strings.TrimSpace(value.DefaultLayer) == "" {
+		return WMSConfigurationInput{}, invalidField("default_layer", "Default layer must not be blank.", nil)
+	}
+	if strings.TrimSpace(value.DefaultLayer) != value.DefaultLayer {
+		return WMSConfigurationInput{}, invalidField("default_layer", "Default layer must not contain surrounding whitespace.", nil)
+	}
+	if len(value.Layers) == 0 {
+		return WMSConfigurationInput{}, invalidField("layers", "At least one layer is required.", nil)
+	}
+
+	layerNames := make(map[string]struct{}, len(value.Layers))
+	for i, layer := range value.Layers {
+		path := fmt.Sprintf("layers[%d]", i)
+		if strings.TrimSpace(layer.Name) == "" {
+			return WMSConfigurationInput{}, invalidField(path+".name", "Layer name must not be blank.", nil)
+		}
+		if _, exists := layerNames[layer.Name]; exists {
+			return WMSConfigurationInput{}, invalidField(path+".name", "Layer names must be unique.", nil)
+		}
+		layerNames[layer.Name] = struct{}{}
+		if strings.TrimSpace(layer.DefaultStyle) != layer.DefaultStyle {
+			return WMSConfigurationInput{}, invalidField(path+".default_style", "Default style must not contain surrounding whitespace.", nil)
+		}
+		if len(layer.Styles) == 0 {
+			return WMSConfigurationInput{}, invalidField(path+".styles", "At least one style is required.", nil)
+		}
+		styleNames := make(map[string]struct{}, len(layer.Styles))
+		for j, style := range layer.Styles {
+			stylePath := fmt.Sprintf("%s.styles[%d]", path, j)
+			if style != "" && strings.TrimSpace(style) == "" {
+				return WMSConfigurationInput{}, invalidField(stylePath, "Style name must not be blank unless it is the empty default style.", nil)
+			}
+			if _, exists := styleNames[style]; exists {
+				return WMSConfigurationInput{}, invalidField(stylePath, "Style names must be unique within a layer.", nil)
+			}
+			styleNames[style] = struct{}{}
+		}
+		if _, found := styleNames[layer.DefaultStyle]; !found {
+			return WMSConfigurationInput{}, invalidField(path+".default_style", "Default style must be one of the configured styles.", nil)
+		}
+	}
+	if _, found := layerNames[value.DefaultLayer]; !found {
+		return WMSConfigurationInput{}, invalidField("default_layer", "Default layer must be one of the configured layers.", nil)
+	}
+
+	mapParameters, err := parseWMSParameters(value.GetMapParameters, "get_map_parameters", wmsGetMapReservedParameters)
+	if err != nil {
+		return WMSConfigurationInput{}, err
+	}
+	featureInfoParameters, err := parseWMSParameters(value.GetFeatureInfoParameters, "get_feature_info_parameters", wmsGetFeatureInfoReservedParameters)
+	if err != nil {
+		return WMSConfigurationInput{}, err
+	}
+	value.GetMapParameters = mapParameters
+	value.GetFeatureInfoParameters = featureInfoParameters
+	if err := validateWMSRequiredDefaults("get_map_parameters", mapParameters); err != nil {
+		return WMSConfigurationInput{}, err
+	}
+	if err := validateWMSRequiredDefaults("get_feature_info_parameters", featureInfoParameters); err != nil {
+		return WMSConfigurationInput{}, err
+	}
+	return value, nil
+}
+
+var (
+	wmsGetMapReservedParameters = reservedParameterNames(
+		"SERVICE", "VERSION", "REQUEST", "LAYERS", "STYLES", "SRS", "CRS", "BBOX", "WIDTH", "HEIGHT", "FORMAT", "TRANSPARENT", "BGCOLOR", "EXCEPTIONS",
+	)
+	wmsGetFeatureInfoReservedParameters = reservedParameterNames(
+		"SERVICE", "VERSION", "REQUEST", "LAYERS", "STYLES", "SRS", "CRS", "BBOX", "WIDTH", "HEIGHT", "FORMAT", "TRANSPARENT", "BGCOLOR", "EXCEPTIONS",
+		"QUERY_LAYERS", "INFO_FORMAT", "FEATURE_COUNT", "X", "Y", "I", "J",
+	)
+)
+
+func reservedParameterNames(names ...string) map[string]struct{} {
+	result := make(map[string]struct{}, len(names))
+	for _, name := range names {
+		result[name] = struct{}{}
+	}
+	return result
+}
+
+func parseWMSParameters(values []WebServiceParameterInput, field string, reserved map[string]struct{}) ([]WebServiceParameterInput, error) {
+	parameters, err := parseWebServiceParameterInputs(values, field)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateWebServiceParameterRoles(parameters, field); err != nil {
+		return nil, err
+	}
+	for i, parameter := range parameters {
+		path := fmt.Sprintf("%s[%d]", field, i)
+		if parameter.Location != ParameterLocationQuery {
+			return nil, invalidField(path+".location", "WMS operation parameters must use QUERY location.", nil)
+		}
+		if _, exists := reserved[strings.ToUpper(parameter.Name)]; exists {
+			return nil, invalidField(path+".name", "Standard WMS parameters cannot be redefined.", nil)
+		}
+	}
+	return parameters, nil
+}
+
+func validateWMSURL(field, value string) error {
+	if strings.TrimSpace(value) == "" {
+		return invalidField(field, "URL must not be blank.", nil)
+	}
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.Host == "" || (strings.ToLower(parsed.Scheme) != "http" && strings.ToLower(parsed.Scheme) != "https") || parsed.Fragment != "" {
+		return invalidField(field, "URL must be an absolute HTTP(S) URL without a fragment.", err)
+	}
+	return nil
+}
+
+func validateWMSRequiredDefaults(field string, values []WebServiceParameterInput) error {
+	for i, parameter := range values {
+		path := fmt.Sprintf("%s[%d]", field, i)
+		if !parameter.Required {
+			continue
+		}
+		if schema, ok := parameter.Schema.(TemplateSchemaInput); ok {
+			for j, input := range schema.Parameters {
+				if input.Required && input.Schema.DefaultValue() == nil {
+					return invalidField(fmt.Sprintf("%s.schema.parameters[%d].default", path, j), "Required template inputs need a default for immediate execution.", nil)
+				}
+			}
+			continue
+		}
+		if parameter.Schema.DefaultValue() == nil {
+			return invalidField(path+".default", "Required parameters need a default for immediate execution.", nil)
+		}
+	}
+	return nil
 }
 
 // NewWebService parses and validates persisted web-service metadata.
@@ -105,17 +451,8 @@ func NewWebService(value WebService) (result WebService, err error) {
 	if value.ID == uuid.Nil {
 		return WebService{}, fmt.Errorf("web service ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	parameterIDs := make(map[string]Parameter, len(value.Parameters))
-	for _, parameter := range value.Parameters {
-		if err := validatePersistedParameter(parameter.Parameter); err != nil {
-			return WebService{}, err
-		}
-		parameterIDs[strings.TrimSpace(parameter.Name)] = parameter.Parameter
-	}
-	if value.Body != nil {
-		if err := validatePersistedParameters(value.Body.Parameters); err != nil {
-			return WebService{}, fmt.Errorf("request body parameters: %w", err)
-		}
+	if err := validatePersistedWebServiceConfiguration(value.Configuration); err != nil {
+		return WebService{}, err
 	}
 
 	input, err := NewWebServiceInput(value.Input())
@@ -124,31 +461,11 @@ func NewWebService(value WebService) (result WebService, err error) {
 	}
 	value.Name = input.Name
 	value.Description = input.Description
-	value.TemplateURL = input.TemplateURL
-	value.Method = input.Method
 	value.Type = input.Type
 	value.VisibleOn = input.VisibleOn
-	if input.Body == nil {
-		value.Body = nil
-	} else {
-		body, err := restoreRequestBody(*input.Body, *value.Body)
-		if err != nil {
-			return WebService{}, fmt.Errorf("restore request body parameter IDs: %w", err)
-		}
-		value.Body = &body
-	}
-	value.Parameters = make([]WebServiceParameter, len(input.Parameters))
-	for i, parameter := range input.Parameters {
-		persisted, err := restoreParameter(parameter.ParameterInput, parameterIDs[parameter.Name])
-		if err != nil {
-			return WebService{}, fmt.Errorf("restore parameter %q ID: %w", parameter.Name, err)
-		}
-		value.Parameters[i] = WebServiceParameter{
-			Parameter: persisted,
-			Property:  parameter.Property,
-			Location:  parameter.Location,
-			Explode:   parameter.Explode,
-		}
+	value.Configuration, err = restoreWebServiceConfiguration(input.Configuration, value.Configuration)
+	if err != nil {
+		return WebService{}, fmt.Errorf("restore configuration parameter IDs: %w", err)
 	}
 	if value.Provider != nil {
 		if err := validateOrganization(*value.Provider); err != nil {
@@ -159,6 +476,162 @@ func NewWebService(value WebService) (result WebService, err error) {
 		return WebService{}, fmt.Errorf("contact points: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	return value, nil
+}
+
+func validatePersistedWebServiceConfiguration(value WebServiceConfiguration) error {
+	switch configuration := value.(type) {
+	case GenericWebServiceConfiguration:
+		if err := validatePersistedWebServiceParameters(configuration.Parameters); err != nil {
+			return err
+		}
+		if configuration.Body != nil {
+			if err := validatePersistedParameters(configuration.Body.Parameters); err != nil {
+				return fmt.Errorf("request body parameters: %w", err)
+			}
+		}
+	case WFSConfiguration:
+		if err := validatePersistedWebServiceParameters(configuration.Parameters); err != nil {
+			return err
+		}
+	case WMSConfiguration:
+		if err := validatePersistedWebServiceParameters(configuration.GetMapParameters); err != nil {
+			return fmt.Errorf("GetMap parameters: %w", err)
+		}
+		if err := validatePersistedWebServiceParameters(configuration.GetFeatureInfoParameters); err != nil {
+			return fmt.Errorf("GetFeatureInfo parameters: %w", err)
+		}
+	case WMTSConfiguration:
+		if err := validatePersistedWebServiceParameters(configuration.GetTileParameters); err != nil {
+			return fmt.Errorf("GetTile parameters: %w", err)
+		}
+		if err := validatePersistedWebServiceParameters(configuration.GetFeatureInfoParameters); err != nil {
+			return fmt.Errorf("GetFeatureInfo parameters: %w", err)
+		}
+	default:
+		return fmt.Errorf("web service configuration is missing or unsupported: %w", apperror.Default(apperror.CodeValidationFailed))
+	}
+	return nil
+}
+
+func validatePersistedWebServiceParameters(values []WebServiceParameter) error {
+	for _, value := range values {
+		if err := validatePersistedParameter(value.Parameter); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func restoreWebServiceConfiguration(input WebServiceConfigurationInput, existing WebServiceConfiguration) (WebServiceConfiguration, error) {
+	switch configuration := input.(type) {
+	case GenericWebServiceConfigurationInput:
+		persisted, ok := existing.(GenericWebServiceConfiguration)
+		if !ok {
+			return nil, fmt.Errorf("generic configuration is missing: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		parameters, err := restoreWebServiceParameters(configuration.Parameters, persisted.Parameters)
+		if err != nil {
+			return nil, err
+		}
+		var body *RequestBody
+		if configuration.Body != nil {
+			if persisted.Body == nil {
+				return nil, fmt.Errorf("request body configuration is missing: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
+			restored, err := restoreRequestBody(*configuration.Body, *persisted.Body)
+			if err != nil {
+				return nil, err
+			}
+			body = &restored
+		}
+		return GenericWebServiceConfiguration{
+			TemplateURL: configuration.TemplateURL,
+			Method:      configuration.Method,
+			Body:        body,
+			Parameters:  parameters,
+			Format:      configuration.Format,
+		}, nil
+	case WFSConfigurationInput:
+		persisted, ok := existing.(WFSConfiguration)
+		if !ok {
+			return nil, fmt.Errorf("WFS configuration is missing: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		parameters, err := restoreWebServiceParameters(configuration.Parameters, persisted.Parameters)
+		if err != nil {
+			return nil, err
+		}
+		return WFSConfiguration{
+			GetFeatureTemplateURL: configuration.GetFeatureTemplateURL,
+			Version:               configuration.Version,
+			FeatureTypes:          configuration.FeatureTypes,
+			DefaultFeatureType:    configuration.DefaultFeatureType,
+			OutputFormats:         configuration.OutputFormats,
+			DefaultOutputFormat:   configuration.DefaultOutputFormat,
+			ResultLimit:           configuration.ResultLimit,
+			ResultLimitEditable:   configuration.ResultLimitEditable,
+			Parameters:            parameters,
+		}, nil
+	case WMTSConfigurationInput:
+		persisted, ok := existing.(WMTSConfiguration)
+		if !ok {
+			return nil, fmt.Errorf("WMTS configuration is missing: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		tile, err := restoreWebServiceParameters(configuration.GetTileParameters, persisted.GetTileParameters)
+		if err != nil {
+			return nil, fmt.Errorf("GetTile parameters: %w", err)
+		}
+		info, err := restoreWebServiceParameters(configuration.GetFeatureInfoParameters, persisted.GetFeatureInfoParameters)
+		if err != nil {
+			return nil, fmt.Errorf("GetFeatureInfo parameters: %w", err)
+		}
+		return WMTSConfiguration{CapabilitiesURL: configuration.CapabilitiesURL, DefaultLayer: configuration.DefaultLayer, Layers: configuration.Layers, GetTileParameters: tile, GetFeatureInfoParameters: info}, nil
+	case WMSConfigurationInput:
+		persisted, ok := existing.(WMSConfiguration)
+		if !ok {
+			return nil, fmt.Errorf("WMS configuration is missing: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		mapParameters, err := restoreWebServiceParameters(configuration.GetMapParameters, persisted.GetMapParameters)
+		if err != nil {
+			return nil, fmt.Errorf("GetMap parameters: %w", err)
+		}
+		featureInfoParameters, err := restoreWebServiceParameters(configuration.GetFeatureInfoParameters, persisted.GetFeatureInfoParameters)
+		if err != nil {
+			return nil, fmt.Errorf("GetFeatureInfo parameters: %w", err)
+		}
+		return WMSConfiguration{
+			CapabilitiesURL:          configuration.CapabilitiesURL,
+			DefaultLayer:             configuration.DefaultLayer,
+			Layers:                   configuration.Layers,
+			TransparencyEditable:     configuration.TransparencyEditable,
+			DefaultTransparency:      configuration.DefaultTransparency,
+			GetMapParameters:         mapParameters,
+			GetFeatureInfoParameters: featureInfoParameters,
+		}, nil
+	default:
+		return nil, fmt.Errorf("web service input configuration is unsupported: %w", apperror.Default(apperror.CodeValidationFailed))
+	}
+}
+
+func restoreWebServiceParameters(values []WebServiceParameterInput, existing []WebServiceParameter) ([]WebServiceParameter, error) {
+	byName := make(map[string]WebServiceParameter, len(existing))
+	for _, value := range existing {
+		byName[value.Name] = value
+	}
+	result := make([]WebServiceParameter, len(values))
+	for i, value := range values {
+		persisted, err := restoreParameter(value.ParameterInput, byName[value.Name].Parameter)
+		if err != nil {
+			return nil, fmt.Errorf("restore parameter %q ID: %w", value.Name, err)
+		}
+		result[i] = WebServiceParameter{
+			Parameter: persisted,
+			Property:  value.Property,
+			Role:      value.Role,
+			Location:  value.Location,
+			Explode:   value.Explode,
+		}
+	}
+	return result, nil
 }
 
 func normalizeWebServiceVisibleOn(values []WebServiceVisibleOn) ([]WebServiceVisibleOn, error) {
@@ -193,18 +666,41 @@ func NewWebServiceParameterInput(value WebServiceParameterInput) (WebServicePara
 	}
 	value.ParameterInput = parameter
 	value.Property = optionalTrimmedString(value.Property)
+	if value.Role != nil {
+		role := WebServiceParameterRole(strings.ToUpper(strings.TrimSpace(string(*value.Role))))
+		if !role.Valid() {
+			return WebServiceParameterInput{}, invalidField("role", "Role is not supported.", nil)
+		}
+		value.Role = &role
+	}
 	value.Location = ParameterLocation(strings.ToUpper(strings.TrimSpace(string(value.Location))))
 	if !value.Location.Valid() {
 		return WebServiceParameterInput{}, invalidField("location", "Location is not supported.", nil)
 	}
-	if value.Explode && (value.Location != ParameterLocationQuery || !schemaHasMultipleValues(value.Schema)) {
+	if value.Explode && (value.Location != ParameterLocationQuery || !value.Schema.AllowsMultipleValues()) {
 		return WebServiceParameterInput{}, invalidField("explode", "Explode requires a query parameter with multiple values.", nil)
+	}
+	if value.Location == ParameterLocationPath && !value.Required {
+		return WebServiceParameterInput{}, invalidField("required", "Path parameters must be required.", nil)
+	}
+	if value.Location == ParameterLocationHeader {
+		if !httpguts.ValidHeaderFieldName(value.Name) {
+			return WebServiceParameterInput{}, invalidField("name", "Header name must be a valid HTTP field name.", nil)
+		}
+		switch textproto.CanonicalMIMEHeaderKey(value.Name) {
+		case "Host", "Content-Length", "Transfer-Encoding", "Connection", "Trailer", "Te", "Upgrade", "Proxy-Connection", "Keep-Alive":
+			return WebServiceParameterInput{}, invalidField("name", "Headers must not override destination or HTTP framing.", nil)
+		default:
+		}
 	}
 	return value, nil
 }
 
 // NewRequestBodyInput parses and validates caller-controlled request-body fields.
 func NewRequestBodyInput(value RequestBodyInput) (RequestBodyInput, error) {
+	if value.Required == nil {
+		value.Required = new(true)
+	}
 	value.ContentType = strings.TrimSpace(value.ContentType)
 	value.Template = strings.TrimSpace(value.Template)
 
@@ -264,16 +760,24 @@ func parseTemplateDefinition(source string, values []ParameterInput) (string, []
 	return source, parameters, nil
 }
 
-func parseWebServiceParameterInputs(values []WebServiceParameterInput) ([]WebServiceParameterInput, error) {
+func parseWebServiceParameterInputs(values []WebServiceParameterInput, field string) ([]WebServiceParameterInput, error) {
 	result := make([]WebServiceParameterInput, 0, len(values))
 	seen := make(map[string]struct{}, len(values))
+	seenHeaders := make(map[string]struct{})
 	for i, value := range values {
 		parsed, err := NewWebServiceParameterInput(value)
 		if err != nil {
-			return nil, fmt.Errorf("validate web service parameter: %w", apperror.PrefixTarget(err, fmt.Sprintf("parameters[%d]", i)))
+			return nil, fmt.Errorf("validate web service parameter: %w", apperror.PrefixTarget(err, fmt.Sprintf("%s[%d]", field, i)))
 		}
 		if _, exists := seen[parsed.Name]; exists {
-			return nil, invalidField(fmt.Sprintf("parameters[%d].name", i), "Parameter names must be unique.", nil)
+			return nil, invalidField(fmt.Sprintf("%s[%d].name", field, i), "Parameter names must be unique.", nil)
+		}
+		if parsed.Location == ParameterLocationHeader {
+			name := textproto.CanonicalMIMEHeaderKey(parsed.Name)
+			if _, exists := seenHeaders[name]; exists {
+				return nil, invalidField(fmt.Sprintf("%s[%d].name", field, i), "Header names must be unique ignoring case.", nil)
+			}
+			seenHeaders[name] = struct{}{}
 		}
 		seen[parsed.Name] = struct{}{}
 		result = append(result, parsed)
@@ -293,6 +797,7 @@ func webServiceParameterInputs(values []WebServiceParameter) []WebServiceParamet
 		result[i] = WebServiceParameterInput{
 			ParameterInput: value.Input(),
 			Property:       value.Property,
+			Role:           value.Role,
 			Location:       value.Location,
 			Explode:        value.Explode,
 		}
@@ -328,6 +833,7 @@ func requestBodyInput(value *RequestBody) *RequestBodyInput {
 		return nil
 	}
 	return &RequestBodyInput{
+		Required:    new(value.Required),
 		ContentType: value.ContentType,
 		Template:    value.Template,
 		Parameters:  parameterInputs(value.Parameters),
@@ -396,7 +902,12 @@ func restoreRequestBody(value RequestBodyInput, existing RequestBody) (RequestBo
 	if err != nil {
 		return RequestBody{}, err
 	}
-	return RequestBody{ContentType: value.ContentType, Template: value.Template, Parameters: parameters}, nil
+	return RequestBody{
+		Required:    *value.Required,
+		ContentType: value.ContentType,
+		Template:    value.Template,
+		Parameters:  parameters,
+	}, nil
 }
 
 func parseParameter(value ParameterInput, allowTemplate, allowMultipleValues bool) (ParameterInput, error) {
@@ -416,10 +927,10 @@ func parseParameter(value ParameterInput, allowTemplate, allowMultipleValues boo
 	if err != nil {
 		return ParameterInput{}, prefixOrField(err, "schema", "schema", "Schema definition is invalid.")
 	}
-	if !allowMultipleValues && schemaHasMultipleValues(schema) {
+	if !allowMultipleValues && schema.AllowsMultipleValues() {
 		return ParameterInput{}, invalidField("schema.multiple_values", "Multiple values are not allowed here.", nil)
 	}
-	if schemaHasMultipleValues(schema) && !parameterSchemaHasEnum(schema) {
+	if schema.AllowsMultipleValues() && !schema.HasEnum() {
 		return ParameterInput{}, invalidField("schema.enum", "Multiple values require at least one allowed value.", nil)
 	}
 	value.Schema = schema
@@ -471,32 +982,6 @@ func parseParameterSchema(value ParameterSchema, allowTemplate bool) (ParameterS
 		return parseTemplateSchema(schema)
 	default:
 		return nil, fmt.Errorf("unsupported parameter schema %T: %w", value, apperror.Default(apperror.CodeValidationFailed))
-	}
-}
-
-func parameterSchemaHasEnum(value ParameterSchema) bool {
-	switch schema := value.(type) {
-	case StringSchema:
-		return len(schema.Enum) > 0
-	case IntegerSchema:
-		return len(schema.Enum) > 0
-	case FloatSchema:
-		return len(schema.Enum) > 0
-	default:
-		return false
-	}
-}
-
-func schemaHasMultipleValues(value ParameterSchema) bool {
-	switch schema := value.(type) {
-	case StringSchema:
-		return schema.MultipleValues
-	case IntegerSchema:
-		return schema.MultipleValues
-	case FloatSchema:
-		return schema.MultipleValues
-	default:
-		return false
 	}
 }
 
@@ -588,9 +1073,6 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
 	if value.Enum != nil && len(value.Enum) == 0 {
 		return FloatSchema{}, fmt.Errorf("float enum cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
-	}
-	if !finiteFloat(value.Minimum) || !finiteFloat(value.Maximum) || !finiteFloat(value.Default) {
-		return FloatSchema{}, fmt.Errorf("float values must be finite: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	seen := make(map[float64]struct{}, len(value.Enum))
 	for i := range value.Enum {
@@ -757,10 +1239,6 @@ func optionalWebServiceDescription(value *string) (*string, error) {
 		return nil, fmt.Errorf("web service description cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	return &trimmed, nil
-}
-
-func finiteFloat(value *float64) bool {
-	return value == nil || (!math.IsNaN(*value) && !math.IsInf(*value, 0))
 }
 
 func integerInRange(value int64, minimum, maximum *int64) bool {

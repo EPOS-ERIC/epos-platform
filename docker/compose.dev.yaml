@@ -172,13 +172,13 @@ services:
     ports:
       - "8100:8100"
     environment:
-      - DATA_RETRIEVER_LISTEN_ADDR=:8100
-      - DATA_RETRIEVER_DB_HOST=data-retriever-db
-      - DATA_RETRIEVER_DB_PORT=5432
-      - DATA_RETRIEVER_DB_NAME=data_retriever
-      - DATA_RETRIEVER_DB_USER=data_retriever
-      - DATA_RETRIEVER_DB_PASSWORD=data_retriever
-      - DATA_RETRIEVER_HTTP_TIMEOUT=30s
+      - GRPC_LISTEN_ADDR=:8100
+      - DB_HOST=data-retriever-db
+      - DB_PORT=5432
+      - DB_NAME=data_retriever
+      - DB_USER=data_retriever
+      - DB_PASSWORD=data_retriever
+      - HTTP_TIMEOUT=30s
       - OTEL_SERVICE_NAME=data-retriever
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
@@ -195,7 +195,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "curl -fsS http://localhost:8100/health >/dev/null || exit 1",
+          "nc -z localhost 8100 || exit 1",
         ]
       interval: 10s
       timeout: 5s

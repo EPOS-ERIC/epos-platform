@@ -15,7 +15,6 @@
 - `cli/` contains repository CLI tooling.
 - `docker/` contains repository-level local development assets.
 - `helm/` contains deployment charts and values.
-- Use kebab-case for app and service directories. Do not add a `-service` suffix to service directory names.
 - Keep service-specific code and infrastructure in its owning module. Put code shared across modules in `packages/`.
 
 ## Change Rules
@@ -33,6 +32,7 @@
 - Use root Makefile targets for cross-repository operations; inspect available targets instead of assuming root and module commands are interchangeable.
 - When adding or changing an app or service, inspect affected root Makefile, `Tiltfile`, Docker Compose, Helm, workflow, documentation, and shared-asset wiring. Report required follow-up changes.
 - Before modifying a GitHub workflow, inspect related workflows and request explicit approval. Do not edit workflow files without that approval.
+- For testing the tsack use `make test-integration` to run full integration tests over the local dev deployment. Set the `TESTS` env variable to only run a set of test files.
 
 ## Local Development
 

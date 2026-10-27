@@ -23,18 +23,19 @@ import (
 
 type Repo struct {
 	db *pgxpool.Pool
+	q  *sqlc.Queries
 }
 
 // New creates a metadata import repository.
 func New(pool *pgxpool.Pool) *Repo {
-	return &Repo{db: pool}
+	return &Repo{db: pool, q: sqlc.New(pool)}
 }
 
 // Import persists one metadata batch in a transaction.
 func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBatch) (domain.ImportResult, error) {
 	result := domain.ImportResult{Warnings: batch.Warnings}
 
-	err := dbtx.RunWithTx(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries, tx pgx.Tx) error {
+	err := dbtx.RunWithTx(ctx, r.db, r.q, func(q *sqlc.Queries, tx pgx.Tx) error {
 		groupIDs, err := importGroups(ctx, tx, q, batch.CategorySchemes, &result)
 		if err != nil {
 			return err

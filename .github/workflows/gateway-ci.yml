@@ -4,10 +4,12 @@ on:
   pull_request:
     paths:
       - "services/gateway/**"
+      - "packages/go/apperror/**"
       - "packages/go/logging/**"
       - "packages/go/observability/**"
       - "packages/go/middleware/**"
       - "packages/go/apidocs/**"
+      - "packages/protobuf/**"
       - "packages/scripts/epos-banner.sh"
       - "docker/gateway-config.dev.yaml"
       - "Makefile"
@@ -21,10 +23,12 @@ on:
       - "v*"
     paths:
       - "services/gateway/**"
+      - "packages/go/apperror/**"
       - "packages/go/logging/**"
       - "packages/go/observability/**"
       - "packages/go/middleware/**"
       - "packages/go/apidocs/**"
+      - "packages/protobuf/**"
       - "packages/scripts/epos-banner.sh"
       - "docker/gateway-config.dev.yaml"
       - "Makefile"

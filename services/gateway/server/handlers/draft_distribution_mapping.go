@@ -72,11 +72,7 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 	r := &metadatalifecyclev1.WebServiceInput{
 		Name:             string(v.Name),
 		Description:      protoOptString(v.Description),
-		TemplateUrl:      string(v.TemplateURL),
-		Method:           toProtoWebServiceMethod(v.Method),
-		Type:             toProtoWebServiceType(v.Type),
 		VisibleOn:        toProtoWebServiceVisibleOn(v.VisibleOn),
-		Format:           string(v.Format),
 		TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
 		Documentation:    toProtoDocumentation(v.Documentation),
 		ContactPoints:    uuidStrings(v.ContactPoints),
@@ -87,47 +83,115 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 	if v.Provider.Set {
 		r.ProviderId = new(v.Provider.Value.String())
 	}
-	for _, parameter := range v.Parameters {
-		r.Parameters = append(r.Parameters, toProtoParameterDraft(parameter))
-	}
-	if v.BodyContentType.Set || v.BodyTemplate.Set || len(v.BodyParameters) > 0 {
-		if v.BodyContentType.Set {
-			r.BodyContentType = new(string(v.BodyContentType.Value))
-		}
-		if v.BodyTemplate.Set {
-			r.BodyTemplate = new(string(v.BodyTemplate.Value))
-		}
-		for _, parameter := range v.BodyParameters {
-			r.BodyParameters = append(r.BodyParameters, toProtoScalarParameterDraft(parameter))
-		}
+	switch v.Configuration.Type {
+	case gatewayapi.WmsWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		configuration := v.Configuration.WmsWebServiceConfigurationDraft
+		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS
+		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wms{Wms: toProtoWMSWebServiceConfigurationDraft(configuration)}
+	case gatewayapi.WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
+		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wmts{Wmts: toProtoWMTSWebServiceConfigurationDraft(v.Configuration.WmtsWebServiceConfigurationDraft)}
+	case gatewayapi.GenericWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		configuration := v.Configuration.GenericWebServiceConfigurationDraft
+		r.Type = toProtoWebServiceType(gatewayapi.WebServiceType(v.Configuration.Type))
+		r.Configuration = &metadatalifecyclev1.WebServiceInput_Generic{Generic: toProtoGenericWebServiceConfigurationDraft(configuration)}
+	case gatewayapi.WfsWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
+		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wfs{Wfs: toProtoWFSWebServiceConfigurationDraft(v.Configuration.WfsWebServiceConfigurationDraft)}
+	default:
+		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
 	}
 	return r
 }
 
-func toProtoDistributionDraft(v gatewayapi.DistributionDraft) *metadatalifecyclev1.DistributionInput {
-	title, description, license, issued, modified, byteSize := distributionFields(v)
-	r := &metadatalifecyclev1.DistributionInput{
-		Type:        string(v.Type),
-		Title:       title,
-		Description: description,
-		License:     license,
-		Issued:      issued,
-		Modified:    modified,
-		ByteSize:    byteSize,
+func toProtoGenericWebServiceConfigurationDraft(value gatewayapi.GenericWebServiceConfigurationDraft) *metadatalifecyclev1.GenericWebServiceConfigurationInput {
+	result := &metadatalifecyclev1.GenericWebServiceConfigurationInput{
+		TemplateUrl: string(value.TemplateURL),
+		Method:      toProtoWebServiceMethod(value.Method),
+		Format:      string(value.Format),
 	}
-	if v.IsWebServiceDistributionDraft() {
-		x := v.WebServiceDistributionDraft
-		r.Delivery = &metadatalifecyclev1.DistributionInput_WebService{WebService: toProtoWebServiceDraft(x.WebService)}
-		return r
+	for _, parameter := range value.Parameters {
+		result.Parameters = append(result.Parameters, toProtoParameterDraft(parameter))
 	}
-	x := v.DownloadableFileDistributionDraft
-	r.Delivery = &metadatalifecyclev1.DistributionInput_DownloadableFile{
-		DownloadableFile: &metadatalifecyclev1.DownloadableFile{
-			Url:    string(x.DownloadableFile.URL),
-			Format: string(x.DownloadableFile.Format),
-		},
+	if value.BodyRequired.Set {
+		result.BodyRequired = new(value.BodyRequired.Value)
 	}
-	return r
+	if value.BodyContentType.Set {
+		result.BodyContentType = new(string(value.BodyContentType.Value))
+	}
+	if value.BodyTemplate.Set {
+		result.BodyTemplate = new(string(value.BodyTemplate.Value))
+	}
+	for _, parameter := range value.BodyParameters {
+		result.BodyParameters = append(result.BodyParameters, toProtoScalarParameterDraft(parameter))
+	}
+	return result
+}
+
+func toProtoWFSWebServiceConfigurationDraft(value gatewayapi.WfsWebServiceConfigurationDraft) *metadatalifecyclev1.WFSWebServiceConfigurationInput {
+	result := &metadatalifecyclev1.WFSWebServiceConfigurationInput{
+		GetFeatureTemplateUrl: value.GetFeatureTemplateURL,
+		Version:               string(value.Version),
+		DefaultFeatureType:    string(value.DefaultFeatureType),
+		DefaultOutputFormat:   string(value.DefaultOutputFormat),
+		ResultLimit:           protoOptInt64(value.ResultLimit),
+		ResultLimitEditable:   value.ResultLimitEditable,
+	}
+	for _, featureType := range value.FeatureTypes {
+		result.FeatureTypes = append(result.FeatureTypes, string(featureType))
+	}
+	for _, format := range value.OutputFormats {
+		result.OutputFormats = append(result.OutputFormats, string(format))
+	}
+	for _, parameter := range value.Parameters {
+		result.Parameters = append(result.Parameters, toProtoParameterDraft(parameter))
+	}
+	return result
+}
+
+func toProtoWMTSWebServiceConfigurationDraft(value gatewayapi.WmtsWebServiceConfigurationDraft) *metadatalifecyclev1.WMTSWebServiceConfigurationInput {
+	result := &metadatalifecyclev1.WMTSWebServiceConfigurationInput{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: string(value.DefaultLayer)}
+	for _, layer := range value.Layers {
+		mapped := &metadatalifecyclev1.WMTSLayer{Name: string(layer.Name)}
+		if layer.DefaultStyle.Set {
+			mapped.DefaultStyle = new(string(layer.DefaultStyle.Value))
+		}
+		for _, style := range layer.Styles {
+			mapped.Styles = append(mapped.Styles, string(style))
+		}
+		result.Layers = append(result.Layers, mapped)
+	}
+	for _, parameter := range value.GetTileParameters {
+		result.GetTileParameters = append(result.GetTileParameters, toProtoParameterDraft(parameter))
+	}
+	for _, parameter := range value.GetFeatureInfoParameters {
+		result.GetFeatureInfoParameters = append(result.GetFeatureInfoParameters, toProtoParameterDraft(parameter))
+	}
+	return result
+}
+
+func toProtoWMSWebServiceConfigurationDraft(value gatewayapi.WmsWebServiceConfigurationDraft) *metadatalifecyclev1.WMSWebServiceConfigurationInput {
+	result := &metadatalifecyclev1.WMSWebServiceConfigurationInput{
+		CapabilitiesUrl:      value.CapabilitiesURL,
+		DefaultLayer:         string(value.DefaultLayer),
+		TransparencyEditable: value.TransparencyEditable,
+		DefaultTransparency:  value.DefaultTransparency,
+	}
+	for _, layer := range value.Layers {
+		mapped := &metadatalifecyclev1.WMSLayer{
+			Name:         string(layer.Name),
+			DefaultStyle: layer.DefaultStyle,
+			Styles:       layer.Styles,
+		}
+		result.Layers = append(result.Layers, mapped)
+	}
+	for _, parameter := range value.GetMapParameters {
+		result.GetMapParameters = append(result.GetMapParameters, toProtoParameterDraft(parameter))
+	}
+	for _, parameter := range value.GetFeatureInfoParameters {
+		result.GetFeatureInfoParameters = append(result.GetFeatureInfoParameters, toProtoParameterDraft(parameter))
+	}
+	return result
 }
 
 func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.DistributionInput {
@@ -208,16 +272,12 @@ func toProtoWebServiceType(value gatewayapi.WebServiceType) metadatalifecyclev1.
 	switch value {
 	case gatewayapi.WebServiceTypeWMS:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS
-	case gatewayapi.WebServiceTypeGEOJSON:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_GEOJSON
-	case gatewayapi.WebServiceTypeDYNAMIC:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
+	case gatewayapi.WebServiceTypeHTTP:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP
 	case gatewayapi.WebServiceTypeWMTS:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
 	case gatewayapi.WebServiceTypeWFS:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
-	case gatewayapi.WebServiceTypeCOVJSON:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_COVJSON
 	default:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
 	}

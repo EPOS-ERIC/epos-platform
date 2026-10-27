@@ -1,77 +1,58 @@
 package domain
 
-import "testing"
+import (
+	"testing"
 
-func TestValidateSuccessJSONBody(t *testing.T) {
-	req := RetrieveRequest{
-		SourceID:    "svc-a",
-		Method:      "POST",
-		URLTemplate: "https://example.org/resource/{id}",
-		PathParams:  map[string]string{"id": "abc"},
-		Body: &RequestBody{
-			ContentType: "application/json; charset=utf-8",
-			JSON:        []byte(`{"k":"v"}`),
-		},
+	"github.com/google/uuid"
+)
+
+func validRetrievalInput() RetrievalInput {
+	return RetrievalInput{
+		ResourceID: uuid.MustParse("2f1d18c5-bb8a-4f2d-84f2-0a1af16dc192"),
+		VersionID:  uuid.MustParse("67f6f345-5a27-467b-967b-0aa9e7f85bb1"),
+		Method:     "GET",
+		URL:        "https://example.org/resource",
 	}
+}
 
-	validated, err := req.Validate()
+func TestNewPreparedRetrievalJSONBody(t *testing.T) {
+	input := validRetrievalInput()
+	input.Method = "post"
+	input.URL = "https://example.org/resource/abc"
+	input.Body = []byte(`{"k":"v"}`)
+	prepared, err := NewPreparedRetrieval(input)
 	if err != nil {
-		t.Fatalf("expected valid request, got error: %v", err)
+		t.Fatalf("NewPreparedRetrieval() error = %v", err)
 	}
-
-	if validated.GeneratedURL != "https://example.org/resource/abc" {
-		t.Fatalf("unexpected generated URL: %s", validated.GeneratedURL)
+	if prepared.Method != "POST" {
+		t.Fatalf("normalized method = %q", prepared.Method)
 	}
-}
-
-func TestValidateRejectDeleteBody(t *testing.T) {
-	req := RetrieveRequest{
-		SourceID:    "svc-a",
-		Method:      "DELETE",
-		URLTemplate: "https://example.org/resource/{id}",
-		PathParams:  map[string]string{"id": "abc"},
-		Body: &RequestBody{
-			ContentType: "text/plain",
-			Raw:         "x",
-		},
+	if prepared.URL != input.URL {
+		t.Fatalf("prepared URL = %q", prepared.URL)
 	}
-
-	if _, err := req.Validate(); err == nil {
-		t.Fatal("expected error for DELETE body")
+	if string(prepared.Body) != `{"k":"v"}` {
+		t.Fatalf("body bytes = %q", prepared.Body)
 	}
 }
 
-func TestValidateRejectPathParamMismatch(t *testing.T) {
-	req := RetrieveRequest{
-		SourceID:    "svc-a",
-		Method:      "GET",
-		URLTemplate: "https://example.org/resource/{id}",
-		PathParams:  map[string]string{"other": "abc"},
-	}
-
-	if _, err := req.Validate(); err == nil {
-		t.Fatal("expected error for mismatched path params")
+func TestNewPreparedRetrievalRejectsDeleteBody(t *testing.T) {
+	input := validRetrievalInput()
+	input.Method = "DELETE"
+	input.Body = []byte("x")
+	if _, err := NewPreparedRetrieval(input); err == nil {
+		t.Fatal("NewPreparedRetrieval() accepted a DELETE body")
 	}
 }
 
-func TestValidateCanonicalizesJSONBody(t *testing.T) {
-	req := RetrieveRequest{
-		SourceID:    "svc-a",
-		Method:      "POST",
-		URLTemplate: "https://example.org/resource/{id}",
-		PathParams:  map[string]string{"id": "abc"},
-		Body: &RequestBody{
-			ContentType: "application/json",
-			JSON:        []byte(`{"b":2, "a":1}`),
-		},
-	}
-
-	validated, err := req.Validate()
+func TestNewPreparedRetrievalPreservesJSONBody(t *testing.T) {
+	input := validRetrievalInput()
+	input.Method = "POST"
+	input.Body = []byte(`{"b":2,"a":1}`)
+	prepared, err := NewPreparedRetrieval(input)
 	if err != nil {
-		t.Fatalf("expected valid request, got error: %v", err)
+		t.Fatalf("NewPreparedRetrieval() error = %v", err)
 	}
-
-	if string(validated.BodyBytes) != `{"a":1,"b":2}` {
-		t.Fatalf("unexpected canonical JSON: %s", string(validated.BodyBytes))
+	if got, want := string(prepared.Body), `{"b":2,"a":1}`; got != want {
+		t.Fatalf("prepared JSON = %q, want %q", got, want)
 	}
 }

@@ -20,12 +20,14 @@ populate-metadatone:
 	./packages/scripts/metadatone.sh
 
 ci:
-	+$(MAKE) -j ci-gateway-image ci-metadata-lifecycle-image ci-sharing-image ci-oss-aai-image
-	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle sharing oss-aai-service
+	+$(MAKE) -j ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-sharing-image ci-oss-aai-image
+	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle data-retriever sharing oss-aai-service
 ci-gateway-image:
 	+$(MAKE) -C $(GATEWAY_DIR) docker
 ci-metadata-lifecycle-image:
 	+$(MAKE) -C $(METADATA_LIFECYCLE_DIR) docker
+ci-data-retriever-image:
+	+$(MAKE) -C $(DATA_RETRIEVER_DIR) docker
 ci-sharing-image:
 	+$(MAKE) -C $(SHARING_DIR) docker
 ci-oss-aai-image:
@@ -58,24 +60,30 @@ lint-sharing:
 	$(MAKE) -C $(SHARING_DIR) lint
 
 generate:
-	+$(MAKE) -j generate-gateway generate-metadata-lifecycle generate-sharing
+	+$(MAKE) -j generate-gateway generate-metadata-lifecycle generate-data-retriever generate-protobuf generate-sharing
 generate-gateway:
 	$(MAKE) -C $(GATEWAY_DIR) generate
 generate-metadata-lifecycle:
 	$(MAKE) -C $(METADATA_LIFECYCLE_DIR) generate
 generate-sharing:
 	$(MAKE) -C $(SHARING_DIR) generate
+generate-data-retriever:
+	$(MAKE) -C $(DATA_RETRIEVER_DIR) generate
+generate-protobuf:
+	$(MAKE) -C packages/protobuf generate
 
+# Space-separated test files or unittest selectors; empty runs full discovery.
+TESTS ?=
 test-integration:
 	docker run --rm \
 		--add-host host.docker.internal:host-gateway \
 		-v "$(CURDIR):/work:ro" \
-		-w /work \
+		-w /work/tests/contract \
 		-e GATEWAY_API_URL=http://host.docker.internal:32000/v1 \
 		-e AAI_URL=http://host.docker.internal:35000 \
 		--entrypoint python \
 		ghcr.io/schemathesis/schemathesis:latest \
-		-m unittest discover -s /work/tests/contract -p 'test_*.py' -v
+		-m unittest $(if $(strip $(TESTS)),-v $(patsubst %.py,%,$(TESTS)),discover -s . -p 'test_*.py' -v)
 
 get-dev-token:
 	curl -s -X POST http://localhost:35000/oauth/token \
@@ -84,4 +92,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle lint-sharing test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing
+.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle lint-sharing test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing generate-data-retriever generate-protobuf

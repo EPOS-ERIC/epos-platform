@@ -50,7 +50,7 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 		})
 	}
 	for _, distribution := range v.Distributions {
-		r.Distributions = append(r.Distributions, toProtoDistributionDraft(distribution))
+		r.Distributions = append(r.Distributions, toProtoDistribution(distribution))
 	}
 	return r, nil
 }

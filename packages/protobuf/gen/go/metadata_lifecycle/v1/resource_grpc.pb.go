@@ -21,6 +21,8 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	ResourceService_CreateResource_FullMethodName                 = "/metadata_lifecycle.v1.ResourceService/CreateResource"
 	ResourceService_GetResourceVersion_FullMethodName             = "/metadata_lifecycle.v1.ResourceService/GetResourceVersion"
+	ResourceService_PrepareDistributionDownload_FullMethodName    = "/metadata_lifecycle.v1.ResourceService/PrepareDistributionDownload"
+	ResourceService_PrepareDistributionAccess_FullMethodName      = "/metadata_lifecycle.v1.ResourceService/PrepareDistributionAccess"
 	ResourceService_ListResourceVersions_FullMethodName           = "/metadata_lifecycle.v1.ResourceService/ListResourceVersions"
 	ResourceService_ReplaceResourceDraft_FullMethodName           = "/metadata_lifecycle.v1.ResourceService/ReplaceResourceDraft"
 	ResourceService_DiscardResourceDraft_FullMethodName           = "/metadata_lifecycle.v1.ResourceService/DiscardResourceDraft"
@@ -41,6 +43,8 @@ const (
 type ResourceServiceClient interface {
 	CreateResource(ctx context.Context, in *CreateResourceRequest, opts ...grpc.CallOption) (*CreateResourceResponse, error)
 	GetResourceVersion(ctx context.Context, in *GetResourceVersionRequest, opts ...grpc.CallOption) (*GetResourceVersionResponse, error)
+	PrepareDistributionDownload(ctx context.Context, in *PrepareDistributionDownloadRequest, opts ...grpc.CallOption) (*PrepareDistributionDownloadResponse, error)
+	PrepareDistributionAccess(ctx context.Context, in *PrepareDistributionAccessRequest, opts ...grpc.CallOption) (*PrepareDistributionAccessResponse, error)
 	ListResourceVersions(ctx context.Context, in *ListResourceVersionsRequest, opts ...grpc.CallOption) (*ListResourceVersionsResponse, error)
 	ReplaceResourceDraft(ctx context.Context, in *ReplaceResourceDraftRequest, opts ...grpc.CallOption) (*ReplaceResourceDraftResponse, error)
 	DiscardResourceDraft(ctx context.Context, in *DiscardResourceDraftRequest, opts ...grpc.CallOption) (*DiscardResourceDraftResponse, error)
@@ -77,6 +81,26 @@ func (c *resourceServiceClient) GetResourceVersion(ctx context.Context, in *GetR
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetResourceVersionResponse)
 	err := c.cc.Invoke(ctx, ResourceService_GetResourceVersion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceServiceClient) PrepareDistributionDownload(ctx context.Context, in *PrepareDistributionDownloadRequest, opts ...grpc.CallOption) (*PrepareDistributionDownloadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PrepareDistributionDownloadResponse)
+	err := c.cc.Invoke(ctx, ResourceService_PrepareDistributionDownload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceServiceClient) PrepareDistributionAccess(ctx context.Context, in *PrepareDistributionAccessRequest, opts ...grpc.CallOption) (*PrepareDistributionAccessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PrepareDistributionAccessResponse)
+	err := c.cc.Invoke(ctx, ResourceService_PrepareDistributionAccess_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -209,6 +233,8 @@ func (c *resourceServiceClient) CopyPublishedResource(ctx context.Context, in *C
 type ResourceServiceServer interface {
 	CreateResource(context.Context, *CreateResourceRequest) (*CreateResourceResponse, error)
 	GetResourceVersion(context.Context, *GetResourceVersionRequest) (*GetResourceVersionResponse, error)
+	PrepareDistributionDownload(context.Context, *PrepareDistributionDownloadRequest) (*PrepareDistributionDownloadResponse, error)
+	PrepareDistributionAccess(context.Context, *PrepareDistributionAccessRequest) (*PrepareDistributionAccessResponse, error)
 	ListResourceVersions(context.Context, *ListResourceVersionsRequest) (*ListResourceVersionsResponse, error)
 	ReplaceResourceDraft(context.Context, *ReplaceResourceDraftRequest) (*ReplaceResourceDraftResponse, error)
 	DiscardResourceDraft(context.Context, *DiscardResourceDraftRequest) (*DiscardResourceDraftResponse, error)
@@ -236,6 +262,12 @@ func (UnimplementedResourceServiceServer) CreateResource(context.Context, *Creat
 }
 func (UnimplementedResourceServiceServer) GetResourceVersion(context.Context, *GetResourceVersionRequest) (*GetResourceVersionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetResourceVersion not implemented")
+}
+func (UnimplementedResourceServiceServer) PrepareDistributionDownload(context.Context, *PrepareDistributionDownloadRequest) (*PrepareDistributionDownloadResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PrepareDistributionDownload not implemented")
+}
+func (UnimplementedResourceServiceServer) PrepareDistributionAccess(context.Context, *PrepareDistributionAccessRequest) (*PrepareDistributionAccessResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PrepareDistributionAccess not implemented")
 }
 func (UnimplementedResourceServiceServer) ListResourceVersions(context.Context, *ListResourceVersionsRequest) (*ListResourceVersionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListResourceVersions not implemented")
@@ -326,6 +358,42 @@ func _ResourceService_GetResourceVersion_Handler(srv interface{}, ctx context.Co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ResourceServiceServer).GetResourceVersion(ctx, req.(*GetResourceVersionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceService_PrepareDistributionDownload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PrepareDistributionDownloadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceServiceServer).PrepareDistributionDownload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceService_PrepareDistributionDownload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceServiceServer).PrepareDistributionDownload(ctx, req.(*PrepareDistributionDownloadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceService_PrepareDistributionAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PrepareDistributionAccessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceServiceServer).PrepareDistributionAccess(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceService_PrepareDistributionAccess_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceServiceServer).PrepareDistributionAccess(ctx, req.(*PrepareDistributionAccessRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -560,6 +628,14 @@ var ResourceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetResourceVersion",
 			Handler:    _ResourceService_GetResourceVersion_Handler,
+		},
+		{
+			MethodName: "PrepareDistributionDownload",
+			Handler:    _ResourceService_PrepareDistributionDownload_Handler,
+		},
+		{
+			MethodName: "PrepareDistributionAccess",
+			Handler:    _ResourceService_PrepareDistributionAccess_Handler,
 		},
 		{
 			MethodName: "ListResourceVersions",

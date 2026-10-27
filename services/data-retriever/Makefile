@@ -3,8 +3,14 @@ IMAGE ?= epos-data-retriever:latest
 BIN = data-retriever
 BUILDFLAGS = -trimpath
 
-build:
+build: generate
 	CGO_ENABLED=0 go build $(BUILDFLAGS) -o $(BIN) .
+
+generate:
+	go generate ./...
+
+dev: generate
+	go run .
 
 docker: build
 	docker build -t $(IMAGE) -f Dockerfile ../..
@@ -21,4 +27,4 @@ lint: fmt
 clean:
 	rm -rf $(BIN)
 
-.PHONY: build docker test fmt lint clean
+.PHONY: build docker generate dev test fmt lint clean

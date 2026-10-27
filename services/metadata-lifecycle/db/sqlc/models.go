@@ -532,15 +532,60 @@ func (ns NullWebServiceParameterLocation) Value() (driver.Value, error) {
 	return string(ns.WebServiceParameterLocation), nil
 }
 
+type WebServiceParameterRole string
+
+const (
+	WebServiceParameterRoleFORMAT    WebServiceParameterRole = "FORMAT"
+	WebServiceParameterRoleSTARTDATE WebServiceParameterRole = "START_DATE"
+	WebServiceParameterRoleENDDATE   WebServiceParameterRole = "END_DATE"
+	WebServiceParameterRoleMINLON    WebServiceParameterRole = "MIN_LON"
+	WebServiceParameterRoleMAXLON    WebServiceParameterRole = "MAX_LON"
+	WebServiceParameterRoleMINLAT    WebServiceParameterRole = "MIN_LAT"
+	WebServiceParameterRoleMAXLAT    WebServiceParameterRole = "MAX_LAT"
+)
+
+func (e *WebServiceParameterRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WebServiceParameterRole(s)
+	case string:
+		*e = WebServiceParameterRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WebServiceParameterRole: %T", src)
+	}
+	return nil
+}
+
+type NullWebServiceParameterRole struct {
+	WebServiceParameterRole WebServiceParameterRole
+	Valid                   bool // Valid is true if WebServiceParameterRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWebServiceParameterRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.WebServiceParameterRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WebServiceParameterRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWebServiceParameterRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WebServiceParameterRole), nil
+}
+
 type WebServiceType string
 
 const (
-	WebServiceTypeWMS     WebServiceType = "WMS"
-	WebServiceTypeGEOJSON WebServiceType = "GEOJSON"
-	WebServiceTypeDYNAMIC WebServiceType = "DYNAMIC"
-	WebServiceTypeWMTS    WebServiceType = "WMTS"
-	WebServiceTypeWFS     WebServiceType = "WFS"
-	WebServiceTypeCOVJSON WebServiceType = "COVJSON"
+	WebServiceTypeWMS  WebServiceType = "WMS"
+	WebServiceTypeHTTP WebServiceType = "HTTP"
+	WebServiceTypeWMTS WebServiceType = "WMTS"
+	WebServiceTypeWFS  WebServiceType = "WFS"
 )
 
 func (e *WebServiceType) Scan(src interface{}) error {
@@ -731,6 +776,13 @@ type FloatParameterSchema struct {
 	MultipleValues bool
 }
 
+type GenericWebService struct {
+	WebServiceID uuid.UUID
+	TemplateUrl  string
+	Method       WebServiceHttpMethod
+	Format       string
+}
+
 type GlobalNotificationSubscription struct {
 	UserID    string
 	EventType string
@@ -857,20 +909,26 @@ type OrganizationMembership struct {
 }
 
 type Parameter struct {
-	ID                  uuid.UUID
-	Position            int32
-	Name                string
-	Label               string
-	Description         *string
-	Required            bool
-	ReadOnly            bool
-	WebServiceID        *uuid.UUID
-	WebServiceBodyID    *uuid.UUID
-	TemplateParameterID *uuid.UUID
-	SchemaKind          ParameterSchemaKind
-	Property            *string
-	Location            *WebServiceParameterLocation
-	Explode             bool
+	ID                          uuid.UUID
+	Position                    int32
+	Name                        string
+	Label                       string
+	Description                 *string
+	Required                    bool
+	ReadOnly                    bool
+	WebServiceID                *uuid.UUID
+	WfsServiceID                *uuid.UUID
+	WmsGetMapServiceID          *uuid.UUID
+	WmsGetFeatureInfoServiceID  *uuid.UUID
+	WmtsGetTileServiceID        *uuid.UUID
+	WmtsGetFeatureInfoServiceID *uuid.UUID
+	WebServiceBodyID            *uuid.UUID
+	TemplateParameterID         *uuid.UUID
+	SchemaKind                  ParameterSchemaKind
+	Role                        *WebServiceParameterRole
+	Property                    *string
+	Location                    *WebServiceParameterLocation
+	Explode                     bool
 }
 
 type ParameterTemplate struct {
@@ -1033,11 +1091,8 @@ type WebService struct {
 	DatasetVersionID         uuid.UUID
 	Name                     string
 	Description              *string
-	TemplateUrl              string
-	Method                   WebServiceHttpMethod
 	Type                     WebServiceType
 	VisibleOn                []WebServiceVisibleOn
-	Format                   string
 	ProviderOrganizationID   *uuid.UUID
 	DocumentationTitle       *string
 	DocumentationDescription *string
@@ -1052,9 +1107,52 @@ type WebServiceBody struct {
 	WebServiceID uuid.UUID
 	ContentType  string
 	Template     string
+	BodyRequired bool
 }
 
 type WebServiceContactPoint struct {
 	WebServiceID   uuid.UUID
 	ContactPointID uuid.UUID
+}
+
+type WfsService struct {
+	WebServiceID          uuid.UUID
+	GetFeatureTemplateUrl string
+	Version               string
+	FeatureTypes          []string
+	DefaultFeatureType    string
+	OutputFormats         []string
+	DefaultOutputFormat   string
+	ResultLimit           *int64
+	ResultLimitEditable   bool
+}
+
+type WmsLayer struct {
+	WebServiceID uuid.UUID
+	Name         string
+	Position     int32
+	DefaultStyle string
+	Styles       []string
+}
+
+type WmsService struct {
+	WebServiceID         uuid.UUID
+	CapabilitiesUrl      string
+	DefaultLayer         string
+	TransparencyEditable bool
+	DefaultTransparency  bool
+}
+
+type WmtsLayer struct {
+	WebServiceID uuid.UUID
+	Name         string
+	Position     int32
+	DefaultStyle *string
+	Styles       []string
+}
+
+type WmtsService struct {
+	WebServiceID    uuid.UUID
+	CapabilitiesUrl string
+	DefaultLayer    string
 }

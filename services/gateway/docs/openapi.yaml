@@ -11,7 +11,7 @@ info:
 
     Authentication:
     - Public catalogue reads do not require credentials.
-    - Supply an OAuth2 bearer token for authenticated reads and all write operations.
+    - Supply an OAuth2 bearer token for authenticated reads and metadata write operations. Published distribution access permits anonymous requests.
     - JSON request bodies must use `Content-Type: application/json`; other media types receive `415`.
     - Error responses use `application/problem+json` unless noted otherwise.
     - Operations backed by Metadata Lifecycle can return `503` when it is unavailable or `504` when a request times out.
@@ -33,6 +33,8 @@ tags:
     description: Search public catalogue records and authenticated records you may access.
   - name: Resources
     description: Read resource versions and manage their draft-to-publication lifecycle.
+  - name: Access
+    description: Access distribution data through the platform.
   - name: Users
     description: Read user profiles and administer global access.
   - name: Authorization
@@ -77,6 +79,176 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /distributions/{distributionId}/access:
+    post:
+      tags: [Access]
+      summary: Access a web-service distribution
+      description: |-
+        Executes an HTTP or WFS web-service distribution using parameter IDs and values, with optional native format selection. WMS and WMTS clients must access providers directly using the distribution configuration; these endpoints do not support them. Published versions allow anonymous access; other states require existing dataset permissions. Successful responses are streamed; upstream HTTP failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use the download endpoint.
+      operationId: accessDistribution
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: output_format
+          in: query
+          description: Exact native format selector. Cannot be repeated or combined with conversion_id.
+          schema: { type: string, minLength: 1 }
+        - name: conversion_id
+          in: query
+          description: Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for future conversion support.
+          schema: { type: string, format: uuid }
+      # TODO: Connect conversion_id when converter and conversion-relation support exist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributionAccessRequest"
+            examples:
+              defaults:
+                value: { type: HTTP, parameters: [] }
+              parameter:
+                value:
+                  type: HTTP
+                  parameters:
+                    - id: 9cf1103f-2e90-4742-a64a-d973e7d32e7d
+                      value: mystation
+              wfsDefaults:
+                value: { type: WFS, parameters: [] }
+              wfsBounds:
+                value:
+                  type: WFS
+                  feature_type: efsm20_cf_top
+                  bbox: [-46.95161056518555, 15.243962287902832, 53.41323471069336, 82.8685073852539]
+                  parameters: []
+      responses:
+        "2XX":
+          description: Successful upstream response, streamed without buffering.
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        default:
+          description: Gateway Problem. Upstream HTTP failures return 503 with upstream_response; execution timeout returns 504.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /distributions/{distributionId}/prepare:
+    post:
+      tags: [Access]
+      summary: Prepare a web-service request without executing it
+      description: |-
+        Prepares an HTTP or WFS web-service distribution request using parameter IDs and values, with optional native format selection. WMS and WMTS clients must access providers directly using the distribution configuration; these endpoints do not support them. Published versions allow anonymous access; other states require existing dataset permissions. Returns the provider request without executing it. Downloadable-file distributions are not supported.
+      operationId: prepareDistribution
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: output_format
+          in: query
+          description: Exact native format selector. Cannot be repeated or combined with conversion_id.
+          schema: { type: string, minLength: 1 }
+        - name: conversion_id
+          in: query
+          description: Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for future conversion support; currently returns an internal error, matching access.
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributionAccessRequest"
+            examples:
+              defaults:
+                value: { type: HTTP, parameters: [] }
+              parameter:
+                value:
+                  type: HTTP
+                  parameters:
+                    - id: 9cf1103f-2e90-4742-a64a-d973e7d32e7d
+                      value: mystation
+              wfsDefaults:
+                value: { type: WFS, parameters: [] }
+              wfsBounds:
+                value:
+                  type: WFS
+                  feature_type: efsm20_cf_top
+                  bbox: [-46.95161056518555, 15.243962287902832, 53.41323471069336, 82.8685073852539]
+                  parameters: []
+      responses:
+        "200":
+          description: Fully prepared provider request. No provider request has been executed.
+          headers:
+            Cache-Control:
+              description: Prepared requests must not be cached.
+              required: true
+              schema: { type: string, enum: [no-store] }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreparedDistributionRequest"
+              example:
+                method: POST
+                url: https://provider.example/query?format=json
+                headers:
+                  Content-Type: application/json
+                body: '{"station":"ABC"}'
+        default:
+          description: Gateway Problem. Preparation errors match access; provider execution errors do not apply.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /distributions/{distributionId}/download:
+    get:
+      tags: [Access]
+      summary: Download a distribution
+      description: |-
+        Resolves a downloadable-file distribution and its owning dataset version by distribution ID. Published versions allow anonymous access; all other states require authenticated access under existing dataset permissions. No query parameters or request body are supported. Web-service distributions cannot be downloaded through this endpoint.
+
+        Successful upstream status and body are streamed to the client. Upstream HTTP failures return a 503 Gateway Problem with the original upstream status and body in `upstream_response`; its body is treated as text. The Problem `instance` contains the request trace ID.
+      operationId: downloadDistribution
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "2XX":
+          description: Successful upstream response, streamed without buffering.
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        default:
+          description: Gateway Problem. Upstream HTTP failures return 503 and preserve the upstream status and body in `upstream_response`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+              examples:
+                upstreamHTTPFailure:
+                  summary: Upstream HTTP failure
+                  value:
+                    type: upstream_http_failure
+                    title: Service Unavailable
+                    status: 503
+                    detail: Upstream service returned an HTTP failure.
+                    instance: 132c7c05d8f744d596e15a2620cacfeb
+                    upstream_response:
+                      status: 404
+                      body: Requested station was not found.
   /imports/turtle:
     post:
       tags:
@@ -2154,6 +2326,90 @@ components:
                 detail: "A required service is unavailable."
 
   schemas:
+    PreparedDistributionRequest:
+      type: object
+      additionalProperties: false
+      required: [method, url, headers, body]
+      properties:
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE]
+        url:
+          type: string
+          format: uri
+          description: Fully rendered provider URL, including the encoded query string. Do not encode it again.
+        headers:
+          type: object
+          description: Prepared provider headers; empty object when no headers are defined. Content-Type is never inferred.
+          additionalProperties: { type: string }
+        body:
+          type: string
+          nullable: true
+          description: Rendered request body as text. Null means absent; an empty string means explicitly empty.
+
+    DistributionAccessRequest:
+      oneOf:
+        - $ref: "#/components/schemas/HTTPDistributionAccessRequest"
+        - $ref: "#/components/schemas/WFSDistributionAccessRequest"
+      discriminator:
+        propertyName: type
+        mapping:
+          HTTP: "#/components/schemas/HTTPDistributionAccessRequest"
+          WFS: "#/components/schemas/WFSDistributionAccessRequest"
+
+    HTTPDistributionAccessRequest:
+      type: object
+      additionalProperties: false
+      required: [type, parameters]
+      properties:
+        type: { type: string, enum: [HTTP] }
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/DistributionAccessParameter"
+
+    WFSDistributionAccessRequest:
+      type: object
+      additionalProperties: false
+      required: [type, parameters]
+      properties:
+        type: { type: string, enum: [WFS] }
+        feature_type: { $ref: "#/components/schemas/NonBlankString" }
+        result_limit: { type: integer, format: int64, minimum: 1 }
+        bbox:
+          type: array
+          minItems: 4
+          maxItems: 4
+          description: Optional CRS84 bounds [west, south, east, north] in degrees, longitude first. Passed to provider without geographic validation or antimeridian handling. Output CRS is always CRS84.
+          items: { type: number, format: double }
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/DistributionAccessParameter"
+
+    DistributionAccessParameter:
+      type: object
+      additionalProperties: false
+      required: [id, value]
+      properties:
+        id: { type: string, format: uuid }
+        value:
+          oneOf:
+            - $ref: "#/components/schemas/DistributionAccessScalar"
+            - type: array
+              minItems: 1
+              items:
+                $ref: "#/components/schemas/DistributionAccessScalar"
+
+    DistributionAccessScalar:
+      oneOf:
+        - type: string
+          title: String
+        - type: boolean
+          title: Boolean
+        - type: number
+          title: Number
+
     # -------------------------------------------------------------------------
     # Shared enums
     # -------------------------------------------------------------------------
@@ -2494,27 +2750,15 @@ components:
     WebServiceDraft:
       type: object
       additionalProperties: false
-      required: [name, template_url, method, type, format]
+      required: [name, configuration]
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true, minLength: 1 }
-        template_url: { $ref: "#/components/schemas/NonBlankString" }
-        method: { $ref: "#/components/schemas/WebServiceMethod" }
-        type: { $ref: "#/components/schemas/WebServiceType" }
         visible_on:
           type: array
           nullable: true
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
-        parameters:
-          type: array
-          items: { $ref: "#/components/schemas/ParameterDraft" }
-        body_content_type: { $ref: "#/components/schemas/NonBlankString" }
-        body_template: { $ref: "#/components/schemas/NonBlankString" }
-        body_parameters:
-          type: array
-          items: { $ref: "#/components/schemas/ScalarParameterDraft" }
-        format: { $ref: "#/components/schemas/NonBlankString" }
         provider: { type: string, format: uuid }
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage:
@@ -2525,6 +2769,167 @@ components:
           example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         contact_points: { type: array, items: { type: string, format: uuid } }
+        configuration: { $ref: "#/components/schemas/WebServiceConfigurationDraft" }
+
+    WebServiceConfigurationDraft:
+      oneOf:
+        - $ref: "#/components/schemas/WmsWebServiceConfigurationDraft"
+        - $ref: "#/components/schemas/WmtsWebServiceConfigurationDraft"
+        - $ref: "#/components/schemas/WfsWebServiceConfigurationDraft"
+        - $ref: "#/components/schemas/GenericWebServiceConfigurationDraft"
+      discriminator:
+        propertyName: type
+        mapping:
+          WMS: "#/components/schemas/WmsWebServiceConfigurationDraft"
+          HTTP: "#/components/schemas/GenericWebServiceConfigurationDraft"
+          WMTS: "#/components/schemas/WmtsWebServiceConfigurationDraft"
+          WFS: "#/components/schemas/WfsWebServiceConfigurationDraft"
+
+    GenericWebServiceConfigurationDraft:
+      type: object
+      additionalProperties: false
+      required: [type, template_url, method, format]
+      properties:
+        type:
+          type: string
+          enum: [HTTP]
+        template_url: { $ref: "#/components/schemas/NonBlankString" }
+        method: { $ref: "#/components/schemas/WebServiceMethod" }
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+        body_content_type: { $ref: "#/components/schemas/NonBlankString" }
+        body_template: { $ref: "#/components/schemas/NonBlankString" }
+        body_required:
+          type: boolean
+          description: Defaults to true when a request body is configured. Must be omitted when no body is configured. Optional bodies are omitted only when unresolved and no child values were supplied.
+        body_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ScalarParameterDraft" }
+        format: { $ref: "#/components/schemas/NonBlankString" }
+
+    WfsWebServiceConfigurationDraft:
+      type: object
+      additionalProperties: false
+      required:
+        [type, get_feature_template_url, version, feature_types, default_feature_type, output_formats, default_output_format, result_limit_editable, parameters]
+      properties:
+        type: { type: string, enum: [WFS] }
+        get_feature_template_url:
+          type: string
+          minLength: 1
+          description: Absolute HTTP(S) GetFeature URL. Placeholders are allowed only in the path; nonstandard provider query parameters are retained.
+        version: { type: string, enum: ["1.1.0", "2.0.0"] }
+        feature_types:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/NonBlankString" }
+        default_feature_type: { $ref: "#/components/schemas/NonBlankString" }
+        output_formats:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Exact provider outputFormat values, advertised as native formats.
+          items: { $ref: "#/components/schemas/NonBlankString" }
+        default_output_format: { $ref: "#/components/schemas/NonBlankString" }
+        result_limit:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Optional maximum features requested in one upstream request. Omitted or null means no configured limit; count/maxFeatures is omitted unless an editable limit is supplied during access. No automatic pagination.
+        result_limit_editable:
+          type: boolean
+          description: Whether callers may supply a different limit. False with no configured limit prevents callers from adding one.
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+
+    WmsWebServiceConfigurationDraft:
+      type: object
+      additionalProperties: false
+      description: WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+      required:
+        [type, capabilities_url, default_layer, layers, transparency_editable, default_transparency, get_map_parameters, get_feature_info_parameters]
+      properties:
+        type: { type: string, enum: [WMS] }
+        capabilities_url:
+          type: string
+          minLength: 1
+          description: Absolute HTTP(S) capabilities URL, including provider query parameters.
+        default_layer:
+          allOf:
+            - $ref: "#/components/schemas/NonBlankString"
+          description: Must name one configured layer.
+        layers:
+          type: array
+          minItems: 1
+          description: Allowed layers in display order. A single layer fixes selection.
+          items: { $ref: "#/components/schemas/WmsLayerDraft" }
+        transparency_editable: { type: boolean }
+        default_transparency:
+          type: boolean
+          description: Fixed when transparency_editable is false.
+        get_map_parameters:
+          type: array
+          description: Custom GetMap parameters. Standard WMS names are reserved, ignoring case.
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+        get_feature_info_parameters:
+          type: array
+          description: Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring case.
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+
+    WmtsWebServiceConfigurationDraft:
+      type: object
+      additionalProperties: false
+      description: WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+      required: [type, capabilities_url, default_layer, layers, get_tile_parameters, get_feature_info_parameters]
+      properties:
+        type: { type: string, enum: [WMTS] }
+        capabilities_url: { type: string, minLength: 1, description: Absolute HTTP(S) capabilities URL including provider query parameters. }
+        default_layer: { $ref: "#/components/schemas/NonBlankString" }
+        layers:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/WmtsLayerDraft" }
+        get_tile_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+        get_feature_info_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+
+    WmtsLayerDraft:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        default_style:
+          allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
+          description: Configured default style. When omitted, use the provider default if allowed by styles.
+        styles:
+          type: array
+          uniqueItems: true
+          description: Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
+          items: { $ref: "#/components/schemas/NonBlankString" }
+
+    WmsLayerDraft:
+      type: object
+      additionalProperties: false
+      required: [name, default_style, styles]
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        default_style:
+          type: string
+          description: Default configured style. Empty string uses the provider default.
+        styles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Allowed styles in display order. Empty string uses the provider default; a single style fixes selection.
+          items: { type: string }
 
     Parameter:
       oneOf:
@@ -2617,12 +3022,13 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
-        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
+        enum: { type: array, minItems: 1, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanParameterDraft:
@@ -2638,6 +3044,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -2666,6 +3073,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -2698,6 +3106,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -2720,6 +3129,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -2753,6 +3163,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -2785,6 +3196,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -2815,6 +3227,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -2849,6 +3262,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         multiple_values: { type: boolean }
@@ -2882,6 +3296,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -2914,6 +3329,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -2950,6 +3366,7 @@ components:
         description: { type: string, nullable: true }
         required: { type: boolean }
         property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
         read_only: { type: boolean }
@@ -3131,13 +3548,18 @@ components:
       type: string
       enum: [PATH, QUERY, HEADER]
 
+    ParameterRole:
+      type: string
+      nullable: true
+      enum: [FORMAT, START_DATE, END_DATE, MIN_LON, MAX_LON, MIN_LAT, MAX_LAT]
+
     WebServiceMethod:
       type: string
       enum: [GET, POST, PUT, DELETE]
 
     WebServiceType:
       type: string
-      enum: [WMS, GEOJSON, DYNAMIC, WMTS, WFS, COVJSON]
+      enum: [WMS, HTTP, WMTS, WFS]
 
     WebServiceVisibleOn:
       type: string
@@ -3505,7 +3927,7 @@ components:
     WebServiceDistribution:
       type: object
       additionalProperties: false
-      required: [id, title, description, type, web_service]
+      required: [id, title, description, type, web_service, available_formats]
       properties:
         id: { type: string, format: uuid }
         title: { type: string }
@@ -3519,6 +3941,49 @@ components:
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         web_service: { $ref: "#/components/schemas/WebService" }
+        available_formats:
+          type: array
+          description: Computed formats for this resource version. Currently ORIGINAL entries only. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
+          items: { $ref: "#/components/schemas/AvailableFormat" }
+
+    AvailableFormat:
+      oneOf:
+        - $ref: "#/components/schemas/OriginalFormat"
+        - $ref: "#/components/schemas/ConvertedFormat"
+      discriminator:
+        propertyName: kind
+        mapping:
+          ORIGINAL: "#/components/schemas/OriginalFormat"
+          CONVERTED: "#/components/schemas/ConvertedFormat"
+
+    OriginalFormat:
+      type: object
+      additionalProperties: false
+      required: [kind, output_format, label]
+      properties:
+        kind: { type: string, enum: [ORIGINAL] }
+        output_format: { type: string }
+        label: { type: string }
+
+    ConvertedFormat:
+      type: object
+      additionalProperties: false
+      required: [kind, conversion_id, input_format, output_format, plugin]
+      properties:
+        kind: { type: string, enum: [CONVERTED] }
+        conversion_id: { type: string, format: uuid }
+        input_format: { type: string }
+        output_format: { type: string }
+        plugin: { $ref: "#/components/schemas/ConversionPlugin" }
+
+    ConversionPlugin:
+      type: object
+      additionalProperties: false
+      required: [id, name, description]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
 
     DownloadableFileDistribution:
       type: object
@@ -3540,28 +4005,16 @@ components:
 
     WebService:
       type: object
-      required: [id, name, template_url, method, type, format]
+      required: [id, name, configuration]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string, nullable: true, minLength: 1 }
-        template_url: { type: string }
-        method: { $ref: "#/components/schemas/WebServiceMethod" }
-        type: { $ref: "#/components/schemas/WebServiceType" }
         visible_on:
           type: array
           nullable: true
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
-        parameters:
-          type: array
-          items: { $ref: "#/components/schemas/Parameter" }
-        format: { type: string }
-        body_content_type: { type: string, nullable: true }
-        body_template: { type: string, nullable: true }
-        body_parameters:
-          type: array
-          items: { $ref: "#/components/schemas/ScalarParameter" }
         provider: { $ref: "#/components/schemas/ResourceVersionReference" }
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage:
@@ -3574,6 +4027,162 @@ components:
         contact_points:
           type: array
           items: { type: string, format: uuid }
+        configuration: { $ref: "#/components/schemas/WebServiceConfiguration" }
+
+    WebServiceConfiguration:
+      oneOf:
+        - $ref: "#/components/schemas/WmsWebServiceConfiguration"
+        - $ref: "#/components/schemas/WmtsWebServiceConfiguration"
+        - $ref: "#/components/schemas/WfsWebServiceConfiguration"
+        - $ref: "#/components/schemas/GenericWebServiceConfiguration"
+      discriminator:
+        propertyName: type
+        mapping:
+          WMS: "#/components/schemas/WmsWebServiceConfiguration"
+          HTTP: "#/components/schemas/GenericWebServiceConfiguration"
+          WMTS: "#/components/schemas/WmtsWebServiceConfiguration"
+          WFS: "#/components/schemas/WfsWebServiceConfiguration"
+
+    GenericWebServiceConfiguration:
+      type: object
+      additionalProperties: false
+      required: [type, template_url, method, format]
+      properties:
+        type:
+          type: string
+          enum: [HTTP]
+        template_url: { type: string }
+        method: { $ref: "#/components/schemas/WebServiceMethod" }
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+        body_content_type: { type: string, nullable: true }
+        body_template: { type: string, nullable: true }
+        body_required:
+          type: boolean
+          description: Whether the configured request body must be rendered. Omitted when no request body is configured.
+        body_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ScalarParameter" }
+        format: { type: string }
+
+    WfsWebServiceConfiguration:
+      type: object
+      additionalProperties: false
+      required:
+        [type, get_feature_template_url, version, feature_types, default_feature_type, output_formats, default_output_format, result_limit_editable, parameters]
+      properties:
+        type: { type: string, enum: [WFS] }
+        get_feature_template_url: { type: string, minLength: 1 }
+        version: { type: string, enum: ["1.1.0", "2.0.0"] }
+        feature_types:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/NonBlankString" }
+        default_feature_type: { $ref: "#/components/schemas/NonBlankString" }
+        output_formats:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Exact provider outputFormat values, advertised as native formats.
+          items: { $ref: "#/components/schemas/NonBlankString" }
+        default_output_format: { $ref: "#/components/schemas/NonBlankString" }
+        result_limit:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Optional default feature limit. Omitted or null means no configured limit.
+        result_limit_editable:
+          type: boolean
+          description: Whether callers may supply a different limit. False with no configured limit prevents callers from adding one.
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+
+    WmsWebServiceConfiguration:
+      type: object
+      additionalProperties: false
+      description: WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+      required:
+        [type, capabilities_url, default_layer, layers, transparency_editable, default_transparency, get_map_parameters, get_feature_info_parameters]
+      properties:
+        type: { type: string, enum: [WMS] }
+        capabilities_url:
+          type: string
+          minLength: 1
+          description: Absolute HTTP(S) capabilities URL, including provider query parameters.
+        default_layer:
+          allOf:
+            - $ref: "#/components/schemas/NonBlankString"
+          description: Must name one configured layer.
+        layers:
+          type: array
+          minItems: 1
+          description: Allowed layers in display order. A single layer fixes selection.
+          items: { $ref: "#/components/schemas/WmsLayer" }
+        transparency_editable: { type: boolean }
+        default_transparency:
+          type: boolean
+          description: Fixed when transparency_editable is false.
+        get_map_parameters:
+          type: array
+          description: Custom GetMap parameters. Standard WMS names are reserved, ignoring case.
+          items: { $ref: "#/components/schemas/Parameter" }
+        get_feature_info_parameters:
+          type: array
+          description: Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring case.
+          items: { $ref: "#/components/schemas/Parameter" }
+
+    WmtsWebServiceConfiguration:
+      type: object
+      additionalProperties: false
+      description: WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+      required: [type, capabilities_url, default_layer, layers, get_tile_parameters, get_feature_info_parameters]
+      properties:
+        type: { type: string, enum: [WMTS] }
+        capabilities_url: { type: string, minLength: 1 }
+        default_layer: { $ref: "#/components/schemas/NonBlankString" }
+        layers:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/WmtsLayer" }
+        get_tile_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+        get_feature_info_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+
+    WmtsLayer:
+      type: object
+      required: [name]
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        default_style:
+          allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
+          description: Configured default style. When omitted, use the provider default if allowed by styles.
+        styles:
+          type: array
+          uniqueItems: true
+          description: Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
+          items: { $ref: "#/components/schemas/NonBlankString" }
+
+    WmsLayer:
+      type: object
+      required: [name, default_style, styles]
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        default_style:
+          type: string
+          description: Default configured style. Empty string uses the provider default.
+        styles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Allowed styles in display order. Empty string uses the provider default; a single style fixes selection.
+          items: { type: string }
 
     Identifier:
       type: object
@@ -4339,3 +4948,17 @@ components:
           type: string
           description: Optional dotted path identifying the request field related to the problem
           example: "metadata.title"
+        upstream_response:
+          type: object
+          description: Present only when an upstream HTTP failure response exists.
+          required: [status, body]
+          additionalProperties: false
+          properties:
+            status:
+              type: integer
+              minimum: 100
+              maximum: 599
+              description: Original upstream HTTP status.
+            body:
+              type: string
+              description: Original upstream failure body, treated as text.

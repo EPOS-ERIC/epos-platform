@@ -420,34 +420,8 @@ func distributionInput(value Distribution) DistributionInput {
 		DownloadableFile: value.DownloadableFile,
 	}
 	if value.WebService != nil {
-		providerID := uuid.Nil
-		if value.WebService.Provider != nil {
-			providerID = value.WebService.Provider.ID
-		}
-		var providerIDPointer *uuid.UUID
-		if value.WebService.Provider != nil {
-			providerIDPointer = &providerID
-		}
-		contactPointIDs := make([]uuid.UUID, len(value.WebService.ContactPoints))
-		for i, contact := range value.WebService.ContactPoints {
-			contactPointIDs[i] = contact.ID
-		}
-		result.WebService = &WebServiceInput{
-			Name:             value.WebService.Name,
-			Description:      value.WebService.Description,
-			TemplateURL:      value.WebService.TemplateURL,
-			Method:           value.WebService.Method,
-			Type:             value.WebService.Type,
-			VisibleOn:        value.WebService.VisibleOn,
-			Body:             requestBodyInput(value.WebService.Body),
-			Parameters:       webServiceParameterInputs(value.WebService.Parameters),
-			Format:           value.WebService.Format,
-			ProviderID:       providerIDPointer,
-			Documentation:    value.WebService.Documentation,
-			SpatialCoverage:  value.WebService.SpatialCoverage,
-			TemporalCoverage: value.WebService.TemporalCoverage,
-			ContactPointIDs:  contactPointIDs,
-		}
+		input := value.WebService.Input()
+		result.WebService = &input
 	}
 	return result
 }
@@ -465,17 +439,66 @@ func (value WebService) Input() WebServiceInput {
 	return WebServiceInput{
 		Name:             value.Name,
 		Description:      value.Description,
-		TemplateURL:      value.TemplateURL,
-		Method:           value.Method,
 		Type:             value.Type,
+		Configuration:    webServiceConfigurationInput(value.Configuration),
 		VisibleOn:        value.VisibleOn,
-		Body:             requestBodyInput(value.Body),
-		Parameters:       webServiceParameterInputs(value.Parameters),
-		Format:           value.Format,
 		ProviderID:       providerID,
 		Documentation:    value.Documentation,
 		SpatialCoverage:  value.SpatialCoverage,
 		TemporalCoverage: value.TemporalCoverage,
 		ContactPointIDs:  contactPointIDs,
+	}
+}
+
+func webServiceConfigurationInput(value WebServiceConfiguration) WebServiceConfigurationInput {
+	if value == nil {
+		return nil
+	}
+	return value.Input()
+}
+
+func (value GenericWebServiceConfiguration) Input() WebServiceConfigurationInput {
+	return GenericWebServiceConfigurationInput{
+		TemplateURL: value.TemplateURL,
+		Method:      value.Method,
+		Body:        requestBodyInput(value.Body),
+		Parameters:  webServiceParameterInputs(value.Parameters),
+		Format:      value.Format,
+	}
+}
+
+func (value WFSConfiguration) Input() WebServiceConfigurationInput {
+	return WFSConfigurationInput{
+		GetFeatureTemplateURL: value.GetFeatureTemplateURL,
+		Version:               value.Version,
+		FeatureTypes:          value.FeatureTypes,
+		DefaultFeatureType:    value.DefaultFeatureType,
+		OutputFormats:         value.OutputFormats,
+		DefaultOutputFormat:   value.DefaultOutputFormat,
+		ResultLimit:           value.ResultLimit,
+		ResultLimitEditable:   value.ResultLimitEditable,
+		Parameters:            webServiceParameterInputs(value.Parameters),
+	}
+}
+
+func (value WMTSConfiguration) Input() WebServiceConfigurationInput {
+	return WMTSConfigurationInput{
+		CapabilitiesURL:          value.CapabilitiesURL,
+		DefaultLayer:             value.DefaultLayer,
+		Layers:                   value.Layers,
+		GetTileParameters:        webServiceParameterInputs(value.GetTileParameters),
+		GetFeatureInfoParameters: webServiceParameterInputs(value.GetFeatureInfoParameters),
+	}
+}
+
+func (value WMSConfiguration) Input() WebServiceConfigurationInput {
+	return WMSConfigurationInput{
+		CapabilitiesURL:          value.CapabilitiesURL,
+		DefaultLayer:             value.DefaultLayer,
+		Layers:                   value.Layers,
+		TransparencyEditable:     value.TransparencyEditable,
+		DefaultTransparency:      value.DefaultTransparency,
+		GetMapParameters:         webServiceParameterInputs(value.GetMapParameters),
+		GetFeatureInfoParameters: webServiceParameterInputs(value.GetFeatureInfoParameters),
 	}
 }
