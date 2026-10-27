@@ -75,7 +75,7 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 func parseWebServiceConfigurationInput(serviceType WebServiceType, value WebServiceConfigurationInput) (WebServiceConfigurationInput, error) {
 	switch configuration := value.(type) {
 	case GenericWebServiceConfigurationInput:
-		if serviceType != WebServiceTypeHTTP && serviceType != WebServiceTypeWMTS {
+		if serviceType != WebServiceTypeHTTP {
 			return nil, invalidField("type", "Configuration does not match service type.", nil)
 		}
 		return newGenericWebServiceConfigurationInput(configuration)
@@ -89,6 +89,11 @@ func parseWebServiceConfigurationInput(serviceType WebServiceType, value WebServ
 			return nil, invalidField("type", "Configuration does not match service type.", nil)
 		}
 		return NewWMSConfigurationInput(configuration)
+	case WMTSConfigurationInput:
+		if serviceType != WebServiceTypeWMTS {
+			return nil, invalidField("type", "Configuration does not match service type.", nil)
+		}
+		return NewWMTSConfigurationInput(configuration)
 	default:
 		return nil, invalidField("configuration", "Configuration type is not supported.", nil)
 	}
@@ -216,6 +221,86 @@ var (
 		"NAMESPACE", "NAMESPACES", "ALIASES", "RESOLVE", "RESOLVEDEPTH", "RESOLVETIMEOUT", "STOREDQUERY_ID",
 	)
 )
+
+func NewWMTSConfigurationInput(value WMTSConfigurationInput) (WMTSConfigurationInput, error) {
+	value.CapabilitiesURL = strings.TrimSpace(value.CapabilitiesURL)
+	if err := validateWMSURL("capabilities_url", value.CapabilitiesURL); err != nil {
+		return WMTSConfigurationInput{}, err
+	}
+	if len(value.Layers) == 0 {
+		return WMTSConfigurationInput{}, invalidField("layers", "At least one layer is required.", nil)
+	}
+	layers := make(map[string]struct{}, len(value.Layers))
+	for i, layer := range value.Layers {
+		path := fmt.Sprintf("layers[%d]", i)
+		if strings.TrimSpace(layer.Name) == "" {
+			return WMTSConfigurationInput{}, invalidField(path+".name", "Layer name must not be blank.", nil)
+		}
+		if _, exists := layers[layer.Name]; exists {
+			return WMTSConfigurationInput{}, invalidField(path+".name", "Layer names must be unique.", nil)
+		}
+		layers[layer.Name] = struct{}{}
+		if layer.DefaultStyle != nil && (*layer.DefaultStyle == "" || strings.TrimSpace(*layer.DefaultStyle) != *layer.DefaultStyle) {
+			return WMTSConfigurationInput{}, invalidField(path+".default_style", "Default style must not be blank or contain surrounding whitespace.", nil)
+		}
+		styles := make(map[string]struct{}, len(layer.Styles))
+		for j, style := range layer.Styles {
+			if strings.TrimSpace(style) == "" {
+				return WMTSConfigurationInput{}, invalidField(fmt.Sprintf("%s.styles[%d]", path, j), "Style name must not be blank.", nil)
+			}
+			if _, exists := styles[style]; exists {
+				return WMTSConfigurationInput{}, invalidField(fmt.Sprintf("%s.styles[%d]", path, j), "Style names must be unique within a layer.", nil)
+			}
+			styles[style] = struct{}{}
+		}
+		if layer.DefaultStyle != nil {
+			if _, exists := styles[*layer.DefaultStyle]; !exists {
+				return WMTSConfigurationInput{}, invalidField(path+".default_style", "Default style must be one of the configured styles.", nil)
+			}
+		}
+	}
+	if _, exists := layers[value.DefaultLayer]; !exists || strings.TrimSpace(value.DefaultLayer) != value.DefaultLayer {
+		return WMTSConfigurationInput{}, invalidField("default_layer", "Default layer must be one of the configured layers.", nil)
+	}
+	var err error
+	value.GetTileParameters, err = parseWMTSParameters(value.GetTileParameters, "get_tile_parameters", wmtsGetTileReservedParameters)
+	if err != nil {
+		return WMTSConfigurationInput{}, err
+	}
+	value.GetFeatureInfoParameters, err = parseWMTSParameters(value.GetFeatureInfoParameters, "get_feature_info_parameters", wmtsGetFeatureInfoReservedParameters)
+	if err != nil {
+		return WMTSConfigurationInput{}, err
+	}
+	return value, nil
+}
+
+var (
+	wmtsGetTileReservedParameters        = reservedParameterNames("SERVICE", "REQUEST", "VERSION", "LAYER", "STYLE", "FORMAT", "TILEMATRIXSET", "TILEMATRIX", "TILEROW", "TILECOL")
+	wmtsGetFeatureInfoReservedParameters = reservedParameterNames("SERVICE", "REQUEST", "VERSION", "LAYER", "STYLE", "FORMAT", "TILEMATRIXSET", "TILEMATRIX", "TILEROW", "TILECOL", "INFOFORMAT", "I", "J")
+)
+
+func parseWMTSParameters(values []WebServiceParameterInput, field string, reserved map[string]struct{}) ([]WebServiceParameterInput, error) {
+	parameters, err := parseWebServiceParameterInputs(values, field)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateWebServiceParameterRoles(parameters, field); err != nil {
+		return nil, err
+	}
+	for i, parameter := range parameters {
+		path := fmt.Sprintf("%s[%d]", field, i)
+		if parameter.Location != ParameterLocationQuery {
+			return nil, invalidField(path+".location", "WMTS operation parameters must use QUERY location.", nil)
+		}
+		if _, exists := reserved[strings.ToUpper(parameter.Name)]; exists {
+			return nil, invalidField(path+".name", "Standard WMTS parameters cannot be redefined.", nil)
+		}
+	}
+	if err := validateWMSRequiredDefaults(field, parameters); err != nil {
+		return nil, err
+	}
+	return parameters, nil
+}
 
 func NewWMSConfigurationInput(value WMSConfigurationInput) (WMSConfigurationInput, error) {
 	value.CapabilitiesURL = strings.TrimSpace(value.CapabilitiesURL)
@@ -415,6 +500,13 @@ func validatePersistedWebServiceConfiguration(value WebServiceConfiguration) err
 		if err := validatePersistedWebServiceParameters(configuration.GetFeatureInfoParameters); err != nil {
 			return fmt.Errorf("GetFeatureInfo parameters: %w", err)
 		}
+	case WMTSConfiguration:
+		if err := validatePersistedWebServiceParameters(configuration.GetTileParameters); err != nil {
+			return fmt.Errorf("GetTile parameters: %w", err)
+		}
+		if err := validatePersistedWebServiceParameters(configuration.GetFeatureInfoParameters); err != nil {
+			return fmt.Errorf("GetFeatureInfo parameters: %w", err)
+		}
 	default:
 		return fmt.Errorf("web service configuration is missing or unsupported: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
@@ -479,6 +571,20 @@ func restoreWebServiceConfiguration(input WebServiceConfigurationInput, existing
 			ResultLimitEditable:   configuration.ResultLimitEditable,
 			Parameters:            parameters,
 		}, nil
+	case WMTSConfigurationInput:
+		persisted, ok := existing.(WMTSConfiguration)
+		if !ok {
+			return nil, fmt.Errorf("WMTS configuration is missing: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		tile, err := restoreWebServiceParameters(configuration.GetTileParameters, persisted.GetTileParameters)
+		if err != nil {
+			return nil, fmt.Errorf("GetTile parameters: %w", err)
+		}
+		info, err := restoreWebServiceParameters(configuration.GetFeatureInfoParameters, persisted.GetFeatureInfoParameters)
+		if err != nil {
+			return nil, fmt.Errorf("GetFeatureInfo parameters: %w", err)
+		}
+		return WMTSConfiguration{CapabilitiesURL: configuration.CapabilitiesURL, DefaultLayer: configuration.DefaultLayer, Layers: configuration.Layers, GetTileParameters: tile, GetFeatureInfoParameters: info}, nil
 	case WMSConfigurationInput:
 		persisted, ok := existing.(WMSConfiguration)
 		if !ok {

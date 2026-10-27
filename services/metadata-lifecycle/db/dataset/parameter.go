@@ -11,12 +11,14 @@ import (
 )
 
 type parameterOwner struct {
-	webServiceID               *uuid.UUID
-	wfsServiceID               *uuid.UUID
-	wmsGetMapServiceID         *uuid.UUID
-	wmsGetFeatureInfoServiceID *uuid.UUID
-	webServiceBodyID           *uuid.UUID
-	templateParameterID        *uuid.UUID
+	webServiceID                *uuid.UUID
+	wfsServiceID                *uuid.UUID
+	wmsGetMapServiceID          *uuid.UUID
+	wmsGetFeatureInfoServiceID  *uuid.UUID
+	wmtsGetTileServiceID        *uuid.UUID
+	wmtsGetFeatureInfoServiceID *uuid.UUID
+	webServiceBodyID            *uuid.UUID
+	templateParameterID         *uuid.UUID
 }
 
 func parameterParams(
@@ -32,20 +34,22 @@ func parameterParams(
 	}
 
 	params := sqlc.AddLifecycleParameterParams{
-		WebServiceID:               owner.webServiceID,
-		WfsServiceID:               owner.wfsServiceID,
-		WmsGetMapServiceID:         owner.wmsGetMapServiceID,
-		WmsGetFeatureInfoServiceID: owner.wmsGetFeatureInfoServiceID,
-		WebServiceBodyID:           owner.webServiceBodyID,
-		TemplateParameterID:        owner.templateParameterID,
-		Position:                   int32(value.Position),
-		Name:                       value.Name,
-		Label:                      value.Label,
-		Description:                value.Description,
-		Required:                   value.Required,
-		ReadOnly:                   value.ReadOnly,
-		Property:                   property,
-		Explode:                    explode,
+		WebServiceID:                owner.webServiceID,
+		WfsServiceID:                owner.wfsServiceID,
+		WmsGetMapServiceID:          owner.wmsGetMapServiceID,
+		WmsGetFeatureInfoServiceID:  owner.wmsGetFeatureInfoServiceID,
+		WmtsGetTileServiceID:        owner.wmtsGetTileServiceID,
+		WmtsGetFeatureInfoServiceID: owner.wmtsGetFeatureInfoServiceID,
+		WebServiceBodyID:            owner.webServiceBodyID,
+		TemplateParameterID:         owner.templateParameterID,
+		Position:                    int32(value.Position),
+		Name:                        value.Name,
+		Label:                       value.Label,
+		Description:                 value.Description,
+		Required:                    value.Required,
+		ReadOnly:                    value.ReadOnly,
+		Property:                    property,
+		Explode:                     explode,
 	}
 	if role != nil {
 		params.Role = new(sqlc.WebServiceParameterRole(*role))

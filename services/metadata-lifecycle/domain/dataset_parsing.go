@@ -481,6 +481,16 @@ func (value WFSConfiguration) Input() WebServiceConfigurationInput {
 	}
 }
 
+func (value WMTSConfiguration) Input() WebServiceConfigurationInput {
+	return WMTSConfigurationInput{
+		CapabilitiesURL:          value.CapabilitiesURL,
+		DefaultLayer:             value.DefaultLayer,
+		Layers:                   value.Layers,
+		GetTileParameters:        webServiceParameterInputs(value.GetTileParameters),
+		GetFeatureInfoParameters: webServiceParameterInputs(value.GetFeatureInfoParameters),
+	}
+}
+
 func (value WMSConfiguration) Input() WebServiceConfigurationInput {
 	return WMSConfigurationInput{
 		CapabilitiesURL:          value.CapabilitiesURL,

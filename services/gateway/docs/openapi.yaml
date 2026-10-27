@@ -2774,6 +2774,7 @@ components:
     WebServiceConfigurationDraft:
       oneOf:
         - $ref: "#/components/schemas/WmsWebServiceConfigurationDraft"
+        - $ref: "#/components/schemas/WmtsWebServiceConfigurationDraft"
         - $ref: "#/components/schemas/WfsWebServiceConfigurationDraft"
         - $ref: "#/components/schemas/GenericWebServiceConfigurationDraft"
       discriminator:
@@ -2781,7 +2782,7 @@ components:
         mapping:
           WMS: "#/components/schemas/WmsWebServiceConfigurationDraft"
           HTTP: "#/components/schemas/GenericWebServiceConfigurationDraft"
-          WMTS: "#/components/schemas/GenericWebServiceConfigurationDraft"
+          WMTS: "#/components/schemas/WmtsWebServiceConfigurationDraft"
           WFS: "#/components/schemas/WfsWebServiceConfigurationDraft"
 
     GenericWebServiceConfigurationDraft:
@@ -2791,7 +2792,7 @@ components:
       properties:
         type:
           type: string
-          enum: [HTTP, WMTS]
+          enum: [HTTP]
         template_url: { $ref: "#/components/schemas/NonBlankString" }
         method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:
@@ -2878,6 +2879,41 @@ components:
           type: array
           description: Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring case.
           items: { $ref: "#/components/schemas/ParameterDraft" }
+
+    WmtsWebServiceConfigurationDraft:
+      type: object
+      additionalProperties: false
+      description: WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+      required: [type, capabilities_url, default_layer, layers, get_tile_parameters, get_feature_info_parameters]
+      properties:
+        type: { type: string, enum: [WMTS] }
+        capabilities_url: { type: string, minLength: 1, description: Absolute HTTP(S) capabilities URL including provider query parameters. }
+        default_layer: { $ref: "#/components/schemas/NonBlankString" }
+        layers:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/WmtsLayerDraft" }
+        get_tile_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+        get_feature_info_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+
+    WmtsLayerDraft:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        default_style:
+          allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
+          description: Configured default style. When omitted, use the provider default if allowed by styles.
+        styles:
+          type: array
+          uniqueItems: true
+          description: Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
+          items: { $ref: "#/components/schemas/NonBlankString" }
 
     WmsLayerDraft:
       type: object
@@ -3907,7 +3943,7 @@ components:
         web_service: { $ref: "#/components/schemas/WebService" }
         available_formats:
           type: array
-          description: Computed formats for this resource version. Currently ORIGINAL entries only. WMS returns image/png; client must verify provider support.
+          description: Computed formats for this resource version. Currently ORIGINAL entries only. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
           items: { $ref: "#/components/schemas/AvailableFormat" }
 
     AvailableFormat:
@@ -3996,6 +4032,7 @@ components:
     WebServiceConfiguration:
       oneOf:
         - $ref: "#/components/schemas/WmsWebServiceConfiguration"
+        - $ref: "#/components/schemas/WmtsWebServiceConfiguration"
         - $ref: "#/components/schemas/WfsWebServiceConfiguration"
         - $ref: "#/components/schemas/GenericWebServiceConfiguration"
       discriminator:
@@ -4003,7 +4040,7 @@ components:
         mapping:
           WMS: "#/components/schemas/WmsWebServiceConfiguration"
           HTTP: "#/components/schemas/GenericWebServiceConfiguration"
-          WMTS: "#/components/schemas/GenericWebServiceConfiguration"
+          WMTS: "#/components/schemas/WmtsWebServiceConfiguration"
           WFS: "#/components/schemas/WfsWebServiceConfiguration"
 
     GenericWebServiceConfiguration:
@@ -4013,7 +4050,7 @@ components:
       properties:
         type:
           type: string
-          enum: [HTTP, WMTS]
+          enum: [HTTP]
         template_url: { type: string }
         method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:
@@ -4097,6 +4134,40 @@ components:
           type: array
           description: Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring case.
           items: { $ref: "#/components/schemas/Parameter" }
+
+    WmtsWebServiceConfiguration:
+      type: object
+      additionalProperties: false
+      description: WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+      required: [type, capabilities_url, default_layer, layers, get_tile_parameters, get_feature_info_parameters]
+      properties:
+        type: { type: string, enum: [WMTS] }
+        capabilities_url: { type: string, minLength: 1 }
+        default_layer: { $ref: "#/components/schemas/NonBlankString" }
+        layers:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/WmtsLayer" }
+        get_tile_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+        get_feature_info_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+
+    WmtsLayer:
+      type: object
+      required: [name]
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        default_style:
+          allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
+          description: Configured default style. When omitted, use the provider default if allowed by styles.
+        styles:
+          type: array
+          uniqueItems: true
+          description: Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
+          items: { $ref: "#/components/schemas/NonBlankString" }
 
     WmsLayer:
       type: object

@@ -11566,8 +11566,6 @@ func (s *GenericWebServiceConfigurationDraftType) Decode(d *jx.Decoder) error {
 	switch GenericWebServiceConfigurationDraftType(v) {
 	case GenericWebServiceConfigurationDraftTypeHTTP:
 		*s = GenericWebServiceConfigurationDraftTypeHTTP
-	case GenericWebServiceConfigurationDraftTypeWMTS:
-		*s = GenericWebServiceConfigurationDraftTypeWMTS
 	default:
 		*s = GenericWebServiceConfigurationDraftType(v)
 	}
@@ -11606,8 +11604,6 @@ func (s *GenericWebServiceConfigurationType) Decode(d *jx.Decoder) error {
 	switch GenericWebServiceConfigurationType(v) {
 	case GenericWebServiceConfigurationTypeHTTP:
 		*s = GenericWebServiceConfigurationTypeHTTP
-	case GenericWebServiceConfigurationTypeWMTS:
-		*s = GenericWebServiceConfigurationTypeWMTS
 	default:
 		*s = GenericWebServiceConfigurationType(v)
 	}
@@ -28924,6 +28920,44 @@ func (s WebServiceConfiguration) encodeFields(e *jx.Encoder) {
 				e.ArrEnd()
 			}
 		}
+	case WmtsWebServiceConfigurationWebServiceConfiguration:
+		e.FieldStart("type")
+		e.Str("WMTS")
+		{
+			s := s.WmtsWebServiceConfiguration
+			{
+				e.FieldStart("capabilities_url")
+				e.Str(s.CapabilitiesURL)
+			}
+			{
+				e.FieldStart("default_layer")
+				s.DefaultLayer.Encode(e)
+			}
+			{
+				e.FieldStart("layers")
+				e.ArrStart()
+				for _, elem := range s.Layers {
+					elem.Encode(e)
+				}
+				e.ArrEnd()
+			}
+			{
+				e.FieldStart("get_tile_parameters")
+				e.ArrStart()
+				for _, elem := range s.GetTileParameters {
+					elem.Encode(e)
+				}
+				e.ArrEnd()
+			}
+			{
+				e.FieldStart("get_feature_info_parameters")
+				e.ArrStart()
+				for _, elem := range s.GetFeatureInfoParameters {
+					elem.Encode(e)
+				}
+				e.ArrEnd()
+			}
+		}
 	case WfsWebServiceConfigurationWebServiceConfiguration:
 		e.FieldStart("type")
 		e.Str("WFS")
@@ -28980,15 +29014,9 @@ func (s WebServiceConfiguration) encodeFields(e *jx.Encoder) {
 				e.ArrEnd()
 			}
 		}
-	case WebServiceConfigurationHTTPWebServiceConfiguration, WebServiceConfigurationWMTSWebServiceConfiguration:
-		switch s.Type {
-		case WebServiceConfigurationHTTPWebServiceConfiguration:
-			e.FieldStart("type")
-			e.Str("HTTP")
-		case WebServiceConfigurationWMTSWebServiceConfiguration:
-			e.FieldStart("type")
-			e.Str("WMTS")
-		}
+	case GenericWebServiceConfigurationWebServiceConfiguration:
+		e.FieldStart("type")
+		e.Str("HTTP")
 		{
 			s := s.GenericWebServiceConfiguration
 			{
@@ -29071,14 +29099,14 @@ func (s *WebServiceConfiguration) Decode(d *jx.Decoder) error {
 				case "WMS":
 					s.Type = WmsWebServiceConfigurationWebServiceConfiguration
 					found = true
+				case "WMTS":
+					s.Type = WmtsWebServiceConfigurationWebServiceConfiguration
+					found = true
 				case "WFS":
 					s.Type = WfsWebServiceConfigurationWebServiceConfiguration
 					found = true
 				case "HTTP":
-					s.Type = WebServiceConfigurationHTTPWebServiceConfiguration
-					found = true
-				case "WMTS":
-					s.Type = WebServiceConfigurationWMTSWebServiceConfiguration
+					s.Type = GenericWebServiceConfigurationWebServiceConfiguration
 					found = true
 				default:
 					return errors.Errorf("unknown type %s", typ)
@@ -29098,11 +29126,15 @@ func (s *WebServiceConfiguration) Decode(d *jx.Decoder) error {
 		if err := s.WmsWebServiceConfiguration.Decode(d); err != nil {
 			return err
 		}
+	case WmtsWebServiceConfigurationWebServiceConfiguration:
+		if err := s.WmtsWebServiceConfiguration.Decode(d); err != nil {
+			return err
+		}
 	case WfsWebServiceConfigurationWebServiceConfiguration:
 		if err := s.WfsWebServiceConfiguration.Decode(d); err != nil {
 			return err
 		}
-	case WebServiceConfigurationHTTPWebServiceConfiguration, WebServiceConfigurationWMTSWebServiceConfiguration:
+	case GenericWebServiceConfigurationWebServiceConfiguration:
 		if err := s.GenericWebServiceConfiguration.Decode(d); err != nil {
 			return err
 		}
@@ -29180,6 +29212,44 @@ func (s WebServiceConfigurationDraft) encodeFields(e *jx.Encoder) {
 				e.ArrEnd()
 			}
 		}
+	case WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		e.FieldStart("type")
+		e.Str("WMTS")
+		{
+			s := s.WmtsWebServiceConfigurationDraft
+			{
+				e.FieldStart("capabilities_url")
+				e.Str(s.CapabilitiesURL)
+			}
+			{
+				e.FieldStart("default_layer")
+				s.DefaultLayer.Encode(e)
+			}
+			{
+				e.FieldStart("layers")
+				e.ArrStart()
+				for _, elem := range s.Layers {
+					elem.Encode(e)
+				}
+				e.ArrEnd()
+			}
+			{
+				e.FieldStart("get_tile_parameters")
+				e.ArrStart()
+				for _, elem := range s.GetTileParameters {
+					elem.Encode(e)
+				}
+				e.ArrEnd()
+			}
+			{
+				e.FieldStart("get_feature_info_parameters")
+				e.ArrStart()
+				for _, elem := range s.GetFeatureInfoParameters {
+					elem.Encode(e)
+				}
+				e.ArrEnd()
+			}
+		}
 	case WfsWebServiceConfigurationDraftWebServiceConfigurationDraft:
 		e.FieldStart("type")
 		e.Str("WFS")
@@ -29236,15 +29306,9 @@ func (s WebServiceConfigurationDraft) encodeFields(e *jx.Encoder) {
 				e.ArrEnd()
 			}
 		}
-	case WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft, WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft:
-		switch s.Type {
-		case WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft:
-			e.FieldStart("type")
-			e.Str("HTTP")
-		case WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft:
-			e.FieldStart("type")
-			e.Str("WMTS")
-		}
+	case GenericWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		e.FieldStart("type")
+		e.Str("HTTP")
 		{
 			s := s.GenericWebServiceConfigurationDraft
 			{
@@ -29327,14 +29391,14 @@ func (s *WebServiceConfigurationDraft) Decode(d *jx.Decoder) error {
 				case "WMS":
 					s.Type = WmsWebServiceConfigurationDraftWebServiceConfigurationDraft
 					found = true
+				case "WMTS":
+					s.Type = WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft
+					found = true
 				case "WFS":
 					s.Type = WfsWebServiceConfigurationDraftWebServiceConfigurationDraft
 					found = true
 				case "HTTP":
-					s.Type = WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft
-					found = true
-				case "WMTS":
-					s.Type = WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft
+					s.Type = GenericWebServiceConfigurationDraftWebServiceConfigurationDraft
 					found = true
 				default:
 					return errors.Errorf("unknown type %s", typ)
@@ -29354,11 +29418,15 @@ func (s *WebServiceConfigurationDraft) Decode(d *jx.Decoder) error {
 		if err := s.WmsWebServiceConfigurationDraft.Decode(d); err != nil {
 			return err
 		}
+	case WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		if err := s.WmtsWebServiceConfigurationDraft.Decode(d); err != nil {
+			return err
+		}
 	case WfsWebServiceConfigurationDraftWebServiceConfigurationDraft:
 		if err := s.WfsWebServiceConfigurationDraft.Decode(d); err != nil {
 			return err
 		}
-	case WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft, WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft:
+	case GenericWebServiceConfigurationDraftWebServiceConfigurationDraft:
 		if err := s.GenericWebServiceConfigurationDraft.Decode(d); err != nil {
 			return err
 		}
@@ -31830,6 +31898,774 @@ func (s WmsWebServiceConfigurationType) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *WmsWebServiceConfigurationType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *WmtsLayer) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *WmtsLayer) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		if s.DefaultStyle.Set {
+			e.FieldStart("default_style")
+			s.DefaultStyle.Encode(e)
+		}
+	}
+	{
+		if s.Styles != nil {
+			e.FieldStart("styles")
+			e.ArrStart()
+			for _, elem := range s.Styles {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfWmtsLayer = [3]string{
+	0: "name",
+	1: "default_style",
+	2: "styles",
+}
+
+// Decode decodes WmtsLayer from json.
+func (s *WmtsLayer) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode WmtsLayer to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "name":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "default_style":
+			if err := func() error {
+				s.DefaultStyle.Reset()
+				if err := s.DefaultStyle.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default_style\"")
+			}
+		case "styles":
+			if err := func() error {
+				s.Styles = make([]NonBlankString, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem NonBlankString
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Styles = append(s.Styles, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"styles\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode WmtsLayer")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfWmtsLayer) {
+					name = jsonFieldsNameOfWmtsLayer[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *WmtsLayer) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *WmtsLayer) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *WmtsLayerDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *WmtsLayerDraft) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		if s.DefaultStyle.Set {
+			e.FieldStart("default_style")
+			s.DefaultStyle.Encode(e)
+		}
+	}
+	{
+		if s.Styles != nil {
+			e.FieldStart("styles")
+			e.ArrStart()
+			for _, elem := range s.Styles {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfWmtsLayerDraft = [3]string{
+	0: "name",
+	1: "default_style",
+	2: "styles",
+}
+
+// Decode decodes WmtsLayerDraft from json.
+func (s *WmtsLayerDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode WmtsLayerDraft to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "name":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "default_style":
+			if err := func() error {
+				s.DefaultStyle.Reset()
+				if err := s.DefaultStyle.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default_style\"")
+			}
+		case "styles":
+			if err := func() error {
+				s.Styles = make([]NonBlankString, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem NonBlankString
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Styles = append(s.Styles, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"styles\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode WmtsLayerDraft")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfWmtsLayerDraft) {
+					name = jsonFieldsNameOfWmtsLayerDraft[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *WmtsLayerDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *WmtsLayerDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *WmtsWebServiceConfiguration) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *WmtsWebServiceConfiguration) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		e.FieldStart("capabilities_url")
+		e.Str(s.CapabilitiesURL)
+	}
+	{
+		e.FieldStart("default_layer")
+		s.DefaultLayer.Encode(e)
+	}
+	{
+		e.FieldStart("layers")
+		e.ArrStart()
+		for _, elem := range s.Layers {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("get_tile_parameters")
+		e.ArrStart()
+		for _, elem := range s.GetTileParameters {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("get_feature_info_parameters")
+		e.ArrStart()
+		for _, elem := range s.GetFeatureInfoParameters {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+}
+
+var jsonFieldsNameOfWmtsWebServiceConfiguration = [6]string{
+	0: "type",
+	1: "capabilities_url",
+	2: "default_layer",
+	3: "layers",
+	4: "get_tile_parameters",
+	5: "get_feature_info_parameters",
+}
+
+// Decode decodes WmtsWebServiceConfiguration from json.
+func (s *WmtsWebServiceConfiguration) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode WmtsWebServiceConfiguration to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "capabilities_url":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.CapabilitiesURL = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"capabilities_url\"")
+			}
+		case "default_layer":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.DefaultLayer.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default_layer\"")
+			}
+		case "layers":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				s.Layers = make([]WmtsLayer, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem WmtsLayer
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Layers = append(s.Layers, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"layers\"")
+			}
+		case "get_tile_parameters":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				s.GetTileParameters = make([]Parameter, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Parameter
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.GetTileParameters = append(s.GetTileParameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"get_tile_parameters\"")
+			}
+		case "get_feature_info_parameters":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				s.GetFeatureInfoParameters = make([]Parameter, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Parameter
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.GetFeatureInfoParameters = append(s.GetFeatureInfoParameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"get_feature_info_parameters\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode WmtsWebServiceConfiguration")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00111111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfWmtsWebServiceConfiguration) {
+					name = jsonFieldsNameOfWmtsWebServiceConfiguration[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *WmtsWebServiceConfiguration) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *WmtsWebServiceConfiguration) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *WmtsWebServiceConfigurationDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *WmtsWebServiceConfigurationDraft) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		e.FieldStart("capabilities_url")
+		e.Str(s.CapabilitiesURL)
+	}
+	{
+		e.FieldStart("default_layer")
+		s.DefaultLayer.Encode(e)
+	}
+	{
+		e.FieldStart("layers")
+		e.ArrStart()
+		for _, elem := range s.Layers {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("get_tile_parameters")
+		e.ArrStart()
+		for _, elem := range s.GetTileParameters {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("get_feature_info_parameters")
+		e.ArrStart()
+		for _, elem := range s.GetFeatureInfoParameters {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+}
+
+var jsonFieldsNameOfWmtsWebServiceConfigurationDraft = [6]string{
+	0: "type",
+	1: "capabilities_url",
+	2: "default_layer",
+	3: "layers",
+	4: "get_tile_parameters",
+	5: "get_feature_info_parameters",
+}
+
+// Decode decodes WmtsWebServiceConfigurationDraft from json.
+func (s *WmtsWebServiceConfigurationDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode WmtsWebServiceConfigurationDraft to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "capabilities_url":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.CapabilitiesURL = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"capabilities_url\"")
+			}
+		case "default_layer":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.DefaultLayer.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default_layer\"")
+			}
+		case "layers":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				s.Layers = make([]WmtsLayerDraft, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem WmtsLayerDraft
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Layers = append(s.Layers, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"layers\"")
+			}
+		case "get_tile_parameters":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				s.GetTileParameters = make([]ParameterDraft, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ParameterDraft
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.GetTileParameters = append(s.GetTileParameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"get_tile_parameters\"")
+			}
+		case "get_feature_info_parameters":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				s.GetFeatureInfoParameters = make([]ParameterDraft, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ParameterDraft
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.GetFeatureInfoParameters = append(s.GetFeatureInfoParameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"get_feature_info_parameters\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode WmtsWebServiceConfigurationDraft")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00111111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfWmtsWebServiceConfigurationDraft) {
+					name = jsonFieldsNameOfWmtsWebServiceConfigurationDraft[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *WmtsWebServiceConfigurationDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *WmtsWebServiceConfigurationDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes WmtsWebServiceConfigurationDraftType as json.
+func (s WmtsWebServiceConfigurationDraftType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes WmtsWebServiceConfigurationDraftType from json.
+func (s *WmtsWebServiceConfigurationDraftType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode WmtsWebServiceConfigurationDraftType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch WmtsWebServiceConfigurationDraftType(v) {
+	case WmtsWebServiceConfigurationDraftTypeWMTS:
+		*s = WmtsWebServiceConfigurationDraftTypeWMTS
+	default:
+		*s = WmtsWebServiceConfigurationDraftType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s WmtsWebServiceConfigurationDraftType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *WmtsWebServiceConfigurationDraftType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes WmtsWebServiceConfigurationType as json.
+func (s WmtsWebServiceConfigurationType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes WmtsWebServiceConfigurationType from json.
+func (s *WmtsWebServiceConfigurationType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode WmtsWebServiceConfigurationType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch WmtsWebServiceConfigurationType(v) {
+	case WmtsWebServiceConfigurationTypeWMTS:
+		*s = WmtsWebServiceConfigurationTypeWMTS
+	default:
+		*s = WmtsWebServiceConfigurationType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s WmtsWebServiceConfigurationType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *WmtsWebServiceConfigurationType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

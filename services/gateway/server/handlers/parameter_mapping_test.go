@@ -117,7 +117,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 			gatewayapi.WebServiceVisibleOnGRAPH,
 		}),
 		Configuration: gatewayapi.WebServiceConfigurationDraft{
-			Type: gatewayapi.WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft,
+			Type: gatewayapi.GenericWebServiceConfigurationDraftWebServiceConfigurationDraft,
 			GenericWebServiceConfigurationDraft: gatewayapi.GenericWebServiceConfigurationDraft{
 				Type:        gatewayapi.GenericWebServiceConfigurationDraftTypeHTTP,
 				TemplateURL: gatewayapi.NonBlankString("https://example.test/{?value}"),
@@ -182,7 +182,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		t.Fatalf("toAPIWebService() error = %v", err)
 	}
 	visibleOn, ok := service.VisibleOn.Get()
-	if !ok || service.Configuration.Type != gatewayapi.WebServiceConfigurationHTTPWebServiceConfiguration || len(visibleOn) != 2 || visibleOn[0] != gatewayapi.WebServiceVisibleOnMAP || visibleOn[1] != gatewayapi.WebServiceVisibleOnGRAPH {
+	if !ok || service.Configuration.Type != gatewayapi.GenericWebServiceConfigurationWebServiceConfiguration || len(visibleOn) != 2 || visibleOn[0] != gatewayapi.WebServiceVisibleOnMAP || visibleOn[1] != gatewayapi.WebServiceVisibleOnGRAPH {
 		t.Fatalf("API web-service fields = configuration type %q, visible on %v", service.Configuration.Type, visibleOn)
 	}
 }

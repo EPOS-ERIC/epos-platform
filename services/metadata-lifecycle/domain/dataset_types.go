@@ -206,6 +206,32 @@ type WMSLayer struct {
 	Styles       []string
 }
 
+type WMTSConfigurationInput struct {
+	CapabilitiesURL          string
+	DefaultLayer             string
+	Layers                   []WMTSLayer
+	GetTileParameters        []WebServiceParameterInput
+	GetFeatureInfoParameters []WebServiceParameterInput
+}
+
+func (WMTSConfigurationInput) webServiceConfigurationInput() {}
+
+type WMTSConfiguration struct {
+	CapabilitiesURL          string
+	DefaultLayer             string
+	Layers                   []WMTSLayer
+	GetTileParameters        []WebServiceParameter
+	GetFeatureInfoParameters []WebServiceParameter
+}
+
+func (WMTSConfiguration) webServiceConfiguration() {}
+
+type WMTSLayer struct {
+	Name         string
+	DefaultStyle *string
+	Styles       []string
+}
+
 type DownloadableFile struct {
 	URL    string
 	Format string

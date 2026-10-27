@@ -28,6 +28,11 @@ func (value WMSConfiguration) NativeFormats() []NativeFormat {
 	return []NativeFormat{{OutputFormat: "image/png", Label: "image/png"}}
 }
 
+func (value WMTSConfiguration) NativeFormats() []NativeFormat {
+	// PNG is a platform map requirement; the client checks provider support.
+	return []NativeFormat{{OutputFormat: "image/png", Label: "image/png"}}
+}
+
 func (value GenericWebServiceConfiguration) NativeFormats() []NativeFormat {
 	var formatSchema *StringSchema
 	for _, parameter := range value.Parameters {

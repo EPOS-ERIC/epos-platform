@@ -909,24 +909,26 @@ type OrganizationMembership struct {
 }
 
 type Parameter struct {
-	ID                         uuid.UUID
-	Position                   int32
-	Name                       string
-	Label                      string
-	Description                *string
-	Required                   bool
-	ReadOnly                   bool
-	WebServiceID               *uuid.UUID
-	WfsServiceID               *uuid.UUID
-	WmsGetMapServiceID         *uuid.UUID
-	WmsGetFeatureInfoServiceID *uuid.UUID
-	WebServiceBodyID           *uuid.UUID
-	TemplateParameterID        *uuid.UUID
-	SchemaKind                 ParameterSchemaKind
-	Role                       *WebServiceParameterRole
-	Property                   *string
-	Location                   *WebServiceParameterLocation
-	Explode                    bool
+	ID                          uuid.UUID
+	Position                    int32
+	Name                        string
+	Label                       string
+	Description                 *string
+	Required                    bool
+	ReadOnly                    bool
+	WebServiceID                *uuid.UUID
+	WfsServiceID                *uuid.UUID
+	WmsGetMapServiceID          *uuid.UUID
+	WmsGetFeatureInfoServiceID  *uuid.UUID
+	WmtsGetTileServiceID        *uuid.UUID
+	WmtsGetFeatureInfoServiceID *uuid.UUID
+	WebServiceBodyID            *uuid.UUID
+	TemplateParameterID         *uuid.UUID
+	SchemaKind                  ParameterSchemaKind
+	Role                        *WebServiceParameterRole
+	Property                    *string
+	Location                    *WebServiceParameterLocation
+	Explode                     bool
 }
 
 type ParameterTemplate struct {
@@ -1139,4 +1141,18 @@ type WmsService struct {
 	DefaultLayer         string
 	TransparencyEditable bool
 	DefaultTransparency  bool
+}
+
+type WmtsLayer struct {
+	WebServiceID uuid.UUID
+	Name         string
+	Position     int32
+	DefaultStyle *string
+	Styles       []string
+}
+
+type WmtsService struct {
+	WebServiceID    uuid.UUID
+	CapabilitiesUrl string
+	DefaultLayer    string
 }

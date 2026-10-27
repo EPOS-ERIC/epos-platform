@@ -27,6 +27,8 @@ func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService 
 		result.Configuration = &metadatalifecyclev1.WebService_Wfs{Wfs: toProtoWFSWebServiceConfiguration(configuration)}
 	case domain.WMSConfiguration:
 		result.Configuration = &metadatalifecyclev1.WebService_Wms{Wms: toProtoWMSWebServiceConfiguration(configuration)}
+	case domain.WMTSConfiguration:
+		result.Configuration = &metadatalifecyclev1.WebService_Wmts{Wmts: toProtoWMTSWebServiceConfiguration(configuration)}
 	}
 	if value.Provider != nil {
 		result.ProviderReference = referenceOutput(value.Provider.ID, value.Provider.Name)
@@ -70,6 +72,20 @@ func toProtoWFSWebServiceConfiguration(value domain.WFSConfiguration) *metadatal
 	}
 	for _, parameter := range value.Parameters {
 		result.Parameters = append(result.Parameters, parameterOutput(parameter))
+	}
+	return result
+}
+
+func toProtoWMTSWebServiceConfiguration(value domain.WMTSConfiguration) *metadatalifecyclev1.WMTSWebServiceConfiguration {
+	result := &metadatalifecyclev1.WMTSWebServiceConfiguration{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: value.DefaultLayer}
+	for _, layer := range value.Layers {
+		result.Layers = append(result.Layers, &metadatalifecyclev1.WMTSLayer{Name: layer.Name, DefaultStyle: layer.DefaultStyle, Styles: layer.Styles})
+	}
+	for _, parameter := range value.GetTileParameters {
+		result.GetTileParameters = append(result.GetTileParameters, parameterOutput(parameter))
+	}
+	for _, parameter := range value.GetFeatureInfoParameters {
+		result.GetFeatureInfoParameters = append(result.GetFeatureInfoParameters, parameterOutput(parameter))
 	}
 	return result
 }
@@ -169,6 +185,11 @@ func toDomainWebServiceConfigurationInput(value *metadatalifecyclev1.WebServiceI
 			return nil, apperror.Field("", "WMS configuration is required.", nil)
 		}
 		return toDomainWMSWebServiceConfigurationInput(configuration.Wms)
+	case *metadatalifecyclev1.WebServiceInput_Wmts:
+		if configuration.Wmts == nil {
+			return nil, apperror.Field("", "WMTS configuration is required.", nil)
+		}
+		return toDomainWMTSWebServiceConfigurationInput(configuration.Wmts)
 	default:
 		return nil, apperror.Field("", "Web service configuration is required.", nil)
 	}
@@ -231,6 +252,25 @@ func toDomainWFSWebServiceConfigurationInput(value *metadatalifecyclev1.WFSWebSe
 		ResultLimitEditable:   value.GetResultLimitEditable(),
 		Parameters:            parameters,
 	}, nil
+}
+
+func toDomainWMTSWebServiceConfigurationInput(value *metadatalifecyclev1.WMTSWebServiceConfigurationInput) (domain.WMTSConfigurationInput, error) {
+	layers := make([]domain.WMTSLayer, 0, len(value.GetLayers()))
+	for i, layer := range value.GetLayers() {
+		if layer == nil {
+			return domain.WMTSConfigurationInput{}, apperror.Field(fmt.Sprintf("layers[%d]", i), "WMTS layer is required.", nil)
+		}
+		layers = append(layers, domain.WMTSLayer{Name: layer.GetName(), DefaultStyle: layer.DefaultStyle, Styles: layer.GetStyles()})
+	}
+	tile, err := toDomainWebServiceParameters(value.GetGetTileParameters(), "get_tile_parameters")
+	if err != nil {
+		return domain.WMTSConfigurationInput{}, err
+	}
+	info, err := toDomainWebServiceParameters(value.GetGetFeatureInfoParameters(), "get_feature_info_parameters")
+	if err != nil {
+		return domain.WMTSConfigurationInput{}, err
+	}
+	return domain.WMTSConfigurationInput{CapabilitiesURL: value.GetCapabilitiesUrl(), DefaultLayer: value.GetDefaultLayer(), Layers: layers, GetTileParameters: tile, GetFeatureInfoParameters: info}, nil
 }
 
 func toDomainWMSWebServiceConfigurationInput(value *metadatalifecyclev1.WMSWebServiceConfigurationInput) (domain.WMSConfigurationInput, error) {

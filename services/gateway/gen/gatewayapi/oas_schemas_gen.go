@@ -5697,14 +5697,12 @@ type GenericWebServiceConfigurationDraftType string
 
 const (
 	GenericWebServiceConfigurationDraftTypeHTTP GenericWebServiceConfigurationDraftType = "HTTP"
-	GenericWebServiceConfigurationDraftTypeWMTS GenericWebServiceConfigurationDraftType = "WMTS"
 )
 
 // AllValues returns all GenericWebServiceConfigurationDraftType values.
 func (GenericWebServiceConfigurationDraftType) AllValues() []GenericWebServiceConfigurationDraftType {
 	return []GenericWebServiceConfigurationDraftType{
 		GenericWebServiceConfigurationDraftTypeHTTP,
-		GenericWebServiceConfigurationDraftTypeWMTS,
 	}
 }
 
@@ -5712,8 +5710,6 @@ func (GenericWebServiceConfigurationDraftType) AllValues() []GenericWebServiceCo
 func (s GenericWebServiceConfigurationDraftType) MarshalText() ([]byte, error) {
 	switch s {
 	case GenericWebServiceConfigurationDraftTypeHTTP:
-		return []byte(s), nil
-	case GenericWebServiceConfigurationDraftTypeWMTS:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -5726,9 +5722,6 @@ func (s *GenericWebServiceConfigurationDraftType) UnmarshalText(data []byte) err
 	case GenericWebServiceConfigurationDraftTypeHTTP:
 		*s = GenericWebServiceConfigurationDraftTypeHTTP
 		return nil
-	case GenericWebServiceConfigurationDraftTypeWMTS:
-		*s = GenericWebServiceConfigurationDraftTypeWMTS
-		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
@@ -5738,14 +5731,12 @@ type GenericWebServiceConfigurationType string
 
 const (
 	GenericWebServiceConfigurationTypeHTTP GenericWebServiceConfigurationType = "HTTP"
-	GenericWebServiceConfigurationTypeWMTS GenericWebServiceConfigurationType = "WMTS"
 )
 
 // AllValues returns all GenericWebServiceConfigurationType values.
 func (GenericWebServiceConfigurationType) AllValues() []GenericWebServiceConfigurationType {
 	return []GenericWebServiceConfigurationType{
 		GenericWebServiceConfigurationTypeHTTP,
-		GenericWebServiceConfigurationTypeWMTS,
 	}
 }
 
@@ -5753,8 +5744,6 @@ func (GenericWebServiceConfigurationType) AllValues() []GenericWebServiceConfigu
 func (s GenericWebServiceConfigurationType) MarshalText() ([]byte, error) {
 	switch s {
 	case GenericWebServiceConfigurationTypeHTTP:
-		return []byte(s), nil
-	case GenericWebServiceConfigurationTypeWMTS:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -5766,9 +5755,6 @@ func (s *GenericWebServiceConfigurationType) UnmarshalText(data []byte) error {
 	switch GenericWebServiceConfigurationType(data) {
 	case GenericWebServiceConfigurationTypeHTTP:
 		*s = GenericWebServiceConfigurationTypeHTTP
-		return nil
-	case GenericWebServiceConfigurationTypeWMTS:
-		*s = GenericWebServiceConfigurationTypeWMTS
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -15204,6 +15190,7 @@ type WebServiceConfiguration struct {
 	// Type selects the active sum variant, switch on this field.
 	Type                           WebServiceConfigurationType
 	WmsWebServiceConfiguration     WmsWebServiceConfiguration
+	WmtsWebServiceConfiguration    WmtsWebServiceConfiguration
 	WfsWebServiceConfiguration     WfsWebServiceConfiguration
 	GenericWebServiceConfiguration GenericWebServiceConfiguration
 }
@@ -15213,15 +15200,20 @@ type WebServiceConfigurationType string
 
 // Possible values for WebServiceConfigurationType.
 const (
-	WmsWebServiceConfigurationWebServiceConfiguration  WebServiceConfigurationType = "WMS"
-	WfsWebServiceConfigurationWebServiceConfiguration  WebServiceConfigurationType = "WFS"
-	WebServiceConfigurationHTTPWebServiceConfiguration WebServiceConfigurationType = "HTTP"
-	WebServiceConfigurationWMTSWebServiceConfiguration WebServiceConfigurationType = "WMTS"
+	WmsWebServiceConfigurationWebServiceConfiguration     WebServiceConfigurationType = "WMS"
+	WmtsWebServiceConfigurationWebServiceConfiguration    WebServiceConfigurationType = "WMTS"
+	WfsWebServiceConfigurationWebServiceConfiguration     WebServiceConfigurationType = "WFS"
+	GenericWebServiceConfigurationWebServiceConfiguration WebServiceConfigurationType = "HTTP"
 )
 
 // IsWmsWebServiceConfiguration reports whether WebServiceConfiguration is WmsWebServiceConfiguration.
 func (s WebServiceConfiguration) IsWmsWebServiceConfiguration() bool {
 	return s.Type == WmsWebServiceConfigurationWebServiceConfiguration
+}
+
+// IsWmtsWebServiceConfiguration reports whether WebServiceConfiguration is WmtsWebServiceConfiguration.
+func (s WebServiceConfiguration) IsWmtsWebServiceConfiguration() bool {
+	return s.Type == WmtsWebServiceConfigurationWebServiceConfiguration
 }
 
 // IsWfsWebServiceConfiguration reports whether WebServiceConfiguration is WfsWebServiceConfiguration.
@@ -15231,12 +15223,7 @@ func (s WebServiceConfiguration) IsWfsWebServiceConfiguration() bool {
 
 // IsGenericWebServiceConfiguration reports whether WebServiceConfiguration is GenericWebServiceConfiguration.
 func (s WebServiceConfiguration) IsGenericWebServiceConfiguration() bool {
-	switch s.Type {
-	case WebServiceConfigurationHTTPWebServiceConfiguration, WebServiceConfigurationWMTSWebServiceConfiguration:
-		return true
-	default:
-		return false
-	}
+	return s.Type == GenericWebServiceConfigurationWebServiceConfiguration
 }
 
 // SetWmsWebServiceConfiguration sets WebServiceConfiguration to WmsWebServiceConfiguration.
@@ -15257,6 +15244,27 @@ func (s WebServiceConfiguration) GetWmsWebServiceConfiguration() (v WmsWebServic
 func NewWmsWebServiceConfigurationWebServiceConfiguration(v WmsWebServiceConfiguration) WebServiceConfiguration {
 	var s WebServiceConfiguration
 	s.SetWmsWebServiceConfiguration(v)
+	return s
+}
+
+// SetWmtsWebServiceConfiguration sets WebServiceConfiguration to WmtsWebServiceConfiguration.
+func (s *WebServiceConfiguration) SetWmtsWebServiceConfiguration(v WmtsWebServiceConfiguration) {
+	s.Type = WmtsWebServiceConfigurationWebServiceConfiguration
+	s.WmtsWebServiceConfiguration = v
+}
+
+// GetWmtsWebServiceConfiguration returns WmtsWebServiceConfiguration and true boolean if WebServiceConfiguration is WmtsWebServiceConfiguration.
+func (s WebServiceConfiguration) GetWmtsWebServiceConfiguration() (v WmtsWebServiceConfiguration, ok bool) {
+	if !s.IsWmtsWebServiceConfiguration() {
+		return v, false
+	}
+	return s.WmtsWebServiceConfiguration, true
+}
+
+// NewWmtsWebServiceConfigurationWebServiceConfiguration returns new WebServiceConfiguration from WmtsWebServiceConfiguration.
+func NewWmtsWebServiceConfigurationWebServiceConfiguration(v WmtsWebServiceConfiguration) WebServiceConfiguration {
+	var s WebServiceConfiguration
+	s.SetWmtsWebServiceConfiguration(v)
 	return s
 }
 
@@ -15282,13 +15290,9 @@ func NewWfsWebServiceConfigurationWebServiceConfiguration(v WfsWebServiceConfigu
 }
 
 // SetGenericWebServiceConfiguration sets WebServiceConfiguration to GenericWebServiceConfiguration.
-// panics if `t` is not associated with GenericWebServiceConfiguration
-func (s *WebServiceConfiguration) SetGenericWebServiceConfiguration(t WebServiceConfigurationType, v GenericWebServiceConfiguration) {
-	s.Type = t
+func (s *WebServiceConfiguration) SetGenericWebServiceConfiguration(v GenericWebServiceConfiguration) {
+	s.Type = GenericWebServiceConfigurationWebServiceConfiguration
 	s.GenericWebServiceConfiguration = v
-	if !s.IsGenericWebServiceConfiguration() {
-		panic(fmt.Errorf("invariant: %v is not GenericWebServiceConfiguration", t))
-	}
 }
 
 // GetGenericWebServiceConfiguration returns GenericWebServiceConfiguration and true boolean if WebServiceConfiguration is GenericWebServiceConfiguration.
@@ -15299,17 +15303,10 @@ func (s WebServiceConfiguration) GetGenericWebServiceConfiguration() (v GenericW
 	return s.GenericWebServiceConfiguration, true
 }
 
-// NewWebServiceConfigurationHTTPWebServiceConfiguration returns new WebServiceConfiguration from GenericWebServiceConfiguration.
-func NewWebServiceConfigurationHTTPWebServiceConfiguration(v GenericWebServiceConfiguration) WebServiceConfiguration {
+// NewGenericWebServiceConfigurationWebServiceConfiguration returns new WebServiceConfiguration from GenericWebServiceConfiguration.
+func NewGenericWebServiceConfigurationWebServiceConfiguration(v GenericWebServiceConfiguration) WebServiceConfiguration {
 	var s WebServiceConfiguration
-	s.SetGenericWebServiceConfiguration(WebServiceConfigurationHTTPWebServiceConfiguration, v)
-	return s
-}
-
-// NewWebServiceConfigurationWMTSWebServiceConfiguration returns new WebServiceConfiguration from GenericWebServiceConfiguration.
-func NewWebServiceConfigurationWMTSWebServiceConfiguration(v GenericWebServiceConfiguration) WebServiceConfiguration {
-	var s WebServiceConfiguration
-	s.SetGenericWebServiceConfiguration(WebServiceConfigurationWMTSWebServiceConfiguration, v)
+	s.SetGenericWebServiceConfiguration(v)
 	return s
 }
 
@@ -15319,6 +15316,7 @@ type WebServiceConfigurationDraft struct {
 	// Type selects the active sum variant, switch on this field.
 	Type                                WebServiceConfigurationDraftType
 	WmsWebServiceConfigurationDraft     WmsWebServiceConfigurationDraft
+	WmtsWebServiceConfigurationDraft    WmtsWebServiceConfigurationDraft
 	WfsWebServiceConfigurationDraft     WfsWebServiceConfigurationDraft
 	GenericWebServiceConfigurationDraft GenericWebServiceConfigurationDraft
 }
@@ -15328,15 +15326,20 @@ type WebServiceConfigurationDraftType string
 
 // Possible values for WebServiceConfigurationDraftType.
 const (
-	WmsWebServiceConfigurationDraftWebServiceConfigurationDraft  WebServiceConfigurationDraftType = "WMS"
-	WfsWebServiceConfigurationDraftWebServiceConfigurationDraft  WebServiceConfigurationDraftType = "WFS"
-	WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft WebServiceConfigurationDraftType = "HTTP"
-	WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft WebServiceConfigurationDraftType = "WMTS"
+	WmsWebServiceConfigurationDraftWebServiceConfigurationDraft     WebServiceConfigurationDraftType = "WMS"
+	WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft    WebServiceConfigurationDraftType = "WMTS"
+	WfsWebServiceConfigurationDraftWebServiceConfigurationDraft     WebServiceConfigurationDraftType = "WFS"
+	GenericWebServiceConfigurationDraftWebServiceConfigurationDraft WebServiceConfigurationDraftType = "HTTP"
 )
 
 // IsWmsWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is WmsWebServiceConfigurationDraft.
 func (s WebServiceConfigurationDraft) IsWmsWebServiceConfigurationDraft() bool {
 	return s.Type == WmsWebServiceConfigurationDraftWebServiceConfigurationDraft
+}
+
+// IsWmtsWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is WmtsWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) IsWmtsWebServiceConfigurationDraft() bool {
+	return s.Type == WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft
 }
 
 // IsWfsWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is WfsWebServiceConfigurationDraft.
@@ -15346,12 +15349,7 @@ func (s WebServiceConfigurationDraft) IsWfsWebServiceConfigurationDraft() bool {
 
 // IsGenericWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is GenericWebServiceConfigurationDraft.
 func (s WebServiceConfigurationDraft) IsGenericWebServiceConfigurationDraft() bool {
-	switch s.Type {
-	case WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft, WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft:
-		return true
-	default:
-		return false
-	}
+	return s.Type == GenericWebServiceConfigurationDraftWebServiceConfigurationDraft
 }
 
 // SetWmsWebServiceConfigurationDraft sets WebServiceConfigurationDraft to WmsWebServiceConfigurationDraft.
@@ -15372,6 +15370,27 @@ func (s WebServiceConfigurationDraft) GetWmsWebServiceConfigurationDraft() (v Wm
 func NewWmsWebServiceConfigurationDraftWebServiceConfigurationDraft(v WmsWebServiceConfigurationDraft) WebServiceConfigurationDraft {
 	var s WebServiceConfigurationDraft
 	s.SetWmsWebServiceConfigurationDraft(v)
+	return s
+}
+
+// SetWmtsWebServiceConfigurationDraft sets WebServiceConfigurationDraft to WmtsWebServiceConfigurationDraft.
+func (s *WebServiceConfigurationDraft) SetWmtsWebServiceConfigurationDraft(v WmtsWebServiceConfigurationDraft) {
+	s.Type = WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft
+	s.WmtsWebServiceConfigurationDraft = v
+}
+
+// GetWmtsWebServiceConfigurationDraft returns WmtsWebServiceConfigurationDraft and true boolean if WebServiceConfigurationDraft is WmtsWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) GetWmtsWebServiceConfigurationDraft() (v WmtsWebServiceConfigurationDraft, ok bool) {
+	if !s.IsWmtsWebServiceConfigurationDraft() {
+		return v, false
+	}
+	return s.WmtsWebServiceConfigurationDraft, true
+}
+
+// NewWmtsWebServiceConfigurationDraftWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from WmtsWebServiceConfigurationDraft.
+func NewWmtsWebServiceConfigurationDraftWebServiceConfigurationDraft(v WmtsWebServiceConfigurationDraft) WebServiceConfigurationDraft {
+	var s WebServiceConfigurationDraft
+	s.SetWmtsWebServiceConfigurationDraft(v)
 	return s
 }
 
@@ -15397,13 +15416,9 @@ func NewWfsWebServiceConfigurationDraftWebServiceConfigurationDraft(v WfsWebServ
 }
 
 // SetGenericWebServiceConfigurationDraft sets WebServiceConfigurationDraft to GenericWebServiceConfigurationDraft.
-// panics if `t` is not associated with GenericWebServiceConfigurationDraft
-func (s *WebServiceConfigurationDraft) SetGenericWebServiceConfigurationDraft(t WebServiceConfigurationDraftType, v GenericWebServiceConfigurationDraft) {
-	s.Type = t
+func (s *WebServiceConfigurationDraft) SetGenericWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) {
+	s.Type = GenericWebServiceConfigurationDraftWebServiceConfigurationDraft
 	s.GenericWebServiceConfigurationDraft = v
-	if !s.IsGenericWebServiceConfigurationDraft() {
-		panic(fmt.Errorf("invariant: %v is not GenericWebServiceConfigurationDraft", t))
-	}
 }
 
 // GetGenericWebServiceConfigurationDraft returns GenericWebServiceConfigurationDraft and true boolean if WebServiceConfigurationDraft is GenericWebServiceConfigurationDraft.
@@ -15414,17 +15429,10 @@ func (s WebServiceConfigurationDraft) GetGenericWebServiceConfigurationDraft() (
 	return s.GenericWebServiceConfigurationDraft, true
 }
 
-// NewWebServiceConfigurationDraftHTTPWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from GenericWebServiceConfigurationDraft.
-func NewWebServiceConfigurationDraftHTTPWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) WebServiceConfigurationDraft {
+// NewGenericWebServiceConfigurationDraftWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from GenericWebServiceConfigurationDraft.
+func NewGenericWebServiceConfigurationDraftWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) WebServiceConfigurationDraft {
 	var s WebServiceConfigurationDraft
-	s.SetGenericWebServiceConfigurationDraft(WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft, v)
-	return s
-}
-
-// NewWebServiceConfigurationDraftWMTSWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from GenericWebServiceConfigurationDraft.
-func NewWebServiceConfigurationDraftWMTSWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) WebServiceConfigurationDraft {
-	var s WebServiceConfigurationDraft
-	s.SetGenericWebServiceConfigurationDraft(WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft, v)
+	s.SetGenericWebServiceConfigurationDraft(v)
 	return s
 }
 
@@ -15439,8 +15447,8 @@ type WebServiceDistribution struct {
 	Modified    OptNilDateTime             `json:"modified"`
 	ByteSize    OptNilInt64                `json:"byte_size"`
 	WebService  WebService                 `json:"web_service"`
-	// Computed formats for this resource version. Currently ORIGINAL entries only. WMS returns image/png;
-	// client must verify provider support.
+	// Computed formats for this resource version. Currently ORIGINAL entries only. WMS and WMTS return
+	// image/png as a platform requirement; client must verify provider support.
 	AvailableFormats []AvailableFormat `json:"available_formats"`
 }
 
@@ -16709,6 +16717,297 @@ func (s *WmsWebServiceConfigurationType) UnmarshalText(data []byte) error {
 	switch WmsWebServiceConfigurationType(data) {
 	case WmsWebServiceConfigurationTypeWMS:
 		*s = WmsWebServiceConfigurationTypeWMS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/WmtsLayer
+type WmtsLayer struct {
+	Name NonBlankString `json:"name"`
+	// Configured default style. When omitted, use the provider default if allowed by styles.
+	DefaultStyle OptNonBlankString `json:"default_style"`
+	// Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
+	Styles []NonBlankString `json:"styles"`
+}
+
+// GetName returns the value of Name.
+func (s *WmtsLayer) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetDefaultStyle returns the value of DefaultStyle.
+func (s *WmtsLayer) GetDefaultStyle() OptNonBlankString {
+	return s.DefaultStyle
+}
+
+// GetStyles returns the value of Styles.
+func (s *WmtsLayer) GetStyles() []NonBlankString {
+	return s.Styles
+}
+
+// SetName sets the value of Name.
+func (s *WmtsLayer) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetDefaultStyle sets the value of DefaultStyle.
+func (s *WmtsLayer) SetDefaultStyle(val OptNonBlankString) {
+	s.DefaultStyle = val
+}
+
+// SetStyles sets the value of Styles.
+func (s *WmtsLayer) SetStyles(val []NonBlankString) {
+	s.Styles = val
+}
+
+// Ref: #/components/schemas/WmtsLayerDraft
+type WmtsLayerDraft struct {
+	Name NonBlankString `json:"name"`
+	// Configured default style. When omitted, use the provider default if allowed by styles.
+	DefaultStyle OptNonBlankString `json:"default_style"`
+	// Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
+	Styles []NonBlankString `json:"styles"`
+}
+
+// GetName returns the value of Name.
+func (s *WmtsLayerDraft) GetName() NonBlankString {
+	return s.Name
+}
+
+// GetDefaultStyle returns the value of DefaultStyle.
+func (s *WmtsLayerDraft) GetDefaultStyle() OptNonBlankString {
+	return s.DefaultStyle
+}
+
+// GetStyles returns the value of Styles.
+func (s *WmtsLayerDraft) GetStyles() []NonBlankString {
+	return s.Styles
+}
+
+// SetName sets the value of Name.
+func (s *WmtsLayerDraft) SetName(val NonBlankString) {
+	s.Name = val
+}
+
+// SetDefaultStyle sets the value of DefaultStyle.
+func (s *WmtsLayerDraft) SetDefaultStyle(val OptNonBlankString) {
+	s.DefaultStyle = val
+}
+
+// SetStyles sets the value of Styles.
+func (s *WmtsLayerDraft) SetStyles(val []NonBlankString) {
+	s.Styles = val
+}
+
+// WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on
+// write.
+// Ref: #/components/schemas/WmtsWebServiceConfiguration
+type WmtsWebServiceConfiguration struct {
+	Type                     WmtsWebServiceConfigurationType `json:"type"`
+	CapabilitiesURL          string                          `json:"capabilities_url"`
+	DefaultLayer             NonBlankString                  `json:"default_layer"`
+	Layers                   []WmtsLayer                     `json:"layers"`
+	GetTileParameters        []Parameter                     `json:"get_tile_parameters"`
+	GetFeatureInfoParameters []Parameter                     `json:"get_feature_info_parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *WmtsWebServiceConfiguration) GetType() WmtsWebServiceConfigurationType {
+	return s.Type
+}
+
+// GetCapabilitiesURL returns the value of CapabilitiesURL.
+func (s *WmtsWebServiceConfiguration) GetCapabilitiesURL() string {
+	return s.CapabilitiesURL
+}
+
+// GetDefaultLayer returns the value of DefaultLayer.
+func (s *WmtsWebServiceConfiguration) GetDefaultLayer() NonBlankString {
+	return s.DefaultLayer
+}
+
+// GetLayers returns the value of Layers.
+func (s *WmtsWebServiceConfiguration) GetLayers() []WmtsLayer {
+	return s.Layers
+}
+
+// GetGetTileParameters returns the value of GetTileParameters.
+func (s *WmtsWebServiceConfiguration) GetGetTileParameters() []Parameter {
+	return s.GetTileParameters
+}
+
+// GetGetFeatureInfoParameters returns the value of GetFeatureInfoParameters.
+func (s *WmtsWebServiceConfiguration) GetGetFeatureInfoParameters() []Parameter {
+	return s.GetFeatureInfoParameters
+}
+
+// SetType sets the value of Type.
+func (s *WmtsWebServiceConfiguration) SetType(val WmtsWebServiceConfigurationType) {
+	s.Type = val
+}
+
+// SetCapabilitiesURL sets the value of CapabilitiesURL.
+func (s *WmtsWebServiceConfiguration) SetCapabilitiesURL(val string) {
+	s.CapabilitiesURL = val
+}
+
+// SetDefaultLayer sets the value of DefaultLayer.
+func (s *WmtsWebServiceConfiguration) SetDefaultLayer(val NonBlankString) {
+	s.DefaultLayer = val
+}
+
+// SetLayers sets the value of Layers.
+func (s *WmtsWebServiceConfiguration) SetLayers(val []WmtsLayer) {
+	s.Layers = val
+}
+
+// SetGetTileParameters sets the value of GetTileParameters.
+func (s *WmtsWebServiceConfiguration) SetGetTileParameters(val []Parameter) {
+	s.GetTileParameters = val
+}
+
+// SetGetFeatureInfoParameters sets the value of GetFeatureInfoParameters.
+func (s *WmtsWebServiceConfiguration) SetGetFeatureInfoParameters(val []Parameter) {
+	s.GetFeatureInfoParameters = val
+}
+
+// WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on
+// write.
+// Ref: #/components/schemas/WmtsWebServiceConfigurationDraft
+type WmtsWebServiceConfigurationDraft struct {
+	Type WmtsWebServiceConfigurationDraftType `json:"type"`
+	// Absolute HTTP(S) capabilities URL including provider query parameters.
+	CapabilitiesURL          string           `json:"capabilities_url"`
+	DefaultLayer             NonBlankString   `json:"default_layer"`
+	Layers                   []WmtsLayerDraft `json:"layers"`
+	GetTileParameters        []ParameterDraft `json:"get_tile_parameters"`
+	GetFeatureInfoParameters []ParameterDraft `json:"get_feature_info_parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *WmtsWebServiceConfigurationDraft) GetType() WmtsWebServiceConfigurationDraftType {
+	return s.Type
+}
+
+// GetCapabilitiesURL returns the value of CapabilitiesURL.
+func (s *WmtsWebServiceConfigurationDraft) GetCapabilitiesURL() string {
+	return s.CapabilitiesURL
+}
+
+// GetDefaultLayer returns the value of DefaultLayer.
+func (s *WmtsWebServiceConfigurationDraft) GetDefaultLayer() NonBlankString {
+	return s.DefaultLayer
+}
+
+// GetLayers returns the value of Layers.
+func (s *WmtsWebServiceConfigurationDraft) GetLayers() []WmtsLayerDraft {
+	return s.Layers
+}
+
+// GetGetTileParameters returns the value of GetTileParameters.
+func (s *WmtsWebServiceConfigurationDraft) GetGetTileParameters() []ParameterDraft {
+	return s.GetTileParameters
+}
+
+// GetGetFeatureInfoParameters returns the value of GetFeatureInfoParameters.
+func (s *WmtsWebServiceConfigurationDraft) GetGetFeatureInfoParameters() []ParameterDraft {
+	return s.GetFeatureInfoParameters
+}
+
+// SetType sets the value of Type.
+func (s *WmtsWebServiceConfigurationDraft) SetType(val WmtsWebServiceConfigurationDraftType) {
+	s.Type = val
+}
+
+// SetCapabilitiesURL sets the value of CapabilitiesURL.
+func (s *WmtsWebServiceConfigurationDraft) SetCapabilitiesURL(val string) {
+	s.CapabilitiesURL = val
+}
+
+// SetDefaultLayer sets the value of DefaultLayer.
+func (s *WmtsWebServiceConfigurationDraft) SetDefaultLayer(val NonBlankString) {
+	s.DefaultLayer = val
+}
+
+// SetLayers sets the value of Layers.
+func (s *WmtsWebServiceConfigurationDraft) SetLayers(val []WmtsLayerDraft) {
+	s.Layers = val
+}
+
+// SetGetTileParameters sets the value of GetTileParameters.
+func (s *WmtsWebServiceConfigurationDraft) SetGetTileParameters(val []ParameterDraft) {
+	s.GetTileParameters = val
+}
+
+// SetGetFeatureInfoParameters sets the value of GetFeatureInfoParameters.
+func (s *WmtsWebServiceConfigurationDraft) SetGetFeatureInfoParameters(val []ParameterDraft) {
+	s.GetFeatureInfoParameters = val
+}
+
+type WmtsWebServiceConfigurationDraftType string
+
+const (
+	WmtsWebServiceConfigurationDraftTypeWMTS WmtsWebServiceConfigurationDraftType = "WMTS"
+)
+
+// AllValues returns all WmtsWebServiceConfigurationDraftType values.
+func (WmtsWebServiceConfigurationDraftType) AllValues() []WmtsWebServiceConfigurationDraftType {
+	return []WmtsWebServiceConfigurationDraftType{
+		WmtsWebServiceConfigurationDraftTypeWMTS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WmtsWebServiceConfigurationDraftType) MarshalText() ([]byte, error) {
+	switch s {
+	case WmtsWebServiceConfigurationDraftTypeWMTS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WmtsWebServiceConfigurationDraftType) UnmarshalText(data []byte) error {
+	switch WmtsWebServiceConfigurationDraftType(data) {
+	case WmtsWebServiceConfigurationDraftTypeWMTS:
+		*s = WmtsWebServiceConfigurationDraftTypeWMTS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type WmtsWebServiceConfigurationType string
+
+const (
+	WmtsWebServiceConfigurationTypeWMTS WmtsWebServiceConfigurationType = "WMTS"
+)
+
+// AllValues returns all WmtsWebServiceConfigurationType values.
+func (WmtsWebServiceConfigurationType) AllValues() []WmtsWebServiceConfigurationType {
+	return []WmtsWebServiceConfigurationType{
+		WmtsWebServiceConfigurationTypeWMTS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WmtsWebServiceConfigurationType) MarshalText() ([]byte, error) {
+	switch s {
+	case WmtsWebServiceConfigurationTypeWMTS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WmtsWebServiceConfigurationType) UnmarshalText(data []byte) error {
+	switch WmtsWebServiceConfigurationType(data) {
+	case WmtsWebServiceConfigurationTypeWMTS:
+		*s = WmtsWebServiceConfigurationTypeWMTS
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

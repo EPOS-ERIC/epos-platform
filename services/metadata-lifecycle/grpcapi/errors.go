@@ -41,6 +41,7 @@ func ValidationAppError(method string, err error) *apperror.AppError {
 			}
 		}
 		target = strings.ReplaceAll(target, ".web_service.wms.", ".web_service.configuration.")
+		target = strings.ReplaceAll(target, ".web_service.wmts.", ".web_service.configuration.")
 		target = strings.ReplaceAll(target, ".web_service.generic.", ".web_service.configuration.")
 	}
 

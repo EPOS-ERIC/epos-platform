@@ -555,6 +555,57 @@ inserted_wms_layers AS (
         web_service_id,
         name
 ),
+inserted_wmts_services AS (
+    INSERT INTO
+        wmts_services (web_service_id, capabilities_url, default_layer)
+    SELECT
+        target.id,
+        source.capabilities_url,
+        source.default_layer
+    FROM
+        wmts_services AS source
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.web_service_id::text
+        )
+    RETURNING
+        web_service_id
+),
+inserted_wmts_layers AS (
+    INSERT INTO
+        wmts_layers (
+            web_service_id,
+            name,
+            position,
+            default_style,
+            styles
+        )
+    SELECT
+        target.web_service_id,
+        source.name,
+        source.position,
+        source.default_style,
+        source.styles
+    FROM
+        wmts_layers AS source
+        JOIN inserted_wmts_services AS target ON target.web_service_id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.web_service_id::text
+        )
+    RETURNING
+        web_service_id,
+        name
+),
 inserted_web_service_bodies AS (
     INSERT INTO
         web_service_bodies (
@@ -624,6 +675,8 @@ inserted_parameters AS (
             wfs_service_id,
             wms_get_map_service_id,
             wms_get_feature_info_service_id,
+            wmts_get_tile_service_id,
+            wmts_get_feature_info_service_id,
             web_service_body_id,
             position,
             name,
@@ -664,6 +717,14 @@ inserted_parameters AS (
             WHEN parameter.wms_get_feature_info_service_id IS NOT NULL THEN wms_target.web_service_id
             ELSE NULL
         END,
+        CASE
+            WHEN parameter.wmts_get_tile_service_id IS NOT NULL THEN wmts_target.web_service_id
+            ELSE NULL
+        END,
+        CASE
+            WHEN parameter.wmts_get_feature_info_service_id IS NOT NULL THEN wmts_target.web_service_id
+            ELSE NULL
+        END,
         target_body.id,
         parameter.position,
         parameter.name,
@@ -692,12 +753,15 @@ inserted_parameters AS (
                 parameter.wfs_service_id,
                 parameter.wms_get_map_service_id,
                 parameter.wms_get_feature_info_service_id,
+                parameter.wmts_get_tile_service_id,
+                parameter.wmts_get_feature_info_service_id,
                 source_body.web_service_id
             )::text
         )
         LEFT JOIN inserted_generic_web_services AS generic_target ON generic_target.web_service_id = target_service.id
         LEFT JOIN inserted_wfs_services AS wfs_target ON wfs_target.web_service_id = target_service.id
         LEFT JOIN inserted_wms_services AS wms_target ON wms_target.web_service_id = target_service.id
+        LEFT JOIN inserted_wmts_services AS wmts_target ON wmts_target.web_service_id = target_service.id
         LEFT JOIN inserted_web_service_bodies AS target_body ON target_body.id = uuid_generate_v5(
             target_service.id,
             source_body.id::text
@@ -708,6 +772,7 @@ inserted_parameters AS (
             generic_target.web_service_id IS NOT NULL
             OR wfs_target.web_service_id IS NOT NULL
             OR wms_target.web_service_id IS NOT NULL
+            OR wmts_target.web_service_id IS NOT NULL
             OR target_body.id IS NOT NULL
         )
     RETURNING
@@ -1123,6 +1188,34 @@ VALUES
         sqlc.arg(styles)
     );
 
+-- name: AddLifecycleWMTSService :exec
+INSERT INTO
+    wmts_services (web_service_id, capabilities_url, default_layer)
+VALUES
+    (
+        sqlc.arg(web_service_id),
+        sqlc.arg(capabilities_url),
+        sqlc.arg(default_layer)
+    );
+
+-- name: AddLifecycleWMTSLayer :exec
+INSERT INTO
+    wmts_layers (
+        web_service_id,
+        name,
+        position,
+        default_style,
+        styles
+    )
+VALUES
+    (
+        sqlc.arg(web_service_id),
+        sqlc.arg(name),
+        sqlc.arg(position),
+        sqlc.arg(default_style),
+        sqlc.arg(styles)
+    );
+
 -- name: AddLifecycleWebServiceBody :one
 INSERT INTO
     web_service_bodies (
@@ -1157,6 +1250,8 @@ INSERT INTO
         wfs_service_id,
         wms_get_map_service_id,
         wms_get_feature_info_service_id,
+        wmts_get_tile_service_id,
+        wmts_get_feature_info_service_id,
         web_service_body_id,
         template_parameter_id,
         position,
@@ -1177,6 +1272,8 @@ VALUES
         sqlc.narg(wfs_service_id),
         sqlc.narg(wms_get_map_service_id),
         sqlc.narg(wms_get_feature_info_service_id),
+        sqlc.narg(wmts_get_tile_service_id),
+        sqlc.narg(wmts_get_feature_info_service_id),
         sqlc.narg(web_service_body_id),
         sqlc.narg(template_parameter_id),
         sqlc.arg(position),
@@ -1581,6 +1678,27 @@ ORDER BY
     web_service_id,
     position;
 
+-- name: ListLifecycleWMTSServices :many
+SELECT
+    *
+FROM
+    wmts_services
+WHERE
+    web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+ORDER BY
+    web_service_id;
+
+-- name: ListLifecycleWMTSLayers :many
+SELECT
+    *
+FROM
+    wmts_layers
+WHERE
+    web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+ORDER BY
+    web_service_id,
+    position;
+
 -- name: ListLifecycleWebServiceContactPoints :many
 SELECT
     link.web_service_id,
@@ -1605,6 +1723,8 @@ WHERE
     OR parameter.wfs_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
     OR parameter.wms_get_map_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
     OR parameter.wms_get_feature_info_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+    OR parameter.wmts_get_tile_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+    OR parameter.wmts_get_feature_info_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
     OR body.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
 ORDER BY
     COALESCE(
@@ -1612,6 +1732,8 @@ ORDER BY
         parameter.wfs_service_id,
         parameter.wms_get_map_service_id,
         parameter.wms_get_feature_info_service_id,
+        parameter.wmts_get_tile_service_id,
+        parameter.wmts_get_feature_info_service_id,
         body.web_service_id
     ),
     parameter.position,

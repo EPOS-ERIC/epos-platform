@@ -88,8 +88,10 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 		configuration := v.Configuration.WmsWebServiceConfigurationDraft
 		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS
 		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wms{Wms: toProtoWMSWebServiceConfigurationDraft(configuration)}
-	case gatewayapi.WebServiceConfigurationDraftHTTPWebServiceConfigurationDraft,
-		gatewayapi.WebServiceConfigurationDraftWMTSWebServiceConfigurationDraft:
+	case gatewayapi.WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
+		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wmts{Wmts: toProtoWMTSWebServiceConfigurationDraft(v.Configuration.WmtsWebServiceConfigurationDraft)}
+	case gatewayapi.GenericWebServiceConfigurationDraftWebServiceConfigurationDraft:
 		configuration := v.Configuration.GenericWebServiceConfigurationDraft
 		r.Type = toProtoWebServiceType(gatewayapi.WebServiceType(v.Configuration.Type))
 		r.Configuration = &metadatalifecyclev1.WebServiceInput_Generic{Generic: toProtoGenericWebServiceConfigurationDraft(configuration)}
@@ -143,6 +145,27 @@ func toProtoWFSWebServiceConfigurationDraft(value gatewayapi.WfsWebServiceConfig
 	}
 	for _, parameter := range value.Parameters {
 		result.Parameters = append(result.Parameters, toProtoParameterDraft(parameter))
+	}
+	return result
+}
+
+func toProtoWMTSWebServiceConfigurationDraft(value gatewayapi.WmtsWebServiceConfigurationDraft) *metadatalifecyclev1.WMTSWebServiceConfigurationInput {
+	result := &metadatalifecyclev1.WMTSWebServiceConfigurationInput{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: string(value.DefaultLayer)}
+	for _, layer := range value.Layers {
+		mapped := &metadatalifecyclev1.WMTSLayer{Name: string(layer.Name)}
+		if layer.DefaultStyle.Set {
+			mapped.DefaultStyle = new(string(layer.DefaultStyle.Value))
+		}
+		for _, style := range layer.Styles {
+			mapped.Styles = append(mapped.Styles, string(style))
+		}
+		result.Layers = append(result.Layers, mapped)
+	}
+	for _, parameter := range value.GetTileParameters {
+		result.GetTileParameters = append(result.GetTileParameters, toProtoParameterDraft(parameter))
+	}
+	for _, parameter := range value.GetFeatureInfoParameters {
+		result.GetFeatureInfoParameters = append(result.GetFeatureInfoParameters, toProtoParameterDraft(parameter))
 	}
 	return result
 }

@@ -148,12 +148,10 @@ func toAPIWebServiceConfiguration(value *metadatalifecyclev1.WebService) (gatewa
 			return gatewayapi.WebServiceConfiguration{}, err
 		}
 		switch serviceType {
-		case gatewayapi.WebServiceTypeWMS, gatewayapi.WebServiceTypeWFS:
+		case gatewayapi.WebServiceTypeWMS, gatewayapi.WebServiceTypeWFS, gatewayapi.WebServiceTypeWMTS:
 			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream generic configuration has incompatible web-service type %q", serviceType)
 		case gatewayapi.WebServiceTypeHTTP:
-			return gatewayapi.NewWebServiceConfigurationHTTPWebServiceConfiguration(generic), nil
-		case gatewayapi.WebServiceTypeWMTS:
-			return gatewayapi.NewWebServiceConfigurationWMTSWebServiceConfiguration(generic), nil
+			return gatewayapi.NewGenericWebServiceConfigurationWebServiceConfiguration(generic), nil
 		default:
 			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("unsupported generic upstream web-service type %q", value.GetType())
 		}
@@ -169,6 +167,18 @@ func toAPIWebServiceConfiguration(value *metadatalifecyclev1.WebService) (gatewa
 			return gatewayapi.WebServiceConfiguration{}, err
 		}
 		return gatewayapi.NewWfsWebServiceConfigurationWebServiceConfiguration(wfs), nil
+	case *metadatalifecyclev1.WebService_Wmts:
+		if configuration.Wmts == nil {
+			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WMTS configuration is nil")
+		}
+		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS {
+			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WMTS configuration has incompatible web-service type %q", value.GetType())
+		}
+		wmts, err := toAPIWMTSWebServiceConfiguration(configuration.Wmts)
+		if err != nil {
+			return gatewayapi.WebServiceConfiguration{}, err
+		}
+		return gatewayapi.NewWmtsWebServiceConfigurationWebServiceConfiguration(wmts), nil
 	case *metadatalifecyclev1.WebService_Wms:
 		if configuration.Wms == nil {
 			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WMS configuration is nil")
@@ -254,6 +264,33 @@ func toAPIWFSWebServiceConfiguration(value *metadatalifecyclev1.WFSWebServiceCon
 			return gatewayapi.WfsWebServiceConfiguration{}, err
 		}
 		result.Parameters = append(result.Parameters, mapped)
+	}
+	return result, nil
+}
+
+func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebServiceConfiguration) (gatewayapi.WmtsWebServiceConfiguration, error) {
+	result := gatewayapi.WmtsWebServiceConfiguration{Type: gatewayapi.WmtsWebServiceConfigurationTypeWMTS, CapabilitiesURL: value.GetCapabilitiesUrl(), DefaultLayer: gatewayapi.NonBlankString(value.GetDefaultLayer())}
+	for _, layer := range value.GetLayers() {
+		if layer == nil {
+			return gatewayapi.WmtsWebServiceConfiguration{}, fmt.Errorf("upstream WMTS layer is nil")
+		}
+		mapped := gatewayapi.WmtsLayer{Name: gatewayapi.NonBlankString(layer.GetName())}
+		if layer.DefaultStyle != nil {
+			mapped.DefaultStyle.SetTo(gatewayapi.NonBlankString(*layer.DefaultStyle))
+		}
+		for _, style := range layer.GetStyles() {
+			mapped.Styles = append(mapped.Styles, gatewayapi.NonBlankString(style))
+		}
+		result.Layers = append(result.Layers, mapped)
+	}
+	var err error
+	result.GetTileParameters, err = toAPIWMSParameters(value.GetGetTileParameters())
+	if err != nil {
+		return gatewayapi.WmtsWebServiceConfiguration{}, err
+	}
+	result.GetFeatureInfoParameters, err = toAPIWMSParameters(value.GetGetFeatureInfoParameters())
+	if err != nil {
+		return gatewayapi.WmtsWebServiceConfiguration{}, err
 	}
 	return result, nil
 }

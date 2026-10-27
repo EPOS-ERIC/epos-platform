@@ -347,6 +347,7 @@ message WebServiceInput {
     GenericWebServiceConfigurationInput generic = 10;
     WMSWebServiceConfigurationInput wms = 11;
     WFSWebServiceConfigurationInput wfs = 12;
+    WMTSWebServiceConfigurationInput wmts = 13;
   }
 }
 
@@ -366,6 +367,7 @@ message WebService {
     GenericWebServiceConfiguration generic = 11;
     WMSWebServiceConfiguration wms = 12;
     WFSWebServiceConfiguration wfs = 13;
+    WMTSWebServiceConfiguration wmts = 14;
   }
 }
 
@@ -445,6 +447,28 @@ message WMSLayer {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   string default_style = 2;
   repeated string styles = 3 [(buf.validate.field).repeated.min_items = 1];
+}
+
+message WMTSWebServiceConfigurationInput {
+  string capabilities_url = 1 [(buf.validate.field).string.uri = true];
+  string default_layer = 2 [(buf.validate.field).string.min_len = 1];
+  repeated WMTSLayer layers = 3 [(buf.validate.field).repeated.min_items = 1];
+  repeated ParameterInput get_tile_parameters = 4;
+  repeated ParameterInput get_feature_info_parameters = 5;
+}
+
+message WMTSWebServiceConfiguration {
+  string capabilities_url = 1 [(buf.validate.field).string.uri = true];
+  string default_layer = 2 [(buf.validate.field).string.min_len = 1];
+  repeated WMTSLayer layers = 3 [(buf.validate.field).repeated.min_items = 1];
+  repeated Parameter get_tile_parameters = 4;
+  repeated Parameter get_feature_info_parameters = 5;
+}
+
+message WMTSLayer {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  optional string default_style = 2 [(buf.validate.field).string.min_len = 1];
+  repeated string styles = 3;
 }
 
 message DownloadableFile {
