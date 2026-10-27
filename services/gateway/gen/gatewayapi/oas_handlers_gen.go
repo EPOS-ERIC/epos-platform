@@ -35,10 +35,12 @@ func (c *codeRecorder) Unwrap() http.ResponseWriter {
 
 // handleAccessDistributionRequest handles accessDistribution operation.
 //
-// Executes a web-service distribution using parameter IDs and values, with optional native format
-// selection. Published versions allow anonymous access; other states require existing dataset
-// permissions. Successful responses are streamed; upstream HTTP failures return a 503 Gateway Problem
-// with upstream_response. Downloadable-file distributions use the download endpoint.
+// Executes an HTTP or WFS web-service distribution using parameter IDs and values, with optional
+// native format selection. WMS and WMTS clients must access providers directly using the distribution
+// configuration; these endpoints do not support them. Published versions allow anonymous access; other
+// states require existing dataset permissions. Successful responses are streamed; upstream HTTP
+// failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use
+// the download endpoint.
 //
 // POST /distributions/{distributionId}/access
 func (s *Server) handleAccessDistributionRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -8936,10 +8938,11 @@ func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http
 
 // handlePrepareDistributionRequest handles prepareDistribution operation.
 //
-// Prepares a web-service distribution request using parameter IDs and values, with optional native
-// format selection. Published versions allow anonymous access; other states require existing dataset
-// permissions. Returns the provider request without executing it. Downloadable-file distributions are
-// not supported.
+// Prepares an HTTP or WFS web-service distribution request using parameter IDs and values, with
+// optional native format selection. WMS and WMTS clients must access providers directly using the
+// distribution configuration; these endpoints do not support them. Published versions allow anonymous
+// access; other states require existing dataset permissions. Returns the provider request without
+// executing it. Downloadable-file distributions are not supported.
 //
 // POST /distributions/{distributionId}/prepare
 func (s *Server) handlePrepareDistributionRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

@@ -84,7 +84,7 @@ paths:
       tags: [Access]
       summary: Access a web-service distribution
       description: |-
-        Executes a web-service distribution using parameter IDs and values, with optional native format selection. Published versions allow anonymous access; other states require existing dataset permissions. Successful responses are streamed; upstream HTTP failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use the download endpoint.
+        Executes an HTTP or WFS web-service distribution using parameter IDs and values, with optional native format selection. WMS and WMTS clients must access providers directly using the distribution configuration; these endpoints do not support them. Published versions allow anonymous access; other states require existing dataset permissions. Successful responses are streamed; upstream HTTP failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use the download endpoint.
       operationId: accessDistribution
       security:
         - bearerAuth: []
@@ -143,7 +143,7 @@ paths:
       tags: [Access]
       summary: Prepare a web-service request without executing it
       description: |-
-        Prepares a web-service distribution request using parameter IDs and values, with optional native format selection. Published versions allow anonymous access; other states require existing dataset permissions. Returns the provider request without executing it. Downloadable-file distributions are not supported.
+        Prepares an HTTP or WFS web-service distribution request using parameter IDs and values, with optional native format selection. WMS and WMTS clients must access providers directly using the distribution configuration; these endpoints do not support them. Published versions allow anonymous access; other states require existing dataset permissions. Returns the provider request without executing it. Downloadable-file distributions are not supported.
       operationId: prepareDistribution
       security:
         - bearerAuth: []

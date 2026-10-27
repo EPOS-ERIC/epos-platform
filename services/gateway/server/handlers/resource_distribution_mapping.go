@@ -247,7 +247,6 @@ func toAPIWFSWebServiceConfiguration(value *metadatalifecyclev1.WFSWebServiceCon
 		DefaultOutputFormat:   gatewayapi.NonBlankString(value.GetDefaultOutputFormat()),
 		ResultLimit:           toAPINilInt64(value.ResultLimit),
 		ResultLimitEditable:   value.GetResultLimitEditable(),
-		Parameters:            make([]gatewayapi.Parameter, 0, len(value.GetParameters())),
 	}
 	for _, featureType := range value.GetFeatureTypes() {
 		result.FeatureTypes = append(result.FeatureTypes, gatewayapi.NonBlankString(featureType))
@@ -255,15 +254,10 @@ func toAPIWFSWebServiceConfiguration(value *metadatalifecyclev1.WFSWebServiceCon
 	for _, format := range value.GetOutputFormats() {
 		result.OutputFormats = append(result.OutputFormats, gatewayapi.NonBlankString(format))
 	}
-	for _, parameter := range value.GetParameters() {
-		if parameter == nil {
-			return gatewayapi.WfsWebServiceConfiguration{}, fmt.Errorf("upstream WFS parameter is nil")
-		}
-		mapped, err := toAPIParameter(parameter)
-		if err != nil {
-			return gatewayapi.WfsWebServiceConfiguration{}, err
-		}
-		result.Parameters = append(result.Parameters, mapped)
+	var err error
+	result.Parameters, err = toAPIParameters(value.GetParameters())
+	if err != nil {
+		return gatewayapi.WfsWebServiceConfiguration{}, err
 	}
 	return result, nil
 }
@@ -284,11 +278,11 @@ func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebServiceC
 		result.Layers = append(result.Layers, mapped)
 	}
 	var err error
-	result.GetTileParameters, err = toAPIWMSParameters(value.GetGetTileParameters())
+	result.GetTileParameters, err = toAPIParameters(value.GetGetTileParameters())
 	if err != nil {
 		return gatewayapi.WmtsWebServiceConfiguration{}, err
 	}
-	result.GetFeatureInfoParameters, err = toAPIWMSParameters(value.GetGetFeatureInfoParameters())
+	result.GetFeatureInfoParameters, err = toAPIParameters(value.GetGetFeatureInfoParameters())
 	if err != nil {
 		return gatewayapi.WmtsWebServiceConfiguration{}, err
 	}
@@ -315,22 +309,22 @@ func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebServiceCon
 		result.Layers = append(result.Layers, mapped)
 	}
 	var err error
-	result.GetMapParameters, err = toAPIWMSParameters(value.GetGetMapParameters())
+	result.GetMapParameters, err = toAPIParameters(value.GetGetMapParameters())
 	if err != nil {
 		return gatewayapi.WmsWebServiceConfiguration{}, err
 	}
-	result.GetFeatureInfoParameters, err = toAPIWMSParameters(value.GetGetFeatureInfoParameters())
+	result.GetFeatureInfoParameters, err = toAPIParameters(value.GetGetFeatureInfoParameters())
 	if err != nil {
 		return gatewayapi.WmsWebServiceConfiguration{}, err
 	}
 	return result, nil
 }
 
-func toAPIWMSParameters(values []*metadatalifecyclev1.Parameter) ([]gatewayapi.Parameter, error) {
+func toAPIParameters(values []*metadatalifecyclev1.Parameter) ([]gatewayapi.Parameter, error) {
 	result := make([]gatewayapi.Parameter, 0, len(values))
 	for _, value := range values {
 		if value == nil {
-			return nil, fmt.Errorf("upstream WMS parameter is nil")
+			return nil, fmt.Errorf("upstream parameter is nil")
 		}
 		mapped, err := toAPIParameter(value)
 		if err != nil {

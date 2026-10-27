@@ -23,12 +23,12 @@ func (value WFSConfiguration) NativeFormats() []NativeFormat {
 	return result
 }
 
-func (value WMSConfiguration) NativeFormats() []NativeFormat {
+func (WMSConfiguration) NativeFormats() []NativeFormat {
 	// PNG is a platform map requirement; the client checks provider support.
 	return []NativeFormat{{OutputFormat: "image/png", Label: "image/png"}}
 }
 
-func (value WMTSConfiguration) NativeFormats() []NativeFormat {
+func (WMTSConfiguration) NativeFormats() []NativeFormat {
 	// PNG is a platform map requirement; the client checks provider support.
 	return []NativeFormat{{OutputFormat: "image/png", Label: "image/png"}}
 }
