@@ -79,7 +79,7 @@ test-integration:
 		--add-host host.docker.internal:host-gateway \
 		-v "$(CURDIR):/work:ro" \
 		-w /work/tests/contract \
-		-e GATEWAY_API_URL=http://host.docker.internal:32000/v1 \
+		-e GATEWAY_API_URL=http://host.docker.internal:33000/v1 \
 		-e AAI_URL=http://host.docker.internal:35000 \
 		--entrypoint python \
 		ghcr.io/schemathesis/schemathesis:latest \

@@ -12,7 +12,7 @@ EXPOSE 5000
 ENV EPOS_SERVICE_NAME="Gateway" \
     EPOS_PORT="5000"
 
-RUN adduser -D -u 1000 appuser && chown -R 1000:1000 /workspace
+RUN adduser -D -u 1000 appuser && mkdir -p /go/pkg/mod /home/appuser/.cache/go-build && chown -R 1000:1000 /workspace /go/pkg/mod /home/appuser/.cache
 USER 1000
 
 ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]

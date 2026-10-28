@@ -1,6 +1,8 @@
 docker_compose('docker/compose.dev.yaml')
 docker_prune_settings(disable=False, max_age_mins=1, num_builds=1)
 
+docker_build('epos-otel-lgtm-dev:local', 'docker', dockerfile='docker/Dockerfile.lgtm.dev', only=['Dockerfile.lgtm.dev'])
+
 docker_build(
     'epos-gateway-dev:local',
     '.',
@@ -154,13 +156,112 @@ docker_build(
     ],
 )
 
+docker_build(
+    'epos-backoffice-dev:local',
+    '.',
+    dockerfile='apps/backoffice/Dockerfile.dev',
+    only=[
+        'apps/backoffice',
+        'packages/scripts/epos-banner.sh',
+    ],
+    ignore=[
+        'apps/backoffice/.angular',
+        'apps/backoffice/dist',
+        'apps/backoffice/node_modules',
+    ],
+    live_update=[
+        sync('apps/backoffice/src', '/workspace/apps/backoffice/src'),
+        sync('apps/backoffice/public', '/workspace/apps/backoffice/public'),
+        sync('apps/backoffice/generated', '/workspace/apps/backoffice/generated'),
+    ],
+)
+
+local_resource(
+    'backoffice-codegen',
+    cmd='''docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
+        -v "$(pwd):/repo:ro" \
+        -v "$(pwd)/apps/backoffice/generated:/output" \
+        node:26 sh -c '
+            mkdir -p /tmp/workspace/apps/backoffice /tmp/workspace/services/gateway/docs &&
+            cp /repo/apps/backoffice/Makefile /repo/apps/backoffice/package.json /repo/apps/backoffice/pnpm-lock.yaml /repo/apps/backoffice/pnpm-workspace.yaml /repo/apps/backoffice/openapi-codegen.config.ts /tmp/workspace/apps/backoffice/ &&
+            cp /repo/services/gateway/docs/openapi.yaml /tmp/workspace/services/gateway/docs/ &&
+            cd /tmp/workspace/apps/backoffice && ln -s /output generated &&
+            make PNPM="npx --yes pnpm@11.24.0" install generate
+        ' ''',
+    deps=[
+        'services/gateway/docs/openapi.yaml',
+        'apps/backoffice/openapi-codegen.config.ts',
+        'apps/backoffice/Makefile',
+        'apps/backoffice/package.json',
+        'apps/backoffice/pnpm-lock.yaml',
+        'apps/backoffice/pnpm-workspace.yaml',
+    ],
+    labels=['codegen'],
+)
+
+local_resource(
+    'protobuf-codegen',
+    cmd='''docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
+        -v "$(pwd)/packages/protobuf:/workspace:ro" \
+        -v "$(pwd)/packages/protobuf/gen:/workspace/gen" \
+        -w /workspace --entrypoint sh bufbuild/buf:1.75.0 \
+        -c 'buf generate' ''',
+    deps=[
+        'packages/protobuf/configuration',
+        'packages/protobuf/data_retriever',
+        'packages/protobuf/metadata_lifecycle',
+        'packages/protobuf/buf.yaml',
+        'packages/protobuf/buf.gen.yaml',
+        'packages/protobuf/buf.lock',
+    ],
+    labels=['codegen'],
+)
+
+local_resource(
+    'gateway-codegen',
+    cmd='''mkdir -p "$HOME/.cache/epos-tilt-codegen" && docker run --rm --user "$(id -u):$(id -g)" \
+        -e HOME=/tmp -e GOMODCACHE=/cache/mod -e GOCACHE=/cache/build \
+        -v "$HOME/.cache/epos-tilt-codegen:/cache" \
+        -v "$(pwd):/workspace:ro" \
+        -v "$(pwd)/services/gateway/gen:/workspace/services/gateway/gen" \
+        -w /workspace/services/gateway golang:1.27-alpine go generate .''',
+    deps=[
+        'services/gateway/docs/openapi.yaml',
+        'services/gateway/.ogen.yml',
+        'services/gateway/generate.go',
+        'services/gateway/go.mod',
+        'services/gateway/go.sum',
+    ],
+    labels=['codegen'],
+)
+
+for service in ['metadata-lifecycle', 'sharing', 'data-retriever']:
+    local_resource(
+        service + '-sqlc',
+        cmd='''mkdir -p "$HOME/.cache/epos-tilt-codegen" && docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp -e GOMODCACHE=/cache/mod -e GOCACHE=/cache/build \
+            -v "$HOME/.cache/epos-tilt-codegen:/cache" \
+            -v "$(pwd):/workspace:ro" \
+            -v "$(pwd)/services/{service}/db/sqlc:/workspace/services/{service}/db/sqlc" \
+            -w /workspace/services/{service} golang:1.27-alpine go generate ./db'''.format(service=service),
+        deps=[
+            'services/' + service + '/db/queries',
+            'services/' + service + '/db/migrations',
+            'services/' + service + '/sqlc.yaml',
+            'services/' + service + '/go.mod',
+            'services/' + service + '/go.sum',
+        ],
+        labels=['codegen'],
+    )
+
 dc_resource('data-retriever-db', labels=['infra'])
 dc_resource('metadata-lifecycle-db', labels=['infra'])
 dc_resource('sharing-db', labels=['infra'])
-dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db'])
+dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db', 'protobuf-codegen', 'data-retriever-sqlc'])
 dc_resource('oss-aai-service', labels=['app'])
-dc_resource('gateway-service', labels=['app'])
-dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['metadata-lifecycle-db'])
-dc_resource('sharing-service', labels=['app'], resource_deps=['sharing-db'])
+dc_resource('gateway-service', labels=['app'], resource_deps=['protobuf-codegen', 'gateway-codegen'])
+dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['metadata-lifecycle-db', 'protobuf-codegen', 'metadata-lifecycle-sqlc'])
+dc_resource('sharing-service', labels=['app'], resource_deps=['sharing-db', 'protobuf-codegen', 'sharing-sqlc'])
 dc_resource('otel-lgtm', labels=['observability'])
 dc_resource('platform-legacy', labels=['app'])
+dc_resource('backoffice', labels=['app'], resource_deps=['backoffice-codegen'])

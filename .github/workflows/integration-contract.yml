@@ -59,7 +59,7 @@ jobs:
         shell: bash
         run: |
           for i in {1..90}; do
-            if curl -fsS 'http://localhost:32000/health' >/dev/null; then
+            if curl -fsS 'http://localhost:33000/health' >/dev/null; then
               exit 0
             fi
             sleep 5

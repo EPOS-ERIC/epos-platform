@@ -12,5 +12,8 @@ EXPOSE 8080
 ENV EPOS_SERVICE_NAME="OSS AAI" \
     EPOS_PORT="8080"
 
+RUN adduser -D -u 1000 appuser && mkdir -p /go/pkg/mod /home/appuser/.cache/go-build /workspace/services/oss-aai-service/data && chown -R 1000:1000 /workspace /go/pkg/mod /home/appuser/.cache
+USER 1000
+
 ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
 CMD ["go", "run", "."]

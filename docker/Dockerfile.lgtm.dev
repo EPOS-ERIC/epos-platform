@@ -1,0 +1,4 @@
+FROM grafana/otel-lgtm
+
+RUN mkdir -p /data /var/tempo && chown -R 1000:1000 /data /var/tempo && chown 1000:1000 /otel-lgtm
+USER 1000:1000

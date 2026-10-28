@@ -50,7 +50,10 @@ docker run --rm -p 8080:8080 -v "$(pwd)/data:/app/data" epos-oss-aai-service:lat
     - `http://localhost:34000/silent-token-refresh.html`
     - `http://localhost:4200/testpath/last-page-redirect`
     - `http://localhost:4200/testpath/silent-token-refresh.html`
+    - `http://localhost:32000/testpath/last-page-redirect`
+    - `http://localhost:32000/testpath/silent-token-refresh.html`
     - `http://localhost:32000/last-page-redirect`
+    - `http://localhost:32000/silent-token-refresh.html`
 
 The initial admin user can be updated or deleted after first login and will not be recreated.
 

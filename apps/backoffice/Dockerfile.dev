@@ -1,0 +1,19 @@
+FROM node:26
+
+WORKDIR /workspace/apps/backoffice
+
+RUN npm install --global pnpm@11.24.0
+
+COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+COPY . /workspace
+
+EXPOSE 4200
+
+ENV EPOS_SERVICE_NAME="Backoffice GUI" \
+    EPOS_PORT="4200"
+
+RUN mkdir -p node_modules .angular && chown -R node:node /workspace/apps/backoffice
+USER node
+
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
+CMD ["make", "dev-tilt"]

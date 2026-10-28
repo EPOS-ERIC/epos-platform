@@ -10,5 +10,8 @@ EXPOSE 4200
 ENV EPOS_SERVICE_NAME="Legacy Platform GUI" \
     EPOS_PORT="4200"
 
+RUN mkdir -p node_modules .angular && chown -R node:node /workspace/apps/platform-legacy
+USER node
+
 ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
-CMD ["sh", "-c", "npm install --no-audit --no-fund && exec npm run dev-oss -- --host 0.0.0.0 --proxy-config proxy.tilt.conf.json"]
+CMD ["make", "dev-tilt"]

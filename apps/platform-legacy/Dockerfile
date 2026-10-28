@@ -1,14 +1,15 @@
-FROM nginx:stable-alpine
+FROM nginxinc/nginx-unprivileged:stable-alpine
 
 ENV SERVER_NAME=_ \
     BASE_URL=/ \
     API_HOST=http://gateway:5000/api \
     AUTH_ROOT_URL=http://localhost:35000
 
-COPY dist/ /opt/epos-gui/
+COPY --chown=101:101 dist/ /opt/epos-gui/
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 WORKDIR /opt/epos-gui/
+USER 101:101
 
 CMD escaped_auth_root_url=$(printf '%s' "$AUTH_ROOT_URL" | sed 's/[&|]/\\&/g') && \
     find /opt/epos-gui -name '*.js' -exec sed -i "s|__AUTH_ROOT_URL__|$escaped_auth_root_url|g" {} \; && \
@@ -18,4 +19,4 @@ CMD escaped_auth_root_url=$(printf '%s' "$AUTH_ROOT_URL" | sed 's/[&|]/\\&/g') &
     sed -i 's|API_HOST|'$API_HOST'|g' /etc/nginx/conf.d/default.conf && \
     nginx -g "daemon off;"
 
-EXPOSE 80
+EXPOSE 8080
