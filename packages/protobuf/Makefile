@@ -1,4 +1,4 @@
-generate: lint
+generate:
 	buf generate
 
 lint:

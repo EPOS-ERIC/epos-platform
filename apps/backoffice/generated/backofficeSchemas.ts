@@ -3,6 +3,62 @@
  *
  * @version 1.0.0
  */
+export type PreparedDistributionRequest = {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  /**
+   * Fully rendered provider URL, including the encoded query string. Do not encode it again.
+   *
+   * @format uri
+   */
+  url: string;
+  /**
+   * Prepared provider headers; empty object when no headers are defined. Content-Type is never inferred.
+   */
+  headers: {
+    [key: string]: string;
+  };
+  /**
+   * Rendered request body as text. Null means absent; an empty string means explicitly empty.
+   */
+  body: string | null;
+};
+
+export type DistributionAccessRequest =
+  HTTPDistributionAccessRequest | WFSDistributionAccessRequest;
+
+export type HTTPDistributionAccessRequest = {
+  type: "HTTP";
+  parameters: DistributionAccessParameter[];
+};
+
+export type WFSDistributionAccessRequest = {
+  type: "WFS";
+  feature_type?: NonBlankString;
+  /**
+   * @format int64
+   * @minimum 1
+   */
+  result_limit?: number;
+  /**
+   * Optional CRS84 bounds [west, south, east, north] in degrees, longitude first. Passed to provider without geographic validation or antimeridian handling. Output CRS is always CRS84.
+   *
+   * @minItems 4
+   * @maxItems 4
+   */
+  bbox?: number[];
+  parameters: DistributionAccessParameter[];
+};
+
+export type DistributionAccessParameter = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  value: DistributionAccessScalar | DistributionAccessScalar[];
+};
+
+export type DistributionAccessScalar = string | boolean | number;
+
 /**
  * @minLength 1
  * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
@@ -326,18 +382,10 @@ export type WebServiceDraft = {
    * @minLength 1
    */
   description?: string | null;
-  template_url: NonBlankString;
-  method: WebServiceMethod;
-  type: WebServiceType;
   /**
    * @minItems 1
    */
   visible_on?: WebServiceVisibleOn[] | null;
-  parameters?: ParameterDraft[];
-  body_content_type?: NonBlankString;
-  body_template?: NonBlankString;
-  body_parameters?: ScalarParameterDraft[];
-  format: NonBlankString;
   /**
    * @format uuid
    */
@@ -352,6 +400,156 @@ export type WebServiceDraft = {
   spatial_coverage?: string | null;
   temporal_coverage?: TemporalCoverage;
   contact_points?: string[];
+  configuration: WebServiceConfigurationDraft;
+};
+
+export type WebServiceConfigurationDraft =
+  | WmsWebServiceConfigurationDraft
+  | WmtsWebServiceConfigurationDraft
+  | WfsWebServiceConfigurationDraft
+  | GenericWebServiceConfigurationDraft;
+
+export type GenericWebServiceConfigurationDraft = {
+  type: "HTTP";
+  template_url: NonBlankString;
+  method: WebServiceMethod;
+  parameters?: ParameterDraft[];
+  body_content_type?: NonBlankString;
+  body_template?: NonBlankString;
+  /**
+   * Defaults to true when a request body is configured. Must be omitted when no body is configured. Optional bodies are omitted only when unresolved and no child values were supplied.
+   */
+  body_required?: boolean;
+  body_parameters?: ScalarParameterDraft[];
+  format: NonBlankString;
+};
+
+export type WfsWebServiceConfigurationDraft = {
+  type: "WFS";
+  /**
+   * Absolute HTTP(S) GetFeature URL. Placeholders are allowed only in the path; nonstandard provider query parameters are retained.
+   *
+   * @minLength 1
+   */
+  get_feature_template_url: string;
+  version: "1.1.0" | "2.0.0";
+  /**
+   * @minItems 1
+   * @uniqueItems true
+   */
+  feature_types: NonBlankString[];
+  default_feature_type: NonBlankString;
+  /**
+   * Exact provider outputFormat values, advertised as native formats.
+   *
+   * @minItems 1
+   * @uniqueItems true
+   */
+  output_formats: NonBlankString[];
+  default_output_format: NonBlankString;
+  /**
+   * Optional maximum features requested in one upstream request. Omitted or null means no configured limit; count/maxFeatures is omitted unless an editable limit is supplied during access. No automatic pagination.
+   *
+   * @format int64
+   * @minimum 1
+   */
+  result_limit?: number | null;
+  /**
+   * Whether callers may supply a different limit. False with no configured limit prevents callers from adding one.
+   */
+  result_limit_editable: boolean;
+  parameters: ParameterDraft[];
+};
+
+/**
+ * WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+ */
+export type WmsWebServiceConfigurationDraft = {
+  type: "WMS";
+  /**
+   * Absolute HTTP(S) capabilities URL, including provider query parameters.
+   *
+   * @minLength 1
+   */
+  capabilities_url: string;
+  /**
+   * Must name one configured layer.
+   *
+   * @minLength 1
+   * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
+   */
+  default_layer: NonBlankString;
+  /**
+   * Allowed layers in display order. A single layer fixes selection.
+   *
+   * @minItems 1
+   */
+  layers: WmsLayerDraft[];
+  transparency_editable: boolean;
+  /**
+   * Fixed when transparency_editable is false.
+   */
+  default_transparency: boolean;
+  /**
+   * Custom GetMap parameters. Standard WMS names are reserved, ignoring case.
+   */
+  get_map_parameters: ParameterDraft[];
+  /**
+   * Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring case.
+   */
+  get_feature_info_parameters: ParameterDraft[];
+};
+
+/**
+ * WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+ */
+export type WmtsWebServiceConfigurationDraft = {
+  type: "WMTS";
+  /**
+   * Absolute HTTP(S) capabilities URL including provider query parameters.
+   *
+   * @minLength 1
+   */
+  capabilities_url: string;
+  default_layer: NonBlankString;
+  /**
+   * @minItems 1
+   */
+  layers: WmtsLayerDraft[];
+  get_tile_parameters: ParameterDraft[];
+  get_feature_info_parameters: ParameterDraft[];
+};
+
+export type WmtsLayerDraft = {
+  name: NonBlankString;
+  /**
+   * Configured default style. When omitted, use the provider default if allowed by styles.
+   *
+   * @minLength 1
+   * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
+   */
+  default_style?: NonBlankString;
+  /**
+   * Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
+   *
+   * @uniqueItems true
+   */
+  styles?: NonBlankString[];
+};
+
+export type WmsLayerDraft = {
+  name: NonBlankString;
+  /**
+   * Default configured style. Empty string uses the provider default.
+   */
+  default_style: string;
+  /**
+   * Allowed styles in display order. Empty string uses the provider default; a single style fixes selection.
+   *
+   * @minItems 1
+   * @uniqueItems true
+   */
+  styles: string[];
 };
 
 export type Parameter =
@@ -395,11 +593,15 @@ export type StringParameterDraft = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
   ["default"]?: string | null;
+  /**
+   * @minItems 1
+   */
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
@@ -415,6 +617,7 @@ export type BooleanParameterDraft = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   read_only: boolean;
@@ -432,6 +635,7 @@ export type IntegerParameterDraft = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   multiple_values: boolean;
@@ -462,6 +666,7 @@ export type FloatParameterDraft = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   multiple_values: boolean;
@@ -492,6 +697,7 @@ export type DateTimeParameterDraft = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   read_only: boolean;
@@ -525,6 +731,7 @@ export type StringParameter = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   multiple_values: boolean;
@@ -549,6 +756,7 @@ export type BooleanParameter = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   read_only: boolean;
@@ -570,6 +778,7 @@ export type IntegerParameter = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   multiple_values: boolean;
@@ -604,6 +813,7 @@ export type FloatParameter = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   multiple_values: boolean;
@@ -638,6 +848,7 @@ export type DateTimeParameter = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   read_only: boolean;
@@ -667,6 +878,7 @@ export type TemplateParameterDraft = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   read_only: boolean;
@@ -692,6 +904,7 @@ export type TemplateParameter = {
   description?: string | null;
   required: boolean;
   property?: string | null;
+  role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   read_only: boolean;
@@ -940,10 +1153,19 @@ export type DateTimeScalarParameter = {
 
 export type ParameterLocation = "PATH" | "QUERY" | "HEADER";
 
+export type ParameterRole =
+  | "FORMAT"
+  | "START_DATE"
+  | "END_DATE"
+  | "MIN_LON"
+  | "MAX_LON"
+  | "MIN_LAT"
+  | "MAX_LAT"
+  | null;
+
 export type WebServiceMethod = "GET" | "POST" | "PUT" | "DELETE";
 
-export type WebServiceType =
-  "WMS" | "GEOJSON" | "DYNAMIC" | "WMTS" | "WFS" | "COVJSON";
+export type WebServiceType = "WMS" | "HTTP" | "WMTS" | "WFS";
 
 export type WebServiceVisibleOn = "GRAPH" | "TABLE" | "MAP";
 
@@ -1265,6 +1487,38 @@ export type WebServiceDistribution = {
    */
   byte_size?: number | null;
   web_service: WebService;
+  /**
+   * Computed formats for this resource version. Currently ORIGINAL entries only. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
+   */
+  available_formats: AvailableFormat[];
+};
+
+export type AvailableFormat = OriginalFormat | ConvertedFormat;
+
+export type OriginalFormat = {
+  kind: "ORIGINAL";
+  output_format: string;
+  label: string;
+};
+
+export type ConvertedFormat = {
+  kind: "CONVERTED";
+  /**
+   * @format uuid
+   */
+  conversion_id: string;
+  input_format: string;
+  output_format: string;
+  plugin: ConversionPlugin;
+};
+
+export type ConversionPlugin = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  name: string;
+  description: string;
 };
 
 export type DownloadableFileDistribution = {
@@ -1302,18 +1556,10 @@ export type WebService = {
    * @minLength 1
    */
   description?: string | null;
-  template_url: string;
-  method: WebServiceMethod;
-  type: WebServiceType;
   /**
    * @minItems 1
    */
   visible_on?: WebServiceVisibleOn[] | null;
-  parameters?: Parameter[];
-  format: string;
-  body_content_type?: string | null;
-  body_template?: string | null;
-  body_parameters?: ScalarParameter[];
   provider?: ResourceVersionReference;
   documentation?: Documentation;
   /**
@@ -1325,6 +1571,152 @@ export type WebService = {
   spatial_coverage?: string | null;
   temporal_coverage?: TemporalCoverage;
   contact_points?: string[];
+  configuration: WebServiceConfiguration;
+};
+
+export type WebServiceConfiguration =
+  | WmsWebServiceConfiguration
+  | WmtsWebServiceConfiguration
+  | WfsWebServiceConfiguration
+  | GenericWebServiceConfiguration;
+
+export type GenericWebServiceConfiguration = {
+  type: "HTTP";
+  template_url: string;
+  method: WebServiceMethod;
+  parameters?: Parameter[];
+  body_content_type?: string | null;
+  body_template?: string | null;
+  /**
+   * Whether the configured request body must be rendered. Omitted when no request body is configured.
+   */
+  body_required?: boolean;
+  body_parameters?: ScalarParameter[];
+  format: string;
+};
+
+export type WfsWebServiceConfiguration = {
+  type: "WFS";
+  /**
+   * @minLength 1
+   */
+  get_feature_template_url: string;
+  version: "1.1.0" | "2.0.0";
+  /**
+   * @minItems 1
+   * @uniqueItems true
+   */
+  feature_types: NonBlankString[];
+  default_feature_type: NonBlankString;
+  /**
+   * Exact provider outputFormat values, advertised as native formats.
+   *
+   * @minItems 1
+   * @uniqueItems true
+   */
+  output_formats: NonBlankString[];
+  default_output_format: NonBlankString;
+  /**
+   * Optional default feature limit. Omitted or null means no configured limit.
+   *
+   * @format int64
+   * @minimum 1
+   */
+  result_limit?: number | null;
+  /**
+   * Whether callers may supply a different limit. False with no configured limit prevents callers from adding one.
+   */
+  result_limit_editable: boolean;
+  parameters: Parameter[];
+};
+
+/**
+ * WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+ */
+export type WmsWebServiceConfiguration = {
+  type: "WMS";
+  /**
+   * Absolute HTTP(S) capabilities URL, including provider query parameters.
+   *
+   * @minLength 1
+   */
+  capabilities_url: string;
+  /**
+   * Must name one configured layer.
+   *
+   * @minLength 1
+   * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
+   */
+  default_layer: NonBlankString;
+  /**
+   * Allowed layers in display order. A single layer fixes selection.
+   *
+   * @minItems 1
+   */
+  layers: WmsLayer[];
+  transparency_editable: boolean;
+  /**
+   * Fixed when transparency_editable is false.
+   */
+  default_transparency: boolean;
+  /**
+   * Custom GetMap parameters. Standard WMS names are reserved, ignoring case.
+   */
+  get_map_parameters: Parameter[];
+  /**
+   * Custom GetFeatureInfo parameters, independent of GetMap. Standard WMS names are reserved, ignoring case.
+   */
+  get_feature_info_parameters: Parameter[];
+};
+
+/**
+ * WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+ */
+export type WmtsWebServiceConfiguration = {
+  type: "WMTS";
+  /**
+   * @minLength 1
+   */
+  capabilities_url: string;
+  default_layer: NonBlankString;
+  /**
+   * @minItems 1
+   */
+  layers: WmtsLayer[];
+  get_tile_parameters: Parameter[];
+  get_feature_info_parameters: Parameter[];
+};
+
+export type WmtsLayer = {
+  name: NonBlankString;
+  /**
+   * Configured default style. When omitted, use the provider default if allowed by styles.
+   *
+   * @minLength 1
+   * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
+   */
+  default_style?: NonBlankString;
+  /**
+   * Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
+   *
+   * @uniqueItems true
+   */
+  styles?: NonBlankString[];
+};
+
+export type WmsLayer = {
+  name: NonBlankString;
+  /**
+   * Default configured style. Empty string uses the provider default.
+   */
+  default_style: string;
+  /**
+   * Allowed styles in display order. Empty string uses the provider default; a single style fixes selection.
+   *
+   * @minItems 1
+   * @uniqueItems true
+   */
+  styles: string[];
 };
 
 export type Identifier = {
@@ -2043,4 +2435,20 @@ export type Problem = {
    * @example metadata.title
    */
   target?: string;
+  /**
+   * Present only when an upstream HTTP failure response exists.
+   */
+  upstream_response?: {
+    /**
+     * Original upstream HTTP status.
+     *
+     * @minimum 100
+     * @maximum 599
+     */
+    status: number;
+    /**
+     * Original upstream failure body, treated as text.
+     */
+    body: string;
+  };
 };

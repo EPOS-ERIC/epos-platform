@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 TTL_FILE=${TTL_FILE:-"$SCRIPT_DIR/../assets/metadatone.ttl"}
-GATEWAY_API_URL=${GATEWAY_API_URL:-http://localhost:32000/v1}
+GATEWAY_API_URL=${GATEWAY_API_URL:-http://localhost:33000/v1}
 AAI_URL=${AAI_URL:-http://localhost:35000}
 AUTH_CLIENT_ID=${AUTH_CLIENT_ID:-local-dev-client}
 AUTH_CLIENT_SECRET=${AUTH_CLIENT_SECRET:-dev-secret}

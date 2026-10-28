@@ -21,10 +21,6 @@ export const routes: Routes = [
     component: LoginPageComponent
   },
   {
-    path: 'testpath/last-page-redirect',
-    component: LoginPageComponent
-  },
-  {
     path: 'data/manage-group',
     component: MainContainerComponent,
     canActivate: [authGuard, groupAdminGuard],

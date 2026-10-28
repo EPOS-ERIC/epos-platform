@@ -1,0 +1,48 @@
+name: Platform Legacy Pipeline
+
+on:
+  pull_request:
+    paths:
+      - apps/platform-legacy/**
+      - .github/workflows/platform-legacy-ci.yml
+      - .github/workflows/_node-app-ci.yml
+      - .github/workflows/_node-app-cd.yml
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+    paths:
+      - apps/platform-legacy/**
+      - .github/workflows/platform-legacy-ci.yml
+      - .github/workflows/_node-app-ci.yml
+      - .github/workflows/_node-app-cd.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_node-app-ci.yml
+    with:
+      app: apps/platform-legacy
+      dockerfile: Dockerfile
+      context: apps/platform-legacy
+      node-version: "26"
+      lint-command: make lint
+      build-command: make build-oss
+
+  publish:
+    needs: ci
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_node-app-cd.yml
+    with:
+      app: apps/platform-legacy
+      image: platform-legacy
+      dockerfile: Dockerfile
+      context: apps/platform-legacy
+      node-version: "26"
+      build-command: make build-oss

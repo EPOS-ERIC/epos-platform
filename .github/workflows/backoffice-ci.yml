@@ -1,0 +1,51 @@
+name: Backoffice Pipeline
+
+on:
+  pull_request:
+    paths:
+      - apps/backoffice/**
+      - services/gateway/docs/openapi.yaml
+      - .github/workflows/backoffice-ci.yml
+      - .github/workflows/_node-app-ci.yml
+      - .github/workflows/_node-app-cd.yml
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+    paths:
+      - apps/backoffice/**
+      - services/gateway/docs/openapi.yaml
+      - .github/workflows/backoffice-ci.yml
+      - .github/workflows/_node-app-ci.yml
+      - .github/workflows/_node-app-cd.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_node-app-ci.yml
+    with:
+      app: apps/backoffice
+      dockerfile: Dockerfile
+      context: apps/backoffice
+      node-version: "26"
+      pnpm-version: "11.24.0"
+      codegen-command: make generate
+
+  publish:
+    needs: ci
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_node-app-cd.yml
+    with:
+      app: apps/backoffice
+      image: backoffice
+      dockerfile: Dockerfile
+      context: apps/backoffice
+      node-version: "26"
+      pnpm-version: "11.24.0"
+      codegen-command: make generate

@@ -67,7 +67,7 @@ services:
         condition: service_healthy
     environment:
       - SERVER_PORT=5000
-      - GATEWAY_PUBLIC_URL=http://localhost:32000
+      - GATEWAY_PUBLIC_URL=http://localhost:33000
       - DB_HOST=metadata-lifecycle-db
       - DB_PORT=5432
       - DB_NAME=metadata-lifecycle
@@ -166,7 +166,7 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
       - OTEL_METRIC_EXPORT_INTERVAL=5000
     ports:
-      - "32000:5000"
+      - "33000:5000"
     networks:
       - epos-network
     healthcheck:

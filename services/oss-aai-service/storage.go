@@ -365,6 +365,19 @@ func (s *localStore) seedOAuthClients() error {
 		return err
 	}
 
+	_, err = s.db.Exec(`
+		UPDATE oauth_clients
+		SET redirect_uris_json = json_insert(
+			CASE WHEN EXISTS (SELECT 1 FROM json_each(redirect_uris_json) WHERE value = ?)
+				THEN redirect_uris_json ELSE json_insert(redirect_uris_json, '$[#]', ?) END,
+			CASE WHEN EXISTS (SELECT 1 FROM json_each(redirect_uris_json) WHERE value = ?)
+				THEN '$' ELSE '$[#]' END, ?
+		)
+		WHERE client_id = 'eposICS'
+	`, legacyTiltRedirectURI, legacyTiltRedirectURI, legacyTiltSilentRefreshURI, legacyTiltSilentRefreshURI)
+	if err != nil {
+		return fmt.Errorf("update legacy redirect URIs: %w", err)
+	}
 	return nil
 }
 
@@ -543,12 +556,19 @@ func newToken() string {
 	return base64.RawURLEncoding.EncodeToString(b)
 }
 
+const (
+	legacyTiltRedirectURI      = "http://localhost:32000/testpath/last-page-redirect"
+	legacyTiltSilentRefreshURI = "http://localhost:32000/testpath/silent-token-refresh.html"
+)
+
 func defaultBackofficeRedirectURIs() []string {
 	return []string{
 		"http://localhost:34000/last-page-redirect",
 		"http://localhost:34000/silent-token-refresh.html",
 		"http://localhost:4200/testpath/last-page-redirect",
 		"http://localhost:4200/testpath/silent-token-refresh.html",
+		legacyTiltRedirectURI,
+		legacyTiltSilentRefreshURI,
 		"http://localhost:32000/last-page-redirect",
 		"http://localhost:32000/silent-token-refresh.html",
 	}

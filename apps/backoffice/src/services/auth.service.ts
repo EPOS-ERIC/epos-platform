@@ -7,7 +7,6 @@ const LIVE_AUTH_ISSUER = 'https://aaai.epos-eu.org/oauth2';
 const LIVE_AUTHORIZATION_ENDPOINT = 'https://aaai.epos-eu.org/oauth2-as/oauth2-authz';
 const LOCAL_AUTH_ISSUER = 'http://localhost:35000/oauth2';
 const LOCAL_AUTHORIZATION_ENDPOINT = `${LOCAL_AUTH_ISSUER}/authorize`;
-const LOCAL_OAUTH_BASE_PATH = '/testpath/';
 const AUTH_ISSUER_KEY = 'epos-backoffice-auth-issuer';
 const RETURN_URL_KEY = 'epos-backoffice-return-url';
 
@@ -83,9 +82,7 @@ export class AuthService {
   }
 
   private makeAuthConfig(): AuthConfig {
-    const callbackBase = this.isLocalDevelopment
-      ? new URL(LOCAL_OAUTH_BASE_PATH, window.location.origin)
-      : new URL(document.baseURI);
+    const callbackBase = new URL(document.baseURI);
 
     return {
       issuer: this.issuer,

@@ -6,10 +6,10 @@ Monorepo for the EPOS Platform web application, backend services, shared Go pack
 
 | Component                     | Purpose                                                        | Local URL                |
 | ----------------------------- | -------------------------------------------------------------- | ------------------------ |
-| `services/gateway`            | Public API, authentication, and backend aggregation            | `http://localhost:32000` |
-| `services/metadata-lifecycle` | Metadata, users, groups, authorization, and resource lifecycle | `http://localhost:33000` |
-| `services/data-retriever`     | Outbound retrieval and metadata persistence                    | `grpc://localhost:8100`  |
-| `services/oss-aai-service`    | Local web login and OAuth2/OIDC provider                       | `http://localhost:8110`  |
+| `services/gateway`            | Public API, authentication, and backend aggregation            | `http://localhost:33000` |
+| `services/metadata-lifecycle` | Metadata, users, groups, authorization, and resource lifecycle | Internal only |
+| `services/data-retriever`     | Outbound retrieval and metadata persistence                    | Internal only |
+| `services/oss-aai-service`    | Local web login and OAuth2/OIDC provider                       | `http://localhost:35000` |
 
 The development stack also includes PostgreSQL databases for Metadata Lifecycle and Data Retriever, plus Grafana's OpenTelemetry LGTM stack for logs, metrics, traces, and profiles.
 
@@ -39,24 +39,25 @@ Start the complete development stack from the repository root:
 make up
 ```
 
-Tilt uses `docker/compose.dev.yaml`, builds backend and GUI development images, and live-updates their source. The GUI serves at `http://localhost:4200/testpath`, proxies API calls to the local Gateway, and uses local OSS AAI at `http://localhost:35000`. For a Kubernetes-backed Tilt environment, select the context explicitly with `make up KUBE_CONTEXT=kind-epos`.
+Tilt uses `docker/compose.dev.yaml`, builds backend and GUI development images, and live-updates their source. Both GUIs proxy API calls to the local Gateway and use local OSS AAI at `http://localhost:35000`. For a Kubernetes-backed Tilt environment, select the context explicitly with `make up KUBE_CONTEXT=kind-epos`.
+
+Tilt runs protobuf, Gateway OpenAPI, backoffice API, and service SQLC generators in Docker at startup and when their source files change. Generated files are written to the repository; generation failures appear in Tilt. Buf's remote plugins require network access.
+
+Development containers run as non-root users. Go services share named module and build cache volumes; frontend dependency and Angular cache volumes remain separate per app.
 
 Stop the stack with `make down`. Pass the same `KUBE_CONTEXT` when stopping a Kubernetes-backed environment.
 
 ### Local endpoints
 
-- Gateway API: `http://localhost:32000/v1`
-- Platform GUI: `http://localhost:4200/testpath`
-- Gateway Scalar UI: `http://localhost:32000/scalar/`
-- Gateway Swagger UI: `http://localhost:32000/swagger/`
-- Metadata Lifecycle API: `http://localhost:33000/api/v1`
-- Data Retriever API: `http://localhost:8100/api/v2`
+- Gateway API: `http://localhost:33000/v1`
+- Platform GUI: `http://localhost:32000/testpath`
+- Backoffice GUI: `http://localhost:34000`
+- Gateway Scalar UI: `http://localhost:33000/scalar/`
+- Gateway Swagger UI: `http://localhost:33000/swagger/`
 - OSS AAI: `http://localhost:35000`
-- Grafana: `http://localhost:3000`
-- Prometheus: `http://localhost:9090`
-- Pyroscope: `http://localhost:4040`
+- Grafana: `http://localhost:36000`
 
-The local PostgreSQL ports are `5433` for Data Retriever and `5434` for Metadata Lifecycle.
+PostgreSQL and backend service ports are accessible only inside the Docker network.
 
 ### Local authentication and sample data
 

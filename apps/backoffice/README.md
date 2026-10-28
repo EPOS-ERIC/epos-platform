@@ -130,15 +130,17 @@ UI capabilities determine which controls are visible or enabled. They do not rep
 
 ## API Integration
 
-`ApiService` is the frontend boundary for HTTP operations. The development proxy maps `/api` to the local backend at `http://localhost:32000`.
+`ApiService` is the frontend boundary for HTTP operations. The development proxy maps `/api` to the local backend at `http://localhost:33000`.
 
 Contracts under `generated/` are produced from the backend OpenAPI document:
 
 ```bash
-pnpm codegen
+make generate
 ```
 
-The generator reads `http://localhost:32000/openapi.yaml`. Never edit generated files manually; update the API specification and regenerate them instead.
+The generator reads `services/gateway/docs/openapi.yaml` from the repository. Never edit generated files manually; update the API specification and regenerate them instead.
+
+The published Nginx image serves the built app and proxies `/api/` to `API_HOST` (default `http://gateway:5000`), stripping the `/api/` prefix to match the Gateway `/v1` routes.
 
 ## UI Infrastructure
 
@@ -152,22 +154,24 @@ Global overlays are mounted once by the application root and controlled through 
 
 ## Development
 
-The repository-level Tilt configuration is the source of truth for the complete local stack. For module-local frontend work:
+The repository-level Tilt configuration runs the backoffice at `http://localhost:34000`, with API requests proxied to the local Gateway and source changes live-reloaded. Tilt runs code generation in Docker at startup and whenever the Gateway OpenAPI specification changes, writing contracts to `generated/` on the host.
+
+For module-local frontend work:
 
 ```bash
-pnpm install
-pnpm dev
+make install
+make dev
 ```
 
-`pnpm dev` regenerates the API contracts before starting the Angular development server, so the local backend OpenAPI endpoint must be available.
+`make dev` regenerates the API contracts before starting the Angular development server.
 
 Useful module commands:
 
 ```bash
 pnpm start                         # Start Angular without running code generation
-pnpm build                         # Production build
-pnpm exec ng test --watch=false    # Run the test suite once
-pnpm codegen                       # Regenerate OpenAPI contracts
+make build                         # Production build
+make test                          # Run the test suite once
+make generate                      # Regenerate OpenAPI contracts
 ```
 
 ## Architecture Guidelines
