@@ -20,7 +20,7 @@ describe('DistributionComponent', () => {
     expect(emissions[0][0]).toMatchObject({
       kind: 'web-service',
       type: 'WEB_SERVICE',
-      webService: { method: 'GET', type: 'DYNAMIC' }
+      webService: { configuration: { method: 'GET', type: 'HTTP' } }
     });
   });
 
@@ -75,7 +75,10 @@ describe('DistributionComponent', () => {
     if (distribution.kind !== 'web-service') {
       throw new Error('Expected a web service distribution');
     }
-    distribution.webService.parameters = [
+    if (distribution.webService.configuration.type !== 'HTTP') {
+      throw new Error('Expected an HTTP web service configuration');
+    }
+    distribution.webService.configuration.parameters = [
       {
         kind: 'BOOLEAN',
         id: 'first-id',

@@ -14,6 +14,8 @@ import type {
   ScalarParameterDraft,
   WebServiceDistribution,
   WebServiceDistributionDraft,
+  WebServiceConfiguration,
+  WebServiceConfigurationDraft,
 } from '../../generated/backofficeSchemas';
 import type {
   DatasetDetailForm,
@@ -23,6 +25,7 @@ import type {
   DatasetSpatialForm,
   DatasetTemporalForm,
   DatasetWebServiceDocumentationForm,
+  DatasetWebServiceConfigurationForm,
   DatasetWebServiceForm,
   DatasetWebServiceParameterForm,
   DatasetWebServiceProviderForm,
@@ -116,7 +119,7 @@ export function hasMultipleParameterWithoutAllowedValues(form: DatasetDetailForm
   return form.distributions.some(
     (distribution) =>
       distribution.kind === 'web-service' &&
-      distribution.webService.parameters.some(
+      webServiceParameters(distribution.webService.configuration).some(
         (parameter) => 'multipleValues' in parameter && parameter.multipleValues && !parameter.allowedValues.some((option) => hasIdentifierValue(option.value)),
       ),
   );
@@ -126,7 +129,7 @@ export function hasInvalidExplodeParameter(form: DatasetDetailForm): boolean {
   return form.distributions.some(
     (distribution) =>
       distribution.kind === 'web-service' &&
-      distribution.webService.parameters.some(
+      webServiceParameters(distribution.webService.configuration).some(
         (parameter) =>
           parameter.explode &&
           (parameter.location !== 'QUERY' || !('multipleValues' in parameter) || !parameter.multipleValues),
@@ -138,10 +141,12 @@ export function hasIncompleteWebServiceBody(form: DatasetDetailForm): boolean {
   return form.distributions.some((distribution) => {
     if (distribution.kind !== 'web-service') return false;
 
-    const webService = distribution.webService;
-    const hasContentType = Boolean(webService.bodyContentType.trim());
-    const hasTemplate = Boolean(webService.bodyTemplate.trim());
-    const hasBody = hasContentType || hasTemplate || webService.bodyParameters.length > 0;
+    const configuration = distribution.webService.configuration;
+    if (configuration.type !== 'HTTP') return false;
+
+    const hasContentType = Boolean(configuration.bodyContentType.trim());
+    const hasTemplate = Boolean(configuration.bodyTemplate.trim());
+    const hasBody = hasContentType || hasTemplate || configuration.bodyParameters.length > 0;
 
     return hasBody && (!hasContentType || !hasTemplate);
   });
@@ -151,12 +156,13 @@ export function hasBodyOnUnsupportedMethod(form: DatasetDetailForm): boolean {
   return form.distributions.some((distribution) => {
     if (distribution.kind !== 'web-service') return false;
 
-    const webService = distribution.webService;
+    const configuration = distribution.webService.configuration;
+    if (configuration.type !== 'HTTP') return false;
     const hasBody = Boolean(
-      webService.bodyContentType.trim() || webService.bodyTemplate.trim() || webService.bodyParameters.length,
+      configuration.bodyContentType.trim() || configuration.bodyTemplate.trim() || configuration.bodyParameters.length,
     );
 
-    return hasBody && (webService.method === 'GET' || webService.method === 'DELETE');
+    return hasBody && (configuration.method === 'GET' || configuration.method === 'DELETE');
   });
 }
 
@@ -184,11 +190,11 @@ export function distributionValidationError(form: DatasetDetailForm): string | n
     if (!hasIdentifierValue(distribution.webService.name)) {
       return `${label}: web service name is required.`;
     }
-    if (!hasIdentifierValue(distribution.webService.templateUrl)) {
-      return `${label}: web service template URL is required.`;
-    }
-    if (!hasIdentifierValue(distribution.webService.format)) {
-      return `${label}: web service format is required.`;
+    const configurationError = webServiceConfigurationValidationError(
+      distribution.webService.configuration,
+    );
+    if (configurationError) {
+      return `${label}: ${configurationError}`;
     }
 
     const documentation = distribution.webService.documentation;
@@ -206,10 +212,97 @@ export function hasParameterDefaultOutsideAllowedValues(form: DatasetDetailForm)
   return form.distributions.some(
     (distribution) =>
       distribution.kind === 'web-service' &&
-      [...distribution.webService.parameters, ...distribution.webService.bodyParameters].some(
+      webServiceAllParameters(distribution.webService.configuration).some(
         hasScalarDefaultOutsideAllowedValues,
       ),
   );
+}
+
+function webServiceParameters(
+  configuration: DatasetWebServiceConfigurationForm,
+): DatasetWebServiceParameterForm[] {
+  switch (configuration.type) {
+    case 'HTTP':
+    case 'WFS':
+      return configuration.parameters;
+    case 'WMS':
+      return [...configuration.getMapParameters, ...configuration.getFeatureInfoParameters];
+    case 'WMTS':
+      return [...configuration.getTileParameters, ...configuration.getFeatureInfoParameters];
+  }
+}
+
+function webServiceAllParameters(
+  configuration: DatasetWebServiceConfigurationForm,
+): Array<DatasetWebServiceParameterForm | DatasetWebServiceScalarParameterForm> {
+  return configuration.type === 'HTTP'
+    ? [...configuration.parameters, ...configuration.bodyParameters]
+    : webServiceParameters(configuration);
+}
+
+function webServiceConfigurationValidationError(
+  configuration: DatasetWebServiceConfigurationForm,
+): string | null {
+  switch (configuration.type) {
+    case 'HTTP':
+      if (!hasIdentifierValue(configuration.templateUrl)) {
+        return 'web service template URL is required.';
+      }
+      if (!hasIdentifierValue(configuration.format)) return 'web service format is required.';
+      return null;
+    case 'WFS':
+      if (!hasIdentifierValue(configuration.getFeatureTemplateUrl)) {
+        return 'WFS GetFeature URL is required.';
+      }
+      if (!configuration.featureTypes.some(hasIdentifierValue)) {
+        return 'at least one WFS feature type is required.';
+      }
+      if (!hasIdentifierValue(configuration.defaultFeatureType)) {
+        return 'WFS default feature type is required.';
+      }
+      if (!configuration.featureTypes.includes(configuration.defaultFeatureType)) {
+        return 'WFS default feature type must be one of the configured feature types.';
+      }
+      if (!configuration.outputFormats.some(hasIdentifierValue)) {
+        return 'at least one WFS output format is required.';
+      }
+      if (!hasIdentifierValue(configuration.defaultOutputFormat)) {
+        return 'WFS default output format is required.';
+      }
+      if (!configuration.outputFormats.includes(configuration.defaultOutputFormat)) {
+        return 'WFS default output format must be one of the configured output formats.';
+      }
+      if (
+        hasIdentifierValue(configuration.resultLimit) &&
+        (!Number.isInteger(toNumberOrNull(configuration.resultLimit)) ||
+          Number(configuration.resultLimit) < 1)
+      ) {
+        return 'WFS result limit must be a positive integer.';
+      }
+      return null;
+    case 'WMS':
+    case 'WMTS': {
+      if (!hasIdentifierValue(configuration.capabilitiesUrl)) {
+        return `${configuration.type} capabilities URL is required.`;
+      }
+      if (!configuration.layers.some((layer) => hasIdentifierValue(layer.name))) {
+        return `at least one ${configuration.type} layer is required.`;
+      }
+      if (!hasIdentifierValue(configuration.defaultLayer)) {
+        return `${configuration.type} default layer is required.`;
+      }
+      if (!configuration.layers.some((layer) => layer.name === configuration.defaultLayer)) {
+        return `${configuration.type} default layer must be one of the configured layers.`;
+      }
+      const invalidStyle = configuration.layers.some(
+        (layer) => hasIdentifierValue(layer.defaultStyle) && !layer.styles.includes(layer.defaultStyle),
+      );
+      if (invalidStyle) {
+        return `${configuration.type} default styles must be included in their layer styles.`;
+      }
+      return null;
+    }
+  }
 }
 
 export function temporalWarningKind(form: DatasetDetailForm): 'none' | 'warning' | 'error' {
@@ -286,14 +379,7 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
       webService: {
         name: webService.name,
         description: webService.description ?? '',
-        templateUrl: webService.template_url,
-        method: webService.method,
-        type: webService.type,
         visibleOn: webService.visible_on ?? [],
-        format: webService.format,
-        bodyContentType: webService.body_content_type ?? '',
-        bodyTemplate: webService.body_template ?? '',
-        bodyParameters: webService.body_parameters?.map(buildWebServiceScalarParameterForm) ?? [],
         documentation: webService.documentation
           ? buildWebServiceDocumentationForm(webService.documentation)
           : { title: '', description: '', uri: '' },
@@ -305,9 +391,7 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
           : [],
         spatialCoverage: webService.spatial_coverage ?? null,
         temporalCoverage: buildTemporalForm(webService.temporal_coverage),
-        parameters: webService.parameters?.length
-          ? webService.parameters.map(buildWebServiceParameterForm)
-          : [buildEmptyWebServiceParameterForm()],
+        configuration: buildWebServiceConfigurationForm(webService.configuration),
       },
     };
   }
@@ -340,6 +424,73 @@ function buildWebServiceProviderForm(
   return { id: provider.id, name: provider.name };
 }
 
+function buildWebServiceConfigurationForm(
+  configuration: WebServiceConfiguration,
+): DatasetWebServiceConfigurationForm {
+  switch (configuration.type) {
+    case 'HTTP':
+      return {
+        type: 'HTTP',
+        templateUrl: configuration.template_url,
+        method: configuration.method,
+        format: configuration.format,
+        bodyContentType: configuration.body_content_type ?? '',
+        bodyTemplate: configuration.body_template ?? '',
+        bodyRequired: configuration.body_required ?? true,
+        bodyParameters:
+          configuration.body_parameters?.map(buildWebServiceScalarParameterForm) ?? [],
+        parameters: parameterForms(configuration.parameters),
+      };
+    case 'WFS':
+      return {
+        type: 'WFS',
+        getFeatureTemplateUrl: configuration.get_feature_template_url,
+        version: configuration.version,
+        featureTypes: [...configuration.feature_types],
+        defaultFeatureType: configuration.default_feature_type,
+        outputFormats: [...configuration.output_formats],
+        defaultOutputFormat: configuration.default_output_format,
+        resultLimit: configuration.result_limit == null ? '' : String(configuration.result_limit),
+        resultLimitEditable: configuration.result_limit_editable,
+        parameters: parameterForms(configuration.parameters),
+      };
+    case 'WMS':
+      return {
+        type: 'WMS',
+        capabilitiesUrl: configuration.capabilities_url,
+        defaultLayer: configuration.default_layer,
+        layers: configuration.layers.map((layer) => ({
+          name: layer.name,
+          defaultStyle: layer.default_style,
+          styles: [...layer.styles],
+        })),
+        transparencyEditable: configuration.transparency_editable,
+        defaultTransparency: configuration.default_transparency,
+        getMapParameters: parameterForms(configuration.get_map_parameters),
+        getFeatureInfoParameters: parameterForms(configuration.get_feature_info_parameters),
+      };
+    case 'WMTS':
+      return {
+        type: 'WMTS',
+        capabilitiesUrl: configuration.capabilities_url,
+        defaultLayer: configuration.default_layer,
+        layers: configuration.layers.map((layer) => ({
+          name: layer.name,
+          defaultStyle: layer.default_style ?? '',
+          styles: [...(layer.styles ?? [])],
+        })),
+        getTileParameters: parameterForms(configuration.get_tile_parameters),
+        getFeatureInfoParameters: parameterForms(configuration.get_feature_info_parameters),
+      };
+  }
+}
+
+function parameterForms(parameters: Parameter[] | undefined): DatasetWebServiceParameterForm[] {
+  return parameters?.length
+    ? parameters.map(buildWebServiceParameterForm)
+    : [buildEmptyWebServiceParameterForm()];
+}
+
 function buildTemporalForm(
   temporalCoverage: WebServiceDistribution['web_service']['temporal_coverage'],
 ): DatasetTemporalForm {
@@ -359,6 +510,7 @@ function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServicePa
     required: parameter.required,
     property: parameter.property ?? '',
     location: parameter.location,
+    role: parameter.role ?? ('' as const),
     explode: parameter.explode,
     readOnly: parameter.read_only,
   };
@@ -470,6 +622,7 @@ function buildEmptyWebServiceParameterForm(): DatasetWebServiceParameterForm {
     required: false,
     property: '',
     location: 'QUERY',
+    role: '',
     explode: false,
     readOnly: false,
     multipleValues: false,
@@ -509,14 +662,7 @@ function buildWebServiceDraft(
   return {
     name: webService.name,
     description: undefinedIfBlank(webService.description),
-    template_url: webService.templateUrl,
-    method: webService.method,
-    type: webService.type,
     visible_on: webService.visibleOn.length ? webService.visibleOn : undefined,
-    body_content_type: undefinedIfBlank(webService.bodyContentType),
-    body_template: undefinedIfBlank(webService.bodyTemplate),
-    body_parameters: webService.bodyParameters.map(buildWebServiceScalarParameterDraft),
-    format: webService.format,
     provider: hasIdentifierValue(webService.provider.id) ? webService.provider.id : undefined,
     documentation: hasIdentifierValue(webService.documentation.uri)
       ? {
@@ -528,10 +674,81 @@ function buildWebServiceDraft(
     spatial_coverage: buildSpatialCoverageDraft(webService.spatialCoverage),
     temporal_coverage: buildTemporalCoverageDraft(webService.temporalCoverage),
     contact_points: webService.contactPoints.filter(hasIdentifierValue),
-    parameters: webService.parameters
-      .filter((parameter) => !isEmptyWebServiceParameter(parameter))
-      .map(buildWebServiceParameterDraft),
+    configuration: buildWebServiceConfigurationDraft(webService.configuration),
   };
+}
+
+function buildWebServiceConfigurationDraft(
+  configuration: DatasetWebServiceConfigurationForm,
+): WebServiceConfigurationDraft {
+  switch (configuration.type) {
+    case 'HTTP': {
+      const hasBody = Boolean(
+        configuration.bodyContentType.trim() ||
+          configuration.bodyTemplate.trim() ||
+          configuration.bodyParameters.length,
+      );
+      return {
+        type: 'HTTP',
+        template_url: configuration.templateUrl,
+        method: configuration.method,
+        format: configuration.format,
+        parameters: parameterDrafts(configuration.parameters),
+        body_content_type: undefinedIfBlank(configuration.bodyContentType),
+        body_template: undefinedIfBlank(configuration.bodyTemplate),
+        body_required: hasBody ? configuration.bodyRequired : undefined,
+        body_parameters: configuration.bodyParameters.map(buildWebServiceScalarParameterDraft),
+      };
+    }
+    case 'WFS':
+      return {
+        type: 'WFS',
+        get_feature_template_url: configuration.getFeatureTemplateUrl,
+        version: configuration.version,
+        feature_types: configuration.featureTypes.filter(hasIdentifierValue),
+        default_feature_type: configuration.defaultFeatureType,
+        output_formats: configuration.outputFormats.filter(hasIdentifierValue),
+        default_output_format: configuration.defaultOutputFormat,
+        result_limit: toNumberOrNull(configuration.resultLimit),
+        result_limit_editable: configuration.resultLimitEditable,
+        parameters: parameterDrafts(configuration.parameters),
+      };
+    case 'WMS':
+      return {
+        type: 'WMS',
+        capabilities_url: configuration.capabilitiesUrl,
+        default_layer: configuration.defaultLayer,
+        layers: configuration.layers.map((layer) => {
+          const styles = layer.styles.includes(layer.defaultStyle)
+            ? layer.styles
+            : [layer.defaultStyle, ...layer.styles];
+          return { name: layer.name, default_style: layer.defaultStyle, styles };
+        }),
+        transparency_editable: configuration.transparencyEditable,
+        default_transparency: configuration.defaultTransparency,
+        get_map_parameters: parameterDrafts(configuration.getMapParameters),
+        get_feature_info_parameters: parameterDrafts(configuration.getFeatureInfoParameters),
+      };
+    case 'WMTS':
+      return {
+        type: 'WMTS',
+        capabilities_url: configuration.capabilitiesUrl,
+        default_layer: configuration.defaultLayer,
+        layers: configuration.layers.map((layer) => ({
+          name: layer.name,
+          default_style: undefinedIfBlank(layer.defaultStyle),
+          styles: layer.styles.length ? layer.styles : undefined,
+        })),
+        get_tile_parameters: parameterDrafts(configuration.getTileParameters),
+        get_feature_info_parameters: parameterDrafts(configuration.getFeatureInfoParameters),
+      };
+  }
+}
+
+function parameterDrafts(parameters: DatasetWebServiceParameterForm[]): ParameterDraft[] {
+  return parameters
+    .filter((parameter) => !isEmptyWebServiceParameter(parameter))
+    .map(buildWebServiceParameterDraft);
 }
 
 function buildWebServiceParameterDraft(
@@ -546,6 +763,7 @@ function buildWebServiceParameterDraft(
     required: parameter.required,
     property: undefinedIfBlank(parameter.property),
     location: parameter.location,
+    role: parameter.role || undefined,
     explode: parameter.explode,
     read_only: parameter.readOnly,
   };

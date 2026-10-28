@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ContactPointsComponent } from '../contact-points/contact-points.component';
 import { SpatialCoverageComponent } from '../spatial-coverage/spatial-coverage.component';
@@ -9,6 +10,7 @@ import { WebServiceParametersComponent } from './web-service-parameters.componen
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
 import type {
   DatasetTemporalForm,
+  DatasetWebServiceConfigurationForm,
   DatasetWebServiceDocumentationForm,
   DatasetWebServiceForm,
   DatasetWebServiceParameterForm,
@@ -18,7 +20,7 @@ import type {
 
 @Component({
   selector: 'app-web-service',
-  imports: [FormsModule, ContactPointsComponent, ProvidersComponent, ScalarParametersEditorComponent, SpatialCoverageComponent, TemporalCoverageComponent, WebServiceDocumentationComponent, WebServiceParametersComponent],
+  imports: [FormsModule, NgTemplateOutlet, ContactPointsComponent, ProvidersComponent, ScalarParametersEditorComponent, SpatialCoverageComponent, TemporalCoverageComponent, WebServiceDocumentationComponent, WebServiceParametersComponent],
   templateUrl: './web-service.component.html',
   styleUrl: './web-service.component.css'
 })
@@ -30,8 +32,8 @@ export class WebServiceComponent {
   @Input() comparisonSide: 'left' | 'right' = 'left';
   @Output() modelChange = new EventEmitter<DatasetWebServiceForm>();
 
-  protected readonly methods: readonly DatasetWebServiceForm['method'][] = ['GET', 'POST', 'PUT', 'DELETE'];
-  protected readonly types: readonly DatasetWebServiceForm['type'][] = ['WMS', 'GEOJSON', 'DYNAMIC', 'WMTS', 'WFS', 'COVJSON'];
+  protected readonly methods = ['GET', 'POST', 'PUT', 'DELETE'] as const;
+  protected readonly types: readonly DatasetWebServiceConfigurationForm['type'][] = ['HTTP', 'WFS', 'WMS', 'WMTS'];
   protected readonly visibleOnOptions: readonly DatasetWebServiceForm['visibleOn'][number][] = ['GRAPH', 'TABLE', 'MAP'];
 
   protected emitModelChange(): void {
@@ -83,18 +85,39 @@ export class WebServiceComponent {
     this.emitModelChange();
   }
 
-  protected onParametersChange(parameters: DatasetWebServiceParameterForm[]): void {
-    if (!this.model) {
-      return;
-    }
-
-    this.model.parameters = parameters;
+  protected onConfigurationTypeChange(type: DatasetWebServiceConfigurationForm['type']): void {
+    if (!this.model || this.model.configuration.type === type) return;
+    this.model.configuration = this.emptyConfiguration(type);
     this.emitModelChange();
   }
 
   protected onBodyParametersChange(parameters: DatasetWebServiceScalarParameterForm[]): void {
-    if (this.model) {
-      this.model.bodyParameters = parameters;
+    if (this.model?.configuration.type === 'HTTP') {
+      this.model.configuration.bodyParameters = parameters;
+      this.emitModelChange();
+    }
+  }
+
+  protected joinValues(values: string[]): string {
+    return values.join(', ');
+  }
+
+  protected splitValues(value: string): string[] {
+    return value.split(',').map((item) => item.trim()).filter(Boolean);
+  }
+
+  protected addLayer(): void {
+    const configuration = this.model?.configuration;
+    if (configuration?.type === 'WMS' || configuration?.type === 'WMTS') {
+      configuration.layers.push({ name: '', defaultStyle: '', styles: [] });
+      this.emitModelChange();
+    }
+  }
+
+  protected removeLayer(index: number): void {
+    const configuration = this.model?.configuration;
+    if (configuration?.type === 'WMS' || configuration?.type === 'WMTS') {
+      configuration.layers.splice(index, 1);
       this.emitModelChange();
     }
   }
@@ -108,5 +131,20 @@ export class WebServiceComponent {
       ? Array.from(new Set([...this.model.visibleOn, value]))
       : this.model.visibleOn.filter((currentValue) => currentValue !== value);
     this.emitModelChange();
+  }
+
+  private emptyConfiguration(
+    type: DatasetWebServiceConfigurationForm['type'],
+  ): DatasetWebServiceConfigurationForm {
+    switch (type) {
+      case 'HTTP':
+        return { type, templateUrl: '', method: 'GET', format: '', bodyContentType: '', bodyTemplate: '', bodyRequired: true, bodyParameters: [], parameters: [] };
+      case 'WFS':
+        return { type, getFeatureTemplateUrl: '', version: '2.0.0', featureTypes: [], defaultFeatureType: '', outputFormats: [], defaultOutputFormat: '', resultLimit: '', resultLimitEditable: false, parameters: [] };
+      case 'WMS':
+        return { type, capabilitiesUrl: '', defaultLayer: '', layers: [{ name: '', defaultStyle: '', styles: [''] }], transparencyEditable: false, defaultTransparency: true, getMapParameters: [], getFeatureInfoParameters: [] };
+      case 'WMTS':
+        return { type, capabilitiesUrl: '', defaultLayer: '', layers: [{ name: '', defaultStyle: '', styles: [] }], getTileParameters: [], getFeatureInfoParameters: [] };
+    }
   }
 }

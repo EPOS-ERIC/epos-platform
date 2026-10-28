@@ -1,7 +1,7 @@
 import type {
   ParameterLocation,
+  ParameterRole,
   WebServiceMethod,
-  WebServiceType,
   WebServiceVisibleOn,
 } from '../../generated/backofficeSchemas';
 
@@ -93,6 +93,7 @@ export type DatasetWebServiceParameterCommonForm = DatasetWebServiceScalarParame
   id: string;
   property: string;
   location: ParameterLocation;
+  role?: ParameterRole | '';
   explode: boolean;
 };
 
@@ -139,23 +140,79 @@ export type DatasetWebServiceParameterForm = DatasetWebServiceParameterCommonFor
       }
   );
 
-export type DatasetWebServiceForm = {
-  name: string;
-  description: string;
+export type DatasetHttpWebServiceConfigurationForm = {
+  type: 'HTTP';
   templateUrl: string;
   method: WebServiceMethod;
-  type: WebServiceType;
-  visibleOn: WebServiceVisibleOn[];
   format: string;
   bodyContentType: string;
   bodyTemplate: string;
+  bodyRequired: boolean;
   bodyParameters: DatasetWebServiceScalarParameterForm[];
+  parameters: DatasetWebServiceParameterForm[];
+};
+
+export type DatasetWfsWebServiceConfigurationForm = {
+  type: 'WFS';
+  getFeatureTemplateUrl: string;
+  version: '1.1.0' | '2.0.0';
+  featureTypes: string[];
+  defaultFeatureType: string;
+  outputFormats: string[];
+  defaultOutputFormat: string;
+  resultLimit: string;
+  resultLimitEditable: boolean;
+  parameters: DatasetWebServiceParameterForm[];
+};
+
+export type DatasetWmsLayerForm = {
+  name: string;
+  defaultStyle: string;
+  styles: string[];
+};
+
+export type DatasetWmsWebServiceConfigurationForm = {
+  type: 'WMS';
+  capabilitiesUrl: string;
+  defaultLayer: string;
+  layers: DatasetWmsLayerForm[];
+  transparencyEditable: boolean;
+  defaultTransparency: boolean;
+  getMapParameters: DatasetWebServiceParameterForm[];
+  getFeatureInfoParameters: DatasetWebServiceParameterForm[];
+};
+
+export type DatasetWmtsLayerForm = {
+  name: string;
+  defaultStyle: string;
+  styles: string[];
+};
+
+export type DatasetWmtsWebServiceConfigurationForm = {
+  type: 'WMTS';
+  capabilitiesUrl: string;
+  defaultLayer: string;
+  layers: DatasetWmtsLayerForm[];
+  getTileParameters: DatasetWebServiceParameterForm[];
+  getFeatureInfoParameters: DatasetWebServiceParameterForm[];
+};
+
+export type DatasetWebServiceConfigurationForm =
+  | DatasetHttpWebServiceConfigurationForm
+  | DatasetWfsWebServiceConfigurationForm
+  | DatasetWmsWebServiceConfigurationForm
+  | DatasetWmtsWebServiceConfigurationForm;
+
+export type DatasetWebServiceForm = {
+  name: string;
+  description: string;
+  visibleOn: WebServiceVisibleOn[];
   documentation: DatasetWebServiceDocumentationForm;
   provider: DatasetWebServiceProviderForm;
   contactPoints: DatasetWebServiceContactPointForm[];
   spatialCoverage: DatasetSpatialForm;
   temporalCoverage: DatasetTemporalForm;
-  parameters: DatasetWebServiceParameterForm[];
+  configuration: DatasetWebServiceConfigurationForm;
 };
 
 export type DatasetDistributionCommonForm = {

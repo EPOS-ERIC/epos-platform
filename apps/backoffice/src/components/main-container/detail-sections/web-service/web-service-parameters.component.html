@@ -180,6 +180,17 @@
                           <span class="parameter-position-help">Controls the order in which parameters are rendered. Position 1 appears first.</span>
                         </label>
 
+                        @if (parameter.kind !== 'TEMPLATE') {
+                          <label class="detail-field">
+                            <span class="detail-label">Semantic role</span>
+                            <select class="app-input" [(ngModel)]="parameter.role" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()">
+                              @for (role of parameterRoles; track role) {
+                                <option [ngValue]="role">{{ role || 'None' }}</option>
+                              }
+                            </select>
+                          </label>
+                        }
+
                         <label class="detail-field">
                           <span class="detail-label">Required</span>
                           <span class="parameter-switch-control">

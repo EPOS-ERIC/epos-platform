@@ -38,6 +38,7 @@ export class WebServiceParametersComponent {
   protected readonly parameterPageSize = 10;
   protected readonly parameterKinds: readonly ParameterFormKind[] = ['STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME', 'TEMPLATE'];
   protected readonly parameterLocations = ['PATH', 'QUERY', 'HEADER'] as const;
+  protected readonly parameterRoles = ['', 'FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT'] as const;
   protected addParameterDialogOpen = false;
   protected selectedParameterKind: ParameterFormKind | '' = '';
   protected parameterKindRequired = false;
@@ -353,6 +354,7 @@ export class WebServiceParametersComponent {
       property: '',
       required: false,
       location: 'QUERY' as const,
+      role: '' as const,
       explode: false,
       readOnly: false
     };

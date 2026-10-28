@@ -91,20 +91,23 @@ export class DistributionComponent {
       webService: {
         name: '',
         description: '',
-        templateUrl: '',
-        method: 'GET',
-        type: 'DYNAMIC',
         visibleOn: [],
-        format: '',
-        bodyContentType: '',
-        bodyTemplate: '',
-        bodyParameters: [],
         documentation: { title: '', description: '', uri: '' },
         provider: { id: '', name: '' },
         contactPoints: [],
         spatialCoverage: null,
         temporalCoverage: { start: '', end: '' },
-        parameters: []
+        configuration: {
+          type: 'HTTP',
+          templateUrl: '',
+          method: 'GET',
+          format: '',
+          bodyContentType: '',
+          bodyTemplate: '',
+          bodyRequired: true,
+          bodyParameters: [],
+          parameters: []
+        }
       }
     };
   }

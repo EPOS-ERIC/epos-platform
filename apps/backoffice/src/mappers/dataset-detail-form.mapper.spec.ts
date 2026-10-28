@@ -1,4 +1,4 @@
-import type { DatasetResourceMetadata } from '../../generated/backofficeSchemas';
+import type { DatasetResourceMetadata, WebServiceConfiguration } from '../../generated/backofficeSchemas';
 import { describe, expect, it } from 'vitest';
 import type {
   DatasetDetailForm,
@@ -39,38 +39,42 @@ function datasetMetadata(): DatasetResourceMetadata {
         type: WEB_SERVICE_TYPE,
         issued: null,
         modified: 'invalid-date',
+        available_formats: [],
         web_service: {
           id: 'service-id',
           name: 'Service',
           description: null,
-          template_url: 'https://example.test/{value}',
-          method: 'POST',
-          type: 'DYNAMIC',
           visible_on: ['GRAPH', 'MAP'],
-          format: 'application/json',
-          body_content_type: 'application/json',
-          body_template: '{"when":"{when}"}',
           provider: { id: 'provider-id', name: 'Provider' },
           documentation: { title: null, description: null, uri: 'https://example.test/docs' },
           contact_points: ['contact-id'],
           spatial_coverage: 'POINT (12.5 41.9)',
           temporal_coverage: { start: 'invalid-start', end: null },
-          body_parameters: [
-            {
-              kind: 'DATETIME',
-              position: 12,
-              name: 'when',
-              label: 'When',
-              description: null,
-              required: true,
-              read_only: false,
-              minimum: '2025-01-01T00:00:00Z',
-              maximum: null,
-              default: '2026-01-01T00:00:00Z',
-              layout: '2006-01-02',
-            },
-          ],
-          parameters: [
+          configuration: {
+            type: 'HTTP',
+            template_url: 'https://example.test/{value}',
+            method: 'POST',
+            format: 'application/json',
+            body_required: false,
+            body_content_type: 'application/json',
+            body_template: '{"when":"{when}"}',
+            body_parameters: [
+              {
+                id: 'body-parameter-id',
+                kind: 'DATETIME',
+                position: 12,
+                name: 'when',
+                label: 'When',
+                description: null,
+                required: true,
+                read_only: false,
+                minimum: '2025-01-01T00:00:00Z',
+                maximum: null,
+                default: '2026-01-01T00:00:00Z',
+                layout: '2006-01-02',
+              },
+            ],
+            parameters: [
             {
               id: 'parameter-id',
               kind: 'FLOAT',
@@ -104,6 +108,7 @@ function datasetMetadata(): DatasetResourceMetadata {
               template: '{code}:{enabled}',
               parameters: [
                 {
+                  id: 'code-parameter-id',
                   kind: 'STRING',
                   position: 4,
                   name: 'code',
@@ -116,6 +121,7 @@ function datasetMetadata(): DatasetResourceMetadata {
                   pattern: '[A-Z]',
                 },
                 {
+                  id: 'enabled-parameter-id',
                   kind: 'BOOLEAN',
                   position: 5,
                   name: 'enabled',
@@ -126,7 +132,8 @@ function datasetMetadata(): DatasetResourceMetadata {
                 },
               ],
             },
-          ],
+            ],
+          },
         },
       },
     ],
@@ -221,20 +228,23 @@ function formWithParameters(
         webService: {
           name: 'Service',
           description: '',
-          templateUrl: 'https://example.test/{value}',
-          method: 'GET',
-          type: 'DYNAMIC',
           visibleOn: [],
-          format: 'application/json',
-          bodyContentType: '',
-          bodyTemplate: '',
-          bodyParameters,
           documentation: { title: '', description: '', uri: 'https://example.test/docs' },
           provider: { id: '', name: '' },
           contactPoints: [],
           spatialCoverage: null,
           temporalCoverage: { start: '', end: '' },
-          parameters,
+          configuration: {
+            type: 'HTTP',
+            templateUrl: 'https://example.test/{value}',
+            method: 'GET',
+            format: 'application/json',
+            bodyContentType: '',
+            bodyTemplate: '',
+            bodyRequired: true,
+            bodyParameters,
+            parameters,
+          },
         },
       },
     ],
@@ -261,13 +271,15 @@ describe('toDatasetDetailForm', () => {
       modified: 'invalid-date',
       webService: {
         description: '',
-        method: 'POST',
-        type: 'DYNAMIC',
         visibleOn: ['GRAPH', 'MAP'],
-        bodyContentType: 'application/json',
-        bodyTemplate: '{"when":"{when}"}',
         documentation: { title: '', description: '', uri: 'https://example.test/docs' },
-        bodyParameters: [
+        configuration: {
+          type: 'HTTP',
+          method: 'POST',
+          bodyRequired: false,
+          bodyContentType: 'application/json',
+          bodyTemplate: '{"when":"{when}"}',
+          bodyParameters: [
           {
             kind: 'DATETIME',
             position: 12,
@@ -277,7 +289,7 @@ describe('toDatasetDetailForm', () => {
             layout: '2006-01-02',
           },
         ],
-        parameters: [
+          parameters: [
           {
             kind: 'FLOAT',
             id: 'parameter-id',
@@ -300,7 +312,8 @@ describe('toDatasetDetailForm', () => {
               { kind: 'BOOLEAN', name: 'enabled', defaultValue: false },
             ],
           },
-        ],
+          ],
+        },
       },
     });
   });
@@ -325,9 +338,11 @@ describe('toDatasetDetailForm', () => {
     metadata.providers = [];
     const distribution = metadata.distributions[0];
     if (distribution.type === WEB_SERVICE_TYPE) {
-      distribution.web_service.parameters = [];
       distribution.web_service.visible_on = null;
-      distribution.web_service.body_parameters = undefined;
+      if (distribution.web_service.configuration.type === 'HTTP') {
+        distribution.web_service.configuration.parameters = [];
+        distribution.web_service.configuration.body_parameters = undefined;
+      }
     }
 
     const form = toDatasetDetailForm(metadata);
@@ -337,17 +352,19 @@ describe('toDatasetDetailForm', () => {
     expect(form.distributions[0]).toMatchObject({
       webService: {
         visibleOn: [],
-        bodyParameters: [],
-        parameters: [
-          {
-            kind: 'STRING',
-            name: '',
-            label: '',
-            location: 'QUERY',
-            multipleValues: false,
-            defaultValue: null,
-          },
-        ],
+        configuration: {
+          bodyParameters: [],
+          parameters: [
+            {
+              kind: 'STRING',
+              name: '',
+              label: '',
+              location: 'QUERY',
+              multipleValues: false,
+              defaultValue: null,
+            },
+          ],
+        },
       },
     });
   });
@@ -363,12 +380,14 @@ describe('toDatasetSaveRequest', () => {
       web_service: {
         name: 'Service',
         description: undefined,
-        method: 'POST',
-        type: 'DYNAMIC',
         visible_on: ['GRAPH', 'MAP'],
-        body_content_type: 'application/json',
-        body_template: '{"when":"{when}"}',
-        body_parameters: [
+        configuration: {
+          method: 'POST',
+          type: 'HTTP',
+          body_required: false,
+          body_content_type: 'application/json',
+          body_template: '{"when":"{when}"}',
+          body_parameters: [
           {
             kind: 'DATETIME',
             position: 0,
@@ -378,7 +397,7 @@ describe('toDatasetSaveRequest', () => {
             layout: '2006-01-02',
           },
         ],
-        parameters: [
+          parameters: [
           {
             kind: 'FLOAT',
             position: 0,
@@ -400,9 +419,60 @@ describe('toDatasetSaveRequest', () => {
               { kind: 'BOOLEAN', position: 1, default: false },
             ],
           },
-        ],
+          ],
+        },
       },
     });
+  });
+
+  it('roundtrips WFS, WMS, and WMTS configurations', () => {
+    const configurations: WebServiceConfiguration[] = [
+      {
+        type: 'WFS',
+        get_feature_template_url: 'https://example.test/wfs/{featureType}',
+        version: '2.0.0',
+        feature_types: ['stations'],
+        default_feature_type: 'stations',
+        output_formats: ['application/geo+json'],
+        default_output_format: 'application/geo+json',
+        result_limit: 500,
+        result_limit_editable: true,
+        parameters: [],
+      },
+      {
+        type: 'WMS',
+        capabilities_url: 'https://example.test/wms?service=WMS&request=GetCapabilities',
+        default_layer: 'stations',
+        layers: [{ name: 'stations', default_style: '', styles: [''] }],
+        transparency_editable: true,
+        default_transparency: false,
+        get_map_parameters: [],
+        get_feature_info_parameters: [],
+      },
+      {
+        type: 'WMTS',
+        capabilities_url: 'https://example.test/wmts/capabilities.xml',
+        default_layer: 'stations',
+        layers: [{ name: 'stations', default_style: 'standard', styles: ['standard'] }],
+        get_tile_parameters: [],
+        get_feature_info_parameters: [],
+      },
+    ];
+
+    for (const configuration of configurations) {
+      const metadata = datasetMetadata();
+      const distribution = metadata.distributions[0];
+      if (distribution.type !== WEB_SERVICE_TYPE) throw new Error('Expected web service');
+      distribution.web_service.configuration = configuration;
+
+      const form = toDatasetDetailForm(metadata);
+      const requestDistribution = toDatasetSaveRequest(form, 1, metadata).metadata.distributions?.[0];
+      if (!requestDistribution || requestDistribution.type !== WEB_SERVICE_TYPE) {
+        throw new Error('Expected web service draft');
+      }
+
+      expect(requestDistribution.web_service.configuration).toEqual(configuration);
+    }
   });
 
   it('serializes blank optional strings and empty visibleOn as undefined', () => {
@@ -413,8 +483,9 @@ describe('toDatasetSaveRequest', () => {
       form.distributions[0].kind === 'web-service' ? form.distributions[0].webService : undefined;
     if (!webService) throw new Error('Expected a web service');
     webService.description = ' ';
-    webService.bodyContentType = '';
-    webService.bodyTemplate = '   ';
+    if (webService.configuration.type !== 'HTTP') throw new Error('Expected HTTP configuration');
+    webService.configuration.bodyContentType = '';
+    webService.configuration.bodyTemplate = '   ';
 
     const request = toDatasetSaveRequest(form, 1, datasetMetadata());
     const distribution = request.metadata.distributions?.[0];
@@ -425,9 +496,11 @@ describe('toDatasetSaveRequest', () => {
       throw new Error('Expected web service draft');
     expect(distribution.web_service.description).toBeUndefined();
     expect(distribution.web_service.visible_on).toBeUndefined();
-    expect(distribution.web_service.body_content_type).toBeUndefined();
-    expect(distribution.web_service.body_template).toBeUndefined();
-    const stringDraft = distribution.web_service.parameters?.[0];
+    if (distribution.web_service.configuration.type !== 'HTTP')
+      throw new Error('Expected HTTP configuration');
+    expect(distribution.web_service.configuration.body_content_type).toBeUndefined();
+    expect(distribution.web_service.configuration.body_template).toBeUndefined();
+    const stringDraft = distribution.web_service.configuration.parameters?.[0];
     if (!stringDraft || stringDraft.kind !== 'STRING') throw new Error('Expected string parameter');
     expect(stringDraft.enum).toBeUndefined();
   });
@@ -478,16 +551,18 @@ describe('toDatasetSaveRequest', () => {
 
     expect(request.metadata.distributions?.[0]).toMatchObject({
       web_service: {
-        parameters: [
-          {
-            kind: 'FLOAT',
-            position: 0,
-            minimum: 1.5,
-            maximum: null,
-            default: 2.75,
-            enum: [{ value: 3.5, label: 'Three and a half' }, { value: 4.5, label: undefined }],
-          },
-        ],
+        configuration: {
+          parameters: [
+            {
+              kind: 'FLOAT',
+              position: 0,
+              minimum: 1.5,
+              maximum: null,
+              default: 2.75,
+              enum: [{ value: 3.5, label: 'Three and a half' }, { value: 4.5, label: undefined }],
+            },
+          ],
+        },
       },
     });
   });
@@ -506,10 +581,12 @@ describe('distributionValidationError', () => {
     expect(distributionValidationError(form)).toBe('Distribution 1: web service name is required.');
 
     form.distributions[0].webService.name = 'API';
-    form.distributions[0].webService.templateUrl = '';
+    const configuration = form.distributions[0].webService.configuration;
+    if (configuration.type !== 'HTTP') throw new Error('Expected HTTP configuration');
+    configuration.templateUrl = '';
     expect(distributionValidationError(form)).toBe('Distribution 1: web service template URL is required.');
-    form.distributions[0].webService.templateUrl = 'https://example.test';
-    form.distributions[0].webService.format = '';
+    configuration.templateUrl = 'https://example.test';
+    configuration.format = '';
     expect(distributionValidationError(form)).toBe('Distribution 1: web service format is required.');
   });
 
@@ -612,12 +689,14 @@ describe('dataset validation helpers', () => {
     const distribution = form.distributions[0];
     if (distribution.kind !== 'web-service') throw new Error('Expected a web service distribution');
 
-    distribution.webService.bodyContentType = 'application/json';
+    const configuration = distribution.webService.configuration;
+    if (configuration.type !== 'HTTP') throw new Error('Expected HTTP configuration');
+    configuration.bodyContentType = 'application/json';
     expect(hasIncompleteWebServiceBody(form)).toBe(true);
     expect(hasBodyOnUnsupportedMethod(form)).toBe(true);
 
-    distribution.webService.method = 'POST';
-    distribution.webService.bodyTemplate = '{}';
+    configuration.method = 'POST';
+    configuration.bodyTemplate = '{}';
     expect(hasIncompleteWebServiceBody(form)).toBe(false);
     expect(hasBodyOnUnsupportedMethod(form)).toBe(false);
   });
