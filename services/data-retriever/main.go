@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log/slog"
 	"os"
@@ -16,7 +17,15 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/upstream"
 )
 
+var version = "dev"
+
 func main() {
+	showVersion := flag.Bool("version", false, "print version and exit")
+	flag.Parse()
+	if *showVersion {
+		fmt.Printf("data-retriever version %s\n", version)
+		return
+	}
 	log := logging.New("data-retriever").With("service", "data-retriever")
 	if err := run(log); err != nil {
 		log.Error("data-retriever stopped", "error", err)

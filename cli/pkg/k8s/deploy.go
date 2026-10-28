@@ -53,7 +53,6 @@ func Deploy(opts DeployOpts) (*Env, error) {
 		return nil, fmt.Errorf("failed to build helm values from config: %w", err)
 	}
 
-
 	settings := cli.New()
 	settings.KubeContext = opts.Context
 	settings.SetNamespace(opts.Config.Name)

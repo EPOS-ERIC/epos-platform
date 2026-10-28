@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -47,7 +49,15 @@ type viewData struct {
 	Continue  string
 }
 
+var version = "dev"
+
 func main() {
+	showVersion := flag.Bool("version", false, "print version and exit")
+	flag.Parse()
+	if *showVersion {
+		fmt.Printf("oss-aai-service version %s\n", version)
+		return
+	}
 	store, err := newLocalStore(filepath.Join("data", "auth.db"))
 	if err != nil {
 		log.Fatalf("init store: %v", err)

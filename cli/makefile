@@ -1,16 +1,12 @@
-BIN=epos-cli
+BIN = epos-cli
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-GOOS?=$(shell go env GOOS)
-GOARCH?=$(shell go env GOARCH)
-EXT?=
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+EXT ?=
 PREFIX ?= /usr/local
 
-LDFLAGS=-s -w -X github.com/EPOS-ERIC/epos-platform/cli/common.Version=$(VERSION)
-BUILDFLAGS=-trimpath
-
-.DEFAULT_GOAL := check
-
-check: lint helm-lint test 
+BUILDFLAGS = -trimpath
+LDFLAGS = -s -w -X github.com/EPOS-ERIC/epos-platform/cli/common.Version=$(VERSION)
 
 build: generate
 	CGO_ENABLED=0 go build $(BUILDFLAGS) -ldflags "$(LDFLAGS)" -o $(BIN) .
@@ -33,7 +29,7 @@ generate:
 fmt:
 	golangci-lint fmt
 
-lint: fmt
+lint: helm-lint fmt
 	golangci-lint run ./...
 
 vet:
@@ -61,4 +57,4 @@ run: clean build
 helm-lint:
 	helm lint ./pkg/k8s/config/helm
 
-.PHONY: build build-release clean generate fmt lint vet test test-race test-integration test-all install helm-lint
+.PHONY: build build-release install clean generate fmt lint vet test test-race test-integration test-all debug run helm-lint
