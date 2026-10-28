@@ -1,0 +1,169 @@
+{{- define "epos.fullname" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "epos.name" -}}
+{{- if .Values.nameOverride -}}
+{{- .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- .Chart.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "epos.labels" -}}
+app.kubernetes.io/name: {{ include "epos.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- if .Chart.Version }}
+helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version }}
+{{- end }}
+{{- end -}}
+
+{{- define "epos.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "epos.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+
+{{- define "epos.image_pull_secrets" -}}
+{{- if .Values.image_pull_secrets.enabled }}
+imagePullSecrets:
+  - name: epos-registry-secret
+{{- end }}
+{{- end -}}
+
+{{- define "epos.image_pull_policy" -}}
+imagePullPolicy: {{ .Values.image_pull_policy | default "IfNotPresent" }}
+{{- end -}}
+
+{{- define "epos.nodeSelector" -}}
+{{- if .Values.nodeSelector }}
+nodeSelector:
+  {{- .Values.nodeSelector | toYaml | nindent 2 }}
+{{- end }}
+{{- end -}}
+
+{{- define "epos.tolerations" -}}
+{{- if .Values.tolerations }}
+tolerations:
+  {{- .Values.tolerations | toYaml | nindent 2 }}
+{{- end }}
+{{- end -}}
+
+{{- define "epos.affinity" -}}
+{{- if .Values.affinity }}
+affinity:
+  {{- .Values.affinity | toYaml | nindent 2 }}
+{{- end }}
+{{- end -}}
+
+{{- define "epos.converterRoutineAffinity" -}}
+{{- $affinity := deepCopy (default (dict) .Values.affinity) -}}
+{{- $podAffinity := deepCopy (default (dict) (get $affinity "podAffinity")) -}}
+{{- $requiredRules := default (list) (get $podAffinity "requiredDuringSchedulingIgnoredDuringExecution") -}}
+{{- $converterServiceRule := dict "labelSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" (include "epos.name" .) "app.kubernetes.io/instance" .Release.Name "app.kubernetes.io/component" "converter-service")) "topologyKey" "kubernetes.io/hostname" -}}
+{{- $_ := set $podAffinity "requiredDuringSchedulingIgnoredDuringExecution" (append $requiredRules $converterServiceRule) -}}
+{{- $_ := set $affinity "podAffinity" $podAffinity -}}
+affinity:
+  {{- $affinity | toYaml | nindent 2 }}
+{{- end -}}
+
+{{- define "epos.securityContext" -}}
+{{- if .Values.securityContext }}
+securityContext:
+  {{- .Values.securityContext | toYaml | nindent 2 }}
+{{- end }}
+{{- end -}}
+
+{{- define "epos.postgresqlConnectionString" -}}
+jdbc:postgresql://{{ default .Values.components.metadata_database.host }}:{{ .Values.components.metadata_database.port  }}/{{ .Values.components.metadata_database.db_name }}?user={{ .Values.components.metadata_database.user }}&password={{ .Values.components.metadata_database.password }}
+{{- end -}}
+
+{{- define "epos.waitForServiceInitContainer" -}}
+- name: wait-for-{{ .name }}
+  image: busybox:latest
+  command:
+  - /bin/sh
+  - -c
+  - |-
+    until nc -z {{ .host | default .name }} {{ .port }}; do
+      sleep 1;
+    done
+{{- end -}}
+
+{{- define "epos.defaultAAIAuthRootURL" -}}
+{{- if .Values.url_prefix_namespace -}}
+{{- printf "%s://%s/%s/aai" .Values.protocol .Values.domain .Release.Namespace -}}
+{{- else -}}
+{{- printf "%s://%s/aai" .Values.protocol .Values.domain -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "epos.backofficeBasePath" -}}
+{{- if .Values.url_prefix_namespace -}}
+{{- printf "/%s%s" .Release.Namespace .Values.components.backoffice.gui.base_url -}}
+{{- else -}}
+{{- .Values.components.backoffice.gui.base_url -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "epos.backofficeURL" -}}
+{{- printf "%s://%s%s" .Values.protocol .Values.domain (include "epos.backofficeBasePath" .) -}}
+{{- end -}}
+
+{{- define "epos.platformBasePath" -}}
+{{- if .Values.url_prefix_namespace -}}
+{{- printf "/%s%s" .Release.Namespace .Values.components.platform_gui.base_url -}}
+{{- else -}}
+{{- .Values.components.platform_gui.base_url -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "epos.platformURL" -}}
+{{- printf "%s://%s%s" .Values.protocol .Values.domain (include "epos.platformBasePath" .) -}}
+{{- end -}}
+
+{{- define "epos.aaiAuthRootURL" -}}
+{{- $endpoint := .Values.components.gateway.aai.service_endpoint | default "" | trim | trimSuffix "/" | trimSuffix "/oauth2/userinfo" -}}
+{{- if $endpoint -}}
+{{- $endpoint -}}
+{{- else -}}
+{{- include "epos.defaultAAIAuthRootURL" . -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "epos.gatewayAAIServiceEndpoint" -}}
+{{- if .Values.components.gateway.aai.enabled -}}
+{{- $gatewayEndpoint := .Values.components.gateway.aai.gateway_endpoint | default "" | trim | trimSuffix "/" | trimSuffix "/oauth2/userinfo" -}}
+{{- if $gatewayEndpoint -}}
+{{- $gatewayEndpoint -}}
+{{- else -}}
+{{- $serviceEndpoint := .Values.components.gateway.aai.service_endpoint | default "" | trim | trimSuffix "/" | trimSuffix "/oauth2/userinfo" -}}
+{{- if $serviceEndpoint -}}
+{{- $serviceEndpoint -}}
+{{- else if .Values.components.aai_service.enabled -}}
+http://aai-service:8080
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "epos.gatewayAAIUserinfoEndpoint" -}}
+{{- if .Values.components.gateway.aai.enabled -}}
+{{- $serviceEndpoint := include "epos.gatewayAAIServiceEndpoint" . | trim | trimSuffix "/" -}}
+{{- if $serviceEndpoint -}}
+{{- if regexMatch "/userinfo$" $serviceEndpoint -}}
+{{- $serviceEndpoint -}}
+{{- else -}}
+{{- printf "%s/oauth2/userinfo" $serviceEndpoint -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}

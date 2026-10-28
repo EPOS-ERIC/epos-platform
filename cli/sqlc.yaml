@@ -1,0 +1,15 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    queries: "./db/queries.sql"
+    schema: "./db/migrations/*.sql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "db/sqlc"
+        emit_pointers_for_null_types: true
+overrides:
+  go:
+    rename:
+      kubernete: Kubernetes
+      k8: K8s

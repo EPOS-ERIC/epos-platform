@@ -1,0 +1,291 @@
+package config
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/EPOS-ERIC/epos-platform/cli/common"
+)
+
+// EnvConfig represents the full Docker environment configuration schema.
+type EnvConfig struct {
+	Name       string        `yaml:"name"`
+	Domain     string        `yaml:"domain"`
+	Protocol   string        `yaml:"protocol"`
+	Components Components    `yaml:"components"`
+	Monitoring Monitoring    `yaml:"monitoring"`
+	Images     common.Images `yaml:"images"`
+}
+
+// PlatformGUI configures the platform GUI endpoint.
+type PlatformGUI struct {
+	BaseURL string `yaml:"base_url"`
+	Port    int    `yaml:"port"`
+}
+
+// AAI configures AAI integration for gateway services.
+type AAI struct {
+	Enabled         bool   `yaml:"enabled"`
+	ServiceEndpoint string `yaml:"service_endpoint"`
+	GatewayEndpoint string `yaml:"gateway_endpoint"`
+}
+
+// SwaggerPage configures API documentation metadata.
+type SwaggerPage struct {
+	Tile         string `yaml:"tile"`
+	Version      string `yaml:"version"`
+	ContactEmail string `yaml:"contact_email"`
+}
+
+// Gateway configures gateway URLs, port, and auth integrations.
+type Gateway struct {
+	AAI         AAI         `yaml:"aai"`
+	BaseURL     string      `yaml:"base_url"`
+	SwaggerPage SwaggerPage `yaml:"swagger_page"`
+	Port        int         `yaml:"port"`
+}
+
+// GUI configures a generic GUI service endpoint.
+type GUI struct {
+	BaseURL string `yaml:"base_url"`
+	Port    int    `yaml:"port"`
+}
+
+// Auth configures auth switches for a service.
+type Auth struct {
+	Enabled   bool `yaml:"enabled"`
+	OnlyAdmin bool `yaml:"only_admin"`
+}
+
+// Service defines common service settings.
+type Service struct {
+	Auth Auth `yaml:"auth"`
+}
+
+// Backoffice configures backoffice UI and service behavior.
+type Backoffice struct {
+	Enabled bool    `yaml:"enabled"`
+	GUI     GUI     `yaml:"gui"`
+	Service Service `yaml:"service"`
+}
+
+// Converter configures the converter service.
+type Converter struct {
+	Enabled bool `yaml:"enabled"`
+	Auth    Auth `yaml:"auth"`
+}
+
+// ResourcesService configures the resources service.
+type ResourcesService struct {
+	Auth        Auth `yaml:"auth"`
+	CacheTTL    int  `yaml:"cache_ttl"`
+	CacheFacets int  `yaml:"cache_facets"`
+}
+
+// IngestorService configures the ingestor service.
+type IngestorService struct {
+	Auth Auth   `yaml:"auth"`
+	Hash string `yaml:"hash"`
+}
+
+// ExternalAccessService configures the external access service.
+type ExternalAccessService struct {
+	Auth Auth `yaml:"auth"`
+}
+
+// SharingService configures the sharing service.
+type SharingService struct {
+	Enabled bool `yaml:"enabled"`
+	Auth    Auth `yaml:"auth"`
+}
+
+// Rabbitmq configures RabbitMQ connection details.
+type Rabbitmq struct {
+	Host     string `yaml:"host"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Vhost    string `yaml:"vhost"`
+}
+
+// MetadataDatabase configures metadata database connection and pooling.
+type MetadataDatabase struct {
+	User                   string `yaml:"user"`
+	Password               string `yaml:"password"`
+	Host                   string `yaml:"host"`
+	Port                   int    `yaml:"port"`
+	PublishedPort          int    `yaml:"published_port"`
+	DBName                 string `yaml:"db_name"`
+	ConnectionPoolInitSize int    `yaml:"connection_pool_init_size"`
+	ConnectionPoolMinSize  int    `yaml:"connection_pool_min_size"`
+	ConnectionPoolMaxSize  int    `yaml:"connection_pool_max_size"`
+}
+
+// EmailSenderService configures email sender service settings.
+type EmailSenderService struct {
+	Enabled         bool   `yaml:"enabled"`
+	Auth            Auth   `yaml:"auth"`
+	EnvironmentType string `yaml:"environment_type"`
+	Sender          string `yaml:"sender"`
+	SenderName      string `yaml:"sender_name"`
+	MailType        string `yaml:"mail_type"`
+	SenderDomain    string `yaml:"sender_domain"`
+	MailHost        string `yaml:"mail_host"`
+	MailUser        string `yaml:"mail_user"`
+	MailPassword    string `yaml:"mail_password"`
+	DevEmails       string `yaml:"dev_emails"`
+	MailAPIURL      string `yaml:"mail_api_url"`
+	MailAPIKey      string `yaml:"mail_api_key"`
+}
+
+type AAIService struct {
+	Enabled  bool   `yaml:"enabled"`
+	Port     int    `yaml:"port"`
+	Name     string `yaml:"name"`
+	Surname  string `yaml:"surname"`
+	Email    string `yaml:"email"`
+	Password string `yaml:"password"`
+}
+
+// Components groups all service-level component settings.
+type Components struct {
+	PlatformGUI           PlatformGUI           `yaml:"platform_gui"`
+	Gateway               Gateway               `yaml:"gateway"`
+	Backoffice            Backoffice            `yaml:"backoffice"`
+	Converter             Converter             `yaml:"converter"`
+	ResourcesService      ResourcesService      `yaml:"resources_service"`
+	IngestorService       IngestorService       `yaml:"ingestor_service"`
+	ExternalAccessService ExternalAccessService `yaml:"external_access_service"`
+	SharingService        SharingService        `yaml:"sharing_service"`
+	Rabbitmq              Rabbitmq              `yaml:"rabbitmq"`
+	MetadataDatabase      MetadataDatabase      `yaml:"metadata_database"`
+	EmailSenderService    EmailSenderService    `yaml:"email_sender_service"`
+	AAIService            AAIService            `yaml:"aai_service"`
+}
+
+// Monitoring configures optional monitoring integration.
+type Monitoring struct {
+	Enabled     bool   `yaml:"enabled"`
+	URL         string `yaml:"url"`
+	User        string `yaml:"user"`
+	Password    string `yaml:"password"`
+	SecurityKey string `yaml:"security_key"`
+}
+
+// ActiveImages returns the ordered list of configured images required by enabled services.
+func (e *EnvConfig) ActiveImages() []common.NamedImage {
+	images := []common.NamedImage{
+		{Name: "Rabbitmq", Ref: e.Images.RabbitmqImage},
+		{Name: "Platform UI", Ref: e.Images.DataportalImage},
+		{Name: "Gateway", Ref: e.Images.GatewayImage},
+		{Name: "Metadata Database", Ref: e.Images.MetadataDatabaseImage},
+		{Name: "Resources Service", Ref: e.Images.ResourcesServiceImage},
+		{Name: "Ingestor Service", Ref: e.Images.IngestorServiceImage},
+		{Name: "External Access Service", Ref: e.Images.ExternalAccessImage},
+	}
+
+	if e.Components.Converter.Enabled {
+		images = append(images,
+			common.NamedImage{Name: "Converter Service", Ref: e.Images.ConverterServiceImage},
+			common.NamedImage{Name: "Converter Routine", Ref: e.Images.ConverterRoutineImage},
+		)
+	}
+
+	if e.Components.Backoffice.Enabled {
+		images = append(images,
+			common.NamedImage{Name: "Backoffice Service", Ref: e.Images.BackofficeServiceImage},
+			common.NamedImage{Name: "Backoffice UI", Ref: e.Images.BackofficeUIImage},
+		)
+	}
+
+	if e.Components.EmailSenderService.Enabled {
+		images = append(images, common.NamedImage{Name: "Email Sender Service", Ref: e.Images.EmailSenderServiceImage})
+	}
+
+	if e.Components.SharingService.Enabled {
+		images = append(images, common.NamedImage{Name: "Sharing Service", Ref: e.Images.SharingServiceImage})
+	}
+
+	if e.Components.AAIService.Enabled {
+		images = append(images, common.NamedImage{Name: "AAI Service", Ref: e.Images.AAIServiceImage})
+	}
+
+	return images
+}
+
+// UsingDefaultPorts reports whether configured ports still match defaults.
+func (e *EnvConfig) UsingDefaultPorts() bool {
+	defaultConfig := GetDefaultConfig()
+
+	if e.Components.PlatformGUI.Port != defaultConfig.Components.PlatformGUI.Port {
+		return false
+	}
+	if e.Components.Gateway.Port != defaultConfig.Components.Gateway.Port {
+		return false
+	}
+	if e.Components.Backoffice.Enabled {
+		if e.Components.Backoffice.GUI.Port != defaultConfig.Components.Backoffice.GUI.Port {
+			return false
+		}
+	}
+	return true
+}
+
+// AAIAuthRootURL returns the externally reachable auth root URL used by UIs.
+func (e *EnvConfig) AAIAuthRootURL() string {
+	if !e.Components.Gateway.AAI.Enabled {
+		return ""
+	}
+
+	endpoint := common.TrimAuthURL(e.Components.Gateway.AAI.ServiceEndpoint)
+
+	if endpoint != "" {
+		return endpoint
+	}
+
+	if e.Components.AAIService.Enabled {
+		return fmt.Sprintf("%s://%s:%d", e.Protocol, e.Domain, e.Components.AAIService.Port)
+	}
+
+	return ""
+}
+
+// AAIServiceEndpoint returns gateway-reachable AAI service endpoint.
+func (e *EnvConfig) AAIServiceEndpoint() string {
+	if !e.Components.Gateway.AAI.Enabled {
+		return ""
+	}
+
+	gatewayEndpoint := common.TrimAuthURL(e.Components.Gateway.AAI.GatewayEndpoint)
+
+	if gatewayEndpoint != "" {
+		return gatewayEndpoint
+	}
+
+	endpoint := common.TrimAuthURL(e.Components.Gateway.AAI.ServiceEndpoint)
+
+	if endpoint != "" {
+		return endpoint
+	}
+
+	if e.Components.AAIService.Enabled {
+		return "http://aai-service:8080"
+	}
+
+	return ""
+}
+
+// AAIUserinfoEndpoint returns gateway-reachable AAI userinfo endpoint.
+func (e *EnvConfig) AAIUserinfoEndpoint() string {
+	endpoint := strings.TrimSpace(e.AAIServiceEndpoint())
+	endpoint = strings.TrimSuffix(endpoint, "/")
+
+	if endpoint == "" {
+		return ""
+	}
+
+	if strings.HasSuffix(endpoint, "/userinfo") {
+		return endpoint
+	}
+
+	return endpoint + "/oauth2/userinfo"
+}
