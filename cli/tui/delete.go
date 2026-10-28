@@ -19,7 +19,7 @@ func (a *App) showDeleteConfirm() {
 		if k8sContext != "" {
 			message += " in context '" + k8sContext + "'"
 		}
-		message += ".\n\n"
+		message += ", including unrelated resources and persistent volume claims. AAI data may be lost; backing volumes follow the storage reclaim policy.\n\n"
 	}
 	message += DefaultTheme.DestructiveTag("b") + "This action cannot be undone." + "[-]"
 

@@ -20,72 +20,10 @@ type CleanOpts struct {
 	Timeout time.Duration
 }
 
-// Clean runs one-off cleanup jobs in an existing K8s environment and returns refreshed metadata.
+// Clean is not yet implemented for the current Kubernetes stack.
 func Clean(opts CleanOpts) (*Env, error) {
-	if opts.Context == "" {
-		context, err := common.GetCurrentKubeContext()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get current kubectl context: %w", err)
-		}
-
-		opts.Context = context
-
-		display.Debug("using current kubectl context: %s", opts.Context)
-	}
-
-	if err := opts.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid clean parameters: %w", err)
-	}
-
-	display.Step("Cleaning data in environment: %s", opts.Name)
-
-	env, err := GetEnv(opts.Name, opts.Context)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get environment %s: %w", opts.Name, err)
-	}
-
-	display.Debug("loaded environment: %s", env.Name)
-
-	cfg := env.Config
-	cfg.Jobs.Enabled = true
-	cfg.Jobs.InitDB.Enabled = true
-
-	display.Debug("enabled init-db and job execution for clean")
-	display.Debug("rendering chart templates for clean jobs")
-
-	renderedFiles, err := cfg.Render()
-	if err != nil {
-		return nil, fmt.Errorf("failed to render chart templates: %w", err)
-	}
-
-	display.Debug("rendered templates: %d", len(renderedFiles))
-
-	jobs := []struct {
-		name       string
-		template   string
-		errorLabel string
-	}{
-		{name: "init-db-job", template: "templates/init-db-job.yaml", errorLabel: "init-db"},
-	}
-
-	for _, job := range jobs {
-		display.Debug("preparing clean job manifest: %s", job.template)
-
-		manifest, err := getRenderedTemplateBySuffix(renderedFiles, job.template)
-		if err != nil {
-			return nil, fmt.Errorf("failed to prepare %s job manifest: %w", job.errorLabel, err)
-		}
-
-		display.Debug("running clean job: %s", job.name)
-
-		if err := runOneOffJobFromManifest(opts.Context, opts.Name, job.name, manifest, opts.Timeout); err != nil {
-			return nil, fmt.Errorf("failed to run %s clean job: %w", job.errorLabel, err)
-		}
-	}
-
-	display.Done("Cleaned environment: %s", opts.Name)
-
-	return env, nil
+	// TODO: Implement cleanup for the current stack while preserving AAI data.
+	return nil, fmt.Errorf("kubernetes clean is not implemented")
 }
 
 func getRenderedTemplateBySuffix(files map[string]string, suffix string) (string, error) {

@@ -1,22 +1,3 @@
-{{- if .Values.components.converter.enabled }}
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: converter-plugins
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: converter
-spec:
-  accessModes:
-    - {{ default "ReadWriteOnce" .Values.components.converter.access_mode | quote }}
-  {{- if .Values.components.converter.storage_class_name }}
-  storageClassName: {{ .Values.components.converter.storage_class_name | quote }}
-  {{- end }}
-  resources:
-    requests:
-      storage: 1Gi
----
-{{- end }}
 {{- if .Values.components.metadata_database.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim

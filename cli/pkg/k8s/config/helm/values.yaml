@@ -1,284 +1,86 @@
-# Shared hostname/IP where all services are accessible (e.g., epos.example.com)
 domain: "localhost"
-
-# Protocol for accessing services. Must be http or https. If any ingress tls is enabled it must be https
 protocol: "http"
-
-# prefix the generated url for the ingresses with the name of the namespace (the name of the environment)
 url_prefix_namespace: true
-
-# create the namespace to deploy in if it doesn't exist
 create_namespace: true
-
-# Image pull policy for application images and jobs.
 image_pull_policy: "IfNotPresent"
 
 components:
-  platform_gui:
-    # URL path prefix for accessing the platform GUI interface. Must end with a /
+  platform_ui:
     base_url: "/"
-
     tls:
-      # Enable TLS termination on ingress
       enabled: false
-      # Name of an existing Kubernetes TLS secret in the release namespace
       secret_name: ""
-
   gateway:
+    base_url: "/api/v1/"
     aai:
-      # Enable/disable AAI (Authentication and Authorization Infrastructure) integration in the gateway.
-      # When enabled, the gateway will call the configured userinfo endpoint to validate authenticated requests.
-      # This can point to the embedded aai_service below or to an external provider.
-      enabled: false
-      # Base URL of your AAI/identity provider (for example https://auth.example.com).
-      # This is the main auth URL used by the platform login pages. For API auth checks:
-      # - if it already ends with /userinfo, it is used as written
-      # - otherwise /oauth2/userinfo is added automatically
-      # Required when aai.enabled is true and built-in aai_service is disabled.
-      # Leave empty only when you want to use the built-in aai_service.
+      enabled: true
       service_endpoint: ""
-      # Optional override for API auth checks.
-      # Use this when API auth should call a different endpoint than service_endpoint. Leave empty to use service_endpoint.
-      # (for example .../protocol/openid-connect/userinfo).
-      # - if it already ends with /userinfo, it is used as written
-      # - otherwise /oauth2/userinfo is added automatically
       gateway_endpoint: ""
-
-    # Base URL path for the API gateway. Must start with / and end with /api/v1
-    base_url: "/api/v1/" # it needs to end with /api/v1
-
-    swagger_page:
-      # Title displayed on the API Gateway Swagger documentation page
-      tile: "EPOS API Gateway"
-      # API version shown in Swagger documentation
-      version: "2.0.0"
-      # Contact email displayed in Swagger documentation
-      contact_email: ""
-
     tls:
-      # Enable TLS termination on ingress
       enabled: false
-      # Name of an existing Kubernetes TLS secret in the release namespace
       secret_name: ""
-
   backoffice:
-    # Enable/disable the backoffice module
-    enabled: false
-
+    enabled: true
     gui:
-      # URL path prefix for accessing the backoffice interface. Must start and end with a /
       base_url: "/backoffice/"
-
-    service:
-      auth:
-        # Enable/disable authentication for the backoffice service
-        enabled: false
-        # Restrict backoffice access to admin users only
-        only_admin: false
-
     tls:
-      # Enable TLS termination on ingress
       enabled: false
-      # Name of an existing Kubernetes TLS secret in the release namespace
       secret_name: ""
-
-  converter:
-    # Enable/disable the converter service
-    enabled: false
-    # Optional StorageClass for the converter plugins PVC. Leave empty to use the cluster default.
-    storage_class_name: ""
-    # Access mode for the converter plugins PVC.
-    access_mode: "ReadWriteOnce"
-    security_context:
-      # Enable/disable a pod-level securityContext for converter pods.
-      enabled: false
-      # Group ID applied to mounted volumes so converter containers can read/write shared files.
-      # Used only when security_context.enabled is true.
-      fs_group: 1001
-    auth:
-      # Enable/disable authentication for the converter service
-      enabled: false
-      # Restrict converter api access to admin users only
-      only_admin: false
-
-  resources_service:
-    auth:
-      # Enable/disable authentication for the resources service
-      enabled: false
-      # Restrict resources service access to admin users only
-      only_admin: false
-    # Cache TTL in milliseconds for database data when making searches
-    cache_ttl: 50000
-
-  ingestor_service:
-    auth:
-      # Enable/disable authentication for the ingestor service
-      enabled: false
-      # Restrict ingestor service access to admin users only
-      only_admin: false
-    # Validation hash for the ingestor service
-    hash: "FA9BEB99E4029AD5A6615399E7BBAE21356086B3"
-
-  external_access_service:
-    auth:
-      # Enable/disable authentication for the external access service
-      enabled: false
-      # Restrict external access service to admin users only
-      only_admin: false
-
-  sharing_service:
-    # Enable/disable the sharing service (allows sharing user configurations via URL)
-    enabled: false
-    auth:
-      # Enable/disable authentication for the sharing service
-      enabled: false
-      # Restrict sharing service access to admin users only
-      only_admin: false
-
-  rabbitmq:
-    # Enable/disable deployment of the in-cluster RabbitMQ component. If set to false the system will assume you have set up an external rabbitmq broker
-    enabled: true
-    # RabbitMQ server hostname or IP address
-    host: "rabbitmq"
-    # RabbitMQ authentication username
-    username: "rabbitmq-user"
-    # RabbitMQ authentication password
-    password: "changeme"
-    # RabbitMQ virtual host for message isolation
-    vhost: "changeme"
-
   metadata_database:
-    # Enable/disable deployment of the in-cluster metadata database. If set to false the system will assume you have set up an external database
     enabled: true
-    # Database user for authentication
-    user: "metadatauser"
-    # Database password for authentication
-    password: "changeme"
-    # Database server hostname or IP address
     host: "metadata-database"
-    # Database server port number
     port: 5432
-    # Name of the database to connect to
-    db_name: "cerif"
-    # Initial size of the database connection pool
-    connection_pool_init_size: 5
-    # Minimum number of connections to maintain in the pool
-    connection_pool_min_size: 5
-    # Maximum number of connections allowed in the pool
-    connection_pool_max_size: 15
-
-  email_sender_service:
-    # Enable/disable the email sender service
-    enabled: false
-    auth:
-      # Enable/disable authentication for the email sender service
-      enabled: false
-      # Restrict email sender service access to admin users only
-      only_admin: false
-    # Environment type. Must be development, production, or staging
-    environment_type: "development"
-    # Identifier for the email sender
-    sender: "data-portal"
-    # Display name for the email sender
-    sender_name: "EPOS Platform Opensource"
-    # Email delivery method. Must be API
-    mail_type: "API"
-    # Domain used for sending emails
-    sender_domain: "your.domain.com"
-    # Mail server hostname (for SMTP-based delivery)
-    mail_host: "mail.domain.com"
-    # Mail server authentication username
-    mail_user: "user@email.com"
-    # Mail server authentication password
-    mail_password: "changeme"
-    # Semicolon-separated list of email addresses to receive notifications in development
-    dev_emails: "foo.bar@somewhere.com;change.me@somewhere.com"
-    # API endpoint URL for email service
-    mail_api_url: "https://api.example.email/"
-    # API key for authenticating with the email service
-    mail_api_key: "changeme"
-
+    user: "metadata-lifecycle"
+    password: ""
+    db_name: "metadata-lifecycle"
+  data_retriever_database:
+    enabled: true
+    host: "retriever-db"
+    port: 5432
+    user: "data_retriever"
+    password: ""
+    db_name: "data_retriever"
+  sharing_database:
+    enabled: true
+    host: "sharing-db"
+    port: 5432
+    user: "sharing"
+    password: ""
+    db_name: "sharing"
   aai_service:
-    # Enable/disable the embedded local AAI service container.
-    # This is optional: the gateway can use an external AAI provider with this disabled.
-    # If you enable this service, gateway.aai.enabled must also be enabled.
-    enabled: false
-    # Initial admin user seeded into the embedded AAI service on first startup
+    enabled: true
     name: "EPOS"
     surname: "User"
     email: "epos@epos.eu"
-    password: "epos"
-
+    password: ""
     tls:
-      # Enable TLS termination on ingress
       enabled: false
-      # Name of an existing Kubernetes TLS secret in the release namespace
+      secret_name: ""
+  otel:
+    enabled: false
+    endpoint: ""
+    admin_user: "admin"
+    admin_password: ""
+    tls:
+      enabled: false
       secret_name: ""
 
-jobs:
-  # When false, no job will run.
-  enabled: false
-
-  init_db:
-    # Enable database restore/initialization job during install/upgrade.
-    enabled: true
-    # Full container image (repository + tag) used by the init DB job.
-    image: "ghcr.io/epos-eric/metadata-database/restorejob:latest"
-    # Number of retries before the Job is marked failed.
-    backoff_limit: 3
-    # Max runtime in seconds before Kubernetes terminates the Job.
-    active_deadline_seconds: 60
-
-  # This is not yet implemented
-  plugin_populator:
-    enabled: false
-    image: "epos/epos-plugin-populator"
-    tag: "v0.1.0"
-    hook_weight: "2"
-    backoff_limit: 3
-    active_deadline_seconds: 3600
-
-# Monitoring support is currently partially implemented
-monitoring:
-  # Enable/disable monitoring integration
-  enabled: false
-  # Monitoring service URL
-  url: ""
-  # Monitoring service authentication username
-  user: ""
-  # Monitoring service authentication password
-  password: ""
-  # Security key for AAI authentication
-  security_key: ""
-
-# Configure this section only when pulling images from a private registry.
 image_pull_secrets:
-  # Enable creation of a Kubernetes imagePullSecret for private registries
   enabled: false
-  # Container registry hostname (for example, ghcr.io or index.docker.io)
   registry_server: ""
-  # Username used to authenticate to the container registry
   registry_username: ""
-  # Password or token used to authenticate to the container registry
   registry_password: ""
-
-# cert-manager ClusterIssuer name used in ingress annotations when tls is enabled
 cert_manager_issuer: "letsencrypt"
 
-# Container images used by EPOS services and supporting components.
-# Override tags/repositories to pin versions or use private registries.
 images:
-  rabbitmq_image:             "rabbitmq:3.13.7-management"
-  dataportal_image:           "ghcr.io/epos-eric/epos-gui:latest"
-  gateway_image:              "ghcr.io/epos-eric/epos-api-gateway:latest"
-  metadata_database_image:    "ghcr.io/epos-eric/metadata-database/deploy:latest"
-  resources_service_image:    "ghcr.io/epos-eric/resources-service:latest"
-  ingestor_service_image:     "ghcr.io/epos-eric/ingestor-service:latest"
-  external_access_image:      "ghcr.io/epos-eric/external-access-service:latest"
-  converter_service_image:    "ghcr.io/epos-eric/converter-service-go:latest"
-  converter_routine_image:    "ghcr.io/epos-eric/converter-routine-go:latest"
-  backoffice_service_image:   "ghcr.io/epos-eric/backoffice-service:latest"
-  backoffice_ui_image:        "ghcr.io/epos-eric/epos-backoffice-gui:latest"
-  email_sender_service_image: "ghcr.io/epos-eric/email-sender-service:latest"
-  sharing_service_image:      "ghcr.io/epos-eric/sharing-service:latest"
-  aai_service_image:          "ghcr.io/epos-eric/oss-aai-service:latest"
+  platform_ui: "ghcr.io/epos-eric/epos-platform/platform-legacy:main"
+  backoffice_ui: "ghcr.io/epos-eric/epos-platform/backoffice:main"
+  gateway: "ghcr.io/epos-eric/epos-platform/gateway:main"
+  metadata_lifecycle: "ghcr.io/epos-eric/epos-platform/metadata-lifecycle:main"
+  data_retriever: "ghcr.io/epos-eric/epos-platform/data-retriever:main"
+  sharing_service: "ghcr.io/epos-eric/epos-platform/sharing:main"
+  aai_service: "ghcr.io/epos-eric/epos-platform/oss-aai-service:main"
+  metadata_database: "postgis/postgis:18-3.6-alpine"
+  data_retriever_database: "postgres:18-alpine"
+  sharing_database: "postgres:18-alpine"
+  otel_lgtm: "grafana/otel-lgtm:latest"

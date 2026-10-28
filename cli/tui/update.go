@@ -56,7 +56,7 @@ func (a *App) showUpdateForm() {
 		)
 	} else {
 		fields = append(fields,
-			FormField{Type: "checkbox", Label: "Force (reset namespace)", CheckboxChangedFunc: func(checked bool) { data.force = checked }},
+			FormField{Type: "checkbox", Label: "Force (delete namespace, PVCs, and unrelated resources)", CheckboxChangedFunc: func(checked bool) { data.force = checked }},
 			FormField{Type: "dropdown", Label: "Timeout", Value: defaultK8sTimeoutOption(), Options: k8sTimeoutOptions(), SelectedFunc: func(option string, index int) {
 				data.timeout, _ = time.ParseDuration(option)
 			}},
@@ -117,8 +117,33 @@ func (a *App) handleUpdate(data *updateFormData, isDocker bool) {
 		return
 	}
 
-	data.cleanupConfigSession()
-	a.showUpdateProgress(data, isDocker, dockerCfg, k8sCfg, timeout)
+	start := func() {
+		data.cleanupConfigSession()
+		a.showUpdateProgress(data, isDocker, dockerCfg, k8sCfg, timeout)
+	}
+	if !isDocker && !data.force && k8sCfg != nil {
+		oldEnv, err := k8s.GetEnv(data.name, data.k8sContext)
+		if err != nil {
+			a.ShowError(fmt.Sprintf("Failed to load environment: %v", err))
+			return
+		}
+		if k8s.ManagedDatabaseSettingsChanged(&oldEnv.Config, k8sCfg) {
+			a.ShowConfirmation(ConfirmationOptions{
+				PageName:     "update-db-warning",
+				Title:        " Database settings changed ",
+				Message:      "PostgreSQL does not apply changed username, database name, or password to existing data. Services may fail to connect.",
+				ConfirmLabel: "Update",
+				CancelLabel:  "Cancel",
+				OnConfirm:    start,
+				OnCancel: func() {
+					a.pages.RemovePage("update-db-warning")
+					a.PopFocus()
+				},
+			})
+			return
+		}
+	}
+	start()
 }
 
 // showUpdateProgress displays the update progress with live output.

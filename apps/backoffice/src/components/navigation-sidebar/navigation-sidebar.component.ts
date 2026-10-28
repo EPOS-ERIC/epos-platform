@@ -88,7 +88,7 @@ export class NavigationSidebarComponent {
   }
 
   protected get logoSrc(): string {
-    return '/logo-white.png';
+    return 'logo-white.png';
   }
 
   protected toggleSidebar(): void {

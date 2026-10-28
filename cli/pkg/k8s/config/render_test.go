@@ -15,7 +15,7 @@ const (
 	gatewayAAIKeycloakUserinfo  = "https://login.envri.eu/auth/realms/envri/protocol/openid-connect/userinfo"
 	dataportalTLSSecret         = "dataportal-tls"
 	gatewayTLSSecret            = "gateway-tls"
-	certManagerIssuerAnnotation = "cert-manager.io/cluster-issuer: letsencrypt"
+	certManagerIssuerAnnotation = `cert-manager.io/cluster-issuer: "letsencrypt"`
 )
 
 func TestConfigRender(t *testing.T) {
@@ -27,44 +27,23 @@ func TestConfigRender(t *testing.T) {
 		notContains  map[string][]string
 	}{
 		{
-			name: "default config renders core manifests with optional components disabled",
+			name: "default config renders current stack",
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-default"
 			},
 			wantFiles: []string{
 				"templates/dataportal.yaml",
 				"templates/gateway.yaml",
-				"templates/rabbitmq.yaml",
+				"templates/application-databases.yaml",
 				"templates/metadata-database.yaml",
-				"templates/resources-service.yaml",
+				"templates/application-services.yaml",
 			},
 			wantContains: map[string][]string{
-				"templates/dataportal.yaml":        {"name: dataportal", `AUTH_ROOT_URL: "http://localhost/test-default/aai"`},
-				"templates/gateway.yaml":           {"name: gateway", `IS_AAI_ENABLED: "false"`, "imagePullPolicy: IfNotPresent"},
-				"templates/rabbitmq.yaml":          {"name: rabbitmq"},
-				"templates/metadata-database.yaml": {"name: metadata-database"},
-				"templates/resources-service.yaml": {"name: resources-service", `MONITORING: "false"`},
-			},
-			notContains: map[string][]string{
-				"templates/gateway.yaml": {
-					"LOAD_BACKOFFICE_API:",
-					"LOAD_CONVERTER_API:",
-					"LOAD_EMAIL_SENDER_API:",
-					"LOAD_SHARING_API:",
-					"SECURITY_KEY:",
-				},
-				"templates/resources-service.yaml": {
-					"MONITORING_URL:",
-					"MONITORING_USER:",
-					"MONITORING_PWD:",
-				},
-				"templates/aai-service.yaml":          {"name: aai-service"},
-				"templates/backoffice-service.yaml":   {"name: backoffice-service"},
-				"templates/backoffice-ui.yaml":        {"name: backoffice-ui"},
-				"templates/converter-service.yaml":    {"name: converter-service"},
-				"templates/converter-routine.yaml":    {"name: converter-routine"},
-				"templates/email-sender-service.yaml": {"name: email-sender-service"},
-				"templates/sharing-service.yaml":      {"name: sharing-service"},
+				"templates/dataportal.yaml":            {"name: dataportal", `value: "http://localhost/test-default/aai"`},
+				"templates/gateway.yaml":               {"name: gateway", `url: "http://aai-service:8080"`, "imagePullPolicy: IfNotPresent"},
+				"templates/application-databases.yaml": {"name: retriever-db", "name: sharing-db"},
+				"templates/metadata-database.yaml":     {"name: metadata-database"},
+				"templates/application-services.yaml":  {"name: metadata-lifecycle", "name: data-retriever", "name: sharing"},
 			},
 		},
 		{
@@ -72,64 +51,31 @@ func TestConfigRender(t *testing.T) {
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-image-policy"
 				cfg.ImagePullPolicy = "Always"
-				cfg.Jobs.Enabled = true
 			},
 			wantContains: map[string][]string{
-				"templates/gateway.yaml":     {"imagePullPolicy: Always"},
-				"templates/init-db-job.yaml": {"imagePullPolicy: Always"},
+				"templates/gateway.yaml":              {"imagePullPolicy: Always"},
+				"templates/application-services.yaml": {"imagePullPolicy: Always"},
 			},
 		},
 		{
-			name: "backoffice enabled renders backoffice manifests and gateway flag",
+			name: "backoffice enabled renders UI",
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-backoffice"
 				cfg.Components.Backoffice.Enabled = true
 			},
 			wantContains: map[string][]string{
-				"templates/gateway.yaml":            {`LOAD_BACKOFFICE_API: "false:false"`},
-				"templates/backoffice-service.yaml": {"name: backoffice-service"},
-				"templates/backoffice-ui.yaml":      {"name: backoffice-ui", `AUTH_ROOT_URL: "http://localhost/test-backoffice/aai"`},
+				"templates/backoffice-ui.yaml": {"name: backoffice-ui", `value: "http://localhost/test-backoffice/aai"`},
 			},
 		},
 		{
-			name: "converter enabled renders converter manifests and gateway flag",
-			mutate: func(cfg *config.Config) {
-				cfg.Name = "test-converter"
-				cfg.Components.Converter.Enabled = true
-				cfg.Components.Converter.StorageClassName = "converter-storage"
-				cfg.Components.Converter.AccessMode = "ReadWriteMany"
-			},
-			wantContains: map[string][]string{
-				"templates/gateway.yaml":           {`LOAD_CONVERTER_API: "false:false"`},
-				"templates/converter-service.yaml": {"name: converter-service"},
-				"templates/converter-routine.yaml": {"name: converter-routine"},
-				"templates/pvc.yaml":               {`- "ReadWriteMany"`, `storageClassName: "converter-storage"`},
-			},
-		},
-		{
-			name: "sharing enabled renders sharing manifest and gateway flag",
+			name: "sharing database enabled renders sharing service",
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-sharing"
-				cfg.Components.SharingService.Enabled = true
+				cfg.Components.SharingDatabase.Enabled = true
 			},
 			wantContains: map[string][]string{
-				"templates/gateway.yaml":         {`LOAD_SHARING_API: "false:false"`},
-				"templates/sharing-service.yaml": {"name: sharing-service"},
-			},
-		},
-		{
-			name: "email sender enabled renders manifest and gateway auth flag",
-			mutate: func(cfg *config.Config) {
-				cfg.Name = "test-email-auth"
-				cfg.Components.EmailSenderService.Enabled = true
-				cfg.Components.EmailSenderService.Auth = config.Auth{
-					Enabled:   true,
-					OnlyAdmin: true,
-				}
-			},
-			wantContains: map[string][]string{
-				"templates/gateway.yaml":              {`LOAD_EMAIL_SENDER_API: "true:true"`},
-				"templates/email-sender-service.yaml": {"name: email-sender-service"},
+				"templates/gateway.yaml":              {`url: "sharing:8200"`},
+				"templates/application-services.yaml": {"name: sharing"},
 			},
 		},
 		{
@@ -142,12 +88,10 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
-					`IS_AAI_ENABLED: "true"`,
-					`AAI_SERVICE_ENDPOINT: "http://aai-service:8080/oauth2/userinfo"`,
-					"wait-for-aai-service",
+					`url: "http://aai-service:8080"`,
 				},
 				"templates/dataportal.yaml": {
-					`AUTH_ROOT_URL: "http://localhost/test-aai/aai"`,
+					`value: "http://localhost/test-aai/aai"`,
 				},
 				"templates/aai-service.yaml": {
 					"name: aai-service",
@@ -156,7 +100,7 @@ func TestConfigRender(t *testing.T) {
 					`INITIAL_ADMIN_NAME: "EPOS"`,
 					`INITIAL_ADMIN_SURNAME: "User"`,
 					`INITIAL_ADMIN_EMAIL: "epos@epos.eu"`,
-					`INITIAL_ADMIN_PASSWORD: "epos"`,
+					"name: INITIAL_ADMIN_PASSWORD",
 					`APP_CORS_ALLOW_ORIGIN: "*"`,
 					`PLATFORM_URL: "http://localhost/test-aai/"`,
 					`BACKOFFICE_URL: "http://localhost/test-aai/backoffice/"`,
@@ -185,15 +129,15 @@ func TestConfigRender(t *testing.T) {
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-external-aai"
 				cfg.Components.Gateway.AAI.Enabled = true
+				cfg.Components.AAIService.Enabled = false
 				cfg.Components.Gateway.AAI.ServiceEndpoint = externalAAIUserinfoEndpoint
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
-					`IS_AAI_ENABLED: "true"`,
-					`AAI_SERVICE_ENDPOINT: "` + externalAAIUserinfoEndpoint + `"`,
+					`url: "` + externalAAIAuthRootURL + `"`,
 				},
 				"templates/dataportal.yaml": {
-					`AUTH_ROOT_URL: "` + externalAAIAuthRootURL + `"`,
+					`value: "` + externalAAIAuthRootURL + `"`,
 				},
 			},
 			notContains: map[string][]string{
@@ -207,22 +151,16 @@ func TestConfigRender(t *testing.T) {
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-gateway-aai-endpoint"
 				cfg.Components.Gateway.AAI.Enabled = true
+				cfg.Components.AAIService.Enabled = false
 				cfg.Components.Gateway.AAI.ServiceEndpoint = externalAAIAuthRootURL
 				cfg.Components.Gateway.AAI.GatewayEndpoint = gatewayAAIUserinfoEndpoint + "/"
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
-					`IS_AAI_ENABLED: "true"`,
-					`AAI_SERVICE_ENDPOINT: "` + gatewayAAIUserinfoEndpoint + `"`,
+					`url: "https://gateway-auth.example.com"`,
 				},
 				"templates/dataportal.yaml": {
-					`AUTH_ROOT_URL: "` + externalAAIAuthRootURL + `"`,
-				},
-			},
-			notContains: map[string][]string{
-				"templates/gateway.yaml": {
-					`AAI_SERVICE_ENDPOINT: "` + externalAAIUserinfoEndpoint + `"`,
-					`AAI_SERVICE_ENDPOINT: "` + gatewayAAIUserinfoEndpoint + `/oauth2/userinfo"`,
+					`value: "` + externalAAIAuthRootURL + `"`,
 				},
 			},
 		},
@@ -231,44 +169,16 @@ func TestConfigRender(t *testing.T) {
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-gateway-aai-keycloak-endpoint"
 				cfg.Components.Gateway.AAI.Enabled = true
+				cfg.Components.AAIService.Enabled = false
 				cfg.Components.Gateway.AAI.ServiceEndpoint = externalAAIAuthRootURL
 				cfg.Components.Gateway.AAI.GatewayEndpoint = gatewayAAIKeycloakUserinfo + "/"
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
-					`IS_AAI_ENABLED: "true"`,
-					`AAI_SERVICE_ENDPOINT: "` + gatewayAAIKeycloakUserinfo + `"`,
+					`url: "` + gatewayAAIKeycloakUserinfo + `"`,
 				},
 				"templates/dataportal.yaml": {
-					`AUTH_ROOT_URL: "` + externalAAIAuthRootURL + `"`,
-				},
-			},
-			notContains: map[string][]string{
-				"templates/gateway.yaml": {
-					`AAI_SERVICE_ENDPOINT: "` + gatewayAAIKeycloakUserinfo + `/oauth2/userinfo"`,
-					`AAI_SERVICE_ENDPOINT: "` + externalAAIUserinfoEndpoint + `"`,
-				},
-			},
-		},
-		{
-			name: "monitoring enabled renders security key and monitoring settings",
-			mutate: func(cfg *config.Config) {
-				cfg.Name = "test-monitoring"
-				cfg.Monitoring.Enabled = true
-				cfg.Monitoring.URL = "https://monitoring.example.com"
-				cfg.Monitoring.User = "monitor-user"
-				cfg.Monitoring.Password = "monitor-password"
-				cfg.Monitoring.SecurityKey = "test-security-key"
-			},
-			wantContains: map[string][]string{
-				"templates/gateway.yaml": {
-					`SECURITY_KEY: "test-security-key"`,
-				},
-				"templates/resources-service.yaml": {
-					`MONITORING: "true"`,
-					"MONITORING_URL: https://monitoring.example.com",
-					"MONITORING_USER: monitor-user",
-					"MONITORING_PWD: monitor-password",
+					`value: "` + externalAAIAuthRootURL + `"`,
 				},
 			},
 		},
@@ -276,8 +186,8 @@ func TestConfigRender(t *testing.T) {
 			name: "service ingress tls renders dedicated secret per ingress",
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-ingress-tls"
-				cfg.Components.PlatformGUI.TLS.Enabled = true
-				cfg.Components.PlatformGUI.TLS.SecretName = dataportalTLSSecret
+				cfg.Components.PlatformUI.TLS.Enabled = true
+				cfg.Components.PlatformUI.TLS.SecretName = dataportalTLSSecret
 				cfg.Components.Gateway.TLS.Enabled = true
 				cfg.Components.Gateway.TLS.SecretName = gatewayTLSSecret
 				cfg.Components.Backoffice.Enabled = true
@@ -289,19 +199,19 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/dataportal.yaml": {
-					"secretName: " + dataportalTLSSecret,
+					`secretName: "` + dataportalTLSSecret + `"`,
 					certManagerIssuerAnnotation,
 				},
 				"templates/gateway.yaml": {
-					"secretName: " + gatewayTLSSecret,
+					`secretName: "` + gatewayTLSSecret + `"`,
 					certManagerIssuerAnnotation,
 				},
 				"templates/backoffice-ui.yaml": {
-					"secretName: backoffice-tls",
+					`secretName: "backoffice-tls"`,
 					certManagerIssuerAnnotation,
 				},
 				"templates/aai-service.yaml": {
-					"secretName: aai-tls",
+					`secretName: "aai-tls"`,
 					certManagerIssuerAnnotation,
 				},
 			},
@@ -316,14 +226,14 @@ func TestConfigRender(t *testing.T) {
 			name: "service ingress tls disabled omits ingress tls block",
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-ingress-tls-toggle"
-				cfg.Components.PlatformGUI.TLS.Enabled = true
-				cfg.Components.PlatformGUI.TLS.SecretName = dataportalTLSSecret
+				cfg.Components.PlatformUI.TLS.Enabled = true
+				cfg.Components.PlatformUI.TLS.SecretName = dataportalTLSSecret
 				cfg.Components.Gateway.TLS.Enabled = false
 				cfg.Components.Gateway.TLS.SecretName = gatewayTLSSecret
 			},
 			wantContains: map[string][]string{
 				"templates/dataportal.yaml": {
-					"secretName: " + dataportalTLSSecret,
+					`secretName: "` + dataportalTLSSecret + `"`,
 					certManagerIssuerAnnotation,
 				},
 			},
@@ -341,7 +251,7 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
-					"secretName: " + gatewayTLSSecret,
+					`secretName: "` + gatewayTLSSecret + `"`,
 					certManagerIssuerAnnotation,
 				},
 			},
@@ -351,11 +261,11 @@ func TestConfigRender(t *testing.T) {
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-empty-cert-issuer"
 				cfg.CertManagerIssuer = ""
-				cfg.Components.PlatformGUI.TLS.Enabled = true
-				cfg.Components.PlatformGUI.TLS.SecretName = dataportalTLSSecret
+				cfg.Components.PlatformUI.TLS.Enabled = true
+				cfg.Components.PlatformUI.TLS.SecretName = dataportalTLSSecret
 			},
 			wantContains: map[string][]string{
-				"templates/dataportal.yaml": {"secretName: " + dataportalTLSSecret},
+				"templates/dataportal.yaml": {`secretName: "` + dataportalTLSSecret + `"`},
 			},
 			notContains: map[string][]string{
 				"templates/dataportal.yaml": {"cert-manager.io/cluster-issuer:"},

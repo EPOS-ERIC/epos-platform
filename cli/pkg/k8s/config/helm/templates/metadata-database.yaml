@@ -9,6 +9,8 @@ metadata:
     app.kubernetes.io/component: metadata-database
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "epos.selectorLabels" . | nindent 6 }}
@@ -22,16 +24,19 @@ spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
       containers:
       - name: metadata-database
-        image: {{ .Values.images.metadata_database_image }}
+        image: {{ .Values.images.metadata_database }}
         {{- include "epos.image_pull_policy" . | nindent 8 }}
         ports:
-        - containerPort: {{ .Values.components.metadata_database.port | int }}
+        - containerPort: 5432
           name: postgresql
         env:
         - name: POSTGRES_USER
           value: {{ .Values.components.metadata_database.user }}
         - name: POSTGRES_PASSWORD
-          value: {{ .Values.components.metadata_database.password }}
+          valueFrom:
+            secretKeyRef:
+              name: metadata-database
+              key: password
         - name: POSTGRES_DB
           value: {{ .Values.components.metadata_database.db_name }}
         livenessProbe:
@@ -74,24 +79,10 @@ metadata:
     app.kubernetes.io/component: metadata-database
 spec:
   ports:
-  - port: {{ .Values.components.metadata_database.port | int }}
-    targetPort: {{ .Values.components.metadata_database.port | int }}
+  - port: 5432
+    targetPort: 5432
     name: postgresql
   selector:
     {{- include "epos.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: metadata-database
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: metadata-database
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: metadata-database
-data:
-  POSTGRES_HOST: {{ .Values.components.metadata_database.host }}
-  POSTGRES_PORT: {{ .Values.components.metadata_database.port | quote }}
-  POSTGRES_USER: {{ .Values.components.metadata_database.user }}
-  POSTGRES_PASSWORD: {{ .Values.components.metadata_database.password }}
-  POSTGRES_DB: {{ .Values.components.metadata_database.db_name }}
 {{- end }}

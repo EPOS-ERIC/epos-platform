@@ -1,16 +1,3 @@
-{{- define "epos.fullname" -}}
-{{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
 {{- define "epos.name" -}}
 {{- if .Values.nameOverride -}}
 {{- .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
@@ -64,38 +51,11 @@ affinity:
 {{- end }}
 {{- end -}}
 
-{{- define "epos.converterRoutineAffinity" -}}
-{{- $affinity := deepCopy (default (dict) .Values.affinity) -}}
-{{- $podAffinity := deepCopy (default (dict) (get $affinity "podAffinity")) -}}
-{{- $requiredRules := default (list) (get $podAffinity "requiredDuringSchedulingIgnoredDuringExecution") -}}
-{{- $converterServiceRule := dict "labelSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" (include "epos.name" .) "app.kubernetes.io/instance" .Release.Name "app.kubernetes.io/component" "converter-service")) "topologyKey" "kubernetes.io/hostname" -}}
-{{- $_ := set $podAffinity "requiredDuringSchedulingIgnoredDuringExecution" (append $requiredRules $converterServiceRule) -}}
-{{- $_ := set $affinity "podAffinity" $podAffinity -}}
-affinity:
-  {{- $affinity | toYaml | nindent 2 }}
-{{- end -}}
-
 {{- define "epos.securityContext" -}}
 {{- if .Values.securityContext }}
 securityContext:
   {{- .Values.securityContext | toYaml | nindent 2 }}
 {{- end }}
-{{- end -}}
-
-{{- define "epos.postgresqlConnectionString" -}}
-jdbc:postgresql://{{ default .Values.components.metadata_database.host }}:{{ .Values.components.metadata_database.port  }}/{{ .Values.components.metadata_database.db_name }}?user={{ .Values.components.metadata_database.user }}&password={{ .Values.components.metadata_database.password }}
-{{- end -}}
-
-{{- define "epos.waitForServiceInitContainer" -}}
-- name: wait-for-{{ .name }}
-  image: busybox:latest
-  command:
-  - /bin/sh
-  - -c
-  - |-
-    until nc -z {{ .host | default .name }} {{ .port }}; do
-      sleep 1;
-    done
 {{- end -}}
 
 {{- define "epos.defaultAAIAuthRootURL" -}}
@@ -120,9 +80,9 @@ jdbc:postgresql://{{ default .Values.components.metadata_database.host }}:{{ .Va
 
 {{- define "epos.platformBasePath" -}}
 {{- if .Values.url_prefix_namespace -}}
-{{- printf "/%s%s" .Release.Namespace .Values.components.platform_gui.base_url -}}
+{{- printf "/%s%s" .Release.Namespace .Values.components.platform_ui.base_url -}}
 {{- else -}}
-{{- .Values.components.platform_gui.base_url -}}
+{{- .Values.components.platform_ui.base_url -}}
 {{- end -}}
 {{- end -}}
 
@@ -150,19 +110,6 @@ jdbc:postgresql://{{ default .Values.components.metadata_database.host }}:{{ .Va
 {{- $serviceEndpoint -}}
 {{- else if .Values.components.aai_service.enabled -}}
 http://aai-service:8080
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{- define "epos.gatewayAAIUserinfoEndpoint" -}}
-{{- if .Values.components.gateway.aai.enabled -}}
-{{- $serviceEndpoint := include "epos.gatewayAAIServiceEndpoint" . | trim | trimSuffix "/" -}}
-{{- if $serviceEndpoint -}}
-{{- if regexMatch "/userinfo$" $serviceEndpoint -}}
-{{- $serviceEndpoint -}}
-{{- else -}}
-{{- printf "%s/oauth2/userinfo" $serviceEndpoint -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

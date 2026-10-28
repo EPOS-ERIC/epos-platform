@@ -13,13 +13,12 @@ func (a *App) showCleanConfirm() {
 	if envName == "" {
 		return
 	}
-
-	message := "This will permanently delete all data in environment '" + envName + "'.\n\n" + DefaultTheme.DestructiveTag("b") + "This action cannot be undone." + "[-]"
-	if isDocker {
-		message = "This will permanently delete managed database and telemetry data in environment '" + envName + "'.\n\n" + DefaultTheme.DestructiveTag("b") + "This action cannot be undone." + "[-]"
-	} else if k8sContext != "" {
-		message = "This will permanently delete all data in environment '" + envName + "' (context: '" + k8sContext + "').\n\n" + DefaultTheme.DestructiveTag("b") + "This action cannot be undone." + "[-]"
+	if !isDocker {
+		a.showCleanProgress(envName, false, k8sContext)
+		return
 	}
+
+	message := "This will permanently delete managed database and telemetry data in environment '" + envName + "'.\n\n" + DefaultTheme.DestructiveTag("b") + "This action cannot be undone." + "[-]"
 
 	a.UpdateFooter(CleanConfirmKey)
 

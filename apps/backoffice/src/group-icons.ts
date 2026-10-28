@@ -1,15 +1,15 @@
 const GROUP_ICON_PATHS: Record<string, string> = {
-  '1375500a-fc04-5831-a7f5-39ea5fcb0445': '/group-icons/1375500a-fc04-5831-a7f5-39ea5fcb0445.svg',
-  '94a5445f-a8c4-5805-a79d-b8993738ea30': '/group-icons/94a5445f-a8c4-5805-a79d-b8993738ea30.png',
-  '23b9b58a-9f1c-5d18-85f9-73842733835c': '/group-icons/23b9b58a-9f1c-5d18-85f9-73842733835c.png',
-  'f3acbf1a-908b-55d4-953e-fadf1221a49e': '/group-icons/f3acbf1a-908b-55d4-953e-fadf1221a49e.png',
-  'c1d952e7-f523-5fb4-a8ac-ef6c93e25316': '/group-icons/c1d952e7-f523-5fb4-a8ac-ef6c93e25316.png',
-  '332c6840-2b07-58e9-9316-3d7f2123f543': '/group-icons/332c6840-2b07-58e9-9316-3d7f2123f543.png',
-  'ea3f23ac-eda7-5624-b51b-6c6e4c3661db': '/group-icons/ea3f23ac-eda7-5624-b51b-6c6e4c3661db.png',
-  'cc5f4f5f-340f-573b-a118-8b7fc0d7e365': '/group-icons/cc5f4f5f-340f-573b-a118-8b7fc0d7e365.png',
-  '9a5cf0d0-21c2-5e21-b27c-f4359f5ee056': '/group-icons/9a5cf0d0-21c2-5e21-b27c-f4359f5ee056.png',
-  '75f0157b-b1a4-5955-9079-f2993c6cc8c4': '/group-icons/75f0157b-b1a4-5955-9079-f2993c6cc8c4.png',
-  'dab56e08-0b75-5d89-aa51-e3433314cbbc': '/group-icons/dab56e08-0b75-5d89-aa51-e3433314cbbc.png'
+  '1375500a-fc04-5831-a7f5-39ea5fcb0445': 'group-icons/1375500a-fc04-5831-a7f5-39ea5fcb0445.svg',
+  '94a5445f-a8c4-5805-a79d-b8993738ea30': 'group-icons/94a5445f-a8c4-5805-a79d-b8993738ea30.png',
+  '23b9b58a-9f1c-5d18-85f9-73842733835c': 'group-icons/23b9b58a-9f1c-5d18-85f9-73842733835c.png',
+  'f3acbf1a-908b-55d4-953e-fadf1221a49e': 'group-icons/f3acbf1a-908b-55d4-953e-fadf1221a49e.png',
+  'c1d952e7-f523-5fb4-a8ac-ef6c93e25316': 'group-icons/c1d952e7-f523-5fb4-a8ac-ef6c93e25316.png',
+  '332c6840-2b07-58e9-9316-3d7f2123f543': 'group-icons/332c6840-2b07-58e9-9316-3d7f2123f543.png',
+  'ea3f23ac-eda7-5624-b51b-6c6e4c3661db': 'group-icons/ea3f23ac-eda7-5624-b51b-6c6e4c3661db.png',
+  'cc5f4f5f-340f-573b-a118-8b7fc0d7e365': 'group-icons/cc5f4f5f-340f-573b-a118-8b7fc0d7e365.png',
+  '9a5cf0d0-21c2-5e21-b27c-f4359f5ee056': 'group-icons/9a5cf0d0-21c2-5e21-b27c-f4359f5ee056.png',
+  '75f0157b-b1a4-5955-9079-f2993c6cc8c4': 'group-icons/75f0157b-b1a4-5955-9079-f2993c6cc8c4.png',
+  'dab56e08-0b75-5d89-aa51-e3433314cbbc': 'group-icons/dab56e08-0b75-5d89-aa51-e3433314cbbc.png'
 };
 
 // Default accent (for elements like the orbit in the "manage" pages)

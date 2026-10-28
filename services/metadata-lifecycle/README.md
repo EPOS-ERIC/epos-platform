@@ -17,20 +17,22 @@ Authenticated endpoints use the `X-EPOS-User-ID` actor header internally. Extern
 
 ## Configuration
 
-| Variable          | Default              |
-| ----------------- | -------------------- |
-| `PORT`            | `5000`               |
-| `REQUEST_TIMEOUT` | `30s`                |
-| `READ_TIMEOUT`    | `15s`                |
-| `WRITE_TIMEOUT`   | `30s`                |
-| `IDLE_TIMEOUT`    | `60s`                |
-| `DB_HOST`         | `localhost`          |
-| `DB_PORT`         | `5432`               |
-| `DB_NAME`         | `metadata-lifecycle` |
-| `DB_USER`         | `metadata-lifecycle` |
-| `DB_PASSWORD`     | `metadata-lifecycle` |
+| Variable             | Default              |
+| -------------------- | -------------------- |
+| `PORT`               | `5000`               |
+| `REQUEST_TIMEOUT`    | `30s`                |
+| `READ_TIMEOUT`       | `15s`                |
+| `WRITE_TIMEOUT`      | `30s`                |
+| `IDLE_TIMEOUT`       | `60s`                |
+| `DB_HOST`            | `localhost`          |
+| `DB_PORT`            | `5432`               |
+| `DB_NAME`            | `metadata-lifecycle` |
+| `DB_USER`            | `metadata-lifecycle` |
+| `DB_PASSWORD`        | `metadata-lifecycle` |
+| `GATEWAY_PUBLIC_URL` | Required             |
 
 `LOG_LEVEL` optionally sets shared structured logging to `DEBUG`, `INFO`, `WARN`, or `ERROR`. Standard OpenTelemetry SDK environment variables configure telemetry export.
+`GATEWAY_PUBLIC_URL` is the public gateway URL before `/v1`; it may include a path prefix.
 
 ## Development
 

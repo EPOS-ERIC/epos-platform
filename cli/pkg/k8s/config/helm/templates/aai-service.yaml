@@ -7,7 +7,6 @@ APP_SECURE_COOKIES: "false"
 INITIAL_ADMIN_NAME: {{ .Values.components.aai_service.name | quote }}
 INITIAL_ADMIN_SURNAME: {{ .Values.components.aai_service.surname | quote }}
 INITIAL_ADMIN_EMAIL: {{ .Values.components.aai_service.email | quote }}
-INITIAL_ADMIN_PASSWORD: {{ .Values.components.aai_service.password | quote }}
 APP_CORS_ALLOW_ORIGIN: "*"
 OIDC_ISSUER: {{ printf "%s/oauth2" (include "epos.defaultAAIAuthRootURL" .) | quote }}
 PLATFORM_URL: {{ include "epos.platformURL" . | quote }}
@@ -27,6 +26,8 @@ metadata:
     app.kubernetes.io/component: aai-service
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "epos.selectorLabels" . | nindent 6 }}
@@ -38,18 +39,29 @@ spec:
         app.kubernetes.io/component: aai-service
       annotations:
         checksum/aai-service-config: {{ include "epos.aaiServiceConfigData" . | sha256sum }}
+        checksum/aai-password: {{ .Values.components.aai_service.password | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
       containers:
       - name: aai-service
-        image: {{ .Values.images.aai_service_image }}
+        image: {{ .Values.images.aai_service }}
         {{- include "epos.image_pull_policy" . | nindent 8 }}
         ports:
         - containerPort: 8080
           name: http
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
         envFrom:
         - configMapRef:
             name: aai-service
+        env:
+        - name: INITIAL_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: aai-service
+              key: password
         volumeMounts:
         - name: aai
           mountPath: /app/data
@@ -89,7 +101,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
 
     {{- if and .Values.components.aai_service.tls.enabled .Values.cert_manager_issuer }}
-    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer | quote }}
     {{- end }}
 spec:
   ingressClassName: nginx
@@ -112,7 +124,7 @@ spec:
   tls:
   - hosts:
     - {{ .Values.domain }}
-    secretName: {{ .Values.components.aai_service.tls.secret_name }}
+    secretName: {{ .Values.components.aai_service.tls.secret_name | quote }}
   {{- end }}
 ---
 apiVersion: v1
@@ -124,4 +136,15 @@ metadata:
     app.kubernetes.io/component: aai-service
 data:
   {{- include "epos.aaiServiceConfigData" . | nindent 2 }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aai-service
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: aai-service
+type: Opaque
+stringData:
+  password: {{ .Values.components.aai_service.password | quote }}
 {{- end }}

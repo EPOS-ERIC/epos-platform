@@ -279,7 +279,7 @@ func TestNotificationLinksUseGatewayAPI(t *testing.T) {
 	groupID := uuid.New()
 	resourceID := uuid.New()
 	versionID := uuid.New()
-	links := (&Service{publicURL: "https://gateway.example.org"}).notificationLinks(domain.NotificationEvent{
+	links := (&Service{publicURL: "https://gateway.example.org/environment/api"}).notificationLinks(domain.NotificationEvent{
 		Kind:      domain.NotificationEventResourcePublished,
 		SubjectID: "user/1",
 		Resource: &domain.NotificationResource{
@@ -295,19 +295,19 @@ func TestNotificationLinksUseGatewayAPI(t *testing.T) {
 	if len(links) != 3 {
 		t.Fatalf("link count = %d, want 3", len(links))
 	}
-	if links[0].URL != "https://gateway.example.org/v1/groups/"+groupID.String() {
+	if links[0].URL != "https://gateway.example.org/environment/api/v1/groups/"+groupID.String() {
 		t.Fatalf("group URL = %q", links[0].URL)
 	}
 	if links[0].Label != "View group" {
 		t.Fatalf("group label = %q", links[0].Label)
 	}
-	if links[1].URL != "https://gateway.example.org/v1/users/user%2F1" {
+	if links[1].URL != "https://gateway.example.org/environment/api/v1/users/user%2F1" {
 		t.Fatalf("user URL = %q", links[1].URL)
 	}
 	if links[1].Label != "View submitter" {
 		t.Fatalf("user label = %q", links[1].Label)
 	}
-	wantResourceURL := "https://gateway.example.org/v1/resources/dataset/" + resourceID.String() + "/versions/" + versionID.String()
+	wantResourceURL := "https://gateway.example.org/environment/api/v1/resources/dataset/" + resourceID.String() + "/versions/" + versionID.String()
 	if links[2].URL != wantResourceURL {
 		t.Fatalf("resource URL = %q, want %q", links[2].URL, wantResourceURL)
 	}

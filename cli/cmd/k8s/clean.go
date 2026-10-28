@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/k8s"
 
@@ -13,25 +12,12 @@ import (
 
 var CleanCmd = &cobra.Command{
 	Use:               "clean <env-name>",
-	Short:             "Reset an environment's data.",
-	Long:              "Reset an environment's data. Runs cleanup jobs without redeploying and deletes populated data in the environment. Prompts for confirmation unless --force is set.",
+	Short:             "Clean is not implemented for Kubernetes environments.",
+	Long:              "Kubernetes clean is not implemented. This command returns an error without changing the environment.",
 	Args:              cobra.ExactArgs(1),
 	ValidArgsFunction: validArgsFunction,
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-
-		if !cleanForce {
-			display.Warn("This will permanently delete all data in environment '%s'. This action cannot be undone.", name)
-			confirmed, err := common.Confirm("Are you sure you want to continue? (y/n):")
-			if err != nil {
-				display.Error("Failed to read confirmation: %v", err)
-				os.Exit(1)
-			}
-			if !confirmed {
-				display.Info("Clean operation cancelled.")
-				return
-			}
-		}
 
 		env, err := k8s.Clean(k8s.CleanOpts{
 			Name:    name,

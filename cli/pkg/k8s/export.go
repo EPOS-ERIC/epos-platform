@@ -6,6 +6,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/k8s/config"
+	"gopkg.in/yaml.v3"
 )
 
 // ExportOpts defines inputs for Export.
@@ -20,7 +21,10 @@ func Export(opts ExportOpts) error {
 		return fmt.Errorf("invalid export parameters: %w", err)
 	}
 
-	cfg := config.GetDefaultConfigBytes()
+	cfg, err := yaml.Marshal(config.GetDefaultConfig())
+	if err != nil {
+		return fmt.Errorf("serialize default config: %w", err)
+	}
 
 	display.Debug("loaded default k8s config bytes")
 

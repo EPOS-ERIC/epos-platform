@@ -4,11 +4,11 @@ import { AuthConfig, OAuthService } from 'angular-oauth2-oidc';
 import { LocalStorageService } from './local-storage.service';
 
 const LIVE_AUTH_ISSUER = 'https://aaai.epos-eu.org/oauth2';
-const LIVE_AUTHORIZATION_ENDPOINT = 'https://aaai.epos-eu.org/oauth2-as/oauth2-authz';
 const LOCAL_AUTH_ISSUER = 'http://localhost:35000/oauth2';
-const LOCAL_AUTHORIZATION_ENDPOINT = `${LOCAL_AUTH_ISSUER}/authorize`;
 const AUTH_ISSUER_KEY = 'epos-backoffice-auth-issuer';
 const RETURN_URL_KEY = 'epos-backoffice-return-url';
+
+const authRootUrl = '__AUTH_ROOT_URL__';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -17,10 +17,9 @@ export class AuthService {
 
   private initialization?: Promise<void>;
   private readonly isLocalDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-  private readonly issuer = this.isLocalDevelopment ? LOCAL_AUTH_ISSUER : LIVE_AUTH_ISSUER;
-  private readonly authorizationEndpoint = this.isLocalDevelopment
-    ? LOCAL_AUTHORIZATION_ENDPOINT
-    : LIVE_AUTHORIZATION_ENDPOINT;
+  private readonly issuer = authRootUrl && !authRootUrl.startsWith('__AUTH_')
+    ? `${authRootUrl.replace(/\/$/, '')}/oauth2`
+    : (this.isLocalDevelopment ? LOCAL_AUTH_ISSUER : LIVE_AUTH_ISSUER);
 
   constructor(
     private readonly oauthService: OAuthService,
@@ -36,7 +35,6 @@ export class AuthService {
 
   login(returnUrl = '/data'): void {
     sessionStorage.setItem(RETURN_URL_KEY, this.safeReturnUrl(returnUrl));
-    this.oauthService.loginUrl = this.authorizationEndpoint;
     this.oauthService.initImplicitFlow();
   }
 
@@ -73,7 +71,6 @@ export class AuthService {
 
     try {
       await this.oauthService.loadDiscoveryDocumentAndTryLogin();
-      this.oauthService.loginUrl = this.authorizationEndpoint;
       this.authenticated.set(this.oauthService.hasValidAccessToken());
     } catch (error) {
       console.error('Failed to initialize OAuth', error);
@@ -86,7 +83,6 @@ export class AuthService {
 
     return {
       issuer: this.issuer,
-      loginUrl: this.authorizationEndpoint,
       redirectUri: new URL('last-page-redirect', callbackBase).toString(),
       silentRefreshRedirectUri: new URL('silent-token-refresh.html', callbackBase).toString(),
       clientId: 'eposICS',

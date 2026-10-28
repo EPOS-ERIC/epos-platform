@@ -1,7 +1,6 @@
 package k8s
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -60,14 +59,12 @@ func TestExport(t *testing.T) {
 				t.Fatalf("stat legacy config.yaml: %v", err)
 			}
 
-			content, err := os.ReadFile(k8sConfigPath)
+			cfg, err := config.LoadConfig(k8sConfigPath)
 			if err != nil {
-				t.Fatalf("failed to read exported file: %v", err)
+				t.Fatalf("failed to load exported config: %v", err)
 			}
-
-			expected := config.GetDefaultConfigBytes()
-			if !bytes.HasSuffix(content, expected) {
-				t.Fatalf("Export() content does not end with default k8s config")
+			if cfg.Components.MetadataDatabase.Password == "" || cfg.Components.DataRetrieverDatabase.Password == "" || cfg.Components.SharingDatabase.Password == "" || cfg.Components.AAIService.Password == "" {
+				t.Fatal("Export() did not generate managed component passwords")
 			}
 		})
 	}

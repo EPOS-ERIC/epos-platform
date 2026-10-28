@@ -2,6 +2,7 @@
 package config
 
 import (
+	"crypto/rand"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -29,6 +30,15 @@ func GetDefaultConfig() *Config {
 	err := yaml.Unmarshal(GetDefaultConfigBytes(), &config)
 	if err != nil {
 		panic(fmt.Errorf("error unmarshalling default config yaml: %w", err))
+	}
+	for _, password := range []*string{
+		&config.Components.MetadataDatabase.Password,
+		&config.Components.DataRetrieverDatabase.Password,
+		&config.Components.SharingDatabase.Password,
+		&config.Components.AAIService.Password,
+		&config.Components.OpenTelemetry.AdminPassword,
+	} {
+		*password = rand.Text()
 	}
 	return &config
 }
@@ -93,38 +103,39 @@ func (c *Config) BuildEnvURLs() (*common.URLs, error) {
 		return url.JoinPath(path, paths...)
 	}
 
-	guiURL, err := buildURL(c.Components.PlatformGUI.BaseURL)
+	guiURL, err := buildURL(c.Components.PlatformUI.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("error building GUI URL: %w", err)
 	}
 
-	apiURL, err := buildURL(c.Components.Gateway.BaseURL, "/ui")
+	apiURL, err := buildURL("/scalar/")
 	if err != nil {
 		return nil, fmt.Errorf("error building API URL: %w", err)
 	}
 
 	urls := &common.URLs{
 		GUIURL: guiURL,
-		APIURL: apiURL,
+		APIURL: strings.TrimRight(apiURL, "/") + "/",
 	}
 
 	if c.Components.Backoffice.Enabled {
-		backofficeURL, err := buildURL(c.Components.Backoffice.GUI.BaseURL, "/home")
+		backofficeURL, err := buildURL(c.Components.Backoffice.GUI.BaseURL)
 		if err != nil {
 			return nil, fmt.Errorf("error building Backoffice URL: %w", err)
 		}
+		backofficeURL = strings.TrimRight(backofficeURL, "/") + "/"
 		urls.BackofficeURL = &backofficeURL
+	}
+	if c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" {
+		grafanaURL, err := buildURL("/grafana/")
+		if err != nil {
+			return nil, fmt.Errorf("error building Grafana URL: %w", err)
+		}
+		grafanaURL = strings.TrimRight(grafanaURL, "/") + "/"
+		urls.GrafanaURL = &grafanaURL
 	}
 
 	return urls, nil
-}
-
-func validateAuthDependsOnGatewayAAI(serviceName string, auth Auth, gatewayAAIEnabled bool) error {
-	if auth.Enabled && !gatewayAAIEnabled {
-		return fmt.Errorf("%s auth requires gateway aai to be enabled", serviceName)
-	}
-
-	return nil
 }
 
 func validateIngressTLSSecret(serviceName string, tls TLS) error {
@@ -150,7 +161,7 @@ func (c *Config) Validate() error {
 	if c.Protocol != "http" && c.Protocol != "https" {
 		return fmt.Errorf("protocol must be http or https")
 	}
-	if err := validateIngressTLSSecret("platform gui", c.Components.PlatformGUI.TLS); err != nil {
+	if err := validateIngressTLSSecret("platform ui", c.Components.PlatformUI.TLS); err != nil {
 		return err
 	}
 	if err := validateIngressTLSSecret("gateway", c.Components.Gateway.TLS); err != nil {
@@ -166,25 +177,16 @@ func (c *Config) Validate() error {
 			return err
 		}
 	}
+	if c.Protocol != "https" && (c.Components.PlatformUI.TLS.Enabled || c.Components.Gateway.TLS.Enabled || (c.Components.Backoffice.Enabled && c.Components.Backoffice.TLS.Enabled) || (c.Components.AAIService.Enabled && c.Components.AAIService.TLS.Enabled) || (c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" && c.Components.OpenTelemetry.TLS.Enabled)) {
+		return fmt.Errorf("protocol must be https when ingress TLS is enabled")
+	}
 
 	// Required images
-	if c.Images.DataportalImage == "" {
-		return fmt.Errorf("dataportal image is required")
+	if c.Images.PlatformUIImage == "" {
+		return fmt.Errorf("platform ui image is required")
 	}
 	if c.Images.GatewayImage == "" {
 		return fmt.Errorf("gateway image is required")
-	}
-	if c.Images.ResourcesServiceImage == "" {
-		return fmt.Errorf("resources service image is required")
-	}
-	if c.Images.IngestorServiceImage == "" {
-		return fmt.Errorf("ingestor service image is required")
-	}
-	if c.Images.ExternalAccessImage == "" {
-		return fmt.Errorf("external access image is required")
-	}
-	if c.Components.Rabbitmq.Enabled && c.Images.RabbitmqImage == "" {
-		return fmt.Errorf("rabbitmq image is required when rabbitmq is enabled")
 	}
 	if c.Components.MetadataDatabase.Enabled && c.Images.MetadataDatabaseImage == "" {
 		return fmt.Errorf("metadata database image is required when metadata database is enabled")
@@ -192,16 +194,40 @@ func (c *Config) Validate() error {
 	if c.Components.AAIService.Enabled && c.Images.AAIServiceImage == "" {
 		return fmt.Errorf("aai service image is required when aai service is enabled")
 	}
+	if c.Images.MetadataLifecycleImage == "" || c.Images.DataRetrieverImage == "" || c.Images.SharingServiceImage == "" {
+		return fmt.Errorf("metadata lifecycle, data retriever, and sharing images are required")
+	}
+	if c.Components.DataRetrieverDatabase.Enabled && c.Images.DataRetrieverDBImage == "" {
+		return fmt.Errorf("data retriever database image is required when managed")
+	}
+	if c.Components.SharingDatabase.Enabled && c.Images.SharingDBImage == "" {
+		return fmt.Errorf("sharing database image is required when managed")
+	}
+	if c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" {
+		if c.Images.OTelLGTMImage == "" || c.Components.OpenTelemetry.AdminUser == "" || c.Components.OpenTelemetry.AdminPassword == "" {
+			return fmt.Errorf("managed opentelemetry image and admin credentials are required")
+		}
+		if err := validateIngressTLSSecret("grafana", c.Components.OpenTelemetry.TLS); err != nil {
+			return err
+		}
+	}
+	if c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint != "" {
+		endpoint := c.Components.OpenTelemetry.Endpoint
+		parsed, err := url.Parse(endpoint)
+		if err != nil || parsed.Hostname() == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+			return fmt.Errorf("OpenTelemetry endpoint must be an absolute HTTP(S) URL without credentials, query or fragment")
+		}
+	}
 
-	// Platform GUI validation
-	if c.Components.PlatformGUI.BaseURL == "" {
-		return fmt.Errorf("platform gui base url is required")
+	// Platform UI validation
+	if c.Components.PlatformUI.BaseURL == "" {
+		return fmt.Errorf("platform ui base url is required")
 	}
-	if !strings.HasPrefix(c.Components.PlatformGUI.BaseURL, "/") {
-		return fmt.Errorf("platform gui base url must start with /")
+	if !strings.HasPrefix(c.Components.PlatformUI.BaseURL, "/") {
+		return fmt.Errorf("platform ui base url must start with /")
 	}
-	if !strings.HasSuffix(c.Components.PlatformGUI.BaseURL, "/") {
-		return fmt.Errorf("platform gui base url must end with /")
+	if !strings.HasSuffix(c.Components.PlatformUI.BaseURL, "/") {
+		return fmt.Errorf("platform ui base url must end with /")
 	}
 
 	// Gateway validation
@@ -217,10 +243,13 @@ func (c *Config) Validate() error {
 	}
 
 	// AAI validation
+	if !c.Components.Gateway.AAI.Enabled {
+		return fmt.Errorf("gateway aai must be enabled")
+	}
+	if c.Components.AAIService.Enabled && (c.Components.Gateway.AAI.ServiceEndpoint != "" || c.Components.Gateway.AAI.GatewayEndpoint != "") {
+		return fmt.Errorf("external AAI endpoints cannot be used with the managed AAI service")
+	}
 	if c.Components.AAIService.Enabled {
-		if !c.Components.Gateway.AAI.Enabled {
-			return fmt.Errorf("aai service is enabled but aai in the gateway is disabled")
-		}
 		if c.Components.AAIService.Name == "" {
 			return fmt.Errorf("aai service name is required when aai service is enabled")
 		}
@@ -241,30 +270,18 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("aai service endpoint is required when aai is enabled and embedded aai service is disabled")
 		}
 	}
-
-	authValidations := []struct {
-		serviceName string
-		auth        Auth
-	}{
-		{serviceName: "backoffice service", auth: c.Components.Backoffice.Service.Auth},
-		{serviceName: "converter service", auth: c.Components.Converter.Auth},
-		{serviceName: "resources service", auth: c.Components.ResourcesService.Auth},
-		{serviceName: "ingestor service", auth: c.Components.IngestorService.Auth},
-		{serviceName: "external access service", auth: c.Components.ExternalAccessService.Auth},
-		{serviceName: "sharing service", auth: c.Components.SharingService.Auth},
-		{serviceName: "email sender service", auth: c.Components.EmailSenderService.Auth},
-	}
-	for _, validation := range authValidations {
-		if err := validateAuthDependsOnGatewayAAI(validation.serviceName, validation.auth, c.Components.Gateway.AAI.Enabled); err != nil {
-			return err
+	for _, endpoint := range []string{c.Components.Gateway.AAI.ServiceEndpoint, c.Components.Gateway.AAI.GatewayEndpoint} {
+		if endpoint == "" {
+			continue
+		}
+		parsed, err := url.Parse(endpoint)
+		if err != nil || parsed.Hostname() == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+			return fmt.Errorf("AAI endpoints must be absolute HTTP(S) URLs without credentials, query or fragment")
 		}
 	}
 
 	// Backoffice validation
 	if c.Components.Backoffice.Enabled {
-		if !c.Components.Backoffice.Service.Auth.Enabled {
-			return fmt.Errorf("backoffice service auth must be enabled when backoffice is enabled")
-		}
 		if c.Components.Backoffice.GUI.BaseURL == "" {
 			return fmt.Errorf("backoffice base url is required when backoffice is enabled")
 		}
@@ -274,51 +291,23 @@ func (c *Config) Validate() error {
 		if !strings.HasSuffix(c.Components.Backoffice.GUI.BaseURL, "/") {
 			return fmt.Errorf("backoffice base url must end with /")
 		}
-		if c.Images.BackofficeServiceImage == "" {
-			return fmt.Errorf("backoffice service image is required when backoffice is enabled")
-		}
 		if c.Images.BackofficeUIImage == "" {
 			return fmt.Errorf("backoffice ui image is required when backoffice is enabled")
 		}
 	}
 
-	// Converter validation
-	if c.Components.Converter.Enabled {
-		if c.Images.ConverterServiceImage == "" {
-			return fmt.Errorf("converter service image is required when converter is enabled")
-		}
-		if c.Images.ConverterRoutineImage == "" {
-			return fmt.Errorf("converter routine image is required when converter is enabled")
-		}
-	}
-
-	// Sharing service validation
-	if c.Components.SharingService.Enabled {
-		if c.Images.SharingServiceImage == "" {
-			return fmt.Errorf("sharing service image is required when sharing service is enabled")
-		}
-	}
-
-	// Resources service validation
-	if c.Components.ResourcesService.CacheTTL <= 0 {
-		return fmt.Errorf("resources service cache ttl must be greater than 0")
-	}
-
-	// RabbitMQ validation
-	if c.Components.Rabbitmq.Host == "" {
-		return fmt.Errorf("rabbitmq host is required")
-	}
-	if c.Components.Rabbitmq.Username == "" {
-		return fmt.Errorf("rabbitmq username is required")
-	}
-	if c.Components.Rabbitmq.Password == "" {
-		return fmt.Errorf("rabbitmq password is required")
-	}
-	if c.Components.Rabbitmq.Vhost == "" {
-		return fmt.Errorf("rabbitmq vhost is required")
-	}
-
 	// Metadata database validation
+	for _, item := range []struct {
+		name string
+		db   MetadataDatabase
+	}{
+		{"data retriever", c.Components.DataRetrieverDatabase},
+		{"sharing", c.Components.SharingDatabase},
+	} {
+		if item.db.Host == "" || item.db.Port < 1 || item.db.Port > 65535 || item.db.User == "" || item.db.Password == "" || item.db.DBName == "" {
+			return fmt.Errorf("%s database host, port, user, password, and database name are required", item.name)
+		}
+	}
 	if c.Components.MetadataDatabase.User == "" {
 		return fmt.Errorf("metadata database user is required")
 	}
@@ -337,68 +326,6 @@ func (c *Config) Validate() error {
 	if c.Components.MetadataDatabase.DBName == "" {
 		return fmt.Errorf("metadata database db_name is required")
 	}
-	if c.Components.MetadataDatabase.ConnectionPoolInitSize <= 0 {
-		return fmt.Errorf("metadata database connection_pool_init_size must be greater than 0")
-	}
-	if c.Components.MetadataDatabase.ConnectionPoolMinSize <= 0 {
-		return fmt.Errorf("metadata database connection_pool_min_size must be greater than 0")
-	}
-	if c.Components.MetadataDatabase.ConnectionPoolMaxSize <= 0 {
-		return fmt.Errorf("metadata database connection_pool_max_size must be greater than 0")
-	}
-	if c.Components.MetadataDatabase.ConnectionPoolInitSize > c.Components.MetadataDatabase.ConnectionPoolMinSize {
-		return fmt.Errorf("metadata database connection_pool_init_size must be <= connection_pool_min_size")
-	}
-	if c.Components.MetadataDatabase.ConnectionPoolMinSize > c.Components.MetadataDatabase.ConnectionPoolMaxSize {
-		return fmt.Errorf("metadata database connection_pool_min_size must be <= connection_pool_max_size")
-	}
-
-	// Email sender service validation
-	if c.Components.EmailSenderService.Enabled {
-		if c.Components.EmailSenderService.EnvironmentType != "development" &&
-			c.Components.EmailSenderService.EnvironmentType != "production" &&
-			c.Components.EmailSenderService.EnvironmentType != "staging" {
-			return fmt.Errorf("email sender service environment_type must be development, production, or staging")
-		}
-		if c.Components.EmailSenderService.Sender == "" {
-			return fmt.Errorf("email sender service sender is required when email sender is enabled")
-		}
-		if c.Components.EmailSenderService.SenderName == "" {
-			return fmt.Errorf("email sender service sender_name is required when email sender is enabled")
-		}
-		if c.Components.EmailSenderService.MailType != "API" {
-			return fmt.Errorf("email sender service mail_type must be API")
-		}
-		if c.Components.EmailSenderService.SenderDomain == "" {
-			return fmt.Errorf("email sender service sender_domain is required when email sender is enabled")
-		}
-		if c.Components.EmailSenderService.MailAPIURL == "" {
-			return fmt.Errorf("email sender service mail_api_url is required when email sender is enabled")
-		}
-		if c.Components.EmailSenderService.MailAPIKey == "" {
-			return fmt.Errorf("email sender service mail_api_key is required when email sender is enabled")
-		}
-		if c.Images.EmailSenderServiceImage == "" {
-			return fmt.Errorf("email sender service image is required when email sender is enabled")
-		}
-	}
-
-	// Monitoring validation
-	if c.Monitoring.Enabled {
-		if c.Monitoring.URL == "" {
-			return fmt.Errorf("monitoring url is required when monitoring is enabled")
-		}
-		if c.Monitoring.User == "" {
-			return fmt.Errorf("monitoring user is required when monitoring is enabled")
-		}
-		if c.Monitoring.Password == "" {
-			return fmt.Errorf("monitoring password is required when monitoring is enabled")
-		}
-		if c.Monitoring.SecurityKey == "" {
-			return fmt.Errorf("monitoring security key is required when monitoring is enabled")
-		}
-	}
-
 	// Image pull secrets validation
 	if c.ImagePullSecrets.Enabled {
 		if c.ImagePullSecrets.RegistryServer == "" {

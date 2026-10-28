@@ -14,7 +14,7 @@ import (
 var DeleteCmd = &cobra.Command{
 	Use:               "delete <env-name>...",
 	Short:             "Delete one or more environments.",
-	Long:              "Delete one or more environments. Removes the environment namespace and all associated resources. Prompts for confirmation unless --force is set.",
+	Long:              "Delete one or more environments. Removes each entire namespace, including unrelated resources and persistent volume claims. Backing volumes follow the storage reclaim policy. Prompts for confirmation unless --force is set.",
 	Args:              cobra.MinimumNArgs(1),
 	ValidArgsFunction: validArgsFunction,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -23,7 +23,7 @@ var DeleteCmd = &cobra.Command{
 		if !deleteForce {
 			envList := strings.Join(name, ", ")
 			display.Warn("This will permanently delete the following environment(s): %s", envList)
-			display.Warn("All namespaces and associated resources will be removed. This action cannot be undone.")
+			display.Warn("Entire namespaces, unrelated resources, and persistent volume claims will be removed. Backing volumes follow the storage reclaim policy. This cannot be undone.")
 			confirmed, err := common.Confirm("Are you sure you want to continue? (y/n):")
 			if err != nil {
 				display.Error("Failed to read confirmation: %v", err)

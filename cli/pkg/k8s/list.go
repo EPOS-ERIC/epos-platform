@@ -33,7 +33,7 @@ func List(context string) ([]Env, error) {
 	envConfigs := []Env{}
 
 	for _, release := range releases {
-		if release.Chart.Metadata.Annotations["managed-by"] != "epos" {
+		if release.Chart.Metadata.Annotations["managed-by"] != "epos-cli" {
 			continue
 		}
 

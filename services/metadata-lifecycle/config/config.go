@@ -39,8 +39,8 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("server_port is required")
 	}
 	publicURL, err := url.Parse(c.GatewayPublicURL)
-	if err != nil || publicURL.Host == "" || (publicURL.Scheme != "http" && publicURL.Scheme != "https") || (publicURL.Path != "" && publicURL.Path != "/") || publicURL.RawQuery != "" || publicURL.Fragment != "" {
-		return fmt.Errorf("gateway_public_url must be an absolute HTTP(S) origin")
+	if err != nil || publicURL.Host == "" || (publicURL.Scheme != "http" && publicURL.Scheme != "https") || publicURL.RawQuery != "" || publicURL.Fragment != "" {
+		return fmt.Errorf("gateway_public_url must be an absolute HTTP(S) URL without a query or fragment")
 	}
 	if c.DBHost == "" {
 		return fmt.Errorf("db_host is required")

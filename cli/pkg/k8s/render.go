@@ -96,7 +96,6 @@ func Render(opts RenderOpts) ([]string, error) {
 func (r *RenderOpts) Validate() error {
 	display.Debug("name: %s", r.Name)
 	display.Debug("outputPath: %s", r.OutputPath)
-	display.Debug("config: %+v", r.Config)
 
 	if r.Config == nil {
 		r.Config = config.GetDefaultConfig()

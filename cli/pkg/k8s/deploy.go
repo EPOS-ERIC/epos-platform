@@ -46,7 +46,6 @@ func Deploy(opts DeployOpts) (*Env, error) {
 		return nil, fmt.Errorf("failed to load helm chart: %w", err)
 	}
 
-	display.Debug("built chart: %+v", chart)
 	display.Debug("building values")
 
 	values, err := opts.Config.AsValues()
@@ -54,7 +53,6 @@ func Deploy(opts DeployOpts) (*Env, error) {
 		return nil, fmt.Errorf("failed to build helm values from config: %w", err)
 	}
 
-	display.Debug("built values: %+v", values)
 
 	settings := cli.New()
 	settings.KubeContext = opts.Context
@@ -101,7 +99,6 @@ func Deploy(opts DeployOpts) (*Env, error) {
 // Validate checks DeployOpts and resolves required deployment preconditions.
 func (d *DeployOpts) Validate() error {
 	display.Debug("context: %s", d.Context)
-	display.Debug("config: %+v", d.Config)
 
 	if d.Config == nil {
 		return fmt.Errorf("config is required")

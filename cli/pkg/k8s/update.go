@@ -33,7 +33,6 @@ func Update(opts UpdateOpts) (*Env, error) {
 	display.Debug("oldEnvName: %s", opts.OldEnvName)
 	display.Debug("context: %s", opts.Context)
 	display.Debug("force: %v", opts.Force)
-	display.Debug("newConfig: %+v", opts.NewConfig)
 
 	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid parameters for update command: %w", err)
@@ -86,7 +85,6 @@ func Update(opts UpdateOpts) (*Env, error) {
 		return nil, fmt.Errorf("failed to load helm chart: %w", err)
 	}
 
-	display.Debug("built chart: %+v", chart)
 	display.Debug("building values")
 
 	values, err := opts.NewConfig.AsValues()
@@ -94,7 +92,6 @@ func Update(opts UpdateOpts) (*Env, error) {
 		return nil, fmt.Errorf("failed to build helm values from config: %w", err)
 	}
 
-	display.Debug("built values: %+v", values)
 
 	settings := cli.New()
 	settings.KubeContext = opts.Context
@@ -141,7 +138,6 @@ func (u *UpdateOpts) Validate() error {
 	display.Debug("oldEnvName: %s", u.OldEnvName)
 	display.Debug("context: %s", u.Context)
 	display.Debug("force: %v", u.Force)
-	display.Debug("newConfig: %+v", u.NewConfig)
 
 	if u.OldEnvName == "" {
 		return fmt.Errorf("old environment name is required")
@@ -193,4 +189,22 @@ func (u *UpdateOpts) Validate() error {
 	}
 
 	return nil
+}
+
+// ManagedDatabaseSettingsChanged reports settings PostgreSQL only applies on initial startup.
+func ManagedDatabaseSettingsChanged(old, new *config.Config) bool {
+	if old == nil || new == nil {
+		return false
+	}
+	for _, pair := range [][2]config.MetadataDatabase{
+		{old.Components.MetadataDatabase, new.Components.MetadataDatabase},
+		{old.Components.DataRetrieverDatabase, new.Components.DataRetrieverDatabase},
+		{old.Components.SharingDatabase, new.Components.SharingDatabase},
+	} {
+		oldDB, newDB := pair[0], pair[1]
+		if oldDB.Enabled && newDB.Enabled && (oldDB.User != newDB.User || oldDB.DBName != newDB.DBName || oldDB.Password != newDB.Password) {
+			return true
+		}
+	}
+	return false
 }

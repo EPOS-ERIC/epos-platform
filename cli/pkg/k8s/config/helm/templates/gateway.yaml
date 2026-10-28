@@ -1,32 +1,28 @@
-{{- define "epos.gatewayConfigData" -}}
-LOAD_RESOURCES_API: "{{.Values.components.resources_service.auth.enabled}}:{{.Values.components.resources_service.auth.only_admin}}"
-LOAD_INGESTOR_API: "{{.Values.components.ingestor_service.auth.enabled}}:{{.Values.components.ingestor_service.auth.only_admin}}"
-LOAD_EXTERNAL_ACCESS_API: "{{.Values.components.external_access_service.auth.enabled}}:{{.Values.components.external_access_service.auth.only_admin}}"
-{{- if .Values.components.backoffice.enabled}}
-LOAD_BACKOFFICE_API: "{{ .Values.components.backoffice.service.auth.enabled }}:{{ .Values.components.backoffice.service.auth.only_admin }}"
-{{- end}}
-{{- if .Values.components.sharing_service.enabled}}
-LOAD_SHARING_API: "{{ .Values.components.sharing_service.auth.enabled }}:{{ .Values.components.sharing_service.auth.only_admin }}"
-{{- end}}
-{{- if .Values.components.converter.enabled}}
-LOAD_CONVERTER_API: "{{ .Values.components.converter.auth.enabled }}:{{ .Values.components.converter.auth.only_admin }}"
-{{- end}}
-{{- if .Values.components.email_sender_service.enabled}}
-LOAD_EMAIL_SENDER_API: "{{ .Values.components.email_sender_service.auth.enabled }}:{{ .Values.components.email_sender_service.auth.only_admin }}"
-{{- end}}
-
-IS_AAI_ENABLED: "{{ .Values.components.gateway.aai.enabled }}"
-AAI_SERVICE_ENDPOINT: "{{ include "epos.gatewayAAIUserinfoEndpoint" . }}"
-
-{{- if .Values.url_prefix_namespace }}
-BASECONTEXT: "/{{ .Release.Namespace }}"
-{{- end }}
-
-{{- if .Values.monitoring.enabled }}
-SECURITY_KEY: "{{ .Values.monitoring.security_key }}"
-{{- end }}
-{{- end -}}
-
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+data:
+  config.yaml: |
+    server:
+      listen: ":5000"
+      cors_allow_origin: "*"
+      request_timeout: "60s"
+      read_timeout: "15s"
+      write_timeout: "30s"
+      idle_timeout: "60s"
+    services:
+      metadata-lifecycle:
+        url: "metadata-lifecycle:5000"
+      data-retriever:
+        url: "data-retriever:8100"
+      sharing:
+        url: "sharing:8200"
+      auth:
+        url: {{ include "epos.gatewayAAIServiceEndpoint" . | quote }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -36,7 +32,7 @@ metadata:
     {{- include "epos.labels" . | nindent 4 }}
     app.kubernetes.io/component: gateway
 spec:
-  replicas: {{ .Values.components.gateway.replicas | default 1 }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "epos.selectorLabels" . | nindent 6 }}
@@ -47,62 +43,39 @@ spec:
         {{- include "epos.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: gateway
       annotations:
-        checksum/gateway-config: {{ include "epos.gatewayConfigData" . | sha256sum }}
+        checksum/aai: {{ .Values.components.gateway.aai | toYaml | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
-      initContainers:
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "ingestor-service" "port" 8080) | nindent 6 }}
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "external-access-service" "port" 8080) | nindent 6 }}
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "resources-service" "port" 8080) | nindent 6 }}
-      {{- if .Values.components.sharing_service.enabled }}
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "sharing-service" "port" 8080) | nindent 6 }}
-      {{- end }}
-      {{- if .Values.components.converter.enabled }}
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "converter-service" "port" 8080) | nindent 6 }}
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "converter-routine" "port" 8080) | nindent 6 }}
-      {{- end }}
-      {{- if .Values.components.email_sender_service.enabled }}
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "email-sender-service" "port" 8080) | nindent 6 }}
-      {{- end }}
-      {{- if .Values.components.backoffice.enabled }}
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "backoffice-service" "port" 8080) | nindent 6 }}
-      {{- end }}
-      {{- if .Values.components.aai_service.enabled }}
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "aai-service" "port" 8080) | nindent 6 }}
-      {{- end }}
       containers:
-      - name: gateway
-        image: {{ .Values.images.gateway_image }}
-        {{- include "epos.image_pull_policy" . | nindent 8 }}
-        ports:
-        - containerPort: 5000
-          name: http
-        envFrom:
-        - configMapRef:
+        - name: gateway
+          image: {{ .Values.images.gateway | quote }}
+          imagePullPolicy: {{ .Values.image_pull_policy }}
+          ports:
+            - containerPort: 5000
+          env:
+            - name: OTEL_SDK_DISABLED
+              value: {{ not .Values.components.otel.enabled | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: gateway
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ if .Values.components.otel.enabled }}{{ default "http://otel-lgtm:4318" .Values.components.otel.endpoint | quote }}{{ else }}""{{ end }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "http/protobuf"
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "5000"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/gateway/config.yaml
+              subPath: config.yaml
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
             name: gateway
-        livenessProbe:
-          exec:
-            command:
-            - sh
-            - -c
-            - python3 -c 'import urllib.request; resp=urllib.request.urlopen("http://localhost:5000/api/v1/ui", timeout=5); print(f"Status {resp.getcode()}"); exit(0 if resp.getcode() == 200 else 1)' || exit 1
-          initialDelaySeconds: 10
-          periodSeconds: 15
-          timeoutSeconds: 5
-          failureThreshold: 5
-        readinessProbe:
-          exec:
-            command:
-            - sh
-            - -c
-            - python3 -c 'import urllib.request; resp=urllib.request.urlopen("http://localhost:5000/api/v1/ui", timeout=5); print(f"Status {resp.getcode()}"); exit(0 if resp.getcode() == 200 else 1)' || exit 1
-          initialDelaySeconds: 10
-          periodSeconds: 15
-          timeoutSeconds: 5
-          failureThreshold: 5
-      {{- include "epos.nodeSelector" . | nindent 6 }}
-      {{- include "epos.tolerations" . | nindent 6 }}
-      {{- include "epos.affinity" . | nindent 6 }}
 ---
 apiVersion: v1
 kind: Service
@@ -113,22 +86,11 @@ metadata:
     app.kubernetes.io/component: gateway
 spec:
   ports:
-  - port: 5000
-    targetPort: 5000
-    name: http
+    - port: 5000
+      targetPort: 5000
   selector:
     {{- include "epos.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: gateway
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: gateway
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: gateway
-data:
-  {{- include "epos.gatewayConfigData" . | nindent 2 }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -138,35 +100,62 @@ metadata:
     {{- include "epos.labels" . | nindent 4 }}
     app.kubernetes.io/component: gateway
   annotations:
-    {{- if .Values.url_prefix_namespace }}
-    nginx.ingress.kubernetes.io/rewrite-target: /{{ .Release.Namespace }}{{ .Values.components.gateway.base_url }}
-    {{- else }}
-    nginx.ingress.kubernetes.io/rewrite-target: {{ .Values.components.gateway.base_url }}
-    {{- end }}
-
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /v1/$2
     {{- if and .Values.components.gateway.tls.enabled .Values.cert_manager_issuer }}
-    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer | quote }}
     {{- end }}
 spec:
   ingressClassName: nginx
   rules:
-  - host: {{ .Values.domain }}
-    http:
-      paths:
-      {{- if .Values.url_prefix_namespace }}
-      - path: /{{ .Release.Namespace }}{{ .Values.components.gateway.base_url }}
-      {{- else }}
-      - path: {{ .Values.components.gateway.base_url }}
-      {{- end }}
-        pathType: Prefix
-        backend:
-          service:
-            name: gateway
-            port:
-              number: 5000
+    - host: {{ .Values.domain | quote }}
+      http:
+        paths:
+          - path: {{ if .Values.url_prefix_namespace }}/{{ .Release.Namespace }}{{ end }}{{ trimSuffix "/" .Values.components.gateway.base_url }}(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 5000
+          - path: {{ if .Values.url_prefix_namespace }}/{{ .Release.Namespace }}{{ end }}/v1(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 5000
   {{- if .Values.components.gateway.tls.enabled }}
   tls:
-  - hosts:
-    - {{ .Values.domain }}
-    secretName: {{ .Values.components.gateway.tls.secret_name }}
+    - hosts: [{{ .Values.domain | quote }}]
+      secretName: {{ .Values.components.gateway.tls.secret_name | quote }}
+  {{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-docs
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1$2
+    {{- if and .Values.components.gateway.tls.enabled .Values.cert_manager_issuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer | quote }}
+    {{- end }}
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: {{ .Values.domain | quote }}
+      http:
+        paths:
+          - path: {{ if .Values.url_prefix_namespace }}/{{ .Release.Namespace }}{{ end }}/(scalar|swagger|openapi.yaml)(/.*|$)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 5000
+  {{- if .Values.components.gateway.tls.enabled }}
+  tls:
+    - hosts: [{{ .Values.domain | quote }}]
+      secretName: {{ .Values.components.gateway.tls.secret_name | quote }}
   {{- end }}

@@ -26,24 +26,17 @@ type NamedImage struct {
 }
 
 type Images struct {
-	RabbitmqImage           string `yaml:"rabbitmq_image"`
-	DataportalImage         string `yaml:"dataportal_image"`
-	GatewayImage            string `yaml:"gateway_image"`
-	MetadataDatabaseImage   string `yaml:"metadata_database_image"`
-	ResourcesServiceImage   string `yaml:"resources_service_image"`
-	IngestorServiceImage    string `yaml:"ingestor_service_image"`
-	ExternalAccessImage     string `yaml:"external_access_image"`
-	ConverterServiceImage   string `yaml:"converter_service_image"`
-	ConverterRoutineImage   string `yaml:"converter_routine_image"`
-	BackofficeServiceImage  string `yaml:"backoffice_service_image"`
-	BackofficeUIImage       string `yaml:"backoffice_ui_image"`
-	EmailSenderServiceImage string `yaml:"email_sender_service_image"`
-	SharingServiceImage     string `yaml:"sharing_service_image"`
-	AAIServiceImage         string `yaml:"aai_service_image"`
-	MetadataLifecycleImage  string `yaml:"metadata_lifecycle_image"`
-	DataRetrieverImage      string `yaml:"data_retriever_image"`
-	DataRetrieverDBImage    string `yaml:"data_retriever_database_image"`
-	SharingDBImage          string `yaml:"sharing_database_image"`
+	PlatformUIImage        string `yaml:"platform_ui"`
+	BackofficeUIImage      string `yaml:"backoffice_ui"`
+	GatewayImage           string `yaml:"gateway"`
+	MetadataLifecycleImage string `yaml:"metadata_lifecycle"`
+	DataRetrieverImage     string `yaml:"data_retriever"`
+	SharingServiceImage    string `yaml:"sharing_service"`
+	AAIServiceImage        string `yaml:"aai_service"`
+	MetadataDatabaseImage  string `yaml:"metadata_database"`
+	DataRetrieverDBImage   string `yaml:"data_retriever_database"`
+	SharingDBImage         string `yaml:"sharing_database"`
+	OTelLGTMImage          string `yaml:"otel_lgtm"`
 }
 
 func ImageExistsLocally(ctx context.Context, imageRef string) (bool, error) {

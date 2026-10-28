@@ -1,12 +1,4 @@
-{{- define "epos.backofficeUIConfigData" -}}
-BASE_URL: {{ include "epos.backofficeBasePath" . }}
-API_HOST: http://gateway:5000/api
-AUTH_ROOT_URL: {{ include "epos.aaiAuthRootURL" . | quote }}
-{{- end -}}
-
 {{- if .Values.components.backoffice.enabled }}
-{{- $base_url := .Values.components.backoffice.gui.base_url | default "/backoffice" }}
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,26 +17,25 @@ spec:
       labels:
         {{- include "epos.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: backoffice-ui
-      annotations:
-        checksum/backoffice-ui-config: {{ include "epos.backofficeUIConfigData" . | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
-      initContainers:
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "gateway" "port" 5000) | nindent 6 }}
-      {{- include "epos.waitForServiceInitContainer" (dict "name" "backoffice-service" "port" 8080) | nindent 6 }}
       containers:
-      - name: backoffice-ui
-        image: {{ .Values.images.backoffice_ui_image }}
-        {{- include "epos.image_pull_policy" . | nindent 8 }}
-        envFrom:
-        - configMapRef:
-            name: backoffice-ui
-        ports:
-        - containerPort: 80
-          name: http
-        {{- include "epos.nodeSelector" . | nindent 6 }}
-        {{- include "epos.tolerations" . | nindent 6 }}
-        {{- include "epos.affinity" . | nindent 6 }}
+        - name: backoffice-ui
+          image: {{ .Values.images.backoffice_ui | quote }}
+          imagePullPolicy: {{ .Values.image_pull_policy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: BASE_URL
+              value: {{ include "epos.backofficeBasePath" . | quote }}
+            - name: API_HOST
+              value: "http://gateway:5000"
+            - name: AUTH_ROOT_URL
+              value: {{ include "epos.aaiAuthRootURL" . | quote }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
 ---
 apiVersion: v1
 kind: Service
@@ -55,9 +46,8 @@ metadata:
     app.kubernetes.io/component: backoffice-ui
 spec:
   ports:
-  - port: 80
-    targetPort: 80
-    name: http
+    - port: 8080
+      targetPort: 8080
   selector:
     {{- include "epos.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: backoffice-ui
@@ -66,42 +56,28 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: backoffice-ui
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: backoffice-ui
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: {{ include "epos.backofficeBasePath" . }}
-
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
     {{- if and .Values.components.backoffice.tls.enabled .Values.cert_manager_issuer }}
-    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer | quote }}
     {{- end }}
 spec:
   ingressClassName: nginx
   rules:
-  - host: {{ .Values.domain }}
-    http:
-      paths:
-      - path: {{ include "epos.backofficeBasePath" . }}
-        pathType: Prefix
-        backend:
-          service:
-            name: backoffice-ui
-            port:
-              number: 80
+    - host: {{ .Values.domain | quote }}
+      http:
+        paths:
+          - path: {{ if eq (include "epos.backofficeBasePath" .) "/" }}/(|/)(.*){{ else }}{{ trimSuffix "/" (include "epos.backofficeBasePath" .) }}(/|$)(.*){{ end }}
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: backoffice-ui
+                port:
+                  number: 8080
   {{- if .Values.components.backoffice.tls.enabled }}
   tls:
-  - hosts:
-    - {{ .Values.domain }}
-    secretName: {{ .Values.components.backoffice.tls.secret_name }}
+    - hosts: [{{ .Values.domain | quote }}]
+      secretName: {{ .Values.components.backoffice.tls.secret_name | quote }}
   {{- end }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: backoffice-ui
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: backoffice-ui
-data:
-  {{- include "epos.backofficeUIConfigData" . | nindent 2 }}
 {{- end }}

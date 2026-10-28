@@ -93,52 +93,48 @@ func TestRenderOpts_ConfigRender_OptionalComponents(t *testing.T) {
 		wantTemplates map[string]string
 	}{
 		{
-			name:    "email sender enabled renders email sender chart and gateway flag",
-			envName: "test-email-sender",
+			name:    "managed telemetry renders collector",
+			envName: "test-otel",
 			mutate: func(cfg *config.Config) {
-				cfg.Components.EmailSenderService.Enabled = true
-				cfg.Components.EmailSenderService.Auth = config.Auth{
-					Enabled:   true,
-					OnlyAdmin: true,
-				}
+				cfg.Components.OpenTelemetry.Enabled = true
 			},
-			wantGateway: []string{`LOAD_EMAIL_SENDER_API: "true:true"`},
+			wantGateway: []string{`value: "http://otel-lgtm:4318"`},
 			wantTemplates: map[string]string{
-				"templates/email-sender-service.yaml": "name: email-sender-service",
+				"templates/otel.yaml": "name: otel-lgtm",
 			},
 		},
 		{
-			name:    "sharing enabled renders sharing chart and gateway flag",
+			name:    "sharing renders current service",
 			envName: "test-sharing",
 			mutate: func(cfg *config.Config) {
-				cfg.Components.SharingService.Enabled = true
+				cfg.Components.SharingDatabase.Enabled = true
 			},
-			wantGateway: []string{`LOAD_SHARING_API: "false:false"`},
+			wantGateway: []string{`url: "sharing:8200"`},
 			wantTemplates: map[string]string{
-				"templates/sharing-service.yaml": "name: sharing-service",
+				"templates/application-services.yaml": "name: sharing",
 			},
 		},
 		{
-			name:    "backoffice enabled renders backoffice chart and gateway flag",
+			name:    "backoffice enabled renders UI",
 			envName: "test-backoffice",
 			mutate: func(cfg *config.Config) {
 				cfg.Components.Backoffice.Enabled = true
 			},
-			wantGateway: []string{`LOAD_BACKOFFICE_API: "false:false"`},
+			wantGateway: []string{`url: "metadata-lifecycle:5000"`},
 			wantTemplates: map[string]string{
-				"templates/backoffice-service.yaml": "name: backoffice-service",
+				"templates/backoffice-ui.yaml": "name: backoffice-ui",
 			},
 		},
 		{
-			name:    "converter enabled renders converter charts and gateway flag",
-			envName: "test-converter",
+			name:    "external telemetry configures gateway",
+			envName: "test-external-otel",
 			mutate: func(cfg *config.Config) {
-				cfg.Components.Converter.Enabled = true
+				cfg.Components.OpenTelemetry.Enabled = true
+				cfg.Components.OpenTelemetry.Endpoint = "https://otel.example"
 			},
-			wantGateway: []string{`LOAD_CONVERTER_API: "false:false"`},
+			wantGateway: []string{`value: "https://otel.example"`},
 			wantTemplates: map[string]string{
-				"templates/converter-service.yaml": "name: converter-service",
-				"templates/converter-routine.yaml": "name: converter-routine",
+				"templates/application-services.yaml": "name: metadata-lifecycle",
 			},
 		},
 	}
