@@ -147,10 +147,9 @@ describe('BackofficeHeaderComponent', () => {
 
     expect(fixture.nativeElement.querySelector('h1')?.textContent?.trim()).toBe('Global Administration');
     expect(fixture.nativeElement.querySelector('.management-eyebrow')?.textContent?.trim()).toBe('Platform Administration');
-    const backLink = fixture.nativeElement.querySelector('.header-manage-back a') as HTMLAnchorElement;
+    const backLink = fixture.nativeElement.querySelector('.header-copy') as HTMLAnchorElement;
     expect(backLink.getAttribute('href')).toBe('/software?groupId=group-id');
-    expect(backLink.classList.contains('app-button--dark')).toBe(true);
-    expect((fixture.nativeElement.querySelector('.header-copy') as HTMLAnchorElement).getAttribute('href')).toBe('/software?groupId=group-id');
+    expect(backLink.classList.contains('header-copy--back')).toBe(true);
     expect(fixture.nativeElement.querySelector('.header-back-affordance')).toBeTruthy();
   });
 });

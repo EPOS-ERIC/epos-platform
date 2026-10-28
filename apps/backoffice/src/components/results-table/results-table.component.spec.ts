@@ -3,9 +3,16 @@ import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 
 import type { DiscoveryItem } from '../../../generated/backofficeSchemas';
+import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
 import { ResultsTableComponent } from './results-table.component';
 
 describe('ResultsTableComponent', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: MembershipRequestDialogService, useValue: { open: vi.fn() } }]
+    });
+  });
+
   it('renders an accessible table skeleton while discovery results are loading', async () => {
     await TestBed.configureTestingModule({
       imports: [ResultsTableComponent],

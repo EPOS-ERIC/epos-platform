@@ -1,13 +1,28 @@
+import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 
 import { LocalStorageService } from './local-storage.service';
 
 describe('LocalStorageService', () => {
   let service: LocalStorageService;
+  let storage: Storage;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    localStorage.clear();
+    const values = new Map<string, string>();
+    storage = {
+      get length() {
+        return values.size;
+      },
+      clear: () => values.clear(),
+      getItem: (key) => values.get(key) ?? null,
+      key: (index) => Array.from(values.keys())[index] ?? null,
+      removeItem: (key) => values.delete(key),
+      setItem: (key, value) => values.set(key, value)
+    };
+    TestBed.configureTestingModule({
+      providers: [{ provide: DOCUMENT, useValue: { defaultView: { localStorage: storage } } }]
+    });
+    storage.clear();
     service = TestBed.inject(LocalStorageService);
   });
 
@@ -19,7 +34,7 @@ describe('LocalStorageService', () => {
   });
 
   it('returns null for invalid JSON', () => {
-    localStorage.setItem('invalid', '{');
+    storage.setItem('invalid', '{');
 
     expect(service.getJson('invalid')).toBeNull();
   });
