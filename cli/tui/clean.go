@@ -15,7 +15,9 @@ func (a *App) showCleanConfirm() {
 	}
 
 	message := "This will permanently delete all data in environment '" + envName + "'.\n\n" + DefaultTheme.DestructiveTag("b") + "This action cannot be undone." + "[-]"
-	if !isDocker && k8sContext != "" {
+	if isDocker {
+		message = "This will permanently delete managed database and telemetry data in environment '" + envName + "'.\n\n" + DefaultTheme.DestructiveTag("b") + "This action cannot be undone." + "[-]"
+	} else if k8sContext != "" {
 		message = "This will permanently delete all data in environment '" + envName + "' (context: '" + k8sContext + "').\n\n" + DefaultTheme.DestructiveTag("b") + "This action cannot be undone." + "[-]"
 	}
 

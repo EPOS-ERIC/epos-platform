@@ -21,6 +21,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -41,6 +43,10 @@ type Config struct {
 }
 
 func Start(ctx context.Context, cfg Config) (func(context.Context) error, error) {
+	if strings.EqualFold(os.Getenv("OTEL_SDK_DISABLED"), "true") {
+		return func(context.Context) error { return nil }, nil
+	}
+
 	var shutdownFuncs []func(context.Context) error
 	var err error
 

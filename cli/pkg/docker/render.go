@@ -91,10 +91,13 @@ func Render(opts RenderOpts) ([]string, error) {
 func (r *RenderOpts) Validate() error {
 	display.Debug("name: %s", r.Name)
 	display.Debug("outputPath: %s", r.OutputPath)
-	display.Debug("config: %+v", r.Config)
 
 	if r.Config == nil {
-		r.Config = config.GetDefaultConfig()
+		var err error
+		r.Config, err = config.GetDefaultConfig()
+		if err != nil {
+			return fmt.Errorf("create default config: %w", err)
+		}
 
 		display.Debug("config not provided, using default config")
 	}

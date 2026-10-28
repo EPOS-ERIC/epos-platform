@@ -122,6 +122,7 @@ var KeyHints = map[ScreenKey][]KeyHint{
 		{"G: copy gui", "G: copy gui url to clipboard", false, "Browser"},
 		{"b: backoffice", "b: open backoffice in browser", true, "Browser"},
 		{"B: copy backoffice", "B: copy backoffice url to clipboard", false, "Browser"},
+		{"t: telemetry", "t: open Grafana telemetry in browser", true, "Browser"},
 		{"a: api", "a: open api docs in browser", true, "Browser"},
 		{"A: copy api", "A: copy api url to clipboard", false, "Browser"},
 		{"enter: open file", "enter: open the selected ingested file/directory/url", false, "Browser"},

@@ -1,430 +1,265 @@
 services:
-  dataportal:
-    image: ${DATAPORTAL_IMAGE}
-    ports:
-      - "${DATAPORTAL_PORT}:80"
-    container_name: ${ENV_NAME:-epos-platform}-data-portal
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - BASE_URL=${DATAPORTAL_PATH}
-      - API_HOST=http://gateway:5000/api
-      - AUTH_ROOT_URL
-    depends_on:
-      gateway:
-        condition: service_healthy
-
-{{- if .Components.Backoffice.Enabled}}
-  backoffice-ui:
-    image: ${BACKOFFICE_UI_IMAGE}
-    ports:
-      - "${BACKOFFICE_PORT:-34000}:80"
-    container_name: ${ENV_NAME:-epos-platform}-backoffice-ui
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - BASE_URL=${BACKOFFICE_PATH}
-      - API_HOST=http://gateway:5000/api
-      - AUTH_ROOT_URL
-    depends_on:
-      gateway:
-        condition: service_healthy
-
-  backoffice-service:
-    image: ${BACKOFFICE_SERVICE_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-backoffice-service
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - POSTGRESQL_CONNECTION_STRING
-      - CONNECTION_POOL_INIT_SIZE
-      - CONNECTION_POOL_MIN_SIZE
-      - CONNECTION_POOL_MAX_SIZE
-    healthcheck:
-      test: "curl --fail --silent http://localhost:8080/api/backoffice-service/v1/actuator/health | grep UP || exit 1"
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    depends_on:
-      metadata-database:
-        condition: service_healthy
-        restart: true
-{{- end}}
-
   gateway:
     image: ${GATEWAY_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-gateway
+    platform: linux/amd64
     ports:
-      - "${GATEWAY_PORT:-33000}:5000"
-    networks:
-      - epos_network
-    restart: always
+      - "${GATEWAY_PORT}:5000"
     environment:
-      - LOAD_RESOURCES_API
-      - LOAD_INGESTOR_API
-      - LOAD_EXTERNAL_ACCESS_API
-      - LOAD_BACKOFFICE_API
-      - LOAD_PROCESSING_API
-      - LOAD_SHARING_API
-      - LOAD_CONVERTER_API
-      - LOAD_MONITORING_API
-      - LOAD_EMAIL_SENDER_API
-
-      - IS_AAI_ENABLED
-      - AAI_SERVICE_ENDPOINT
-
-	{{- if .Monitoring.Enabled}}
-      - SECURITY_KEY
-	{{- end }}
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: gateway
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
+    configs:
+      - source: gateway_config
+        target: /etc/gateway/config.yaml
+    networks: [epos]
+    restart: unless-stopped
     healthcheck:
-      test: python3 -c 'import urllib.request; resp=urllib.request.urlopen("http://localhost:5000/api/v1/ui", timeout=5); print(f"Status {resp.getcode()}"); exit(0 if resp.getcode() == 200 else 1)' || exit 1
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    depends_on:
-      resources-service:
-        condition: service_healthy
-      ingestor-service:
-        condition: service_healthy
-      external-access-service:
-        condition: service_healthy
-	{{- if .Components.Converter.Enabled}}
-      converter-service:
-        condition: service_healthy
-      converter-routine:
-        condition: service_healthy
-	{{- end}}
-	{{- if .Components.Backoffice.Enabled}}
-      backoffice-service:
-        condition: service_healthy
-	{{- end}}
-	{{- if .Components.EmailSenderService.Enabled}}
-      email-sender-service:
-        condition: service_healthy
-	{{- end}}
-	{{- if .Components.SharingService.Enabled}}
-      sharing-service:
-        condition: service_healthy
-	{{- end}}
-	{{- if .Components.AAIService.Enabled}}
-      aai-service:
-        condition: service_healthy
-	{{- end}}
-
-  rabbitmq:
-    image: ${RABBITMQ_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-rabbitmq
-    environment:
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}
-      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST}
-    restart: always
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    networks:
-      - epos_network
-
-  resources-service:
-    image: ${RESOURCES_SERVICE_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-resources-service
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - BROKER_HOST=${RABBITMQ_HOST}
-      - BROKER_USERNAME=${RABBITMQ_USERNAME}
-      - BROKER_PASSWORD=${RABBITMQ_PASSWORD}
-      - BROKER_VHOST=${RABBITMQ_VHOST}
-
-      - FACETS_DEFAULT=true
-      - FACETS_TYPE_DEFAULT=categories
-
-      - APICONTEXT=/api/v1
-
-      - APIHOST=${PROTOCOL}://${HOST}:${GATEWAY_PORT:-33000}/
-      - PERSISTENCE_NAME=EPOSDataModel
-
-	{{- if .Monitoring.Enabled}}
-      - MONITORING=true
-      - MONITORING_URL=${MONITORING_URL}
-      - MONITORING_USER=${MONITORING_USER}
-      - MONITORING_PWD=${MONITORING_PWD}
-	{{- else}}
-      - MONITORING=false
-	{{- end}}
-
-      - CACHE_TTL
-      - CACHE_FACETS
-
-      - POSTGRESQL_CONNECTION_STRING
-      - PERSISTENCE_NAME
-      - CONNECTION_POOL_INIT_SIZE
-      - CONNECTION_POOL_MIN_SIZE
-      - CONNECTION_POOL_MAX_SIZE
-    healthcheck:
-      test: "curl --fail --silent http://localhost:8080/api/resources-service/v1/actuator/health | grep UP || exit 1"
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-        restart: true
-      metadata-database:
-        condition: service_healthy
-        restart: true
-
-  ingestor-service:
-    image: ${INGESTOR_SERVICE_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-ingestor-service
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - PERSISTENCE_NAME=EPOSDataModel
-      - POSTGRESQL_CONNECTION_STRING
-      - INGESTOR_HASH
-      - BASECONTEXT=
-      - CONNECTION_POOL_INIT_SIZE
-      - CONNECTION_POOL_MIN_SIZE
-      - CONNECTION_POOL_MAX_SIZE
-    healthcheck:
-      test: "curl --fail --silent http://localhost:8080/api/ingestor-service/v1/actuator/health | grep UP || exit 1"
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    depends_on:
-      metadata-database:
-        condition: service_healthy
-        restart: true
-
-  external-access-service:
-    image: ${EXTERNAL_ACCESS_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-external-access-service
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - BROKER_HOST=${RABBITMQ_HOST}
-      - BROKER_USERNAME=${RABBITMQ_USERNAME}
-      - BROKER_PASSWORD=${RABBITMQ_PASSWORD}
-      - BROKER_VHOST=${RABBITMQ_VHOST}
-
-      - POSTGRESQL_CONNECTION_STRING
-      - CONNECTION_POOL_INIT_SIZE
-      - CONNECTION_POOL_MIN_SIZE
-      - CONNECTION_POOL_MAX_SIZE
-    healthcheck:
-      test: "curl --fail --silent http://localhost:8080/api/external-access-service/v1/actuator/health | grep UP || exit 1"
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    depends_on:
-      metadata-database:
-        condition: service_healthy
-        restart: true
-      rabbitmq:
-        condition: service_healthy
-        restart: true
-
-{{- if .Components.Converter.Enabled}}
-  converter-service:
-    image: ${CONVERTER_SERVICE_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-converter-service
-    volumes:
-      - converter:/opt/converter/plugins
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - BROKER_HOST=${RABBITMQ_HOST}
-      - BROKER_USERNAME=${RABBITMQ_USERNAME}
-      - BROKER_PASSWORD=${RABBITMQ_PASSWORD}
-      - BROKER_VHOST=${RABBITMQ_VHOST}
-
-      - LOG_LEVEL=INFO
-      - POSTGRESQL_CONNECTION_STRING
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget -q -O - http://localhost:8080/api/converter-service/v1/actuator/health | grep -i 'healthy'",
-        ]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      metadata-database:
-        condition: service_healthy
-
-  converter-routine:
-    image: ${CONVERTER_ROUTINE_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-converter-routine
-    volumes:
-      - converter:/opt/converter/plugins
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - LOG_LEVEL=INFO
-
-      - POSTGRESQL_CONNECTION_STRING
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget -q -O - http://localhost:8080/api/converter-routine/v1/actuator/health | grep -i 'healthy'",
-        ]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    depends_on:
-      metadata-database:
-        condition: service_healthy
-{{- end}}
-
-{{- if .Components.EmailSenderService.Enabled}}
-  email-sender-service:
-    image: ${EMAIL_SENDER_SERVICE_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-email-sender-service
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - POSTGRESQL_CONNECTION_STRING
-      - CONNECTION_POOL_INIT_SIZE
-      - CONNECTION_POOL_MIN_SIZE
-      - CONNECTION_POOL_MAX_SIZE
-
-      - ENVIRONMENT_TYPE
-      - SENDER
-      - SENDER_NAME
-      - MAIL_TYPE
-      - SENDER_DOMAIN
-      - MAIL_HOST
-      - MAIL_USER
-      - MAIL_PASSWORD
-      - DEV_EMAILS
-      - MAIL_API_URL
-      - MAIL_API_KEY
-
-      - PERSISTENCE_NAME=EPOSDataModel
-    healthcheck:
-      test: "curl --fail --silent http://localhost:8080/api/email-sender-service/v1/actuator/health | grep UP || exit 1"
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    depends_on:
-      metadata-database:
-        condition: service_healthy
-        restart: true
-{{- end}}
-
-{{- if .Components.SharingService.Enabled}}
-  sharing-service:
-    image: ${SHARING_SERVICE_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-sharing-service
-    networks:
-      - epos_network
-    restart: always
-    environment:
-      - POSTGRESQL_CONNECTION_STRING
-      - PERSISTENCE_NAME_SHARING="EPOSSharing"
-    healthcheck:
-      test: "curl --fail --silent http://localhost:8080/api/sharing-service/v1/actuator/health | grep UP || exit 1"
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    depends_on:
-      metadata-database:
-        condition: service_healthy
-        restart: true
-{{- end}}
-
-  metadata-database:
-    restart: always
-    image: ${METADATA_DATABASE_IMAGE}
-    {{- if gt .Components.MetadataDatabase.PublishedPort 0 }}
-    ports:
-      - "${METADATA_DATABASE_PUBLISHED_PORT}:5432"
-    {{- end }}
-    container_name: ${ENV_NAME:-epos-platform}-metadata-database
-    environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_DB
-    volumes:
-      - psqldata:/var/lib/postgresql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:5000/health || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 10s
-    networks:
-      - epos_network
+      retries: 20
+      start_period: 20s
 
-{{- if .Components.AAIService.Enabled}}
+  metadata-lifecycle:
+    image: ${METADATA_LIFECYCLE_IMAGE}
+    platform: linux/amd64
+    environment:
+      SERVER_PORT: "5000"
+      GATEWAY_PUBLIC_URL: ${GATEWAY_PUBLIC_URL}
+      DB_HOST: ${METADATA_DB_HOST}
+      DB_PORT: ${METADATA_DB_PORT}
+      DB_NAME: ${METADATA_DB_NAME}
+      DB_USER: ${METADATA_DB_USER}
+      DB_PASSWORD: ${METADATA_DB_PASSWORD:?metadata database password is required}
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: metadata-lifecycle
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
+{{- if .Components.MetadataDatabase.Enabled }}
+    depends_on:
+      metadata-db:
+        condition: service_healthy
+{{- end }}
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 5000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  data-retriever:
+    image: ${DATA_RETRIEVER_IMAGE}
+    platform: linux/amd64
+    environment:
+      GRPC_LISTEN_ADDR: ":8100"
+      DB_HOST: ${RETRIEVER_DB_HOST}
+      DB_PORT: ${RETRIEVER_DB_PORT}
+      DB_NAME: ${RETRIEVER_DB_NAME}
+      DB_USER: ${RETRIEVER_DB_USER}
+      DB_PASSWORD: ${RETRIEVER_DB_PASSWORD:?retriever database password is required}
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: data-retriever
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
+{{- if .Components.DataRetrieverDatabase.Enabled }}
+    depends_on:
+      retriever-db:
+        condition: service_healthy
+{{- end }}
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8100 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  sharing:
+    image: ${SHARING_IMAGE}
+    platform: linux/amd64
+    environment:
+      SERVER_PORT: "8200"
+      DB_HOST: ${SHARING_DB_HOST}
+      DB_PORT: ${SHARING_DB_PORT}
+      DB_NAME: ${SHARING_DB_NAME}
+      DB_USER: ${SHARING_DB_USER}
+      DB_PASSWORD: ${SHARING_DB_PASSWORD:?sharing database password is required}
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: sharing
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
+{{- if .Components.SharingDatabase.Enabled }}
+    depends_on:
+      sharing-db:
+        condition: service_healthy
+{{- end }}
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+{{- if .Components.OpenTelemetry.ManagedCollectorEnabled }}
+  otel-lgtm:
+    image: ${OTEL_LGTM_IMAGE}
+    platform: linux/amd64
+    ports: ["${OTEL_GRAFANA_PORT}:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: "${OTEL_ADMIN_USER}"
+      GF_SECURITY_ADMIN_PASSWORD: "${OTEL_ADMIN_PASSWORD:?Grafana admin password is required}"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes: ["otel-lgtm:/data"]
+    networks: [epos]
+    restart: unless-stopped
+{{- end }}
+
+{{- if .Components.MetadataDatabase.Enabled }}
+  metadata-db:
+    image: ${METADATA_DB_IMAGE}
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${METADATA_DB_NAME}
+      POSTGRES_USER: ${METADATA_DB_USER}
+      POSTGRES_PASSWORD: ${METADATA_DB_PASSWORD}
+    volumes: ["metadata-db:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [epos]
+    restart: unless-stopped
+{{- end }}
+{{- if .Components.DataRetrieverDatabase.Enabled }}
+  retriever-db:
+    image: ${RETRIEVER_DB_IMAGE}
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${RETRIEVER_DB_NAME}
+      POSTGRES_USER: ${RETRIEVER_DB_USER}
+      POSTGRES_PASSWORD: ${RETRIEVER_DB_PASSWORD}
+    volumes: ["retriever-db:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [epos]
+    restart: unless-stopped
+{{- end }}
+{{- if .Components.SharingDatabase.Enabled }}
+  sharing-db:
+    image: ${SHARING_DB_IMAGE}
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${SHARING_DB_NAME}
+      POSTGRES_USER: ${SHARING_DB_USER}
+      POSTGRES_PASSWORD: ${SHARING_DB_PASSWORD}
+    volumes: ["sharing-db:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [epos]
+    restart: unless-stopped
+{{- end }}
+{{- if .Components.AAIService.Enabled }}
   aai-service:
     image: ${AAI_SERVICE_IMAGE}
-    container_name: ${ENV_NAME:-epos-platform}-aai-service
-    ports:
-      - "${AAI_SERVICE_PORT}:8080"
-    volumes:
-      - aai:/app/data
-    networks:
-      - epos_network
-    restart: always
+    platform: linux/amd64
+    ports: ["${AAI_SERVICE_PORT}:8080"]
     environment:
-	  {{- if eq .Protocol "https"}}
-      - APP_SECURE_COOKIES=true
-	  {{- else}}
-      - APP_SECURE_COOKIES=false
-	  {{- end}}
-      - INITIAL_ADMIN_NAME=${ADMIN_NAME}
-      - INITIAL_ADMIN_SURNAME=${ADMIN_SURNAME}
-      - INITIAL_ADMIN_EMAIL=${ADMIN_EMAIL}
-      - INITIAL_ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - APP_CORS_ALLOW_ORIGIN=*
-      - PLATFORM_URL=${PLATFORM_URL}
-      {{- if .Components.Backoffice.Enabled}}
-      - BACKOFFICE_URL=${BACKOFFICE_URL}
-      {{- end}}
+      APP_SECURE_COOKIES: ${SECURE_COOKIES}
+      APP_CORS_ALLOW_ORIGIN: "*"
+      INITIAL_ADMIN_NAME: ${ADMIN_NAME}
+      INITIAL_ADMIN_SURNAME: ${ADMIN_SURNAME}
+      INITIAL_ADMIN_EMAIL: ${ADMIN_EMAIL}
+      INITIAL_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?AAI admin password is required}
+      OIDC_ISSUER: ${OIDC_ISSUER}
+      PLATFORM_URL: ${PLATFORM_URL}
+      BACKOFFICE_URL: ${BACKOFFICE_URL}
+    volumes: ["aai:/app/data"]
+    networks: [epos]
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/health || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 10s
-{{- end}}
+      retries: 20
+      start_period: 20s
+{{- end }}
+
+  platform:
+    image: ${PLATFORM_UI_IMAGE}
+    platform: linux/amd64
+    ports: ["${PLATFORM_UI_PORT}:8080"]
+    environment:
+      BASE_URL: ${PLATFORM_UI_PATH}
+      API_HOST: http://gateway:5000/
+      AUTH_ROOT_URL: ${AUTH_ROOT_URL}
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  backoffice:
+    image: ${BACKOFFICE_UI_IMAGE}
+    platform: linux/amd64
+    ports: ["${BACKOFFICE_PORT}:8080"]
+    environment:
+      API_HOST: http://gateway:5000
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+configs:
+  gateway_config:
+    content: |
+      server:
+        listen: ":5000"
+        cors_allow_origin: "*"
+        request_timeout: "60s"
+        read_timeout: "15s"
+        write_timeout: "30s"
+        idle_timeout: "60s"
+      services:
+        metadata-lifecycle:
+          url: "metadata-lifecycle:5000"
+        data-retriever:
+          url: "data-retriever:8100"
+        sharing:
+          url: "sharing:8200"
+        auth:
+          url: "${GATEWAY_AUTH_URL}"
 
 volumes:
-  psqldata:
-{{- if .Components.Converter.Enabled}}
-  converter:
-{{- end}}
-{{- if .Components.AAIService.Enabled}}
+  metadata-db:
+  retriever-db:
+  sharing-db:
   aai:
-{{- end}}
+  otel-lgtm:
 
 networks:
-  epos_network:
-    name: ${ENV_NAME}-epos-network
+  epos:
+    driver: bridge

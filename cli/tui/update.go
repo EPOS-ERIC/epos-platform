@@ -17,7 +17,6 @@ type updateFormData struct {
 	timeout       time.Duration // K8s only
 	pullImages    bool          // Docker only
 	force         bool          // Docker: reset DB; K8s: reset namespace
-	reset         bool          // Reset config to defaults
 	configSession *configEditSession
 }
 
@@ -64,13 +63,6 @@ func (a *App) showUpdateForm() {
 		)
 	}
 
-	fields = append(fields, FormField{Type: "checkbox", Label: "Reset Config", CheckboxChangedFunc: func(checked bool) {
-		data.reset = checked
-		if checked {
-			data.cleanupConfigSession()
-		}
-	}})
-
 	buttons := []FormButton{
 		{Label: "Update", SelectedFunc: func() { a.handleUpdate(data, isDocker) }},
 		{Label: "Cancel", SelectedFunc: func() {
@@ -114,11 +106,6 @@ func (a *App) showUpdateForm() {
 
 // handleUpdate validates the form and starts update.
 func (a *App) handleUpdate(data *updateFormData, isDocker bool) {
-	if data.reset && data.configSession != nil {
-		a.ShowError("Cannot use an edited config when Reset Config is enabled.")
-		return
-	}
-
 	var timeout time.Duration
 	if !isDocker {
 		timeout = data.timeout
@@ -146,7 +133,6 @@ func (a *App) showUpdateProgress(data *updateFormData, isDocker bool, dockerCfg 
 				_, err = docker.Update(docker.UpdateOpts{
 					PullImages: data.pullImages,
 					Force:      data.force,
-					Reset:      data.reset,
 					OldEnvName: data.name,
 					NewConfig:  dockerCfg,
 				})
@@ -156,7 +142,6 @@ func (a *App) showUpdateProgress(data *updateFormData, isDocker bool, dockerCfg 
 					Context:    data.k8sContext,
 					Timeout:    timeout,
 					Force:      data.force,
-					Reset:      data.reset,
 					NewConfig:  k8sCfg,
 				})
 			}
@@ -166,11 +151,6 @@ func (a *App) showUpdateProgress(data *updateFormData, isDocker bool, dockerCfg 
 }
 
 func (a *App) editUpdateConfig(data *updateFormData, isDocker bool) {
-	if data.reset {
-		a.ShowError("Disable Reset Config before editing a config file.")
-		return
-	}
-
 	if data.configSession == nil {
 		fileName := "docker-config.yaml"
 		if !isDocker {
@@ -186,9 +166,15 @@ func (a *App) editUpdateConfig(data *updateFormData, isDocker bool) {
 		if isDocker {
 			seed, err := a.loadDockerUpdateSeed(data.name)
 			if err != nil {
-				seed = dockerconfig.GetDefaultConfig()
+				loadErr := err
+				seed, err = dockerconfig.GetDefaultConfig()
+				if err != nil {
+					_ = session.Cleanup()
+					a.ShowError(err.Error())
+					return
+				}
 				seed.Name = data.name
-				a.FlashMessage(fmt.Sprintf("Using default Docker config seed: %v", err), 3*time.Second)
+				a.FlashMessage(fmt.Sprintf("Using default Docker config seed: %v", loadErr), 3*time.Second)
 			}
 
 			if err := seed.Save(session.FilePath()); err != nil {
@@ -223,7 +209,7 @@ func (a *App) editUpdateConfig(data *updateFormData, isDocker bool) {
 }
 
 func (a *App) buildUpdateConfig(data *updateFormData, isDocker bool) (*dockerconfig.EnvConfig, *k8sconfig.Config, error) {
-	if data.reset || data.configSession == nil {
+	if data.configSession == nil {
 		return nil, nil, nil
 	}
 

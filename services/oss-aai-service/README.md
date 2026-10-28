@@ -67,6 +67,7 @@ The initial admin user can be updated or deleted after first login and will not 
 - `APP_CORS_ALLOW_ORIGIN` - when set, adds the `Access-Control-Allow-Origin` header with the provided value and enables basic CORS preflight handling
 - `OSS_AAI_LISTEN_ADDR` - HTTP listen address, defaults to `:8080`
 - `OIDC_ISSUER` - overrides issuer URL in OIDC discovery metadata
+- `PLATFORM_URL` and `BACKOFFICE_URL` - optional absolute HTTP(S) GUI base URLs. On first initialization, their login and silent-refresh callbacks are added to the public OAuth client. Changing these values does not update an existing database.
 
 If none of the `INITIAL_ADMIN_*` variables are set before the first startup, the service seeds the default `Admin Admin / admin@admin.org / adminadmin` account.
 

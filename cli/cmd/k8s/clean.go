@@ -49,7 +49,7 @@ var CleanCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		display.URLs(URLs.GUIURL, URLs.APIURL, fmt.Sprintf("epos-cli k8s clean %s", name), URLs.BackofficeURL)
+		display.URLs(URLs.GUIURL, URLs.APIURL, fmt.Sprintf("epos-cli k8s clean %s", name), URLs.BackofficeURL, nil)
 	},
 }
 

@@ -40,6 +40,10 @@ type Images struct {
 	EmailSenderServiceImage string `yaml:"email_sender_service_image"`
 	SharingServiceImage     string `yaml:"sharing_service_image"`
 	AAIServiceImage         string `yaml:"aai_service_image"`
+	MetadataLifecycleImage  string `yaml:"metadata_lifecycle_image"`
+	DataRetrieverImage      string `yaml:"data_retriever_image"`
+	DataRetrieverDBImage    string `yaml:"data_retriever_database_image"`
+	SharingDBImage          string `yaml:"sharing_database_image"`
 }
 
 func ImageExistsLocally(ctx context.Context, imageRef string) (bool, error) {
@@ -47,8 +51,9 @@ func ImageExistsLocally(ctx context.Context, imageRef string) (bool, error) {
 		return false, fmt.Errorf("invalid image reference: %q", imageRef)
 	}
 
-	cmd := exec.CommandContext(ctx, "docker", "image", "inspect", imageRef)
-	if err := cmd.Run(); err != nil {
+	cmd := exec.CommandContext(ctx, "docker", "image", "inspect", "--platform", "linux/amd64", "--format", "{{.Os}}/{{.Architecture}}", imageRef)
+	output, err := cmd.Output()
+	if err != nil {
 		if _, ok := errors.AsType[*exec.ExitError](err); ok {
 			return false, nil
 		}
@@ -56,7 +61,7 @@ func ImageExistsLocally(ctx context.Context, imageRef string) (bool, error) {
 		return false, fmt.Errorf("failed to inspect local image %q: %w", imageRef, err)
 	}
 
-	return true, nil
+	return strings.TrimSpace(string(output)) == "linux/amd64", nil
 }
 
 func localImageDigest(ctx context.Context, imageRef string) (string, error) {

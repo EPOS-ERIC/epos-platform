@@ -181,17 +181,11 @@ type PluginPopulatorJob struct {
 	ActiveDeadlineSeconds int    `yaml:"active_deadline_seconds"`
 }
 
-// OntologyPopulatorJob configures the ontology-populator Kubernetes job.
-type OntologyPopulatorJob struct {
-	ActiveDeadlineSeconds int `yaml:"active_deadline_seconds"`
-}
-
 // Jobs groups all optional Kubernetes jobs settings.
 type Jobs struct {
-	Enabled           bool                 `yaml:"enabled"`
-	InitDB            InitDBJob            `yaml:"init_db"`
-	PluginPopulator   PluginPopulatorJob   `yaml:"plugin_populator"`
-	OntologyPopulator OntologyPopulatorJob `yaml:"ontology_populator"`
+	Enabled         bool               `yaml:"enabled"`
+	InitDB          InitDBJob          `yaml:"init_db"`
+	PluginPopulator PluginPopulatorJob `yaml:"plugin_populator"`
 }
 
 // Components groups all service-level component settings.

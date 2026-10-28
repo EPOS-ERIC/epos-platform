@@ -20,11 +20,18 @@ func Export(opts ExportOpts) error {
 		return fmt.Errorf("invalid export parameters: %w", err)
 	}
 
-	cfg := config.GetDefaultConfigBytes()
+	cfg, err := config.GetDefaultConfig()
+	if err != nil {
+		return fmt.Errorf("create default config: %w", err)
+	}
+	data, err := cfg.Bytes()
+	if err != nil {
+		return fmt.Errorf("serialize default config: %w", err)
+	}
 
 	display.Debug("loaded default docker config bytes")
 
-	path, err := common.Export(opts.Path, "docker-config.yaml", cfg)
+	path, err := common.Export(opts.Path, "docker-config.yaml", data)
 	if err != nil {
 		return fmt.Errorf("failed to export config: %w", err)
 	}

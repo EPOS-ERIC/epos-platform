@@ -8,6 +8,7 @@ Public HTTP API for the EPOS Platform. The gateway exposes a stable `/v1` contra
 - Health check: `GET /health`
 - OpenAPI document: `GET /openapi.yaml`
 - Scalar UI: `GET /scalar/`
+- Gateway root: `GET /` redirects to `/scalar/`
 - Swagger UI: `GET /swagger/`
 - Source contract: `docs/openapi.yaml`
 

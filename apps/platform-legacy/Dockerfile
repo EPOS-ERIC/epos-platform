@@ -2,7 +2,7 @@ FROM nginxinc/nginx-unprivileged:stable-alpine
 
 ENV SERVER_NAME=_ \
     BASE_URL=/ \
-    API_HOST=http://gateway:5000/api \
+    API_HOST=http://gateway:5000/ \
     AUTH_ROOT_URL=http://localhost:35000
 
 COPY --chown=101:101 dist/ /opt/epos-gui/

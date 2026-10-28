@@ -66,7 +66,6 @@ func Clean(opts CleanOpts) (*Env, error) {
 		errorLabel string
 	}{
 		{name: "init-db-job", template: "templates/init-db-job.yaml", errorLabel: "init-db"},
-		{name: "ontology-populator-job", template: "templates/ontology-populator-job.yaml", errorLabel: "ontology populator"},
 	}
 
 	for _, job := range jobs {

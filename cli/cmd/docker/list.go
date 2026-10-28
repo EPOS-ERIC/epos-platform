@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"net/url"
 	"os"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
@@ -13,7 +12,7 @@ import (
 var ListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List EPOS environments.",
-	Long:  "List EPOS environments. Lists local Docker Compose environments and shows their GUI, API, and backoffice URLs.",
+	Long:  "List EPOS environments. Lists local Docker Compose environments and shows their GUI, API, backoffice, and Grafana URLs.",
 	Run: func(cmd *cobra.Command, args []string) {
 		envs, err := docker.List()
 		if err != nil {
@@ -29,27 +28,21 @@ var ListCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			apiURL, err := url.JoinPath(urls.APIURL, "ui")
-			if err != nil {
-				display.Warn("Could not construct gateway URL: %v", err)
-				apiURL = urls.APIURL
-			}
+			apiURL := dockerEnv.GatewayPublicURL() + "/"
 
 			var backofficeURL string
 			if urls.BackofficeURL != nil {
-				u, err := url.JoinPath(*urls.BackofficeURL, "home")
-				if err != nil {
-					display.Warn("Could not construct backoffice URL: %v", err)
-					backofficeURL = *urls.BackofficeURL
-				} else {
-					backofficeURL = u
-				}
+				backofficeURL = *urls.BackofficeURL
+			}
+			var grafanaURL string
+			if urls.GrafanaURL != nil {
+				grafanaURL = *urls.GrafanaURL
 			}
 
-			rows[i] = []any{dockerEnv.Name, urls.GUIURL, apiURL, backofficeURL}
+			rows[i] = []any{dockerEnv.Name, urls.GUIURL, apiURL, backofficeURL, grafanaURL}
 		}
 
-		headers := []string{"Name", "GUI URL", "API URL", "Backoffice URL"}
+		headers := []string{"Name", "GUI URL", "API URL", "Backoffice URL", "Grafana URL"}
 		display.InfraList(rows, headers, "Installed Docker environments")
 	},
 }

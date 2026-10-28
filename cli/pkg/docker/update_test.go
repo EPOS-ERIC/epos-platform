@@ -8,8 +8,6 @@ import (
 )
 
 func TestUpdateOpts_Validate(t *testing.T) {
-	invalidConfig := &config.EnvConfig{}
-
 	tests := []struct {
 		name        string
 		opts        UpdateOpts
@@ -24,11 +22,6 @@ func TestUpdateOpts_Validate(t *testing.T) {
 		{
 			name:    "Environment does not exist",
 			opts:    UpdateOpts{OldEnvName: "does-not-exist"},
-			wantErr: true,
-		},
-		{
-			name:    "Reset with custom config returns error",
-			opts:    UpdateOpts{OldEnvName: "test", Reset: true, NewConfig: invalidConfig},
 			wantErr: true,
 		},
 		{

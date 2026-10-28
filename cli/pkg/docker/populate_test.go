@@ -26,32 +26,17 @@ func TestPopulateOpts_Validate(t *testing.T) {
 	}{
 		{
 			name:    "Environment does not exist",
-			opts:    PopulateOpts{Name: "does-not-exist", Parallel: 1, TTLDirs: []string{tmpDir}},
-			wantErr: true,
-		},
-		{
-			name:    "Parallel above maximum",
-			opts:    PopulateOpts{Name: "test", Parallel: 21, TTLDirs: []string{tmpDir}},
-			wantErr: true,
-		},
-		{
-			name:    "Parallel below minimum",
-			opts:    PopulateOpts{Name: "test", Parallel: 0, TTLDirs: []string{tmpDir}},
-			wantErr: true,
-		},
-		{
-			name:    "Parallel negative",
-			opts:    PopulateOpts{Name: "test", Parallel: -1, TTLDirs: []string{tmpDir}},
+			opts:    PopulateOpts{Name: "does-not-exist", TTLDirs: []string{tmpDir}},
 			wantErr: true,
 		},
 		{
 			name:    "File without ttl extension",
-			opts:    PopulateOpts{Name: "test", Parallel: 5, TTLDirs: []string{notTtlFile}},
+			opts:    PopulateOpts{Name: "test", TTLDirs: []string{notTtlFile}},
 			wantErr: true,
 		},
 		{
 			name:    "Non-existent path",
-			opts:    PopulateOpts{Name: "test", Parallel: 5, TTLDirs: []string{"nonexistent"}},
+			opts:    PopulateOpts{Name: "test", TTLDirs: []string{"nonexistent"}},
 			wantErr: true,
 		},
 	}

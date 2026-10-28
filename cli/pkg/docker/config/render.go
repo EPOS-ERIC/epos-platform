@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"strings"
 	"text/template"
 )
 
@@ -12,7 +13,11 @@ var templateFS embed.FS
 
 // Render renders docker-compose and .env templates from the current configuration.
 func (e *EnvConfig) Render() (map[string]string, error) {
-	tmpl, err := template.ParseFS(templateFS, "templates/*.tmpl")
+	tmpl, err := template.New("").Funcs(template.FuncMap{
+		"env": func(value string) string {
+			return "'" + strings.ReplaceAll(value, "'", "\\'") + "'"
+		},
+	}).ParseFS(templateFS, "templates/*.tmpl")
 	if err != nil {
 		return nil, fmt.Errorf("error parsing template: %w", err)
 	}

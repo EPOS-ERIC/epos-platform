@@ -75,19 +75,8 @@ func TestConfigRender(t *testing.T) {
 				cfg.Jobs.Enabled = true
 			},
 			wantContains: map[string][]string{
-				"templates/gateway.yaml":                {"imagePullPolicy: Always"},
-				"templates/init-db-job.yaml":            {"imagePullPolicy: Always"},
-				"templates/ontology-populator-job.yaml": {"imagePullPolicy: Always"},
-			},
-		},
-		{
-			name: "ontology populator deadline is configurable",
-			mutate: func(cfg *config.Config) {
-				cfg.Name = "test-ontology-deadline"
-				cfg.Jobs.OntologyPopulator.ActiveDeadlineSeconds = 900
-			},
-			wantContains: map[string][]string{
-				"templates/ontology-populator-job.yaml": {"activeDeadlineSeconds: 900"},
+				"templates/gateway.yaml":     {"imagePullPolicy: Always"},
+				"templates/init-db-job.yaml": {"imagePullPolicy: Always"},
 			},
 		},
 		{

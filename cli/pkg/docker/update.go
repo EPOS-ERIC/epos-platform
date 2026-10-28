@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/db"
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/docker/config"
@@ -18,8 +17,6 @@ type UpdateOpts struct {
 	PullImages bool
 	// Stop and remove containers before updating. Useful to reset the database
 	Force bool
-	// Reset config to embedded defaults. Cannot be used with NewConfig
-	Reset bool
 	// Name of the environment to update (required)
 	OldEnvName string
 	// New configuration to apply. If nil, preserves existing config
@@ -119,14 +116,8 @@ func Update(opts UpdateOpts) (*Env, error) {
 
 	display.Debug("built urls: %+v", urls)
 
-	// only repopulate the ontologies if the database has been cleaned
 	if opts.Force {
-		display.Debug("force update: repopulating base ontologies and clearing ingested tracking")
-
-		if err := common.PopulateOntologies(urls.APIURL); err != nil {
-			display.Error("error initializing the ontologies in the environment: %v", err)
-			return handleFailure("error initializing the ontologies in the environment: %w", err)
-		}
+		display.Debug("force update: clearing ingested tracking")
 
 		if err := db.DeleteIngestedFilesByEnvironment(opts.NewConfig.Name); err != nil {
 			return handleFailure("failed to clear ingested files tracking: %w", err)
@@ -148,8 +139,6 @@ func (u *UpdateOpts) Validate() error {
 	display.Debug("oldEnvName: %s", u.OldEnvName)
 	display.Debug("pullImages: %v", u.PullImages)
 	display.Debug("force: %v", u.Force)
-	display.Debug("reset: %v", u.Reset)
-	display.Debug("newConfig: %+v", u.NewConfig)
 
 	if u.OldEnvName == "" {
 		return fmt.Errorf("name is required")
@@ -157,16 +146,6 @@ func (u *UpdateOpts) Validate() error {
 
 	if err := validate.Name(u.OldEnvName); err != nil {
 		return fmt.Errorf("'%s' is an invalid name for an environment: %w", u.OldEnvName, err)
-	}
-
-	if u.Reset {
-		if u.NewConfig != nil {
-			return fmt.Errorf("cannot specify custom config when Reset is true")
-		} else {
-			display.Info("Reset flag enabled: using default config")
-
-			u.NewConfig = config.GetDefaultConfig()
-		}
 	}
 
 	if u.NewConfig != nil {

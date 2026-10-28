@@ -22,7 +22,11 @@ var DeployCmd = &cobra.Command{
 		var cfg *config.EnvConfig
 		var err error
 		if configFilePath == "" {
-			cfg = config.GetDefaultConfig()
+			cfg, err = config.GetDefaultConfig()
+			if err != nil {
+				display.Error("Failed to create config: %v", err)
+				os.Exit(1)
+			}
 		} else {
 			cfg, err = config.LoadConfig(configFilePath)
 			if err != nil {
@@ -48,7 +52,7 @@ var DeployCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		display.URLs(urls.GUIURL, urls.APIURL, fmt.Sprintf("epos-cli docker deploy %s", env.Name), urls.BackofficeURL)
+		display.URLs(urls.GUIURL, env.GatewayPublicURL()+"/", fmt.Sprintf("epos-cli docker deploy %s", env.Name), urls.BackofficeURL, urls.GrafanaURL)
 	},
 }
 

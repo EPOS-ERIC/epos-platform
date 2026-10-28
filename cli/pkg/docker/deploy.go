@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/docker/config"
 	"github.com/EPOS-ERIC/epos-platform/cli/validate"
@@ -77,13 +76,6 @@ func Deploy(opts DeployOpts) (*Env, error) {
 
 	display.Debug("urls: %+v", urls)
 
-	if err := common.PopulateOntologies(urls.APIURL); err != nil {
-		display.Error("error initializing the ontologies in the environment: %v", err)
-		return handleFailure("error initializing the ontologies: %w", err)
-	}
-
-	display.Debug("initialized base ontologies using: %s", urls.APIURL)
-
 	env, err := upsertEnvConfig(opts.Config)
 	if err != nil {
 		return handleFailure("failed to persist environment config: %w", err)
@@ -97,7 +89,6 @@ func Deploy(opts DeployOpts) (*Env, error) {
 // Validate checks DeployOpts and resolves any required preconditions before deployment.
 func (d *DeployOpts) Validate() error {
 	display.Debug("pullImages: %v", d.PullImages)
-	display.Debug("config: %+v", d.Config)
 
 	if d.Config == nil {
 		return fmt.Errorf("config is required")

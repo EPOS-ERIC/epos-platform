@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -340,24 +342,16 @@ func (s *localStore) ensureTableColumn(table, name, definition string) error {
 }
 
 func (s *localStore) seedOAuthClients() error {
-	secretHash, err := hashPassword("dev-secret")
+	redirectURIs, err := defaultOAuthRedirectURIs()
 	if err != nil {
-		return fmt.Errorf("hash default client secret: %w", err)
-	}
-
-	if err := s.seedOAuthClient(oauthClientRecord{
-		ClientID:         "local-dev-client",
-		ClientSecretHash: secretHash,
-		AllowedScopes:    []string{"openid", "profile", "email"},
-		CreatedAt:        time.Now().UTC(),
-	}); err != nil {
 		return err
 	}
 
 	if err := s.seedOAuthClient(oauthClientRecord{
-		ClientID:             "eposICS",
-		IsPublic:             true,
-		RedirectURIs:         defaultBackofficeRedirectURIs(),
+		ClientID: "eposICS",
+		IsPublic: true,
+		// TODO: Reconcile configured redirects when an existing environment changes URLs.
+		RedirectURIs:         redirectURIs,
 		AllowedScopes:        []string{"openid", "profile", "email", "single-logout"},
 		AllowedResponseTypes: []string{"id_token token"},
 		CreatedAt:            time.Now().UTC(),
@@ -507,12 +501,8 @@ func (s *localStore) getOAuthClientLocked(clientID string) (oauthClientRecord, b
 }
 
 func (s *localStore) validateOAuthClient(clientID, clientSecret string) bool {
-	client, ok := s.getOAuthClient(clientID)
-	if !ok || client.IsPublic || strings.TrimSpace(clientSecret) == "" {
-		return false
-	}
-
-	return checkPassword(clientSecret, client.ClientSecretHash)
+	return subtle.ConstantTimeCompare([]byte(clientID), []byte("local-dev-client")) == 1 &&
+		subtle.ConstantTimeCompare([]byte(clientSecret), []byte("dev-secret")) == 1
 }
 
 func (s *localStore) getAppMeta(key string) (string, bool, error) {
@@ -572,6 +562,26 @@ func defaultBackofficeRedirectURIs() []string {
 		"http://localhost:32000/last-page-redirect",
 		"http://localhost:32000/silent-token-refresh.html",
 	}
+}
+
+func defaultOAuthRedirectURIs() ([]string, error) {
+	redirectURIs := defaultBackofficeRedirectURIs()
+	for _, envName := range []string{"PLATFORM_URL", "BACKOFFICE_URL"} {
+		baseURL := strings.TrimSpace(os.Getenv(envName))
+		if baseURL == "" {
+			continue
+		}
+		parsed, err := url.Parse(baseURL)
+		if err != nil {
+			return nil, fmt.Errorf("invalid %s: %w", envName, err)
+		}
+		if (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+			return nil, fmt.Errorf("invalid %s: must be an absolute http(s) URL without user info, query or fragment", envName)
+		}
+		baseURL = strings.TrimRight(baseURL, "/")
+		redirectURIs = append(redirectURIs, baseURL+"/last-page-redirect", baseURL+"/silent-token-refresh.html")
+	}
+	return redirectURIs, nil
 }
 
 func marshalStringList(values []string) (string, error) {

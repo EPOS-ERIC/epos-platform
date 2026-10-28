@@ -48,6 +48,9 @@ func (a *App) showHelp() {
 	if (prevContext == DetailsDockerKey || prevContext == DetailsK8sKey) && a.detailsPanel != nil && !a.detailsPanel.hasDetailRow("Backoffice") {
 		groupedHints = filterBackofficeHelpHints(groupedHints)
 	}
+	if prevContext == DetailsDockerKey && a.detailsPanel != nil && !a.detailsPanel.hasDetailRow("Grafana") {
+		groupedHints = filterGrafanaHelpHints(groupedHints)
+	}
 
 	var content strings.Builder
 	maxWidth := 0
@@ -182,5 +185,15 @@ func filterBackofficeHelpHints(groupedHints map[string][]string) map[string][]st
 	}
 
 	groupedHints["Browser"] = filtered
+	return groupedHints
+}
+
+func filterGrafanaHelpHints(groupedHints map[string][]string) map[string][]string {
+	browserHints, exists := groupedHints["Browser"]
+	if !exists {
+		return groupedHints
+	}
+
+	groupedHints["Browser"] = filterGrafanaHints(browserHints)
 	return groupedHints
 }

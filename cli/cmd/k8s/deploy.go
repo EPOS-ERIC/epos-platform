@@ -48,7 +48,7 @@ var DeployCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		display.URLs(URLs.GUIURL, URLs.APIURL, fmt.Sprintf("epos-cli k8s deploy %s", name), URLs.BackofficeURL)
+		display.URLs(URLs.GUIURL, URLs.APIURL, fmt.Sprintf("epos-cli k8s deploy %s", name), URLs.BackofficeURL, nil)
 	},
 }
 

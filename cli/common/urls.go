@@ -1,9 +1,12 @@
 package common
 
+import "strings"
+
 type URLs struct {
 	GUIURL        string
 	APIURL        string
 	BackofficeURL *string
+	GrafanaURL    *string
 }
 
 func (u *URLs) String() string {
@@ -11,9 +14,12 @@ func (u *URLs) String() string {
 		return ""
 	}
 
-	if u.BackofficeURL == nil || *u.BackofficeURL == "" {
-		return "gui=" + u.GUIURL + ", api=" + u.APIURL
+	parts := []string{"gui=" + u.GUIURL, "api=" + u.APIURL}
+	if u.BackofficeURL != nil && *u.BackofficeURL != "" {
+		parts = append(parts, "backoffice="+*u.BackofficeURL)
 	}
-
-	return "gui=" + u.GUIURL + ", api=" + u.APIURL + ", backoffice=" + *u.BackofficeURL
+	if u.GrafanaURL != nil && *u.GrafanaURL != "" {
+		parts = append(parts, "grafana="+*u.GrafanaURL)
+	}
+	return strings.Join(parts, ", ")
 }

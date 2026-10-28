@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/config"
@@ -24,6 +25,7 @@ const (
 type populateState struct {
 	paths       []string
 	examples    bool
+	token       string
 	inputs      []*tview.InputField
 	focusButton FocusButton // "browse", "files", "dirs", or ""
 }
@@ -35,6 +37,15 @@ func (a *App) showPopulateForm() {
 
 	if envName == "" {
 		return
+	}
+	var requiresToken bool
+	if isDocker {
+		env, err := docker.GetEnv(envName)
+		if err != nil {
+			a.ShowError(fmt.Sprintf("Error loading Docker environment: %v", err))
+			return
+		}
+		requiresToken = !env.Components.AAIService.Enabled
 	}
 
 	a.UpdateFooter(PopulateFormKey)
@@ -190,7 +201,23 @@ func (a *App) showPopulateForm() {
 			SetFieldTextColor(DefaultTheme.Secondary).
 			SetBorderPadding(0, 0, 1, 1)
 
+		var tokenInput *tview.InputField
+		if isDocker {
+			label := "Bearer token (optional) "
+			if requiresToken {
+				label = "Bearer token (required*) "
+			}
+			tokenInput = NewStyledInputField(label, state.token).
+				SetMaskCharacter('*').
+				SetChangedFunc(func(text string) { state.token = text })
+			tokenInput.SetBorderPadding(0, 0, 1, 1)
+		}
+
 		populateBtn := NewStyledButton("Populate", func() {
+			if requiresToken && strings.TrimSpace(state.token) == "" && strings.TrimSpace(os.Getenv("EPOS_BEARER_TOKEN")) == "" {
+				a.ShowError("A bearer token or EPOS_BEARER_TOKEN is required for external AAI")
+				return
+			}
 			a.handlePopulate(envName, k8sContext, state, isDocker)
 		})
 
@@ -220,7 +247,12 @@ func (a *App) showPopulateForm() {
 		controls := tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(controlsFlex, 1, 0, false).
 			AddItem(tview.NewBox(), 1, 0, false).
-			AddItem(checkbox, 1, 0, false).
+			AddItem(checkbox, 1, 0, false)
+		if tokenInput != nil {
+			controls.AddItem(tview.NewBox(), 1, 0, false).
+				AddItem(tokenInput, 1, 0, false)
+		}
+		controls = controls.
 			AddItem(tview.NewBox(), 0, 1, false).
 			AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
 				AddItem(tview.NewBox(), 0, 1, false).
@@ -248,10 +280,14 @@ func (a *App) showPopulateForm() {
 		}
 
 		if a.config.TUI.FilePickerMode == config.FilePickerModeTUI {
-			allFocusable = append(allFocusable, browseBtn, addPathBtn, checkbox, populateBtn, cancelBtn)
+			allFocusable = append(allFocusable, browseBtn, addPathBtn, checkbox)
 		} else {
-			allFocusable = append(allFocusable, browseDirsBtn, browseFilesBtn, addPathBtn, checkbox, populateBtn, cancelBtn)
+			allFocusable = append(allFocusable, browseDirsBtn, browseFilesBtn, addPathBtn, checkbox)
 		}
+		if tokenInput != nil {
+			allFocusable = append(allFocusable, tokenInput)
+		}
+		allFocusable = append(allFocusable, populateBtn, cancelBtn)
 
 		formFlex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			if event.Key() == tcell.KeyEsc {
@@ -314,11 +350,11 @@ func (a *App) handlePopulate(envName, context string, state *populateState, isDo
 		}
 	}
 
-	a.showPopulateProgress(envName, context, validPaths, state.examples, isDocker)
+	a.showPopulateProgress(envName, context, validPaths, state.examples, isDocker, state.token)
 }
 
 // showPopulateProgress displays the populate progress with live output.
-func (a *App) showPopulateProgress(envName, context string, paths []string, examples, isDocker bool) {
+func (a *App) showPopulateProgress(envName, context string, paths []string, examples, isDocker bool, token string) {
 	a.RunBackgroundTask(TaskOptions{
 		Operation: "Populate",
 		EnvName:   envName,
@@ -330,7 +366,7 @@ func (a *App) showPopulateProgress(envName, context string, paths []string, exam
 					Name:             envName,
 					TTLDirs:          paths,
 					PopulateExamples: examples,
-					Parallel:         1,
+					BearerToken:      token,
 				})
 			} else {
 				_, err = k8s.Populate(k8s.PopulateOpts{

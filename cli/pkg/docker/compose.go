@@ -90,7 +90,7 @@ func composeCommand(bundle *composeBundle, projectName string, args ...string) *
 }
 
 func pullImage(image common.NamedImage) error {
-	if _, err := command.RunCommand(exec.Command("docker", "pull", image.Ref), false); err != nil {
+	if _, err := command.RunCommand(exec.Command("docker", "pull", "--platform", "linux/amd64", image.Ref), false); err != nil {
 		return fmt.Errorf("pull image %q failed: %w", image.Ref, err)
 	}
 
@@ -142,7 +142,7 @@ func syncEnvImages(cfg *config.EnvConfig, pullAll bool) error {
 func deployStack(removeOrphans bool, cfg *config.EnvConfig) error {
 	display.Step("Deploying stack")
 
-	args := []string{"up", "-d", "--pull", "never"}
+	args := []string{"up", "-d", "--wait", "--pull", "never"}
 	if removeOrphans {
 		args = append(args, "--remove-orphans")
 	}

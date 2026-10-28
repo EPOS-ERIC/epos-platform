@@ -157,6 +157,7 @@ func (a *App) showDeployProgress(data *deployFormData, isDocker bool, dockerCfg 
 		Task: func() (string, error) {
 			var err error
 			var guiURL string
+			var grafanaURL string
 
 			if isDocker {
 				env, derr := docker.Deploy(docker.DeployOpts{
@@ -170,6 +171,9 @@ func (a *App) showDeployProgress(data *deployFormData, isDocker bool, dockerCfg 
 						return "", uerr
 					}
 					guiURL = urls.GUIURL
+					if urls.GrafanaURL != nil {
+						grafanaURL = *urls.GrafanaURL
+					}
 				}
 			} else {
 				env, kerr := k8s.Deploy(k8s.DeployOpts{
@@ -190,6 +194,9 @@ func (a *App) showDeployProgress(data *deployFormData, isDocker bool, dockerCfg 
 			if err != nil {
 				return "", err
 			}
+			if grafanaURL != "" {
+				return fmt.Sprintf("Deployment complete! GUI: %s, Grafana: %s", guiURL, grafanaURL), nil
+			}
 			return fmt.Sprintf("Deployment complete! GUI: %s", guiURL), nil
 		},
 	})
@@ -209,7 +216,12 @@ func (a *App) editDeployConfig(data *deployFormData, isDocker bool) {
 		}
 
 		if isDocker {
-			seed := dockerconfig.GetDefaultConfig()
+			seed, err := dockerconfig.GetDefaultConfig()
+			if err != nil {
+				_ = session.Cleanup()
+				a.ShowError(err.Error())
+				return
+			}
 			if data.name != "" {
 				seed.Name = data.name
 			}
@@ -245,7 +257,10 @@ func (a *App) editDeployConfig(data *deployFormData, isDocker bool) {
 
 func (a *App) buildDeployConfig(data *deployFormData, isDocker bool) (*dockerconfig.EnvConfig, *k8sconfig.Config, error) {
 	if isDocker {
-		cfg := dockerconfig.GetDefaultConfig()
+		cfg, err := dockerconfig.GetDefaultConfig()
+		if err != nil {
+			return nil, nil, fmt.Errorf("create default docker config: %w", err)
+		}
 		if data.configSession != nil {
 			loadedCfg, err := dockerconfig.LoadConfig(data.configSession.FilePath())
 			if err != nil {

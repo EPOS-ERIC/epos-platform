@@ -113,8 +113,8 @@ func Copyright() string {
 	return fmt.Sprintf("Copyright (C) %d  EPOS ERIC", time.Now().Year())
 }
 
-// URLs prints the URLs for the data portal, API gateway, and backoffice for a specific environment
-func URLs(portalURL, gatewayURL, title string, backofficeURL *string) {
+// URLs prints the URLs for an environment.
+func URLs(portalURL, gatewayURL, title string, backofficeURL, grafanaURL *string) {
 	t := table.NewWriter()
 	t.SetTitle(title)
 	t.SetStyle(table.StyleRounded)
@@ -138,6 +138,10 @@ func URLs(portalURL, gatewayURL, title string, backofficeURL *string) {
 	if backofficeURL != nil {
 		t.AppendSeparator()
 		t.AppendRow(table.Row{"EPOS Backoffice UI", *backofficeURL})
+	}
+	if grafanaURL != nil {
+		t.AppendSeparator()
+		t.AppendRow(table.Row{"EPOS Grafana", *grafanaURL})
 	}
 	copyrightText := Copyright()
 	t.AppendFooter(table.Row{copyrightText, copyrightText}, table.RowConfig{AutoMerge: true, AutoMergeAlign: text.AlignLeft})

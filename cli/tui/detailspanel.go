@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 	"unicode/utf8"
 
@@ -18,11 +17,13 @@ import (
 
 // DetailRow represents a row in the details grid.
 type DetailRow struct {
-	Label       string
-	Value       string
-	IncludeOpen bool
-	OnCopy      func()
-	OnOpen      func()
+	Label            string
+	Value            string
+	IncludeOpen      bool
+	OnCopy           func()
+	OnOpen           func()
+	ExtraActionLabel string
+	ExtraAction      func()
 }
 
 // DetailsPanel manages the right-side information and action panel.
@@ -304,19 +305,10 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 				return
 			}
 
-			apiURL, err := url.JoinPath(urls.APIURL, "ui")
-			if err != nil {
-				dp.app.ShowError(fmt.Sprintf("Error joining Docker API URL: %v", err))
-				return
-			}
+			apiURL := env.GatewayPublicURL() + "/"
 			var backofficeURL string
 			if urls.BackofficeURL != nil {
-				u, err := url.JoinPath(*urls.BackofficeURL, "home")
-				if err != nil {
-					dp.app.ShowError(fmt.Sprintf("Error joining Docker backoffice URL: %v", err))
-					return
-				}
-				backofficeURL = u
+				backofficeURL = *urls.BackofficeURL
 			}
 			nameDirRows := []DetailRow{
 				{Label: "Name", Value: env.Name, IncludeOpen: false},
@@ -331,13 +323,28 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 			nameDirGridCount = len(nameDirRows)
 			dp.createGridRows(dp.nameDirGrid, nameDirRows, &dp.nameDirButtons, "Basic Information")
 
-			rows := []DetailRow{
-				{Label: "GUI", Value: urls.GUIURL, IncludeOpen: true},
+			guiRow := DetailRow{Label: "GUI", Value: urls.GUIURL, IncludeOpen: true}
+			backofficeRow := DetailRow{Label: "Backoffice", Value: backofficeURL, IncludeOpen: true}
+			if env.Components.AAIService.Enabled {
+				copyPassword := func() { dp.copyDockerPassword(true) }
+				guiRow.ExtraActionLabel, guiRow.ExtraAction = "Copy password", copyPassword
+				backofficeRow.ExtraActionLabel, backofficeRow.ExtraAction = "Copy password", copyPassword
 			}
+			rows := []DetailRow{guiRow}
 			if backofficeURL != "" {
-				rows = append(rows, DetailRow{Label: "Backoffice", Value: backofficeURL, IncludeOpen: true})
+				rows = append(rows, backofficeRow)
 			}
-			rows = append(rows, DetailRow{Label: "API", Value: apiURL, IncludeOpen: true})
+			apiRow := DetailRow{Label: "API", Value: apiURL, IncludeOpen: true}
+			if env.Components.AAIService.Enabled {
+				apiRow.ExtraActionLabel = "Copy token"
+				apiRow.ExtraAction = dp.copyDockerToken
+			}
+			rows = append(rows, apiRow)
+			if urls.GrafanaURL != nil {
+				rows = append(rows, DetailRow{Label: "Grafana", Value: *urls.GrafanaURL, IncludeOpen: true, ExtraActionLabel: "Copy password", ExtraAction: func() {
+					dp.copyDockerPassword(false)
+				}})
+			}
 			detailsGridCount = len(rows)
 			dp.currentDetailsRows = rows
 			dp.createDetailsRows(rows)
@@ -392,15 +399,15 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 		}
 	}
 
+	// Recalculate heights when optional rows change between environments.
+	nameDirGridSize := (nameDirGridCount * 2) + 3 + 1
+	detailsGridSize := (detailsGridCount * 2) + 3
+	dp.details.Clear()
+	dp.details.AddItem(dp.buttonsFlex, 1, 0, true)
+	dp.details.AddItem(dp.nameDirGrid, nameDirGridSize, 0, false)
+	dp.details.AddItem(dp.detailsGrid, detailsGridSize, 0, false)
+	dp.details.AddItem(dp.detailsListFlex, 0, 1, false)
 	if !dp.detailsShown {
-		// calculate the height of the grids based on the number of rows + header + padding
-		nameDirGridSize := (nameDirGridCount * 2) + 3 + 1
-		detailsGridSize := (detailsGridCount * 2) + 3
-		dp.details.Clear()
-		dp.details.AddItem(dp.buttonsFlex, 1, 0, true)
-		dp.details.AddItem(dp.nameDirGrid, nameDirGridSize, 0, false)
-		dp.details.AddItem(dp.detailsGrid, detailsGridSize, 0, false)
-		dp.details.AddItem(dp.detailsListFlex, 0, 1, false)
 		dp.detailsShown = true
 		updateBoxStyle(dp.details, true)
 	}
@@ -411,6 +418,41 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 		dp.app.tview.SetFocus(dp.details)
 		dp.app.UpdateFooter(getDetailsKey(envType))
 	}
+}
+
+func (dp *DetailsPanel) copyDockerPassword(aai bool) {
+	env, err := docker.GetEnv(dp.currentDetailsName)
+	if err != nil {
+		dp.app.ShowError(fmt.Sprintf("Failed to load Docker environment: %v", err))
+		return
+	}
+	password := env.Components.OpenTelemetry.AdminPassword
+	if aai {
+		password = env.Components.AAIService.Password
+	}
+	if password == "" {
+		dp.app.ShowError("No initial password is configured")
+		return
+	}
+	dp.app.copyToClipboardWithFeedback(password, "Initial password copied to clipboard", "Failed to copy password")
+}
+
+func (dp *DetailsPanel) copyDockerToken() {
+	name := dp.currentDetailsName
+	go func() {
+		env, err := docker.GetEnv(name)
+		if err == nil {
+			var token string
+			token, err = env.ManagedAAIToken()
+			if err == nil {
+				dp.app.copyToClipboardWithFeedback(token, "API token copied to clipboard", "Failed to copy API token")
+				return
+			}
+		}
+		dp.app.tview.QueueUpdateDraw(func() {
+			dp.app.ShowError(fmt.Sprintf("Failed to generate API token: %v", err))
+		})
+	}()
 }
 
 // Clear shows the placeholder text in the details panel.
@@ -673,6 +715,13 @@ func (dp *DetailsPanel) SetupInput() {
 				}
 				return nil
 			}
+		case event.Rune() == 't':
+			if dp.detailsShown {
+				if value, ok := dp.findDetailRowValue("Grafana"); ok {
+					dp.openValue(value)
+				}
+				return nil
+			}
 		case event.Rune() == 'a':
 			if dp.detailsShown {
 				if value, ok := dp.findDetailRowValue("API"); ok {
@@ -763,12 +812,18 @@ func (dp *DetailsPanel) createGridRows(grid *tview.Grid, rows []DetailRow, butto
 
 	numColumns := 3
 	hasOpenButtons := false
+	hasExtraButtons := false
 	for _, row := range rows {
 		if row.IncludeOpen {
 			numColumns = 4
 			hasOpenButtons = true
-			break
 		}
+		if row.ExtraAction != nil {
+			hasExtraButtons = true
+		}
+	}
+	if hasExtraButtons {
+		numColumns++
 	}
 
 	// Calculate total rows: header + separator + (data rows + spacing rows)
@@ -787,10 +842,15 @@ func (dp *DetailsPanel) createGridRows(grid *tview.Grid, rows []DetailRow, butto
 	}
 	grid.SetRows(rowHeights...)
 
-	if hasOpenButtons {
-		grid.SetColumns(15, 0, 10, 10)
-	} else {
-		grid.SetColumns(15, 0, 10)
+	switch {
+	case hasExtraButtons && hasOpenButtons:
+		grid.SetColumns(15, 0, 17, 12, 10)
+	case hasOpenButtons:
+		grid.SetColumns(15, 0, 12, 10)
+	case hasExtraButtons:
+		grid.SetColumns(15, 0, 17, 12)
+	default:
+		grid.SetColumns(15, 0, 12)
 	}
 
 	rowIndex := 0
@@ -843,8 +903,13 @@ func (dp *DetailsPanel) createGridRows(grid *tview.Grid, rows []DetailRow, butto
 			SetTextColor(DefaultTheme.OnSurface)
 		valueTV.SetBorderPadding(0, 0, 1, 1)
 
-		// add spacing around buttons
-		copyBtn := NewStyledButton("Copy", copyAction)
+		copyLabel := "Copy"
+		openLabel := "Open"
+		if strings.HasPrefix(row.Value, "http://") || strings.HasPrefix(row.Value, "https://") {
+			copyLabel = "Copy URL"
+			openLabel = "Open ↗"
+		}
+		copyBtn := NewStyledButton(copyLabel, copyAction)
 
 		// wrap button in a box with padding
 		copyBtnBox := tview.NewFlex().SetDirection(tview.FlexColumn)
@@ -854,12 +919,25 @@ func (dp *DetailsPanel) createGridRows(grid *tview.Grid, rows []DetailRow, butto
 
 		grid.AddItem(labelTV, rowIndex, 0, 1, 1, 0, 0, false)
 		grid.AddItem(valueTV, rowIndex, 1, 1, 1, 0, 0, false)
-		grid.AddItem(copyBtnBox, rowIndex, 2, 1, 1, 0, 0, false)
+		copyColumn := 2
+		if hasExtraButtons {
+			copyColumn++
+			if row.ExtraAction != nil {
+				button := NewStyledButton(row.ExtraActionLabel, row.ExtraAction)
+				buttonBox := tview.NewFlex().SetDirection(tview.FlexColumn)
+				buttonBox.AddItem(tview.NewBox(), 1, 0, false)
+				buttonBox.AddItem(button, 0, 1, false)
+				buttonBox.AddItem(tview.NewBox(), 1, 0, false)
+				grid.AddItem(buttonBox, rowIndex, 2, 1, 1, 0, 0, false)
+				*buttons = append(*buttons, button)
+			}
+		}
+		grid.AddItem(copyBtnBox, rowIndex, copyColumn, 1, 1, 0, 0, false)
 
 		*buttons = append(*buttons, copyBtn)
 
 		if row.IncludeOpen {
-			openBtn := NewStyledButton("Open", openAction)
+			openBtn := NewStyledButton(openLabel, openAction)
 
 			// wrap button in a box with padding
 			openBtnBox := tview.NewFlex().SetDirection(tview.FlexColumn)
@@ -867,7 +945,7 @@ func (dp *DetailsPanel) createGridRows(grid *tview.Grid, rows []DetailRow, butto
 			openBtnBox.AddItem(openBtn, 0, 1, false)
 			openBtnBox.AddItem(tview.NewBox(), 1, 0, false)
 
-			grid.AddItem(openBtnBox, rowIndex, 3, 1, 1, 0, 0, false)
+			grid.AddItem(openBtnBox, rowIndex, copyColumn+1, 1, 1, 0, 0, false)
 			*buttons = append(*buttons, openBtn)
 		}
 

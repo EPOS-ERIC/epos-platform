@@ -24,8 +24,6 @@ type UpdateOpts struct {
 	Timeout time.Duration
 	// Optional. do an uninstall then an install (to wipe volumes and stuff) maybe we should rename the flag?
 	Force bool
-	// Optional. reset the environment config to the embedded defaults maybe we should rename the flag?
-	Reset bool
 	// New configuration to apply. If nil, preserves existing config
 	NewConfig *config.Config
 }
@@ -35,14 +33,13 @@ func Update(opts UpdateOpts) (*Env, error) {
 	display.Debug("oldEnvName: %s", opts.OldEnvName)
 	display.Debug("context: %s", opts.Context)
 	display.Debug("force: %v", opts.Force)
-	display.Debug("reset: %v", opts.Reset)
 	display.Debug("newConfig: %+v", opts.NewConfig)
 
 	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid parameters for update command: %w", err)
 	}
 
-	if opts.NewConfig == nil && !opts.Reset {
+	if opts.NewConfig == nil {
 		display.Debug("new config not provided, using current environment config")
 
 		oldEnv, err := GetEnv(opts.OldEnvName, opts.Context)
@@ -144,7 +141,6 @@ func (u *UpdateOpts) Validate() error {
 	display.Debug("oldEnvName: %s", u.OldEnvName)
 	display.Debug("context: %s", u.Context)
 	display.Debug("force: %v", u.Force)
-	display.Debug("reset: %v", u.Reset)
 	display.Debug("newConfig: %+v", u.NewConfig)
 
 	if u.OldEnvName == "" {
@@ -158,16 +154,6 @@ func (u *UpdateOpts) Validate() error {
 	resolvedTimeout, err := resolveCommandTimeout(u.Timeout)
 	if err != nil {
 		return fmt.Errorf("invalid timeout: %w", err)
-	}
-
-	if u.Reset {
-		if u.NewConfig != nil {
-			return fmt.Errorf("cannot specify custom config when Reset is true")
-		} else {
-			display.Info("Reset flag enabled: using default config")
-
-			u.NewConfig = config.GetDefaultConfig()
-		}
 	}
 
 	u.Timeout = resolvedTimeout

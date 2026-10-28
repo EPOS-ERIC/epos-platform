@@ -1,11 +1,12 @@
 package docker
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/command"
-	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/db"
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 )
@@ -29,67 +30,43 @@ func Clean(opts CleanOpts) (*Env, error) {
 		return nil, fmt.Errorf("failed to load docker environment %s: %w", opts.Name, err)
 	}
 
-	urls, err := env.BuildEnvURLs()
-	if err != nil {
-		return nil, fmt.Errorf("failed to build environment URLs: %w", err)
-	}
-
-	metadataContainer := fmt.Sprintf("%s-metadata-database", opts.Name)
-	volumeName := fmt.Sprintf("%s_psqldata", opts.Name)
-
-	handleFailure := func(msg string, mainErr error) (*Env, error) {
-		display.Error("Unexpected error: %v", mainErr)
-		display.Warn("Clean failed, trying to restore services")
-		display.Step("Attempting recovery")
-
-		if err := deployStack(false, &env.EnvConfig); err != nil {
-			return nil, fmt.Errorf("unable to recover from error: %w", err)
+	display.Step("Stopping managed containers")
+	if err := downStack(&env.EnvConfig, false); err != nil {
+		display.Warn("Clean failed; managed data may have been partially deleted. Attempting to restart services")
+		if restartErr := deployStack(false, &env.EnvConfig); restartErr != nil {
+			return nil, errors.Join(fmt.Errorf("remove managed volumes: %w", err), fmt.Errorf("restart services: %w", restartErr))
 		}
-
-		display.Done("Recovery succeeded")
-
-		return nil, fmt.Errorf(msg, mainErr)
+		return nil, fmt.Errorf("remove managed volumes: %w", err)
 	}
 
-	display.Step("Cleaning database volume")
-	display.Debug("stopping metadata container: %s", metadataContainer)
-
-	if _, err := command.RunCommand(exec.Command("docker", "stop", metadataContainer), false); err != nil {
-		return handleFailure("failed to stop metadata container: %w", fmt.Errorf("%s: %w", metadataContainer, err))
+	var cleanErr error
+	for _, volume := range []string{"metadata-db", "retriever-db", "sharing-db", "otel-lgtm"} {
+		names, err := command.RunCommand(exec.Command("docker", "volume", "ls", "-q", "--filter", "label=com.docker.compose.project="+opts.Name, "--filter", "label=com.docker.compose.volume="+volume), true)
+		if err != nil {
+			cleanErr = fmt.Errorf("find %s volume: %w", volume, err)
+			break
+		}
+		if names = strings.TrimSpace(names); names != "" {
+			args := append([]string{"volume", "rm"}, strings.Fields(names)...)
+			if _, err := command.RunCommand(exec.Command("docker", args...), false); err != nil {
+				cleanErr = fmt.Errorf("remove %s volume: %w", volume, err)
+				break
+			}
+		}
+		if volume == "metadata-db" && env.Components.MetadataDatabase.Enabled {
+			if err := db.DeleteIngestedFilesByEnvironment(opts.Name); err != nil {
+				cleanErr = fmt.Errorf("clear ingested file tracking: %w", err)
+				break
+			}
+		}
 	}
-
-	display.Debug("removing metadata container: %s", metadataContainer)
-
-	if _, err := command.RunCommand(exec.Command("docker", "rm", "-v", metadataContainer), false); err != nil {
-		return handleFailure("failed to remove metadata container: %w", fmt.Errorf("%s: %w", metadataContainer, err))
-	}
-
-	display.Debug("removing database volume: %s", volumeName)
-
-	if _, err := command.RunCommand(exec.Command("docker", "volume", "rm", volumeName), false); err != nil {
-		return handleFailure("failed to remove volume: %w", fmt.Errorf("%s: %w", volumeName, err))
-	}
-
-	display.Done("Database volume cleaned")
-
-	if err := db.DeleteIngestedFilesByEnvironment(opts.Name); err != nil {
-		return handleFailure("failed to clear ingested files tracking: %w", err)
-	}
-
-	display.Debug("cleared ingested file records for environment: %s", opts.Name)
-	display.Debug("redeploying stack for environment: %s", env.Name)
-
 	if err := deployStack(false, &env.EnvConfig); err != nil {
-		return handleFailure("failed to restart the environment: %w", err)
+		return nil, errors.Join(cleanErr, fmt.Errorf("restart environment after removing volumes: %w", err))
+	}
+	if cleanErr != nil {
+		return nil, fmt.Errorf("clean incomplete; some managed data may have been deleted: %w", cleanErr)
 	}
 
-	display.Done("Services restarted successfully")
-
-	if err := common.PopulateOntologies(urls.APIURL); err != nil {
-		return handleFailure("failed to populate base ontologies in environment: %w", err)
-	}
-
-	display.Debug("repopulated base ontologies from: %s", urls.APIURL)
 	display.Done("Cleaned environment: %s", opts.Name)
 
 	return env, nil

@@ -14,7 +14,7 @@ import (
 var CleanCmd = &cobra.Command{
 	Use:               "clean <env-name>",
 	Short:             "Reset an environment's data.",
-	Long:              "Reset an environment's data. Removes database data and ingested file records, then restarts the environment and repopulates base ontologies. Prompts for confirmation unless --force is set.",
+	Long:              "Reset managed database and telemetry volumes, then restart the environment. AAI data and external resources are preserved. Prompts for confirmation unless --force is set.",
 	Args:              cobra.ExactArgs(1),
 	ValidArgsFunction: validArgsFunction,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -47,7 +47,7 @@ var CleanCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		display.URLs(urls.GUIURL, urls.APIURL, fmt.Sprintf("epos-cli docker clean %s", name), urls.BackofficeURL)
+		display.URLs(urls.GUIURL, env.GatewayPublicURL()+"/", fmt.Sprintf("epos-cli docker clean %s", name), urls.BackofficeURL, urls.GrafanaURL)
 	},
 }
 

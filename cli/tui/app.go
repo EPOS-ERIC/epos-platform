@@ -284,10 +284,16 @@ func (a *App) UpdateFooter(contextKey ScreenKey) {
 
 func (a *App) getFooterHints(contextKey ScreenKey) []string {
 	keys := getFooterHints(contextKey)
-	if (contextKey == DetailsDockerKey || contextKey == DetailsK8sKey) && a.detailsPanel != nil && !a.detailsPanel.hasDetailRow("Backoffice") {
-		return filterBackofficeHints(keys)
+	if (contextKey != DetailsDockerKey && contextKey != DetailsK8sKey) || a.detailsPanel == nil {
+		return keys
 	}
 
+	if !a.detailsPanel.hasDetailRow("Backoffice") {
+		keys = filterBackofficeHints(keys)
+	}
+	if contextKey == DetailsDockerKey && !a.detailsPanel.hasDetailRow("Grafana") {
+		keys = filterGrafanaHints(keys)
+	}
 	return keys
 }
 
@@ -295,6 +301,18 @@ func filterBackofficeHints(keys []string) []string {
 	filtered := make([]string, 0, len(keys))
 	for _, key := range keys {
 		if strings.HasPrefix(key, "b: backoffice") || strings.HasPrefix(key, "B: copy backoffice") {
+			continue
+		}
+		filtered = append(filtered, key)
+	}
+
+	return filtered
+}
+
+func filterGrafanaHints(keys []string) []string {
+	filtered := make([]string, 0, len(keys))
+	for _, key := range keys {
+		if strings.HasPrefix(key, "t: telemetry") {
 			continue
 		}
 		filtered = append(filtered, key)

@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -65,9 +64,13 @@ func TestExport(t *testing.T) {
 				t.Fatalf("failed to read exported file: %v", err)
 			}
 
-			expected := config.GetDefaultConfigBytes()
-			if !bytes.HasSuffix(content, expected) {
-				t.Fatalf("Export() content does not end with default docker config")
+			cfg, err := config.LoadConfigFromBytes(content)
+			if err != nil {
+				t.Fatalf("parse exported config: %v", err)
+			}
+			cfg.Name = "test-env"
+			if err := cfg.Validate(); err != nil {
+				t.Fatalf("exported config invalid: %v", err)
 			}
 		})
 	}

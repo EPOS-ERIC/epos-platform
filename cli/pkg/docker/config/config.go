@@ -2,8 +2,10 @@
 package config
 
 import (
+	"crypto/rand"
 	_ "embed"
 	"fmt"
+	"math/big"
 	"net"
 	"net/url"
 	"os"
@@ -18,461 +20,266 @@ import (
 //go:embed default.yaml
 var defaultConfig []byte
 
-// GetDefaultConfig returns a parsed copy of the embedded default Docker configuration.
-func GetDefaultConfig() *EnvConfig {
+// GetDefaultConfig creates a default Docker configuration with unique credentials.
+func GetDefaultConfig() (*EnvConfig, error) {
 	var config EnvConfig
-	err := yaml.Unmarshal(defaultConfig, &config)
-	if err != nil {
-		panic(fmt.Errorf("error unmarshalling default config yaml: %w", err))
+	if err := yaml.Unmarshal(defaultConfig, &config); err != nil {
+		return nil, fmt.Errorf("unmarshal default config: %w", err)
 	}
-	return &config
+	for _, password := range []*string{
+		&config.Components.MetadataDatabase.Password,
+		&config.Components.DataRetrieverDatabase.Password,
+		&config.Components.SharingDatabase.Password,
+		&config.Components.AAIService.Password,
+		&config.Components.OpenTelemetry.AdminPassword,
+	} {
+		value, err := generatePassword()
+		if err != nil {
+			return nil, fmt.Errorf("generate environment password: %w", err)
+		}
+		*password = value
+	}
+	return &config, nil
 }
 
-// GetDefaultConfigBytes returns the raw embedded default Docker configuration bytes.
-func GetDefaultConfigBytes() []byte {
-	return defaultConfig
+func generatePassword() (string, error) {
+	const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	var password [8]byte
+	for i := range password {
+		index, err := rand.Int(rand.Reader, big.NewInt(int64(len(alphabet))))
+		if err != nil {
+			return "", err
+		}
+		password[i] = alphabet[index.Int64()]
+	}
+	return string(password[:]), nil
 }
 
 // LoadConfig loads a Docker configuration from a YAML file.
 func LoadConfig(path string) (*EnvConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read config file %s: %w", path, err)
+		return nil, fmt.Errorf("read config file %s: %w", path, err)
 	}
-
 	config, err := LoadConfigFromBytes(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse config file %s: %w", path, err)
+		return nil, fmt.Errorf("parse config file %s: %w", path, err)
 	}
-
 	return config, nil
 }
 
 // LoadConfigFromBytes loads a Docker configuration from YAML bytes.
 func LoadConfigFromBytes(data []byte) (*EnvConfig, error) {
 	var config EnvConfig
-	err := yaml.Unmarshal(data, &config)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling config yaml: %w", err)
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("unmarshal config yaml: %w", err)
 	}
-
 	return &config, nil
 }
 
 // Bytes marshals the current configuration to YAML bytes.
 func (e *EnvConfig) Bytes() ([]byte, error) {
-	bytes, err := yaml.Marshal(e)
+	data, err := yaml.Marshal(e)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal config: %w", err)
+		return nil, fmt.Errorf("marshal config: %w", err)
 	}
-
-	return bytes, nil
+	return data, nil
 }
 
 // Save writes the current configuration as YAML to path.
 func (e *EnvConfig) Save(path string) error {
-	bytes, err := e.Bytes()
+	data, err := e.Bytes()
 	if err != nil {
 		return err
 	}
-
-	if err := common.CreateFileWithContent(path, string(bytes), false); err != nil {
-		return fmt.Errorf("failed to create config file: %w", err)
+	if err := common.CreateFileWithContent(path, string(data), false); err != nil {
+		return fmt.Errorf("create config file: %w", err)
 	}
-
 	return nil
 }
 
-// BuildEnvURLs builds GUI, API, and optional backoffice URLs from the configuration.
+// BuildEnvURLs builds public GUI, API, backoffice, and optional Grafana URLs.
 func (e *EnvConfig) BuildEnvURLs() (*common.URLs, error) {
 	buildURL := func(port int, basePath string) (string, error) {
-		base := &url.URL{
-			Scheme: e.Protocol,
-			Host:   net.JoinHostPort(e.Domain, strconv.Itoa(port)),
-		}
+		base := &url.URL{Scheme: e.Protocol, Host: net.JoinHostPort(e.Domain, strconv.Itoa(port))}
 		return url.JoinPath(base.String(), basePath)
 	}
-
-	guiURL, err := buildURL(e.Components.PlatformGUI.Port, e.Components.PlatformGUI.BaseURL)
+	guiURL, err := buildURL(e.Components.PlatformUI.Port, e.Components.PlatformUI.BaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("error building GUI URL: %w", err)
+		return nil, fmt.Errorf("build GUI URL: %w", err)
 	}
-
 	apiURL, err := buildURL(e.Components.Gateway.Port, e.Components.Gateway.BaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("error building API URL: %w", err)
+		return nil, fmt.Errorf("build API URL: %w", err)
 	}
-
-	urls := &common.URLs{
-		GUIURL: guiURL,
-		APIURL: apiURL,
+	backofficeURL, err := buildURL(e.Components.Backoffice.GUI.Port, e.Components.Backoffice.GUI.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("build backoffice URL: %w", err)
 	}
-
-	if e.Components.Backoffice.Enabled {
-		backofficeURL, err := buildURL(e.Components.Backoffice.GUI.Port, e.Components.Backoffice.GUI.BaseURL)
+	urls := &common.URLs{GUIURL: guiURL, APIURL: apiURL, BackofficeURL: &backofficeURL}
+	if e.Components.OpenTelemetry.ManagedCollectorEnabled() {
+		grafanaURL, err := buildURL(e.Components.OpenTelemetry.GrafanaPort, "/")
 		if err != nil {
-			return nil, fmt.Errorf("error building Backoffice URL: %w", err)
+			return nil, fmt.Errorf("build Grafana URL: %w", err)
 		}
-		urls.BackofficeURL = &backofficeURL
+		urls.GrafanaURL = &grafanaURL
 	}
-
 	return urls, nil
 }
 
 // BackofficeURL returns the externally reachable backoffice base URL.
 func (e *EnvConfig) BackofficeURL() string {
-	base := &url.URL{
-		Scheme: e.Protocol,
-		Host:   net.JoinHostPort(e.Domain, strconv.Itoa(e.Components.Backoffice.GUI.Port)),
-	}
-
-	backofficeURL, err := url.JoinPath(base.String(), e.Components.Backoffice.GUI.BaseURL)
+	base := &url.URL{Scheme: e.Protocol, Host: net.JoinHostPort(e.Domain, strconv.Itoa(e.Components.Backoffice.GUI.Port))}
+	result, err := url.JoinPath(base.String(), e.Components.Backoffice.GUI.BaseURL)
 	if err != nil {
 		return ""
 	}
-
-	return backofficeURL
+	return result
 }
 
 // PlatformURL returns the externally reachable platform GUI base URL.
 func (e *EnvConfig) PlatformURL() string {
-	base := &url.URL{
-		Scheme: e.Protocol,
-		Host:   net.JoinHostPort(e.Domain, strconv.Itoa(e.Components.PlatformGUI.Port)),
-	}
-
-	platformURL, err := url.JoinPath(base.String(), e.Components.PlatformGUI.BaseURL)
+	base := &url.URL{Scheme: e.Protocol, Host: net.JoinHostPort(e.Domain, strconv.Itoa(e.Components.PlatformUI.Port))}
+	result, err := url.JoinPath(base.String(), e.Components.PlatformUI.BaseURL)
 	if err != nil {
 		return ""
 	}
-
-	return platformURL
+	return result
 }
 
 // CheckForUpdates checks configured container images for newer tags.
 func (e *EnvConfig) CheckForUpdates() ([]display.ImageUpdateInfo, error) {
 	updates, err := common.CheckImagesForUpdates(e.ActiveImages())
 	if err != nil {
-		return nil, fmt.Errorf("error checking for updates: %w", err)
+		return nil, fmt.Errorf("check images for updates: %w", err)
 	}
-
 	return updates, nil
 }
 
-func validateAuthDependsOnGatewayAAI(serviceName string, auth Auth, gatewayAAIEnabled bool) error {
-	if auth.Enabled && !gatewayAAIEnabled {
-		return fmt.Errorf("%s auth requires gateway aai to be enabled", serviceName)
-	}
-
-	return nil
-}
-
-// EnsurePortsFree verifies default service ports are available and auto-selects free ones when needed.
+// EnsurePortsFree auto-selects available ports when the defaults are in use.
 func (e *EnvConfig) EnsurePortsFree() error {
 	if !e.UsingDefaultPorts() {
-		return nil // User specified custom ports, use them as-is
+		return nil
 	}
-
-	// Check and auto-select ports for default configuration
-	if free, err := common.IsPortFree(e.Components.PlatformGUI.Port); err != nil {
-		display.Warn("error checking availability of port for platform GUI: %d. Continuing anyway", e.Components.PlatformGUI.Port)
-	} else if !free {
-		freePort, err := common.FindFreePort()
+	ports := []struct {
+		name string
+		port *int
+	}{
+		{"platform UI", &e.Components.PlatformUI.Port},
+		{"gateway", &e.Components.Gateway.Port},
+		{"backoffice", &e.Components.Backoffice.GUI.Port},
+	}
+	if e.Components.AAIService.Enabled {
+		ports = append(ports, struct {
+			name string
+			port *int
+		}{"AAI", &e.Components.AAIService.Port})
+	}
+	if e.Components.OpenTelemetry.ManagedCollectorEnabled() {
+		ports = append(ports, struct {
+			name string
+			port *int
+		}{"OpenTelemetry Grafana", &e.Components.OpenTelemetry.GrafanaPort})
+	}
+	for _, item := range ports {
+		free, err := common.IsPortFree(*item.port)
 		if err != nil {
-			return fmt.Errorf("error finding free port for platform GUI: %w", err)
+			display.Warn("error checking availability of port for %s: %d. Continuing anyway", item.name, *item.port)
+			continue
 		}
-		display.Info("Port %d for platform GUI is already used, using new random free port: %d", e.Components.PlatformGUI.Port, freePort)
-		e.Components.PlatformGUI.Port = freePort
-	}
-
-	if free, err := common.IsPortFree(e.Components.Gateway.Port); err != nil {
-		display.Warn("error checking availability of port for gateway: %d. Continuing anyway", e.Components.Gateway.Port)
-	} else if !free {
-		freePort, err := common.FindFreePort()
-		if err != nil {
-			return fmt.Errorf("error finding free port for gateway: %w", err)
-		}
-		display.Info("Port %d for gateway is already used, using new random free port: %d", e.Components.Gateway.Port, freePort)
-		e.Components.Gateway.Port = freePort
-	}
-
-	if e.Components.Backoffice.Enabled {
-		if free, err := common.IsPortFree(e.Components.Backoffice.GUI.Port); err != nil {
-			display.Warn("error checking availability of port for backoffice: %d. Continuing anyway", e.Components.Backoffice.GUI.Port)
-		} else if !free {
-			freePort, err := common.FindFreePort()
+		if !free {
+			port, err := common.FindFreePort()
 			if err != nil {
-				return fmt.Errorf("error finding free port for backoffice: %w", err)
+				return fmt.Errorf("find free %s port: %w", item.name, err)
 			}
-			display.Info("Port %d for backoffice is already used, using new random free port: %d", e.Components.Backoffice.GUI.Port, freePort)
-			e.Components.Backoffice.GUI.Port = freePort
+			display.Info("Port %d for %s is already used, using %d", *item.port, item.name, port)
+			*item.port = port
 		}
 	}
-
-	// TODO: add the free port check for the aai service too
-
 	return nil
 }
 
 // Validate checks whether the configuration contains all required values.
 func (e *EnvConfig) Validate() error {
-	// Basic required fields
-	if e.Name == "" {
-		return fmt.Errorf("environment name is required")
-	}
-	if e.Domain == "" {
-		return fmt.Errorf("domain is required")
+	if e.Name == "" || e.Domain == "" {
+		return fmt.Errorf("environment name and domain are required")
 	}
 	if e.Protocol != "http" && e.Protocol != "https" {
 		return fmt.Errorf("protocol must be http or https")
 	}
-
-	// Required core images
-	if e.Images.RabbitmqImage == "" {
-		return fmt.Errorf("rabbitmq image is required")
+	if strings.ContainsAny(e.Domain, "/@?#[]\\\" \t\r\n") || (strings.Contains(e.Domain, ":") && net.ParseIP(e.Domain) == nil) {
+		return fmt.Errorf("domain must be a hostname or unbracketed IP address")
 	}
-	if e.Images.DataportalImage == "" {
-		return fmt.Errorf("dataportal image is required")
+	if e.Components.Gateway.BaseURL != "/v1" {
+		return fmt.Errorf("gateway base_url must be /v1")
 	}
-	if e.Images.GatewayImage == "" {
-		return fmt.Errorf("gateway image is required")
+	if e.Components.PlatformUI.BaseURL == "" || !strings.HasPrefix(e.Components.PlatformUI.BaseURL, "/") {
+		return fmt.Errorf("platform UI base_url must start with /")
 	}
-	if e.Images.MetadataDatabaseImage == "" {
-		return fmt.Errorf("metadata database image is required")
+	if e.Components.Backoffice.GUI.BaseURL != "/" {
+		return fmt.Errorf("backoffice base_url must be /")
 	}
-	if e.Images.ResourcesServiceImage == "" {
-		return fmt.Errorf("resources service image is required")
-	}
-	if e.Images.IngestorServiceImage == "" {
-		return fmt.Errorf("ingestor service image is required")
-	}
-	if e.Images.ExternalAccessImage == "" {
-		return fmt.Errorf("external access image is required")
-	}
-
-	// Platform GUI validation
-	if e.Components.PlatformGUI.BaseURL == "" {
-		return fmt.Errorf("platform gui base url is required")
-	}
-	if e.Components.PlatformGUI.Port == 0 {
-		return fmt.Errorf("platform gui port is required")
-	}
-	if e.Components.PlatformGUI.Port < 1 || e.Components.PlatformGUI.Port > 65535 {
-		return fmt.Errorf("platform gui port must be between 1 and 65535")
-	}
-
-	// Gateway validation
-	if e.Components.Gateway.Port == 0 {
-		return fmt.Errorf("gateway port is required")
-	}
-	if e.Components.Gateway.Port < 1 || e.Components.Gateway.Port > 65535 {
-		return fmt.Errorf("gateway port must be between 1 and 65535")
-	}
-	if e.Components.Gateway.BaseURL == "" {
-		return fmt.Errorf("gateway base url is required")
-	}
-	if !strings.HasPrefix(e.Components.Gateway.BaseURL, "/") {
-		return fmt.Errorf("gateway base url must start with /")
-	}
-	if !strings.HasSuffix(e.Components.Gateway.BaseURL, "/api/v1") {
-		return fmt.Errorf("gateway base url must end with /api/v1")
-	}
-
-	// AAI validation
+	ports := []int{e.Components.PlatformUI.Port, e.Components.Gateway.Port, e.Components.Backoffice.GUI.Port}
 	if e.Components.AAIService.Enabled {
-		if !e.Components.Gateway.AAI.Enabled {
-			return fmt.Errorf("aai service is enabled but aai in the gateway is disabled")
+		ports = append(ports, e.Components.AAIService.Port)
+	}
+	if e.Components.OpenTelemetry.ManagedCollectorEnabled() {
+		ports = append(ports, e.Components.OpenTelemetry.GrafanaPort)
+	}
+	seen := make(map[int]bool)
+	for _, port := range ports {
+		if port < 1 || port > 65535 || seen[port] {
+			return fmt.Errorf("service ports must be unique and between 1 and 65535")
 		}
-		if e.Components.AAIService.Port == 0 {
-			return fmt.Errorf("aai service port is required when aai service is enabled")
-		}
-		if e.Components.AAIService.Port < 1 || e.Components.AAIService.Port > 65535 {
-			return fmt.Errorf("aai service port must be between 1 and 65535")
-		}
-		if e.Components.AAIService.Name == "" {
-			return fmt.Errorf("aai service name is required when aai service is enabled")
-		}
-		if e.Components.AAIService.Surname == "" {
-			return fmt.Errorf("aai service surname is required when aai service is enabled")
-		}
-		if e.Components.AAIService.Email == "" {
-			return fmt.Errorf("aai service email is required when aai service is enabled")
-		}
-		if e.Components.AAIService.Password == "" {
-			return fmt.Errorf("aai service password is required when aai service is enabled")
-		}
-		if e.Images.AAIServiceImage == "" {
-			return fmt.Errorf("aai service image is required when aai service is enabled")
+		seen[port] = true
+	}
+	if !e.Components.Gateway.AAI.Enabled || e.AAIAuthRootURL() == "" || e.AAIServiceEndpoint() == "" {
+		return fmt.Errorf("gateway AAI and its public and gateway endpoints are required")
+	}
+	if e.Components.AAIService.Enabled && (e.Components.Gateway.AAI.ServiceEndpoint != "" || e.Components.Gateway.AAI.GatewayEndpoint != "") {
+		return fmt.Errorf("external AAI endpoints cannot be used with the managed AAI service")
+	}
+	for _, endpoint := range []string{e.AAIAuthRootURL(), e.AAIServiceEndpoint()} {
+		parsed, err := url.Parse(endpoint)
+		if err != nil || parsed.Hostname() == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || strings.ContainsAny(endpoint, "\"\\\r\n") {
+			return fmt.Errorf("AAI endpoints must be absolute HTTP(S) URLs without credentials, query or fragment")
 		}
 	}
-	if e.Components.Gateway.AAI.Enabled {
-		if e.AAIAuthRootURL() == "" {
-			return fmt.Errorf("aai service endpoint is required when aai is enabled and embedded aai service is disabled")
+	if otel := e.Components.OpenTelemetry; otel.Enabled && otel.Endpoint != "" {
+		parsed, err := url.Parse(otel.Endpoint)
+		if err != nil || parsed.Hostname() == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || strings.ContainsAny(otel.Endpoint, "\"\\\r\n") {
+			return fmt.Errorf("OpenTelemetry endpoint must be an absolute HTTP(S) URL without credentials, query or fragment")
 		}
 	}
-
-	authValidations := []struct {
-		serviceName string
-		auth        Auth
+	if aai := e.Components.AAIService; aai.Enabled {
+		if strings.TrimSpace(aai.Name) == "" || strings.TrimSpace(aai.Surname) == "" || strings.TrimSpace(aai.Email) == "" || strings.TrimSpace(aai.Password) == "" {
+			return fmt.Errorf("AAI administrator credentials are required")
+		}
+	}
+	if otel := e.Components.OpenTelemetry; otel.ManagedCollectorEnabled() {
+		if strings.TrimSpace(otel.AdminUser) == "" || strings.TrimSpace(otel.AdminPassword) == "" {
+			return fmt.Errorf("grafana admin credentials are required when managed LGTM is enabled")
+		}
+	}
+	for _, db := range []struct {
+		name  string
+		value MetadataDatabase
 	}{
-		{serviceName: "backoffice service", auth: e.Components.Backoffice.Service.Auth},
-		{serviceName: "converter service", auth: e.Components.Converter.Auth},
-		{serviceName: "resources service", auth: e.Components.ResourcesService.Auth},
-		{serviceName: "ingestor service", auth: e.Components.IngestorService.Auth},
-		{serviceName: "external access service", auth: e.Components.ExternalAccessService.Auth},
-		{serviceName: "sharing service", auth: e.Components.SharingService.Auth},
-		{serviceName: "email sender service", auth: e.Components.EmailSenderService.Auth},
-	}
-	for _, validation := range authValidations {
-		if err := validateAuthDependsOnGatewayAAI(validation.serviceName, validation.auth, e.Components.Gateway.AAI.Enabled); err != nil {
-			return err
+		{"metadata", e.Components.MetadataDatabase},
+		{"data retriever", e.Components.DataRetrieverDatabase},
+		{"sharing", e.Components.SharingDatabase},
+	} {
+		if db.value.User == "" || db.value.Password == "" || db.value.DBName == "" {
+			return fmt.Errorf("%s database name, user and password are required", db.name)
+		}
+		if !db.value.Enabled && (db.value.Host == "" || db.value.Port < 1 || db.value.Port > 65535) {
+			return fmt.Errorf("%s external database host and valid port are required", db.name)
 		}
 	}
-
-	// Backoffice validation
-	if e.Components.Backoffice.Enabled {
-		if !e.Components.Backoffice.Service.Auth.Enabled {
-			return fmt.Errorf("backoffice service auth must be enabled when backoffice is enabled")
-		}
-		if e.Components.Backoffice.GUI.BaseURL == "" {
-			return fmt.Errorf("backoffice base url is required when backoffice is enabled")
-		}
-		if e.Components.Backoffice.GUI.Port == 0 {
-			return fmt.Errorf("backoffice port is required when backoffice is enabled")
-		}
-		if e.Components.Backoffice.GUI.Port < 1 || e.Components.Backoffice.GUI.Port > 65535 {
-			return fmt.Errorf("backoffice port must be between 1 and 65535")
-		}
-		if e.Images.BackofficeServiceImage == "" {
-			return fmt.Errorf("backoffice service image is required when backoffice is enabled")
-		}
-		if e.Images.BackofficeUIImage == "" {
-			return fmt.Errorf("backoffice ui image is required when backoffice is enabled")
+	for _, image := range e.ActiveImages() {
+		if strings.TrimSpace(image.Ref) == "" {
+			return fmt.Errorf("%s image is required", image.Name)
 		}
 	}
-
-	// Converter validation
-	if e.Components.Converter.Enabled {
-		if e.Images.ConverterServiceImage == "" {
-			return fmt.Errorf("converter service image is required when converter is enabled")
-		}
-		if e.Images.ConverterRoutineImage == "" {
-			return fmt.Errorf("converter routine image is required when converter is enabled")
-		}
-	}
-
-	// Sharing service validation
-	if e.Components.SharingService.Enabled {
-		if e.Images.SharingServiceImage == "" {
-			return fmt.Errorf("sharing service image is required when sharing service is enabled")
-		}
-	}
-
-	// Resources service validation
-	if e.Components.ResourcesService.CacheTTL <= 0 {
-		return fmt.Errorf("resources service cache ttl must be greater than 0")
-	}
-	if e.Components.ResourcesService.CacheFacets <= 0 {
-		return fmt.Errorf("resources service cache facets must be greater than 0")
-	}
-
-	// RabbitMQ validation
-	if e.Components.Rabbitmq.Host == "" {
-		return fmt.Errorf("rabbitmq host is required")
-	}
-	if e.Components.Rabbitmq.Username == "" {
-		return fmt.Errorf("rabbitmq username is required")
-	}
-	if e.Components.Rabbitmq.Password == "" {
-		return fmt.Errorf("rabbitmq password is required")
-	}
-	if e.Components.Rabbitmq.Vhost == "" {
-		return fmt.Errorf("rabbitmq vhost is required")
-	}
-
-	// Metadata database validation
-	if e.Components.MetadataDatabase.User == "" {
-		return fmt.Errorf("metadata database user is required")
-	}
-	if e.Components.MetadataDatabase.Password == "" {
-		return fmt.Errorf("metadata database password is required")
-	}
-	if e.Components.MetadataDatabase.Host == "" {
-		return fmt.Errorf("metadata database host is required")
-	}
-	if e.Components.MetadataDatabase.Port == 0 {
-		return fmt.Errorf("metadata database port is required")
-	}
-	if e.Components.MetadataDatabase.Port < 1 || e.Components.MetadataDatabase.Port > 65535 {
-		return fmt.Errorf("metadata database port must be between 1 and 65535")
-	}
-	if e.Components.MetadataDatabase.PublishedPort < 0 || e.Components.MetadataDatabase.PublishedPort > 65535 {
-		return fmt.Errorf("metadata database published_port must be between 1 and 65535 when set")
-	}
-	if e.Components.MetadataDatabase.DBName == "" {
-		return fmt.Errorf("metadata database db_name is required")
-	}
-	if e.Components.MetadataDatabase.ConnectionPoolInitSize <= 0 {
-		return fmt.Errorf("metadata database connection_pool_init_size must be greater than 0")
-	}
-	if e.Components.MetadataDatabase.ConnectionPoolMinSize <= 0 {
-		return fmt.Errorf("metadata database connection_pool_min_size must be greater than 0")
-	}
-	if e.Components.MetadataDatabase.ConnectionPoolMaxSize <= 0 {
-		return fmt.Errorf("metadata database connection_pool_max_size must be greater than 0")
-	}
-	if e.Components.MetadataDatabase.ConnectionPoolInitSize > e.Components.MetadataDatabase.ConnectionPoolMinSize {
-		return fmt.Errorf("metadata database connection_pool_init_size must be <= connection_pool_min_size")
-	}
-	if e.Components.MetadataDatabase.ConnectionPoolMinSize > e.Components.MetadataDatabase.ConnectionPoolMaxSize {
-		return fmt.Errorf("metadata database connection_pool_min_size must be <= connection_pool_max_size")
-	}
-
-	// Email sender service validation
-	if e.Components.EmailSenderService.Enabled {
-		if e.Components.EmailSenderService.EnvironmentType != "development" &&
-			e.Components.EmailSenderService.EnvironmentType != "production" &&
-			e.Components.EmailSenderService.EnvironmentType != "staging" {
-			return fmt.Errorf("email sender service environment_type must be development, production, or staging")
-		}
-		if e.Components.EmailSenderService.Sender == "" {
-			return fmt.Errorf("email sender service sender is required when email sender is enabled")
-		}
-		if e.Components.EmailSenderService.SenderName == "" {
-			return fmt.Errorf("email sender service sender_name is required when email sender is enabled")
-		}
-		if e.Components.EmailSenderService.MailType != "API" {
-			return fmt.Errorf("email sender service mail_type must be API")
-		}
-		if e.Components.EmailSenderService.SenderDomain == "" {
-			return fmt.Errorf("email sender service sender_domain is required when email sender is enabled")
-		}
-		if e.Components.EmailSenderService.MailAPIURL == "" {
-			return fmt.Errorf("email sender service mail_api_url is required when email sender is enabled")
-		}
-		if e.Components.EmailSenderService.MailAPIKey == "" {
-			return fmt.Errorf("email sender service mail_api_key is required when email sender is enabled")
-		}
-		if e.Images.EmailSenderServiceImage == "" {
-			return fmt.Errorf("email sender service image is required when email sender is enabled")
-		}
-	}
-
-	// Monitoring validation
-	if e.Monitoring.Enabled {
-		if e.Monitoring.URL == "" {
-			return fmt.Errorf("monitoring url is required when monitoring is enabled")
-		}
-		if e.Monitoring.User == "" {
-			return fmt.Errorf("monitoring user is required when monitoring is enabled")
-		}
-		if e.Monitoring.Password == "" {
-			return fmt.Errorf("monitoring password is required when monitoring is enabled")
-		}
-		if e.Monitoring.SecurityKey == "" {
-			return fmt.Errorf("monitoring security key is required when monitoring is enabled")
-		}
-	}
-
 	return nil
 }
