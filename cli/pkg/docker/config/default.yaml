@@ -9,6 +9,11 @@ components:
   gateway:
     port: 33000
     base_url: "/v1"
+    mailgun:
+      enable: false
+      domain: "epos-ip.org"
+      from: "epos-ics-c@epos-ip.org"
+      api_key: ""
     aai:
       enabled: true
       # Public provider URL and optional gateway-reachable override.

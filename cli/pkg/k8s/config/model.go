@@ -37,9 +37,17 @@ type AAI struct {
 
 // Gateway configures gateway URLs and auth integrations.
 type Gateway struct {
-	AAI     AAI    `yaml:"aai"`
-	BaseURL string `yaml:"base_url"`
-	TLS     TLS    `yaml:"tls"`
+	AAI     AAI     `yaml:"aai"`
+	BaseURL string  `yaml:"base_url"`
+	TLS     TLS     `yaml:"tls"`
+	Mailgun Mailgun `yaml:"mailgun"`
+}
+
+type Mailgun struct {
+	Enable bool   `yaml:"enable"`
+	Domain string `yaml:"domain"`
+	From   string `yaml:"from"`
+	APIKey string `yaml:"api_key"`
 }
 
 // GUI configures a generic GUI service endpoint.

@@ -23,6 +23,22 @@ data:
         url: "sharing:8200"
       auth:
         url: {{ include "epos.gatewayAAIServiceEndpoint" . | quote }}
+    notifications:
+      mailgun:
+        enable: {{ .Values.components.gateway.mailgun.enable }}
+        domain: {{ .Values.components.gateway.mailgun.domain | quote }}
+        from: {{ .Values.components.gateway.mailgun.from | quote }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gateway-mailgun
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+type: Opaque
+stringData:
+  api_key: {{ .Values.components.gateway.mailgun.api_key | quote }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -44,6 +60,7 @@ spec:
         app.kubernetes.io/component: gateway
       annotations:
         checksum/aai: {{ .Values.components.gateway.aai | toYaml | sha256sum }}
+        checksum/mailgun: {{ .Values.components.gateway.mailgun | toYaml | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
       containers:
@@ -53,6 +70,11 @@ spec:
           ports:
             - containerPort: 5000
           env:
+            - name: MAILGUN_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gateway-mailgun
+                  key: api_key
             - name: OTEL_SDK_DISABLED
               value: {{ not .Values.components.otel.enabled | quote }}
             - name: OTEL_SERVICE_NAME

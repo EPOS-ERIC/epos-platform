@@ -14,6 +14,9 @@ var templateFS embed.FS
 // Render renders docker-compose and .env templates from the current configuration.
 func (e *EnvConfig) Render() (map[string]string, error) {
 	tmpl, err := template.New("").Funcs(template.FuncMap{
+		"yamlString": func(value string) string {
+			return fmt.Sprintf("%q", strings.ReplaceAll(value, "$", "$$"))
+		},
 		"env": func(value string) string {
 			return "'" + strings.ReplaceAll(value, "'", "\\'") + "'"
 		},

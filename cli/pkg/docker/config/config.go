@@ -205,6 +205,9 @@ func (e *EnvConfig) EnsurePortsFree() error {
 
 // Validate checks whether the configuration contains all required values.
 func (e *EnvConfig) Validate() error {
+	if m := e.Components.Gateway.Mailgun; m.Enable && (m.Domain == "" || m.From == "" || m.APIKey == "") {
+		return fmt.Errorf("Mailgun domain, sender and API key are required when enabled")
+	}
 	if e.Name == "" || e.Domain == "" {
 		return fmt.Errorf("environment name and domain are required")
 	}

@@ -154,6 +154,9 @@ func validateIngressTLSSecret(serviceName string, tls TLS) error {
 
 // Validate checks whether the configuration contains all required values.
 func (c *Config) Validate() error {
+	if m := c.Components.Gateway.Mailgun; m.Enable && (m.Domain == "" || m.From == "" || m.APIKey == "") {
+		return fmt.Errorf("Mailgun domain, sender and API key are required when enabled")
+	}
 	if c.ImagePullPolicy == "" {
 		c.ImagePullPolicy = defaultImagePullPolicy
 	}
