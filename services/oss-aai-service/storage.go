@@ -491,7 +491,7 @@ func defaultOAuthRedirectURIs() ([]string, error) {
 	var redirectURIs []string
 	configured := strings.TrimSpace(os.Getenv("OAUTH_GUI_URLS"))
 	if configured == "" {
-		return redirectURIs, nil
+		return nil, errors.New("OAUTH_GUI_URLS must be configured")
 	}
 	for item := range strings.SplitSeq(configured, ",") {
 		baseURL := strings.TrimSpace(item)
