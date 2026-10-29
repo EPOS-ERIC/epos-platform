@@ -74,7 +74,7 @@ func DefaultConfig() Config {
 		cfg.TUI.OpenDirectoryCommand = darwinOpenCommand
 		cfg.TUI.OpenFileCommand = darwinOpenCommand
 	case "windows":
-		cfg.TUI.OpenURLCommand = "cmd /c start"
+		cfg.TUI.OpenURLCommand = "cmd /c start %s"
 		cfg.TUI.OpenDirectoryCommand = "explorer"
 		cfg.TUI.OpenFileCommand = "explorer"
 	default: // linux and others
