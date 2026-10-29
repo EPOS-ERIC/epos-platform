@@ -57,6 +57,46 @@ describe('DistributionComponent', () => {
     });
   });
 
+  it('deletes the selected distribution and selects the adjacent one', () => {
+    const fixture = TestBed.createComponent(DistributionComponent);
+    const emissions: DatasetDistributionForm[][] = [];
+    const model: DatasetDistributionForm[] = [
+      {
+        kind: 'downloadable-file',
+        type: 'DOWNLOADABLE_FILE',
+        title: 'First',
+        description: 'First distribution',
+        issued: '',
+        modified: '',
+        license: '',
+        downloadableFile: { url: 'https://example.test/first', format: 'text/csv' }
+      },
+      {
+        kind: 'downloadable-file',
+        type: 'DOWNLOADABLE_FILE',
+        title: 'Second',
+        description: 'Second distribution',
+        issued: '',
+        modified: '',
+        license: '',
+        downloadableFile: { url: 'https://example.test/second', format: 'application/json' }
+      }
+    ];
+    fixture.componentInstance.modelChange.subscribe((value) => emissions.push(value));
+    fixture.componentRef.setInput('model', model);
+    fixture.detectChanges();
+
+    const tabs = fixture.nativeElement.querySelectorAll('.tab-button') as NodeListOf<HTMLButtonElement>;
+    tabs[1].click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.distribution-delete-button') as HTMLButtonElement).click();
+
+    expect(emissions).toEqual([[model[0]]]);
+    fixture.componentRef.setInput('model', emissions[0]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.tab-button.active')?.textContent?.trim()).toBe('First');
+  });
+
   it('keeps distribution and parameter navigation enabled in read-only mode', () => {
     TestBed.overrideProvider(ApiService, {
       useValue: {

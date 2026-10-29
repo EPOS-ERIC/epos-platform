@@ -29,11 +29,23 @@
       </div>
 
       @if (selectedDistribution(); as distribution) {
-        <div class="distribution-body">
-          <div class="distribution-level-heading">
-            <span class="app-badge app-badge--blue">Distribution</span>
-            <strong>{{ distribution.title || 'Selected distribution' }}</strong>
-          </div>
+          <div class="distribution-body">
+            <div class="distribution-level-heading">
+              <div class="distribution-level-title">
+                <span class="app-badge app-badge--blue">Distribution</span>
+                <strong>{{ distribution.title || 'Selected distribution' }}</strong>
+              </div>
+              @if (!comparisonMode) {
+                <button
+                  type="button"
+                  class="app-button detail-delete-button distribution-delete-button"
+                  (click)="deleteSelectedDistribution()"
+                  [disabled]="disabled"
+                >
+                  Delete distribution
+                </button>
+              }
+            </div>
 
           <fieldset class="detail-fieldset" [disabled]="disabled">
             <div class="detail-form-grid">

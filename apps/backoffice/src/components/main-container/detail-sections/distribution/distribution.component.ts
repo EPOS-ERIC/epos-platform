@@ -40,6 +40,17 @@ export class DistributionComponent {
     this.modelChange.emit(model);
   }
 
+  protected deleteSelectedDistribution(): void {
+    if (this.disabled || this.comparisonMode || !this.model.length) {
+      return;
+    }
+
+    const selectedIndex = Math.min(this.distributionTabs, this.model.length - 1);
+    const model = this.model.filter((_, index) => index !== selectedIndex);
+    this.distributionTabs = Math.max(0, Math.min(selectedIndex, model.length - 1));
+    this.modelChange.emit(model);
+  }
+
   protected selectedDistribution(): DatasetDistributionForm | null {
     return this.model[this.distributionTabs] ?? this.model[0] ?? null;
   }

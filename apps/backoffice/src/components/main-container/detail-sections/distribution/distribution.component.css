@@ -10,6 +10,17 @@
   min-width: 180px;
 }
 
+.distribution-level-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.distribution-level-title strong {
+  overflow-wrap: anywhere;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -33,5 +44,14 @@
   .distribution-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .distribution-level-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .distribution-delete-button {
+    width: 100%;
   }
 }
