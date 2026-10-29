@@ -963,10 +963,9 @@ func (dp *DetailsPanel) createGridRows(grid *tview.Grid, rows []DetailRow, butto
 		valueTV.SetBorderPadding(0, 0, 1, 1)
 
 		copyLabel := "Copy"
-		openLabel := "Open"
+		openLabel := "Open ↗"
 		if strings.HasPrefix(row.Value, "http://") || strings.HasPrefix(row.Value, "https://") {
 			copyLabel = "Copy URL"
-			openLabel = "Open ↗"
 		}
 		copyBtn := NewStyledButton(copyLabel, copyAction)
 

@@ -160,7 +160,7 @@ func (u *UpdateOpts) Validate() error {
 			display.Debug("new config name not set, using old name: %s", u.OldEnvName)
 		}
 
-		if u.NewConfig.Name != "" && u.NewConfig.Name != u.OldEnvName {
+		if u.NewConfig.Name != u.OldEnvName {
 			return fmt.Errorf("config name %q must match environment name %q", u.NewConfig.Name, u.OldEnvName)
 		}
 

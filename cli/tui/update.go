@@ -29,17 +29,17 @@ func (u *updateFormData) cleanupConfigSession() {
 
 // showUpdateForm displays the environment update form for Docker or K8s.
 func (a *App) showUpdateForm() {
-	a.PushFocus()
 	envName, isDocker, k8sContext := a.envList.GetSelected()
+	if envName == "" {
+		return
+	}
+
+	a.PushFocus()
 	title := "Update Docker Environment"
 	if !isDocker {
 		title = "Update K8s Environment"
 	}
 	a.UpdateFooter(UpdateFormKey)
-
-	if envName == "" {
-		return
-	}
 
 	data := &updateFormData{
 		name:       envName,

@@ -30,18 +30,7 @@ func RunCommand(cmd *exec.Cmd, interceptOut bool) (string, error) {
 	} else {
 		cmd.Stdout = Stdout
 	}
-	if cmd.Stdin == nil {
-		cmd.Stdin = os.Stdin
-	}
-
-	if cmd.Env == nil {
-		cmd.Env = os.Environ()
-	} else {
-		cmd.Env = append(cmd.Env, os.Environ()...)
-	}
-
-	// Apply platform specific configuration
-	configurePlatformCmd(cmd)
+	prepareCommand(cmd)
 
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
@@ -99,6 +88,11 @@ func RunCommand(cmd *exec.Cmd, interceptOut bool) (string, error) {
 // but without waiting for it to exit. It does not redirect stdout or stderr,
 // allowing callers to set up pipes as needed.
 func StartCommand(cmd *exec.Cmd) error {
+	prepareCommand(cmd)
+	return cmd.Start()
+}
+
+func prepareCommand(cmd *exec.Cmd) {
 	if cmd.Stdin == nil {
 		cmd.Stdin = os.Stdin
 	}
@@ -111,6 +105,4 @@ func StartCommand(cmd *exec.Cmd) error {
 
 	// Apply platform-specific configuration
 	configurePlatformCmd(cmd)
-
-	return cmd.Start()
 }

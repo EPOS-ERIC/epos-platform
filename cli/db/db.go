@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/config"
 	"github.com/EPOS-ERIC/epos-platform/cli/db/sqlc"
@@ -24,6 +25,11 @@ import (
 var embedMigrations embed.FS
 
 const dbName = "db.db"
+
+var (
+	dbMu    sync.Mutex
+	queries *sqlc.Queries
+)
 
 type gooseLogger struct{}
 
@@ -48,8 +54,14 @@ func init() {
 	goose.SetLogger(&gooseLogger{})
 }
 
-// Get opens a new connection to the database, creating the database file and schema if they do not exist.
+// Get returns shared database queries, creating the database and schema if needed.
 func Get() (*sqlc.Queries, error) {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	if queries != nil {
+		return queries, nil
+	}
+
 	dbDir := config.GetDataPath()
 	dbFile := path.Join(dbDir, dbName)
 
@@ -91,7 +103,7 @@ func Get() (*sqlc.Queries, error) {
 		return nil, err
 	}
 
-	queries := sqlc.New(db)
+	queries = sqlc.New(db)
 	return queries, nil
 }
 

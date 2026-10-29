@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# TODO: update this to install the correct version
 #
 # Installer for the epos-cli CLI.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/EPOS-ERIC/epos-cli/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/EPOS-ERIC/epos-platform/main/cli/install.sh | bash
 #
 # The script will:
 # 1. Detect the user's OS and architecture.
@@ -21,7 +20,7 @@
 set -euo pipefail
 
 # GitHub repository for the CLI tool.
-readonly REPO="EPOS-ERIC/epos-cli"
+readonly REPO="EPOS-ERIC/epos-platform"
 # The name of the binary to be installed.
 readonly BINARY_NAME="epos-cli"
 # GitHub API URL for the latest release.
@@ -32,27 +31,31 @@ readonly GITHUB_API_URL="https://api.github.com/repos/${REPO}/releases/latest"
 # Pretty logging functions with color and bold text.
 BOLD=$(tput bold 2>/dev/null || echo "")
 BLUE=$(tput setaf 4 2>/dev/null || echo -e "\e[34m")
+CYAN=$(tput setaf 6 2>/dev/null || echo -e "\e[36m")
 GREEN=$(tput setaf 2 2>/dev/null || echo -e "\e[32m")
 YELLOW=$(tput setaf 3 2>/dev/null || echo -e "\e[33m")
 RED=$(tput setaf 1 2>/dev/null || echo -e "\e[31m")
 NC=$(tput sgr0 2>/dev/null || echo -e "\e[0m") # No Color
 
 log_step() {
-    printf "\n${BLUE}${BOLD}❯ %s${NC}\n" "$@"
+    printf '%s[STEP]%s  %s\n' "${CYAN}" "${NC}" "$*"
 }
 
 log_info() {
-    printf "  ${BLUE}›${NC} %s\n" "$@"
+    printf '%s[INFO]%s  %s\n' "${BLUE}" "${NC}" "$*"
 }
 
 log_warn() {
-    printf "  ${YELLOW}⚠️${NC} %s\n" "$@"
+    printf '%s%s[WARN]%s  %s\n' "${YELLOW}" "${BOLD}" "${NC}" "$*"
 }
 
 log_error() {
-    printf "\n${RED}${BOLD}*** ERROR ***${NC}\n" >&2
-    printf "${RED}    ✗ %s${NC}\n\n" "$@" >&2
+    printf '%s%s[ERROR] %s%s\n' "${RED}" "${BOLD}" "$*" "${NC}" >&2
     exit 1
+}
+
+log_done() {
+    printf '%s[DONE]%s  %s\n' "${GREEN}" "${NC}" "$*"
 }
 
 
@@ -230,22 +233,15 @@ provide_path_instructions() {
 
     local export_cmd="export PATH=\"${install_dir}:\$PATH\""
 
-    printf "\n${YELLOW}${BOLD}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}\n"
-    printf "${YELLOW}${BOLD}┃ ACTION REQUIRED: Update your PATH                            ┃${NC}\n"
-    printf "${YELLOW}${BOLD}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫${NC}\n"
-    printf "${YELLOW}┃${NC} To run '${BOLD}${BINARY_NAME}${NC}${YELLOW}' from any directory, you need to add it to your PATH.${NC}\n"
-    printf "${YELLOW}┃${NC} We've detected you are using ${BOLD}${shell_name}${NC}${YELLOW}.${NC}\n"
-    printf "${YELLOW}┃${NC}\n"
-    printf "${YELLOW}┃${NC} Run the following command in your terminal:${NC}\n"
-    printf "${YELLOW}┃${NC}   ${BOLD}echo '${export_cmd}' >> ${profile_file}${NC}\n"
-    printf "${YELLOW}┃${NC}\n"
-    printf "${YELLOW}┃${NC} Then, restart your terminal or run: ${BOLD}source ${profile_file}${NC}\n"
-    printf "${YELLOW}${BOLD}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}\n"
+    log_warn "The directory '${install_dir}' is not in your PATH."
+    log_info "Add it to your ${shell_name} configuration:"
+    log_info "  echo '${export_cmd}' >> ${profile_file}"
+    log_info "Then restart your terminal or run: source ${profile_file}"
 }
 
 # --- Main Execution Logic ---
 main() {
-    printf "${BLUE}${BOLD}--- ${BINARY_NAME} CLI Installer ---${NC}\n"
+    log_info "${BINARY_NAME} installer"
 
     # 1. Determine OS, Architecture, and versions
     log_step "Step 1: Checking your system and existing installation..."
@@ -288,7 +284,7 @@ main() {
         log_info "Latest available version:  ${LATEST_VERSION}"
 
         if [ "${local_version}" = "${LATEST_VERSION}" ]; then
-            printf "\n${GREEN}${BOLD}✔ You already have the latest version installed. Nothing to do.${NC}\n\n"
+            log_done "You already have the latest version installed. Nothing to do."
             exit 0
         fi
         
@@ -296,7 +292,7 @@ main() {
         # We use `sort -V` which correctly handles semantic versioning. The oldest version comes first.
         if [ "$(printf '%s\n' "${LATEST_VERSION}" "${local_version}" | sort -V | head -n 1)" = "${LATEST_VERSION}" ]; then
             log_info "Your local version (${local_version}) is newer than the latest release (${LATEST_VERSION})."
-            printf "\n${GREEN}${BOLD}✔ No update necessary. Keeping your current version.${NC}\n\n"
+            log_done "No update necessary. Keeping your current version."
             exit 0
         fi
 
@@ -307,12 +303,8 @@ main() {
         latest_major_version=$(echo "${LATEST_VERSION}" | cut -d'.' -f1)
 
         if [ "${latest_major_version}" -gt "${local_major_version}" ]; then
-            printf "\n${YELLOW}${BOLD}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}\n"
-            printf "${YELLOW}${BOLD}┃ ⚠️  BREAKING CHANGE WARNING                                    ┃${NC}\n"
-            printf "${YELLOW}${BOLD}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫${NC}\n"
-            printf "${YELLOW}┃${NC} Your current version is ${BOLD}${local_version}${NC}${YELLOW}, and the latest is ${BOLD}${LATEST_VERSION}${NC}${YELLOW}.${NC}\n"
-            printf "${YELLOW}┃${NC} Updating across a major version may break existing environments.${NC}\n"
-            printf "${YELLOW}${BOLD}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}\n\n"
+            log_warn "Major version upgrade: ${local_version} -> ${LATEST_VERSION}."
+            log_warn "Updating across a major version may break existing environments."
             
             printf "  ${BOLD}Do you want to proceed with the update? [y/N]: ${NC}"
             read -r answer < /dev/tty
@@ -327,7 +319,7 @@ main() {
     log_step "Step 3: Preparing for installation..."
     local install_dir
     install_dir=$(get_install_dir)
-    mkdir -p "${install_dir}" # Ensure the directory exists.
+    mkdir -p "${install_dir}"
     log_info "Binary will be installed to: ${install_dir}"
 
     local path_needs_update=false
@@ -340,23 +332,14 @@ main() {
             ;;
     esac
 
-    # 4. Remove old installation if it exists in a different location
-    if [ -n "${current_install_path}" ]; then
-        local new_install_path="${install_dir}/${BINARY_NAME}"
-        if [ "${current_install_path}" != "${new_install_path}" ]; then
-            log_step "Step 4: Cleaning up old installation..."
-            remove_old_installation "${current_install_path}" "${install_dir}"
-        fi
-    fi
-
-    # 5. Download and install
-    log_step "Step 5: Downloading and Installing..."
+    # 4. Download and install
+    log_step "Step 4: Downloading and Installing..."
     local temp_file
     temp_file=$(mktemp)
     local install_path="${install_dir}/${BINARY_NAME}"
 
     log_info "Downloading from ${DOWNLOAD_URL}"
-    if ! curl --progress-bar -L "${DOWNLOAD_URL}" -o "${temp_file}"; then
+    if ! curl --fail --progress-bar -L "${DOWNLOAD_URL}" -o "${temp_file}"; then
         rm "${temp_file}"
         log_error "Download failed. Please check your network connection or the URL."
     fi
@@ -373,20 +356,18 @@ main() {
     else
         mv "${temp_file}" "${install_path}"
     fi
-    
-    printf "\n${GREEN}${BOLD}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}\n"
-    printf "${GREEN}${BOLD}┃ 🎉 INSTALLATION COMPLETE                                         ┃${NC}\n"
-    printf "${GREEN}${BOLD}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫${NC}\n"
-    printf "${GREEN}┃${NC} ${BOLD}${BINARY_NAME} version ${LATEST_VERSION}${NC}${GREEN} has been successfully installed to:${NC}\n"
-    printf "${GREEN}┃${NC}   ${install_path}${NC}\n"
-    printf "${GREEN}┃${NC}\n"
-    if [ "${path_needs_update}" = true ]; then
-        printf "${GREEN}┃${NC} ${BOLD}IMPORTANT:${NC}${GREEN} Don't forget to restart your terminal for the PATH${NC}\n"
-        printf "${GREEN}┃${NC}           changes to take effect.${NC}\n"
-        printf "${GREEN}┃${NC}\n"
+
+    # 5. Remove old installation only after the replacement is installed.
+    if [ -n "${current_install_path}" ] && [ "${current_install_path}" != "${install_path}" ]; then
+        log_step "Step 5: Cleaning up old installation..."
+        remove_old_installation "${current_install_path}" "${install_dir}"
     fi
-    printf "${GREEN}┃${NC} Run '${BOLD}${BINARY_NAME} --help${NC}${GREEN}' to get started.${NC}\n"
-    printf "${GREEN}${BOLD}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}\n\n"
+    
+    log_done "${BINARY_NAME} version ${LATEST_VERSION} installed to ${install_path}."
+    if [ "${path_needs_update}" = true ]; then
+        log_warn "Restart your terminal for PATH changes to take effect."
+    fi
+    log_info "Run '${BINARY_NAME} --help' to get started."
 }
 
 # Run the main function.

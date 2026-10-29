@@ -30,7 +30,7 @@ var updateCmd = &cobra.Command{
 	Short: "Update the CLI to the latest version.",
 	Long:  "Update the CLI to the latest version. Downloads the latest GitHub release for your platform and replaces the current binary. Prompts for confirmation before major version upgrades.",
 	Run: func(cmd *cobra.Command, args []string) {
-		release, err := fetchLatestGitHubRelease("EPOS-ERIC", "epos-cli")
+		release, err := fetchLatestGitHubRelease("EPOS-ERIC", "epos-platform")
 		if err != nil {
 			display.Error("Failed to fetch latest release: %v", err)
 			os.Exit(1)

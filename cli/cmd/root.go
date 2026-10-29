@@ -37,7 +37,7 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
-		tag, err := getLatestTagWithCache("EPOS-ERIC", "epos-cli")
+		tag, err := getLatestTagWithCache("EPOS-ERIC", "epos-platform")
 		if err != nil {
 			log.Println("Failed to get latest tag:", err)
 			return

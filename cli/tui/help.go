@@ -59,52 +59,59 @@ func (a *App) showHelp() {
 	// Define group order
 	groupOrder := []string{"Navigation", "Environment", "Browser", "Generic"}
 	for _, group := range groupOrder {
-		if hints, exists := groupedHints[group]; exists {
-			// Group header
-			content.WriteString(DefaultTheme.SecondaryTag("b") + group + "\n")
-			lineCount++
-
-			if len(group) > maxWidth {
-				maxWidth = len(group)
-			}
-
-			// Separator
-			separatorLen := 50
-			content.WriteString(DefaultTheme.MutedTag("") + strings.Repeat("─", separatorLen) + "\n")
-			lineCount++
-			if separatorLen > maxWidth {
-				maxWidth = separatorLen
-			}
-
-			// Hints
-			for _, key := range hints {
-				parts := strings.SplitN(key, ": ", 2)
-				if len(parts) == 2 {
-					line := fmt.Sprintf("  %s%-14s%s %s",
-						DefaultTheme.PrimaryTag("b"),
-						parts[0],
-						DefaultTheme.Tag(DefaultTheme.OnSurface, ""),
-						parts[1])
-					content.WriteString(line + "\n")
-
-					// Calculate plain text width
-					plainLine := fmt.Sprintf("  %-14s %s", parts[0], parts[1])
-					if len(plainLine) > maxWidth {
-						maxWidth = len(plainLine)
-					}
-					lineCount++
-				} else {
-					fmt.Fprintf(&content, "  %s\n", key)
-					if len(key)+2 > maxWidth {
-						maxWidth = len(key) + 2
-					}
-					lineCount++
-				}
-			}
-
-			content.WriteString("\n") // Spacing between groups
-			lineCount++
+		hints, exists := groupedHints[group]
+		if !exists {
+			continue
 		}
+		// Group header
+		content.WriteString(DefaultTheme.SecondaryTag("b"))
+		content.WriteString(group)
+		content.WriteString("\n")
+		lineCount++
+
+		if len(group) > maxWidth {
+			maxWidth = len(group)
+		}
+
+		// Separator
+		separatorLen := 50
+		content.WriteString(DefaultTheme.MutedTag(""))
+		content.WriteString(strings.Repeat("─", separatorLen))
+		content.WriteString("\n")
+		lineCount++
+		if separatorLen > maxWidth {
+			maxWidth = separatorLen
+		}
+
+		// Hints
+		for _, key := range hints {
+			parts := strings.SplitN(key, ": ", 2)
+			if len(parts) == 2 {
+				line := fmt.Sprintf("  %s%-14s%s %s",
+					DefaultTheme.PrimaryTag("b"),
+					parts[0],
+					DefaultTheme.Tag(DefaultTheme.OnSurface, ""),
+					parts[1])
+				content.WriteString(line)
+				content.WriteString("\n")
+
+				// Calculate plain text width
+				plainLine := fmt.Sprintf("  %-14s %s", parts[0], parts[1])
+				if len(plainLine) > maxWidth {
+					maxWidth = len(plainLine)
+				}
+				lineCount++
+			} else {
+				fmt.Fprintf(&content, "  %s\n", key)
+				if len(key)+2 > maxWidth {
+					maxWidth = len(key) + 2
+				}
+				lineCount++
+			}
+		}
+
+		content.WriteString("\n") // Spacing between groups
+		lineCount++
 	}
 
 	// Now that we know maxWidth, create centered title

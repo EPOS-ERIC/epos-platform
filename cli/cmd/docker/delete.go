@@ -19,10 +19,8 @@ var DeleteCmd = &cobra.Command{
 	Args:              cobra.MinimumNArgs(1),
 	ValidArgsFunction: validArgsFunction,
 	Run: func(cmd *cobra.Command, args []string) {
-		name := args[0:]
-
 		if !deleteForce {
-			envList := strings.Join(name, ", ")
+			envList := strings.Join(args, ", ")
 			display.Warn("This will permanently delete the following environment(s): %s", envList)
 			display.Warn("All containers, volumes, and associated resources will be removed. This action cannot be undone.")
 			confirmed, err := common.Confirm("Are you sure you want to continue? (y/n):")
@@ -37,7 +35,7 @@ var DeleteCmd = &cobra.Command{
 		}
 
 		err := docker.Delete(docker.DeleteOpts{
-			Name: name,
+			Name: args,
 		})
 		if err != nil {
 			display.Error("%v", err)
