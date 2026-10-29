@@ -311,6 +311,7 @@ func TestOAuthRevokeHandlerAcceptsPublicClientBearerRevoke(t *testing.T) {
 }
 
 func TestNewLocalStoreSeedsInitialAdminUserFromEnvironment(t *testing.T) {
+	t.Setenv("OAUTH_GUI_URLS", "http://localhost:34000/")
 	t.Setenv("INITIAL_ADMIN_NAME", "Platform")
 	t.Setenv("INITIAL_ADMIN_SURNAME", "Owner")
 	t.Setenv("INITIAL_ADMIN_EMAIL", "root@example.org")

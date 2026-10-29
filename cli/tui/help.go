@@ -169,7 +169,6 @@ func (a *App) showHelp() {
 		height = 12
 	}
 
-	a.UpdateFooter(HelpKey)
 	a.pages.AddPage("help", CenterPrimitiveFixed(container, width, height), true, true)
 	a.currentPage = "help"
 	a.tview.SetFocus(container)

@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -126,14 +125,5 @@ func (a *App) handleRender(data *renderFormData, isDocker bool) {
 }
 
 func resolveRenderOutputDir(outputPath string) (string, error) {
-	if outputPath == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return "", err
-		}
-
-		return cwd, nil
-	}
-
 	return filepath.Abs(outputPath)
 }

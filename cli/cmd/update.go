@@ -30,7 +30,7 @@ var updateCmd = &cobra.Command{
 	Short: "Update the CLI to the latest version.",
 	Long:  "Update the CLI to the latest version. Downloads the latest GitHub release for your platform and replaces the current binary. Prompts for confirmation before major version upgrades.",
 	Run: func(cmd *cobra.Command, args []string) {
-		release, err := fetchLatestGitHubRelease("EPOS-ERIC", "epos-platform")
+		release, err := fetchLatestGitHubRelease()
 		if err != nil {
 			display.Error("Failed to fetch latest release: %v", err)
 			os.Exit(1)
@@ -107,24 +107,16 @@ var updateCmd = &cobra.Command{
 
 		display.UpdateStarting(current, tag)
 
-		var platformOS, platformArch string
+		platformOS, platformArch := runtime.GOOS, runtime.GOARCH
 		switch runtime.GOOS {
-		case "windows":
-			platformOS = windowsOS
-		case "linux":
-			platformOS = linuxOS
-		case "darwin":
-			platformOS = macOS
+		case windowsOS, linuxOS, macOS:
 		default:
 			display.Error("Unsupported platform: %s", runtime.GOOS)
 			os.Exit(1)
 		}
 
 		switch runtime.GOARCH {
-		case "amd64":
-			platformArch = "amd64"
-		case "arm64":
-			platformArch = "arm64"
+		case "amd64", "arm64":
 		default:
 			display.Error("Unsupported architecture: %s", runtime.GOARCH)
 			os.Exit(1)
@@ -263,10 +255,6 @@ func isMarkdownHeading(line string) bool {
 	idx := 0
 	for idx < len(trimmed) && trimmed[idx] == '#' {
 		idx++
-	}
-
-	if idx == 0 {
-		return false
 	}
 
 	return strings.TrimSpace(trimmed[idx:]) != ""

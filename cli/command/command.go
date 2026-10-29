@@ -72,16 +72,10 @@ func RunCommand(cmd *exec.Cmd, interceptOut bool) (string, error) {
 	}
 
 	if cmdErr != nil {
-		if interceptOut {
-			return stdout.String(), fmt.Errorf("%s execution failed: %w", cmd.Path, cmdErr)
-		}
-		return "", fmt.Errorf("%s execution failed: %w", cmd.Path, cmdErr)
+		return stdout.String(), fmt.Errorf("%s execution failed: %w", cmd.Path, cmdErr)
 	}
 
-	if interceptOut {
-		return stdout.String(), nil
-	}
-	return "", nil
+	return stdout.String(), nil
 }
 
 // StartCommand starts cmd after applying platform-specific configuration,

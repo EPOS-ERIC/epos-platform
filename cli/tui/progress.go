@@ -44,7 +44,6 @@ type OperationProgress struct {
 	title    *tview.TextView
 	clock    *tview.TextView
 	logsView *tview.TextView
-	overlay  tview.Primitive
 
 	wasInDetails        bool
 	savedDetailsName    string
@@ -220,8 +219,6 @@ func (op *OperationProgress) showCompletionOverlay() {
 		switch buttonLabel {
 		case "Close & Return":
 			op.returnToHome()
-		case "Copy Logs":
-			op.copyLogs()
 		case "View Logs":
 			op.app.pages.HidePage("completion-overlay")
 			op.app.tview.SetFocus(op.layout)
@@ -295,7 +292,6 @@ func (op *OperationProgress) showCompletionOverlay() {
 		return event
 	})
 
-	op.overlay = modalLayout
 	op.app.pages.AddPage("completion-overlay", CenterPrimitiveFixed(modalLayout, 50, 10), true, true)
 	op.app.currentPage = "completion-overlay"
 	op.app.tview.SetFocus(closeBtn)

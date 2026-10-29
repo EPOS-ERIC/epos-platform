@@ -13,7 +13,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"golang.org/x/sync/errgroup"
 )
 
 var ErrImageMissing = errors.New("image not found locally")
@@ -158,30 +157,25 @@ func CheckImagesForUpdates(images []NamedImage) ([]display.ImageUpdateInfo, erro
 		return updates, nil
 	}
 
-	g, ctx := errgroup.WithContext(ctx)
+	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	g.SetLimit(len(images))
-
 	for _, image := range images {
-		g.Go(func() error {
+		wg.Go(func() {
 			update, err := checkImageForUpdate(ctx, image)
 			if err != nil {
 				display.Debug("skipping image update check for %s (%s): %v", image.Name, image.Ref, err)
-				return nil
+				return
 			}
 			if update != nil {
 				mu.Lock()
 				updates = append(updates, *update)
 				mu.Unlock()
 			}
-			return nil
 		})
 	}
 
-	if err := g.Wait(); err != nil {
-		return updates, err
-	}
+	wg.Wait()
 
 	return updates, nil
 }

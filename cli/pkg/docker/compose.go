@@ -65,11 +65,7 @@ func withComposeBundle(cfg *config.EnvConfig, fn func(bundle *composeBundle) err
 		}
 	}()
 
-	if err := fn(bundle); err != nil {
-		return err
-	}
-
-	return nil
+	return fn(bundle)
 }
 
 // composeCommand creates a docker compose command configured with explicit files and project name.

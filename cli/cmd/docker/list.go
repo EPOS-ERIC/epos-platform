@@ -28,8 +28,6 @@ var ListCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			apiURL := urls.APIDocsURL
-
 			var backofficeURL string
 			if urls.BackofficeURL != nil {
 				backofficeURL = *urls.BackofficeURL
@@ -39,7 +37,7 @@ var ListCmd = &cobra.Command{
 				grafanaURL = *urls.GrafanaURL
 			}
 
-			rows[i] = []string{dockerEnv.Name, urls.GUIURL, apiURL, backofficeURL, grafanaURL}
+			rows[i] = []string{dockerEnv.Name, urls.GUIURL, urls.APIDocsURL, backofficeURL, grafanaURL}
 		}
 
 		headers := []string{"Name", "GUI URL", "API URL", "Backoffice URL", "Grafana URL"}

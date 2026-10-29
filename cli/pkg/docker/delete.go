@@ -58,11 +58,7 @@ func Delete(opts DeleteOpts) error {
 		})
 	}
 
-	if err := eg.Wait(); err != nil {
-		return err
-	}
-
-	return nil
+	return eg.Wait()
 }
 
 // Validate checks DeleteOpts and ensures every requested environment exists.

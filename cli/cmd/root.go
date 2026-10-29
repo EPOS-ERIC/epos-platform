@@ -37,7 +37,7 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
-		tag, err := getLatestTagWithCache("EPOS-ERIC", "epos-platform")
+		tag, err := getLatestTagWithCache()
 		if err != nil {
 			log.Println("Failed to get latest tag:", err)
 			return
@@ -100,13 +100,13 @@ func Execute() {
 }
 
 // fetchLatestGitHubRelease fetches the latest release from GitHub
-func fetchLatestGitHubRelease(owner, repoName string) (*github.RepositoryRelease, error) {
+func fetchLatestGitHubRelease() (*github.RepositoryRelease, error) {
 	client := github.NewClient(nil)
 
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelFunc()
 
-	release, _, err := client.Repositories.GetLatestRelease(ctx, owner, repoName)
+	release, _, err := client.Repositories.GetLatestRelease(ctx, "EPOS-ERIC", "epos-platform")
 	if err != nil {
 		return nil, err
 	}
@@ -115,13 +115,13 @@ func fetchLatestGitHubRelease(owner, repoName string) (*github.RepositoryRelease
 }
 
 // getLatestTagWithCache gets the latest tag with caching
-func getLatestTagWithCache(owner, repoName string) (string, error) {
+func getLatestTagWithCache() (string, error) {
 	cached, err := db.GetLatestReleaseCache()
 	if err == nil && cached.FetchedAt != nil && time.Since(*cached.FetchedAt) < 12*time.Hour {
 		return cached.TagName, nil
 	}
 
-	release, err := fetchLatestGitHubRelease(owner, repoName)
+	release, err := fetchLatestGitHubRelease()
 	if err != nil || release.TagName == nil {
 		return "", fmt.Errorf("failed to fetch latest release: %w", err)
 	}
