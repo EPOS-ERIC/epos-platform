@@ -100,7 +100,7 @@ func TestRenderOpts_ConfigRender_OptionalComponents(t *testing.T) {
 			},
 			wantGateway: []string{`value: "http://otel-lgtm:4318"`},
 			wantTemplates: map[string]string{
-				"templates/otel.yaml": "name: otel-lgtm",
+				"templates/otel.yaml": "path: /test-otel/grafana(/|$)(.*)",
 			},
 		},
 		{

@@ -68,7 +68,7 @@ var UpdateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		display.URLs(URLs.GUIURL, URLs.APIURL, fmt.Sprintf("epos-cli k8s update %s", name), URLs.BackofficeURL, nil)
+		display.URLs(URLs.GUIURL, URLs.APIDocsURL, fmt.Sprintf("epos-cli k8s update %s", name), URLs.BackofficeURL, URLs.GrafanaURL)
 	},
 }
 

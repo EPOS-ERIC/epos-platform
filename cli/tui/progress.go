@@ -213,7 +213,7 @@ func (op *OperationProgress) showCompletionOverlay() {
 		if len(errMsg) > 200 {
 			errMsg = "Operation failed. Check the logs below for full details."
 		}
-		message = fmt.Sprintf("%s\n\nTime: [::b]%s[-]", errMsg, timeStr)
+		message = fmt.Sprintf("%s\n\nTime: [::b]%s[-]", tview.Escape(errMsg), timeStr)
 	}
 
 	doneFunc := func(buttonLabel string) {

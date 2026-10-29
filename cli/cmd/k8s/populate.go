@@ -12,7 +12,7 @@ import (
 var PopulateCmd = &cobra.Command{
 	Use:               "populate <env-name> [ttl-paths...]",
 	Short:             "Load TTL data into an environment.",
-	Long:              "Load TTL data into an environment. Imports .ttl files from the given files or directories, or loads bundled example data with --example. Uses kubectl port-forward to send the data to the ingestor service.",
+	Long:              "Load TTL data into an environment. Imports .ttl files from the given files or directories, or loads bundled example data with --example. Set EPOS_BEARER_TOKEN for external AAI or to override managed AAI authentication.",
 	ValidArgsFunction: validArgsFunction,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if populateExamples {
@@ -36,7 +36,6 @@ var PopulateCmd = &cobra.Command{
 			Context:          context,
 			TTLDirs:          ttlPaths,
 			Name:             name,
-			Parallel:         parallel,
 			PopulateExamples: populateExamples,
 		})
 		if err != nil {
@@ -50,12 +49,11 @@ var PopulateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		display.URLs(URLs.GUIURL, URLs.APIURL, fmt.Sprintf("epos-cli k8s populate %s", name), URLs.BackofficeURL, nil)
+		display.URLs(URLs.GUIURL, URLs.APIDocsURL, fmt.Sprintf("epos-cli k8s populate %s", name), URLs.BackofficeURL, URLs.GrafanaURL)
 	},
 }
 
 func init() {
 	addContextFlag(PopulateCmd)
-	PopulateCmd.Flags().IntVarP(&parallel, "parallel", "p", 1, "Parallel TTL uploads (1-20)")
 	PopulateCmd.Flags().BoolVar(&populateExamples, "example", false, "Load bundled example data")
 }

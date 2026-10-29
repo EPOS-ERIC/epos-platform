@@ -3,7 +3,6 @@ package k8s
 import (
 	"fmt"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/command"
@@ -24,27 +23,6 @@ func runKubectl(dir string, suppressOut bool, context string, args ...string) er
 	cmd := newKubectlCommand(dir, context, args...)
 	_, err := command.RunCommand(cmd, suppressOut)
 	return err
-}
-
-func runKubectlWithInput(dir string, suppressOut bool, context, input string, args ...string) error {
-	cmd := newKubectlCommand(dir, context, args...)
-	cmd.Stdin = strings.NewReader(input)
-	_, err := command.RunCommand(cmd, suppressOut)
-	return err
-}
-
-func runKubectlCapture(dir, context string, args ...string) string {
-	cmd := newKubectlCommand(dir, context, args...)
-	out, err := command.RunCommand(cmd, true)
-	if err != nil {
-		trimmed := strings.TrimSpace(out)
-		if trimmed != "" {
-			return trimmed
-		}
-		return ""
-	}
-
-	return strings.TrimSpace(out)
 }
 
 func newKubectlCommand(dir, context string, args ...string) *exec.Cmd {

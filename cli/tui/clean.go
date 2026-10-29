@@ -4,17 +4,12 @@ import (
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/docker"
-	"github.com/EPOS-ERIC/epos-platform/cli/pkg/k8s"
 )
 
 // showCleanConfirm displays a confirmation dialog for cleaning an environment.
 func (a *App) showCleanConfirm() {
-	envName, isDocker, k8sContext := a.envList.GetSelected()
-	if envName == "" {
-		return
-	}
-	if !isDocker {
-		a.showCleanProgress(envName, false, k8sContext)
+	envName, isDocker, _ := a.envList.GetSelected()
+	if envName == "" || !isDocker {
 		return
 	}
 
@@ -31,7 +26,7 @@ func (a *App) showCleanConfirm() {
 		ConfirmDestructive: true,
 		Secondary:          true,
 		OnConfirm: func() {
-			a.showCleanProgress(envName, isDocker, k8sContext)
+			a.showCleanProgress(envName)
 		},
 		OnCancel: func() {
 			a.ResetToHome(ResetOptions{
@@ -43,42 +38,21 @@ func (a *App) showCleanConfirm() {
 }
 
 // showCleanProgress displays the cleaning progress with live output.
-func (a *App) showCleanProgress(envName string, isDocker bool, context string) {
+func (a *App) showCleanProgress(envName string) {
 	a.RunBackgroundTask(TaskOptions{
 		Operation: "Clean",
 		EnvName:   envName,
-		IsDocker:  isDocker,
+		IsDocker:  true,
 		Task: func() (string, error) {
-			if isDocker {
-				env, err := docker.Clean(docker.CleanOpts{
-					Name: envName,
-				})
-				if err != nil {
-					return "", err
-				}
-
-				urls, err := env.BuildEnvURLs()
-				if err != nil {
-					return "", err
-				}
-
-				return fmt.Sprintf("Environment cleaned successfully! GUI: %s", urls.GUIURL), nil
-			} else {
-				env, err := k8s.Clean(k8s.CleanOpts{
-					Name:    envName,
-					Context: context,
-				})
-				if err != nil {
-					return "", err
-				}
-
-				urls, err := env.BuildEnvURLs()
-				if err != nil {
-					return "", err
-				}
-
-				return fmt.Sprintf("Environment cleaned successfully! GUI: %s", urls.GUIURL), nil
+			env, err := docker.Clean(docker.CleanOpts{Name: envName})
+			if err != nil {
+				return "", err
 			}
+			urls, err := env.BuildEnvURLs()
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf("Environment cleaned successfully! GUI: %s", urls.GUIURL), nil
 		},
 	})
 }

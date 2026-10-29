@@ -52,7 +52,7 @@ var DeployCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		display.URLs(urls.GUIURL, env.GatewayPublicURL()+"/", fmt.Sprintf("epos-cli docker deploy %s", env.Name), urls.BackofficeURL, urls.GrafanaURL)
+		display.URLs(urls.GUIURL, urls.APIDocsURL, fmt.Sprintf("epos-cli docker deploy %s", env.Name), urls.BackofficeURL, urls.GrafanaURL)
 	},
 }
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/config"
+	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/docker"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/k8s"
 	"github.com/gdamore/tcell/v2"
@@ -43,6 +44,13 @@ func (a *App) showPopulateForm() {
 		env, err := docker.GetEnv(envName)
 		if err != nil {
 			a.ShowError(fmt.Sprintf("Error loading Docker environment: %v", err))
+			return
+		}
+		requiresToken = !env.Components.AAIService.Enabled
+	} else {
+		env, err := k8s.GetEnv(envName, k8sContext)
+		if err != nil {
+			a.ShowError(fmt.Sprintf("Error loading Kubernetes environment: %v", err))
 			return
 		}
 		requiresToken = !env.Components.AAIService.Enabled
@@ -201,17 +209,14 @@ func (a *App) showPopulateForm() {
 			SetFieldTextColor(DefaultTheme.Secondary).
 			SetBorderPadding(0, 0, 1, 1)
 
-		var tokenInput *tview.InputField
-		if isDocker {
-			label := "Bearer token (optional) "
-			if requiresToken {
-				label = "Bearer token (required*) "
-			}
-			tokenInput = NewStyledInputField(label, state.token).
-				SetMaskCharacter('*').
-				SetChangedFunc(func(text string) { state.token = text })
-			tokenInput.SetBorderPadding(0, 0, 1, 1)
+		label := "Bearer token (optional) "
+		if requiresToken {
+			label = "Bearer token (required*) "
 		}
+		tokenInput := NewStyledInputField(label, state.token).
+			SetMaskCharacter('*').
+			SetChangedFunc(func(text string) { state.token = text })
+		tokenInput.SetBorderPadding(0, 0, 1, 1)
 
 		populateBtn := NewStyledButton("Populate", func() {
 			if requiresToken && strings.TrimSpace(state.token) == "" && strings.TrimSpace(os.Getenv("EPOS_BEARER_TOKEN")) == "" {
@@ -374,8 +379,11 @@ func (a *App) showPopulateProgress(envName, context string, paths []string, exam
 					Context:          context,
 					TTLDirs:          paths,
 					PopulateExamples: examples,
-					Parallel:         1,
+					BearerToken:      token,
 				})
+			}
+			if err != nil {
+				display.Error("%v", err)
 			}
 			return "", err
 		},

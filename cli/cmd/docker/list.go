@@ -20,7 +20,7 @@ var ListCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		rows := make([][]any, len(envs))
+		rows := make([][]string, len(envs))
 		for i, dockerEnv := range envs {
 			urls, err := dockerEnv.BuildEnvURLs()
 			if err != nil {
@@ -28,7 +28,7 @@ var ListCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			apiURL := dockerEnv.GatewayPublicURL() + "/"
+			apiURL := urls.APIDocsURL
 
 			var backofficeURL string
 			if urls.BackofficeURL != nil {
@@ -39,7 +39,7 @@ var ListCmd = &cobra.Command{
 				grafanaURL = *urls.GrafanaURL
 			}
 
-			rows[i] = []any{dockerEnv.Name, urls.GUIURL, apiURL, backofficeURL, grafanaURL}
+			rows[i] = []string{dockerEnv.Name, urls.GUIURL, apiURL, backofficeURL, grafanaURL}
 		}
 
 		headers := []string{"Name", "GUI URL", "API URL", "Backoffice URL", "Grafana URL"}

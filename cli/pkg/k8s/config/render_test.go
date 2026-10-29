@@ -40,7 +40,7 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/dataportal.yaml":            {"name: dataportal", `value: "http://localhost/test-default/aai"`},
-				"templates/gateway.yaml":               {"name: gateway", `url: "http://aai-service:8080"`, "imagePullPolicy: IfNotPresent"},
+				"templates/gateway.yaml":               {"name: gateway", `url: "http://aai-service:8080"`, "imagePullPolicy: IfNotPresent", `nginx.ingress.kubernetes.io/proxy-body-size: "10m"`},
 				"templates/application-databases.yaml": {"name: retriever-db", "name: sharing-db"},
 				"templates/metadata-database.yaml":     {"name: metadata-database"},
 				"templates/application-services.yaml":  {"name: metadata-lifecycle", "name: data-retriever", "name: sharing"},
@@ -102,8 +102,7 @@ func TestConfigRender(t *testing.T) {
 					`INITIAL_ADMIN_EMAIL: "epos@epos.eu"`,
 					"name: INITIAL_ADMIN_PASSWORD",
 					`APP_CORS_ALLOW_ORIGIN: "*"`,
-					`PLATFORM_URL: "http://localhost/test-aai/"`,
-					`BACKOFFICE_URL: "http://localhost/test-aai/backoffice/"`,
+					`OAUTH_GUI_URLS: "http://localhost/test-aai/,http://localhost/test-aai/backoffice/"`,
 				},
 				"templates/pvc.yaml": {"name: aai"},
 			},
@@ -119,8 +118,7 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/aai-service.yaml": {
-					`PLATFORM_URL: "http://localhost/"`,
-					`BACKOFFICE_URL: "http://localhost/backoffice/"`,
+					`OAUTH_GUI_URLS: "http://localhost/,http://localhost/backoffice/"`,
 				},
 			},
 		},

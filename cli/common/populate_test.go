@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 )
@@ -185,6 +186,17 @@ func TestPopulateEnv(t *testing.T) {
 				t.Errorf("Expected %d requests, but got %d", len(tc.expectedPaths), len(receivedPaths))
 			}
 		})
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = io.WriteString(w, `{"type":"validation_failed","title":"Bad Request","detail":"Invalid Turtle","target":"metadata","instance":"trace-123"}`)
+	}))
+	defer server.Close()
+	err := SendTurtleImport(server.URL, "test-token", []byte("invalid"))
+	if err == nil || !strings.Contains(err.Error(), "Invalid Turtle") || !strings.Contains(err.Error(), "metadata") || !strings.Contains(err.Error(), "trace-123") {
+		t.Fatalf("missing problem details: %v", err)
 	}
 }
 

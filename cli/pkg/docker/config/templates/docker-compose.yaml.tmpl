@@ -188,8 +188,7 @@ services:
       INITIAL_ADMIN_EMAIL: ${ADMIN_EMAIL}
       INITIAL_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?AAI admin password is required}
       OIDC_ISSUER: ${OIDC_ISSUER}
-      PLATFORM_URL: ${PLATFORM_URL}
-      BACKOFFICE_URL: ${BACKOFFICE_URL}
+      OAUTH_GUI_URLS: ${OAUTH_GUI_URLS}
     volumes: ["aai:/app/data"]
     networks: [epos]
     restart: unless-stopped

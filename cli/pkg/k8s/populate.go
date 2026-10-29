@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -11,97 +12,69 @@ import (
 
 // PopulateOpts defines inputs for Populate.
 type PopulateOpts struct {
-	// Required. name of the environment
-	Name string
-	// Optional. Kubernetes context to use; defaults to the current kubectl context when unset.
-	Context string
-	// Required. list of directories or ttl files to populate the environment with
-	TTLDirs []string
-	// Optional. number of parallel uploads to do to the default is 1
-	Parallel int
-	// Optional. weather to populate the examples or not
+	Name             string
+	Context          string
+	TTLDirs          []string
 	PopulateExamples bool
+	BearerToken      string
 }
 
-// Populate ingests example or user-provided TTL data into an existing K8s environment.
+// Populate imports Turtle inputs into an existing Kubernetes environment.
 func Populate(opts PopulateOpts) (*Env, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid parameters for populate command: %w", err)
 	}
-
-	display.Step("Populating environment %s with %d directories", opts.Name, len(opts.TTLDirs))
 
 	env, err := GetEnv(opts.Name, opts.Context)
 	if err != nil {
 		return nil, fmt.Errorf("error getting environment: %w", err)
 	}
 
-	display.Debug("loaded environment: %s", env.Name)
-
-	port, err := common.FindFreePort()
+	urls, err := env.BuildEnvURLs()
 	if err != nil {
-		return nil, fmt.Errorf("error getting free port: %w", err)
+		return nil, fmt.Errorf("build environment URLs: %w", err)
 	}
 
-	display.Debug("selected local port for port-forward: %d", port)
-
-	// start a port forward locally to the ingestor service and use that to do the populate posts
-	err = ForwardAndRun(opts.Name, "ingestor-service", port, 8080, opts.Context, func(host string, port int) error {
-		display.Step("Starting port-forward to ingestor-service pod")
-		display.Debug("port-forward ready on %s:%d", host, port)
-
-		url := fmt.Sprintf("http://%s:%d/api/ingestor-service/v1/", host, port)
-
-		if opts.PopulateExamples {
-			display.Debug("populating bundled examples through port-forward")
-
-			successfulExamples, err := common.PopulateExample(url, opts.Parallel)
-			if err != nil {
-				return fmt.Errorf("error populating environment with examples through port-forward: %w", err)
-			}
-
-			display.Debug("populated example files: %d", len(successfulExamples))
-		}
-
-		for _, p := range opts.TTLDirs {
-			display.Debug("processing metadata path: %s", p)
-
-			absPath, err := filepath.Abs(p)
-			if err != nil {
-				return fmt.Errorf("error finding absolute path for given metadata path '%s': %w", p, err)
-			}
-
-			display.Debug("populating metadata from absolute path: %s", absPath)
-
-			successfulFiles, err := common.PopulateEnv(absPath, url, opts.Parallel)
-			if err != nil {
-				return fmt.Errorf("error populating environment through port-forward: %w", err)
-			}
-
-			display.Debug("populated metadata files from path %s: %d", absPath, len(successfulFiles))
-		}
-
-		return nil
-	})
+	paths, err := common.PopulateTurtle(opts.TTLDirs, opts.PopulateExamples, opts.BearerToken, env.Components.AAIService.Enabled, env.ManagedAAIToken, urls.APIBaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("error populating environment: %w", err)
+		return nil, err
 	}
 
-	display.Done("Finished populating environment with ttl files from %d directories", len(opts.TTLDirs))
+	display.Done("Imported %d Turtle inputs", len(paths))
 
 	return env, nil
 }
 
+// ManagedAAIToken requests a token from the managed AAI service.
+func (env *Env) ManagedAAIToken() (string, error) {
+	if !env.Components.AAIService.Enabled {
+		return "", fmt.Errorf("managed AAI is not enabled")
+	}
+
+	base := (&url.URL{Scheme: env.Protocol, Host: env.Domain}).String()
+
+	var err error
+	if env.URLPrefixNamespace {
+		base, err = url.JoinPath(base, env.Name)
+		if err != nil {
+			return "", fmt.Errorf("build AAI URL: %w", err)
+		}
+	}
+
+	base, err = url.JoinPath(base, "aai")
+	if err != nil {
+		return "", fmt.Errorf("build AAI URL: %w", err)
+	}
+
+	admin := env.Components.AAIService
+
+	return common.RequestManagedToken(base, admin.Email, admin.Password)
+}
+
 // Validate checks PopulateOpts and verifies paths, context, and environment state.
 func (p *PopulateOpts) Validate() error {
-	display.Debug("name: %s", p.Name)
-	display.Debug("context: %s", p.Context)
-	display.Debug("ttlDirs: %+v", p.TTLDirs)
-	display.Debug("parallel: %d", p.Parallel)
-	display.Debug("populateExamples: %v", p.PopulateExamples)
-
-	if p.Parallel < 1 || p.Parallel > 20 {
-		return fmt.Errorf("parallel uploads must be between 1 and 20")
+	if len(p.TTLDirs) == 0 && !p.PopulateExamples {
+		return fmt.Errorf("at least one Turtle path or examples is required")
 	}
 
 	if p.Context == "" {
@@ -125,10 +98,8 @@ func (p *PopulateOpts) Validate() error {
 			return fmt.Errorf("error stating path %q: %w", item, err)
 		}
 
-		if !info.IsDir() {
-			if filepath.Ext(item) != ".ttl" {
-				return fmt.Errorf("file %s is not a .ttl file", item)
-			}
+		if !info.IsDir() && filepath.Ext(item) != ".ttl" {
+			return fmt.Errorf("file %s is not a .ttl file", item)
 		}
 	}
 

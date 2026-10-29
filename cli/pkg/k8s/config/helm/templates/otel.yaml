@@ -92,6 +92,7 @@ kind: Ingress
 metadata:
   name: otel-lgtm
   annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
     {{- if and .Values.components.otel.tls.enabled .Values.cert_manager_issuer }}
     cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer | quote }}
     {{- end }}
@@ -101,8 +102,8 @@ spec:
     - host: {{ .Values.domain | quote }}
       http:
         paths:
-          - path: {{ $path }}
-            pathType: Prefix
+          - path: {{ $path }}(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: otel-lgtm

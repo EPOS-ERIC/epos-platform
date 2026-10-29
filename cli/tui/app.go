@@ -291,7 +291,7 @@ func (a *App) getFooterHints(contextKey ScreenKey) []string {
 	if !a.detailsPanel.hasDetailRow("Backoffice") {
 		keys = filterBackofficeHints(keys)
 	}
-	if contextKey == DetailsDockerKey && !a.detailsPanel.hasDetailRow("Grafana") {
+	if !a.detailsPanel.hasDetailRow("Grafana") {
 		keys = filterGrafanaHints(keys)
 	}
 	return keys

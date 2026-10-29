@@ -116,7 +116,11 @@ func (e *EnvConfig) BuildEnvURLs() (*common.URLs, error) {
 	if err != nil {
 		return nil, fmt.Errorf("build backoffice URL: %w", err)
 	}
-	urls := &common.URLs{GUIURL: guiURL, APIURL: apiURL, BackofficeURL: &backofficeURL}
+	docsURL, err := buildURL(e.Components.Gateway.Port, "/")
+	if err != nil {
+		return nil, fmt.Errorf("build API docs URL: %w", err)
+	}
+	urls := &common.URLs{GUIURL: guiURL, APIDocsURL: docsURL, APIBaseURL: apiURL, BackofficeURL: &backofficeURL}
 	if e.Components.OpenTelemetry.ManagedCollectorEnabled() {
 		grafanaURL, err := buildURL(e.Components.OpenTelemetry.GrafanaPort, "/")
 		if err != nil {

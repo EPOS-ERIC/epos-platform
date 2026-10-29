@@ -191,17 +191,7 @@ func (dp *DetailsPanel) buildUI() {
 	})
 
 	dp.buttonsFlex = tview.NewFlex().SetDirection(tview.FlexColumn)
-	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
-	dp.buttonsFlex.AddItem(dp.populateButton, 14, 0, true)
-	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
-	dp.buttonsFlex.AddItem(dp.renderButton, 12, 0, false)
-	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
-	dp.buttonsFlex.AddItem(dp.updateButton, 12, 0, false)
-	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
-	dp.buttonsFlex.AddItem(dp.cleanButton, 11, 0, false)
-	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
-	dp.buttonsFlex.AddItem(dp.deleteButton, 12, 0, false)
-	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
+	dp.updateActionButtons()
 
 	dp.detailsList = NewStyledList()
 	dp.detailsList.SetBorder(true)
@@ -277,6 +267,23 @@ func padRight(value string, width int) string {
 	return value + strings.Repeat(" ", padding)
 }
 
+func (dp *DetailsPanel) updateActionButtons() {
+	dp.buttonsFlex.Clear()
+	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
+	dp.buttonsFlex.AddItem(dp.populateButton, 14, 0, true)
+	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
+	dp.buttonsFlex.AddItem(dp.renderButton, 12, 0, false)
+	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
+	dp.buttonsFlex.AddItem(dp.updateButton, 12, 0, false)
+	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
+	if dp.currentDetailsType == string(DockerKey) {
+		dp.buttonsFlex.AddItem(dp.cleanButton, 11, 0, false)
+		dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
+	}
+	dp.buttonsFlex.AddItem(dp.deleteButton, 12, 0, false)
+	dp.buttonsFlex.AddItem(tview.NewBox(), 0, 1, false)
+}
+
 // Update fetches and displays environment details in the panel.
 func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 	dp.cleanupConfigViewSession()
@@ -284,6 +291,7 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 	dp.currentDetailsName = name
 	dp.currentDetailsType = envType
 	dp.currentDetailsContext = context
+	dp.updateActionButtons()
 
 	nameDirGridCount := 2
 	detailsGridCount := 2
@@ -305,7 +313,7 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 				return
 			}
 
-			apiURL := env.GatewayPublicURL() + "/"
+			apiURL := urls.APIDocsURL
 			var backofficeURL string
 			if urls.BackofficeURL != nil {
 				backofficeURL = *urls.BackofficeURL
@@ -326,7 +334,7 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 			guiRow := DetailRow{Label: "GUI", Value: urls.GUIURL, IncludeOpen: true}
 			backofficeRow := DetailRow{Label: "Backoffice", Value: backofficeURL, IncludeOpen: true}
 			if env.Components.AAIService.Enabled {
-				copyPassword := func() { dp.copyDockerPassword(true) }
+				copyPassword := func() { dp.copyPassword(true) }
 				guiRow.ExtraActionLabel, guiRow.ExtraAction = "Copy password", copyPassword
 				backofficeRow.ExtraActionLabel, backofficeRow.ExtraAction = "Copy password", copyPassword
 			}
@@ -337,12 +345,12 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 			apiRow := DetailRow{Label: "API", Value: apiURL, IncludeOpen: true}
 			if env.Components.AAIService.Enabled {
 				apiRow.ExtraActionLabel = "Copy token"
-				apiRow.ExtraAction = dp.copyDockerToken
+				apiRow.ExtraAction = dp.copyToken
 			}
 			rows = append(rows, apiRow)
 			if urls.GrafanaURL != nil {
 				rows = append(rows, DetailRow{Label: "Grafana", Value: *urls.GrafanaURL, IncludeOpen: true, ExtraActionLabel: "Copy password", ExtraAction: func() {
-					dp.copyDockerPassword(false)
+					dp.copyPassword(false)
 				}})
 			}
 			detailsGridCount = len(rows)
@@ -386,13 +394,29 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 			nameDirGridCount = len(nameDirRows)
 			dp.createGridRows(dp.nameDirGrid, nameDirRows, &dp.nameDirButtons, "Basic Information")
 
-			rows := []DetailRow{
-				{Label: "GUI", Value: urls.GUIURL, IncludeOpen: true},
+			guiRow := DetailRow{Label: "GUI", Value: urls.GUIURL, IncludeOpen: true}
+			if env.Components.AAIService.Enabled {
+				guiRow.ExtraActionLabel = "Copy password"
+				guiRow.ExtraAction = func() { dp.copyPassword(true) }
 			}
+			rows := []DetailRow{guiRow}
 			if urls.BackofficeURL != nil {
-				rows = append(rows, DetailRow{Label: "Backoffice", Value: *urls.BackofficeURL, IncludeOpen: true})
+				backofficeRow := DetailRow{Label: "Backoffice", Value: *urls.BackofficeURL, IncludeOpen: true}
+				if env.Components.AAIService.Enabled {
+					backofficeRow.ExtraActionLabel = "Copy password"
+					backofficeRow.ExtraAction = func() { dp.copyPassword(true) }
+				}
+				rows = append(rows, backofficeRow)
 			}
-			rows = append(rows, DetailRow{Label: "API", Value: urls.APIURL, IncludeOpen: true})
+			apiRow := DetailRow{Label: "API", Value: urls.APIDocsURL, IncludeOpen: true}
+			if env.Components.AAIService.Enabled {
+				apiRow.ExtraActionLabel = "Copy token"
+				apiRow.ExtraAction = dp.copyToken
+			}
+			rows = append(rows, apiRow)
+			if urls.GrafanaURL != nil {
+				rows = append(rows, DetailRow{Label: "Grafana", Value: *urls.GrafanaURL, IncludeOpen: true, ExtraActionLabel: "Copy password", ExtraAction: func() { dp.copyPassword(false) }})
+			}
 			detailsGridCount = len(rows)
 			dp.currentDetailsRows = rows
 			dp.createDetailsRows(rows)
@@ -420,15 +444,28 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 	}
 }
 
-func (dp *DetailsPanel) copyDockerPassword(aai bool) {
-	env, err := docker.GetEnv(dp.currentDetailsName)
-	if err != nil {
-		dp.app.ShowError(fmt.Sprintf("Failed to load Docker environment: %v", err))
-		return
-	}
-	password := env.Components.OpenTelemetry.AdminPassword
-	if aai {
-		password = env.Components.AAIService.Password
+func (dp *DetailsPanel) copyPassword(aai bool) {
+	var password string
+	if dp.currentDetailsType == string(K8sKey) {
+		env, err := k8s.GetEnv(dp.currentDetailsName, dp.currentDetailsContext)
+		if err != nil {
+			dp.app.ShowError(fmt.Sprintf("Failed to load Kubernetes environment: %v", err))
+			return
+		}
+		password = env.Components.OpenTelemetry.AdminPassword
+		if aai {
+			password = env.Components.AAIService.Password
+		}
+	} else {
+		env, err := docker.GetEnv(dp.currentDetailsName)
+		if err != nil {
+			dp.app.ShowError(fmt.Sprintf("Failed to load Docker environment: %v", err))
+			return
+		}
+		password = env.Components.OpenTelemetry.AdminPassword
+		if aai {
+			password = env.Components.AAIService.Password
+		}
 	}
 	if password == "" {
 		dp.app.ShowError("No initial password is configured")
@@ -437,17 +474,29 @@ func (dp *DetailsPanel) copyDockerPassword(aai bool) {
 	dp.app.copyToClipboardWithFeedback(password, "Initial password copied to clipboard", "Failed to copy password")
 }
 
-func (dp *DetailsPanel) copyDockerToken() {
+func (dp *DetailsPanel) copyToken() {
 	name := dp.currentDetailsName
+	envType := dp.currentDetailsType
+	context := dp.currentDetailsContext
 	go func() {
-		env, err := docker.GetEnv(name)
-		if err == nil {
-			var token string
-			token, err = env.ManagedAAIToken()
+		var token string
+		var err error
+		if envType == string(K8sKey) {
+			var env *k8s.Env
+			env, err = k8s.GetEnv(name, context)
 			if err == nil {
-				dp.app.copyToClipboardWithFeedback(token, "API token copied to clipboard", "Failed to copy API token")
-				return
+				token, err = env.ManagedAAIToken()
 			}
+		} else {
+			var env *docker.Env
+			env, err = docker.GetEnv(name)
+			if err == nil {
+				token, err = env.ManagedAAIToken()
+			}
+		}
+		if err == nil {
+			dp.app.copyToClipboardWithFeedback(token, "API token copied to clipboard", "Failed to copy API token")
+			return
 		}
 		dp.app.tview.QueueUpdateDraw(func() {
 			dp.app.ShowError(fmt.Sprintf("Failed to generate API token: %v", err))
@@ -578,7 +627,11 @@ func (dp *DetailsPanel) CycleFocus() {
 	case dp.cleanButton:
 		dp.app.tview.SetFocus(dp.deleteButton)
 	case dp.updateButton:
-		dp.app.tview.SetFocus(dp.cleanButton)
+		if dp.currentDetailsType == string(DockerKey) {
+			dp.app.tview.SetFocus(dp.cleanButton)
+		} else {
+			dp.app.tview.SetFocus(dp.deleteButton)
+		}
 	case dp.renderButton:
 		dp.app.tview.SetFocus(dp.updateButton)
 	case dp.populateButton:
@@ -631,7 +684,11 @@ func (dp *DetailsPanel) CycleFocusBackward() {
 			dp.app.tview.SetFocus(dp.deleteButton)
 		}
 	case dp.deleteButton:
-		dp.app.tview.SetFocus(dp.cleanButton)
+		if dp.currentDetailsType == string(DockerKey) {
+			dp.app.tview.SetFocus(dp.cleanButton)
+		} else {
+			dp.app.tview.SetFocus(dp.updateButton)
+		}
 	case dp.cleanButton:
 		dp.app.tview.SetFocus(dp.updateButton)
 	case dp.updateButton:
@@ -692,8 +749,10 @@ func (dp *DetailsPanel) SetupInput() {
 			dp.app.showDeleteConfirm()
 			return nil
 		case event.Rune() == 'c':
-			dp.app.showCleanConfirm()
-			return nil
+			if dp.currentDetailsType == string(DockerKey) {
+				dp.app.showCleanConfirm()
+				return nil
+			}
 		case event.Rune() == 'u':
 			dp.app.showUpdateForm()
 			return nil

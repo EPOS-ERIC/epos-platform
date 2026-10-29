@@ -113,9 +113,14 @@ func (c *Config) BuildEnvURLs() (*common.URLs, error) {
 		return nil, fmt.Errorf("error building API URL: %w", err)
 	}
 
+	apiBaseURL, err := buildURL(c.Components.Gateway.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("error building API base URL: %w", err)
+	}
 	urls := &common.URLs{
-		GUIURL: guiURL,
-		APIURL: strings.TrimRight(apiURL, "/") + "/",
+		GUIURL:     guiURL,
+		APIDocsURL: strings.TrimRight(apiURL, "/") + "/",
+		APIBaseURL: apiBaseURL,
 	}
 
 	if c.Components.Backoffice.Enabled {
@@ -126,6 +131,7 @@ func (c *Config) BuildEnvURLs() (*common.URLs, error) {
 		backofficeURL = strings.TrimRight(backofficeURL, "/") + "/"
 		urls.BackofficeURL = &backofficeURL
 	}
+
 	if c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" {
 		grafanaURL, err := buildURL("/grafana/")
 		if err != nil {
@@ -237,9 +243,8 @@ func (c *Config) Validate() error {
 	if !strings.HasPrefix(c.Components.Gateway.BaseURL, "/") {
 		return fmt.Errorf("gateway base url must start with /")
 	}
-	if !strings.HasSuffix(c.Components.Gateway.BaseURL, "/api/v1") &&
-		!strings.HasSuffix(c.Components.Gateway.BaseURL, "/api/v1/") {
-		return fmt.Errorf("gateway base url must end with /api/v1 or /api/v1/")
+	if strings.TrimRight(c.Components.Gateway.BaseURL, "/") != "/v1" {
+		return fmt.Errorf("gateway base url must be /v1 or /v1/")
 	}
 
 	// AAI validation

@@ -29,32 +29,18 @@ generate:
 fmt:
 	golangci-lint fmt
 
-lint: helm-lint fmt
+lint: fix fmt
+	helm lint ./pkg/k8s/config/helm
 	golangci-lint run ./...
 
-vet:
-	go vet ./...
-	go tool sqlc vet ./...
+fix:
+	go mod tidy
+	go fix ./...
 
 test: vet
 	go test ./...
 
-test-race:
-	go test ./... -race -count=1
-
-test-integration:
-	go test -tags=integration ./...
-
-test-all: test test-race test-integration
-
-debug: generate
-	go build -gcflags "all=-N -l" -o $(BIN) .
-	dlv exec --headless=true --listen=127.0.0.1:2345 --api-version=2 --accept-multiclient ./$(BIN)
-
 run: clean build
 	./$(BIN)
 
-helm-lint:
-	helm lint ./pkg/k8s/config/helm
-
-.PHONY: build build-release install clean generate fmt lint vet test test-race test-integration test-all debug run helm-lint
+.PHONY: build build-release install clean generate fmt lint vet test run

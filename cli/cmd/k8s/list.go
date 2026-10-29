@@ -38,7 +38,7 @@ var ListCmd = &cobra.Command{
 			envs = append(envs, kubeEnvs...)
 		}
 
-		rows := make([][]any, len(envs))
+		rows := make([][]string, len(envs))
 		for i, env := range envs {
 			urls, err := env.BuildEnvURLs()
 			if err != nil {
@@ -51,10 +51,15 @@ var ListCmd = &cobra.Command{
 				backofficeURL = *urls.BackofficeURL
 			}
 
-			rows[i] = []any{env.Name, env.Context, urls.GUIURL, urls.APIURL, backofficeURL}
+			var grafanaURL string
+			if urls.GrafanaURL != nil {
+				grafanaURL = *urls.GrafanaURL
+			}
+
+			rows[i] = []string{env.Name, env.Context, urls.GUIURL, urls.APIDocsURL, backofficeURL, grafanaURL}
 		}
 
-		headers := []string{"Name", "Context", "GUI URL", "API URL", "Backoffice URL"}
+		headers := []string{"Name", "Context", "GUI URL", "API URL", "Backoffice URL", "Grafana URL"}
 		display.InfraList(rows, headers, "Installed K8s environments")
 	},
 }

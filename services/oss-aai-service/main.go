@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -27,9 +28,10 @@ const (
 )
 
 type app struct {
-	store     *localStore
-	templates *template.Template
-	oidc      *oidcSigner
+	store        *localStore
+	templates    *template.Template
+	oidc         *oidcSigner
+	publicPrefix string
 }
 
 type responseWriter struct {
@@ -47,6 +49,7 @@ type viewData struct {
 	User      *userRecord
 	CSRFToken string
 	Continue  string
+	BasePath  string
 }
 
 var version = "dev"
@@ -73,7 +76,11 @@ func main() {
 		log.Fatalf("init OIDC signer: %v", err)
 	}
 
-	a := &app{store: store, templates: tmpl, oidc: oidcSigner}
+	prefix, err := publicPrefixFromIssuer(os.Getenv("OIDC_ISSUER"))
+	if err != nil {
+		log.Fatalf("invalid OIDC_ISSUER: %v", err)
+	}
+	a := &app{store: store, templates: tmpl, oidc: oidcSigner, publicPrefix: prefix}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", a.healthHandler)
 	mux.HandleFunc("/healthz", a.healthHandler)
@@ -138,7 +145,7 @@ func (a *app) homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := a.currentUserFromCookie(r)
 	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		http.Redirect(w, r, a.publicPath("/login"), http.StatusSeeOther)
 		return
 	}
 
@@ -183,7 +190,7 @@ func (a *app) registerHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		http.Redirect(w, r, pathWithContinue("/login", continuePath), http.StatusSeeOther)
+		http.Redirect(w, r, pathWithContinue(a.publicPath("/login"), continuePath), http.StatusSeeOther)
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -231,7 +238,7 @@ func (a *app) loginHandler(w http.ResponseWriter, r *http.Request) {
 			Expires:  session.ExpiresAt,
 		})
 
-		http.Redirect(w, r, defaultContinuePath(continuePath), http.StatusSeeOther)
+		http.Redirect(w, r, a.publicPath(defaultContinuePath(continuePath)), http.StatusSeeOther)
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -262,7 +269,7 @@ func (a *app) logoutHandler(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 	})
 
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.Redirect(w, r, a.publicPath("/login"), http.StatusSeeOther)
 }
 
 func (a *app) oauthTokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -539,7 +546,7 @@ func (a *app) oauthAuthorizationHandler(w http.ResponseWriter, r *http.Request) 
 			a.redirectAuthorizationError(w, r, redirectURI, state, "login_required", "user login is required")
 			return
 		}
-		http.Redirect(w, r, pathWithContinue("/login", r.URL.RequestURI()), http.StatusSeeOther)
+		http.Redirect(w, r, pathWithContinue(a.publicPath("/login"), r.URL.RequestURI()), http.StatusSeeOther)
 		return
 	}
 
@@ -678,6 +685,7 @@ func (a *app) currentUserFromCookie(r *http.Request) (userRecord, error) {
 func (a *app) renderTemplate(w http.ResponseWriter, r *http.Request, name string, data viewData) {
 	token := a.ensureCSRFCookie(w, r)
 	data.CSRFToken = token
+	data.BasePath = a.publicPrefix
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := a.templates.ExecuteTemplate(w, name, data); err != nil {
@@ -786,7 +794,7 @@ func safeContinuePath(raw string) string {
 	}
 
 	parsed, err := url.Parse(raw)
-	if err != nil || parsed.Scheme != "" || parsed.Host != "" {
+	if err != nil || parsed.Scheme != "" || parsed.Host != "" || strings.HasPrefix(parsed.Path, "//") || strings.Contains(parsed.Path, "\\") || path.Clean(parsed.Path) != strings.TrimSuffix(parsed.Path, "/") && parsed.Path != "/" {
 		return ""
 	}
 
@@ -879,6 +887,29 @@ func secureCookiesEnabled(r *http.Request) bool {
 
 func corsAllowedOrigin() string {
 	return strings.TrimSpace(os.Getenv("APP_CORS_ALLOW_ORIGIN"))
+}
+
+func (a *app) publicPath(internalPath string) string {
+	return a.publicPrefix + internalPath
+}
+
+func publicPrefixFromIssuer(issuer string) (string, error) {
+	issuer = strings.TrimSpace(issuer)
+	if issuer == "" {
+		return "", nil
+	}
+	u, err := url.Parse(issuer)
+	if err != nil {
+		return "", err
+	}
+	if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil || u.RawQuery != "" || u.ForceQuery || u.Fragment != "" {
+		return "", fmt.Errorf("must be an absolute HTTP(S) URL without user info, query or fragment")
+	}
+	issuerPath := strings.TrimRight(u.Path, "/")
+	if !strings.HasSuffix(issuerPath, "/oauth2") || path.Clean(issuerPath) != issuerPath || u.EscapedPath() != u.Path || strings.Contains(issuerPath, "\\") {
+		return "", fmt.Errorf("path must end in /oauth2 and contain no encoded or unclean segments")
+	}
+	return strings.TrimSuffix(issuerPath, "/oauth2"), nil
 }
 
 func issuerURL(r *http.Request) string {

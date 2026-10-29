@@ -8,7 +8,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/text"
 )
 
-func InfraList(rows [][]any, headers []string, title string) {
+func InfraList(rows [][]string, headers []string, title string) {
 	if len(rows) == 0 {
 		Info("No installed environments found")
 		return
@@ -22,11 +22,7 @@ func InfraList(rows [][]any, headers []string, title string) {
 				continue
 			}
 
-			if row[col] == nil {
-				continue
-			}
-
-			if strings.TrimSpace(fmt.Sprint(row[col])) != "" {
+			if strings.TrimSpace(row[col]) != "" {
 				emptyInAllRows = false
 				break
 			}
@@ -65,7 +61,11 @@ func InfraList(rows [][]any, headers []string, title string) {
 	}
 	t.AppendHeader(table.Row(headerAny))
 	for _, row := range rows {
-		t.AppendRow(table.Row(row))
+		cells := make(table.Row, len(row))
+		for i, value := range row {
+			cells[i] = value
+		}
+		t.AppendRow(cells)
 	}
 	rowMerge := table.RowConfig{
 		AutoMerge:      true,

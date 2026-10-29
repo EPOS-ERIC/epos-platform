@@ -48,7 +48,7 @@ func (a *App) showHelp() {
 	if (prevContext == DetailsDockerKey || prevContext == DetailsK8sKey) && a.detailsPanel != nil && !a.detailsPanel.hasDetailRow("Backoffice") {
 		groupedHints = filterBackofficeHelpHints(groupedHints)
 	}
-	if prevContext == DetailsDockerKey && a.detailsPanel != nil && !a.detailsPanel.hasDetailRow("Grafana") {
+	if (prevContext == DetailsDockerKey || prevContext == DetailsK8sKey) && a.detailsPanel != nil && !a.detailsPanel.hasDetailRow("Grafana") {
 		groupedHints = filterGrafanaHelpHints(groupedHints)
 	}
 

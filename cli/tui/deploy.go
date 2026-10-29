@@ -188,6 +188,9 @@ func (a *App) showDeployProgress(data *deployFormData, isDocker bool, dockerCfg 
 						return "", uerr
 					}
 					guiURL = urls.GUIURL
+					if urls.GrafanaURL != nil {
+						grafanaURL = *urls.GrafanaURL
+					}
 				}
 			}
 

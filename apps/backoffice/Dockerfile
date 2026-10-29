@@ -12,6 +12,6 @@ USER 101:101
 
 CMD sed -i "s|<base href=\"/\">|<base href=\"$BASE_URL\">|" /usr/share/nginx/html/index.html && \
     find /usr/share/nginx/html -name '*.js' -exec sed -i "s|__AUTH_ROOT_URL__|$AUTH_ROOT_URL|g" {} + && \
-    exec nginx -g 'daemon off;'
+    exec /docker-entrypoint.sh nginx -g 'daemon off;'
 
 EXPOSE 8080

@@ -102,6 +102,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /v1/$2
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     {{- if and .Values.components.gateway.tls.enabled .Values.cert_manager_issuer }}
     cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer | quote }}
     {{- end }}
@@ -112,13 +113,6 @@ spec:
       http:
         paths:
           - path: {{ if .Values.url_prefix_namespace }}/{{ .Release.Namespace }}{{ end }}{{ trimSuffix "/" .Values.components.gateway.base_url }}(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: gateway
-                port:
-                  number: 5000
-          - path: {{ if .Values.url_prefix_namespace }}/{{ .Release.Namespace }}{{ end }}/v1(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
               service:

@@ -48,7 +48,7 @@ var PopulateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		display.URLs(urls.GUIURL, env.GatewayPublicURL()+"/", fmt.Sprintf("epos-cli docker populate %s", name), urls.BackofficeURL, urls.GrafanaURL)
+		display.URLs(urls.GUIURL, urls.APIDocsURL, fmt.Sprintf("epos-cli docker populate %s", name), urls.BackofficeURL, urls.GrafanaURL)
 	},
 }
 

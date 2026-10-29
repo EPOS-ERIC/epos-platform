@@ -64,17 +64,18 @@ type oauthClientRecord struct {
 	CreatedAt            time.Time
 }
 
-type dbState struct {
-	_ int
-}
-
 type localStore struct {
-	mu   sync.RWMutex
-	path string
-	db   *sql.DB
+	mu           sync.RWMutex
+	path         string
+	db           *sql.DB
+	publicClient oauthClientRecord
 }
 
 func newLocalStore(path string) (*localStore, error) {
+	redirectURIs, err := defaultOAuthRedirectURIs()
+	if err != nil {
+		return nil, err
+	}
 	dir := filepath.Dir(path)
 	if err := ensureDir(dir); err != nil {
 		return nil, err
@@ -85,7 +86,11 @@ func newLocalStore(path string) (*localStore, error) {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}
 
-	store := &localStore{path: path, db: db}
+	store := &localStore{path: path, db: db, publicClient: oauthClientRecord{
+		ClientID: "eposICS", IsPublic: true, RedirectURIs: redirectURIs,
+		AllowedScopes:        []string{"openid", "profile", "email", "single-logout"},
+		AllowedResponseTypes: []string{"id_token token"},
+	}}
 	if err := store.loadOrInit(); err != nil {
 		_ = db.Close()
 		return nil, err
@@ -278,10 +283,6 @@ func (s *localStore) loadOrInit() error {
 		return fmt.Errorf("create app_meta table: %w", err)
 	}
 
-	if err := s.seedOAuthClients(); err != nil {
-		return fmt.Errorf("seed oauth clients: %w", err)
-	}
-
 	if err := s.seedInitialAdminUser(); err != nil {
 		return fmt.Errorf("seed initial admin user: %w", err)
 	}
@@ -338,69 +339,6 @@ func (s *localStore) ensureTableColumn(table, name, definition string) error {
 	}
 
 	_, err = s.db.Exec(fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s", table, definition))
-	return err
-}
-
-func (s *localStore) seedOAuthClients() error {
-	redirectURIs, err := defaultOAuthRedirectURIs()
-	if err != nil {
-		return err
-	}
-
-	if err := s.seedOAuthClient(oauthClientRecord{
-		ClientID: "eposICS",
-		IsPublic: true,
-		// TODO: Reconcile configured redirects when an existing environment changes URLs.
-		RedirectURIs:         redirectURIs,
-		AllowedScopes:        []string{"openid", "profile", "email", "single-logout"},
-		AllowedResponseTypes: []string{"id_token token"},
-		CreatedAt:            time.Now().UTC(),
-	}); err != nil {
-		return err
-	}
-
-	_, err = s.db.Exec(`
-		UPDATE oauth_clients
-		SET redirect_uris_json = json_insert(
-			CASE WHEN EXISTS (SELECT 1 FROM json_each(redirect_uris_json) WHERE value = ?)
-				THEN redirect_uris_json ELSE json_insert(redirect_uris_json, '$[#]', ?) END,
-			CASE WHEN EXISTS (SELECT 1 FROM json_each(redirect_uris_json) WHERE value = ?)
-				THEN '$' ELSE '$[#]' END, ?
-		)
-		WHERE client_id = 'eposICS'
-	`, legacyTiltRedirectURI, legacyTiltRedirectURI, legacyTiltSilentRefreshURI, legacyTiltSilentRefreshURI)
-	if err != nil {
-		return fmt.Errorf("update legacy redirect URIs: %w", err)
-	}
-	return nil
-}
-
-func (s *localStore) seedOAuthClient(client oauthClientRecord) error {
-	redirectURIsJSON, err := marshalStringList(client.RedirectURIs)
-	if err != nil {
-		return err
-	}
-	scopesJSON, err := marshalStringList(client.AllowedScopes)
-	if err != nil {
-		return err
-	}
-	responseTypesJSON, err := marshalStringList(client.AllowedResponseTypes)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.db.Exec(`
-		INSERT OR IGNORE INTO oauth_clients(
-			client_id,
-			client_secret_hash,
-			is_public,
-			redirect_uris_json,
-			allowed_scopes_json,
-			allowed_response_types_json,
-			created_at
-		)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
-	`, client.ClientID, client.ClientSecretHash, boolToInt(client.IsPublic), redirectURIsJSON, scopesJSON, responseTypesJSON, client.CreatedAt.Unix())
 	return err
 }
 
@@ -473,6 +411,9 @@ func (s *localStore) getOAuthClient(clientID string) (oauthClientRecord, bool) {
 }
 
 func (s *localStore) getOAuthClientLocked(clientID string) (oauthClientRecord, bool) {
+	if strings.TrimSpace(clientID) == s.publicClient.ClientID {
+		return s.publicClient, true
+	}
 	row := s.db.QueryRow(`
 		SELECT client_id, client_secret_hash, is_public, redirect_uris_json, allowed_scopes_json, allowed_response_types_json, created_at
 		FROM oauth_clients
@@ -546,55 +487,25 @@ func newToken() string {
 	return base64.RawURLEncoding.EncodeToString(b)
 }
 
-const (
-	legacyTiltRedirectURI      = "http://localhost:32000/testpath/last-page-redirect"
-	legacyTiltSilentRefreshURI = "http://localhost:32000/testpath/silent-token-refresh.html"
-)
-
-func defaultBackofficeRedirectURIs() []string {
-	return []string{
-		"http://localhost:34000/last-page-redirect",
-		"http://localhost:34000/silent-token-refresh.html",
-		"http://localhost:4200/testpath/last-page-redirect",
-		"http://localhost:4200/testpath/silent-token-refresh.html",
-		legacyTiltRedirectURI,
-		legacyTiltSilentRefreshURI,
-		"http://localhost:32000/last-page-redirect",
-		"http://localhost:32000/silent-token-refresh.html",
-	}
-}
-
 func defaultOAuthRedirectURIs() ([]string, error) {
-	redirectURIs := defaultBackofficeRedirectURIs()
-	for _, envName := range []string{"PLATFORM_URL", "BACKOFFICE_URL"} {
-		baseURL := strings.TrimSpace(os.Getenv(envName))
-		if baseURL == "" {
-			continue
-		}
+	var redirectURIs []string
+	configured := strings.TrimSpace(os.Getenv("OAUTH_GUI_URLS"))
+	if configured == "" {
+		return redirectURIs, nil
+	}
+	for item := range strings.SplitSeq(configured, ",") {
+		baseURL := strings.TrimSpace(item)
 		parsed, err := url.Parse(baseURL)
 		if err != nil {
-			return nil, fmt.Errorf("invalid %s: %w", envName, err)
+			return nil, fmt.Errorf("invalid OAUTH_GUI_URLS: %w", err)
 		}
 		if (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
-			return nil, fmt.Errorf("invalid %s: must be an absolute http(s) URL without user info, query or fragment", envName)
+			return nil, fmt.Errorf("invalid OAUTH_GUI_URLS: entries must be absolute http(s) URLs without user info, query or fragment")
 		}
 		baseURL = strings.TrimRight(baseURL, "/")
 		redirectURIs = append(redirectURIs, baseURL+"/last-page-redirect", baseURL+"/silent-token-refresh.html")
 	}
 	return redirectURIs, nil
-}
-
-func marshalStringList(values []string) (string, error) {
-	if len(values) == 0 {
-		return "[]", nil
-	}
-
-	encoded, err := json.Marshal(values)
-	if err != nil {
-		return "", err
-	}
-
-	return string(encoded), nil
 }
 
 func unmarshalStringList(value string) []string {
@@ -608,11 +519,4 @@ func unmarshalStringList(value string) []string {
 	}
 
 	return values
-}
-
-func boolToInt(value bool) int {
-	if value {
-		return 1
-	}
-	return 0
 }

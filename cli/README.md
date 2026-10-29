@@ -144,7 +144,6 @@ epos-cli docker populate my-test /path/to/my/data
 | :--------- | :---------------------------------------------------------------- |
 | `deploy`   | Create and deploy a new K8s environment in a dedicated namespace. |
 | `populate` | Ingest TTL files from directories or files into an environment.   |
-| `clean`    | Clean the data of an environment.                                 |
 | `delete`   | Remove K8s environments and all their namespaces.                 |
 | `export`   | Export default K8s config (`k8s-config.yaml`) to a directory.     |
 | `get`      | Get the currently applied K8s environment configuration.          |
