@@ -1,0 +1,71 @@
+# Public host and protocol. HTTPS requires an external reverse proxy.
+domain: "localhost"
+protocol: "http"
+
+components:
+  platform_ui:
+    base_url: "/"
+    port: 32000
+  gateway:
+    port: 33000
+    base_url: "/v1"
+    aai:
+      enabled: true
+      # Public provider URL and optional gateway-reachable override.
+      # Leave both empty for managed AAI; disable aai_service when using external endpoints.
+      service_endpoint: ""
+      gateway_endpoint: ""
+  backoffice:
+    gui:
+      base_url: "/"
+      port: 34000
+  aai_service:
+    enabled: true
+    port: 35000
+    name: "EPOS"
+    surname: "User"
+    email: "epos@epos.eu"
+    password: ""
+  # Set enabled to false and provide host, port and credentials for an external database.
+  # External database connections are unencrypted (sslmode=disable).
+  metadata_database:
+    enabled: true
+    host: "metadata-db"
+    port: 5432
+    user: "metadata-lifecycle"
+    password: ""
+    db_name: "metadata-lifecycle"
+  data_retriever_database:
+    enabled: true
+    host: "retriever-db"
+    port: 5432
+    user: "data_retriever"
+    password: ""
+    db_name: "data_retriever"
+  sharing_database:
+    enabled: true
+    host: "sharing-db"
+    port: 5432
+    user: "sharing"
+    password: ""
+    db_name: "sharing"
+  # Set enabled to export telemetry. Empty endpoint uses managed LGTM; set a container-reachable OTLP/HTTP endpoint for external collectors.
+  otel:
+    enabled: false
+    endpoint: ""
+    grafana_port: 36000
+    admin_user: "admin"
+    admin_password: ""
+
+images:
+  platform_ui: "ghcr.io/epos-eric/epos-platform/platform-legacy:main"
+  backoffice_ui: "ghcr.io/epos-eric/epos-platform/backoffice:main"
+  gateway: "ghcr.io/epos-eric/epos-platform/gateway:main"
+  metadata_lifecycle: "ghcr.io/epos-eric/epos-platform/metadata-lifecycle:main"
+  data_retriever: "ghcr.io/epos-eric/epos-platform/data-retriever:main"
+  sharing_service: "ghcr.io/epos-eric/epos-platform/sharing:main"
+  aai_service: "ghcr.io/epos-eric/epos-platform/oss-aai-service:main"
+  metadata_database: "postgis/postgis:18-3.6-alpine"
+  data_retriever_database: "postgres:18-alpine"
+  sharing_database: "postgres:18-alpine"
+  otel_lgtm: "grafana/otel-lgtm:latest"

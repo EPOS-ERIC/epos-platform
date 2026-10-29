@@ -91,7 +91,7 @@ export type ResourceVersionResponse<T extends DiscoveryResourceType> = Omit<Reso
 export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
-  private readonly baseUrl = '/api/v1';
+  private readonly baseUrl = 'api/v1';
   private get bearerToken(): string {
     return this.authService.accessToken;
   }

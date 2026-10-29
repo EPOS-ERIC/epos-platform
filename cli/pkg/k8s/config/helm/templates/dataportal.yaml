@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dataportal
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dataportal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "epos.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: dataportal
+  template:
+    metadata:
+      labels:
+        {{- include "epos.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: dataportal
+    spec:
+      {{- include "epos.image_pull_secrets" . | nindent 6 }}
+      containers:
+        - name: dataportal
+          image: {{ .Values.images.platform_ui | quote }}
+          imagePullPolicy: {{ .Values.image_pull_policy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: BASE_URL
+              value: {{ include "epos.platformBasePath" . | quote }}
+            - name: API_HOST
+              value: "http://gateway:5000/"
+            - name: AUTH_ROOT_URL
+              value: {{ include "epos.aaiAuthRootURL" . | quote }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dataportal
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dataportal
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    {{- include "epos.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: dataportal
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dataportal
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    {{- if and .Values.components.platform_ui.tls.enabled .Values.cert_manager_issuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer | quote }}
+    {{- end }}
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: {{ .Values.domain | quote }}
+      http:
+        paths:
+          - path: {{ if eq (include "epos.platformBasePath" .) "/" }}/(|/)(.*){{ else }}{{ trimSuffix "/" (include "epos.platformBasePath" .) }}(/|$)(.*){{ end }}
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: dataportal
+                port:
+                  number: 8080
+  {{- if .Values.components.platform_ui.tls.enabled }}
+  tls:
+    - hosts: [{{ .Values.domain | quote }}]
+      secretName: {{ .Values.components.platform_ui.tls.secret_name | quote }}
+  {{- end }}

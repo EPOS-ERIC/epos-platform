@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,7 +15,15 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/server"
 )
 
+var version = "dev"
+
 func main() {
+	showVersion := flag.Bool("version", false, "print version and exit")
+	flag.Parse()
+	if *showVersion {
+		fmt.Printf("metadata-lifecycle version %s\n", version)
+		return
+	}
 	log := logging.New("metadata-lifecycle").With("service", "metadata-lifecycle")
 
 	cfg, err := config.Load()

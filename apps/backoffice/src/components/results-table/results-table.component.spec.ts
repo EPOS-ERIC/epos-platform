@@ -172,8 +172,8 @@ describe('ResultsTableComponent', () => {
     fixture.componentRef.setInput('discoveryItems', [item]);
     fixture.detectChanges();
 
-    expect((fixture.nativeElement.querySelector('.group-summary-logo') as HTMLImageElement).getAttribute('src')).toBe(`/group-icons/${groupId}.png`);
-    expect((fixture.nativeElement.querySelector('.group-cell-logo') as HTMLImageElement).getAttribute('src')).toBe(`/group-icons/${groupId}.png`);
+    expect((fixture.nativeElement.querySelector('.group-summary-logo') as HTMLImageElement).getAttribute('src')).toBe(`group-icons/${groupId}.png`);
+    expect((fixture.nativeElement.querySelector('.group-cell-logo') as HTMLImageElement).getAttribute('src')).toBe(`group-icons/${groupId}.png`);
   });
 
   it('renders all-group results and links each item to its canonical section', async () => {

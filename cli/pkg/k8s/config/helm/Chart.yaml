@@ -1,0 +1,8 @@
+apiVersion: v2
+name: epos
+description: EPOS Platform Helm Chart
+version: 0.0.0
+appVersion: "0.0.0"
+type: application
+annotations:
+  managed-by: "epos-cli"

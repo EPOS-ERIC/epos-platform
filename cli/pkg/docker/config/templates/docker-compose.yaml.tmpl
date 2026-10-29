@@ -1,0 +1,264 @@
+services:
+  gateway:
+    image: ${GATEWAY_IMAGE}
+    platform: linux/amd64
+    ports:
+      - "${GATEWAY_PORT}:5000"
+    environment:
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: gateway
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
+    configs:
+      - source: gateway_config
+        target: /etc/gateway/config.yaml
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  metadata-lifecycle:
+    image: ${METADATA_LIFECYCLE_IMAGE}
+    platform: linux/amd64
+    environment:
+      SERVER_PORT: "5000"
+      GATEWAY_PUBLIC_URL: ${GATEWAY_PUBLIC_URL}
+      DB_HOST: ${METADATA_DB_HOST}
+      DB_PORT: ${METADATA_DB_PORT}
+      DB_NAME: ${METADATA_DB_NAME}
+      DB_USER: ${METADATA_DB_USER}
+      DB_PASSWORD: ${METADATA_DB_PASSWORD:?metadata database password is required}
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: metadata-lifecycle
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
+{{- if .Components.MetadataDatabase.Enabled }}
+    depends_on:
+      metadata-db:
+        condition: service_healthy
+{{- end }}
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 5000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  data-retriever:
+    image: ${DATA_RETRIEVER_IMAGE}
+    platform: linux/amd64
+    environment:
+      GRPC_LISTEN_ADDR: ":8100"
+      DB_HOST: ${RETRIEVER_DB_HOST}
+      DB_PORT: ${RETRIEVER_DB_PORT}
+      DB_NAME: ${RETRIEVER_DB_NAME}
+      DB_USER: ${RETRIEVER_DB_USER}
+      DB_PASSWORD: ${RETRIEVER_DB_PASSWORD:?retriever database password is required}
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: data-retriever
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
+{{- if .Components.DataRetrieverDatabase.Enabled }}
+    depends_on:
+      retriever-db:
+        condition: service_healthy
+{{- end }}
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8100 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  sharing:
+    image: ${SHARING_IMAGE}
+    platform: linux/amd64
+    environment:
+      SERVER_PORT: "8200"
+      DB_HOST: ${SHARING_DB_HOST}
+      DB_PORT: ${SHARING_DB_PORT}
+      DB_NAME: ${SHARING_DB_NAME}
+      DB_USER: ${SHARING_DB_USER}
+      DB_PASSWORD: ${SHARING_DB_PASSWORD:?sharing database password is required}
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: sharing
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
+{{- if .Components.SharingDatabase.Enabled }}
+    depends_on:
+      sharing-db:
+        condition: service_healthy
+{{- end }}
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+{{- if .Components.OpenTelemetry.ManagedCollectorEnabled }}
+  otel-lgtm:
+    image: ${OTEL_LGTM_IMAGE}
+    platform: linux/amd64
+    ports: ["${OTEL_GRAFANA_PORT}:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: "${OTEL_ADMIN_USER}"
+      GF_SECURITY_ADMIN_PASSWORD: "${OTEL_ADMIN_PASSWORD:?Grafana admin password is required}"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes: ["otel-lgtm:/data"]
+    networks: [epos]
+    restart: unless-stopped
+{{- end }}
+
+{{- if .Components.MetadataDatabase.Enabled }}
+  metadata-db:
+    image: ${METADATA_DB_IMAGE}
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${METADATA_DB_NAME}
+      POSTGRES_USER: ${METADATA_DB_USER}
+      POSTGRES_PASSWORD: ${METADATA_DB_PASSWORD}
+    volumes: ["metadata-db:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [epos]
+    restart: unless-stopped
+{{- end }}
+{{- if .Components.DataRetrieverDatabase.Enabled }}
+  retriever-db:
+    image: ${RETRIEVER_DB_IMAGE}
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${RETRIEVER_DB_NAME}
+      POSTGRES_USER: ${RETRIEVER_DB_USER}
+      POSTGRES_PASSWORD: ${RETRIEVER_DB_PASSWORD}
+    volumes: ["retriever-db:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [epos]
+    restart: unless-stopped
+{{- end }}
+{{- if .Components.SharingDatabase.Enabled }}
+  sharing-db:
+    image: ${SHARING_DB_IMAGE}
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${SHARING_DB_NAME}
+      POSTGRES_USER: ${SHARING_DB_USER}
+      POSTGRES_PASSWORD: ${SHARING_DB_PASSWORD}
+    volumes: ["sharing-db:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [epos]
+    restart: unless-stopped
+{{- end }}
+{{- if .Components.AAIService.Enabled }}
+  aai-service:
+    image: ${AAI_SERVICE_IMAGE}
+    platform: linux/amd64
+    ports: ["${AAI_SERVICE_PORT}:8080"]
+    environment:
+      APP_SECURE_COOKIES: ${SECURE_COOKIES}
+      APP_CORS_ALLOW_ORIGIN: "*"
+      INITIAL_ADMIN_NAME: ${ADMIN_NAME}
+      INITIAL_ADMIN_SURNAME: ${ADMIN_SURNAME}
+      INITIAL_ADMIN_EMAIL: ${ADMIN_EMAIL}
+      INITIAL_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?AAI admin password is required}
+      OIDC_ISSUER: ${OIDC_ISSUER}
+      OAUTH_GUI_URLS: ${OAUTH_GUI_URLS}
+    volumes: ["aai:/app/data"]
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+{{- end }}
+
+  platform:
+    image: ${PLATFORM_UI_IMAGE}
+    platform: linux/amd64
+    ports: ["${PLATFORM_UI_PORT}:8080"]
+    environment:
+      BASE_URL: ${PLATFORM_UI_PATH}
+      API_HOST: http://gateway:5000/
+      AUTH_ROOT_URL: ${AUTH_ROOT_URL}
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  backoffice:
+    image: ${BACKOFFICE_UI_IMAGE}
+    platform: linux/amd64
+    ports: ["${BACKOFFICE_PORT}:8080"]
+    environment:
+      API_HOST: http://gateway:5000
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+configs:
+  gateway_config:
+    content: |
+      server:
+        listen: ":5000"
+        cors_allow_origin: "*"
+        request_timeout: "60s"
+        read_timeout: "15s"
+        write_timeout: "30s"
+        idle_timeout: "60s"
+      services:
+        metadata-lifecycle:
+          url: "metadata-lifecycle:5000"
+        data-retriever:
+          url: "data-retriever:8100"
+        sharing:
+          url: "sharing:8200"
+        auth:
+          url: "${GATEWAY_AUTH_URL}"
+
+volumes:
+  metadata-db:
+  retriever-db:
+  sharing-db:
+  aai:
+  otel-lgtm:
+
+networks:
+  epos:
+    driver: bridge

@@ -192,6 +192,7 @@ services:
       - OSS_AAI_LISTEN_ADDR=:8080
       - APP_CORS_ALLOW_ORIGIN=*
       - OIDC_ISSUER=http://localhost:35000/oauth2
+      - OAUTH_GUI_URLS=http://localhost:32000/,http://localhost:32000/testpath/,http://localhost:34000/,http://localhost:4200/testpath/
     volumes:
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/home/appuser/.cache/go-build

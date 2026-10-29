@@ -129,6 +129,51 @@ func TestOAuthAuthorizationHandlerRedirectsToLoginWhenSessionMissing(t *testing.
 	if got := parsed.Query().Get("continue"); got != req.URL.RequestURI() {
 		t.Fatalf("unexpected continue query: %q", got)
 	}
+
+	t.Setenv("OAUTH_GUI_URLS", "http://localhost/backoffice/")
+	reopened, err := newLocalStore(a.store.path)
+	if err != nil {
+		t.Fatalf("reopen store: %v", err)
+	}
+	t.Cleanup(func() { _ = reopened.db.Close() })
+	client, ok := reopened.getOAuthClient("eposICS")
+	if !ok || !containsString(client.RedirectURIs, "http://localhost/backoffice/last-page-redirect") || containsString(client.RedirectURIs, "http://localhost:34000/last-page-redirect") {
+		t.Fatalf("unexpected redirects after configuration change: %v", client.RedirectURIs)
+	}
+
+	prefix, err := publicPrefixFromIssuer("http://localhost/test/aai/oauth2")
+	if err != nil || prefix != "/test/aai" {
+		t.Fatalf("unexpected public prefix %q: %v", prefix, err)
+	}
+	a.publicPrefix = prefix
+	rr = httptest.NewRecorder()
+	a.oauthAuthorizationHandler(rr, req)
+	loginURL, err := url.Parse(rr.Header().Get("Location"))
+	if err != nil || loginURL.Path != "/test/aai/login" || loginURL.Query().Get("continue") != req.URL.RequestURI() {
+		t.Fatalf("unexpected prefixed login redirect: %q, %v", rr.Header().Get("Location"), err)
+	}
+	loginReq := httptest.NewRequest(http.MethodGet, "http://localhost/login?"+loginURL.RawQuery, nil)
+	loginResp := httptest.NewRecorder()
+	a.loginHandler(loginResp, loginReq)
+	if !strings.Contains(loginResp.Body.String(), `action="/test/aai/login"`) || !strings.Contains(loginResp.Body.String(), `href="/test/aai/register?`) {
+		t.Fatal("login form and registration link must use public prefix")
+	}
+	if got := a.publicPath(defaultContinuePath(loginURL.Query().Get("continue"))); got != "/test/aai"+req.URL.RequestURI() {
+		t.Fatalf("unexpected prefixed continuation: %q", got)
+	}
+	csrf := loginResp.Result().Cookies()[0]
+	form := url.Values{"email": {defaultInitialAdminEmail}, "password": {defaultInitialAdminPassword}, "csrf_token": {csrf.Value}, "continue": {loginURL.Query().Get("continue")}}
+	postReq := httptest.NewRequest(http.MethodPost, "http://localhost/login", strings.NewReader(form.Encode()))
+	postReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	postReq.AddCookie(csrf)
+	postResp := httptest.NewRecorder()
+	a.loginHandler(postResp, postReq)
+	if postResp.Code != http.StatusSeeOther || postResp.Header().Get("Location") != "/test/aai"+req.URL.RequestURI() {
+		t.Fatalf("unexpected login response: %d %q", postResp.Code, postResp.Header().Get("Location"))
+	}
+	if safeContinuePath("/%2fexample.com") != "" || safeContinuePath("/../outside") != "" {
+		t.Fatal("unsafe continuation accepted")
+	}
 }
 
 func TestOAuthAuthorizationHandlerIssuesImplicitTokensForLoggedInUser(t *testing.T) {
@@ -266,6 +311,7 @@ func TestOAuthRevokeHandlerAcceptsPublicClientBearerRevoke(t *testing.T) {
 }
 
 func TestNewLocalStoreSeedsInitialAdminUserFromEnvironment(t *testing.T) {
+	t.Setenv("OAUTH_GUI_URLS", "http://localhost:34000/")
 	t.Setenv("INITIAL_ADMIN_NAME", "Platform")
 	t.Setenv("INITIAL_ADMIN_SURNAME", "Owner")
 	t.Setenv("INITIAL_ADMIN_EMAIL", "root@example.org")
@@ -299,6 +345,7 @@ func TestNewLocalStoreSeedsInitialAdminUserFromEnvironment(t *testing.T) {
 
 func newTestApp(t *testing.T) *app {
 	t.Helper()
+	t.Setenv("OAUTH_GUI_URLS", "http://localhost:34000/")
 
 	store, err := newLocalStore(filepath.Join(t.TempDir(), "auth.db"))
 	if err != nil {

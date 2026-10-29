@@ -3,6 +3,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
@@ -12,13 +13,20 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server"
 )
 
+var version = "dev"
+
 func main() {
+	showVersion := flag.Bool("version", false, "print version and exit")
+	cfgPath := flag.String("config", "/etc/gateway/config.yaml", "path to config file")
+	flag.Parse()
+	if *showVersion {
+		fmt.Printf("gateway version %s\n", version)
+		return
+	}
+
 	log := logging.New("gateway").With("service", "gateway")
 
 	log.Info("gateway service started")
-
-	cfgPath := flag.String("config", "/etc/gateway/config.yaml", "path to config file")
-	flag.Parse()
 
 	cfg, err := config.Load(*cfgPath)
 	if err != nil {

@@ -1,0 +1,155 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+data:
+  config.yaml: |
+    server:
+      listen: ":5000"
+      cors_allow_origin: "*"
+      request_timeout: "60s"
+      read_timeout: "15s"
+      write_timeout: "30s"
+      idle_timeout: "60s"
+    services:
+      metadata-lifecycle:
+        url: "metadata-lifecycle:5000"
+      data-retriever:
+        url: "data-retriever:8100"
+      sharing:
+        url: "sharing:8200"
+      auth:
+        url: {{ include "epos.gatewayAAIServiceEndpoint" . | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "epos.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: gateway
+  template:
+    metadata:
+      labels:
+        {{- include "epos.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: gateway
+      annotations:
+        checksum/aai: {{ .Values.components.gateway.aai | toYaml | sha256sum }}
+    spec:
+      {{- include "epos.image_pull_secrets" . | nindent 6 }}
+      containers:
+        - name: gateway
+          image: {{ .Values.images.gateway | quote }}
+          imagePullPolicy: {{ .Values.image_pull_policy }}
+          ports:
+            - containerPort: 5000
+          env:
+            - name: OTEL_SDK_DISABLED
+              value: {{ not .Values.components.otel.enabled | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: gateway
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ if .Values.components.otel.enabled }}{{ default "http://otel-lgtm:4318" .Values.components.otel.endpoint | quote }}{{ else }}""{{ end }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "http/protobuf"
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "5000"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/gateway/config.yaml
+              subPath: config.yaml
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: gateway
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  ports:
+    - port: 5000
+      targetPort: 5000
+  selector:
+    {{- include "epos.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /v1/$2
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    {{- if and .Values.components.gateway.tls.enabled .Values.cert_manager_issuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer | quote }}
+    {{- end }}
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: {{ .Values.domain | quote }}
+      http:
+        paths:
+          - path: {{ if .Values.url_prefix_namespace }}/{{ .Release.Namespace }}{{ end }}{{ trimSuffix "/" .Values.components.gateway.base_url }}(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 5000
+  {{- if .Values.components.gateway.tls.enabled }}
+  tls:
+    - hosts: [{{ .Values.domain | quote }}]
+      secretName: {{ .Values.components.gateway.tls.secret_name | quote }}
+  {{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-docs
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1$2
+    {{- if and .Values.components.gateway.tls.enabled .Values.cert_manager_issuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer | quote }}
+    {{- end }}
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: {{ .Values.domain | quote }}
+      http:
+        paths:
+          - path: {{ if .Values.url_prefix_namespace }}/{{ .Release.Namespace }}{{ end }}/(scalar|swagger|openapi.yaml)(/.*|$)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 5000
+  {{- if .Values.components.gateway.tls.enabled }}
+  tls:
+    - hosts: [{{ .Values.domain | quote }}]
+      secretName: {{ .Values.components.gateway.tls.secret_name | quote }}
+  {{- end }}

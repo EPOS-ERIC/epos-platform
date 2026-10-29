@@ -1,0 +1,927 @@
+package tui
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/EPOS-ERIC/epos-platform/cli/command"
+	"github.com/EPOS-ERIC/epos-platform/cli/common"
+	"github.com/EPOS-ERIC/epos-platform/cli/config"
+	"github.com/EPOS-ERIC/epos-platform/cli/display"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
+)
+
+const homePageName = "home"
+
+// App manages the global TUI state, coordinator for components and navigation.
+type App struct {
+	tview  *tview.Application
+	pages  *tview.Pages
+	frame  *tview.Frame
+	config config.Config
+
+	envList      *EnvList
+	detailsPanel *DetailsPanel
+	homeFlex     *tview.Flex
+	focusStack   []tview.Primitive
+
+	refreshTicker    *time.Ticker
+	dockerRefreshMu  sync.Mutex
+	dockerRefreshing bool
+	k8sRefreshMu     sync.Mutex
+	k8sRefreshing    bool
+
+	currentFooterSection string
+	currentFooterKeys    []string
+	currentContext       ScreenKey
+	currentPage          string
+	terminalTooSmall     bool
+	footerMutex          sync.Mutex
+
+	outputWriter *OutputWriter
+}
+
+// ResetOptions configures the return to home screen.
+type ResetOptions struct {
+	PageNames     []string // Pages to remove
+	ClearDetails  bool     // Clear details panel (e.g., after delete)
+	RefreshFiles  bool     // Refresh files list (e.g., after populate)
+	RestoreFocus  bool     // Restore focus from stack
+	ForceEnvFocus bool     // Explicitly focus environment list
+}
+
+// ConfirmationOptions defines settings for the standardized confirmation modal.
+type ConfirmationOptions struct {
+	PageName           string
+	Title              string
+	Message            string
+	ConfirmLabel       string
+	CancelLabel        string
+	OnConfirm          func()
+	OnCancel           func()
+	Destructive        bool // Use Red border
+	ConfirmDestructive bool // Use Red confirm button
+	Secondary          bool // Use Yellow border (ignored if Destructive)
+	InputCapture       func(leftBtn, rightBtn *tview.Button) func(*tcell.EventKey) *tcell.EventKey
+}
+
+// TaskOptions defines settings for background operations with progress UI.
+type TaskOptions struct {
+	Operation    string
+	EnvName      string
+	IsDocker     bool
+	Task         func() (string, error) // Returns success message or error
+	OnSuccess    func()
+	ClearDetails bool
+}
+
+// FormField represents a field in a modal form.
+type FormField struct {
+	Type                string // "input", "checkbox", "dropdown"
+	Label               string
+	Value               string
+	Options             []string          // For dropdowns
+	InputChangedFunc    func(string)      // For inputs
+	CheckboxChangedFunc func(bool)        // For checkboxes
+	SelectedFunc        func(string, int) // For dropdowns
+}
+
+// FormButton represents a button in a modal form.
+type FormButton struct {
+	Label        string
+	SelectedFunc func()
+}
+
+// ModalFormOptions defines settings for modal forms.
+type ModalFormOptions struct {
+	PageName     string
+	Title        string
+	Fields       []FormField
+	Buttons      []FormButton
+	BottomButton *FormButton // Optional button rendered between form fields and action buttons
+	Width        int
+	Height       int
+	OnCancel     func()
+}
+
+// Run starts the TUI application.
+func Run(debug bool) error {
+	app := &App{}
+	app.init(debug)
+	return app.run()
+}
+
+func (a *App) init(debug bool) {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Printf("config error: %v, using defaults", err)
+		cfg = config.DefaultConfig()
+	}
+	a.config = cfg
+
+	a.tview = tview.NewApplication()
+	a.tview.EnableMouse(true)
+	a.tview.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if a.terminalTooSmall {
+			if event.Rune() == 'q' {
+				a.Quit()
+				return nil
+			}
+			if event.Key() == tcell.KeyCtrlC {
+				return event
+			}
+
+			return nil
+		}
+
+		// Don't handle global keys when focused on input components
+		if current := a.tview.GetFocus(); current != nil {
+			switch current.(type) {
+			case *tview.InputField, *tview.DropDown, *tview.Form:
+				return event
+			}
+		}
+
+		switch event.Rune() {
+		case 'q':
+			a.Quit()
+			return nil
+		case '?':
+			if (a.currentPage == homePageName || a.currentPage == "file-picker") && a.currentContext != "help" {
+				a.showHelp()
+			}
+			return nil
+		}
+		return event
+	})
+	a.pages = tview.NewPages()
+	a.outputWriter = &OutputWriter{}
+
+	InitStyles()
+
+	a.pages.SetBackgroundColor(tcell.ColorDefault)
+
+	// Redirect command output to TUI
+	display.Stdout = a.outputWriter
+	display.Stderr = a.outputWriter
+	command.Stdout = a.outputWriter
+
+	// Keep Kubernetes library logs from writing directly into the terminal while the TUI is active.
+	if debug {
+		rest.SetDefaultWarningHandler(rest.NewWarningWriter(log.Writer(), rest.WarningWriterOptions{Color: false}))
+		klog.LogToStderr(false)
+		klog.SetOutput(log.Writer())
+	} else {
+		rest.SetDefaultWarningHandler(rest.NewWarningWriter(io.Discard, rest.WarningWriterOptions{Color: false}))
+		klog.LogToStderr(false)
+		klog.SetOutput(io.Discard)
+	}
+
+	a.envList = NewEnvList(a)
+	a.detailsPanel = NewDetailsPanel(a)
+
+	home := a.createHome()
+	a.pages.AddPage(homePageName, home, true, true)
+	a.pages.SetBackgroundColor(DefaultTheme.Background)
+	a.currentPage = homePageName
+
+	a.frame = tview.NewFrame(a.pages).SetBorders(0, 0, 0, 0, 0, 0)
+	a.frame.SetBackgroundColor(DefaultTheme.Primary)
+
+	a.startRefreshTicker()
+}
+
+// run starts the tview event loop.
+func (a *App) run() error {
+	a.tview.SetRoot(newTerminalSizeGuard(a, a.frame), true)
+	a.envList.SetInitialFocus()
+	return a.tview.Run()
+}
+
+// startRefreshTicker starts background list refresh every 3 seconds.
+func (a *App) startRefreshTicker() {
+	a.refreshEnvListsAsync()
+
+	a.refreshTicker = time.NewTicker(3 * time.Second)
+	go func() {
+		for range a.refreshTicker.C {
+			a.refreshEnvListsAsync()
+		}
+	}()
+}
+
+func (a *App) refreshEnvListsAsync() {
+	a.refreshDockerAsync()
+	a.refreshK8sAsync()
+}
+
+func (a *App) refreshDockerAsync() {
+	a.dockerRefreshMu.Lock()
+	if a.dockerRefreshing {
+		a.dockerRefreshMu.Unlock()
+		return
+	}
+	a.dockerRefreshing = true
+	a.dockerRefreshMu.Unlock()
+
+	go func() {
+		data := a.envList.loadDockerData()
+
+		a.tview.QueueUpdateDraw(func() {
+			a.envList.applyDockerData(data)
+
+			a.dockerRefreshMu.Lock()
+			a.dockerRefreshing = false
+			a.dockerRefreshMu.Unlock()
+		})
+	}()
+}
+
+func (a *App) refreshK8sAsync() {
+	a.k8sRefreshMu.Lock()
+	if a.k8sRefreshing {
+		a.k8sRefreshMu.Unlock()
+		return
+	}
+	a.k8sRefreshing = true
+	a.k8sRefreshMu.Unlock()
+
+	go func() {
+		data := a.envList.loadK8sData()
+
+		a.tview.QueueUpdateDraw(func() {
+			a.envList.applyK8sData(data)
+
+			a.k8sRefreshMu.Lock()
+			a.k8sRefreshing = false
+			a.k8sRefreshMu.Unlock()
+		})
+	}()
+}
+
+// UpdateFooter updates the footer section text and shortcut keys.
+func (a *App) UpdateFooter(contextKey ScreenKey) {
+	section := GetFooterText(contextKey)
+	keys := a.getFooterHints(contextKey)
+	a.footerMutex.Lock()
+	a.currentFooterSection = string(section)
+	a.currentFooterKeys = keys
+	a.setContext(contextKey)
+	a.footerMutex.Unlock()
+
+	a.drawFooter(string(section), keys)
+}
+
+func (a *App) getFooterHints(contextKey ScreenKey) []string {
+	keys := getFooterHints(contextKey)
+	if (contextKey != DetailsDockerKey && contextKey != DetailsK8sKey) || a.detailsPanel == nil {
+		return keys
+	}
+
+	if !a.detailsPanel.hasDetailRow("Backoffice") {
+		keys = filterBackofficeHints(keys)
+	}
+	if !a.detailsPanel.hasDetailRow("Grafana") {
+		keys = filterGrafanaHints(keys)
+	}
+	return keys
+}
+
+func filterBackofficeHints(keys []string) []string {
+	filtered := make([]string, 0, len(keys))
+	for _, key := range keys {
+		if strings.HasPrefix(key, "b: backoffice") || strings.HasPrefix(key, "B: copy backoffice") {
+			continue
+		}
+		filtered = append(filtered, key)
+	}
+
+	return filtered
+}
+
+func filterGrafanaHints(keys []string) []string {
+	filtered := make([]string, 0, len(keys))
+	for _, key := range keys {
+		if strings.HasPrefix(key, "t: telemetry") {
+			continue
+		}
+		filtered = append(filtered, key)
+	}
+
+	return filtered
+}
+
+// UpdateFooterCustom updates the footer with custom keys (not from context).
+func (a *App) UpdateFooterCustom(section string, keys []string) {
+	a.footerMutex.Lock()
+	a.currentFooterSection = section
+	a.currentFooterKeys = keys
+	a.currentContext = ""
+	a.footerMutex.Unlock()
+
+	a.drawFooter(section, keys)
+}
+
+// setContext sets the current context with validation.
+func (a *App) setContext(contextKey ScreenKey) {
+	if _, ok := KeyHints[contextKey]; !ok {
+		log.Printf("warning: invalid context key '%s', defaulting to 'general'", contextKey)
+		contextKey = "general"
+	}
+	a.currentContext = contextKey
+}
+
+// drawFooter actually renders the footer components.
+func (a *App) drawFooter(section string, keys []string) {
+	section = tview.Escape(section)
+	keyString := tview.Escape(strings.Join(keys, ", "))
+	a.frame.Clear()
+	a.frame.AddText("[::b]"+section, false, tview.AlignLeft, DefaultTheme.OnPrimary)
+	a.frame.AddText("[::b]"+keyString, false, tview.AlignCenter, DefaultTheme.OnPrimary)
+
+	version := fmt.Sprintf("epos-cli [%s]", common.GetVersion())
+	a.frame.AddText("[::b]"+tview.Escape(version), false, tview.AlignRight, DefaultTheme.OnPrimary)
+}
+
+// FlashMessage shows a temporary message in the footer for the specified duration.
+func (a *App) FlashMessage(message string, duration time.Duration) {
+	go func() {
+		a.tview.QueueUpdateDraw(func() {
+			a.footerMutex.Lock()
+			section := a.currentFooterSection
+			a.footerMutex.Unlock()
+
+			a.drawFooter(section, []string{message})
+		})
+
+		time.Sleep(duration)
+		a.tview.QueueUpdateDraw(func() {
+			a.footerMutex.Lock()
+			section := a.currentFooterSection
+			keys := a.currentFooterKeys
+			a.footerMutex.Unlock()
+
+			a.drawFooter(section, keys)
+		})
+	}()
+}
+
+// ResetToHome cleans up pages and returns to the home screen.
+// Handles page removal, refreshing lists, and restoring focus.
+func (a *App) ResetToHome(opts ResetOptions) {
+	for _, page := range opts.PageNames {
+		a.pages.RemovePage(page)
+	}
+
+	a.pages.SwitchToPage(homePageName)
+	a.currentPage = homePageName
+	a.refreshEnvListsAsync()
+
+	if opts.RefreshFiles {
+		a.detailsPanel.RefreshFiles()
+	}
+
+	switch {
+	case opts.ClearDetails:
+		a.detailsPanel.Clear()
+		a.envList.FocusActiveList()
+	case opts.ForceEnvFocus:
+		a.envList.FocusActiveList()
+	case opts.RestoreFocus && len(a.focusStack) > 0:
+		a.PopFocus()
+		if a.detailsPanel.IsShown() {
+			key := getDetailsKey(a.detailsPanel.GetCurrentDetailsType())
+			a.UpdateFooter(key)
+		}
+	case a.detailsPanel.IsShown():
+		key := getDetailsKey(a.detailsPanel.GetCurrentDetailsType())
+		a.UpdateFooter(key)
+		a.tview.SetFocus(a.detailsPanel.GetFlex())
+	default:
+		a.envList.FocusActiveList()
+	}
+}
+
+// ShowError displays an error modal with a message.
+// Press OK or ESC to dismiss.
+func (a *App) ShowError(message string) {
+	a.PushFocus()
+	modal := tview.NewModal().
+		SetText(DefaultTheme.DestructiveTag("b") + message + "[-]").
+		AddButtons([]string{"OK"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			a.pages.RemovePage("error")
+			a.PopFocus()
+		})
+
+	modal.SetBackgroundColor(DefaultTheme.Background)
+	modal.Box.SetBackgroundColor(DefaultTheme.Background)
+	modal.SetBorderColor(DefaultTheme.Destructive)
+	modal.SetTitle(" [::b]Error ")
+	modal.SetTitleColor(DefaultTheme.Destructive)
+	modal.SetButtonActivatedStyle(tcell.StyleDefault.Background(DefaultTheme.Secondary).Foreground(DefaultTheme.Primary))
+
+	a.pages.AddPage("error", modal, true, true)
+	a.currentPage = "error"
+	a.tview.SetFocus(modal)
+}
+
+// ShowConfirmation displays a standardized confirmation modal.
+func (a *App) ShowConfirmation(opts ConfirmationOptions) {
+	a.PushFocus()
+
+	textView := tview.NewTextView().
+		SetText(opts.Message).
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter)
+	textView.SetBorderPadding(1, 0, 1, 1)
+
+	confirmBtn := tview.NewButton(opts.ConfirmLabel).SetSelectedFunc(func() {
+		a.pages.RemovePage(opts.PageName)
+		opts.OnConfirm()
+	})
+
+	if opts.ConfirmDestructive {
+		confirmBtn.SetStyle(tcell.StyleDefault.Background(DefaultTheme.Destructive).Foreground(DefaultTheme.OnDestructive))
+		confirmBtn.SetActivatedStyle(tcell.StyleDefault.Background(DefaultTheme.Secondary).Foreground(DefaultTheme.OnSecondary))
+	} else {
+		confirmBtn.SetStyle(tcell.StyleDefault.Background(DefaultTheme.Primary).Foreground(DefaultTheme.OnPrimary))
+		confirmBtn.SetActivatedStyle(tcell.StyleDefault.Background(DefaultTheme.Secondary).Foreground(DefaultTheme.OnSecondary))
+	}
+
+	cancelBtn := tview.NewButton(opts.CancelLabel).SetSelectedFunc(func() {
+		opts.OnCancel()
+	})
+	cancelBtn.SetStyle(tcell.StyleDefault.Background(DefaultTheme.Primary).Foreground(DefaultTheme.OnPrimary))
+	cancelBtn.SetActivatedStyle(tcell.StyleDefault.Background(DefaultTheme.Secondary).Foreground(DefaultTheme.OnSecondary))
+
+	buttonInputCapture := func(leftBtn, rightBtn *tview.Button) func(*tcell.EventKey) *tcell.EventKey {
+		return func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Key() {
+			case tcell.KeyLeft, tcell.KeyBacktab:
+				if a.tview.GetFocus() == leftBtn {
+					a.tview.SetFocus(rightBtn)
+				} else {
+					a.tview.SetFocus(leftBtn)
+				}
+				return nil
+			case tcell.KeyRight, tcell.KeyTab:
+				if a.tview.GetFocus() == rightBtn {
+					a.tview.SetFocus(leftBtn)
+				} else {
+					a.tview.SetFocus(rightBtn)
+				}
+				return nil
+			case tcell.KeyEsc:
+				opts.OnCancel()
+				return nil
+			}
+			return event
+		}
+	}
+	confirmBtn.SetInputCapture(buttonInputCapture(confirmBtn, cancelBtn))
+	cancelBtn.SetInputCapture(buttonInputCapture(confirmBtn, cancelBtn))
+
+	buttonContainer := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(tview.NewBox(), 0, 1, false).
+		AddItem(confirmBtn, len(opts.ConfirmLabel)+4, 0, true).
+		AddItem(tview.NewBox(), 2, 0, false).
+		AddItem(cancelBtn, len(opts.CancelLabel)+4, 0, true).
+		AddItem(tview.NewBox(), 0, 1, false)
+	buttonContainer.SetBackgroundColor(tcell.ColorDefault)
+
+	layout := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(textView, 0, 1, false).
+		AddItem(buttonContainer, 1, 0, true)
+
+	borderColor := DefaultTheme.Secondary
+	if opts.Destructive {
+		borderColor = DefaultTheme.Destructive
+	} else if opts.Secondary {
+		borderColor = DefaultTheme.Secondary
+	}
+
+	layout.SetBorder(true).
+		SetTitle(opts.Title).
+		SetTitleColor(DefaultTheme.Secondary).
+		SetBorderColor(borderColor).
+		SetBackgroundColor(DefaultTheme.Background)
+
+	innerFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(nil, 0, 1, false).
+		AddItem(layout, 11, 1, true).
+		AddItem(nil, 0, 1, false)
+	innerFlex.SetBackgroundColor(DefaultTheme.Background)
+
+	outerLayout := tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(innerFlex, 60, 1, true).
+		AddItem(nil, 0, 1, false)
+	outerLayout.SetBackgroundColor(DefaultTheme.Background)
+
+	a.pages.AddPage(opts.PageName, outerLayout, true, true)
+	a.currentPage = opts.PageName
+	a.tview.SetFocus(confirmBtn)
+}
+
+// RunBackgroundTask runs an operation with a standard progress UI.
+// It starts a new OperationProgress screen and executes the provided task in a goroutine.
+// Handles updating the UI upon completion (success or error).
+func (a *App) RunBackgroundTask(opts TaskOptions) {
+	progress := NewOperationProgress(a, opts.Operation, opts.EnvName)
+	progress.Start()
+
+	go func() {
+		msg, err := opts.Task()
+		if err != nil {
+			errorMessage := err.Error()
+			if !opts.IsDocker && errors.Is(err, context.DeadlineExceeded) {
+				display.Error("Kubernetes %s timeout details: %v", strings.ToLower(opts.Operation), err)
+				errorMessage = fmt.Sprintf("Kubernetes %s timed out while waiting for resources. Check operation logs for details.", strings.ToLower(opts.Operation))
+			}
+			progress.Complete(false, errorMessage)
+		} else {
+			if msg == "" {
+				msg = fmt.Sprintf("%s completed successfully!", opts.Operation)
+			}
+			if opts.OnSuccess != nil {
+				opts.OnSuccess()
+			}
+			progress.Complete(true, msg)
+		}
+	}()
+}
+
+func (a *App) openValue(value string) error {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fmt.Errorf("empty value")
+	}
+
+	var cmd string
+	if strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://") {
+		cmd = a.config.TUI.OpenURLCommand
+	} else {
+		if info, err := os.Stat(value); err == nil && info.IsDir() {
+			cmd = a.config.TUI.OpenDirectoryCommand
+		} else {
+			cmd = a.config.TUI.OpenFileCommand
+		}
+	}
+
+	if strings.TrimSpace(cmd) == "" {
+		return fmt.Errorf("no open command configured")
+	}
+
+	var openErr error
+	a.tview.Suspend(func() {
+		openErr = common.OpenWithCommand(cmd, value)
+	})
+
+	if openErr != nil {
+		return fmt.Errorf("failed to open: %w", openErr)
+	}
+
+	return nil
+}
+
+// PushFocus saves the current focus to the stack.
+func (a *App) PushFocus() {
+	current := a.tview.GetFocus()
+	if current != nil {
+		a.focusStack = append(a.focusStack, current)
+	}
+}
+
+// PopFocus restores the last saved focus from the stack.
+// Returns the restored primitive or nil if stack was empty.
+func (a *App) PopFocus() tview.Primitive {
+	if len(a.focusStack) == 0 {
+		return nil
+	}
+	lastIdx := len(a.focusStack) - 1
+	p := a.focusStack[lastIdx]
+	a.focusStack = a.focusStack[:lastIdx]
+	a.tview.SetFocus(p)
+	return p
+}
+
+// ShowModalForm displays a standardized modal form with fields and buttons.
+func (a *App) ShowModalForm(opts ModalFormOptions) {
+	if opts.Width == 0 {
+		opts.Width = 65
+	}
+	if opts.Height == 0 {
+		opts.Height = 16
+	}
+	if opts.BottomButton != nil {
+		opts.Height += 2
+	}
+
+	form := NewStyledForm()
+	fieldIndex := 0
+	for _, field := range opts.Fields {
+		switch field.Type {
+		case "input":
+			form.AddInputField(field.Label, field.Value, 0, nil, field.InputChangedFunc)
+		case "checkbox":
+			checked := field.Value == "true"
+			form.AddCheckbox(field.Label, checked, field.CheckboxChangedFunc)
+		case "dropdown":
+			currentIndex := 0
+			for i, opt := range field.Options {
+				if opt == field.Value {
+					currentIndex = i
+					break
+				}
+			}
+			form.AddDropDown(field.Label, field.Options, currentIndex, field.SelectedFunc)
+			if dd, ok := form.GetFormItem(fieldIndex).(*tview.DropDown); ok {
+				ApplyDropDownStyle(dd)
+			}
+		}
+		fieldIndex++
+	}
+
+	actionButtons := make([]*tview.Button, 0, len(opts.Buttons))
+	for _, btn := range opts.Buttons {
+		actionButtons = append(actionButtons, NewStyledButton(btn.Label, btn.SelectedFunc))
+	}
+
+	var bottomButton *tview.Button
+	if opts.BottomButton != nil {
+		bottomButton = NewStyledInactiveButton(opts.BottomButton.Label, opts.BottomButton.SelectedFunc)
+	}
+
+	formItemCount := form.GetFormItemCount()
+
+	focusFirstFormItem := func() bool {
+		if formItemCount == 0 {
+			return false
+		}
+
+		form.SetFocus(0)
+		a.tview.SetFocus(form)
+
+		return true
+	}
+
+	focusLastFormItem := func() bool {
+		if formItemCount == 0 {
+			return false
+		}
+
+		form.SetFocus(formItemCount - 1)
+		a.tview.SetFocus(form)
+
+		return true
+	}
+
+	focusFirstActionButton := func() bool {
+		if len(actionButtons) == 0 {
+			return false
+		}
+
+		a.tview.SetFocus(actionButtons[0])
+
+		return true
+	}
+
+	focusLastActionButton := func() bool {
+		if len(actionButtons) == 0 {
+			return false
+		}
+
+		a.tview.SetFocus(actionButtons[len(actionButtons)-1])
+
+		return true
+	}
+
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEsc:
+			if opts.OnCancel != nil {
+				opts.OnCancel()
+				return nil
+			}
+		case tcell.KeyTab:
+			if formItemCount == 0 {
+				if bottomButton != nil {
+					a.tview.SetFocus(bottomButton)
+					return nil
+				}
+				if focusFirstActionButton() {
+					return nil
+				}
+				return event
+			}
+
+			formItemIndex, _ := form.GetFocusedItemIndex()
+			if formItemIndex == formItemCount-1 {
+				if bottomButton != nil {
+					a.tview.SetFocus(bottomButton)
+					return nil
+				}
+				if focusFirstActionButton() {
+					return nil
+				}
+			}
+		case tcell.KeyBacktab:
+			if formItemCount == 0 {
+				if focusLastActionButton() {
+					return nil
+				}
+				if bottomButton != nil {
+					a.tview.SetFocus(bottomButton)
+					return nil
+				}
+				return event
+			}
+
+			formItemIndex, _ := form.GetFocusedItemIndex()
+			if formItemIndex == 0 {
+				if focusLastActionButton() {
+					return nil
+				}
+				if bottomButton != nil {
+					a.tview.SetFocus(bottomButton)
+					return nil
+				}
+			}
+		}
+
+		return event
+	})
+
+	if bottomButton != nil {
+		bottomButton.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Key() {
+			case tcell.KeyEsc:
+				if opts.OnCancel != nil {
+					opts.OnCancel()
+					return nil
+				}
+			case tcell.KeyTab:
+				if focusFirstActionButton() {
+					return nil
+				}
+				if focusFirstFormItem() {
+					return nil
+				}
+			case tcell.KeyBacktab:
+				if focusLastFormItem() {
+					return nil
+				}
+				if focusLastActionButton() {
+					return nil
+				}
+			}
+
+			return event
+		})
+	}
+
+	for i := range actionButtons {
+		idx := i
+		actionButtons[idx].SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Key() {
+			case tcell.KeyEsc:
+				if opts.OnCancel != nil {
+					opts.OnCancel()
+					return nil
+				}
+			case tcell.KeyTab:
+				if idx < len(actionButtons)-1 {
+					a.tview.SetFocus(actionButtons[idx+1])
+					return nil
+				}
+				if focusFirstFormItem() {
+					return nil
+				}
+				if bottomButton != nil {
+					a.tview.SetFocus(bottomButton)
+					return nil
+				}
+				if focusFirstActionButton() {
+					return nil
+				}
+			case tcell.KeyBacktab:
+				if idx > 0 {
+					a.tview.SetFocus(actionButtons[idx-1])
+					return nil
+				}
+				if bottomButton != nil {
+					a.tview.SetFocus(bottomButton)
+					return nil
+				}
+				if focusLastFormItem() {
+					return nil
+				}
+				if focusLastActionButton() {
+					return nil
+				}
+			}
+
+			return event
+		})
+	}
+
+	content := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(form, 0, 1, true)
+
+	if bottomButton != nil {
+		bottomRow := tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(tview.NewBox(), 0, 1, false).
+			AddItem(bottomButton, len(opts.BottomButton.Label)+4, 0, false).
+			AddItem(tview.NewBox(), 0, 1, false)
+
+		content.AddItem(tview.NewBox(), 1, 0, false)
+		content.AddItem(bottomRow, 1, 0, false)
+	}
+
+	if len(actionButtons) > 0 {
+		actionsRow := tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(tview.NewBox(), 0, 1, false)
+
+		for i, btn := range actionButtons {
+			actionsRow.AddItem(btn, len(btn.GetLabel())+4, 0, false)
+			if i < len(actionButtons)-1 {
+				actionsRow.AddItem(tview.NewBox(), 2, 0, false)
+			}
+		}
+
+		actionsRow.AddItem(tview.NewBox(), 0, 1, false)
+
+		content.AddItem(tview.NewBox(), 1, 0, false)
+		content.AddItem(actionsRow, 1, 0, false)
+	}
+
+	content.SetBorder(true).
+		SetBorderColor(DefaultTheme.Primary).
+		SetTitle(fmt.Sprintf(" [::b]%s ", opts.Title)).
+		SetTitleColor(DefaultTheme.Secondary)
+
+	a.pages.AddPage(opts.PageName, CenterPrimitiveFixed(content, opts.Width, opts.Height), true, true)
+	a.currentPage = opts.PageName
+	if !focusFirstFormItem() {
+		if bottomButton != nil {
+			a.tview.SetFocus(bottomButton)
+		} else if !focusFirstActionButton() {
+			a.tview.SetFocus(form)
+		}
+	}
+}
+
+// CenterPrimitive wraps a primitive in a flex layout that centers it.
+// Use width/height as proportions (1 = minimal, higher = more space).
+func CenterPrimitive(p tview.Primitive, width, height int) tview.Primitive {
+	return tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(nil, 0, 1, false).
+			AddItem(p, 0, max(1, height), true).
+			AddItem(nil, 0, 1, false), 0, max(1, width), true).
+		AddItem(nil, 0, 1, false)
+}
+
+// CenterPrimitiveFixed wraps a primitive in a flex layout that centers it with fixed dimensions.
+func CenterPrimitiveFixed(p tview.Primitive, width, height int) tview.Primitive {
+	return tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(nil, 0, 1, false).
+			AddItem(p, height, 0, true).
+			AddItem(nil, 0, 1, false), width, 0, true).
+		AddItem(nil, 0, 1, false)
+}
+
+// Quit stops the application.
+func (a *App) Quit() {
+	if a.refreshTicker != nil {
+		a.refreshTicker.Stop()
+	}
+	a.tview.Stop()
+}
+
+// copyToClipboardWithFeedback asynchronously copies text to clipboard and provides user feedback.
+func (a *App) copyToClipboardWithFeedback(text, successMsg, errorMsg string) {
+	go func() {
+		if err := common.CopyToClipboard(text); err != nil {
+			a.tview.QueueUpdateDraw(func() {
+				a.ShowError(errorMsg)
+			})
+		} else {
+			a.FlashMessage(successMsg, 2*time.Second)
+		}
+	}()
+}
