@@ -54,9 +54,7 @@ func (a *App) showHelp() {
 
 	var content strings.Builder
 	maxWidth := 0
-	lineCount := 0
-
-	lineCount += 2
+	lineCount := 2
 
 	// Define group order
 	groupOrder := []string{"Navigation", "Environment", "Browser", "Generic"}
