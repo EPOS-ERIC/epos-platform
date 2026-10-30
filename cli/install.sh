@@ -92,6 +92,10 @@ get_platform_and_arch() {
             log_error "Unsupported architecture: ${uname_m}. Only x86_64/amd64 and arm64/aarch64 are supported."
             ;;
     esac
+
+    if [ "${OS}" = "linux" ] && [ "${ARCH}" = "arm64" ]; then
+        log_error "Unsupported platform: linux-arm64. No release binary is available."
+    fi
 }
 
 # get_current_install_path returns the full path to the currently installed binary.

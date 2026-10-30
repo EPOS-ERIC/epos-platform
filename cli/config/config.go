@@ -26,8 +26,9 @@ const (
 )
 
 var (
-	dataPath   string
-	configPath string
+	dataPath           string
+	configPath         string
+	ErrMalformedConfig = errors.New("malformed user config")
 )
 
 func init() {
@@ -124,7 +125,7 @@ func LoadConfig() (Config, error) {
 	}
 	var cfg Config
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return DefaultConfig(), nil
+		return Config{}, fmt.Errorf("%w %s: %v", ErrMalformedConfig, p, err)
 	}
 	if err := ValidateConfig(cfg); err != nil {
 		return Config{}, fmt.Errorf("invalid config: %w", err)

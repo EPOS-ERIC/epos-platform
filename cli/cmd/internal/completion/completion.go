@@ -22,14 +22,12 @@ func SharedValuesCompletion(toComplete string, valueGetter ValueGetter) ([]strin
 // SharedValidArgs provides completion for environment names based on the command use.
 func SharedValidArgs(cmd *cobra.Command, args []string, toComplete string, valueGetter ValueGetter) ([]string, cobra.ShellCompDirective) {
 	switch {
-	case strings.Contains(cmd.Use, "populate"):
+	case strings.Contains(cmd.Use, "populate"), strings.Contains(cmd.Use, "delete"):
 		if len(args) == 0 {
 			return SharedValuesCompletion(toComplete, valueGetter)
 		}
-		return nil, cobra.ShellCompDirectiveDefault
-	case strings.Contains(cmd.Use, "delete"):
-		if len(args) == 0 {
-			return SharedValuesCompletion(toComplete, valueGetter)
+		if strings.Contains(cmd.Use, "populate") {
+			return nil, cobra.ShellCompDirectiveDefault
 		}
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	case strings.Contains(cmd.Use, "clean"):

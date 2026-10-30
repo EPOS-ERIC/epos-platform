@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/docker"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/docker/config"
@@ -16,7 +17,7 @@ var force bool
 var UpdateCmd = &cobra.Command{
 	Use:   "update <env-name>",
 	Short: "Update an existing environment.",
-	Long:  "Update an existing environment. Updates the deployed environment using the current applied configuration or a file passed with --config. Use --force to recreate containers, or --update-images to pull images before starting.",
+	Long:  "Update an existing environment. --force removes containers and volumes.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
@@ -28,6 +29,18 @@ var UpdateCmd = &cobra.Command{
 			if err != nil {
 				display.Error("Failed to load config: %v", err)
 				os.Exit(1)
+			}
+		}
+		if force {
+			display.Warn("Force update permanently removes containers and volumes for environment '%s'. This cannot be undone.", name)
+			confirmed, err := common.Confirm("Continue with update? (y/n):")
+			if err != nil {
+				display.Error("Failed to read confirmation: %v", err)
+				os.Exit(1)
+			}
+			if !confirmed {
+				display.Info("Update cancelled.")
+				return
 			}
 		}
 
@@ -53,7 +66,7 @@ var UpdateCmd = &cobra.Command{
 }
 
 func init() {
-	UpdateCmd.Flags().BoolVarP(&force, "force", "f", false, "Recreate the environment by removing current containers first")
+	UpdateCmd.Flags().BoolVarP(&force, "force", "f", false, "Recreate containers and volumes")
 	UpdateCmd.Flags().BoolVarP(&pullImages, "update-images", "u", false, "Pull Docker images before starting")
 	UpdateCmd.Flags().StringVar(&configFilePath, "config", "", "Path to YAML configuration file")
 }

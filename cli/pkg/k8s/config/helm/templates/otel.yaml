@@ -47,6 +47,12 @@ spec:
             - name: otlp-http
               containerPort: 4318
           env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: PYROSCOPE_EXTRA_ARGS
+              value: "-memberlist.advertise-addr=$(POD_IP)"
             - name: GF_SECURITY_ADMIN_USER
               value: {{ .Values.components.otel.admin_user | quote }}
             - name: GF_SECURITY_ADMIN_PASSWORD

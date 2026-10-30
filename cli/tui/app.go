@@ -117,13 +117,18 @@ type ModalFormOptions struct {
 // Run starts the TUI application.
 func Run(debug bool) error {
 	app := &App{}
-	app.init(debug)
+	if err := app.init(debug); err != nil {
+		return err
+	}
 	return app.run()
 }
 
-func (a *App) init(debug bool) {
+func (a *App) init(debug bool) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
+		if errors.Is(err, config.ErrMalformedConfig) {
+			return err
+		}
 		log.Printf("config error: %v, using defaults", err)
 		cfg = config.DefaultConfig()
 	}
@@ -199,6 +204,7 @@ func (a *App) init(debug bool) {
 	a.frame.SetBackgroundColor(DefaultTheme.Primary)
 
 	a.startRefreshTicker()
+	return nil
 }
 
 // run starts the tview event loop.
@@ -544,12 +550,7 @@ func (a *App) RunBackgroundTask(opts TaskOptions) {
 	go func() {
 		msg, err := opts.Task()
 		if err != nil {
-			errorMessage := err.Error()
-			if !opts.IsDocker && errors.Is(err, context.DeadlineExceeded) {
-				display.Error("Kubernetes %s timeout details: %v", strings.ToLower(opts.Operation), err)
-				errorMessage = fmt.Sprintf("Kubernetes %s timed out while waiting for resources. Check operation logs for details.", strings.ToLower(opts.Operation))
-			}
-			progress.Complete(false, errorMessage)
+			progress.Complete(false, taskErrorMessage(opts, err))
 		} else {
 			if msg == "" {
 				msg = fmt.Sprintf("%s completed successfully!", opts.Operation)
@@ -560,6 +561,14 @@ func (a *App) RunBackgroundTask(opts TaskOptions) {
 			progress.Complete(true, msg)
 		}
 	}()
+}
+
+func taskErrorMessage(opts TaskOptions, err error) string {
+	display.Error("%s failed: %v", opts.Operation, err)
+	if !opts.IsDocker && errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Sprintf("Kubernetes %s timed out while waiting for resources. Check operation logs for details.", strings.ToLower(opts.Operation))
+	}
+	return err.Error()
 }
 
 func (a *App) openValue(value string) error {

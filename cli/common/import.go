@@ -30,6 +30,22 @@ var exampleURLs = []string{
 	"https://raw.githubusercontent.com/EPOS-ERIC/opensource-docs/refs/heads/main/static/examples/ogc-wfs.ttl",
 }
 
+// ValidateTurtlePaths checks that each input is a directory or a Turtle file.
+func ValidateTurtlePaths(paths []string, statError string) error {
+	for _, path := range paths {
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("%s %q: %w", statError, path, err)
+		}
+
+		if !info.IsDir() && filepath.Ext(path) != ".ttl" {
+			return fmt.Errorf("file %s is not a .ttl file", path)
+		}
+	}
+
+	return nil
+}
+
 // PopulateTurtle prepares and imports inputs using the configured authentication.
 func PopulateTurtle(inputs []string, examples bool, bearerToken string, managedAAI bool, managedToken func() (string, error), apiURL string) ([]string, error) {
 	payload, paths, err := PrepareTurtleImport(inputs, examples)
@@ -155,9 +171,7 @@ func appendTurtle(dst *bytes.Buffer, path string) error {
 		return fmt.Errorf("combined Turtle inputs exceed 10 MiB import limit")
 	}
 
-	if _, err := dst.WriteString("\n"); err != nil {
-		return fmt.Errorf("write Turtle separator: %w", err)
-	}
+	_ = dst.WriteByte('\n')
 
 	return nil
 }

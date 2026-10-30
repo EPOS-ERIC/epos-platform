@@ -122,6 +122,11 @@ var updateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		if platformOS == linuxOS && platformArch == "arm64" {
+			display.Error("No release binary available for platform: %s-%s", platformOS, platformArch)
+			os.Exit(1)
+		}
+
 		binaryName := fmt.Sprintf("epos-cli-%s-%s", platformOS, platformArch)
 		if platformOS == windowsOS {
 			binaryName += ".exe"
@@ -237,12 +242,7 @@ func isBreakingChangesHeading(line string) bool {
 		return false
 	}
 
-	idx := 0
-	for idx < len(trimmed) && trimmed[idx] == '#' {
-		idx++
-	}
-
-	heading := strings.TrimSpace(trimmed[idx:])
+	heading := strings.TrimSpace(strings.TrimLeft(trimmed, "#"))
 	return strings.EqualFold(heading, "breaking change") || strings.EqualFold(heading, "breaking changes")
 }
 
@@ -252,10 +252,5 @@ func isMarkdownHeading(line string) bool {
 		return false
 	}
 
-	idx := 0
-	for idx < len(trimmed) && trimmed[idx] == '#' {
-		idx++
-	}
-
-	return strings.TrimSpace(trimmed[idx:]) != ""
+	return strings.TrimSpace(strings.TrimLeft(trimmed, "#")) != ""
 }

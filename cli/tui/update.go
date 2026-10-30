@@ -52,11 +52,11 @@ func (a *App) showUpdateForm() {
 	if isDocker {
 		fields = append(fields,
 			FormField{Type: "checkbox", Label: "Pull Images", CheckboxChangedFunc: func(checked bool) { data.pullImages = checked }},
-			FormField{Type: "checkbox", Label: "Force (reset DB)", CheckboxChangedFunc: func(checked bool) { data.force = checked }},
+			FormField{Type: "checkbox", Label: "Force - deletes volumes", CheckboxChangedFunc: func(checked bool) { data.force = checked }},
 		)
 	} else {
 		fields = append(fields,
-			FormField{Type: "checkbox", Label: "Force (delete namespace, PVCs, and unrelated resources)", CheckboxChangedFunc: func(checked bool) { data.force = checked }},
+			FormField{Type: "checkbox", Label: "Force - deletes namespace and data", CheckboxChangedFunc: func(checked bool) { data.force = checked }},
 			FormField{Type: "dropdown", Label: "Timeout", Value: defaultK8sTimeoutOption(), Options: k8sTimeoutOptions(), SelectedFunc: func(option string, index int) {
 				data.timeout, _ = time.ParseDuration(option)
 			}},
@@ -120,6 +120,22 @@ func (a *App) handleUpdate(data *updateFormData, isDocker bool) {
 	start := func() {
 		data.cleanupConfigSession()
 		a.showUpdateProgress(data, isDocker, dockerCfg, k8sCfg, timeout)
+	}
+	if isDocker && data.force {
+		a.ShowConfirmation(ConfirmationOptions{
+			PageName:           "update-force-warning",
+			Title:              " Force update ",
+			Message:            "This permanently removes containers and volumes. This cannot be undone.",
+			ConfirmLabel:       "Update",
+			CancelLabel:        "Cancel",
+			ConfirmDestructive: true,
+			OnConfirm:          start,
+			OnCancel: func() {
+				a.pages.RemovePage("update-force-warning")
+				a.PopFocus()
+			},
+		})
+		return
 	}
 	if !isDocker && !data.force && k8sCfg != nil {
 		oldEnv, err := k8s.GetEnv(data.name, data.k8sContext)

@@ -75,7 +75,7 @@ func (a *App) showRenderForm() {
 
 func (a *App) handleRender(data *renderFormData, isDocker bool) {
 	outputPath := strings.TrimSpace(data.outputPath)
-	openDir, err := resolveRenderOutputDir(outputPath)
+	openDir, err := filepath.Abs(outputPath)
 	if err != nil {
 		a.ShowError(fmt.Sprintf("Failed to resolve output path: %v", err))
 		return
@@ -122,8 +122,4 @@ func (a *App) handleRender(data *renderFormData, isDocker bool) {
 	})
 
 	a.FlashMessage("Rendered files and opened output directory.", 2*time.Second)
-}
-
-func resolveRenderOutputDir(outputPath string) (string, error) {
-	return filepath.Abs(outputPath)
 }

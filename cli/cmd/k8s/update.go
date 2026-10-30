@@ -16,7 +16,7 @@ var force bool
 var UpdateCmd = &cobra.Command{
 	Use:               "update <env-name>",
 	Short:             "Update an existing environment.",
-	Long:              "Update an existing environment. Changes to managed database initialization settings require confirmation. Use --force to delete and recreate the entire namespace, including unrelated resources and persistent volume claims. AAI data may be lost; backing volumes follow the storage reclaim policy.",
+	Long:              "Update an existing environment. --force deletes the namespace, including unrelated resources and persistent volume claims.",
 	Args:              cobra.ExactArgs(1),
 	ValidArgsFunction: validArgsFunction,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -74,7 +74,7 @@ var UpdateCmd = &cobra.Command{
 
 func init() {
 	addContextFlag(UpdateCmd)
-	UpdateCmd.Flags().BoolVarP(&force, "force", "f", false, "Reinstall from scratch by deleting the namespace first")
+	UpdateCmd.Flags().BoolVarP(&force, "force", "f", false, "Recreate the namespace and its resources")
 	UpdateCmd.Flags().StringVar(&configFilePath, "config", "", "Path to YAML configuration file")
 	UpdateCmd.Flags().DurationVar(&timeout, "timeout", 0, "Operation timeout (default: 5m)")
 }

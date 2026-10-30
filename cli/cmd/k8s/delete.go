@@ -14,7 +14,7 @@ import (
 var DeleteCmd = &cobra.Command{
 	Use:               "delete <env-name>...",
 	Short:             "Delete one or more environments.",
-	Long:              "Delete one or more environments. Removes each entire namespace, including unrelated resources and persistent volume claims. Backing volumes follow the storage reclaim policy. Prompts for confirmation unless --force is set.",
+	Long:              "Delete environments and their entire namespaces, including unrelated resources and persistent volume claims. Backing volumes follow the storage reclaim policy.",
 	Args:              cobra.MinimumNArgs(1),
 	ValidArgsFunction: validArgsFunction,
 	Run: func(cmd *cobra.Command, args []string) {

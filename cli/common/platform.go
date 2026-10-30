@@ -15,43 +15,33 @@ const (
 )
 
 func OpenBrowser(url string) error {
-	url = strings.Trim(url, " ")
-	var cmd *exec.Cmd
-	switch runtime.GOOS {
-	case darwinOS:
-		cmd = exec.Command("open", url)
-	case linuxOS:
-		cmd = exec.Command("xdg-open", url)
-	case windowsOS:
-		cmd = exec.Command("cmd", "/c", "start", url)
-	default:
-		cmd = exec.Command("xdg-open", url) // Fallback
-	}
-	if err := cmd.Run(); err != nil {
+	if err := openCommand(url).Run(); err != nil {
 		log.Printf("error opening in browser: %v", err)
 		return err
 	}
+
 	return nil
 }
 
 func OpenDirectory(dir string) error {
-	dir = strings.Trim(dir, " ")
-	var cmd *exec.Cmd
-	switch runtime.GOOS {
-	case darwinOS:
-		cmd = exec.Command("open", dir)
-	case linuxOS:
-		cmd = exec.Command("xdg-open", dir)
-	case windowsOS:
-		cmd = exec.Command("cmd", "/c", "start", dir)
-	default:
-		cmd = exec.Command("xdg-open", dir) // Fallback
-	}
-	if err := cmd.Run(); err != nil {
+	if err := openCommand(dir).Run(); err != nil {
 		log.Printf("error opening directory: %v", err)
 		return err
 	}
+
 	return nil
+}
+
+func openCommand(target string) *exec.Cmd {
+	target = strings.Trim(target, " ")
+	switch runtime.GOOS {
+	case darwinOS:
+		return exec.Command("open", target)
+	case windowsOS:
+		return exec.Command("cmd", "/c", "start", target)
+	default:
+		return exec.Command("xdg-open", target)
+	}
 }
 
 func CopyToClipboard(text string) error {

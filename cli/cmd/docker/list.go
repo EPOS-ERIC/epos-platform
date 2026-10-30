@@ -12,7 +12,7 @@ import (
 var ListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List EPOS environments.",
-	Long:  "List EPOS environments. Lists local Docker Compose environments and shows their GUI, API, backoffice, and Grafana URLs.",
+	Long:  "List locally deployed docker EPOS environments.",
 	Run: func(cmd *cobra.Command, args []string) {
 		envs, err := docker.List()
 		if err != nil {

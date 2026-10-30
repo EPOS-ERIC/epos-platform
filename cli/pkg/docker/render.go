@@ -2,7 +2,6 @@ package docker
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/common"
@@ -36,32 +35,9 @@ func Render(opts RenderOpts) ([]string, error) {
 
 	display.Debug("rendered docker templates: %d", len(files))
 
-	if opts.OutputPath == "" {
-		display.Debug("output path not set, using current working directory")
-
-		opts.OutputPath, err = os.Getwd()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get current working directory: %w", err)
-		}
-	} else {
-		display.Debug("resolving output path")
-
-		opts.OutputPath, err = filepath.Abs(opts.OutputPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get absolute path for output path: %w", err)
-		}
-
-		if _, err := os.Stat(opts.OutputPath); err == nil {
-			return nil, fmt.Errorf("environment directory %s already exists", opts.OutputPath)
-		} else if !os.IsNotExist(err) {
-			return nil, fmt.Errorf("failed to check directory %s: %w", opts.OutputPath, err)
-		}
-
-		if err := os.MkdirAll(opts.OutputPath, 0o750); err != nil {
-			return nil, fmt.Errorf("failed to create environment directory %s: %w", opts.OutputPath, err)
-		}
-
-		display.Debug("created output directory: %s", opts.OutputPath)
+	opts.OutputPath, err = common.RenderOutputPath(opts.OutputPath)
+	if err != nil {
+		return nil, err
 	}
 
 	envFilePath := filepath.Join(opts.OutputPath, ".env")

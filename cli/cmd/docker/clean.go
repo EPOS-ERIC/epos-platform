@@ -14,7 +14,7 @@ import (
 var CleanCmd = &cobra.Command{
 	Use:               "clean <env-name>",
 	Short:             "Reset an environment's data.",
-	Long:              "Reset managed database and telemetry volumes, then restart the environment. AAI data and external resources are preserved. Prompts for confirmation unless --force is set.",
+	Long:              "Delete managed database and telemetry data, then restart the environment. AAI data and external resources are preserved.",
 	Args:              cobra.ExactArgs(1),
 	ValidArgsFunction: validArgsFunction,
 	Run: func(cmd *cobra.Command, args []string) {

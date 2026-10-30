@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/k8s/config"
 	"github.com/EPOS-ERIC/epos-platform/cli/validate"
@@ -170,17 +169,13 @@ func (u *UpdateOpts) Validate() error {
 
 	}
 
-	if u.Context == "" {
-		context, err := common.GetCurrentKubeContext()
-		if err != nil {
-			return fmt.Errorf("failed to get current kubectl context: %w", err)
-		}
-
-		u.Context = context
-
+	usingCurrentContext := u.Context == ""
+	u.Context, err = resolveContext(u.Context)
+	if err != nil {
+		return err
+	}
+	if usingCurrentContext {
 		display.Debug("using current kubectl context: %s", u.Context)
-	} else if err := EnsureContextExists(u.Context); err != nil {
-		return fmt.Errorf("K8s context %q is not an available context: %w", u.Context, err)
 	}
 
 	if err := EnsureEnvironmentExists(u.OldEnvName, u.Context); err != nil {

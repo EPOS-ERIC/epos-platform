@@ -12,7 +12,7 @@ import (
 var PopulateCmd = &cobra.Command{
 	Use:               "populate <env-name> [ttl-paths...]",
 	Short:             "Load TTL data into an environment.",
-	Long:              "Load TTL data into an environment. Imports .ttl files from the given files or directories, or loads bundled example data with --example. Pass at least one TTL path unless --example is set. Set EPOS_BEARER_TOKEN to an administrator bearer token for external AAI or to override managed AAI authentication.",
+	Long:              "Load TTL files or bundled example data into an environment. Set EPOS_BEARER_TOKEN for external AAI.",
 	ValidArgsFunction: validArgsFunction,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if populateExamples {

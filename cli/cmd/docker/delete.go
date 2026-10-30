@@ -15,7 +15,7 @@ import (
 var DeleteCmd = &cobra.Command{
 	Use:               "delete <env-name>...",
 	Short:             "Delete one or more environments.",
-	Long:              "Delete one or more environments. Removes the Docker Compose environment, including its containers, volumes, and tracked metadata. Prompts for confirmation unless --force is set.",
+	Long:              "Delete environments with their containers and volumes.",
 	Args:              cobra.MinimumNArgs(1),
 	ValidArgsFunction: validArgsFunction,
 	Run: func(cmd *cobra.Command, args []string) {

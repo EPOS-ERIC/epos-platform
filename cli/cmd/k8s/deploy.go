@@ -15,7 +15,7 @@ import (
 var DeployCmd = &cobra.Command{
 	Use:   "deploy <env-name>",
 	Short: "Deploy a new environment.",
-	Long:  "Deploy a new environment. Creates a new namespace and deploys the EPOS services to it. Uses the default configuration unless --config is set.",
+	Long:  "Deploy a new environment. Uses the default configuration unless --config is set",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]

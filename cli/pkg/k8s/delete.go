@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"golang.org/x/sync/errgroup"
 	"helm.sh/helm/v3/pkg/action"
@@ -92,17 +91,13 @@ func (d *DeleteOpts) Validate() error {
 
 	d.Timeout = resolvedTimeout
 
-	if d.Context == "" {
-		context, err := common.GetCurrentKubeContext()
-		if err != nil {
-			return fmt.Errorf("failed to get current kubectl context: %w", err)
-		}
-
-		d.Context = context
-
+	usingCurrentContext := d.Context == ""
+	d.Context, err = resolveContext(d.Context)
+	if err != nil {
+		return err
+	}
+	if usingCurrentContext {
 		display.Debug("using current kubectl context: %s", d.Context)
-	} else if err := EnsureContextExists(d.Context); err != nil {
-		return fmt.Errorf("K8s context %q is not an available context: %w", d.Context, err)
 	}
 
 	for _, envName := range d.Name {

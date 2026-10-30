@@ -3,8 +3,6 @@ package k8s
 import (
 	"fmt"
 	"net/url"
-	"os"
-	"path/filepath"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
@@ -77,31 +75,15 @@ func (p *PopulateOpts) Validate() error {
 		return fmt.Errorf("at least one Turtle path or examples is required")
 	}
 
-	if p.Context == "" {
-		context, err := common.GetCurrentKubeContext()
-		if err != nil {
-			return fmt.Errorf("failed to get current kubectl context: %w", err)
-		}
-
-		p.Context = context
-	} else if err := EnsureContextExists(p.Context); err != nil {
-		return fmt.Errorf("K8s context %q is not an available context: %w", p.Context, err)
+	context, err := resolveContext(p.Context)
+	if err != nil {
+		return err
 	}
+	p.Context = context
 
 	if err := EnsureEnvironmentExists(p.Name, p.Context); err != nil {
 		return fmt.Errorf("error validating environment name, no environment with '%s' exists: %w", p.Name, err)
 	}
 
-	for _, item := range p.TTLDirs {
-		info, err := os.Stat(item)
-		if err != nil {
-			return fmt.Errorf("error stating path %q: %w", item, err)
-		}
-
-		if !info.IsDir() && filepath.Ext(item) != ".ttl" {
-			return fmt.Errorf("file %s is not a .ttl file", item)
-		}
-	}
-
-	return nil
+	return common.ValidateTurtlePaths(p.TTLDirs, "error stating path")
 }

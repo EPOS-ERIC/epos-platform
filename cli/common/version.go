@@ -26,7 +26,7 @@ func GenerateExportHeader(doNotEdit bool) string {
 		GetVersion(),
 		time.Now().UTC().Format(time.RFC3339))
 	if doNotEdit {
-		output = fmt.Sprintf("%s# DO NOT EDIT\n", output)
+		output += "# DO NOT EDIT\n"
 	}
-	return fmt.Sprintf("%s\n", output)
+	return output + "\n"
 }

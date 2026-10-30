@@ -118,15 +118,9 @@ func (d *DeployOpts) Validate() error {
 		return fmt.Errorf("'%s' is an invalid name for an environment: %w", d.Config.Name, err)
 	}
 
-	if d.Context == "" {
-		context, err := common.GetCurrentKubeContext()
-		if err != nil {
-			return fmt.Errorf("failed to get current kubectl context: %w", err)
-		}
-
-		d.Context = context
-	} else if err := EnsureContextExists(d.Context); err != nil {
-		return fmt.Errorf("K8s context %q is not an available context: %w", d.Context, err)
+	d.Context, err = resolveContext(d.Context)
+	if err != nil {
+		return err
 	}
 
 	if err := EnsureEnvironmentDoesNotExist(d.Config.Name, d.Context); err != nil {
@@ -134,4 +128,21 @@ func (d *DeployOpts) Validate() error {
 	}
 
 	return nil
+}
+
+func resolveContext(context string) (string, error) {
+	if context == "" {
+		context, err := common.GetCurrentKubeContext()
+		if err != nil {
+			return "", fmt.Errorf("failed to get current kubectl context: %w", err)
+		}
+
+		return context, nil
+	}
+
+	if err := EnsureContextExists(context); err != nil {
+		return context, fmt.Errorf("K8s context %q is not an available context: %w", context, err)
+	}
+
+	return context, nil
 }

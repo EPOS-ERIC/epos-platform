@@ -1,6 +1,9 @@
 package config
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 )
@@ -42,5 +45,21 @@ func TestDefaultConfig(t *testing.T) {
 		if cfg.TUI.OpenURLCommand != "xdg-open" {
 			t.Errorf("Expected xdg-open, got %s", cfg.TUI.OpenURLCommand)
 		}
+	}
+}
+
+func TestLoadConfigMalformedAndMissing(t *testing.T) {
+	oldPath := configPath
+	configPath = t.TempDir()
+	t.Cleanup(func() { configPath = oldPath })
+
+	if _, err := LoadConfig(); err != nil {
+		t.Fatalf("missing config: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(configPath, "epos-cli.yaml"), []byte("tui: ["), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadConfig(); !errors.Is(err, ErrMalformedConfig) {
+		t.Fatalf("malformed config: got %v", err)
 	}
 }

@@ -2,8 +2,6 @@ package docker
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/EPOS-ERIC/epos-platform/cli/common"
 	"github.com/EPOS-ERIC/epos-platform/cli/db"
@@ -69,16 +67,5 @@ func (p *PopulateOpts) Validate() error {
 		return fmt.Errorf("at least one Turtle path or examples is required")
 	}
 
-	for _, item := range p.TTLDirs {
-		info, err := os.Stat(item)
-		if err != nil {
-			return fmt.Errorf("stat path %q: %w", item, err)
-		}
-
-		if !info.IsDir() && filepath.Ext(item) != ".ttl" {
-			return fmt.Errorf("file %s is not a .ttl file", item)
-		}
-	}
-
-	return nil
+	return common.ValidateTurtlePaths(p.TTLDirs, "stat path")
 }

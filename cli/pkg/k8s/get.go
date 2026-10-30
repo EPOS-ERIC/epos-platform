@@ -6,6 +6,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/cli/display"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 // GetEnv fetches a deployed K8s environment by release name and context.
@@ -30,10 +31,22 @@ func GetEnv(name, context string) (*Env, error) {
 		return nil, fmt.Errorf("failed to get helm chart: %w", err)
 	}
 
+	if err := validateReleaseOwnership(rel); err != nil {
+		return nil, err
+	}
+
 	env, err := EnvFromRelease(rel, context)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert release to config: %w", err)
 	}
 
 	return env, nil
+}
+
+func validateReleaseOwnership(rel *release.Release) error {
+	if rel == nil || rel.Chart == nil || rel.Chart.Metadata == nil || rel.Chart.Metadata.Annotations["managed-by"] != "epos-cli" {
+		return fmt.Errorf("helm release is not managed by epos-cli")
+	}
+
+	return nil
 }
