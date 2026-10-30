@@ -35,7 +35,7 @@ func (WMTSConfiguration) NativeFormats() []NativeFormat {
 
 func (value GenericWebServiceConfiguration) NativeFormats() []NativeFormat {
 	var formatSchema *StringSchema
-	if parameter := value.formatParameter(); parameter != nil {
+	if parameter := value.parameterWithRole(WebServiceParameterRoleFormat); parameter != nil {
 		schema := parameter.Schema.(StringSchema)
 		formatSchema = &schema
 	}
@@ -63,53 +63,61 @@ func (value GenericWebServiceConfiguration) NativeFormats() []NativeFormat {
 	return result
 }
 
-func (value GenericWebServiceConfiguration) formatParameter() *Parameter {
-	for _, parameter := range value.Parameters {
-		if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
+func (value GenericWebServiceConfiguration) parameterWithRole(role WebServiceParameterRole) *Parameter {
+	for i := range value.Parameters {
+		parameter := &value.Parameters[i]
+		if parameter.Role != nil && *parameter.Role == role {
 			return &parameter.Parameter
 		}
 		if template, ok := parameter.Schema.(TemplateSchema); ok {
-			for _, child := range template.Parameters {
-				if child.Role != nil && *child.Role == WebServiceParameterRoleFormat {
-					return &child
+			for j := range template.Parameters {
+				if template.Parameters[j].Role != nil && *template.Parameters[j].Role == role {
+					return &template.Parameters[j]
 				}
 			}
 		}
 	}
 	if value.Body != nil {
-		for _, parameter := range value.Body.Parameters {
-			if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
-				return &parameter
+		for i := range value.Body.Parameters {
+			if value.Body.Parameters[i].Role != nil && *value.Body.Parameters[i].Role == role {
+				return &value.Body.Parameters[i]
 			}
 		}
 	}
 	return nil
 }
 
-func validateWebServiceParameterRoles(parameters []WebServiceParameterInput, field string, body []ParameterInput) error {
+func validateWebServiceParameterRoles(serviceType WebServiceType, parameters []WebServiceParameterInput, field string, body []ParameterInput) error {
 	seen := map[WebServiceParameterRole]struct{}{}
 	for i, parameter := range parameters {
 		target := fmt.Sprintf("%s[%d]", field, i)
-		if err := validateParameterRole(parameter.ParameterInput, target, seen); err != nil {
+		if err := validateParameterRole(serviceType, parameter.ParameterInput, target, seen); err != nil {
 			return err
 		}
 		if template, ok := parameter.Schema.(TemplateSchemaInput); ok {
 			for j, child := range template.Parameters {
-				if err := validateParameterRole(child, fmt.Sprintf("%s.parameters[%d]", target, j), seen); err != nil {
+				if err := validateParameterRole(serviceType, child, fmt.Sprintf("%s.parameters[%d]", target, j), seen); err != nil {
 					return err
 				}
 			}
 		}
 	}
 	for i, parameter := range body {
-		if err := validateParameterRole(parameter, fmt.Sprintf("body_parameters[%d]", i), seen); err != nil {
+		if err := validateParameterRole(serviceType, parameter, fmt.Sprintf("body_parameters[%d]", i), seen); err != nil {
 			return err
+		}
+	}
+	if serviceType == WebServiceTypeDynamic {
+		for _, role := range []WebServiceParameterRole{WebServiceParameterRoleLongitude, WebServiceParameterRoleLatitude} {
+			if _, exists := seen[role]; !exists {
+				return invalidField(field, "DYNAMIC services require exactly one LONGITUDE and one LATITUDE parameter.", nil)
+			}
 		}
 	}
 	return nil
 }
 
-func validateParameterRole(parameter ParameterInput, target string, seen map[WebServiceParameterRole]struct{}) error {
+func validateParameterRole(serviceType WebServiceType, parameter ParameterInput, target string, seen map[WebServiceParameterRole]struct{}) error {
 	if parameter.Role == nil {
 		return nil
 	}
@@ -149,6 +157,29 @@ func validateParameterRole(parameter ParameterInput, target string, seen map[Web
 			}
 		default:
 			return invalidField(target+".kind", "Coordinate roles require an INTEGER or FLOAT parameter.", nil)
+		}
+	case WebServiceParameterRoleLongitude, WebServiceParameterRoleLatitude:
+		if serviceType != WebServiceTypeDynamic {
+			return invalidField(target+".role", "LONGITUDE and LATITUDE roles are only supported on DYNAMIC services.", nil)
+		}
+		schema, ok := parameter.Schema.(FloatSchema)
+		if !ok {
+			return invalidField(target+".kind", "LONGITUDE and LATITUDE roles require a FLOAT parameter.", nil)
+		}
+		if !parameter.Required {
+			return invalidField(target+".required", "DYNAMIC coordinate parameters must be required.", nil)
+		}
+		if parameter.ReadOnly {
+			return invalidField(target+".read_only", "DYNAMIC coordinate parameters must be editable.", nil)
+		}
+		if schema.MultipleValues {
+			return invalidField(target+".multiple_values", "DYNAMIC coordinate parameters must have a single value.", nil)
+		}
+		if schema.Default != nil {
+			return invalidField(target+".default", "DYNAMIC coordinate parameters must not have a default.", nil)
+		}
+		if len(schema.Enum) != 0 {
+			return invalidField(target+".enum", "DYNAMIC coordinate parameters must not define an enum.", nil)
 		}
 	default:
 		return invalidField(target+".role", "Role is not supported.", nil)

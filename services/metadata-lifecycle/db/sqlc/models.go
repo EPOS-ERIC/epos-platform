@@ -542,6 +542,8 @@ const (
 	WebServiceParameterRoleMAXLON    WebServiceParameterRole = "MAX_LON"
 	WebServiceParameterRoleMINLAT    WebServiceParameterRole = "MIN_LAT"
 	WebServiceParameterRoleMAXLAT    WebServiceParameterRole = "MAX_LAT"
+	WebServiceParameterRoleLONGITUDE WebServiceParameterRole = "LONGITUDE"
+	WebServiceParameterRoleLATITUDE  WebServiceParameterRole = "LATITUDE"
 )
 
 func (e *WebServiceParameterRole) Scan(src interface{}) error {
@@ -582,10 +584,11 @@ func (ns NullWebServiceParameterRole) Value() (driver.Value, error) {
 type WebServiceType string
 
 const (
-	WebServiceTypeWMS  WebServiceType = "WMS"
-	WebServiceTypeHTTP WebServiceType = "HTTP"
-	WebServiceTypeWMTS WebServiceType = "WMTS"
-	WebServiceTypeWFS  WebServiceType = "WFS"
+	WebServiceTypeWMS     WebServiceType = "WMS"
+	WebServiceTypeHTTP    WebServiceType = "HTTP"
+	WebServiceTypeWMTS    WebServiceType = "WMTS"
+	WebServiceTypeWFS     WebServiceType = "WFS"
+	WebServiceTypeDYNAMIC WebServiceType = "DYNAMIC"
 )
 
 func (e *WebServiceType) Scan(src interface{}) error {

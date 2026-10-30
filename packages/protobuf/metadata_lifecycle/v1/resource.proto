@@ -76,6 +76,7 @@ message PrepareDistributionAccessRequest {
     option (buf.validate.oneof).required = true;
     HTTPDistributionAccessInput http = 3;
     WFSDistributionAccessInput wfs = 4;
+    DynamicDistributionAccessInput dynamic = 5;
   }
 }
 
@@ -88,6 +89,12 @@ message WFSDistributionAccessInput {
   optional int64 result_limit = 2 [(buf.validate.field).int64.gt = 0];
   WFSBoundingBox bbox = 3;
   repeated DistributionAccessParameterInput parameters = 4;
+}
+
+message DynamicDistributionAccessInput {
+  double longitude = 1 [(buf.validate.field).double.finite = true];
+  double latitude = 2 [(buf.validate.field).double.finite = true];
+  repeated DistributionAccessParameterInput parameters = 3;
 }
 
 message WFSBoundingBox {
@@ -305,6 +312,7 @@ enum WebServiceType {
   WEB_SERVICE_TYPE_WMTS = 2;
   WEB_SERVICE_TYPE_WFS = 3;
   WEB_SERVICE_TYPE_HTTP = 4;
+  WEB_SERVICE_TYPE_DYNAMIC = 5;
 }
 
 enum WebServiceVisibleOn {
@@ -330,6 +338,8 @@ enum WebServiceParameterRole {
   WEB_SERVICE_PARAMETER_ROLE_MAX_LON = 5;
   WEB_SERVICE_PARAMETER_ROLE_MIN_LAT = 6;
   WEB_SERVICE_PARAMETER_ROLE_MAX_LAT = 7;
+  WEB_SERVICE_PARAMETER_ROLE_LONGITUDE = 8;
+  WEB_SERVICE_PARAMETER_ROLE_LATITUDE = 9;
 }
 
 message WebServiceInput {
@@ -348,6 +358,7 @@ message WebServiceInput {
     WMSWebServiceConfigurationInput wms = 11;
     WFSWebServiceConfigurationInput wfs = 12;
     WMTSWebServiceConfigurationInput wmts = 13;
+    GenericWebServiceConfigurationInput dynamic = 14;
   }
 }
 
@@ -368,6 +379,7 @@ message WebService {
     WMSWebServiceConfiguration wms = 12;
     WFSWebServiceConfiguration wfs = 13;
     WMTSWebServiceConfiguration wmts = 14;
+    GenericWebServiceConfiguration dynamic = 15;
   }
 }
 

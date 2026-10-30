@@ -75,10 +75,10 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 func parseWebServiceConfigurationInput(serviceType WebServiceType, value WebServiceConfigurationInput) (WebServiceConfigurationInput, error) {
 	switch configuration := value.(type) {
 	case GenericWebServiceConfigurationInput:
-		if serviceType != WebServiceTypeHTTP {
+		if serviceType != WebServiceTypeHTTP && serviceType != WebServiceTypeDynamic {
 			return nil, invalidField("type", "Configuration does not match service type.", nil)
 		}
-		return newGenericWebServiceConfigurationInput(configuration)
+		return newGenericWebServiceConfigurationInput(serviceType, configuration)
 	case WFSConfigurationInput:
 		if serviceType != WebServiceTypeWFS {
 			return nil, invalidField("type", "Configuration does not match service type.", nil)
@@ -99,7 +99,7 @@ func parseWebServiceConfigurationInput(serviceType WebServiceType, value WebServ
 	}
 }
 
-func newGenericWebServiceConfigurationInput(value GenericWebServiceConfigurationInput) (GenericWebServiceConfigurationInput, error) {
+func newGenericWebServiceConfigurationInput(serviceType WebServiceType, value GenericWebServiceConfigurationInput) (GenericWebServiceConfigurationInput, error) {
 	value.TemplateURL = strings.TrimSpace(value.TemplateURL)
 	value.Format = strings.TrimSpace(value.Format)
 	value.Method = HTTPMethod(strings.ToUpper(strings.TrimSpace(string(value.Method))))
@@ -128,7 +128,7 @@ func newGenericWebServiceConfigurationInput(value GenericWebServiceConfiguration
 	if value.Body != nil {
 		bodyParameters = value.Body.Parameters
 	}
-	if err := validateWebServiceParameterRoles(parameters, "parameters", bodyParameters); err != nil {
+	if err := validateWebServiceParameterRoles(serviceType, parameters, "parameters", bodyParameters); err != nil {
 		return GenericWebServiceConfigurationInput{}, err
 	}
 	if err := validateMethodBody(value.Method, value.Body); err != nil {
@@ -158,7 +158,7 @@ func NewWFSConfigurationInput(value WFSConfigurationInput) (WFSConfigurationInpu
 	if err != nil {
 		return WFSConfigurationInput{}, err
 	}
-	if err := validateWebServiceParameterRoles(parameters, "parameters", nil); err != nil {
+	if err := validateWebServiceParameterRoles(WebServiceTypeWFS, parameters, "parameters", nil); err != nil {
 		return WFSConfigurationInput{}, err
 	}
 	for i, parameter := range parameters {
@@ -288,7 +288,7 @@ func parseWMTSParameters(values []WebServiceParameterInput, field string, reserv
 	if err != nil {
 		return nil, err
 	}
-	if err := validateWebServiceParameterRoles(parameters, field, nil); err != nil {
+	if err := validateWebServiceParameterRoles(WebServiceTypeWMTS, parameters, field, nil); err != nil {
 		return nil, err
 	}
 	for i, parameter := range parameters {
@@ -398,7 +398,7 @@ func parseWMSParameters(values []WebServiceParameterInput, field string, reserve
 	if err != nil {
 		return nil, err
 	}
-	if err := validateWebServiceParameterRoles(parameters, field, nil); err != nil {
+	if err := validateWebServiceParameterRoles(WebServiceTypeWMS, parameters, field, nil); err != nil {
 		return nil, err
 	}
 	for i, parameter := range parameters {

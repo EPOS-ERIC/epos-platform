@@ -25,6 +25,11 @@ func toDomainDistributionAccessInput(value *metadatalifecyclev1.PrepareDistribut
 			return domain.DistributionAccessInput{}, apperror.Field("wfs", "WFS input is required.", nil)
 		}
 		parameters = input.Wfs.Parameters
+	case *metadatalifecyclev1.PrepareDistributionAccessRequest_Dynamic:
+		if input.Dynamic == nil {
+			return domain.DistributionAccessInput{}, apperror.Field("dynamic", "DYNAMIC input is required.", nil)
+		}
+		parameters = input.Dynamic.Parameters
 	default:
 		return domain.DistributionAccessInput{}, apperror.Field("type", "Request type is required.", nil)
 	}
@@ -87,6 +92,12 @@ func toDomainDistributionAccessInput(value *metadatalifecyclev1.PrepareDistribut
 			}
 		}
 		result.Input = wfs
+	case *metadatalifecyclev1.PrepareDistributionAccessRequest_Dynamic:
+		result.Input = domain.DynamicAccessInput{
+			Longitude:  input.Dynamic.Longitude,
+			Latitude:   input.Dynamic.Latitude,
+			Parameters: mappedParameters,
+		}
 	}
 
 	return result, nil

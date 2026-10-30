@@ -1202,6 +1202,8 @@ func webServiceTypeInput(value metadatalifecyclev1.WebServiceType) (domain.WebSe
 		return domain.WebServiceTypeWMTS, nil
 	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS:
 		return domain.WebServiceTypeWFS, nil
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC:
+		return domain.WebServiceTypeDynamic, nil
 	default:
 		return "", apperror.New(apperror.CodeValidationFailed, "web service type is invalid") //nolint:wrapcheck
 	}
@@ -1217,6 +1219,8 @@ func webServiceTypeOutput(value domain.WebServiceType) metadatalifecyclev1.WebSe
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
 	case domain.WebServiceTypeWFS:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
+	case domain.WebServiceTypeDynamic:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
 	default:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
 	}
@@ -1302,6 +1306,10 @@ func webServiceParameterRoleInput(value metadatalifecyclev1.WebServiceParameterR
 		role = domain.WebServiceParameterRoleMinLat
 	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT:
 		role = domain.WebServiceParameterRoleMaxLat
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LONGITUDE:
+		role = domain.WebServiceParameterRoleLongitude
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LATITUDE:
+		role = domain.WebServiceParameterRoleLatitude
 	default:
 		return nil, apperror.New(apperror.CodeValidationFailed, "parameter role is invalid") //nolint:wrapcheck
 	}
@@ -1327,6 +1335,10 @@ func webServiceParameterRoleOutput(value *domain.WebServiceParameterRole) metada
 		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LAT
 	case domain.WebServiceParameterRoleMaxLat:
 		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT
+	case domain.WebServiceParameterRoleLongitude:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LONGITUDE
+	case domain.WebServiceParameterRoleLatitude:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LATITUDE
 	default:
 		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED
 	}

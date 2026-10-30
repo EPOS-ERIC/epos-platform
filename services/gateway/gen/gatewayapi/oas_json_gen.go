@@ -8542,6 +8542,28 @@ func (s DistributionAccessRequest) encodeFields(e *jx.Encoder) {
 				e.ArrEnd()
 			}
 		}
+	case DynamicDistributionAccessRequestDistributionAccessRequest:
+		e.FieldStart("type")
+		e.Str("DYNAMIC")
+		{
+			s := s.DynamicDistributionAccessRequest
+			{
+				e.FieldStart("longitude")
+				e.Float64(s.Longitude)
+			}
+			{
+				e.FieldStart("latitude")
+				e.Float64(s.Latitude)
+			}
+			{
+				e.FieldStart("parameters")
+				e.ArrStart()
+				for _, elem := range s.Parameters {
+					elem.Encode(e)
+				}
+				e.ArrEnd()
+			}
+		}
 	case WFSDistributionAccessRequestDistributionAccessRequest:
 		e.FieldStart("type")
 		e.Str("WFS")
@@ -8607,6 +8629,9 @@ func (s *DistributionAccessRequest) Decode(d *jx.Decoder) error {
 				case "HTTP":
 					s.Type = HTTPDistributionAccessRequestDistributionAccessRequest
 					found = true
+				case "DYNAMIC":
+					s.Type = DynamicDistributionAccessRequestDistributionAccessRequest
+					found = true
 				case "WFS":
 					s.Type = WFSDistributionAccessRequestDistributionAccessRequest
 					found = true
@@ -8626,6 +8651,10 @@ func (s *DistributionAccessRequest) Decode(d *jx.Decoder) error {
 	switch s.Type {
 	case HTTPDistributionAccessRequestDistributionAccessRequest:
 		if err := s.HTTPDistributionAccessRequest.Decode(d); err != nil {
+			return err
+		}
+	case DynamicDistributionAccessRequestDistributionAccessRequest:
+		if err := s.DynamicDistributionAccessRequest.Decode(d); err != nil {
 			return err
 		}
 	case WFSDistributionAccessRequestDistributionAccessRequest:
@@ -9629,6 +9658,773 @@ func (s DownloadableFileDistributionType) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *DownloadableFileDistributionType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DynamicDistributionAccessRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DynamicDistributionAccessRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		e.FieldStart("longitude")
+		e.Float64(s.Longitude)
+	}
+	{
+		e.FieldStart("latitude")
+		e.Float64(s.Latitude)
+	}
+	{
+		e.FieldStart("parameters")
+		e.ArrStart()
+		for _, elem := range s.Parameters {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+}
+
+var jsonFieldsNameOfDynamicDistributionAccessRequest = [4]string{
+	0: "type",
+	1: "longitude",
+	2: "latitude",
+	3: "parameters",
+}
+
+// Decode decodes DynamicDistributionAccessRequest from json.
+func (s *DynamicDistributionAccessRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DynamicDistributionAccessRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "longitude":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Float64()
+				s.Longitude = float64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"longitude\"")
+			}
+		case "latitude":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Float64()
+				s.Latitude = float64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"latitude\"")
+			}
+		case "parameters":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				s.Parameters = make([]DistributionAccessParameter, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem DistributionAccessParameter
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Parameters = append(s.Parameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"parameters\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DynamicDistributionAccessRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00001111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDynamicDistributionAccessRequest) {
+					name = jsonFieldsNameOfDynamicDistributionAccessRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DynamicDistributionAccessRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DynamicDistributionAccessRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes DynamicDistributionAccessRequestType as json.
+func (s DynamicDistributionAccessRequestType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes DynamicDistributionAccessRequestType from json.
+func (s *DynamicDistributionAccessRequestType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DynamicDistributionAccessRequestType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch DynamicDistributionAccessRequestType(v) {
+	case DynamicDistributionAccessRequestTypeDYNAMIC:
+		*s = DynamicDistributionAccessRequestTypeDYNAMIC
+	default:
+		*s = DynamicDistributionAccessRequestType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s DynamicDistributionAccessRequestType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DynamicDistributionAccessRequestType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DynamicWebServiceConfiguration) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DynamicWebServiceConfiguration) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		e.FieldStart("template_url")
+		e.Str(s.TemplateURL)
+	}
+	{
+		e.FieldStart("method")
+		s.Method.Encode(e)
+	}
+	{
+		if s.Parameters != nil {
+			e.FieldStart("parameters")
+			e.ArrStart()
+			for _, elem := range s.Parameters {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.BodyContentType.Set {
+			e.FieldStart("body_content_type")
+			s.BodyContentType.Encode(e)
+		}
+	}
+	{
+		if s.BodyTemplate.Set {
+			e.FieldStart("body_template")
+			s.BodyTemplate.Encode(e)
+		}
+	}
+	{
+		if s.BodyRequired.Set {
+			e.FieldStart("body_required")
+			s.BodyRequired.Encode(e)
+		}
+	}
+	{
+		if s.BodyParameters != nil {
+			e.FieldStart("body_parameters")
+			e.ArrStart()
+			for _, elem := range s.BodyParameters {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		e.FieldStart("format")
+		e.Str(s.Format)
+	}
+}
+
+var jsonFieldsNameOfDynamicWebServiceConfiguration = [9]string{
+	0: "type",
+	1: "template_url",
+	2: "method",
+	3: "parameters",
+	4: "body_content_type",
+	5: "body_template",
+	6: "body_required",
+	7: "body_parameters",
+	8: "format",
+}
+
+// Decode decodes DynamicWebServiceConfiguration from json.
+func (s *DynamicWebServiceConfiguration) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DynamicWebServiceConfiguration to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "template_url":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.TemplateURL = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"template_url\"")
+			}
+		case "method":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Method.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"method\"")
+			}
+		case "parameters":
+			if err := func() error {
+				s.Parameters = make([]Parameter, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Parameter
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Parameters = append(s.Parameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"parameters\"")
+			}
+		case "body_content_type":
+			if err := func() error {
+				s.BodyContentType.Reset()
+				if err := s.BodyContentType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_content_type\"")
+			}
+		case "body_template":
+			if err := func() error {
+				s.BodyTemplate.Reset()
+				if err := s.BodyTemplate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_template\"")
+			}
+		case "body_required":
+			if err := func() error {
+				s.BodyRequired.Reset()
+				if err := s.BodyRequired.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_required\"")
+			}
+		case "body_parameters":
+			if err := func() error {
+				s.BodyParameters = make([]ScalarParameter, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ScalarParameter
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.BodyParameters = append(s.BodyParameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_parameters\"")
+			}
+		case "format":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.Format = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"format\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DynamicWebServiceConfiguration")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b00000111,
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDynamicWebServiceConfiguration) {
+					name = jsonFieldsNameOfDynamicWebServiceConfiguration[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DynamicWebServiceConfiguration) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DynamicWebServiceConfiguration) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DynamicWebServiceConfigurationDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DynamicWebServiceConfigurationDraft) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		e.FieldStart("template_url")
+		s.TemplateURL.Encode(e)
+	}
+	{
+		e.FieldStart("method")
+		s.Method.Encode(e)
+	}
+	{
+		if s.Parameters != nil {
+			e.FieldStart("parameters")
+			e.ArrStart()
+			for _, elem := range s.Parameters {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.BodyContentType.Set {
+			e.FieldStart("body_content_type")
+			s.BodyContentType.Encode(e)
+		}
+	}
+	{
+		if s.BodyTemplate.Set {
+			e.FieldStart("body_template")
+			s.BodyTemplate.Encode(e)
+		}
+	}
+	{
+		if s.BodyRequired.Set {
+			e.FieldStart("body_required")
+			s.BodyRequired.Encode(e)
+		}
+	}
+	{
+		if s.BodyParameters != nil {
+			e.FieldStart("body_parameters")
+			e.ArrStart()
+			for _, elem := range s.BodyParameters {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		e.FieldStart("format")
+		s.Format.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfDynamicWebServiceConfigurationDraft = [9]string{
+	0: "type",
+	1: "template_url",
+	2: "method",
+	3: "parameters",
+	4: "body_content_type",
+	5: "body_template",
+	6: "body_required",
+	7: "body_parameters",
+	8: "format",
+}
+
+// Decode decodes DynamicWebServiceConfigurationDraft from json.
+func (s *DynamicWebServiceConfigurationDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DynamicWebServiceConfigurationDraft to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "template_url":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.TemplateURL.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"template_url\"")
+			}
+		case "method":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Method.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"method\"")
+			}
+		case "parameters":
+			if err := func() error {
+				s.Parameters = make([]ParameterDraft, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ParameterDraft
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Parameters = append(s.Parameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"parameters\"")
+			}
+		case "body_content_type":
+			if err := func() error {
+				s.BodyContentType.Reset()
+				if err := s.BodyContentType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_content_type\"")
+			}
+		case "body_template":
+			if err := func() error {
+				s.BodyTemplate.Reset()
+				if err := s.BodyTemplate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_template\"")
+			}
+		case "body_required":
+			if err := func() error {
+				s.BodyRequired.Reset()
+				if err := s.BodyRequired.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_required\"")
+			}
+		case "body_parameters":
+			if err := func() error {
+				s.BodyParameters = make([]ScalarParameterDraft, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ScalarParameterDraft
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.BodyParameters = append(s.BodyParameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_parameters\"")
+			}
+		case "format":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				if err := s.Format.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"format\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DynamicWebServiceConfigurationDraft")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b00000111,
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDynamicWebServiceConfigurationDraft) {
+					name = jsonFieldsNameOfDynamicWebServiceConfigurationDraft[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DynamicWebServiceConfigurationDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DynamicWebServiceConfigurationDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes DynamicWebServiceConfigurationDraftType as json.
+func (s DynamicWebServiceConfigurationDraftType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes DynamicWebServiceConfigurationDraftType from json.
+func (s *DynamicWebServiceConfigurationDraftType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DynamicWebServiceConfigurationDraftType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch DynamicWebServiceConfigurationDraftType(v) {
+	case DynamicWebServiceConfigurationDraftTypeDYNAMIC:
+		*s = DynamicWebServiceConfigurationDraftTypeDYNAMIC
+	default:
+		*s = DynamicWebServiceConfigurationDraftType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s DynamicWebServiceConfigurationDraftType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DynamicWebServiceConfigurationDraftType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes DynamicWebServiceConfigurationType as json.
+func (s DynamicWebServiceConfigurationType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes DynamicWebServiceConfigurationType from json.
+func (s *DynamicWebServiceConfigurationType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DynamicWebServiceConfigurationType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch DynamicWebServiceConfigurationType(v) {
+	case DynamicWebServiceConfigurationTypeDYNAMIC:
+		*s = DynamicWebServiceConfigurationTypeDYNAMIC
+	default:
+		*s = DynamicWebServiceConfigurationType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s DynamicWebServiceConfigurationType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DynamicWebServiceConfigurationType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -18611,6 +19407,10 @@ func (s *ParameterRole) Decode(d *jx.Decoder) error {
 		*s = ParameterRoleMINLAT
 	case ParameterRoleMAXLAT:
 		*s = ParameterRoleMAXLAT
+	case ParameterRoleLONGITUDE:
+		*s = ParameterRoleLONGITUDE
+	case ParameterRoleLATITUDE:
+		*s = ParameterRoleLATITUDE
 	default:
 		*s = ParameterRole(v)
 	}
@@ -29531,6 +30331,62 @@ func (s WebServiceConfiguration) encodeFields(e *jx.Encoder) {
 				e.Str(s.Format)
 			}
 		}
+	case DynamicWebServiceConfigurationWebServiceConfiguration:
+		e.FieldStart("type")
+		e.Str("DYNAMIC")
+		{
+			s := s.DynamicWebServiceConfiguration
+			{
+				e.FieldStart("template_url")
+				e.Str(s.TemplateURL)
+			}
+			{
+				e.FieldStart("method")
+				s.Method.Encode(e)
+			}
+			{
+				if s.Parameters != nil {
+					e.FieldStart("parameters")
+					e.ArrStart()
+					for _, elem := range s.Parameters {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.BodyContentType.Set {
+					e.FieldStart("body_content_type")
+					s.BodyContentType.Encode(e)
+				}
+			}
+			{
+				if s.BodyTemplate.Set {
+					e.FieldStart("body_template")
+					s.BodyTemplate.Encode(e)
+				}
+			}
+			{
+				if s.BodyRequired.Set {
+					e.FieldStart("body_required")
+					s.BodyRequired.Encode(e)
+				}
+			}
+			{
+				if s.BodyParameters != nil {
+					e.FieldStart("body_parameters")
+					e.ArrStart()
+					for _, elem := range s.BodyParameters {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				e.FieldStart("format")
+				e.Str(s.Format)
+			}
+		}
 	}
 }
 
@@ -29569,6 +30425,9 @@ func (s *WebServiceConfiguration) Decode(d *jx.Decoder) error {
 				case "HTTP":
 					s.Type = GenericWebServiceConfigurationWebServiceConfiguration
 					found = true
+				case "DYNAMIC":
+					s.Type = DynamicWebServiceConfigurationWebServiceConfiguration
+					found = true
 				default:
 					return errors.Errorf("unknown type %s", typ)
 				}
@@ -29597,6 +30456,10 @@ func (s *WebServiceConfiguration) Decode(d *jx.Decoder) error {
 		}
 	case GenericWebServiceConfigurationWebServiceConfiguration:
 		if err := s.GenericWebServiceConfiguration.Decode(d); err != nil {
+			return err
+		}
+	case DynamicWebServiceConfigurationWebServiceConfiguration:
+		if err := s.DynamicWebServiceConfiguration.Decode(d); err != nil {
 			return err
 		}
 	default:
@@ -29823,6 +30686,62 @@ func (s WebServiceConfigurationDraft) encodeFields(e *jx.Encoder) {
 				s.Format.Encode(e)
 			}
 		}
+	case DynamicWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		e.FieldStart("type")
+		e.Str("DYNAMIC")
+		{
+			s := s.DynamicWebServiceConfigurationDraft
+			{
+				e.FieldStart("template_url")
+				s.TemplateURL.Encode(e)
+			}
+			{
+				e.FieldStart("method")
+				s.Method.Encode(e)
+			}
+			{
+				if s.Parameters != nil {
+					e.FieldStart("parameters")
+					e.ArrStart()
+					for _, elem := range s.Parameters {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.BodyContentType.Set {
+					e.FieldStart("body_content_type")
+					s.BodyContentType.Encode(e)
+				}
+			}
+			{
+				if s.BodyTemplate.Set {
+					e.FieldStart("body_template")
+					s.BodyTemplate.Encode(e)
+				}
+			}
+			{
+				if s.BodyRequired.Set {
+					e.FieldStart("body_required")
+					s.BodyRequired.Encode(e)
+				}
+			}
+			{
+				if s.BodyParameters != nil {
+					e.FieldStart("body_parameters")
+					e.ArrStart()
+					for _, elem := range s.BodyParameters {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				e.FieldStart("format")
+				s.Format.Encode(e)
+			}
+		}
 	}
 }
 
@@ -29861,6 +30780,9 @@ func (s *WebServiceConfigurationDraft) Decode(d *jx.Decoder) error {
 				case "HTTP":
 					s.Type = GenericWebServiceConfigurationDraftWebServiceConfigurationDraft
 					found = true
+				case "DYNAMIC":
+					s.Type = DynamicWebServiceConfigurationDraftWebServiceConfigurationDraft
+					found = true
 				default:
 					return errors.Errorf("unknown type %s", typ)
 				}
@@ -29889,6 +30811,10 @@ func (s *WebServiceConfigurationDraft) Decode(d *jx.Decoder) error {
 		}
 	case GenericWebServiceConfigurationDraftWebServiceConfigurationDraft:
 		if err := s.GenericWebServiceConfigurationDraft.Decode(d); err != nil {
+			return err
+		}
+	case DynamicWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		if err := s.DynamicWebServiceConfigurationDraft.Decode(d); err != nil {
 			return err
 		}
 	default:
@@ -30763,6 +31689,8 @@ func (s *WebServiceType) Decode(d *jx.Decoder) error {
 		*s = WebServiceTypeWMTS
 	case WebServiceTypeWFS:
 		*s = WebServiceTypeWFS
+	case WebServiceTypeDYNAMIC:
+		*s = WebServiceTypeDYNAMIC
 	default:
 		*s = WebServiceType(v)
 	}

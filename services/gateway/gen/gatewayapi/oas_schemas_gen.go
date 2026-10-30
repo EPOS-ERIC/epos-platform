@@ -4184,9 +4184,10 @@ func NewDistributionAccessScalarArrayDistributionAccessParameterValue(v []Distri
 // DistributionAccessRequest represents sum type.
 type DistributionAccessRequest struct {
 	// Type selects the active sum variant, switch on this field.
-	Type                          DistributionAccessRequestType
-	HTTPDistributionAccessRequest HTTPDistributionAccessRequest
-	WFSDistributionAccessRequest  WFSDistributionAccessRequest
+	Type                             DistributionAccessRequestType
+	HTTPDistributionAccessRequest    HTTPDistributionAccessRequest
+	DynamicDistributionAccessRequest DynamicDistributionAccessRequest
+	WFSDistributionAccessRequest     WFSDistributionAccessRequest
 }
 
 // DistributionAccessRequestType is oneOf type of DistributionAccessRequest.
@@ -4194,13 +4195,19 @@ type DistributionAccessRequestType string
 
 // Possible values for DistributionAccessRequestType.
 const (
-	HTTPDistributionAccessRequestDistributionAccessRequest DistributionAccessRequestType = "HTTP"
-	WFSDistributionAccessRequestDistributionAccessRequest  DistributionAccessRequestType = "WFS"
+	HTTPDistributionAccessRequestDistributionAccessRequest    DistributionAccessRequestType = "HTTP"
+	DynamicDistributionAccessRequestDistributionAccessRequest DistributionAccessRequestType = "DYNAMIC"
+	WFSDistributionAccessRequestDistributionAccessRequest     DistributionAccessRequestType = "WFS"
 )
 
 // IsHTTPDistributionAccessRequest reports whether DistributionAccessRequest is HTTPDistributionAccessRequest.
 func (s DistributionAccessRequest) IsHTTPDistributionAccessRequest() bool {
 	return s.Type == HTTPDistributionAccessRequestDistributionAccessRequest
+}
+
+// IsDynamicDistributionAccessRequest reports whether DistributionAccessRequest is DynamicDistributionAccessRequest.
+func (s DistributionAccessRequest) IsDynamicDistributionAccessRequest() bool {
+	return s.Type == DynamicDistributionAccessRequestDistributionAccessRequest
 }
 
 // IsWFSDistributionAccessRequest reports whether DistributionAccessRequest is WFSDistributionAccessRequest.
@@ -4226,6 +4233,27 @@ func (s DistributionAccessRequest) GetHTTPDistributionAccessRequest() (v HTTPDis
 func NewHTTPDistributionAccessRequestDistributionAccessRequest(v HTTPDistributionAccessRequest) DistributionAccessRequest {
 	var s DistributionAccessRequest
 	s.SetHTTPDistributionAccessRequest(v)
+	return s
+}
+
+// SetDynamicDistributionAccessRequest sets DistributionAccessRequest to DynamicDistributionAccessRequest.
+func (s *DistributionAccessRequest) SetDynamicDistributionAccessRequest(v DynamicDistributionAccessRequest) {
+	s.Type = DynamicDistributionAccessRequestDistributionAccessRequest
+	s.DynamicDistributionAccessRequest = v
+}
+
+// GetDynamicDistributionAccessRequest returns DynamicDistributionAccessRequest and true boolean if DistributionAccessRequest is DynamicDistributionAccessRequest.
+func (s DistributionAccessRequest) GetDynamicDistributionAccessRequest() (v DynamicDistributionAccessRequest, ok bool) {
+	if !s.IsDynamicDistributionAccessRequest() {
+		return v, false
+	}
+	return s.DynamicDistributionAccessRequest, true
+}
+
+// NewDynamicDistributionAccessRequestDistributionAccessRequest returns new DistributionAccessRequest from DynamicDistributionAccessRequest.
+func NewDynamicDistributionAccessRequestDistributionAccessRequest(v DynamicDistributionAccessRequest) DistributionAccessRequest {
+	var s DistributionAccessRequest
+	s.SetDynamicDistributionAccessRequest(v)
 	return s
 }
 
@@ -4772,6 +4800,373 @@ func (s *DownloadableFileDistributionType) UnmarshalText(data []byte) error {
 	switch DownloadableFileDistributionType(data) {
 	case DownloadableFileDistributionTypeDOWNLOADABLEFILE:
 		*s = DownloadableFileDistributionTypeDOWNLOADABLEFILE
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/DynamicDistributionAccessRequest
+type DynamicDistributionAccessRequest struct {
+	Type      DynamicDistributionAccessRequestType `json:"type"`
+	Longitude float64                              `json:"longitude"`
+	Latitude  float64                              `json:"latitude"`
+	// Ordinary parameter values. Do not include the parameter IDs assigned LONGITUDE or LATITUDE roles;
+	// their values are supplied by longitude and latitude.
+	Parameters []DistributionAccessParameter `json:"parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *DynamicDistributionAccessRequest) GetType() DynamicDistributionAccessRequestType {
+	return s.Type
+}
+
+// GetLongitude returns the value of Longitude.
+func (s *DynamicDistributionAccessRequest) GetLongitude() float64 {
+	return s.Longitude
+}
+
+// GetLatitude returns the value of Latitude.
+func (s *DynamicDistributionAccessRequest) GetLatitude() float64 {
+	return s.Latitude
+}
+
+// GetParameters returns the value of Parameters.
+func (s *DynamicDistributionAccessRequest) GetParameters() []DistributionAccessParameter {
+	return s.Parameters
+}
+
+// SetType sets the value of Type.
+func (s *DynamicDistributionAccessRequest) SetType(val DynamicDistributionAccessRequestType) {
+	s.Type = val
+}
+
+// SetLongitude sets the value of Longitude.
+func (s *DynamicDistributionAccessRequest) SetLongitude(val float64) {
+	s.Longitude = val
+}
+
+// SetLatitude sets the value of Latitude.
+func (s *DynamicDistributionAccessRequest) SetLatitude(val float64) {
+	s.Latitude = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *DynamicDistributionAccessRequest) SetParameters(val []DistributionAccessParameter) {
+	s.Parameters = val
+}
+
+type DynamicDistributionAccessRequestType string
+
+const (
+	DynamicDistributionAccessRequestTypeDYNAMIC DynamicDistributionAccessRequestType = "DYNAMIC"
+)
+
+// AllValues returns all DynamicDistributionAccessRequestType values.
+func (DynamicDistributionAccessRequestType) AllValues() []DynamicDistributionAccessRequestType {
+	return []DynamicDistributionAccessRequestType{
+		DynamicDistributionAccessRequestTypeDYNAMIC,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DynamicDistributionAccessRequestType) MarshalText() ([]byte, error) {
+	switch s {
+	case DynamicDistributionAccessRequestTypeDYNAMIC:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DynamicDistributionAccessRequestType) UnmarshalText(data []byte) error {
+	switch DynamicDistributionAccessRequestType(data) {
+	case DynamicDistributionAccessRequestTypeDYNAMIC:
+		*s = DynamicDistributionAccessRequestTypeDYNAMIC
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level
+// parameters, template children, and body_parameters.
+// Ref: #/components/schemas/DynamicWebServiceConfiguration
+type DynamicWebServiceConfiguration struct {
+	Type            DynamicWebServiceConfigurationType `json:"type"`
+	TemplateURL     string                             `json:"template_url"`
+	Method          WebServiceMethod                   `json:"method"`
+	Parameters      []Parameter                        `json:"parameters"`
+	BodyContentType OptNilString                       `json:"body_content_type"`
+	BodyTemplate    OptNilString                       `json:"body_template"`
+	// Whether the configured request body must be rendered. Omitted when no request body is configured.
+	BodyRequired   OptBool           `json:"body_required"`
+	BodyParameters []ScalarParameter `json:"body_parameters"`
+	Format         string            `json:"format"`
+}
+
+// GetType returns the value of Type.
+func (s *DynamicWebServiceConfiguration) GetType() DynamicWebServiceConfigurationType {
+	return s.Type
+}
+
+// GetTemplateURL returns the value of TemplateURL.
+func (s *DynamicWebServiceConfiguration) GetTemplateURL() string {
+	return s.TemplateURL
+}
+
+// GetMethod returns the value of Method.
+func (s *DynamicWebServiceConfiguration) GetMethod() WebServiceMethod {
+	return s.Method
+}
+
+// GetParameters returns the value of Parameters.
+func (s *DynamicWebServiceConfiguration) GetParameters() []Parameter {
+	return s.Parameters
+}
+
+// GetBodyContentType returns the value of BodyContentType.
+func (s *DynamicWebServiceConfiguration) GetBodyContentType() OptNilString {
+	return s.BodyContentType
+}
+
+// GetBodyTemplate returns the value of BodyTemplate.
+func (s *DynamicWebServiceConfiguration) GetBodyTemplate() OptNilString {
+	return s.BodyTemplate
+}
+
+// GetBodyRequired returns the value of BodyRequired.
+func (s *DynamicWebServiceConfiguration) GetBodyRequired() OptBool {
+	return s.BodyRequired
+}
+
+// GetBodyParameters returns the value of BodyParameters.
+func (s *DynamicWebServiceConfiguration) GetBodyParameters() []ScalarParameter {
+	return s.BodyParameters
+}
+
+// GetFormat returns the value of Format.
+func (s *DynamicWebServiceConfiguration) GetFormat() string {
+	return s.Format
+}
+
+// SetType sets the value of Type.
+func (s *DynamicWebServiceConfiguration) SetType(val DynamicWebServiceConfigurationType) {
+	s.Type = val
+}
+
+// SetTemplateURL sets the value of TemplateURL.
+func (s *DynamicWebServiceConfiguration) SetTemplateURL(val string) {
+	s.TemplateURL = val
+}
+
+// SetMethod sets the value of Method.
+func (s *DynamicWebServiceConfiguration) SetMethod(val WebServiceMethod) {
+	s.Method = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *DynamicWebServiceConfiguration) SetParameters(val []Parameter) {
+	s.Parameters = val
+}
+
+// SetBodyContentType sets the value of BodyContentType.
+func (s *DynamicWebServiceConfiguration) SetBodyContentType(val OptNilString) {
+	s.BodyContentType = val
+}
+
+// SetBodyTemplate sets the value of BodyTemplate.
+func (s *DynamicWebServiceConfiguration) SetBodyTemplate(val OptNilString) {
+	s.BodyTemplate = val
+}
+
+// SetBodyRequired sets the value of BodyRequired.
+func (s *DynamicWebServiceConfiguration) SetBodyRequired(val OptBool) {
+	s.BodyRequired = val
+}
+
+// SetBodyParameters sets the value of BodyParameters.
+func (s *DynamicWebServiceConfiguration) SetBodyParameters(val []ScalarParameter) {
+	s.BodyParameters = val
+}
+
+// SetFormat sets the value of Format.
+func (s *DynamicWebServiceConfiguration) SetFormat(val string) {
+	s.Format = val
+}
+
+// HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level
+// parameters, template children, and body_parameters. Coordinate parameters must be required,
+// editable, single-value, have no default or enum, and must not use explode. Optional minimum and
+// maximum bounds are supported.
+// Ref: #/components/schemas/DynamicWebServiceConfigurationDraft
+type DynamicWebServiceConfigurationDraft struct {
+	Type            DynamicWebServiceConfigurationDraftType `json:"type"`
+	TemplateURL     NonBlankString                          `json:"template_url"`
+	Method          WebServiceMethod                        `json:"method"`
+	Parameters      []ParameterDraft                        `json:"parameters"`
+	BodyContentType OptNonBlankString                       `json:"body_content_type"`
+	BodyTemplate    OptNonBlankString                       `json:"body_template"`
+	// Defaults to true when a request body is configured. Must be omitted when no body is configured.
+	// Optional bodies are omitted only when unresolved and no child values were supplied.
+	BodyRequired   OptBool                `json:"body_required"`
+	BodyParameters []ScalarParameterDraft `json:"body_parameters"`
+	Format         NonBlankString         `json:"format"`
+}
+
+// GetType returns the value of Type.
+func (s *DynamicWebServiceConfigurationDraft) GetType() DynamicWebServiceConfigurationDraftType {
+	return s.Type
+}
+
+// GetTemplateURL returns the value of TemplateURL.
+func (s *DynamicWebServiceConfigurationDraft) GetTemplateURL() NonBlankString {
+	return s.TemplateURL
+}
+
+// GetMethod returns the value of Method.
+func (s *DynamicWebServiceConfigurationDraft) GetMethod() WebServiceMethod {
+	return s.Method
+}
+
+// GetParameters returns the value of Parameters.
+func (s *DynamicWebServiceConfigurationDraft) GetParameters() []ParameterDraft {
+	return s.Parameters
+}
+
+// GetBodyContentType returns the value of BodyContentType.
+func (s *DynamicWebServiceConfigurationDraft) GetBodyContentType() OptNonBlankString {
+	return s.BodyContentType
+}
+
+// GetBodyTemplate returns the value of BodyTemplate.
+func (s *DynamicWebServiceConfigurationDraft) GetBodyTemplate() OptNonBlankString {
+	return s.BodyTemplate
+}
+
+// GetBodyRequired returns the value of BodyRequired.
+func (s *DynamicWebServiceConfigurationDraft) GetBodyRequired() OptBool {
+	return s.BodyRequired
+}
+
+// GetBodyParameters returns the value of BodyParameters.
+func (s *DynamicWebServiceConfigurationDraft) GetBodyParameters() []ScalarParameterDraft {
+	return s.BodyParameters
+}
+
+// GetFormat returns the value of Format.
+func (s *DynamicWebServiceConfigurationDraft) GetFormat() NonBlankString {
+	return s.Format
+}
+
+// SetType sets the value of Type.
+func (s *DynamicWebServiceConfigurationDraft) SetType(val DynamicWebServiceConfigurationDraftType) {
+	s.Type = val
+}
+
+// SetTemplateURL sets the value of TemplateURL.
+func (s *DynamicWebServiceConfigurationDraft) SetTemplateURL(val NonBlankString) {
+	s.TemplateURL = val
+}
+
+// SetMethod sets the value of Method.
+func (s *DynamicWebServiceConfigurationDraft) SetMethod(val WebServiceMethod) {
+	s.Method = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *DynamicWebServiceConfigurationDraft) SetParameters(val []ParameterDraft) {
+	s.Parameters = val
+}
+
+// SetBodyContentType sets the value of BodyContentType.
+func (s *DynamicWebServiceConfigurationDraft) SetBodyContentType(val OptNonBlankString) {
+	s.BodyContentType = val
+}
+
+// SetBodyTemplate sets the value of BodyTemplate.
+func (s *DynamicWebServiceConfigurationDraft) SetBodyTemplate(val OptNonBlankString) {
+	s.BodyTemplate = val
+}
+
+// SetBodyRequired sets the value of BodyRequired.
+func (s *DynamicWebServiceConfigurationDraft) SetBodyRequired(val OptBool) {
+	s.BodyRequired = val
+}
+
+// SetBodyParameters sets the value of BodyParameters.
+func (s *DynamicWebServiceConfigurationDraft) SetBodyParameters(val []ScalarParameterDraft) {
+	s.BodyParameters = val
+}
+
+// SetFormat sets the value of Format.
+func (s *DynamicWebServiceConfigurationDraft) SetFormat(val NonBlankString) {
+	s.Format = val
+}
+
+type DynamicWebServiceConfigurationDraftType string
+
+const (
+	DynamicWebServiceConfigurationDraftTypeDYNAMIC DynamicWebServiceConfigurationDraftType = "DYNAMIC"
+)
+
+// AllValues returns all DynamicWebServiceConfigurationDraftType values.
+func (DynamicWebServiceConfigurationDraftType) AllValues() []DynamicWebServiceConfigurationDraftType {
+	return []DynamicWebServiceConfigurationDraftType{
+		DynamicWebServiceConfigurationDraftTypeDYNAMIC,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DynamicWebServiceConfigurationDraftType) MarshalText() ([]byte, error) {
+	switch s {
+	case DynamicWebServiceConfigurationDraftTypeDYNAMIC:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DynamicWebServiceConfigurationDraftType) UnmarshalText(data []byte) error {
+	switch DynamicWebServiceConfigurationDraftType(data) {
+	case DynamicWebServiceConfigurationDraftTypeDYNAMIC:
+		*s = DynamicWebServiceConfigurationDraftTypeDYNAMIC
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type DynamicWebServiceConfigurationType string
+
+const (
+	DynamicWebServiceConfigurationTypeDYNAMIC DynamicWebServiceConfigurationType = "DYNAMIC"
+)
+
+// AllValues returns all DynamicWebServiceConfigurationType values.
+func (DynamicWebServiceConfigurationType) AllValues() []DynamicWebServiceConfigurationType {
+	return []DynamicWebServiceConfigurationType{
+		DynamicWebServiceConfigurationTypeDYNAMIC,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DynamicWebServiceConfigurationType) MarshalText() ([]byte, error) {
+	switch s {
+	case DynamicWebServiceConfigurationTypeDYNAMIC:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DynamicWebServiceConfigurationType) UnmarshalText(data []byte) error {
+	switch DynamicWebServiceConfigurationType(data) {
+	case DynamicWebServiceConfigurationTypeDYNAMIC:
+		*s = DynamicWebServiceConfigurationTypeDYNAMIC
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -10418,6 +10813,8 @@ const (
 	ParameterRoleMAXLON    ParameterRole = "MAX_LON"
 	ParameterRoleMINLAT    ParameterRole = "MIN_LAT"
 	ParameterRoleMAXLAT    ParameterRole = "MAX_LAT"
+	ParameterRoleLONGITUDE ParameterRole = "LONGITUDE"
+	ParameterRoleLATITUDE  ParameterRole = "LATITUDE"
 )
 
 // AllValues returns all ParameterRole values.
@@ -10430,6 +10827,8 @@ func (ParameterRole) AllValues() []ParameterRole {
 		ParameterRoleMAXLON,
 		ParameterRoleMINLAT,
 		ParameterRoleMAXLAT,
+		ParameterRoleLONGITUDE,
+		ParameterRoleLATITUDE,
 	}
 }
 
@@ -10449,6 +10848,10 @@ func (s ParameterRole) MarshalText() ([]byte, error) {
 	case ParameterRoleMINLAT:
 		return []byte(s), nil
 	case ParameterRoleMAXLAT:
+		return []byte(s), nil
+	case ParameterRoleLONGITUDE:
+		return []byte(s), nil
+	case ParameterRoleLATITUDE:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -10478,6 +10881,12 @@ func (s *ParameterRole) UnmarshalText(data []byte) error {
 		return nil
 	case ParameterRoleMAXLAT:
 		*s = ParameterRoleMAXLAT
+		return nil
+	case ParameterRoleLONGITUDE:
+		*s = ParameterRoleLONGITUDE
+		return nil
+	case ParameterRoleLATITUDE:
+		*s = ParameterRoleLATITUDE
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -15413,6 +15822,7 @@ type WebServiceConfiguration struct {
 	WmtsWebServiceConfiguration    WmtsWebServiceConfiguration
 	WfsWebServiceConfiguration     WfsWebServiceConfiguration
 	GenericWebServiceConfiguration GenericWebServiceConfiguration
+	DynamicWebServiceConfiguration DynamicWebServiceConfiguration
 }
 
 // WebServiceConfigurationType is oneOf type of WebServiceConfiguration.
@@ -15424,6 +15834,7 @@ const (
 	WmtsWebServiceConfigurationWebServiceConfiguration    WebServiceConfigurationType = "WMTS"
 	WfsWebServiceConfigurationWebServiceConfiguration     WebServiceConfigurationType = "WFS"
 	GenericWebServiceConfigurationWebServiceConfiguration WebServiceConfigurationType = "HTTP"
+	DynamicWebServiceConfigurationWebServiceConfiguration WebServiceConfigurationType = "DYNAMIC"
 )
 
 // IsWmsWebServiceConfiguration reports whether WebServiceConfiguration is WmsWebServiceConfiguration.
@@ -15444,6 +15855,11 @@ func (s WebServiceConfiguration) IsWfsWebServiceConfiguration() bool {
 // IsGenericWebServiceConfiguration reports whether WebServiceConfiguration is GenericWebServiceConfiguration.
 func (s WebServiceConfiguration) IsGenericWebServiceConfiguration() bool {
 	return s.Type == GenericWebServiceConfigurationWebServiceConfiguration
+}
+
+// IsDynamicWebServiceConfiguration reports whether WebServiceConfiguration is DynamicWebServiceConfiguration.
+func (s WebServiceConfiguration) IsDynamicWebServiceConfiguration() bool {
+	return s.Type == DynamicWebServiceConfigurationWebServiceConfiguration
 }
 
 // SetWmsWebServiceConfiguration sets WebServiceConfiguration to WmsWebServiceConfiguration.
@@ -15530,6 +15946,27 @@ func NewGenericWebServiceConfigurationWebServiceConfiguration(v GenericWebServic
 	return s
 }
 
+// SetDynamicWebServiceConfiguration sets WebServiceConfiguration to DynamicWebServiceConfiguration.
+func (s *WebServiceConfiguration) SetDynamicWebServiceConfiguration(v DynamicWebServiceConfiguration) {
+	s.Type = DynamicWebServiceConfigurationWebServiceConfiguration
+	s.DynamicWebServiceConfiguration = v
+}
+
+// GetDynamicWebServiceConfiguration returns DynamicWebServiceConfiguration and true boolean if WebServiceConfiguration is DynamicWebServiceConfiguration.
+func (s WebServiceConfiguration) GetDynamicWebServiceConfiguration() (v DynamicWebServiceConfiguration, ok bool) {
+	if !s.IsDynamicWebServiceConfiguration() {
+		return v, false
+	}
+	return s.DynamicWebServiceConfiguration, true
+}
+
+// NewDynamicWebServiceConfigurationWebServiceConfiguration returns new WebServiceConfiguration from DynamicWebServiceConfiguration.
+func NewDynamicWebServiceConfigurationWebServiceConfiguration(v DynamicWebServiceConfiguration) WebServiceConfiguration {
+	var s WebServiceConfiguration
+	s.SetDynamicWebServiceConfiguration(v)
+	return s
+}
+
 // Ref: #/components/schemas/WebServiceConfigurationDraft
 // WebServiceConfigurationDraft represents sum type.
 type WebServiceConfigurationDraft struct {
@@ -15539,6 +15976,7 @@ type WebServiceConfigurationDraft struct {
 	WmtsWebServiceConfigurationDraft    WmtsWebServiceConfigurationDraft
 	WfsWebServiceConfigurationDraft     WfsWebServiceConfigurationDraft
 	GenericWebServiceConfigurationDraft GenericWebServiceConfigurationDraft
+	DynamicWebServiceConfigurationDraft DynamicWebServiceConfigurationDraft
 }
 
 // WebServiceConfigurationDraftType is oneOf type of WebServiceConfigurationDraft.
@@ -15550,6 +15988,7 @@ const (
 	WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft    WebServiceConfigurationDraftType = "WMTS"
 	WfsWebServiceConfigurationDraftWebServiceConfigurationDraft     WebServiceConfigurationDraftType = "WFS"
 	GenericWebServiceConfigurationDraftWebServiceConfigurationDraft WebServiceConfigurationDraftType = "HTTP"
+	DynamicWebServiceConfigurationDraftWebServiceConfigurationDraft WebServiceConfigurationDraftType = "DYNAMIC"
 )
 
 // IsWmsWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is WmsWebServiceConfigurationDraft.
@@ -15570,6 +16009,11 @@ func (s WebServiceConfigurationDraft) IsWfsWebServiceConfigurationDraft() bool {
 // IsGenericWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is GenericWebServiceConfigurationDraft.
 func (s WebServiceConfigurationDraft) IsGenericWebServiceConfigurationDraft() bool {
 	return s.Type == GenericWebServiceConfigurationDraftWebServiceConfigurationDraft
+}
+
+// IsDynamicWebServiceConfigurationDraft reports whether WebServiceConfigurationDraft is DynamicWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) IsDynamicWebServiceConfigurationDraft() bool {
+	return s.Type == DynamicWebServiceConfigurationDraftWebServiceConfigurationDraft
 }
 
 // SetWmsWebServiceConfigurationDraft sets WebServiceConfigurationDraft to WmsWebServiceConfigurationDraft.
@@ -15653,6 +16097,27 @@ func (s WebServiceConfigurationDraft) GetGenericWebServiceConfigurationDraft() (
 func NewGenericWebServiceConfigurationDraftWebServiceConfigurationDraft(v GenericWebServiceConfigurationDraft) WebServiceConfigurationDraft {
 	var s WebServiceConfigurationDraft
 	s.SetGenericWebServiceConfigurationDraft(v)
+	return s
+}
+
+// SetDynamicWebServiceConfigurationDraft sets WebServiceConfigurationDraft to DynamicWebServiceConfigurationDraft.
+func (s *WebServiceConfigurationDraft) SetDynamicWebServiceConfigurationDraft(v DynamicWebServiceConfigurationDraft) {
+	s.Type = DynamicWebServiceConfigurationDraftWebServiceConfigurationDraft
+	s.DynamicWebServiceConfigurationDraft = v
+}
+
+// GetDynamicWebServiceConfigurationDraft returns DynamicWebServiceConfigurationDraft and true boolean if WebServiceConfigurationDraft is DynamicWebServiceConfigurationDraft.
+func (s WebServiceConfigurationDraft) GetDynamicWebServiceConfigurationDraft() (v DynamicWebServiceConfigurationDraft, ok bool) {
+	if !s.IsDynamicWebServiceConfigurationDraft() {
+		return v, false
+	}
+	return s.DynamicWebServiceConfigurationDraft, true
+}
+
+// NewDynamicWebServiceConfigurationDraftWebServiceConfigurationDraft returns new WebServiceConfigurationDraft from DynamicWebServiceConfigurationDraft.
+func NewDynamicWebServiceConfigurationDraftWebServiceConfigurationDraft(v DynamicWebServiceConfigurationDraft) WebServiceConfigurationDraft {
+	var s WebServiceConfigurationDraft
+	s.SetDynamicWebServiceConfigurationDraft(v)
 	return s
 }
 
@@ -16096,10 +16561,11 @@ func (s *WebServiceMethod) UnmarshalText(data []byte) error {
 type WebServiceType string
 
 const (
-	WebServiceTypeWMS  WebServiceType = "WMS"
-	WebServiceTypeHTTP WebServiceType = "HTTP"
-	WebServiceTypeWMTS WebServiceType = "WMTS"
-	WebServiceTypeWFS  WebServiceType = "WFS"
+	WebServiceTypeWMS     WebServiceType = "WMS"
+	WebServiceTypeHTTP    WebServiceType = "HTTP"
+	WebServiceTypeWMTS    WebServiceType = "WMTS"
+	WebServiceTypeWFS     WebServiceType = "WFS"
+	WebServiceTypeDYNAMIC WebServiceType = "DYNAMIC"
 )
 
 // AllValues returns all WebServiceType values.
@@ -16109,6 +16575,7 @@ func (WebServiceType) AllValues() []WebServiceType {
 		WebServiceTypeHTTP,
 		WebServiceTypeWMTS,
 		WebServiceTypeWFS,
+		WebServiceTypeDYNAMIC,
 	}
 }
 
@@ -16122,6 +16589,8 @@ func (s WebServiceType) MarshalText() ([]byte, error) {
 	case WebServiceTypeWMTS:
 		return []byte(s), nil
 	case WebServiceTypeWFS:
+		return []byte(s), nil
+	case WebServiceTypeDYNAMIC:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -16142,6 +16611,9 @@ func (s *WebServiceType) UnmarshalText(data []byte) error {
 		return nil
 	case WebServiceTypeWFS:
 		*s = WebServiceTypeWFS
+		return nil
+	case WebServiceTypeDYNAMIC:
+		*s = WebServiceTypeDYNAMIC
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

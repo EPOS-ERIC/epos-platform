@@ -326,6 +326,10 @@ func toProtoParameterRole(value gatewayapi.OptNilParameterRole) metadatalifecycl
 		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LAT
 	case gatewayapi.ParameterRoleMAXLAT:
 		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT
+	case gatewayapi.ParameterRoleLONGITUDE:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LONGITUDE
+	case gatewayapi.ParameterRoleLATITUDE:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LATITUDE
 	default:
 		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED
 	}

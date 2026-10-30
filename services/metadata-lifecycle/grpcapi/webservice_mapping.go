@@ -22,7 +22,11 @@ func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService 
 	}
 	switch configuration := value.Configuration.(type) {
 	case domain.GenericWebServiceConfiguration:
-		result.Configuration = &metadatalifecyclev1.WebService_Generic{Generic: toProtoGenericWebServiceConfiguration(configuration)}
+		if value.Type == domain.WebServiceTypeDynamic {
+			result.Configuration = &metadatalifecyclev1.WebService_Dynamic{Dynamic: toProtoGenericWebServiceConfiguration(configuration)}
+		} else {
+			result.Configuration = &metadatalifecyclev1.WebService_Generic{Generic: toProtoGenericWebServiceConfiguration(configuration)}
+		}
 	case domain.WFSConfiguration:
 		result.Configuration = &metadatalifecyclev1.WebService_Wfs{Wfs: toProtoWFSWebServiceConfiguration(configuration)}
 	case domain.WMSConfiguration:
@@ -38,7 +42,6 @@ func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService 
 	}
 	return result
 }
-
 func toProtoGenericWebServiceConfiguration(value domain.GenericWebServiceConfiguration) *metadatalifecyclev1.GenericWebServiceConfiguration {
 	result := &metadatalifecyclev1.GenericWebServiceConfiguration{
 		TemplateUrl: value.TemplateURL,
@@ -174,7 +177,18 @@ func toDomainWebServiceConfigurationInput(value *metadatalifecyclev1.WebServiceI
 		if configuration.Generic == nil {
 			return nil, apperror.Field("", "Generic web service configuration is required.", nil)
 		}
+		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP {
+			return nil, apperror.Field("type", "Generic configuration requires HTTP service type.", nil)
+		}
 		return toDomainGenericWebServiceConfigurationInput(configuration.Generic)
+	case *metadatalifecyclev1.WebServiceInput_Dynamic:
+		if configuration.Dynamic == nil {
+			return nil, apperror.Field("", "DYNAMIC web service configuration is required.", nil)
+		}
+		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC {
+			return nil, apperror.Field("type", "DYNAMIC configuration requires DYNAMIC service type.", nil)
+		}
+		return toDomainGenericWebServiceConfigurationInput(configuration.Dynamic)
 	case *metadatalifecyclev1.WebServiceInput_Wfs:
 		if configuration.Wfs == nil {
 			return nil, apperror.Field("", "WFS configuration is required.", nil)
