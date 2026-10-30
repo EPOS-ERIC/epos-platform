@@ -85,6 +85,10 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
         })
         boundary = self.request(dynamic, "prepare", {**body, "longitude": -180, "latitude": 90})
         self.assertEqual(boundary.status_code, 200)
+        zero = self.request(dynamic, "prepare", {**body, "longitude": 0, "latitude": 0})
+        self.assertEqual(zero.status_code, 200)
+        self.assertEqual(parse_qs(urlsplit(zero.json()["url"]).query)["lon"], ["0"])
+        self.assertEqual(parse_qs(urlsplit(zero.json()["url"]).query)["lat"], ["0"])
         cases = [
             (dynamic, {"type": "DYNAMIC", "latitude": 0, "parameters": []}),
             (dynamic, {"type": "DYNAMIC", "longitude": 0, "parameters": []}),
@@ -109,6 +113,44 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
         replaced = updated["metadata"]["distributions"][0]
         self.assertEqual(replaced["web_service"]["configuration"]["type"], "DYNAMIC")
         self.assertEqual(self.request(replaced, "prepare", body).status_code, 200)
+
+    def test_clone_nested_coordinate_roles(self) -> None:
+        """Regression: both clone flows preserve template-child roles and properties."""
+        source = dynamic_distribution([
+            parameter("point", "TEMPLATE", template="{{.lon}},{{.lat}}", parameters=[
+                child("lon", "FLOAT", required=True, role="LONGITUDE", property="geo:longitude"),
+                child("lat", "FLOAT", position=1, required=True, role="LATITUDE", property="geo:latitude"),
+            ]),
+        ])
+        detail = self.create_draft([source])
+        for action in ("submit", "publish"):
+            self.transition(detail, action)
+        target_group = create_group(self.gateway, f"dynamic-copy-{uuid4().hex}")
+        copied = self.gateway.post(
+            "/groups/{groupId}/resources/{resourceType}/{id}/copy",
+            groupId=target_group, resourceType="dataset", id=detail["resource_id"],
+        )
+        self.assertEqual(copied.status_code, 201)
+        drafted = self.gateway.post(
+            "/resources/{resourceType}/{id}/draft-from-publication",
+            resourceType="dataset", id=detail["resource_id"],
+        )
+        self.assertEqual(drafted.status_code, 201)
+        for resource_id in (copied.json()["id"], detail["resource_id"]):
+            with self.subTest(resource_id=resource_id):
+                version = self.version(resource_id, "DRAFT")
+                clone = self.details(resource_id, version["version_id"])
+                distribution = clone["metadata"]["distributions"][0]
+                parameters = distribution["web_service"]["configuration"]["parameters"][0]["parameters"]
+                self.assertEqual(
+                    {item["name"]: (item["role"], item["property"]) for item in parameters},
+                    {"lon": ("LONGITUDE", "geo:longitude"), "lat": ("LATITUDE", "geo:latitude")},
+                )
+                response = self.request(distribution, "prepare", {
+                    "type": "DYNAMIC", "longitude": 12.5, "latitude": -42, "parameters": [],
+                })
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(parse_qs(urlsplit(response.json()["url"]).query)["point"], ["12.5,-42"])
 
     def test_coordinate_locations_and_template_activation(self) -> None:
         """Verify coordinates render in path, header, query templates and optional bodies."""

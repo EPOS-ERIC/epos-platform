@@ -65,10 +65,7 @@ func (service GenericWebServiceConfiguration) prepareDynamicAccess(input Dynamic
 		DistributionAccessParameter{ID: longitude.ID, Value: AccessFloat(input.Longitude)},
 		DistributionAccessParameter{ID: latitude.ID, Value: AccessFloat(input.Latitude)},
 	)
-	return service.PrepareAccess(DistributionAccessInput{
-		Input:        HTTPAccessInput{Parameters: parameters},
-		OutputFormat: outputFormat,
-	})
+	return service.prepareHTTPRequest(parameters, outputFormat)
 }
 
 func (service WFSConfiguration) PrepareAccess(input DistributionAccessInput) (PreparedHTTPRequest, error) {
