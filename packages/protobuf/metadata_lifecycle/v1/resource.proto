@@ -542,6 +542,8 @@ message ScalarParameterInput {
     ScalarFloatParameter float = 10;
     ScalarDateTimeParameter date_time = 11;
   }
+  optional string property = 12;
+  WebServiceParameterRole role = 13 [(buf.validate.field).enum.defined_only = true];
 }
 
 message ScalarParameter {
@@ -560,6 +562,8 @@ message ScalarParameter {
     ScalarDateTimeParameter date_time = 11;
   }
   string id = 12 [(buf.validate.field).string.uuid = true];
+  optional string property = 13;
+  WebServiceParameterRole role = 14 [(buf.validate.field).enum.defined_only = true];
 }
 
 message StringEnumOption {

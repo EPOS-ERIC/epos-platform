@@ -280,9 +280,9 @@ CREATE TABLE parameters (
     CHECK (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id, web_service_body_id, template_parameter_id) = 1),
     CHECK (
         (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 1 AND location IS NOT NULL)
-        OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 0 AND location IS NULL AND property IS NULL AND NOT explode)
+        OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 0 AND location IS NULL AND NOT explode)
     ),
-    CHECK (role IS NULL OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 1 AND schema_kind <> 'TEMPLATE')),
+    CHECK (role IS NULL OR schema_kind <> 'TEMPLATE'),
     CHECK (NOT explode OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 1 AND location = 'QUERY')),
     CHECK (wfs_service_id IS NULL OR location IN ('PATH', 'QUERY')),
     CHECK (location <> 'PATH' OR required),

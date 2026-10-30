@@ -116,9 +116,6 @@ func newGenericWebServiceConfigurationInput(value GenericWebServiceConfiguration
 	if err != nil {
 		return GenericWebServiceConfigurationInput{}, err
 	}
-	if err := validateWebServiceParameterRoles(parameters, "parameters"); err != nil {
-		return GenericWebServiceConfigurationInput{}, err
-	}
 	value.Parameters = parameters
 	if value.Body != nil {
 		body, err := NewRequestBodyInput(*value.Body)
@@ -126,6 +123,13 @@ func newGenericWebServiceConfigurationInput(value GenericWebServiceConfiguration
 			return GenericWebServiceConfigurationInput{}, err
 		}
 		value.Body = &body
+	}
+	var bodyParameters []ParameterInput
+	if value.Body != nil {
+		bodyParameters = value.Body.Parameters
+	}
+	if err := validateWebServiceParameterRoles(parameters, "parameters", bodyParameters); err != nil {
+		return GenericWebServiceConfigurationInput{}, err
 	}
 	if err := validateMethodBody(value.Method, value.Body); err != nil {
 		return GenericWebServiceConfigurationInput{}, invalidField("body_template", "This method does not support a request body.", err)
@@ -154,7 +158,7 @@ func NewWFSConfigurationInput(value WFSConfigurationInput) (WFSConfigurationInpu
 	if err != nil {
 		return WFSConfigurationInput{}, err
 	}
-	if err := validateWebServiceParameterRoles(parameters, "parameters"); err != nil {
+	if err := validateWebServiceParameterRoles(parameters, "parameters", nil); err != nil {
 		return WFSConfigurationInput{}, err
 	}
 	for i, parameter := range parameters {
@@ -284,7 +288,7 @@ func parseWMTSParameters(values []WebServiceParameterInput, field string, reserv
 	if err != nil {
 		return nil, err
 	}
-	if err := validateWebServiceParameterRoles(parameters, field); err != nil {
+	if err := validateWebServiceParameterRoles(parameters, field, nil); err != nil {
 		return nil, err
 	}
 	for i, parameter := range parameters {
@@ -394,7 +398,7 @@ func parseWMSParameters(values []WebServiceParameterInput, field string, reserve
 	if err != nil {
 		return nil, err
 	}
-	if err := validateWebServiceParameterRoles(parameters, field); err != nil {
+	if err := validateWebServiceParameterRoles(parameters, field, nil); err != nil {
 		return nil, err
 	}
 	for i, parameter := range parameters {
@@ -625,8 +629,6 @@ func restoreWebServiceParameters(values []WebServiceParameterInput, existing []W
 		}
 		result[i] = WebServiceParameter{
 			Parameter: persisted,
-			Property:  value.Property,
-			Role:      value.Role,
 			Location:  value.Location,
 			Explode:   value.Explode,
 		}
@@ -665,14 +667,6 @@ func NewWebServiceParameterInput(value WebServiceParameterInput) (WebServicePara
 		return WebServiceParameterInput{}, err
 	}
 	value.ParameterInput = parameter
-	value.Property = optionalTrimmedString(value.Property)
-	if value.Role != nil {
-		role := WebServiceParameterRole(strings.ToUpper(strings.TrimSpace(string(*value.Role))))
-		if !role.Valid() {
-			return WebServiceParameterInput{}, invalidField("role", "Role is not supported.", nil)
-		}
-		value.Role = &role
-	}
 	value.Location = ParameterLocation(strings.ToUpper(strings.TrimSpace(string(value.Location))))
 	if !value.Location.Valid() {
 		return WebServiceParameterInput{}, invalidField("location", "Location is not supported.", nil)
@@ -796,8 +790,6 @@ func webServiceParameterInputs(values []WebServiceParameter) []WebServiceParamet
 	for i, value := range values {
 		result[i] = WebServiceParameterInput{
 			ParameterInput: value.Input(),
-			Property:       value.Property,
-			Role:           value.Role,
 			Location:       value.Location,
 			Explode:        value.Explode,
 		}
@@ -914,6 +906,14 @@ func parseParameter(value ParameterInput, allowTemplate, allowMultipleValues boo
 	value.Name = strings.TrimSpace(value.Name)
 	value.Label = strings.TrimSpace(value.Label)
 	value.Description = optionalTrimmedString(value.Description)
+	value.Property = optionalTrimmedString(value.Property)
+	if value.Role != nil {
+		role := WebServiceParameterRole(strings.ToUpper(strings.TrimSpace(string(*value.Role))))
+		if !role.Valid() {
+			return ParameterInput{}, invalidField("role", "Role is not supported.", nil)
+		}
+		value.Role = &role
+	}
 	if value.Name == "" {
 		return ParameterInput{}, invalidField("name", "Name must not be blank.", nil)
 	}

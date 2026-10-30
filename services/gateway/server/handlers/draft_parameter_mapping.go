@@ -126,6 +126,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 	switch {
 	case v.IsStringScalarParameterDraft():
 		x := v.StringScalarParameterDraft
+		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -139,6 +140,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		}}
 	case v.IsBooleanScalarParameterDraft():
 		x := v.BooleanScalarParameterDraft
+		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -148,6 +150,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_Boolean{Boolean: &metadatalifecyclev1.ScalarBooleanParameter{Default: protoOptionalBool(x.Default)}}
 	case v.IsIntegerScalarParameterDraft():
 		x := v.IntegerScalarParameterDraft
+		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -162,6 +165,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		}}
 	case v.IsFloatScalarParameterDraft():
 		x := v.FloatScalarParameterDraft
+		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -176,6 +180,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		}}
 	case v.IsDateTimeScalarParameterDraft():
 		x := v.DateTimeScalarParameterDraft
+		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)

@@ -937,6 +937,8 @@ func scalarParameterOutput(value domain.Parameter) *metadatalifecyclev1.ScalarPa
 		Name:        value.Name,
 		Label:       value.Label,
 		Description: value.Description,
+		Property:    value.Property,
+		Role:        webServiceParameterRoleOutput(value.Role),
 		Required:    value.Required,
 		ReadOnly:    value.ReadOnly,
 		Id:          value.ID.String(),
@@ -1276,7 +1278,9 @@ func webServiceParameterInput(value *metadatalifecyclev1.ParameterInput) (domain
 	if err != nil {
 		return domain.WebServiceParameterInput{}, err
 	}
-	return domain.WebServiceParameterInput{ParameterInput: parameter, Property: value.Property, Role: role, Location: location, Explode: value.GetExplode()}, nil
+	parameter.Property = value.Property
+	parameter.Role = role
+	return domain.WebServiceParameterInput{ParameterInput: parameter, Location: location, Explode: value.GetExplode()}, nil
 }
 
 func webServiceParameterRoleInput(value metadatalifecyclev1.WebServiceParameterRole) (*domain.WebServiceParameterRole, error) {
@@ -1432,7 +1436,11 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (doma
 	if value == nil {
 		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter is required") //nolint:wrapcheck
 	}
-	parameter := domain.ParameterInput{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
+	role, err := webServiceParameterRoleInput(value.GetRole())
+	if err != nil {
+		return domain.ParameterInput{}, err
+	}
+	parameter := domain.ParameterInput{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Property: value.Property, Role: role, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
 	switch v := value.GetValue().(type) {
 	case *metadatalifecyclev1.ScalarParameterInput_String_:
 		if v.String_ == nil {

@@ -363,6 +363,8 @@ type ParameterInput struct {
 	Name        string
 	Label       string
 	Description *string
+	Property    *string
+	Role        *WebServiceParameterRole
 	Required    bool
 	ReadOnly    bool
 	Schema      ParameterSchema
@@ -376,16 +378,12 @@ type Parameter struct {
 
 type WebServiceParameterInput struct {
 	ParameterInput
-	Property *string
-	Role     *WebServiceParameterRole
 	Location ParameterLocation
 	Explode  bool
 }
 
 type WebServiceParameter struct {
 	Parameter
-	Property *string
-	Role     *WebServiceParameterRole
 	Location ParameterLocation
 	Explode  bool
 }

@@ -924,6 +924,8 @@ export type StringScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   ["default"]?: string | null;
@@ -940,6 +942,8 @@ export type BooleanScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   ["default"]?: boolean | null;
@@ -954,6 +958,8 @@ export type IntegerScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -980,6 +986,8 @@ export type FloatScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -1006,6 +1014,8 @@ export type DateTimeScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -1036,6 +1046,8 @@ export type StringScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   ["default"]?: string | null;
@@ -1056,6 +1068,8 @@ export type BooleanScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   ["default"]?: boolean | null;
@@ -1074,6 +1088,8 @@ export type IntegerScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -1104,6 +1120,8 @@ export type FloatScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -1134,6 +1152,8 @@ export type DateTimeScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**

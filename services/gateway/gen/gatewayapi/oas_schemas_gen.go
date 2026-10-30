@@ -531,6 +531,8 @@ type BooleanScalarParameter struct {
 	Name        NonBlankString             `json:"name"`
 	Label       NonBlankString             `json:"label"`
 	Description OptNilString               `json:"description"`
+	Property    OptNilString               `json:"property"`
+	Role        OptNilParameterRole        `json:"role"`
 	Required    bool                       `json:"required"`
 	ReadOnly    bool                       `json:"read_only"`
 	Default     OptNilBool                 `json:"default"`
@@ -564,6 +566,16 @@ func (s *BooleanScalarParameter) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *BooleanScalarParameter) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *BooleanScalarParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *BooleanScalarParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -611,6 +623,16 @@ func (s *BooleanScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
 }
 
+// SetProperty sets the value of Property.
+func (s *BooleanScalarParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *BooleanScalarParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetRequired sets the value of Required.
 func (s *BooleanScalarParameter) SetRequired(val bool) {
 	s.Required = val
@@ -633,6 +655,8 @@ type BooleanScalarParameterDraft struct {
 	Name        NonBlankString                  `json:"name"`
 	Label       NonBlankString                  `json:"label"`
 	Description OptNilString                    `json:"description"`
+	Property    OptNilString                    `json:"property"`
+	Role        OptNilParameterRole             `json:"role"`
 	Required    bool                            `json:"required"`
 	ReadOnly    bool                            `json:"read_only"`
 	Default     OptNilBool                      `json:"default"`
@@ -661,6 +685,16 @@ func (s *BooleanScalarParameterDraft) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *BooleanScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *BooleanScalarParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *BooleanScalarParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -701,6 +735,16 @@ func (s *BooleanScalarParameterDraft) SetLabel(val NonBlankString) {
 // SetDescription sets the value of Description.
 func (s *BooleanScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
+}
+
+// SetProperty sets the value of Property.
+func (s *BooleanScalarParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *BooleanScalarParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetRequired sets the value of Required.
@@ -3101,6 +3145,8 @@ type DateTimeScalarParameter struct {
 	Name        NonBlankString              `json:"name"`
 	Label       NonBlankString              `json:"label"`
 	Description OptNilString                `json:"description"`
+	Property    OptNilString                `json:"property"`
+	Role        OptNilParameterRole         `json:"role"`
 	Required    bool                        `json:"required"`
 	ReadOnly    bool                        `json:"read_only"`
 	Minimum     OptNilDateTime              `json:"minimum"`
@@ -3137,6 +3183,16 @@ func (s *DateTimeScalarParameter) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *DateTimeScalarParameter) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *DateTimeScalarParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *DateTimeScalarParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -3199,6 +3255,16 @@ func (s *DateTimeScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
 }
 
+// SetProperty sets the value of Property.
+func (s *DateTimeScalarParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *DateTimeScalarParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetRequired sets the value of Required.
 func (s *DateTimeScalarParameter) SetRequired(val bool) {
 	s.Required = val
@@ -3236,6 +3302,8 @@ type DateTimeScalarParameterDraft struct {
 	Name        NonBlankString                   `json:"name"`
 	Label       NonBlankString                   `json:"label"`
 	Description OptNilString                     `json:"description"`
+	Property    OptNilString                     `json:"property"`
+	Role        OptNilParameterRole              `json:"role"`
 	Required    bool                             `json:"required"`
 	ReadOnly    bool                             `json:"read_only"`
 	Minimum     OptNilDateTime                   `json:"minimum"`
@@ -3267,6 +3335,16 @@ func (s *DateTimeScalarParameterDraft) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *DateTimeScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *DateTimeScalarParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *DateTimeScalarParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -3322,6 +3400,16 @@ func (s *DateTimeScalarParameterDraft) SetLabel(val NonBlankString) {
 // SetDescription sets the value of Description.
 func (s *DateTimeScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
+}
+
+// SetProperty sets the value of Property.
+func (s *DateTimeScalarParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *DateTimeScalarParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetRequired sets the value of Required.
@@ -5163,6 +5251,8 @@ type FloatScalarParameter struct {
 	Name        NonBlankString           `json:"name"`
 	Label       NonBlankString           `json:"label"`
 	Description OptNilString             `json:"description"`
+	Property    OptNilString             `json:"property"`
+	Role        OptNilParameterRole      `json:"role"`
 	Required    bool                     `json:"required"`
 	ReadOnly    bool                     `json:"read_only"`
 	Minimum     OptNilFloat64            `json:"minimum"`
@@ -5199,6 +5289,16 @@ func (s *FloatScalarParameter) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *FloatScalarParameter) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *FloatScalarParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *FloatScalarParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -5261,6 +5361,16 @@ func (s *FloatScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
 }
 
+// SetProperty sets the value of Property.
+func (s *FloatScalarParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *FloatScalarParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetRequired sets the value of Required.
 func (s *FloatScalarParameter) SetRequired(val bool) {
 	s.Required = val
@@ -5298,6 +5408,8 @@ type FloatScalarParameterDraft struct {
 	Name        NonBlankString                `json:"name"`
 	Label       NonBlankString                `json:"label"`
 	Description OptNilString                  `json:"description"`
+	Property    OptNilString                  `json:"property"`
+	Role        OptNilParameterRole           `json:"role"`
 	Required    bool                          `json:"required"`
 	ReadOnly    bool                          `json:"read_only"`
 	Minimum     OptNilFloat64                 `json:"minimum"`
@@ -5329,6 +5441,16 @@ func (s *FloatScalarParameterDraft) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *FloatScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *FloatScalarParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *FloatScalarParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -5384,6 +5506,16 @@ func (s *FloatScalarParameterDraft) SetLabel(val NonBlankString) {
 // SetDescription sets the value of Description.
 func (s *FloatScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
+}
+
+// SetProperty sets the value of Property.
+func (s *FloatScalarParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *FloatScalarParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetRequired sets the value of Required.
@@ -7266,6 +7398,8 @@ type IntegerScalarParameter struct {
 	Name        NonBlankString             `json:"name"`
 	Label       NonBlankString             `json:"label"`
 	Description OptNilString               `json:"description"`
+	Property    OptNilString               `json:"property"`
+	Role        OptNilParameterRole        `json:"role"`
 	Required    bool                       `json:"required"`
 	ReadOnly    bool                       `json:"read_only"`
 	Minimum     OptNilInt64                `json:"minimum"`
@@ -7302,6 +7436,16 @@ func (s *IntegerScalarParameter) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *IntegerScalarParameter) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *IntegerScalarParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *IntegerScalarParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -7364,6 +7508,16 @@ func (s *IntegerScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
 }
 
+// SetProperty sets the value of Property.
+func (s *IntegerScalarParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *IntegerScalarParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetRequired sets the value of Required.
 func (s *IntegerScalarParameter) SetRequired(val bool) {
 	s.Required = val
@@ -7401,6 +7555,8 @@ type IntegerScalarParameterDraft struct {
 	Name        NonBlankString                  `json:"name"`
 	Label       NonBlankString                  `json:"label"`
 	Description OptNilString                    `json:"description"`
+	Property    OptNilString                    `json:"property"`
+	Role        OptNilParameterRole             `json:"role"`
 	Required    bool                            `json:"required"`
 	ReadOnly    bool                            `json:"read_only"`
 	Minimum     OptNilInt64                     `json:"minimum"`
@@ -7432,6 +7588,16 @@ func (s *IntegerScalarParameterDraft) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *IntegerScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *IntegerScalarParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *IntegerScalarParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -7487,6 +7653,16 @@ func (s *IntegerScalarParameterDraft) SetLabel(val NonBlankString) {
 // SetDescription sets the value of Description.
 func (s *IntegerScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
+}
+
+// SetProperty sets the value of Property.
+func (s *IntegerScalarParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *IntegerScalarParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetRequired sets the value of Required.
@@ -13807,6 +13983,8 @@ type StringScalarParameter struct {
 	Name        NonBlankString            `json:"name"`
 	Label       NonBlankString            `json:"label"`
 	Description OptNilString              `json:"description"`
+	Property    OptNilString              `json:"property"`
+	Role        OptNilParameterRole       `json:"role"`
 	Required    bool                      `json:"required"`
 	ReadOnly    bool                      `json:"read_only"`
 	Default     OptNilString              `json:"default"`
@@ -13842,6 +14020,16 @@ func (s *StringScalarParameter) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *StringScalarParameter) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *StringScalarParameter) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *StringScalarParameter) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -13899,6 +14087,16 @@ func (s *StringScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
 }
 
+// SetProperty sets the value of Property.
+func (s *StringScalarParameter) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *StringScalarParameter) SetRole(val OptNilParameterRole) {
+	s.Role = val
+}
+
 // SetRequired sets the value of Required.
 func (s *StringScalarParameter) SetRequired(val bool) {
 	s.Required = val
@@ -13931,6 +14129,8 @@ type StringScalarParameterDraft struct {
 	Name        NonBlankString                 `json:"name"`
 	Label       NonBlankString                 `json:"label"`
 	Description OptNilString                   `json:"description"`
+	Property    OptNilString                   `json:"property"`
+	Role        OptNilParameterRole            `json:"role"`
 	Required    bool                           `json:"required"`
 	ReadOnly    bool                           `json:"read_only"`
 	Default     OptNilString                   `json:"default"`
@@ -13961,6 +14161,16 @@ func (s *StringScalarParameterDraft) GetLabel() NonBlankString {
 // GetDescription returns the value of Description.
 func (s *StringScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
+}
+
+// GetProperty returns the value of Property.
+func (s *StringScalarParameterDraft) GetProperty() OptNilString {
+	return s.Property
+}
+
+// GetRole returns the value of Role.
+func (s *StringScalarParameterDraft) GetRole() OptNilParameterRole {
+	return s.Role
 }
 
 // GetRequired returns the value of Required.
@@ -14011,6 +14221,16 @@ func (s *StringScalarParameterDraft) SetLabel(val NonBlankString) {
 // SetDescription sets the value of Description.
 func (s *StringScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
+}
+
+// SetProperty sets the value of Property.
+func (s *StringScalarParameterDraft) SetProperty(val OptNilString) {
+	s.Property = val
+}
+
+// SetRole sets the value of Role.
+func (s *StringScalarParameterDraft) SetRole(val OptNilParameterRole) {
+	s.Role = val
 }
 
 // SetRequired sets the value of Required.

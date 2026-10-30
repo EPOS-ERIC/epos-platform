@@ -35,12 +35,9 @@ func (WMTSConfiguration) NativeFormats() []NativeFormat {
 
 func (value GenericWebServiceConfiguration) NativeFormats() []NativeFormat {
 	var formatSchema *StringSchema
-	for _, parameter := range value.Parameters {
-		if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
-			schema := parameter.Schema.(StringSchema)
-			formatSchema = &schema
-			break
-		}
+	if parameter := value.formatParameter(); parameter != nil {
+		schema := parameter.Schema.(StringSchema)
+		formatSchema = &schema
 	}
 
 	if formatSchema == nil {
@@ -66,53 +63,95 @@ func (value GenericWebServiceConfiguration) NativeFormats() []NativeFormat {
 	return result
 }
 
-func validateWebServiceParameterRoles(parameters []WebServiceParameterInput, field string) error {
-	seen := make(map[WebServiceParameterRole]struct{})
-	for i, parameter := range parameters {
-		if parameter.Role == nil {
-			continue
+func (value GenericWebServiceConfiguration) formatParameter() *Parameter {
+	for _, parameter := range value.Parameters {
+		if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
+			return &parameter.Parameter
 		}
-		target := fmt.Sprintf("%s[%d]", field, i)
-		role := *parameter.Role
-		if _, exists := seen[role]; exists {
-			return invalidField(target+".role", "Only one parameter per role is allowed.", nil)
-		}
-		seen[role] = struct{}{}
-		if parameter.Schema.Kind() == ParameterSchemaKindTemplate {
-			return invalidField(target+".role", "Roles are only supported on non-template parameters.", nil)
-		}
-		switch role {
-		case WebServiceParameterRoleFormat:
-			schema, ok := parameter.Schema.(StringSchema)
-			if !ok {
-				return invalidField(target+".kind", "FORMAT role requires a STRING parameter.", nil)
-			}
-			if schema.MultipleValues {
-				return invalidField(target+".multiple_values", "FORMAT role requires a single-value parameter.", nil)
-			}
-			if !parameter.ReadOnly {
-				return invalidField(target+".read_only", "FORMAT role requires a read-only parameter.", nil)
-			}
-			if schema.Default == nil {
-				return invalidField(target+".default", "FORMAT role requires a default.", nil)
-			}
-		case WebServiceParameterRoleStartDate, WebServiceParameterRoleEndDate:
-			if _, ok := parameter.Schema.(DateTimeSchema); !ok {
-				return invalidField(target+".kind", "Date roles require a DATETIME parameter.", nil)
-			}
-		case WebServiceParameterRoleMinLon, WebServiceParameterRoleMaxLon,
-			WebServiceParameterRoleMinLat, WebServiceParameterRoleMaxLat:
-			switch parameter.Schema.(type) {
-			case IntegerSchema, FloatSchema:
-				if parameter.Schema.AllowsMultipleValues() {
-					return invalidField(target+".multiple_values", "Coordinate roles require a single-value parameter.", nil)
+		if template, ok := parameter.Schema.(TemplateSchema); ok {
+			for _, child := range template.Parameters {
+				if child.Role != nil && *child.Role == WebServiceParameterRoleFormat {
+					return &child
 				}
-			default:
-				return invalidField(target+".kind", "Coordinate roles require an INTEGER or FLOAT parameter.", nil)
+			}
+		}
+	}
+	if value.Body != nil {
+		for _, parameter := range value.Body.Parameters {
+			if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
+				return &parameter
+			}
+		}
+	}
+	return nil
+}
+
+func validateWebServiceParameterRoles(parameters []WebServiceParameterInput, field string, body []ParameterInput) error {
+	seen := map[WebServiceParameterRole]struct{}{}
+	for i, parameter := range parameters {
+		target := fmt.Sprintf("%s[%d]", field, i)
+		if err := validateParameterRole(parameter.ParameterInput, target, seen); err != nil {
+			return err
+		}
+		if template, ok := parameter.Schema.(TemplateSchemaInput); ok {
+			for j, child := range template.Parameters {
+				if err := validateParameterRole(child, fmt.Sprintf("%s.parameters[%d]", target, j), seen); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	for i, parameter := range body {
+		if err := validateParameterRole(parameter, fmt.Sprintf("body_parameters[%d]", i), seen); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateParameterRole(parameter ParameterInput, target string, seen map[WebServiceParameterRole]struct{}) error {
+	if parameter.Role == nil {
+		return nil
+	}
+	role := *parameter.Role
+	if _, exists := seen[role]; exists {
+		return invalidField(target+".role", "Only one parameter per role is allowed.", nil)
+	}
+	seen[role] = struct{}{}
+	if parameter.Schema.Kind() == ParameterSchemaKindTemplate {
+		return invalidField(target+".role", "Roles are only supported on non-template parameters.", nil)
+	}
+	switch role {
+	case WebServiceParameterRoleFormat:
+		schema, ok := parameter.Schema.(StringSchema)
+		if !ok {
+			return invalidField(target+".kind", "FORMAT role requires a STRING parameter.", nil)
+		}
+		if schema.MultipleValues {
+			return invalidField(target+".multiple_values", "FORMAT role requires a single-value parameter.", nil)
+		}
+		if !parameter.ReadOnly {
+			return invalidField(target+".read_only", "FORMAT role requires a read-only parameter.", nil)
+		}
+		if schema.Default == nil {
+			return invalidField(target+".default", "FORMAT role requires a default.", nil)
+		}
+	case WebServiceParameterRoleStartDate, WebServiceParameterRoleEndDate:
+		if _, ok := parameter.Schema.(DateTimeSchema); !ok {
+			return invalidField(target+".kind", "Date roles require a DATETIME parameter.", nil)
+		}
+	case WebServiceParameterRoleMinLon, WebServiceParameterRoleMaxLon,
+		WebServiceParameterRoleMinLat, WebServiceParameterRoleMaxLat:
+		switch parameter.Schema.(type) {
+		case IntegerSchema, FloatSchema:
+			if parameter.Schema.AllowsMultipleValues() {
+				return invalidField(target+".multiple_values", "Coordinate roles require a single-value parameter.", nil)
 			}
 		default:
-			return invalidField(target+".role", "Role is not supported.", nil)
+			return invalidField(target+".kind", "Coordinate roles require an INTEGER or FLOAT parameter.", nil)
 		}
+	default:
+		return invalidField(target+".role", "Role is not supported.", nil)
 	}
 	return nil
 }

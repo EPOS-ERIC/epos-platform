@@ -132,6 +132,7 @@ func (service GenericWebServiceConfiguration) prepareHTTPRequest(parameters []Di
 	}
 	if formatValues != nil {
 		values.resolved[formatParameterID] = formatValues
+		values.supplied[formatParameterID] = true
 	}
 
 	// Render parameter templates and serialize values once, before placing them in the request.
@@ -290,15 +291,12 @@ func (service GenericWebServiceConfiguration) selectAccessFormat(selected *strin
 		return uuid.Nil, nil, invalidField("output_format", "Select a native output format for this distribution.", nil)
 	}
 
-	for _, parameter := range service.Parameters {
-		if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
-			resolved, err := resolveAccessValue(parameter.Schema, AccessString(*selected))
-			if err != nil {
-				return uuid.Nil, nil, internalValidationError(err)
-			}
-
-			return parameter.ID, resolved, nil
+	if parameter := service.formatParameter(); parameter != nil {
+		resolved, err := resolveAccessValue(parameter.Schema, AccessString(*selected))
+		if err != nil {
+			return uuid.Nil, nil, internalValidationError(err)
 		}
+		return parameter.ID, resolved, nil
 	}
 	return uuid.Nil, nil, nil
 }

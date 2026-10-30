@@ -97,7 +97,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			params, err := parameterParams(test.value, parameterOwner{}, nil, nil, nil, false)
+			params, err := parameterParams(test.value, parameterOwner{}, nil, false)
 			if err != nil {
 				t.Fatalf("parameterParams() error = %v", err)
 			}
@@ -138,6 +138,7 @@ func parameterRow(value sqlc.AddLifecycleParameterParams) sqlc.Parameter {
 		WebServiceBodyID:           value.WebServiceBodyID,
 		TemplateParameterID:        value.TemplateParameterID,
 		Role:                       value.Role,
+		Property:                   value.Property,
 		Location:                   value.Location,
 		Explode:                    value.Explode,
 		SchemaKind:                 value.SchemaKind,
@@ -145,7 +146,7 @@ func parameterRow(value sqlc.AddLifecycleParameterParams) sqlc.Parameter {
 }
 
 func parameterRowForSchema(value domain.ParameterInput, parentID uuid.UUID) sqlc.Parameter {
-	params, err := parameterParams(value, parameterOwner{templateParameterID: &parentID}, nil, nil, nil, false)
+	params, err := parameterParams(value, parameterOwner{templateParameterID: &parentID}, nil, false)
 	if err != nil {
 		panic(err)
 	}
@@ -181,7 +182,7 @@ func TestParameterParamsPreservesWebServiceOwner(t *testing.T) {
 		Name:   "value",
 		Label:  "Value",
 		Schema: domain.StringSchema{},
-	}, parameterOwner{webServiceID: &serviceID}, nil, nil, &location, true)
+	}, parameterOwner{webServiceID: &serviceID}, &location, true)
 	if err != nil {
 		t.Fatalf("parameterParams() error = %v", err)
 	}
