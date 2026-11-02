@@ -84,7 +84,7 @@ paths:
       tags: [Access]
       summary: Access a web-service distribution
       description: |-
-        Executes an HTTP or WFS web-service distribution using parameter IDs and values, with optional native format selection. WMS and WMTS clients must access providers directly using the distribution configuration; these endpoints do not support them. Published versions allow anonymous access; other states require existing dataset permissions. Successful responses are streamed; upstream HTTP failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use the download endpoint.
+        Executes an HTTP, DYNAMIC, or WFS web-service distribution using parameter IDs and values, with optional native format selection. Dynamic requests require longitude and latitude values; coordinate parameter IDs must not be repeated in parameters. WMS and WMTS clients must access providers directly using the distribution configuration; these endpoints do not support them. Published versions allow anonymous access; other states require existing dataset permissions. Successful responses are streamed; upstream HTTP failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use the download endpoint.
       operationId: accessDistribution
       security:
         - bearerAuth: []
@@ -143,7 +143,7 @@ paths:
       tags: [Access]
       summary: Prepare a web-service request without executing it
       description: |-
-        Prepares an HTTP or WFS web-service distribution request using parameter IDs and values, with optional native format selection. WMS and WMTS clients must access providers directly using the distribution configuration; these endpoints do not support them. Published versions allow anonymous access; other states require existing dataset permissions. Returns the provider request without executing it. Downloadable-file distributions are not supported.
+        Prepares an HTTP, DYNAMIC, or WFS web-service distribution request using parameter IDs and values, with optional native format selection. Dynamic requests require longitude and latitude values; coordinate parameter IDs must not be repeated in parameters. WMS and WMTS clients must access providers directly using the distribution configuration; these endpoints do not support them. Published versions allow anonymous access; other states require existing dataset permissions. Returns the provider request without executing it. Downloadable-file distributions are not supported.
       operationId: prepareDistribution
       security:
         - bearerAuth: []
@@ -2350,11 +2350,13 @@ components:
     DistributionAccessRequest:
       oneOf:
         - $ref: "#/components/schemas/HTTPDistributionAccessRequest"
+        - $ref: "#/components/schemas/DynamicDistributionAccessRequest"
         - $ref: "#/components/schemas/WFSDistributionAccessRequest"
       discriminator:
         propertyName: type
         mapping:
           HTTP: "#/components/schemas/HTTPDistributionAccessRequest"
+          DYNAMIC: "#/components/schemas/DynamicDistributionAccessRequest"
           WFS: "#/components/schemas/WFSDistributionAccessRequest"
 
     HTTPDistributionAccessRequest:
@@ -2365,6 +2367,20 @@ components:
         type: { type: string, enum: [HTTP] }
         parameters:
           type: array
+          items:
+            $ref: "#/components/schemas/DistributionAccessParameter"
+
+    DynamicDistributionAccessRequest:
+      type: object
+      additionalProperties: false
+      required: [type, longitude, latitude, parameters]
+      properties:
+        type: { type: string, enum: [DYNAMIC] }
+        longitude: { type: number, format: double }
+        latitude: { type: number, format: double }
+        parameters:
+          type: array
+          description: Ordinary parameter values. Do not include the parameter IDs assigned LONGITUDE or LATITUDE roles; their values are supplied by longitude and latitude.
           items:
             $ref: "#/components/schemas/DistributionAccessParameter"
 
@@ -2777,6 +2793,7 @@ components:
         - $ref: "#/components/schemas/WmtsWebServiceConfigurationDraft"
         - $ref: "#/components/schemas/WfsWebServiceConfigurationDraft"
         - $ref: "#/components/schemas/GenericWebServiceConfigurationDraft"
+        - $ref: "#/components/schemas/DynamicWebServiceConfigurationDraft"
       discriminator:
         propertyName: type
         mapping:
@@ -2784,6 +2801,7 @@ components:
           HTTP: "#/components/schemas/GenericWebServiceConfigurationDraft"
           WMTS: "#/components/schemas/WmtsWebServiceConfigurationDraft"
           WFS: "#/components/schemas/WfsWebServiceConfigurationDraft"
+          DYNAMIC: "#/components/schemas/DynamicWebServiceConfigurationDraft"
 
     GenericWebServiceConfigurationDraft:
       type: object
@@ -2793,6 +2811,28 @@ components:
         type:
           type: string
           enum: [HTTP]
+        template_url: { $ref: "#/components/schemas/NonBlankString" }
+        method: { $ref: "#/components/schemas/WebServiceMethod" }
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ParameterDraft" }
+        body_content_type: { $ref: "#/components/schemas/NonBlankString" }
+        body_template: { $ref: "#/components/schemas/NonBlankString" }
+        body_required:
+          type: boolean
+          description: Defaults to true when a request body is configured. Must be omitted when no body is configured. Optional bodies are omitted only when unresolved and no child values were supplied.
+        body_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ScalarParameterDraft" }
+        format: { $ref: "#/components/schemas/NonBlankString" }
+
+    DynamicWebServiceConfigurationDraft:
+      type: object
+      additionalProperties: false
+      description: HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
+      required: [type, template_url, method, format]
+      properties:
+        type: { type: string, enum: [DYNAMIC] }
         template_url: { $ref: "#/components/schemas/NonBlankString" }
         method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:
@@ -3387,6 +3427,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
@@ -3403,6 +3445,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         default: { type: boolean, nullable: true }
@@ -3417,6 +3461,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
@@ -3434,6 +3480,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
@@ -3451,6 +3499,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         minimum: { type: string, format: date-time, nullable: true }
@@ -3469,6 +3519,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         default: { type: string, nullable: true }
@@ -3486,6 +3538,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         default: { type: boolean, nullable: true }
@@ -3501,6 +3555,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
@@ -3519,6 +3575,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
@@ -3537,6 +3595,8 @@ components:
         name: { $ref: "#/components/schemas/NonBlankString" }
         label: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
+        property: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
         minimum: { type: string, format: date-time, nullable: true }
@@ -3551,7 +3611,7 @@ components:
     ParameterRole:
       type: string
       nullable: true
-      enum: [FORMAT, START_DATE, END_DATE, MIN_LON, MAX_LON, MIN_LAT, MAX_LAT]
+      enum: [FORMAT, START_DATE, END_DATE, MIN_LON, MAX_LON, MIN_LAT, MAX_LAT, LONGITUDE, LATITUDE]
 
     WebServiceMethod:
       type: string
@@ -3559,7 +3619,7 @@ components:
 
     WebServiceType:
       type: string
-      enum: [WMS, HTTP, WMTS, WFS]
+      enum: [WMS, HTTP, WMTS, WFS, DYNAMIC]
 
     WebServiceVisibleOn:
       type: string
@@ -4035,6 +4095,7 @@ components:
         - $ref: "#/components/schemas/WmtsWebServiceConfiguration"
         - $ref: "#/components/schemas/WfsWebServiceConfiguration"
         - $ref: "#/components/schemas/GenericWebServiceConfiguration"
+        - $ref: "#/components/schemas/DynamicWebServiceConfiguration"
       discriminator:
         propertyName: type
         mapping:
@@ -4042,6 +4103,7 @@ components:
           HTTP: "#/components/schemas/GenericWebServiceConfiguration"
           WMTS: "#/components/schemas/WmtsWebServiceConfiguration"
           WFS: "#/components/schemas/WfsWebServiceConfiguration"
+          DYNAMIC: "#/components/schemas/DynamicWebServiceConfiguration"
 
     GenericWebServiceConfiguration:
       type: object
@@ -4051,6 +4113,28 @@ components:
         type:
           type: string
           enum: [HTTP]
+        template_url: { type: string }
+        method: { $ref: "#/components/schemas/WebServiceMethod" }
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+        body_content_type: { type: string, nullable: true }
+        body_template: { type: string, nullable: true }
+        body_required:
+          type: boolean
+          description: Whether the configured request body must be rendered. Omitted when no request body is configured.
+        body_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ScalarParameter" }
+        format: { type: string }
+
+    DynamicWebServiceConfiguration:
+      type: object
+      additionalProperties: false
+      description: HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters.
+      required: [type, template_url, method, format]
+      properties:
+        type: { type: string, enum: [DYNAMIC] }
         template_url: { type: string }
         method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:

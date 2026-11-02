@@ -22,6 +22,14 @@ type HTTPAccessInput struct {
 
 func (HTTPAccessInput) webServiceAccessInput() {}
 
+type DynamicAccessInput struct {
+	Longitude  float64
+	Latitude   float64
+	Parameters []DistributionAccessParameter
+}
+
+func (DynamicAccessInput) webServiceAccessInput() {}
+
 type WFSAccessInput struct {
 	FeatureType *string
 	ResultLimit *int64

@@ -23,12 +23,49 @@ import (
 func (service WebService) PrepareAccess(input DistributionAccessInput) (PreparedHTTPRequest, error) {
 	switch configuration := service.Configuration.(type) {
 	case GenericWebServiceConfiguration:
-		return configuration.PrepareAccess(input)
+		switch service.Type {
+		case WebServiceTypeHTTP:
+			return configuration.PrepareAccess(input)
+		case WebServiceTypeDynamic:
+			dynamic, ok := input.Input.(DynamicAccessInput)
+			if !ok {
+				return PreparedHTTPRequest{}, invalidField("type", "Request type does not match service configuration.", nil)
+			}
+			return configuration.prepareDynamicAccess(dynamic, input.OutputFormat)
+		case WebServiceTypeWMS, WebServiceTypeWMTS, WebServiceTypeWFS:
+			return PreparedHTTPRequest{}, invalidField("type", "Request type does not match service configuration.", nil)
+		default:
+			return PreparedHTTPRequest{}, invalidField("type", "Request type does not match service configuration.", nil)
+		}
 	case WFSConfiguration:
+		if service.Type != WebServiceTypeWFS {
+			return PreparedHTTPRequest{}, invalidField("type", "Request type does not match service configuration.", nil)
+		}
 		return configuration.PrepareAccess(input)
 	default:
 		return PreparedHTTPRequest{}, invalidField("type", "Prepared HTTP access is not supported for this service configuration.", nil)
 	}
+}
+
+func (service GenericWebServiceConfiguration) prepareDynamicAccess(input DynamicAccessInput, outputFormat *string) (PreparedHTTPRequest, error) {
+	longitude := service.parameterWithRole(WebServiceParameterRoleLongitude)
+	latitude := service.parameterWithRole(WebServiceParameterRoleLatitude)
+	if longitude == nil || latitude == nil {
+		return PreparedHTTPRequest{}, apperror.Default(apperror.CodeInternal)
+	}
+
+	parameters := make([]DistributionAccessParameter, 0, len(input.Parameters)+2)
+	parameters = append(parameters, input.Parameters...)
+	for i, parameter := range input.Parameters {
+		if parameter.ID == longitude.ID || parameter.ID == latitude.ID {
+			return PreparedHTTPRequest{}, invalidField(fmt.Sprintf("parameters[%d].id", i), "Coordinate values must be supplied through longitude and latitude.", nil)
+		}
+	}
+	parameters = append(parameters,
+		DistributionAccessParameter{ID: longitude.ID, Value: AccessFloat(input.Longitude)},
+		DistributionAccessParameter{ID: latitude.ID, Value: AccessFloat(input.Latitude)},
+	)
+	return service.prepareHTTPRequest(parameters, outputFormat)
 }
 
 func (service WFSConfiguration) PrepareAccess(input DistributionAccessInput) (PreparedHTTPRequest, error) {
@@ -132,6 +169,7 @@ func (service GenericWebServiceConfiguration) prepareHTTPRequest(parameters []Di
 	}
 	if formatValues != nil {
 		values.resolved[formatParameterID] = formatValues
+		values.supplied[formatParameterID] = true
 	}
 
 	// Render parameter templates and serialize values once, before placing them in the request.
@@ -290,15 +328,12 @@ func (service GenericWebServiceConfiguration) selectAccessFormat(selected *strin
 		return uuid.Nil, nil, invalidField("output_format", "Select a native output format for this distribution.", nil)
 	}
 
-	for _, parameter := range service.Parameters {
-		if parameter.Role != nil && *parameter.Role == WebServiceParameterRoleFormat {
-			resolved, err := resolveAccessValue(parameter.Schema, AccessString(*selected))
-			if err != nil {
-				return uuid.Nil, nil, internalValidationError(err)
-			}
-
-			return parameter.ID, resolved, nil
+	if parameter := service.parameterWithRole(WebServiceParameterRoleFormat); parameter != nil {
+		resolved, err := resolveAccessValue(parameter.Schema, AccessString(*selected))
+		if err != nil {
+			return uuid.Nil, nil, internalValidationError(err)
 		}
+		return parameter.ID, resolved, nil
 	}
 	return uuid.Nil, nil, nil
 }

@@ -24,8 +24,6 @@ type parameterOwner struct {
 func parameterParams(
 	value domain.ParameterInput,
 	owner parameterOwner,
-	property *string,
-	role *domain.WebServiceParameterRole,
 	location *domain.ParameterLocation,
 	explode bool,
 ) (sqlc.AddLifecycleParameterParams, error) {
@@ -48,11 +46,11 @@ func parameterParams(
 		Description:                 value.Description,
 		Required:                    value.Required,
 		ReadOnly:                    value.ReadOnly,
-		Property:                    property,
+		Property:                    value.Property,
 		Explode:                     explode,
 	}
-	if role != nil {
-		params.Role = new(sqlc.WebServiceParameterRole(*role))
+	if value.Role != nil {
+		params.Role = new(sqlc.WebServiceParameterRole(*value.Role))
 	}
 	if location != nil {
 		converted := sqlc.WebServiceParameterLocation(*location)
@@ -68,12 +66,10 @@ func persistParameter(
 	q *sqlc.Queries,
 	value domain.ParameterInput,
 	owner parameterOwner,
-	property *string,
-	role *domain.WebServiceParameterRole,
 	location *domain.ParameterLocation,
 	explode bool,
 ) (sqlc.Parameter, error) {
-	params, err := parameterParams(value, owner, property, role, location, explode)
+	params, err := parameterParams(value, owner, location, explode)
 	if err != nil {
 		return sqlc.Parameter{}, err
 	}
@@ -132,7 +128,7 @@ func persistParameter(
 			break
 		}
 		for _, child := range schema.Parameters {
-			if _, err := persistParameter(ctx, q, child, parameterOwner{templateParameterID: &created.ID}, nil, nil, nil, false); err != nil {
+			if _, err := persistParameter(ctx, q, child, parameterOwner{templateParameterID: &created.ID}, nil, false); err != nil {
 				return sqlc.Parameter{}, fmt.Errorf("add template parameter: %w", err)
 			}
 		}
@@ -353,11 +349,18 @@ func domainParameter(value sqlc.Parameter, template *sqlc.ParameterTemplate, chi
 	default:
 		return domain.Parameter{}, fmt.Errorf("unsupported parameter schema kind %q", value.SchemaKind)
 	}
+	var role *domain.WebServiceParameterRole
+	if value.Role != nil {
+		converted := domain.WebServiceParameterRole(*value.Role)
+		role = &converted
+	}
 	return domain.Parameter{
 		Position:    int(value.Position),
 		Name:        value.Name,
 		Label:       value.Label,
 		Description: value.Description,
+		Property:    value.Property,
+		Role:        role,
 		Required:    value.Required,
 		ReadOnly:    value.ReadOnly,
 		Schema:      schema,

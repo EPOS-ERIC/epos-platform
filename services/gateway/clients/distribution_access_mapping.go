@@ -41,6 +41,8 @@ func toProtoDistributionAccess(request domain.AccessRequest) (*metadatalifecycle
 	switch input := request.Input.(type) {
 	case domain.HTTPAccessInput:
 		assignments = input.Parameters
+	case domain.DynamicAccessInput:
+		assignments = input.Parameters
 	case domain.WFSAccessInput:
 		assignments = input.Parameters
 	default:
@@ -62,6 +64,14 @@ func toProtoDistributionAccess(request domain.AccessRequest) (*metadatalifecycle
 	case domain.HTTPAccessInput:
 		result.Input = &metadatalifecyclev1.PrepareDistributionAccessRequest_Http{
 			Http: &metadatalifecyclev1.HTTPDistributionAccessInput{Parameters: parameters},
+		}
+	case domain.DynamicAccessInput:
+		result.Input = &metadatalifecyclev1.PrepareDistributionAccessRequest_Dynamic{
+			Dynamic: &metadatalifecyclev1.DynamicDistributionAccessInput{
+				Longitude:  input.Longitude,
+				Latitude:   input.Latitude,
+				Parameters: parameters,
+			},
 		}
 	case domain.WFSAccessInput:
 		wfs := &metadatalifecyclev1.WFSDistributionAccessInput{

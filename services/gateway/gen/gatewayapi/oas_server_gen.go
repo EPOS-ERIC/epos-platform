@@ -10,12 +10,13 @@ import (
 type Handler interface {
 	// AccessDistribution implements accessDistribution operation.
 	//
-	// Executes an HTTP or WFS web-service distribution using parameter IDs and values, with optional
-	// native format selection. WMS and WMTS clients must access providers directly using the distribution
-	// configuration; these endpoints do not support them. Published versions allow anonymous access; other
-	// states require existing dataset permissions. Successful responses are streamed; upstream HTTP
-	// failures return a 503 Gateway Problem with upstream_response. Downloadable-file distributions use
-	// the download endpoint.
+	// Executes an HTTP, DYNAMIC, or WFS web-service distribution using parameter IDs and values, with
+	// optional native format selection. Dynamic requests require longitude and latitude values; coordinate
+	// parameter IDs must not be repeated in parameters. WMS and WMTS clients must access providers
+	// directly using the distribution configuration; these endpoints do not support them. Published
+	// versions allow anonymous access; other states require existing dataset permissions. Successful
+	// responses are streamed; upstream HTTP failures return a 503 Gateway Problem with upstream_response.
+	// Downloadable-file distributions use the download endpoint.
 	//
 	// POST /distributions/{distributionId}/access
 	AccessDistribution(ctx context.Context, req DistributionAccessRequest, params AccessDistributionParams) (*AccessDistribution2XXStatusCode, error)
@@ -323,11 +324,13 @@ type Handler interface {
 	ListUsers(ctx context.Context) ([]UserListItem, error)
 	// PrepareDistribution implements prepareDistribution operation.
 	//
-	// Prepares an HTTP or WFS web-service distribution request using parameter IDs and values, with
-	// optional native format selection. WMS and WMTS clients must access providers directly using the
-	// distribution configuration; these endpoints do not support them. Published versions allow anonymous
-	// access; other states require existing dataset permissions. Returns the provider request without
-	// executing it. Downloadable-file distributions are not supported.
+	// Prepares an HTTP, DYNAMIC, or WFS web-service distribution request using parameter IDs and values,
+	// with optional native format selection. Dynamic requests require longitude and latitude values;
+	// coordinate parameter IDs must not be repeated in parameters. WMS and WMTS clients must access
+	// providers directly using the distribution configuration; these endpoints do not support them.
+	// Published versions allow anonymous access; other states require existing dataset permissions.
+	// Returns the provider request without executing it. Downloadable-file distributions are not
+	// supported.
 	//
 	// POST /distributions/{distributionId}/prepare
 	PrepareDistribution(ctx context.Context, req DistributionAccessRequest, params PrepareDistributionParams) (*PrepareDistributionOKHeaders, error)

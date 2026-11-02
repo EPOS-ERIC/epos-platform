@@ -24,10 +24,28 @@ export type PreparedDistributionRequest = {
 };
 
 export type DistributionAccessRequest =
-  HTTPDistributionAccessRequest | WFSDistributionAccessRequest;
+  | HTTPDistributionAccessRequest
+  | DynamicDistributionAccessRequest
+  | WFSDistributionAccessRequest;
 
 export type HTTPDistributionAccessRequest = {
   type: "HTTP";
+  parameters: DistributionAccessParameter[];
+};
+
+export type DynamicDistributionAccessRequest = {
+  type: "DYNAMIC";
+  /**
+   * @format double
+   */
+  longitude: number;
+  /**
+   * @format double
+   */
+  latitude: number;
+  /**
+   * Ordinary parameter values. Do not include the parameter IDs assigned LONGITUDE or LATITUDE roles; their values are supplied by longitude and latitude.
+   */
   parameters: DistributionAccessParameter[];
 };
 
@@ -407,10 +425,29 @@ export type WebServiceConfigurationDraft =
   | WmsWebServiceConfigurationDraft
   | WmtsWebServiceConfigurationDraft
   | WfsWebServiceConfigurationDraft
-  | GenericWebServiceConfigurationDraft;
+  | GenericWebServiceConfigurationDraft
+  | DynamicWebServiceConfigurationDraft;
 
 export type GenericWebServiceConfigurationDraft = {
   type: "HTTP";
+  template_url: NonBlankString;
+  method: WebServiceMethod;
+  parameters?: ParameterDraft[];
+  body_content_type?: NonBlankString;
+  body_template?: NonBlankString;
+  /**
+   * Defaults to true when a request body is configured. Must be omitted when no body is configured. Optional bodies are omitted only when unresolved and no child values were supplied.
+   */
+  body_required?: boolean;
+  body_parameters?: ScalarParameterDraft[];
+  format: NonBlankString;
+};
+
+/**
+ * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
+ */
+export type DynamicWebServiceConfigurationDraft = {
+  type: "DYNAMIC";
   template_url: NonBlankString;
   method: WebServiceMethod;
   parameters?: ParameterDraft[];
@@ -924,6 +961,8 @@ export type StringScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   ["default"]?: string | null;
@@ -940,6 +979,8 @@ export type BooleanScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   ["default"]?: boolean | null;
@@ -954,6 +995,8 @@ export type IntegerScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -980,6 +1023,8 @@ export type FloatScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -1006,6 +1051,8 @@ export type DateTimeScalarParameterDraft = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -1036,6 +1083,8 @@ export type StringScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   ["default"]?: string | null;
@@ -1056,6 +1105,8 @@ export type BooleanScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   ["default"]?: boolean | null;
@@ -1074,6 +1125,8 @@ export type IntegerScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -1104,6 +1157,8 @@ export type FloatScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -1134,6 +1189,8 @@ export type DateTimeScalarParameter = {
   name: NonBlankString;
   label: NonBlankString;
   description?: string | null;
+  property?: string | null;
+  role?: ParameterRole;
   required: boolean;
   read_only: boolean;
   /**
@@ -1161,11 +1218,13 @@ export type ParameterRole =
   | "MAX_LON"
   | "MIN_LAT"
   | "MAX_LAT"
+  | "LONGITUDE"
+  | "LATITUDE"
   | null;
 
 export type WebServiceMethod = "GET" | "POST" | "PUT" | "DELETE";
 
-export type WebServiceType = "WMS" | "HTTP" | "WMTS" | "WFS";
+export type WebServiceType = "WMS" | "HTTP" | "WMTS" | "WFS" | "DYNAMIC";
 
 export type WebServiceVisibleOn = "GRAPH" | "TABLE" | "MAP";
 
@@ -1578,10 +1637,29 @@ export type WebServiceConfiguration =
   | WmsWebServiceConfiguration
   | WmtsWebServiceConfiguration
   | WfsWebServiceConfiguration
-  | GenericWebServiceConfiguration;
+  | GenericWebServiceConfiguration
+  | DynamicWebServiceConfiguration;
 
 export type GenericWebServiceConfiguration = {
   type: "HTTP";
+  template_url: string;
+  method: WebServiceMethod;
+  parameters?: Parameter[];
+  body_content_type?: string | null;
+  body_template?: string | null;
+  /**
+   * Whether the configured request body must be rendered. Omitted when no request body is configured.
+   */
+  body_required?: boolean;
+  body_parameters?: ScalarParameter[];
+  format: string;
+};
+
+/**
+ * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters.
+ */
+export type DynamicWebServiceConfiguration = {
+  type: "DYNAMIC";
   template_url: string;
   method: WebServiceMethod;
   parameters?: Parameter[];

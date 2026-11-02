@@ -1416,6 +1416,8 @@ template_parameters AS (
             description,
             required,
             READ_ONLY,
+            property,
+            role,
             schema_kind
         )
     SELECT
@@ -1443,6 +1445,8 @@ template_parameters AS (
         source_parameter.description,
         source_parameter.required,
         source_parameter.read_only,
+        source_parameter.property,
+        source_parameter.role,
         source_parameter.schema_kind
     FROM
         parameters AS source_parameter

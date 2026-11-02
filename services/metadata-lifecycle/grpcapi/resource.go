@@ -937,6 +937,8 @@ func scalarParameterOutput(value domain.Parameter) *metadatalifecyclev1.ScalarPa
 		Name:        value.Name,
 		Label:       value.Label,
 		Description: value.Description,
+		Property:    value.Property,
+		Role:        webServiceParameterRoleOutput(value.Role),
 		Required:    value.Required,
 		ReadOnly:    value.ReadOnly,
 		Id:          value.ID.String(),
@@ -1200,6 +1202,8 @@ func webServiceTypeInput(value metadatalifecyclev1.WebServiceType) (domain.WebSe
 		return domain.WebServiceTypeWMTS, nil
 	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS:
 		return domain.WebServiceTypeWFS, nil
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC:
+		return domain.WebServiceTypeDynamic, nil
 	default:
 		return "", apperror.New(apperror.CodeValidationFailed, "web service type is invalid") //nolint:wrapcheck
 	}
@@ -1215,6 +1219,8 @@ func webServiceTypeOutput(value domain.WebServiceType) metadatalifecyclev1.WebSe
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
 	case domain.WebServiceTypeWFS:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
+	case domain.WebServiceTypeDynamic:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
 	default:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
 	}
@@ -1276,7 +1282,9 @@ func webServiceParameterInput(value *metadatalifecyclev1.ParameterInput) (domain
 	if err != nil {
 		return domain.WebServiceParameterInput{}, err
 	}
-	return domain.WebServiceParameterInput{ParameterInput: parameter, Property: value.Property, Role: role, Location: location, Explode: value.GetExplode()}, nil
+	parameter.Property = value.Property
+	parameter.Role = role
+	return domain.WebServiceParameterInput{ParameterInput: parameter, Location: location, Explode: value.GetExplode()}, nil
 }
 
 func webServiceParameterRoleInput(value metadatalifecyclev1.WebServiceParameterRole) (*domain.WebServiceParameterRole, error) {
@@ -1298,6 +1306,10 @@ func webServiceParameterRoleInput(value metadatalifecyclev1.WebServiceParameterR
 		role = domain.WebServiceParameterRoleMinLat
 	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT:
 		role = domain.WebServiceParameterRoleMaxLat
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LONGITUDE:
+		role = domain.WebServiceParameterRoleLongitude
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LATITUDE:
+		role = domain.WebServiceParameterRoleLatitude
 	default:
 		return nil, apperror.New(apperror.CodeValidationFailed, "parameter role is invalid") //nolint:wrapcheck
 	}
@@ -1323,6 +1335,10 @@ func webServiceParameterRoleOutput(value *domain.WebServiceParameterRole) metada
 		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MIN_LAT
 	case domain.WebServiceParameterRoleMaxLat:
 		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT
+	case domain.WebServiceParameterRoleLongitude:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LONGITUDE
+	case domain.WebServiceParameterRoleLatitude:
+		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LATITUDE
 	default:
 		return metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_UNSPECIFIED
 	}
@@ -1432,7 +1448,11 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (doma
 	if value == nil {
 		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter is required") //nolint:wrapcheck
 	}
-	parameter := domain.ParameterInput{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
+	role, err := webServiceParameterRoleInput(value.GetRole())
+	if err != nil {
+		return domain.ParameterInput{}, err
+	}
+	parameter := domain.ParameterInput{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Property: value.Property, Role: role, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
 	switch v := value.GetValue().(type) {
 	case *metadatalifecyclev1.ScalarParameterInput_String_:
 		if v.String_ == nil {

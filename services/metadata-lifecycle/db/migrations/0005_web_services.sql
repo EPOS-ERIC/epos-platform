@@ -1,11 +1,11 @@
 -- +goose Up
 
 CREATE TYPE web_service_http_method AS ENUM ('GET', 'POST', 'PUT', 'DELETE');
-CREATE TYPE web_service_type AS ENUM ('WMS', 'HTTP', 'WMTS', 'WFS');
+CREATE TYPE web_service_type AS ENUM ('WMS', 'HTTP', 'WMTS', 'WFS', 'DYNAMIC');
 CREATE TYPE web_service_visible_on AS ENUM ('GRAPH', 'TABLE', 'MAP');
 CREATE TYPE web_service_parameter_location AS ENUM ('PATH', 'QUERY', 'HEADER');
 CREATE TYPE parameter_schema_kind AS ENUM ('STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME', 'TEMPLATE');
-CREATE TYPE web_service_parameter_role AS ENUM ('FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT');
+CREATE TYPE web_service_parameter_role AS ENUM ('FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT', 'LONGITUDE', 'LATITUDE');
 
 CREATE TYPE string_parameter_enum_option AS (
     value text,
@@ -280,9 +280,10 @@ CREATE TABLE parameters (
     CHECK (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id, web_service_body_id, template_parameter_id) = 1),
     CHECK (
         (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 1 AND location IS NOT NULL)
-        OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 0 AND location IS NULL AND property IS NULL AND NOT explode)
+        OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 0 AND location IS NULL AND NOT explode)
     ),
-    CHECK (role IS NULL OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 1 AND schema_kind <> 'TEMPLATE')),
+    CHECK (role IS NULL OR schema_kind <> 'TEMPLATE'),
+    CHECK (role NOT IN ('LONGITUDE', 'LATITUDE') OR schema_kind = 'FLOAT'),
     CHECK (NOT explode OR (num_nonnulls(web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id) = 1 AND location = 'QUERY')),
     CHECK (wfs_service_id IS NULL OR location IN ('PATH', 'QUERY')),
     CHECK (location <> 'PATH' OR required),
@@ -420,7 +421,7 @@ BEGIN
 
     IF (v_type = 'WMS' AND (v_has_generic OR v_has_wfs OR v_has_wmts OR NOT v_has_wms))
         OR (v_type = 'WFS' AND (v_has_generic OR v_has_wms OR v_has_wmts OR NOT v_has_wfs))
-        OR (v_type = 'HTTP' AND (NOT v_has_generic OR v_has_wms OR v_has_wfs OR v_has_wmts))
+        OR (v_type IN ('HTTP', 'DYNAMIC') AND (NOT v_has_generic OR v_has_wms OR v_has_wfs OR v_has_wmts))
         OR (v_type = 'WMTS' AND (v_has_generic OR v_has_wms OR v_has_wfs OR NOT v_has_wmts)) THEN
         RAISE EXCEPTION 'web service % must have exactly one configuration matching type %', v_web_service_id, v_type
             USING ERRCODE = 'check_violation';

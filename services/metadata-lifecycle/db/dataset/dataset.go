@@ -546,14 +546,14 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				}
 				bodyID = &body.ID
 				for _, parameter := range configuration.Body.Parameters {
-					if _, err := persistParameter(ctx, q, parameter, parameterOwner{webServiceBodyID: bodyID}, nil, nil, nil, false); err != nil {
+					if _, err := persistParameter(ctx, q, parameter, parameterOwner{webServiceBodyID: bodyID}, nil, false); err != nil {
 						return fmt.Errorf("add web service body parameter: %w", err)
 					}
 				}
 			}
 			for _, parameter := range configuration.Parameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{webServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{webServiceID: &created.ID}, &location, parameter.Explode); err != nil {
 					return fmt.Errorf("add web service parameter: %w", err)
 				}
 			}
@@ -573,7 +573,7 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.Parameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wfsServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wfsServiceID: &created.ID}, &location, parameter.Explode); err != nil {
 					return fmt.Errorf("add WFS parameter: %w", err)
 				}
 			}
@@ -596,13 +596,13 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.GetTileParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetTileServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetTileServiceID: &created.ID}, &location, parameter.Explode); err != nil {
 					return fmt.Errorf("add WMTS GetTile parameter: %w", err)
 				}
 			}
 			for _, parameter := range configuration.GetFeatureInfoParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetFeatureInfoServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode); err != nil {
 					return fmt.Errorf("add WMTS GetFeatureInfo parameter: %w", err)
 				}
 			}
@@ -629,13 +629,13 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.GetMapParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetMapServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetMapServiceID: &created.ID}, &location, parameter.Explode); err != nil {
 					return fmt.Errorf("add WMS GetMap parameter: %w", err)
 				}
 			}
 			for _, parameter := range configuration.GetFeatureInfoParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetFeatureInfoServiceID: &created.ID}, parameter.Property, parameter.Role, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode); err != nil {
 					return fmt.Errorf("add WMS GetFeatureInfo parameter: %w", err)
 				}
 			}
@@ -1019,15 +1019,8 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 			if item.Location != nil {
 				location = domain.ParameterLocation(*item.Location)
 			}
-			var role *domain.WebServiceParameterRole
-			if item.Role != nil {
-				converted := domain.WebServiceParameterRole(*item.Role)
-				role = &converted
-			}
 			parameterValue := domain.WebServiceParameter{
 				Parameter: parameter,
-				Property:  item.Property,
-				Role:      role,
 				Location:  location,
 				Explode:   item.Explode,
 			}

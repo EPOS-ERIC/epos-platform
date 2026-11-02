@@ -95,6 +95,19 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 		configuration := v.Configuration.GenericWebServiceConfigurationDraft
 		r.Type = toProtoWebServiceType(gatewayapi.WebServiceType(v.Configuration.Type))
 		r.Configuration = &metadatalifecyclev1.WebServiceInput_Generic{Generic: toProtoGenericWebServiceConfigurationDraft(configuration)}
+	case gatewayapi.DynamicWebServiceConfigurationDraftWebServiceConfigurationDraft:
+		configuration := v.Configuration.DynamicWebServiceConfigurationDraft
+		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
+		r.Configuration = &metadatalifecyclev1.WebServiceInput_Dynamic{Dynamic: toProtoGenericWebServiceConfigurationDraft(gatewayapi.GenericWebServiceConfigurationDraft{
+			TemplateURL:     configuration.TemplateURL,
+			Method:          configuration.Method,
+			Parameters:      configuration.Parameters,
+			BodyContentType: configuration.BodyContentType,
+			BodyTemplate:    configuration.BodyTemplate,
+			BodyRequired:    configuration.BodyRequired,
+			BodyParameters:  configuration.BodyParameters,
+			Format:          configuration.Format,
+		})}
 	case gatewayapi.WfsWebServiceConfigurationDraftWebServiceConfigurationDraft:
 		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
 		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wfs{Wfs: toProtoWFSWebServiceConfigurationDraft(v.Configuration.WfsWebServiceConfigurationDraft)}
@@ -278,6 +291,8 @@ func toProtoWebServiceType(value gatewayapi.WebServiceType) metadatalifecyclev1.
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
 	case gatewayapi.WebServiceTypeWFS:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
+	case gatewayapi.WebServiceTypeDYNAMIC:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
 	default:
 		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
 	}

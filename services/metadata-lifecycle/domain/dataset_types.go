@@ -281,15 +281,16 @@ func (m HTTPMethod) Valid() bool {
 type WebServiceType string
 
 const (
-	WebServiceTypeWMS  WebServiceType = "WMS"
-	WebServiceTypeHTTP WebServiceType = "HTTP"
-	WebServiceTypeWMTS WebServiceType = "WMTS"
-	WebServiceTypeWFS  WebServiceType = "WFS"
+	WebServiceTypeWMS     WebServiceType = "WMS"
+	WebServiceTypeHTTP    WebServiceType = "HTTP"
+	WebServiceTypeWMTS    WebServiceType = "WMTS"
+	WebServiceTypeWFS     WebServiceType = "WFS"
+	WebServiceTypeDynamic WebServiceType = "DYNAMIC"
 )
 
 func (t WebServiceType) Valid() bool {
 	switch t {
-	case WebServiceTypeWMS, WebServiceTypeHTTP, WebServiceTypeWMTS, WebServiceTypeWFS:
+	case WebServiceTypeWMS, WebServiceTypeHTTP, WebServiceTypeWMTS, WebServiceTypeWFS, WebServiceTypeDynamic:
 		return true
 	default:
 		return false
@@ -340,6 +341,8 @@ const (
 	WebServiceParameterRoleMaxLon    WebServiceParameterRole = "MAX_LON"
 	WebServiceParameterRoleMinLat    WebServiceParameterRole = "MIN_LAT"
 	WebServiceParameterRoleMaxLat    WebServiceParameterRole = "MAX_LAT"
+	WebServiceParameterRoleLongitude WebServiceParameterRole = "LONGITUDE"
+	WebServiceParameterRoleLatitude  WebServiceParameterRole = "LATITUDE"
 )
 
 func (r WebServiceParameterRole) Valid() bool {
@@ -350,7 +353,9 @@ func (r WebServiceParameterRole) Valid() bool {
 		WebServiceParameterRoleMinLon,
 		WebServiceParameterRoleMaxLon,
 		WebServiceParameterRoleMinLat,
-		WebServiceParameterRoleMaxLat:
+		WebServiceParameterRoleMaxLat,
+		WebServiceParameterRoleLongitude,
+		WebServiceParameterRoleLatitude:
 		return true
 	default:
 		return false
@@ -363,6 +368,8 @@ type ParameterInput struct {
 	Name        string
 	Label       string
 	Description *string
+	Property    *string
+	Role        *WebServiceParameterRole
 	Required    bool
 	ReadOnly    bool
 	Schema      ParameterSchema
@@ -376,16 +383,12 @@ type Parameter struct {
 
 type WebServiceParameterInput struct {
 	ParameterInput
-	Property *string
-	Role     *WebServiceParameterRole
 	Location ParameterLocation
 	Explode  bool
 }
 
 type WebServiceParameter struct {
 	Parameter
-	Property *string
-	Role     *WebServiceParameterRole
 	Location ParameterLocation
 	Explode  bool
 }

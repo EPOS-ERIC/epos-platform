@@ -25,6 +25,8 @@ func fromAPIDistributionAccess(
 	switch request.Type {
 	case gatewayapi.HTTPDistributionAccessRequestDistributionAccessRequest:
 		parameters = request.HTTPDistributionAccessRequest.Parameters
+	case gatewayapi.DynamicDistributionAccessRequestDistributionAccessRequest:
+		parameters = request.DynamicDistributionAccessRequest.Parameters
 	case gatewayapi.WFSDistributionAccessRequestDistributionAccessRequest:
 		parameters = request.WFSDistributionAccessRequest.Parameters
 	default:
@@ -47,9 +49,13 @@ func fromAPIDistributionAccess(
 		}
 		mapped[i] = domain.AccessParameter{ID: parameter.ID, Value: value}
 	}
-	if request.Type == gatewayapi.HTTPDistributionAccessRequestDistributionAccessRequest {
+	switch request.Type {
+	case gatewayapi.HTTPDistributionAccessRequestDistributionAccessRequest:
 		input.Input = domain.HTTPAccessInput{Parameters: mapped}
-	} else {
+	case gatewayapi.DynamicDistributionAccessRequestDistributionAccessRequest:
+		value := request.DynamicDistributionAccessRequest
+		input.Input = domain.DynamicAccessInput{Longitude: value.Longitude, Latitude: value.Latitude, Parameters: mapped}
+	case gatewayapi.WFSDistributionAccessRequestDistributionAccessRequest:
 		value := request.WFSDistributionAccessRequest
 		wfs := domain.WFSAccessInput{Parameters: mapped}
 		if selected, ok := value.FeatureType.Get(); ok {
@@ -67,6 +73,8 @@ func fromAPIDistributionAccess(
 			}
 		}
 		input.Input = wfs
+	default:
+		return domain.AccessRequest{}, apperror.Field("type", "Request type is not supported.", nil)
 	}
 
 	return input, nil

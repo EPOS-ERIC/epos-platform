@@ -148,7 +148,7 @@ func toAPIWebServiceConfiguration(value *metadatalifecyclev1.WebService) (gatewa
 			return gatewayapi.WebServiceConfiguration{}, err
 		}
 		switch serviceType {
-		case gatewayapi.WebServiceTypeWMS, gatewayapi.WebServiceTypeWFS, gatewayapi.WebServiceTypeWMTS:
+		case gatewayapi.WebServiceTypeWMS, gatewayapi.WebServiceTypeWFS, gatewayapi.WebServiceTypeWMTS, gatewayapi.WebServiceTypeDYNAMIC:
 			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream generic configuration has incompatible web-service type %q", serviceType)
 		case gatewayapi.WebServiceTypeHTTP:
 			return gatewayapi.NewGenericWebServiceConfigurationWebServiceConfiguration(generic), nil
@@ -191,6 +191,29 @@ func toAPIWebServiceConfiguration(value *metadatalifecyclev1.WebService) (gatewa
 			return gatewayapi.WebServiceConfiguration{}, err
 		}
 		return gatewayapi.NewWmsWebServiceConfigurationWebServiceConfiguration(wms), nil
+	case *metadatalifecyclev1.WebService_Dynamic:
+		if configuration.Dynamic == nil {
+			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream DYNAMIC configuration is nil")
+		}
+		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC {
+			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream DYNAMIC configuration has incompatible web-service type %q", value.GetType())
+		}
+		generic, err := toAPIGenericWebServiceConfiguration(configuration.Dynamic)
+		if err != nil {
+			return gatewayapi.WebServiceConfiguration{}, err
+		}
+		dynamic := gatewayapi.DynamicWebServiceConfiguration{
+			Type:            gatewayapi.DynamicWebServiceConfigurationTypeDYNAMIC,
+			TemplateURL:     generic.TemplateURL,
+			Method:          generic.Method,
+			Parameters:      generic.Parameters,
+			BodyContentType: generic.BodyContentType,
+			BodyTemplate:    generic.BodyTemplate,
+			BodyRequired:    generic.BodyRequired,
+			BodyParameters:  generic.BodyParameters,
+			Format:          generic.Format,
+		}
+		return gatewayapi.NewDynamicWebServiceConfigurationWebServiceConfiguration(dynamic), nil
 	default:
 		return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream web-service configuration is missing")
 	}
@@ -360,6 +383,8 @@ func toAPIWebServiceType(value metadatalifecyclev1.WebServiceType) (gatewayapi.W
 		return gatewayapi.WebServiceTypeWMTS, nil
 	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS:
 		return gatewayapi.WebServiceTypeWFS, nil
+	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC:
+		return gatewayapi.WebServiceTypeDYNAMIC, nil
 	default:
 		return "", fmt.Errorf("unsupported upstream web service type %q", value)
 	}
@@ -555,6 +580,10 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 		return gatewayapi.ScalarParameter{}, err
 	}
 	description := toAPINilString(value.Description)
+	role, err := toAPIParameterRole(value.Role)
+	if err != nil {
+		return gatewayapi.ScalarParameter{}, err
+	}
 	switch {
 	case value.GetString_() != nil:
 		v := value.GetString_()
@@ -563,6 +592,8 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			return gatewayapi.ScalarParameter{}, err
 		}
 		return gatewayapi.NewStringScalarParameterScalarParameter(gatewayapi.StringScalarParameter{
+			Property:    toAPINilString(value.Property),
+			Role:        role,
 			ID:          id,
 			Kind:        gatewayapi.StringScalarParameterKindSTRING,
 			Position:    value.Position,
@@ -578,6 +609,8 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	case value.GetBoolean() != nil:
 		v := value.GetBoolean()
 		return gatewayapi.NewBooleanScalarParameterScalarParameter(gatewayapi.BooleanScalarParameter{
+			Property:    toAPINilString(value.Property),
+			Role:        role,
 			ID:          id,
 			Kind:        gatewayapi.BooleanScalarParameterKindBOOLEAN,
 			Position:    value.Position,
@@ -595,6 +628,8 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			return gatewayapi.ScalarParameter{}, err
 		}
 		return gatewayapi.NewIntegerScalarParameterScalarParameter(gatewayapi.IntegerScalarParameter{
+			Property:    toAPINilString(value.Property),
+			Role:        role,
 			ID:          id,
 			Kind:        gatewayapi.IntegerScalarParameterKindINTEGER,
 			Position:    value.Position,
@@ -615,6 +650,8 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			return gatewayapi.ScalarParameter{}, err
 		}
 		return gatewayapi.NewFloatScalarParameterScalarParameter(gatewayapi.FloatScalarParameter{
+			Property:    toAPINilString(value.Property),
+			Role:        role,
 			ID:          id,
 			Kind:        gatewayapi.FloatScalarParameterKindFLOAT,
 			Position:    value.Position,
@@ -631,6 +668,8 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	case value.GetDateTime() != nil:
 		v := value.GetDateTime()
 		return gatewayapi.NewDateTimeScalarParameterScalarParameter(gatewayapi.DateTimeScalarParameter{
+			Property:    toAPINilString(value.Property),
+			Role:        role,
 			ID:          id,
 			Kind:        gatewayapi.DateTimeScalarParameterKindDATETIME,
 			Position:    value.Position,
@@ -731,6 +770,10 @@ func toAPIParameterRole(value metadatalifecyclev1.WebServiceParameterRole) (gate
 		result.SetTo(gatewayapi.ParameterRoleMINLAT)
 	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_MAX_LAT:
 		result.SetTo(gatewayapi.ParameterRoleMAXLAT)
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LONGITUDE:
+		result.SetTo(gatewayapi.ParameterRoleLONGITUDE)
+	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LATITUDE:
+		result.SetTo(gatewayapi.ParameterRoleLATITUDE)
 	default:
 		return gatewayapi.OptNilParameterRole{}, fmt.Errorf("unsupported upstream parameter role %q", value)
 	}
