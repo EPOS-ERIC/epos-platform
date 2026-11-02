@@ -138,6 +138,20 @@ docker_build(
 )
 
 docker_build(
+    'epos-semantic-aggregator-dev:local',
+    '.',
+    dockerfile='services/semantic-aggregator/Dockerfile.dev',
+    only=['services/semantic-aggregator', 'packages/scripts/epos-banner.sh', 'packages/protobuf'],
+    ignore=['services/semantic-aggregator/target', 'services/semantic-aggregator/bin'],
+    live_update=[
+        sync('services/semantic-aggregator', '/workspace/services/semantic-aggregator'),
+        sync('packages/protobuf', '/workspace/packages/protobuf'),
+        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
+        restart_container(),
+    ],
+)
+
+docker_build(
     'epos-platform-legacy-dev:local',
     '.',
     dockerfile='apps/platform-legacy/Dockerfile.dev',
@@ -210,6 +224,7 @@ local_resource(
         'packages/protobuf/configuration',
         'packages/protobuf/data_retriever',
         'packages/protobuf/metadata_lifecycle',
+        'packages/protobuf/semantic_aggregator',
         'packages/protobuf/buf.yaml',
         'packages/protobuf/buf.gen.yaml',
         'packages/protobuf/buf.lock',
@@ -257,8 +272,10 @@ for service in ['metadata-lifecycle', 'sharing', 'data-retriever']:
 dc_resource('data-retriever-db', labels=['infra'])
 dc_resource('metadata-lifecycle-db', labels=['infra'])
 dc_resource('sharing-db', labels=['infra'])
+dc_resource('semantic-aggregator-fuseki', labels=['infra'])
 dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db', 'protobuf-codegen', 'data-retriever-sqlc'])
 dc_resource('oss-aai-service', labels=['app'])
+dc_resource('semantic-aggregator-service', labels=['app'], resource_deps=['protobuf-codegen'])
 dc_resource('gateway-service', labels=['app'], resource_deps=['protobuf-codegen', 'gateway-codegen'])
 dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['metadata-lifecycle-db', 'protobuf-codegen', 'metadata-lifecycle-sqlc'])
 dc_resource('sharing-service', labels=['app'], resource_deps=['sharing-db', 'protobuf-codegen', 'sharing-sqlc'])

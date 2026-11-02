@@ -99,4 +99,5 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-oss-aai-service test-cli lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle lint-sharing lint-cli test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing generate-data-retriever generate-protobuf generate-cli
+.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle lint-sharing test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing generate-data-retriever generate-protobuf
+.PHONY: ci-semantic-aggregator-image test-semantic-aggregator lint-semantic-aggregator

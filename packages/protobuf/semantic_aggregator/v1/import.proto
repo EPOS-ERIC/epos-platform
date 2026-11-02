@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package semantic_aggregator.v1;
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/semantic_aggregator/v1;semanticaggregatorv1";
+
+// Imports datasets whose complete metadata is supported by the selected mapping.
+service DatasetImportService {
+  rpc ImportDatasets(ImportDatasetsRequest) returns (ImportDatasetsResponse);
+}
+
+message ImportDatasetsRequest {
+  bytes turtle = 1;
+  string base_uri = 2;
+  string mapping_id = 3;
+  int32 mapping_version = 4;
+  string group_id = 5;
+  // Explicit links to already-existing Metadata Lifecycle entities.
+  repeated ReferenceBinding references = 6;
+}
+
+enum ReferenceKind {
+  REFERENCE_KIND_UNSPECIFIED = 0;
+  REFERENCE_KIND_ORGANIZATION = 1;
+  REFERENCE_KIND_CONTACT_POINT = 2;
+  REFERENCE_KIND_CATEGORY = 3;
+}
+
+message ReferenceBinding {
+  ReferenceKind kind = 1;
+  string iri = 2;
+  string id = 3;
+}
+
+message ImportedDataset {
+  string subject = 1;
+  string resource_id = 2;
+  string version_id = 3;
+  DatasetImportOutcome outcome = 4;
+}
+
+enum DatasetImportOutcome {
+  DATASET_IMPORT_OUTCOME_UNSPECIFIED = 0;
+  // Freshly created by this invocation.
+  DATASET_IMPORT_OUTCOME_CREATED = 1;
+  // Resolved from a durable association; no new dataset was created.
+  DATASET_IMPORT_OUTCOME_REUSED = 2;
+}
+
+message ImportFailure {
+  string subject = 1;
+  // Canonical gRPC status name returned by Metadata Lifecycle.
+  string code = 2;
+  // When true, the upstream may have created an entity despite the error.
+  bool outcome_unknown = 3;
+  ImportPhase phase = 4;
+}
+
+enum ImportPhase {
+  IMPORT_PHASE_UNSPECIFIED = 0;
+  IMPORT_PHASE_CONTACT_RESOLUTION = 1;
+  IMPORT_PHASE_DATASET_CREATION = 2;
+  IMPORT_PHASE_CATEGORY_CREATION = 3;
+  IMPORT_PHASE_ORGANIZATION_CREATION = 4;
+}
+
+message ResolvedContact {
+  string iri = 1;
+  string id = 2;
+  // True when this invocation created the contact; false when it reused one.
+  bool created = 3;
+}
+
+message CreatedCategory {
+  string iri = 1;
+  string id = 2;
+}
+
+message CreatedOrganization {
+  string iri = 1;
+  string id = 2;
+}
+
+message ImportDatasetsResponse {
+  repeated ImportedDataset imported = 1;
+  // Processing stops at the first failure. Remaining entities are not attempted.
+  ImportFailure failure = 2;
+  // Contacts automatically resolved by email/role during this invocation.
+  repeated ResolvedContact contacts = 3;
+  // Categories created during this invocation.
+  repeated CreatedCategory categories = 4;
+  // Organizations created during this invocation.
+  repeated CreatedOrganization organizations = 5;
+}

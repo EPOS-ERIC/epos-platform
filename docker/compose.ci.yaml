@@ -1,4 +1,45 @@
 services:
+  semantic-aggregator-fuseki-ci:
+    image: secoresearch/fuseki:5.6.0@sha256:c199d50c534922324663c52c3be3f7d4c10e7be30d5f5d3ed0addc42fbd66989
+    profiles: ["semantic-fuseki"]
+    environment:
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-semantic-aggregator-ci}
+      - ENABLE_DATA_WRITE=true
+      - ENABLE_UPDATE=true
+    volumes:
+      - semantic-aggregator-fuseki-data-ci:/fuseki-base
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3030/$$/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  semantic-aggregator:
+    image: epos-semantic-aggregator:latest
+    profiles: ["semantic-fuseki"]
+    depends_on:
+      semantic-aggregator-fuseki-ci:
+        condition: service_healthy
+    environment:
+      - METADATA_LIFECYCLE_ADDR=metadata-lifecycle:5000
+      - TRIPLESTORE_REPOSITORY_URL=http://semantic-aggregator-fuseki-ci:3030/ds/data
+      - TRIPLESTORE_USERNAME=admin
+      - TRIPLESTORE_PASSWORD=${ADMIN_PASSWORD:-semantic-aggregator-ci}
+      - IDENTITY_STATE_DIR=/state
+    volumes:
+      - semantic-aggregator-state-ci:/state
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD", "java", "-cp", "/semantic-aggregator.jar", "eu.epos.semanticaggregator.HealthProbe"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   data-retriever-db:
     image: postgres:18-alpine
     environment:
@@ -182,6 +223,8 @@ services:
       start_period: 20s
 
 volumes:
+  semantic-aggregator-fuseki-data-ci:
+  semantic-aggregator-state-ci:
   data-retriever-db-data-ci:
   metadata-lifecycle-db-data-ci:
   sharing-db-data-ci:

@@ -1,0 +1,12 @@
+FROM maven:3.9-eclipse-temurin-25-alpine
+WORKDIR /workspace/services/semantic-aggregator
+ENV EPOS_SERVICE_NAME="Semantic Aggregator" EPOS_PORT="8300" MAVEN_CONFIG=/home/appuser/.m2
+RUN apk add --no-cache make && adduser -D -u 1000 appuser && mkdir -p /home/appuser/.m2 && chown -R 1000:1000 /home/appuser
+COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+COPY --chown=1000:1000 services/semantic-aggregator /workspace/services/semantic-aggregator
+COPY --chown=1000:1000 packages/protobuf /workspace/packages/protobuf
+RUN mkdir -p /state && chown 1000:1000 /state /workspace/services/semantic-aggregator
+USER 1000
+EXPOSE 8300
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
+CMD ["make", "dev"]

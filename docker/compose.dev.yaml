@@ -1,4 +1,42 @@
 services:
+  semantic-aggregator-fuseki:
+    image: secoresearch/fuseki:5.6.0@sha256:c199d50c534922324663c52c3be3f7d4c10e7be30d5f5d3ed0addc42fbd66989
+    environment:
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-semantic-aggregator-dev}
+      - ENABLE_DATA_WRITE=true
+      - ENABLE_UPDATE=true
+    volumes:
+      - semantic-aggregator-fuseki-data:/fuseki-base
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3030/$$/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  semantic-aggregator-service:
+    image: epos-semantic-aggregator-dev:local
+    environment:
+      - METADATA_LIFECYCLE_ADDR=metadata-lifecycle-service:5000
+      - TRIPLESTORE_REPOSITORY_URL=http://semantic-aggregator-fuseki:3030/ds/data
+      - TRIPLESTORE_USERNAME=admin
+      - TRIPLESTORE_PASSWORD=${ADMIN_PASSWORD:-semantic-aggregator-dev}
+      - IDENTITY_STATE_DIR=/state
+    volumes:
+      - semantic-aggregator-state:/state
+      - semantic-aggregator-maven-cache:/home/appuser/.m2
+    restart: on-failure
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD", "java", "-cp", "target/semantic-aggregator.jar", "eu.epos.semanticaggregator.HealthProbe"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   data-retriever-db:
     image: postgres:18-alpine
     user: "70:70"
@@ -244,6 +282,9 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Editor # or Admin if you need write access
 
 volumes:
+  semantic-aggregator-fuseki-data:
+  semantic-aggregator-state:
+  semantic-aggregator-maven-cache:
   go-mod-cache:
   go-build-cache:
   platform-legacy-angular-cache:
