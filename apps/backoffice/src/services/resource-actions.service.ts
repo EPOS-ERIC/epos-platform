@@ -47,14 +47,6 @@ export class ResourceActionsService {
     this.errorState.set(message);
   }
 
-  setValidationError(message: string, label: string): void {
-    this.errorState.set(message);
-    this.toastService.error('Resource could not be saved.', {
-      duration: null,
-      issues: [{ label, message }]
-    });
-  }
-
   sidebarActions(status: VersioningStatus | null, permissions: readonly GroupPermission[]): ResourceActionItem[] {
     const pending = this.pendingActionState();
     const capabilities = resourceCapabilities(status, permissions);

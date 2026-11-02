@@ -20,9 +20,20 @@
       }
     </span>
     <div class="toast-content">
-      <strong class="toast-title">
-        {{ toast.tone === 'success' ? 'Success' : toast.tone === 'error' ? 'Something went wrong' : 'Notice' }}
-      </strong>
+      @if (toast.issues?.length === 1 && issueAnchor(toast.issues?.[0]?.target); as anchor) {
+        <button
+          type="button"
+          class="toast-title toast-title-link"
+          (click)="navigateToIssue(anchor)"
+          [attr.aria-label]="'Go to ' + (toast.issues?.[0]?.label ?? 'the section with the error')"
+        >
+          Something went wrong
+        </button>
+      } @else {
+        <strong class="toast-title">
+          {{ toast.tone === 'success' ? 'Success' : toast.tone === 'error' ? 'Something went wrong' : 'Notice' }}
+        </strong>
+      }
       <span class="toast-message">{{ toast.message }}</span>
       @if (toast.issues; as issues) {
         <details class="toast-issues">

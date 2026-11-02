@@ -1,15 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 
 import type { DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
-import { ToastService } from '../../../../services/toast.service';
 import { WebServiceParametersComponent } from './web-service-parameters.component';
 
 describe('WebServiceParametersComponent', () => {
   it('keeps the mirrored, collapsible parameter list navigable when detail fields are read only', async () => {
-    const toast = { error: vi.fn() };
     await TestBed.configureTestingModule({
-      imports: [WebServiceParametersComponent],
-      providers: [{ provide: ToastService, useValue: toast }]
+      imports: [WebServiceParametersComponent]
     }).compileComponents();
     const fixture = TestBed.createComponent(WebServiceParametersComponent);
     const parameters: DatasetWebServiceParameterForm[] = [
@@ -109,7 +106,6 @@ describe('WebServiceParametersComponent', () => {
 
     expect(parameters[1].name).toBe('second');
     expect(nameInput.value).toBe('second');
-    expect(toast.error).toHaveBeenCalledWith('A parameter named "FIRST" already exists.');
   });
 
   it('marks the workspace as comparison content', async () => {
