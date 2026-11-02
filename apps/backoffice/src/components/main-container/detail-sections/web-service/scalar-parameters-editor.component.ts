@@ -20,13 +20,21 @@ export class ScalarParametersEditorComponent {
 
   @Input() model: DatasetWebServiceScalarParameterForm[] = [];
   @Input() disabled = false;
+  @Input() dynamic = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceScalarParameterForm[]>();
 
   protected readonly kinds: readonly ScalarParameterKind[] = ['STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME'];
+  protected readonly standardRoles = ['', 'FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT'] as const;
   protected selectedKind: ScalarParameterKind = 'STRING';
 
   protected emitModelChange(): void {
     this.modelChange.emit(this.model);
+  }
+
+  protected roles(): readonly DatasetWebServiceScalarParameterForm['role'][] {
+    return this.dynamic
+      ? [...this.standardRoles, 'LONGITUDE', 'LATITUDE']
+      : this.standardRoles;
   }
 
   protected updateParameterName(
@@ -74,7 +82,8 @@ export class ScalarParametersEditorComponent {
       label: '',
       description: '',
       required: false,
-      readOnly: false
+      readOnly: false,
+      role: '' as const
     };
 
     switch (kind) {

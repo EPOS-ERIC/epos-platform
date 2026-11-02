@@ -124,6 +124,23 @@ describe('WebServiceParametersComponent', () => {
     expect(fixture.nativeElement.querySelector('.webservice-parameters--comparison')).not.toBeNull();
   });
 
+  it('offers longitude and latitude roles for DYNAMIC services', async () => {
+    await TestBed.configureTestingModule({
+      imports: [WebServiceParametersComponent]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(WebServiceParametersComponent);
+    fixture.componentRef.setInput('model', [createStringParameter('Coordinate', 'coordinate', 0)]);
+    fixture.componentRef.setInput('dynamic', true);
+    fixture.detectChanges();
+
+    const roleField = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.detail-field'))
+      .find((field) => field.querySelector('.detail-label')?.textContent?.trim() === 'Semantic role');
+    const options = Array.from((roleField?.querySelector('select') as HTMLSelectElement).options)
+      .map((option) => option.textContent?.trim());
+    expect(options).toContain('LONGITUDE');
+    expect(options).toContain('LATITUDE');
+  });
+
   it('reorders parameters from the drag handle and updates every position', async () => {
     await TestBed.configureTestingModule({
       imports: [WebServiceParametersComponent]

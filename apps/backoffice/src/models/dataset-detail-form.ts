@@ -52,6 +52,7 @@ export type DatasetWebServiceScalarParameterCommonForm = {
   description: string;
   required: boolean;
   readOnly: boolean;
+  role?: ParameterRole | '';
 };
 
 export type DatasetWebServiceScalarParameterForm = DatasetWebServiceScalarParameterCommonForm &
@@ -141,7 +142,7 @@ export type DatasetWebServiceParameterForm = DatasetWebServiceParameterCommonFor
   );
 
 export type DatasetHttpWebServiceConfigurationForm = {
-  type: 'HTTP';
+  type: 'HTTP' | 'DYNAMIC';
   templateUrl: string;
   method: WebServiceMethod;
   format: string;

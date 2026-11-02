@@ -30,6 +30,7 @@ export class WebServiceParametersComponent {
   @Input() comparisonMode = false;
   @Input() comparisonSide: 'left' | 'right' = 'left';
   @Input() reversed = false;
+  @Input() dynamic = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceParameterForm[]>();
 
   protected parameterPage = 0;
@@ -38,7 +39,7 @@ export class WebServiceParametersComponent {
   protected readonly parameterPageSize = 10;
   protected readonly parameterKinds: readonly ParameterFormKind[] = ['STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME', 'TEMPLATE'];
   protected readonly parameterLocations = ['PATH', 'QUERY', 'HEADER'] as const;
-  protected readonly parameterRoles = ['', 'FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT'] as const;
+  protected readonly standardParameterRoles = ['', 'FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT'] as const;
   protected addParameterDialogOpen = false;
   protected selectedParameterKind: ParameterFormKind | '' = '';
   protected parameterKindRequired = false;
@@ -52,6 +53,12 @@ export class WebServiceParametersComponent {
 
   protected emitModelChange(): void {
     this.modelChange.emit(this.model);
+  }
+
+  protected parameterRoles(): readonly DatasetWebServiceParameterForm['role'][] {
+    return this.dynamic
+      ? [...this.standardParameterRoles, 'LONGITUDE', 'LATITUDE']
+      : this.standardParameterRoles;
   }
 
   protected updateParameterName(

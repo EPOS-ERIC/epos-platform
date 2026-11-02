@@ -142,7 +142,7 @@ export function hasIncompleteWebServiceBody(form: DatasetDetailForm): boolean {
     if (distribution.kind !== 'web-service') return false;
 
     const configuration = distribution.webService.configuration;
-    if (configuration.type !== 'HTTP') return false;
+    if (configuration.type !== 'HTTP' && configuration.type !== 'DYNAMIC') return false;
 
     const hasContentType = Boolean(configuration.bodyContentType.trim());
     const hasTemplate = Boolean(configuration.bodyTemplate.trim());
@@ -157,7 +157,7 @@ export function hasBodyOnUnsupportedMethod(form: DatasetDetailForm): boolean {
     if (distribution.kind !== 'web-service') return false;
 
     const configuration = distribution.webService.configuration;
-    if (configuration.type !== 'HTTP') return false;
+    if (configuration.type !== 'HTTP' && configuration.type !== 'DYNAMIC') return false;
     const hasBody = Boolean(
       configuration.bodyContentType.trim() || configuration.bodyTemplate.trim() || configuration.bodyParameters.length,
     );
@@ -223,6 +223,7 @@ function webServiceParameters(
 ): DatasetWebServiceParameterForm[] {
   switch (configuration.type) {
     case 'HTTP':
+    case 'DYNAMIC':
     case 'WFS':
       return configuration.parameters;
     case 'WMS':
@@ -235,7 +236,7 @@ function webServiceParameters(
 function webServiceAllParameters(
   configuration: DatasetWebServiceConfigurationForm,
 ): Array<DatasetWebServiceParameterForm | DatasetWebServiceScalarParameterForm> {
-  return configuration.type === 'HTTP'
+  return configuration.type === 'HTTP' || configuration.type === 'DYNAMIC'
     ? [...configuration.parameters, ...configuration.bodyParameters]
     : webServiceParameters(configuration);
 }
@@ -245,6 +246,7 @@ function webServiceConfigurationValidationError(
 ): string | null {
   switch (configuration.type) {
     case 'HTTP':
+    case 'DYNAMIC':
       if (!hasIdentifierValue(configuration.templateUrl)) {
         return 'web service template URL is required.';
       }
@@ -429,8 +431,9 @@ function buildWebServiceConfigurationForm(
 ): DatasetWebServiceConfigurationForm {
   switch (configuration.type) {
     case 'HTTP':
+    case 'DYNAMIC':
       return {
-        type: 'HTTP',
+        type: configuration.type,
         templateUrl: configuration.template_url,
         method: configuration.method,
         format: configuration.format,
@@ -576,6 +579,7 @@ function buildWebServiceScalarParameterForm(
     description: parameter.description ?? '',
     required: parameter.required,
     readOnly: parameter.read_only,
+    role: parameter.role ?? ('' as const),
   };
 
   switch (parameter.kind) {
@@ -682,14 +686,15 @@ function buildWebServiceConfigurationDraft(
   configuration: DatasetWebServiceConfigurationForm,
 ): WebServiceConfigurationDraft {
   switch (configuration.type) {
-    case 'HTTP': {
+    case 'HTTP':
+    case 'DYNAMIC': {
       const hasBody = Boolean(
         configuration.bodyContentType.trim() ||
           configuration.bodyTemplate.trim() ||
           configuration.bodyParameters.length,
       );
       return {
-        type: 'HTTP',
+        type: configuration.type,
         template_url: configuration.templateUrl,
         method: configuration.method,
         format: configuration.format,
@@ -830,6 +835,7 @@ function buildWebServiceScalarParameterDraft(
     description: undefinedIfBlank(parameter.description),
     required: parameter.required,
     read_only: parameter.readOnly,
+    role: parameter.role || undefined,
   };
 
   switch (parameter.kind) {

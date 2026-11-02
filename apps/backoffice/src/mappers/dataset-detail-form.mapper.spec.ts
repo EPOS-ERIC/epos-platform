@@ -210,6 +210,30 @@ function scalarParameter(
   };
 }
 
+function coordinateParameter(
+  role: 'LONGITUDE' | 'LATITUDE',
+): Extract<DatasetWebServiceParameterForm, { kind: 'FLOAT' }> {
+  return {
+    kind: 'FLOAT',
+    id: '',
+    position: 0,
+    name: role.toLowerCase(),
+    label: role === 'LONGITUDE' ? 'Longitude' : 'Latitude',
+    description: '',
+    required: true,
+    property: '',
+    location: 'QUERY',
+    role,
+    explode: false,
+    multipleValues: false,
+    readOnly: false,
+    minimum: '',
+    maximum: '',
+    defaultValue: '',
+    allowedValues: [],
+  };
+}
+
 function formWithParameters(
   parameters: DatasetWebServiceParameterForm[],
   bodyParameters: DatasetWebServiceScalarParameterForm[] = [],
@@ -622,6 +646,37 @@ describe('distributionValidationError', () => {
     expect(distributionValidationError(form)).toBe(
       'Distribution 1: documentation URI is required when documentation is provided.',
     );
+  });
+
+  it('lets the backend validate DYNAMIC coordinate parameters and preserves their roles', () => {
+    const form = formWithParameters([]);
+    const distribution = form.distributions[0];
+    distribution.title = 'Dynamic distribution';
+    distribution.description = 'Dynamic service';
+    if (distribution.kind !== 'web-service' || distribution.webService.configuration.type !== 'HTTP') {
+      throw new Error('Expected HTTP web service configuration');
+    }
+    distribution.webService.configuration = {
+      ...distribution.webService.configuration,
+      type: 'DYNAMIC',
+    };
+
+    expect(distributionValidationError(form)).toBeNull();
+
+    distribution.webService.configuration.parameters = [
+      coordinateParameter('LONGITUDE'),
+      coordinateParameter('LATITUDE'),
+    ];
+    expect(distributionValidationError(form)).toBeNull();
+
+    const requestDistribution = toDatasetSaveRequest(form, 1, datasetMetadata()).metadata.distributions?.[0];
+    if (!requestDistribution || requestDistribution.type !== WEB_SERVICE_TYPE) {
+      throw new Error('Expected web service draft');
+    }
+    expect(requestDistribution.web_service.configuration).toMatchObject({
+      type: 'DYNAMIC',
+      parameters: [{ role: 'LONGITUDE' }, { role: 'LATITUDE' }],
+    });
   });
 });
 
