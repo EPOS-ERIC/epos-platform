@@ -24,8 +24,6 @@ CREATE TABLE conversion_relations (
     UNIQUE (distribution_id, plugin_id, input_format, output_format)
 );
 
-CREATE INDEX conversion_relations_distribution_id_idx ON conversion_relations (distribution_id);
-
 -- +goose Down
 DROP TABLE conversion_relations;
 DROP TABLE plugins;

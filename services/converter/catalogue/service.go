@@ -21,7 +21,7 @@ type Repository interface {
 	DeletePlugin(context.Context, uuid.UUID) error
 	CreateRelation(context.Context, domain.RelationInput, string) (domain.Relation, error)
 	Relation(context.Context, uuid.UUID) (domain.Relation, error)
-	Relations(context.Context, *uuid.UUID) ([]domain.Relation, error)
+	Relations(context.Context) ([]domain.Relation, error)
 	UpdateRelation(context.Context, uuid.UUID, domain.RelationInput, string) (domain.Relation, error)
 	DeleteRelation(context.Context, uuid.UUID) error
 }
@@ -45,7 +45,7 @@ func (s *Service) CreatePlugin(ctx context.Context, input domain.PluginInput, ac
 	if err != nil {
 		return domain.Plugin{}, false, err
 	}
-	if _, err := s.SyncPlugin(ctx, record.ID); err != nil {
+	if err := s.manager.Sync(ctx, definition(record), false); err != nil {
 		s.log.ErrorContext(ctx, "initial plugin sync failed", "plugin_id", record.ID, "error", err)
 		return record, true, nil
 	}
@@ -124,8 +124,8 @@ func (s *Service) Relation(ctx context.Context, id uuid.UUID) (domain.Relation, 
 	return s.repo.Relation(ctx, id)
 }
 
-func (s *Service) Relations(ctx context.Context, distributionID *uuid.UUID) ([]domain.Relation, error) {
-	return s.repo.Relations(ctx, distributionID)
+func (s *Service) Relations(ctx context.Context) ([]domain.Relation, error) {
+	return s.repo.Relations(ctx)
 }
 
 func (s *Service) DeleteRelation(ctx context.Context, id uuid.UUID) error {
@@ -174,7 +174,7 @@ func (s *Service) syncAll(ctx context.Context) {
 		if err := ctx.Err(); err != nil {
 			return
 		}
-		if _, err := s.SyncPlugin(ctx, record.ID); err != nil {
+		if err := s.manager.Sync(ctx, definition(record), false); err != nil {
 			s.log.ErrorContext(ctx, "synchronize plugin", "plugin_id", record.ID, "error", err)
 		}
 	}

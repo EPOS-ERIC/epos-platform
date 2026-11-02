@@ -104,8 +104,8 @@ func (c *Converter) GetRelation(ctx context.Context, actor string, request *conv
 	return response, nil
 }
 
-func (c *Converter) ListRelations(ctx context.Context, actor string, request *converterv1.ListRelationsRequest) (*converterv1.ListRelationsResponse, error) {
-	response, err := c.client.ListRelations(converterActor(ctx, actor), request)
+func (c *Converter) ListRelations(ctx context.Context, actor string) (*converterv1.ListRelationsResponse, error) {
+	response, err := c.client.ListRelations(converterActor(ctx, actor), &converterv1.ListRelationsRequest{})
 	if err != nil {
 		return nil, c.wrapError(ctx, "list relations", err)
 	}
@@ -147,8 +147,9 @@ func (c *Converter) Conversion(ctx context.Context, id uuid.UUID) (domain.Conver
 		return domain.ConversionRelation{}, apperror.Wrap(apperror.CodeInternal, "", err)
 	}
 	return domain.ConversionRelation{
-		ID: relationID, DistributionID: distributionID,
-		InputFormat: relation.GetInput().GetInputFormat(), OutputFormat: relation.GetInput().GetOutputFormat(),
+		ID:             relationID,
+		DistributionID: distributionID,
+		InputFormat:    relation.GetInput().GetInputFormat(),
 	}, nil
 }
 
@@ -158,7 +159,7 @@ func (c *Converter) AvailableConversions(ctx context.Context) ([]domain.Availabl
 		return nil, err
 	}
 
-	relations, err := c.ListRelations(ctx, "", &converterv1.ListRelationsRequest{})
+	relations, err := c.ListRelations(ctx, "")
 	if err != nil {
 		return nil, err
 	}

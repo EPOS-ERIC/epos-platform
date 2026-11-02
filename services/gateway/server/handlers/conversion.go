@@ -222,7 +222,7 @@ func (h *ogenHandler) ListConversionRelations(ctx context.Context) ([]gatewayapi
 	if err != nil {
 		return nil, err
 	}
-	response, err := h.converter.ListRelations(ctx, actor, &converterv1.ListRelationsRequest{})
+	response, err := h.converter.ListRelations(ctx, actor)
 	if err != nil {
 		return nil, err
 	}

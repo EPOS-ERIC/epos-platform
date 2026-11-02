@@ -132,45 +132,6 @@ func (q *Queries) ListRelations(ctx context.Context) ([]ConversionRelation, erro
 	return items, nil
 }
 
-const listRelationsByDistribution = `-- name: ListRelationsByDistribution :many
-SELECT
-    id, distribution_id, plugin_id, input_format, output_format, created_by, updated_by
-FROM
-    conversion_relations
-WHERE
-    distribution_id = $1
-ORDER BY
-    id
-`
-
-func (q *Queries) ListRelationsByDistribution(ctx context.Context, distributionID uuid.UUID) ([]ConversionRelation, error) {
-	rows, err := q.db.Query(ctx, listRelationsByDistribution, distributionID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ConversionRelation
-	for rows.Next() {
-		var i ConversionRelation
-		if err := rows.Scan(
-			&i.ID,
-			&i.DistributionID,
-			&i.PluginID,
-			&i.InputFormat,
-			&i.OutputFormat,
-			&i.CreatedBy,
-			&i.UpdatedBy,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const updateRelation = `-- name: UpdateRelation :one
 UPDATE
     conversion_relations

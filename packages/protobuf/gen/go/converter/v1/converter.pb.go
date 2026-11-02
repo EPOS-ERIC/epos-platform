@@ -1282,10 +1282,9 @@ func (*DeleteRelationResponse) Descriptor() ([]byte, []int) {
 }
 
 type ListRelationsRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	DistributionId *string                `protobuf:"bytes,1,opt,name=distribution_id,json=distributionId,proto3,oneof" json:"distribution_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListRelationsRequest) Reset() {
@@ -1316,13 +1315,6 @@ func (x *ListRelationsRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListRelationsRequest.ProtoReflect.Descriptor instead.
 func (*ListRelationsRequest) Descriptor() ([]byte, []int) {
 	return file_converter_v1_converter_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *ListRelationsRequest) GetDistributionId() string {
-	if x != nil && x.DistributionId != nil {
-		return *x.DistributionId
-	}
-	return ""
 }
 
 type ListRelationsResponse struct {
@@ -1635,10 +1627,8 @@ const file_converter_v1_converter_proto_rawDesc = "" +
 	"\brelation\x18\x01 \x01(\v2\x16.converter.v1.RelationR\brelation\"'\n" +
 	"\x15DeleteRelationRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x18\n" +
-	"\x16DeleteRelationResponse\"X\n" +
-	"\x14ListRelationsRequest\x12,\n" +
-	"\x0fdistribution_id\x18\x01 \x01(\tH\x00R\x0edistributionId\x88\x01\x01B\x12\n" +
-	"\x10_distribution_id\"M\n" +
+	"\x16DeleteRelationResponse\"\x16\n" +
+	"\x14ListRelationsRequest\"M\n" +
 	"\x15ListRelationsResponse\x124\n" +
 	"\trelations\x18\x01 \x03(\v2\x16.converter.v1.RelationR\trelations\"|\n" +
 	"\rExecuteHeader\x12#\n" +
@@ -1773,7 +1763,6 @@ func file_converter_v1_converter_proto_init() {
 		return
 	}
 	file_converter_v1_converter_proto_msgTypes[1].OneofWrappers = []any{}
-	file_converter_v1_converter_proto_msgTypes[24].OneofWrappers = []any{}
 	file_converter_v1_converter_proto_msgTypes[27].OneofWrappers = []any{
 		(*ExecuteRequest_Header)(nil),
 		(*ExecuteRequest_Chunk)(nil),

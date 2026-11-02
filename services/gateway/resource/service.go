@@ -49,13 +49,9 @@ func (s *Service) GetVersion(ctx context.Context, actor string, resourceType dom
 		return nil, domain.ResourceVersion{}, fmt.Errorf("list available conversions: %w", err)
 	}
 
-	byDistribution := make(map[uuid.UUID][]domain.AvailableConversion)
+	resource.ConversionsByDistribution = make(map[uuid.UUID][]domain.AvailableConversion, len(conversions))
 	for _, conversion := range conversions {
-		byDistribution[conversion.DistributionID] = append(byDistribution[conversion.DistributionID], conversion)
-	}
-
-	for i := range resource.Distributions {
-		resource.Distributions[i].Conversions = byDistribution[resource.Distributions[i].ID]
+		resource.ConversionsByDistribution[conversion.DistributionID] = append(resource.ConversionsByDistribution[conversion.DistributionID], conversion)
 	}
 
 	return response, resource, nil

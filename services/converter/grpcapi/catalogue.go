@@ -10,7 +10,6 @@ import (
 	converterv1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/converter/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/converter/catalogue"
 	"github.com/EPOS-ERIC/epos-platform/services/converter/plugin"
-	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -184,16 +183,8 @@ func (s *Server) GetRelation(ctx context.Context, request *converterv1.GetRelati
 	return &converterv1.GetRelationResponse{Relation: toProtoRelation(record)}, nil
 }
 
-func (s *Server) ListRelations(ctx context.Context, request *converterv1.ListRelationsRequest) (*converterv1.ListRelationsResponse, error) {
-	var distributionID *uuid.UUID
-	if request.DistributionId != nil {
-		id, err := parseID("distribution_id", request.GetDistributionId())
-		if err != nil {
-			return nil, err
-		}
-		distributionID = &id
-	}
-	records, err := s.service.Relations(ctx, distributionID)
+func (s *Server) ListRelations(ctx context.Context, _ *converterv1.ListRelationsRequest) (*converterv1.ListRelationsResponse, error) {
+	records, err := s.service.Relations(ctx)
 	if err != nil {
 		return nil, err
 	}

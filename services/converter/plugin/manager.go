@@ -110,12 +110,8 @@ func validateEntrypoint(dir string, runtime domain.Runtime) error {
 	return nil
 }
 
+// Sync replaces the plugin directory unless the installed commit is current.
 func (m *Manager) Sync(ctx context.Context, definition Definition, force bool) error {
-	return m.install(ctx, definition, force)
-}
-
-// install replaces the plugin directory unless the installed commit is current.
-func (m *Manager) install(ctx context.Context, definition Definition, force bool) error {
 	previous, _, previousErr := m.current(ctx, definition.ID)
 	if previousErr != nil {
 		return previousErr

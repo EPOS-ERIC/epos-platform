@@ -10,7 +10,6 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/postgres"
 	"github.com/EPOS-ERIC/epos-platform/services/converter/config"
-	"github.com/EPOS-ERIC/epos-platform/services/converter/db/sqlc"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,8 +19,7 @@ import (
 var migrations embed.FS
 
 type Database struct {
-	Pool    *pgxpool.Pool
-	Queries *sqlc.Queries
+	Pool *pgxpool.Pool
 }
 
 func Open(ctx context.Context, log *slog.Logger, cfg config.Config) (*Database, error) {
@@ -36,7 +34,7 @@ func Open(ctx context.Context, log *slog.Logger, cfg config.Config) (*Database, 
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
-	return &Database{Pool: pool, Queries: sqlc.New(pool)}, nil
+	return &Database{Pool: pool}, nil
 }
 
 func (d *Database) Close() { d.Pool.Close() }

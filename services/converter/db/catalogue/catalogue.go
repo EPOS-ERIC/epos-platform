@@ -107,14 +107,8 @@ func (r *Repository) Relation(ctx context.Context, id uuid.UUID) (domain.Relatio
 	return fromRelation(relation), persistenceError("get relation", err)
 }
 
-func (r *Repository) Relations(ctx context.Context, distributionID *uuid.UUID) ([]domain.Relation, error) {
-	var rows []sqlc.ConversionRelation
-	var err error
-	if distributionID == nil {
-		rows, err = r.queries.ListRelations(ctx)
-	} else {
-		rows, err = r.queries.ListRelationsByDistribution(ctx, *distributionID)
-	}
+func (r *Repository) Relations(ctx context.Context) ([]domain.Relation, error) {
+	rows, err := r.queries.ListRelations(ctx)
 	if err != nil {
 		return nil, persistenceError("list relations", err)
 	}

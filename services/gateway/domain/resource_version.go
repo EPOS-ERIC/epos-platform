@@ -12,11 +12,6 @@ const (
 
 // ResourceVersion contains the fields needed to enrich a resource response.
 type ResourceVersion struct {
-	IsDataset     bool
-	Distributions []ResourceDistribution
-}
-
-type ResourceDistribution struct {
-	ID          uuid.UUID
-	Conversions []AvailableConversion
+	IsDataset                 bool
+	ConversionsByDistribution map[uuid.UUID][]AvailableConversion
 }

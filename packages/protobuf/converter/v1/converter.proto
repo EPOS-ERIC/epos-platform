@@ -103,9 +103,7 @@ message DeleteRelationRequest {
   string id = 1;
 }
 message DeleteRelationResponse {}
-message ListRelationsRequest {
-  optional string distribution_id = 1;
-}
+message ListRelationsRequest {}
 message ListRelationsResponse {
   repeated Relation relations = 1;
 }

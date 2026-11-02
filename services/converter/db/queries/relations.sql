@@ -29,16 +29,6 @@ FROM
 ORDER BY
     id;
 
--- name: ListRelationsByDistribution :many
-SELECT
-    *
-FROM
-    conversion_relations
-WHERE
-    distribution_id = $1
-ORDER BY
-    id;
-
 -- name: UpdateRelation :one
 UPDATE
     conversion_relations

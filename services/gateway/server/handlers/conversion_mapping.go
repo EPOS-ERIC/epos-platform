@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"slices"
 
 	converterv1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/converter/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -23,14 +22,8 @@ func toProtoConversionRuntime(runtime gatewayapi.ConversionRuntime) (converterv1
 	}
 }
 
-// withAvailableConversions returns a copy of dataset with conversions appended to their matching distributions.
-func withAvailableConversions(dataset gatewayapi.DatasetResourceMetadata, distributions []domain.ResourceDistribution) gatewayapi.DatasetResourceMetadata {
-	byDistribution := make(map[uuid.UUID][]domain.AvailableConversion)
-	for _, distribution := range distributions {
-		byDistribution[distribution.ID] = distribution.Conversions
-	}
-
-	dataset.Distributions = slices.Clone(dataset.Distributions)
+// withAvailableConversions appends conversions to their matching distributions.
+func withAvailableConversions(dataset gatewayapi.DatasetResourceMetadata, byDistribution map[uuid.UUID][]domain.AvailableConversion) gatewayapi.DatasetResourceMetadata {
 	for i := range dataset.Distributions {
 		distribution := &dataset.Distributions[i]
 		if !distribution.IsWebServiceDistribution() {
@@ -38,11 +31,6 @@ func withAvailableConversions(dataset gatewayapi.DatasetResourceMetadata, distri
 		}
 
 		web := &distribution.WebServiceDistribution
-		if len(byDistribution[web.ID]) == 0 {
-			continue
-		}
-
-		web.AvailableFormats = slices.Clone(web.AvailableFormats)
 		for _, conversion := range byDistribution[web.ID] {
 			web.AvailableFormats = append(web.AvailableFormats, gatewayapi.NewConvertedFormatAvailableFormat(gatewayapi.ConvertedFormat{
 				Kind:         gatewayapi.ConvertedFormatKindCONVERTED,

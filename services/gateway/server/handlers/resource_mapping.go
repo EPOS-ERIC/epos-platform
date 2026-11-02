@@ -41,7 +41,7 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion, enrichment dom
 	}
 
 	if metadata.IsDatasetResourceMetadata() {
-		metadata.DatasetResourceMetadata = withAvailableConversions(metadata.DatasetResourceMetadata, enrichment.Distributions)
+		metadata.DatasetResourceMetadata = withAvailableConversions(metadata.DatasetResourceMetadata, enrichment.ConversionsByDistribution)
 	}
 
 	var rejectionNote gatewayapi.OptNonBlankString
