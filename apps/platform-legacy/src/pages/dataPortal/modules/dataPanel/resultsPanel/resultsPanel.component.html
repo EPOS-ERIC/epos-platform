@@ -10,7 +10,7 @@
     tourDescription="Click the green funnel icon to view, and sort by associated TCS categories." tourTitle="Categories"
     tourPosition="right" (tourEnterFunction)="addServiceItemTourStep()" data-cy="results-title">
     <button class="facet-expand" mat-icon-button
-      [hidden]="activeDomainData.code === 'FAV' || activeDomainData.code === 'ALL'"
+      [hidden]="activeDomainData.code === 'FAV' || (activeDomainData.code === 'ALL' && !hasVersionedResources)"
       (click)="toggleFacetExpansionPanel()" data-cy="categories-filter">
       <mat-icon matTooltip="Filter by categories">filter_alt</mat-icon>
     </button>
@@ -29,18 +29,18 @@
     </button>
   </div>
   <app-facet-dropdown
-    *ngIf="!showLoading && activeDomainData?.code !== 'FAV' && activeDomainData?.code !== 'ALL' && !facetExpansionHidden"
+    *ngIf="!showLoading && activeDomainData?.code !== 'FAV' && (activeDomainData?.code !== 'ALL' || hasVersionedResources) && (hasVersionedResources || !facetExpansionHidden)"
     [activeDomainData]="activeDomainData" [facetExpansionHidden]="facetExpansionHidden" [rawTreeData]="rawTreeData"
     (setSelectedFacets)="setSelectedFacets($event)" data-cy="categories-filter-dropdown"></app-facet-dropdown>
   <div
-    *ngIf="!showLoading && dataSource !== undefined && (dataSource.filteredData.length === 0 || dataSource.filteredData[0] === undefined)"
+    *ngIf="!showLoading && displayedResultCount === 0"
     class="results-container">
     <div class="results-no-data">
       <p>No results found on {{ activeDomainData!.title }}</p>
     </div>
   </div>
   <div
-    *ngIf="(!showLoading && dataSource !== undefined && dataSource.filteredData[0] !== undefined) || (messageShow && messageType === 'error')"
+    *ngIf="(!showLoading && displayedResultCount > 0) || (messageShow && messageType === 'error')"
     class="results-container nice-scrollbar" data-cy="results-container">
     <div class="results-table">
       <table mat-table [dataSource]="dataSource" multiTemplateDataRows id="distributionListTable"
@@ -49,15 +49,30 @@
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let element; let i = dataIndex" [class]="{ 'cell-result': true }"
             [style.border-left-color]="element.color">
+            <ng-container *ngTemplateOutlet="distributionCard; context: { $implicit: element }"></ng-container>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+        <tr mat-row *matRowDef="let element; columns: columnsToDisplay" [id]="element !== undefined ? element.id : null"
+          [style.background-color]="expandedElement !== null && expandedElement!.id === element.id ? element.lcolor : ''"
+          [class]="{ hidden: !(element !== undefined && (activeDomainData.code === 'FAV' || element.hideToResult === false)) }">
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <mat-paginator [class]="{ hidden: showLoading }" [pageSizeOptions]="[10, 15, 20]" showFirstLastButtons
+    aria-label="results per page" (page)="onPaginateChange()"></mat-paginator>
+</div>
+
+<ng-template #distributionCard let-element>
             <div
-              [class]="{ container: true, 'mat-elevation-z8': expandedElement !== null && expandedElement.id === element.id }"
+              [class]="{ container: true, 'mat-elevation-z8': isDistributionExpanded(element) }"
               *ngIf="element !== undefined && (activeDomainData?.code === 'FAV' || element.hideToResult === false)">
               <div
-                [class]="{ 'item-header': true, selected: expandedElement !== null && expandedElement.id === element.id }">
+                [class]="{ 'item-header': true, selected: isDistributionExpanded(element) }">
                 <div class="item-name">
-                  <p (click)="select(element, $event)" data-cy="results-panel-item-name">
-                    {{ element.name }}
-                  </p>
+                  <p (click)="select(element, $event)" data-cy="results-panel-item-name">{{ element.name }}</p>
                 </div>
                 <div class="item-actions">
                   <ng-container>
@@ -80,7 +95,7 @@
                   <mat-icon *ngIf="element.isPinned" (click)="favourite(element, $event)" class="yellow"
                     matTooltip="Remove from favourites" data-cy="remove-from-favourites">star</mat-icon>
                   <mat-icon
-                    [class]="expandedElement !== null && expandedElement.id === element.id ? 'icon-up' : 'icon-down'"
+                    [class]="isDistributionExpanded(element) ? 'icon-up' : 'icon-down'"
                     aria-hidden="true" aria-label="expand-more" (click)="select(element, $event)" class="expand-item"
                     matTooltip="Advanced search filters">
                     expand_more
@@ -89,18 +104,30 @@
               </div>
               <ng-container>
                 <div
-                  [class]="{ informations: true, selected: expandedElement !== null && expandedElement.id === element.id }">
-                  <app-breadcrumb [levels]="element.levels"
-                    [showFirst]="activeDomainData.code === 'FAV' || activeDomainData.code === 'ALL'"></app-breadcrumb>
+                  [class]="{ informations: true, selected: isDistributionExpanded(element) }">
+                  <app-breadcrumb *ngIf="!element.distSummary.resourceVersion || element.levels.length > 0" [levels]="element.levels"
+                    [filterFirst]="!!element.distSummary.resourceVersion"
+                    [showFirst]="!!element.distSummary.resourceVersion || activeDomainData.code === 'FAV' || activeDomainData.code === 'ALL'"></app-breadcrumb>
+                  <div *ngIf="element.distSummary.resourceVersion" class="distribution-summary">
+                    <span *ngIf="element.visibility[0] !== ''">Visible on: —</span>
+                    <app-visible-on [item]="element" [configurables]="configurables"
+                      data-cy="results-panel-visible-on"></app-visible-on>
+                  </div>
                   <div class="informations-bottom">
                     <div class="informations-bottom-left">
                       <ng-container>
-                        <app-visible-on [item]="element" [configurables]="configurables"
+                        <app-visible-on *ngIf="!element.distSummary.resourceVersion" [item]="element" [configurables]="configurables"
                           data-cy="results-panel-visible-on"></app-visible-on>
                       </ng-container>
                       <!-- Service Provider -->
+                      <div *ngIf="element.distSummary.resourceVersion && element.cardProviderName">
+                        Service Provider:
+                        <a *ngIf="element.cardProviderUrl; else providerName" [href]="element.cardProviderUrl" target="_blank"
+                          rel="noopener noreferrer">{{ element.cardProviderName }}</a>
+                        <ng-template #providerName>{{ element.cardProviderName }}</ng-template>
+                      </div>
                       <ng-container
-                        *ngIf="element.serviceProvider !== '' && element.serviceProvider !== null && element.serviceProvider !== undefined">
+                        *ngIf="!element.distSummary.resourceVersion && element.serviceProvider !== '' && element.serviceProvider !== null && element.serviceProvider !== undefined">
                         <div>
                           Service Provider: <a href="{{element.serviceProvider.dataProviderUrl || ''}}" target="_blank"
                             rel="noopener noreferrer">
@@ -152,7 +179,7 @@
                 </div>
               </ng-container>
               <div [class]="{ 'results-element-detail': true }"
-                *ngIf="element !== undefined && expandedElement?.id === element.id">
+                *ngIf="element !== undefined && isDistributionExpanded(element)">
                 <div
                   [ngClass]="{ 'advanced-search-container': true, 'nice-scrollbar': true, 'advanced-search-container-min': messageShow }">
                   <app-notification id="{{ messageId }}" [showMessage]="messageShow" type="{{ messageType }}"
@@ -164,17 +191,4 @@
                 </div>
               </div>
             </div>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
-        <tr mat-row *matRowDef="let element; columns: columnsToDisplay" [id]="element !== undefined ? element.id : null"
-          [style.background-color]="expandedElement !== null && expandedElement!.id === element.id ? element.lcolor : ''"
-          [class]="{ hidden: !(element !== undefined && (activeDomainData.code === 'FAV' || element.hideToResult === false)) }">
-        </tr>
-      </table>
-    </div>
-  </div>
-
-  <mat-paginator [class]="{ hidden: showLoading }" [pageSizeOptions]="[10, 15, 20]" showFirstLastButtons
-    aria-label="results per page" (page)="onPaginateChange()"></mat-paginator>
-</div>
+</ng-template>

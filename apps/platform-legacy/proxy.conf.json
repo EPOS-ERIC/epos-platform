@@ -5,6 +5,11 @@
     "changeOrigin": true,
     "logLevel": "debug",
     "pathRewrite": {
+      "^/testpath/api/v1/search": "/v1/search",
+      "^/testpath/api/v1/groups": "/v1/groups",
+      "^/testpath/api/v1/organizations": "/v1/organizations",
+      "^/testpath/api/v1/users/self": "/v1/users/self",
+      "^/testpath/api/v1/configurations": "/v1/configurations",
       "^/testpath": ""
     }
   }

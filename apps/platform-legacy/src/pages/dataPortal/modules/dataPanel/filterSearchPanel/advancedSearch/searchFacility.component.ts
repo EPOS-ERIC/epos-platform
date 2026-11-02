@@ -424,7 +424,7 @@ export class SearchFacilityComponent implements OnInit {
     // Ensure not called too many times in succession on init
     clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => {
-      void this.dataSearchServiceAuth.doSearch(request).then(() => {
+      void this.dataSearchService.search(request).then(() => {
         this.somethingChanged();
       });
     }, 100);

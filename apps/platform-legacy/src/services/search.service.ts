@@ -7,6 +7,7 @@ import { ItemSummary } from 'api/webApi/data/itemSummary.interface';
 import { DistributionDetails } from 'api/webApi/data/distributionDetails.interface';
 import { LoggingService } from './logging.service';
 import { Organization } from 'api/webApi/data/organization.interface';
+import { DistributionSummary } from 'api/webApi/data/distributionSummary.interface';
 
 /**
  * A service that exposes methods for accessing the webAPI search functionality
@@ -49,6 +50,25 @@ export class SearchService {
     return this.loggingService.logForPromise((cachedValue != null) //
       ? Promise.resolve(cachedValue) : this.goGetDetails(id, context), //
       this.getDetailsLogMessage(id));
+  }
+
+  public getResourceVersionDistributionDetails(
+    resourceType: string,
+    resourceId: string,
+    versionId: string,
+    distributionId: string,
+    summary: DistributionSummary,
+  ): Promise<DistributionDetails> {
+    const cacheKey = `${resourceType}:${resourceId}:${versionId}:${distributionId}`;
+    const cachedValue = this.cachedDistDetails.get(cacheKey);
+    const details = cachedValue != null
+      ? Promise.resolve(cachedValue)
+      : this.apiService.getResourceVersionDistributionDetails(resourceType, resourceId, versionId, distributionId, summary)
+        .then(value => {
+          this.cachedDistDetails.set(cacheKey, value);
+          return value;
+        });
+    return this.loggingService.logForPromise(details, `Resource version details API Call - id: ${distributionId}`);
   }
 
   /**

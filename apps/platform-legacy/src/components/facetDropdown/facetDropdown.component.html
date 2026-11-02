@@ -28,7 +28,7 @@
           [checked]="descendantsAllSelected(node)"
           (change)="facetItemSelectionToggle(node)"
           [indeterminate]="descendantsPartiallySelected(node)">
-          {{ node.level === 0 ? 'All Categories' : node.name }} ({{ node.count }})
+          {{ node.level === 0 && activeDomain.code !== 'ALL' ? 'All Categories' : node.name }} ({{ node.count }})
         </mat-checkbox>
       </mat-tree-node>
     </mat-tree>

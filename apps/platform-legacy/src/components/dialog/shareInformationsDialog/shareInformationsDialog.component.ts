@@ -75,9 +75,8 @@ export class ShareInformationsDialogComponent implements OnInit {
               // retrieve
               void this.apiService.retrieveConfigurables(params.share as string).then(response => {
 
-                if (response !== '') {
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-                  const shareConf = JSON.parse(JSON.parse(this.share.deencrypt(response as string) as string)) as ShareConfigurables;
+                if (response !== null && response !== '') {
+                  const shareConf = JSON.parse(response) as ShareConfigurables;
 
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                   this.configurables = JSON.parse(shareConf.configurables as string);
@@ -97,6 +96,9 @@ export class ShareInformationsDialogComponent implements OnInit {
                 } else {
                   this.cancel();
                 }
+              }).catch(error => {
+                console.error('Failed to load shared configuration:', error);
+                this.cancel();
               });
             } else {
               this.cancel();

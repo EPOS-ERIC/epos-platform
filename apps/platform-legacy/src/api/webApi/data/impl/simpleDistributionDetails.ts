@@ -13,6 +13,7 @@ import { DistributionCategories } from '../distributionCategories.interface';
 import { Creator } from '../creator.interface';
 
 export class SimpleDistributionDetails implements DistributionDetails {
+  public readonly resourceVersion: DistributionSummary['resourceVersion'];
   public readonly isDownloadable: boolean;
   public readonly isMappable: boolean;
   public readonly isGraphable: boolean;
@@ -67,6 +68,7 @@ export class SimpleDistributionDetails implements DistributionDetails {
     private readonly creator: Array<Creator>
   ) {
     this.uid = (uid);
+    this.resourceVersion = this.summary.resourceVersion;
     this.isMappable = this.summary.isMappable;
     this.isGraphable = this.summary.isGraphable;
     this.isDownloadable = this.summary.isDownloadable;

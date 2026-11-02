@@ -6,13 +6,14 @@
 
         <!-- first only if ALL or FAV -->
         <ng-container *ngIf="first && showFirst">
-          <span class="no-link" matTooltip='{{ showFirst ? "" : "Filter by" }} {{ crumb.value }}'>
+          <span [class.no-link]="!filterFirst" (click)="filterFirst && filterBy(crumb.value)"
+            matTooltip='{{ filterFirst ? "Filter by " : "" }}{{ crumb.value }}'>
             {{ (crumb.value.length>textSliceLimit)? (crumb.value | slice:0:textSliceLimit)+'...':(crumb.value) }}
-          </span> >
+          </span><ng-container *ngIf="!last"> > </ng-container>
         </ng-container>
         <ng-container *ngIf="!first">
-          <span [class]="{'no-link': showFirst}" (click)="filterBy(crumb.value)"
-            matTooltip='{{ showFirst ? "" : "Filter by" }} {{ crumb.value }}'>
+          <span [class]="{'no-link': showFirst && !filterFirst}" (click)="filterBy(crumb.value)"
+            matTooltip='{{ showFirst && !filterFirst ? "" : "Filter by" }} {{ crumb.value }}'>
             {{ (crumb.value.length>textSliceLimit)? (crumb.value | slice:0:textSliceLimit)+'...':(crumb.value) }}
           </span>
         </ng-container>
