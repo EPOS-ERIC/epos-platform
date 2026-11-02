@@ -22,6 +22,9 @@
 
     <div class="detail-field">
       <span class="detail-label">Keywords</span>
+      @if (!disabled) {
+        <span class="keyword-hint app-muted">Press <kbd>Enter</kbd> to add a keyword.</span>
+      }
       <app-keyword-chips [keywords]="model.keywords" [disabled]="disabled" (keywordsChange)="updateKeywords($event)" />
     </div>
 
