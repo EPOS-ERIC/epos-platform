@@ -24,6 +24,7 @@ const (
 	GlobalPermissionResourceUnpublish    GlobalPermission = "global.resource.unpublish"
 	GlobalPermissionCategoryManage       GlobalPermission = "global.category.manage"
 	GlobalPermissionConfigurationManage  GlobalPermission = "global.configuration.manage"
+	GlobalPermissionConverterManage      GlobalPermission = "global.converter.manage"
 )
 
 // GroupPermission is a permission evaluated within a group's scope.
@@ -66,7 +67,8 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 		GlobalPermissionResourcePublish,
 		GlobalPermissionResourceUnpublish,
 		GlobalPermissionCategoryManage,
-		GlobalPermissionConfigurationManage:
+		GlobalPermissionConfigurationManage,
+		GlobalPermissionConverterManage:
 		return permission, nil
 	default:
 		return "", apperror.Default(apperror.CodeValidationFailed)

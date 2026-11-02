@@ -13,6 +13,8 @@ services:
     url: "data-retriever-service:8100"
   sharing:
     url: "sharing-service:8200"
+  converter:
+    url: "converter-service:8200"
   auth:
     url: "http://oss-aai-service:8080/"
 

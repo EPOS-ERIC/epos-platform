@@ -17,6 +17,8 @@ services:
     url: "metadata-lifecycle:5000"
   data-retriever:
     url: "data-retriever:8100"
+  converter:
+    url: "converter:8200"
   sharing:
     url: "sharing:8200"
   auth:

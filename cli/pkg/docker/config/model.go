@@ -26,10 +26,12 @@ type Images struct {
 	GatewayImage           string `yaml:"gateway"`
 	MetadataLifecycleImage string `yaml:"metadata_lifecycle"`
 	DataRetrieverImage     string `yaml:"data_retriever"`
+	ConverterImage         string `yaml:"converter"`
 	SharingServiceImage    string `yaml:"sharing_service"`
 	AAIServiceImage        string `yaml:"aai_service"`
 	MetadataDatabaseImage  string `yaml:"metadata_database"`
 	DataRetrieverDBImage   string `yaml:"data_retriever_database"`
+	ConverterDBImage       string `yaml:"converter_database"`
 	SharingDBImage         string `yaml:"sharing_database"`
 	OTelLGTMImage          string `yaml:"otel_lgtm"`
 }
@@ -139,6 +141,7 @@ type Components struct {
 	Backoffice            Backoffice       `yaml:"backoffice"`
 	MetadataDatabase      MetadataDatabase `yaml:"metadata_database"`
 	DataRetrieverDatabase MetadataDatabase `yaml:"data_retriever_database"`
+	ConverterDatabase     MetadataDatabase `yaml:"converter_database"`
 	SharingDatabase       MetadataDatabase `yaml:"sharing_database"`
 	AAIService            AAIService       `yaml:"aai_service"`
 	OpenTelemetry         OpenTelemetry    `yaml:"otel"`
@@ -165,6 +168,7 @@ func (e *EnvConfig) ActiveImages() []common.NamedImage {
 		{Name: "Gateway", Ref: e.Images.GatewayImage},
 		{Name: "Metadata Lifecycle", Ref: e.Images.MetadataLifecycleImage},
 		{Name: "Data Retriever", Ref: e.Images.DataRetrieverImage},
+		{Name: "Converter", Ref: e.Images.ConverterImage},
 		{Name: "Sharing", Ref: e.Images.SharingServiceImage},
 	}
 	if e.Components.MetadataDatabase.Enabled {
@@ -172,6 +176,9 @@ func (e *EnvConfig) ActiveImages() []common.NamedImage {
 	}
 	if e.Components.DataRetrieverDatabase.Enabled {
 		images = append(images, common.NamedImage{Name: "Data Retriever Database", Ref: e.Images.DataRetrieverDBImage})
+	}
+	if e.Components.ConverterDatabase.Enabled {
+		images = append(images, common.NamedImage{Name: "Converter Database", Ref: e.Images.ConverterDBImage})
 	}
 	if e.Components.SharingDatabase.Enabled {
 		images = append(images, common.NamedImage{Name: "Sharing Database", Ref: e.Images.SharingDBImage})

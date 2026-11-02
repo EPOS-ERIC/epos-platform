@@ -1,4 +1,44 @@
 services:
+  converter-db:
+    image: postgres:18-alpine
+    environment:
+      - POSTGRES_DB=converter
+      - POSTGRES_USER=converter
+      - POSTGRES_PASSWORD=converter
+    networks: [epos-network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U converter -d converter || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - converter-db-data-ci:/var/lib/postgresql
+
+  converter:
+    image: epos-converter:latest
+    depends_on:
+      converter-db:
+        condition: service_healthy
+    environment:
+      - SERVER_PORT=8200
+      - DB_HOST=converter-db
+      - DB_PORT=5432
+      - DB_NAME=converter
+      - DB_USER=converter
+      - DB_PASSWORD=converter
+      - OTEL_SERVICE_NAME=converter
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+    volumes:
+      - converter-plugins-ci:/data/plugins
+    networks: [epos-network]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   data-retriever-db:
     image: postgres:18-alpine
     environment:
@@ -158,6 +198,8 @@ services:
         condition: service_healthy
       data-retriever:
         condition: service_healthy
+      converter:
+        condition: service_healthy
       oss-aai-service:
         condition: service_healthy
     environment:
@@ -182,6 +224,8 @@ services:
       start_period: 20s
 
 volumes:
+  converter-db-data-ci:
+  converter-plugins-ci:
   data-retriever-db-data-ci:
   metadata-lifecycle-db-data-ci:
   sharing-db-data-ci:

@@ -19,6 +19,8 @@ data:
         url: "metadata-lifecycle:5000"
       data-retriever:
         url: "data-retriever:8100"
+      converter:
+        url: "converter:8200"
       sharing:
         url: "sharing:8200"
       auth:
@@ -28,17 +30,6 @@ data:
         enable: {{ .Values.components.gateway.mailgun.enable }}
         domain: {{ .Values.components.gateway.mailgun.domain | quote }}
         from: {{ .Values.components.gateway.mailgun.from | quote }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gateway-mailgun
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: gateway
-type: Opaque
-stringData:
-  api_key: {{ .Values.components.gateway.mailgun.api_key | quote }}
 ---
 apiVersion: apps/v1
 kind: Deployment

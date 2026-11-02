@@ -1,0 +1,19 @@
+FROM golang:1.27-alpine
+
+WORKDIR /workspace/services/converter
+
+ENV CGO_ENABLED=0
+RUN apk add --no-cache ca-certificates git make openjdk21-jre python3 py3-pip
+COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+COPY . /workspace
+
+EXPOSE 8200
+ENV EPOS_SERVICE_NAME="Converter" \
+    EPOS_PORT="8200" \
+    PLUGINS_PATH="/data/plugins"
+
+RUN adduser -D -u 1000 appuser && mkdir -p /data/plugins /go/pkg/mod /home/appuser/.cache/go-build && chown -R 1000:1000 /workspace /data/plugins /go/pkg/mod /home/appuser/.cache
+USER 1000
+
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
+CMD ["go", "run", "."]

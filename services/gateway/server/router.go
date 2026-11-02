@@ -15,6 +15,7 @@ import (
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 	"github.com/go-chi/chi/v5"
@@ -26,6 +27,7 @@ func NewRouter(
 	membershipService *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
 	dataRetrieverClient *clients.DataRetriever,
+	converterClient *clients.Converter,
 	sharingService *sharingservice.Service,
 	authService *auth.Service,
 	corsAllowOrigin string,
@@ -60,13 +62,16 @@ func NewRouter(
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
 	securityHandler := handlers.NewSecurityHandler(authService, identityService)
-	accessService := distributionaccess.NewService(metadataLifecycleClient, dataRetrieverClient)
+	accessService := distributionaccess.NewService(metadataLifecycleClient, dataRetrieverClient, converterClient)
+	resourceService := resource.New(metadataLifecycleClient, converterClient)
 	generatedHandler := handlers.NewOgenHandler(
 		identityService,
 		membershipService,
 		metadataLifecycleClient,
 		sharingService,
 		accessService,
+		resourceService,
+		converterClient,
 		log,
 	)
 	generatedServer, err := gatewayapi.NewServer(

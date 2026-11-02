@@ -1,0 +1,57 @@
+name: Converter Pipeline
+
+on:
+  pull_request:
+    paths:
+      - services/converter/**
+      - packages/go/apperror/**
+      - packages/go/grpcserver/**
+      - packages/go/logging/**
+      - packages/go/observability/**
+      - packages/go/postgres/**
+      - packages/protobuf/**
+      - packages/scripts/epos-banner.sh
+      - Makefile
+      - .github/workflows/converter-ci.yml
+      - .github/workflows/_go-service-ci.yml
+      - .github/workflows/_go-service-cd.yml
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+    paths:
+      - services/converter/**
+      - packages/go/apperror/**
+      - packages/go/grpcserver/**
+      - packages/go/logging/**
+      - packages/go/observability/**
+      - packages/go/postgres/**
+      - packages/protobuf/**
+      - packages/scripts/epos-banner.sh
+      - Makefile
+      - .github/workflows/converter-ci.yml
+      - .github/workflows/_go-service-ci.yml
+      - .github/workflows/_go-service-cd.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_go-service-ci.yml
+    secrets: inherit
+    with:
+      service: services/converter
+
+  publish:
+    needs: ci
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_go-service-cd.yml
+    secrets: inherit
+    with:
+      service: services/converter
+      image: converter

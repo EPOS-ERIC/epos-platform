@@ -8,6 +8,49 @@ import (
 	"github.com/google/uuid"
 )
 
+// DistributionFormats returns native formats to authorized converter managers.
+func (s *Service) DistributionFormats(ctx context.Context, actor domain.Actor, distributionID uuid.UUID) ([]string, error) {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actor), domain.GlobalPermissionConverterManage)
+	if err != nil {
+		return nil, operationError("authorize converter management", err)
+	}
+
+	if !allowed.Allowed {
+		return nil, apperror.Default(apperror.CodePermissionDenied)
+	}
+
+	datasetID, versionID, err := s.store.GetDistributionDatasetVersion(ctx, distributionID)
+	if err != nil {
+		return nil, operationError("resolve distribution", err)
+	}
+
+	dataset, err := s.store.Get(ctx, datasetID, versionID)
+	if err != nil {
+		return nil, operationError("get distribution metadata", err)
+	}
+
+	for _, distribution := range dataset.Metadata.Distributions {
+		if distribution.ID != distributionID {
+			continue
+		}
+
+		if distribution.Type != domain.DistributionTypeWebService || distribution.WebService == nil {
+			return nil, apperror.Field("distribution_id", "Distribution is not a web service.", nil)
+		}
+
+		formats := distribution.WebService.NativeFormats()
+
+		result := make([]string, len(formats))
+		for i, format := range formats {
+			result[i] = format.OutputFormat
+		}
+
+		return result, nil
+	}
+
+	return nil, apperror.Default(apperror.CodeNotFound)
+}
+
 func (s *Service) PrepareAccess(ctx context.Context, actor *domain.Actor, distributionID uuid.UUID, input domain.DistributionAccessInput) (domain.DistributionAccess, error) {
 	if err := ctx.Err(); err != nil {
 		return domain.DistributionAccess{}, err

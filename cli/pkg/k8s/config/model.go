@@ -90,6 +90,7 @@ type Components struct {
 	Backoffice            Backoffice       `yaml:"backoffice"`
 	MetadataDatabase      MetadataDatabase `yaml:"metadata_database"`
 	DataRetrieverDatabase MetadataDatabase `yaml:"data_retriever_database"`
+	ConverterDatabase     MetadataDatabase `yaml:"converter_database"`
 	SharingDatabase       MetadataDatabase `yaml:"sharing_database"`
 	AAIService            AAIService       `yaml:"aai_service"`
 	OpenTelemetry         OpenTelemetry    `yaml:"otel"`

@@ -4,12 +4,13 @@ import (
 	"errors"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.ResourceVersion, error) {
+func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion, enrichment domain.ResourceVersion) (gatewayapi.ResourceVersion, error) {
 	if v == nil {
 		return gatewayapi.ResourceVersion{}, errors.New("decode metadata-lifecycle resource record: response is empty")
 	}
@@ -37,6 +38,10 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.Re
 	metadata, err := toAPIResourceMetadata(v)
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
+	}
+
+	if metadata.IsDatasetResourceMetadata() {
+		metadata.DatasetResourceMetadata = withAvailableConversions(metadata.DatasetResourceMetadata, enrichment.Distributions)
 	}
 
 	var rejectionNote gatewayapi.OptNonBlankString

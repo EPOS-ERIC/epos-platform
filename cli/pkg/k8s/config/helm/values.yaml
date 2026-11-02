@@ -53,6 +53,13 @@ components:
     user: "sharing"
     password: ""
     db_name: "sharing"
+  converter_database:
+    enabled: true
+    host: "converter-db"
+    port: 5432
+    user: "converter"
+    password: ""
+    db_name: "converter"
   aai_service:
     enabled: true
     name: "EPOS"
@@ -84,9 +91,11 @@ images:
   gateway: "ghcr.io/epos-eric/epos-platform/gateway:main"
   metadata_lifecycle: "ghcr.io/epos-eric/epos-platform/metadata-lifecycle:main"
   data_retriever: "ghcr.io/epos-eric/epos-platform/data-retriever:main"
+  converter: "ghcr.io/epos-eric/epos-platform/converter:main"
   sharing_service: "ghcr.io/epos-eric/epos-platform/sharing:main"
   aai_service: "ghcr.io/epos-eric/epos-platform/oss-aai-service:main"
   metadata_database: "postgis/postgis:18-3.6-alpine"
   data_retriever_database: "postgres:18-alpine"
+  converter_database: "postgres:18-alpine"
   sharing_database: "postgres:18-alpine"
   otel_lgtm: "grafana/otel-lgtm:latest"

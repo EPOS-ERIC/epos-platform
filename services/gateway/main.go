@@ -55,10 +55,17 @@ func main() {
 		log.Error("invalid metadata-lifecycle service configuration", "error", err)
 		panic("invalid metadata-lifecycle service configuration")
 	}
+
 	dataRetrieverClient, err := clients.NewDataRetriever(log, cfg.Services.DataRetriever.URL)
 	if err != nil {
 		log.Error("invalid data-retriever service configuration", "error", err)
 		panic("invalid data-retriever service configuration")
+	}
+
+	converterClient, err := clients.NewConverter(log, cfg.Services.Converter.URL)
+	if err != nil {
+		log.Error("invalid converter service configuration", "error", err)
+		panic("invalid converter service configuration")
 	}
 
 	sharingClient, err := clients.NewSharing(log, cfg.Services.Sharing.URL)
@@ -73,7 +80,7 @@ func main() {
 		panic("invalid auth service configuration")
 	}
 
-	if err := server.Run(*cfg, log, metadataLifecycleClient, dataRetrieverClient, sharingClient, authService); err != nil {
+	if err := server.Run(*cfg, log, metadataLifecycleClient, dataRetrieverClient, converterClient, sharingClient, authService); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}

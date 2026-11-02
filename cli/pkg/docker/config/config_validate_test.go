@@ -13,6 +13,7 @@ func TestConfigValidate(t *testing.T) {
 	for _, password := range []string{
 		cfg.Components.MetadataDatabase.Password,
 		cfg.Components.DataRetrieverDatabase.Password,
+		cfg.Components.ConverterDatabase.Password,
 		cfg.Components.SharingDatabase.Password,
 		cfg.Components.AAIService.Password,
 		cfg.Components.OpenTelemetry.AdminPassword,
@@ -35,6 +36,8 @@ func TestConfigValidate(t *testing.T) {
 		{"invalid domain", func() { cfg.Domain = "host/path" }},
 		{"missing database password", func() { cfg.Components.MetadataDatabase.Password = "" }},
 		{"missing retriever password", func() { cfg.Components.DataRetrieverDatabase.Password = "" }},
+		{"missing converter password", func() { cfg.Components.ConverterDatabase.Password = "" }},
+		{"missing converter image", func() { cfg.Images.ConverterImage = "" }},
 		{"missing sharing password", func() { cfg.Components.SharingDatabase.Password = "" }},
 		{"missing AAI password", func() { cfg.Components.AAIService.Password = "" }},
 		{"missing gateway image", func() { cfg.Images.GatewayImage = "" }},
