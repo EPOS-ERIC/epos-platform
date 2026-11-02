@@ -14,13 +14,6 @@
     </div>
   }
 
-  @if (warningKind !== 'none') {
-    <div class="temporal-warning" [class.temporal-warning--error]="warningKind === 'error'" [class.temporal-warning--warning]="warningKind === 'warning'">
-      <app-icon [name]="'warning'" [size]="16" />
-      <span>{{ warningMessage }}</span>
-    </div>
-  }
-
   <fieldset class="detail-fieldset detail-form-grid" [disabled]="disabled">
     @if (allowGeological) {
       <label class="detail-field detail-field--full">
@@ -54,4 +47,11 @@
       </label>
     }
   </fieldset>
+  
+  @if (warningKind !== 'none') {
+    <div class="temporal-warning" [class.temporal-warning--error]="warningKind === 'error'" [class.temporal-warning--warning]="warningKind === 'warning'">
+      <app-icon [name]="'warning'" [size]="16" />
+      <span>{{ warningMessage }}</span>
+    </div>
+  }
 </section>

@@ -73,6 +73,7 @@
 .temporal-warning {
   display: flex;
   align-items: flex-start;
+  justify-content: center;
   gap: 10px;
   padding: 12px 14px;
   margin-bottom: 16px;
