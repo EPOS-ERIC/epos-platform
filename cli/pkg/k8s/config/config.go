@@ -167,6 +167,13 @@ func (c *Config) Validate() error {
 	if c.Domain == "" {
 		return fmt.Errorf("domain is required")
 	}
+	if c.IngressHost != nil && *c.IngressHost != "" && *c.IngressHost != c.Domain && c.CertManagerIssuer != "" &&
+		(c.Components.PlatformUI.TLS.Enabled || c.Components.Gateway.TLS.Enabled ||
+			(c.Components.Backoffice.Enabled && c.Components.Backoffice.TLS.Enabled) ||
+			(c.Components.AAIService.Enabled && c.Components.AAIService.TLS.Enabled) ||
+			(c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" && c.Components.OpenTelemetry.TLS.Enabled)) {
+		return fmt.Errorf("ingress_host must match domain when cert-manager TLS is enabled")
+	}
 	if c.Protocol != "http" && c.Protocol != "https" {
 		return fmt.Errorf("protocol must be http or https")
 	}

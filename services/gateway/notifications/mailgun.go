@@ -82,6 +82,7 @@ func (m *Mailgun) sendAsync(ctx context.Context, notification domain.Notificatio
 		attribute.String("notification.channel", string(notification.Channel)),
 		attribute.String("notification.event_kind", notification.EventKind),
 		attribute.String("notification.provider", "mailgun"),
+		attribute.String("notification.recipient", notification.TargetEmail),
 	)
 
 	ctx, cancel := context.WithTimeout(ctx, m.timeout)
@@ -89,7 +90,7 @@ func (m *Mailgun) sendAsync(ctx context.Context, notification domain.Notificatio
 
 	if err := m.send(ctx, notification); err != nil {
 		span.RecordError(err)
-		span.SetStatus(codes.Error, "notification send failed")
+		span.SetStatus(codes.Error, err.Error())
 		m.log.ErrorContext(ctx, "send notification failed", "target", notification.TargetEmail, "event", notification.EventKind, "error", err)
 	}
 }

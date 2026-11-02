@@ -105,7 +105,9 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.domain | quote }}
+    - {{- if (include "epos.ingressHost" .) }}
+      host: {{ include "epos.ingressHost" . | quote }}
+      {{- end }}
       http:
         paths:
           - path: {{ $path }}(/|$)(.*)

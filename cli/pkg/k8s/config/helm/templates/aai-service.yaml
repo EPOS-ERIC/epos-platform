@@ -39,6 +39,8 @@ spec:
         checksum/aai-password: {{ .Values.components.aai_service.password | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: aai-service
         image: {{ .Values.images.aai_service }}
@@ -103,7 +105,9 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: {{ .Values.domain }}
+  - {{- if (include "epos.ingressHost" .) }}
+    host: {{ include "epos.ingressHost" . | quote }}
+    {{- end }}
     http:
       paths:
       {{- if .Values.url_prefix_namespace }}

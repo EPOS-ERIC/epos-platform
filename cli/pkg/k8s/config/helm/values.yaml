@@ -1,4 +1,5 @@
 domain: "localhost"
+ingress_host: "localhost" # Empty matches any host.
 protocol: "http"
 url_prefix_namespace: true
 create_namespace: true

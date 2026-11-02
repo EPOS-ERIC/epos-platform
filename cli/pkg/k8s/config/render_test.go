@@ -95,6 +95,7 @@ func TestConfigRender(t *testing.T) {
 				},
 				"templates/aai-service.yaml": {
 					"name: aai-service",
+					"securityContext:\n        fsGroup: 1000",
 					"kind: Ingress",
 					"path: /test-aai/aai(/|$)(.*)",
 					`INITIAL_ADMIN_NAME: "EPOS"`,
@@ -297,6 +298,62 @@ func TestConfigRender(t *testing.T) {
 				contentExcludes(t, content, suffix, substrings)
 			}
 		})
+	}
+}
+
+func TestIngressHost(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		host *string
+		want string
+	}{
+		{name: "default", want: `host: "localhost"`},
+		{name: "any host", host: new(string)},
+		{name: "custom", host: func() *string { s := "ingress.example.org"; return &s }(), want: `host: "ingress.example.org"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.GetDefaultConfig()
+			cfg.Name = "test-ingress"
+			cfg.IngressHost = tc.host
+			cfg.Components.AAIService.Enabled = true
+			cfg.Components.Backoffice.Enabled = true
+			cfg.Components.OpenTelemetry.Enabled = true
+			files, err := cfg.Render()
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, name := range []string{"gateway", "dataportal", "backoffice-ui", "aai-service", "otel"} {
+				content := files["epos/templates/"+name+".yaml"]
+				if content == "" {
+					t.Fatalf("missing template %s", name)
+				}
+				if tc.want == "" && strings.Contains(content, "host:") {
+					t.Errorf("%s contains ingress host", name)
+				} else if tc.want != "" && !strings.Contains(content, tc.want) {
+					t.Errorf("%s missing %s", name, tc.want)
+				}
+			}
+			if !strings.Contains(files["epos/templates/aai-service.yaml"], "http://localhost/test-ingress/aai") {
+				t.Error("public AAI URL changed")
+			}
+		})
+	}
+}
+
+func TestIngressHostCertManagerValidation(t *testing.T) {
+	cfg := config.GetDefaultConfig()
+	cfg.Name = "test-ingress"
+	cfg.Protocol = "https"
+	cfg.Components.Gateway.TLS.Enabled = true
+	cfg.Components.Gateway.TLS.SecretName = "gateway-tls"
+	host := "other.example.org"
+	cfg.IngressHost = &host
+	if err := cfg.Validate(); err == nil || !strings.Contains(err.Error(), "ingress_host must match domain") {
+		t.Fatalf("unexpected validation error: %v", err)
+	}
+	host = ""
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("hostless ingress validation: %v", err)
 	}
 }
 

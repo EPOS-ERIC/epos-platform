@@ -6,6 +6,14 @@
 {{- end -}}
 {{- end -}}
 
+{{- define "epos.ingressHost" -}}
+{{- if hasKey .Values "ingress_host" -}}
+{{- .Values.ingress_host -}}
+{{- else -}}
+{{- .Values.domain -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "epos.labels" -}}
 app.kubernetes.io/name: {{ include "epos.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}

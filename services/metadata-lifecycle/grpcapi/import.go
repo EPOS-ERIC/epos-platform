@@ -10,6 +10,7 @@ import (
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type importParser interface {
@@ -38,6 +39,7 @@ func (s *ImportServer) ImportTurtle(ctx context.Context, request *metadatalifecy
 
 	batch, err := s.parser.Parse(bytes.NewReader(request.GetTurtle()))
 	if err != nil {
+		trace.SpanFromContext(ctx).RecordError(err)
 		return nil, fmt.Errorf("parse Turtle: %w: %w", apperror.Default(apperror.CodeValidationFailed), err)
 	}
 

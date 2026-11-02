@@ -6,6 +6,7 @@ import "github.com/EPOS-ERIC/epos-platform/cli/common"
 type Config struct {
 	Name               string           `yaml:"name"`
 	Domain             string           `yaml:"domain"`
+	IngressHost        *string          `yaml:"ingress_host,omitempty"`
 	Protocol           string           `yaml:"protocol"`
 	URLPrefixNamespace bool             `yaml:"url_prefix_namespace"`
 	CreateNamespace    bool             `yaml:"create_namespace"`
