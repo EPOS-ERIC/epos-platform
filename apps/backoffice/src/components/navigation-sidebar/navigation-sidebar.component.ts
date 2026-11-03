@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, DOCUMENT, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
@@ -17,7 +18,7 @@ type NavigationItem = {
 
 @Component({
   selector: 'app-navigation-sidebar',
-  imports: [AppIconComponent, RouterLink],
+  imports: [AppIconComponent, NgTemplateOutlet, RouterLink],
   templateUrl: './navigation-sidebar.component.html',
   styleUrl: './navigation-sidebar.component.css'
 })
@@ -51,6 +52,7 @@ export class NavigationSidebarComponent {
   @Output() detailAction = new EventEmitter<ResourceActionKey>();
 
   protected readonly collapsed = signal(false);
+  protected readonly detailRootExpanded = signal(true);
   protected readonly expandedNodes = signal<Set<string>>(new Set());
   protected readonly expandedMainRoute = signal<string | null>(null);
 
@@ -83,6 +85,14 @@ export class NavigationSidebarComponent {
     return undefined;
   }
 
+  protected get detailRootItems(): NavigationItem[] {
+    return this.detailItems.filter((item) => item.anchor !== 'distributions');
+  }
+
+  protected get detailSiblingItems(): NavigationItem[] {
+    return this.detailItems.filter((item) => item.anchor === 'distributions');
+  }
+
   protected get adminItems(): NavigationItem[] {
     return this.canAccessGlobalManage ? this.allAdminItems : [];
   }
@@ -93,6 +103,10 @@ export class NavigationSidebarComponent {
 
   protected toggleSidebar(): void {
     this.collapsed.update((value) => !value);
+  }
+
+  protected toggleDetailRoot(): void {
+    this.detailRootExpanded.update((value) => !value);
   }
 
   protected groupsForItem(item: NavigationItem): Group[] {

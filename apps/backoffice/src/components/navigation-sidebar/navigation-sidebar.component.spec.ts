@@ -33,7 +33,38 @@ describe('NavigationSidebarComponent', () => {
     fixture.detectChanges();
 
     expect((fixture.nativeElement.querySelector('.nav-section-title') as HTMLElement).textContent?.trim()).toBe('Compare');
-    expect(fixture.nativeElement.querySelector('.nav-item--tree-link')?.getAttribute('href')).toBe('#compare-general-information');
+    const root = fixture.nativeElement.querySelector('.nav-tree-item--root') as HTMLElement;
+    expect(root.querySelector('.nav-root-label')?.textContent?.trim()).toBe('Dataset');
+    expect(root.querySelector('.nav-item--tree-link')?.getAttribute('href')).toBe('#compare-general-information');
+
+    const rootToggle = root.querySelector('.detail-root-toggle-button') as HTMLButtonElement;
+    expect(rootToggle.getAttribute('aria-expanded')).toBe('true');
+    rootToggle.click();
+    fixture.detectChanges();
+
+    expect(rootToggle.getAttribute('aria-expanded')).toBe('false');
+    expect(root.querySelector('.nav-item--tree-link')).toBeNull();
+  });
+
+  it('renders distributions alongside the resource root', async () => {
+    await TestBed.configureTestingModule({
+      imports: [NavigationSidebarComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(NavigationSidebarComponent);
+    fixture.componentRef.setInput('detailRootLabel', 'Dataset');
+    fixture.componentRef.setInput('detailItems', [
+      { label: 'General Information', anchor: 'general-information' },
+      { label: 'Distributions', anchor: 'distributions' }
+    ]);
+    fixture.detectChanges();
+
+    const detailSection = fixture.nativeElement.querySelector('.nav-section--detail') as HTMLElement;
+    const root = detailSection.querySelector('.nav-tree-item--root') as HTMLElement;
+    const distributions = detailSection.querySelector('[href="#distributions"]') as HTMLAnchorElement;
+    expect(root.querySelector('[href="#general-information"]')).not.toBeNull();
+    expect(root.querySelector('[href="#distributions"]')).toBeNull();
+    expect(distributions.closest('.nav-tree-item')?.parentElement).toBe(detailSection);
   });
 
   it('shows a single global management entry when an admin capability is granted', async () => {

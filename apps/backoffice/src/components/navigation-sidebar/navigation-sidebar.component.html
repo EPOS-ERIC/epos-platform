@@ -73,59 +73,81 @@
       <div class="nav-section nav-section--detail" [class.centered]="collapsed()">
         <span class="nav-section-title" [class.hidden]="collapsed()">{{ detailSectionLabel }}</span>
 
-        <div class="nav-root-item" [class.centered]="collapsed()">
-          @if (detailRootIcon) {
-            <span class="nav-icon nav-icon--root"><app-icon [name]="detailRootIcon" [size]="16" /></span>
-          }
-
-          <span class="nav-root-label" [class.hidden]="collapsed()">{{ detailRootLabel }}</span>
-        </div>
-
-        @for (item of detailItems; track item.anchor) {
-          <div class="nav-tree-item" [class.nav-tree-item--expanded]="!!item.children?.length && !collapsed() && isNodeExpanded(item.anchor)">
-            <div class="nav-tree-row">
-              <a class="nav-item nav-item--nested nav-item--anchor nav-item--tree-link" [href]="'#' + item.anchor" (click)="scrollToSectionAndExpand($event, item.anchor)" [class.centered]="collapsed()" [class.active]="isDetailAnchorActive(item.anchor)">
-                <span class="nav-label" [class.hidden]="collapsed()">{{ item.label }}</span>
-              </a>
-
-              @if (item.children?.length && !collapsed()) {
-                <button type="button" class="tree-toggle-button" (click)="toggleNode($event, item.anchor)" [attr.aria-expanded]="isNodeExpanded(item.anchor)">
-                  <app-icon [name]="isNodeExpanded(item.anchor) ? 'chevron-down' : 'chevron-right'" [size]="14" />
-                </button>
+        <div class="nav-tree-item nav-tree-item--root" [class.nav-tree-item--expanded]="!collapsed() && detailRootExpanded()">
+          <div class="nav-tree-row nav-tree-row--root">
+            <div class="nav-root-item" [class.centered]="collapsed()">
+              @if (detailRootIcon) {
+                <span class="nav-icon nav-icon--root"><app-icon [name]="detailRootIcon" [size]="16" /></span>
               }
+
+              <span class="nav-root-label" [class.hidden]="collapsed()">{{ detailRootLabel }}</span>
             </div>
 
-            @if (item.children?.length && !collapsed() && isNodeExpanded(item.anchor)) {
-              <div class="nav-tree-children nav-tree-children--fill">
-                @for (child of item.children; track child.anchor) {
-                  <div class="nav-tree-item nav-tree-item--child" [class.nav-tree-item--expanded]="!!child.children?.length && isNodeExpanded(child.anchor)">
-                    <div class="nav-tree-row nav-tree-row--child">
-                      <a class="nav-item nav-item--nested nav-item--anchor nav-item--sub nav-item--tree-link" [href]="'#' + child.anchor" (click)="scrollToSectionAndExpand($event, child.anchor)" [class.active]="isDetailAnchorActive(child.anchor)">
-                        <span class="nav-label">{{ child.label }}</span>
-                      </a>
-
-                      @if (child.children?.length) {
-                        <button type="button" class="tree-toggle-button" (click)="toggleNode($event, child.anchor)" [attr.aria-expanded]="isNodeExpanded(child.anchor)">
-                          <app-icon [name]="isNodeExpanded(child.anchor) ? 'chevron-down' : 'chevron-right'" [size]="14" />
-                        </button>
-                      }
-                    </div>
-
-                    @if (child.children?.length && isNodeExpanded(child.anchor)) {
-                      <div class="nav-tree-children nav-tree-children--sub nav-tree-children--scrollable">
-                        @for (grandchild of child.children; track grandchild.anchor) {
-                          <a class="nav-item nav-item--nested nav-item--anchor nav-item--sub nav-item--sub-sub nav-item--tree-link" [href]="'#' + grandchild.anchor" (click)="scrollToSectionAndExpand($event, grandchild.anchor)" [class.active]="isDetailAnchorActive(grandchild.anchor)">
-                            <span class="nav-label">{{ grandchild.label }}</span>
-                          </a>
-                        }
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
+            @if (!collapsed()) {
+              <button type="button" class="tree-toggle-button detail-root-toggle-button" (click)="toggleDetailRoot()" [attr.aria-expanded]="detailRootExpanded()" [attr.aria-label]="(detailRootExpanded() ? 'Collapse ' : 'Expand ') + detailRootLabel">
+                <app-icon [name]="detailRootExpanded() ? 'chevron-down' : 'chevron-right'" [size]="14" />
+              </button>
             }
           </div>
+
+          @if (!collapsed() && detailRootExpanded()) {
+            <div class="nav-tree-children nav-tree-children--root">
+              <ng-container *ngTemplateOutlet="detailTree; context: { $implicit: detailRootItems }" />
+            </div>
+          }
+        </div>
+
+        @if (!collapsed()) {
+          <ng-container *ngTemplateOutlet="detailTree; context: { $implicit: detailSiblingItems }" />
         }
+
+        <ng-template #detailTree let-treeItems>
+          @for (item of treeItems; track item.anchor) {
+            <div class="nav-tree-item" [class.nav-tree-item--expanded]="!!item.children?.length && isNodeExpanded(item.anchor)">
+              <div class="nav-tree-row">
+                <a class="nav-item nav-item--nested nav-item--anchor nav-item--tree-link" [href]="'#' + item.anchor" (click)="scrollToSectionAndExpand($event, item.anchor)" [class.active]="isDetailAnchorActive(item.anchor)">
+                  <span class="nav-label">{{ item.label }}</span>
+                </a>
+
+                @if (item.children?.length) {
+                  <button type="button" class="tree-toggle-button" (click)="toggleNode($event, item.anchor)" [attr.aria-expanded]="isNodeExpanded(item.anchor)">
+                    <app-icon [name]="isNodeExpanded(item.anchor) ? 'chevron-down' : 'chevron-right'" [size]="14" />
+                  </button>
+                }
+              </div>
+
+              @if (item.children?.length && isNodeExpanded(item.anchor)) {
+                <div class="nav-tree-children nav-tree-children--fill">
+                  @for (child of item.children; track child.anchor) {
+                    <div class="nav-tree-item nav-tree-item--child" [class.nav-tree-item--expanded]="!!child.children?.length && isNodeExpanded(child.anchor)">
+                      <div class="nav-tree-row nav-tree-row--child">
+                        <a class="nav-item nav-item--nested nav-item--anchor nav-item--sub nav-item--tree-link" [href]="'#' + child.anchor" (click)="scrollToSectionAndExpand($event, child.anchor)" [class.active]="isDetailAnchorActive(child.anchor)">
+                          <span class="nav-label">{{ child.label }}</span>
+                        </a>
+
+                        @if (child.children?.length) {
+                          <button type="button" class="tree-toggle-button" (click)="toggleNode($event, child.anchor)" [attr.aria-expanded]="isNodeExpanded(child.anchor)">
+                            <app-icon [name]="isNodeExpanded(child.anchor) ? 'chevron-down' : 'chevron-right'" [size]="14" />
+                          </button>
+                        }
+                      </div>
+
+                      @if (child.children?.length && isNodeExpanded(child.anchor)) {
+                        <div class="nav-tree-children nav-tree-children--sub nav-tree-children--scrollable">
+                          @for (grandchild of child.children; track grandchild.anchor) {
+                            <a class="nav-item nav-item--nested nav-item--anchor nav-item--sub nav-item--sub-sub nav-item--tree-link" [href]="'#' + grandchild.anchor" (click)="scrollToSectionAndExpand($event, grandchild.anchor)" [class.active]="isDetailAnchorActive(grandchild.anchor)">
+                              <span class="nav-label">{{ grandchild.label }}</span>
+                            </a>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </ng-template>
       </div>
     }
 
