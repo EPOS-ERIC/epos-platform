@@ -118,7 +118,9 @@ describe('Table panel', () => {
       .should('have.length', service.markerCount <= 25 ? service.markerCount : 25);  // 5 rows per page by default
     cy.getByDataCy('table-component-paginator')
       .find('.mat-paginator-range-label')
-      .should('have.text', `Page 1 of ${Math.ceil(service.markerCount / 25)}`);
+      .should(($label) => {
+        expect($label.text().trim()).to.equal(`Page 1 of ${Math.ceil(service.markerCount / 25)}`);
+      });
   });
 
   it('Add/Remove column', () => {
