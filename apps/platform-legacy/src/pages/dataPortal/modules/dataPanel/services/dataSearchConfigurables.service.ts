@@ -73,7 +73,7 @@ export class DataSearchConfigurablesServiceResource extends DataSearchConfigurab
     distId: string,
   ): Promise<DataConfigurableDataSearch> {
     const discoverResponse = this.model.dataDiscoverResponse.get();
-    const dataset = discoverResponse?.datasets?.().find(item => item.distributions.some(distribution => distribution.id === distId));
+    const dataset = discoverResponse?.datasets?.().find(item => item.distributions.some(dist => dist.id === distId));
     const distribution = dataset?.distributions.find(item => item.id === distId);
     const details = dataset != null && distribution != null
       ? this.searchService.getResourceVersionDistributionDetails(

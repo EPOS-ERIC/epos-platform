@@ -30,8 +30,10 @@
         const userInfo = await this.rest.get(url) as {
           id: string;
           email: string;
+          // eslint-disable-next-line @typescript-eslint/naming-convention -- API response field name.
           given_name: string;
           memberships: unknown[];
+          // eslint-disable-next-line @typescript-eslint/naming-convention -- API response field name.
           global_roles: string[];
         };
 
