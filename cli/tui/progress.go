@@ -301,6 +301,7 @@ func (op *OperationProgress) showCompletionOverlay() {
 func (op *OperationProgress) returnToHome() {
 	pageName := fmt.Sprintf("%s-progress", op.operation)
 	op.app.outputWriter.ClearView()
+	detailsCleared := op.wasInDetails && !op.app.detailsPanel.IsShown()
 
 	op.app.ResetToHome(ResetOptions{
 		PageNames:     []string{pageName, "completion-overlay"},
@@ -312,7 +313,9 @@ func (op *OperationProgress) returnToHome() {
 
 	// If we were in details and it wasn't a delete, we might need a full update
 	// to show changed information (like new GUIs or updated config).
-	if op.wasInDetails && op.operation != opDelete && op.state == StateSuccess {
+	if detailsCleared {
+		op.app.envList.FocusActiveList()
+	} else if op.wasInDetails && op.operation != opDelete && op.state == StateSuccess {
 		op.app.detailsPanel.Update(op.savedDetailsName, op.savedDetailsType, op.savedDetailsContext, true)
 	}
 }

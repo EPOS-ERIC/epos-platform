@@ -1,25 +1,26 @@
 package tui
 
 import (
+	"fmt"
+
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/docker"
 	"github.com/EPOS-ERIC/epos-platform/cli/pkg/k8s"
+	"github.com/rivo/tview"
 )
 
 // showDeleteConfirm displays a confirmation dialog for deleting a Docker or K8s environment.
-func (a *App) showDeleteConfirm() {
-	envName, isDocker, k8sContext := a.envList.GetSelected()
-
+func (a *App) showDeleteConfirm(envName string, isDocker bool, k8sContext string) {
 	if envName == "" {
 		return
 	}
 
-	message := "This will permanently remove all containers, volumes, and associated resources.\n\n"
+	message := fmt.Sprintf("Environment: %s\n\nThis will permanently remove all containers, volumes, and associated resources.\n\n", tview.Escape(envName))
 	if !isDocker {
-		message = "This will permanently remove the namespace and all associated K8s resources"
+		message = fmt.Sprintf("Environment: %s\n", tview.Escape(envName))
 		if k8sContext != "" {
-			message += " in context '" + k8sContext + "'"
+			message += fmt.Sprintf("Context: %s\n", tview.Escape(k8sContext))
 		}
-		message += "\n\n"
+		message += "\nThis will permanently remove the namespace and all associated K8s resources.\n\n"
 	}
 	message += DefaultTheme.DestructiveTag("b") + "This action cannot be undone." + "[-]"
 

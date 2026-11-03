@@ -7,8 +7,7 @@ import (
 )
 
 // showCleanConfirm displays a confirmation dialog for cleaning an environment.
-func (a *App) showCleanConfirm() {
-	envName, isDocker, _ := a.envList.GetSelected()
+func (a *App) showCleanConfirm(envName string, isDocker bool) {
 	if envName == "" || !isDocker {
 		return
 	}

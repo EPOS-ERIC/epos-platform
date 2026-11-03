@@ -5,6 +5,8 @@ DATA_RETRIEVER_DIR := services/data-retriever
 CONVERTER_DIR := services/converter
 OSS_AAI_SERVICE_DIR := services/oss-aai-service
 CLI_DIR := cli
+BACKOFFICE_DIR := apps/backoffice
+PLATFORM_LEGACY_DIR := apps/platform-legacy
 
 up: 
 	tilt up $(TILT_CONTEXT_ARG)
@@ -38,7 +40,7 @@ ci-oss-aai-image:
 	+$(MAKE) -C $(OSS_AAI_SERVICE_DIR) docker
 
 test:
-	+$(MAKE) -j test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-converter test-oss-aai-service test-cli
+	+$(MAKE) -j test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-converter test-oss-aai-service test-cli test-backoffice test-platform-legacy
 test-gateway:
 	$(MAKE) -C $(GATEWAY_DIR) test
 test-metadata-lifecycle:
@@ -53,9 +55,13 @@ test-oss-aai-service:
 	$(MAKE) -C $(OSS_AAI_SERVICE_DIR) test
 test-cli:
 	$(MAKE) -C $(CLI_DIR) test
+test-backoffice:
+	$(MAKE) -C $(BACKOFFICE_DIR) test
+test-platform-legacy:
+	$(MAKE) -C $(PLATFORM_LEGACY_DIR) test
 
 lint:
-	+$(MAKE) -j lint-gateway lint-data-retriever lint-converter lint-oss-aai-service lint-metadata-lifecycle lint-sharing lint-cli
+	+$(MAKE) -j lint-gateway lint-data-retriever lint-converter lint-oss-aai-service lint-metadata-lifecycle lint-sharing lint-cli lint-platform-legacy
 lint-gateway:
 	$(MAKE) -C $(GATEWAY_DIR) lint
 lint-data-retriever:
@@ -70,6 +76,8 @@ lint-sharing:
 	$(MAKE) -C $(SHARING_DIR) lint
 lint-cli:
 	$(MAKE) -C $(CLI_DIR) lint
+lint-platform-legacy:
+	$(MAKE) -C $(PLATFORM_LEGACY_DIR) lint
 
 generate:
 	+$(MAKE) -j generate-gateway generate-metadata-lifecycle generate-data-retriever generate-converter generate-protobuf generate-sharing generate-cli
@@ -108,4 +116,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-converter-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-converter test-oss-aai-service test-cli lint lint-gateway lint-data-retriever lint-converter lint-oss-aai-service lint-metadata-lifecycle lint-sharing lint-cli test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing generate-data-retriever generate-converter generate-protobuf generate-cli
+.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-converter-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-converter test-oss-aai-service test-cli test-backoffice test-platform-legacy lint lint-gateway lint-data-retriever lint-converter lint-oss-aai-service lint-metadata-lifecycle lint-sharing lint-cli lint-platform-legacy test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing generate-data-retriever generate-converter generate-protobuf generate-cli

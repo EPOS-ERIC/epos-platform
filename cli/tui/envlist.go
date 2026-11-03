@@ -23,8 +23,9 @@ type dockerListData struct {
 }
 
 type k8sListData struct {
-	envs []k8sEnvRef
-	err  error
+	envs            []k8sEnvRef
+	checkedContexts map[string]bool
+	err             error
 }
 
 // EnvList manages the left-side navigation for environment selection.
@@ -152,15 +153,17 @@ func (el *EnvList) loadDockerData() dockerListData {
 func (el *EnvList) loadK8sData() k8sListData {
 	data := k8sListData{envs: []k8sEnvRef{}}
 
-	envs, err := el.loadK8sEnvs()
+	envs, checkedContexts, err := el.loadK8sEnvs()
 	data.envs = envs
+	data.checkedContexts = checkedContexts
 	data.err = err
 
 	return data
 }
 
-func (el *EnvList) loadK8sEnvs() ([]k8sEnvRef, error) {
+func (el *EnvList) loadK8sEnvs() ([]k8sEnvRef, map[string]bool, error) {
 	k8sEnvs := []k8sEnvRef{}
+	checkedContexts := make(map[string]bool)
 
 	contexts, err := common.GetKubeContexts()
 	if err != nil {
@@ -175,10 +178,10 @@ func (el *EnvList) loadK8sEnvs() ([]k8sEnvRef, error) {
 
 	if len(contexts) == 0 {
 		if err != nil {
-			return k8sEnvs, err
+			return k8sEnvs, checkedContexts, err
 		}
 
-		return k8sEnvs, nil
+		return k8sEnvs, checkedContexts, nil
 	}
 
 	seenContexts := make(map[string]struct{}, len(contexts))
@@ -203,6 +206,7 @@ func (el *EnvList) loadK8sEnvs() ([]k8sEnvRef, error) {
 			}
 			continue
 		}
+		checkedContexts[context] = true
 
 		for _, env := range envs {
 			k8sEnvs = append(k8sEnvs, k8sEnvRef{
@@ -221,10 +225,10 @@ func (el *EnvList) loadK8sEnvs() ([]k8sEnvRef, error) {
 	})
 
 	if len(k8sEnvs) == 0 && firstErr != nil {
-		return k8sEnvs, firstErr
+		return k8sEnvs, checkedContexts, firstErr
 	}
 
-	return k8sEnvs, nil
+	return k8sEnvs, checkedContexts, nil
 }
 
 func (el *EnvList) applyDockerData(data dockerListData) {
@@ -273,6 +277,9 @@ func (el *EnvList) applyDockerData(data dockerListData) {
 
 	el.dockerFlexInner.AddItem(el.buttonFlex, 1, 0, true)
 	el.syncFocusWithVisibleItems()
+	if data.err == nil && el.app.detailsPanel.IsShown() && el.app.detailsPanel.currentDetailsType == string(DockerKey) {
+		el.syncDetailsSelection(true)
+	}
 }
 
 func (el *EnvList) applyK8sData(data k8sListData) {
@@ -319,6 +326,38 @@ func (el *EnvList) applyK8sData(data k8sListData) {
 
 	el.k8sFlexInner.AddItem(el.buttonFlexK8s, 1, 0, true)
 	el.syncFocusWithVisibleItems()
+	if el.app.detailsPanel.IsShown() && el.app.detailsPanel.currentDetailsType == string(K8sKey) {
+		el.syncDetailsSelection(data.checkedContexts[el.app.detailsPanel.currentDetailsContext])
+	}
+}
+
+func (el *EnvList) syncDetailsSelection(clearMissing bool) {
+	dp := el.app.detailsPanel
+	switch dp.currentDetailsType {
+	case string(DockerKey):
+		for i, name := range el.dockerEnvs {
+			if name == dp.currentDetailsName {
+				el.docker.SetCurrentItem(i)
+				el.currentEnv = el.dockerFlex
+				return
+			}
+		}
+	case string(K8sKey):
+		for i, env := range el.k8sEnvs {
+			if env.Name == dp.currentDetailsName && env.Context == dp.currentDetailsContext {
+				el.k8s.SetCurrentItem(i)
+				el.currentEnv = el.k8sFlex
+				return
+			}
+		}
+	}
+
+	if clearMissing {
+		dp.Clear()
+		if el.app.currentPage == homePageName {
+			el.FocusActiveList()
+		}
+	}
 }
 
 func (el *EnvList) syncFocusWithVisibleItems() {
@@ -436,43 +475,44 @@ func (el *EnvList) setupRootInput(envsFlex *tview.Flex) {
 			return nil
 		case event.Rune() == 'd':
 			if el.IsDockerActive() && el.docker.GetItemCount() > 0 {
-				el.app.showDeleteConfirm()
+				el.app.showDeleteConfirm(el.GetSelected())
 				return nil
 			}
 			if !el.IsDockerActive() && el.k8s.GetItemCount() > 0 {
-				el.app.showDeleteConfirm()
+				el.app.showDeleteConfirm(el.GetSelected())
 				return nil
 			}
 		case event.Rune() == 'c':
 			if el.IsDockerActive() && el.docker.GetItemCount() > 0 {
-				el.app.showCleanConfirm()
+				name, isDocker, _ := el.GetSelected()
+				el.app.showCleanConfirm(name, isDocker)
 				return nil
 			}
 		case event.Rune() == 'u':
 			if el.IsDockerActive() && el.docker.GetItemCount() > 0 {
-				el.app.showUpdateForm()
+				el.app.showUpdateForm(el.GetSelected())
 				return nil
 			}
 			if !el.IsDockerActive() && el.k8s.GetItemCount() > 0 {
-				el.app.showUpdateForm()
+				el.app.showUpdateForm(el.GetSelected())
 				return nil
 			}
 		case event.Rune() == 'r':
 			if el.IsDockerActive() && el.docker.GetItemCount() > 0 {
-				el.app.showRenderForm()
+				el.app.showRenderForm(el.GetSelected())
 				return nil
 			}
 			if !el.IsDockerActive() && el.k8s.GetItemCount() > 0 {
-				el.app.showRenderForm()
+				el.app.showRenderForm(el.GetSelected())
 				return nil
 			}
 		case event.Rune() == 'p':
 			if el.IsDockerActive() && el.docker.GetItemCount() > 0 {
-				el.app.showPopulateForm()
+				el.app.showPopulateForm(el.GetSelected())
 				return nil
 			}
 			if !el.IsDockerActive() && el.k8s.GetItemCount() > 0 {
-				el.app.showPopulateForm()
+				el.app.showPopulateForm(el.GetSelected())
 				return nil
 			}
 		}

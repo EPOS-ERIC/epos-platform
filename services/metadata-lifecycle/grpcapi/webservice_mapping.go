@@ -42,6 +42,7 @@ func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService 
 	}
 	return result
 }
+
 func toProtoGenericWebServiceConfiguration(value domain.GenericWebServiceConfiguration) *metadatalifecyclev1.GenericWebServiceConfiguration {
 	result := &metadatalifecyclev1.GenericWebServiceConfiguration{
 		TemplateUrl: value.TemplateURL,
