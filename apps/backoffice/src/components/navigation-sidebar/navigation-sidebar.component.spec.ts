@@ -67,6 +67,34 @@ describe('NavigationSidebarComponent', () => {
     expect(distributions.closest('.nav-tree-item')?.parentElement).toBe(detailSection);
   });
 
+  it('keeps the active detail item in sync with manual scrolling', async () => {
+    await TestBed.configureTestingModule({
+      imports: [NavigationSidebarComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const general = document.createElement('section');
+    general.id = 'general-information';
+    general.getBoundingClientRect = () => ({ top: -200 }) as DOMRect;
+    const spatial = document.createElement('section');
+    spatial.id = 'spatial-coverage';
+    spatial.getBoundingClientRect = () => ({ top: 20 }) as DOMRect;
+    document.body.append(general, spatial);
+
+    const fixture = TestBed.createComponent(NavigationSidebarComponent);
+    fixture.componentRef.setInput('detailRootLabel', 'Dataset');
+    fixture.componentRef.setInput('detailItems', [
+      { label: 'General Information', anchor: 'general-information' },
+      { label: 'Spatial Coverage', anchor: 'spatial-coverage' }
+    ]);
+    fixture.detectChanges();
+    (fixture.componentInstance as unknown as { syncActiveDetailAnchor(): void }).syncActiveDetailAnchor();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.nav-item--tree-link.active')?.getAttribute('href')).toBe('#spatial-coverage');
+    general.remove();
+    spatial.remove();
+  });
+
   it('shows a single global management entry when an admin capability is granted', async () => {
     await TestBed.configureTestingModule({
       imports: [NavigationSidebarComponent],
