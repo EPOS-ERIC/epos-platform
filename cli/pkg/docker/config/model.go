@@ -15,6 +15,7 @@ type EnvConfig struct {
 	Name       string     `yaml:"name"`
 	Domain     string     `yaml:"domain"`
 	Protocol   string     `yaml:"protocol"`
+	Debug      bool       `yaml:"debug"`
 	Components Components `yaml:"components"`
 	Images     Images     `yaml:"images"`
 }

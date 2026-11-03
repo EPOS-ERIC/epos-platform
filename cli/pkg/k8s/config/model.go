@@ -8,6 +8,7 @@ type Config struct {
 	Domain             string           `yaml:"domain"`
 	IngressHost        *string          `yaml:"ingress_host,omitempty"`
 	Protocol           string           `yaml:"protocol"`
+	Debug              bool             `yaml:"debug"`
 	URLPrefixNamespace bool             `yaml:"url_prefix_namespace"`
 	CreateNamespace    bool             `yaml:"create_namespace"`
 	ImagePullPolicy    string           `yaml:"image_pull_policy"`

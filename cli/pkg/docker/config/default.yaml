@@ -1,6 +1,7 @@
 # Public host and protocol. HTTPS requires an external reverse proxy.
 domain: "localhost"
 protocol: "http"
+debug: false
 
 components:
   platform_ui:

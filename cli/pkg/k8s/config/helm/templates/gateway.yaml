@@ -66,6 +66,8 @@ spec:
                 secretKeyRef:
                   name: gateway-mailgun
                   key: api_key
+            - name: LOG_LEVEL
+              value: {{ ternary "DEBUG" "INFO" .Values.debug | quote }}
             - name: OTEL_SDK_DISABLED
               value: {{ not .Values.components.otel.enabled | quote }}
             - name: OTEL_SERVICE_NAME

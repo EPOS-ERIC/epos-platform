@@ -170,6 +170,10 @@ services:
   oss-aai-service:
     image: epos-oss-aai-service:latest
     environment:
+      - OTEL_SERVICE_NAME=aai-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
       - OSS_AAI_LISTEN_ADDR=:8080
       - APP_CORS_ALLOW_ORIGIN=*
       - OIDC_ISSUER=http://localhost:35000/oauth2

@@ -56,6 +56,18 @@ spec:
         - configMapRef:
             name: aai-service
         env:
+        - name: LOG_LEVEL
+          value: {{ ternary "DEBUG" "INFO" .Values.debug | quote }}
+        - name: OTEL_SDK_DISABLED
+          value: {{ not .Values.components.otel.enabled | quote }}
+        - name: OTEL_SERVICE_NAME
+          value: aai-service
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: {{ if .Values.components.otel.enabled }}{{ default "http://otel-lgtm:4318" .Values.components.otel.endpoint | quote }}{{ else }}""{{ end }}
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "http/protobuf"
+        - name: OTEL_METRIC_EXPORT_INTERVAL
+          value: "5000"
         - name: INITIAL_ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:

@@ -152,6 +152,8 @@ docker_build(
     dockerfile='services/oss-aai-service/Dockerfile.dev',
     only=[
         'services/oss-aai-service',
+        'packages/go/logging',
+        'packages/go/observability',
         'packages/scripts/epos-banner.sh',
     ],
     ignore=[
@@ -159,6 +161,8 @@ docker_build(
     ],
     live_update=[
         sync('services/oss-aai-service', '/workspace/services/oss-aai-service'),
+        sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
         restart_container(),
     ],
