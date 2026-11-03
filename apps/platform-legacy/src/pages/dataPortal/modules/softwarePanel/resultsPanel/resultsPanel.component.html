@@ -8,7 +8,7 @@
   </div>
   <div *ngIf="!showLoading" class="results-title" data-cy="software-results-title">
     <button class="facet-expand" mat-icon-button
-      [hidden]="activeDomainData.code === 'FAV' || activeDomainData.code === 'ALL'"
+      [hidden]="activeDomainData.code === 'FAV' || (activeDomainData.code === 'ALL' && !hasVersionedResources)"
       (click)="toggleFacetExpansionPanel()" data-cy="software-categories-filter">
       <mat-icon matTooltip="Filter by categories">filter_alt</mat-icon>
     </button>
@@ -27,7 +27,7 @@
     </button>
   </div>
   <app-facet-dropdown
-    *ngIf="!showLoading && activeDomainData?.code !== 'FAV' && activeDomainData?.code !== 'ALL' && !facetExpansionHidden"
+    *ngIf="!showLoading && activeDomainData?.code !== 'FAV' && (activeDomainData?.code !== 'ALL' || hasVersionedResources) && (hasVersionedResources || !facetExpansionHidden)"
     [activeDomainData]="activeDomainData" [facetExpansionHidden]="facetExpansionHidden" [rawTreeData]="rawTreeData"
     (setSelectedFacets)="setSelectedFacets($event)" data-cy="software-categories-filter-dropdown"></app-facet-dropdown>
   <div
@@ -93,9 +93,17 @@
                 <div
                   [class]="{ informations: true, selected: expandedElement !== null && expandedElement.id === element.id }">
                   <app-breadcrumb [levels]="element.levels"
-                    [showFirst]="activeDomainData.code === 'FAV' || activeDomainData.code === 'ALL'"></app-breadcrumb>
+                    [filterFirst]="hasVersionedResources"
+                    [showFirst]="hasVersionedResources || activeDomainData.code === 'FAV' || activeDomainData.code === 'ALL'"></app-breadcrumb>
                   <div class="informations-bottom">
                     <div class="informations-bottom-left">
+                      <div *ngIf="element.cardCreators?.length > 0">
+                        Creators:
+                        <span *ngFor="let creator of element.cardCreators; let last = last">
+                          <a *ngIf="creator.url; else creatorName" [href]="creator.url" target="_blank" rel="noopener noreferrer">{{ creator.name }}</a>
+                          <ng-template #creatorName>{{ creator.name }}</ng-template>{{ last ? '' : ', ' }}
+                        </span>
+                      </div>
                       <ng-container
                         *ngIf="metadataStatusModeActive === true && element.versioningStatus !== '' && showStatusChipsOnCards">
                         <div class="metadata-preview">

@@ -1,5 +1,6 @@
 import { DistributionLevel } from './distributionLevel.interface';
 import { DistributionSummary } from './distributionSummary.interface';
+import { Creator } from './creator.interface';
 
 export interface DistributionItem {
   id: string;
@@ -18,4 +19,9 @@ export interface DistributionItem {
   status: number | null;
   statusTimestamp: string | null;
   statusURL: string | null;
+  datasetKey?: string;
+  metadataLoaded?: boolean;
+  cardProviderName?: string;
+  cardProviderUrl?: string;
+  cardCreators?: Creator[];
 }

@@ -59,17 +59,7 @@ describe('Test info popup', () => {
               expect(val).to.eq('GNSS Data and Products');
               break;
             case 'Categories':
-              // First tree
-              cy.wrap(value)
-                .find('.mat-nested-tree-node')
-                .then($value => {
-                  // First text
-                  cy.wrap($value)
-                    .find('.mat-tree-node').should('contain.text', 'Products');
-                  // Second text
-                  cy.wrap($value)
-                    .find('.mat-tree-node').should('contain.text', 'Station Information');
-                });
+              expect(val).to.eq('Station Information');
               break;
             case 'Description':
               expect(val).to.eq('Displays the GNSS stations that provide GNSS Products on the map. Returns their metadata as a json, geojson, or csv file.');
@@ -166,10 +156,10 @@ describe('Test info popup', () => {
               expect(val).to.eq('Displays the GNSS stations that provide GNSS Products on the map. Returns their metadata as a json, geojson, or csv file.');
               break;
             case 'Service Provider':
-              expect(val).to.eq('UBI - University of Beira Interior - PT');
+              expect(val).to.eq('UBI - University of Beira Interior');
               break;
             case 'Service Endpoint':
-              expect(val).to.eq('https://gnssproducts.epos.ubi.pt/GlassFramework/webresources/stations/v2/station/bbox/');
+              expect(val).to.eq('https://gnssproducts.epos.ubi.pt/GlassFramework/webresources/stations/v2/station/bbox/{minLon}/{minLat}/{maxLon}/{maxLat}?with=2');
               break;
             case 'Service Documentation':
               expect(val).to.eq('https://gnss-epos.eu/ics-tcs/');

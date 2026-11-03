@@ -1,3 +1,5 @@
 {
-  "url": "https://gnssproducts.epos.ubi.pt/GlassFramework/webresources/stations/v2/station/bbox/-180/-90/180/90?with=2"
+  "url": "https://gnssproducts.epos.ubi.pt/GlassFramework/webresources/stations/v2/station/bbox/-180/-90/180/90?with=2",
+  "method": "GET",
+  "headers": {}
 }

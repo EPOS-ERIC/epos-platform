@@ -84,6 +84,163 @@ export class JSONDistributionFactory {
     return this.buildStandardDetails(json, null);
   }
 
+  public static jsonToResourceVersionDistributionDetails(
+    json: Record<string, unknown>,
+    distributionId: string,
+    summary: DistributionSummary,
+    accessUrl: string,
+  ): Optional<null | DistributionDetails> {
+    const metadata = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(json, 'metadata', true) ?? {};
+    const resourceType = ObjectAccessUtility.getObjectValueString(metadata, 'resource_type', true);
+    const categories = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(metadata, 'categories', false) ?? [];
+    const normalizedCategories = {
+      name: '', code: '', children: [{
+        name: ObjectAccessUtility.getObjectValueString(json, 'group_name', false, ''),
+        code: ObjectAccessUtility.getObjectValueString(json, 'group_id', false, ''),
+        children: categories.map(category => ({ name: category.name, code: category.id, children: [] })),
+      }],
+    };
+    if (resourceType === 'software-application' || resourceType === 'software-source-code') {
+      const creators = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(metadata, 'creators', false) ?? [];
+      const identifiers = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(metadata, 'identifiers', false) ?? [];
+      const language = ObjectAccessUtility.getObjectValueString(metadata, 'programming_language', false, '');
+      return this.buildSoftwareAsStandardDetails({
+        ...metadata, id: summary.getIdentifier(), title: metadata.name, type: resourceType,
+        categories: normalizedCategories, availableFormats: [],
+        downloadURL: metadata.download_url, codeRepository: metadata.repository,
+        licenseURL: metadata.license, softwareVersion: metadata.version,
+        mainEntityOfPage: metadata.main_entity_of_page,
+        softwareRequirements: metadata.requirements ?? metadata.software_requirements,
+        operatingSystem: metadata.operating_system, runtimePlatform: metadata.runtime_platform,
+        programmingLanguage: language ? [language] : [],
+        contactPoints: metadata.contact_points,
+        creator: creators.map(creator => ({ name: creator.name, uid: creator.id, url: creator.url ?? '' })),
+        DOI: identifiers.filter(identifier => String(identifier.type).toLowerCase() === 'doi').map(identifier => identifier.value),
+        internalID: identifiers.filter(identifier => String(identifier.type).toLowerCase() !== 'doi').map(identifier => identifier.value),
+        versioningStatus: json.status, changeDate: json.updated_at,
+      }, resourceType.replace(/-/g, '_'), summary);
+    }
+    const distributions = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(metadata, 'distributions', false) ?? [];
+    const distribution = distributions.find(item => ObjectAccessUtility.getObjectValueString(item, 'id', false) === distributionId);
+    if (distribution == null) {
+      return Optional.empty();
+    }
+
+    const type = ObjectAccessUtility.getObjectValueString(distribution, 'type', true);
+    const webService = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(distribution, 'web_service', false);
+    const configuration = webService == null ? null
+      : ObjectAccessUtility.getObjectValue<Record<string, unknown>>(webService, 'configuration', true);
+    const downloadableFile = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(distribution, 'downloadable_file', false);
+    const rawParameters = configuration == null ? [] : [
+      ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(configuration, 'parameters', false) ?? []),
+      ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(configuration, 'body_parameters', false) ?? []),
+    ];
+    const serviceParameters = rawParameters.map(parameter => this.normalizeResourceParameter(parameter));
+    const availableFormats = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(distribution, 'available_formats', false) ?? [];
+    const formats = availableFormats.map(availableFormat => {
+      const kind = ObjectAccessUtility.getObjectValueString(availableFormat, 'kind', true);
+      const outputFormat = ObjectAccessUtility.getObjectValueString(availableFormat, 'output_format', true);
+      const plugin = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(availableFormat, 'plugin', false);
+      const selector = kind === 'CONVERTED'
+        ? `conversion_id=${encodeURIComponent(ObjectAccessUtility.getObjectValueString(availableFormat, 'conversion_id', true))}`
+        : `output_format=${encodeURIComponent(outputFormat)}`;
+      const format = SimpleDistributionFormat.make(
+        kind === 'CONVERTED' ? ObjectAccessUtility.getObjectValueString(plugin!, 'name', true)
+          : ObjectAccessUtility.getObjectValueString(availableFormat, 'label', true),
+        outputFormat,
+        kind === 'CONVERTED' ? ObjectAccessUtility.getObjectValueString(availableFormat, 'input_format', true) : outputFormat,
+        `${accessUrl}?${selector}`,
+        kind,
+      );
+      format.resourceAccess = {
+        type: ObjectAccessUtility.getObjectValueString(configuration!, 'type', true),
+        parameters: rawParameters.map(parameter => ({
+          id: ObjectAccessUtility.getObjectValueString(parameter, 'id', true),
+          name: ObjectAccessUtility.getObjectValueString(parameter, 'name', true),
+          kind: ObjectAccessUtility.getObjectValueString(parameter, 'kind', true),
+          role: ObjectAccessUtility.getObjectValueString(parameter, 'role', false),
+        })),
+      };
+      return format;
+    });
+    summary.getFormats().splice(0, summary.getFormats().length, ...formats);
+    const webServiceTemporalCoverage = webService == null ? null
+      : ObjectAccessUtility.getObjectValue<Record<string, unknown>>(webService, 'temporal_coverage', false);
+    const temporalCoverage = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(metadata, 'temporal_coverage', false);
+    const documentation = webService == null ? null
+      : ObjectAccessUtility.getObjectValue<Record<string, unknown>>(webService, 'documentation', false);
+    const provider = webService == null ? null
+      : ObjectAccessUtility.getObjectValue<Record<string, unknown>>(webService, 'provider', false);
+    const visibleOn = webService == null ? [] : ObjectAccessUtility.getObjectArray<string>(webService, 'visible_on', false) ?? [];
+    const providers = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(metadata, 'providers', false) ?? [];
+    const persistentIdentifiers = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(metadata, 'persistent_identifiers', false) ?? [];
+    const groupId = ObjectAccessUtility.getObjectValueString(json, 'group_id', false, '');
+    const groupName = ObjectAccessUtility.getObjectValueString(json, 'group_name', false, '');
+    const spatialCoverage = ObjectAccessUtility.getObjectValueString(metadata, 'spatial_coverage', false);
+    const endpoint = configuration != null
+      ? ObjectAccessUtility.getObjectValueString(configuration, configuration.type === 'WFS' ? 'get_feature_template_url' : 'template_url', false, '')
+      : downloadableFile != null ? ObjectAccessUtility.getObjectValueString(downloadableFile, 'url', false, '') : '';
+    const normalizedDetails: Record<string, unknown> = {
+      id: distributionId,
+      title: ObjectAccessUtility.getObjectValueString(distribution, 'title', true),
+      description: ObjectAccessUtility.getObjectValueString(distribution, 'description', false, ''),
+      license: ObjectAccessUtility.getObjectValueString(distribution, 'license', false, ''),
+      type,
+      endpoint,
+      downloadURL: downloadableFile == null ? '' : ObjectAccessUtility.getObjectValueString(downloadableFile, 'url', false, ''),
+      availableFormats: [],
+      serviceEndpoint: endpoint,
+      serviceName: webService == null ? '' : ObjectAccessUtility.getObjectValueString(webService, 'name', false, ''),
+      serviceDescription: webService == null ? '' : ObjectAccessUtility.getObjectValueString(webService, 'description', false, ''),
+      serviceParameters,
+      serviceDocumentation: documentation == null ? '' : ObjectAccessUtility.getObjectValueString(documentation, 'uri', false, ''),
+      serviceProvider: provider == null ? null : {
+        dataProviderLegalName: ObjectAccessUtility.getObjectValueString(provider, 'name', false, ''),
+        dataProviderUrl: '',
+        relatedDataServiceProvider: [],
+        uid: ObjectAccessUtility.getObjectValueString(provider, 'id', false, ''),
+        country: '',
+      },
+      dataProvider: providers.map(item => ({
+        dataProviderLegalName: ObjectAccessUtility.getObjectValueString(item, 'name', false, ''),
+        dataProviderUrl: ObjectAccessUtility.getObjectValueString(item, 'url', false, ''),
+        relatedDataServiceProvider: [],
+        uid: ObjectAccessUtility.getObjectValueString(item, 'id', false, ''),
+        country: ObjectAccessUtility.getObjectValueString(item, 'country', false, ''),
+      })),
+      categories: {
+        name: '',
+        code: '',
+        children: [{
+          name: groupName,
+          code: groupId,
+          children: categories.map(item => ({
+            name: ObjectAccessUtility.getObjectValueString(item, 'name', true),
+            code: ObjectAccessUtility.getObjectValueString(item, 'id', true),
+            children: [],
+          })),
+        }],
+      },
+      spatial: this.normalizeResourceSpatialCoverage(spatialCoverage),
+      temporalCoverage: this.normalizeResourceTemporalCoverage(temporalCoverage),
+      serviceTemporalCoverage: this.normalizeResourceTemporalCoverage(webServiceTemporalCoverage),
+      DOI: persistentIdentifiers
+        .filter(item => ObjectAccessUtility.getObjectValueString(item, 'type', false, '').toLowerCase() === 'doi')
+        .map(item => ObjectAccessUtility.getObjectValueString(item, 'value', true)),
+      keywords: ObjectAccessUtility.getObjectArray<string>(metadata, 'keywords', false) ?? [],
+      frequencyUpdate: ObjectAccessUtility.getObjectValueString(metadata, 'accrual_periodicity', false, ''),
+      qualityAssurance: ObjectAccessUtility.getObjectValueString(metadata, 'quality_annotation', false, ''),
+      contactPoints: ObjectAccessUtility.getObjectArray<string>(metadata, 'contact_points', false) ?? [],
+    };
+
+    summary.isMappable = visibleOn.includes('MAP');
+    summary.isTabularable = visibleOn.includes('TABLE');
+    summary.isGraphable = visibleOn.includes('GRAPH');
+    summary.isDownloadable = formats.length > 0 || downloadableFile != null;
+    return this.buildStandardDetails(normalizedDetails, null, summary);
+  }
+
+
   /**
    * The function `jsonToDataProvider` parses a JSON object to create a DataProvider object with
    * specific fields.
@@ -571,17 +728,82 @@ export class JSONDistributionFactory {
     return null;
   }
 
+  private static normalizeResourceParameter(parameter: Record<string, unknown>): Record<string, unknown> {
+    const propertiesByRole: Record<string, ParameterProperty> = {
+      MIN_LON: ParameterProperty.WESTERN_LONGITUDE,
+      MAX_LON: ParameterProperty.EASTERN_LONGITUDE,
+      MIN_LAT: ParameterProperty.SOUTHERN_LATITUDE,
+      MAX_LAT: ParameterProperty.NORTHERN_LATITUDE,
+      START_DATE: ParameterProperty.START_DATE,
+      END_DATE: ParameterProperty.END_DATE,
+      FORMAT: ParameterProperty.OUTPUT_FORMAT,
+    };
+    const role = ObjectAccessUtility.getObjectValueString(parameter, 'role', false);
+    const enumValues = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(parameter, 'enum', false) ?? [];
+    const defaultValue = ObjectAccessUtility.getObjectValue(parameter, 'default', false);
+    const minimum = ObjectAccessUtility.getObjectValue(parameter, 'minimum', false);
+    const maximum = ObjectAccessUtility.getObjectValue(parameter, 'maximum', false);
+    const readOnly = ObjectAccessUtility.getObjectValueBoolean(parameter, 'read_only', false, false);
+    return {
+      name: ObjectAccessUtility.getObjectValueString(parameter, 'name', true),
+      label: ObjectAccessUtility.getObjectValueString(parameter, 'label', false, ''),
+      type: ObjectAccessUtility.getObjectValueString(parameter, 'kind', false, 'STRING'),
+      property: propertiesByRole[role] ?? ObjectAccessUtility.getObjectValueString(parameter, 'property', false, null),
+      required: ObjectAccessUtility.getObjectValueBoolean(parameter, 'required', false, false),
+      defaultValue: defaultValue == null ? null : String(defaultValue),
+      Enum: enumValues.map(value => {
+        const enumValue = ObjectAccessUtility.getObjectValue(value, 'value', true);
+        return enumValue == null ? '' : String(enumValue);
+      }),
+      minValue: minimum == null ? '' : String(minimum),
+      maxValue: maximum == null ? '' : String(maximum),
+      regex: ObjectAccessUtility.getObjectValueString(parameter, 'pattern', false, ''),
+      valuePattern: ObjectAccessUtility.getObjectValueString(parameter, 'layout', false, ''),
+      readOnlyValue: readOnly ? 'true' : '',
+      multipleValue: ObjectAccessUtility.getObjectValueBoolean(parameter, 'multiple_values', false, false) ? 'true' : 'false',
+    };
+  }
+
+  private static normalizeResourceTemporalCoverage(coverage: Record<string, unknown> | null): Record<string, unknown> | null {
+    if (coverage == null) {
+      return null;
+    }
+    return {
+      startDate: ObjectAccessUtility.getObjectValue<string>(coverage, 'start', false),
+      endDate: ObjectAccessUtility.getObjectValue<string>(coverage, 'end', false),
+    };
+  }
+
+  private static normalizeResourceSpatialCoverage(coverage: string | null): Record<string, number> | { paths: number[][][]; wkid: number } | null {
+    if (coverage == null) {
+      return null;
+    }
+    const point = /^POINT\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)$/i.exec(coverage);
+    if (point == null) {
+      const polygon = /^POLYGON\s*\(\s*\((.*)\)\s*\)$/i.exec(coverage);
+      if (polygon != null) {
+        const paths = polygon[1].split(/\)\s*,\s*\(/).map(ring => ring.split(',').map(coordinates => coordinates.trim().split(/\s+/).map(Number)));
+        return { paths, wkid: 4326 };
+      }
+      return null;
+    }
+    return { x: Number(point[1]), y: Number(point[2]) };
+  }
+
   /**
    * Builds a standard DistributionDetails object (e.g., for web services or file distributions).
    * This contains the original parsing logic.
    */
   private static buildStandardDetails(
     rawData: Record<string, unknown>,
-    detailsType: string | null
+    detailsType: string | null,
+    summaryOverride: DistributionSummary | null = null,
   ): Optional<null | DistributionDetails> {
 
     // read the summary part first
-    const summary: Optional<null | DistributionSummary> = JSONDistributionFactory.jsonToDistributionSummary(rawData);
+    const summary: Optional<null | DistributionSummary> = summaryOverride == null
+      ? JSONDistributionFactory.jsonToDistributionSummary(rawData)
+      : Optional.ofNonNullable(summaryOverride);
 
     // If summary is good map else return empty optional
     return summary.map(sum => {
@@ -704,7 +926,8 @@ export class JSONDistributionFactory {
    */
   private static buildSoftwareAsStandardDetails(
     rawData: Record<string, unknown>,
-    detailsType: string // This can now be either 'software_source_code' or 'software_application'
+    detailsType: string, // This can now be either 'software_source_code' or 'software_application'
+    summaryOverride: DistributionSummary | null = null,
   ): Optional<null | DistributionDetails> {
 
     // --- PATCH: Normalize 'name' to 'title' ---
@@ -715,7 +938,8 @@ export class JSONDistributionFactory {
     }
 
     // 1. read the summary part first
-    const summary: Optional<null | DistributionSummary> = JSONDistributionFactory.jsonToDistributionSummary(rawData);
+    const summary: Optional<null | DistributionSummary> = summaryOverride == null
+      ? JSONDistributionFactory.jsonToDistributionSummary(rawData) : Optional.ofNonNullable(summaryOverride);
 
     // If summary is good map else return empty optional
     return summary.map(sum => {

@@ -11,4 +11,12 @@ export interface DetailsApi {
   getDetails(summary: DistributionSummary, context: string): Promise<null | DistributionDetails>;
 
   getDetailsById(id: string, context: string): Promise<null | DistributionDetails>;
+
+  getResourceVersionDistributionDetails(
+    resourceType: string,
+    resourceId: string,
+    versionId: string,
+    distributionId: string,
+    summary: DistributionSummary,
+  ): Promise<DistributionDetails>;
 }

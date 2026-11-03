@@ -6,7 +6,6 @@ import { SearchCriteria } from 'api/webApi/classes/searchCriteria.enum';
 import { Organization } from 'api/webApi/data/organization.interface';
 import { UrlBuilder } from 'api/webApi/classes/urlBuilder.interface';
 import { JSONDistributionFactory } from 'api/webApi/data/impl/jsonDistributionFactory';
-import { CONTEXT_RESOURCE } from 'api/api.service.factory';
 
 /**
  * **NOT CURRENTLY IN USE. It was originally created when we had an infrastructure search**
@@ -24,29 +23,40 @@ export class DevSearchApi implements SearchApi {
     throw new Error('API 1.3 - Method not implemented.');
   }
 
-  getOrganizations(type: string): Promise<Organization[] | null> {
+  getOrganizations(_type: string): Promise<Organization[] | null> {
 
     const builder: UrlBuilder = this.baseUrl.urlBuilder();
-    builder.addPathElements(CONTEXT_RESOURCE);
     builder.addPathElements('organizations');
-    builder.addParameter('type', type);
 
     return this.rest
-      .get(builder.build()).then((json: Record<string, unknown>) => {
-        return JSONDistributionFactory.jsonToOrganizations(json);
+      .get(builder.build()).then((json: unknown) => {
+        const organizations = Array.isArray(json) ? json.map((organization: Record<string, unknown>) => {
+          const address = organization.address as Record<string, unknown>;
+          return {
+            ...organization,
+            url: organization.page_url,
+            country: address.country,
+            logo: organization.logo_url,
+          };
+        }) : json;
+        return JSONDistributionFactory.jsonToOrganizations(organizations);
       });
   }
 
   getOrganizationById(organizationId: string): Promise<Organization | null> {
       const builder: UrlBuilder = this.baseUrl.urlBuilder();
-      builder.addPathElements(CONTEXT_RESOURCE);
       builder.addPathElements('organizations');
-
-      builder.addParameter('id', organizationId);
+      builder.addPathElements(organizationId);
 
       return this.rest
         .get(builder.build()).then((json: Record<string, unknown>) => {
-          return JSONDistributionFactory.jsonToOrganization(json);
+          const address = json.address as Record<string, unknown>;
+          return JSONDistributionFactory.jsonToOrganization([{
+            ...json,
+            url: json.page_url,
+            country: address.country,
+            logo: json.logo_url,
+          }]);
         });
   }
 }

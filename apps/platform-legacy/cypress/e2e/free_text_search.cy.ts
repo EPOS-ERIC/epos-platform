@@ -15,8 +15,7 @@ describe('Free text search', () => {
     ];
 
     cy.intercept(
-      'GET',
-      new RegExp('.*/resources/search\\?q='),
+      { method: 'GET', pathname: '**/api/v1/search', query: { q: keyword } },
       // Stub the request with the correct fixture and save a reference to the request to be able to wait on it
       { fixture: 'free_text_search.json' })
       .as('free_text_search');

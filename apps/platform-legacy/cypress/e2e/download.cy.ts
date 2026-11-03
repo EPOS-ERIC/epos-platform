@@ -139,21 +139,17 @@ describe('Test download', () => {
       .should('not.exist');
 
     const rawSourceRequest = '@rawSource' + service.name;
-    cy.fixture(service.getOriginalURL()).then((response: { url: string }) => {
-      const parsedUrl = new URL(response.url);
-      cy.intercept(
-        'GET',
-        `${parsedUrl.origin}${parsedUrl.pathname}*`,
-        { fixture: service.rawServiceResponse() }
-      ).as(rawSourceRequest.substring(1));
-    });
+    cy.intercept(
+      'POST',
+      `**/distributions/${service.id}/access*`,
+      { fixture: service.rawServiceResponse() }
+    ).as(rawSourceRequest.substring(1));
 
     // Click on the first item's download
     cy.getByDataCy('downloads-dialog-download-button')
       .first()
       .click();
 
-    cy.wait(service.getOriginalUrlRequest);
     cy.wait(rawSourceRequest);
 
     // Check that the downloaded file is correct

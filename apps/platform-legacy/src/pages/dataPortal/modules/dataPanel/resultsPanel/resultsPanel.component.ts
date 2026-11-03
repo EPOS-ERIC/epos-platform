@@ -82,7 +82,7 @@ export class ResultsPanelComponent extends BaseResultsPanelComponent implements 
 
             this.model.dataDiscoverResponse.valueObs.subscribe((discoverResponse: DiscoverResponse) => {
               this.onChangeResponse(discoverResponse, this.model.domainMI, this.model.dataSearchTypeData);
-              this.resultPanelService.setCounterData(this.data.length);
+              this.resultPanelService.setCounterData(this.resultCount);
             }),
 
             this.analysisConfigurables.triggerEnvironmentSelectionObs.subscribe((environment: Environment | null) => {

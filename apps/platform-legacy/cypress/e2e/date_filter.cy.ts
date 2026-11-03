@@ -6,27 +6,23 @@ describe('Global Date filter', () => {
   });
 
   it('Test time range picker', () => {
-    const requestDateFormat = 'YYYY-MM-DDThh:mm:ssZ';
+    const requestDateFormat = 'YYYY-MM-DDTHH:mm:ss[Z]';
     const expectedStartDate = moment('2023-01-01 12:00:00', 'YYYY-MM-DD HH:mm:ss', true)
       .utc()
       .format(requestDateFormat);
     const expectedEndDate = moment('2024-01-01 12:00:00', 'YYYY-MM-DD HH:mm:ss', true)
       .utc()
       .format(requestDateFormat);
-    const expectedStartDateEncoded = encodeURIComponent(expectedStartDate);
-    const expectedEndDateEncoded = encodeURIComponent(expectedEndDate);
 
     // Intercept the request for the start date.
     cy.intercept(
-      'GET',
-      new RegExp(`.*\\/resources\\/search\\?q=&startDate=${expectedStartDateEncoded}$`),
+      { method: 'GET', pathname: '**/api/v1/search', query: { dateFrom: expectedStartDate } },
       { fixture: 'bbox_filtered_distributions.json' },
     ).as('startDate');
 
     // Intercept the request for the end date.
     cy.intercept(
-      'GET',
-      new RegExp(`.*\\/resources\\/search\\?q=&startDate=${expectedStartDateEncoded}&endDate=${expectedEndDateEncoded}$`),
+      { method: 'GET', pathname: '**/api/v1/search', query: { dateFrom: expectedStartDate, dateTo: expectedEndDate } },
       { fixture: 'bbox_filtered_distributions.json' },
     ).as('endDate');
 

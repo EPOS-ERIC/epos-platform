@@ -86,16 +86,26 @@ Cypress.Commands.add('getByDataCy', (args) => {
 });
 
 Cypress.Commands.add('init', () => {
-  cy.intercept('GET', /testpath\/api\/v1\/resources\/search(\?q=)?$/, { fixture: 'distributions.json' }).as('search');
-  cy.intercept('GET', /testpath\/api\/v1\/resources\/organizations.*/, { fixture: 'organizations.json' }).as('organizations');
+  cy.intercept('GET', '**/api/v1/search*', (request) => {
+    request.alias = `initial${String(request.query.concept)}Search`;
+    request.reply(request.query.concept === 'DATA' ? { fixture: 'distributions.json' } : []);
+  });
+  cy.intercept('GET', '**/api/v1/groups', { fixture: 'groups.json' });
+  cy.fixture('categories.json').then((categories: Record<string, unknown[]>) => {
+    cy.intercept('GET', /\/api\/v1\/groups\/[^/]+\/categories$/, (request) => {
+      request.reply(categories[request.url.split('/').slice(-2)[0]]);
+    });
+  });
+  cy.intercept('GET', /testpath\/api\/v1\/organizations(?:\?.*)?$/, { fixture: 'organizations.json' }).as('organizations');
   cy.policyAcceptAndWelcomePopup();
   cy.wait(['@organizations']);
-  cy.wait(['@search', '@search', '@search', '@search']);
+  cy.wait(['@initialDATASearch', '@initialFACILITIESSearch', '@initialSOFTWARESearch']);
+  cy.getByDataCy('domain-list').should('be.visible');
 });
 
 Cypress.Commands.add('freeTextSearch', (text: string) => {
   // Intercept the request to filter the results
-  cy.intercept('GET', '/testpath/api/v1/resources/search*').as('search');
+  cy.intercept({ method: 'GET', pathname: '**/api/v1/search', query: { q: text } }).as('search');
 
   // Search for the test service
   cy.getByDataCy('search-panel-free-text-input').type(text + '{enter}');
@@ -116,7 +126,7 @@ Cypress.Commands.add('getServiceMapFeatures', (service: Service) => {
 Cypress.Commands.add('searchForService', (service: Service) => {
   // Intercept the search request
   cy.intercept(
-    'GET', /.*\/resources\/search(\?q=)?/,
+    'GET', /\/api\/v1\/search\?/,
     { fixture: service.searchJson() });
 
   // Search for the fake distribution
@@ -125,33 +135,25 @@ Cypress.Commands.add('searchForService', (service: Service) => {
 
 Cypress.Commands.add('interceptService', (service: Service) => {
   // Intercept all the possible request for this service, stubbing them with the correct fixture and save a reference to the request to be able to wait on it
-  // The details
-  cy.intercept(
-    'GET',
-    new RegExp('.*/resources/details/' + service.id), // Match all the request to the details of the service
-    // Stub the request with the correct fixture and save a reference to the request to be able to wait on it
-    { fixture: service.detailsJson() }).as(service.detailsRequest.substring(1)); // Use the detailsRequest without the @
-  // The complete data
-  cy.intercept(
-    'GET',
-    new RegExp('.*/execute/' + service.id + '\\?.*'),
-    { fixture: service.dataJson() }).as(service.dataRequest.substring(1));
-  // The search request
-  cy.intercept(
-    'GET',
-    new RegExp('.*/resources/search\\?q=' + encodeURIComponent(service.name)),
+  // Details belong to the dataset version returned by discovery.
+  cy.fixture(service.searchJson()).then((datasets: Array<{ resource_id: string; version_id: string }>) => {
+    const dataset = datasets[0];
+    cy.intercept('GET', `**/resources/dataset/${dataset.resource_id}/versions/${dataset.version_id}`,
+      { fixture: service.detailsJson() }).as(service.detailsRequest.substring(1));
+  });
+  cy.intercept('POST', `**/distributions/${service.id}/access*`, (request) => {
+    const parameters = request.body.parameters as Array<{ value: unknown }>;
+    const hasBoundingBox = [-5.00977, 54.00777, 9.93164, 39.02772].every(value =>
+      parameters.some(parameter => Number(parameter.value).toFixed(5) === value.toFixed(5)));
+    request.alias = hasBoundingBox ? service.bboxFilteredRequest.substring(1) : service.dataRequest.substring(1);
+    request.reply({ fixture: hasBoundingBox ? service.bboxFilteredJson() : service.dataJson() });
+  });
+  cy.intercept({ method: 'GET', pathname: '**/api/v1/search', query: { q: service.name } },
     { fixture: service.searchJson() }).as(service.searchRequest.substring(1));
-  // The bbox filtered data
+  // Prepare the provider URL only when a scenario requests it.
   cy.intercept(
-    'GET', new RegExp(
-      '.*/execute/' + service.id +
-      '\\?.*minLon.*-5\\.00977.*maxLat.*54\\.00777.*maxLon.*9\\.93164.*minLat.*39\\.02772.*'),
-    { fixture: service.bboxFilteredJson() }
-  ).as(service.bboxFilteredRequest.substring(1));
-  // The getoriginalurl
-  cy.intercept(
-    'GET',
-    new RegExp(`.*/getoriginalurl/${service.id}.*`),
-    { fixture: service.getOriginalURL() }
+    'POST',
+    `**/distributions/${service.id}/prepare*`,
+    request => request.reply({ fixture: service.getOriginalURL() })
   ).as(service.getOriginalUrlRequest.substring(1));
 });

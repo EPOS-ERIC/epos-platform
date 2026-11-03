@@ -70,7 +70,14 @@ export class DataSearchConfigurablesServiceSoftware extends DataSearchConfigurab
   public createConfigurable(
     distId: string,
   ): Promise<DataConfigurableDataSearch> {
-    return this.searchService.getDetailsById(distId, CONTEXT_SOFTWARE)
+    const summary = this.model.dataDiscoverResponseSoft.get()?.results().getFlatData()
+      .find(item => item.getIdentifier() === distId);
+    const resourceVersion = summary?.resourceVersion;
+    const details = resourceVersion != null
+      ? this.searchService.getResourceVersionDistributionDetails(
+        resourceVersion.resourceType, resourceVersion.resourceId, resourceVersion.versionId, distId, summary!,
+      ) : this.searchService.getDetailsById(distId, CONTEXT_SOFTWARE);
+    return details
       .then((distributionDetails: DistributionDetails) => {
         const paramDefs = distributionDetails.getParameters();
 

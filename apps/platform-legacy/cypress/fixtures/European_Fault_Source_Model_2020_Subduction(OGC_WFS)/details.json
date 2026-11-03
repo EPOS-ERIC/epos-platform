@@ -1,339 +1,203 @@
 {
-  "DOI": [
-    "10.13127/efsm20"
-  ],
-  "availableContactPoints": [
-    {
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/sender/send-email?id=b4111681-f76b-464d-973d-a77b235e6276&contactType=SERVICEPROVIDERS",
-      "type": "SERVICEPROVIDERS"
-    },
-    {
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/sender/send-email?id=d02bf9e0-ca80-4a4e-b3b6-b651ebaf97ed&contactType=DATAPROVIDERS",
-      "type": "DATAPROVIDERS"
-    },
-    {
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/sender/send-email?id=19f0935b-ade5-4c5a-8fb4-51b664de9add&contactType=ALL",
-      "type": "ALL"
-    }
-  ],
-  "availableFormats": [
-    {
-      "format": "OGR-TAB",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=OGR-TAB",
-      "label": "OGR-TAB",
-      "originalFormat": "OGR-TAB",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "OGR-KML",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=OGR-KML",
-      "label": "OGR-KML",
-      "originalFormat": "OGR-KML",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "gml3",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=gml3",
-      "label": "GML3",
-      "originalFormat": "gml3",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "application/epos.geo+json",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=json",
-      "label": "GEOJSON (json)",
-      "originalFormat": "json",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "KML",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=KML",
-      "label": "KML",
-      "originalFormat": "KML",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "gml32",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=gml32",
-      "label": "GML32",
-      "originalFormat": "gml32",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "SHAPE-ZIP",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=SHAPE-ZIP",
-      "label": "SHAPE-ZIP",
-      "originalFormat": "SHAPE-ZIP",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "OGR-CSV",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=OGR-CSV",
-      "label": "OGR-CSV",
-      "originalFormat": "OGR-CSV",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "OGR-MIF",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=OGR-MIF",
-      "label": "OGR-MIF",
-      "originalFormat": "OGR-MIF",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "csv",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=csv",
-      "label": "CSV",
-      "originalFormat": "csv",
-      "type": "ORIGINAL"
-    },
-    {
-      "format": "GML2",
-      "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/execute/19f0935b-ade5-4c5a-8fb4-51b664de9add?format=GML2",
-      "label": "GML2",
-      "originalFormat": "GML2",
-      "type": "ORIGINAL"
-    }
-  ],
-  "categories": {
-    "children": [
+  "resource_id": "ee8f2ae6-724e-51ab-a5fb-30a842fb3743",
+  "status": "PUBLISHED",
+  "updated_at": "1970-01-01T12:00:00Z",
+  "group_id": "85ff89db-b889-5f98-9b96-3f2897d63b70",
+  "group_name": "Seismology",
+  "metadata": {
+    "resource_type": "dataset",
+    "title": "European Fault Source Model 2020 - Subduction (OGC WFS)",
+    "description": "The European Fault-Source Model 2020 (EFSM20) was compiled in the framework of the EU Project SERA, Work Package 25, JRA3. EFSM20 includes only faults that are deemed to be capable of generating earthquakes of magnitude equal to or larger than 5.5 and aims at ensuring a homogenous input for use in ground-shaking hazard assessment in the Euro-Mediterranean area, namely the European Seismic Hazard Model 2020 (ESHM20). This is the standard OGC WFS web service providing the European Fault Source Model 2020 (EFSM20) data related to subduction zones in the form of vectors. Layers description: 1) efsm20_slabdepths: Depth isolines (contours) representing the geometry of the top surface of the slab. Polylines. 2) efsm20_si_parameters: Subduction Interface (SI) parameters. Polygons encompassing the SI area in map view. 3) efsm20_si_discretization: Subduction Interface (SI) discretized in areas spanning 1 km depth. Polygons encompassing each area in map view. 4) efsm20_si_realizations: Subduction Interface (SI) model realizations considering uncertainties. Polygons encompassing each area of the different realizations in map view. 5) efsm20_is_lattice: Intraslab (IS) model constituted by equally-spaced nodes sampling the crustal part of the slab volume. Points. The full description of all the parameters can be found in the documentation linked below. This service is hosted and maintained by Istituto Nazionale di Geofisica e Vulcanologia (INGV) through the European Databases of Seismogenic Faults (Seismofaults.eu) installation.",
+    "distributions": [
       {
-        "children": [
-          {
-            "children": [
-              {
-                "ddss": "category:seismogenicfaults",
-                "name": "Seismogenic faults"
-              }
+        "id": "19f0935b-ade5-4c5a-8fb4-51b664de9add",
+        "title": "European Fault Source Model 2020 - Subduction (OGC WFS)",
+        "description": "The European Fault-Source Model 2020 (EFSM20) was compiled in the framework of the EU Project SERA, Work Package 25, JRA3. EFSM20 includes only faults that are deemed to be capable of generating earthquakes of magnitude equal to or larger than 5.5 and aims at ensuring a homogenous input for use in ground-shaking hazard assessment in the Euro-Mediterranean area, namely the European Seismic Hazard Model 2020 (ESHM20). This is the standard OGC WFS web service providing the European Fault Source Model 2020 (EFSM20) data related to subduction zones in the form of vectors. Layers description: 1) efsm20_slabdepths: Depth isolines (contours) representing the geometry of the top surface of the slab. Polylines. 2) efsm20_si_parameters: Subduction Interface (SI) parameters. Polygons encompassing the SI area in map view. 3) efsm20_si_discretization: Subduction Interface (SI) discretized in areas spanning 1 km depth. Polygons encompassing each area in map view. 4) efsm20_si_realizations: Subduction Interface (SI) model realizations considering uncertainties. Polygons encompassing each area of the different realizations in map view. 5) efsm20_is_lattice: Intraslab (IS) model constituted by equally-spaced nodes sampling the crustal part of the slab volume. Points. The full description of all the parameters can be found in the documentation linked below. This service is hosted and maintained by Istituto Nazionale di Geofisica e Vulcanologia (INGV) through the European Databases of Seismogenic Faults (Seismofaults.eu) installation.",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "type": "WEB_SERVICE",
+        "web_service": {
+          "id": "c45f0bf0-5611-5dcc-831e-2cbf2065ebdf",
+          "name": "European Fault Source Model 2020",
+          "description": "This web services provides respectively, map layers and vectorial data of the EFSM20 dataset. It is implemented according to the OGC (Open Geospatial Consortium) standard Web Map Service - WMS (1.1.1, 1.3.0) and Web Feature Service - WFS (1.0.0, 1.1.0, 2.0.0)",
+          "visible_on": [
+            "MAP",
+            "TABLE"
+          ],
+          "provider": {
+            "id": "18b0d0d6-6dc3-4d23-bc7c-260557108192",
+            "name": "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+          },
+          "configuration": {
+            "type": "WFS",
+            "get_feature_template_url": "https://services.seismofaults.eu/EFSM20/ows",
+            "version": "2.0.0",
+            "feature_types": [
+              "efsm20_si_parameters",
+              "efsm20_slabdepths",
+              "efsm20_is_lattice",
+              "efsm20_si_discretization",
+              "efsm20_si_realizations"
             ],
-            "ddss": "category:earthquakehazardriskservices",
-            "name": "Earthquake hazard and risk services"
+            "default_feature_type": "efsm20_slabdepths",
+            "output_formats": [
+              "OGR-TAB",
+              "OGR-KML",
+              "gml3",
+              "json",
+              "KML",
+              "gml32",
+              "SHAPE-ZIP",
+              "OGR-CSV",
+              "OGR-MIF",
+              "csv",
+              "GML2"
+            ],
+            "default_output_format": "json",
+            "result_limit": null,
+            "result_limit_editable": false,
+            "parameters": []
+          },
+          "temporal_coverage": {
+            "start": "2021-09-15T00:00:00Z"
+          },
+          "documentation": {
+            "uri": "https://seismofaults.eu/efsm20documentation"
           }
-        ],
-        "code": "SEI",
-        "color": "#476f57",
-        "id": "1",
-        "imgUrl": "assets/img/logo/SEISM_logo.png",
-        "linkUrl": "https://www.epos-eu.org/tcs/seismology",
-        "name": "Seismology"
+        },
+        "available_formats": [
+          {
+            "kind": "ORIGINAL",
+            "output_format": "OGR-TAB",
+            "label": "OGR-TAB"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "OGR-KML",
+            "label": "OGR-KML"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "gml3",
+            "label": "GML3"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "json",
+            "label": "GEOJSON (json)"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "KML",
+            "label": "KML"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "gml32",
+            "label": "GML32"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "SHAPE-ZIP",
+            "label": "SHAPE-ZIP"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "OGR-CSV",
+            "label": "OGR-CSV"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "OGR-MIF",
+            "label": "OGR-MIF"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "csv",
+            "label": "CSV"
+          },
+          {
+            "kind": "ORIGINAL",
+            "output_format": "GML2",
+            "label": "GML2"
+          },
+          {
+            "kind": "CONVERTED",
+            "conversion_id": "2e3104bd-af39-5f29-bcda-b4359c667ea4",
+            "input_format": "json",
+            "output_format": "application/epos.geo+json",
+            "plugin": {
+              "id": "3ca63de7-6425-5536-a741-154b4b629339",
+              "name": "EPOS GeoJSON",
+              "description": "GeoJSON map and table properties"
+            }
+          }
+        ]
       }
     ],
-    "name": "domains"
-  },
-  "dataProvider": [
-    {
-      "country": "IT",
-      "dataProviderLegalName": "INGV - Istituto Nazionale di Geofisica e Vulcanologia",
-      "dataProviderUrl": "http://www.ingv.it",
-      "instanceid": "18b0d0d6-6dc3-4d23-bc7c-260557108192",
-      "metaid": "18b0d0d6-6dc3-4d23-bc7c-260557108192",
-      "uid": "18b0d0d6-6dc3-4d23-bc7c-260557108192"
-    }
-  ],
-  "description": "The European Fault-Source Model 2020 (EFSM20) was compiled in the framework of the EU Project SERA, Work Package 25, JRA3. EFSM20 includes only faults that are deemed to be capable of generating earthquakes of magnitude equal to or larger than 5.5 and aims at ensuring a homogenous input for use in ground-shaking hazard assessment in the Euro-Mediterranean area, namely the European Seismic Hazard Model 2020 (ESHM20). This is the standard OGC WFS web service providing the European Fault Source Model 2020 (EFSM20) data related to subduction zones in the form of vectors. Layers description: 1) efsm20_slabdepths: Depth isolines (contours) representing the geometry of the top surface of the slab. Polylines. 2) efsm20_si_parameters: Subduction Interface (SI) parameters. Polygons encompassing the SI area in map view. 3) efsm20_si_discretization: Subduction Interface (SI) discretized in areas spanning 1 km depth. Polygons encompassing each area in map view. 4) efsm20_si_realizations: Subduction Interface (SI) model realizations considering uncertainties. Polygons encompassing each area of the different realizations in map view. 5) efsm20_is_lattice: Intraslab (IS) model constituted by equally-spaced nodes sampling the crustal part of the slab volume. Points. The full description of all the parameters can be found in the documentation linked below. This service is hosted and maintained by Istituto Nazionale di Geofisica e Vulcanologia (INGV) through the European Databases of Seismogenic Faults (Seismofaults.eu) installation.",
-  "downloadURL": "",
-  "endpoint": "https://services.seismofaults.eu/EFSM20/ows{?typeNames, outputFormat}&service=WFS&version=2.0.0&request=GetFeature&srsName=EPSG:4326&bbox={minlatitude, minlongitude, maxlatitude, maxlongitude}",
-  "frequencyUpdate": "http://purl.org/cld/freq/irregular",
-  "qualityAssurance": "https://seismofaults.eu/documentation/dqa",
-  "href": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/resources/details/19f0935b-ade5-4c5a-8fb4-51b664de9add",
-  "hrefExtended": "https://ics-c.epos-ip.org/development/k8s-epos-deploy/latest/api/v1/resources/details/19f0935b-ade5-4c5a-8fb4-51b664de9add?extended=true",
-  "id": "19f0935b-ade5-4c5a-8fb4-51b664de9add",
-  "internalID": [
-    "WP08-DDSS-054"
-  ],
-  "keywords": [
-    "slip rate",
-    "seismic hazard model",
-    "wfs",
-    "seismology",
-    "web feature service",
-    "dip",
-    "ogc",
-    "geology",
-    "slab",
-    "web map service",
-    "efehr",
-    "crustal fault",
-    "efsm20",
-    "hazard",
-    "active fault",
-    "geohazard",
-    "magnitude",
-    "seismofaults",
-    "subduction fault",
-    "wms",
-    "hazard model",
-    "seismogenic zone",
-    "seismogenic source",
-    "seismic hazard",
-    "geoserver",
-    "ingv",
-    "open geospatial consortium",
-    "strike",
-    "fault",
-    "earthquake",
-    "eshm20",
-    "crust",
-    "subduction",
-    "sera",
-    "seismogenic fault",
-    "rake"
-  ],
-  "license": "https://creativecommons.org/licenses/by/4.0/",
-  "operationid": "Seismology/EFSM20/WFS-Subduction",
-  "scienceDomain": [
-    "Seismogenic faults"
-  ],
-  "serviceDescription": "This web services provides respectively, map layers and vectorial data of the EFSM20 dataset. It is implemented according to the OGC (Open Geospatial Consortium) standard Web Map Service - WMS (1.1.1, 1.3.0) and Web Feature Service - WFS (1.0.0, 1.1.0, 2.0.0)",
-  "serviceDocumentation": "https://seismofaults.eu/efsm20documentation",
-  "serviceEndpoint": "https://services.seismofaults.eu/EFSM20/ows",
-  "serviceName": "European Fault Source Model 2020",
-  "serviceParameters": [
-    {
-      "Enum": [
-        "efsm20_si_parameters",
-        "efsm20_slabdepths",
-        "efsm20_is_lattice",
-        "efsm20_si_discretization",
-        "efsm20_si_realizations"
-      ],
-      "defaultValue": "efsm20_slabdepths",
-      "label": "Feature layer to load",
-      "name": "typeNames",
-      "required": true,
-      "type": "string"
-    },
-    {
-      "defaultValue": "82.8685073852539",
-      "label": "Maximum Latitude",
-      "maxValue": "90.0",
-      "minValue": "-90.0",
-      "name": "maxlatitude",
-      "property": "epos:northernmostLatitude",
-      "required": true,
-      "type": "float"
-    },
-    {
-      "Enum": [
-        "OGR-TAB",
-        "OGR-KML",
-        "gml3",
-        "json",
-        "KML",
-        "gml32",
-        "SHAPE-ZIP",
-        "OGR-CSV",
-        "OGR-MIF",
-        "csv",
-        "GML2"
-      ],
-      "defaultValue": "json",
-      "label": "Output format",
-      "name": "outputFormat",
-      "property": "schema:encodingFormat",
-      "required": true,
-      "type": "string"
-    },
-    {
-      "defaultValue": "53.41323471069336",
-      "label": "Maximum Longitude",
-      "maxValue": "180.0",
-      "minValue": "-180.0",
-      "name": "maxlongitude",
-      "property": "epos:easternmostLongitude",
-      "required": true,
-      "type": "float"
-    },
-    {
-      "defaultValue": "15.243962287902832",
-      "label": "Minimum Latitude",
-      "maxValue": "90.0",
-      "minValue": "-90.0",
-      "name": "minlatitude",
-      "property": "epos:southernmostLatitude",
-      "required": true,
-      "type": "float"
-    },
-    {
-      "defaultValue": "-46.95161056518555",
-      "label": "Minimum Longitude",
-      "maxValue": "180.0",
-      "minValue": "-180.0",
-      "name": "minlongitude",
-      "property": "epos:westernmostLongitude",
-      "required": true,
-      "type": "float"
-    }
-  ],
-  "serviceProvider": {
-    "country": "IT",
-    "dataProviderLegalName": "INGV - Istituto Nazionale di Geofisica e Vulcanologia",
-    "dataProviderUrl": "http://www.ingv.it",
-    "instanceid": "18b0d0d6-6dc3-4d23-bc7c-260557108192",
-    "metaid": "18b0d0d6-6dc3-4d23-bc7c-260557108192",
-    "uid": "18b0d0d6-6dc3-4d23-bc7c-260557108192"
-  },
-  "serviceSpatial": {
-    "paths": [
-      [
-        [
-          -46.95293045043945,
-          15.23708438873291
-        ],
-        [
-          -46.95293045043945,
-          82.8685073852539
-        ],
-        [
-          53.462215423583984,
-          82.8685073852539
-        ],
-        [
-          53.462215423583984,
-          15.23708438873291
-        ],
-        [
-          -46.95293045043945,
-          15.23708438873291
-        ]
-      ]
+    "categories": [
+      {
+        "id": "365a6098-52ab-52e3-99a7-c70eaddea035",
+        "name": "Seismogenic faults"
+      }
     ],
-    "wkid": 4326
-  },
-  "serviceTemporalCoverage": {
-    "startDate": "2021-09-15T00:00:00Z"
-  },
-  "spatial": {
-    "paths": [
-      [
-        [
-          -46.95293045043945,
-          15.23708438873291
-        ],
-        [
-          -46.95293045043945,
-          82.8685073852539
-        ],
-        [
-          53.462215423583984,
-          82.8685073852539
-        ],
-        [
-          53.462215423583984,
-          15.23708438873291
-        ],
-        [
-          -46.95293045043945,
-          15.23708438873291
-        ]
-      ]
+    "providers": [
+      {
+        "id": "18b0d0d6-6dc3-4d23-bc7c-260557108192",
+        "name": "INGV - Istituto Nazionale di Geofisica e Vulcanologia",
+        "url": "http://www.ingv.it",
+        "country": "IT"
+      }
     ],
-    "wkid": 4326
+    "keywords": [
+      "slip rate",
+      "seismic hazard model",
+      "wfs",
+      "seismology",
+      "web feature service",
+      "dip",
+      "ogc",
+      "geology",
+      "slab",
+      "web map service",
+      "efehr",
+      "crustal fault",
+      "efsm20",
+      "hazard",
+      "active fault",
+      "geohazard",
+      "magnitude",
+      "seismofaults",
+      "subduction fault",
+      "wms",
+      "hazard model",
+      "seismogenic zone",
+      "seismogenic source",
+      "seismic hazard",
+      "geoserver",
+      "ingv",
+      "open geospatial consortium",
+      "strike",
+      "fault",
+      "earthquake",
+      "eshm20",
+      "crust",
+      "subduction",
+      "sera",
+      "seismogenic fault",
+      "rake"
+    ],
+    "accrual_periodicity": "http://purl.org/cld/freq/irregular",
+    "quality_annotation": "https://seismofaults.eu/documentation/dqa",
+    "persistent_identifiers": [],
+    "contact_points": [],
+    "temporal_coverage": {
+      "start": "2022-09-15T00:00:00Z"
+    },
+    "spatial_coverage": "POLYGON((-46.95293045043945 15.23708438873291, -46.95293045043945 82.8685073852539, 53.462215423583984 82.8685073852539, 53.462215423583984 15.23708438873291, -46.95293045043945 15.23708438873291))",
+    "id": "ee8f2ae6-724e-51ab-a5fb-30a842fb3743"
   },
-  "temporalCoverage": {
-    "startDate": "2022-09-15T00:00:00Z"
-  },
-  "title": "European Fault Source Model 2020 - Subduction (OGC WFS)",
-  "type": "WEB_SERVICE",
-  "uid": "Seismology/EFSM20/Distribution/WFS_Subduction"
+  "version_id": "5853a9ba-39f5-5040-84b5-7f2caa1e3ebd",
+  "revision": 1,
+  "created_by": "47bfc4bc-10a2-5560-9f46-27507c4951ef",
+  "created_at": "1970-01-01T12:00:00Z"
 }

@@ -26,23 +26,33 @@ export class DevShareApi implements ShareApi {
    * @returns The function `saveConfigurables` is returning a Promise that resolves to a string. Inside
    * the Promise, it is making a POST request to a specified URL with a body containing a configuration
    * value. After the POST request is completed, it is extracting the value associated with the key
-   * 'key' from the response body using `ObjectAccessUtility.getObjectValue` function. If the value is
+   * 'id' from the response body using `ObjectAccessUtility.getObjectValue` function. If the value is
    * found, it
    */
   public saveConfigurables(value: string): Promise<string> {
 
     const builder: UrlBuilder = this.baseUrl.urlBuilder();
-    builder.addPathElements('share');
+    builder.addPathElements('configurations');
 
     // the search URL
     const url = builder.build();
     const body = {
-      configuration: value
+      configuration: JSON.parse(value) as unknown,
+      title: 'Shared configuration ' + new Date().toISOString(),
+      description: null,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      list_of_services: [],
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      is_public: true
     };
 
     return this.rest.post(url, body, true).then((json: HttpResponse<unknown>) => {
 
-      return ObjectAccessUtility.getObjectValue(json.body as Record<string, unknown>, 'key', true) ?? '';
+      const id = ObjectAccessUtility.getObjectValueString(json.body as Record<string, unknown>, 'id', true);
+      if (id === '') {
+        throw new Error('Configuration response is missing its id');
+      }
+      return id;
 
     });
   }
@@ -59,12 +69,16 @@ export class DevShareApi implements ShareApi {
   public retrieveConfigurables(key: string): Promise<string> {
 
     const builder: UrlBuilder = this.baseUrl.urlBuilder();
-    builder.addPathElements('share');
+    builder.addPathElements('configurations');
     builder.addPathElements(key);
     const url = builder.build();
     return this.rest.get(url).then((json: Record<string, unknown>) => {
 
-      return ObjectAccessUtility.getObjectValueString(json, 'configuration', true, '');
+      const configuration = ObjectAccessUtility.getObjectValue(json, 'configuration', true);
+      if (configuration === null) {
+        throw new Error('Configuration response is missing its configuration');
+      }
+      return JSON.stringify(configuration);
 
     });
   }

@@ -22,58 +22,30 @@
 
    constructor(private readonly baseUrl: BaseUrl, private readonly rest: Rest) { }
 
-    async getBackOfficeUser(self: string = 'self'): Promise<SimpleBackOfficeUser>{
+    async getBackOfficeUser(_self: string = 'self'): Promise<SimpleBackOfficeUser>{
         const builder = this.baseUrl.urlBuilder();
-        builder.addPathElements('user', 'self');
+        builder.addPathElements('users', 'self');
         const url = builder.build();
 
-        const json = await this.rest.get(url) as Array<{ authIdentifier: string; email: string; firstName: string; groups: [] }>;
-
-        const userInfo: { authIdentifier: string; email: string; firstName: string; groups: [] } | null = json[0] ? json[0] : null;
-
-        // user info properties
-        let authIdentifier: string = '';
-        let email: string = '';
-        let firstName: string = '';
-        let groups: unknown[] = [];
+        const userInfo = await this.rest.get(url) as {
+          id: string;
+          email: string;
+          // eslint-disable-next-line @typescript-eslint/naming-convention -- API response field name.
+          given_name: string;
+          memberships: unknown[];
+          // eslint-disable-next-line @typescript-eslint/naming-convention -- API response field name.
+          global_roles: string[];
+        };
 
         if (!userInfo) {
             throw new Error('No backOffice User details found');
         }
-
-        // authIdentifier
-        if (!userInfo.authIdentifier) {
-            throw new Error('No "authIdentifier" property in backOffice User response');
-        }
-        else{
-            authIdentifier = userInfo.authIdentifier;
-        }
-        // email
-        if (!userInfo.email) {
-            throw new Error('No "email" property in backOffice User response');
-        }
-        else{
-            email = userInfo.email;
-        }
-        // firstName
-        if (!userInfo.firstName) {
-            throw new Error('No "firstName" property in backOffice User response');
-        }
-        else{
-            firstName = userInfo.firstName;
-        }
-        // groups
-        if(!userInfo.groups){
-            throw new Error('No "groups" property in backOffice User response');
-        }
-        else if (userInfo.groups.length === 0){
-            groups = []; // no groups, so empty array
-        }
-        else{
-            groups = userInfo.groups;
+        if (!userInfo.id || !userInfo.email) {
+            throw new Error('BackOffice User response is missing id or email');
         }
 
-        return SimpleBackOfficeUser.make(authIdentifier, email, firstName, groups);
+        const groups = [...(userInfo.memberships ?? []), ...(userInfo.global_roles ?? [])];
+        return SimpleBackOfficeUser.make(userInfo.id, userInfo.email, userInfo.given_name || userInfo.email, groups);
 
     }
  }
