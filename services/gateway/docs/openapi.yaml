@@ -281,6 +281,31 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /distributions/{distributionId}/conversion-relations:
+    get:
+      tags: [Conversions]
+      summary: List conversion plugins and relations for a distribution
+      description: Requires permission to read the distribution. Includes disabled and uninstalled plugins.
+      operationId: listDistributionConversionRelations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Plugins and their relations for the distribution
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DistributionConversionPlugin" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /distributions/{distributionId}/access:
     post:
       tags: [Access]
@@ -2585,6 +2610,34 @@ components:
         created_by: { type: string, description: Immutable creator user ID. }
         updated_by: { type: string, description: Last administrator to change the record. }
 
+    DistributionConversionPlugin:
+      type: object
+      additionalProperties: false
+      required: [id, name, description, repository, enabled, installed, branch, runtime, arguments, relations]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        repository: { type: string }
+        enabled: { type: boolean }
+        installed: { type: boolean, description: Installation status on the responding converter instance. }
+        branch: { type: string }
+        runtime: { $ref: "#/components/schemas/ConversionRuntime" }
+        arguments:
+          type: array
+          items: { type: string }
+        relations:
+          type: array
+          items: { $ref: "#/components/schemas/DistributionConversionRelation" }
+    DistributionConversionRelation:
+      type: object
+      additionalProperties: false
+      required: [id, input_format, output_format, distribution_id]
+      properties:
+        id: { type: string, format: uuid }
+        input_format: { type: string }
+        output_format: { type: string }
+        distribution_id: { type: string, format: uuid }
     ConversionRelationInput:
       type: object
       additionalProperties: false

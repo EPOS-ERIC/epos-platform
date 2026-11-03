@@ -4640,6 +4640,169 @@ func NewFloat64DistributionAccessScalar(v float64) DistributionAccessScalar {
 	return s
 }
 
+// Ref: #/components/schemas/DistributionConversionPlugin
+type DistributionConversionPlugin struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Repository  string    `json:"repository"`
+	Enabled     bool      `json:"enabled"`
+	// Installation status on the responding converter instance.
+	Installed bool                             `json:"installed"`
+	Branch    string                           `json:"branch"`
+	Runtime   ConversionRuntime                `json:"runtime"`
+	Arguments []string                         `json:"arguments"`
+	Relations []DistributionConversionRelation `json:"relations"`
+}
+
+// GetID returns the value of ID.
+func (s *DistributionConversionPlugin) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *DistributionConversionPlugin) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *DistributionConversionPlugin) GetDescription() string {
+	return s.Description
+}
+
+// GetRepository returns the value of Repository.
+func (s *DistributionConversionPlugin) GetRepository() string {
+	return s.Repository
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *DistributionConversionPlugin) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetInstalled returns the value of Installed.
+func (s *DistributionConversionPlugin) GetInstalled() bool {
+	return s.Installed
+}
+
+// GetBranch returns the value of Branch.
+func (s *DistributionConversionPlugin) GetBranch() string {
+	return s.Branch
+}
+
+// GetRuntime returns the value of Runtime.
+func (s *DistributionConversionPlugin) GetRuntime() ConversionRuntime {
+	return s.Runtime
+}
+
+// GetArguments returns the value of Arguments.
+func (s *DistributionConversionPlugin) GetArguments() []string {
+	return s.Arguments
+}
+
+// GetRelations returns the value of Relations.
+func (s *DistributionConversionPlugin) GetRelations() []DistributionConversionRelation {
+	return s.Relations
+}
+
+// SetID sets the value of ID.
+func (s *DistributionConversionPlugin) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *DistributionConversionPlugin) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *DistributionConversionPlugin) SetDescription(val string) {
+	s.Description = val
+}
+
+// SetRepository sets the value of Repository.
+func (s *DistributionConversionPlugin) SetRepository(val string) {
+	s.Repository = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *DistributionConversionPlugin) SetEnabled(val bool) {
+	s.Enabled = val
+}
+
+// SetInstalled sets the value of Installed.
+func (s *DistributionConversionPlugin) SetInstalled(val bool) {
+	s.Installed = val
+}
+
+// SetBranch sets the value of Branch.
+func (s *DistributionConversionPlugin) SetBranch(val string) {
+	s.Branch = val
+}
+
+// SetRuntime sets the value of Runtime.
+func (s *DistributionConversionPlugin) SetRuntime(val ConversionRuntime) {
+	s.Runtime = val
+}
+
+// SetArguments sets the value of Arguments.
+func (s *DistributionConversionPlugin) SetArguments(val []string) {
+	s.Arguments = val
+}
+
+// SetRelations sets the value of Relations.
+func (s *DistributionConversionPlugin) SetRelations(val []DistributionConversionRelation) {
+	s.Relations = val
+}
+
+// Ref: #/components/schemas/DistributionConversionRelation
+type DistributionConversionRelation struct {
+	ID             uuid.UUID `json:"id"`
+	InputFormat    string    `json:"input_format"`
+	OutputFormat   string    `json:"output_format"`
+	DistributionID uuid.UUID `json:"distribution_id"`
+}
+
+// GetID returns the value of ID.
+func (s *DistributionConversionRelation) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetInputFormat returns the value of InputFormat.
+func (s *DistributionConversionRelation) GetInputFormat() string {
+	return s.InputFormat
+}
+
+// GetOutputFormat returns the value of OutputFormat.
+func (s *DistributionConversionRelation) GetOutputFormat() string {
+	return s.OutputFormat
+}
+
+// GetDistributionID returns the value of DistributionID.
+func (s *DistributionConversionRelation) GetDistributionID() uuid.UUID {
+	return s.DistributionID
+}
+
+// SetID sets the value of ID.
+func (s *DistributionConversionRelation) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetInputFormat sets the value of InputFormat.
+func (s *DistributionConversionRelation) SetInputFormat(val string) {
+	s.InputFormat = val
+}
+
+// SetOutputFormat sets the value of OutputFormat.
+func (s *DistributionConversionRelation) SetOutputFormat(val string) {
+	s.OutputFormat = val
+}
+
+// SetDistributionID sets the value of DistributionID.
+func (s *DistributionConversionRelation) SetDistributionID(val uuid.UUID) {
+	s.DistributionID = val
+}
+
 // Ref: #/components/schemas/DistributionDraft
 // DistributionDraft represents sum type.
 type DistributionDraft struct {

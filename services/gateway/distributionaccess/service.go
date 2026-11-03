@@ -13,6 +13,7 @@ import (
 )
 
 type metadataLifecycle interface {
+	CheckDistributionRead(context.Context, string, uuid.UUID) error
 	PrepareDistributionDownload(context.Context, string, uuid.UUID) (domain.DownloadTarget, error)
 	PrepareDistributionAccess(context.Context, string, domain.AccessRequest) (domain.PreparedRequest, error)
 }
@@ -23,8 +24,17 @@ type dataRetriever interface {
 }
 
 type converter interface {
+	DistributionRelations(context.Context, string, uuid.UUID) ([]domain.DistributionPluginRelation, error)
 	Conversion(context.Context, uuid.UUID) (domain.ConversionRelation, error)
 	Execute(context.Context, uuid.UUID, uuid.UUID, string, io.Reader) (io.ReadCloser, error)
+}
+
+func (s *Service) DistributionRelations(ctx context.Context, actorID string, id uuid.UUID) ([]domain.DistributionPluginRelation, error) {
+	if err := s.metadataLifecycle.CheckDistributionRead(ctx, actorID, id); err != nil {
+		return nil, fmt.Errorf("authorize distribution read: %w", err)
+	}
+
+	return s.converter.DistributionRelations(ctx, actorID, id)
 }
 
 type Service struct {

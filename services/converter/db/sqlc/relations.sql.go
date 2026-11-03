@@ -22,7 +22,14 @@ INSERT INTO
         updated_by
     )
 VALUES
-    ($1, $2, $3, $4, $5, $5)
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $5
+    )
 RETURNING
     id, distribution_id, plugin_id, input_format, output_format, created_by, updated_by
 `
@@ -95,6 +102,65 @@ func (q *Queries) GetRelation(ctx context.Context, id uuid.UUID) (ConversionRela
 	return i, err
 }
 
+const listDistributionRelations = `-- name: ListDistributionRelations :many
+SELECT
+    conversion_relations.id, conversion_relations.distribution_id, conversion_relations.plugin_id, conversion_relations.input_format, conversion_relations.output_format, conversion_relations.created_by, conversion_relations.updated_by,
+    plugins.id, plugins.name, plugins.description, plugins.repository, plugins.branch, plugins.runtime, plugins.arguments, plugins.enabled, plugins.installed_commit, plugins.created_by, plugins.updated_by
+FROM
+    conversion_relations
+    JOIN plugins ON plugins.id = conversion_relations.plugin_id
+WHERE
+    conversion_relations.distribution_id = $1
+ORDER BY
+    plugins.name,
+    plugins.id,
+    conversion_relations.id
+`
+
+type ListDistributionRelationsRow struct {
+	ConversionRelation ConversionRelation
+	Plugin             Plugin
+}
+
+func (q *Queries) ListDistributionRelations(ctx context.Context, distributionID uuid.UUID) ([]ListDistributionRelationsRow, error) {
+	rows, err := q.db.Query(ctx, listDistributionRelations, distributionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDistributionRelationsRow
+	for rows.Next() {
+		var i ListDistributionRelationsRow
+		if err := rows.Scan(
+			&i.ConversionRelation.ID,
+			&i.ConversionRelation.DistributionID,
+			&i.ConversionRelation.PluginID,
+			&i.ConversionRelation.InputFormat,
+			&i.ConversionRelation.OutputFormat,
+			&i.ConversionRelation.CreatedBy,
+			&i.ConversionRelation.UpdatedBy,
+			&i.Plugin.ID,
+			&i.Plugin.Name,
+			&i.Plugin.Description,
+			&i.Plugin.Repository,
+			&i.Plugin.Branch,
+			&i.Plugin.Runtime,
+			&i.Plugin.Arguments,
+			&i.Plugin.Enabled,
+			&i.Plugin.InstalledCommit,
+			&i.Plugin.CreatedBy,
+			&i.Plugin.UpdatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRelations = `-- name: ListRelations :many
 SELECT
     id, distribution_id, plugin_id, input_format, output_format, created_by, updated_by
@@ -136,34 +202,34 @@ const updateRelation = `-- name: UpdateRelation :one
 UPDATE
     conversion_relations
 SET
-    distribution_id = $2,
-    plugin_id = $3,
-    input_format = $4,
-    output_format = $5,
-    updated_by = $6
+    distribution_id = $1,
+    plugin_id = $2,
+    input_format = $3,
+    output_format = $4,
+    updated_by = $5
 WHERE
-    id = $1
+    id = $6
 RETURNING
     id, distribution_id, plugin_id, input_format, output_format, created_by, updated_by
 `
 
 type UpdateRelationParams struct {
-	ID             uuid.UUID
 	DistributionID uuid.UUID
 	PluginID       uuid.UUID
 	InputFormat    string
 	OutputFormat   string
 	UpdatedBy      string
+	ID             uuid.UUID
 }
 
 func (q *Queries) UpdateRelation(ctx context.Context, arg UpdateRelationParams) (ConversionRelation, error) {
 	row := q.db.QueryRow(ctx, updateRelation,
-		arg.ID,
 		arg.DistributionID,
 		arg.PluginID,
 		arg.InputFormat,
 		arg.OutputFormat,
 		arg.UpdatedBy,
+		arg.ID,
 	)
 	var i ConversionRelation
 	err := row.Scan(

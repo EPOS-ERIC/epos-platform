@@ -8,6 +8,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// CheckDistributionRead verifies access without preparing a distribution request.
+func (s *Service) CheckDistributionRead(ctx context.Context, actor domain.Actor, distributionID uuid.UUID) error {
+	_, _, _, err := s.readDistribution(ctx, &actor, distributionID)
+	return err
+}
+
 // DistributionFormats returns native formats to authorized converter managers.
 func (s *Service) DistributionFormats(ctx context.Context, actor domain.Actor, distributionID uuid.UUID) ([]string, error) {
 	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actor), domain.GlobalPermissionConverterManage)

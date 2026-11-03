@@ -11,7 +11,16 @@ INSERT INTO
         updated_by
     )
 VALUES
-    ($1, $2, $3, $4, $5, $6, $7, $7)
+    (
+        sqlc.arg(name),
+        sqlc.arg(description),
+        sqlc.arg(repository),
+        sqlc.arg(branch),
+        sqlc.arg(runtime),
+        sqlc.arg(arguments),
+        sqlc.arg(created_by),
+        sqlc.arg(created_by)
+    )
 RETURNING
     *;
 
@@ -21,7 +30,7 @@ SELECT
 FROM
     plugins
 WHERE
-    id = $1;
+    id = sqlc.arg(id);
 
 -- name: ListPlugins :many
 SELECT
@@ -36,16 +45,16 @@ ORDER BY
 UPDATE
     plugins
 SET
-    name = $2,
-    description = $3,
-    repository = $4,
-    branch = $5,
-    runtime = $6,
-    arguments = $7,
-    enabled = $8,
-    updated_by = $9
+    name = sqlc.arg(name),
+    description = sqlc.arg(description),
+    repository = sqlc.arg(repository),
+    branch = sqlc.arg(branch),
+    runtime = sqlc.arg(runtime),
+    arguments = sqlc.arg(arguments),
+    enabled = sqlc.arg(enabled),
+    updated_by = sqlc.arg(updated_by)
 WHERE
-    id = $1
+    id = sqlc.arg(id)
 RETURNING
     *;
 
@@ -53,7 +62,7 @@ RETURNING
 DELETE FROM
     plugins
 WHERE
-    id = $1;
+    id = sqlc.arg(id);
 
 -- name: GetPluginInstallation :one
 SELECT
@@ -62,12 +71,12 @@ SELECT
 FROM
     plugins
 WHERE
-    id = $1;
+    id = sqlc.arg(id);
 
 -- name: SetPluginInstallation :execrows
 UPDATE
     plugins
 SET
-    installed_commit = $2
+    installed_commit = sqlc.narg(installed_commit)
 WHERE
-    id = $1;
+    id = sqlc.arg(id);

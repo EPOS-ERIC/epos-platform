@@ -22,8 +22,13 @@ type Repository interface {
 	CreateRelation(context.Context, domain.RelationInput, string) (domain.Relation, error)
 	Relation(context.Context, uuid.UUID) (domain.Relation, error)
 	Relations(context.Context) ([]domain.Relation, error)
+	DistributionRelations(context.Context, uuid.UUID) ([]domain.PluginRelation, error)
 	UpdateRelation(context.Context, uuid.UUID, domain.RelationInput, string) (domain.Relation, error)
 	DeleteRelation(context.Context, uuid.UUID) error
+}
+
+func (s *Service) DistributionRelations(ctx context.Context, id uuid.UUID) ([]domain.PluginRelation, error) {
+	return s.repo.DistributionRelations(ctx, id)
 }
 
 type Service struct {

@@ -445,6 +445,15 @@ func (UnimplementedHandler) ListConversionRelations(ctx context.Context) (r []Co
 	return r, ht.ErrNotImplemented
 }
 
+// ListDistributionConversionRelations implements listDistributionConversionRelations operation.
+//
+// Requires permission to read the distribution. Includes disabled and uninstalled plugins.
+//
+// GET /distributions/{distributionId}/conversion-relations
+func (UnimplementedHandler) ListDistributionConversionRelations(ctx context.Context, params ListDistributionConversionRelationsParams) (r []DistributionConversionPlugin, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListGroupCategories implements listGroupCategories operation.
 //
 // List group categories.

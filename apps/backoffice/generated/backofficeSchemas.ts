@@ -78,6 +78,38 @@ export type ManagedConversionPlugin = {
   updated_by: string;
 };
 
+export type DistributionConversionPlugin = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  name: string;
+  description: string;
+  repository: string;
+  enabled: boolean;
+  /**
+   * Installation status on the responding converter instance.
+   */
+  installed: boolean;
+  branch: string;
+  runtime: ConversionRuntime;
+  arguments: string[];
+  relations: DistributionConversionRelation[];
+};
+
+export type DistributionConversionRelation = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  input_format: string;
+  output_format: string;
+  /**
+   * @format uuid
+   */
+  distribution_id: string;
+};
+
 export type ConversionRelationInput = {
   /**
    * @format uuid

@@ -9,6 +9,44 @@ import (
 	"github.com/google/uuid"
 )
 
+func toAPIDistributionConversionPlugins(relations []domain.DistributionPluginRelation) []gatewayapi.DistributionConversionPlugin {
+	result := make([]gatewayapi.DistributionConversionPlugin, 0)
+	indices := make(map[uuid.UUID]int)
+	for _, item := range relations {
+		index, ok := indices[item.PluginID]
+		if !ok {
+			index = len(result)
+			indices[item.PluginID] = index
+			arguments := item.Arguments
+			if arguments == nil {
+				arguments = []string{}
+			}
+
+			result = append(result, gatewayapi.DistributionConversionPlugin{
+				ID:          item.PluginID,
+				Name:        item.Name,
+				Description: item.Description,
+				Repository:  item.Repository,
+				Branch:      item.Branch,
+				Runtime:     gatewayapi.ConversionRuntime(item.Runtime),
+				Arguments:   arguments,
+				Enabled:     item.Enabled,
+				Installed:   item.Installed,
+				Relations:   []gatewayapi.DistributionConversionRelation{},
+			})
+		}
+
+		result[index].Relations = append(result[index].Relations, gatewayapi.DistributionConversionRelation{
+			ID:             item.RelationID,
+			DistributionID: item.DistributionID,
+			InputFormat:    item.InputFormat,
+			OutputFormat:   item.OutputFormat,
+		})
+	}
+
+	return result
+}
+
 func toProtoConversionRuntime(runtime gatewayapi.ConversionRuntime) (converterv1.Runtime, error) {
 	switch runtime {
 	case gatewayapi.ConversionRuntimePython:

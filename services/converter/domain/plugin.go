@@ -54,6 +54,11 @@ type Relation struct {
 	UpdatedBy string
 }
 
+type PluginRelation struct {
+	Plugin   Plugin
+	Relation Relation
+}
+
 func NewPluginInput(input PluginInput) (PluginInput, error) {
 	input.Name = strings.TrimSpace(input.Name)
 	input.Branch = strings.TrimSpace(input.Branch)

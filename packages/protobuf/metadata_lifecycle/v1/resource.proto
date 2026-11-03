@@ -45,6 +45,12 @@ message GetDistributionFormatsResponse {
   repeated string formats = 1;
 }
 
+message CheckDistributionReadRequest {
+  string distribution_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message CheckDistributionReadResponse {}
+
 message PrepareDistributionDownloadResponse {
   string resource_id = 1 [(buf.validate.field).string.uuid = true];
   string version_id = 2 [(buf.validate.field).string.uuid = true];
@@ -824,6 +830,9 @@ service ResourceService {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_OPTIONAL;
   }
   rpc GetDistributionFormats(GetDistributionFormatsRequest) returns (GetDistributionFormatsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc CheckDistributionRead(CheckDistributionReadRequest) returns (CheckDistributionReadResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
   }
   rpc PrepareDistributionDownload(PrepareDistributionDownloadRequest) returns (PrepareDistributionDownloadResponse) {

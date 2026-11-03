@@ -4349,6 +4349,71 @@ func decodeListConfigurationsParams(args [0]string, argsEscaped bool, r *http.Re
 	return params, nil
 }
 
+// ListDistributionConversionRelationsParams is parameters of listDistributionConversionRelations operation.
+type ListDistributionConversionRelationsParams struct {
+	DistributionId uuid.UUID
+}
+
+func unpackListDistributionConversionRelationsParams(packed middleware.Parameters) (params ListDistributionConversionRelationsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "distributionId",
+			In:   "path",
+		}
+		params.DistributionId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeListDistributionConversionRelationsParams(args [1]string, argsEscaped bool, r *http.Request) (params ListDistributionConversionRelationsParams, _ error) {
+	// Decode path: distributionId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "distributionId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.DistributionId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "distributionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ListGroupCategoriesParams is parameters of listGroupCategories operation.
 type ListGroupCategoriesParams struct {
 	// Group identifier.

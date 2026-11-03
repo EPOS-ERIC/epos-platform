@@ -211,6 +211,90 @@ class ConversionsContractTest(DistributionContractTestCase):
         self.assertEqual(listed.status_code, 200)
         self.assertNotIn(relation_id, [item["id"] for item in listed.json()])
 
+    def test_distribution_plugin_relations(self) -> None:
+        """Verify grouped relations, distribution isolation, and dataset read authorization."""
+        payload, plugin = self.create_plugin()
+        _, other_plugin = self.create_plugin()
+        second = web_distribution()
+        second["title"] = "other-distribution"
+        detail = self.create_draft([web_distribution(), second])
+        distributions = {item["title"]: item for item in detail["metadata"]["distributions"]}
+        distribution_id = distributions["prepared-service"]["id"]
+        other_id = distributions["other-distribution"]["id"]
+        path = "/distributions/{distributionId}/conversion-relations"
+
+        empty = self.gateway.get(path, distributionId=distribution_id)
+        self.assertEqual(empty.status_code, 200)
+        self.assertEqual(empty.json(), [])
+
+        updated = self.gateway.put(
+            "/conversion-plugins/{pluginId}", pluginId=plugin["id"],
+            json={**payload, "enabled": False},
+        )
+        self.assertIn(updated.status_code, (200, 202))
+        self.assertFalse(updated.json()["installed"])
+        relation_ids = []
+        for output_format in ("text/csv", "application/xml"):
+            response = self.gateway.post("/conversion-relations", json={
+                "distribution_id": distribution_id, "plugin_id": plugin["id"],
+                "input_format": "application/json", "output_format": output_format,
+            })
+            self.assertEqual(response.status_code, 201)
+            relation_ids.append(response.json()["id"])
+        for target_id, plugin_id in ((distribution_id, other_plugin["id"]), (other_id, plugin["id"])):
+            response = self.gateway.post("/conversion-relations", json={
+                "distribution_id": target_id, "plugin_id": plugin_id,
+                "input_format": "application/json", "output_format": "text/csv",
+            })
+            self.assertEqual(response.status_code, 201)
+
+        listed = self.gateway.get(path, distributionId=distribution_id)
+        self.assertEqual(listed.status_code, 200)
+        plugins = {item["id"]: item for item in listed.json()}
+        self.assertEqual(set(plugins), {plugin["id"], other_plugin["id"]})
+        result = plugins[plugin["id"]]
+        self.assertEqual(set(result), {
+            "id", "name", "description", "repository", "enabled", "installed",
+            "branch", "runtime", "arguments", "relations",
+        })
+        for key, value in payload.items():
+            self.assertEqual(result[key], value)
+        self.assertEqual(result["description"], "")
+        self.assertFalse(result["enabled"])
+        self.assertFalse(result["installed"])
+        self.assertCountEqual([item["id"] for item in result["relations"]], relation_ids)
+        self.assertCountEqual(
+            [item["output_format"] for item in result["relations"]],
+            ["text/csv", "application/xml"],
+        )
+        for relation in result["relations"]:
+            self.assertEqual(set(relation), {"id", "distribution_id", "input_format", "output_format"})
+            self.assertEqual(relation["distribution_id"], distribution_id)
+            self.assertEqual(relation["input_format"], "application/json")
+        self.assertEqual(len(plugins[other_plugin["id"]]["relations"]), 1)
+
+        member, member_id = self.create_user("conversion-reader")
+        unrelated, _ = self.create_user("conversion-unrelated")
+        requested = member.post(
+            "/groups/{groupId}/membership-requests", groupId=detail["group_id"], json={"roles": []},
+        )
+        self.assertEqual(requested.status_code, 201)
+        accepted = self.gateway.post(
+            "/groups/{groupId}/memberships/{userId}/{decision}", groupId=detail["group_id"],
+            userId=member_id, decision="accept",
+        )
+        self.assertEqual(accepted.status_code, 200)
+        self.assertIn(member.get("/conversion-plugins").status_code, (401, 403))
+        visible = member.get(path, distributionId=distribution_id)
+        self.assertEqual(visible.status_code, 200)
+        self.assertEqual({item["id"] for item in visible.json()}, set(plugins))
+        self.assertEqual(unrelated.get(path, distributionId=distribution_id).status_code, 404)
+        self.assertEqual(self.gateway.get(
+            path, distributionId=distribution_id, headers={"Authorization": None},
+        ).status_code, 401)
+        self.assertEqual(self.gateway.get(path, distributionId=str(uuid4())).status_code, 404)
+        self.assertEqual(self.gateway.get(path, distributionId="invalid-uuid").status_code, 400)
+
     def test_uninstalled_and_disabled_plugin_formats_are_hidden(self) -> None:
         """Verify relations remain readable but unavailable for uninstalled plugins."""
         payload, plugin = self.create_plugin()

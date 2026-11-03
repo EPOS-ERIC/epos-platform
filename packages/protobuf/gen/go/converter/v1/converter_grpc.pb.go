@@ -19,18 +19,19 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ConverterService_CreatePlugin_FullMethodName   = "/converter.v1.ConverterService/CreatePlugin"
-	ConverterService_GetPlugin_FullMethodName      = "/converter.v1.ConverterService/GetPlugin"
-	ConverterService_ListPlugins_FullMethodName    = "/converter.v1.ConverterService/ListPlugins"
-	ConverterService_UpdatePlugin_FullMethodName   = "/converter.v1.ConverterService/UpdatePlugin"
-	ConverterService_DeletePlugin_FullMethodName   = "/converter.v1.ConverterService/DeletePlugin"
-	ConverterService_SyncPlugin_FullMethodName     = "/converter.v1.ConverterService/SyncPlugin"
-	ConverterService_CreateRelation_FullMethodName = "/converter.v1.ConverterService/CreateRelation"
-	ConverterService_GetRelation_FullMethodName    = "/converter.v1.ConverterService/GetRelation"
-	ConverterService_ListRelations_FullMethodName  = "/converter.v1.ConverterService/ListRelations"
-	ConverterService_UpdateRelation_FullMethodName = "/converter.v1.ConverterService/UpdateRelation"
-	ConverterService_DeleteRelation_FullMethodName = "/converter.v1.ConverterService/DeleteRelation"
-	ConverterService_Execute_FullMethodName        = "/converter.v1.ConverterService/Execute"
+	ConverterService_CreatePlugin_FullMethodName              = "/converter.v1.ConverterService/CreatePlugin"
+	ConverterService_GetPlugin_FullMethodName                 = "/converter.v1.ConverterService/GetPlugin"
+	ConverterService_ListPlugins_FullMethodName               = "/converter.v1.ConverterService/ListPlugins"
+	ConverterService_UpdatePlugin_FullMethodName              = "/converter.v1.ConverterService/UpdatePlugin"
+	ConverterService_DeletePlugin_FullMethodName              = "/converter.v1.ConverterService/DeletePlugin"
+	ConverterService_SyncPlugin_FullMethodName                = "/converter.v1.ConverterService/SyncPlugin"
+	ConverterService_CreateRelation_FullMethodName            = "/converter.v1.ConverterService/CreateRelation"
+	ConverterService_GetRelation_FullMethodName               = "/converter.v1.ConverterService/GetRelation"
+	ConverterService_ListRelations_FullMethodName             = "/converter.v1.ConverterService/ListRelations"
+	ConverterService_ListDistributionRelations_FullMethodName = "/converter.v1.ConverterService/ListDistributionRelations"
+	ConverterService_UpdateRelation_FullMethodName            = "/converter.v1.ConverterService/UpdateRelation"
+	ConverterService_DeleteRelation_FullMethodName            = "/converter.v1.ConverterService/DeleteRelation"
+	ConverterService_Execute_FullMethodName                   = "/converter.v1.ConverterService/Execute"
 )
 
 // ConverterServiceClient is the client API for ConverterService service.
@@ -46,6 +47,7 @@ type ConverterServiceClient interface {
 	CreateRelation(ctx context.Context, in *CreateRelationRequest, opts ...grpc.CallOption) (*CreateRelationResponse, error)
 	GetRelation(ctx context.Context, in *GetRelationRequest, opts ...grpc.CallOption) (*GetRelationResponse, error)
 	ListRelations(ctx context.Context, in *ListRelationsRequest, opts ...grpc.CallOption) (*ListRelationsResponse, error)
+	ListDistributionRelations(ctx context.Context, in *ListDistributionRelationsRequest, opts ...grpc.CallOption) (*ListDistributionRelationsResponse, error)
 	UpdateRelation(ctx context.Context, in *UpdateRelationRequest, opts ...grpc.CallOption) (*UpdateRelationResponse, error)
 	DeleteRelation(ctx context.Context, in *DeleteRelationRequest, opts ...grpc.CallOption) (*DeleteRelationResponse, error)
 	Execute(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExecuteRequest, ExecuteResponse], error)
@@ -149,6 +151,16 @@ func (c *converterServiceClient) ListRelations(ctx context.Context, in *ListRela
 	return out, nil
 }
 
+func (c *converterServiceClient) ListDistributionRelations(ctx context.Context, in *ListDistributionRelationsRequest, opts ...grpc.CallOption) (*ListDistributionRelationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDistributionRelationsResponse)
+	err := c.cc.Invoke(ctx, ConverterService_ListDistributionRelations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *converterServiceClient) UpdateRelation(ctx context.Context, in *UpdateRelationRequest, opts ...grpc.CallOption) (*UpdateRelationResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateRelationResponse)
@@ -195,6 +207,7 @@ type ConverterServiceServer interface {
 	CreateRelation(context.Context, *CreateRelationRequest) (*CreateRelationResponse, error)
 	GetRelation(context.Context, *GetRelationRequest) (*GetRelationResponse, error)
 	ListRelations(context.Context, *ListRelationsRequest) (*ListRelationsResponse, error)
+	ListDistributionRelations(context.Context, *ListDistributionRelationsRequest) (*ListDistributionRelationsResponse, error)
 	UpdateRelation(context.Context, *UpdateRelationRequest) (*UpdateRelationResponse, error)
 	DeleteRelation(context.Context, *DeleteRelationRequest) (*DeleteRelationResponse, error)
 	Execute(grpc.BidiStreamingServer[ExecuteRequest, ExecuteResponse]) error
@@ -234,6 +247,9 @@ func (UnimplementedConverterServiceServer) GetRelation(context.Context, *GetRela
 }
 func (UnimplementedConverterServiceServer) ListRelations(context.Context, *ListRelationsRequest) (*ListRelationsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListRelations not implemented")
+}
+func (UnimplementedConverterServiceServer) ListDistributionRelations(context.Context, *ListDistributionRelationsRequest) (*ListDistributionRelationsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListDistributionRelations not implemented")
 }
 func (UnimplementedConverterServiceServer) UpdateRelation(context.Context, *UpdateRelationRequest) (*UpdateRelationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateRelation not implemented")
@@ -427,6 +443,24 @@ func _ConverterService_ListRelations_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConverterService_ListDistributionRelations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDistributionRelationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConverterServiceServer).ListDistributionRelations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConverterService_ListDistributionRelations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConverterServiceServer).ListDistributionRelations(ctx, req.(*ListDistributionRelationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ConverterService_UpdateRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateRelationRequest)
 	if err := dec(in); err != nil {
@@ -512,6 +546,10 @@ var ConverterService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRelations",
 			Handler:    _ConverterService_ListRelations_Handler,
+		},
+		{
+			MethodName: "ListDistributionRelations",
+			Handler:    _ConverterService_ListDistributionRelations_Handler,
 		},
 		{
 			MethodName: "UpdateRelation",

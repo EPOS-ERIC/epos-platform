@@ -24,7 +24,16 @@ INSERT INTO
         updated_by
     )
 VALUES
-    ($1, $2, $3, $4, $5, $6, $7, $7)
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $7
+    )
 RETURNING
     id, name, description, repository, branch, runtime, arguments, enabled, installed_commit, created_by, updated_by
 `
@@ -177,18 +186,18 @@ const setPluginInstallation = `-- name: SetPluginInstallation :execrows
 UPDATE
     plugins
 SET
-    installed_commit = $2
+    installed_commit = $1
 WHERE
-    id = $1
+    id = $2
 `
 
 type SetPluginInstallationParams struct {
-	ID              uuid.UUID
 	InstalledCommit *string
+	ID              uuid.UUID
 }
 
 func (q *Queries) SetPluginInstallation(ctx context.Context, arg SetPluginInstallationParams) (int64, error) {
-	result, err := q.db.Exec(ctx, setPluginInstallation, arg.ID, arg.InstalledCommit)
+	result, err := q.db.Exec(ctx, setPluginInstallation, arg.InstalledCommit, arg.ID)
 	if err != nil {
 		return 0, err
 	}
@@ -199,22 +208,21 @@ const updatePlugin = `-- name: UpdatePlugin :one
 UPDATE
     plugins
 SET
-    name = $2,
-    description = $3,
-    repository = $4,
-    branch = $5,
-    runtime = $6,
-    arguments = $7,
-    enabled = $8,
-    updated_by = $9
+    name = $1,
+    description = $2,
+    repository = $3,
+    branch = $4,
+    runtime = $5,
+    arguments = $6,
+    enabled = $7,
+    updated_by = $8
 WHERE
-    id = $1
+    id = $9
 RETURNING
     id, name, description, repository, branch, runtime, arguments, enabled, installed_commit, created_by, updated_by
 `
 
 type UpdatePluginParams struct {
-	ID          uuid.UUID
 	Name        string
 	Description string
 	Repository  string
@@ -223,11 +231,11 @@ type UpdatePluginParams struct {
 	Arguments   []string
 	Enabled     bool
 	UpdatedBy   string
+	ID          uuid.UUID
 }
 
 func (q *Queries) UpdatePlugin(ctx context.Context, arg UpdatePluginParams) (Plugin, error) {
 	row := q.db.QueryRow(ctx, updatePlugin,
-		arg.ID,
 		arg.Name,
 		arg.Description,
 		arg.Repository,
@@ -236,6 +244,7 @@ func (q *Queries) UpdatePlugin(ctx context.Context, arg UpdatePluginParams) (Plu
 		arg.Arguments,
 		arg.Enabled,
 		arg.UpdatedBy,
+		arg.ID,
 	)
 	var i Plugin
 	err := row.Scan(

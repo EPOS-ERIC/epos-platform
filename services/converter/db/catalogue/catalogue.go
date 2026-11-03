@@ -119,6 +119,25 @@ func (r *Repository) Relations(ctx context.Context) ([]domain.Relation, error) {
 	return result, nil
 }
 
+func (r *Repository) DistributionRelations(ctx context.Context, id uuid.UUID) ([]domain.PluginRelation, error) {
+	rows, err := r.queries.ListDistributionRelations(ctx, id)
+	if err != nil {
+		return nil, persistenceError("list distribution relations", err)
+	}
+	result := make([]domain.PluginRelation, 0, len(rows))
+	for _, row := range rows {
+		p, err := fromPlugin(row.Plugin)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, domain.PluginRelation{
+			Plugin:   p,
+			Relation: fromRelation(row.ConversionRelation),
+		})
+	}
+	return result, nil
+}
+
 func (r *Repository) UpdateRelation(ctx context.Context, id uuid.UUID, input domain.RelationInput, actor string) (domain.Relation, error) {
 	relation, err := r.queries.UpdateRelation(ctx, sqlc.UpdateRelationParams{
 		ID:             id,

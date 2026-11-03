@@ -112,6 +112,79 @@ func (c *Converter) ListRelations(ctx context.Context, actor string) (*converter
 	return response, nil
 }
 
+func (c *Converter) ListDistributionRelations(ctx context.Context, actor string, distributionID uuid.UUID) (*converterv1.ListDistributionRelationsResponse, error) {
+	response, err := c.client.ListDistributionRelations(converterActor(ctx, actor), &converterv1.ListDistributionRelationsRequest{DistributionId: distributionID.String()})
+	if err != nil {
+		return nil, c.wrapError(ctx, "list distribution relations", err)
+	}
+
+	return response, nil
+}
+
+func (c *Converter) DistributionRelations(ctx context.Context, actor string, distributionID uuid.UUID) ([]domain.DistributionPluginRelation, error) {
+	response, err := c.ListDistributionRelations(ctx, actor, distributionID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.DistributionPluginRelation, 0, len(response.GetRelations()))
+	for _, item := range response.GetRelations() {
+		p, r := item.GetPlugin(), item.GetRelation()
+		if p == nil || p.GetInput() == nil || r == nil || r.GetInput() == nil {
+			return nil, apperror.Default(apperror.CodeInternal)
+		}
+
+		pid, err := uuid.Parse(p.GetId())
+		if err != nil {
+			return nil, apperror.Wrap(apperror.CodeInternal, "", err)
+		}
+
+		rid, err := uuid.Parse(r.GetId())
+		if err != nil {
+			return nil, apperror.Wrap(apperror.CodeInternal, "", err)
+		}
+
+		did, err := uuid.Parse(r.GetInput().GetDistributionId())
+		if err != nil {
+			return nil, apperror.Wrap(apperror.CodeInternal, "", err)
+		}
+
+		if did != distributionID || r.GetInput().GetPluginId() != p.GetId() {
+			return nil, apperror.Default(apperror.CodeInternal)
+		}
+
+		var runtime domain.ConversionRuntime
+		switch p.GetInput().GetRuntime() {
+		case converterv1.Runtime_RUNTIME_PYTHON:
+			runtime = domain.ConversionRuntimePython
+		case converterv1.Runtime_RUNTIME_JAVA:
+			runtime = domain.ConversionRuntimeJava
+		case converterv1.Runtime_RUNTIME_BINARY:
+			runtime = domain.ConversionRuntimeBinary
+		default:
+			return nil, apperror.Default(apperror.CodeInternal)
+		}
+
+		result = append(result, domain.DistributionPluginRelation{
+			PluginID:       pid,
+			Name:           p.GetInput().GetName(),
+			Description:    p.GetInput().GetDescription(),
+			Repository:     p.GetInput().GetRepository(),
+			Branch:         p.GetInput().GetBranch(),
+			Runtime:        runtime,
+			Arguments:      p.GetInput().GetArguments(),
+			Enabled:        p.GetEnabled(),
+			Installed:      p.GetInstalled(),
+			RelationID:     rid,
+			DistributionID: did,
+			InputFormat:    r.GetInput().GetInputFormat(),
+			OutputFormat:   r.GetInput().GetOutputFormat(),
+		})
+	}
+
+	return result, nil
+}
+
 func (c *Converter) UpdateRelation(ctx context.Context, actor string, request *converterv1.UpdateRelationRequest) (*converterv1.UpdateRelationResponse, error) {
 	response, err := c.client.UpdateRelation(converterActor(ctx, actor), request)
 	if err != nil {

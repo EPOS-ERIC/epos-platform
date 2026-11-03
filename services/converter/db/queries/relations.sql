@@ -9,7 +9,14 @@ INSERT INTO
         updated_by
     )
 VALUES
-    ($1, $2, $3, $4, $5, $5)
+    (
+        sqlc.arg(distribution_id),
+        sqlc.arg(plugin_id),
+        sqlc.arg(input_format),
+        sqlc.arg(output_format),
+        sqlc.arg(created_by),
+        sqlc.arg(created_by)
+    )
 RETURNING
     *;
 
@@ -19,7 +26,7 @@ SELECT
 FROM
     conversion_relations
 WHERE
-    id = $1;
+    id = sqlc.arg(id);
 
 -- name: ListRelations :many
 SELECT
@@ -29,17 +36,31 @@ FROM
 ORDER BY
     id;
 
+-- name: ListDistributionRelations :many
+SELECT
+    sqlc.embed(conversion_relations),
+    sqlc.embed(plugins)
+FROM
+    conversion_relations
+    JOIN plugins ON plugins.id = conversion_relations.plugin_id
+WHERE
+    conversion_relations.distribution_id = sqlc.arg(distribution_id)
+ORDER BY
+    plugins.name,
+    plugins.id,
+    conversion_relations.id;
+
 -- name: UpdateRelation :one
 UPDATE
     conversion_relations
 SET
-    distribution_id = $2,
-    plugin_id = $3,
-    input_format = $4,
-    output_format = $5,
-    updated_by = $6
+    distribution_id = sqlc.arg(distribution_id),
+    plugin_id = sqlc.arg(plugin_id),
+    input_format = sqlc.arg(input_format),
+    output_format = sqlc.arg(output_format),
+    updated_by = sqlc.arg(updated_by)
 WHERE
-    id = $1
+    id = sqlc.arg(id)
 RETURNING
     *;
 
@@ -47,4 +68,4 @@ RETURNING
 DELETE FROM
     conversion_relations
 WHERE
-    id = $1;
+    id = sqlc.arg(id);

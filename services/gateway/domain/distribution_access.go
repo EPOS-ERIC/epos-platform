@@ -6,6 +6,30 @@ import (
 	"github.com/google/uuid"
 )
 
+type ConversionRuntime string
+
+const (
+	ConversionRuntimePython ConversionRuntime = "python"
+	ConversionRuntimeJava   ConversionRuntime = "java"
+	ConversionRuntimeBinary ConversionRuntime = "binary"
+)
+
+type DistributionPluginRelation struct {
+	PluginID       uuid.UUID
+	Name           string
+	Description    string
+	Repository     string
+	Branch         string
+	Runtime        ConversionRuntime
+	Arguments      []string
+	Enabled        bool
+	Installed      bool
+	RelationID     uuid.UUID
+	DistributionID uuid.UUID
+	InputFormat    string
+	OutputFormat   string
+}
+
 type AccessRequest struct {
 	DistributionID uuid.UUID
 	OutputFormat   *string

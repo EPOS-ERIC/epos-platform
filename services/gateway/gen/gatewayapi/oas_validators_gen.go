@@ -2880,6 +2880,51 @@ func (s DistributionAccessScalar) Validate() error {
 	}
 }
 
+func (s *DistributionConversionPlugin) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Runtime.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "runtime",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.Arguments == nil {
+			return errors.New("nil is invalid value")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "arguments",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.Relations == nil {
+			return errors.New("nil is invalid value")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "relations",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s DistributionDraft) Validate() error {
 	switch s.Type {
 	case WebServiceDistributionDraftDistributionDraft:

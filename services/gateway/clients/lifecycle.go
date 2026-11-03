@@ -73,6 +73,17 @@ func (c *MetadataLifecycle) DistributionFormats(ctx context.Context, actorID str
 	return response.GetFormats(), nil
 }
 
+func (c *MetadataLifecycle) CheckDistributionRead(ctx context.Context, actorID string, distributionID uuid.UUID) error {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+
+	_, err := c.resources.CheckDistributionRead(ctx, &metadatalifecyclev1.CheckDistributionReadRequest{DistributionId: distributionID.String()})
+	if err != nil {
+		return c.wrapError(ctx, "check distribution read", err)
+	}
+
+	return nil
+}
+
 func (c *MetadataLifecycle) PrepareDistributionAccess(ctx context.Context, actorID string, request domain.AccessRequest) (domain.PreparedRequest, error) {
 	if actorID != "" {
 		ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)

@@ -1361,6 +1361,146 @@ func (x *ListRelationsResponse) GetRelations() []*Relation {
 	return nil
 }
 
+type ListDistributionRelationsRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	DistributionId string                 `protobuf:"bytes,1,opt,name=distribution_id,json=distributionId,proto3" json:"distribution_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ListDistributionRelationsRequest) Reset() {
+	*x = ListDistributionRelationsRequest{}
+	mi := &file_converter_v1_converter_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDistributionRelationsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDistributionRelationsRequest) ProtoMessage() {}
+
+func (x *ListDistributionRelationsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_converter_v1_converter_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDistributionRelationsRequest.ProtoReflect.Descriptor instead.
+func (*ListDistributionRelationsRequest) Descriptor() ([]byte, []int) {
+	return file_converter_v1_converter_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ListDistributionRelationsRequest) GetDistributionId() string {
+	if x != nil {
+		return x.DistributionId
+	}
+	return ""
+}
+
+type DistributionRelation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plugin        *Plugin                `protobuf:"bytes,1,opt,name=plugin,proto3" json:"plugin,omitempty"`
+	Relation      *Relation              `protobuf:"bytes,2,opt,name=relation,proto3" json:"relation,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DistributionRelation) Reset() {
+	*x = DistributionRelation{}
+	mi := &file_converter_v1_converter_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DistributionRelation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DistributionRelation) ProtoMessage() {}
+
+func (x *DistributionRelation) ProtoReflect() protoreflect.Message {
+	mi := &file_converter_v1_converter_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DistributionRelation.ProtoReflect.Descriptor instead.
+func (*DistributionRelation) Descriptor() ([]byte, []int) {
+	return file_converter_v1_converter_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *DistributionRelation) GetPlugin() *Plugin {
+	if x != nil {
+		return x.Plugin
+	}
+	return nil
+}
+
+func (x *DistributionRelation) GetRelation() *Relation {
+	if x != nil {
+		return x.Relation
+	}
+	return nil
+}
+
+type ListDistributionRelationsResponse struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Relations     []*DistributionRelation `protobuf:"bytes,1,rep,name=relations,proto3" json:"relations,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDistributionRelationsResponse) Reset() {
+	*x = ListDistributionRelationsResponse{}
+	mi := &file_converter_v1_converter_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDistributionRelationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDistributionRelationsResponse) ProtoMessage() {}
+
+func (x *ListDistributionRelationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_converter_v1_converter_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDistributionRelationsResponse.ProtoReflect.Descriptor instead.
+func (*ListDistributionRelationsResponse) Descriptor() ([]byte, []int) {
+	return file_converter_v1_converter_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ListDistributionRelationsResponse) GetRelations() []*DistributionRelation {
+	if x != nil {
+		return x.Relations
+	}
+	return nil
+}
+
 type ExecuteHeader struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversionId   string                 `protobuf:"bytes,1,opt,name=conversion_id,json=conversionId,proto3" json:"conversion_id,omitempty"`
@@ -1372,7 +1512,7 @@ type ExecuteHeader struct {
 
 func (x *ExecuteHeader) Reset() {
 	*x = ExecuteHeader{}
-	mi := &file_converter_v1_converter_proto_msgTypes[26]
+	mi := &file_converter_v1_converter_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1384,7 +1524,7 @@ func (x *ExecuteHeader) String() string {
 func (*ExecuteHeader) ProtoMessage() {}
 
 func (x *ExecuteHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_converter_v1_converter_proto_msgTypes[26]
+	mi := &file_converter_v1_converter_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1397,7 +1537,7 @@ func (x *ExecuteHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteHeader.ProtoReflect.Descriptor instead.
 func (*ExecuteHeader) Descriptor() ([]byte, []int) {
-	return file_converter_v1_converter_proto_rawDescGZIP(), []int{26}
+	return file_converter_v1_converter_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ExecuteHeader) GetConversionId() string {
@@ -1434,7 +1574,7 @@ type ExecuteRequest struct {
 
 func (x *ExecuteRequest) Reset() {
 	*x = ExecuteRequest{}
-	mi := &file_converter_v1_converter_proto_msgTypes[27]
+	mi := &file_converter_v1_converter_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1446,7 +1586,7 @@ func (x *ExecuteRequest) String() string {
 func (*ExecuteRequest) ProtoMessage() {}
 
 func (x *ExecuteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_converter_v1_converter_proto_msgTypes[27]
+	mi := &file_converter_v1_converter_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1459,7 +1599,7 @@ func (x *ExecuteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteRequest.ProtoReflect.Descriptor instead.
 func (*ExecuteRequest) Descriptor() ([]byte, []int) {
-	return file_converter_v1_converter_proto_rawDescGZIP(), []int{27}
+	return file_converter_v1_converter_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ExecuteRequest) GetEvent() isExecuteRequest_Event {
@@ -1512,7 +1652,7 @@ type ExecuteResponse struct {
 
 func (x *ExecuteResponse) Reset() {
 	*x = ExecuteResponse{}
-	mi := &file_converter_v1_converter_proto_msgTypes[28]
+	mi := &file_converter_v1_converter_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1524,7 +1664,7 @@ func (x *ExecuteResponse) String() string {
 func (*ExecuteResponse) ProtoMessage() {}
 
 func (x *ExecuteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_converter_v1_converter_proto_msgTypes[28]
+	mi := &file_converter_v1_converter_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1537,7 +1677,7 @@ func (x *ExecuteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteResponse.ProtoReflect.Descriptor instead.
 func (*ExecuteResponse) Descriptor() ([]byte, []int) {
-	return file_converter_v1_converter_proto_rawDescGZIP(), []int{28}
+	return file_converter_v1_converter_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ExecuteResponse) GetChunk() []byte {
@@ -1630,7 +1770,14 @@ const file_converter_v1_converter_proto_rawDesc = "" +
 	"\x16DeleteRelationResponse\"\x16\n" +
 	"\x14ListRelationsRequest\"M\n" +
 	"\x15ListRelationsResponse\x124\n" +
-	"\trelations\x18\x01 \x03(\v2\x16.converter.v1.RelationR\trelations\"|\n" +
+	"\trelations\x18\x01 \x03(\v2\x16.converter.v1.RelationR\trelations\"K\n" +
+	" ListDistributionRelationsRequest\x12'\n" +
+	"\x0fdistribution_id\x18\x01 \x01(\tR\x0edistributionId\"x\n" +
+	"\x14DistributionRelation\x12,\n" +
+	"\x06plugin\x18\x01 \x01(\v2\x14.converter.v1.PluginR\x06plugin\x122\n" +
+	"\brelation\x18\x02 \x01(\v2\x16.converter.v1.RelationR\brelation\"e\n" +
+	"!ListDistributionRelationsResponse\x12@\n" +
+	"\trelations\x18\x01 \x03(\v2\".converter.v1.DistributionRelationR\trelations\"|\n" +
 	"\rExecuteHeader\x12#\n" +
 	"\rconversion_id\x18\x01 \x01(\tR\fconversionId\x12'\n" +
 	"\x0fdistribution_id\x18\x02 \x01(\tR\x0edistributionId\x12\x1d\n" +
@@ -1646,7 +1793,7 @@ const file_converter_v1_converter_proto_rawDesc = "" +
 	"\x13RUNTIME_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eRUNTIME_PYTHON\x10\x01\x12\x10\n" +
 	"\fRUNTIME_JAVA\x10\x02\x12\x12\n" +
-	"\x0eRUNTIME_BINARY\x10\x032\x9b\b\n" +
+	"\x0eRUNTIME_BINARY\x10\x032\x99\t\n" +
 	"\x10ConverterService\x12U\n" +
 	"\fCreatePlugin\x12!.converter.v1.CreatePluginRequest\x1a\".converter.v1.CreatePluginResponse\x12L\n" +
 	"\tGetPlugin\x12\x1e.converter.v1.GetPluginRequest\x1a\x1f.converter.v1.GetPluginResponse\x12R\n" +
@@ -1657,7 +1804,8 @@ const file_converter_v1_converter_proto_rawDesc = "" +
 	"SyncPlugin\x12\x1f.converter.v1.SyncPluginRequest\x1a .converter.v1.SyncPluginResponse\x12[\n" +
 	"\x0eCreateRelation\x12#.converter.v1.CreateRelationRequest\x1a$.converter.v1.CreateRelationResponse\x12R\n" +
 	"\vGetRelation\x12 .converter.v1.GetRelationRequest\x1a!.converter.v1.GetRelationResponse\x12X\n" +
-	"\rListRelations\x12\".converter.v1.ListRelationsRequest\x1a#.converter.v1.ListRelationsResponse\x12[\n" +
+	"\rListRelations\x12\".converter.v1.ListRelationsRequest\x1a#.converter.v1.ListRelationsResponse\x12|\n" +
+	"\x19ListDistributionRelations\x12..converter.v1.ListDistributionRelationsRequest\x1a/.converter.v1.ListDistributionRelationsResponse\x12[\n" +
 	"\x0eUpdateRelation\x12#.converter.v1.UpdateRelationRequest\x1a$.converter.v1.UpdateRelationResponse\x12[\n" +
 	"\x0eDeleteRelation\x12#.converter.v1.DeleteRelationRequest\x1a$.converter.v1.DeleteRelationResponse\x12J\n" +
 	"\aExecute\x12\x1c.converter.v1.ExecuteRequest\x1a\x1d.converter.v1.ExecuteResponse(\x010\x01BVZTgithub.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/converter/v1;converterv1b\x06proto3"
@@ -1675,38 +1823,41 @@ func file_converter_v1_converter_proto_rawDescGZIP() []byte {
 }
 
 var file_converter_v1_converter_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_converter_v1_converter_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_converter_v1_converter_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_converter_v1_converter_proto_goTypes = []any{
-	(Runtime)(0),                   // 0: converter.v1.Runtime
-	(*PluginInput)(nil),            // 1: converter.v1.PluginInput
-	(*Plugin)(nil),                 // 2: converter.v1.Plugin
-	(*RelationInput)(nil),          // 3: converter.v1.RelationInput
-	(*Relation)(nil),               // 4: converter.v1.Relation
-	(*CreatePluginRequest)(nil),    // 5: converter.v1.CreatePluginRequest
-	(*UpdatePluginRequest)(nil),    // 6: converter.v1.UpdatePluginRequest
-	(*CreatePluginResponse)(nil),   // 7: converter.v1.CreatePluginResponse
-	(*UpdatePluginResponse)(nil),   // 8: converter.v1.UpdatePluginResponse
-	(*GetPluginRequest)(nil),       // 9: converter.v1.GetPluginRequest
-	(*GetPluginResponse)(nil),      // 10: converter.v1.GetPluginResponse
-	(*DeletePluginRequest)(nil),    // 11: converter.v1.DeletePluginRequest
-	(*DeletePluginResponse)(nil),   // 12: converter.v1.DeletePluginResponse
-	(*SyncPluginRequest)(nil),      // 13: converter.v1.SyncPluginRequest
-	(*SyncPluginResponse)(nil),     // 14: converter.v1.SyncPluginResponse
-	(*ListPluginsRequest)(nil),     // 15: converter.v1.ListPluginsRequest
-	(*ListPluginsResponse)(nil),    // 16: converter.v1.ListPluginsResponse
-	(*CreateRelationRequest)(nil),  // 17: converter.v1.CreateRelationRequest
-	(*UpdateRelationRequest)(nil),  // 18: converter.v1.UpdateRelationRequest
-	(*CreateRelationResponse)(nil), // 19: converter.v1.CreateRelationResponse
-	(*UpdateRelationResponse)(nil), // 20: converter.v1.UpdateRelationResponse
-	(*GetRelationRequest)(nil),     // 21: converter.v1.GetRelationRequest
-	(*GetRelationResponse)(nil),    // 22: converter.v1.GetRelationResponse
-	(*DeleteRelationRequest)(nil),  // 23: converter.v1.DeleteRelationRequest
-	(*DeleteRelationResponse)(nil), // 24: converter.v1.DeleteRelationResponse
-	(*ListRelationsRequest)(nil),   // 25: converter.v1.ListRelationsRequest
-	(*ListRelationsResponse)(nil),  // 26: converter.v1.ListRelationsResponse
-	(*ExecuteHeader)(nil),          // 27: converter.v1.ExecuteHeader
-	(*ExecuteRequest)(nil),         // 28: converter.v1.ExecuteRequest
-	(*ExecuteResponse)(nil),        // 29: converter.v1.ExecuteResponse
+	(Runtime)(0),                              // 0: converter.v1.Runtime
+	(*PluginInput)(nil),                       // 1: converter.v1.PluginInput
+	(*Plugin)(nil),                            // 2: converter.v1.Plugin
+	(*RelationInput)(nil),                     // 3: converter.v1.RelationInput
+	(*Relation)(nil),                          // 4: converter.v1.Relation
+	(*CreatePluginRequest)(nil),               // 5: converter.v1.CreatePluginRequest
+	(*UpdatePluginRequest)(nil),               // 6: converter.v1.UpdatePluginRequest
+	(*CreatePluginResponse)(nil),              // 7: converter.v1.CreatePluginResponse
+	(*UpdatePluginResponse)(nil),              // 8: converter.v1.UpdatePluginResponse
+	(*GetPluginRequest)(nil),                  // 9: converter.v1.GetPluginRequest
+	(*GetPluginResponse)(nil),                 // 10: converter.v1.GetPluginResponse
+	(*DeletePluginRequest)(nil),               // 11: converter.v1.DeletePluginRequest
+	(*DeletePluginResponse)(nil),              // 12: converter.v1.DeletePluginResponse
+	(*SyncPluginRequest)(nil),                 // 13: converter.v1.SyncPluginRequest
+	(*SyncPluginResponse)(nil),                // 14: converter.v1.SyncPluginResponse
+	(*ListPluginsRequest)(nil),                // 15: converter.v1.ListPluginsRequest
+	(*ListPluginsResponse)(nil),               // 16: converter.v1.ListPluginsResponse
+	(*CreateRelationRequest)(nil),             // 17: converter.v1.CreateRelationRequest
+	(*UpdateRelationRequest)(nil),             // 18: converter.v1.UpdateRelationRequest
+	(*CreateRelationResponse)(nil),            // 19: converter.v1.CreateRelationResponse
+	(*UpdateRelationResponse)(nil),            // 20: converter.v1.UpdateRelationResponse
+	(*GetRelationRequest)(nil),                // 21: converter.v1.GetRelationRequest
+	(*GetRelationResponse)(nil),               // 22: converter.v1.GetRelationResponse
+	(*DeleteRelationRequest)(nil),             // 23: converter.v1.DeleteRelationRequest
+	(*DeleteRelationResponse)(nil),            // 24: converter.v1.DeleteRelationResponse
+	(*ListRelationsRequest)(nil),              // 25: converter.v1.ListRelationsRequest
+	(*ListRelationsResponse)(nil),             // 26: converter.v1.ListRelationsResponse
+	(*ListDistributionRelationsRequest)(nil),  // 27: converter.v1.ListDistributionRelationsRequest
+	(*DistributionRelation)(nil),              // 28: converter.v1.DistributionRelation
+	(*ListDistributionRelationsResponse)(nil), // 29: converter.v1.ListDistributionRelationsResponse
+	(*ExecuteHeader)(nil),                     // 30: converter.v1.ExecuteHeader
+	(*ExecuteRequest)(nil),                    // 31: converter.v1.ExecuteRequest
+	(*ExecuteResponse)(nil),                   // 32: converter.v1.ExecuteResponse
 }
 var file_converter_v1_converter_proto_depIdxs = []int32{
 	0,  // 0: converter.v1.PluginInput.runtime:type_name -> converter.v1.Runtime
@@ -1725,36 +1876,41 @@ var file_converter_v1_converter_proto_depIdxs = []int32{
 	4,  // 13: converter.v1.UpdateRelationResponse.relation:type_name -> converter.v1.Relation
 	4,  // 14: converter.v1.GetRelationResponse.relation:type_name -> converter.v1.Relation
 	4,  // 15: converter.v1.ListRelationsResponse.relations:type_name -> converter.v1.Relation
-	27, // 16: converter.v1.ExecuteRequest.header:type_name -> converter.v1.ExecuteHeader
-	5,  // 17: converter.v1.ConverterService.CreatePlugin:input_type -> converter.v1.CreatePluginRequest
-	9,  // 18: converter.v1.ConverterService.GetPlugin:input_type -> converter.v1.GetPluginRequest
-	15, // 19: converter.v1.ConverterService.ListPlugins:input_type -> converter.v1.ListPluginsRequest
-	6,  // 20: converter.v1.ConverterService.UpdatePlugin:input_type -> converter.v1.UpdatePluginRequest
-	11, // 21: converter.v1.ConverterService.DeletePlugin:input_type -> converter.v1.DeletePluginRequest
-	13, // 22: converter.v1.ConverterService.SyncPlugin:input_type -> converter.v1.SyncPluginRequest
-	17, // 23: converter.v1.ConverterService.CreateRelation:input_type -> converter.v1.CreateRelationRequest
-	21, // 24: converter.v1.ConverterService.GetRelation:input_type -> converter.v1.GetRelationRequest
-	25, // 25: converter.v1.ConverterService.ListRelations:input_type -> converter.v1.ListRelationsRequest
-	18, // 26: converter.v1.ConverterService.UpdateRelation:input_type -> converter.v1.UpdateRelationRequest
-	23, // 27: converter.v1.ConverterService.DeleteRelation:input_type -> converter.v1.DeleteRelationRequest
-	28, // 28: converter.v1.ConverterService.Execute:input_type -> converter.v1.ExecuteRequest
-	7,  // 29: converter.v1.ConverterService.CreatePlugin:output_type -> converter.v1.CreatePluginResponse
-	10, // 30: converter.v1.ConverterService.GetPlugin:output_type -> converter.v1.GetPluginResponse
-	16, // 31: converter.v1.ConverterService.ListPlugins:output_type -> converter.v1.ListPluginsResponse
-	8,  // 32: converter.v1.ConverterService.UpdatePlugin:output_type -> converter.v1.UpdatePluginResponse
-	12, // 33: converter.v1.ConverterService.DeletePlugin:output_type -> converter.v1.DeletePluginResponse
-	14, // 34: converter.v1.ConverterService.SyncPlugin:output_type -> converter.v1.SyncPluginResponse
-	19, // 35: converter.v1.ConverterService.CreateRelation:output_type -> converter.v1.CreateRelationResponse
-	22, // 36: converter.v1.ConverterService.GetRelation:output_type -> converter.v1.GetRelationResponse
-	26, // 37: converter.v1.ConverterService.ListRelations:output_type -> converter.v1.ListRelationsResponse
-	20, // 38: converter.v1.ConverterService.UpdateRelation:output_type -> converter.v1.UpdateRelationResponse
-	24, // 39: converter.v1.ConverterService.DeleteRelation:output_type -> converter.v1.DeleteRelationResponse
-	29, // 40: converter.v1.ConverterService.Execute:output_type -> converter.v1.ExecuteResponse
-	29, // [29:41] is the sub-list for method output_type
-	17, // [17:29] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	2,  // 16: converter.v1.DistributionRelation.plugin:type_name -> converter.v1.Plugin
+	4,  // 17: converter.v1.DistributionRelation.relation:type_name -> converter.v1.Relation
+	28, // 18: converter.v1.ListDistributionRelationsResponse.relations:type_name -> converter.v1.DistributionRelation
+	30, // 19: converter.v1.ExecuteRequest.header:type_name -> converter.v1.ExecuteHeader
+	5,  // 20: converter.v1.ConverterService.CreatePlugin:input_type -> converter.v1.CreatePluginRequest
+	9,  // 21: converter.v1.ConverterService.GetPlugin:input_type -> converter.v1.GetPluginRequest
+	15, // 22: converter.v1.ConverterService.ListPlugins:input_type -> converter.v1.ListPluginsRequest
+	6,  // 23: converter.v1.ConverterService.UpdatePlugin:input_type -> converter.v1.UpdatePluginRequest
+	11, // 24: converter.v1.ConverterService.DeletePlugin:input_type -> converter.v1.DeletePluginRequest
+	13, // 25: converter.v1.ConverterService.SyncPlugin:input_type -> converter.v1.SyncPluginRequest
+	17, // 26: converter.v1.ConverterService.CreateRelation:input_type -> converter.v1.CreateRelationRequest
+	21, // 27: converter.v1.ConverterService.GetRelation:input_type -> converter.v1.GetRelationRequest
+	25, // 28: converter.v1.ConverterService.ListRelations:input_type -> converter.v1.ListRelationsRequest
+	27, // 29: converter.v1.ConverterService.ListDistributionRelations:input_type -> converter.v1.ListDistributionRelationsRequest
+	18, // 30: converter.v1.ConverterService.UpdateRelation:input_type -> converter.v1.UpdateRelationRequest
+	23, // 31: converter.v1.ConverterService.DeleteRelation:input_type -> converter.v1.DeleteRelationRequest
+	31, // 32: converter.v1.ConverterService.Execute:input_type -> converter.v1.ExecuteRequest
+	7,  // 33: converter.v1.ConverterService.CreatePlugin:output_type -> converter.v1.CreatePluginResponse
+	10, // 34: converter.v1.ConverterService.GetPlugin:output_type -> converter.v1.GetPluginResponse
+	16, // 35: converter.v1.ConverterService.ListPlugins:output_type -> converter.v1.ListPluginsResponse
+	8,  // 36: converter.v1.ConverterService.UpdatePlugin:output_type -> converter.v1.UpdatePluginResponse
+	12, // 37: converter.v1.ConverterService.DeletePlugin:output_type -> converter.v1.DeletePluginResponse
+	14, // 38: converter.v1.ConverterService.SyncPlugin:output_type -> converter.v1.SyncPluginResponse
+	19, // 39: converter.v1.ConverterService.CreateRelation:output_type -> converter.v1.CreateRelationResponse
+	22, // 40: converter.v1.ConverterService.GetRelation:output_type -> converter.v1.GetRelationResponse
+	26, // 41: converter.v1.ConverterService.ListRelations:output_type -> converter.v1.ListRelationsResponse
+	29, // 42: converter.v1.ConverterService.ListDistributionRelations:output_type -> converter.v1.ListDistributionRelationsResponse
+	20, // 43: converter.v1.ConverterService.UpdateRelation:output_type -> converter.v1.UpdateRelationResponse
+	24, // 44: converter.v1.ConverterService.DeleteRelation:output_type -> converter.v1.DeleteRelationResponse
+	32, // 45: converter.v1.ConverterService.Execute:output_type -> converter.v1.ExecuteResponse
+	33, // [33:46] is the sub-list for method output_type
+	20, // [20:33] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_converter_v1_converter_proto_init() }
@@ -1763,7 +1919,7 @@ func file_converter_v1_converter_proto_init() {
 		return
 	}
 	file_converter_v1_converter_proto_msgTypes[1].OneofWrappers = []any{}
-	file_converter_v1_converter_proto_msgTypes[27].OneofWrappers = []any{
+	file_converter_v1_converter_proto_msgTypes[30].OneofWrappers = []any{
 		(*ExecuteRequest_Header)(nil),
 		(*ExecuteRequest_Chunk)(nil),
 	}
@@ -1773,7 +1929,7 @@ func file_converter_v1_converter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_converter_v1_converter_proto_rawDesc), len(file_converter_v1_converter_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   29,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

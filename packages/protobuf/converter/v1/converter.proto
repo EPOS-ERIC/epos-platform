@@ -107,6 +107,16 @@ message ListRelationsRequest {}
 message ListRelationsResponse {
   repeated Relation relations = 1;
 }
+message ListDistributionRelationsRequest {
+  string distribution_id = 1;
+}
+message DistributionRelation {
+  Plugin plugin = 1;
+  Relation relation = 2;
+}
+message ListDistributionRelationsResponse {
+  repeated DistributionRelation relations = 1;
+}
 
 message ExecuteHeader {
   string conversion_id = 1;
@@ -133,6 +143,7 @@ service ConverterService {
   rpc CreateRelation(CreateRelationRequest) returns (CreateRelationResponse);
   rpc GetRelation(GetRelationRequest) returns (GetRelationResponse);
   rpc ListRelations(ListRelationsRequest) returns (ListRelationsResponse);
+  rpc ListDistributionRelations(ListDistributionRelationsRequest) returns (ListDistributionRelationsResponse);
   rpc UpdateRelation(UpdateRelationRequest) returns (UpdateRelationResponse);
   rpc DeleteRelation(DeleteRelationRequest) returns (DeleteRelationResponse);
   rpc Execute(stream ExecuteRequest) returns (stream ExecuteResponse);

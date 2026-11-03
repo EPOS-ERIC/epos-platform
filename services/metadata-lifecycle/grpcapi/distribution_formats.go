@@ -7,6 +7,28 @@ import (
 	metadatav1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 )
 
+func (s *ResourceServer) CheckDistributionRead(ctx context.Context, request *metadatav1.CheckDistributionReadRequest) (*metadatav1.CheckDistributionReadResponse, error) {
+	if request == nil {
+		return nil, apperror.Field("request", "Request is required.", nil)
+	}
+
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := parseUUIDAt(request.GetDistributionId(), "distribution id", "distribution_id")
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.datasets.CheckDistributionRead(ctx, actor, id); err != nil {
+		return nil, err
+	}
+
+	return &metadatav1.CheckDistributionReadResponse{}, nil
+}
+
 func (s *ResourceServer) GetDistributionFormats(ctx context.Context, request *metadatav1.GetDistributionFormatsRequest) (*metadatav1.GetDistributionFormatsResponse, error) {
 	if request == nil {
 		return nil, apperror.Field("request", "Request is required.", nil)

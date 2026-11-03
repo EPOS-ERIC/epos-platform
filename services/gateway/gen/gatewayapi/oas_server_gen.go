@@ -308,6 +308,12 @@ type Handler interface {
 	//
 	// GET /conversion-relations
 	ListConversionRelations(ctx context.Context) ([]ConversionRelation, error)
+	// ListDistributionConversionRelations implements listDistributionConversionRelations operation.
+	//
+	// Requires permission to read the distribution. Includes disabled and uninstalled plugins.
+	//
+	// GET /distributions/{distributionId}/conversion-relations
+	ListDistributionConversionRelations(ctx context.Context, params ListDistributionConversionRelationsParams) ([]DistributionConversionPlugin, error)
 	// ListGroupCategories implements listGroupCategories operation.
 	//
 	// List group categories.

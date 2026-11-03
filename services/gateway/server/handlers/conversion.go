@@ -25,6 +25,20 @@ func requireConverterManager(ctx context.Context) (string, error) {
 	return user.ID, nil
 }
 
+func (h *ogenHandler) ListDistributionConversionRelations(ctx context.Context, params gatewayapi.ListDistributionConversionRelationsParams) ([]gatewayapi.DistributionConversionPlugin, error) {
+	actor, ok := authcontext.ActorID(ctx)
+	if !ok || actor == "" {
+		return nil, apperror.Default(apperror.CodeUnauthenticated)
+	}
+
+	relations, err := h.distributionAccess.DistributionRelations(ctx, actor, params.DistributionId)
+	if err != nil {
+		return nil, err
+	}
+
+	return toAPIDistributionConversionPlugins(relations), nil
+}
+
 func (h *ogenHandler) CreateConversionPlugin(ctx context.Context, request *gatewayapi.CreateConversionPluginRequest) (gatewayapi.CreateConversionPluginRes, error) {
 	actor, err := requireConverterManager(ctx)
 	if err != nil {

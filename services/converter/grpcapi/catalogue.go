@@ -195,6 +195,39 @@ func (s *Server) ListRelations(ctx context.Context, _ *converterv1.ListRelations
 	return response, nil
 }
 
+func (s *Server) ListDistributionRelations(ctx context.Context, request *converterv1.ListDistributionRelationsRequest) (*converterv1.ListDistributionRelationsResponse, error) {
+	id, err := parseID("distribution_id", request.GetDistributionId())
+	if err != nil {
+		return nil, err
+	}
+	records, err := s.service.DistributionRelations(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	response := &converterv1.ListDistributionRelationsResponse{}
+	plugins := make(map[string]*converterv1.Plugin)
+	for _, record := range records {
+		key := record.Plugin.ID.String()
+		p := plugins[key]
+		if p == nil {
+			status, err := s.service.Status(ctx, record.Plugin.ID)
+			if err != nil {
+				return nil, err
+			}
+			p, err = toProtoPlugin(record.Plugin, status)
+			if err != nil {
+				return nil, err
+			}
+			plugins[key] = p
+		}
+		response.Relations = append(response.Relations, &converterv1.DistributionRelation{
+			Plugin:   p,
+			Relation: toProtoRelation(record.Relation),
+		})
+	}
+	return response, nil
+}
+
 func (s *Server) UpdateRelation(ctx context.Context, request *converterv1.UpdateRelationRequest) (*converterv1.UpdateRelationResponse, error) {
 	who, err := actor(ctx)
 	if err != nil {
