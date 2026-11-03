@@ -193,6 +193,7 @@ func ManagedDatabaseSettingsChanged(old, new *config.Config) bool {
 	for _, pair := range [][2]config.MetadataDatabase{
 		{old.Components.MetadataDatabase, new.Components.MetadataDatabase},
 		{old.Components.DataRetrieverDatabase, new.Components.DataRetrieverDatabase},
+		{old.Components.ConverterDatabase, new.Components.ConverterDatabase},
 		{old.Components.SharingDatabase, new.Components.SharingDatabase},
 	} {
 		oldDB, newDB := pair[0], pair[1]

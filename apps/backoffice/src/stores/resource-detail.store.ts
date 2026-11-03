@@ -12,20 +12,12 @@ import type {
   VersioningStatus
 } from '../../generated/backofficeSchemas';
 import {
-  distributionValidationError,
-  geologicalTemporalValidationError,
-  hasBodyOnUnsupportedMethod,
-  hasIncompleteWebServiceBody,
-  hasInvalidExplodeParameter,
-  hasParameterDefaultOutsideAllowedValues,
-  hasMultipleParameterWithoutAllowedValues,
   temporalWarningKind,
   temporalWarningMessage,
   toDatasetDetailForm,
   toDatasetSaveRequest
 } from '../mappers/dataset-detail-form.mapper';
 import {
-  isSoftwareDescriptionValid,
   toSoftwareApplicationSaveRequest,
   toSoftwareSourceCodeSaveRequest
 } from '../mappers/software-detail-form.mapper';
@@ -491,63 +483,6 @@ export class ResourceDetailStore {
     const datasetForm = this.datasetForm();
 
     if (datasetVersion && datasetForm) {
-      if (!datasetForm.description.trim()) {
-        this.resourceActions.setValidationError('Dataset description is required.', 'General information');
-        return null;
-      }
-
-      const geologicalTemporalError = geologicalTemporalValidationError(datasetForm);
-      if (geologicalTemporalError) {
-        this.resourceActions.setValidationError(geologicalTemporalError, 'Temporal coverage');
-        return null;
-      }
-
-      const distributionError = distributionValidationError(datasetForm);
-      if (distributionError) {
-        this.resourceActions.setValidationError(distributionError, 'Distributions');
-        return null;
-      }
-
-      if (hasInvalidExplodeParameter(datasetForm)) {
-        this.resourceActions.setValidationError(
-          'Explode requires a QUERY parameter with Multiple values enabled.',
-          'Web service parameters'
-        );
-        return null;
-      }
-
-      if (hasMultipleParameterWithoutAllowedValues(datasetForm)) {
-        this.resourceActions.setValidationError(
-          'Every multiple-value web service parameter must define at least one allowed value.',
-          'Web service parameters'
-        );
-        return null;
-      }
-
-      if (hasParameterDefaultOutsideAllowedValues(datasetForm)) {
-        this.resourceActions.setValidationError(
-          'A web service parameter default value must be included in its allowed values.',
-          'Web service parameters'
-        );
-        return null;
-      }
-
-      if (hasIncompleteWebServiceBody(datasetForm)) {
-        this.resourceActions.setValidationError(
-          'Request body content type and template are both required.',
-          'Web service request body'
-        );
-        return null;
-      }
-
-      if (hasBodyOnUnsupportedMethod(datasetForm)) {
-        this.resourceActions.setValidationError(
-          'Request bodies are supported only for POST and PUT web services.',
-          'Web service request body'
-        );
-        return null;
-      }
-
       return {
         resourceType: 'dataset',
         resourceId: datasetVersion.resource_id,
@@ -560,11 +495,6 @@ export class ResourceDetailStore {
     const resourceVersion = this.resourceVersion();
     const applicationForm = this.softwareApplicationForm();
     if (resourceVersion && applicationForm) {
-      if (!isSoftwareDescriptionValid(applicationForm)) {
-        this.resourceActions.setValidationError('Software description is required.', 'General information');
-        return null;
-      }
-
       return {
         resourceType: 'software-application',
         resourceId: resourceVersion.resource_id,
@@ -576,11 +506,6 @@ export class ResourceDetailStore {
 
     const sourceCodeForm = this.softwareSourceCodeForm();
     if (resourceVersion && sourceCodeForm) {
-      if (!isSoftwareDescriptionValid(sourceCodeForm)) {
-        this.resourceActions.setValidationError('Software description is required.', 'General information');
-        return null;
-      }
-
       return {
         resourceType: 'software-source-code',
         resourceId: resourceVersion.resource_id,

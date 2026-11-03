@@ -1,0 +1,164 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metadata-lifecycle
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metadata-lifecycle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "epos.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: metadata-lifecycle
+  template:
+    metadata:
+      labels:
+        {{- include "epos.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: metadata-lifecycle
+    spec:
+      {{- include "epos.image_pull_secrets" . | nindent 6 }}
+      containers:
+        - name: metadata-lifecycle
+          image: {{ .Values.images.metadata_lifecycle | quote }}
+          imagePullPolicy: {{ .Values.image_pull_policy }}
+          ports:
+            - containerPort: 5000
+          env:
+            - name: SERVER_PORT
+              value: "5000"
+            - name: DB_HOST
+              value: {{ if .Values.components.metadata_database.enabled }}"metadata-database"{{ else }}{{ .Values.components.metadata_database.host | quote }}{{ end }}
+            - name: DB_PORT
+              value: {{ if .Values.components.metadata_database.enabled }}"5432"{{ else }}{{ .Values.components.metadata_database.port | quote }}{{ end }}
+            - name: DB_NAME
+              value: {{ .Values.components.metadata_database.db_name | quote }}
+            - name: DB_USER
+              value: {{ .Values.components.metadata_database.user | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: metadata-database
+                  key: password
+            - name: OTEL_SDK_DISABLED
+              value: {{ not .Values.components.otel.enabled | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: "metadata-lifecycle"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ if .Values.components.otel.enabled }}{{ default "http://otel-lgtm:4318" .Values.components.otel.endpoint | quote }}{{ else }}""{{ end }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "http/protobuf"
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "5000"
+            - name: GATEWAY_PUBLIC_URL
+              value: {{ printf "%s://%s%s%s" .Values.protocol .Values.domain (ternary (printf "/%s" $.Release.Namespace) "" .Values.url_prefix_namespace) (trimSuffix "/v1" (trimSuffix "/" .Values.components.gateway.base_url)) | quote }}
+
+          readinessProbe:
+            tcpSocket:
+              port: 5000
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metadata-lifecycle
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metadata-lifecycle
+spec:
+  ports:
+    - port: 5000
+      targetPort: 5000
+  selector:
+    {{- include "epos.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: metadata-lifecycle
+
+{{- if .Values.components.metadata_database.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metadata-database
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metadata-database
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "epos.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: metadata-database
+  template:
+    metadata:
+      labels:
+        {{- include "epos.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: metadata-database
+    spec:
+      {{- include "epos.image_pull_secrets" . | nindent 6 }}
+      containers:
+      - name: metadata-database
+        image: {{ .Values.images.metadata_database }}
+        {{- include "epos.image_pull_policy" . | nindent 8 }}
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.components.metadata_database.user }}
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: metadata-database
+              key: password
+        - name: POSTGRES_DB
+          value: {{ .Values.components.metadata_database.db_name }}
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pg_isready -U $POSTGRES_USER
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pg_isready -U $POSTGRES_USER
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        volumeMounts:
+        - name: psqldata
+          mountPath: /var/lib/postgresql
+      volumes:
+      - name: psqldata
+        persistentVolumeClaim:
+          claimName: psqldata
+      {{- include "epos.nodeSelector" . | nindent 6 }}
+      {{- include "epos.tolerations" . | nindent 6 }}
+      {{- include "epos.affinity" . | nindent 6 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metadata-database
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metadata-database
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgresql
+  selector:
+    {{- include "epos.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: metadata-database
+{{- end }}

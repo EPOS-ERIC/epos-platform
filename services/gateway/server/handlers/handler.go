@@ -14,6 +14,7 @@ import (
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/resource"
 	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/validate"
@@ -28,16 +29,20 @@ type ogenHandler struct {
 	identity           *identity.Service
 	membership         *membership.Service
 	distributionAccess *distributionaccess.Service
+	resource           *resource.Service
+	converter          *clients.Converter
 	log                *slog.Logger
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, sharing *sharingservice.Service, d *distributionaccess.Service, log *slog.Logger) *ogenHandler {
+func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, sharing *sharingservice.Service, d *distributionaccess.Service, resourceService *resource.Service, converter *clients.Converter, log *slog.Logger) *ogenHandler {
 	return &ogenHandler{
 		metadataLifecycle:  metadataLifecycle,
 		sharing:            sharing,
 		identity:           i,
 		membership:         m,
 		distributionAccess: d,
+		resource:           resourceService,
+		converter:          converter,
 		log:                log,
 	}
 }

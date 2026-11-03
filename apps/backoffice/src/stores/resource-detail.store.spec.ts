@@ -60,7 +60,6 @@ describe('ResourceDetailStore', () => {
     deleting: signal(false),
     clearError: vi.fn(() => actionError.set('')),
     setError: vi.fn((message: string) => actionError.set(message)),
-    setValidationError: vi.fn((message: string) => actionError.set(message)),
     sidebarActions: vi.fn(() => []),
     save: vi.fn(),
     submit: vi.fn(),
@@ -152,7 +151,7 @@ describe('ResourceDetailStore', () => {
     expect(store.rejectionAuthorName()).toBe('missing-user');
   });
 
-  it('blocks invalid distributions before calling the save endpoint', () => {
+  it('builds invalid distribution payloads for backend validation', () => {
     store.load(context('dataset', 'dataset-id'));
     store.updateDatasetDistributions([{
       kind: 'downloadable-file',
@@ -165,11 +164,13 @@ describe('ResourceDetailStore', () => {
       downloadableFile: { url: '', format: '' }
     }]);
 
-    expect(store.buildSaveContext()).toBeNull();
-    expect(resourceActions.setValidationError).toHaveBeenCalledWith(
-      'Distribution 1: title is required.',
-      'Distributions'
-    );
+    const saveContext = store.buildSaveContext();
+    expect(saveContext).not.toBeNull();
+    expect(saveContext?.payload).toMatchObject({
+      metadata: {
+        distributions: [{ title: '', description: undefined }]
+      }
+    });
   });
 
   it('cancels the first request when a second load starts', () => {

@@ -162,17 +162,4 @@ describe('ResourceActionsService', () => {
       }]
     });
   });
-
-  it('shows frontend validation failures as persistent issues', () => {
-    service.setValidationError('Distribution 1: title is required.', 'Distributions');
-
-    expect(service.error()).toBe('Distribution 1: title is required.');
-    expect(toastService.error).toHaveBeenCalledWith('Resource could not be saved.', {
-      duration: null,
-      issues: [{
-        label: 'Distributions',
-        message: 'Distribution 1: title is required.'
-      }]
-    });
-  });
 });

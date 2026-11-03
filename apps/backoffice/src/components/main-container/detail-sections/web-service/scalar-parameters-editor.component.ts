@@ -1,8 +1,7 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import type { DatasetEnumOptionForm, DatasetWebServiceScalarParameterForm } from '../../../../models/dataset-detail-form';
-import { ToastService } from '../../../../services/toast.service';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 
 type ScalarParameterKind = DatasetWebServiceScalarParameterForm['kind'];
@@ -16,17 +15,23 @@ type ScalarParameterKind = DatasetWebServiceScalarParameterForm['kind'];
   styleUrl: './scalar-parameters-editor.component.css'
 })
 export class ScalarParametersEditorComponent {
-  private readonly toast = inject(ToastService);
-
   @Input() model: DatasetWebServiceScalarParameterForm[] = [];
   @Input() disabled = false;
+  @Input() dynamic = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceScalarParameterForm[]>();
 
   protected readonly kinds: readonly ScalarParameterKind[] = ['STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME'];
+  protected readonly standardRoles = ['', 'FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT'] as const;
   protected selectedKind: ScalarParameterKind = 'STRING';
 
   protected emitModelChange(): void {
     this.modelChange.emit(this.model);
+  }
+
+  protected roles(): readonly DatasetWebServiceScalarParameterForm['role'][] {
+    return this.dynamic
+      ? [...this.standardRoles, 'LONGITUDE', 'LATITUDE']
+      : this.standardRoles;
   }
 
   protected updateParameterName(
@@ -39,7 +44,6 @@ export class ScalarParametersEditorComponent {
       (candidate) => candidate !== parameter && candidate.name.trim().toLocaleLowerCase() === normalizedName
     );
     if (duplicate) {
-      this.toast.error(`A parameter named "${name.trim()}" already exists.`);
       input.value = parameter.name;
       return;
     }
@@ -74,7 +78,8 @@ export class ScalarParametersEditorComponent {
       label: '',
       description: '',
       required: false,
-      readOnly: false
+      readOnly: false,
+      role: '' as const
     };
 
     switch (kind) {

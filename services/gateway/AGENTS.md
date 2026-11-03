@@ -7,7 +7,7 @@
 ## Package Boundaries
 
 - Keep routing, HTTP parsing, response encoding, and Gateway API mapping in `server/handlers/`.
-- Keep Gateway-owned business concepts, orchestration state, and domain errors in `domain/`. Do not mirror an upstream service's domain model only to proxy it.
+- Keep Gateway-owned business concepts, orchestration state, and domain errors in `domain/`. Do not mirror an upstream service's domain model only to proxy it; orchestrated resources may define full domain representations when their response requires them.
 - Keep Gateway orchestration in domain-oriented service packages. Create a service method only when it resolves Gateway-specific semantics, combines upstream calls, applies Gateway policy, or owns workflow state.
 - Pure proxy endpoints do not need a Gateway service or Gateway domain DTO. Their handlers may call a concrete Gateway-owned client adapter directly.
 - Keep outbound connection setup, gRPC metadata, deadlines, retries, and gRPC-status-to-Gateway-error mapping in `clients/`. Handlers must not call generated gRPC clients directly.
@@ -23,7 +23,7 @@
 
 - Treat `docs/openapi.yaml` and embedded docs assets as the public Gateway HTTP contract. Keep routes, `api/` types, status codes, response bodies, and docs aligned.
 - Treat `api/` as public Gateway HTTP request and response shapes. Handler owns mapping from an upstream protobuf response to `api/` for pure proxy endpoints.
-- For pure proxies use `protobuf response -> api response`. For orchestration use `protobuf response -> minimal Gateway domain type -> api response or next action`.
+- For pure proxies use `protobuf response -> api response`. For orchestration map fields used for behavior to minimal Gateway domain types; an otherwise unchanged protobuf response may pass through alongside separate enrichment.
 - Clients convert upstream gRPC failures to Gateway domain errors. Handlers map those errors to documented HTTP responses and never expose upstream diagnostics.
 - Keep handlers thin: parse input, call a service, map domain errors to HTTP status, and encode the response.
 - Keep URL construction such as `href` in `server/handlers/`.
@@ -40,7 +40,7 @@
 ## Mapping Rules
 
 - Map exactly once at each transport boundary. For a pure proxy: `api request -> protobuf request` in the handler, then `protobuf response -> api response` in the handler. Do not introduce a Gateway domain type between those mappings.
-- For Gateway orchestration: client returns protobuf, the orchestration service maps only the fields it needs to a Gateway domain type, and the handler maps the final Gateway result to `api/`.
+- For Gateway orchestration: map fields used by the service to minimal Gateway domain types. Unchanged protobuf responses may pass through alongside separate enrichment for mapping by the handler.
 - Keep request and response mappings for one resource family together in a dedicated `*_mapping.go` file. Do not place mapping functions in handler method files except small private helpers used by that one handler.
 - Name conversions by source and destination: `toProtoX`, `toAPIX`, and `fromProtoX`. Do not use ambiguous names such as `mapX`, `convertX`, or names that mix destination concepts such as `toAPIProtoX`.
 - Define shared protobuf-to-OpenAPI primitives (UUID, timestamp, nullable scalar, enum) once in `mapping_helpers.go`. Resource mappings must use those helpers instead of recreating nullable or timestamp semantics.
@@ -51,7 +51,7 @@
 
 - Keep generated gRPC clients behind concrete Gateway-owned adapters in `clients/`. Handlers must not call generated gRPC clients directly.
 - Pass actor identity through gRPC metadata from Gateway clients. Do not add actor identity to protobuf business requests or Gateway domain objects.
-- For pure proxy calls, Gateway client methods return generated protobuf responses unchanged. For orchestration calls, add a separate adapter method that maps the protobuf response to the minimal required Gateway domain type.
+- Gateway clients may return protobuf responses unchanged for pure proxies or passthrough enrichment. For orchestration decisions, adapter methods map required fields to minimal Gateway domain types.
 
 ## Generated Assets
 

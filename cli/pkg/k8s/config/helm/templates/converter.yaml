@@ -1,0 +1,154 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: converter
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: converter
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "epos.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: converter
+  template:
+    metadata:
+      labels:
+        {{- include "epos.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: converter
+    spec:
+      {{- include "epos.image_pull_secrets" . | nindent 6 }}
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: converter
+          image: {{ .Values.images.converter | quote }}
+          imagePullPolicy: {{ .Values.image_pull_policy }}
+          ports:
+            - containerPort: 8200
+          env:
+            - name: SERVER_PORT
+              value: "8200"
+            - name: DB_HOST
+              value: {{ if .Values.components.converter_database.enabled }}"converter-db"{{ else }}{{ .Values.components.converter_database.host | quote }}{{ end }}
+            - name: DB_PORT
+              value: {{ if .Values.components.converter_database.enabled }}"5432"{{ else }}{{ .Values.components.converter_database.port | quote }}{{ end }}
+            - name: DB_NAME
+              value: {{ .Values.components.converter_database.db_name | quote }}
+            - name: DB_USER
+              value: {{ .Values.components.converter_database.user | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: converter-db
+                  key: password
+            - name: OTEL_SDK_DISABLED
+              value: {{ not .Values.components.otel.enabled | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: "converter"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ if .Values.components.otel.enabled }}{{ default "http://otel-lgtm:4318" .Values.components.otel.endpoint | quote }}{{ else }}""{{ end }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "http/protobuf"
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "5000"
+
+            - name: PLUGINS_PATH
+              value: /data/plugins
+          volumeMounts:
+            - name: plugins
+              mountPath: /data/plugins
+          readinessProbe:
+            tcpSocket:
+              port: 8200
+            periodSeconds: 10
+      volumes:
+        - name: plugins
+          persistentVolumeClaim:
+            claimName: converter-plugins
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: converter
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: converter
+spec:
+  ports:
+    - port: 8200
+      targetPort: 8200
+  selector:
+    {{- include "epos.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: converter
+
+{{- if .Values.components.converter_database.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: converter-db
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: converter-db
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "epos.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: converter-db
+  template:
+    metadata:
+      labels:
+        {{- include "epos.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: converter-db
+    spec:
+      {{- include "epos.image_pull_secrets" . | nindent 6 }}
+      containers:
+        - name: converter-db
+          image: {{ .Values.images.converter_database | quote }}
+          imagePullPolicy: {{ .Values.image_pull_policy }}
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.components.converter_database.user | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.components.converter_database.db_name | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: converter-db
+                  key: password
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: converter-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: converter-db
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: converter-db
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    {{- include "epos.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: converter-db
+{{- end }}

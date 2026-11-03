@@ -33,7 +33,7 @@ export class WebServiceComponent {
   @Output() modelChange = new EventEmitter<DatasetWebServiceForm>();
 
   protected readonly methods = ['GET', 'POST', 'PUT', 'DELETE'] as const;
-  protected readonly types: readonly DatasetWebServiceConfigurationForm['type'][] = ['HTTP', 'WFS', 'WMS', 'WMTS'];
+  protected readonly types: readonly DatasetWebServiceConfigurationForm['type'][] = ['HTTP', 'DYNAMIC', 'WFS', 'WMS', 'WMTS'];
   protected readonly visibleOnOptions: readonly DatasetWebServiceForm['visibleOn'][number][] = ['GRAPH', 'TABLE', 'MAP'];
 
   protected emitModelChange(): void {
@@ -92,7 +92,10 @@ export class WebServiceComponent {
   }
 
   protected onBodyParametersChange(parameters: DatasetWebServiceScalarParameterForm[]): void {
-    if (this.model?.configuration.type === 'HTTP') {
+    if (
+      this.model?.configuration.type === 'HTTP' ||
+      this.model?.configuration.type === 'DYNAMIC'
+    ) {
       this.model.configuration.bodyParameters = parameters;
       this.emitModelChange();
     }
@@ -138,6 +141,7 @@ export class WebServiceComponent {
   ): DatasetWebServiceConfigurationForm {
     switch (type) {
       case 'HTTP':
+      case 'DYNAMIC':
         return { type, templateUrl: '', method: 'GET', format: '', bodyContentType: '', bodyTemplate: '', bodyRequired: true, bodyParameters: [], parameters: [] };
       case 'WFS':
         return { type, getFeatureTemplateUrl: '', version: '2.0.0', featureTypes: [], defaultFeatureType: '', outputFormats: [], defaultOutputFormat: '', resultLimit: '', resultLimitEditable: false, parameters: [] };

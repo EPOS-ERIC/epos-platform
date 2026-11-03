@@ -18,6 +18,7 @@ func TestValidateMailgunRequiresAPIKeyEnv(t *testing.T) {
 	}
 	cfg.Services.MetadataLifecycle.URL = "metadata-lifecycle:5000"
 	cfg.Services.DataRetriever.URL = "data-retriever:8100"
+	cfg.Services.Converter.URL = "converter:8200"
 	cfg.Services.Sharing.URL = "sharing:8200"
 	cfg.Services.Auth.URL = "http://auth:8080"
 	cfg.Notifications.Mailgun.Enable = true

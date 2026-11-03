@@ -52,9 +52,13 @@
               @for (field of distributionFields; track field) {
                 <!-- Render distribution fields but not "type" (= no need to expose it as an input field) -->
                 @if (field !== 'type') {
-                  <label class="detail-field">
+                  <label class="detail-field" [class.detail-field--full]="field === 'description'">
                     <span class="detail-label">{{ distributionFieldLabel(field) }}{{ field === 'title' || field === 'description' ? ' *' : '' }}</span>
-                    <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="field === 'title' || field === 'description'" />
+                    @if (field === 'description') {
+                      <textarea class="app-input detail-textarea" rows="3" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required></textarea>
+                    } @else {
+                      <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="field === 'title'" />
+                    }
                   </label>
                 }
               }

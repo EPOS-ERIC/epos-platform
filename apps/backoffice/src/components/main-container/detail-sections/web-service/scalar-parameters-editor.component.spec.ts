@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
 import type { DatasetWebServiceScalarParameterForm } from '../../../../models/dataset-detail-form';
-import { ToastService } from '../../../../services/toast.service';
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
 
 describe('ScalarParametersEditorComponent', () => {
@@ -27,6 +26,7 @@ describe('ScalarParametersEditorComponent', () => {
         description: '',
         required: false,
         readOnly: false,
+        role: '',
         defaultValue: null,
         allowedValues: [],
         pattern: ''
@@ -35,10 +35,8 @@ describe('ScalarParametersEditorComponent', () => {
   });
 
   it('rejects duplicate scalar parameter names', async () => {
-    const toast = { error: vi.fn() };
     await TestBed.configureTestingModule({
-      imports: [ScalarParametersEditorComponent],
-      providers: [{ provide: ToastService, useValue: toast }]
+      imports: [ScalarParametersEditorComponent]
     }).compileComponents();
     const fixture = TestBed.createComponent(ScalarParametersEditorComponent);
     const parameters: DatasetWebServiceScalarParameterForm[] = [
@@ -62,6 +60,5 @@ describe('ScalarParametersEditorComponent', () => {
 
     expect(parameters[1].name).toBe('second');
     expect(secondNameInput.value).toBe('second');
-    expect(toast.error).toHaveBeenCalledWith('A parameter named "First" already exists.');
   });
 });

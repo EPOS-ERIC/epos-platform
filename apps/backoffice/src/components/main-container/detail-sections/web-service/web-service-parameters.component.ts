@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AppIconComponent } from '../../../../shared/ui/app-icon.component';
 import type { DatasetEnumOptionForm, DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
-import { ToastService } from '../../../../services/toast.service';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
 
@@ -22,14 +21,13 @@ interface ParameterListItem {
   styleUrl: './web-service-parameters.component.css'
 })
 export class WebServiceParametersComponent {
-  private readonly toast = inject(ToastService);
-
   @Input() model: DatasetWebServiceParameterForm[] = [];
   @Input() comparisonModel: DatasetWebServiceParameterForm[] = [];
   @Input() disabled = false;
   @Input() comparisonMode = false;
   @Input() comparisonSide: 'left' | 'right' = 'left';
   @Input() reversed = false;
+  @Input() dynamic = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceParameterForm[]>();
 
   protected parameterPage = 0;
@@ -38,7 +36,7 @@ export class WebServiceParametersComponent {
   protected readonly parameterPageSize = 10;
   protected readonly parameterKinds: readonly ParameterFormKind[] = ['STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME', 'TEMPLATE'];
   protected readonly parameterLocations = ['PATH', 'QUERY', 'HEADER'] as const;
-  protected readonly parameterRoles = ['', 'FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT'] as const;
+  protected readonly standardParameterRoles = ['', 'FORMAT', 'START_DATE', 'END_DATE', 'MIN_LON', 'MAX_LON', 'MIN_LAT', 'MAX_LAT'] as const;
   protected addParameterDialogOpen = false;
   protected selectedParameterKind: ParameterFormKind | '' = '';
   protected parameterKindRequired = false;
@@ -54,6 +52,12 @@ export class WebServiceParametersComponent {
     this.modelChange.emit(this.model);
   }
 
+  protected parameterRoles(): readonly DatasetWebServiceParameterForm['role'][] {
+    return this.dynamic
+      ? [...this.standardParameterRoles, 'LONGITUDE', 'LATITUDE']
+      : this.standardParameterRoles;
+  }
+
   protected updateParameterName(
     parameter: DatasetWebServiceParameterForm,
     name: string,
@@ -64,7 +68,6 @@ export class WebServiceParametersComponent {
       (candidate) => candidate !== parameter && candidate.name.trim().toLocaleLowerCase() === normalizedName
     );
     if (duplicate) {
-      this.toast.error(`A parameter named "${name.trim()}" already exists.`);
       input.value = parameter.name;
       return;
     }

@@ -29,6 +29,7 @@ func GetDefaultConfig() (*EnvConfig, error) {
 	for _, password := range []*string{
 		&config.Components.MetadataDatabase.Password,
 		&config.Components.DataRetrieverDatabase.Password,
+		&config.Components.ConverterDatabase.Password,
 		&config.Components.SharingDatabase.Password,
 		&config.Components.AAIService.Password,
 		&config.Components.OpenTelemetry.AdminPassword,
@@ -274,6 +275,7 @@ func (e *EnvConfig) Validate() error {
 	}{
 		{"metadata", e.Components.MetadataDatabase},
 		{"data retriever", e.Components.DataRetrieverDatabase},
+		{"converter", e.Components.ConverterDatabase},
 		{"sharing", e.Components.SharingDatabase},
 	} {
 		if db.value.User == "" || db.value.Password == "" || db.value.DBName == "" {

@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package converter.v1;
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/converter/v1;converterv1";
+
+enum Runtime {
+  RUNTIME_UNSPECIFIED = 0;
+  RUNTIME_PYTHON = 1;
+  RUNTIME_JAVA = 2;
+  RUNTIME_BINARY = 3;
+}
+
+message PluginInput {
+  string name = 1;
+  string description = 2;
+  string repository = 3;
+  string branch = 4;
+  Runtime runtime = 5;
+  repeated string arguments = 6;
+}
+
+message Plugin {
+  string id = 1;
+  PluginInput input = 2;
+  bool enabled = 3;
+  bool installed = 4;
+  optional string installed_commit = 5;
+  string created_by = 7;
+  string updated_by = 8;
+}
+
+message RelationInput {
+  string distribution_id = 1;
+  string plugin_id = 2;
+  string input_format = 3;
+  string output_format = 4;
+}
+
+message Relation {
+  string id = 1;
+  RelationInput input = 2;
+  string created_by = 3;
+  string updated_by = 4;
+}
+
+message CreatePluginRequest {
+  PluginInput input = 1;
+}
+message UpdatePluginRequest {
+  string id = 1;
+  PluginInput input = 2;
+  bool enabled = 3;
+}
+message CreatePluginResponse {
+  Plugin plugin = 1;
+  bool sync_failed = 2;
+}
+message UpdatePluginResponse {
+  Plugin plugin = 1;
+  bool sync_failed = 2;
+}
+message GetPluginRequest {
+  string id = 1;
+}
+message GetPluginResponse {
+  Plugin plugin = 1;
+}
+message DeletePluginRequest {
+  string id = 1;
+}
+message DeletePluginResponse {}
+message SyncPluginRequest {
+  string id = 1;
+}
+message SyncPluginResponse {
+  Plugin plugin = 1;
+}
+message ListPluginsRequest {}
+message ListPluginsResponse {
+  repeated Plugin plugins = 1;
+}
+message CreateRelationRequest {
+  RelationInput input = 1;
+}
+message UpdateRelationRequest {
+  string id = 1;
+  RelationInput input = 2;
+}
+message CreateRelationResponse {
+  Relation relation = 1;
+}
+message UpdateRelationResponse {
+  Relation relation = 1;
+}
+message GetRelationRequest {
+  string id = 1;
+}
+message GetRelationResponse {
+  Relation relation = 1;
+}
+message DeleteRelationRequest {
+  string id = 1;
+}
+message DeleteRelationResponse {}
+message ListRelationsRequest {}
+message ListRelationsResponse {
+  repeated Relation relations = 1;
+}
+
+message ExecuteHeader {
+  string conversion_id = 1;
+  string distribution_id = 2;
+  string source_url = 3;
+}
+message ExecuteRequest {
+  oneof event {
+    ExecuteHeader header = 1;
+    bytes chunk = 2;
+  }
+}
+message ExecuteResponse {
+  bytes chunk = 1;
+}
+
+service ConverterService {
+  rpc CreatePlugin(CreatePluginRequest) returns (CreatePluginResponse);
+  rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse);
+  rpc ListPlugins(ListPluginsRequest) returns (ListPluginsResponse);
+  rpc UpdatePlugin(UpdatePluginRequest) returns (UpdatePluginResponse);
+  rpc DeletePlugin(DeletePluginRequest) returns (DeletePluginResponse);
+  rpc SyncPlugin(SyncPluginRequest) returns (SyncPluginResponse);
+  rpc CreateRelation(CreateRelationRequest) returns (CreateRelationResponse);
+  rpc GetRelation(GetRelationRequest) returns (GetRelationResponse);
+  rpc ListRelations(ListRelationsRequest) returns (ListRelationsResponse);
+  rpc UpdateRelation(UpdateRelationRequest) returns (UpdateRelationResponse);
+  rpc DeleteRelation(DeleteRelationRequest) returns (DeleteRelationResponse);
+  rpc Execute(stream ExecuteRequest) returns (stream ExecuteResponse);
+}

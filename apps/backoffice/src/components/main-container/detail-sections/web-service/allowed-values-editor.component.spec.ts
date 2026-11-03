@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
 import type { DatasetEnumOptionForm } from '../../../../models/dataset-detail-form';
-import { ToastService } from '../../../../services/toast.service';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 
 describe('AllowedValuesEditorComponent', () => {
@@ -50,10 +49,8 @@ describe('AllowedValuesEditorComponent', () => {
   });
 
   it('rejects duplicate values from single edits and bulk additions', async () => {
-    const toast = { error: vi.fn() };
     await TestBed.configureTestingModule({
-      imports: [AllowedValuesEditorComponent],
-      providers: [{ provide: ToastService, useValue: toast }]
+      imports: [AllowedValuesEditorComponent]
     }).compileComponents();
     const fixture = TestBed.createComponent(AllowedValuesEditorComponent);
     const emittedValues: DatasetEnumOptionForm[][] = [];
@@ -71,7 +68,6 @@ describe('AllowedValuesEditorComponent', () => {
     await fixture.whenStable();
     expect(emittedValues).toHaveLength(0);
     expect(secondOption.value).toBe('Second option');
-    expect(toast.error).toHaveBeenCalledWith('The option "First option" already exists.');
 
     (fixture.nativeElement.querySelector('.allowed-values-add-toggle') as HTMLButtonElement).click();
     fixture.detectChanges();
@@ -87,6 +83,5 @@ describe('AllowedValuesEditorComponent', () => {
 
     expect(emittedValues).toHaveLength(0);
     expect(fixture.nativeElement.querySelector('.allowed-values-error')?.textContent).toContain('Third option');
-    expect(toast.error).toHaveBeenCalledWith('The option "Third option" already exists.');
   });
 });

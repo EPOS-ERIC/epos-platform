@@ -60,6 +60,20 @@ type Handler interface {
 	//
 	// POST /contact-points
 	CreateContactPoint(ctx context.Context, req *CreateContactPointRequest) (*ContactPoint, error)
+	// CreateConversionPlugin implements createConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. The plugin is enabled by default and installation
+	// is attempted immediately. Failed installation is retried periodically.
+	//
+	// POST /conversion-plugins
+	CreateConversionPlugin(ctx context.Context, req *CreateConversionPluginRequest) (CreateConversionPluginRes, error)
+	// CreateConversionRelation implements createConversionRelation operation.
+	//
+	// Requires the global.converter.manage permission. Input format must match a current native format of
+	// the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+	//
+	// POST /conversion-relations
+	CreateConversionRelation(ctx context.Context, req *ConversionRelationInput) (*ConversionRelation, error)
 	// CreateGroup implements createGroup operation.
 	//
 	// Create group.
@@ -111,6 +125,18 @@ type Handler interface {
 	//
 	// DELETE /contact-points/{contactPointId}
 	DeleteContactPoint(ctx context.Context, params DeleteContactPointParams) error
+	// DeleteConversionPlugin implements deleteConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. Deletes its relations and installation.
+	//
+	// DELETE /conversion-plugins/{pluginId}
+	DeleteConversionPlugin(ctx context.Context, params DeleteConversionPluginParams) error
+	// DeleteConversionRelation implements deleteConversionRelation operation.
+	//
+	// Requires the global.converter.manage permission.
+	//
+	// DELETE /conversion-relations/{conversionId}
+	DeleteConversionRelation(ctx context.Context, params DeleteConversionRelationParams) error
 	// DeleteGroup implements deleteGroup operation.
 	//
 	// Delete group.
@@ -192,6 +218,19 @@ type Handler interface {
 	//
 	// GET /contact-points/{contactPointId}
 	GetContactPoint(ctx context.Context, params GetContactPointParams) (*ContactPoint, error)
+	// GetConversionPlugin implements getConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. Installation status is local to the responding
+	// converter instance.
+	//
+	// GET /conversion-plugins/{pluginId}
+	GetConversionPlugin(ctx context.Context, params GetConversionPluginParams) (*ManagedConversionPlugin, error)
+	// GetConversionRelation implements getConversionRelation operation.
+	//
+	// Requires the global.converter.manage permission.
+	//
+	// GET /conversion-relations/{conversionId}
+	GetConversionRelation(ctx context.Context, params GetConversionRelationParams) (*ConversionRelation, error)
 	// GetGroup implements getGroup operation.
 	//
 	// Retrieve public group metadata from Metadata Lifecycle. Membership data is not included.
@@ -256,6 +295,19 @@ type Handler interface {
 	//
 	// GET /contact-points
 	ListContactPoints(ctx context.Context) ([]ContactPoint, error)
+	// ListConversionPlugins implements listConversionPlugins operation.
+	//
+	// Requires the global.converter.manage permission. Installation status is local to the responding
+	// converter instance.
+	//
+	// GET /conversion-plugins
+	ListConversionPlugins(ctx context.Context) ([]ManagedConversionPlugin, error)
+	// ListConversionRelations implements listConversionRelations operation.
+	//
+	// Requires the global.converter.manage permission.
+	//
+	// GET /conversion-relations
+	ListConversionRelations(ctx context.Context) ([]ConversionRelation, error)
 	// ListGroupCategories implements listGroupCategories operation.
 	//
 	// List group categories.
@@ -379,6 +431,20 @@ type Handler interface {
 	//
 	// PUT /contact-points/{contactPointId}
 	ReplaceContactPoint(ctx context.Context, req *ReplaceContactPointRequest, params ReplaceContactPointParams) (*ContactPoint, error)
+	// ReplaceConversionPlugin implements replaceConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. Changing repository or branch triggers immediate
+	// synchronization. A failed update retains the last working installation and is retried periodically.
+	//
+	// PUT /conversion-plugins/{pluginId}
+	ReplaceConversionPlugin(ctx context.Context, req *ReplaceConversionPluginRequest, params ReplaceConversionPluginParams) (ReplaceConversionPluginRes, error)
+	// ReplaceConversionRelation implements replaceConversionRelation operation.
+	//
+	// Requires the global.converter.manage permission. Input format must match a current native format of
+	// the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+	//
+	// PUT /conversion-relations/{conversionId}
+	ReplaceConversionRelation(ctx context.Context, req *ConversionRelationInput, params ReplaceConversionRelationParams) (*ConversionRelation, error)
 	// ReplaceGroup implements replaceGroup operation.
 	//
 	// Replace group.
@@ -454,6 +520,12 @@ type Handler interface {
 	//
 	// PUT /users/{userId}/notification-subscriptions/{topicKey}
 	SubscribeUserNotification(ctx context.Context, params SubscribeUserNotificationParams) error
+	// SyncConversionPlugin implements syncConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. Waits for synchronization to finish.
+	//
+	// POST /conversion-plugins/{pluginId}/sync
+	SyncConversionPlugin(ctx context.Context, params SyncConversionPluginParams) (*ManagedConversionPlugin, error)
 	// UnblockUser implements unblockUser operation.
 	//
 	// Restore a blocked user to ACTIVE. Requires active global ADMIN.

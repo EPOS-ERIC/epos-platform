@@ -6,6 +6,7 @@ import "github.com/EPOS-ERIC/epos-platform/cli/common"
 type Config struct {
 	Name               string           `yaml:"name"`
 	Domain             string           `yaml:"domain"`
+	IngressHost        *string          `yaml:"ingress_host,omitempty"`
 	Protocol           string           `yaml:"protocol"`
 	URLPrefixNamespace bool             `yaml:"url_prefix_namespace"`
 	CreateNamespace    bool             `yaml:"create_namespace"`
@@ -89,6 +90,7 @@ type Components struct {
 	Backoffice            Backoffice       `yaml:"backoffice"`
 	MetadataDatabase      MetadataDatabase `yaml:"metadata_database"`
 	DataRetrieverDatabase MetadataDatabase `yaml:"data_retriever_database"`
+	ConverterDatabase     MetadataDatabase `yaml:"converter_database"`
 	SharingDatabase       MetadataDatabase `yaml:"sharing_database"`
 	AAIService            AAIService       `yaml:"aai_service"`
 	OpenTelemetry         OpenTelemetry    `yaml:"otel"`
