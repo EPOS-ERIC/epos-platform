@@ -88,6 +88,7 @@ export class JSONDistributionFactory {
     json: Record<string, unknown>,
     distributionId: string,
     summary: DistributionSummary,
+    accessUrl: string,
   ): Optional<null | DistributionDetails> {
     const metadata = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(json, 'metadata', true) ?? {};
     const resourceType = ObjectAccessUtility.getObjectValueString(metadata, 'resource_type', true);
@@ -127,11 +128,42 @@ export class JSONDistributionFactory {
 
     const type = ObjectAccessUtility.getObjectValueString(distribution, 'type', true);
     const webService = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(distribution, 'web_service', false);
+    const configuration = webService == null ? null
+      : ObjectAccessUtility.getObjectValue<Record<string, unknown>>(webService, 'configuration', true);
     const downloadableFile = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(distribution, 'downloadable_file', false);
-    const serviceParameters = webService == null ? [] : [
-      ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(webService, 'parameters', false) ?? []),
-      ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(webService, 'body_parameters', false) ?? []),
-    ].map(parameter => this.normalizeResourceParameter(parameter));
+    const rawParameters = configuration == null ? [] : [
+      ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(configuration, 'parameters', false) ?? []),
+      ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(configuration, 'body_parameters', false) ?? []),
+    ];
+    const serviceParameters = rawParameters.map(parameter => this.normalizeResourceParameter(parameter));
+    const availableFormats = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(distribution, 'available_formats', false) ?? [];
+    const formats = availableFormats.map(availableFormat => {
+      const kind = ObjectAccessUtility.getObjectValueString(availableFormat, 'kind', true);
+      const outputFormat = ObjectAccessUtility.getObjectValueString(availableFormat, 'output_format', true);
+      const plugin = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(availableFormat, 'plugin', false);
+      const selector = kind === 'CONVERTED'
+        ? `conversion_id=${encodeURIComponent(ObjectAccessUtility.getObjectValueString(availableFormat, 'conversion_id', true))}`
+        : `output_format=${encodeURIComponent(outputFormat)}`;
+      const format = SimpleDistributionFormat.make(
+        kind === 'CONVERTED' ? ObjectAccessUtility.getObjectValueString(plugin!, 'name', true)
+          : ObjectAccessUtility.getObjectValueString(availableFormat, 'label', true),
+        outputFormat,
+        kind === 'CONVERTED' ? ObjectAccessUtility.getObjectValueString(availableFormat, 'input_format', true) : outputFormat,
+        `${accessUrl}?${selector}`,
+        kind,
+      );
+      format.resourceAccess = {
+        type: ObjectAccessUtility.getObjectValueString(configuration!, 'type', true),
+        parameters: rawParameters.map(parameter => ({
+          id: ObjectAccessUtility.getObjectValueString(parameter, 'id', true),
+          name: ObjectAccessUtility.getObjectValueString(parameter, 'name', true),
+          kind: ObjectAccessUtility.getObjectValueString(parameter, 'kind', true),
+          role: ObjectAccessUtility.getObjectValueString(parameter, 'role', false),
+        })),
+      };
+      return format;
+    });
+    summary.getFormats().splice(0, summary.getFormats().length, ...formats);
     const webServiceTemporalCoverage = webService == null ? null
       : ObjectAccessUtility.getObjectValue<Record<string, unknown>>(webService, 'temporal_coverage', false);
     const temporalCoverage = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(metadata, 'temporal_coverage', false);
@@ -145,8 +177,8 @@ export class JSONDistributionFactory {
     const groupId = ObjectAccessUtility.getObjectValueString(json, 'group_id', false, '');
     const groupName = ObjectAccessUtility.getObjectValueString(json, 'group_name', false, '');
     const spatialCoverage = ObjectAccessUtility.getObjectValueString(metadata, 'spatial_coverage', false);
-    const endpoint = webService != null
-      ? ObjectAccessUtility.getObjectValueString(webService, 'template_url', false, '')
+    const endpoint = configuration != null
+      ? ObjectAccessUtility.getObjectValueString(configuration, configuration.type === 'WFS' ? 'get_feature_template_url' : 'template_url', false, '')
       : downloadableFile != null ? ObjectAccessUtility.getObjectValueString(downloadableFile, 'url', false, '') : '';
     const normalizedDetails: Record<string, unknown> = {
       id: distributionId,
@@ -204,6 +236,7 @@ export class JSONDistributionFactory {
     summary.isMappable = visibleOn.includes('MAP');
     summary.isTabularable = visibleOn.includes('TABLE');
     summary.isGraphable = visibleOn.includes('GRAPH');
+    summary.isDownloadable = formats.length > 0 || downloadableFile != null;
     return this.buildStandardDetails(normalizedDetails, null, summary);
   }
 
@@ -696,6 +729,16 @@ export class JSONDistributionFactory {
   }
 
   private static normalizeResourceParameter(parameter: Record<string, unknown>): Record<string, unknown> {
+    const propertiesByRole: Record<string, ParameterProperty> = {
+      MIN_LON: ParameterProperty.WESTERN_LONGITUDE,
+      MAX_LON: ParameterProperty.EASTERN_LONGITUDE,
+      MIN_LAT: ParameterProperty.SOUTHERN_LATITUDE,
+      MAX_LAT: ParameterProperty.NORTHERN_LATITUDE,
+      START_DATE: ParameterProperty.START_DATE,
+      END_DATE: ParameterProperty.END_DATE,
+      FORMAT: ParameterProperty.OUTPUT_FORMAT,
+    };
+    const role = ObjectAccessUtility.getObjectValueString(parameter, 'role', false);
     const enumValues = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(parameter, 'enum', false) ?? [];
     const defaultValue = ObjectAccessUtility.getObjectValue(parameter, 'default', false);
     const minimum = ObjectAccessUtility.getObjectValue(parameter, 'minimum', false);
@@ -705,7 +748,7 @@ export class JSONDistributionFactory {
       name: ObjectAccessUtility.getObjectValueString(parameter, 'name', true),
       label: ObjectAccessUtility.getObjectValueString(parameter, 'label', false, ''),
       type: ObjectAccessUtility.getObjectValueString(parameter, 'kind', false, 'STRING'),
-      property: ObjectAccessUtility.getObjectValueString(parameter, 'property', false, null),
+      property: propertiesByRole[role] ?? ObjectAccessUtility.getObjectValueString(parameter, 'property', false, null),
       required: ObjectAccessUtility.getObjectValueBoolean(parameter, 'required', false, false),
       defaultValue: defaultValue == null ? null : String(defaultValue),
       Enum: enumValues.map(value => {
@@ -726,17 +769,22 @@ export class JSONDistributionFactory {
       return null;
     }
     return {
-      startDate: ObjectAccessUtility.getObjectValueString(coverage, 'start', false),
-      endDate: ObjectAccessUtility.getObjectValueString(coverage, 'end', false),
+      startDate: ObjectAccessUtility.getObjectValue<string>(coverage, 'start', false),
+      endDate: ObjectAccessUtility.getObjectValue<string>(coverage, 'end', false),
     };
   }
 
-  private static normalizeResourceSpatialCoverage(coverage: string | null): Record<string, number> | null {
+  private static normalizeResourceSpatialCoverage(coverage: string | null): Record<string, number> | { paths: number[][][]; wkid: number } | null {
     if (coverage == null) {
       return null;
     }
     const point = /^POINT\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)$/i.exec(coverage);
     if (point == null) {
+      const polygon = /^POLYGON\s*\(\s*\((.*)\)\s*\)$/i.exec(coverage);
+      if (polygon != null) {
+        const paths = polygon[1].split(/\)\s*,\s*\(/).map(ring => ring.split(',').map(coordinates => coordinates.trim().split(/\s+/).map(Number)));
+        return { paths, wkid: 4326 };
+      }
       return null;
     }
     return { x: Number(point[1]), y: Number(point[2]) };

@@ -267,8 +267,9 @@ export class DevDiscoverApi implements DiscoverApi {
           const { id, name } = reference;
           if (id && name && !domainsById.has(id)) {
             domainsById.set(id, {
-              id, code: id, title: name, color: '#fff',
+              id, code: id, title: name, color: ObjectAccessUtility.getObjectValueString(item, 'color', false, '#fff'),
               imgUrl: ObjectAccessUtility.getObjectValueString(item, 'logo', false),
+              linkUrl: ObjectAccessUtility.getObjectValueString(item, 'page', false),
             });
           }
         });

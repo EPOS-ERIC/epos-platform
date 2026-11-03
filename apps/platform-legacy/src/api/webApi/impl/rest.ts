@@ -75,11 +75,12 @@ export class RestImpl implements Rest {
    * @param fullResponse
    * @returns JSON or HttpResponse depending of fullResponse
    */
-  public post(url: string, body: unknown, fullResponse = false, extraHeaders: Record<string, string> = {}): Promise<unknown> {
+  public post(url: string, body: unknown, fullResponse = false, extraHeaders: Record<string, string> = {}, asBlob = false): Promise<unknown> {
     const method = 'post';
-    return this.http.post(url, body, {
-      ...this.makeOptions(extraHeaders),
-    }).toPromise().then((res: HttpResponse<unknown>) => {
+    return (asBlob
+      ? this.http.post(url, body, { ...this.makeOptions(extraHeaders), responseType: 'blob' })
+      : this.http.post(url, body, this.makeOptions(extraHeaders))
+    ).toPromise().then((res: HttpResponse<unknown>) => {
       return this.doThen(res, method, url, fullResponse);
     }).catch(
       (error: unknown) => {

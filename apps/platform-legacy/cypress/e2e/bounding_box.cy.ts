@@ -14,24 +14,26 @@ describe('Bounding box filter', () => {
 
 
     cy.getByDataCy('epos-leaflet-map')
+      .find('.leaflet-container')
       .trigger('mousedown', { clientX: 400, clientY: 300, which: 1 }) // punto di partenza
       .trigger('mousemove', { clientX: 600, clientY: 500 })           // trascina più a destra e più in basso
       .trigger('mouseup');
 
     // Click on the spatial control button (we need to specify the visibility because there is a bounding box button for each left panel tab (data, facilities))
-    cy.getByDataCy('drawing-spatial-control-button').filter(':visible').click();
+    cy.getByDataCy('drawing-spatial-control-button').filter(':visible').find('button').first().click();
 
     // Intercept the request to filter the results by the bounding box
-    cy.intercept('GET', /\/resources\/search\?.*?\bbbox=[^&]+/, { fixture: 'bbox_filtered_distributions.json' }).as('search');
+    cy.intercept({ method: 'GET', pathname: '**/api/v1/search', query: { spatialFilter: '*' } }, { fixture: 'bbox_filtered_distributions.json' }).as('spatialSearch');
 
     // Draw a bounding box on the map
     cy.getByDataCy('epos-leaflet-map')
+      .find('.leaflet-container')
       .trigger('mousedown', 'center', { which: 1 })
       .trigger('mousemove', { clientX: 1300, clientY: 1100 }) // più a destra (x) e più in basso (y)
       .trigger('mouseup', { force: true });
 
     // Wait for the results to be filtered
-    cy.wait('@search');
+    cy.wait('@spatialSearch');
 
     // There should be a "Spatial" chip in the filters
     cy.getByDataCy('search-panel-filters-mat-chip-list').contains('Spatial');

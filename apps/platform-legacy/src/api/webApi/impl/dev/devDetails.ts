@@ -63,7 +63,8 @@ export class DevDetailsApi implements DetailsApi {
         if (typeof json !== 'object' || json === null || Array.isArray(json)) {
           throw new Error(`Invalid resource version response for ${versionId}`);
         }
-        const details = JSONDistributionFactory.jsonToResourceVersionDistributionDetails(json as Record<string, unknown>, distributionId, summary);
+        const accessUrl = this.baseUrl.urlBuilder().addPathElements('distributions', distributionId, 'access').build();
+        const details = JSONDistributionFactory.jsonToResourceVersionDistributionDetails(json as Record<string, unknown>, distributionId, summary, accessUrl);
         if (details.isEmpty()) {
           return Promise.reject(new Error(`Distribution ${distributionId} not found in resource version ${versionId}`));
         }
