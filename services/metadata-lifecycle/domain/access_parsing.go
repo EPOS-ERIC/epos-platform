@@ -29,7 +29,8 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 		GlobalPermissionResourcePublish,
 		GlobalPermissionResourceUnpublish,
 		GlobalPermissionCategoryManage,
-		GlobalPermissionConfigurationManage:
+		GlobalPermissionConfigurationManage,
+		GlobalPermissionConverterManage:
 		return permission, nil
 	default:
 		return "", apperror.Default(apperror.CodeInternal)

@@ -53,8 +53,210 @@ tags:
     description: Store and retrieve shared workspace configurations.
   - name: Notifications
     description: Manage notification topics and email subscriptions.
+  - name: Conversions
+    description: Manage conversion plugins and their distribution relations.
 
 paths:
+  /conversion-plugins:
+    get:
+      tags: [Conversions]
+      summary: List conversion plugins
+      description: Requires the global.converter.manage permission. Installation status is local to the responding converter instance.
+      operationId: listConversionPlugins
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Conversion plugins returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    post:
+      tags: [Conversions]
+      summary: Register a conversion plugin
+      description: Requires the global.converter.manage permission. The plugin is enabled by default and installation is attempted immediately. Failed installation is retried periodically.
+      operationId: createConversionPlugin
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateConversionPluginRequest" }
+      responses:
+        "201":
+          description: Plugin registered and installed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        "202":
+          description: Plugin registered, but initial installation failed and will be retried
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+  /conversion-plugins/{pluginId}:
+    parameters:
+      - name: pluginId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Conversions]
+      summary: Get a conversion plugin
+      description: Requires the global.converter.manage permission. Installation status is local to the responding converter instance.
+      operationId: getConversionPlugin
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Conversion plugin returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    put:
+      tags: [Conversions]
+      summary: Replace conversion plugin settings
+      description: Requires the global.converter.manage permission. Changing repository or branch triggers immediate synchronization. A failed update retains the last working installation and is retried periodically.
+      operationId: replaceConversionPlugin
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceConversionPluginRequest" }
+      responses:
+        "200":
+          description: Plugin settings saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        "202":
+          description: Plugin settings saved, but synchronization failed and will be retried
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    delete:
+      tags: [Conversions]
+      summary: Delete a conversion plugin
+      description: Requires the global.converter.manage permission. Deletes its relations and installation.
+      operationId: deleteConversionPlugin
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Conversion plugin deleted }
+        default:
+          $ref: "#/components/responses/GatewayError"
+  /conversion-plugins/{pluginId}/sync:
+    post:
+      tags: [Conversions]
+      summary: Synchronize a conversion plugin
+      description: Requires the global.converter.manage permission. Waits for synchronization to finish.
+      operationId: syncConversionPlugin
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Plugin synchronized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+  /conversion-relations:
+    get:
+      tags: [Conversions]
+      summary: List conversion relations
+      description: Requires the global.converter.manage permission.
+      operationId: listConversionRelations
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Conversion relations returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ConversionRelation" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    post:
+      tags: [Conversions]
+      summary: Create a conversion relation
+      description: Requires the global.converter.manage permission. Input format must match a current native format of the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+      operationId: createConversionRelation
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConversionRelationInput" }
+      responses:
+        "201":
+          description: Conversion relation created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversionRelation" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+  /conversion-relations/{conversionId}:
+    parameters:
+      - name: conversionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Conversions]
+      summary: Get a conversion relation
+      description: Requires the global.converter.manage permission.
+      operationId: getConversionRelation
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Conversion relation returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversionRelation" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    put:
+      tags: [Conversions]
+      summary: Replace a conversion relation
+      description: Requires the global.converter.manage permission. Input format must match a current native format of the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+      operationId: replaceConversionRelation
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConversionRelationInput" }
+      responses:
+        "200":
+          description: Conversion relation replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversionRelation" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    delete:
+      tags: [Conversions]
+      summary: Delete a conversion relation
+      description: Requires the global.converter.manage permission.
+      operationId: deleteConversionRelation
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Conversion relation deleted }
+        default:
+          $ref: "#/components/responses/GatewayError"
   /permissions:
     get:
       tags:
@@ -100,9 +302,8 @@ paths:
           schema: { type: string, minLength: 1 }
         - name: conversion_id
           in: query
-          description: Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for future conversion support.
+          description: Conversion relation UUID for this distribution. Cannot be repeated or combined with output_format.
           schema: { type: string, format: uuid }
-      # TODO: Connect conversion_id when converter and conversion-relation support exist.
       requestBody:
         required: true
         content:
@@ -128,7 +329,7 @@ paths:
                   parameters: []
       responses:
         "2XX":
-          description: Successful upstream response, streamed without buffering.
+          description: Successful response. Native responses stream directly; converted responses stream after conversion completes. Responses use application/octet-stream; the converted format's MIME type is available in distribution metadata.
           content:
             application/octet-stream:
               schema: { type: string, format: binary }
@@ -159,7 +360,7 @@ paths:
           schema: { type: string, minLength: 1 }
         - name: conversion_id
           in: query
-          description: Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for future conversion support; currently returns an internal error, matching access.
+          description: Not supported for preparation; requests containing this parameter are rejected.
           schema: { type: string, format: uuid }
       requestBody:
         required: true
@@ -2206,6 +2407,11 @@ components:
       explode: false
 
   responses:
+    GatewayError:
+      description: Gateway error
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
     BadRequest:
       description: Invalid request parameters
       content:
@@ -2326,6 +2532,81 @@ components:
                 detail: "A required service is unavailable."
 
   schemas:
+    ConversionRuntime:
+      type: string
+      enum: [python, java, binary]
+
+    CreateConversionPluginRequest:
+      type: object
+      additionalProperties: false
+      required: [name, repository, branch, runtime]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string, default: "" }
+        repository: { type: string, description: Public Git repository URL. }
+        branch: { type: string, minLength: 1 }
+        runtime: { $ref: "#/components/schemas/ConversionRuntime" }
+        arguments:
+          type: array
+          items: { type: string }
+
+    ReplaceConversionPluginRequest:
+      type: object
+      additionalProperties: false
+      required: [name, repository, branch, runtime, enabled]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string, default: "" }
+        repository: { type: string, description: Public Git repository URL. }
+        branch: { type: string, minLength: 1 }
+        runtime: { $ref: "#/components/schemas/ConversionRuntime" }
+        arguments:
+          type: array
+          items: { type: string }
+        enabled: { type: boolean }
+
+    ManagedConversionPlugin:
+      type: object
+      additionalProperties: false
+      required: [id, name, description, repository, branch, runtime, arguments, enabled, installed, installed_commit, created_by, updated_by]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        repository: { type: string }
+        branch: { type: string }
+        runtime: { $ref: "#/components/schemas/ConversionRuntime" }
+        arguments:
+          type: array
+          items: { type: string }
+        enabled: { type: boolean }
+        installed: { type: boolean, description: Installation status on the responding converter instance. }
+        installed_commit: { type: string, nullable: true, description: Git commit installed on the responding converter instance. }
+        created_by: { type: string, description: Immutable creator user ID. }
+        updated_by: { type: string, description: Last administrator to change the record. }
+
+    ConversionRelationInput:
+      type: object
+      additionalProperties: false
+      required: [distribution_id, plugin_id, input_format, output_format]
+      properties:
+        distribution_id: { type: string, format: uuid }
+        plugin_id: { type: string, format: uuid }
+        input_format: { type: string, minLength: 1, description: Exact native format string. }
+        output_format: { type: string, minLength: 1, description: Output MIME type. }
+
+    ConversionRelation:
+      type: object
+      additionalProperties: false
+      required: [id, distribution_id, plugin_id, input_format, output_format, created_by, updated_by]
+      properties:
+        id: { type: string, format: uuid, description: Conversion ID used to select this exact relation. }
+        distribution_id: { type: string, format: uuid }
+        plugin_id: { type: string, format: uuid }
+        input_format: { type: string, description: Exact native format string. }
+        output_format: { type: string, description: Output MIME type. }
+        created_by: { type: string, description: Immutable creator user ID. }
+        updated_by: { type: string, description: Last administrator to change the record. }
     PreparedDistributionRequest:
       type: object
       additionalProperties: false
@@ -2486,6 +2767,7 @@ components:
         - global.resource.unpublish
         - global.category.manage
         - global.configuration.manage
+        - global.converter.manage
 
     GroupPermission:
       type: string
@@ -4003,7 +4285,7 @@ components:
         web_service: { $ref: "#/components/schemas/WebService" }
         available_formats:
           type: array
-          description: Computed formats for this resource version. Currently ORIGINAL entries only. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
+          description: Native formats and conversions whose plugins are enabled and locally installed. If converter is unavailable, only native formats are returned. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
           items: { $ref: "#/components/schemas/AvailableFormat" }
 
     AvailableFormat:

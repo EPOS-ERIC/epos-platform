@@ -137,15 +137,4 @@ metadata:
     app.kubernetes.io/component: aai-service
 data:
   {{- include "epos.aaiServiceConfigData" . | nindent 2 }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: aai-service
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: aai-service
-type: Opaque
-stringData:
-  password: {{ .Values.components.aai_service.password | quote }}
 {{- end }}

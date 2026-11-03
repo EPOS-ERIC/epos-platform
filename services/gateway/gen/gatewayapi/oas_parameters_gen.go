@@ -22,8 +22,7 @@ type AccessDistributionParams struct {
 	DistributionId uuid.UUID
 	// Exact native format selector. Cannot be repeated or combined with conversion_id.
 	OutputFormat OptString `json:",omitempty,omitzero"`
-	// Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for
-	// future conversion support.
+	// Conversion relation UUID for this distribution. Cannot be repeated or combined with output_format.
 	ConversionID OptUUID `json:",omitempty,omitzero"`
 }
 
@@ -1391,6 +1390,136 @@ func decodeDeleteContactPointParams(args [1]string, argsEscaped bool, r *http.Re
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "contactPointId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// DeleteConversionPluginParams is parameters of deleteConversionPlugin operation.
+type DeleteConversionPluginParams struct {
+	PluginId uuid.UUID
+}
+
+func unpackDeleteConversionPluginParams(packed middleware.Parameters) (params DeleteConversionPluginParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "pluginId",
+			In:   "path",
+		}
+		params.PluginId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeDeleteConversionPluginParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteConversionPluginParams, _ error) {
+	// Decode path: pluginId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "pluginId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PluginId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pluginId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// DeleteConversionRelationParams is parameters of deleteConversionRelation operation.
+type DeleteConversionRelationParams struct {
+	ConversionId uuid.UUID
+}
+
+func unpackDeleteConversionRelationParams(packed middleware.Parameters) (params DeleteConversionRelationParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "conversionId",
+			In:   "path",
+		}
+		params.ConversionId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeDeleteConversionRelationParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteConversionRelationParams, _ error) {
+	// Decode path: conversionId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "conversionId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConversionId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "conversionId",
 			In:   "path",
 			Err:  err,
 		}
@@ -3122,6 +3251,136 @@ func decodeGetContactPointParams(args [1]string, argsEscaped bool, r *http.Reque
 	return params, nil
 }
 
+// GetConversionPluginParams is parameters of getConversionPlugin operation.
+type GetConversionPluginParams struct {
+	PluginId uuid.UUID
+}
+
+func unpackGetConversionPluginParams(packed middleware.Parameters) (params GetConversionPluginParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "pluginId",
+			In:   "path",
+		}
+		params.PluginId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetConversionPluginParams(args [1]string, argsEscaped bool, r *http.Request) (params GetConversionPluginParams, _ error) {
+	// Decode path: pluginId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "pluginId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PluginId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pluginId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetConversionRelationParams is parameters of getConversionRelation operation.
+type GetConversionRelationParams struct {
+	ConversionId uuid.UUID
+}
+
+func unpackGetConversionRelationParams(packed middleware.Parameters) (params GetConversionRelationParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "conversionId",
+			In:   "path",
+		}
+		params.ConversionId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetConversionRelationParams(args [1]string, argsEscaped bool, r *http.Request) (params GetConversionRelationParams, _ error) {
+	// Decode path: conversionId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "conversionId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConversionId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "conversionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetGroupParams is parameters of getGroup operation.
 type GetGroupParams struct {
 	// Group identifier.
@@ -4441,8 +4700,7 @@ type PrepareDistributionParams struct {
 	DistributionId uuid.UUID
 	// Exact native format selector. Cannot be repeated or combined with conversion_id.
 	OutputFormat OptString `json:",omitempty,omitzero"`
-	// Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for
-	// future conversion support; currently returns an internal error, matching access.
+	// Not supported for preparation; requests containing this parameter are rejected.
 	ConversionID OptUUID `json:",omitempty,omitzero"`
 }
 
@@ -5613,6 +5871,136 @@ func decodeReplaceContactPointParams(args [1]string, argsEscaped bool, r *http.R
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "contactPointId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ReplaceConversionPluginParams is parameters of replaceConversionPlugin operation.
+type ReplaceConversionPluginParams struct {
+	PluginId uuid.UUID
+}
+
+func unpackReplaceConversionPluginParams(packed middleware.Parameters) (params ReplaceConversionPluginParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "pluginId",
+			In:   "path",
+		}
+		params.PluginId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeReplaceConversionPluginParams(args [1]string, argsEscaped bool, r *http.Request) (params ReplaceConversionPluginParams, _ error) {
+	// Decode path: pluginId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "pluginId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PluginId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pluginId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ReplaceConversionRelationParams is parameters of replaceConversionRelation operation.
+type ReplaceConversionRelationParams struct {
+	ConversionId uuid.UUID
+}
+
+func unpackReplaceConversionRelationParams(packed middleware.Parameters) (params ReplaceConversionRelationParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "conversionId",
+			In:   "path",
+		}
+		params.ConversionId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeReplaceConversionRelationParams(args [1]string, argsEscaped bool, r *http.Request) (params ReplaceConversionRelationParams, _ error) {
+	// Decode path: conversionId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "conversionId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConversionId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "conversionId",
 			In:   "path",
 			Err:  err,
 		}
@@ -7023,6 +7411,71 @@ func decodeSubscribeUserNotificationParams(args [2]string, argsEscaped bool, r *
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "topicKey",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SyncConversionPluginParams is parameters of syncConversionPlugin operation.
+type SyncConversionPluginParams struct {
+	PluginId uuid.UUID
+}
+
+func unpackSyncConversionPluginParams(packed middleware.Parameters) (params SyncConversionPluginParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "pluginId",
+			In:   "path",
+		}
+		params.PluginId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeSyncConversionPluginParams(args [1]string, argsEscaped bool, r *http.Request) (params SyncConversionPluginParams, _ error) {
+	// Decode path: pluginId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "pluginId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.PluginId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pluginId",
 			In:   "path",
 			Err:  err,
 		}

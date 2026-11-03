@@ -1,0 +1,46 @@
+version: "2"
+
+run:
+  allow-parallel-runners: true
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: strict
+  settings:
+    gofumpt:
+      extra:
+        group-params: true
+        balance-calls: true
+linters:
+  default: standard
+  enable:
+    - staticcheck
+    - errcheck
+    - misspell
+    - dupl
+    - gocritic
+    - godoclint
+    - contextcheck
+    - containedctx
+    - copyloopvar
+    - exhaustive
+  exclusions:
+    paths:
+      - ".*gen/.*"
+    rules:
+      - linters:
+          - errcheck
+        source: "^\\s*defer\\s+"
+      - linters:
+          - errcheck
+          - exhaustruct_v5
+        path: ".*_test\\.go"
+  settings:
+    goconst:
+      ignore-string-values:
+        - "true"
+    exhaustive:
+      default-case-required: true
+      ignore-constants: "(_UNSPECIFIED|Unspecified)$"

@@ -34,16 +34,34 @@ func TestConfigRender(t *testing.T) {
 			wantFiles: []string{
 				"templates/dataportal.yaml",
 				"templates/gateway.yaml",
-				"templates/application-databases.yaml",
-				"templates/metadata-database.yaml",
-				"templates/application-services.yaml",
+				"templates/metadata-lifecycle.yaml",
+				"templates/data-retriever.yaml",
+				"templates/converter.yaml",
+				"templates/sharing.yaml",
 			},
 			wantContains: map[string][]string{
-				"templates/dataportal.yaml":            {"name: dataportal", `value: "http://localhost/test-default/aai"`},
-				"templates/gateway.yaml":               {"name: gateway", `url: "http://aai-service:8080"`, "imagePullPolicy: IfNotPresent", `nginx.ingress.kubernetes.io/proxy-body-size: "10m"`},
-				"templates/application-databases.yaml": {"name: retriever-db", "name: sharing-db"},
-				"templates/metadata-database.yaml":     {"name: metadata-database"},
-				"templates/application-services.yaml":  {"name: metadata-lifecycle", "name: data-retriever", "name: sharing"},
+				"templates/dataportal.yaml":         {"name: dataportal", `value: "http://localhost/test-default/aai"`},
+				"templates/gateway.yaml":            {"name: gateway", `url: "http://aai-service:8080"`, `url: "converter:8200"`, "imagePullPolicy: IfNotPresent", `nginx.ingress.kubernetes.io/proxy-body-size: "10m"`},
+				"templates/metadata-lifecycle.yaml": {"name: metadata-lifecycle", "name: metadata-database", "claimName: psqldata"},
+				"templates/data-retriever.yaml":     {"name: data-retriever", "name: retriever-db"},
+				"templates/converter.yaml":          {"name: converter", "name: converter-db", "claimName: converter-plugins", "type: Recreate", "fsGroup: 1000"},
+				"templates/sharing.yaml":            {"name: sharing", "name: sharing-db"},
+				"templates/pvc.yaml":                {"name: psqldata", "name: retriever-db", "name: converter-db", "name: converter-plugins", "name: sharing-db", "ReadWriteOnce"},
+			},
+		},
+		{
+			name: "external converter database",
+			mutate: func(cfg *config.Config) {
+				cfg.Name = "test-external-converter-db"
+				cfg.Components.ConverterDatabase.Enabled = false
+				cfg.Components.ConverterDatabase.Host = "external-db"
+			},
+			wantContains: map[string][]string{
+				"templates/converter.yaml": {`value: "external-db"`, "name: converter"},
+			},
+			notContains: map[string][]string{
+				"templates/converter.yaml": {"claimName: converter-db"},
+				"templates/pvc.yaml":       {"name: converter-db"},
 			},
 		},
 		{
@@ -53,8 +71,8 @@ func TestConfigRender(t *testing.T) {
 				cfg.ImagePullPolicy = "Always"
 			},
 			wantContains: map[string][]string{
-				"templates/gateway.yaml":              {"imagePullPolicy: Always"},
-				"templates/application-services.yaml": {"imagePullPolicy: Always"},
+				"templates/gateway.yaml":   {"imagePullPolicy: Always"},
+				"templates/converter.yaml": {"imagePullPolicy: Always"},
 			},
 		},
 		{
@@ -74,8 +92,8 @@ func TestConfigRender(t *testing.T) {
 				cfg.Components.SharingDatabase.Enabled = true
 			},
 			wantContains: map[string][]string{
-				"templates/gateway.yaml":              {`url: "sharing:8200"`},
-				"templates/application-services.yaml": {"name: sharing"},
+				"templates/gateway.yaml": {`url: "sharing:8200"`},
+				"templates/sharing.yaml": {"name: sharing"},
 			},
 		},
 		{

@@ -86,6 +86,26 @@ func (UnimplementedHandler) CreateContactPoint(ctx context.Context, req *CreateC
 	return r, ht.ErrNotImplemented
 }
 
+// CreateConversionPlugin implements createConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. The plugin is enabled by default and installation
+// is attempted immediately. Failed installation is retried periodically.
+//
+// POST /conversion-plugins
+func (UnimplementedHandler) CreateConversionPlugin(ctx context.Context, req *CreateConversionPluginRequest) (r CreateConversionPluginRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CreateConversionRelation implements createConversionRelation operation.
+//
+// Requires the global.converter.manage permission. Input format must match a current native format of
+// the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+//
+// POST /conversion-relations
+func (UnimplementedHandler) CreateConversionRelation(ctx context.Context, req *ConversionRelationInput) (r *ConversionRelation, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateGroup implements createGroup operation.
 //
 // Create group.
@@ -158,6 +178,24 @@ func (UnimplementedHandler) DeleteConfiguration(ctx context.Context, params Dele
 //
 // DELETE /contact-points/{contactPointId}
 func (UnimplementedHandler) DeleteContactPoint(ctx context.Context, params DeleteContactPointParams) error {
+	return ht.ErrNotImplemented
+}
+
+// DeleteConversionPlugin implements deleteConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. Deletes its relations and installation.
+//
+// DELETE /conversion-plugins/{pluginId}
+func (UnimplementedHandler) DeleteConversionPlugin(ctx context.Context, params DeleteConversionPluginParams) error {
+	return ht.ErrNotImplemented
+}
+
+// DeleteConversionRelation implements deleteConversionRelation operation.
+//
+// Requires the global.converter.manage permission.
+//
+// DELETE /conversion-relations/{conversionId}
+func (UnimplementedHandler) DeleteConversionRelation(ctx context.Context, params DeleteConversionRelationParams) error {
 	return ht.ErrNotImplemented
 }
 
@@ -275,6 +313,25 @@ func (UnimplementedHandler) GetContactPoint(ctx context.Context, params GetConta
 	return r, ht.ErrNotImplemented
 }
 
+// GetConversionPlugin implements getConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. Installation status is local to the responding
+// converter instance.
+//
+// GET /conversion-plugins/{pluginId}
+func (UnimplementedHandler) GetConversionPlugin(ctx context.Context, params GetConversionPluginParams) (r *ManagedConversionPlugin, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetConversionRelation implements getConversionRelation operation.
+//
+// Requires the global.converter.manage permission.
+//
+// GET /conversion-relations/{conversionId}
+func (UnimplementedHandler) GetConversionRelation(ctx context.Context, params GetConversionRelationParams) (r *ConversionRelation, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetGroup implements getGroup operation.
 //
 // Retrieve public group metadata from Metadata Lifecycle. Membership data is not included.
@@ -366,6 +423,25 @@ func (UnimplementedHandler) ListConfigurations(ctx context.Context, params ListC
 //
 // GET /contact-points
 func (UnimplementedHandler) ListContactPoints(ctx context.Context) (r []ContactPoint, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListConversionPlugins implements listConversionPlugins operation.
+//
+// Requires the global.converter.manage permission. Installation status is local to the responding
+// converter instance.
+//
+// GET /conversion-plugins
+func (UnimplementedHandler) ListConversionPlugins(ctx context.Context) (r []ManagedConversionPlugin, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListConversionRelations implements listConversionRelations operation.
+//
+// Requires the global.converter.manage permission.
+//
+// GET /conversion-relations
+func (UnimplementedHandler) ListConversionRelations(ctx context.Context) (r []ConversionRelation, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -546,6 +622,26 @@ func (UnimplementedHandler) ReplaceContactPoint(ctx context.Context, req *Replac
 	return r, ht.ErrNotImplemented
 }
 
+// ReplaceConversionPlugin implements replaceConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. Changing repository or branch triggers immediate
+// synchronization. A failed update retains the last working installation and is retried periodically.
+//
+// PUT /conversion-plugins/{pluginId}
+func (UnimplementedHandler) ReplaceConversionPlugin(ctx context.Context, req *ReplaceConversionPluginRequest, params ReplaceConversionPluginParams) (r ReplaceConversionPluginRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ReplaceConversionRelation implements replaceConversionRelation operation.
+//
+// Requires the global.converter.manage permission. Input format must match a current native format of
+// the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+//
+// PUT /conversion-relations/{conversionId}
+func (UnimplementedHandler) ReplaceConversionRelation(ctx context.Context, req *ConversionRelationInput, params ReplaceConversionRelationParams) (r *ConversionRelation, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ReplaceGroup implements replaceGroup operation.
 //
 // Replace group.
@@ -655,6 +751,15 @@ func (UnimplementedHandler) SubscribeGroupUserNotification(ctx context.Context, 
 // PUT /users/{userId}/notification-subscriptions/{topicKey}
 func (UnimplementedHandler) SubscribeUserNotification(ctx context.Context, params SubscribeUserNotificationParams) error {
 	return ht.ErrNotImplemented
+}
+
+// SyncConversionPlugin implements syncConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. Waits for synchronization to finish.
+//
+// POST /conversion-plugins/{pluginId}/sync
+func (UnimplementedHandler) SyncConversionPlugin(ctx context.Context, params SyncConversionPluginParams) (r *ManagedConversionPlugin, _ error) {
+	return r, ht.ErrNotImplemented
 }
 
 // UnblockUser implements unblockUser operation.

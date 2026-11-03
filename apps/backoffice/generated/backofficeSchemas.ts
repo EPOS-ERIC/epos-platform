@@ -3,6 +3,137 @@
  *
  * @version 1.0.0
  */
+export type ConversionRuntime = "python" | "java" | "binary";
+
+export type CreateConversionPluginRequest = {
+  /**
+   * @minLength 1
+   */
+  name: string;
+  /**
+   * @default
+   */
+  description?: string;
+  /**
+   * Public Git repository URL.
+   */
+  repository: string;
+  /**
+   * @minLength 1
+   */
+  branch: string;
+  runtime: ConversionRuntime;
+  arguments?: string[];
+};
+
+export type ReplaceConversionPluginRequest = {
+  /**
+   * @minLength 1
+   */
+  name: string;
+  /**
+   * @default
+   */
+  description?: string;
+  /**
+   * Public Git repository URL.
+   */
+  repository: string;
+  /**
+   * @minLength 1
+   */
+  branch: string;
+  runtime: ConversionRuntime;
+  arguments?: string[];
+  enabled: boolean;
+};
+
+export type ManagedConversionPlugin = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  name: string;
+  description: string;
+  repository: string;
+  branch: string;
+  runtime: ConversionRuntime;
+  arguments: string[];
+  enabled: boolean;
+  /**
+   * Installation status on the responding converter instance.
+   */
+  installed: boolean;
+  /**
+   * Git commit installed on the responding converter instance.
+   */
+  installed_commit: string | null;
+  /**
+   * Immutable creator user ID.
+   */
+  created_by: string;
+  /**
+   * Last administrator to change the record.
+   */
+  updated_by: string;
+};
+
+export type ConversionRelationInput = {
+  /**
+   * @format uuid
+   */
+  distribution_id: string;
+  /**
+   * @format uuid
+   */
+  plugin_id: string;
+  /**
+   * Exact native format string.
+   *
+   * @minLength 1
+   */
+  input_format: string;
+  /**
+   * Output MIME type.
+   *
+   * @minLength 1
+   */
+  output_format: string;
+};
+
+export type ConversionRelation = {
+  /**
+   * Conversion ID used to select this exact relation.
+   *
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format uuid
+   */
+  distribution_id: string;
+  /**
+   * @format uuid
+   */
+  plugin_id: string;
+  /**
+   * Exact native format string.
+   */
+  input_format: string;
+  /**
+   * Output MIME type.
+   */
+  output_format: string;
+  /**
+   * Immutable creator user ID.
+   */
+  created_by: string;
+  /**
+   * Last administrator to change the record.
+   */
+  updated_by: string;
+};
+
 export type PreparedDistributionRequest = {
   method: "GET" | "POST" | "PUT" | "DELETE";
   /**
@@ -143,7 +274,8 @@ export type GlobalPermission =
   | "global.resource.publish"
   | "global.resource.unpublish"
   | "global.category.manage"
-  | "global.configuration.manage";
+  | "global.configuration.manage"
+  | "global.converter.manage";
 
 /**
  * Group-scoped permission key.
@@ -1547,7 +1679,7 @@ export type WebServiceDistribution = {
   byte_size?: number | null;
   web_service: WebService;
   /**
-   * Computed formats for this resource version. Currently ORIGINAL entries only. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
+   * Native formats and conversions whose plugins are enabled and locally installed. If converter is unavailable, only native formats are returned. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
    */
   available_formats: AvailableFormat[];
 };

@@ -112,3 +112,17 @@ type RetrievalResponse struct {
 	StatusCode int
 	Body       io.ReadCloser
 }
+
+type ConversionRelation struct {
+	ID             uuid.UUID
+	DistributionID uuid.UUID
+	InputFormat    string
+	OutputFormat   string
+}
+
+type AvailableConversion struct {
+	ConversionRelation
+	PluginID          uuid.UUID
+	PluginName        string
+	PluginDescription string
+}

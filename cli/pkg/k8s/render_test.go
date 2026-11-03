@@ -111,7 +111,7 @@ func TestRenderOpts_ConfigRender_OptionalComponents(t *testing.T) {
 			},
 			wantGateway: []string{`url: "sharing:8200"`},
 			wantTemplates: map[string]string{
-				"templates/application-services.yaml": "name: sharing",
+				"templates/sharing.yaml": "name: sharing",
 			},
 		},
 		{
@@ -134,7 +134,7 @@ func TestRenderOpts_ConfigRender_OptionalComponents(t *testing.T) {
 			},
 			wantGateway: []string{`value: "https://otel.example"`},
 			wantTemplates: map[string]string{
-				"templates/application-services.yaml": "name: metadata-lifecycle",
+				"templates/metadata-lifecycle.yaml": "name: metadata-lifecycle",
 			},
 		},
 	}

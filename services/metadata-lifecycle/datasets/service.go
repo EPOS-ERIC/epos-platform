@@ -32,6 +32,7 @@ type Store interface {
 }
 
 type Authorizer interface {
+	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
 	AuthorizeGroup(context.Context, string, uuid.UUID, domain.GroupPermission) (domain.Result, error)
 	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, domain.GroupPermission) (domain.Result, error)
 	CanReadResourceVersions(context.Context, string, domain.ResourceType, uuid.UUID) (domain.Result, error)

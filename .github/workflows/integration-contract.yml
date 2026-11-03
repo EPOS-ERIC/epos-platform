@@ -5,6 +5,7 @@ on:
     paths:
       - "tests/contract/**"
       - "services/gateway/**"
+      - "services/converter/**"
       - "services/metadata-lifecycle/**"
       - "services/oss-aai-service/**"
       - "packages/go/logging/**"
@@ -23,6 +24,7 @@ on:
     paths:
       - "tests/contract/**"
       - "services/gateway/**"
+      - "services/converter/**"
       - "services/metadata-lifecycle/**"
       - "services/oss-aai-service/**"
       - "packages/go/logging/**"

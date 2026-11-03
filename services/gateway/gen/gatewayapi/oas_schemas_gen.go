@@ -1351,6 +1351,191 @@ func (s *ConversionPlugin) SetDescription(val string) {
 	s.Description = val
 }
 
+// Ref: #/components/schemas/ConversionRelation
+type ConversionRelation struct {
+	// Conversion ID used to select this exact relation.
+	ID             uuid.UUID `json:"id"`
+	DistributionID uuid.UUID `json:"distribution_id"`
+	PluginID       uuid.UUID `json:"plugin_id"`
+	// Exact native format string.
+	InputFormat string `json:"input_format"`
+	// Output MIME type.
+	OutputFormat string `json:"output_format"`
+	// Immutable creator user ID.
+	CreatedBy string `json:"created_by"`
+	// Last administrator to change the record.
+	UpdatedBy string `json:"updated_by"`
+}
+
+// GetID returns the value of ID.
+func (s *ConversionRelation) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetDistributionID returns the value of DistributionID.
+func (s *ConversionRelation) GetDistributionID() uuid.UUID {
+	return s.DistributionID
+}
+
+// GetPluginID returns the value of PluginID.
+func (s *ConversionRelation) GetPluginID() uuid.UUID {
+	return s.PluginID
+}
+
+// GetInputFormat returns the value of InputFormat.
+func (s *ConversionRelation) GetInputFormat() string {
+	return s.InputFormat
+}
+
+// GetOutputFormat returns the value of OutputFormat.
+func (s *ConversionRelation) GetOutputFormat() string {
+	return s.OutputFormat
+}
+
+// GetCreatedBy returns the value of CreatedBy.
+func (s *ConversionRelation) GetCreatedBy() string {
+	return s.CreatedBy
+}
+
+// GetUpdatedBy returns the value of UpdatedBy.
+func (s *ConversionRelation) GetUpdatedBy() string {
+	return s.UpdatedBy
+}
+
+// SetID sets the value of ID.
+func (s *ConversionRelation) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetDistributionID sets the value of DistributionID.
+func (s *ConversionRelation) SetDistributionID(val uuid.UUID) {
+	s.DistributionID = val
+}
+
+// SetPluginID sets the value of PluginID.
+func (s *ConversionRelation) SetPluginID(val uuid.UUID) {
+	s.PluginID = val
+}
+
+// SetInputFormat sets the value of InputFormat.
+func (s *ConversionRelation) SetInputFormat(val string) {
+	s.InputFormat = val
+}
+
+// SetOutputFormat sets the value of OutputFormat.
+func (s *ConversionRelation) SetOutputFormat(val string) {
+	s.OutputFormat = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *ConversionRelation) SetCreatedBy(val string) {
+	s.CreatedBy = val
+}
+
+// SetUpdatedBy sets the value of UpdatedBy.
+func (s *ConversionRelation) SetUpdatedBy(val string) {
+	s.UpdatedBy = val
+}
+
+// Ref: #/components/schemas/ConversionRelationInput
+type ConversionRelationInput struct {
+	DistributionID uuid.UUID `json:"distribution_id"`
+	PluginID       uuid.UUID `json:"plugin_id"`
+	// Exact native format string.
+	InputFormat string `json:"input_format"`
+	// Output MIME type.
+	OutputFormat string `json:"output_format"`
+}
+
+// GetDistributionID returns the value of DistributionID.
+func (s *ConversionRelationInput) GetDistributionID() uuid.UUID {
+	return s.DistributionID
+}
+
+// GetPluginID returns the value of PluginID.
+func (s *ConversionRelationInput) GetPluginID() uuid.UUID {
+	return s.PluginID
+}
+
+// GetInputFormat returns the value of InputFormat.
+func (s *ConversionRelationInput) GetInputFormat() string {
+	return s.InputFormat
+}
+
+// GetOutputFormat returns the value of OutputFormat.
+func (s *ConversionRelationInput) GetOutputFormat() string {
+	return s.OutputFormat
+}
+
+// SetDistributionID sets the value of DistributionID.
+func (s *ConversionRelationInput) SetDistributionID(val uuid.UUID) {
+	s.DistributionID = val
+}
+
+// SetPluginID sets the value of PluginID.
+func (s *ConversionRelationInput) SetPluginID(val uuid.UUID) {
+	s.PluginID = val
+}
+
+// SetInputFormat sets the value of InputFormat.
+func (s *ConversionRelationInput) SetInputFormat(val string) {
+	s.InputFormat = val
+}
+
+// SetOutputFormat sets the value of OutputFormat.
+func (s *ConversionRelationInput) SetOutputFormat(val string) {
+	s.OutputFormat = val
+}
+
+// Ref: #/components/schemas/ConversionRuntime
+type ConversionRuntime string
+
+const (
+	ConversionRuntimePython ConversionRuntime = "python"
+	ConversionRuntimeJava   ConversionRuntime = "java"
+	ConversionRuntimeBinary ConversionRuntime = "binary"
+)
+
+// AllValues returns all ConversionRuntime values.
+func (ConversionRuntime) AllValues() []ConversionRuntime {
+	return []ConversionRuntime{
+		ConversionRuntimePython,
+		ConversionRuntimeJava,
+		ConversionRuntimeBinary,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ConversionRuntime) MarshalText() ([]byte, error) {
+	switch s {
+	case ConversionRuntimePython:
+		return []byte(s), nil
+	case ConversionRuntimeJava:
+		return []byte(s), nil
+	case ConversionRuntimeBinary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ConversionRuntime) UnmarshalText(data []byte) error {
+	switch ConversionRuntime(data) {
+	case ConversionRuntimePython:
+		*s = ConversionRuntimePython
+		return nil
+	case ConversionRuntimeJava:
+		*s = ConversionRuntimeJava
+		return nil
+	case ConversionRuntimeBinary:
+		*s = ConversionRuntimeBinary
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/ConvertedFormat
 type ConvertedFormat struct {
 	Kind         ConvertedFormatKind `json:"kind"`
@@ -1494,6 +1679,85 @@ func (s *CreateContactPointRequest) SetEmail(val string) {
 // SetRole sets the value of Role.
 func (s *CreateContactPointRequest) SetRole(val NonBlankString) {
 	s.Role = val
+}
+
+type CreateConversionPluginAccepted ManagedConversionPlugin
+
+func (*CreateConversionPluginAccepted) createConversionPluginRes() {}
+
+type CreateConversionPluginCreated ManagedConversionPlugin
+
+func (*CreateConversionPluginCreated) createConversionPluginRes() {}
+
+// Ref: #/components/schemas/CreateConversionPluginRequest
+type CreateConversionPluginRequest struct {
+	Name        string    `json:"name"`
+	Description OptString `json:"description"`
+	// Public Git repository URL.
+	Repository string            `json:"repository"`
+	Branch     string            `json:"branch"`
+	Runtime    ConversionRuntime `json:"runtime"`
+	Arguments  []string          `json:"arguments"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateConversionPluginRequest) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *CreateConversionPluginRequest) GetDescription() OptString {
+	return s.Description
+}
+
+// GetRepository returns the value of Repository.
+func (s *CreateConversionPluginRequest) GetRepository() string {
+	return s.Repository
+}
+
+// GetBranch returns the value of Branch.
+func (s *CreateConversionPluginRequest) GetBranch() string {
+	return s.Branch
+}
+
+// GetRuntime returns the value of Runtime.
+func (s *CreateConversionPluginRequest) GetRuntime() ConversionRuntime {
+	return s.Runtime
+}
+
+// GetArguments returns the value of Arguments.
+func (s *CreateConversionPluginRequest) GetArguments() []string {
+	return s.Arguments
+}
+
+// SetName sets the value of Name.
+func (s *CreateConversionPluginRequest) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *CreateConversionPluginRequest) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetRepository sets the value of Repository.
+func (s *CreateConversionPluginRequest) SetRepository(val string) {
+	s.Repository = val
+}
+
+// SetBranch sets the value of Branch.
+func (s *CreateConversionPluginRequest) SetBranch(val string) {
+	s.Branch = val
+}
+
+// SetRuntime sets the value of Runtime.
+func (s *CreateConversionPluginRequest) SetRuntime(val ConversionRuntime) {
+	s.Runtime = val
+}
+
+// SetArguments sets the value of Arguments.
+func (s *CreateConversionPluginRequest) SetArguments(val []string) {
+	s.Arguments = val
 }
 
 // Ref: #/components/schemas/CreateDatasetResourceRequest
@@ -3556,6 +3820,12 @@ type DeleteConfigurationNoContent struct{}
 
 // DeleteContactPointNoContent is response for DeleteContactPoint operation.
 type DeleteContactPointNoContent struct{}
+
+// DeleteConversionPluginNoContent is response for DeleteConversionPlugin operation.
+type DeleteConversionPluginNoContent struct{}
+
+// DeleteConversionRelationNoContent is response for DeleteConversionRelation operation.
+type DeleteConversionRelationNoContent struct{}
 
 // DeleteGroupCategoryNoContent is response for DeleteGroupCategory operation.
 type DeleteGroupCategoryNoContent struct{}
@@ -6394,6 +6664,7 @@ const (
 	GlobalPermissionGlobalResourceUnpublish    GlobalPermission = "global.resource.unpublish"
 	GlobalPermissionGlobalCategoryManage       GlobalPermission = "global.category.manage"
 	GlobalPermissionGlobalConfigurationManage  GlobalPermission = "global.configuration.manage"
+	GlobalPermissionGlobalConverterManage      GlobalPermission = "global.converter.manage"
 )
 
 // AllValues returns all GlobalPermission values.
@@ -6417,6 +6688,7 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalResourceUnpublish,
 		GlobalPermissionGlobalCategoryManage,
 		GlobalPermissionGlobalConfigurationManage,
+		GlobalPermissionGlobalConverterManage,
 	}
 }
 
@@ -6458,6 +6730,8 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 	case GlobalPermissionGlobalCategoryManage:
 		return []byte(s), nil
 	case GlobalPermissionGlobalConfigurationManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalConverterManage:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -6520,6 +6794,9 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 		return nil
 	case GlobalPermissionGlobalConfigurationManage:
 		*s = GlobalPermissionGlobalConfigurationManage
+		return nil
+	case GlobalPermissionGlobalConverterManage:
+		*s = GlobalPermissionGlobalConverterManage
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -8240,6 +8517,146 @@ func (s *ListConfigurationsScope) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// Ref: #/components/schemas/ManagedConversionPlugin
+type ManagedConversionPlugin struct {
+	ID          uuid.UUID         `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Repository  string            `json:"repository"`
+	Branch      string            `json:"branch"`
+	Runtime     ConversionRuntime `json:"runtime"`
+	Arguments   []string          `json:"arguments"`
+	Enabled     bool              `json:"enabled"`
+	// Installation status on the responding converter instance.
+	Installed bool `json:"installed"`
+	// Git commit installed on the responding converter instance.
+	InstalledCommit NilString `json:"installed_commit"`
+	// Immutable creator user ID.
+	CreatedBy string `json:"created_by"`
+	// Last administrator to change the record.
+	UpdatedBy string `json:"updated_by"`
+}
+
+// GetID returns the value of ID.
+func (s *ManagedConversionPlugin) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *ManagedConversionPlugin) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *ManagedConversionPlugin) GetDescription() string {
+	return s.Description
+}
+
+// GetRepository returns the value of Repository.
+func (s *ManagedConversionPlugin) GetRepository() string {
+	return s.Repository
+}
+
+// GetBranch returns the value of Branch.
+func (s *ManagedConversionPlugin) GetBranch() string {
+	return s.Branch
+}
+
+// GetRuntime returns the value of Runtime.
+func (s *ManagedConversionPlugin) GetRuntime() ConversionRuntime {
+	return s.Runtime
+}
+
+// GetArguments returns the value of Arguments.
+func (s *ManagedConversionPlugin) GetArguments() []string {
+	return s.Arguments
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *ManagedConversionPlugin) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetInstalled returns the value of Installed.
+func (s *ManagedConversionPlugin) GetInstalled() bool {
+	return s.Installed
+}
+
+// GetInstalledCommit returns the value of InstalledCommit.
+func (s *ManagedConversionPlugin) GetInstalledCommit() NilString {
+	return s.InstalledCommit
+}
+
+// GetCreatedBy returns the value of CreatedBy.
+func (s *ManagedConversionPlugin) GetCreatedBy() string {
+	return s.CreatedBy
+}
+
+// GetUpdatedBy returns the value of UpdatedBy.
+func (s *ManagedConversionPlugin) GetUpdatedBy() string {
+	return s.UpdatedBy
+}
+
+// SetID sets the value of ID.
+func (s *ManagedConversionPlugin) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *ManagedConversionPlugin) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *ManagedConversionPlugin) SetDescription(val string) {
+	s.Description = val
+}
+
+// SetRepository sets the value of Repository.
+func (s *ManagedConversionPlugin) SetRepository(val string) {
+	s.Repository = val
+}
+
+// SetBranch sets the value of Branch.
+func (s *ManagedConversionPlugin) SetBranch(val string) {
+	s.Branch = val
+}
+
+// SetRuntime sets the value of Runtime.
+func (s *ManagedConversionPlugin) SetRuntime(val ConversionRuntime) {
+	s.Runtime = val
+}
+
+// SetArguments sets the value of Arguments.
+func (s *ManagedConversionPlugin) SetArguments(val []string) {
+	s.Arguments = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *ManagedConversionPlugin) SetEnabled(val bool) {
+	s.Enabled = val
+}
+
+// SetInstalled sets the value of Installed.
+func (s *ManagedConversionPlugin) SetInstalled(val bool) {
+	s.Installed = val
+}
+
+// SetInstalledCommit sets the value of InstalledCommit.
+func (s *ManagedConversionPlugin) SetInstalledCommit(val NilString) {
+	s.InstalledCommit = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *ManagedConversionPlugin) SetCreatedBy(val string) {
+	s.CreatedBy = val
+}
+
+// SetUpdatedBy sets the value of UpdatedBy.
+func (s *ManagedConversionPlugin) SetUpdatedBy(val string) {
+	s.UpdatedBy = val
 }
 
 // Role assigned to a user inside a group.
@@ -11405,6 +11822,96 @@ func (s *ReplaceContactPointRequest) SetEmail(val string) {
 // SetRole sets the value of Role.
 func (s *ReplaceContactPointRequest) SetRole(val NonBlankString) {
 	s.Role = val
+}
+
+type ReplaceConversionPluginAccepted ManagedConversionPlugin
+
+func (*ReplaceConversionPluginAccepted) replaceConversionPluginRes() {}
+
+type ReplaceConversionPluginOK ManagedConversionPlugin
+
+func (*ReplaceConversionPluginOK) replaceConversionPluginRes() {}
+
+// Ref: #/components/schemas/ReplaceConversionPluginRequest
+type ReplaceConversionPluginRequest struct {
+	Name        string    `json:"name"`
+	Description OptString `json:"description"`
+	// Public Git repository URL.
+	Repository string            `json:"repository"`
+	Branch     string            `json:"branch"`
+	Runtime    ConversionRuntime `json:"runtime"`
+	Arguments  []string          `json:"arguments"`
+	Enabled    bool              `json:"enabled"`
+}
+
+// GetName returns the value of Name.
+func (s *ReplaceConversionPluginRequest) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *ReplaceConversionPluginRequest) GetDescription() OptString {
+	return s.Description
+}
+
+// GetRepository returns the value of Repository.
+func (s *ReplaceConversionPluginRequest) GetRepository() string {
+	return s.Repository
+}
+
+// GetBranch returns the value of Branch.
+func (s *ReplaceConversionPluginRequest) GetBranch() string {
+	return s.Branch
+}
+
+// GetRuntime returns the value of Runtime.
+func (s *ReplaceConversionPluginRequest) GetRuntime() ConversionRuntime {
+	return s.Runtime
+}
+
+// GetArguments returns the value of Arguments.
+func (s *ReplaceConversionPluginRequest) GetArguments() []string {
+	return s.Arguments
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *ReplaceConversionPluginRequest) GetEnabled() bool {
+	return s.Enabled
+}
+
+// SetName sets the value of Name.
+func (s *ReplaceConversionPluginRequest) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *ReplaceConversionPluginRequest) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetRepository sets the value of Repository.
+func (s *ReplaceConversionPluginRequest) SetRepository(val string) {
+	s.Repository = val
+}
+
+// SetBranch sets the value of Branch.
+func (s *ReplaceConversionPluginRequest) SetBranch(val string) {
+	s.Branch = val
+}
+
+// SetRuntime sets the value of Runtime.
+func (s *ReplaceConversionPluginRequest) SetRuntime(val ConversionRuntime) {
+	s.Runtime = val
+}
+
+// SetArguments sets the value of Arguments.
+func (s *ReplaceConversionPluginRequest) SetArguments(val []string) {
+	s.Arguments = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *ReplaceConversionPluginRequest) SetEnabled(val bool) {
+	s.Enabled = val
 }
 
 // Ref: #/components/schemas/ReplaceDatasetDraftRequest
@@ -16132,8 +16639,9 @@ type WebServiceDistribution struct {
 	Modified    OptNilDateTime             `json:"modified"`
 	ByteSize    OptNilInt64                `json:"byte_size"`
 	WebService  WebService                 `json:"web_service"`
-	// Computed formats for this resource version. Currently ORIGINAL entries only. WMS and WMTS return
-	// image/png as a platform requirement; client must verify provider support.
+	// Native formats and conversions whose plugins are enabled and locally installed. If converter is
+	// unavailable, only native formats are returned. WMS and WMTS return image/png as a platform
+	// requirement; client must verify provider support.
 	AvailableFormats []AvailableFormat `json:"available_formats"`
 }
 

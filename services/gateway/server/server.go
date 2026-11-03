@@ -20,7 +20,7 @@ import (
 	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 )
 
-func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, dataRetrieverClient *clients.DataRetriever, sharingClient *clients.Sharing, authService *auth.Service) error {
+func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, dataRetrieverClient *clients.DataRetriever, converterClient *clients.Converter, sharingClient *clients.Sharing, authService *auth.Service) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -43,7 +43,7 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 	identitySvc := identity.NewService(baseLog, metadataLifecycleClient)
 	membershipSvc := membership.NewService(baseLog, metadataLifecycleClient)
 	sharingSvc := sharingservice.NewService(sharingClient)
-	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, dataRetrieverClient, sharingSvc, authService, cfg.Server.CORSAllowOrigin, cfg.Server.RequestTimeout)
+	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, dataRetrieverClient, converterClient, sharingSvc, authService, cfg.Server.CORSAllowOrigin, cfg.Server.RequestTimeout)
 
 	// WriteTimeout stays disabled because distribution downloads stream large responses.
 	srv := &http.Server{

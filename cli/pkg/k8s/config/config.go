@@ -34,6 +34,7 @@ func GetDefaultConfig() *Config {
 	for _, password := range []*string{
 		&config.Components.MetadataDatabase.Password,
 		&config.Components.DataRetrieverDatabase.Password,
+		&config.Components.ConverterDatabase.Password,
 		&config.Components.SharingDatabase.Password,
 		&config.Components.AAIService.Password,
 		&config.Components.OpenTelemetry.AdminPassword,
@@ -210,11 +211,14 @@ func (c *Config) Validate() error {
 	if c.Components.AAIService.Enabled && c.Images.AAIServiceImage == "" {
 		return fmt.Errorf("aai service image is required when aai service is enabled")
 	}
-	if c.Images.MetadataLifecycleImage == "" || c.Images.DataRetrieverImage == "" || c.Images.SharingServiceImage == "" {
-		return fmt.Errorf("metadata lifecycle, data retriever, and sharing images are required")
+	if c.Images.MetadataLifecycleImage == "" || c.Images.DataRetrieverImage == "" || c.Images.ConverterImage == "" || c.Images.SharingServiceImage == "" {
+		return fmt.Errorf("metadata lifecycle, data retriever, converter, and sharing images are required")
 	}
 	if c.Components.DataRetrieverDatabase.Enabled && c.Images.DataRetrieverDBImage == "" {
 		return fmt.Errorf("data retriever database image is required when managed")
+	}
+	if c.Components.ConverterDatabase.Enabled && c.Images.ConverterDBImage == "" {
+		return fmt.Errorf("converter database image is required when managed")
 	}
 	if c.Components.SharingDatabase.Enabled && c.Images.SharingDBImage == "" {
 		return fmt.Errorf("sharing database image is required when managed")
@@ -317,6 +321,7 @@ func (c *Config) Validate() error {
 		db   MetadataDatabase
 	}{
 		{"data retriever", c.Components.DataRetrieverDatabase},
+		{"converter", c.Components.ConverterDatabase},
 		{"sharing", c.Components.SharingDatabase},
 	} {
 		if item.db.Host == "" || item.db.Port < 1 || item.db.Port > 65535 || item.db.User == "" || item.db.Password == "" || item.db.DBName == "" {
