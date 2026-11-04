@@ -26,8 +26,8 @@ export class LandingService extends BaseLandingService {
   }
 
   /**
-   * The function retrieves a list of domains from an API service, adds two additional domains to the
-   * list, sorts the list by ID, and updates the source of the domains.
+   * The function retrieves ordered domains from an API service, adds ALL and Favourites, and updates
+   * the source of the domains.
    */
   public getDomains(): void {
     void this.loggingService.logForPromise(
@@ -36,8 +36,8 @@ export class LandingService extends BaseLandingService {
     ).then((r: null | Array<Domain>) => {
 
       if (r !== null) {
-        // add ALL
-        r.push({
+        // add ALL and favourites before the ordered TCS domains
+        r.unshift({
           id: '0',
           title: 'All facilities',
           code: 'ALL',
@@ -45,10 +45,7 @@ export class LandingService extends BaseLandingService {
           imgUrl: 'assets/img/see_all.png',
           domain: false,
           color: '#fff',
-        });
-
-        // add FAC
-        r.push({
+        }, {
           id: '100',
           title: 'Favourites',
           code: 'FAV',
@@ -57,9 +54,6 @@ export class LandingService extends BaseLandingService {
           domain: false,
           color: '#fff',
         });
-
-        // order by id
-        r.sort((a, b) => (a.id !== undefined && Number(a.id)) > (b.id !== undefined && Number(b.id)) ? 1 : -1);
 
         this.domainsSrc.next(r);
       }

@@ -75,6 +75,7 @@ describe('Filter by categories', () => {
 
     // The badge should be visible and have the correct number
     cy.getByDataCy('categories-filtered-badge')
+      .find('.mat-badge-content')
       .should('be.visible')
       .and('have.text', '2');
 

@@ -63,6 +63,16 @@ export class DevCompositeApi implements Api {
     return this.detailsApi.getDetailsById(id, context);
   }
 
+  getResourceVersionDistributionDetails(
+    resourceType: string,
+    resourceId: string,
+    versionId: string,
+    distributionId: string,
+    summary: DistributionSummary,
+  ): Promise<DistributionDetails> {
+    return this.detailsApi.getResourceVersionDistributionDetails(resourceType, resourceId, versionId, distributionId, summary);
+  }
+
   // ---------------------------
 
   doSearch(searchCriteriaMap: Map<SearchCriteria, unknown>): Promise<Array<ItemSummary>> {

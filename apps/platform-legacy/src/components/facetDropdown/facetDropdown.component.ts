@@ -114,6 +114,11 @@ export class FacetDropdownComponent {
         const selectedfacetFlatNode = facetFlatNodeArr.find((node: FacetFlatNode) => node.name === facet);
         if (null != selectedfacetFlatNode) {
           this.facetItemSelectionSelect(selectedfacetFlatNode);
+          let parent = this.getParentNode(selectedfacetFlatNode);
+          while (parent != null) {
+            this.treeControl.expand(parent);
+            parent = this.getParentNode(parent);
+          }
         }
       }),
     );
@@ -124,7 +129,8 @@ export class FacetDropdownComponent {
     const treeData = new Array<DistributionLevel>();
     if (distFacetModelSource != null) {
       distFacetModelSource.roots().forEach((root: Facet<DistributionSummary>) => {
-        root.getChildren().filter((rootDomain) => rootDomain.getName() === this.activeDomain.title).forEach((rootChild) => {
+        root.getChildren().filter(rootDomain =>
+          this.activeDomain.code === 'ALL' || rootDomain.getName() === this.activeDomain.title).forEach((rootChild) => {
           const distributionLevel = this.recursiveNestedTreeObjectArray(rootChild, 0);
           treeData.push(distributionLevel);
         });

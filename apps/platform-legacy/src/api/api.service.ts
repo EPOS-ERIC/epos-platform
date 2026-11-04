@@ -148,6 +148,17 @@ export class ApiService implements Api {
     return this.delegate!.getDetailsById(id, context);
   }
 
+  public getResourceVersionDistributionDetails(
+    resourceType: string,
+    resourceId: string,
+    versionId: string,
+    distributionId: string,
+    summary: DistributionSummary,
+  ): Promise<DistributionDetails> {
+    this.checkApiBeforeCall();
+    return this.delegate!.getResourceVersionDistributionDetails(resourceType, resourceId, versionId, distributionId, summary);
+  }
+
   // exectution
   public executeAuthenticatedUrl(
     url: string,

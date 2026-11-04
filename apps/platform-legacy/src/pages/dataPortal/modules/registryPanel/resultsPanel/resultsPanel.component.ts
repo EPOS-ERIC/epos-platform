@@ -81,7 +81,7 @@ export class ResultsPanelComponent extends BaseResultsPanelComponent implements 
 
               this.onChangeResponse(discoverResponse, this.model.domainMIReg, null);
 
-              this.resultPanelService.setCounterRegistry(this.data.length);
+              this.resultPanelService.setCounterRegistry(this.resultCount);
 
             }),
 

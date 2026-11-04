@@ -18,6 +18,8 @@ import { SimpleDistributionLevel } from 'api/webApi/data/impl/SimpleDistribution
 import { NotificationService } from 'services/notification.service';
 import { Tracker } from 'utility/tracker/tracker.service';
 import { TrackerAction, TrackerCategory } from 'utility/tracker/tracker.enum';
+import { JSONDistributionFactory } from 'api/webApi/data/impl/jsonDistributionFactory';
+import { DistributionSummary } from 'api/webApi/data/distributionSummary.interface';
 
 
 export class DataConfigurableDataSearch
@@ -81,7 +83,24 @@ export class DataConfigurableDataSearch
     context: string,
   ): Promise<null | DataConfigurableDataSearch> {
     const searchService = injector.get(SearchService);
-    return Promise.resolve<null | DataConfigurableDataSearch>(searchService.getDetailsById(String(object.id), context)
+    let details: Promise<DistributionDetails>;
+    if (typeof object.resourceId === 'string' && typeof object.versionId === 'string') {
+      const summary = JSONDistributionFactory.jsonToDistributionSummary(object).orNull();
+      if (summary === null) {
+        return Promise.reject(new Error('Invalid shared distribution summary'));
+      }
+      summary.resourceVersion = {
+        resourceType: object.resourceType as NonNullable<DistributionSummary['resourceVersion']>['resourceType'],
+        resourceId: object.resourceId,
+        versionId: object.versionId,
+      };
+      details = searchService.getResourceVersionDistributionDetails(
+        summary.resourceVersion.resourceType, object.resourceId, object.versionId, String(object.id), summary,
+      );
+    } else {
+      details = searchService.getDetailsById(String(object.id), context);
+    }
+    return Promise.resolve<null | DataConfigurableDataSearch>(details
       .then((dist: DistributionDetails) => {
         const paramValues = (object.paramValues as Array<Record<string, unknown>>)
           .map((obj: Record<string, unknown>) => new SimpleParameterValue(String(obj.name), String(obj.value)));
@@ -170,6 +189,20 @@ public getUid(): string {
   public toSimpleObject(): Record<string, unknown> {
     return {
       id: this.id,
+      resourceType: this.distributionDetails.resourceVersion?.resourceType,
+      resourceId: this.distributionDetails.resourceVersion?.resourceId,
+      versionId: this.distributionDetails.resourceVersion?.versionId,
+      title: this.name,
+      availableFormats: this.distributionDetails.getFormats().map(format => ({
+        label: format.getLabel(),
+        format: format.getFormat(),
+        originalFormat: format.getOriginalFormat(),
+        href: format.getUrl(),
+        type: format.getType(),
+      })),
+      status: this.distributionDetails.getStatus(),
+      statusTimestamp: this.distributionDetails.getStatusTimestamp(),
+      statusURL: this.distributionDetails.getStatusURL(),
       paramValues: this.currentParamValues.slice(),
       style: this.getStyle(),
       pinned: this.isPinned(),
@@ -179,7 +212,6 @@ public getUid(): string {
       showSpatialCoverage: this.getShowSpatialCoverage(),
       levels: this.getLevels(),
       layerBbox: this.getLayerBbox(),
-      uid: this.uid,
     };
   }
 

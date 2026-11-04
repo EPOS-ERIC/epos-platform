@@ -37,6 +37,9 @@ import { MetaDataStatusService } from 'services/metaDataStatus.service';
 import { Model } from 'services/model/model.service';
 import { AaaiService } from 'api/aaai.service';
 import { AAAIUser } from 'api/aaai/aaaiUser.interface';
+import { CONTEXT_FACILITY, CONTEXT_RESOURCE } from 'api/api.service.factory';
+import { DatasetSummary } from 'api/webApi/data/datasetSummary.interface';
+import { ViewType } from 'api/webApi/data/viewType.enum';
 
 @Unsubscriber(['domainSubscription', 'subscriptions'])
 @Component({
@@ -103,6 +106,10 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
 
   private lastGoodSelectedConfigurableId: string;
   private wasAuthenticatedUser = false;
+  private datasets: DatasetSummary[] | null = null;
+  private selectedDatasetFacets = new Set<string>();
+  private discoverResponse: DiscoverResponse | null = null;
+  private readonly providerOrganizationUrls = new Map<string, Promise<string>>();
 
   constructor(
     public readonly configurables: DataSearchConfigurablesService,
@@ -124,6 +131,18 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
 
   }
 
+  public get hasVersionedResources(): boolean {
+    return this.datasets !== null || this.data?.some(item => item.distSummary.resourceVersion != null) === true;
+  }
+
+  public get resultCount(): number {
+    return this.datasets !== null ? this.data.filter(item => !item.hideToResult).length : this.data.length;
+  }
+
+  public get displayedResultCount(): number {
+    return this.dataSource?.filteredData.length ?? 0;
+  }
+
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(): void {
     this.configurables.setSelected(null, true);
@@ -132,9 +151,13 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
   public onChangeDomain(selectedDomain: Domain): void {
     this.resultPanelService.clearFacetSelection();
     this.activeDomain = selectedDomain;
+    this.selectedDatasetFacets.clear();
     this.refresh(this.activeDomain);
     this.activeDomainData = this.configurables.getDomainInfoBy(this.domains, this.activeDomain.code, 'code');
     this.totalFacetsSelected = 0;
+    if (!this.facetExpansionHidden) {
+      this.loadFacetCategories();
+    }
     setTimeout(() => {
       this.panelsEvent.dataPanelToggle();
     }, 100);
@@ -152,6 +175,7 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
    * or `null`. If it holds a value of `TypeDataMI`, it will be used to filter the
    */
   public onChangeResponse(discoverResponse: DiscoverResponse, domainMI: DomainMI, filterType: TypeDataMI | null): void {
+    this.discoverResponse = discoverResponse;
     let results: null | FacetModel<DistributionSummary> = null;
     if (discoverResponse != null) {
       results = discoverResponse.results();
@@ -159,10 +183,51 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
 
     this.activeDomain = domainMI.get();
 
-    const filterTypeArray = filterType !== null ? filterType.get() : [];
+    const filterTypeArray = filterType !== null ? filterType.get() ?? [] : [];
 
+    this.datasets = this.context === CONTEXT_RESOURCE || this.context === CONTEXT_FACILITY ? discoverResponse?.datasets?.() ?? null : null;
+    if (this.datasets !== null) {
+      const groupIds = new Set(this.domains.map(domain => domain.code));
+      this.datasets.forEach(dataset => {
+        if (!groupIds.has(dataset.group.id)) {
+          this.domains.push({ id: dataset.group.id, code: dataset.group.id, title: dataset.group.name, color: '#fff' });
+          groupIds.add(dataset.group.id);
+        }
+      });
+      const groupLogos = new Map<string, string>([
+        ['Seismology', 'SEISM_logo.png'],
+        ['Near Fault Observatories', 'NFO_logo.png'],
+        ['GNSS Data and Products', 'GNSS_logo.png'],
+        ['Volcano Observations', 'VOLCANO_logo.png'],
+        ['Satellite Data', 'SATELLITE_logo.png'],
+        ['Geomagnetic Observations', 'GEOMAG_logo.png'],
+        ['Anthropogenic Hazards', 'ANTHROPO_logo.png'],
+        ['Geological Information and Modeling', 'MODELING_logo.png'],
+        ['Multi-scale Laboratories', 'LABS_logo.png'],
+        ['Laboratories', 'LABS_logo.png'],
+        ['Tsunami', 'TSU_logo.png'],
+      ]);
+      this.domains.forEach(domain => {
+        const logo = groupLogos.get(domain.title ?? '');
+        if (logo !== undefined && !domain.imgUrl) {
+          domain.imgUrl = `assets/img/logo/${logo}`;
+        }
+      });
+    }
+    this.activeDomainData = this.configurables.getDomainInfoBy(this.domains, this.activeDomain.code, 'code');
     this.createItemsDisplay(results, filterTypeArray as Array<string>);
+    this.selectedDatasetFacets.clear();
     this.rawTreeData = results;
+    if (!this.facetExpansionHidden) {
+      this.loadFacetCategories();
+    }
+    this.data.filter(item => !item.hideToResult && item.distSummary.resourceVersion != null).forEach(item => {
+      item.levels = item.levels.map(levels => levels.slice(0, -1));
+      const resourceVersion = item.distSummary.resourceVersion!;
+      const dataset = this.datasets?.find(candidate => candidate.resourceId === resourceVersion.resourceId
+        && candidate.versionId === resourceVersion.versionId);
+      item.cardProviderName = dataset?.distributions.find(distribution => distribution.id === item.distId)?.provider?.name;
+    });
 
     this.refresh(this.activeDomain);
     this.totalFacetsSelected = 0;
@@ -280,6 +345,7 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
             this.resultPanelService.openFacetSelectionObs.subscribe((open: boolean) => {
               if (open) {
                 this.facetExpansionHidden = false;
+                this.loadFacetCategories();
               }
             }),
           );
@@ -323,7 +389,7 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
     /* IF (contains): dialog show up conditions */
 
     // If (there's an element expanded and new element is not the current one) AND (this current element is not pinned and new element is pinned OR this current element is not pinned and new is not pinned)
-    if(((this.expandedElement !== null) && (this.expandedElement.id !== expandedElement!.id)) && ((!this.configurables.isPinned(this.expandedElement!.id) && this.configurables.isPinned(expandedElement!.id)) || (!this.configurables.isPinned(this.expandedElement!.id) && !this.configurables.isPinned(expandedElement!.id)))){
+    if(((this.expandedElement !== null) && !this.isDistributionExpanded(expandedElement)) && ((!this.configurables.isPinned(this.expandedElement!.id) && this.configurables.isPinned(expandedElement!.id)) || (!this.configurables.isPinned(this.expandedElement!.id) && !this.configurables.isPinned(expandedElement!.id)))){
       // If dialogcheck == null (first time) OR dialogcheck == false, show dialog
       if(this.localStoragePersister.getValue(LocalStorageVariables.LS_SWITCH_DISTRIBUTION_ITEM_CHECK) === null || this.localStoragePersister.getValue(LocalStorageVariables.LS_SWITCH_DISTRIBUTION_ITEM_CHECK as string) === 'false'){
         this.openSwitchItemConfirmationDialog(expandedElement);
@@ -341,11 +407,14 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
   /* The 'toggleExpandItem' function executes the actual instructions for the select(), which performs some controls, based on whom, will either call this function or not.  */
   public toggleExpandItem(expandedElement: DistributionItem): Promise<void>{
 
-    this.expandedElement = this.expandedElement !== null && this.expandedElement.id === expandedElement!.id ? null : expandedElement;
+    this.expandedElement = this.isDistributionExpanded(expandedElement) ? null : expandedElement;
 
     this.messageShow = false;
 
     if (this.expandedElement !== null) {
+      if (this.expandedElement.distSummary.resourceVersion != null && !this.expandedElement.metadataLoaded) {
+        void this.loadCardMetadata(this.expandedElement).catch(error => console.error('Unable to load resource card metadata', error));
+      }
       if(!this.configurables.isPinned(this.expandedElement.distId)){
         // Send the notification
         this.loadingNotification(this.expandedElement!.distId);
@@ -487,11 +556,16 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
    * @param {DistributionItem} element - The parameter `element` is of type `DistributionItem`.
    */
   public openDialog(element: DistributionItem): void {
+    const resourceVersion = element.distSummary.resourceVersion;
     void this.dialogService.openDetailsDialog(
       element.id,
       this.context,
       this.domains,
       '50vw',
+      resourceVersion != null ? {
+        ...resourceVersion,
+        summary: element.distSummary,
+      } : undefined,
     );
   }
 
@@ -584,9 +658,18 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
 
   public toggleFacetExpansionPanel(): void {
     this.facetExpansionHidden = !this.facetExpansionHidden;
+    if (!this.facetExpansionHidden) {
+      this.loadFacetCategories();
+    }
   }
 
   public setSelectedFacets(data: Array<FacetFlatNode>): void {
+    if (this.hasVersionedResources) {
+      this.selectedDatasetFacets = new Set(data.map(node => node.distId));
+      this.refresh(this.activeDomain);
+      this.resetPagination();
+      return;
+    }
     const facetSet = new Set<DistributionItem>();
     const domainFilteredData = this.data.filter(o => o.code === this.activeDomain.code);
     domainFilteredData.filter((item: DistributionItem) => {
@@ -619,6 +702,11 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
     this.messageShow = showMessage;
   }
 
+  public isDistributionExpanded(item: DistributionItem): boolean {
+    return this.expandedElement !== null && this.expandedElement.id === item.id && this.expandedElement.datasetKey === item.datasetKey;
+  }
+
+
   /**
    * The function `resetVersion` checks a value in local storage and updates it if necessary.
    */
@@ -640,6 +728,9 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
    */
   protected updateConfigs(): void {
     const allConfigurables = this.configurables.getAll().slice();
+    if (this.datasets !== null) {
+      this.data.forEach(item => { item.isPinned = this.configurables.isPinned(item.distId); });
+    }
 
     this.ensureReloadFuncSet(allConfigurables);
 
@@ -661,15 +752,71 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
 
   }
 
-  /**
-   * The function "refresh" updates the data source for a table based on the selected domain and
-   * filters the data accordingly.
-   * @param {Domain} domain - The `domain` parameter is an object that represents a domain. It has a
-   * property `code` which is a string representing the code of the domain.
-   */
+  private loadFacetCategories(): void {
+    const response = this.discoverResponse;
+    const domainCode = this.activeDomain.code;
+    if (response?.loadCategories == null || domainCode === 'FAV') {
+      return;
+    }
+    void response.loadCategories(domainCode === 'ALL' ? undefined : domainCode).then(results => {
+      if (this.discoverResponse === response && this.activeDomain.code === domainCode && this.rawTreeData !== results) {
+        this.rawTreeData = results;
+      }
+    }).catch(error => {
+      if (this.discoverResponse === response && this.activeDomain.code === domainCode) {
+        console.error('Unable to load categories', error);
+        this.notification.sendErrorNotification('Close and reopen the filter to retry.', 'Unable to load categories');
+      }
+    });
+  }
+
+  private async loadCardMetadata(item: DistributionItem): Promise<void> {
+    const resourceVersion = item.distSummary.resourceVersion!;
+    const details = await this.searchService.getResourceVersionDistributionDetails(
+      resourceVersion.resourceType, resourceVersion.resourceId, resourceVersion.versionId, item.distId, item.distSummary,
+    );
+    item.levels = details.getCategories()?.children.flatMap(group => {
+      const root: DistributionLevel = { id: 0, value: group.name, distId: group.code, level: 0 };
+      return group.children.length === 0 ? [[root]] : group.children.map(category => [
+        root, { id: 1, value: category.name, distId: category.code, level: 1, parentName: group.name },
+      ]);
+    }) ?? [];
+    const provider = details.getWebServiceProvider();
+    item.cardProviderName = provider?.dataProviderLegalName ?? '';
+    item.cardProviderUrl = provider?.dataProviderUrl ?? '';
+    item.cardCreators = details.getCreator().map(creator => ({ ...creator }));
+    item.visibility = [
+      !(details.isMappable || details.isTabularable || details.isGraphable) ? 'Not viewable' : '',
+      details.isMappable ? ViewType.MAP : '',
+      details.isTabularable ? ViewType.TABLE : '',
+      details.isGraphable ? ViewType.GRAPH : '',
+    ];
+    item.metadataLoaded = true;
+    if (!item.cardProviderUrl && provider?.dataProviderId) {
+      item.cardProviderUrl = await this.getProviderOrganizationUrl(provider.dataProviderId);
+    }
+    await Promise.all(item.cardCreators.map(async creator => {
+      if (!creator.url && creator.uid) {
+        creator.url = await this.getProviderOrganizationUrl(creator.uid);
+      }
+    }));
+  }
+
+  private getProviderOrganizationUrl(providerId: string): Promise<string> {
+    let url = this.providerOrganizationUrls.get(providerId);
+    if (url === undefined) {
+      url = this.searchService.getOrganizationById(providerId).then(organization => organization?.getUrl() ?? '').catch(error => {
+        this.providerOrganizationUrls.delete(providerId);
+        throw error;
+      });
+      this.providerOrganizationUrls.set(providerId, url);
+    }
+    return url;
+  }
+
   private refresh(domain: Domain): void {
     if (null != this.data) {
-      let basicItemList = this.data;
+      let basicItemList = this.datasets !== null ? this.data.filter(item => !item.hideToResult) : this.data;
       if (domain.code === 'FAV') {
 
         basicItemList = [];
@@ -687,13 +834,27 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
         if (this.filteredFacetData.length !== 0 && this.filteredFacetData[0].code === domain.code) {
           basicItemList = this.filteredFacetData;
         } else {
-          basicItemList = this.data.filter((item: DistributionItem) => item.code === domain.code);
+          basicItemList = basicItemList.filter((item: DistributionItem) => item.code === domain.code);
           this.filteredFacetData = [];
         }
       }
 
       this.totalFacetsSelected = this.filteredFacetData.length;
       this.dataSource = new MatTableDataSource<DistributionItem>(basicItemList);
+      if (this.hasVersionedResources && domain.code !== 'FAV' && this.selectedDatasetFacets.size > 0) {
+        this.dataSource.data = basicItemList.filter(item => {
+          const resourceVersion = item.distSummary.resourceVersion;
+          if (this.datasets !== null) {
+            return this.datasets.some(dataset => dataset.distributions.some(distribution => distribution.id === item.distId)
+              && (this.selectedDatasetFacets.has(`${dataset.resourceId}:${dataset.versionId}`)
+                || this.selectedDatasetFacets.has(dataset.group.id)
+                || dataset.categories.some(category => this.selectedDatasetFacets.has(category.id))));
+          }
+          return this.selectedDatasetFacets.has(`${resourceVersion?.resourceId}:${resourceVersion?.versionId}`)
+            || item.levels.some(levels => levels.some(level => this.selectedDatasetFacets.has(level.distId ?? '')));
+        });
+        this.totalFacetsSelected = this.dataSource.data.length;
+      }
       this.dataSource.paginator = this.paginator;
     }
   }
@@ -817,8 +978,22 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
    * is found.
    */
   private async getProviderDetails(distId: string): Promise<ProviderDetails | null> {
+    const dataset = this.datasets?.find(item => item.distributions.some(distribution => distribution.id === distId));
+    if (dataset != null) {
+      const provider = dataset.distributions.find(distribution => distribution.id === distId)?.provider;
+      if (!provider?.id || !provider.name) {
+        return null;
+      }
+      return { providerName: provider.name, providerUrl: null, providerId: provider.id };
+    }
+
     // Get the details
-    const details = await this.searchService.getDetailsById(distId, this.context);
+    const summary = this.data.find(item => item.distId === distId)?.distSummary;
+    const resourceVersion = summary?.resourceVersion;
+    const details = resourceVersion != null
+      ? await this.searchService.getResourceVersionDistributionDetails(
+        resourceVersion.resourceType, resourceVersion.resourceId, resourceVersion.versionId, distId, summary!,
+      ) : await this.searchService.getDetailsById(distId, this.context);
 
     const providerName = details.getWebServiceProvider()?.dataProviderLegalName;
     const providerUrl = details.getWebServiceProvider()?.dataProviderUrl;

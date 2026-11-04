@@ -10,7 +10,9 @@
     <div class="detail-section-header">
       <div>
         <h2>Contact Points</h2>
-        <p class="subtitle app-muted">Search the catalog, filter by role, then add the contact points you need.</p>
+        @if (!selectedOnlyView()) {
+          <p class="subtitle app-muted">Search the catalog, filter by role, then add the contact points you need.</p>
+        }
       </div>
     </div>
   }
@@ -19,7 +21,7 @@
     <div class="detail-empty">Loading contact points...</div>
   } @else if (error()) {
     <div class="detail-empty">{{ error() }}</div>
-  } @else if (readonlyView) {
+  } @else if (selectedOnlyView()) {
     @if (hasSelection()) {
       <ul class="contact-points-list contact-points-list--assigned">
         @for (contactPoint of selectedContactPoints(); track contactPoint.id) {

@@ -31,10 +31,7 @@ describe('DistributionComponent', () => {
     fixture.componentRef.setInput('disabled', true);
     fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('.distribution-actions button') as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-    button.click();
-
+    expect(fixture.nativeElement.querySelector('.distribution-actions')).toBeNull();
     expect(emissions).toHaveLength(0);
   });
 

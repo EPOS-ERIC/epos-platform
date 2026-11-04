@@ -71,7 +71,9 @@
             <p class="subtitle app-muted">Resource creators.</p>
           </div>
 
-          <button type="button" class="app-button app-button--ghost app-button--icon" (click)="addCreator()" aria-label="Add creator">+</button>
+          @if (!disabled) {
+            <button type="button" class="app-button app-button--ghost app-button--icon" (click)="addCreator()" aria-label="Add creator">+</button>
+          }
         </div>
 
         <ul class="identifier-list">
@@ -88,7 +90,9 @@
                   <input class="app-input" type="text" [(ngModel)]="creator.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                 </label>
 
-                <button type="button" class="app-button app-button--ghost coordinate-remove" (click)="removeCreator($index)">Remove</button>
+                @if (!disabled) {
+                  <button type="button" class="app-button app-button--ghost coordinate-remove" (click)="removeCreator($index)">Remove</button>
+                }
               </div>
             </li>
           }
@@ -159,7 +163,9 @@
             <p class="subtitle app-muted">Resource creators.</p>
           </div>
 
-          <button type="button" class="app-button app-button--ghost app-button--icon" (click)="addCreator()" aria-label="Add creator">+</button>
+          @if (!disabled) {
+            <button type="button" class="app-button app-button--ghost app-button--icon" (click)="addCreator()" aria-label="Add creator">+</button>
+          }
         </div>
 
         <ul class="identifier-list">
@@ -176,7 +182,9 @@
                   <input class="app-input" type="text" [(ngModel)]="creator.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
                 </label>
 
-                <button type="button" class="app-button app-button--ghost coordinate-remove" (click)="removeCreator($index)">Remove</button>
+                @if (!disabled) {
+                  <button type="button" class="app-button app-button--ghost coordinate-remove" (click)="removeCreator($index)">Remove</button>
+                }
               </div>
             </li>
           }

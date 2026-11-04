@@ -13,6 +13,7 @@ import { JSONDistributionFactory } from 'api/webApi/data/impl/jsonDistributionFa
  * - Returns the appropriate response to the caller
  */
 export class DevDetailsApi implements DetailsApi {
+  private readonly resourceVersionResponses = new Map<string, Promise<unknown>>();
 
   constructor(private readonly baseUrl: BaseUrl, private readonly rest: Rest) { }
 
@@ -36,6 +37,39 @@ export class DevDetailsApi implements DetailsApi {
 
       return Promise.resolve(details.get());
     });
+  }
+
+  public getResourceVersionDistributionDetails(
+    resourceType: string,
+    resourceId: string,
+    versionId: string,
+    distributionId: string,
+    summary: DistributionSummary,
+  ): Promise<DistributionDetails> {
+    const url = this.baseUrl.urlBuilder()
+      .addPathElements('resources', resourceType, resourceId, 'versions', versionId)
+      .build();
+
+    let response = this.resourceVersionResponses.get(url);
+    if (response === undefined) {
+      response = this.rest.get(url).catch(error => {
+        this.resourceVersionResponses.delete(url);
+        throw error;
+      });
+      this.resourceVersionResponses.set(url, response);
+    }
+    return response
+      .then(json => {
+        if (typeof json !== 'object' || json === null || Array.isArray(json)) {
+          throw new Error(`Invalid resource version response for ${versionId}`);
+        }
+        const accessUrl = this.baseUrl.urlBuilder().addPathElements('distributions', distributionId, 'access').build();
+        const details = JSONDistributionFactory.jsonToResourceVersionDistributionDetails(json as Record<string, unknown>, distributionId, summary, accessUrl);
+        if (details.isEmpty()) {
+          return Promise.reject(new Error(`Distribution ${distributionId} not found in resource version ${versionId}`));
+        }
+        return details.get()!;
+      });
   }
 
   private buildDetailsURL(id: string, context: string): string {

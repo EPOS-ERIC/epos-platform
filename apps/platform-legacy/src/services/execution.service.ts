@@ -146,7 +146,7 @@ export class ExecutionService {
     );
     this.loggingService.info(`Downloading (${format.getLabel()}) - ${distDetails.getName()}`, true);
 
-    if (authRequired || multipleDownload) {
+    if (authRequired || multipleDownload || format.resourceAccess != null) {
       this._executeDistributionFormat(format, distDetails.getParameters(), params, true)
         .then((blob: Blob) => {
 

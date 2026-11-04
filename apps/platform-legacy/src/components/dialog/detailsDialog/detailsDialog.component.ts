@@ -18,6 +18,7 @@ import { LocalStoragePersister } from 'services/model/persisters/localStoragePer
 import { LocalStorageVariables } from 'services/model/persisters/localStorageVariables.enum';
 import { Subscription } from 'rxjs';
 import { Domain } from 'api/webApi/data/domain.interface';
+import { DistributionSummary } from 'api/webApi/data/distributionSummary.interface';
 import { CONTEXT_FACILITY, CONTEXT_RESOURCE } from 'api/api.service.factory';
 import { Popover } from 'driver.js';
 import { environment } from 'environments/environment';
@@ -26,6 +27,12 @@ export interface DetailsDataIn {
   distId: string;
   context: string;
   domains: Array<Domain>;
+  resourceVersion?: {
+    resourceType: string;
+    resourceId: string;
+    versionId: string;
+    summary: DistributionSummary;
+  };
 }
 
 /**
@@ -90,7 +97,18 @@ export class DetailsDialogComponent implements OnInit, AfterViewInit, OnDestroy 
     // Set the citations to show in the citation component based on the context
     this.citationsToShow = this.getCitationsToShow();
 
-    void this.searchService.getDetailsById(this.data.dataIn.distId, this.context)
+    const resourceVersion = this.data.dataIn.resourceVersion;
+    const details = resourceVersion != null
+      ? this.searchService.getResourceVersionDistributionDetails(
+        resourceVersion.resourceType,
+        resourceVersion.resourceId,
+        resourceVersion.versionId,
+        this.data.dataIn.distId,
+        resourceVersion.summary,
+      )
+      : this.searchService.getDetailsById(this.data.dataIn.distId, this.context);
+
+    void details
       .then((distributionDetails: DistributionDetails) => {
         this.detailsData = distributionDetails;
         if (this.detailsData !== undefined) {

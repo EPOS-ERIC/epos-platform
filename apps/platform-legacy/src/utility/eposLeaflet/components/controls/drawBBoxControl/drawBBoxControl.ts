@@ -36,6 +36,7 @@ export class DrawBBoxControl extends L.Control.Draw implements SetMapComponentab
   protected drawnRadius: DrawnRadius | null = null;
 
   protected timeout: NodeJS.Timeout;
+  protected redrawTimeout: NodeJS.Timeout | null = null;
   protected setBboxArray = new Array<BoundingBox>();
   protected circleDrawActive = false;
   protected circleCenter: L.LatLng | null = null;
@@ -100,6 +101,11 @@ export class DrawBBoxControl extends L.Control.Draw implements SetMapComponentab
   }
 
   public startDraw(mode: SpatialSelectionMode = 'bbox'): this {
+    if (this.redrawTimeout !== null) {
+      clearTimeout(this.redrawTimeout);
+      this.redrawTimeout = null;
+      this.addTo(this.eposLeaflet.leafletMapObj);
+    }
     if (mode === 'radius') {
       this.startCircleDraw();
     } else {
@@ -119,7 +125,11 @@ export class DrawBBoxControl extends L.Control.Draw implements SetMapComponentab
     // remove bbox control
     this.remove();
 
-    setTimeout(() => {
+    if (this.redrawTimeout !== null) {
+      clearTimeout(this.redrawTimeout);
+    }
+    this.redrawTimeout = setTimeout(() => {
+      this.redrawTimeout = null;
       // readd bbox control
       this.addTo(this.eposLeaflet.leafletMapObj);
     }, 500);

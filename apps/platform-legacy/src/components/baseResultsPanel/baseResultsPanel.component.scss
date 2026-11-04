@@ -387,6 +387,69 @@
     overflow: hidden;
   }
 
+  .dataset-cell {
+    border-left-color: $color-primary;
+    min-width: 0;
+  }
+
+  .dataset-card {
+    min-width: 0;
+    padding: 12px 10px 12px 0;
+    overflow-wrap: anywhere;
+
+    .dataset-title,
+    .distribution-title {
+      display: block;
+      max-width: 100%;
+      white-space: normal;
+      text-align: left;
+      line-height: 1.5;
+      padding: 6px 0;
+      font-weight: bold;
+      color: $color-primary;
+    }
+
+    .dataset-toggle {
+      max-width: 100%;
+      white-space: normal;
+      text-align: left;
+      margin-top: 6px;
+    }
+
+    .dataset-providers,
+    .dataset-categories,
+    .distribution-summary {
+      margin: 4px 0;
+    }
+
+    .dataset-categories,
+    .distribution-summary {
+      font-size: 12px;
+    }
+
+    .dataset-distributions > .container {
+      border-top: 1px solid #efefef;
+      margin-right: 0;
+      padding-top: 10px;
+    }
+
+    .item-header {
+      flex-wrap: wrap;
+    }
+
+    .item-name {
+      min-width: 0;
+      flex: 1 1 180px;
+      margin-right: 8px;
+    }
+
+    .item-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+  }
+
   .mat-button-toggle {
     &.image {
       background-repeat: no-repeat;
@@ -409,6 +472,7 @@
   }
 
   .advanced-search-container {
+    position: relative;
     padding: 5px;
     height: auto;
     overflow: auto;
@@ -505,6 +569,7 @@ app-data-configuration.disabled {
 }
 
 app-facet-dropdown {
+  flex-shrink: 0;
   border-bottom: 1px solid #efefef;
 }
 

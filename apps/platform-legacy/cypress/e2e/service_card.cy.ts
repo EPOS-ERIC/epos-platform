@@ -40,7 +40,7 @@ describe('Service card', () => {
     // Check that service has the right categories
     cy.getByDataCy('results-panel-item-breadcrumb')
       .filter(':visible')
-      .should('have.text', ' GNSS Data and Products  >  Products  >  Station Information ')
+      .should('have.text', ' GNSS Data and Products  >  Station Information ')
       .and('be.visible');
 
     // Check that the service has the right "visible on" options

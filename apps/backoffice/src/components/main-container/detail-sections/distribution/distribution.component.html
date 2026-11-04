@@ -4,7 +4,7 @@
       <h2>Distributions</h2>
       <p class="subtitle app-muted">Multiple distributions with typed internal payloads.</p>
     </div>
-    @if (!comparisonMode) {
+    @if (!comparisonMode && !disabled) {
       <div class="distribution-actions">
         <label>
           <span class="visually-hidden">Distribution type</span>
@@ -32,10 +32,9 @@
           <div class="distribution-body">
             <div class="distribution-level-heading">
               <div class="distribution-level-title">
-                <span class="app-badge app-badge--blue">Distribution</span>
                 <strong>{{ distribution.title || 'Selected distribution' }}</strong>
               </div>
-              @if (!comparisonMode) {
+              @if (!comparisonMode && !disabled) {
                 <button
                   type="button"
                   class="app-button detail-delete-button distribution-delete-button"

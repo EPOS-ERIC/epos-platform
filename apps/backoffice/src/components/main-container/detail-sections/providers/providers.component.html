@@ -10,12 +10,14 @@
     <div class="detail-section-header">
       <div>
         <h2>{{ single ? 'Provider' : 'Providers' }}</h2>
-        <p class="subtitle app-muted">Choose {{ single ? 'one provider' : 'the providers' }} from the available catalog.</p>
+        @if (!selectedOnlyView()) {
+          <p class="subtitle app-muted">Choose {{ single ? 'one provider' : 'the providers' }} from the available catalog.</p>
+        }
       </div>
     </div>
   }
 
-  @if (readonlyView) {
+  @if (selectedOnlyView()) {
     @if (selectedProviders().length) {
       <ul class="providers-list">
         @for (provider of selectedProviders(); track provider.id) {

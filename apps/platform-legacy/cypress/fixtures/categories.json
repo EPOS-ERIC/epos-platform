@@ -1,0 +1,282 @@
+{
+  "1ffd3b36-8afd-50f3-affc-752d659ea8bd": [
+    {
+      "id": "b050cb8b-5186-5ca7-afa5-6b4b7c5fef22",
+      "name": "Processing tools",
+      "parent_category_id": null
+    },
+    {
+      "id": "08950f67-fd6f-547a-82c4-a92dbe7dc70c",
+      "name": "Multidisciplinary AH data",
+      "parent_category_id": null
+    },
+    {
+      "id": "f87b25f3-7e7a-5bf1-9005-b5959f721c9f",
+      "name": "Conventional hydrocarbon extraction",
+      "parent_category_id": "08950f67-fd6f-547a-82c4-a92dbe7dc70c"
+    },
+    {
+      "id": "de33ccd0-6bac-50c4-9068-87e148bd52cc",
+      "name": "Wastewater injection",
+      "parent_category_id": "08950f67-fd6f-547a-82c4-a92dbe7dc70c"
+    },
+    {
+      "id": "60714f5b-e59a-516b-a7dc-2838f8ac1033",
+      "name": "Underground mining",
+      "parent_category_id": "08950f67-fd6f-547a-82c4-a92dbe7dc70c"
+    },
+    {
+      "id": "2705634d-1766-534b-8c45-ac9c94a03354",
+      "name": "Geothermal energy production",
+      "parent_category_id": "08950f67-fd6f-547a-82c4-a92dbe7dc70c"
+    }
+  ],
+  "40d6554c-becc-56a1-a08f-565e414fd5ed": [
+    {
+      "id": "66a821ae-8f48-54a0-a779-78cc89dff64a",
+      "name": "Magnetotelluric models and data",
+      "parent_category_id": null
+    },
+    {
+      "id": "505ea6f5-ed90-5e21-9bc0-730d0415e1a3",
+      "name": "Geomagnetic models",
+      "parent_category_id": null
+    }
+  ],
+  "759bb4da-3831-5673-ae0c-8f7b5f038f6f": [
+    {
+      "id": "b80940c7-d0a3-5768-91a0-7cbd58a3e092",
+      "name": "Geological Maps",
+      "parent_category_id": null
+    },
+    {
+      "id": "2935c00b-6199-5104-8aeb-da2e357ed66b",
+      "name": "Boreholes",
+      "parent_category_id": null
+    }
+  ],
+  "fd0a5d4d-b20f-5830-a7ef-ac99f12dd2e7": [
+    {
+      "id": "94221673-ab9d-5943-9aa0-ee7112695177",
+      "name": "Data",
+      "parent_category_id": null
+    },
+    {
+      "id": "5ac9d317-8260-51e4-ac11-a927fee4e1d6",
+      "name": "Products",
+      "parent_category_id": null
+    },
+    {
+      "id": "cc09e9b7-1496-5b79-9b51-8fdc758ef7b2",
+      "name": "GNSS Station Velocities",
+      "parent_category_id": "5ac9d317-8260-51e4-ac11-a927fee4e1d6"
+    },
+    {
+      "id": "e7efd7b0-863b-5cbc-a601-6cd79b6364c5",
+      "name": "Strain Rates",
+      "parent_category_id": "5ac9d317-8260-51e4-ac11-a927fee4e1d6"
+    },
+    {
+      "id": "dbbaf5d3-d052-582b-8a9d-c050aa09b20d",
+      "name": "GNSS Position Time Series",
+      "parent_category_id": "5ac9d317-8260-51e4-ac11-a927fee4e1d6"
+    },
+    {
+      "id": "bc5eaeea-b534-5b68-9e30-a1faa0417141",
+      "name": "Station Information",
+      "parent_category_id": "5ac9d317-8260-51e4-ac11-a927fee4e1d6"
+    }
+  ],
+  "23aaaf42-eaa4-5938-a7b1-f7eaec688d95": [
+    {
+      "id": "cca6db7f-e9f8-5d19-ae78-992fbb93d56a",
+      "name": "Cross-discipline laboratory data",
+      "parent_category_id": null
+    },
+    {
+      "id": "6ec2636d-2eaf-53a9-b3de-1a3f3f607136",
+      "name": "Rock and melt physics",
+      "parent_category_id": null
+    }
+  ],
+  "5773eb8e-c3b8-50a4-904c-e0fb12cb25a4": [
+    {
+      "id": "8163f66a-77ae-5edb-abe8-6ae41d150c67",
+      "name": "Geochemical Data",
+      "parent_category_id": null
+    },
+    {
+      "id": "92aed396-37c6-57e8-b2cc-8367e80768e6",
+      "name": "Radon",
+      "parent_category_id": "8163f66a-77ae-5edb-abe8-6ae41d150c67"
+    },
+    {
+      "id": "386c3684-24b4-54ba-87ec-9e67af5bc568",
+      "name": "Meteo Parameters",
+      "parent_category_id": "8163f66a-77ae-5edb-abe8-6ae41d150c67"
+    },
+    {
+      "id": "499a0993-fb0b-5de8-a2c8-2521b1c67fe8",
+      "name": "Carbon Dioxide",
+      "parent_category_id": "8163f66a-77ae-5edb-abe8-6ae41d150c67"
+    },
+    {
+      "id": "60f100b3-9c9c-5dd1-8f78-17a2ffc58ea6",
+      "name": "Geophysical Data",
+      "parent_category_id": null
+    },
+    {
+      "id": "f7ccbf59-777e-5bc5-98c4-5c3adf4bab81",
+      "name": "Strainmeter",
+      "parent_category_id": "60f100b3-9c9c-5dd1-8f78-17a2ffc58ea6"
+    },
+    {
+      "id": "beef553d-7196-5e24-b41e-b3954420e81b",
+      "name": "Infrasound",
+      "parent_category_id": "60f100b3-9c9c-5dd1-8f78-17a2ffc58ea6"
+    },
+    {
+      "id": "c398975c-ef83-5153-b8d0-1234e20b6c5e",
+      "name": "Seismological Data",
+      "parent_category_id": null
+    },
+    {
+      "id": "f7313af4-bdfe-5a28-9bbd-12f6db3b40e1",
+      "name": "Seismological products",
+      "parent_category_id": "c398975c-ef83-5153-b8d0-1234e20b6c5e"
+    },
+    {
+      "id": "a9a8a740-df0e-5fca-b1e1-81d5a4f6322d",
+      "name": "Vp/Vs - velocity ratio",
+      "parent_category_id": "f7313af4-bdfe-5a28-9bbd-12f6db3b40e1"
+    }
+  ],
+  "ef2c0e7c-42ab-58a8-a430-5755a615951e": [
+    {
+      "id": "0cd7fad2-a181-5806-9767-c91087067639",
+      "name": "InSAR",
+      "parent_category_id": null
+    }
+  ],
+  "85ff89db-b889-5f98-9b96-3f2897d63b70": [
+    {
+      "id": "759ef0b2-1f8f-5fa1-b22e-7ccd993db4da",
+      "name": "Waveform and peak-motion services",
+      "parent_category_id": null
+    },
+    {
+      "id": "f2f84cba-cace-505f-8c31-d03c90195860",
+      "name": "Strong motion parameters",
+      "parent_category_id": "759ef0b2-1f8f-5fa1-b22e-7ccd993db4da"
+    },
+    {
+      "id": "9eb302bc-e1d4-5a67-8dad-b70dc92e3829",
+      "name": "Waveform metrics",
+      "parent_category_id": "759ef0b2-1f8f-5fa1-b22e-7ccd993db4da"
+    },
+    {
+      "id": "622ab2c0-93d5-55c5-a4b9-482e49b67d13",
+      "name": "Quality metrics distributed by EIDA (individual endpoints)",
+      "parent_category_id": "9eb302bc-e1d4-5a67-8dad-b70dc92e3829"
+    },
+    {
+      "id": "9b6fa454-84c3-5986-9329-43a52f01bc70",
+      "name": "Seismological products services",
+      "parent_category_id": null
+    },
+    {
+      "id": "be1abf31-c410-529a-baf3-c881394ab9d4",
+      "name": "Macroseismic data",
+      "parent_category_id": "9b6fa454-84c3-5986-9329-43a52f01bc70"
+    },
+    {
+      "id": "c4e23f9a-93cb-52e3-a8a0-fa7c4ec8fe3a",
+      "name": "Earthquake source data",
+      "parent_category_id": "9b6fa454-84c3-5986-9329-43a52f01bc70"
+    },
+    {
+      "id": "bd68dc89-3d97-5270-9cac-cf17d2041c29",
+      "name": "Earthquake hazard and risk services",
+      "parent_category_id": null
+    },
+    {
+      "id": "2942973a-0e06-5877-8ec1-3ff7de4c5152",
+      "name": "Risk products",
+      "parent_category_id": "bd68dc89-3d97-5270-9cac-cf17d2041c29"
+    },
+    {
+      "id": "365a6098-52ab-52e3-99a7-c70eaddea035",
+      "name": "Seismogenic faults",
+      "parent_category_id": "bd68dc89-3d97-5270-9cac-cf17d2041c29"
+    },
+    {
+      "id": "45ae0ecb-0d29-57cd-8014-d824dd81c7fc",
+      "name": "Exposure models",
+      "parent_category_id": "bd68dc89-3d97-5270-9cac-cf17d2041c29"
+    },
+    {
+      "id": "34f5006a-3a2b-557b-a8ed-b7c62c62603f",
+      "name": "Hazard products",
+      "parent_category_id": "bd68dc89-3d97-5270-9cac-cf17d2041c29"
+    },
+    {
+      "id": "22bb1f9a-d89d-56fd-87cb-3b8969fc1c9f",
+      "name": "Waveform parameters",
+      "parent_category_id": "759ef0b2-1f8f-5fa1-b22e-7ccd993db4da"
+    },
+    {
+      "id": "b890c1d6-772d-5b0d-87a7-57b35d4bac0b",
+      "name": "Waveform and peak-motion data",
+      "parent_category_id": "759ef0b2-1f8f-5fa1-b22e-7ccd993db4da"
+    },
+    {
+      "id": "96712c60-466f-54a2-8723-ebbd6313f44b",
+      "name": "Seismic waveforms distributed by EIDA (individual endpoints)",
+      "parent_category_id": "b890c1d6-772d-5b0d-87a7-57b35d4bac0b"
+    },
+    {
+      "id": "c5f28295-f83e-58b0-b7a2-4409263cbaa0",
+      "name": "Waveform metadata",
+      "parent_category_id": "759ef0b2-1f8f-5fa1-b22e-7ccd993db4da"
+    },
+    {
+      "id": "6507b73a-1ef8-54ba-94cc-f228b3927c32",
+      "name": "Seismic metadata distributed by EIDA (individual endpoints)",
+      "parent_category_id": "c5f28295-f83e-58b0-b7a2-4409263cbaa0"
+    }
+  ],
+  "f6b2268b-fc1d-5d40-9d1b-6f76c654711a": [
+    {
+      "id": "8a3b1a93-1104-504f-8748-fc4aca336a01",
+      "name": "Submarine Landslide Catalogue",
+      "parent_category_id": null
+    },
+    {
+      "id": "4d18e710-c3d8-52d1-9684-7f1497b3839a",
+      "name": "The Euro-Mediterranean Submarine landSlide database (EMSS21)",
+      "parent_category_id": "8a3b1a93-1104-504f-8748-fc4aca336a01"
+    },
+    {
+      "id": "39d1b291-ca40-55e8-a73a-c0ba6c4cf097",
+      "name": "Paleotsunami Deposits Catalogue",
+      "parent_category_id": null
+    },
+    {
+      "id": "644b1e95-b055-5a91-b9f3-8f675ba5bc3c",
+      "name": "Paleotsunami Deposits",
+      "parent_category_id": "39d1b291-ca40-55e8-a73a-c0ba6c4cf097"
+    }
+  ],
+  "bd6cdd29-0d0d-5856-a0dd-5fa6a4b06751": [
+    {
+      "id": "90ebaf42-3182-5051-8970-0c5d87b439d8",
+      "name": "Geohazards",
+      "parent_category_id": null
+    },
+    {
+      "id": "886ac2d7-990c-5478-b281-b47c008a7afd",
+      "name": "Geodetic data",
+      "parent_category_id": null
+    }
+  ]
+}

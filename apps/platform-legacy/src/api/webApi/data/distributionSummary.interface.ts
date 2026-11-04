@@ -6,6 +6,11 @@ import { DistributionIdentifiable } from './distributionIdentifiable.interface';
  * A (DDSS) distrubution, with default format return when default URL queried.
  */
 export interface DistributionSummary extends DistributionIdentifiable, Usable {
+  resourceVersion?: {
+    resourceType: 'dataset' | 'software-application' | 'software-source-code';
+    resourceId: string;
+    versionId: string;
+  };
   getFormats(): Array<DistributionFormat>;
   getMappableFormats(): Array<DistributionFormat>;
   getGraphableFormats(): Array<DistributionFormat>;

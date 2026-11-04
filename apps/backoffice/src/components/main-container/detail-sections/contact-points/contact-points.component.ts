@@ -76,6 +76,10 @@ export class ContactPointsComponent implements OnInit {
     return this.selectedContactPoints().length > 0;
   }
 
+  protected selectedOnlyView(): boolean {
+    return this.readonlyView || this.disabled;
+  }
+
   protected hasAvailableContactPoints(): boolean {
     return this.availableContactPoints().length > 0;
   }
