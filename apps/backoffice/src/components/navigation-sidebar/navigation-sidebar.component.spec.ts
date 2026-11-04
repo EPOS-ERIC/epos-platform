@@ -35,8 +35,10 @@ describe('NavigationSidebarComponent', () => {
 
     expect((fixture.nativeElement.querySelector('.nav-section-title') as HTMLElement).textContent?.trim()).toBe('Compare');
     const root = fixture.nativeElement.querySelector('.nav-tree-item--root') as HTMLElement;
+    const rootChildren = root.querySelector('.nav-tree-children--root') as HTMLElement;
     expect(root.querySelector('.nav-root-label')?.textContent?.trim()).toBe('Dataset');
     expect(root.querySelector('.nav-item--tree-link')?.getAttribute('href')).toBe('#compare-general-information');
+    expect(rootChildren.classList.contains('nav-tree-children--bounded')).toBe(true);
     expect(root.querySelector('[href="#compare-distributions"]')).toBeNull();
     const distributions = fixture.nativeElement.querySelector('[href="#compare-distributions"]') as HTMLAnchorElement;
     expect(distributions.closest('.nav-tree-item')?.parentElement).toBe(fixture.nativeElement.querySelector('.nav-section--detail'));

@@ -91,7 +91,7 @@
           </div>
 
           @if (!collapsed() && detailRootExpanded()) {
-            <div class="nav-tree-children nav-tree-children--root">
+            <div class="nav-tree-children nav-tree-children--root nav-tree-children--bounded">
               <ng-container *ngTemplateOutlet="detailTree; context: { $implicit: detailRootItems }" />
             </div>
           }

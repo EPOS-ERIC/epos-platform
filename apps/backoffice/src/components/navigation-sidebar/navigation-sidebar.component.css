@@ -281,6 +281,11 @@
   margin-left: 16px;
 }
 
+.nav-tree-children--bounded {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .nav-root-item.centered {
   justify-content: center;
 }
