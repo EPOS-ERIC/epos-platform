@@ -183,14 +183,16 @@ describe('NavigationSidebarComponent', () => {
     const fixture = TestBed.createComponent(NavigationSidebarComponent);
     fixture.componentRef.setInput('groups', [
       { id: 'group-1', name: 'First Group', position: 1, concept: 'DATA' },
-      { id: 'group-2', name: 'Second Group', position: 2, concept: 'DATA' }
+      { id: 'b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2', name: 'Geochemistry', position: 2, concept: 'DATA' }
     ]);
     fixture.componentRef.setInput('currentSectionPath', 'data');
-    fixture.componentRef.setInput('selectedGroupId', 'group-2');
+    fixture.componentRef.setInput('selectedGroupId', 'b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2');
     fixture.detectChanges();
 
     const selected = fixture.nativeElement.querySelector('.nav-item--sub.active') as HTMLAnchorElement;
-    expect(selected.textContent).toContain('Second Group');
-    expect(selected.getAttribute('href')).toBe('/data?groupId=group-2');
+    expect(selected.textContent).toContain('Geochemistry');
+    expect(selected.getAttribute('href')).toBe('/data?groupId=b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2');
+    expect((selected.querySelector('.group-nav-icon') as HTMLImageElement).getAttribute('src'))
+      .toBe('group-icons/b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2.png');
   });
 });
