@@ -45,10 +45,14 @@ export class ProvidersComponent implements OnInit {
   @Output() modelChange = new EventEmitter<DatasetProviderForm[] | DatasetProviderForm>();
 
   ngOnInit(): void {
-    if (this.readonlyView) {
+    if (this.selectedOnlyView()) {
       return;
     }
     this.loadOrganizations();
+  }
+
+  protected selectedOnlyView(): boolean {
+    return this.readonlyView || this.disabled;
   }
 
   protected selectedProviders(): DatasetProviderForm[] {
