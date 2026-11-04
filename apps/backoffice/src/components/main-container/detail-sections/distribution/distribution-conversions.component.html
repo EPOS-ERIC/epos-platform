@@ -1,0 +1,112 @@
+<details id="webservice-conversions" class="webservice-subsection">
+  <summary class="webservice-subsection-summary">
+    <span class="distribution-subtitle">Conversions</span>
+    <span class="webservice-summary-hint">Closed</span>
+  </summary>
+
+  <div class="webservice-subsection-body conversions-body">
+    <p class="conversions-description app-muted">
+      Conversion plugins extend this distribution with additional output formats and processing capabilities.
+    </p>
+
+    @if (loading()) {
+      <p class="conversion-state" role="status">Loading conversions...</p>
+    } @else if (error()) {
+      <div class="conversion-error" role="alert">
+        <span>{{ error() }}</span>
+        <button type="button" class="app-button app-button--ghost" (click)="retry()">Retry</button>
+      </div>
+    } @else if (rows().length) {
+      <div class="conversion-table-wrap">
+        <table class="conversion-table">
+          <thead>
+            <tr>
+              <th scope="col">Plugin</th>
+              <th scope="col">Conversion</th>
+              <th scope="col">Runtime</th>
+              <th scope="col">Availability</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.relation.id) {
+              <tr>
+                <td>
+                  <strong>{{ row.plugin.name }}</strong>
+                  @if (row.plugin.description) {
+                    <span class="conversion-cell-detail">{{ row.plugin.description }}</span>
+                  }
+                  <a class="conversion-repository" [href]="row.plugin.repository" target="_blank" rel="noopener noreferrer">
+                    Repository
+                  </a>
+                </td>
+                <td>
+                  <span class="conversion-format">{{ row.relation.input_format }}</span>
+                  <span class="conversion-arrow" aria-hidden="true">&rarr;</span>
+                  <span class="conversion-format">{{ row.relation.output_format }}</span>
+                </td>
+                <td>
+                  <strong>{{ row.plugin.runtime }}</strong>
+                  <span class="conversion-cell-detail">Branch: {{ row.plugin.branch }}</span>
+                  @if (row.plugin.arguments.length) {
+                    <span class="conversion-cell-detail">Arguments: {{ row.plugin.arguments.join(' ') }}</span>
+                  }
+                </td>
+                <td>
+                  <span class="conversion-status" [class.conversion-status--available]="row.plugin.enabled">
+                    {{ row.plugin.enabled ? 'Enabled' : 'Disabled' }}
+                  </span>
+                  <span class="conversion-status" [class.conversion-status--available]="row.plugin.installed">
+                    {{ row.plugin.installed ? 'Installed' : 'Not installed' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="detail-empty">No conversions are associated with this distribution.</p>
+    }
+
+    @if (!disabled) {
+      <section class="conversion-request" aria-labelledby="conversion-request-title">
+        <div>
+          <h4 id="conversion-request-title">Request new conversion</h4>
+          <p class="app-muted">Request submission will be enabled when the conversion request API is integrated.</p>
+        </div>
+
+        <fieldset class="detail-fieldset">
+          <div class="detail-form-grid">
+            <label class="detail-field">
+              <span class="detail-label">Input format *</span>
+              <input class="app-input" [(ngModel)]="requestInputFormat" [ngModelOptions]="{ standalone: true }" placeholder="application/json" />
+            </label>
+
+            <div class="detail-field">
+              <span class="detail-label">Visualizations *</span>
+              <div class="conversion-visualizations">
+                @for (visualization of visualizationOptions; track visualization) {
+                  <label>
+                    <input
+                      type="checkbox"
+                      [checked]="requestVisualizations.includes(visualization)"
+                      (change)="toggleRequestVisualization(visualization, $any($event.target).checked)"
+                    />
+                    {{ visualization }}
+                  </label>
+                }
+              </div>
+            </div>
+
+            <label class="detail-field detail-field--full">
+              <span class="detail-label">Message *</span>
+              <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="requestMessage" [ngModelOptions]="{ standalone: true }"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <button type="button" class="app-button app-button--primary" disabled>Send request</button>
+      </section>
+    }
+  </div>
+</details>

@@ -67,6 +67,7 @@
           @if (distribution.kind === 'web-service') {
             <app-web-service
               [model]="distribution.webService"
+              [distributionId]="comparisonMode ? '' : (distribution.id ?? '')"
               [comparisonModel]="selectedComparisonWebService()"
               [disabled]="disabled"
               [comparisonMode]="comparisonMode"

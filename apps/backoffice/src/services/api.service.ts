@@ -15,6 +15,7 @@ import type {
   CreateOrganizationRequest,
   CreateResourceDraftRequest,
   DatasetResourceMetadata,
+  DistributionConversionPlugin,
   DiscoveryItem,
   DiscoveryResourceType,
   Group,
@@ -107,6 +108,17 @@ export class ApiService {
   public getResourceVersion<T extends DiscoveryResourceType>(resourceType: T, id: string, versionId: string): Observable<ResourceVersionResponse<T>> {
     return this.http.get<ResourceVersionResponse<T>>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.bearerToken}`
+        }
+      }
+    );
+  }
+
+  public listDistributionConversionRelations(distributionId: string): Observable<DistributionConversionPlugin[]> {
+    return this.http.get<DistributionConversionPlugin[]>(
+      `${this.baseUrl}/distributions/${encodeURIComponent(distributionId)}/conversion-relations`,
       {
         headers: {
           Authorization: `Bearer ${this.bearerToken}`

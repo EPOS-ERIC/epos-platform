@@ -146,6 +146,10 @@
         <app-web-service-parameters [model]="model.configuration.getFeatureInfoParameters" [disabled]="disabled" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
       }
     }
+
+    @if (distributionId) {
+      <app-distribution-conversions [distributionId]="distributionId" [disabled]="disabled" />
+    }
   }
 </div>
 

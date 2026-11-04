@@ -290,6 +290,7 @@ describe('toDatasetDetailForm', () => {
       temporal: { start: 'invalid-start', end: '' },
     });
     expect(form.distributions[0]).toMatchObject({
+      id: 'distribution-id',
       kind: 'web-service',
       issued: '',
       modified: 'invalid-date',
@@ -447,6 +448,7 @@ describe('toDatasetSaveRequest', () => {
         },
       },
     });
+    expect(distribution).not.toHaveProperty('id');
   });
 
   it('roundtrips WFS, WMS, and WMTS configurations', () => {

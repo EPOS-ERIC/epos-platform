@@ -217,6 +217,7 @@ export type DatasetWebServiceForm = {
 };
 
 export type DatasetDistributionCommonForm = {
+  id?: string;
   title: string;
   description: string;
   issued: string;

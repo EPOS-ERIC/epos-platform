@@ -364,6 +364,7 @@ export function geologicalTemporalValidationError(form: DatasetDetailForm): stri
 
 function buildDistributionForm(distribution: Distribution): DatasetDistributionForm {
   const base = {
+    id: distribution.id,
     title: distribution.title,
     description: distribution.description,
     issued: distribution.issued ? toDateTimeLocalValue(distribution.issued) : '',
