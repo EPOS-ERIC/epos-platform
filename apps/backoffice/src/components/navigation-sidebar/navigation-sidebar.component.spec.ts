@@ -28,7 +28,8 @@ describe('NavigationSidebarComponent', () => {
     fixture.componentRef.setInput('detailSectionLabel', 'Compare');
     fixture.componentRef.setInput('detailRootLabel', 'Dataset');
     fixture.componentRef.setInput('detailItems', [
-      { label: 'General Information', anchor: 'compare-general-information' }
+      { label: 'General Information', anchor: 'compare-general-information' },
+      { label: 'Distributions', anchor: 'compare-distributions' }
     ]);
     fixture.detectChanges();
 
@@ -36,6 +37,9 @@ describe('NavigationSidebarComponent', () => {
     const root = fixture.nativeElement.querySelector('.nav-tree-item--root') as HTMLElement;
     expect(root.querySelector('.nav-root-label')?.textContent?.trim()).toBe('Dataset');
     expect(root.querySelector('.nav-item--tree-link')?.getAttribute('href')).toBe('#compare-general-information');
+    expect(root.querySelector('[href="#compare-distributions"]')).toBeNull();
+    const distributions = fixture.nativeElement.querySelector('[href="#compare-distributions"]') as HTMLAnchorElement;
+    expect(distributions.closest('.nav-tree-item')?.parentElement).toBe(fixture.nativeElement.querySelector('.nav-section--detail'));
 
     const rootToggle = root.querySelector('.detail-root-toggle-button') as HTMLButtonElement;
     expect(rootToggle.getAttribute('aria-expanded')).toBe('true');

@@ -108,11 +108,11 @@ export class NavigationSidebarComponent {
   }
 
   protected get detailRootItems(): NavigationItem[] {
-    return this.detailItems.filter((item) => item.anchor !== 'distributions');
+    return this.detailItems.filter((item) => !this.isDistributionItem(item));
   }
 
   protected get detailSiblingItems(): NavigationItem[] {
-    return this.detailItems.filter((item) => item.anchor === 'distributions');
+    return this.detailItems.filter((item) => this.isDistributionItem(item));
   }
 
   protected get adminItems(): NavigationItem[] {
@@ -129,6 +129,10 @@ export class NavigationSidebarComponent {
 
   protected toggleDetailRoot(): void {
     this.detailRootExpanded.update((value) => !value);
+  }
+
+  private isDistributionItem(item: NavigationItem): boolean {
+    return item.anchor === 'distributions' || item.anchor === 'compare-distributions';
   }
 
   protected groupsForItem(item: NavigationItem): Group[] {
