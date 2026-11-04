@@ -1,3 +1,4 @@
+//nolint:dupl // Different events might have similar handling but should be different
 package notifications
 
 import (

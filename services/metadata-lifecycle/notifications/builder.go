@@ -259,6 +259,8 @@ func (s *Service) resourceURL(resource domain.NotificationResource) string {
 		section = "software"
 	case domain.SoftwareSourceCode:
 		section = "facilities"
+	default:
+		return ""
 	}
 
 	if s.publicURL == "" || section == "" || resource.ResourceID == uuid.Nil || resource.VersionID == uuid.Nil {
