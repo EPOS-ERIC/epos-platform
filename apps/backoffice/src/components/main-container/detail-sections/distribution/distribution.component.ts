@@ -67,6 +67,7 @@ export class DistributionComponent {
   protected distributionFieldLabel(field: keyof DatasetDistributionCommonForm): string {
     const labels: Record<keyof DatasetDistributionCommonForm, string> = {
       id: 'ID',
+      nativeFormats: 'Native formats',
       title: 'Title',
       description: 'Description',
       issued: 'Issued',

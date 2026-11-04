@@ -28,6 +28,7 @@ import type {
 export class WebServiceComponent {
   @Input() model: DatasetWebServiceForm | null = null;
   @Input() distributionId = '';
+  @Input() nativeFormats: string[] = [];
   @Input() comparisonModel: DatasetWebServiceForm | null = null;
   @Input() disabled = false;
   @Input() comparisonMode = false;

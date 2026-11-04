@@ -68,6 +68,7 @@
             <app-web-service
               [model]="distribution.webService"
               [distributionId]="comparisonMode ? '' : (distribution.id ?? '')"
+              [nativeFormats]="distribution.nativeFormats ?? []"
               [comparisonModel]="selectedComparisonWebService()"
               [disabled]="disabled"
               [comparisonMode]="comparisonMode"

@@ -44,6 +44,7 @@ import type {
   SoftwareSourceCodeResourceMetadata,
   User,
   UserListItem,
+  WebServiceVisibleOn,
   MembershipRole,
   Permission
 } from '../../generated/backofficeSchemas';
@@ -74,6 +75,12 @@ export interface DiscoverySearchParams {
   provider?: Provider;
   versioningStatus?: VersioningStatus;
   keywords?: Keywords;
+}
+
+export interface DistributionConversionRequest {
+  input_format: string;
+  visualizations: WebServiceVisibleOn[];
+  message: string;
 }
 
 type ResourceVersionResponseMap = {
@@ -119,6 +126,21 @@ export class ApiService {
   public listDistributionConversionRelations(distributionId: string): Observable<DistributionConversionPlugin[]> {
     return this.http.get<DistributionConversionPlugin[]>(
       `${this.baseUrl}/distributions/${encodeURIComponent(distributionId)}/conversion-relations`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.bearerToken}`
+        }
+      }
+    );
+  }
+
+  public requestDistributionConversion(
+    distributionId: string,
+    payload: DistributionConversionRequest
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/distributions/${encodeURIComponent(distributionId)}/conversion-requests`,
+      payload,
       {
         headers: {
           Authorization: `Bearer ${this.bearerToken}`

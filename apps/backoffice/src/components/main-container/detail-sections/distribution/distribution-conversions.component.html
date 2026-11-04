@@ -72,14 +72,19 @@
       <section class="conversion-request" aria-labelledby="conversion-request-title">
         <div>
           <h4 id="conversion-request-title">Request new conversion</h4>
-          <p class="app-muted">Request submission will be enabled when the conversion request API is integrated.</p>
+          <p class="app-muted">Describe the format and visualizations that the requested conversion should support.</p>
         </div>
 
         <fieldset class="detail-fieldset">
           <div class="detail-form-grid">
             <label class="detail-field">
               <span class="detail-label">Input format *</span>
-              <input class="app-input" [(ngModel)]="requestInputFormat" [ngModelOptions]="{ standalone: true }" placeholder="application/json" />
+              <select class="app-input" [(ngModel)]="requestInputFormat" [ngModelOptions]="{ standalone: true }" required>
+                <option value="" disabled>Select native format</option>
+                @for (format of nativeFormats; track format) {
+                  <option [value]="format">{{ format }}</option>
+                }
+              </select>
             </label>
 
             <div class="detail-field">
@@ -100,12 +105,19 @@
 
             <label class="detail-field detail-field--full">
               <span class="detail-label">Message *</span>
-              <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="requestMessage" [ngModelOptions]="{ standalone: true }"></textarea>
+              <textarea class="app-input detail-textarea" rows="4" [(ngModel)]="requestMessage" [ngModelOptions]="{ standalone: true }" required></textarea>
             </label>
           </div>
         </fieldset>
 
-        <button type="button" class="app-button app-button--primary" disabled>Send request</button>
+        <button
+          type="button"
+          class="app-button app-button--primary conversion-request-submit"
+          (click)="submitRequest()"
+          [disabled]="!canSubmitRequest()"
+        >
+          {{ requestSubmitting() ? 'Sending...' : 'Send request' }}
+        </button>
       </section>
     }
   </div>
