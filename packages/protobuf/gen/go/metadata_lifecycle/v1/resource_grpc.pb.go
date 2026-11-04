@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ResourceService_RequestDistributionConversion_FullMethodName  = "/metadata_lifecycle.v1.ResourceService/RequestDistributionConversion"
 	ResourceService_CreateResource_FullMethodName                 = "/metadata_lifecycle.v1.ResourceService/CreateResource"
 	ResourceService_GetResourceVersion_FullMethodName             = "/metadata_lifecycle.v1.ResourceService/GetResourceVersion"
 	ResourceService_GetDistributionFormats_FullMethodName         = "/metadata_lifecycle.v1.ResourceService/GetDistributionFormats"
@@ -43,6 +44,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ResourceServiceClient interface {
+	RequestDistributionConversion(ctx context.Context, in *RequestDistributionConversionRequest, opts ...grpc.CallOption) (*RequestDistributionConversionResponse, error)
 	CreateResource(ctx context.Context, in *CreateResourceRequest, opts ...grpc.CallOption) (*CreateResourceResponse, error)
 	GetResourceVersion(ctx context.Context, in *GetResourceVersionRequest, opts ...grpc.CallOption) (*GetResourceVersionResponse, error)
 	GetDistributionFormats(ctx context.Context, in *GetDistributionFormatsRequest, opts ...grpc.CallOption) (*GetDistributionFormatsResponse, error)
@@ -69,6 +71,16 @@ type resourceServiceClient struct {
 
 func NewResourceServiceClient(cc grpc.ClientConnInterface) ResourceServiceClient {
 	return &resourceServiceClient{cc}
+}
+
+func (c *resourceServiceClient) RequestDistributionConversion(ctx context.Context, in *RequestDistributionConversionRequest, opts ...grpc.CallOption) (*RequestDistributionConversionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RequestDistributionConversionResponse)
+	err := c.cc.Invoke(ctx, ResourceService_RequestDistributionConversion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *resourceServiceClient) CreateResource(ctx context.Context, in *CreateResourceRequest, opts ...grpc.CallOption) (*CreateResourceResponse, error) {
@@ -255,6 +267,7 @@ func (c *resourceServiceClient) CopyPublishedResource(ctx context.Context, in *C
 // All implementations must embed UnimplementedResourceServiceServer
 // for forward compatibility.
 type ResourceServiceServer interface {
+	RequestDistributionConversion(context.Context, *RequestDistributionConversionRequest) (*RequestDistributionConversionResponse, error)
 	CreateResource(context.Context, *CreateResourceRequest) (*CreateResourceResponse, error)
 	GetResourceVersion(context.Context, *GetResourceVersionRequest) (*GetResourceVersionResponse, error)
 	GetDistributionFormats(context.Context, *GetDistributionFormatsRequest) (*GetDistributionFormatsResponse, error)
@@ -283,6 +296,9 @@ type ResourceServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedResourceServiceServer struct{}
 
+func (UnimplementedResourceServiceServer) RequestDistributionConversion(context.Context, *RequestDistributionConversionRequest) (*RequestDistributionConversionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RequestDistributionConversion not implemented")
+}
 func (UnimplementedResourceServiceServer) CreateResource(context.Context, *CreateResourceRequest) (*CreateResourceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateResource not implemented")
 }
@@ -356,6 +372,24 @@ func RegisterResourceServiceServer(s grpc.ServiceRegistrar, srv ResourceServiceS
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ResourceService_ServiceDesc, srv)
+}
+
+func _ResourceService_RequestDistributionConversion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestDistributionConversionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceServiceServer).RequestDistributionConversion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceService_RequestDistributionConversion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceServiceServer).RequestDistributionConversion(ctx, req.(*RequestDistributionConversionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ResourceService_CreateResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -689,6 +723,10 @@ var ResourceService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "metadata_lifecycle.v1.ResourceService",
 	HandlerType: (*ResourceServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RequestDistributionConversion",
+			Handler:    _ResourceService_RequestDistributionConversion_Handler,
+		},
 		{
 			MethodName: "CreateResource",
 			Handler:    _ResourceService_CreateResource_Handler,

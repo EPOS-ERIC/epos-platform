@@ -31,7 +31,7 @@ const maxImportTurtleMessageSize = 10<<20 + 5
 
 func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.PostgresDB) error {
 	authorizer := authz.New(log, db.Authorization)
-	notificationsSvc := notifications.New(log, db.Notifications, authorizer, cfg.GatewayPublicURL)
+	notificationsSvc := notifications.New(log, db.Notifications, authorizer, cfg.BackofficeURL)
 	usersSvc := users.New(log, db.Users, authorizer, notificationsSvc)
 	importSvc := metadataimport.New(log, db.Imports, authorizer)
 	turtler := turtle.New(log)

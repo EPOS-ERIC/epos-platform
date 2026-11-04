@@ -26,24 +26,6 @@ func toProtoNotification(value domain.Notification) (*metadatalifecyclev1.Notifi
 		Body:         value.Body,
 		Channel:      channel,
 	}
-	if value.GroupID != nil {
-		result.GroupId = new(value.GroupID.String())
-	}
-	if value.ResourceID != nil {
-		result.ResourceId = new(value.ResourceID.String())
-	}
-	if value.VersionID != nil {
-		result.VersionId = new(value.VersionID.String())
-	}
-	if value.AccessID != nil {
-		result.AccessId = new(value.AccessID.String())
-	}
-	if value.ResourceType != "" {
-		result.ResourceType = toGRPCResourceType(value.ResourceType)
-		if result.ResourceType == metadatalifecyclev1.ResourceType_RESOURCE_TYPE_UNSPECIFIED {
-			return nil, fmt.Errorf("unknown resource type: %q", value.ResourceType)
-		}
-	}
 	return result, nil
 }
 
@@ -74,6 +56,8 @@ func toProtoNotificationEventKind(value domain.NotificationEventKind) (metadatal
 		return metadatalifecyclev1.NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED, nil
 	case domain.NotificationEventResourceUnpublished:
 		return metadatalifecyclev1.NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED, nil
+	case domain.NotificationEventConversionRequested:
+		return metadatalifecyclev1.NotificationEventKind_NOTIFICATION_EVENT_KIND_CONVERSION_REQUESTED, nil
 	default:
 		return 0, fmt.Errorf("unknown notification event kind: %q", value)
 	}

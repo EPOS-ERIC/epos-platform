@@ -59,9 +59,8 @@ type GUI struct {
 
 // Backoffice configures the backoffice UI.
 type Backoffice struct {
-	Enabled bool `yaml:"enabled"`
-	GUI     GUI  `yaml:"gui"`
-	TLS     TLS  `yaml:"tls"`
+	GUI GUI `yaml:"gui"`
+	TLS TLS `yaml:"tls"`
 }
 
 // MetadataDatabase configures a database connection.

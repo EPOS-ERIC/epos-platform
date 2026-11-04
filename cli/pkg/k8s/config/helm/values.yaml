@@ -27,7 +27,6 @@ components:
       enabled: false
       secret_name: ""
   backoffice:
-    enabled: true
     gui:
       base_url: "/backoffice/"
     tls:

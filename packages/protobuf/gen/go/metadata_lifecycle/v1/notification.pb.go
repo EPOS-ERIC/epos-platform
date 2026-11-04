@@ -34,6 +34,7 @@ const (
 	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED      NotificationTopicKey = 6
 	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED     NotificationTopicKey = 7
 	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED     NotificationTopicKey = 8
+	NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED   NotificationTopicKey = 9
 )
 
 // Enum value maps for NotificationTopicKey.
@@ -48,6 +49,7 @@ var (
 		6: "NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED",
 		7: "NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED",
 		8: "NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED",
+		9: "NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED",
 	}
 	NotificationTopicKey_value = map[string]int32{
 		"NOTIFICATION_TOPIC_KEY_UNSPECIFIED":                   0,
@@ -59,6 +61,7 @@ var (
 		"NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED":      6,
 		"NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED":     7,
 		"NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED":     8,
+		"NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED":   9,
 	}
 )
 
@@ -652,7 +655,7 @@ const file_metadata_lifecycle_v1_notification_proto_rawDesc = "" +
 	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12R\n" +
 	"\ttopic_key\x18\x03 \x01(\x0e2+.metadata_lifecycle.v1.NotificationTopicKeyB\b\xbaH\x05\x82\x01\x02\x10\x01R\btopicKey\x12N\n" +
 	"\achannel\x18\x04 \x01(\x0e2*.metadata_lifecycle.v1.NotificationChannelB\b\xbaH\x05\x82\x01\x02\x10\x01R\achannel\"!\n" +
-	"\x1fUnsubscribeNotificationResponse*\xf6\x03\n" +
+	"\x1fUnsubscribeNotificationResponse*\xae\x04\n" +
 	"\x14NotificationTopicKey\x12&\n" +
 	"\"NOTIFICATION_TOPIC_KEY_UNSPECIFIED\x10\x00\x125\n" +
 	"1NOTIFICATION_TOPIC_KEY_GROUP_MEMBERSHIP_REQUESTED\x10\x01\x126\n" +
@@ -662,7 +665,8 @@ const file_metadata_lifecycle_v1_notification_proto_rawDesc = "" +
 	"/NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_SUBMITTED\x10\x05\x123\n" +
 	"/NOTIFICATION_TOPIC_KEY_GROUP_RESOURCE_PUBLISHED\x10\x06\x124\n" +
 	"0NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED\x10\a\x124\n" +
-	"0NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED\x10\b2\xdc\x04\n" +
+	"0NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED\x10\b\x126\n" +
+	"2NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED\x10\t2\xdc\x04\n" +
 	"\x13NotificationService\x12\x85\x01\n" +
 	"\x16ListNotificationTopics\x124.metadata_lifecycle.v1.ListNotificationTopicsRequest\x1a5.metadata_lifecycle.v1.ListNotificationTopicsResponse\x12\xa0\x01\n" +
 	"\x1dListNotificationSubscriptions\x12;.metadata_lifecycle.v1.ListNotificationSubscriptionsRequest\x1a<.metadata_lifecycle.v1.ListNotificationSubscriptionsResponse\"\x04\x80\xb5\x18\x03\x12\x88\x01\n" +

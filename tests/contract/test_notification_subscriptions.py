@@ -54,6 +54,30 @@ class NotificationSubscriptionsContractTest(unittest.TestCase):
         self.assertEqual(accepted.json()["status"], "ACTIVE")
         return user_id
 
+    def test_global_topic_requires_its_permission(self) -> None:
+        """Regression: users without the topic permission can subscribe to restricted global topics."""
+        user, user_id = self.create_user("unprivileged", uuid4().hex)
+
+        response = user.put(
+            "/users/{userId}/notification-subscriptions/{topicKey}",
+            userId="self",
+            topicKey="global.membership.requested",
+        )
+        assert_problem(self, response, 403, "permission_denied")
+
+        granted = self.gateway.put(
+            "/users/{id}/global-permissions/{permission}",
+            id=user_id,
+            permission="global.membership.manage",
+        )
+        self.assertEqual(granted.status_code, 204)
+        allowed = user.put(
+            "/users/{userId}/notification-subscriptions/{topicKey}",
+            userId="self",
+            topicKey="global.membership.requested",
+        )
+        self.assertEqual(allowed.status_code, 204)
+
     def test_group_managers_only_see_subscriptions_in_managed_groups(self) -> None:
         """Regression: group-only managers must not see global or other-group subscriptions."""
 
@@ -95,7 +119,7 @@ class NotificationSubscriptionsContractTest(unittest.TestCase):
         global_subscription = target.put(
             "/users/{userId}/notification-subscriptions/{topicKey}",
             userId="self",
-            topicKey="global.membership.requested",
+            topicKey="global.resource.published",
         )
         self.assertEqual(global_subscription.status_code, 204)
         for group_id in (direct_group_id, role_group_id, hidden_group_id):
@@ -134,7 +158,7 @@ class NotificationSubscriptionsContractTest(unittest.TestCase):
         self.assertEqual(self_response.status_code, 200)
         self_subscriptions = self_response.json()
         self.assertIn(
-            (None, "global.membership.requested"),
+            (None, "global.resource.published"),
             [(item.get("group_id"), item["topic_key"]) for item in self_subscriptions],
         )
         self.assertCountEqual(

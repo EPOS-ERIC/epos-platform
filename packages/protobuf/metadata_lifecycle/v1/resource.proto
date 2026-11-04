@@ -45,6 +45,20 @@ message GetDistributionFormatsResponse {
   repeated string formats = 1;
 }
 
+message RequestDistributionConversionRequest {
+  string distribution_id = 1 [(buf.validate.field).string.uuid = true];
+  string input_format = 2 [(buf.validate.field).string.min_len = 1];
+  repeated WebServiceVisibleOn visualizations = 3 [
+    (buf.validate.field).repeated.min_items = 1,
+    (buf.validate.field).repeated.items.enum.defined_only = true
+  ];
+  string message = 4 [(buf.validate.field).string.min_len = 1];
+}
+
+message RequestDistributionConversionResponse {
+  repeated Notification notifications = 1;
+}
+
 message CheckDistributionReadRequest {
   string distribution_id = 1 [(buf.validate.field).string.uuid = true];
 }
@@ -823,6 +837,9 @@ message ReplaceResourceDraftResponse {
 }
 
 service ResourceService {
+  rpc RequestDistributionConversion(RequestDistributionConversionRequest) returns (RequestDistributionConversionResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
   rpc CreateResource(CreateResourceRequest) returns (CreateResourceResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
   }

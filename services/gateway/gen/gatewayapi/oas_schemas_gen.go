@@ -6756,6 +6756,7 @@ const (
 	GlobalNotificationTopicKeyGlobalRoleRequestRequested GlobalNotificationTopicKey = "global.role_request.requested"
 	GlobalNotificationTopicKeyGlobalResourceSubmitted    GlobalNotificationTopicKey = "global.resource.submitted"
 	GlobalNotificationTopicKeyGlobalResourcePublished    GlobalNotificationTopicKey = "global.resource.published"
+	GlobalNotificationTopicKeyGlobalConversionRequested  GlobalNotificationTopicKey = "global.conversion.requested"
 )
 
 // AllValues returns all GlobalNotificationTopicKey values.
@@ -6765,6 +6766,7 @@ func (GlobalNotificationTopicKey) AllValues() []GlobalNotificationTopicKey {
 		GlobalNotificationTopicKeyGlobalRoleRequestRequested,
 		GlobalNotificationTopicKeyGlobalResourceSubmitted,
 		GlobalNotificationTopicKeyGlobalResourcePublished,
+		GlobalNotificationTopicKeyGlobalConversionRequested,
 	}
 }
 
@@ -6778,6 +6780,8 @@ func (s GlobalNotificationTopicKey) MarshalText() ([]byte, error) {
 	case GlobalNotificationTopicKeyGlobalResourceSubmitted:
 		return []byte(s), nil
 	case GlobalNotificationTopicKeyGlobalResourcePublished:
+		return []byte(s), nil
+	case GlobalNotificationTopicKeyGlobalConversionRequested:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -6798,6 +6802,9 @@ func (s *GlobalNotificationTopicKey) UnmarshalText(data []byte) error {
 		return nil
 	case GlobalNotificationTopicKeyGlobalResourcePublished:
 		*s = GlobalNotificationTopicKeyGlobalResourcePublished
+		return nil
+	case GlobalNotificationTopicKeyGlobalConversionRequested:
+		*s = GlobalNotificationTopicKeyGlobalConversionRequested
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -9350,6 +9357,7 @@ const (
 	NotificationTopicKeyGroupResourcePublished     NotificationTopicKey = "group.resource.published"
 	NotificationTopicKeyGlobalResourceSubmitted    NotificationTopicKey = "global.resource.submitted"
 	NotificationTopicKeyGlobalResourcePublished    NotificationTopicKey = "global.resource.published"
+	NotificationTopicKeyGlobalConversionRequested  NotificationTopicKey = "global.conversion.requested"
 )
 
 // AllValues returns all NotificationTopicKey values.
@@ -9363,6 +9371,7 @@ func (NotificationTopicKey) AllValues() []NotificationTopicKey {
 		NotificationTopicKeyGroupResourcePublished,
 		NotificationTopicKeyGlobalResourceSubmitted,
 		NotificationTopicKeyGlobalResourcePublished,
+		NotificationTopicKeyGlobalConversionRequested,
 	}
 }
 
@@ -9384,6 +9393,8 @@ func (s NotificationTopicKey) MarshalText() ([]byte, error) {
 	case NotificationTopicKeyGlobalResourceSubmitted:
 		return []byte(s), nil
 	case NotificationTopicKeyGlobalResourcePublished:
+		return []byte(s), nil
+	case NotificationTopicKeyGlobalConversionRequested:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -9416,6 +9427,9 @@ func (s *NotificationTopicKey) UnmarshalText(data []byte) error {
 		return nil
 	case NotificationTopicKeyGlobalResourcePublished:
 		*s = NotificationTopicKeyGlobalResourcePublished
+		return nil
+	case NotificationTopicKeyGlobalConversionRequested:
+		*s = NotificationTopicKeyGlobalConversionRequested
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -12629,6 +12643,45 @@ func (s *ReplaceSoftwareSourceCodeDraftRequestResourceType) UnmarshalText(data [
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// RequestDistributionConversionAccepted is response for RequestDistributionConversion operation.
+type RequestDistributionConversionAccepted struct{}
+
+type RequestDistributionConversionReq struct {
+	InputFormat    string                `json:"input_format"`
+	Visualizations []WebServiceVisibleOn `json:"visualizations"`
+	Message        string                `json:"message"`
+}
+
+// GetInputFormat returns the value of InputFormat.
+func (s *RequestDistributionConversionReq) GetInputFormat() string {
+	return s.InputFormat
+}
+
+// GetVisualizations returns the value of Visualizations.
+func (s *RequestDistributionConversionReq) GetVisualizations() []WebServiceVisibleOn {
+	return s.Visualizations
+}
+
+// GetMessage returns the value of Message.
+func (s *RequestDistributionConversionReq) GetMessage() string {
+	return s.Message
+}
+
+// SetInputFormat sets the value of InputFormat.
+func (s *RequestDistributionConversionReq) SetInputFormat(val string) {
+	s.InputFormat = val
+}
+
+// SetVisualizations sets the value of Visualizations.
+func (s *RequestDistributionConversionReq) SetVisualizations(val []WebServiceVisibleOn) {
+	s.Visualizations = val
+}
+
+// SetMessage sets the value of Message.
+func (s *RequestDistributionConversionReq) SetMessage(val string) {
+	s.Message = val
 }
 
 // Ref: #/components/schemas/ResourceVersion

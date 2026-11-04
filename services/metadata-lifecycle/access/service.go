@@ -13,11 +13,11 @@ import (
 
 type Store interface {
 	ListMemberships(context.Context, uuid.UUID) ([]domain.GroupMembership, error)
-	RequestMembership(context.Context, uuid.UUID, string, []domain.GroupRole) (domain.GroupMembership, error)
+	RequestMembership(context.Context, uuid.UUID, string, []domain.GroupRole) (domain.GroupMembership, domain.TopLevelConcept, error)
 	WithdrawMembershipRequest(context.Context, uuid.UUID, string) error
 	DecideMembership(context.Context, uuid.UUID, string, domain.Decision, string) (domain.GroupMembership, error)
 	RevokeMembership(context.Context, uuid.UUID, string) error
-	RequestRole(context.Context, uuid.UUID, string, domain.GroupRole) (domain.RoleRequest, error)
+	RequestRole(context.Context, uuid.UUID, string, domain.GroupRole) (domain.RoleRequest, domain.TopLevelConcept, error)
 	DecideRoleRequest(context.Context, uuid.UUID, uuid.UUID, domain.Decision, string) (domain.RoleRequestDecision, error)
 	WithdrawRoleRequest(context.Context, uuid.UUID, uuid.UUID, string) error
 	AssignRole(context.Context, uuid.UUID, string, domain.GroupRole, string) (bool, error)
@@ -91,16 +91,16 @@ func (s *Service) RequestMembership(ctx context.Context, actorID domain.Actor, g
 		return domain.GroupMembership{}, nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
-	membership, err := s.store.RequestMembership(ctx, groupID, string(actorID), roles)
+	membership, concept, err := s.store.RequestMembership(ctx, groupID, string(actorID), roles)
 	if err != nil {
 		return domain.GroupMembership{}, nil, fmt.Errorf("request group membership: %w", err)
 	}
 
-	notification, err := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:         domain.NotificationEventMembershipRequested,
+	notification, err := s.notifier.Build(ctx, domain.MembershipRequested{
 		ActorID:      actorID,
 		SubjectID:    membership.User.ID,
-		GroupID:      &groupID,
+		GroupID:      groupID,
+		GroupConcept: concept,
 		TargetUserID: string(actorID),
 	})
 	if err != nil {
@@ -148,19 +148,23 @@ func (s *Service) DecideMembership(ctx context.Context, actorID domain.Actor, gr
 		return domain.GroupMembership{}, nil, fmt.Errorf("decide group membership: %w", err)
 	}
 
-	kind := domain.NotificationEventMembershipRejected
-	if decision == domain.DecisionAccept {
-		kind = domain.NotificationEventMembershipAccepted
-	}
-	notification, err := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:         kind,
+	var event domain.NotificationEvent = domain.MembershipRejectedEvent{
 		ActorID:      actorID,
 		SubjectID:    userID,
-		GroupID:      &groupID,
+		GroupID:      groupID,
 		TargetUserID: userID,
-	})
+	}
+	if decision == domain.DecisionAccept {
+		event = domain.MembershipAccepted{
+			ActorID:      actorID,
+			SubjectID:    userID,
+			GroupID:      groupID,
+			TargetUserID: userID,
+		}
+	}
+	notification, err := s.notifier.Build(ctx, event)
 	if err != nil {
-		s.log.ErrorContext(ctx, "build notification notification failed", "event", kind, "error", err)
+		s.log.ErrorContext(ctx, "build notification notification failed", "event", event.NotificationKind(), "error", err)
 		notification = nil
 	}
 	return membership, notification, nil
@@ -199,16 +203,16 @@ func (s *Service) RequestRole(ctx context.Context, actorID domain.Actor, groupID
 		return domain.RoleRequest{}, nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
-	request, err := s.store.RequestRole(ctx, groupID, string(actorID), role)
+	request, concept, err := s.store.RequestRole(ctx, groupID, string(actorID), role)
 	if err != nil {
 		return domain.RoleRequest{}, nil, fmt.Errorf("request group role: %w", err)
 	}
 
-	notification, err := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:         domain.NotificationEventRoleRequested,
+	notification, err := s.notifier.Build(ctx, domain.RoleRequested{
 		ActorID:      actorID,
 		SubjectID:    string(actorID),
-		GroupID:      &groupID,
+		GroupID:      groupID,
+		GroupConcept: concept,
 		TargetUserID: string(actorID),
 		Role:         string(role),
 	})
@@ -237,21 +241,27 @@ func (s *Service) DecideRoleRequest(ctx context.Context, actorID domain.Actor, g
 		return domain.GroupMembership{}, nil, fmt.Errorf("decide group role request: %w", err)
 	}
 
-	kind := domain.NotificationEventRoleRequestRejected
-	if decision == domain.DecisionAccept {
-		kind = domain.NotificationEventRoleRequestAccepted
-	}
-	notification, err := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:         kind,
+	var event domain.NotificationEvent = domain.RoleRequestRejectedEvent{
 		ActorID:      actorID,
 		SubjectID:    result.Membership.User.ID,
-		GroupID:      &groupID,
+		GroupID:      groupID,
 		TargetUserID: result.Membership.User.ID,
 		Role:         string(result.Request.Role),
-		AccessID:     &result.Request.ID,
-	})
+		AccessID:     result.Request.ID,
+	}
+	if decision == domain.DecisionAccept {
+		event = domain.RoleRequestAcceptedEvent{
+			ActorID:      actorID,
+			SubjectID:    result.Membership.User.ID,
+			GroupID:      groupID,
+			TargetUserID: result.Membership.User.ID,
+			Role:         string(result.Request.Role),
+			AccessID:     result.Request.ID,
+		}
+	}
+	notification, err := s.notifier.Build(ctx, event)
 	if err != nil {
-		s.log.ErrorContext(ctx, "build notification notification failed", "event", kind, "error", err)
+		s.log.ErrorContext(ctx, "build notification notification failed", "event", event.NotificationKind(), "error", err)
 		notification = nil
 	}
 	return result.Membership, notification, nil
@@ -298,11 +308,10 @@ func (s *Service) AssignRole(ctx context.Context, actorID domain.Actor, groupID 
 		return nil, nil
 	}
 
-	notification, err := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:         domain.NotificationEventRoleAssigned,
+	notification, err := s.notifier.Build(ctx, domain.RoleAssigned{
 		ActorID:      actorID,
 		SubjectID:    userID,
-		GroupID:      &groupID,
+		GroupID:      groupID,
 		TargetUserID: userID,
 		Role:         string(role),
 	})
@@ -355,11 +364,10 @@ func (s *Service) GrantPermission(ctx context.Context, actorID domain.Actor, gro
 		return nil, nil
 	}
 
-	notification, err := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:         domain.NotificationEventPermissionAssigned,
+	notification, err := s.notifier.Build(ctx, domain.PermissionAssigned{
 		ActorID:      actorID,
 		SubjectID:    userID,
-		GroupID:      &groupID,
+		GroupID:      groupID,
 		TargetUserID: userID,
 		Permission:   string(permission),
 	})

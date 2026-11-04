@@ -1,0 +1,9 @@
+<h1>Resource published: {{.Resource.Name}}</h1>
+{{with resourceURL .Resource}}<p><a href="{{.}}">View resource</a></p>{{end}}
+<p><strong>Published by:</strong> {{userLabel .ActorID}}</p>
+<p><strong>Group:</strong> {{groupLabel .GroupID}}</p>
+<p><strong>Resource type:</strong> {{.Resource.Type}}</p>
+<p><strong>Resource ID:</strong> {{.Resource.ResourceID}}</p>
+<p><strong>Version ID:</strong> {{.Resource.VersionID}}</p>
+<p><strong>Revision:</strong> {{.Resource.Revision}}</p>
+<p><strong>Status:</strong> {{.Resource.Status}}</p>

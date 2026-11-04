@@ -94,6 +94,7 @@ var operationRolesBearerAuth = map[string][]string{
 	ReplaceGroupCategoryOperation:                []string{},
 	ReplaceOrganizationOperation:                 []string{},
 	ReplaceResourceDraftVersionOperation:         []string{},
+	RequestDistributionConversionOperation:       []string{},
 	RequestGroupMembershipOperation:              []string{},
 	RequestGroupRoleOperation:                    []string{},
 	RevokeGlobalPermissionOperation:              []string{},

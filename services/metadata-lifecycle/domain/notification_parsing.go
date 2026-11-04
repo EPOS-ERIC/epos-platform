@@ -26,7 +26,8 @@ func NewNotificationTopicKey(value string) (NotificationTopicKey, error) {
 		NotificationTopicGroupResourceSubmitted,
 		NotificationTopicGroupResourcePublished,
 		NotificationTopicGlobalResourceSubmitted,
-		NotificationTopicGlobalResourcePublished:
+		NotificationTopicGlobalResourcePublished,
+		NotificationTopicGlobalConversionRequested:
 		return key, nil
 	default:
 		return "", apperror.Default(apperror.CodeValidationFailed)

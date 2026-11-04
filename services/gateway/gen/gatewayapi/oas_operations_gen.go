@@ -75,6 +75,7 @@ const (
 	ReplaceGroupCategoryOperation                OperationName = "ReplaceGroupCategory"
 	ReplaceOrganizationOperation                 OperationName = "ReplaceOrganization"
 	ReplaceResourceDraftVersionOperation         OperationName = "ReplaceResourceDraftVersion"
+	RequestDistributionConversionOperation       OperationName = "RequestDistributionConversion"
 	RequestGroupMembershipOperation              OperationName = "RequestGroupMembership"
 	RequestGroupRoleOperation                    OperationName = "RequestGroupRole"
 	RevokeGlobalPermissionOperation              OperationName = "RevokeGlobalPermission"

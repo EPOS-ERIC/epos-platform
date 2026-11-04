@@ -688,6 +688,16 @@ func (UnimplementedHandler) ReplaceResourceDraftVersion(ctx context.Context, req
 	return r, ht.ErrNotImplemented
 }
 
+// RequestDistributionConversion implements requestDistributionConversion operation.
+//
+// Requires edit permission for a draft dataset and a web-service distribution. Email delivery is
+// asynchronous and best effort.
+//
+// POST /distributions/{distributionId}/conversion-requests
+func (UnimplementedHandler) RequestDistributionConversion(ctx context.Context, req *RequestDistributionConversionReq, params RequestDistributionConversionParams) error {
+	return ht.ErrNotImplemented
+}
+
 // RequestGroupMembership implements requestGroupMembership operation.
 //
 // Create the authenticated user's pending membership request with zero or more requested group roles.

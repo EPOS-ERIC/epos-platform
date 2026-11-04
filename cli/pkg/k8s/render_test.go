@@ -118,7 +118,6 @@ func TestRenderOpts_ConfigRender_OptionalComponents(t *testing.T) {
 			name:    "backoffice enabled renders UI",
 			envName: "test-backoffice",
 			mutate: func(cfg *config.Config) {
-				cfg.Components.Backoffice.Enabled = true
 			},
 			wantGateway: []string{`url: "metadata-lifecycle:5000"`},
 			wantTemplates: map[string]string{

@@ -6444,6 +6444,71 @@ func decodeReplaceResourceDraftVersionParams(args [2]string, argsEscaped bool, r
 	return params, nil
 }
 
+// RequestDistributionConversionParams is parameters of requestDistributionConversion operation.
+type RequestDistributionConversionParams struct {
+	DistributionId uuid.UUID
+}
+
+func unpackRequestDistributionConversionParams(packed middleware.Parameters) (params RequestDistributionConversionParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "distributionId",
+			In:   "path",
+		}
+		params.DistributionId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeRequestDistributionConversionParams(args [1]string, argsEscaped bool, r *http.Request) (params RequestDistributionConversionParams, _ error) {
+	// Decode path: distributionId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "distributionId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.DistributionId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "distributionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // RequestGroupMembershipParams is parameters of requestGroupMembership operation.
 type RequestGroupMembershipParams struct {
 	// Group identifier.

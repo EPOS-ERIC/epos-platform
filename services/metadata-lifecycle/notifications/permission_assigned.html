@@ -1,0 +1,5 @@
+<h1>Permission assigned</h1>
+<p>You were granted the <strong>{{.Permission}}</strong> permission.</p>
+{{if ne .GroupID.String "00000000-0000-0000-0000-000000000000"}}<p><strong>Group:</strong> {{groupLabel .GroupID}}</p>{{end}}
+<p><strong>Granted by:</strong> {{userLabel .ActorID}}</p>
+{{if ne .GroupID.String "00000000-0000-0000-0000-000000000000"}}{{with pageURL "/memberships"}}<p><a href="{{.}}">View your memberships</a></p>{{end}}{{else}}{{with pageURL "/global-manage?panel=members"}}<p><a href="{{.}}">View members</a></p>{{end}}{{end}}

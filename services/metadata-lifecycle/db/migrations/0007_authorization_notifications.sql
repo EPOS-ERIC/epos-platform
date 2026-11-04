@@ -211,7 +211,8 @@ INSERT INTO notification_event_types (key, label, description, scope, default_on
     ('global.membership.requested',   'Global membership requests',   'Notifies eligible managers when a user requests membership in any group.',                    'GLOBAL', true),
     ('global.role_request.requested', 'Global role requests',         'Notifies eligible managers when a user requests a role in any group.',                        'GLOBAL', true),
     ('global.resource.submitted',     'Global resource submissions',  'Notifies global subscribers when a resource is submitted for review in any group.',           'GLOBAL', true),
-    ('global.resource.published',     'Global resource publications', 'Notifies global subscribers when a resource is published in any group.',                      'GLOBAL', true);
+    ('global.resource.published',     'Global resource publications', 'Notifies global subscribers when a resource is published in any group.',                      'GLOBAL', true),
+    ('global.conversion.requested',   'Conversion requests',          'Notifies plugin managers when a distribution conversion is requested.',                       'GLOBAL', true);
 INSERT INTO notification_event_type_permissions (event_type, permission_key) VALUES
     ('group.membership.requested',    'group.membership.manage'),
     ('global.membership.requested',   'global.membership.manage'),
@@ -220,7 +221,8 @@ INSERT INTO notification_event_type_permissions (event_type, permission_key) VAL
     ('group.resource.submitted',      'group.resource.publish'),
     ('group.resource.submitted',      'group.resource.reject'),
     ('global.resource.submitted',     'global.resource.publish'),
-    ('global.resource.submitted',     'global.resource.reject');
+    ('global.resource.submitted',     'global.resource.reject'),
+    ('global.conversion.requested',   'global.converter.manage');
 
 -- +goose Down
 

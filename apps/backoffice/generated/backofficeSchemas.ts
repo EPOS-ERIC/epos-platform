@@ -345,13 +345,15 @@ export type NotificationTopicKey =
   | "group.resource.submitted"
   | "group.resource.published"
   | "global.resource.submitted"
-  | "global.resource.published";
+  | "global.resource.published"
+  | "global.conversion.requested";
 
 export type GlobalNotificationTopicKey =
   | "global.membership.requested"
   | "global.role_request.requested"
   | "global.resource.submitted"
-  | "global.resource.published";
+  | "global.resource.published"
+  | "global.conversion.requested";
 
 export type GroupNotificationTopicKey =
   | "group.membership.requested"

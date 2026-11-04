@@ -942,6 +942,12 @@ func encodeReplaceResourceDraftVersionResponse(response *WriteResult, w http.Res
 	return nil
 }
 
+func encodeRequestDistributionConversionResponse(response *RequestDistributionConversionAccepted, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(202)
+
+	return nil
+}
+
 func encodeRequestGroupMembershipResponse(response *GroupMembership, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)

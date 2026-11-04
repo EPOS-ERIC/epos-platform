@@ -29,6 +29,7 @@ type Store interface {
 type Authorizer interface {
 	CanManageGlobalNotificationSubscriptions(context.Context, string, string) (domain.Result, error)
 	CanManageGroupNotificationSubscriptions(context.Context, string, string, uuid.UUID) (domain.Result, error)
+	CanSubscribeToNotificationTopic(context.Context, string, *uuid.UUID, []string) (domain.Result, error)
 	GroupsWithAnyPermissionForActiveMember(context.Context, string, string, []domain.GroupPermission) ([]uuid.UUID, error)
 }
 
@@ -168,7 +169,7 @@ func (s *Service) authorizeSubscription(ctx context.Context, actor domain.Actor,
 		if !allowed.Allowed {
 			return domain.NotificationTopic{}, apperror.Default(apperror.CodePermissionDenied)
 		}
-		return topic, nil
+		return s.authorizeTopicEligibility(ctx, userID, groupID, topic)
 	}
 
 	if topic.Scope != domain.NotificationScopeGroup || *groupID == uuid.Nil {
@@ -181,6 +182,19 @@ func (s *Service) authorizeSubscription(ctx context.Context, actor domain.Actor,
 	if !allowed.Allowed {
 		return domain.NotificationTopic{}, apperror.Default(apperror.CodePermissionDenied)
 	}
+	return s.authorizeTopicEligibility(ctx, userID, groupID, topic)
+}
+
+func (s *Service) authorizeTopicEligibility(ctx context.Context, userID string, groupID *uuid.UUID, topic domain.NotificationTopic) (domain.NotificationTopic, error) {
+	allowed, err := s.authorizer.CanSubscribeToNotificationTopic(ctx, userID, groupID, topic.RequiredPermissions)
+	if err != nil {
+		return domain.NotificationTopic{}, fmt.Errorf("authorize notification topic eligibility: %w", err)
+	}
+
+	if !allowed.Allowed {
+		return domain.NotificationTopic{}, apperror.Default(apperror.CodePermissionDenied)
+	}
+
 	return topic, nil
 }
 

@@ -79,7 +79,6 @@ func TestConfigRender(t *testing.T) {
 			name: "backoffice enabled renders UI",
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-backoffice"
-				cfg.Components.Backoffice.Enabled = true
 			},
 			wantContains: map[string][]string{
 				"templates/backoffice-ui.yaml": {"name: backoffice-ui", `value: "http://localhost/test-backoffice/aai"`},
@@ -102,7 +101,6 @@ func TestConfigRender(t *testing.T) {
 				cfg.Name = "test-aai"
 				cfg.Components.Gateway.AAI.Enabled = true
 				cfg.Components.AAIService.Enabled = true
-				cfg.Components.Backoffice.Enabled = true
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
@@ -133,7 +131,6 @@ func TestConfigRender(t *testing.T) {
 				cfg.URLPrefixNamespace = false
 				cfg.Components.Gateway.AAI.Enabled = true
 				cfg.Components.AAIService.Enabled = true
-				cfg.Components.Backoffice.Enabled = true
 			},
 			wantContains: map[string][]string{
 				"templates/aai-service.yaml": {
@@ -207,7 +204,6 @@ func TestConfigRender(t *testing.T) {
 				cfg.Components.PlatformUI.TLS.SecretName = dataportalTLSSecret
 				cfg.Components.Gateway.TLS.Enabled = true
 				cfg.Components.Gateway.TLS.SecretName = gatewayTLSSecret
-				cfg.Components.Backoffice.Enabled = true
 				cfg.Components.Backoffice.TLS.Enabled = true
 				cfg.Components.Backoffice.TLS.SecretName = "backoffice-tls"
 				cfg.Components.AAIService.Enabled = true
@@ -334,7 +330,6 @@ func TestIngressHost(t *testing.T) {
 			cfg.Name = "test-ingress"
 			cfg.IngressHost = tc.host
 			cfg.Components.AAIService.Enabled = true
-			cfg.Components.Backoffice.Enabled = true
 			cfg.Components.OpenTelemetry.Enabled = true
 			files, err := cfg.Render()
 			if err != nil {

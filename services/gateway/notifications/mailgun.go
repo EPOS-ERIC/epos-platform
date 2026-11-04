@@ -92,7 +92,10 @@ func (m *Mailgun) sendAsync(ctx context.Context, notification domain.Notificatio
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		m.log.ErrorContext(ctx, "send notification failed", "target", notification.TargetEmail, "event", notification.EventKind, "error", err)
+		return
 	}
+
+	m.log.DebugContext(ctx, "notification accepted by Mailgun", "target", notification.TargetEmail, "event", notification.EventKind)
 }
 
 func (m *Mailgun) send(ctx context.Context, notification domain.Notification) error {

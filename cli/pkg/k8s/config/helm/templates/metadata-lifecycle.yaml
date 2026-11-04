@@ -53,8 +53,8 @@ spec:
               value: "http/protobuf"
             - name: OTEL_METRIC_EXPORT_INTERVAL
               value: "5000"
-            - name: GATEWAY_PUBLIC_URL
-              value: {{ printf "%s://%s%s%s" .Values.protocol .Values.domain (ternary (printf "/%s" $.Release.Namespace) "" .Values.url_prefix_namespace) (trimSuffix "/v1" (trimSuffix "/" .Values.components.gateway.base_url)) | quote }}
+            - name: BACKOFFICE_URL
+              value: {{ include "epos.backofficeURL" . | quote }}
 
           readinessProbe:
             tcpSocket:

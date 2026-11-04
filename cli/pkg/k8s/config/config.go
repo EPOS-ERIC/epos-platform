@@ -83,7 +83,7 @@ func (c *Config) Save(path string) error {
 	return nil
 }
 
-// BuildEnvURLs builds GUI, API, and optional backoffice URLs from the configuration.
+// BuildEnvURLs builds GUI, API, and backoffice URLs from the configuration.
 func (c *Config) BuildEnvURLs() (*common.URLs, error) {
 	buildURL := func(paths ...string) (string, error) {
 		base := &url.URL{
@@ -124,14 +124,12 @@ func (c *Config) BuildEnvURLs() (*common.URLs, error) {
 		APIBaseURL: apiBaseURL,
 	}
 
-	if c.Components.Backoffice.Enabled {
-		backofficeURL, err := buildURL(c.Components.Backoffice.GUI.BaseURL)
-		if err != nil {
-			return nil, fmt.Errorf("error building Backoffice URL: %w", err)
-		}
-		backofficeURL = strings.TrimRight(backofficeURL, "/") + "/"
-		urls.BackofficeURL = &backofficeURL
+	backofficeURL, err := buildURL(c.Components.Backoffice.GUI.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("error building Backoffice URL: %w", err)
 	}
+	backofficeURL = strings.TrimRight(backofficeURL, "/") + "/"
+	urls.BackofficeURL = &backofficeURL
 
 	if c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" {
 		grafanaURL, err := buildURL("/grafana/")
@@ -170,7 +168,7 @@ func (c *Config) Validate() error {
 	}
 	if c.IngressHost != nil && *c.IngressHost != "" && *c.IngressHost != c.Domain && c.CertManagerIssuer != "" &&
 		(c.Components.PlatformUI.TLS.Enabled || c.Components.Gateway.TLS.Enabled ||
-			(c.Components.Backoffice.Enabled && c.Components.Backoffice.TLS.Enabled) ||
+			c.Components.Backoffice.TLS.Enabled ||
 			(c.Components.AAIService.Enabled && c.Components.AAIService.TLS.Enabled) ||
 			(c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" && c.Components.OpenTelemetry.TLS.Enabled)) {
 		return fmt.Errorf("ingress_host must match domain when cert-manager TLS is enabled")
@@ -184,17 +182,15 @@ func (c *Config) Validate() error {
 	if err := validateIngressTLSSecret("gateway", c.Components.Gateway.TLS); err != nil {
 		return err
 	}
-	if c.Components.Backoffice.Enabled {
-		if err := validateIngressTLSSecret("backoffice", c.Components.Backoffice.TLS); err != nil {
-			return err
-		}
+	if err := validateIngressTLSSecret("backoffice", c.Components.Backoffice.TLS); err != nil {
+		return err
 	}
 	if c.Components.AAIService.Enabled {
 		if err := validateIngressTLSSecret("aai service", c.Components.AAIService.TLS); err != nil {
 			return err
 		}
 	}
-	if c.Protocol != "https" && (c.Components.PlatformUI.TLS.Enabled || c.Components.Gateway.TLS.Enabled || (c.Components.Backoffice.Enabled && c.Components.Backoffice.TLS.Enabled) || (c.Components.AAIService.Enabled && c.Components.AAIService.TLS.Enabled) || (c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" && c.Components.OpenTelemetry.TLS.Enabled)) {
+	if c.Protocol != "https" && (c.Components.PlatformUI.TLS.Enabled || c.Components.Gateway.TLS.Enabled || c.Components.Backoffice.TLS.Enabled || (c.Components.AAIService.Enabled && c.Components.AAIService.TLS.Enabled) || (c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" && c.Components.OpenTelemetry.TLS.Enabled)) {
 		return fmt.Errorf("protocol must be https when ingress TLS is enabled")
 	}
 
@@ -300,19 +296,17 @@ func (c *Config) Validate() error {
 	}
 
 	// Backoffice validation
-	if c.Components.Backoffice.Enabled {
-		if c.Components.Backoffice.GUI.BaseURL == "" {
-			return fmt.Errorf("backoffice base url is required when backoffice is enabled")
-		}
-		if !strings.HasPrefix(c.Components.Backoffice.GUI.BaseURL, "/") {
-			return fmt.Errorf("backoffice base url must start with /")
-		}
-		if !strings.HasSuffix(c.Components.Backoffice.GUI.BaseURL, "/") {
-			return fmt.Errorf("backoffice base url must end with /")
-		}
-		if c.Images.BackofficeUIImage == "" {
-			return fmt.Errorf("backoffice ui image is required when backoffice is enabled")
-		}
+	if c.Components.Backoffice.GUI.BaseURL == "" {
+		return fmt.Errorf("backoffice base url is required")
+	}
+	if !strings.HasPrefix(c.Components.Backoffice.GUI.BaseURL, "/") {
+		return fmt.Errorf("backoffice base url must start with /")
+	}
+	if !strings.HasSuffix(c.Components.Backoffice.GUI.BaseURL, "/") {
+		return fmt.Errorf("backoffice base url must end with /")
+	}
+	if c.Images.BackofficeUIImage == "" {
+		return fmt.Errorf("backoffice ui image is required")
 	}
 
 	// Metadata database validation

@@ -234,11 +234,6 @@ func (e *EnvConfig) AAIAuthRootURL() string {
 	return ""
 }
 
-// GatewayPublicURL returns the externally reachable gateway root URL for the Compose template.
-func (e *EnvConfig) GatewayPublicURL() string {
-	return fmt.Sprintf("%s://%s", e.Protocol, net.JoinHostPort(e.Domain, strconv.Itoa(e.Components.Gateway.Port)))
-}
-
 // AAIServiceEndpoint returns gateway-reachable AAI service endpoint.
 func (e *EnvConfig) AAIServiceEndpoint() string {
 	if !e.Components.Gateway.AAI.Enabled {

@@ -169,11 +169,10 @@ func (s *Service) Submit(ctx context.Context, actor domain.Actor, datasetID, ver
 		return domain.DatasetVersion{}, nil, operationError("submit draft", err)
 	}
 
-	notification, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourceSubmitted,
+	notification, buildErr := s.notifier.Build(ctx, domain.ResourceSubmitted{
 		ActorID:  actor,
-		GroupID:  &dataset.Group.ID,
-		Resource: datasetNotificationResource(dataset),
+		GroupID:  dataset.Group.ID,
+		Resource: *datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourceSubmitted, "error", buildErr)
@@ -201,11 +200,10 @@ func (s *Service) Reject(ctx context.Context, actor domain.Actor, datasetID, ver
 		return domain.DatasetVersion{}, nil, operationError("reject submission", err)
 	}
 
-	notification, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourceRejected,
+	notification, buildErr := s.notifier.Build(ctx, domain.ResourceRejected{
 		ActorID:  actor,
-		GroupID:  &dataset.Group.ID,
-		Resource: datasetNotificationResource(dataset),
+		GroupID:  dataset.Group.ID,
+		Resource: *datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourceRejected, "error", buildErr)
@@ -234,11 +232,10 @@ func (s *Service) Publish(ctx context.Context, actor domain.Actor, datasetID, ve
 		return domain.DatasetVersion{}, nil, operationError("publish version", err)
 	}
 
-	notification, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourcePublished,
+	notification, buildErr := s.notifier.Build(ctx, domain.ResourcePublished{
 		ActorID:  actor,
-		GroupID:  &dataset.Group.ID,
-		Resource: datasetNotificationResource(dataset),
+		GroupID:  dataset.Group.ID,
+		Resource: *datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourcePublished, "error", buildErr)
@@ -266,11 +263,10 @@ func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, datasetID, 
 		return domain.DatasetVersion{}, nil, operationError("unpublish version", err)
 	}
 
-	notification, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourceUnpublished,
+	notification, buildErr := s.notifier.Build(ctx, domain.ResourceUnpublished{
 		ActorID:  actor,
-		GroupID:  &dataset.Group.ID,
-		Resource: datasetNotificationResource(dataset),
+		GroupID:  dataset.Group.ID,
+		Resource: *datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourceUnpublished, "error", buildErr)

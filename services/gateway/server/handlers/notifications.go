@@ -128,6 +128,8 @@ func toProtoGlobalNotificationTopicKey(value gatewayapi.GlobalNotificationTopicK
 		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED, nil
 	case gatewayapi.GlobalNotificationTopicKeyGlobalResourcePublished:
 		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED, nil
+	case gatewayapi.GlobalNotificationTopicKeyGlobalConversionRequested:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED, nil
 	default:
 		return 0, fmt.Errorf("unknown global notification topic key: %q", value)
 	}
@@ -166,6 +168,8 @@ func fromProtoNotificationTopicKey(value metadatalifecyclev1.NotificationTopicKe
 		return gatewayapi.NotificationTopicKeyGlobalResourceSubmitted, nil
 	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED:
 		return gatewayapi.NotificationTopicKeyGlobalResourcePublished, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED:
+		return gatewayapi.NotificationTopicKeyGlobalConversionRequested, nil
 	default:
 		return "", fmt.Errorf("metadata-lifecycle returned unknown notification topic key %s", value.String())
 	}

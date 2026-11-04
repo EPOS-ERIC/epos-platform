@@ -476,6 +476,13 @@ type Handler interface {
 	//
 	// PUT /resources/{id}/versions/{versionId}/draft
 	ReplaceResourceDraftVersion(ctx context.Context, req ReplaceResourceDraftRequest, params ReplaceResourceDraftVersionParams) (*WriteResult, error)
+	// RequestDistributionConversion implements requestDistributionConversion operation.
+	//
+	// Requires edit permission for a draft dataset and a web-service distribution. Email delivery is
+	// asynchronous and best effort.
+	//
+	// POST /distributions/{distributionId}/conversion-requests
+	RequestDistributionConversion(ctx context.Context, req *RequestDistributionConversionReq, params RequestDistributionConversionParams) error
 	// RequestGroupMembership implements requestGroupMembership operation.
 	//
 	// Create the authenticated user's pending membership request with zero or more requested group roles.

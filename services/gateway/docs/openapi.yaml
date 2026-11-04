@@ -306,6 +306,40 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/Problem" }
+  /distributions/{distributionId}/conversion-requests:
+    post:
+      tags: [Conversions]
+      summary: Request a distribution conversion
+      description: Requires edit permission for a draft dataset and a web-service distribution. Email delivery is asynchronous and best effort.
+      operationId: requestDistributionConversion
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [input_format, visualizations, message]
+              properties:
+                input_format: { type: string, minLength: 1 }
+                visualizations:
+                  type: array
+                  minItems: 1
+                  items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
+                message: { type: string, minLength: 1 }
+      responses:
+        "202":
+          description: Request accepted; email delivery is not guaranteed
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /distributions/{distributionId}/access:
     post:
       tags: [Access]
@@ -2865,6 +2899,7 @@ components:
         - group.resource.published
         - global.resource.submitted
         - global.resource.published
+        - global.conversion.requested
 
     GlobalNotificationTopicKey:
       type: string
@@ -2873,6 +2908,7 @@ components:
         - global.role_request.requested
         - global.resource.submitted
         - global.resource.published
+        - global.conversion.requested
 
     GroupNotificationTopicKey:
       type: string
