@@ -95,7 +95,7 @@ export class ApiService {
   private get bearerToken(): string {
     return this.authService.accessToken;
   }
-  getDiscovery(params: DiscoverySearchParams = {}): Observable<DiscoveryItem[]> {
+  public getDiscovery(params: DiscoverySearchParams = {}): Observable<DiscoveryItem[]> {
     return this.http.get<DiscoveryItem[]>(`${this.baseUrl}/search`, {
       params: this.toHttpParams(params),
       headers: {
@@ -104,7 +104,7 @@ export class ApiService {
     });
   }
 
-  getResourceVersion<T extends DiscoveryResourceType>(resourceType: T, id: string, versionId: string): Observable<ResourceVersionResponse<T>> {
+  public getResourceVersion<T extends DiscoveryResourceType>(resourceType: T, id: string, versionId: string): Observable<ResourceVersionResponse<T>> {
     return this.http.get<ResourceVersionResponse<T>>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}`,
       {
@@ -115,7 +115,7 @@ export class ApiService {
     );
   }
 
-  listResourceVersions(
+  public listResourceVersions(
     resourceType: DiscoveryResourceType,
     id: string
   ): Observable<ResourceVersionSummary[]> {
@@ -129,7 +129,7 @@ export class ApiService {
     );
   }
 
-  saveResourceVersionDraft(
+  public saveResourceVersionDraft(
     id: string,
     versionId: string,
     targetStatus: 'draft' | 'submitted',
@@ -148,7 +148,7 @@ export class ApiService {
     );
   }
 
-  deleteResourceVersionDraft(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<void> {
+  public deleteResourceVersionDraft(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/draft`,
       {
@@ -159,7 +159,7 @@ export class ApiService {
     );
   }
 
-  submitResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
+  public submitResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
     return this.http.post<WriteResult>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/submit`,
       undefined,
@@ -171,7 +171,19 @@ export class ApiService {
     );
   }
 
-  publishResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
+  public withdrawResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
+    return this.http.post<WriteResult>(
+      `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/withdraw`,
+      undefined,
+      {
+        headers: {
+          Authorization: `Bearer ${this.bearerToken}`
+        }
+      }
+    );
+  }
+
+  public publishResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
     return this.http.post<WriteResult>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/publish`,
       undefined,
@@ -183,7 +195,7 @@ export class ApiService {
     );
   }
 
-  createDraftFromPublication(resourceType: DiscoveryResourceType, id: string): Observable<WriteResult> {
+  public createDraftFromPublication(resourceType: DiscoveryResourceType, id: string): Observable<WriteResult> {
     return this.http.post<WriteResult>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/draft-from-publication`,
       undefined,
@@ -195,7 +207,7 @@ export class ApiService {
     );
   }
 
-  createDraftFromArchive(resourceType: DiscoveryResourceType, id: string): Observable<WriteResult> {
+  public createDraftFromArchive(resourceType: DiscoveryResourceType, id: string): Observable<WriteResult> {
     return this.http.post<WriteResult>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/draft-from-archive`,
       undefined,
@@ -207,7 +219,7 @@ export class ApiService {
     );
   }
 
-  unpublishResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
+  public unpublishResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
     return this.http.post<WriteResult>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/unpublish`,
       undefined,
@@ -219,7 +231,7 @@ export class ApiService {
     );
   }
 
-  reopenResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
+  public reopenResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
     return this.http.post<WriteResult>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/reopen`,
       undefined,
@@ -231,7 +243,7 @@ export class ApiService {
     );
   }
 
-  rejectResourceVersion(
+  public rejectResourceVersion(
     resourceType: DiscoveryResourceType,
     id: string,
     versionId: string,
@@ -248,7 +260,7 @@ export class ApiService {
     );
   }
 
-  getContactPoint(id: string): Observable<ContactPoint> {
+  public getContactPoint(id: string): Observable<ContactPoint> {
     return this.http.get<ContactPoint>(`${this.baseUrl}/contact-points/${encodeURIComponent(id)}`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -256,7 +268,7 @@ export class ApiService {
     });
   }
 
-  getContactPoints(): Observable<ContactPoint[]> {
+  public getContactPoints(): Observable<ContactPoint[]> {
     return this.http.get<ContactPoint[]>(`${this.baseUrl}/contact-points`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -264,7 +276,7 @@ export class ApiService {
     });
   }
 
-  createContactPoint(payload: CreateContactPointRequest): Observable<ContactPoint> {
+  public createContactPoint(payload: CreateContactPointRequest): Observable<ContactPoint> {
     return this.http.post<ContactPoint>(`${this.baseUrl}/contact-points`, payload, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -272,7 +284,7 @@ export class ApiService {
     });
   }
 
-  replaceContactPoint(id: string, payload: ReplaceContactPointRequest): Observable<ContactPoint> {
+  public replaceContactPoint(id: string, payload: ReplaceContactPointRequest): Observable<ContactPoint> {
     return this.http.put<ContactPoint>(`${this.baseUrl}/contact-points/${encodeURIComponent(id)}`, payload, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -280,7 +292,7 @@ export class ApiService {
     });
   }
 
-  deleteContactPoint(id: string): Observable<void> {
+  public deleteContactPoint(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/contact-points/${encodeURIComponent(id)}`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -288,7 +300,7 @@ export class ApiService {
     });
   }
 
-  getOrganizations(): Observable<ResourceVersionReference[]> {
+  public getOrganizations(): Observable<ResourceVersionReference[]> {
     return this.http.get<CanonicalOrganization[]>(`${this.baseUrl}/organizations`).pipe(
       map((organizations) => {
         const references = new Map<string, ResourceVersionReference>();
@@ -304,7 +316,7 @@ export class ApiService {
     );
   }
 
-  getCanonicalOrganizations(): Observable<CanonicalOrganization[]> {
+  public getCanonicalOrganizations(): Observable<CanonicalOrganization[]> {
     return this.http.get<CanonicalOrganization[]>(`${this.baseUrl}/organizations`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -312,7 +324,7 @@ export class ApiService {
     });
   }
 
-  createOrganization(payload: CreateOrganizationRequest): Observable<CanonicalOrganization> {
+  public createOrganization(payload: CreateOrganizationRequest): Observable<CanonicalOrganization> {
     return this.http.post<CanonicalOrganization>(`${this.baseUrl}/organizations`, payload, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -320,7 +332,7 @@ export class ApiService {
     });
   }
 
-  replaceOrganization(id: string, payload: ReplaceOrganizationRequest): Observable<CanonicalOrganization> {
+  public replaceOrganization(id: string, payload: ReplaceOrganizationRequest): Observable<CanonicalOrganization> {
     return this.http.put<CanonicalOrganization>(`${this.baseUrl}/organizations/${encodeURIComponent(id)}`, payload, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -328,7 +340,7 @@ export class ApiService {
     });
   }
 
-  deleteOrganization(id: string): Observable<void> {
+  public deleteOrganization(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/organizations/${encodeURIComponent(id)}`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -336,11 +348,11 @@ export class ApiService {
     });
   }
 
-  getGroupCategories(groupId: string): Observable<Category[]> {
+  public getGroupCategories(groupId: string): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/categories`);
   }
 
-  createGroupCategory(groupId: string, payload: CreateCategoryRequest): Observable<Category> {
+  public createGroupCategory(groupId: string, payload: CreateCategoryRequest): Observable<Category> {
     return this.http.post<Category>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/categories`, payload, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -348,7 +360,7 @@ export class ApiService {
     });
   }
 
-  replaceGroupCategory(groupId: string, categoryId: string, payload: ReplaceCategoryRequest): Observable<Category> {
+  public replaceGroupCategory(groupId: string, categoryId: string, payload: ReplaceCategoryRequest): Observable<Category> {
     return this.http.put<Category>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/categories/${encodeURIComponent(categoryId)}`,
       payload,
@@ -360,7 +372,7 @@ export class ApiService {
     );
   }
 
-  deleteGroupCategory(groupId: string, categoryId: string): Observable<void> {
+  public deleteGroupCategory(groupId: string, categoryId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/categories/${encodeURIComponent(categoryId)}`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -368,11 +380,11 @@ export class ApiService {
     });
   }
 
-  getGroups(): Observable<Group[]> {
+  public getGroups(): Observable<Group[]> {
     return this.http.get<Group[]>(`${this.baseUrl}/groups`);
   }
 
-  createGroup(payload: CreateGroupRequest): Observable<Group> {
+  public createGroup(payload: CreateGroupRequest): Observable<Group> {
     return this.http.post<Group>(`${this.baseUrl}/groups`, payload, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -380,7 +392,7 @@ export class ApiService {
     });
   }
 
-  replaceGroup(id: string, payload: ReplaceGroupRequest): Observable<Group> {
+  public replaceGroup(id: string, payload: ReplaceGroupRequest): Observable<Group> {
     return this.http.put<Group>(`${this.baseUrl}/groups/${encodeURIComponent(id)}`, payload, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -388,7 +400,7 @@ export class ApiService {
     });
   }
 
-  deleteGroup(id: string): Observable<void> {
+  public deleteGroup(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/groups/${encodeURIComponent(id)}`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -396,28 +408,28 @@ export class ApiService {
     });
   }
 
-  listPermissions(): Observable<Permission[]> {
+  public listPermissions(): Observable<Permission[]> {
     return this.http.get<Permission[]>(`${this.baseUrl}/permissions`);
   }
 
-  listNotificationTopics(): Observable<NotificationTopic[]> {
+  public listNotificationTopics(): Observable<NotificationTopic[]> {
     return this.http.get<NotificationTopic[]>(`${this.baseUrl}/notification-topics`);
   }
 
-  listUserNotificationSubscriptions(userId: string): Observable<NotificationSubscription[]> {
+  public listUserNotificationSubscriptions(userId: string): Observable<NotificationSubscription[]> {
     return this.http.get<NotificationSubscription[]>(
       `${this.baseUrl}/users/${encodeURIComponent(userId)}/notification-subscriptions`,
       { headers: { Authorization: `Bearer ${this.bearerToken}` } }
     );
   }
 
-  setUserNotificationSubscription(userId: string, topicKey: GlobalNotificationTopicKey, enabled: boolean): Observable<void> {
+  public setUserNotificationSubscription(userId: string, topicKey: GlobalNotificationTopicKey, enabled: boolean): Observable<void> {
     const url = `${this.baseUrl}/users/${encodeURIComponent(userId)}/notification-subscriptions/${encodeURIComponent(topicKey)}`;
     const options = { headers: { Authorization: `Bearer ${this.bearerToken}` } };
     return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
   }
 
-  setGroupUserNotificationSubscription(
+  public setGroupUserNotificationSubscription(
     groupId: string,
     userId: string,
     topicKey: GroupNotificationTopicKey,
@@ -428,7 +440,7 @@ export class ApiService {
     return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
   }
 
-  getGroupMemberships(groupId: string): Observable<GroupMembership[]> {
+  public getGroupMemberships(groupId: string): Observable<GroupMembership[]> {
     return this.http.get<GroupMembership[]>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -436,7 +448,7 @@ export class ApiService {
     });
   }
 
-  requestGroupMembership(groupId: string, payload: CreateMembershipRequest): Observable<GroupMembership> {
+  public requestGroupMembership(groupId: string, payload: CreateMembershipRequest): Observable<GroupMembership> {
     return this.http.post<GroupMembership>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/membership-requests`,
       payload,
@@ -444,13 +456,13 @@ export class ApiService {
     );
   }
 
-  withdrawGroupMembershipRequest(groupId: string): Observable<void> {
+  public withdrawGroupMembershipRequest(groupId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/membership-requests`, {
       headers: { Authorization: `Bearer ${this.bearerToken}` }
     });
   }
 
-  requestGroupRole(groupId: string, payload: CreateRoleRequest): Observable<RoleRequest> {
+  public requestGroupRole(groupId: string, payload: CreateRoleRequest): Observable<RoleRequest> {
     return this.http.post<RoleRequest>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/role-requests`,
       payload,
@@ -458,21 +470,21 @@ export class ApiService {
     );
   }
 
-  leaveOwnGroupMembership(groupId: string): Observable<void> {
+  public leaveOwnGroupMembership(groupId: string): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/self`,
       { headers: { Authorization: `Bearer ${this.bearerToken}` } }
     );
   }
 
-  removeGroupMember(groupId: string, userId: string): Observable<void> {
+  public removeGroupMember(groupId: string, userId: string): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/${encodeURIComponent(userId)}`,
       { headers: { Authorization: `Bearer ${this.bearerToken}` } }
     );
   }
 
-  decideGroupMembership(groupId: string, userId: string, decision: Decision): Observable<GroupMembership> {
+  public decideGroupMembership(groupId: string, userId: string, decision: Decision): Observable<GroupMembership> {
     return this.http.post<GroupMembership>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/${encodeURIComponent(userId)}/${decision}`,
       undefined,
@@ -480,7 +492,7 @@ export class ApiService {
     );
   }
 
-  decideGroupRoleRequest(groupId: string, requestId: string, decision: Decision): Observable<GroupMembership> {
+  public decideGroupRoleRequest(groupId: string, requestId: string, decision: Decision): Observable<GroupMembership> {
     return this.http.post<GroupMembership>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/role-requests/${encodeURIComponent(requestId)}/${decision}`,
       undefined,
@@ -488,7 +500,7 @@ export class ApiService {
     );
   }
 
-  getUsers(): Observable<UserListItem[]> {
+  public getUsers(): Observable<UserListItem[]> {
     return this.http.get<UserListItem[]>(`${this.baseUrl}/users`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -496,7 +508,7 @@ export class ApiService {
     });
   }
 
-  getUser(id: string): Observable<User> {
+  public getUser(id: string): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/users/${encodeURIComponent(id)}`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -504,43 +516,43 @@ export class ApiService {
     });
   }
 
-  blockUser(id: string, request: BlockUserRequest): Observable<void> {
+  public blockUser(id: string, request: BlockUserRequest): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/users/${encodeURIComponent(id)}/block`, request, {
       headers: { Authorization: `Bearer ${this.bearerToken}` }
     });
   }
 
-  unblockUser(id: string): Observable<void> {
+  public unblockUser(id: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/users/${encodeURIComponent(id)}/unblock`, undefined, {
       headers: { Authorization: `Bearer ${this.bearerToken}` }
     });
   }
   // Grant or revoke global role
-  setGlobalRole(userId: string, role: GlobalRole, enabled: boolean): Observable<void> {
+  public setGlobalRole(userId: string, role: GlobalRole, enabled: boolean): Observable<void> {
     const url = `${this.baseUrl}/users/${encodeURIComponent(userId)}/global-roles/${encodeURIComponent(role)}`;
     const options = { headers: { Authorization: `Bearer ${this.bearerToken}` } };
     return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
   }
   // Grant or revoke global permission
-  setGlobalPermission(userId: string, permission: GlobalPermission, enabled: boolean): Observable<void> {
+  public setGlobalPermission(userId: string, permission: GlobalPermission, enabled: boolean): Observable<void> {
     const url = `${this.baseUrl}/users/${encodeURIComponent(userId)}/global-permissions/${encodeURIComponent(permission)}`;
     const options = { headers: { Authorization: `Bearer ${this.bearerToken}` } };
     return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
   }
 
-  setGroupMembershipRole(groupId: string, userId: string, role: MembershipRole, enabled: boolean): Observable<void> {
+  public setGroupMembershipRole(groupId: string, userId: string, role: MembershipRole, enabled: boolean): Observable<void> {
     const url = `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/${encodeURIComponent(userId)}/roles/${encodeURIComponent(role)}`;
     const options = { headers: { Authorization: `Bearer ${this.bearerToken}` } };
     return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
   }
 
-  setGroupMembershipPermission(groupId: string, userId: string, permission: GroupPermission, enabled: boolean): Observable<void> {
+  public setGroupMembershipPermission(groupId: string, userId: string, permission: GroupPermission, enabled: boolean): Observable<void> {
     const url = `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/memberships/${encodeURIComponent(userId)}/permissions/${encodeURIComponent(permission)}`;
     const options = { headers: { Authorization: `Bearer ${this.bearerToken}` } };
     return enabled ? this.http.put<void>(url, undefined, options) : this.http.delete<void>(url, options);
   }
 
-  createResourceDraft(groupId: string, payload: CreateResourceDraftRequest): Observable<WriteResult> {
+  public createResourceDraft(groupId: string, payload: CreateResourceDraftRequest): Observable<WriteResult> {
     return this.http.post<WriteResult>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/resources`, payload, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
@@ -548,7 +560,7 @@ export class ApiService {
     });
   }
 
-  copyResource(groupId: string, resourceType: DiscoveryResourceType, resourceId: string): Observable<WriteResult> {
+  public copyResource(groupId: string, resourceType: DiscoveryResourceType, resourceId: string): Observable<WriteResult> {
     return this.http.post<WriteResult>(
       `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(resourceId)}/copy`,
       undefined,

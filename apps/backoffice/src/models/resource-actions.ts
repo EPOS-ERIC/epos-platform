@@ -3,6 +3,7 @@ import type { DiscoveryResourceType, GroupPermission, Permission, ReplaceResourc
 export type ResourceActionKey =
   | 'save'
   | 'submit'
+  | 'withdraw'
   | 'publish'
   | 'create-new-draft'
   | 'archive'
@@ -13,6 +14,7 @@ export type ResourceActionKey =
 export const RESOURCE_ACTION_PERMISSIONS = {
   save: 'group.resource.edit',
   submit: 'group.resource.submit',
+  withdraw: 'group.resource.withdraw',
   publish: 'group.resource.publish',
   'create-new-draft': 'group.resource.create',
   archive: 'group.resource.unpublish',

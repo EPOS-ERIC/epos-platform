@@ -6,6 +6,7 @@ export type ResourceCapabilities = {
   delete: boolean;
   save: boolean;
   submit: boolean;
+  withdraw: boolean;
   publish: boolean;
   reject: boolean;
   reopen: boolean;
@@ -28,6 +29,7 @@ export function resourceCapabilities(
     delete: isDraft && hasPermission(RESOURCE_ACTION_PERMISSIONS.delete),
     save: isDraft && hasPermission(RESOURCE_ACTION_PERMISSIONS.save),
     submit: isDraft && hasPermission(RESOURCE_ACTION_PERMISSIONS.submit),
+    withdraw: status === 'SUBMITTED' && hasPermission(RESOURCE_ACTION_PERMISSIONS.withdraw),
     publish: status === 'SUBMITTED' && hasPermission(RESOURCE_ACTION_PERMISSIONS.publish),
     reject: status === 'SUBMITTED' && hasPermission(RESOURCE_ACTION_PERMISSIONS.reject),
     reopen: status === 'REJECTED' && hasPermission(RESOURCE_ACTION_PERMISSIONS['revert-to-draft']),
