@@ -70,6 +70,8 @@ export class BackofficeHeaderComponent implements OnDestroy {
   @Input() managementIconPath = '';
   @Input() managementBackRoute = '/data';
   @Input() headerBackRoute: string | null = null;
+  @Input() selectedGroupId = '';
+  @Input() accountReturnUrl = '/data';
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() addNewResource = new EventEmitter<void>();
   @Output() searchQueryChange = new EventEmitter<string>();
@@ -81,6 +83,13 @@ export class BackofficeHeaderComponent implements OnDestroy {
 
   protected sectionSubtitle(): string {
     return SECTION_SUBTITLES[this.sectionTitle] ?? 'Manage resources and related metadata.';
+  }
+
+  protected membershipsQueryParams(): Record<string, string> {
+    return {
+      ...(this.selectedGroupId ? { groupId: this.selectedGroupId } : {}),
+      returnUrl: this.accountReturnUrl
+    };
   }
 
   @HostListener('document:click')
