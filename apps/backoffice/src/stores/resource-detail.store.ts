@@ -270,6 +270,7 @@ export class ResourceDetailStore {
 
   readonly actionError = this.resourceActions.error;
   readonly saving = this.resourceActions.saving;
+  readonly withdrawing = this.resourceActions.withdrawing;
   readonly publishing = this.resourceActions.publishing;
   readonly creatingDraft = this.resourceActions.creatingDraft;
   readonly archiving = this.resourceActions.archiving;
@@ -526,6 +527,9 @@ export class ResourceDetailStore {
       case 'submit':
         this.submit();
         break;
+      case 'withdraw':
+        this.withdraw();
+        break;
       case 'publish':
         this.publish();
         break;
@@ -570,6 +574,13 @@ export class ResourceDetailStore {
       return;
     }
     this.runAndReload((context) => this.resourceActions.submit(context, this.title()));
+  }
+
+  withdraw(): void {
+    if (this.withdrawing() || !this.capabilities().withdraw) {
+      return;
+    }
+    this.runAndReload((context) => this.resourceActions.withdraw(context, this.title()));
   }
 
   publish(): void {

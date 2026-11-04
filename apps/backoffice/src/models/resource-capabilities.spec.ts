@@ -19,11 +19,13 @@ describe('resourceCapabilities', () => {
   it('derives review actions independently from their permissions', () => {
     expect(resourceCapabilities('SUBMITTED', []).publish).toBe(false);
     expect(resourceCapabilities('SUBMITTED', []).reject).toBe(false);
+    expect(resourceCapabilities('SUBMITTED', []).withdraw).toBe(false);
     expect(resourceCapabilities('SUBMITTED', []).viewHistory).toBe(true);
     expect(resourceCapabilities('SUBMITTED', ['group.resource.publish']).publish).toBe(true);
     expect(resourceCapabilities('SUBMITTED', ['group.resource.publish']).reject).toBe(false);
     expect(resourceCapabilities('SUBMITTED', ['group.resource.reject']).publish).toBe(false);
     expect(resourceCapabilities('SUBMITTED', ['group.resource.reject']).reject).toBe(true);
+    expect(resourceCapabilities('SUBMITTED', ['group.resource.withdraw']).withdraw).toBe(true);
   });
 
   it('maps the remaining lifecycle states to their available transitions', () => {

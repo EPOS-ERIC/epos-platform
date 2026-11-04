@@ -171,6 +171,18 @@ export class ApiService {
     );
   }
 
+  withdrawResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
+    return this.http.post<WriteResult>(
+      `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/withdraw`,
+      undefined,
+      {
+        headers: {
+          Authorization: `Bearer ${this.bearerToken}`
+        }
+      }
+    );
+  }
+
   publishResourceVersion(resourceType: DiscoveryResourceType, id: string, versionId: string): Observable<WriteResult> {
     return this.http.post<WriteResult>(
       `${this.baseUrl}/resources/${encodeURIComponent(resourceType)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/publish`,
