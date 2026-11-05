@@ -1643,7 +1643,7 @@ func (s *Server) handleCreateConversionPluginRequest(args [0]string, argsEscaped
 		}
 	}()
 
-	var response CreateConversionPluginRes
+	var response *ManagedConversionPlugin
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -1659,7 +1659,7 @@ func (s *Server) handleCreateConversionPluginRequest(args [0]string, argsEscaped
 		type (
 			Request  = *CreateConversionPluginRequest
 			Params   = struct{}
-			Response = CreateConversionPluginRes
+			Response = *ManagedConversionPlugin
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -12578,7 +12578,7 @@ func (s *Server) handleReplaceConversionPluginRequest(args [1]string, argsEscape
 		}
 	}()
 
-	var response ReplaceConversionPluginRes
+	var response *ManagedConversionPlugin
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -12599,7 +12599,7 @@ func (s *Server) handleReplaceConversionPluginRequest(args [1]string, argsEscape
 		type (
 			Request  = *ReplaceConversionPluginRequest
 			Params   = ReplaceConversionPluginParams
-			Response = ReplaceConversionPluginRes
+			Response = *ManagedConversionPlugin
 		)
 		response, err = middleware.HookMiddleware[
 			Request,

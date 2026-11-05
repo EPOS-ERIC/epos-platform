@@ -92,7 +92,7 @@ func (UnimplementedHandler) CreateContactPoint(ctx context.Context, req *CreateC
 // is attempted immediately. Failed installation is retried periodically.
 //
 // POST /conversion-plugins
-func (UnimplementedHandler) CreateConversionPlugin(ctx context.Context, req *CreateConversionPluginRequest) (r CreateConversionPluginRes, _ error) {
+func (UnimplementedHandler) CreateConversionPlugin(ctx context.Context, req *CreateConversionPluginRequest) (r *ManagedConversionPlugin, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -639,7 +639,7 @@ func (UnimplementedHandler) ReplaceContactPoint(ctx context.Context, req *Replac
 // synchronization. A failed update retains the last working installation and is retried periodically.
 //
 // PUT /conversion-plugins/{pluginId}
-func (UnimplementedHandler) ReplaceConversionPlugin(ctx context.Context, req *ReplaceConversionPluginRequest, params ReplaceConversionPluginParams) (r ReplaceConversionPluginRes, _ error) {
+func (UnimplementedHandler) ReplaceConversionPlugin(ctx context.Context, req *ReplaceConversionPluginRequest, params ReplaceConversionPluginParams) (r *ManagedConversionPlugin, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

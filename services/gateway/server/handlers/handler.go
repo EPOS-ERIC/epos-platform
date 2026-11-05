@@ -10,12 +10,13 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/converter"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resource"
-	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/validate"
 	"go.opentelemetry.io/otel/trace"
@@ -24,26 +25,35 @@ import (
 // ogenHandler is the HTTP boundary. Pure proxy operations call the concrete
 // Metadata Lifecycle client; identity orchestration remains in identity.Service.
 type ogenHandler struct {
-	metadataLifecycle  *clients.MetadataLifecycle
-	sharing            *sharingservice.Service
-	identity           *identity.Service
-	membership         *membership.Service
-	distributionAccess *distributionaccess.Service
-	resource           *resource.Service
-	converter          *clients.Converter
-	log                *slog.Logger
+	metadataLifecycleClient *clients.MetadataLifecycle
+	sharing                 *sharing.Service
+	identity                *identity.Service
+	membership              *membership.Service
+	distributionAccess      *distributionaccess.Service
+	resource                *resource.Service
+	converter               *converter.Service
+	log                     *slog.Logger
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, sharing *sharingservice.Service, d *distributionaccess.Service, resourceService *resource.Service, converter *clients.Converter, log *slog.Logger) *ogenHandler {
+func NewOgenHandler(
+	identity *identity.Service,
+	membership *membership.Service,
+	metadataLifecycleClient *clients.MetadataLifecycle,
+	sharing *sharing.Service,
+	distributionAccess *distributionaccess.Service,
+	resources *resource.Service,
+	converter *converter.Service,
+	log *slog.Logger,
+) *ogenHandler {
 	return &ogenHandler{
-		metadataLifecycle:  metadataLifecycle,
-		sharing:            sharing,
-		identity:           i,
-		membership:         m,
-		distributionAccess: d,
-		resource:           resourceService,
-		converter:          converter,
-		log:                log,
+		metadataLifecycleClient: metadataLifecycleClient,
+		sharing:                 sharing,
+		identity:                identity,
+		membership:              membership,
+		distributionAccess:      distributionAccess,
+		resource:                resources,
+		converter:               converter,
+		log:                     log,
 	}
 }
 

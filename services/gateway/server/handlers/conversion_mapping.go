@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 
-	converterv1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/converter/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/google/uuid"
@@ -47,16 +46,16 @@ func toAPIDistributionConversionPlugins(relations []domain.DistributionPluginRel
 	return result
 }
 
-func toProtoConversionRuntime(runtime gatewayapi.ConversionRuntime) (converterv1.Runtime, error) {
+func toDomainConversionRuntime(runtime gatewayapi.ConversionRuntime) (domain.ConversionRuntime, error) {
 	switch runtime {
 	case gatewayapi.ConversionRuntimePython:
-		return converterv1.Runtime_RUNTIME_PYTHON, nil
+		return domain.ConversionRuntimePython, nil
 	case gatewayapi.ConversionRuntimeJava:
-		return converterv1.Runtime_RUNTIME_JAVA, nil
+		return domain.ConversionRuntimeJava, nil
 	case gatewayapi.ConversionRuntimeBinary:
-		return converterv1.Runtime_RUNTIME_BINARY, nil
+		return domain.ConversionRuntimeBinary, nil
 	default:
-		return 0, fmt.Errorf("unknown conversion runtime %q", runtime)
+		return "", fmt.Errorf("unknown conversion runtime %q", runtime)
 	}
 }
 
@@ -87,86 +86,57 @@ func withAvailableConversions(dataset gatewayapi.DatasetResourceMetadata, byDist
 	return dataset
 }
 
-func toProtoConversionRelation(input *gatewayapi.ConversionRelationInput) *converterv1.RelationInput {
-	return &converterv1.RelationInput{
-		DistributionId: input.DistributionID.String(),
-		PluginId:       input.PluginID.String(),
+func toDomainConversionRelation(input *gatewayapi.ConversionRelationInput) domain.Relation {
+	return domain.Relation{
+		DistributionID: input.DistributionID,
+		PluginID:       input.PluginID,
 		InputFormat:    input.InputFormat,
 		OutputFormat:   input.OutputFormat,
 	}
 }
 
-func toAPIManagedConversionPlugin(value *converterv1.Plugin) (gatewayapi.ManagedConversionPlugin, error) {
-	if value == nil || value.GetInput() == nil {
-		return gatewayapi.ManagedConversionPlugin{}, fmt.Errorf("converter returned an incomplete plugin")
-	}
-
-	id, err := parseUUID("plugin.id", value.GetId())
-	if err != nil {
-		return gatewayapi.ManagedConversionPlugin{}, err
-	}
-
-	input := value.GetInput()
+func toAPIManagedConversionPlugin(value domain.Plugin) (gatewayapi.ManagedConversionPlugin, error) {
 	var runtime gatewayapi.ConversionRuntime
-	switch input.GetRuntime() {
-	case converterv1.Runtime_RUNTIME_PYTHON:
+	switch value.Runtime {
+	case domain.ConversionRuntimePython:
 		runtime = gatewayapi.ConversionRuntimePython
-	case converterv1.Runtime_RUNTIME_JAVA:
+	case domain.ConversionRuntimeJava:
 		runtime = gatewayapi.ConversionRuntimeJava
-	case converterv1.Runtime_RUNTIME_BINARY:
+	case domain.ConversionRuntimeBinary:
 		runtime = gatewayapi.ConversionRuntimeBinary
 	default:
 		return gatewayapi.ManagedConversionPlugin{}, fmt.Errorf("converter returned unknown runtime")
 	}
 
-	arguments := input.GetArguments()
+	arguments := value.Arguments
 	if arguments == nil {
 		arguments = []string{}
 	}
 
 	return gatewayapi.ManagedConversionPlugin{
-		ID:              id,
-		Name:            input.GetName(),
-		Description:     input.GetDescription(),
-		Repository:      input.GetRepository(),
-		Branch:          input.GetBranch(),
+		ID:              value.ID,
+		Name:            value.Name,
+		Description:     value.Description,
+		Repository:      value.Repository,
+		Branch:          value.Branch,
 		Runtime:         runtime,
 		Arguments:       arguments,
-		Enabled:         value.GetEnabled(),
-		Installed:       value.GetInstalled(),
+		Enabled:         value.Enabled,
+		Installed:       value.Installed,
 		InstalledCommit: toAPIRequiredNilString(value.InstalledCommit),
-		CreatedBy:       value.GetCreatedBy(),
-		UpdatedBy:       value.GetUpdatedBy(),
+		CreatedBy:       value.CreatedBy,
+		UpdatedBy:       value.UpdatedBy,
 	}, nil
 }
 
-func toAPIConversionRelation(value *converterv1.Relation) (gatewayapi.ConversionRelation, error) {
-	if value == nil || value.GetInput() == nil {
-		return gatewayapi.ConversionRelation{}, fmt.Errorf("converter returned an incomplete relation")
-	}
-
-	id, err := parseUUID("relation.id", value.GetId())
-	if err != nil {
-		return gatewayapi.ConversionRelation{}, err
-	}
-
-	distributionID, err := parseUUID("relation.distribution_id", value.GetInput().GetDistributionId())
-	if err != nil {
-		return gatewayapi.ConversionRelation{}, err
-	}
-
-	pluginID, err := parseUUID("relation.plugin_id", value.GetInput().GetPluginId())
-	if err != nil {
-		return gatewayapi.ConversionRelation{}, err
-	}
-
+func toAPIConversionRelation(value domain.Relation) gatewayapi.ConversionRelation {
 	return gatewayapi.ConversionRelation{
-		ID:             id,
-		DistributionID: distributionID,
-		PluginID:       pluginID,
-		InputFormat:    value.GetInput().GetInputFormat(),
-		OutputFormat:   value.GetInput().GetOutputFormat(),
-		CreatedBy:      value.GetCreatedBy(),
-		UpdatedBy:      value.GetUpdatedBy(),
-	}, nil
+		ID:             value.ID,
+		DistributionID: value.DistributionID,
+		PluginID:       value.PluginID,
+		InputFormat:    value.InputFormat,
+		OutputFormat:   value.OutputFormat,
+		CreatedBy:      value.CreatedBy,
+		UpdatedBy:      value.UpdatedBy,
+	}
 }

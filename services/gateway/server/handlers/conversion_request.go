@@ -9,5 +9,5 @@ import (
 
 func (h *ogenHandler) RequestDistributionConversion(ctx context.Context, request *gatewayapi.RequestDistributionConversionReq, params gatewayapi.RequestDistributionConversionParams) error {
 	actorID, _ := authcontext.ActorID(ctx)
-	return h.metadataLifecycle.RequestConversion(ctx, actorID, toProtoConversionRequest(request, params.DistributionId))
+	return h.metadataLifecycleClient.RequestConversion(ctx, actorID, toProtoConversionRequest(request, params.DistributionId))
 }

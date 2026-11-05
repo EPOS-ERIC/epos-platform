@@ -14,6 +14,25 @@ const (
 	ConversionRuntimeBinary ConversionRuntime = "binary"
 )
 
+type PluginInput struct {
+	Name        string
+	Description string
+	Repository  string
+	Branch      string
+	Runtime     ConversionRuntime
+	Arguments   []string
+}
+
+type Plugin struct {
+	PluginInput
+	ID              uuid.UUID
+	Enabled         bool
+	Installed       bool
+	InstalledCommit *string
+	CreatedBy       string
+	UpdatedBy       string
+}
+
 type DistributionPluginRelation struct {
 	PluginID       uuid.UUID
 	Name           string

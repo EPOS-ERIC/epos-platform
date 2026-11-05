@@ -89,8 +89,9 @@ func (r *Repo) ReplaceDraft(
 	datasetID,
 	versionID uuid.UUID,
 	value domain.DatasetDraftInput,
-) (domain.DatasetVersion, error) {
+) (domain.DatasetVersion, []uuid.UUID, error) {
 	var result domain.DatasetVersion
+	var removed []uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		if len(value.Metadata.CategoryIDs) > 0 {
 			dataset, err := q.GetLifecycleDataset(ctx, datasetID)
@@ -127,6 +128,15 @@ func (r *Repo) ReplaceDraft(
 		if err != nil {
 			return err
 		}
+		retained := make(map[uuid.UUID]struct{}, len(distributions))
+		for _, distribution := range distributions {
+			retained[distribution.id] = struct{}{}
+		}
+		for _, distribution := range current.Metadata.Distributions {
+			if _, ok := retained[distribution.ID]; !ok {
+				removed = append(removed, distribution.ID)
+			}
+		}
 		parameters, err := parameterIdentities(value.Metadata.Distributions, current.Metadata.Distributions)
 		if err != nil {
 			return err
@@ -148,7 +158,7 @@ func (r *Repo) ReplaceDraft(
 		}
 		return nil
 	})
-	return result, resourcedb.LifecycleError(err)
+	return result, removed, resourcedb.LifecycleError(err)
 }
 
 // Get returns one selected version with all version-owned metadata and canonical references.
@@ -334,12 +344,20 @@ func (r *Repo) Unpublish(ctx context.Context, actorID string, datasetID, version
 	return datasetResultByID(ctx, r.q, v.DatasetID, v.ID)
 }
 
-func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) error {
+func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) ([]uuid.UUID, error) {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
-		return fmt.Errorf("discard dataset: %w", err)
+		return nil, fmt.Errorf("discard dataset: %w", err)
 	}
 
+	var removed []uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
+		distributions, err := q.ListLifecycleDistributions(ctx, versionID)
+		if err != nil {
+			return fmt.Errorf("list discarded distributions: %w", err)
+		}
+		for _, distribution := range distributions {
+			removed = append(removed, distribution.ID)
+		}
 		id, err := q.DiscardLifecycleDatasetVersion(ctx, versionID)
 		if err != nil {
 			return fmt.Errorf("discard dataset version: %w", err)
@@ -350,25 +368,26 @@ func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) erro
 		return nil
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return apperror.Default(apperror.CodeConflict)
+		return nil, apperror.Default(apperror.CodeConflict)
 	}
 	if err != nil {
-		return fmt.Errorf("discard dataset transaction: %w", err)
+		return nil, fmt.Errorf("discard dataset transaction: %w", err)
 	}
 
-	return nil
+	return removed, nil
 }
 
-func (r *Repo) DraftFromPublication(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, error) {
+func (r *Repo) DraftFromPublication(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusPUBLISHED, uuid.Nil, true)
 }
 
-func (r *Repo) DraftFromLatestArchive(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, error) {
+func (r *Repo) DraftFromLatestArchive(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
 }
 
-func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID) (domain.DatasetVersion, error) {
+func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	var result domain.DatasetVersion
+	var pairs map[uuid.UUID]uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		source, err := q.GetPublishedLifecycleDatasetVersion(ctx, sourceDatasetID)
 		if err != nil {
@@ -392,13 +411,17 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetI
 		if err != nil {
 			return fmt.Errorf("clone published dataset version: %w", err)
 		}
+		pairs, err = clonedDistributions(ctx, q, source.ID, version.ID)
+		if err != nil {
+			return err
+		}
 		result, err = datasetResultByID(ctx, q, version.DatasetID, version.ID)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
-	return result, resourcedb.LifecycleError(err)
+	return result, pairs, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) clone(
@@ -409,8 +432,9 @@ func (r *Repo) clone(
 	status sqlc.ResourceStatus,
 	targetGroupID uuid.UUID,
 	categories bool,
-) (domain.DatasetVersion, error) {
+) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	var result domain.DatasetVersion
+	var pairs map[uuid.UUID]uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		var source sqlc.DatasetVersion
 		var err error
@@ -440,13 +464,31 @@ func (r *Repo) clone(
 		if err != nil {
 			return fmt.Errorf("clone dataset version: %w", err)
 		}
+		pairs, err = clonedDistributions(ctx, q, source.ID, v.ID)
+		if err != nil {
+			return err
+		}
 		result, err = datasetResultByID(ctx, q, v.DatasetID, v.ID)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
-	return result, resourcedb.LifecycleError(err)
+	return result, pairs, resourcedb.LifecycleError(err)
+}
+
+func clonedDistributions(ctx context.Context, q *sqlc.Queries, sourceID, targetID uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
+	rows, err := q.ListClonedLifecycleDistributions(ctx, sqlc.ListClonedLifecycleDistributionsParams{SourceVersionID: sourceID, TargetVersionID: targetID})
+	if err != nil {
+		return nil, fmt.Errorf("list cloned distributions: %w", err)
+	}
+
+	pairs := make(map[uuid.UUID]uuid.UUID, len(rows))
+	for _, row := range rows {
+		pairs[row.SourceID] = row.TargetID
+	}
+
+	return pairs, nil
 }
 
 func (r *Repo) ensureVersion(ctx context.Context, datasetID, versionID uuid.UUID) error {

@@ -46,7 +46,7 @@ func (s *Server) CreatePlugin(ctx context.Context, request *converterv1.CreatePl
 	if err != nil {
 		return nil, err
 	}
-	record, failed, err := s.service.CreatePlugin(ctx, input, who)
+	record, err := s.service.CreatePlugin(ctx, input, who)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (s *Server) CreatePlugin(ctx context.Context, request *converterv1.CreatePl
 		return nil, err
 	}
 	p, err := toProtoPlugin(record, status)
-	return &converterv1.CreatePluginResponse{Plugin: p, SyncFailed: failed}, err
+	return &converterv1.CreatePluginResponse{Plugin: p}, err
 }
 
 func (s *Server) GetPlugin(ctx context.Context, request *converterv1.GetPluginRequest) (*converterv1.GetPluginResponse, error) {
@@ -108,7 +108,7 @@ func (s *Server) UpdatePlugin(ctx context.Context, request *converterv1.UpdatePl
 	if err != nil {
 		return nil, err
 	}
-	record, failed, err := s.service.UpdatePlugin(ctx, id, input, request.GetEnabled(), who)
+	record, err := s.service.UpdatePlugin(ctx, id, input, request.GetEnabled(), who)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (s *Server) UpdatePlugin(ctx context.Context, request *converterv1.UpdatePl
 		return nil, err
 	}
 	p, err := toProtoPlugin(record, status)
-	return &converterv1.UpdatePluginResponse{Plugin: p, SyncFailed: failed}, err
+	return &converterv1.UpdatePluginResponse{Plugin: p}, err
 }
 
 func (s *Server) DeletePlugin(ctx context.Context, request *converterv1.DeletePluginRequest) (*converterv1.DeletePluginResponse, error) {

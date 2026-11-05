@@ -819,7 +819,9 @@ message UnpublishResourceResponse {
   ResourceRecord resource = 1;
   repeated Notification notifications = 2;
 }
-message DiscardResourceDraftResponse {}
+message DiscardResourceDraftResponse {
+  repeated string removed_distribution_ids = 1;
+}
 
 message RejectResourceRequest {
   ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
@@ -838,6 +840,8 @@ message DraftResourceFromPublicationRequest {
 }
 message DraftResourceFromPublicationResponse {
   ResourceRecord resource = 1;
+  // Maps source version-specific distribution IDs to target IDs.
+  map<string, string> copied_distributions = 2;
 }
 message DraftResourceFromLatestArchiveRequest {
   ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
@@ -845,6 +849,8 @@ message DraftResourceFromLatestArchiveRequest {
 }
 message DraftResourceFromLatestArchiveResponse {
   ResourceRecord resource = 1;
+  // Maps source version-specific distribution IDs to target IDs.
+  map<string, string> copied_distributions = 2;
 }
 
 message CopyPublishedResourceRequest {
@@ -854,6 +860,8 @@ message CopyPublishedResourceRequest {
 }
 message CopyPublishedResourceResponse {
   ResourceRecord resource = 1;
+  // Maps source version-specific distribution IDs to target IDs.
+  map<string, string> copied_distributions = 2;
 }
 
 message ReplaceResourceDraftRequest {
@@ -870,6 +878,7 @@ message ReplaceResourceDraftRequest {
 
 message ReplaceResourceDraftResponse {
   ResourceRecord resource = 1;
+  repeated string removed_distribution_ids = 2;
 }
 
 service ResourceService {
