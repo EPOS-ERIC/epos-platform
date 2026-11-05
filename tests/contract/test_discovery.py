@@ -60,6 +60,6 @@ class DiscoveryContractTest(unittest.TestCase):
                 ).json()
 
                 self.assertEqual(details["resource_id"], item["resource_id"])
-                self.assertEqual(details["version_id"], item["version_id"])
+                self.assertEqual(details["id"], item["version_id"])
                 self.assertEqual(details["status"], "DRAFT")
                 self.assertEqual(details["metadata"]["resource_type"], resource_type)

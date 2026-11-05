@@ -93,7 +93,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         resource_id = response.json()["id"]
         version = self.version(resource_id, "DRAFT")
-        return resource_id, self.details(resource_id, version["version_id"])
+        return resource_id, self.details(resource_id, version["id"])
 
     def assert_formats(
         self, distribution: dict[str, Any], expected: list[tuple[str, str]]
@@ -113,14 +113,14 @@ class DistributionFormatsContractTest(unittest.TestCase):
         response = self.gateway.put(
             "/resources/{id}/versions/{versionId}/draft",
             id=detail["resource_id"],
-            versionId=detail["version_id"],
+            versionId=detail["id"],
             json={
                 "resource_type": "dataset", "revision": detail["revision"],
                 "metadata": metadata,
             },
         )
         self.assertEqual(response.status_code, 200)
-        return self.details(detail["resource_id"], detail["version_id"])
+        return self.details(detail["resource_id"], detail["id"])
 
     def test_native_format_discovery(self) -> None:
         """Verify explicit format roles, labels, generic properties, and file exclusion."""
@@ -184,7 +184,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         ]
         draft = self.replace_draft(draft, metadata)
         self.assert_formats(draft["metadata"]["distributions"][0], [("format-B", "format-B")])
-        published_version_id = draft["version_id"]
+        published_version_id = draft["id"]
         for action in ("submit", "publish"):
             response = self.gateway.post(
                 "/resources/{resourceType}/{id}/versions/{versionId}/" + action,
@@ -198,8 +198,8 @@ class DistributionFormatsContractTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 201)
         version = self.version(resource_id, "DRAFT")
-        self.assertNotEqual(version["version_id"], published_version_id)
-        draft = self.details(resource_id, version["version_id"])
+        self.assertNotEqual(version["id"], published_version_id)
+        draft = self.details(resource_id, version["id"])
         copied_parameter = draft["metadata"]["distributions"][0]["web_service"]["configuration"]["parameters"][0]
         self.assertEqual(copied_parameter["role"], "FORMAT")
         self.assertEqual(copied_parameter["property"], "schema:encodingFormat")
@@ -258,7 +258,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
                     else:
                         response = self.gateway.put(
                             "/resources/{id}/versions/{versionId}/draft",
-                            id=resource_id, versionId=draft["version_id"],
+                            id=resource_id, versionId=draft["id"],
                             json={
                                 "resource_type": "dataset", "revision": draft["revision"],
                                 "metadata": invalid,
@@ -272,7 +272,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
                         problem,
                     )
                     if method == "PUT":
-                        unchanged = self.details(resource_id, draft["version_id"])
+                        unchanged = self.details(resource_id, draft["id"])
                         self.assertEqual(unchanged["revision"], draft["revision"])
                         self.assert_formats(
                             unchanged["metadata"]["distributions"][0], [("xml_dc", "xml_dc")]

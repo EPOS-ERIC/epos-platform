@@ -42,8 +42,8 @@ type Handler interface {
 	BlockUser(ctx context.Context, req *BlockUserRequest, params BlockUserParams) error
 	// CopyResource implements copyResource operation.
 	//
-	// Creates a draft copy in the group identified by `groupId`. The target group is taken from the URL,
-	// not the request body.
+	// Creates an independent draft copy in the group identified by `groupId`, with new resource and child
+	// identities. The target group is taken from the URL, not the request body.
 	//
 	// POST /groups/{groupId}/resources/{resourceType}/{id}/copy
 	CopyResource(ctx context.Context, params CopyResourceParams) (*WriteResult, error)
@@ -195,13 +195,15 @@ type Handler interface {
 	DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (*DownloadDistribution2XXStatusCode, error)
 	// DraftFromArchive implements draftFromArchive operation.
 	//
-	// Create draft from archive.
+	// Creates a draft version with new version-specific IDs and the same logical resource IDs as the
+	// latest archived version.
 	//
 	// POST /resources/{resourceType}/{id}/draft-from-archive
 	DraftFromArchive(ctx context.Context, params DraftFromArchiveParams) (*WriteResult, error)
 	// DraftFromPublication implements draftFromPublication operation.
 	//
-	// Create draft from publication.
+	// Creates a draft version with new version-specific IDs and the same logical resource IDs as the
+	// published version.
 	//
 	// POST /resources/{resourceType}/{id}/draft-from-publication
 	DraftFromPublication(ctx context.Context, params DraftFromPublicationParams) (*WriteResult, error)
@@ -471,8 +473,13 @@ type Handler interface {
 	ReplaceOrganization(ctx context.Context, req *ReplaceOrganizationRequest, params ReplaceOrganizationParams) (*CanonicalOrganization, error)
 	// ReplaceResourceDraftVersion implements replaceResourceDraftVersion operation.
 	//
-	// Replaces an editable draft only. Request body shape is selected by `resource_type` and includes the
-	// current revision.
+	// Replaces all metadata in an editable draft. Request shape is selected by `resource_type` and
+	// includes the current revision. To retain a distribution, web service, parameter, layer, or
+	// identifier, send its `resource_id` from the draft read response. Omit `resource_id` for a new child;
+	// omit an existing child from its collection to remove it. IDs must belong to the same draft and
+	// parent. Parameters cannot move between collections or web services. Changing a parameter's PATH,
+	// QUERY, or HEADER location within its collection is an edit. Child `id` identifies the
+	// version-specific record and is not sent on writes.
 	//
 	// PUT /resources/{id}/versions/{versionId}/draft
 	ReplaceResourceDraftVersion(ctx context.Context, req ReplaceResourceDraftRequest, params ReplaceResourceDraftVersionParams) (*WriteResult, error)

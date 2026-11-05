@@ -24,10 +24,11 @@ func TestScalarParameterMappingsOmitTopLevelFields(t *testing.T) {
 	label := "One"
 	id := uuid.New()
 	apiValue, err := toAPIScalarParameter(&metadatalifecyclev1.ScalarParameter{
-		Position: 1,
-		Name:     "value",
-		Label:    "Value",
-		Id:       id.String(),
+		Position:   1,
+		Name:       "value",
+		Label:      "Value",
+		Id:         id.String(),
+		ResourceId: id.String(),
 		Value: &metadatalifecyclev1.ScalarParameter_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
 			Enum: []*metadatalifecyclev1.StringEnumOption{{Value: "one", Label: &label}, {Value: "two"}},
 		}},
@@ -146,11 +147,12 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 
 	id := uuid.New()
 	value, err := toAPIParameter(&metadatalifecyclev1.Parameter{
-		Id:       id.String(),
-		Name:     "value",
-		Label:    "Value",
-		Location: metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_QUERY,
-		Explode:  true,
+		Id:         id.String(),
+		ResourceId: id.String(),
+		Name:       "value",
+		Label:      "Value",
+		Location:   metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_QUERY,
+		Explode:    true,
 		Value: &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{
 			Enum:           []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
 			MultipleValues: true,
@@ -165,9 +167,10 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	}
 
 	service, err := toAPIWebService(&metadatalifecyclev1.WebService{
-		Id:   id.String(),
-		Name: "service",
-		Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
+		Id:         id.String(),
+		ResourceId: id.String(),
+		Name:       "service",
+		Type:       metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
 		VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
 			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP,
 			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,

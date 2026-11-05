@@ -51,10 +51,7 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.Updated = timestamppb.New(v.Updated.Value)
 		}
 		for _, id := range v.PersistentIdentifiers {
-			metadata.PersistentIdentifiers = append(metadata.PersistentIdentifiers, &metadatalifecyclev1.IdentifierInput{
-				Type:  string(id.Type),
-				Value: string(id.Value),
-			})
+			metadata.PersistentIdentifiers = append(metadata.PersistentIdentifiers, toProtoVersionedIdentifierInput(id))
 		}
 		for _, distribution := range v.Distributions {
 			metadata.Distributions = append(metadata.Distributions, toProtoDistribution(distribution))
@@ -90,10 +87,7 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.OperatingSystem = new(v.OperatingSystem.Value)
 		}
 		for _, id := range v.Identifiers {
-			metadata.Identifiers = append(metadata.Identifiers, &metadatalifecyclev1.IdentifierInput{
-				Type:  string(id.Type),
-				Value: string(id.Value),
-			})
+			metadata.Identifiers = append(metadata.Identifiers, toProtoVersionedIdentifierInput(id))
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_SoftwareApplication{SoftwareApplication: metadata}
 		return request, gatewayapi.WriteResourceTypeSoftwareApplication, nil
@@ -129,10 +123,7 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.MainEntityOfPage = new(v.MainEntityOfPage.Value.String())
 		}
 		for _, id := range v.Identifiers {
-			metadata.Identifiers = append(metadata.Identifiers, &metadatalifecyclev1.IdentifierInput{
-				Type:  string(id.Type),
-				Value: string(id.Value),
-			})
+			metadata.Identifiers = append(metadata.Identifiers, toProtoVersionedIdentifierInput(id))
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_SoftwareSourceCode{SoftwareSourceCode: metadata}
 		return request, gatewayapi.WriteResourceTypeSoftwareSourceCode, nil

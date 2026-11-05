@@ -135,17 +135,6 @@ enum RoleRequestStatus {
   ROLE_REQUEST_STATUS_REJECTED = 3;
 }
 
-message Identifier {
-  string id = 1 [(buf.validate.field).string.uuid = true];
-  string type = 2 [(buf.validate.field).string.min_len = 1];
-  string value = 3 [(buf.validate.field).string.min_len = 1];
-}
-
-message IdentifierInput {
-  string type = 1 [(buf.validate.field).string.min_len = 1];
-  string value = 2 [(buf.validate.field).string.min_len = 1];
-}
-
 message EntityReference {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2;

@@ -12,6 +12,7 @@ import (
 func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService {
 	result := &metadatalifecyclev1.WebService{
 		Id:               value.ID.String(),
+		ResourceId:       value.ResourceID.String(),
 		Name:             value.Name,
 		Description:      value.Description,
 		Type:             webServiceTypeOutput(value.Type),
@@ -83,7 +84,13 @@ func toProtoWFSWebServiceConfiguration(value domain.WFSConfiguration) *metadatal
 func toProtoWMTSWebServiceConfiguration(value domain.WMTSConfiguration) *metadatalifecyclev1.WMTSWebServiceConfiguration {
 	result := &metadatalifecyclev1.WMTSWebServiceConfiguration{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: value.DefaultLayer}
 	for _, layer := range value.Layers {
-		result.Layers = append(result.Layers, &metadatalifecyclev1.WMTSLayer{Name: layer.Name, DefaultStyle: layer.DefaultStyle, Styles: layer.Styles})
+		result.Layers = append(result.Layers, &metadatalifecyclev1.WMTSLayer{
+			Id:           layer.ID.String(),
+			ResourceId:   layer.ResourceID.String(),
+			Name:         layer.Name,
+			DefaultStyle: layer.DefaultStyle,
+			Styles:       layer.Styles,
+		})
 	}
 	for _, parameter := range value.GetTileParameters {
 		result.GetTileParameters = append(result.GetTileParameters, parameterOutput(parameter))
@@ -109,6 +116,8 @@ func toProtoWMSWebServiceConfiguration(value domain.WMSConfiguration) *metadatal
 	}
 	for _, layer := range value.Layers {
 		mapped := &metadatalifecyclev1.WMSLayer{
+			Id:           layer.ID.String(),
+			ResourceId:   layer.ResourceID.String(),
 			Name:         layer.Name,
 			DefaultStyle: layer.DefaultStyle,
 			Styles:       layer.Styles,
@@ -121,6 +130,14 @@ func toProtoWMSWebServiceConfiguration(value domain.WMSConfiguration) *metadatal
 func toDomainWebServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServiceInput, error) {
 	if value == nil {
 		return domain.WebServiceInput{}, apperror.New(apperror.CodeValidationFailed, "web service is required") //nolint:wrapcheck
+	}
+	var resourceID *uuid.UUID
+	if value.ResourceId != nil {
+		id, err := parseUUIDAt(*value.ResourceId, "web service resource ID", "resource_id")
+		if err != nil {
+			return domain.WebServiceInput{}, err
+		}
+		resourceID = &id
 	}
 	contactPoints, err := resourceParseUUIDs(value.GetContactPoints(), "web service contact point", "contact_points")
 	if err != nil {
@@ -159,6 +176,7 @@ func toDomainWebServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain
 		return domain.WebServiceInput{}, fmt.Errorf("map web service configuration: %w", apperror.PrefixTarget(err, "configuration"))
 	}
 	return domain.WebServiceInput{
+		ResourceID:       resourceID,
 		Name:             value.GetName(),
 		Description:      value.Description,
 		Type:             serviceType,
@@ -270,12 +288,21 @@ func toDomainWFSWebServiceConfigurationInput(value *metadatalifecyclev1.WFSWebSe
 }
 
 func toDomainWMTSWebServiceConfigurationInput(value *metadatalifecyclev1.WMTSWebServiceConfigurationInput) (domain.WMTSConfigurationInput, error) {
-	layers := make([]domain.WMTSLayer, 0, len(value.GetLayers()))
+	layers := make([]domain.WMTSLayerInput, 0, len(value.GetLayers()))
 	for i, layer := range value.GetLayers() {
 		if layer == nil {
 			return domain.WMTSConfigurationInput{}, apperror.Field(fmt.Sprintf("layers[%d]", i), "WMTS layer is required.", nil)
 		}
-		layers = append(layers, domain.WMTSLayer{Name: layer.GetName(), DefaultStyle: layer.DefaultStyle, Styles: layer.GetStyles()})
+		resourceID, err := layerResourceID(layer.ResourceId, i)
+		if err != nil {
+			return domain.WMTSConfigurationInput{}, err
+		}
+		layers = append(layers, domain.WMTSLayerInput{
+			ResourceID:   resourceID,
+			Name:         layer.GetName(),
+			DefaultStyle: layer.DefaultStyle,
+			Styles:       layer.GetStyles(),
+		})
 	}
 	tile, err := toDomainWebServiceParameters(value.GetGetTileParameters(), "get_tile_parameters")
 	if err != nil {
@@ -289,12 +316,17 @@ func toDomainWMTSWebServiceConfigurationInput(value *metadatalifecyclev1.WMTSWeb
 }
 
 func toDomainWMSWebServiceConfigurationInput(value *metadatalifecyclev1.WMSWebServiceConfigurationInput) (domain.WMSConfigurationInput, error) {
-	layers := make([]domain.WMSLayer, 0, len(value.GetLayers()))
+	layers := make([]domain.WMSLayerInput, 0, len(value.GetLayers()))
 	for i, layer := range value.GetLayers() {
 		if layer == nil {
 			return domain.WMSConfigurationInput{}, apperror.Field(fmt.Sprintf("layers[%d]", i), "WMS layer is required.", nil)
 		}
-		layers = append(layers, domain.WMSLayer{
+		resourceID, err := layerResourceID(layer.ResourceId, i)
+		if err != nil {
+			return domain.WMSConfigurationInput{}, err
+		}
+		layers = append(layers, domain.WMSLayerInput{
+			ResourceID:   resourceID,
 			Name:         layer.GetName(),
 			DefaultStyle: layer.GetDefaultStyle(),
 			Styles:       layer.GetStyles(),
@@ -317,6 +349,17 @@ func toDomainWMSWebServiceConfigurationInput(value *metadatalifecyclev1.WMSWebSe
 		GetMapParameters:         getMapParameters,
 		GetFeatureInfoParameters: getFeatureInfoParameters,
 	}, nil
+}
+
+func layerResourceID(value *string, index int) (*uuid.UUID, error) {
+	if value == nil {
+		return nil, nil
+	}
+	id, err := parseUUIDAt(*value, "layer resource ID", fmt.Sprintf("layers[%d].resource_id", index))
+	if err != nil {
+		return nil, err
+	}
+	return &id, nil
 }
 
 func toDomainWebServiceParameters(values []*metadatalifecyclev1.ParameterInput, target string) ([]domain.WebServiceParameterInput, error) {

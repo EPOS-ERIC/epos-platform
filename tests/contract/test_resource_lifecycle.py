@@ -84,7 +84,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
 
         draft = get_version("DRAFT")
         self.assertEqual(draft["resource_id"], resource_id)
-        version_id = draft["version_id"]
+        version_id = draft["id"]
         initial_revision = draft["revision"]
 
         draft_details_response = self.gateway.get(
@@ -96,7 +96,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         self.assertEqual(draft_details_response.status_code, 200)
         draft_details = draft_details_response.json()
         self.assertEqual(draft_details["resource_id"], resource_id)
-        self.assertEqual(draft_details["version_id"], version_id)
+        self.assertEqual(draft_details["id"], version_id)
         self.assertEqual(draft_details["status"], "DRAFT")
         self.assertEqual(draft_details["group_id"], group_id)
         self.assertEqual(draft_details["metadata"]["resource_type"], "dataset")
@@ -146,7 +146,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         draft = get_version("DRAFT")
         self.assertEqual(draft["resource_id"], resource_id)
         self.assertEqual(draft["revision"], initial_revision + 1)
-        version_id = draft["version_id"]
+        version_id = draft["id"]
 
         stale = self.gateway.put(
             "/resources/{id}/versions/{versionId}/draft",
@@ -177,7 +177,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
 
         submitted_version = get_version("SUBMITTED")
         self.assertEqual(submitted_version["resource_id"], resource_id)
-        self.assertEqual(submitted_version["version_id"], version_id)
+        self.assertEqual(submitted_version["id"], version_id)
         self.assertTrue(submitted_version["submitted_by"])
         self.assertIsNotNone(submitted_version["submitted_at"])
 
@@ -195,7 +195,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
 
         published_version = get_version("PUBLISHED")
         self.assertEqual(published_version["resource_id"], resource_id)
-        self.assertEqual(published_version["version_id"], version_id)
+        self.assertEqual(published_version["id"], version_id)
         self.assertTrue(published_version["published_by"])
         self.assertIsNotNone(published_version["published_at"])
 
@@ -208,7 +208,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         self.assertEqual(published_details_response.status_code, 200)
         published_details = published_details_response.json()
         self.assertEqual(published_details["resource_id"], resource_id)
-        self.assertEqual(published_details["version_id"], version_id)
+        self.assertEqual(published_details["id"], version_id)
         self.assertEqual(published_details["status"], "PUBLISHED")
         self.assertEqual(published_details["group_id"], group_id)
         self.assertEqual(published_details["metadata"]["resource_type"], "dataset")

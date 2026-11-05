@@ -451,7 +451,7 @@ export type DatasetDraftMetadata = {
    * Mutually exclusive with temporal_coverage.
    */
   geological_temporal_coverage?: GeologicalTemporalCoverage;
-  persistent_identifiers?: IdentifierInput[];
+  persistent_identifiers?: VersionedIdentifierInput[];
   contact_points?: string[];
   providers?: string[];
   categories?: string[];
@@ -482,7 +482,7 @@ export type SoftwareApplicationDraftMetadata = {
    */
   main_entity_of_page?: string;
   creators?: string[];
-  identifiers?: IdentifierInput[];
+  identifiers?: VersionedIdentifierInput[];
   categories?: string[];
   contact_points?: string[];
 };
@@ -505,9 +505,18 @@ export type SoftwareSourceCodeDraftMetadata = {
   main_entity_of_page?: string;
   version?: string | null;
   creators?: string[];
-  identifiers?: IdentifierInput[];
+  identifiers?: VersionedIdentifierInput[];
   categories?: string[];
   contact_points?: string[];
+};
+
+export type VersionedIdentifierInput = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
+  type: NonBlankString;
+  value: NonBlankString;
 };
 
 export type IdentifierInput = {
@@ -519,6 +528,10 @@ export type DistributionDraft =
   WebServiceDistributionDraft | DownloadableFileDistributionDraft;
 
 export type WebServiceDistributionDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   title: string;
   description?: string;
   license?: string | null;
@@ -540,6 +553,10 @@ export type WebServiceDistributionDraft = {
 };
 
 export type DownloadableFileDistributionDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   title: string;
   description?: string;
   license?: string | null;
@@ -561,6 +578,10 @@ export type DownloadableFileDistributionDraft = {
 };
 
 export type WebServiceDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   name: NonBlankString;
   /**
    * @minLength 1
@@ -724,6 +745,10 @@ export type WmtsWebServiceConfigurationDraft = {
 };
 
 export type WmtsLayerDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   name: NonBlankString;
   /**
    * Configured default style. When omitted, use the provider default if allowed by styles.
@@ -741,6 +766,10 @@ export type WmtsLayerDraft = {
 };
 
 export type WmsLayerDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   name: NonBlankString;
   /**
    * Default configured style. Empty string uses the provider default.
@@ -786,6 +815,10 @@ export type ScalarParameterDraft =
   | DateTimeScalarParameterDraft;
 
 export type StringParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "STRING";
   /**
    * @format int32
@@ -810,6 +843,10 @@ export type StringParameterDraft = {
 };
 
 export type BooleanParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "BOOLEAN";
   /**
    * @format int32
@@ -828,6 +865,10 @@ export type BooleanParameterDraft = {
 };
 
 export type IntegerParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "INTEGER";
   /**
    * @format int32
@@ -859,6 +900,10 @@ export type IntegerParameterDraft = {
 };
 
 export type FloatParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "FLOAT";
   /**
    * @format int32
@@ -890,6 +935,10 @@ export type FloatParameterDraft = {
 };
 
 export type DateTimeParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "DATETIME";
   /**
    * @format int32
@@ -924,6 +973,10 @@ export type StringParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "STRING";
   /**
    * @format int32
@@ -949,6 +1002,10 @@ export type BooleanParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "BOOLEAN";
   /**
    * @format int32
@@ -971,6 +1028,10 @@ export type IntegerParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "INTEGER";
   /**
    * @format int32
@@ -1006,6 +1067,10 @@ export type FloatParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "FLOAT";
   /**
    * @format int32
@@ -1041,6 +1106,10 @@ export type DateTimeParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "DATETIME";
   /**
    * @format int32
@@ -1071,6 +1140,10 @@ export type DateTimeParameter = {
 };
 
 export type TemplateParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "TEMPLATE";
   /**
    * @format int32
@@ -1097,6 +1170,10 @@ export type TemplateParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "TEMPLATE";
   /**
    * @format int32
@@ -1119,6 +1196,10 @@ export type TemplateParameter = {
 };
 
 export type StringScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "STRING";
   /**
    * @format int32
@@ -1137,6 +1218,10 @@ export type StringScalarParameterDraft = {
 };
 
 export type BooleanScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "BOOLEAN";
   /**
    * @format int32
@@ -1153,6 +1238,10 @@ export type BooleanScalarParameterDraft = {
 };
 
 export type IntegerScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "INTEGER";
   /**
    * @format int32
@@ -1181,6 +1270,10 @@ export type IntegerScalarParameterDraft = {
 };
 
 export type FloatScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "FLOAT";
   /**
    * @format int32
@@ -1209,6 +1302,10 @@ export type FloatScalarParameterDraft = {
 };
 
 export type DateTimeScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "DATETIME";
   /**
    * @format int32
@@ -1241,6 +1338,10 @@ export type StringScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "STRING";
   /**
    * @format int32
@@ -1263,6 +1364,10 @@ export type BooleanScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "BOOLEAN";
   /**
    * @format int32
@@ -1283,6 +1388,10 @@ export type IntegerScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "INTEGER";
   /**
    * @format int32
@@ -1315,6 +1424,10 @@ export type FloatScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "FLOAT";
   /**
    * @format int32
@@ -1347,6 +1460,10 @@ export type DateTimeScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "DATETIME";
   /**
    * @format int32
@@ -1493,13 +1610,17 @@ export type RejectResourceRequest = {
 
 export type ResourceVersion = {
   /**
+   * Logical resource identity shared across versions.
+   *
    * @format uuid
    */
   resource_id: string;
   /**
+   * Identity of this specific resource version.
+   *
    * @format uuid
    */
-  version_id: string;
+  id: string;
   /**
    * @format int32
    */
@@ -1543,7 +1664,7 @@ export type ResourceVersionSummary = {
   /**
    * @format uuid
    */
-  version_id: string;
+  id: string;
   /**
    * @format int32
    * @minimum 1
@@ -1606,10 +1727,6 @@ export type ResourceVersionSummary = {
 
 export type DatasetResourceMetadata = {
   resource_type: "dataset";
-  /**
-   * @format uuid
-   */
-  id: string;
   title: string;
   description: string;
   keywords: Keyword[];
@@ -1629,7 +1746,7 @@ export type DatasetResourceMetadata = {
    * Mutually exclusive with temporal_coverage.
    */
   geological_temporal_coverage?: GeologicalTemporalCoverage;
-  persistent_identifiers: Identifier[];
+  persistent_identifiers: VersionedIdentifier[];
   contact_points: string[] | null;
   providers: ResourceVersionReference[];
   categories: ResourceVersionReference[];
@@ -1645,10 +1762,6 @@ export type DatasetResourceMetadata = {
 
 export type SoftwareApplicationResourceMetadata = {
   resource_type: "software-application";
-  /**
-   * @format uuid
-   */
-  id: string;
   name: string;
   description: string;
   main_entity_of_page?: string | null;
@@ -1659,17 +1772,13 @@ export type SoftwareApplicationResourceMetadata = {
   requirements?: string | null;
   operating_system?: string | null;
   creators: ResourceVersionReference[];
-  identifiers: Identifier[];
+  identifiers: VersionedIdentifier[];
   contact_points: string[] | null;
   categories: ResourceVersionReference[];
 };
 
 export type SoftwareSourceCodeResourceMetadata = {
   resource_type: "software-source-code";
-  /**
-   * @format uuid
-   */
-  id: string;
   name: string;
   description: string;
   programming_language?: string | null;
@@ -1681,7 +1790,7 @@ export type SoftwareSourceCodeResourceMetadata = {
   main_entity_of_page?: string | null;
   version?: string | null;
   creators: ResourceVersionReference[];
-  identifiers: Identifier[];
+  identifiers: VersionedIdentifier[];
   contact_points: string[] | null;
   categories: ResourceVersionReference[];
 };
@@ -1694,6 +1803,10 @@ export type WebServiceDistribution = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   title: string;
   description: string;
   license?: string | null;
@@ -1751,6 +1864,10 @@ export type DownloadableFileDistribution = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   title: string;
   description: string;
   license?: string | null;
@@ -1776,6 +1893,10 @@ export type WebService = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   name: string;
   /**
    * @minLength 1
@@ -1932,6 +2053,14 @@ export type WmtsWebServiceConfiguration = {
 };
 
 export type WmtsLayer = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   name: NonBlankString;
   /**
    * Configured default style. When omitted, use the provider default if allowed by styles.
@@ -1949,6 +2078,14 @@ export type WmtsLayer = {
 };
 
 export type WmsLayer = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   name: NonBlankString;
   /**
    * Default configured style. Empty string uses the provider default.
@@ -1961,6 +2098,25 @@ export type WmsLayer = {
    * @uniqueItems true
    */
   styles: string[];
+};
+
+export type VersionedIdentifier = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
+  /**
+   * @minLength 1
+   */
+  type: string;
+  /**
+   * @minLength 1
+   */
+  value: string;
 };
 
 export type Identifier = {

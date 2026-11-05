@@ -227,7 +227,11 @@ func (value SoftwareSourceCodeMetadata) Validate() error {
 func (value SoftwareSourceCodeMetadata) Input() SoftwareSourceCodeInput {
 	identifiers := make([]IdentifierInput, len(value.Identifiers))
 	for i, identifier := range value.Identifiers {
-		identifiers[i] = IdentifierInput{Type: identifier.Type, Value: identifier.Value}
+		identifiers[i] = IdentifierInput{
+			ResourceID: &identifier.ResourceID,
+			Type:       identifier.Type,
+			Value:      identifier.Value,
+		}
 	}
 	creatorIDs := make([]uuid.UUID, len(value.Creators))
 	for i, creator := range value.Creators {

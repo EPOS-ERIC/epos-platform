@@ -175,6 +175,7 @@ func (s *BlockUserRequest) SetReason(val NonBlankString) {
 // Ref: #/components/schemas/BooleanParameter
 type BooleanParameter struct {
 	ID          uuid.UUID            `json:"id"`
+	ResourceID  uuid.UUID            `json:"resource_id"`
 	Kind        BooleanParameterKind `json:"kind"`
 	Position    int32                `json:"position"`
 	Name        NonBlankString       `json:"name"`
@@ -192,6 +193,11 @@ type BooleanParameter struct {
 // GetID returns the value of ID.
 func (s *BooleanParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *BooleanParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -259,6 +265,11 @@ func (s *BooleanParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *BooleanParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *BooleanParameter) SetKind(val BooleanParameterKind) {
 	s.Kind = val
@@ -321,6 +332,7 @@ func (s *BooleanParameter) SetDefault(val OptNilBool) {
 
 // Ref: #/components/schemas/BooleanParameterDraft
 type BooleanParameterDraft struct {
+	ResourceID  OptUUID                   `json:"resource_id"`
 	Kind        BooleanParameterDraftKind `json:"kind"`
 	Position    int32                     `json:"position"`
 	Name        NonBlankString            `json:"name"`
@@ -333,6 +345,11 @@ type BooleanParameterDraft struct {
 	Explode     bool                      `json:"explode"`
 	ReadOnly    bool                      `json:"read_only"`
 	Default     OptNilBool                `json:"default"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *BooleanParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -393,6 +410,11 @@ func (s *BooleanParameterDraft) GetReadOnly() bool {
 // GetDefault returns the value of Default.
 func (s *BooleanParameterDraft) GetDefault() OptNilBool {
 	return s.Default
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *BooleanParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -526,6 +548,7 @@ func (s *BooleanParameterKind) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/BooleanScalarParameter
 type BooleanScalarParameter struct {
 	ID          uuid.UUID                  `json:"id"`
+	ResourceID  uuid.UUID                  `json:"resource_id"`
 	Kind        BooleanScalarParameterKind `json:"kind"`
 	Position    int32                      `json:"position"`
 	Name        NonBlankString             `json:"name"`
@@ -541,6 +564,11 @@ type BooleanScalarParameter struct {
 // GetID returns the value of ID.
 func (s *BooleanScalarParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *BooleanScalarParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -598,6 +626,11 @@ func (s *BooleanScalarParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *BooleanScalarParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *BooleanScalarParameter) SetKind(val BooleanScalarParameterKind) {
 	s.Kind = val
@@ -650,6 +683,7 @@ func (s *BooleanScalarParameter) SetDefault(val OptNilBool) {
 
 // Ref: #/components/schemas/BooleanScalarParameterDraft
 type BooleanScalarParameterDraft struct {
+	ResourceID  OptUUID                         `json:"resource_id"`
 	Kind        BooleanScalarParameterDraftKind `json:"kind"`
 	Position    int32                           `json:"position"`
 	Name        NonBlankString                  `json:"name"`
@@ -660,6 +694,11 @@ type BooleanScalarParameterDraft struct {
 	Required    bool                            `json:"required"`
 	ReadOnly    bool                            `json:"read_only"`
 	Default     OptNilBool                      `json:"default"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *BooleanScalarParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -710,6 +749,11 @@ func (s *BooleanScalarParameterDraft) GetReadOnly() bool {
 // GetDefault returns the value of Default.
 func (s *BooleanScalarParameterDraft) GetDefault() OptNilBool {
 	return s.Default
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *BooleanScalarParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -2578,7 +2622,7 @@ type DatasetDraftMetadata struct {
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
 	// Mutually exclusive with temporal_coverage.
 	GeologicalTemporalCoverage OptGeologicalTemporalCoverage `json:"geological_temporal_coverage"`
-	PersistentIdentifiers      []IdentifierInput             `json:"persistent_identifiers"`
+	PersistentIdentifiers      []VersionedIdentifierInput    `json:"persistent_identifiers"`
 	ContactPoints              []uuid.UUID                   `json:"contact_points"`
 	Providers                  []uuid.UUID                   `json:"providers"`
 	Categories                 []uuid.UUID                   `json:"categories"`
@@ -2637,7 +2681,7 @@ func (s *DatasetDraftMetadata) GetGeologicalTemporalCoverage() OptGeologicalTemp
 }
 
 // GetPersistentIdentifiers returns the value of PersistentIdentifiers.
-func (s *DatasetDraftMetadata) GetPersistentIdentifiers() []IdentifierInput {
+func (s *DatasetDraftMetadata) GetPersistentIdentifiers() []VersionedIdentifierInput {
 	return s.PersistentIdentifiers
 }
 
@@ -2717,7 +2761,7 @@ func (s *DatasetDraftMetadata) SetGeologicalTemporalCoverage(val OptGeologicalTe
 }
 
 // SetPersistentIdentifiers sets the value of PersistentIdentifiers.
-func (s *DatasetDraftMetadata) SetPersistentIdentifiers(val []IdentifierInput) {
+func (s *DatasetDraftMetadata) SetPersistentIdentifiers(val []VersionedIdentifierInput) {
 	s.PersistentIdentifiers = val
 }
 
@@ -2749,7 +2793,6 @@ func (s *DatasetDraftMetadata) SetUpdated(val OptNilDateTime) {
 // Ref: #/components/schemas/DatasetResourceMetadata
 type DatasetResourceMetadata struct {
 	ResourceType       DatasetResourceMetadataResourceType `json:"resource_type"`
-	ID                 uuid.UUID                           `json:"id"`
 	Title              string                              `json:"title"`
 	Description        string                              `json:"description"`
 	Keywords           []Keyword                           `json:"keywords"`
@@ -2762,7 +2805,7 @@ type DatasetResourceMetadata struct {
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
 	// Mutually exclusive with temporal_coverage.
 	GeologicalTemporalCoverage OptGeologicalTemporalCoverage `json:"geological_temporal_coverage"`
-	PersistentIdentifiers      []Identifier                  `json:"persistent_identifiers"`
+	PersistentIdentifiers      []VersionedIdentifier         `json:"persistent_identifiers"`
 	ContactPoints              []uuid.UUID                   `json:"contact_points"`
 	Providers                  []ResourceVersionReference    `json:"providers"`
 	Categories                 []ResourceVersionReference    `json:"categories"`
@@ -2773,11 +2816,6 @@ type DatasetResourceMetadata struct {
 // GetResourceType returns the value of ResourceType.
 func (s *DatasetResourceMetadata) GetResourceType() DatasetResourceMetadataResourceType {
 	return s.ResourceType
-}
-
-// GetID returns the value of ID.
-func (s *DatasetResourceMetadata) GetID() uuid.UUID {
-	return s.ID
 }
 
 // GetTitle returns the value of Title.
@@ -2831,7 +2869,7 @@ func (s *DatasetResourceMetadata) GetGeologicalTemporalCoverage() OptGeologicalT
 }
 
 // GetPersistentIdentifiers returns the value of PersistentIdentifiers.
-func (s *DatasetResourceMetadata) GetPersistentIdentifiers() []Identifier {
+func (s *DatasetResourceMetadata) GetPersistentIdentifiers() []VersionedIdentifier {
 	return s.PersistentIdentifiers
 }
 
@@ -2863,11 +2901,6 @@ func (s *DatasetResourceMetadata) GetUpdated() OptNilDateTime {
 // SetResourceType sets the value of ResourceType.
 func (s *DatasetResourceMetadata) SetResourceType(val DatasetResourceMetadataResourceType) {
 	s.ResourceType = val
-}
-
-// SetID sets the value of ID.
-func (s *DatasetResourceMetadata) SetID(val uuid.UUID) {
-	s.ID = val
 }
 
 // SetTitle sets the value of Title.
@@ -2921,7 +2954,7 @@ func (s *DatasetResourceMetadata) SetGeologicalTemporalCoverage(val OptGeologica
 }
 
 // SetPersistentIdentifiers sets the value of PersistentIdentifiers.
-func (s *DatasetResourceMetadata) SetPersistentIdentifiers(val []Identifier) {
+func (s *DatasetResourceMetadata) SetPersistentIdentifiers(val []VersionedIdentifier) {
 	s.PersistentIdentifiers = val
 }
 
@@ -2987,6 +3020,7 @@ func (s *DatasetResourceMetadataResourceType) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/DateTimeParameter
 type DateTimeParameter struct {
 	ID          uuid.UUID             `json:"id"`
+	ResourceID  uuid.UUID             `json:"resource_id"`
 	Kind        DateTimeParameterKind `json:"kind"`
 	Position    int32                 `json:"position"`
 	Name        NonBlankString        `json:"name"`
@@ -3007,6 +3041,11 @@ type DateTimeParameter struct {
 // GetID returns the value of ID.
 func (s *DateTimeParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *DateTimeParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -3089,6 +3128,11 @@ func (s *DateTimeParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *DateTimeParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *DateTimeParameter) SetKind(val DateTimeParameterKind) {
 	s.Kind = val
@@ -3166,6 +3210,7 @@ func (s *DateTimeParameter) SetLayout(val OptNilString) {
 
 // Ref: #/components/schemas/DateTimeParameterDraft
 type DateTimeParameterDraft struct {
+	ResourceID  OptUUID                    `json:"resource_id"`
 	Kind        DateTimeParameterDraftKind `json:"kind"`
 	Position    int32                      `json:"position"`
 	Name        NonBlankString             `json:"name"`
@@ -3181,6 +3226,11 @@ type DateTimeParameterDraft struct {
 	Maximum     OptNilDateTime             `json:"maximum"`
 	Default     OptNilDateTime             `json:"default"`
 	Layout      OptNilString               `json:"layout"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *DateTimeParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -3256,6 +3306,11 @@ func (s *DateTimeParameterDraft) GetDefault() OptNilDateTime {
 // GetLayout returns the value of Layout.
 func (s *DateTimeParameterDraft) GetLayout() OptNilString {
 	return s.Layout
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *DateTimeParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -3404,6 +3459,7 @@ func (s *DateTimeParameterKind) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/DateTimeScalarParameter
 type DateTimeScalarParameter struct {
 	ID          uuid.UUID                   `json:"id"`
+	ResourceID  uuid.UUID                   `json:"resource_id"`
 	Kind        DateTimeScalarParameterKind `json:"kind"`
 	Position    int32                       `json:"position"`
 	Name        NonBlankString              `json:"name"`
@@ -3422,6 +3478,11 @@ type DateTimeScalarParameter struct {
 // GetID returns the value of ID.
 func (s *DateTimeScalarParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *DateTimeScalarParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -3494,6 +3555,11 @@ func (s *DateTimeScalarParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *DateTimeScalarParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *DateTimeScalarParameter) SetKind(val DateTimeScalarParameterKind) {
 	s.Kind = val
@@ -3561,6 +3627,7 @@ func (s *DateTimeScalarParameter) SetLayout(val OptNilString) {
 
 // Ref: #/components/schemas/DateTimeScalarParameterDraft
 type DateTimeScalarParameterDraft struct {
+	ResourceID  OptUUID                          `json:"resource_id"`
 	Kind        DateTimeScalarParameterDraftKind `json:"kind"`
 	Position    int32                            `json:"position"`
 	Name        NonBlankString                   `json:"name"`
@@ -3574,6 +3641,11 @@ type DateTimeScalarParameterDraft struct {
 	Maximum     OptNilDateTime                   `json:"maximum"`
 	Default     OptNilDateTime                   `json:"default"`
 	Layout      OptNilString                     `json:"layout"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *DateTimeScalarParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -3639,6 +3711,11 @@ func (s *DateTimeScalarParameterDraft) GetDefault() OptNilDateTime {
 // GetLayout returns the value of Layout.
 func (s *DateTimeScalarParameterDraft) GetLayout() OptNilString {
 	return s.Layout
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *DateTimeScalarParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -4979,6 +5056,7 @@ func (s *DownloadableFile) SetFormat(val NonBlankString) {
 // Ref: #/components/schemas/DownloadableFileDistribution
 type DownloadableFileDistribution struct {
 	ID               uuid.UUID                        `json:"id"`
+	ResourceID       uuid.UUID                        `json:"resource_id"`
 	Title            string                           `json:"title"`
 	Description      string                           `json:"description"`
 	License          OptNilString                     `json:"license"`
@@ -4992,6 +5070,11 @@ type DownloadableFileDistribution struct {
 // GetID returns the value of ID.
 func (s *DownloadableFileDistribution) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *DownloadableFileDistribution) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetTitle returns the value of Title.
@@ -5039,6 +5122,11 @@ func (s *DownloadableFileDistribution) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *DownloadableFileDistribution) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetTitle sets the value of Title.
 func (s *DownloadableFileDistribution) SetTitle(val string) {
 	s.Title = val
@@ -5081,6 +5169,7 @@ func (s *DownloadableFileDistribution) SetDownloadableFile(val DownloadableFile)
 
 // Ref: #/components/schemas/DownloadableFileDistributionDraft
 type DownloadableFileDistributionDraft struct {
+	ResourceID       OptUUID                               `json:"resource_id"`
 	Title            string                                `json:"title"`
 	Description      OptString                             `json:"description"`
 	License          OptNilString                          `json:"license"`
@@ -5089,6 +5178,11 @@ type DownloadableFileDistributionDraft struct {
 	Modified         OptNilDateTime                        `json:"modified"`
 	ByteSize         OptNilInt64                           `json:"byte_size"`
 	DownloadableFile DownloadableFile                      `json:"downloadable_file"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *DownloadableFileDistributionDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetTitle returns the value of Title.
@@ -5129,6 +5223,11 @@ func (s *DownloadableFileDistributionDraft) GetByteSize() OptNilInt64 {
 // GetDownloadableFile returns the value of DownloadableFile.
 func (s *DownloadableFileDistributionDraft) GetDownloadableFile() DownloadableFile {
 	return s.DownloadableFile
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *DownloadableFileDistributionDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetTitle sets the value of Title.
@@ -5635,6 +5734,7 @@ func (s *FloatEnumOption) SetLabel(val OptString) {
 // Ref: #/components/schemas/FloatParameter
 type FloatParameter struct {
 	ID             uuid.UUID           `json:"id"`
+	ResourceID     uuid.UUID           `json:"resource_id"`
 	Kind           FloatParameterKind  `json:"kind"`
 	Position       int32               `json:"position"`
 	Name           NonBlankString      `json:"name"`
@@ -5656,6 +5756,11 @@ type FloatParameter struct {
 // GetID returns the value of ID.
 func (s *FloatParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *FloatParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -5743,6 +5848,11 @@ func (s *FloatParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *FloatParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *FloatParameter) SetKind(val FloatParameterKind) {
 	s.Kind = val
@@ -5825,6 +5935,7 @@ func (s *FloatParameter) SetEnum(val []FloatEnumOption) {
 
 // Ref: #/components/schemas/FloatParameterDraft
 type FloatParameterDraft struct {
+	ResourceID     OptUUID                 `json:"resource_id"`
 	Kind           FloatParameterDraftKind `json:"kind"`
 	Position       int32                   `json:"position"`
 	Name           NonBlankString          `json:"name"`
@@ -5841,6 +5952,11 @@ type FloatParameterDraft struct {
 	Maximum        OptNilFloat64           `json:"maximum"`
 	Default        OptNilFloat64           `json:"default"`
 	Enum           []FloatEnumOption       `json:"enum"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *FloatParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -5921,6 +6037,11 @@ func (s *FloatParameterDraft) GetDefault() OptNilFloat64 {
 // GetEnum returns the value of Enum.
 func (s *FloatParameterDraft) GetEnum() []FloatEnumOption {
 	return s.Enum
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *FloatParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -6074,6 +6195,7 @@ func (s *FloatParameterKind) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/FloatScalarParameter
 type FloatScalarParameter struct {
 	ID          uuid.UUID                `json:"id"`
+	ResourceID  uuid.UUID                `json:"resource_id"`
 	Kind        FloatScalarParameterKind `json:"kind"`
 	Position    int32                    `json:"position"`
 	Name        NonBlankString           `json:"name"`
@@ -6092,6 +6214,11 @@ type FloatScalarParameter struct {
 // GetID returns the value of ID.
 func (s *FloatScalarParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *FloatScalarParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -6164,6 +6291,11 @@ func (s *FloatScalarParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *FloatScalarParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *FloatScalarParameter) SetKind(val FloatScalarParameterKind) {
 	s.Kind = val
@@ -6231,6 +6363,7 @@ func (s *FloatScalarParameter) SetEnum(val []FloatEnumOption) {
 
 // Ref: #/components/schemas/FloatScalarParameterDraft
 type FloatScalarParameterDraft struct {
+	ResourceID  OptUUID                       `json:"resource_id"`
 	Kind        FloatScalarParameterDraftKind `json:"kind"`
 	Position    int32                         `json:"position"`
 	Name        NonBlankString                `json:"name"`
@@ -6244,6 +6377,11 @@ type FloatScalarParameterDraft struct {
 	Maximum     OptNilFloat64                 `json:"maximum"`
 	Default     OptNilFloat64                 `json:"default"`
 	Enum        []FloatEnumOption             `json:"enum"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *FloatScalarParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -6309,6 +6447,11 @@ func (s *FloatScalarParameterDraft) GetDefault() OptNilFloat64 {
 // GetEnum returns the value of Enum.
 func (s *FloatScalarParameterDraft) GetEnum() []FloatEnumOption {
 	return s.Enum
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *FloatScalarParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -7796,6 +7939,7 @@ func (s *IntegerEnumOption) SetLabel(val OptString) {
 // Ref: #/components/schemas/IntegerParameter
 type IntegerParameter struct {
 	ID             uuid.UUID            `json:"id"`
+	ResourceID     uuid.UUID            `json:"resource_id"`
 	Kind           IntegerParameterKind `json:"kind"`
 	Position       int32                `json:"position"`
 	Name           NonBlankString       `json:"name"`
@@ -7817,6 +7961,11 @@ type IntegerParameter struct {
 // GetID returns the value of ID.
 func (s *IntegerParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *IntegerParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -7904,6 +8053,11 @@ func (s *IntegerParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *IntegerParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *IntegerParameter) SetKind(val IntegerParameterKind) {
 	s.Kind = val
@@ -7986,6 +8140,7 @@ func (s *IntegerParameter) SetEnum(val []IntegerEnumOption) {
 
 // Ref: #/components/schemas/IntegerParameterDraft
 type IntegerParameterDraft struct {
+	ResourceID     OptUUID                   `json:"resource_id"`
 	Kind           IntegerParameterDraftKind `json:"kind"`
 	Position       int32                     `json:"position"`
 	Name           NonBlankString            `json:"name"`
@@ -8002,6 +8157,11 @@ type IntegerParameterDraft struct {
 	Maximum        OptNilInt64               `json:"maximum"`
 	Default        OptNilInt64               `json:"default"`
 	Enum           []IntegerEnumOption       `json:"enum"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *IntegerParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -8082,6 +8242,11 @@ func (s *IntegerParameterDraft) GetDefault() OptNilInt64 {
 // GetEnum returns the value of Enum.
 func (s *IntegerParameterDraft) GetEnum() []IntegerEnumOption {
 	return s.Enum
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *IntegerParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -8235,6 +8400,7 @@ func (s *IntegerParameterKind) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/IntegerScalarParameter
 type IntegerScalarParameter struct {
 	ID          uuid.UUID                  `json:"id"`
+	ResourceID  uuid.UUID                  `json:"resource_id"`
 	Kind        IntegerScalarParameterKind `json:"kind"`
 	Position    int32                      `json:"position"`
 	Name        NonBlankString             `json:"name"`
@@ -8253,6 +8419,11 @@ type IntegerScalarParameter struct {
 // GetID returns the value of ID.
 func (s *IntegerScalarParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *IntegerScalarParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -8325,6 +8496,11 @@ func (s *IntegerScalarParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *IntegerScalarParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *IntegerScalarParameter) SetKind(val IntegerScalarParameterKind) {
 	s.Kind = val
@@ -8392,6 +8568,7 @@ func (s *IntegerScalarParameter) SetEnum(val []IntegerEnumOption) {
 
 // Ref: #/components/schemas/IntegerScalarParameterDraft
 type IntegerScalarParameterDraft struct {
+	ResourceID  OptUUID                         `json:"resource_id"`
 	Kind        IntegerScalarParameterDraftKind `json:"kind"`
 	Position    int32                           `json:"position"`
 	Name        NonBlankString                  `json:"name"`
@@ -8405,6 +8582,11 @@ type IntegerScalarParameterDraft struct {
 	Maximum     OptNilInt64                     `json:"maximum"`
 	Default     OptNilInt64                     `json:"default"`
 	Enum        []IntegerEnumOption             `json:"enum"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *IntegerScalarParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -8470,6 +8652,11 @@ func (s *IntegerScalarParameterDraft) GetDefault() OptNilInt64 {
 // GetEnum returns the value of Enum.
 func (s *IntegerScalarParameterDraft) GetEnum() []IntegerEnumOption {
 	return s.Enum
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *IntegerScalarParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -12686,8 +12873,10 @@ func (s *RequestDistributionConversionReq) SetMessage(val string) {
 
 // Ref: #/components/schemas/ResourceVersion
 type ResourceVersion struct {
-	ResourceID    uuid.UUID               `json:"resource_id"`
-	VersionID     uuid.UUID               `json:"version_id"`
+	// Logical resource identity shared across versions.
+	ResourceID uuid.UUID `json:"resource_id"`
+	// Identity of this specific resource version.
+	ID            uuid.UUID               `json:"id"`
 	Revision      int32                   `json:"revision"`
 	Status        VersioningStatus        `json:"status"`
 	CreatedBy     string                  `json:"created_by"`
@@ -12706,9 +12895,9 @@ func (s *ResourceVersion) GetResourceID() uuid.UUID {
 	return s.ResourceID
 }
 
-// GetVersionID returns the value of VersionID.
-func (s *ResourceVersion) GetVersionID() uuid.UUID {
-	return s.VersionID
+// GetID returns the value of ID.
+func (s *ResourceVersion) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetRevision returns the value of Revision.
@@ -12771,9 +12960,9 @@ func (s *ResourceVersion) SetResourceID(val uuid.UUID) {
 	s.ResourceID = val
 }
 
-// SetVersionID sets the value of VersionID.
-func (s *ResourceVersion) SetVersionID(val uuid.UUID) {
-	s.VersionID = val
+// SetID sets the value of ID.
+func (s *ResourceVersion) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetRevision sets the value of Revision.
@@ -12958,7 +13147,7 @@ func (s *ResourceVersionReference) SetName(val string) {
 type ResourceVersionSummary struct {
 	ResourceType  DiscoveryResourceType `json:"resource_type"`
 	ResourceID    uuid.UUID             `json:"resource_id"`
-	VersionID     uuid.UUID             `json:"version_id"`
+	ID            uuid.UUID             `json:"id"`
 	Revision      int32                 `json:"revision"`
 	Status        VersioningStatus      `json:"status"`
 	Name          string                `json:"name"`
@@ -12986,9 +13175,9 @@ func (s *ResourceVersionSummary) GetResourceID() uuid.UUID {
 	return s.ResourceID
 }
 
-// GetVersionID returns the value of VersionID.
-func (s *ResourceVersionSummary) GetVersionID() uuid.UUID {
-	return s.VersionID
+// GetID returns the value of ID.
+func (s *ResourceVersionSummary) GetID() uuid.UUID {
+	return s.ID
 }
 
 // GetRevision returns the value of Revision.
@@ -13076,9 +13265,9 @@ func (s *ResourceVersionSummary) SetResourceID(val uuid.UUID) {
 	s.ResourceID = val
 }
 
-// SetVersionID sets the value of VersionID.
-func (s *ResourceVersionSummary) SetVersionID(val uuid.UUID) {
-	s.VersionID = val
+// SetID sets the value of ID.
+func (s *ResourceVersionSummary) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
 // SetRevision sets the value of Revision.
@@ -13784,19 +13973,19 @@ func (s *SoftwareApplicationDiscoveryItemType) UnmarshalText(data []byte) error 
 
 // Ref: #/components/schemas/SoftwareApplicationDraftMetadata
 type SoftwareApplicationDraftMetadata struct {
-	Name             NonBlankString    `json:"name"`
-	Description      NonBlankString    `json:"description"`
-	Keywords         []Keyword         `json:"keywords"`
-	License          OptNilString      `json:"license"`
-	Version          OptNilString      `json:"version"`
-	DownloadURL      OptURI            `json:"download_url"`
-	Requirements     OptNilString      `json:"requirements"`
-	OperatingSystem  OptNilString      `json:"operating_system"`
-	MainEntityOfPage OptURI            `json:"main_entity_of_page"`
-	Creators         []uuid.UUID       `json:"creators"`
-	Identifiers      []IdentifierInput `json:"identifiers"`
-	Categories       []uuid.UUID       `json:"categories"`
-	ContactPoints    []uuid.UUID       `json:"contact_points"`
+	Name             NonBlankString             `json:"name"`
+	Description      NonBlankString             `json:"description"`
+	Keywords         []Keyword                  `json:"keywords"`
+	License          OptNilString               `json:"license"`
+	Version          OptNilString               `json:"version"`
+	DownloadURL      OptURI                     `json:"download_url"`
+	Requirements     OptNilString               `json:"requirements"`
+	OperatingSystem  OptNilString               `json:"operating_system"`
+	MainEntityOfPage OptURI                     `json:"main_entity_of_page"`
+	Creators         []uuid.UUID                `json:"creators"`
+	Identifiers      []VersionedIdentifierInput `json:"identifiers"`
+	Categories       []uuid.UUID                `json:"categories"`
+	ContactPoints    []uuid.UUID                `json:"contact_points"`
 }
 
 // GetName returns the value of Name.
@@ -13850,7 +14039,7 @@ func (s *SoftwareApplicationDraftMetadata) GetCreators() []uuid.UUID {
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *SoftwareApplicationDraftMetadata) GetIdentifiers() []IdentifierInput {
+func (s *SoftwareApplicationDraftMetadata) GetIdentifiers() []VersionedIdentifierInput {
 	return s.Identifiers
 }
 
@@ -13915,7 +14104,7 @@ func (s *SoftwareApplicationDraftMetadata) SetCreators(val []uuid.UUID) {
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *SoftwareApplicationDraftMetadata) SetIdentifiers(val []IdentifierInput) {
+func (s *SoftwareApplicationDraftMetadata) SetIdentifiers(val []VersionedIdentifierInput) {
 	s.Identifiers = val
 }
 
@@ -13932,7 +14121,6 @@ func (s *SoftwareApplicationDraftMetadata) SetContactPoints(val []uuid.UUID) {
 // Ref: #/components/schemas/SoftwareApplicationResourceMetadata
 type SoftwareApplicationResourceMetadata struct {
 	ResourceType     SoftwareApplicationResourceMetadataResourceType `json:"resource_type"`
-	ID               uuid.UUID                                       `json:"id"`
 	Name             string                                          `json:"name"`
 	Description      string                                          `json:"description"`
 	MainEntityOfPage OptNilString                                    `json:"main_entity_of_page"`
@@ -13943,7 +14131,7 @@ type SoftwareApplicationResourceMetadata struct {
 	Requirements     OptNilString                                    `json:"requirements"`
 	OperatingSystem  OptNilString                                    `json:"operating_system"`
 	Creators         []ResourceVersionReference                      `json:"creators"`
-	Identifiers      []Identifier                                    `json:"identifiers"`
+	Identifiers      []VersionedIdentifier                           `json:"identifiers"`
 	ContactPoints    []uuid.UUID                                     `json:"contact_points"`
 	Categories       []ResourceVersionReference                      `json:"categories"`
 }
@@ -13951,11 +14139,6 @@ type SoftwareApplicationResourceMetadata struct {
 // GetResourceType returns the value of ResourceType.
 func (s *SoftwareApplicationResourceMetadata) GetResourceType() SoftwareApplicationResourceMetadataResourceType {
 	return s.ResourceType
-}
-
-// GetID returns the value of ID.
-func (s *SoftwareApplicationResourceMetadata) GetID() uuid.UUID {
-	return s.ID
 }
 
 // GetName returns the value of Name.
@@ -14009,7 +14192,7 @@ func (s *SoftwareApplicationResourceMetadata) GetCreators() []ResourceVersionRef
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *SoftwareApplicationResourceMetadata) GetIdentifiers() []Identifier {
+func (s *SoftwareApplicationResourceMetadata) GetIdentifiers() []VersionedIdentifier {
 	return s.Identifiers
 }
 
@@ -14026,11 +14209,6 @@ func (s *SoftwareApplicationResourceMetadata) GetCategories() []ResourceVersionR
 // SetResourceType sets the value of ResourceType.
 func (s *SoftwareApplicationResourceMetadata) SetResourceType(val SoftwareApplicationResourceMetadataResourceType) {
 	s.ResourceType = val
-}
-
-// SetID sets the value of ID.
-func (s *SoftwareApplicationResourceMetadata) SetID(val uuid.UUID) {
-	s.ID = val
 }
 
 // SetName sets the value of Name.
@@ -14084,7 +14262,7 @@ func (s *SoftwareApplicationResourceMetadata) SetCreators(val []ResourceVersionR
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *SoftwareApplicationResourceMetadata) SetIdentifiers(val []Identifier) {
+func (s *SoftwareApplicationResourceMetadata) SetIdentifiers(val []VersionedIdentifier) {
 	s.Identifiers = val
 }
 
@@ -14294,20 +14472,20 @@ func (s *SoftwareSourceCodeDiscoveryItemType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/SoftwareSourceCodeDraftMetadata
 type SoftwareSourceCodeDraftMetadata struct {
-	Name                 NonBlankString    `json:"name"`
-	Description          NonBlankString    `json:"description"`
-	Keywords             []Keyword         `json:"keywords"`
-	Repository           OptURI            `json:"repository"`
-	ProgrammingLanguage  OptString         `json:"programming_language"`
-	License              OptNilString      `json:"license"`
-	SoftwareRequirements OptNilString      `json:"software_requirements"`
-	RuntimePlatform      OptNilString      `json:"runtime_platform"`
-	MainEntityOfPage     OptURI            `json:"main_entity_of_page"`
-	Version              OptNilString      `json:"version"`
-	Creators             []uuid.UUID       `json:"creators"`
-	Identifiers          []IdentifierInput `json:"identifiers"`
-	Categories           []uuid.UUID       `json:"categories"`
-	ContactPoints        []uuid.UUID       `json:"contact_points"`
+	Name                 NonBlankString             `json:"name"`
+	Description          NonBlankString             `json:"description"`
+	Keywords             []Keyword                  `json:"keywords"`
+	Repository           OptURI                     `json:"repository"`
+	ProgrammingLanguage  OptString                  `json:"programming_language"`
+	License              OptNilString               `json:"license"`
+	SoftwareRequirements OptNilString               `json:"software_requirements"`
+	RuntimePlatform      OptNilString               `json:"runtime_platform"`
+	MainEntityOfPage     OptURI                     `json:"main_entity_of_page"`
+	Version              OptNilString               `json:"version"`
+	Creators             []uuid.UUID                `json:"creators"`
+	Identifiers          []VersionedIdentifierInput `json:"identifiers"`
+	Categories           []uuid.UUID                `json:"categories"`
+	ContactPoints        []uuid.UUID                `json:"contact_points"`
 }
 
 // GetName returns the value of Name.
@@ -14366,7 +14544,7 @@ func (s *SoftwareSourceCodeDraftMetadata) GetCreators() []uuid.UUID {
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *SoftwareSourceCodeDraftMetadata) GetIdentifiers() []IdentifierInput {
+func (s *SoftwareSourceCodeDraftMetadata) GetIdentifiers() []VersionedIdentifierInput {
 	return s.Identifiers
 }
 
@@ -14436,7 +14614,7 @@ func (s *SoftwareSourceCodeDraftMetadata) SetCreators(val []uuid.UUID) {
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *SoftwareSourceCodeDraftMetadata) SetIdentifiers(val []IdentifierInput) {
+func (s *SoftwareSourceCodeDraftMetadata) SetIdentifiers(val []VersionedIdentifierInput) {
 	s.Identifiers = val
 }
 
@@ -14453,7 +14631,6 @@ func (s *SoftwareSourceCodeDraftMetadata) SetContactPoints(val []uuid.UUID) {
 // Ref: #/components/schemas/SoftwareSourceCodeResourceMetadata
 type SoftwareSourceCodeResourceMetadata struct {
 	ResourceType         SoftwareSourceCodeResourceMetadataResourceType `json:"resource_type"`
-	ID                   uuid.UUID                                      `json:"id"`
 	Name                 string                                         `json:"name"`
 	Description          string                                         `json:"description"`
 	ProgrammingLanguage  OptNilString                                   `json:"programming_language"`
@@ -14465,7 +14642,7 @@ type SoftwareSourceCodeResourceMetadata struct {
 	MainEntityOfPage     OptNilString                                   `json:"main_entity_of_page"`
 	Version              OptNilString                                   `json:"version"`
 	Creators             []ResourceVersionReference                     `json:"creators"`
-	Identifiers          []Identifier                                   `json:"identifiers"`
+	Identifiers          []VersionedIdentifier                          `json:"identifiers"`
 	ContactPoints        []uuid.UUID                                    `json:"contact_points"`
 	Categories           []ResourceVersionReference                     `json:"categories"`
 }
@@ -14473,11 +14650,6 @@ type SoftwareSourceCodeResourceMetadata struct {
 // GetResourceType returns the value of ResourceType.
 func (s *SoftwareSourceCodeResourceMetadata) GetResourceType() SoftwareSourceCodeResourceMetadataResourceType {
 	return s.ResourceType
-}
-
-// GetID returns the value of ID.
-func (s *SoftwareSourceCodeResourceMetadata) GetID() uuid.UUID {
-	return s.ID
 }
 
 // GetName returns the value of Name.
@@ -14536,7 +14708,7 @@ func (s *SoftwareSourceCodeResourceMetadata) GetCreators() []ResourceVersionRefe
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *SoftwareSourceCodeResourceMetadata) GetIdentifiers() []Identifier {
+func (s *SoftwareSourceCodeResourceMetadata) GetIdentifiers() []VersionedIdentifier {
 	return s.Identifiers
 }
 
@@ -14553,11 +14725,6 @@ func (s *SoftwareSourceCodeResourceMetadata) GetCategories() []ResourceVersionRe
 // SetResourceType sets the value of ResourceType.
 func (s *SoftwareSourceCodeResourceMetadata) SetResourceType(val SoftwareSourceCodeResourceMetadataResourceType) {
 	s.ResourceType = val
-}
-
-// SetID sets the value of ID.
-func (s *SoftwareSourceCodeResourceMetadata) SetID(val uuid.UUID) {
-	s.ID = val
 }
 
 // SetName sets the value of Name.
@@ -14616,7 +14783,7 @@ func (s *SoftwareSourceCodeResourceMetadata) SetCreators(val []ResourceVersionRe
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *SoftwareSourceCodeResourceMetadata) SetIdentifiers(val []Identifier) {
+func (s *SoftwareSourceCodeResourceMetadata) SetIdentifiers(val []VersionedIdentifier) {
 	s.Identifiers = val
 }
 
@@ -14693,6 +14860,7 @@ func (s *StringEnumOption) SetLabel(val OptString) {
 // Ref: #/components/schemas/StringParameter
 type StringParameter struct {
 	ID             uuid.UUID           `json:"id"`
+	ResourceID     uuid.UUID           `json:"resource_id"`
 	Kind           StringParameterKind `json:"kind"`
 	Position       int32               `json:"position"`
 	Name           NonBlankString      `json:"name"`
@@ -14713,6 +14881,11 @@ type StringParameter struct {
 // GetID returns the value of ID.
 func (s *StringParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *StringParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -14795,6 +14968,11 @@ func (s *StringParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *StringParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *StringParameter) SetKind(val StringParameterKind) {
 	s.Kind = val
@@ -14872,6 +15050,7 @@ func (s *StringParameter) SetPattern(val OptNilString) {
 
 // Ref: #/components/schemas/StringParameterDraft
 type StringParameterDraft struct {
+	ResourceID     OptUUID                  `json:"resource_id"`
 	Kind           StringParameterDraftKind `json:"kind"`
 	Position       int32                    `json:"position"`
 	Name           NonBlankString           `json:"name"`
@@ -14887,6 +15066,11 @@ type StringParameterDraft struct {
 	Default        OptNilString             `json:"default"`
 	Enum           []StringEnumOption       `json:"enum"`
 	Pattern        OptNilString             `json:"pattern"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *StringParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -14962,6 +15146,11 @@ func (s *StringParameterDraft) GetEnum() []StringEnumOption {
 // GetPattern returns the value of Pattern.
 func (s *StringParameterDraft) GetPattern() OptNilString {
 	return s.Pattern
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *StringParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -15110,6 +15299,7 @@ func (s *StringParameterKind) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/StringScalarParameter
 type StringScalarParameter struct {
 	ID          uuid.UUID                 `json:"id"`
+	ResourceID  uuid.UUID                 `json:"resource_id"`
 	Kind        StringScalarParameterKind `json:"kind"`
 	Position    int32                     `json:"position"`
 	Name        NonBlankString            `json:"name"`
@@ -15127,6 +15317,11 @@ type StringScalarParameter struct {
 // GetID returns the value of ID.
 func (s *StringScalarParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *StringScalarParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -15194,6 +15389,11 @@ func (s *StringScalarParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *StringScalarParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *StringScalarParameter) SetKind(val StringScalarParameterKind) {
 	s.Kind = val
@@ -15256,6 +15456,7 @@ func (s *StringScalarParameter) SetPattern(val OptNilString) {
 
 // Ref: #/components/schemas/StringScalarParameterDraft
 type StringScalarParameterDraft struct {
+	ResourceID  OptUUID                        `json:"resource_id"`
 	Kind        StringScalarParameterDraftKind `json:"kind"`
 	Position    int32                          `json:"position"`
 	Name        NonBlankString                 `json:"name"`
@@ -15268,6 +15469,11 @@ type StringScalarParameterDraft struct {
 	Default     OptNilString                   `json:"default"`
 	Enum        []StringEnumOption             `json:"enum"`
 	Pattern     OptNilString                   `json:"pattern"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *StringScalarParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -15328,6 +15534,11 @@ func (s *StringScalarParameterDraft) GetEnum() []StringEnumOption {
 // GetPattern returns the value of Pattern.
 func (s *StringScalarParameterDraft) GetPattern() OptNilString {
 	return s.Pattern
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *StringScalarParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -15467,6 +15678,7 @@ type SubscribeUserNotificationNoContent struct{}
 // Ref: #/components/schemas/TemplateParameter
 type TemplateParameter struct {
 	ID          uuid.UUID             `json:"id"`
+	ResourceID  uuid.UUID             `json:"resource_id"`
 	Kind        TemplateParameterKind `json:"kind"`
 	Position    int32                 `json:"position"`
 	Name        NonBlankString        `json:"name"`
@@ -15485,6 +15697,11 @@ type TemplateParameter struct {
 // GetID returns the value of ID.
 func (s *TemplateParameter) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *TemplateParameter) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -15557,6 +15774,11 @@ func (s *TemplateParameter) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *TemplateParameter) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetKind sets the value of Kind.
 func (s *TemplateParameter) SetKind(val TemplateParameterKind) {
 	s.Kind = val
@@ -15624,6 +15846,7 @@ func (s *TemplateParameter) SetParameters(val []ScalarParameter) {
 
 // Ref: #/components/schemas/TemplateParameterDraft
 type TemplateParameterDraft struct {
+	ResourceID  OptUUID                    `json:"resource_id"`
 	Kind        TemplateParameterDraftKind `json:"kind"`
 	Position    int32                      `json:"position"`
 	Name        NonBlankString             `json:"name"`
@@ -15637,6 +15860,11 @@ type TemplateParameterDraft struct {
 	ReadOnly    bool                       `json:"read_only"`
 	Template    string                     `json:"template"`
 	Parameters  []ScalarParameterDraft     `json:"parameters"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *TemplateParameterDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetKind returns the value of Kind.
@@ -15702,6 +15930,11 @@ func (s *TemplateParameterDraft) GetTemplate() string {
 // GetParameters returns the value of Parameters.
 func (s *TemplateParameterDraft) GetParameters() []ScalarParameterDraft {
 	return s.Parameters
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *TemplateParameterDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetKind sets the value of Kind.
@@ -16262,6 +16495,91 @@ func (s *UserStatus) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/VersionedIdentifier
+type VersionedIdentifier struct {
+	ID         uuid.UUID `json:"id"`
+	ResourceID uuid.UUID `json:"resource_id"`
+	Type       string    `json:"type"`
+	Value      string    `json:"value"`
+}
+
+// GetID returns the value of ID.
+func (s *VersionedIdentifier) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *VersionedIdentifier) GetResourceID() uuid.UUID {
+	return s.ResourceID
+}
+
+// GetType returns the value of Type.
+func (s *VersionedIdentifier) GetType() string {
+	return s.Type
+}
+
+// GetValue returns the value of Value.
+func (s *VersionedIdentifier) GetValue() string {
+	return s.Value
+}
+
+// SetID sets the value of ID.
+func (s *VersionedIdentifier) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *VersionedIdentifier) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
+// SetType sets the value of Type.
+func (s *VersionedIdentifier) SetType(val string) {
+	s.Type = val
+}
+
+// SetValue sets the value of Value.
+func (s *VersionedIdentifier) SetValue(val string) {
+	s.Value = val
+}
+
+// Ref: #/components/schemas/VersionedIdentifierInput
+type VersionedIdentifierInput struct {
+	ResourceID OptUUID        `json:"resource_id"`
+	Type       NonBlankString `json:"type"`
+	Value      NonBlankString `json:"value"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *VersionedIdentifierInput) GetResourceID() OptUUID {
+	return s.ResourceID
+}
+
+// GetType returns the value of Type.
+func (s *VersionedIdentifierInput) GetType() NonBlankString {
+	return s.Type
+}
+
+// GetValue returns the value of Value.
+func (s *VersionedIdentifierInput) GetValue() NonBlankString {
+	return s.Value
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *VersionedIdentifierInput) SetResourceID(val OptUUID) {
+	s.ResourceID = val
+}
+
+// SetType sets the value of Type.
+func (s *VersionedIdentifierInput) SetType(val NonBlankString) {
+	s.Type = val
+}
+
+// SetValue sets the value of Value.
+func (s *VersionedIdentifierInput) SetValue(val NonBlankString) {
+	s.Value = val
+}
+
 // Lifecycle state used by resource and discovery operations.
 // Ref: #/components/schemas/VersioningStatus
 type VersioningStatus string
@@ -16424,6 +16742,7 @@ func (s *WFSDistributionAccessRequestType) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/WebService
 type WebService struct {
 	ID            uuid.UUID                      `json:"id"`
+	ResourceID    uuid.UUID                      `json:"resource_id"`
 	Name          string                         `json:"name"`
 	Description   OptNilString                   `json:"description"`
 	VisibleOn     OptNilWebServiceVisibleOnArray `json:"visible_on"`
@@ -16439,6 +16758,11 @@ type WebService struct {
 // GetID returns the value of ID.
 func (s *WebService) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *WebService) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetName returns the value of Name.
@@ -16489,6 +16813,11 @@ func (s *WebService) GetConfiguration() WebServiceConfiguration {
 // SetID sets the value of ID.
 func (s *WebService) SetID(val uuid.UUID) {
 	s.ID = val
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *WebService) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
 }
 
 // SetName sets the value of Name.
@@ -16847,6 +17176,7 @@ func NewDynamicWebServiceConfigurationDraftWebServiceConfigurationDraft(v Dynami
 // Ref: #/components/schemas/WebServiceDistribution
 type WebServiceDistribution struct {
 	ID          uuid.UUID                  `json:"id"`
+	ResourceID  uuid.UUID                  `json:"resource_id"`
 	Title       string                     `json:"title"`
 	Description string                     `json:"description"`
 	License     OptNilString               `json:"license"`
@@ -16864,6 +17194,11 @@ type WebServiceDistribution struct {
 // GetID returns the value of ID.
 func (s *WebServiceDistribution) GetID() uuid.UUID {
 	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *WebServiceDistribution) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetTitle returns the value of Title.
@@ -16916,6 +17251,11 @@ func (s *WebServiceDistribution) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
+// SetResourceID sets the value of ResourceID.
+func (s *WebServiceDistribution) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
 // SetTitle sets the value of Title.
 func (s *WebServiceDistribution) SetTitle(val string) {
 	s.Title = val
@@ -16963,6 +17303,7 @@ func (s *WebServiceDistribution) SetAvailableFormats(val []AvailableFormat) {
 
 // Ref: #/components/schemas/WebServiceDistributionDraft
 type WebServiceDistributionDraft struct {
+	ResourceID  OptUUID                         `json:"resource_id"`
 	Title       string                          `json:"title"`
 	Description OptString                       `json:"description"`
 	License     OptNilString                    `json:"license"`
@@ -16971,6 +17312,11 @@ type WebServiceDistributionDraft struct {
 	Modified    OptNilDateTime                  `json:"modified"`
 	ByteSize    OptNilInt64                     `json:"byte_size"`
 	WebService  WebServiceDraft                 `json:"web_service"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *WebServiceDistributionDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetTitle returns the value of Title.
@@ -17011,6 +17357,11 @@ func (s *WebServiceDistributionDraft) GetByteSize() OptNilInt64 {
 // GetWebService returns the value of WebService.
 func (s *WebServiceDistributionDraft) GetWebService() WebServiceDraft {
 	return s.WebService
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *WebServiceDistributionDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetTitle sets the value of Title.
@@ -17123,6 +17474,7 @@ func (s *WebServiceDistributionType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/WebServiceDraft
 type WebServiceDraft struct {
+	ResourceID    OptUUID                        `json:"resource_id"`
 	Name          NonBlankString                 `json:"name"`
 	Description   OptNilString                   `json:"description"`
 	VisibleOn     OptNilWebServiceVisibleOnArray `json:"visible_on"`
@@ -17133,6 +17485,11 @@ type WebServiceDraft struct {
 	TemporalCoverage OptTemporalCoverage          `json:"temporal_coverage"`
 	ContactPoints    []uuid.UUID                  `json:"contact_points"`
 	Configuration    WebServiceConfigurationDraft `json:"configuration"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *WebServiceDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetName returns the value of Name.
@@ -17178,6 +17535,11 @@ func (s *WebServiceDraft) GetContactPoints() []uuid.UUID {
 // GetConfiguration returns the value of Configuration.
 func (s *WebServiceDraft) GetConfiguration() WebServiceConfigurationDraft {
 	return s.Configuration
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *WebServiceDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetName sets the value of Name.
@@ -17791,12 +18153,24 @@ type WithdrawGroupRoleRequestNoContent struct{}
 
 // Ref: #/components/schemas/WmsLayer
 type WmsLayer struct {
-	Name NonBlankString `json:"name"`
+	ID         uuid.UUID      `json:"id"`
+	ResourceID uuid.UUID      `json:"resource_id"`
+	Name       NonBlankString `json:"name"`
 	// Default configured style. Empty string uses the provider default.
 	DefaultStyle string `json:"default_style"`
 	// Allowed styles in display order. Empty string uses the provider default; a single style fixes
 	// selection.
 	Styles []string `json:"styles"`
+}
+
+// GetID returns the value of ID.
+func (s *WmsLayer) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *WmsLayer) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetName returns the value of Name.
@@ -17812,6 +18186,16 @@ func (s *WmsLayer) GetDefaultStyle() string {
 // GetStyles returns the value of Styles.
 func (s *WmsLayer) GetStyles() []string {
 	return s.Styles
+}
+
+// SetID sets the value of ID.
+func (s *WmsLayer) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *WmsLayer) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
 }
 
 // SetName sets the value of Name.
@@ -17831,12 +18215,18 @@ func (s *WmsLayer) SetStyles(val []string) {
 
 // Ref: #/components/schemas/WmsLayerDraft
 type WmsLayerDraft struct {
-	Name NonBlankString `json:"name"`
+	ResourceID OptUUID        `json:"resource_id"`
+	Name       NonBlankString `json:"name"`
 	// Default configured style. Empty string uses the provider default.
 	DefaultStyle string `json:"default_style"`
 	// Allowed styles in display order. Empty string uses the provider default; a single style fixes
 	// selection.
 	Styles []string `json:"styles"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *WmsLayerDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetName returns the value of Name.
@@ -17852,6 +18242,11 @@ func (s *WmsLayerDraft) GetDefaultStyle() string {
 // GetStyles returns the value of Styles.
 func (s *WmsLayerDraft) GetStyles() []string {
 	return s.Styles
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *WmsLayerDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetName sets the value of Name.
@@ -18141,11 +18536,23 @@ func (s *WmsWebServiceConfigurationType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/WmtsLayer
 type WmtsLayer struct {
-	Name NonBlankString `json:"name"`
+	ID         uuid.UUID      `json:"id"`
+	ResourceID uuid.UUID      `json:"resource_id"`
+	Name       NonBlankString `json:"name"`
 	// Configured default style. When omitted, use the provider default if allowed by styles.
 	DefaultStyle OptNonBlankString `json:"default_style"`
 	// Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
 	Styles []NonBlankString `json:"styles"`
+}
+
+// GetID returns the value of ID.
+func (s *WmtsLayer) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *WmtsLayer) GetResourceID() uuid.UUID {
+	return s.ResourceID
 }
 
 // GetName returns the value of Name.
@@ -18161,6 +18568,16 @@ func (s *WmtsLayer) GetDefaultStyle() OptNonBlankString {
 // GetStyles returns the value of Styles.
 func (s *WmtsLayer) GetStyles() []NonBlankString {
 	return s.Styles
+}
+
+// SetID sets the value of ID.
+func (s *WmtsLayer) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *WmtsLayer) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
 }
 
 // SetName sets the value of Name.
@@ -18180,11 +18597,17 @@ func (s *WmtsLayer) SetStyles(val []NonBlankString) {
 
 // Ref: #/components/schemas/WmtsLayerDraft
 type WmtsLayerDraft struct {
-	Name NonBlankString `json:"name"`
+	ResourceID OptUUID        `json:"resource_id"`
+	Name       NonBlankString `json:"name"`
 	// Configured default style. When omitted, use the provider default if allowed by styles.
 	DefaultStyle OptNonBlankString `json:"default_style"`
 	// Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
 	Styles []NonBlankString `json:"styles"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *WmtsLayerDraft) GetResourceID() OptUUID {
+	return s.ResourceID
 }
 
 // GetName returns the value of Name.
@@ -18200,6 +18623,11 @@ func (s *WmtsLayerDraft) GetDefaultStyle() OptNonBlankString {
 // GetStyles returns the value of Styles.
 func (s *WmtsLayerDraft) GetStyles() []NonBlankString {
 	return s.Styles
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *WmtsLayerDraft) SetResourceID(val OptUUID) {
+	s.ResourceID = val
 }
 
 // SetName sets the value of Name.

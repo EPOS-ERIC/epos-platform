@@ -320,8 +320,17 @@ inserted AS (
 ),
 identifiers AS (
     INSERT INTO
-        identifiers (TYPE, value, dataset_version_id)
+        identifiers (resource_id, TYPE, value, dataset_version_id)
     SELECT
+        CASE
+            WHEN (
+                SELECT
+                    dataset_id
+                FROM
+                    source
+            ) = sqlc.arg(target_dataset_id) THEN resource_id
+            ELSE uuid_generate_v4()
+        END,
         TYPE,
         value,
         (
@@ -389,6 +398,7 @@ inserted_web_services AS (
     INSERT INTO
         web_services (
             id,
+            resource_id,
             dataset_version_id,
             name,
             description,
@@ -412,6 +422,15 @@ inserted_web_services AS (
             ),
             source.id::text
         ),
+        CASE
+            WHEN (
+                SELECT
+                    dataset_id
+                FROM
+                    source
+            ) = sqlc.arg(target_dataset_id) THEN source.resource_id
+            ELSE uuid_generate_v4()
+        END,
         (
             SELECT
                 id
@@ -528,6 +547,7 @@ inserted_wms_services AS (
 inserted_wms_layers AS (
     INSERT INTO
         wms_layers (
+            resource_id,
             web_service_id,
             name,
             position,
@@ -535,6 +555,15 @@ inserted_wms_layers AS (
             styles
         )
     SELECT
+        CASE
+            WHEN (
+                SELECT
+                    dataset_id
+                FROM
+                    source
+            ) = sqlc.arg(target_dataset_id) THEN source.resource_id
+            ELSE uuid_generate_v4()
+        END,
         target.web_service_id,
         source.name,
         source.position,
@@ -579,6 +608,7 @@ inserted_wmts_services AS (
 inserted_wmts_layers AS (
     INSERT INTO
         wmts_layers (
+            resource_id,
             web_service_id,
             name,
             position,
@@ -586,6 +616,15 @@ inserted_wmts_layers AS (
             styles
         )
     SELECT
+        CASE
+            WHEN (
+                SELECT
+                    dataset_id
+                FROM
+                    source
+            ) = sqlc.arg(target_dataset_id) THEN source.resource_id
+            ELSE uuid_generate_v4()
+        END,
         target.web_service_id,
         source.name,
         source.position,
@@ -671,6 +710,7 @@ inserted_parameters AS (
     INSERT INTO
         parameters (
             id,
+            resource_id,
             web_service_id,
             wfs_service_id,
             wms_get_map_service_id,
@@ -701,6 +741,15 @@ inserted_parameters AS (
             ),
             parameter.id::text
         ),
+        CASE
+            WHEN (
+                SELECT
+                    dataset_id
+                FROM
+                    source
+            ) = sqlc.arg(target_dataset_id) THEN parameter.resource_id
+            ELSE uuid_generate_v4()
+        END,
         CASE
             WHEN parameter.web_service_id IS NOT NULL THEN generic_target.web_service_id
             ELSE NULL
@@ -810,6 +859,7 @@ template_parameters AS (
     INSERT INTO
         parameters (
             id,
+            resource_id,
             template_parameter_id,
             position,
             name,
@@ -831,6 +881,15 @@ template_parameters AS (
             ),
             source_parameter.id::text
         ),
+        CASE
+            WHEN (
+                SELECT
+                    dataset_id
+                FROM
+                    source
+            ) = sqlc.arg(target_dataset_id) THEN source_parameter.resource_id
+            ELSE uuid_generate_v4()
+        END,
         uuid_generate_v5(
             (
                 SELECT
@@ -988,6 +1047,7 @@ inserted_datetime_parameter_schemas AS (
 distributions AS (
     INSERT INTO
         distributions (
+            resource_id,
             dataset_version_id,
             title,
             description,
@@ -1001,6 +1061,15 @@ distributions AS (
             web_service_id
         )
     SELECT
+        CASE
+            WHEN (
+                SELECT
+                    dataset_id
+                FROM
+                    source
+            ) = sqlc.arg(target_dataset_id) THEN distribution.resource_id
+            ELSE uuid_generate_v4()
+        END,
         (
             SELECT
                 id
@@ -1046,9 +1115,11 @@ FROM
 
 -- name: AddLifecycleDatasetIdentifier :exec
 INSERT INTO
-    identifiers (TYPE, value, dataset_version_id)
+    identifiers (id, resource_id, TYPE, value, dataset_version_id)
 VALUES
     (
+        sqlc.arg(id),
+        sqlc.arg(resource_id),
         sqlc.arg(TYPE),
         sqlc.arg(value),
         sqlc.arg(dataset_version_id)
@@ -1088,6 +1159,8 @@ WHERE
 -- name: AddLifecycleWebService :one
 INSERT INTO
     web_services (
+        id,
+        resource_id,
         dataset_version_id,
         name,
         description,
@@ -1103,6 +1176,8 @@ INSERT INTO
     )
 VALUES
     (
+        sqlc.arg(id),
+        sqlc.arg(resource_id),
         sqlc.arg(dataset_version_id),
         sqlc.arg(name),
         sqlc.arg(description),
@@ -1177,6 +1252,8 @@ VALUES
 -- name: AddLifecycleWMSLayer :exec
 INSERT INTO
     wms_layers (
+        id,
+        resource_id,
         web_service_id,
         name,
         position,
@@ -1185,6 +1262,8 @@ INSERT INTO
     )
 VALUES
     (
+        sqlc.arg(id),
+        sqlc.arg(resource_id),
         sqlc.arg(web_service_id),
         sqlc.arg(name),
         sqlc.arg(position),
@@ -1205,6 +1284,8 @@ VALUES
 -- name: AddLifecycleWMTSLayer :exec
 INSERT INTO
     wmts_layers (
+        id,
+        resource_id,
         web_service_id,
         name,
         position,
@@ -1213,6 +1294,8 @@ INSERT INTO
     )
 VALUES
     (
+        sqlc.arg(id),
+        sqlc.arg(resource_id),
         sqlc.arg(web_service_id),
         sqlc.arg(name),
         sqlc.arg(position),
@@ -1250,6 +1333,8 @@ VALUES
 -- name: AddLifecycleParameter :one
 INSERT INTO
     parameters (
+        id,
+        resource_id,
         web_service_id,
         wfs_service_id,
         wms_get_map_service_id,
@@ -1272,6 +1357,8 @@ INSERT INTO
     )
 VALUES
     (
+        sqlc.arg(id),
+        sqlc.arg(resource_id),
         sqlc.narg(web_service_id),
         sqlc.narg(wfs_service_id),
         sqlc.narg(wms_get_map_service_id),
@@ -1389,6 +1476,8 @@ VALUES
 -- name: AddLifecycleDistribution :exec
 INSERT INTO
     distributions (
+        id,
+        resource_id,
         dataset_version_id,
         title,
         description,
@@ -1403,6 +1492,8 @@ INSERT INTO
     )
 VALUES
     (
+        sqlc.arg(id),
+        sqlc.arg(resource_id),
         sqlc.arg(dataset_version_id),
         sqlc.arg(title),
         sqlc.arg(description),

@@ -8,11 +8,20 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func protoOptionalUUID(value gatewayapi.OptUUID) *string {
+	if !value.Set {
+		return nil
+	}
+	return new(value.Value.String())
+}
+
+//nolint:dupl // Parameter variants intentionally map their distinct typed schemas.
 func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.ParameterInput {
 	result := &metadatalifecyclev1.ParameterInput{}
 	switch {
 	case v.IsStringParameterDraft():
 		x := v.StringParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -31,6 +40,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		}}
 	case v.IsBooleanParameterDraft():
 		x := v.BooleanParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -44,6 +54,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Value = &metadatalifecyclev1.ParameterInput_Boolean{Boolean: &metadatalifecyclev1.BooleanParameter{Default: protoOptionalBool(x.Default)}}
 	case v.IsIntegerParameterDraft():
 		x := v.IntegerParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -63,6 +74,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		}}
 	case v.IsFloatParameterDraft():
 		x := v.FloatParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -82,6 +94,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		}}
 	case v.IsDateTimeParameterDraft():
 		x := v.DateTimeParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -100,6 +113,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		}}
 	case v.IsTemplateParameterDraft():
 		x := v.TemplateParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
 		result.Name = string(x.Name)
 		result.Label = string(x.Label)
@@ -126,6 +140,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 	switch {
 	case v.IsStringScalarParameterDraft():
 		x := v.StringScalarParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)
@@ -140,6 +155,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		}}
 	case v.IsBooleanScalarParameterDraft():
 		x := v.BooleanScalarParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)
@@ -150,6 +166,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_Boolean{Boolean: &metadatalifecyclev1.ScalarBooleanParameter{Default: protoOptionalBool(x.Default)}}
 	case v.IsIntegerScalarParameterDraft():
 		x := v.IntegerScalarParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)
@@ -165,6 +182,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		}}
 	case v.IsFloatScalarParameterDraft():
 		x := v.FloatScalarParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)
@@ -180,6 +198,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		}}
 	case v.IsDateTimeScalarParameterDraft():
 		x := v.DateTimeScalarParameterDraft
+		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
 		result.Position = x.Position
 		result.Name = string(x.Name)

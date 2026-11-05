@@ -47,8 +47,15 @@ func ToReplaceDraftParams(applicationID, versionID uuid.UUID, revision int32, va
 
 // PersistChildren persists application references for one version.
 func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.SoftwareApplicationInput) error {
+	return persistChildren(ctx, q, versionID, value, nil)
+}
+
+func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.SoftwareApplicationInput, identities map[uuid.UUID]domain.Identifier) error {
 	for _, identifier := range value.Identifiers {
+		id, resourceID := resourcedb.IdentifierIDs(identifier, identities)
 		if err := q.AddLifecycleSoftwareApplicationIdentifier(ctx, sqlc.AddLifecycleSoftwareApplicationIdentifierParams{
+			ID:                           id,
+			ResourceID:                   resourceID,
 			Type:                         string(identifier.Type),
 			Value:                        identifier.Value,
 			SoftwareApplicationVersionID: &versionID,

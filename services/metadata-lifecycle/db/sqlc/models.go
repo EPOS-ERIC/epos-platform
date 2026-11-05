@@ -756,6 +756,7 @@ type DatetimeParameterSchema struct {
 
 type Distribution struct {
 	ID                     uuid.UUID
+	ResourceID             uuid.UUID
 	DatasetVersionID       uuid.UUID
 	Title                  string
 	Description            string
@@ -857,10 +858,10 @@ type GroupRoleRequest struct {
 
 type Identifier struct {
 	ID                           uuid.UUID
+	ResourceID                   uuid.UUID
 	Type                         string
 	Value                        string
 	DatasetVersionID             *uuid.UUID
-	OrganizationID               *uuid.UUID
 	SoftwareApplicationVersionID *uuid.UUID
 	SoftwareSourceCodeVersionID  *uuid.UUID
 }
@@ -906,6 +907,13 @@ type OrganizationContactPoint struct {
 	ContactPointID uuid.UUID
 }
 
+type OrganizationIdentifier struct {
+	ID             uuid.UUID
+	OrganizationID uuid.UUID
+	Type           string
+	Value          string
+}
+
 type OrganizationMembership struct {
 	ChildOrganizationID  uuid.UUID
 	ParentOrganizationID uuid.UUID
@@ -913,6 +921,7 @@ type OrganizationMembership struct {
 
 type Parameter struct {
 	ID                          uuid.UUID
+	ResourceID                  uuid.UUID
 	Position                    int32
 	Name                        string
 	Label                       string
@@ -1091,6 +1100,7 @@ type UserGlobalRole struct {
 
 type WebService struct {
 	ID                       uuid.UUID
+	ResourceID               uuid.UUID
 	DatasetVersionID         uuid.UUID
 	Name                     string
 	Description              *string
@@ -1131,6 +1141,8 @@ type WfsService struct {
 }
 
 type WmsLayer struct {
+	ID           uuid.UUID
+	ResourceID   uuid.UUID
 	WebServiceID uuid.UUID
 	Name         string
 	Position     int32
@@ -1147,6 +1159,8 @@ type WmsService struct {
 }
 
 type WmtsLayer struct {
+	ID           uuid.UUID
+	ResourceID   uuid.UUID
 	WebServiceID uuid.UUID
 	Name         string
 	Position     int32

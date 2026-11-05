@@ -25,7 +25,7 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion, enrichment dom
 		return gatewayapi.ResourceVersion{}, err
 	}
 
-	versionID, err := parseUUID("resource_version.version_id", v.VersionId)
+	versionID, err := parseUUID("resource_version.id", v.Id)
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
 	}
@@ -58,7 +58,7 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion, enrichment dom
 	}
 	return gatewayapi.ResourceVersion{
 		ResourceID:    resourceID,
-		VersionID:     versionID,
+		ID:            versionID,
 		Revision:      v.Revision,
 		Status:        status,
 		CreatedBy:     v.CreatedBy,
@@ -91,7 +91,7 @@ func toAPIResourceVersionSummaries(values []*metadatalifecyclev1.ResourceVersion
 		if err != nil {
 			return nil, err
 		}
-		versionID, err := parseUUID("resource_version_summary.version_id", value.VersionId)
+		versionID, err := parseUUID("resource_version_summary.id", value.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func toAPIResourceVersionSummaries(values []*metadatalifecyclev1.ResourceVersion
 		mapped := gatewayapi.ResourceVersionSummary{
 			ResourceType: resourceType,
 			ResourceID:   resourceID,
-			VersionID:    versionID,
+			ID:           versionID,
 			Revision:     value.Revision,
 			Status:       status,
 			Name:         value.Name,
@@ -185,13 +185,9 @@ func toAPIResourceMetadata(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.R
 }
 
 func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatewayapi.DatasetResourceMetadata, error) {
-	id, err := parseUUID("dataset.id", v.GetId())
-	if err != nil {
-		return gatewayapi.DatasetResourceMetadata{}, err
-	}
+	var err error
 	result := gatewayapi.DatasetResourceMetadata{
 		ResourceType:       gatewayapi.DatasetResourceMetadataResourceTypeDataset,
-		ID:                 id,
 		Title:              v.GetTitle(),
 		Description:        v.GetDescription(),
 		Keywords:           toAPIKeywords(v.GetKeywords()),
@@ -253,13 +249,9 @@ func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatew
 }
 
 func toAPISoftwareApplicationMetadata(v *metadatalifecyclev1.SoftwareApplicationResourceMetadata) (gatewayapi.SoftwareApplicationResourceMetadata, error) {
-	id, err := parseUUID("software_application.id", v.GetId())
-	if err != nil {
-		return gatewayapi.SoftwareApplicationResourceMetadata{}, err
-	}
+	var err error
 	result := gatewayapi.SoftwareApplicationResourceMetadata{
 		ResourceType:     gatewayapi.SoftwareApplicationResourceMetadataResourceTypeSoftwareApplication,
-		ID:               id,
 		Name:             v.GetName(),
 		Description:      v.GetDescription(),
 		MainEntityOfPage: toAPINilString(v.MainEntityOfPage),
@@ -287,13 +279,9 @@ func toAPISoftwareApplicationMetadata(v *metadatalifecyclev1.SoftwareApplication
 }
 
 func toAPISoftwareSourceCodeMetadata(v *metadatalifecyclev1.SoftwareSourceCodeResourceMetadata) (gatewayapi.SoftwareSourceCodeResourceMetadata, error) {
-	id, err := parseUUID("software_source_code.id", v.GetId())
-	if err != nil {
-		return gatewayapi.SoftwareSourceCodeResourceMetadata{}, err
-	}
+	var err error
 	result := gatewayapi.SoftwareSourceCodeResourceMetadata{
 		ResourceType:         gatewayapi.SoftwareSourceCodeResourceMetadataResourceTypeSoftwareSourceCode,
-		ID:                   id,
 		Name:                 v.GetName(),
 		Description:          v.GetDescription(),
 		ProgrammingLanguage:  toAPINilString(v.ProgrammingLanguage),
@@ -339,8 +327,8 @@ func toAPIReferences(values []*metadatalifecyclev1.EntityReference, field string
 	return result, nil
 }
 
-func toAPIIdentifiers(values []*metadatalifecyclev1.Identifier) ([]gatewayapi.Identifier, error) {
-	result := make([]gatewayapi.Identifier, 0, len(values))
+func toAPIIdentifiers(values []*metadatalifecyclev1.VersionedIdentifier) ([]gatewayapi.VersionedIdentifier, error) {
+	result := make([]gatewayapi.VersionedIdentifier, 0, len(values))
 	for _, value := range values {
 		if value == nil {
 			continue
@@ -354,15 +342,22 @@ func toAPIIdentifiers(values []*metadatalifecyclev1.Identifier) ([]gatewayapi.Id
 	return result, nil
 }
 
-func toAPIIdentifier(value *metadatalifecyclev1.Identifier) (gatewayapi.Identifier, error) {
+func toAPIIdentifier(value *metadatalifecyclev1.VersionedIdentifier) (gatewayapi.VersionedIdentifier, error) {
 	id, err := parseUUID("identifier.id", value.GetId())
 	if err != nil {
-		return gatewayapi.Identifier{}, err
+		return gatewayapi.VersionedIdentifier{}, err
 	}
-	return gatewayapi.Identifier{
-		ID:    id,
-		Type:  value.GetType(),
-		Value: value.GetValue(),
+
+	resourceID, err := parseUUID("identifier.resource_id", value.GetResourceId())
+	if err != nil {
+		return gatewayapi.VersionedIdentifier{}, err
+	}
+
+	return gatewayapi.VersionedIdentifier{
+		ID:         id,
+		ResourceID: resourceID,
+		Type:       value.GetType(),
+		Value:      value.GetValue(),
 	}, nil
 }
 

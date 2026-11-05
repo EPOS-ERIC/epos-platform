@@ -49,7 +49,7 @@ class ConversionRequestsContractTest(unittest.TestCase):
         resource_id = created.json()["id"]
         versions = self.gateway.get("/resources/{resourceType}/{id}/versions", resourceType="dataset", id=resource_id)
         self.assertEqual(versions.status_code, 200)
-        version_id = next(item["version_id"] for item in versions.json() if item["status"] == "DRAFT")
+        version_id = next(item["id"] for item in versions.json() if item["status"] == "DRAFT")
         detail = self.gateway.get("/resources/{resourceType}/{id}/versions/{versionId}", resourceType="dataset", id=resource_id, versionId=version_id)
         self.assertEqual(detail.status_code, 200)
         distribution_id = detail.json()["metadata"]["distributions"][0]["id"]

@@ -86,6 +86,8 @@ func (q *Queries) AddLifecycleSoftwareApplicationCreator(ctx context.Context, ar
 const addLifecycleSoftwareApplicationIdentifier = `-- name: AddLifecycleSoftwareApplicationIdentifier :exec
 INSERT INTO
     identifiers (
+        id,
+        resource_id,
         TYPE,
         value,
         software_application_version_id
@@ -94,18 +96,28 @@ VALUES
     (
         $1,
         $2,
-        $3
+        $3,
+        $4,
+        $5
     )
 `
 
 type AddLifecycleSoftwareApplicationIdentifierParams struct {
+	ID                           uuid.UUID
+	ResourceID                   uuid.UUID
 	Type                         string
 	Value                        string
 	SoftwareApplicationVersionID *uuid.UUID
 }
 
 func (q *Queries) AddLifecycleSoftwareApplicationIdentifier(ctx context.Context, arg AddLifecycleSoftwareApplicationIdentifierParams) error {
-	_, err := q.db.Exec(ctx, addLifecycleSoftwareApplicationIdentifier, arg.Type, arg.Value, arg.SoftwareApplicationVersionID)
+	_, err := q.db.Exec(ctx, addLifecycleSoftwareApplicationIdentifier,
+		arg.ID,
+		arg.ResourceID,
+		arg.Type,
+		arg.Value,
+		arg.SoftwareApplicationVersionID,
+	)
 	return err
 }
 
@@ -176,11 +188,21 @@ inserted AS (
 identifiers AS (
     INSERT INTO
         identifiers (
+            resource_id,
             TYPE,
             value,
             software_application_version_id
         )
     SELECT
+        CASE
+            WHEN (
+                SELECT
+                    software_application_id
+                FROM
+                    source
+            ) = $3 THEN resource_id
+            ELSE uuid_generate_v4()
+        END,
         TYPE,
         value,
         (
@@ -949,7 +971,7 @@ func (q *Queries) ListLifecycleSoftwareApplicationCreators(ctx context.Context, 
 
 const listLifecycleSoftwareApplicationIdentifiers = `-- name: ListLifecycleSoftwareApplicationIdentifiers :many
 SELECT
-    identifier.id, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
+    identifier.id, identifier.resource_id, identifier.type, identifier.value, identifier.dataset_version_id, identifier.software_application_version_id, identifier.software_source_code_version_id
 FROM
     identifiers AS identifier
 WHERE
@@ -973,10 +995,10 @@ func (q *Queries) ListLifecycleSoftwareApplicationIdentifiers(ctx context.Contex
 		var i ListLifecycleSoftwareApplicationIdentifiersRow
 		if err := rows.Scan(
 			&i.Identifier.ID,
+			&i.Identifier.ResourceID,
 			&i.Identifier.Type,
 			&i.Identifier.Value,
 			&i.Identifier.DatasetVersionID,
-			&i.Identifier.OrganizationID,
 			&i.Identifier.SoftwareApplicationVersionID,
 			&i.Identifier.SoftwareSourceCodeVersionID,
 		); err != nil {

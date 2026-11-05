@@ -79,14 +79,16 @@ func NewRejectionNote(status Status, note *string) (*string, error) {
 type IdentifierType string
 
 type IdentifierInput struct {
-	Type  IdentifierType
-	Value string
+	ResourceID *uuid.UUID
+	Type       IdentifierType
+	Value      string
 }
 
 type Identifier struct {
-	ID    uuid.UUID
-	Type  IdentifierType
-	Value string
+	ID         uuid.UUID
+	ResourceID uuid.UUID
+	Type       IdentifierType
+	Value      string
 }
 
 // OrganizationMetadata is embedded organization metadata used by resources.

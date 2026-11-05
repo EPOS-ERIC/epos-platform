@@ -77,6 +77,9 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 		Documentation:    toProtoDocumentation(v.Documentation),
 		ContactPoints:    uuidStrings(v.ContactPoints),
 	}
+	if v.ResourceID.Set {
+		r.ResourceId = new(v.ResourceID.Value.String())
+	}
 	if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
 		r.SpatialCoverage = new(v.SpatialCoverage.Value)
 	}
@@ -165,7 +168,11 @@ func toProtoWFSWebServiceConfigurationDraft(value gatewayapi.WfsWebServiceConfig
 func toProtoWMTSWebServiceConfigurationDraft(value gatewayapi.WmtsWebServiceConfigurationDraft) *metadatalifecyclev1.WMTSWebServiceConfigurationInput {
 	result := &metadatalifecyclev1.WMTSWebServiceConfigurationInput{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: string(value.DefaultLayer)}
 	for _, layer := range value.Layers {
-		mapped := &metadatalifecyclev1.WMTSLayer{Name: string(layer.Name)}
+		mapped := &metadatalifecyclev1.WMTSLayerInput{
+			Name:       string(layer.Name),
+			ResourceId: protoOptionalUUID(layer.ResourceID),
+		}
+
 		if layer.DefaultStyle.Set {
 			mapped.DefaultStyle = new(string(layer.DefaultStyle.Value))
 		}
@@ -191,11 +198,13 @@ func toProtoWMSWebServiceConfigurationDraft(value gatewayapi.WmsWebServiceConfig
 		DefaultTransparency:  value.DefaultTransparency,
 	}
 	for _, layer := range value.Layers {
-		mapped := &metadatalifecyclev1.WMSLayer{
+		mapped := &metadatalifecyclev1.WMSLayerInput{
+			ResourceId:   protoOptionalUUID(layer.ResourceID),
 			Name:         string(layer.Name),
 			DefaultStyle: layer.DefaultStyle,
 			Styles:       layer.Styles,
 		}
+
 		result.Layers = append(result.Layers, mapped)
 	}
 	for _, parameter := range value.GetMapParameters {
@@ -220,6 +229,9 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.Di
 	}
 	if v.IsWebServiceDistributionDraft() {
 		x := v.WebServiceDistributionDraft
+		if x.ResourceID.Set {
+			r.ResourceId = new(x.ResourceID.Value.String())
+		}
 		r.Delivery = &metadatalifecyclev1.DistributionInput_WebService{
 			WebService: toProtoWebServiceDraft(x.WebService),
 		}
@@ -227,6 +239,9 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.Di
 	}
 
 	x := v.DownloadableFileDistributionDraft
+	if x.ResourceID.Set {
+		r.ResourceId = new(x.ResourceID.Value.String())
+	}
 	r.Delivery = &metadatalifecyclev1.DistributionInput_DownloadableFile{
 		DownloadableFile: &metadatalifecyclev1.DownloadableFile{
 			Url:    string(x.DownloadableFile.URL),

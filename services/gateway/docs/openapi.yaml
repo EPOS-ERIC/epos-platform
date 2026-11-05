@@ -1828,7 +1828,7 @@ paths:
       tags:
         - Resources
       summary: Copy resource
-      description: Creates a draft copy in the group identified by `groupId`. The target group is taken from the URL, not the request body.
+      description: Creates an independent draft copy in the group identified by `groupId`, with new resource and child identities. The target group is taken from the URL, not the request body.
       operationId: copyResource
       security:
         - bearerAuth: []
@@ -1853,7 +1853,15 @@ paths:
       tags:
         - Resources
       summary: Replace resource draft version
-      description: Replaces an editable draft only. Request body shape is selected by `resource_type` and includes the current revision.
+      description: >-
+        Replaces all metadata in an editable draft. Request shape is selected by
+        `resource_type` and includes the current revision. To retain a distribution,
+        web service, parameter, layer, or identifier, send its `resource_id` from
+        the draft read response. Omit `resource_id` for a new child; omit an existing
+        child from its collection to remove it. IDs must belong to the same draft and
+        parent. Parameters cannot move between collections or web services. Changing
+        a parameter's PATH, QUERY, or HEADER location within its collection is an edit.
+        Child `id` identifies the version-specific record and is not sent on writes.
       operationId: replaceResourceDraftVersion
       security:
         - bearerAuth: []
@@ -2117,6 +2125,7 @@ paths:
       tags:
         - Resources
       summary: Create draft from publication
+      description: Creates a draft version with new version-specific IDs and the same logical resource IDs as the published version.
       operationId: draftFromPublication
       security:
         - bearerAuth: []
@@ -2141,6 +2150,7 @@ paths:
       tags:
         - Resources
       summary: Create draft from archive
+      description: Creates a draft version with new version-specific IDs and the same logical resource IDs as the latest archived version.
       operationId: draftFromArchive
       security:
         - bearerAuth: []
@@ -3023,7 +3033,7 @@ components:
         persistent_identifiers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/IdentifierInput" },
+            items: { $ref: "#/components/schemas/VersionedIdentifierInput" },
           }
         contact_points: { type: array, items: { type: string, format: uuid } }
         providers: { type: array, items: { type: string, format: uuid } }
@@ -3051,7 +3061,7 @@ components:
         identifiers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/IdentifierInput" },
+            items: { $ref: "#/components/schemas/VersionedIdentifierInput" },
           }
         categories: { type: array, items: { type: string, format: uuid } }
         contact_points: { type: array, items: { type: string, format: uuid } }
@@ -3077,10 +3087,19 @@ components:
         identifiers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/IdentifierInput" },
+            items: { $ref: "#/components/schemas/VersionedIdentifierInput" },
           }
         categories: { type: array, items: { type: string, format: uuid } }
         contact_points: { type: array, items: { type: string, format: uuid } }
+
+    VersionedIdentifierInput:
+      type: object
+      additionalProperties: false
+      required: [type, value]
+      properties:
+        resource_id: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/NonBlankString" }
+        value: { $ref: "#/components/schemas/NonBlankString" }
 
     IdentifierInput:
       type: object
@@ -3105,6 +3124,7 @@ components:
       additionalProperties: false
       required: [title, type, web_service]
       properties:
+        resource_id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -3122,6 +3142,7 @@ components:
       additionalProperties: false
       required: [title, type, downloadable_file]
       properties:
+        resource_id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -3139,6 +3160,7 @@ components:
       additionalProperties: false
       required: [name, configuration]
       properties:
+        resource_id: { type: string, format: uuid }
         name: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true, minLength: 1 }
         visible_on:
@@ -3316,6 +3338,7 @@ components:
       additionalProperties: false
       required: [name]
       properties:
+        resource_id: { type: string, format: uuid }
         name: { $ref: "#/components/schemas/NonBlankString" }
         default_style:
           allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
@@ -3331,6 +3354,7 @@ components:
       additionalProperties: false
       required: [name, default_style, styles]
       properties:
+        resource_id: { type: string, format: uuid }
         name: { $ref: "#/components/schemas/NonBlankString" }
         default_style:
           type: string
@@ -3426,6 +3450,7 @@ components:
           multiple_values,
         ]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3448,6 +3473,7 @@ components:
       required:
         [kind, position, name, label, required, read_only, location, explode]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3477,6 +3503,7 @@ components:
           multiple_values,
         ]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3510,6 +3537,7 @@ components:
           multiple_values,
         ]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3533,6 +3561,7 @@ components:
       required:
         [kind, position, name, label, required, read_only, location, explode]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3555,6 +3584,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3567,6 +3597,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3589,6 +3620,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3600,6 +3632,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3619,6 +3652,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3631,6 +3665,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3654,6 +3689,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3666,6 +3702,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3689,6 +3726,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3700,6 +3738,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3733,6 +3772,7 @@ components:
           parameters,
         ]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [TEMPLATE] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3757,6 +3797,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3770,6 +3811,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [TEMPLATE] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3793,6 +3835,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3811,6 +3854,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3827,6 +3871,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3846,6 +3891,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3865,6 +3911,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3882,9 +3929,10 @@ components:
     StringScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3901,9 +3949,10 @@ components:
     BooleanScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3918,9 +3967,10 @@ components:
     IntegerScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3938,9 +3988,10 @@ components:
     FloatScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3958,9 +4009,10 @@ components:
     DateTimeScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -4120,7 +4172,7 @@ components:
       required:
         [
           resource_id,
-          version_id,
+          id,
           revision,
           status,
           created_by,
@@ -4131,8 +4183,8 @@ components:
           metadata,
         ]
       properties:
-        resource_id: { type: string, format: uuid }
-        version_id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid, description: Logical resource identity shared across versions. }
+        id: { type: string, format: uuid, description: Identity of this specific resource version. }
         revision: { type: integer, format: int32 }
         status: { $ref: "#/components/schemas/VersioningStatus" }
         # TODO: make this not required, only have the creator if the user is authenticated and a member of a group, otherwise omit this field complitely, we don't want to leak other user's ids
@@ -4163,7 +4215,7 @@ components:
         [
           resource_type,
           resource_id,
-          version_id,
+          id,
           revision,
           status,
           name,
@@ -4183,7 +4235,7 @@ components:
       properties:
         resource_type: { $ref: "#/components/schemas/DiscoveryResourceType" }
         resource_id: { type: string, format: uuid }
-        version_id: { type: string, format: uuid }
+        id: { type: string, format: uuid }
         revision: { type: integer, format: int32, minimum: 1 }
         status: { $ref: "#/components/schemas/VersioningStatus" }
         name: { type: string, minLength: 1 }
@@ -4205,7 +4257,6 @@ components:
       required:
         [
           resource_type,
-          id,
           title,
           description,
           keywords,
@@ -4218,7 +4269,6 @@ components:
       additionalProperties: false
       properties:
         resource_type: { type: string, enum: [dataset] }
-        id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         keywords:
@@ -4244,7 +4294,7 @@ components:
           }
         persistent_identifiers:
           type: array
-          items: { $ref: "#/components/schemas/Identifier" }
+          items: { $ref: "#/components/schemas/VersionedIdentifier" }
         contact_points:
           type: array
           nullable: true
@@ -4263,7 +4313,6 @@ components:
       required:
         [
           resource_type,
-          id,
           name,
           description,
           keywords,
@@ -4275,7 +4324,6 @@ components:
       additionalProperties: false
       properties:
         resource_type: { type: string, enum: [software-application] }
-        id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
         main_entity_of_page: { type: string, nullable: true }
@@ -4292,7 +4340,7 @@ components:
           items: { $ref: "#/components/schemas/ResourceVersionReference" }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/Identifier" }
+          items: { $ref: "#/components/schemas/VersionedIdentifier" }
         contact_points:
           type: array
           nullable: true
@@ -4306,7 +4354,6 @@ components:
       required:
         [
           resource_type,
-          id,
           name,
           description,
           keywords,
@@ -4318,7 +4365,6 @@ components:
       additionalProperties: false
       properties:
         resource_type: { type: string, enum: [software-source-code] }
-        id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
         programming_language: { type: string, nullable: true }
@@ -4336,7 +4382,7 @@ components:
           items: { $ref: "#/components/schemas/ResourceVersionReference" }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/Identifier" }
+          items: { $ref: "#/components/schemas/VersionedIdentifier" }
         contact_points:
           type: array
           nullable: true
@@ -4358,9 +4404,10 @@ components:
     WebServiceDistribution:
       type: object
       additionalProperties: false
-      required: [id, title, description, type, web_service, available_formats]
+      required: [id, resource_id, title, description, type, web_service, available_formats]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -4419,9 +4466,10 @@ components:
     DownloadableFileDistribution:
       type: object
       additionalProperties: false
-      required: [id, title, description, type, downloadable_file]
+      required: [id, resource_id, title, description, type, downloadable_file]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -4436,9 +4484,10 @@ components:
 
     WebService:
       type: object
-      required: [id, name, configuration]
+      required: [id, resource_id, name, configuration]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string, nullable: true, minLength: 1 }
         visible_on:
@@ -4612,8 +4661,10 @@ components:
 
     WmtsLayer:
       type: object
-      required: [name]
+      required: [id, resource_id, name]
       properties:
+        id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         name: { $ref: "#/components/schemas/NonBlankString" }
         default_style:
           allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
@@ -4626,8 +4677,10 @@ components:
 
     WmsLayer:
       type: object
-      required: [name, default_style, styles]
+      required: [id, resource_id, name, default_style, styles]
       properties:
+        id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         name: { $ref: "#/components/schemas/NonBlankString" }
         default_style:
           type: string
@@ -4638,6 +4691,15 @@ components:
           uniqueItems: true
           description: Allowed styles in display order. Empty string uses the provider default; a single style fixes selection.
           items: { type: string }
+
+    VersionedIdentifier:
+      type: object
+      required: [id, resource_id, type, value]
+      properties:
+        id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
+        type: { type: string, minLength: 1 }
+        value: { type: string, minLength: 1 }
 
     Identifier:
       type: object

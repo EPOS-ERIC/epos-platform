@@ -132,7 +132,7 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 		}
 		response = toProtoSoftwareSourceCodeVersion(value)
 	default:
-		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required")
 	}
 	return &metadatalifecyclev1.GetResourceVersionResponse{Resource: response}, nil
 }
@@ -347,7 +347,7 @@ func (s *ResourceServer) DiscardResourceDraft(ctx context.Context, request *meta
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
 		err = s.sourceCodes.Discard(ctx, actor, resourceID, versionID)
 	default:
-		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required")
 	}
 	if err != nil {
 		return nil, err
@@ -405,7 +405,7 @@ func (s *ResourceServer) WithdrawResource(ctx context.Context, request *metadata
 
 func (s *ResourceServer) RejectResource(ctx context.Context, request *metadatalifecyclev1.RejectResourceRequest) (*metadatalifecyclev1.RejectResourceResponse, error) {
 	if request == nil {
-		return nil, apperror.New(apperror.CodeValidationFailed, "resource request is required") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
 	}
 	actor, resourceID, versionID, _, err := s.lifecycleRequest(ctx, request)
 	if err != nil {
@@ -477,7 +477,7 @@ func (s *ResourceServer) RejectResource(ctx context.Context, request *metadatali
 
 		return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
 	default:
-		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required")
 	}
 }
 
@@ -672,7 +672,7 @@ type draftResourceRequest interface {
 
 func (s *ResourceServer) draftResource(ctx context.Context, request draftResourceRequest, source string) (*metadatalifecyclev1.ResourceRecord, error) {
 	if request == nil {
-		return nil, apperror.New(apperror.CodeValidationFailed, "resource request is required") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
 	}
 	actor, err := actorFromContext(ctx)
 	if err != nil {
@@ -703,7 +703,7 @@ func (s *ResourceServer) draftResource(ctx context.Context, request draftResourc
 			result, err = s.sourceCodes.DraftFromLatestArchive(ctx, actor, id)
 		}
 	default:
-		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required")
 	}
 	if err != nil {
 		return nil, err
@@ -720,7 +720,7 @@ func lifecycleResponse(value any) (*metadatalifecyclev1.ResourceRecord, error) {
 	case domain.SoftwareSourceCodeVersion:
 		return &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareSourceCodeID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}, nil
 	default:
-		return nil, apperror.Default(apperror.CodeInternal) //nolint:wrapcheck
+		return nil, apperror.Default(apperror.CodeInternal)
 	}
 }
 
@@ -734,17 +734,27 @@ func optionalActorFromContext(ctx context.Context) (*domain.Actor, error) {
 		return nil, nil
 	}
 	if len(values) != 1 {
-		return nil, apperror.New(apperror.CodeValidationFailed, "invalid actor") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid actor")
 	}
 	actor, err := domain.NewActor(values[0])
 	if err != nil {
-		return nil, apperror.New(apperror.CodeValidationFailed, "invalid actor") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "invalid actor")
 	}
 	return &actor, nil
 }
 
 func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.DatasetResourceMetadata {
-	result := &metadatalifecyclev1.DatasetResourceMetadata{Id: value.ID.String(), Title: value.Title, Description: value.Description, Keywords: value.Keywords, AccrualPeriodicity: value.AccrualPeriodicity, QualityAnnotation: value.QualityAnnotation, AccessRight: value.AccessRight, SpatialCoverage: geometryString(value.SpatialCoverage), Created: timestampOutput(value.SourceCreated), Updated: timestampOutput(value.SourceUpdated)}
+	result := &metadatalifecyclev1.DatasetResourceMetadata{
+		Title:              value.Title,
+		Description:        value.Description,
+		Keywords:           value.Keywords,
+		AccrualPeriodicity: value.AccrualPeriodicity,
+		QualityAnnotation:  value.QualityAnnotation,
+		AccessRight:        value.AccessRight,
+		SpatialCoverage:    geometryString(value.SpatialCoverage),
+		Created:            timestampOutput(value.SourceCreated),
+		Updated:            timestampOutput(value.SourceUpdated),
+	}
 	if value.TemporalCoverage != nil {
 		result.TemporalRange = &metadatalifecyclev1.DatasetResourceMetadata_TemporalCoverage{TemporalCoverage: temporalOutput(value.TemporalCoverage)}
 	}
@@ -770,7 +780,17 @@ func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.
 }
 
 func applicationResourceMetadata(value domain.SoftwareApplicationMetadata) *metadatalifecyclev1.SoftwareApplicationResourceMetadata {
-	result := &metadatalifecyclev1.SoftwareApplicationResourceMetadata{Id: value.ID.String(), Name: value.Name, Description: value.Description, MainEntityOfPage: value.MainEntityOfPage, License: value.License, Version: value.Version, Keywords: value.Keywords, DownloadUrl: value.DownloadURL, Requirements: value.Requirements, OperatingSystem: value.OperatingSystem}
+	result := &metadatalifecyclev1.SoftwareApplicationResourceMetadata{
+		Name:             value.Name,
+		Description:      value.Description,
+		MainEntityOfPage: value.MainEntityOfPage,
+		License:          value.License,
+		Version:          value.Version,
+		Keywords:         value.Keywords,
+		DownloadUrl:      value.DownloadURL,
+		Requirements:     value.Requirements,
+		OperatingSystem:  value.OperatingSystem,
+	}
 	for _, item := range value.Creators {
 		result.Creators = append(result.Creators, referenceOutput(item.ID, item.Name))
 	}
@@ -787,7 +807,18 @@ func applicationResourceMetadata(value domain.SoftwareApplicationMetadata) *meta
 }
 
 func sourceCodeResourceMetadata(value domain.SoftwareSourceCodeMetadata) *metadatalifecyclev1.SoftwareSourceCodeResourceMetadata {
-	result := &metadatalifecyclev1.SoftwareSourceCodeResourceMetadata{Id: value.ID.String(), Name: value.Name, Description: value.Description, ProgrammingLanguage: value.ProgrammingLanguage, Keywords: value.Keywords, Repository: value.Repository, License: value.License, SoftwareRequirements: value.SoftwareRequirements, RuntimePlatform: value.RuntimePlatform, MainEntityOfPage: value.MainEntityOfPage, Version: value.Version}
+	result := &metadatalifecyclev1.SoftwareSourceCodeResourceMetadata{
+		Name:                 value.Name,
+		Description:          value.Description,
+		ProgrammingLanguage:  value.ProgrammingLanguage,
+		Keywords:             value.Keywords,
+		Repository:           value.Repository,
+		License:              value.License,
+		SoftwareRequirements: value.SoftwareRequirements,
+		RuntimePlatform:      value.RuntimePlatform,
+		MainEntityOfPage:     value.MainEntityOfPage,
+		Version:              value.Version,
+	}
 	for _, item := range value.Creators {
 		result.Creators = append(result.Creators, referenceOutput(item.ID, item.Name))
 	}
@@ -807,8 +838,13 @@ func referenceOutput(id uuid.UUID, name string) *metadatalifecyclev1.EntityRefer
 	return &metadatalifecyclev1.EntityReference{Id: id.String(), Name: name}
 }
 
-func identifierOutput(value domain.Identifier) *metadatalifecyclev1.Identifier {
-	return &metadatalifecyclev1.Identifier{Id: value.ID.String(), Type: string(value.Type), Value: value.Value}
+func identifierOutput(value domain.Identifier) *metadatalifecyclev1.VersionedIdentifier {
+	return &metadatalifecyclev1.VersionedIdentifier{
+		Id:         value.ID.String(),
+		ResourceId: value.ResourceID.String(),
+		Type:       string(value.Type),
+		Value:      value.Value,
+	}
 }
 
 func geometryString(value geom.T) *string {
@@ -844,7 +880,17 @@ func geologicalTemporalOutput(value *domain.GeologicalTemporal) *metadatalifecyc
 }
 
 func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribution {
-	result := &metadatalifecyclev1.Distribution{Id: value.ID.String(), Title: value.Title, Description: value.Description, License: value.License, Type: string(value.Type), Issued: timestampOutput(value.Issued), Modified: timestampOutput(value.Modified), ByteSize: value.ByteSize}
+	result := &metadatalifecyclev1.Distribution{
+		Id:          value.ID.String(),
+		ResourceId:  value.ResourceID.String(),
+		Title:       value.Title,
+		Description: value.Description,
+		License:     value.License,
+		Type:        string(value.Type),
+		Issued:      timestampOutput(value.Issued),
+		Modified:    timestampOutput(value.Modified),
+		ByteSize:    value.ByteSize,
+	}
 	if value.DownloadableFile != nil {
 		result.Delivery = &metadatalifecyclev1.Distribution_DownloadableFile{DownloadableFile: &metadatalifecyclev1.DownloadableFile{Url: value.DownloadableFile.URL, Format: value.DownloadableFile.Format}}
 	}
@@ -865,6 +911,7 @@ func documentationOutput(value *domain.Documentation) *metadatalifecyclev1.Docum
 func parameterOutput(value domain.WebServiceParameter) *metadatalifecyclev1.Parameter {
 	result := &metadatalifecyclev1.Parameter{
 		Id:          value.ID.String(),
+		ResourceId:  value.ResourceID.String(),
 		Position:    int32(value.Position),
 		Name:        value.Name,
 		Label:       value.Label,
@@ -933,6 +980,7 @@ func parameterOutput(value domain.WebServiceParameter) *metadatalifecyclev1.Para
 
 func scalarParameterOutput(value domain.Parameter) *metadatalifecyclev1.ScalarParameter {
 	result := &metadatalifecyclev1.ScalarParameter{
+		ResourceId:  value.ResourceID.String(),
 		Position:    int32(value.Position),
 		Name:        value.Name,
 		Label:       value.Label,
@@ -1029,7 +1077,7 @@ func stringEnumInput(values []*metadatalifecyclev1.StringEnumOption) ([]domain.S
 	result := make([]domain.StringEnumOption, len(values))
 	for i, value := range values {
 		if value == nil {
-			return nil, apperror.New(apperror.CodeValidationFailed, fmt.Sprintf("string enum option %d is required", i)) //nolint:wrapcheck
+			return nil, apperror.New(apperror.CodeValidationFailed, fmt.Sprintf("string enum option %d is required", i))
 		}
 		result[i] = domain.StringEnumOption{Value: value.Value, Label: value.Label}
 	}
@@ -1043,7 +1091,7 @@ func integerEnumInput(values []*metadatalifecyclev1.IntegerEnumOption) ([]domain
 	result := make([]domain.IntegerEnumOption, len(values))
 	for i, value := range values {
 		if value == nil {
-			return nil, apperror.New(apperror.CodeValidationFailed, fmt.Sprintf("integer enum option %d is required", i)) //nolint:wrapcheck
+			return nil, apperror.New(apperror.CodeValidationFailed, fmt.Sprintf("integer enum option %d is required", i))
 		}
 		result[i] = domain.IntegerEnumOption{Value: value.Value, Label: value.Label}
 	}
@@ -1057,7 +1105,7 @@ func floatEnumInput(values []*metadatalifecyclev1.FloatEnumOption) ([]domain.Flo
 	result := make([]domain.FloatEnumOption, len(values))
 	for i, value := range values {
 		if value == nil {
-			return nil, apperror.New(apperror.CodeValidationFailed, fmt.Sprintf("float enum option %d is required", i)) //nolint:wrapcheck
+			return nil, apperror.New(apperror.CodeValidationFailed, fmt.Sprintf("float enum option %d is required", i))
 		}
 		result[i] = domain.FloatEnumOption{Value: value.Value, Label: value.Label}
 	}
@@ -1133,7 +1181,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
 func distributionInput(value *metadatalifecyclev1.DistributionInput) (domain.DistributionInput, error) {
 	if value == nil {
-		return domain.DistributionInput{}, apperror.New(apperror.CodeValidationFailed, "distribution is required") //nolint:wrapcheck
+		return domain.DistributionInput{}, apperror.New(apperror.CodeValidationFailed, "distribution is required")
 	}
 	issued, err := timestampInput(value.GetIssued())
 	if err != nil {
@@ -1143,7 +1191,22 @@ func distributionInput(value *metadatalifecyclev1.DistributionInput) (domain.Dis
 	if err != nil {
 		return domain.DistributionInput{}, fmt.Errorf("map modified timestamp: %w", apperror.PrefixTarget(err, "modified"))
 	}
-	result := domain.DistributionInput{Title: value.GetTitle(), Description: value.GetDescription(), License: value.License, Type: domain.DistributionType(value.GetType()), Issued: issued, Modified: modified, ByteSize: value.ByteSize}
+	result := domain.DistributionInput{
+		Title:       value.GetTitle(),
+		Description: value.GetDescription(),
+		License:     value.License,
+		Type:        domain.DistributionType(value.GetType()),
+		Issued:      issued,
+		Modified:    modified,
+		ByteSize:    value.ByteSize,
+	}
+	if value.ResourceId != nil {
+		id, err := parseUUIDAt(*value.ResourceId, "distribution resource ID", "resource_id")
+		if err != nil {
+			return domain.DistributionInput{}, err
+		}
+		result.ResourceID = &id
+	}
 	switch delivery := value.GetDelivery().(type) {
 	case *metadatalifecyclev1.DistributionInput_WebService:
 		mapped, err := toDomainWebServiceInput(delivery.WebService)
@@ -1153,11 +1216,11 @@ func distributionInput(value *metadatalifecyclev1.DistributionInput) (domain.Dis
 		result.WebService = &mapped
 	case *metadatalifecyclev1.DistributionInput_DownloadableFile:
 		if delivery.DownloadableFile == nil {
-			return domain.DistributionInput{}, apperror.New(apperror.CodeValidationFailed, "downloadable file is required") //nolint:wrapcheck
+			return domain.DistributionInput{}, apperror.New(apperror.CodeValidationFailed, "downloadable file is required")
 		}
 		result.DownloadableFile = &domain.DownloadableFile{URL: delivery.DownloadableFile.GetUrl(), Format: delivery.DownloadableFile.GetFormat()}
 	default:
-		return domain.DistributionInput{}, apperror.New(apperror.CodeValidationFailed, "distribution delivery method is required") //nolint:wrapcheck
+		return domain.DistributionInput{}, apperror.New(apperror.CodeValidationFailed, "distribution delivery method is required")
 	}
 	return result, nil
 }
@@ -1173,7 +1236,7 @@ func webServiceMethodInput(value metadatalifecyclev1.WebServiceMethod) (domain.H
 	case metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_DELETE:
 		return domain.HTTPMethodDelete, nil
 	default:
-		return "", apperror.New(apperror.CodeValidationFailed, "web service method is invalid") //nolint:wrapcheck
+		return "", apperror.New(apperror.CodeValidationFailed, "web service method is invalid")
 	}
 }
 
@@ -1205,7 +1268,7 @@ func webServiceTypeInput(value metadatalifecyclev1.WebServiceType) (domain.WebSe
 	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC:
 		return domain.WebServiceTypeDynamic, nil
 	default:
-		return "", apperror.New(apperror.CodeValidationFailed, "web service type is invalid") //nolint:wrapcheck
+		return "", apperror.New(apperror.CodeValidationFailed, "web service type is invalid")
 	}
 }
 
@@ -1240,7 +1303,7 @@ func webServiceVisibleOnInput(values []metadatalifecyclev1.WebServiceVisibleOn) 
 		case metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP:
 			result[i] = domain.WebServiceVisibleOnMap
 		default:
-			return nil, apperror.New(apperror.CodeValidationFailed, "web service visible on is invalid") //nolint:wrapcheck
+			return nil, apperror.New(apperror.CodeValidationFailed, "web service visible on is invalid")
 		}
 	}
 	return result, nil
@@ -1268,7 +1331,7 @@ func webServiceVisibleOnOutput(values []domain.WebServiceVisibleOn) []metadatali
 
 func webServiceParameterInput(value *metadatalifecyclev1.ParameterInput) (domain.WebServiceParameterInput, error) {
 	if value == nil {
-		return domain.WebServiceParameterInput{}, apperror.New(apperror.CodeValidationFailed, "web service parameter is required") //nolint:wrapcheck
+		return domain.WebServiceParameterInput{}, apperror.New(apperror.CodeValidationFailed, "web service parameter is required")
 	}
 	parameter, err := parameterInput(value)
 	if err != nil {
@@ -1311,7 +1374,7 @@ func webServiceParameterRoleInput(value metadatalifecyclev1.WebServiceParameterR
 	case metadatalifecyclev1.WebServiceParameterRole_WEB_SERVICE_PARAMETER_ROLE_LATITUDE:
 		role = domain.WebServiceParameterRoleLatitude
 	default:
-		return nil, apperror.New(apperror.CodeValidationFailed, "parameter role is invalid") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "parameter role is invalid")
 	}
 	return &role, nil
 }
@@ -1353,7 +1416,7 @@ func webServiceParameterLocationInput(value metadatalifecyclev1.WebServiceParame
 	case metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_HEADER:
 		return domain.ParameterLocationHeader, nil
 	default:
-		return "", apperror.New(apperror.CodeValidationFailed, "parameter location is invalid") //nolint:wrapcheck
+		return "", apperror.New(apperror.CodeValidationFailed, "parameter location is invalid")
 	}
 }
 
@@ -1372,13 +1435,28 @@ func webServiceParameterLocationOutput(value domain.ParameterLocation) metadatal
 
 func parameterInput(value *metadatalifecyclev1.ParameterInput) (domain.ParameterInput, error) {
 	if value == nil {
-		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "parameter is required") //nolint:wrapcheck
+		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "parameter is required")
 	}
-	parameter := domain.ParameterInput{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
+	parameter := domain.ParameterInput{
+		Position:    int(value.GetPosition()),
+		Name:        value.GetName(),
+		Label:       value.GetLabel(),
+		Description: value.Description,
+		Required:    value.GetRequired(),
+		ReadOnly:    value.GetReadOnly(),
+	}
+	if value.ResourceId != nil {
+		id, err := parseUUIDAt(*value.ResourceId, "parameter resource ID", "resource_id")
+		if err != nil {
+			return domain.ParameterInput{}, err
+		}
+		parameter.ResourceID = &id
+	}
+
 	switch v := value.GetValue().(type) {
 	case *metadatalifecyclev1.ParameterInput_String_:
 		if v.String_ == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "string parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "string parameter is required")
 		}
 		enum, err := stringEnumInput(v.String_.GetEnum())
 		if err != nil {
@@ -1387,12 +1465,12 @@ func parameterInput(value *metadatalifecyclev1.ParameterInput) (domain.Parameter
 		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: enum, Pattern: v.String_.Pattern, MultipleValues: v.String_.MultipleValues}
 	case *metadatalifecyclev1.ParameterInput_Boolean:
 		if v.Boolean == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "boolean parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "boolean parameter is required")
 		}
 		parameter.Schema = domain.BooleanSchema{Default: v.Boolean.Default}
 	case *metadatalifecyclev1.ParameterInput_Integer:
 		if v.Integer == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "integer parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "integer parameter is required")
 		}
 		enum, err := integerEnumInput(v.Integer.GetEnum())
 		if err != nil {
@@ -1401,7 +1479,7 @@ func parameterInput(value *metadatalifecyclev1.ParameterInput) (domain.Parameter
 		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: enum, MultipleValues: v.Integer.MultipleValues}
 	case *metadatalifecyclev1.ParameterInput_Float:
 		if v.Float == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "float parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "float parameter is required")
 		}
 		enum, err := floatEnumInput(v.Float.GetEnum())
 		if err != nil {
@@ -1410,7 +1488,7 @@ func parameterInput(value *metadatalifecyclev1.ParameterInput) (domain.Parameter
 		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: enum, MultipleValues: v.Float.MultipleValues}
 	case *metadatalifecyclev1.ParameterInput_DateTime:
 		if v.DateTime == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "date-time parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "date-time parameter is required")
 		}
 		minimum, err := timestampInput(v.DateTime.GetMinimum())
 		if err != nil {
@@ -1427,7 +1505,7 @@ func parameterInput(value *metadatalifecyclev1.ParameterInput) (domain.Parameter
 		parameter.Schema = domain.DateTimeSchema{Minimum: minimum, Maximum: maximum, Default: def, Layout: v.DateTime.Layout}
 	case *metadatalifecyclev1.ParameterInput_Template:
 		if v.Template == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "template parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "template parameter is required")
 		}
 		parameters := make([]domain.ParameterInput, 0, len(v.Template.GetParameters()))
 		for _, item := range v.Template.GetParameters() {
@@ -1439,24 +1517,41 @@ func parameterInput(value *metadatalifecyclev1.ParameterInput) (domain.Parameter
 		}
 		parameter.Schema = domain.TemplateSchemaInput{Template: v.Template.GetTemplate(), Parameters: parameters}
 	default:
-		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "parameter value is required") //nolint:wrapcheck
+		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "parameter value is required")
 	}
 	return parameter, nil
 }
 
 func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (domain.ParameterInput, error) {
 	if value == nil {
-		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter is required") //nolint:wrapcheck
+		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter is required")
 	}
 	role, err := webServiceParameterRoleInput(value.GetRole())
 	if err != nil {
 		return domain.ParameterInput{}, err
 	}
-	parameter := domain.ParameterInput{Position: int(value.GetPosition()), Name: value.GetName(), Label: value.GetLabel(), Description: value.Description, Property: value.Property, Role: role, Required: value.GetRequired(), ReadOnly: value.GetReadOnly()}
+	parameter := domain.ParameterInput{
+		Position:    int(value.GetPosition()),
+		Name:        value.GetName(),
+		Label:       value.GetLabel(),
+		Description: value.Description,
+		Property:    value.Property,
+		Role:        role,
+		Required:    value.GetRequired(),
+		ReadOnly:    value.GetReadOnly(),
+	}
+	if value.ResourceId != nil {
+		id, err := parseUUIDAt(*value.ResourceId, "parameter resource ID", "resource_id")
+		if err != nil {
+			return domain.ParameterInput{}, err
+		}
+		parameter.ResourceID = &id
+	}
+
 	switch v := value.GetValue().(type) {
 	case *metadatalifecyclev1.ScalarParameterInput_String_:
 		if v.String_ == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "string parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "string parameter is required")
 		}
 		enum, err := stringEnumInput(v.String_.GetEnum())
 		if err != nil {
@@ -1465,12 +1560,12 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (doma
 		parameter.Schema = domain.StringSchema{Default: v.String_.Default, Enum: enum, Pattern: v.String_.Pattern}
 	case *metadatalifecyclev1.ScalarParameterInput_Boolean:
 		if v.Boolean == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "boolean parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "boolean parameter is required")
 		}
 		parameter.Schema = domain.BooleanSchema{Default: v.Boolean.Default}
 	case *metadatalifecyclev1.ScalarParameterInput_Integer:
 		if v.Integer == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "integer parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "integer parameter is required")
 		}
 		enum, err := integerEnumInput(v.Integer.GetEnum())
 		if err != nil {
@@ -1479,7 +1574,7 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (doma
 		parameter.Schema = domain.IntegerSchema{Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, Enum: enum}
 	case *metadatalifecyclev1.ScalarParameterInput_Float:
 		if v.Float == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "float parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "float parameter is required")
 		}
 		enum, err := floatEnumInput(v.Float.GetEnum())
 		if err != nil {
@@ -1488,7 +1583,7 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (doma
 		parameter.Schema = domain.FloatSchema{Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, Enum: enum}
 	case *metadatalifecyclev1.ScalarParameterInput_DateTime:
 		if v.DateTime == nil {
-			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "date-time parameter is required") //nolint:wrapcheck
+			return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "date-time parameter is required")
 		}
 		minimum, err := timestampInput(v.DateTime.GetMinimum())
 		if err != nil {
@@ -1504,7 +1599,7 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (doma
 		}
 		parameter.Schema = domain.DateTimeSchema{Minimum: minimum, Maximum: maximum, Default: def, Layout: v.DateTime.Layout}
 	default:
-		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter value is required") //nolint:wrapcheck
+		return domain.ParameterInput{}, apperror.New(apperror.CodeValidationFailed, "scalar parameter value is required")
 	}
 	return parameter, nil
 }
@@ -1595,13 +1690,25 @@ func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeInput)
 	return result, nil
 }
 
-func identifierInputs(values []*metadatalifecyclev1.IdentifierInput, target string) ([]domain.IdentifierInput, error) {
+func identifierInputs(values []*metadatalifecyclev1.VersionedIdentifierInput, target string) ([]domain.IdentifierInput, error) {
 	result := make([]domain.IdentifierInput, 0, len(values))
 	for i, value := range values {
 		if value == nil {
 			return nil, apperror.Field(fmt.Sprintf("%s[%d]", target, i), "Identifier is required.", fmt.Errorf("missing identifier at index %d", i))
 		}
-		result = append(result, domain.IdentifierInput{Type: domain.IdentifierType(value.GetType()), Value: value.GetValue()})
+		var resourceID *uuid.UUID
+		if value.ResourceId != nil {
+			id, err := parseUUIDAt(*value.ResourceId, "identifier resource ID", fmt.Sprintf("%s[%d].resource_id", target, i))
+			if err != nil {
+				return nil, err
+			}
+			resourceID = &id
+		}
+		result = append(result, domain.IdentifierInput{
+			ResourceID: resourceID,
+			Type:       domain.IdentifierType(value.GetType()),
+			Value:      value.GetValue(),
+		})
 	}
 	return result, nil
 }
@@ -1696,7 +1803,7 @@ func resourceVersionSummaryOutput(value domain.ResourceVersionSummary) *metadata
 	return &metadatalifecyclev1.ResourceVersionSummary{
 		ResourceType:  toGRPCResourceType(value.ResourceType),
 		ResourceId:    value.ResourceID.String(),
-		VersionId:     value.VersionID.String(),
+		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
 		Name:          value.Name,

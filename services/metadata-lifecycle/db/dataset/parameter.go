@@ -68,10 +68,17 @@ func persistParameter(
 	owner parameterOwner,
 	location *domain.ParameterLocation,
 	explode bool,
+	identities map[uuid.UUID]domain.Parameter,
 ) (sqlc.Parameter, error) {
 	params, err := parameterParams(value, owner, location, explode)
 	if err != nil {
 		return sqlc.Parameter{}, err
+	}
+	params.ID, params.ResourceID = uuid.New(), uuid.New()
+	if value.ResourceID != nil {
+		if previous, ok := identities[*value.ResourceID]; ok {
+			params.ID, params.ResourceID = previous.ID, previous.ResourceID
+		}
 	}
 	created, err := q.AddLifecycleParameter(ctx, params)
 	if err != nil {
@@ -128,7 +135,7 @@ func persistParameter(
 			break
 		}
 		for _, child := range schema.Parameters {
-			if _, err := persistParameter(ctx, q, child, parameterOwner{templateParameterID: &created.ID}, nil, false); err != nil {
+			if _, err := persistParameter(ctx, q, child, parameterOwner{templateParameterID: &created.ID}, nil, false, identities); err != nil {
 				return sqlc.Parameter{}, fmt.Errorf("add template parameter: %w", err)
 			}
 		}
@@ -365,5 +372,6 @@ func domainParameter(value sqlc.Parameter, template *sqlc.ParameterTemplate, chi
 		ReadOnly:    value.ReadOnly,
 		Schema:      schema,
 		ID:          value.ID,
+		ResourceID:  value.ResourceID,
 	}, nil
 }

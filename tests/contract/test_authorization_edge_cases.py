@@ -100,7 +100,7 @@ class AuthorizationEdgeCasesContractTest(unittest.TestCase):
             if version["status"] == "DRAFT"
         ]
         self.assertEqual(len(drafts), 1)
-        return title, resource_id, drafts[0]["version_id"]
+        return title, resource_id, drafts[0]["id"]
 
     def assert_forbidden(self, response: Any) -> None:
         assert_problem(self, response, 403, "permission_denied")
@@ -139,7 +139,7 @@ class AuthorizationEdgeCasesContractTest(unittest.TestCase):
             id=resource_id,
         )
         self.assertEqual(versions.status_code, 200)
-        self.assertIn(version_id, {item["version_id"] for item in versions.json()})
+        self.assertIn(version_id, {item["id"] for item in versions.json()})
 
         version = client.get(
             "/resources/{resourceType}/{id}/versions/{versionId}",
@@ -149,7 +149,7 @@ class AuthorizationEdgeCasesContractTest(unittest.TestCase):
         )
         self.assertEqual(version.status_code, 200)
         self.assertEqual(version.json()["resource_id"], resource_id)
-        self.assertEqual(version.json()["version_id"], version_id)
+        self.assertEqual(version.json()["id"], version_id)
         self.assertEqual(version.json()["status"], "DRAFT")
 
     def test_blocked_user_access_restores_and_last_admin_is_protected(self) -> None:

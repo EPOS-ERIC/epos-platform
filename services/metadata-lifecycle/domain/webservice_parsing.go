@@ -588,7 +588,14 @@ func restoreWebServiceConfiguration(input WebServiceConfigurationInput, existing
 		if err != nil {
 			return nil, fmt.Errorf("GetFeatureInfo parameters: %w", err)
 		}
-		return WMTSConfiguration{CapabilitiesURL: configuration.CapabilitiesURL, DefaultLayer: configuration.DefaultLayer, Layers: configuration.Layers, GetTileParameters: tile, GetFeatureInfoParameters: info}, nil
+		return WMTSConfiguration{
+			CapabilitiesURL:          configuration.CapabilitiesURL,
+			DefaultLayer:             configuration.DefaultLayer,
+			Layers:                   persisted.Layers,
+			GetTileParameters:        tile,
+			GetFeatureInfoParameters: info,
+		}, nil
+
 	case WMSConfigurationInput:
 		persisted, ok := existing.(WMSConfiguration)
 		if !ok {
@@ -605,12 +612,13 @@ func restoreWebServiceConfiguration(input WebServiceConfigurationInput, existing
 		return WMSConfiguration{
 			CapabilitiesURL:          configuration.CapabilitiesURL,
 			DefaultLayer:             configuration.DefaultLayer,
-			Layers:                   configuration.Layers,
+			Layers:                   persisted.Layers,
 			TransparencyEditable:     configuration.TransparencyEditable,
 			DefaultTransparency:      configuration.DefaultTransparency,
 			GetMapParameters:         mapParameters,
 			GetFeatureInfoParameters: featureInfoParameters,
 		}, nil
+
 	default:
 		return nil, fmt.Errorf("web service input configuration is unsupported: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
@@ -799,6 +807,9 @@ func webServiceParameterInputs(values []WebServiceParameter) []WebServiceParamet
 
 func (value Parameter) Input() ParameterInput {
 	input := value.ParameterInput
+	if value.ResourceID != uuid.Nil {
+		input.ResourceID = &value.ResourceID
+	}
 	input.Schema = parameterSchemaInput(input.Schema)
 	return input
 }
@@ -858,7 +869,11 @@ func restoreParameter(value ParameterInput, existing Parameter) (Parameter, erro
 	if existing.ID == uuid.Nil {
 		return Parameter{}, fmt.Errorf("parameter ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	result := Parameter{ParameterInput: value, ID: existing.ID}
+	result := Parameter{
+		ParameterInput: value,
+		ID:             existing.ID,
+		ResourceID:     existing.ResourceID,
+	}
 	if schema, ok := value.Schema.(TemplateSchemaInput); ok {
 		existingSchema, ok := existing.Schema.(TemplateSchema)
 		if !ok {
@@ -868,7 +883,10 @@ func restoreParameter(value ParameterInput, existing Parameter) (Parameter, erro
 		if err != nil {
 			return Parameter{}, err
 		}
-		result.Schema = TemplateSchema{Template: schema.Template, Parameters: parameters}
+		result.Schema = TemplateSchema{
+			Template:   schema.Template,
+			Parameters: parameters,
+		}
 	}
 	return result, nil
 }

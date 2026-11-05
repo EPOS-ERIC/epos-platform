@@ -30,6 +30,9 @@ func New(pool *pgxpool.Pool) *Repo {
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.SoftwareApplicationInput) (domain.SoftwareApplicationVersion, error) {
 	var result domain.SoftwareApplicationVersion
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
+		if _, err := resourcedb.IdentifierIdentities(value.Identifiers, nil, "metadata.identifiers"); err != nil {
+			return err
+		}
 		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
 		if err != nil {
 			return fmt.Errorf("validate application categories: %w", err)
@@ -79,13 +82,24 @@ func (r *Repo) ReplaceDraft(ctx context.Context, applicationID, versionID uuid.U
 		if err != nil {
 			return fmt.Errorf("replace application draft: %w", err)
 		}
+		current, err := applicationResult(ctx, q, applicationID, versionID)
+		if err != nil {
+			return err
+		}
+		identities, err := resourcedb.IdentifierIdentities(value.Metadata.Identifiers, current.Metadata.Identifiers, "metadata.identifiers")
+		if err != nil {
+			return err
+		}
 		if err := q.DeleteLifecycleSoftwareApplicationVersionChildren(ctx, &version.ID); err != nil {
 			return fmt.Errorf("delete application draft children: %w", err)
 		}
-		if err := PersistChildren(ctx, q, version.ID, value.Metadata); err != nil {
+		if err := persistChildren(ctx, q, version.ID, value.Metadata, identities); err != nil {
 			return err
 		}
 		result, err = applicationResult(ctx, q, applicationID, version.ID)
+		if err != nil {
+			return err
+		}
 		return err
 	})
 	return result, resourcedb.LifecycleError(err)

@@ -37,9 +37,10 @@ func ToContactPoint(value sqlc.ContactPoint) domain.ContactPoint {
 // ToIdentifier maps a persisted identifier to resource metadata.
 func ToIdentifier(value sqlc.Identifier) domain.Identifier {
 	return domain.Identifier{
-		ID:    value.ID,
-		Type:  domain.IdentifierType(value.Type),
-		Value: value.Value,
+		ID:         value.ID,
+		ResourceID: value.ResourceID,
+		Type:       domain.IdentifierType(value.Type),
+		Value:      value.Value,
 	}
 }
 

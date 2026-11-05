@@ -152,7 +152,7 @@ message ListResourceVersionsRequest {
 message ResourceVersionSummary {
   ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
   string resource_id = 2 [(buf.validate.field).string.uuid = true];
-  string version_id = 3 [(buf.validate.field).string.uuid = true];
+  string id = 3 [(buf.validate.field).string.uuid = true];
   int32 revision = 4 [(buf.validate.field).int32.gte = 1];
   VersioningStatus status = 5 [(buf.validate.field).enum.defined_only = true];
   string name = 6 [(buf.validate.field).string.min_len = 1];
@@ -176,7 +176,7 @@ message ListResourceVersionsResponse {
 
 message ResourceVersion {
   string resource_id = 1 [(buf.validate.field).string.uuid = true];
-  string version_id = 2 [(buf.validate.field).string.uuid = true];
+  string id = 2 [(buf.validate.field).string.uuid = true];
   int32 revision = 3 [(buf.validate.field).int32.gte = 0];
   VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
   string created_by = 5 [(buf.validate.field).string.min_len = 1];
@@ -195,7 +195,6 @@ message ResourceVersion {
 }
 
 message DatasetResourceMetadata {
-  string id = 1 [(buf.validate.field).string.uuid = true];
   string title = 2 [(buf.validate.field).string.min_len = 1];
   string description = 3 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
@@ -208,7 +207,7 @@ message DatasetResourceMetadata {
     Temporal temporal_coverage = 10;
     GeologicalTemporalCoverage geological_temporal_coverage = 17;
   }
-  repeated Identifier persistent_identifiers = 11;
+  repeated VersionedIdentifier persistent_identifiers = 11;
   repeated string contact_points = 12 [(buf.validate.field).repeated.items.string.uuid = true];
   repeated EntityReference providers = 13;
   repeated EntityReference categories = 14;
@@ -217,7 +216,6 @@ message DatasetResourceMetadata {
 }
 
 message SoftwareApplicationResourceMetadata {
-  string id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2 [(buf.validate.field).string.min_len = 1];
   string description = 3 [(buf.validate.field).string.min_len = 1];
   optional string main_entity_of_page = 4 [(buf.validate.field).string.min_len = 1];
@@ -228,13 +226,12 @@ message SoftwareApplicationResourceMetadata {
   optional string requirements = 9 [(buf.validate.field).string.min_len = 1];
   optional string operating_system = 10 [(buf.validate.field).string.min_len = 1];
   repeated EntityReference creators = 11;
-  repeated Identifier identifiers = 12;
+  repeated VersionedIdentifier identifiers = 12;
   repeated EntityReference categories = 13;
   repeated string contact_points = 14 [(buf.validate.field).repeated.items.string.uuid = true];
 }
 
 message SoftwareSourceCodeResourceMetadata {
-  string id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2 [(buf.validate.field).string.min_len = 1];
   string description = 3 [(buf.validate.field).string.min_len = 1];
   optional string programming_language = 4 [(buf.validate.field).string.min_len = 1];
@@ -246,7 +243,7 @@ message SoftwareSourceCodeResourceMetadata {
   optional string main_entity_of_page = 10 [(buf.validate.field).string.min_len = 1];
   optional string version = 11 [(buf.validate.field).string.min_len = 1];
   repeated EntityReference creators = 12;
-  repeated Identifier identifiers = 13;
+  repeated VersionedIdentifier identifiers = 13;
   repeated EntityReference categories = 14;
   repeated string contact_points = 15 [(buf.validate.field).repeated.items.string.uuid = true];
 }
@@ -256,6 +253,19 @@ message ResourceRecord {
   string version_id = 2 [(buf.validate.field).string.uuid = true];
   int32 revision = 3 [(buf.validate.field).int32.gte = 0];
   VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
+}
+
+message VersionedIdentifier {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string type = 3 [(buf.validate.field).string.min_len = 1];
+  string value = 4 [(buf.validate.field).string.min_len = 1];
+}
+
+message VersionedIdentifierInput {
+  optional string resource_id = 1 [(buf.validate.field).string.uuid = true];
+  string type = 2 [(buf.validate.field).string.min_len = 1];
+  string value = 3 [(buf.validate.field).string.min_len = 1];
 }
 
 message Temporal {
@@ -281,7 +291,7 @@ message DatasetInput {
     Temporal temporal_coverage = 9;
     GeologicalTemporalCoverage geological_temporal_coverage = 16;
   }
-  repeated IdentifierInput persistent_identifiers = 10;
+  repeated VersionedIdentifierInput persistent_identifiers = 10;
   repeated string contact_points = 11 [(buf.validate.field).repeated.items.string.uuid = true];
   repeated string providers = 12 [(buf.validate.field).repeated.items.string.uuid = true];
   repeated string categories = 13 [(buf.validate.field).repeated.items.string.uuid = true];
@@ -303,6 +313,7 @@ message DistributionInput {
     WebServiceInput web_service = 8;
     DownloadableFile downloadable_file = 9;
   }
+  optional string resource_id = 10 [(buf.validate.field).string.uuid = true];
 }
 
 message Distribution {
@@ -319,6 +330,7 @@ message Distribution {
   }
   string id = 10 [(buf.validate.field).string.uuid = true];
   repeated NativeFormat native_formats = 11;
+  string resource_id = 12 [(buf.validate.field).string.uuid = true];
 }
 
 message NativeFormat {
@@ -388,6 +400,7 @@ message WebServiceInput {
     WMTSWebServiceConfigurationInput wmts = 13;
     GenericWebServiceConfigurationInput dynamic = 14;
   }
+  optional string resource_id = 15 [(buf.validate.field).string.uuid = true];
 }
 
 message WebService {
@@ -409,6 +422,7 @@ message WebService {
     WMTSWebServiceConfiguration wmts = 14;
     GenericWebServiceConfiguration dynamic = 15;
   }
+  string resource_id = 16 [(buf.validate.field).string.uuid = true];
 }
 
 message GenericWebServiceConfigurationInput {
@@ -466,7 +480,7 @@ message WFSWebServiceConfiguration {
 message WMSWebServiceConfigurationInput {
   string capabilities_url = 1 [(buf.validate.field).string.uri = true];
   string default_layer = 2 [(buf.validate.field).string.min_len = 1];
-  repeated WMSLayer layers = 3 [(buf.validate.field).repeated.min_items = 1];
+  repeated WMSLayerInput layers = 3 [(buf.validate.field).repeated.min_items = 1];
   bool transparency_editable = 4;
   bool default_transparency = 5;
   repeated ParameterInput get_map_parameters = 6;
@@ -487,12 +501,21 @@ message WMSLayer {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   string default_style = 2;
   repeated string styles = 3 [(buf.validate.field).repeated.min_items = 1];
+  string id = 4 [(buf.validate.field).string.uuid = true];
+  string resource_id = 5 [(buf.validate.field).string.uuid = true];
+}
+
+message WMSLayerInput {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string default_style = 2;
+  repeated string styles = 3 [(buf.validate.field).repeated.min_items = 1];
+  optional string resource_id = 4 [(buf.validate.field).string.uuid = true];
 }
 
 message WMTSWebServiceConfigurationInput {
   string capabilities_url = 1 [(buf.validate.field).string.uri = true];
   string default_layer = 2 [(buf.validate.field).string.min_len = 1];
-  repeated WMTSLayer layers = 3 [(buf.validate.field).repeated.min_items = 1];
+  repeated WMTSLayerInput layers = 3 [(buf.validate.field).repeated.min_items = 1];
   repeated ParameterInput get_tile_parameters = 4;
   repeated ParameterInput get_feature_info_parameters = 5;
 }
@@ -509,6 +532,15 @@ message WMTSLayer {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   optional string default_style = 2 [(buf.validate.field).string.min_len = 1];
   repeated string styles = 3;
+  string id = 4 [(buf.validate.field).string.uuid = true];
+  string resource_id = 5 [(buf.validate.field).string.uuid = true];
+}
+
+message WMTSLayerInput {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  optional string default_style = 2 [(buf.validate.field).string.min_len = 1];
+  repeated string styles = 3;
+  optional string resource_id = 4 [(buf.validate.field).string.uuid = true];
 }
 
 message DownloadableFile {
@@ -542,6 +574,7 @@ message ParameterInput {
   WebServiceParameterLocation location = 14 [(buf.validate.field).enum.defined_only = true];
   bool explode = 15;
   WebServiceParameterRole role = 16 [(buf.validate.field).enum.defined_only = true];
+  optional string resource_id = 17 [(buf.validate.field).string.uuid = true];
 }
 
 message Parameter {
@@ -565,6 +598,7 @@ message Parameter {
   bool explode = 15;
   WebServiceParameterRole role = 16 [(buf.validate.field).enum.defined_only = true];
   string id = 17 [(buf.validate.field).string.uuid = true];
+  string resource_id = 18 [(buf.validate.field).string.uuid = true];
 }
 
 message ScalarParameterInput {
@@ -584,6 +618,7 @@ message ScalarParameterInput {
   }
   optional string property = 12;
   WebServiceParameterRole role = 13 [(buf.validate.field).enum.defined_only = true];
+  optional string resource_id = 14 [(buf.validate.field).string.uuid = true];
 }
 
 message ScalarParameter {
@@ -604,6 +639,7 @@ message ScalarParameter {
   string id = 12 [(buf.validate.field).string.uuid = true];
   optional string property = 13;
   WebServiceParameterRole role = 14 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 15 [(buf.validate.field).string.uuid = true];
 }
 
 message StringEnumOption {
@@ -707,7 +743,7 @@ message SoftwareApplicationInput {
   optional string requirements = 8 [(buf.validate.field).string.min_len = 1];
   optional string operating_system = 9 [(buf.validate.field).string.min_len = 1];
   repeated string creators = 10 [(buf.validate.field).repeated.items.string.uuid = true];
-  repeated IdentifierInput identifiers = 11;
+  repeated VersionedIdentifierInput identifiers = 11;
   repeated string categories = 12 [(buf.validate.field).repeated.items.string.uuid = true];
   repeated string contact_points = 13 [(buf.validate.field).repeated.items.string.uuid = true];
 }
@@ -724,7 +760,7 @@ message SoftwareSourceCodeInput {
   optional string main_entity_of_page = 9 [(buf.validate.field).string.min_len = 1];
   optional string version = 10 [(buf.validate.field).string.min_len = 1];
   repeated string creators = 11 [(buf.validate.field).repeated.items.string.uuid = true];
-  repeated IdentifierInput identifiers = 12;
+  repeated VersionedIdentifierInput identifiers = 12;
   repeated string categories = 13 [(buf.validate.field).repeated.items.string.uuid = true];
   repeated string contact_points = 14 [(buf.validate.field).repeated.items.string.uuid = true];
 }

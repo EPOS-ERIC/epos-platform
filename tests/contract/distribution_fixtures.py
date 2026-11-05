@@ -67,7 +67,7 @@ class DistributionContractTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 201)
         resource_id = response.json()["id"]
-        return self.details(resource_id, self.version(resource_id, "DRAFT")["version_id"])
+        return self.details(resource_id, self.version(resource_id, "DRAFT")["id"])
 
     def version(self, resource_id: str, status: str) -> dict[str, Any]:
         response = self.gateway.get(
@@ -89,14 +89,14 @@ class DistributionContractTestCase(unittest.TestCase):
     def replace_response(self, detail: dict[str, Any], metadata: dict[str, Any]) -> Any:
         return self.gateway.put(
             "/resources/{id}/versions/{versionId}/draft", id=detail["resource_id"],
-            versionId=detail["version_id"],
+            versionId=detail["id"],
             json={"resource_type": "dataset", "revision": detail["revision"], "metadata": metadata},
         )
 
     def transition(self, detail: dict[str, Any], action: str, **kwargs: Any) -> None:
         response = self.gateway.post(
             "/resources/{resourceType}/{id}/versions/{versionId}/" + action,
-            resourceType="dataset", id=detail["resource_id"], versionId=detail["version_id"],
+            resourceType="dataset", id=detail["resource_id"], versionId=detail["id"],
             **kwargs,
         )
         self.assertEqual(response.status_code, 200)

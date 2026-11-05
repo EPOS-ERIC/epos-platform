@@ -10,6 +10,10 @@ import (
 )
 
 func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Distribution, error) {
+	resourceID, err := parseUUID("distribution.resource_id", value.GetResourceId())
+	if err != nil {
+		return gatewayapi.Distribution{}, err
+	}
 	switch {
 	case value.GetDownloadableFile() != nil:
 		v := value.GetDownloadableFile()
@@ -19,6 +23,7 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 		}
 		return gatewayapi.NewDownloadableFileDistributionDistribution(gatewayapi.DownloadableFileDistribution{
 			ID:          id,
+			ResourceID:  resourceID,
 			Title:       value.Title,
 			Description: value.Description,
 			License:     toAPINilString(value.License),
@@ -47,6 +52,7 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 		}
 		return gatewayapi.NewWebServiceDistributionDistribution(gatewayapi.WebServiceDistribution{
 			ID:               id,
+			ResourceID:       resourceID,
 			Title:            value.Title,
 			Description:      value.Description,
 			License:          toAPINilString(value.License),
@@ -88,6 +94,10 @@ func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.WebServi
 	if err != nil {
 		return gatewayapi.WebService{}, err
 	}
+	resourceID, err := parseUUID("web_service.resource_id", value.GetResourceId())
+	if err != nil {
+		return gatewayapi.WebService{}, err
+	}
 	visibleOn, err := toAPIWebServiceVisibleOn(value.VisibleOn)
 	if err != nil {
 		return gatewayapi.WebService{}, err
@@ -98,6 +108,7 @@ func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.WebServi
 	}
 	result := gatewayapi.WebService{
 		ID:               id,
+		ResourceID:       resourceID,
 		Name:             value.Name,
 		Description:      toAPINilString(value.Description),
 		VisibleOn:        visibleOn,
@@ -291,7 +302,21 @@ func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebServiceC
 		if layer == nil {
 			return gatewayapi.WmtsWebServiceConfiguration{}, fmt.Errorf("upstream WMTS layer is nil")
 		}
-		mapped := gatewayapi.WmtsLayer{Name: gatewayapi.NonBlankString(layer.GetName())}
+		id, err := parseUUID("wmts.layer.id", layer.GetId())
+		if err != nil {
+			return gatewayapi.WmtsWebServiceConfiguration{}, err
+		}
+		resourceID, err := parseUUID("wmts.layer.resource_id", layer.GetResourceId())
+		if err != nil {
+			return gatewayapi.WmtsWebServiceConfiguration{}, err
+		}
+
+		mapped := gatewayapi.WmtsLayer{
+			ID:         id,
+			ResourceID: resourceID,
+			Name:       gatewayapi.NonBlankString(layer.GetName()),
+		}
+
 		if layer.DefaultStyle != nil {
 			mapped.DefaultStyle.SetTo(gatewayapi.NonBlankString(*layer.DefaultStyle))
 		}
@@ -324,7 +349,17 @@ func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebServiceCon
 		if layer == nil {
 			return gatewayapi.WmsWebServiceConfiguration{}, fmt.Errorf("upstream WMS layer is nil")
 		}
+		id, err := parseUUID("wms.layer.id", layer.GetId())
+		if err != nil {
+			return gatewayapi.WmsWebServiceConfiguration{}, err
+		}
+		resourceID, err := parseUUID("wms.layer.resource_id", layer.GetResourceId())
+		if err != nil {
+			return gatewayapi.WmsWebServiceConfiguration{}, err
+		}
 		mapped := gatewayapi.WmsLayer{
+			ID:           id,
+			ResourceID:   resourceID,
 			Name:         gatewayapi.NonBlankString(layer.GetName()),
 			DefaultStyle: layer.GetDefaultStyle(),
 			Styles:       layer.GetStyles(),
@@ -418,6 +453,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 	if err != nil {
 		return gatewayapi.Parameter{}, err
 	}
+	resourceID, err := parseUUID("web_service.parameter.resource_id", value.GetResourceId())
+	if err != nil {
+		return gatewayapi.Parameter{}, err
+	}
 	description := toAPINilString(value.Description)
 	property := toAPINilString(value.Property)
 	role, err := toAPIParameterRole(value.Role)
@@ -437,6 +476,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 		}
 		return gatewayapi.NewStringParameterParameter(gatewayapi.StringParameter{
 			ID:             id,
+			ResourceID:     resourceID,
 			Kind:           gatewayapi.StringParameterKindSTRING,
 			Position:       value.Position,
 			Name:           gatewayapi.NonBlankString(value.Name),
@@ -457,6 +497,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 		v := value.GetBoolean()
 		return gatewayapi.NewBooleanParameterParameter(gatewayapi.BooleanParameter{
 			ID:          id,
+			ResourceID:  resourceID,
 			Kind:        gatewayapi.BooleanParameterKindBOOLEAN,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -478,6 +519,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 		}
 		return gatewayapi.NewIntegerParameterParameter(gatewayapi.IntegerParameter{
 			ID:             id,
+			ResourceID:     resourceID,
 			Kind:           gatewayapi.IntegerParameterKindINTEGER,
 			Position:       value.Position,
 			Name:           gatewayapi.NonBlankString(value.Name),
@@ -503,6 +545,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 		}
 		return gatewayapi.NewFloatParameterParameter(gatewayapi.FloatParameter{
 			ID:             id,
+			ResourceID:     resourceID,
 			Kind:           gatewayapi.FloatParameterKindFLOAT,
 			Position:       value.Position,
 			Name:           gatewayapi.NonBlankString(value.Name),
@@ -524,6 +567,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 		v := value.GetDateTime()
 		return gatewayapi.NewDateTimeParameterParameter(gatewayapi.DateTimeParameter{
 			ID:          id,
+			ResourceID:  resourceID,
 			Kind:        gatewayapi.DateTimeParameterKindDATETIME,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -552,6 +596,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 		}
 		return gatewayapi.NewTemplateParameterParameter(gatewayapi.TemplateParameter{
 			ID:          id,
+			ResourceID:  resourceID,
 			Kind:        gatewayapi.TemplateParameterKindTEMPLATE,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -579,6 +624,10 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	if err != nil {
 		return gatewayapi.ScalarParameter{}, err
 	}
+	resourceID, err := parseUUID("web_service.scalar_parameter.resource_id", value.GetResourceId())
+	if err != nil {
+		return gatewayapi.ScalarParameter{}, err
+	}
 	description := toAPINilString(value.Description)
 	role, err := toAPIParameterRole(value.Role)
 	if err != nil {
@@ -595,6 +644,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
+			ResourceID:  resourceID,
 			Kind:        gatewayapi.StringScalarParameterKindSTRING,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -612,6 +662,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
+			ResourceID:  resourceID,
 			Kind:        gatewayapi.BooleanScalarParameterKindBOOLEAN,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -631,6 +682,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
+			ResourceID:  resourceID,
 			Kind:        gatewayapi.IntegerScalarParameterKindINTEGER,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -653,6 +705,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
+			ResourceID:  resourceID,
 			Kind:        gatewayapi.FloatScalarParameterKindFLOAT,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),
@@ -671,6 +724,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
+			ResourceID:  resourceID,
 			Kind:        gatewayapi.DateTimeScalarParameterKindDATETIME,
 			Position:    value.Position,
 			Name:        gatewayapi.NonBlankString(value.Name),

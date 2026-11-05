@@ -136,7 +136,7 @@ func toProtoNativeFormats(values []domain.NativeFormat) []*metadatalifecyclev1.N
 func toProtoDatasetVersion(value domain.DatasetVersion) *metadatalifecyclev1.ResourceVersion {
 	return &metadatalifecyclev1.ResourceVersion{
 		ResourceId:    value.DatasetID.String(),
-		VersionId:     value.VersionID.String(),
+		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
 		CreatedBy:     string(value.CreatedBy),
@@ -162,7 +162,7 @@ func toProtoDistributionDownload(value domain.DistributionDownload) *metadatalif
 func toProtoSoftwareApplicationVersion(value domain.SoftwareApplicationVersion) *metadatalifecyclev1.ResourceVersion {
 	return &metadatalifecyclev1.ResourceVersion{
 		ResourceId:    value.SoftwareApplicationID.String(),
-		VersionId:     value.VersionID.String(),
+		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
 		CreatedBy:     string(value.CreatedBy),
@@ -180,7 +180,7 @@ func toProtoSoftwareApplicationVersion(value domain.SoftwareApplicationVersion) 
 func toProtoSoftwareSourceCodeVersion(value domain.SoftwareSourceCodeVersion) *metadatalifecyclev1.ResourceVersion {
 	return &metadatalifecyclev1.ResourceVersion{
 		ResourceId:    value.SoftwareSourceCodeID.String(),
-		VersionId:     value.VersionID.String(),
+		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
 		CreatedBy:     string(value.CreatedBy),

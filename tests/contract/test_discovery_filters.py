@@ -114,7 +114,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         drafts = [version for version in versions.json() if version["status"] == "DRAFT"]
         self.assertEqual(len(drafts), 1)
         draft = drafts[0]
-        version_id = draft["version_id"]
+        version_id = draft["id"]
         replaced = client.put(
             "/resources/{id}/versions/{versionId}/draft",
             id=resource_id,

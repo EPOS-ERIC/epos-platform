@@ -134,6 +134,7 @@ func toDomainWebService(value sqlc.WebService) domain.WebService {
 	}
 	return domain.WebService{
 		ID:               value.ID,
+		ResourceID:       value.ResourceID,
 		Name:             value.Name,
 		Description:      value.Description,
 		Type:             domain.WebServiceType(value.Type),
@@ -161,6 +162,7 @@ func domainVisibleOnValues(values []sqlc.WebServiceVisibleOn) []domain.WebServic
 func toDomainDistribution(value sqlc.Distribution, services map[uuid.UUID]domain.WebService) domain.Distribution {
 	result := domain.Distribution{
 		ID:               value.ID,
+		ResourceID:       value.ResourceID,
 		Title:            value.Title,
 		Description:      value.Description,
 		License:          value.License,
@@ -233,9 +235,10 @@ func toDomainContactPoint(value sqlc.ContactPoint) domain.ContactPoint {
 
 func toDomainIdentifier(value sqlc.Identifier) domain.Identifier {
 	return domain.Identifier{
-		ID:    value.ID,
-		Type:  domain.IdentifierType(value.Type),
-		Value: value.Value,
+		ID:         value.ID,
+		ResourceID: value.ResourceID,
+		Type:       domain.IdentifierType(value.Type),
+		Value:      value.Value,
 	}
 }
 
