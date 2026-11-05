@@ -16,18 +16,16 @@ func IdentifierIdentities(inputs []domain.IdentifierInput, existing []domain.Ide
 	}
 
 	result := make(map[uuid.UUID]domain.Identifier)
-	seen := make(map[uuid.UUID]struct{})
 	for i, input := range inputs {
 		if input.ResourceID == nil {
 			continue
 		}
 		id := *input.ResourceID
 		identifier, ok := byResourceID[id]
-		_, duplicate := seen[id]
+		_, duplicate := result[id]
 		if !ok || duplicate || id == uuid.Nil {
 			return nil, apperror.Field(fmt.Sprintf("%s[%d].resource_id", target, i), "Identifier must belong to this version and appear only once.", nil)
 		}
-		seen[id] = struct{}{}
 		result[id] = identifier
 	}
 	return result, nil

@@ -70,15 +70,13 @@ func toProtoDocumentation(v gatewayapi.OptDocumentation) *metadatalifecyclev1.Do
 
 func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.WebServiceInput {
 	r := &metadatalifecyclev1.WebServiceInput{
+		ResourceId:       protoOptionalUUID(v.ResourceID),
 		Name:             string(v.Name),
 		Description:      protoOptString(v.Description),
 		VisibleOn:        toProtoWebServiceVisibleOn(v.VisibleOn),
 		TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
 		Documentation:    toProtoDocumentation(v.Documentation),
 		ContactPoints:    uuidStrings(v.ContactPoints),
-	}
-	if v.ResourceID.Set {
-		r.ResourceId = new(v.ResourceID.Value.String())
 	}
 	if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
 		r.SpatialCoverage = new(v.SpatialCoverage.Value)
@@ -229,9 +227,7 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.Di
 	}
 	if v.IsWebServiceDistributionDraft() {
 		x := v.WebServiceDistributionDraft
-		if x.ResourceID.Set {
-			r.ResourceId = new(x.ResourceID.Value.String())
-		}
+		r.ResourceId = protoOptionalUUID(x.ResourceID)
 		r.Delivery = &metadatalifecyclev1.DistributionInput_WebService{
 			WebService: toProtoWebServiceDraft(x.WebService),
 		}
@@ -239,9 +235,7 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.Di
 	}
 
 	x := v.DownloadableFileDistributionDraft
-	if x.ResourceID.Set {
-		r.ResourceId = new(x.ResourceID.Value.String())
-	}
+	r.ResourceId = protoOptionalUUID(x.ResourceID)
 	r.Delivery = &metadatalifecyclev1.DistributionInput_DownloadableFile{
 		DownloadableFile: &metadatalifecyclev1.DownloadableFile{
 			Url:    string(x.DownloadableFile.URL),

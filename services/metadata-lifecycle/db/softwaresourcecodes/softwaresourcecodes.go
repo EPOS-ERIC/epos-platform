@@ -97,9 +97,6 @@ func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UU
 			return err
 		}
 		result, err = sourceCodeResult(ctx, q, sourceCodeID, version.ID)
-		if err != nil {
-			return err
-		}
 		return err
 	})
 	return result, resourcedb.LifecycleError(err)

@@ -486,7 +486,7 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 	return persistChildren(ctx, q, versionID, value, nil, nil, nil, nil)
 }
 
-func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.DatasetInput, identities map[uuid.UUID]domain.Identifier, distributions []distributionIdentity, parameters map[uuid.UUID]domain.Parameter, layers map[uuid.UUID]layerIdentity) error {
+func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.DatasetInput, identities map[uuid.UUID]domain.Identifier, distributions []distributionIdentity, parameters map[uuid.UUID]domain.Parameter, layers map[uuid.UUID]uuid.UUID) error {
 	if distributions == nil {
 		distributions = make([]distributionIdentity, len(value.Distributions))
 		for i := range distributions {

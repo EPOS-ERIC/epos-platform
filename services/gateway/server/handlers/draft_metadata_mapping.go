@@ -124,11 +124,9 @@ func toProtoSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraft
 
 func toProtoVersionedIdentifierInput(value gatewayapi.VersionedIdentifierInput) *metadatalifecyclev1.VersionedIdentifierInput {
 	result := &metadatalifecyclev1.VersionedIdentifierInput{
-		Type:  string(value.Type),
-		Value: string(value.Value),
-	}
-	if value.ResourceID.Set {
-		result.ResourceId = new(value.ResourceID.Value.String())
+		ResourceId: protoOptionalUUID(value.ResourceID),
+		Type:       string(value.Type),
+		Value:      string(value.Value),
 	}
 	return result
 }

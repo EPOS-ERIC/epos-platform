@@ -15,17 +15,12 @@ type distributionIdentity struct {
 	serviceResourceID uuid.UUID
 }
 
-type layerIdentity struct {
-	id         uuid.UUID
-	resourceID uuid.UUID
-}
-
-func layerIdentities(inputs []domain.DistributionInput, existing []domain.Distribution) (map[uuid.UUID]layerIdentity, error) {
+func layerIdentities(inputs []domain.DistributionInput, existing []domain.Distribution) (map[uuid.UUID]uuid.UUID, error) {
 	byID := make(map[uuid.UUID]domain.Distribution, len(existing))
 	for _, distribution := range existing {
 		byID[distribution.ResourceID] = distribution
 	}
-	result := make(map[uuid.UUID]layerIdentity)
+	result := make(map[uuid.UUID]uuid.UUID)
 	for i, distribution := range inputs {
 		if distribution.WebService == nil {
 			continue
@@ -37,7 +32,7 @@ func layerIdentities(inputs []domain.DistributionInput, existing []domain.Distri
 				previous = old.WebService.Configuration
 			}
 		}
-		check := func(id *uuid.UUID, old map[uuid.UUID]layerIdentity, position int) error {
+		check := func(id *uuid.UUID, old map[uuid.UUID]uuid.UUID, position int) error {
 			if id == nil {
 				return nil
 			}
@@ -52,9 +47,9 @@ func layerIdentities(inputs []domain.DistributionInput, existing []domain.Distri
 		switch configuration := distribution.WebService.Configuration.(type) {
 		case domain.WMSConfigurationInput:
 			old, _ := previous.(domain.WMSConfiguration)
-			byLayerID := make(map[uuid.UUID]layerIdentity, len(old.Layers))
+			byLayerID := make(map[uuid.UUID]uuid.UUID, len(old.Layers))
 			for _, layer := range old.Layers {
-				byLayerID[layer.ResourceID] = layerIdentity{id: layer.ID, resourceID: layer.ResourceID}
+				byLayerID[layer.ResourceID] = layer.ID
 			}
 			for j, layer := range configuration.Layers {
 				if err := check(layer.ResourceID, byLayerID, j); err != nil {
@@ -63,9 +58,9 @@ func layerIdentities(inputs []domain.DistributionInput, existing []domain.Distri
 			}
 		case domain.WMTSConfigurationInput:
 			old, _ := previous.(domain.WMTSConfiguration)
-			byLayerID := make(map[uuid.UUID]layerIdentity, len(old.Layers))
+			byLayerID := make(map[uuid.UUID]uuid.UUID, len(old.Layers))
 			for _, layer := range old.Layers {
-				byLayerID[layer.ResourceID] = layerIdentity{id: layer.ID, resourceID: layer.ResourceID}
+				byLayerID[layer.ResourceID] = layer.ID
 			}
 			for j, layer := range configuration.Layers {
 				if err := check(layer.ResourceID, byLayerID, j); err != nil {
@@ -77,10 +72,10 @@ func layerIdentities(inputs []domain.DistributionInput, existing []domain.Distri
 	return result, nil
 }
 
-func layerIDs(resourceID *uuid.UUID, identities map[uuid.UUID]layerIdentity) (uuid.UUID, uuid.UUID) {
+func layerIDs(resourceID *uuid.UUID, identities map[uuid.UUID]uuid.UUID) (uuid.UUID, uuid.UUID) {
 	if resourceID != nil {
 		if identity, ok := identities[*resourceID]; ok {
-			return identity.id, identity.resourceID
+			return identity, *resourceID
 		}
 	}
 	return uuid.New(), uuid.New()
