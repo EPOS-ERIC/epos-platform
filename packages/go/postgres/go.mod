@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/packages/go/postgres
 
-go 1.27
+go 1.27.3
 
 require (
 	github.com/exaring/otelpgx v0.11.1
