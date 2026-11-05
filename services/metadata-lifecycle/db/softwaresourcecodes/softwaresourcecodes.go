@@ -30,6 +30,9 @@ func New(pool *pgxpool.Pool) *Repo {
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeVersion, error) {
 	var result domain.SoftwareSourceCodeVersion
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
+		if _, err := resourcedb.IdentifierIdentities(value.Identifiers, nil, "metadata.identifiers"); err != nil {
+			return err
+		}
 		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
 		if err != nil {
 			return fmt.Errorf("validate source code categories: %w", err)
@@ -79,10 +82,18 @@ func (r *Repo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UU
 		if err != nil {
 			return fmt.Errorf("replace source code draft: %w", err)
 		}
+		current, err := sourceCodeResult(ctx, q, sourceCodeID, versionID)
+		if err != nil {
+			return err
+		}
+		identities, err := resourcedb.IdentifierIdentities(value.Metadata.Identifiers, current.Metadata.Identifiers, "metadata.identifiers")
+		if err != nil {
+			return err
+		}
 		if err := q.DeleteLifecycleSoftwareSourceCodeVersionChildren(ctx, &version.ID); err != nil {
 			return fmt.Errorf("delete source code draft children: %w", err)
 		}
-		if err := PersistChildren(ctx, q, version.ID, value.Metadata); err != nil {
+		if err := persistChildren(ctx, q, version.ID, value.Metadata, identities); err != nil {
 			return err
 		}
 		result, err = sourceCodeResult(ctx, q, sourceCodeID, version.ID)

@@ -47,7 +47,7 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
         )
         self.assertEqual(self.prepare(distribution, gateway=unrelated), expected)
         self.transition(detail, "unpublish")
-        archived = self.details(detail["resource_id"], detail["version_id"])
+        archived = self.details(detail["resource_id"], detail["id"])
         self.assertEqual(archived["status"], "ARCHIVED")
         self.assertEqual(archived["metadata"]["distributions"][0]["id"], distribution["id"])
         assert_private()
@@ -77,7 +77,7 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
             "distributions": [web_distribution(template_url="https://provider.invalid/replacement")],
         }
         self.assertEqual(self.replace_response(detail, metadata).status_code, 200)
-        replaced = self.details(detail["resource_id"], detail["version_id"])
+        replaced = self.details(detail["resource_id"], detail["id"])
         replacement = replaced["metadata"]["distributions"][0]
         self.assertNotEqual(replacement["id"], original["id"])
         self.assert_prepare_problem(self.prepare_response(original), 404, "not_found")
@@ -95,7 +95,7 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
         )
         self.assertEqual(copied.status_code, 201)
         version = self.version(detail["resource_id"], "DRAFT")
-        draft = self.details(detail["resource_id"], version["version_id"])
+        draft = self.details(detail["resource_id"], version["id"])
         duplicate = draft["metadata"]["distributions"][0]
         self.assertNotEqual(duplicate["id"], original["id"])
         original_parameter = original["web_service"]["configuration"]["parameters"][0]["id"]
@@ -114,7 +114,7 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
             )],
         }
         self.assertEqual(self.replace_response(draft, metadata).status_code, 200)
-        updated = self.details(draft["resource_id"], draft["version_id"])
+        updated = self.details(draft["resource_id"], draft["id"])
         self.assertEqual(
             self.prepare(updated["metadata"]["distributions"][0])["url"],
             "https://provider.invalid/draft?value=draft",

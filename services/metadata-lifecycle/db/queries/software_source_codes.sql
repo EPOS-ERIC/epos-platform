@@ -290,11 +290,21 @@ inserted AS (
 identifiers AS (
     INSERT INTO
         identifiers (
+            resource_id,
             TYPE,
             value,
             software_source_code_version_id
         )
     SELECT
+        CASE
+            WHEN (
+                SELECT
+                    software_source_code_id
+                FROM
+                    source
+            ) = sqlc.arg(target_software_source_code_id) THEN resource_id
+            ELSE uuid_generate_v4()
+        END,
         TYPE,
         value,
         (
@@ -398,12 +408,16 @@ FROM
 -- name: AddLifecycleSoftwareSourceCodeIdentifier :exec
 INSERT INTO
     identifiers (
+        id,
+        resource_id,
         TYPE,
         value,
         software_source_code_version_id
     )
 VALUES
     (
+        sqlc.arg(id),
+        sqlc.arg(resource_id),
         sqlc.arg(TYPE),
         sqlc.arg(value),
         sqlc.arg(software_source_code_version_id)

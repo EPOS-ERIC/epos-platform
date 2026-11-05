@@ -4,9 +4,19 @@ package metadata_lifecycle.v1;
 
 import "buf/validate/validate.proto";
 import "metadata_lifecycle/v1/annotations.proto";
-import "metadata_lifecycle/v1/common.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message Identifier {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string type = 2 [(buf.validate.field).string.min_len = 1];
+  string value = 3 [(buf.validate.field).string.min_len = 1];
+}
+
+message IdentifierInput {
+  string type = 1 [(buf.validate.field).string.min_len = 1];
+  string value = 2 [(buf.validate.field).string.min_len = 1];
+}
 
 message Organization {
   string id = 1 [(buf.validate.field).string.uuid = true];

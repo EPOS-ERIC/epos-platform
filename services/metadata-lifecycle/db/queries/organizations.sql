@@ -108,7 +108,7 @@ RETURNING
 
 -- name: CreateOrganizationIdentifier :exec
 INSERT INTO
-    identifiers (id, TYPE, value, organization_id)
+    organization_identifiers (id, TYPE, value, organization_id)
 VALUES
     (
         sqlc.arg(id),
@@ -140,7 +140,7 @@ SELECT
     organization_id,
     sqlc.embed(identifier)
 FROM
-    identifiers AS identifier
+    organization_identifiers AS identifier
 WHERE
     organization_id = ANY(sqlc.arg(organization_ids)::uuid [])
 ORDER BY
@@ -191,7 +191,7 @@ RETURNING
 
 -- name: DeleteOrganizationIdentifiers :exec
 DELETE FROM
-    identifiers
+    organization_identifiers
 WHERE
     organization_id = sqlc.arg(organization_id);
 

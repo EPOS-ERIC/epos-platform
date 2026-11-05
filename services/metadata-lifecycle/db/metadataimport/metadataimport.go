@@ -403,14 +403,14 @@ func importOrganizations(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, organi
 			if err != nil {
 				return fmt.Errorf("upsert organization %q: %w", organization.ID, err)
 			}
-			if err := q.DeleteImportOrganizationIdentifiers(ctx, &id); err != nil {
+			if err := q.DeleteImportOrganizationIdentifiers(ctx, id); err != nil {
 				return fmt.Errorf("replace organization identifiers %q: %w", organization.ID, err)
 			}
 			for _, identifier := range organization.Identifiers {
 				if err := q.AddImportOrganizationIdentifier(ctx, sqlc.AddImportOrganizationIdentifierParams{
 					Type:           string(identifier.Type),
 					Value:          identifier.Value,
-					OrganizationID: &id,
+					OrganizationID: id,
 				}); err != nil {
 					return fmt.Errorf("add organization identifier %q: %w", organization.ID, err)
 				}

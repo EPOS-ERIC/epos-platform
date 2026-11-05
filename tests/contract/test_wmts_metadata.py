@@ -36,7 +36,10 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
         fields = ("get_tile_parameters", "get_feature_info_parameters")
         for field in configuration.keys() - set(fields) - {"layers"}:
             self.assertEqual(actual[field], configuration[field], field)
-        self.assertEqual(actual["layers"][:2], configuration["layers"][:2])
+        self.assertEqual(
+            [{k: v for k, v in layer.items() if k not in ("id", "resource_id")} for layer in actual["layers"][:2]],
+            configuration["layers"][:2],
+        )
         self.assertEqual(actual["layers"][2]["name"], "provider-default")
         self.assertNotIn("default_style", actual["layers"][2])
         self.assertFalse(actual["layers"][2].get("styles"))
@@ -92,7 +95,7 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
                         json={"resource_type": "dataset", "metadata": metadata},
                     ) if method == "POST" else self.replace_response(detail, metadata))
                     self.assert_prepare_problem(response)
-        unchanged = self.details(detail["resource_id"], detail["version_id"])
+        unchanged = self.details(detail["resource_id"], detail["id"])
         self.assertEqual(unchanged["revision"], detail["revision"])
         self.assertEqual(unchanged["metadata"]["distributions"][0]["web_service"]["configuration"], actual)
 
@@ -110,10 +113,16 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
         )
         self.assertEqual(drafted.status_code, 201)
         for resource_id in (copied.json()["id"], detail["resource_id"]):
-            clone = self.details(resource_id, self.version(resource_id, "DRAFT")["version_id"])
+            clone = self.details(resource_id, self.version(resource_id, "DRAFT")["id"])
             cloned = clone["metadata"]["distributions"][0]["web_service"]["configuration"]
-            for field in configuration.keys() - set(fields):
+            for field in configuration.keys() - set(fields) - {"layers"}:
                 self.assertEqual(cloned[field], actual[field], field)
+            for source, target in zip(actual["layers"], cloned["layers"], strict=True):
+                self.assertNotEqual(source["id"], target["id"])
+                if resource_id == detail["resource_id"]:
+                    self.assertEqual(source["resource_id"], target["resource_id"])
+                else:
+                    self.assertNotEqual(source["resource_id"], target["resource_id"])
             for field in fields:
                 for source, target in zip(actual[field], cloned[field], strict=True):
                     self.assertNotEqual(source["id"], target["id"])
@@ -126,16 +135,26 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
             if resource_id == detail["resource_id"]:
                 detail = clone
 
+        previous_distribution = detail["metadata"]["distributions"][0]
+        previous_service = previous_distribution["web_service"]
+        previous_layer = previous_service["configuration"]["layers"][1]
+        distribution["resource_id"] = previous_distribution["resource_id"]
+        distribution["web_service"]["resource_id"] = previous_service["resource_id"]
         configuration.update({
             "capabilities_url": "https://provider.invalid/replaced?tenant=updated",
-            "default_layer": "boundaries",
-            "layers": [{"name": "boundaries", "default_style": "outline", "styles": ["outline"]}],
+            "default_layer": "boundaries-renamed",
+            "layers": [{"resource_id": previous_layer["resource_id"], "name": "boundaries-renamed", "default_style": "outline", "styles": ["outline"]}],
             "get_tile_parameters": [], "get_feature_info_parameters": [],
         })
         response = self.replace_response(detail, {
             "title": detail["metadata"]["title"], "description": "Replaced WMTS", "distributions": [distribution],
         })
         self.assertEqual(response.status_code, 200)
-        updated = self.details(detail["resource_id"], detail["version_id"])
+        updated = self.details(detail["resource_id"], detail["id"])
         self.assertEqual(updated["revision"], detail["revision"] + 1)
-        self.assertEqual(updated["metadata"]["distributions"][0]["web_service"]["configuration"], configuration)
+        updated_configuration = updated["metadata"]["distributions"][0]["web_service"]["configuration"]
+        for field in configuration.keys() - {"layers"}:
+            self.assertEqual(updated_configuration[field], configuration[field], field)
+        self.assertEqual(updated_configuration["layers"][0]["id"], previous_layer["id"])
+        self.assertEqual(updated_configuration["layers"][0]["resource_id"], previous_layer["resource_id"])
+        self.assertEqual(updated_configuration["layers"][0]["name"], "boundaries-renamed")

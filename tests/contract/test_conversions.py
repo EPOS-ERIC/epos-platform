@@ -323,7 +323,7 @@ class ConversionsContractTest(DistributionContractTestCase):
                     "/conversion-relations/{conversionId}", conversionId=relation_id,
                 )
                 self.assertEqual(fetched.status_code, 200)
-                refreshed = self.details(detail["resource_id"], detail["version_id"])
+                refreshed = self.details(detail["resource_id"], detail["id"])
                 formats = refreshed["metadata"]["distributions"][0]["available_formats"]
                 self.assertTrue(any(
                     item["kind"] == "ORIGINAL" and item["output_format"] == "application/json"
@@ -516,7 +516,7 @@ class ConversionsContractTest(DistributionContractTestCase):
 
         private = denied.get(
             "/resources/{resourceType}/{id}/versions/{versionId}", resourceType="dataset",
-            id=detail["resource_id"], versionId=detail["version_id"],
+            id=detail["resource_id"], versionId=detail["id"],
         )
         self.assertEqual(private.status_code, 404)
         plugin_update = denied.put(

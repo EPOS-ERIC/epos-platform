@@ -115,6 +115,7 @@ $$;
 CREATE TABLE web_services (
     -- Version-owned web service identity
     id                        uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    resource_id               uuid NOT NULL DEFAULT uuid_generate_v4(),
     dataset_version_id        uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,
 
     -- Web service metadata
@@ -130,6 +131,7 @@ CREATE TABLE web_services (
     temporal_start            timestamptz,
     temporal_end              timestamptz,
 
+    UNIQUE (dataset_version_id, resource_id),
     CHECK (temporal_start IS NULL OR temporal_end IS NULL OR temporal_start <= temporal_end),
     CHECK ((documentation_title IS NULL AND documentation_description IS NULL AND documentation_uri IS NULL) OR documentation_uri IS NOT NULL),
     CHECK (visible_on IS NULL OR cardinality(visible_on) > 0)
@@ -188,12 +190,15 @@ $$;
 -- +goose StatementEnd
 
 CREATE TABLE wms_layers (
+    id                uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    resource_id       uuid NOT NULL DEFAULT uuid_generate_v4(),
     web_service_id    uuid NOT NULL REFERENCES wms_services(web_service_id) ON DELETE CASCADE,
     name              nonblank_text NOT NULL,
     position          integer NOT NULL,
     default_style     text NOT NULL,
     styles            text[] NOT NULL,
-    PRIMARY KEY (web_service_id, name),
+    UNIQUE (web_service_id, name),
+    UNIQUE (web_service_id, resource_id),
     UNIQUE (web_service_id, position),
     CHECK (is_valid_wms_styles(styles)),
     CHECK (default_style = ANY(styles))
@@ -222,12 +227,15 @@ $$;
 -- +goose StatementEnd
 
 CREATE TABLE wmts_layers (
+    id             uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    resource_id    uuid NOT NULL DEFAULT uuid_generate_v4(),
     web_service_id uuid NOT NULL REFERENCES wmts_services(web_service_id) ON DELETE CASCADE,
     name           nonblank_text NOT NULL,
     position       integer NOT NULL,
     default_style  nonblank_text_opt,
     styles         text[] NOT NULL,
-    PRIMARY KEY (web_service_id, name),
+    UNIQUE (web_service_id, name),
+    UNIQUE (web_service_id, resource_id),
     UNIQUE (web_service_id, position),
     CHECK (is_valid_wmts_styles(styles)),
     CHECK (default_style IS NULL OR default_style = ANY(styles))
@@ -253,6 +261,7 @@ CREATE TABLE web_service_contact_points (
 );
 CREATE TABLE parameters (
     id                              uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    resource_id                     uuid NOT NULL DEFAULT uuid_generate_v4(),
     position                        integer NOT NULL,
     name                            nonblank_text NOT NULL,
     label                           nonblank_text NOT NULL,

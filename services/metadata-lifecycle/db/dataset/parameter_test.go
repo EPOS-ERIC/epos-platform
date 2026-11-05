@@ -121,6 +121,23 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 			}
 		})
 	}
+
+	resourceID := uuid.New()
+	parameter := domain.Parameter{ID: uuid.New(), ResourceID: resourceID}
+	inputs := []domain.ParameterInput{{ResourceID: &resourceID}}
+	identities := make(map[uuid.UUID]domain.Parameter)
+	if err := matchParameters(inputs, []domain.Parameter{parameter}, "parameters", identities); err != nil {
+		t.Fatalf("match existing parameter: %v", err)
+	}
+	if identities[resourceID].ID != parameter.ID {
+		t.Fatal("existing parameter identity not preserved")
+	}
+	if err := matchParameters(inputs, nil, "other_parameters", make(map[uuid.UUID]domain.Parameter)); err == nil {
+		t.Fatal("parameter accepted in a different collection")
+	}
+	if err := matchParameters(append(inputs, inputs...), []domain.Parameter{parameter}, "parameters", make(map[uuid.UUID]domain.Parameter)); err == nil {
+		t.Fatal("duplicate parameter identity accepted")
+	}
 }
 
 func parameterRow(value sqlc.AddLifecycleParameterParams) sqlc.Parameter {

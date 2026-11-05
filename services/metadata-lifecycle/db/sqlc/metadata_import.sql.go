@@ -34,7 +34,7 @@ func (q *Queries) AddImportOrganizationContactPoint(ctx context.Context, arg Add
 
 const addImportOrganizationIdentifier = `-- name: AddImportOrganizationIdentifier :exec
 INSERT INTO
-    identifiers (TYPE, value, organization_id)
+    organization_identifiers (TYPE, value, organization_id)
 VALUES
     (
         $1,
@@ -46,7 +46,7 @@ VALUES
 type AddImportOrganizationIdentifierParams struct {
 	Type           string
 	Value          string
-	OrganizationID *uuid.UUID
+	OrganizationID uuid.UUID
 }
 
 func (q *Queries) AddImportOrganizationIdentifier(ctx context.Context, arg AddImportOrganizationIdentifierParams) error {
@@ -184,12 +184,12 @@ func (q *Queries) DeleteImportOrganizationContactPoints(ctx context.Context, org
 
 const deleteImportOrganizationIdentifiers = `-- name: DeleteImportOrganizationIdentifiers :exec
 DELETE FROM
-    identifiers
+    organization_identifiers
 WHERE
     organization_id = $1
 `
 
-func (q *Queries) DeleteImportOrganizationIdentifiers(ctx context.Context, organizationID *uuid.UUID) error {
+func (q *Queries) DeleteImportOrganizationIdentifiers(ctx context.Context, organizationID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteImportOrganizationIdentifiers, organizationID)
 	return err
 }

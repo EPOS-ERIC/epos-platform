@@ -80,13 +80,13 @@ RETURNING
 
 -- name: DeleteImportOrganizationIdentifiers :exec
 DELETE FROM
-    identifiers
+    organization_identifiers
 WHERE
     organization_id = sqlc.arg(organization_id);
 
 -- name: AddImportOrganizationIdentifier :exec
 INSERT INTO
-    identifiers (TYPE, value, organization_id)
+    organization_identifiers (TYPE, value, organization_id)
 VALUES
     (
         sqlc.arg(TYPE),

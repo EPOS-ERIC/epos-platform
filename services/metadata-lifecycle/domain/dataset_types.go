@@ -61,6 +61,7 @@ type DatasetMetadata struct {
 
 // DistributionInput contains caller-controlled distribution fields.
 type DistributionInput struct {
+	ResourceID       *uuid.UUID
 	Title            string
 	Description      string
 	License          *string
@@ -75,6 +76,7 @@ type DistributionInput struct {
 // Distribution is persisted distribution metadata.
 type Distribution struct {
 	ID               uuid.UUID
+	ResourceID       uuid.UUID
 	Title            string
 	Description      string
 	License          *string
@@ -89,6 +91,7 @@ type Distribution struct {
 
 // WebServiceInput contains caller-controlled web-service fields.
 type WebServiceInput struct {
+	ResourceID       *uuid.UUID
 	Name             string
 	Description      *string
 	Type             WebServiceType
@@ -104,6 +107,7 @@ type WebServiceInput struct {
 // WebService is persisted web-service metadata.
 type WebService struct {
 	ID               uuid.UUID
+	ResourceID       uuid.UUID
 	Name             string
 	Description      *string
 	Type             WebServiceType
@@ -179,7 +183,7 @@ func (WFSConfiguration) webServiceConfiguration() {}
 type WMSConfigurationInput struct {
 	CapabilitiesURL          string
 	DefaultLayer             string
-	Layers                   []WMSLayer
+	Layers                   []WMSLayerInput
 	TransparencyEditable     bool
 	DefaultTransparency      bool
 	GetMapParameters         []WebServiceParameterInput
@@ -200,7 +204,16 @@ type WMSConfiguration struct {
 
 func (WMSConfiguration) webServiceConfiguration() {}
 
+type WMSLayerInput struct {
+	ResourceID   *uuid.UUID
+	Name         string
+	DefaultStyle string
+	Styles       []string
+}
+
 type WMSLayer struct {
+	ID           uuid.UUID
+	ResourceID   uuid.UUID
 	Name         string
 	DefaultStyle string
 	Styles       []string
@@ -209,7 +222,7 @@ type WMSLayer struct {
 type WMTSConfigurationInput struct {
 	CapabilitiesURL          string
 	DefaultLayer             string
-	Layers                   []WMTSLayer
+	Layers                   []WMTSLayerInput
 	GetTileParameters        []WebServiceParameterInput
 	GetFeatureInfoParameters []WebServiceParameterInput
 }
@@ -226,7 +239,16 @@ type WMTSConfiguration struct {
 
 func (WMTSConfiguration) webServiceConfiguration() {}
 
+type WMTSLayerInput struct {
+	ResourceID   *uuid.UUID
+	Name         string
+	DefaultStyle *string
+	Styles       []string
+}
+
 type WMTSLayer struct {
+	ID           uuid.UUID
+	ResourceID   uuid.UUID
 	Name         string
 	DefaultStyle *string
 	Styles       []string
@@ -364,6 +386,7 @@ func (r WebServiceParameterRole) Valid() bool {
 
 // ParameterInput contains caller-controlled scalar or template parameter fields.
 type ParameterInput struct {
+	ResourceID  *uuid.UUID
 	Position    int
 	Name        string
 	Label       string
@@ -378,7 +401,8 @@ type ParameterInput struct {
 // Parameter is persisted scalar or template parameter metadata.
 type Parameter struct {
 	ParameterInput
-	ID uuid.UUID
+	ID         uuid.UUID
+	ResourceID uuid.UUID
 }
 
 type WebServiceParameterInput struct {

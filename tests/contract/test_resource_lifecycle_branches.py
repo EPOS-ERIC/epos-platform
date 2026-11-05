@@ -113,7 +113,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         self.assertEqual(created.status_code, 201)
         resource_id = created.json()["id"]
         draft = self.get_version(resource_id, "DRAFT")
-        version_id = draft["version_id"]
+        version_id = draft["id"]
         self.assertEqual(draft["resource_id"], resource_id)
         self.assertEqual(draft["revision"], 1)
 
@@ -148,7 +148,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         self.assertEqual(replaced.status_code, 200)
         draft = self.get_version(resource_id, "DRAFT")
         self.assertEqual(draft["revision"], 2)
-        version_id = draft["version_id"]
+        version_id = draft["id"]
         draft_details = editor.get(
             "/resources/{resourceType}/{id}/versions/{versionId}",
             resourceType="dataset",
@@ -173,7 +173,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         )
         self.assertEqual(submitted.status_code, 200)
         submitted_version = self.get_version(resource_id, "SUBMITTED")
-        self.assertEqual(submitted_version["version_id"], version_id)
+        self.assertEqual(submitted_version["id"], version_id)
         self.assertEqual(submitted_version["submitted_by"], editor_id)
         self.assertIsNotNone(submitted_version["submitted_at"])
 
@@ -184,7 +184,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
             versionId=version_id,
         )
         self.assertEqual(withdrawn.status_code, 200)
-        self.assertEqual(self.get_version(resource_id, "DRAFT")["version_id"], version_id)
+        self.assertEqual(self.get_version(resource_id, "DRAFT")["id"], version_id)
 
         self.assertEqual(
             editor.post(
@@ -205,7 +205,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         )
         self.assertEqual(rejected.status_code, 200)
         rejected_version = self.get_version(resource_id, "REJECTED")
-        self.assertEqual(rejected_version["version_id"], version_id)
+        self.assertEqual(rejected_version["id"], version_id)
         self.assertEqual(rejected_version["rejected_by"], reviewer_id)
         self.assertIsNotNone(rejected_version["rejected_at"])
         self.assertEqual(rejected_version["rejection_note"], rejection_note)
@@ -227,7 +227,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         )
         self.assertEqual(reopened.status_code, 200)
         reopened_version = self.get_version(resource_id, "DRAFT")
-        self.assertEqual(reopened_version["version_id"], version_id)
+        self.assertEqual(reopened_version["id"], version_id)
         self.assertEqual(reopened_version["rejection_note"], rejection_note)
 
         self.assertEqual(
@@ -247,7 +247,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         )
         self.assertEqual(published.status_code, 200)
         published_version = self.get_version(resource_id, "PUBLISHED")
-        self.assertEqual(published_version["version_id"], version_id)
+        self.assertEqual(published_version["id"], version_id)
         self.assertEqual(published_version["published_by"], reviewer_id)
         self.assertIsNotNone(published_version["published_at"])
         self.assertIsNone(published_version["rejected_by"])
@@ -278,13 +278,13 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         self.assertEqual(from_publication.json()["id"], resource_id)
         self.assertEqual(from_publication.json()["status"], "DRAFT")
         publication_draft = self.get_version(resource_id, "DRAFT")
-        self.assertNotEqual(publication_draft["version_id"], version_id)
+        self.assertNotEqual(publication_draft["id"], version_id)
         self.assertEqual(publication_draft["revision"], 1)
         publication_draft_details = editor.get(
             "/resources/{resourceType}/{id}/versions/{versionId}",
             resourceType="dataset",
             id=resource_id,
-            versionId=publication_draft["version_id"],
+            versionId=publication_draft["id"],
         ).json()
         self.assertEqual(
             publication_draft_details["metadata"]["title"],
@@ -304,7 +304,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
             "/resources/{resourceType}/{id}/versions/{versionId}/draft",
             resourceType="dataset",
             id=resource_id,
-            versionId=publication_draft["version_id"],
+            versionId=publication_draft["id"],
         )
         self.assertEqual(discarded_publication_draft.status_code, 204)
 
@@ -316,7 +316,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         )
         self.assertEqual(unpublished.status_code, 200)
         archived_version = self.get_version(resource_id, "ARCHIVED")
-        self.assertEqual(archived_version["version_id"], version_id)
+        self.assertEqual(archived_version["id"], version_id)
         self.assertEqual(archived_version["archived_by"], reviewer_id)
         self.assertIsNotNone(archived_version["archived_at"])
 
@@ -329,12 +329,12 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         self.assertEqual(from_archive.json()["id"], resource_id)
         self.assertEqual(from_archive.json()["status"], "DRAFT")
         archive_draft = self.get_version(resource_id, "DRAFT")
-        self.assertNotEqual(archive_draft["version_id"], version_id)
+        self.assertNotEqual(archive_draft["id"], version_id)
         archive_draft_details = editor.get(
             "/resources/{resourceType}/{id}/versions/{versionId}",
             resourceType="dataset",
             id=resource_id,
-            versionId=archive_draft["version_id"],
+            versionId=archive_draft["id"],
         ).json()
         self.assertEqual(archive_draft_details["metadata"]["title"], updated_title)
 
@@ -351,7 +351,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         )
         self.assertEqual(rejected_resource.status_code, 201)
         rejected_id = rejected_resource.json()["id"]
-        rejected_version_id = self.get_version(rejected_id, "DRAFT")["version_id"]
+        rejected_version_id = self.get_version(rejected_id, "DRAFT")["id"]
         self.assertEqual(
             editor.post(
                 "/resources/{resourceType}/{id}/versions/{versionId}/submit",
@@ -399,7 +399,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
         )
         self.assertEqual(draft_resource.status_code, 201)
         draft_resource_id = draft_resource.json()["id"]
-        draft_resource_version_id = self.get_version(draft_resource_id, "DRAFT")["version_id"]
+        draft_resource_version_id = self.get_version(draft_resource_id, "DRAFT")["id"]
         discarded_draft = editor.delete(
             "/resources/{resourceType}/{id}/versions/{versionId}/draft",
             resourceType="dataset",
@@ -448,7 +448,7 @@ class ResourceLifecycleBranchesContractTest(unittest.TestCase):
                 version for version in versions.json() if version["status"] == "DRAFT"
             ]
             self.assertEqual(len(drafts), 1)
-            version_id = drafts[0]["version_id"]
+            version_id = drafts[0]["id"]
             details_path = "/resources/{resourceType}/{id}/versions/{versionId}"
             draft_details = editor.get(
                 details_path,

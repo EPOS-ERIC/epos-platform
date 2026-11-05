@@ -894,8 +894,8 @@ func (s *Server) handleBlockUserRequest(args [1]string, argsEscaped bool, w http
 
 // handleCopyResourceRequest handles copyResource operation.
 //
-// Creates a draft copy in the group identified by `groupId`. The target group is taken from the URL,
-// not the request body.
+// Creates an independent draft copy in the group identified by `groupId`, with new resource and child
+// identities. The target group is taken from the URL, not the request body.
 //
 // POST /groups/{groupId}/resources/{resourceType}/{id}/copy
 func (s *Server) handleCopyResourceRequest(args [3]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -5427,7 +5427,8 @@ func (s *Server) handleDownloadDistributionRequest(args [1]string, argsEscaped b
 
 // handleDraftFromArchiveRequest handles draftFromArchive operation.
 //
-// Create draft from archive.
+// Creates a draft version with new version-specific IDs and the same logical resource IDs as the
+// latest archived version.
 //
 // POST /resources/{resourceType}/{id}/draft-from-archive
 func (s *Server) handleDraftFromArchiveRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -5631,7 +5632,8 @@ func (s *Server) handleDraftFromArchiveRequest(args [2]string, argsEscaped bool,
 
 // handleDraftFromPublicationRequest handles draftFromPublication operation.
 //
-// Create draft from publication.
+// Creates a draft version with new version-specific IDs and the same logical resource IDs as the
+// published version.
 //
 // POST /resources/{resourceType}/{id}/draft-from-publication
 func (s *Server) handleDraftFromPublicationRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -13508,8 +13510,13 @@ func (s *Server) handleReplaceOrganizationRequest(args [1]string, argsEscaped bo
 
 // handleReplaceResourceDraftVersionRequest handles replaceResourceDraftVersion operation.
 //
-// Replaces an editable draft only. Request body shape is selected by `resource_type` and includes the
-// current revision.
+// Replaces all metadata in an editable draft. Request shape is selected by `resource_type` and
+// includes the current revision. To retain a distribution, web service, parameter, layer, or
+// identifier, send its `resource_id` from the draft read response. Omit `resource_id` for a new child;
+// omit an existing child from its collection to remove it. IDs must belong to the same draft and
+// parent. Parameters cannot move between collections or web services. Changing a parameter's PATH,
+// QUERY, or HEADER location within its collection is an edit. Child `id` identifies the
+// version-specific record and is not sent on writes.
 //
 // PUT /resources/{id}/versions/{versionId}/draft
 func (s *Server) handleReplaceResourceDraftVersionRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

@@ -257,7 +257,11 @@ func (value DatasetMetadata) Validate() error {
 func (value DatasetMetadata) Input() DatasetInput {
 	identifiers := make([]IdentifierInput, len(value.PersistentIdentifiers))
 	for i, identifier := range value.PersistentIdentifiers {
-		identifiers[i] = IdentifierInput{Type: identifier.Type, Value: identifier.Value}
+		identifiers[i] = IdentifierInput{
+			ResourceID: &identifier.ResourceID,
+			Type:       identifier.Type,
+			Value:      identifier.Value,
+		}
 	}
 	providerIDs := make([]uuid.UUID, len(value.Providers))
 	for i, provider := range value.Providers {
@@ -409,6 +413,7 @@ func validateDatasetTemporal(temporal *Temporal, geological *GeologicalTemporal)
 
 func distributionInput(value Distribution) DistributionInput {
 	result := DistributionInput{
+		ResourceID:       &value.ResourceID,
 		Title:            value.Title,
 		Description:      value.Description,
 		License:          value.License,
@@ -437,6 +442,7 @@ func (value WebService) Input() WebServiceInput {
 		contactPointIDs[i] = contact.ID
 	}
 	return WebServiceInput{
+		ResourceID:       &value.ResourceID,
 		Name:             value.Name,
 		Description:      value.Description,
 		Type:             value.Type,
@@ -482,20 +488,40 @@ func (value WFSConfiguration) Input() WebServiceConfigurationInput {
 }
 
 func (value WMTSConfiguration) Input() WebServiceConfigurationInput {
+	layers := make([]WMTSLayerInput, len(value.Layers))
+	for i, layer := range value.Layers {
+		layers[i] = WMTSLayerInput{
+			ResourceID:   &layer.ResourceID,
+			Name:         layer.Name,
+			DefaultStyle: layer.DefaultStyle,
+			Styles:       layer.Styles,
+		}
+	}
+
 	return WMTSConfigurationInput{
 		CapabilitiesURL:          value.CapabilitiesURL,
 		DefaultLayer:             value.DefaultLayer,
-		Layers:                   value.Layers,
+		Layers:                   layers,
 		GetTileParameters:        webServiceParameterInputs(value.GetTileParameters),
 		GetFeatureInfoParameters: webServiceParameterInputs(value.GetFeatureInfoParameters),
 	}
 }
 
 func (value WMSConfiguration) Input() WebServiceConfigurationInput {
+	layers := make([]WMSLayerInput, len(value.Layers))
+	for i, layer := range value.Layers {
+		layers[i] = WMSLayerInput{
+			ResourceID:   &layer.ResourceID,
+			Name:         layer.Name,
+			DefaultStyle: layer.DefaultStyle,
+			Styles:       layer.Styles,
+		}
+	}
+
 	return WMSConfigurationInput{
 		CapabilitiesURL:          value.CapabilitiesURL,
 		DefaultLayer:             value.DefaultLayer,
-		Layers:                   value.Layers,
+		Layers:                   layers,
 		TransparencyEditable:     value.TransparencyEditable,
 		DefaultTransparency:      value.DefaultTransparency,
 		GetMapParameters:         webServiceParameterInputs(value.GetMapParameters),

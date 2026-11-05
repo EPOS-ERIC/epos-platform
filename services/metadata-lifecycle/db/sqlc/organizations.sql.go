@@ -106,7 +106,7 @@ func (q *Queries) CreateOrganizationContactPoint(ctx context.Context, arg Create
 
 const createOrganizationIdentifier = `-- name: CreateOrganizationIdentifier :exec
 INSERT INTO
-    identifiers (id, TYPE, value, organization_id)
+    organization_identifiers (id, TYPE, value, organization_id)
 VALUES
     (
         $1,
@@ -120,7 +120,7 @@ type CreateOrganizationIdentifierParams struct {
 	ID             uuid.UUID
 	Type           string
 	Value          string
-	OrganizationID *uuid.UUID
+	OrganizationID uuid.UUID
 }
 
 func (q *Queries) CreateOrganizationIdentifier(ctx context.Context, arg CreateOrganizationIdentifierParams) error {
@@ -182,12 +182,12 @@ func (q *Queries) DeleteOrganizationContactPoints(ctx context.Context, organizat
 
 const deleteOrganizationIdentifiers = `-- name: DeleteOrganizationIdentifiers :exec
 DELETE FROM
-    identifiers
+    organization_identifiers
 WHERE
     organization_id = $1
 `
 
-func (q *Queries) DeleteOrganizationIdentifiers(ctx context.Context, organizationID *uuid.UUID) error {
+func (q *Queries) DeleteOrganizationIdentifiers(ctx context.Context, organizationID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteOrganizationIdentifiers, organizationID)
 	return err
 }
@@ -342,9 +342,9 @@ func (q *Queries) ListOrganizationContactPointIDs(ctx context.Context, organizat
 const listOrganizationIdentifiers = `-- name: ListOrganizationIdentifiers :many
 SELECT
     organization_id,
-    identifier.id, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
+    identifier.id, identifier.organization_id, identifier.type, identifier.value
 FROM
-    identifiers AS identifier
+    organization_identifiers AS identifier
 WHERE
     organization_id = ANY($1::uuid [])
 ORDER BY
@@ -353,8 +353,8 @@ ORDER BY
 `
 
 type ListOrganizationIdentifiersRow struct {
-	OrganizationID *uuid.UUID
-	Identifier     Identifier
+	OrganizationID         uuid.UUID
+	OrganizationIdentifier OrganizationIdentifier
 }
 
 func (q *Queries) ListOrganizationIdentifiers(ctx context.Context, organizationIds []uuid.UUID) ([]ListOrganizationIdentifiersRow, error) {
@@ -368,13 +368,10 @@ func (q *Queries) ListOrganizationIdentifiers(ctx context.Context, organizationI
 		var i ListOrganizationIdentifiersRow
 		if err := rows.Scan(
 			&i.OrganizationID,
-			&i.Identifier.ID,
-			&i.Identifier.Type,
-			&i.Identifier.Value,
-			&i.Identifier.DatasetVersionID,
-			&i.Identifier.OrganizationID,
-			&i.Identifier.SoftwareApplicationVersionID,
-			&i.Identifier.SoftwareSourceCodeVersionID,
+			&i.OrganizationIdentifier.ID,
+			&i.OrganizationIdentifier.OrganizationID,
+			&i.OrganizationIdentifier.Type,
+			&i.OrganizationIdentifier.Value,
 		); err != nil {
 			return nil, err
 		}

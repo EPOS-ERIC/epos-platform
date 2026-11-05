@@ -31,6 +31,21 @@ func New(pool *pgxpool.Pool) *Repo {
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.DatasetInput) (domain.DatasetVersion, error) {
 	var result domain.DatasetVersion
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
+		if _, err := resourcedb.IdentifierIdentities(value.PersistentIdentifiers, nil, "metadata.persistent_identifiers"); err != nil {
+			return err
+		}
+		distributions, err := distributionIdentities(value.Distributions, nil)
+		if err != nil {
+			return err
+		}
+		parameters, err := parameterIdentities(value.Distributions, nil)
+		if err != nil {
+			return err
+		}
+		layers, err := layerIdentities(value.Distributions, nil)
+		if err != nil {
+			return err
+		}
 		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
 		if err != nil {
 			return fmt.Errorf("validate dataset categories: %w", err)
@@ -57,7 +72,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 			return fmt.Errorf("create dataset version: %w", err)
 		}
 
-		if err := PersistChildren(ctx, q, version.ID, value); err != nil {
+		if err := persistChildren(ctx, q, version.ID, value, nil, distributions, parameters, layers); err != nil {
 			return fmt.Errorf("persist dataset metadata: %w", err)
 		}
 		result, err = datasetResultByID(ctx, q, version.DatasetID, version.ID)
@@ -100,11 +115,31 @@ func (r *Repo) ReplaceDraft(
 		if err != nil {
 			return fmt.Errorf("replace draft: %w", err)
 		}
+		current, err := datasetResultByID(ctx, q, datasetID, versionID)
+		if err != nil {
+			return err
+		}
+		identities, err := resourcedb.IdentifierIdentities(value.Metadata.PersistentIdentifiers, current.Metadata.PersistentIdentifiers, "metadata.persistent_identifiers")
+		if err != nil {
+			return err
+		}
+		distributions, err := distributionIdentities(value.Metadata.Distributions, current.Metadata.Distributions)
+		if err != nil {
+			return err
+		}
+		parameters, err := parameterIdentities(value.Metadata.Distributions, current.Metadata.Distributions)
+		if err != nil {
+			return err
+		}
+		layers, err := layerIdentities(value.Metadata.Distributions, current.Metadata.Distributions)
+		if err != nil {
+			return err
+		}
 
 		if err := q.DeleteLifecycleDatasetVersionChildren(ctx, &version.ID); err != nil {
 			return fmt.Errorf("delete draft children: %w", err)
 		}
-		if err := PersistChildren(ctx, q, version.ID, value.Metadata); err != nil {
+		if err := persistChildren(ctx, q, version.ID, value.Metadata, identities, distributions, parameters, layers); err != nil {
 			return fmt.Errorf("persist draft metadata: %w", err)
 		}
 		result, err = datasetResultByID(ctx, q, version.DatasetID, version.ID)
@@ -448,8 +483,21 @@ func datasetResultFromRow(ctx context.Context, q *sqlc.Queries, version sqlc.Get
 }
 
 func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.DatasetInput) error {
+	return persistChildren(ctx, q, versionID, value, nil, nil, nil, nil)
+}
+
+func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.DatasetInput, identities map[uuid.UUID]domain.Identifier, distributions []distributionIdentity, parameters map[uuid.UUID]domain.Parameter, layers map[uuid.UUID]uuid.UUID) error {
+	if distributions == nil {
+		distributions = make([]distributionIdentity, len(value.Distributions))
+		for i := range distributions {
+			distributions[i] = distributionIdentity{id: uuid.New(), resourceID: uuid.New(), serviceID: uuid.New(), serviceResourceID: uuid.New()}
+		}
+	}
 	for _, identifier := range value.PersistentIdentifiers {
+		id, resourceID := resourcedb.IdentifierIDs(identifier, identities)
 		if err := q.AddLifecycleDatasetIdentifier(ctx, sqlc.AddLifecycleDatasetIdentifierParams{
+			ID:               id,
+			ResourceID:       resourceID,
 			Type:             string(identifier.Type),
 			Value:            identifier.Value,
 			DatasetVersionID: &versionID,
@@ -498,6 +546,8 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			title, description, uri = service.Documentation.Title, service.Documentation.Description, &service.Documentation.URI
 		}
 		created, err := q.AddLifecycleWebService(ctx, sqlc.AddLifecycleWebServiceParams{
+			ID:                       distributions[i].serviceID,
+			ResourceID:               distributions[i].serviceResourceID,
 			DatasetVersionID:         versionID,
 			Name:                     service.Name,
 			Description:              service.Description,
@@ -546,14 +596,14 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				}
 				bodyID = &body.ID
 				for _, parameter := range configuration.Body.Parameters {
-					if _, err := persistParameter(ctx, q, parameter, parameterOwner{webServiceBodyID: bodyID}, nil, false); err != nil {
+					if _, err := persistParameter(ctx, q, parameter, parameterOwner{webServiceBodyID: bodyID}, nil, false, parameters); err != nil {
 						return fmt.Errorf("add web service body parameter: %w", err)
 					}
 				}
 			}
 			for _, parameter := range configuration.Parameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{webServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{webServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add web service parameter: %w", err)
 				}
 			}
@@ -573,7 +623,7 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.Parameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wfsServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wfsServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WFS parameter: %w", err)
 				}
 			}
@@ -584,25 +634,32 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				return fmt.Errorf("add WMTS configuration: %w", err)
 			}
 			for position, layer := range configuration.Layers {
+				id, resourceID := layerIDs(layer.ResourceID, layers)
 				styles := layer.Styles
 				if styles == nil {
 					styles = []string{}
 				}
 				if err := q.AddLifecycleWMTSLayer(ctx, sqlc.AddLifecycleWMTSLayerParams{
-					WebServiceID: created.ID, Name: layer.Name, Position: int32(position), DefaultStyle: layer.DefaultStyle, Styles: styles,
+					ID:           id,
+					ResourceID:   resourceID,
+					WebServiceID: created.ID,
+					Name:         layer.Name,
+					Position:     int32(position),
+					DefaultStyle: layer.DefaultStyle,
+					Styles:       styles,
 				}); err != nil {
 					return fmt.Errorf("add WMTS layer %q: %w", layer.Name, err)
 				}
 			}
 			for _, parameter := range configuration.GetTileParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetTileServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetTileServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMTS GetTile parameter: %w", err)
 				}
 			}
 			for _, parameter := range configuration.GetFeatureInfoParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMTS GetFeatureInfo parameter: %w", err)
 				}
 			}
@@ -617,7 +674,10 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				return fmt.Errorf("add WMS configuration: %w", err)
 			}
 			for layerPosition, layer := range configuration.Layers {
+				id, resourceID := layerIDs(layer.ResourceID, layers)
 				if err := q.AddLifecycleWMSLayer(ctx, sqlc.AddLifecycleWMSLayerParams{
+					ID:           id,
+					ResourceID:   resourceID,
 					WebServiceID: created.ID,
 					Name:         layer.Name,
 					Position:     int32(layerPosition),
@@ -629,13 +689,13 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.GetMapParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetMapServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetMapServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMS GetMap parameter: %w", err)
 				}
 			}
 			for _, parameter := range configuration.GetFeatureInfoParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMS GetFeatureInfo parameter: %w", err)
 				}
 			}
@@ -645,6 +705,8 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 	}
 	for i, distribution := range value.Distributions {
 		params := sqlc.AddLifecycleDistributionParams{
+			ID:                     distributions[i].id,
+			ResourceID:             distributions[i].resourceID,
 			DatasetVersionID:       versionID,
 			Title:                  distribution.Title,
 			Description:            distribution.Description,
@@ -867,6 +929,8 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 			return nil, fmt.Errorf("WMS layer references non-WMS service %s", value.WebServiceID)
 		}
 		configuration.Layers = append(configuration.Layers, domain.WMSLayer{
+			ID:           value.ID,
+			ResourceID:   value.ResourceID,
 			Name:         value.Name,
 			DefaultStyle: value.DefaultStyle,
 			Styles:       value.Styles,
@@ -899,7 +963,13 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		if !ok {
 			return nil, fmt.Errorf("WMTS layer references non-WMTS service %s", value.WebServiceID)
 		}
-		configuration.Layers = append(configuration.Layers, domain.WMTSLayer{Name: value.Name, DefaultStyle: value.DefaultStyle, Styles: value.Styles})
+		configuration.Layers = append(configuration.Layers, domain.WMTSLayer{
+			ID:           value.ID,
+			ResourceID:   value.ResourceID,
+			Name:         value.Name,
+			DefaultStyle: value.DefaultStyle,
+			Styles:       value.Styles,
+		})
 		service.Configuration = configuration
 		result[value.WebServiceID] = service
 	}
