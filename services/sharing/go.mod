@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/services/sharing
 
-go 1.27
+go 1.27.3
 
 require (
 	buf.build/go/protovalidate v1.3.0
