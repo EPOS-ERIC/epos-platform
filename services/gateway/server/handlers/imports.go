@@ -20,7 +20,7 @@ func (h *ogenHandler) ImportTurtleMetadata(ctx context.Context, body gatewayapi.
 	if err != nil {
 		return nil, fmt.Errorf("read import body: %w", err)
 	}
-	v, err := h.metadataLifecycle.ImportTurtle(ctx, actor, importTurtleRequest(data))
+	v, err := h.metadataLifecycleClient.ImportTurtle(ctx, actor, importTurtleRequest(data))
 	if err != nil {
 		return nil, fmt.Errorf("import turtle metadata: %w", err)
 	}

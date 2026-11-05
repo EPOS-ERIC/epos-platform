@@ -1725,14 +1725,6 @@ func (s *CreateContactPointRequest) SetRole(val NonBlankString) {
 	s.Role = val
 }
 
-type CreateConversionPluginAccepted ManagedConversionPlugin
-
-func (*CreateConversionPluginAccepted) createConversionPluginRes() {}
-
-type CreateConversionPluginCreated ManagedConversionPlugin
-
-func (*CreateConversionPluginCreated) createConversionPluginRes() {}
-
 // Ref: #/components/schemas/CreateConversionPluginRequest
 type CreateConversionPluginRequest struct {
 	Name        string    `json:"name"`
@@ -12187,14 +12179,6 @@ func (s *ReplaceContactPointRequest) SetEmail(val string) {
 func (s *ReplaceContactPointRequest) SetRole(val NonBlankString) {
 	s.Role = val
 }
-
-type ReplaceConversionPluginAccepted ManagedConversionPlugin
-
-func (*ReplaceConversionPluginAccepted) replaceConversionPluginRes() {}
-
-type ReplaceConversionPluginOK ManagedConversionPlugin
-
-func (*ReplaceConversionPluginOK) replaceConversionPluginRes() {}
 
 // Ref: #/components/schemas/ReplaceConversionPluginRequest
 type ReplaceConversionPluginRequest struct {

@@ -41,42 +41,40 @@ func New(repo Repository, manager *plugin.Manager, log *slog.Logger) *Service {
 	return &Service{repo: repo, manager: manager, log: log}
 }
 
-func (s *Service) CreatePlugin(ctx context.Context, input domain.PluginInput, actor string) (domain.Plugin, bool, error) {
+func (s *Service) CreatePlugin(ctx context.Context, input domain.PluginInput, actor string) (domain.Plugin, error) {
 	input, err := domain.NewPluginInput(input)
 	if err != nil {
-		return domain.Plugin{}, false, err
+		return domain.Plugin{}, err
 	}
 	record, err := s.repo.CreatePlugin(ctx, input, actor)
 	if err != nil {
-		return domain.Plugin{}, false, err
+		return domain.Plugin{}, err
 	}
 	if err := s.manager.Sync(ctx, definition(record), false); err != nil {
 		s.log.ErrorContext(ctx, "initial plugin sync failed", "plugin_id", record.ID, "error", err)
-		return record, true, nil
 	}
-	return record, false, nil
+	return record, nil
 }
 
-func (s *Service) UpdatePlugin(ctx context.Context, id uuid.UUID, input domain.PluginInput, enabled bool, actor string) (domain.Plugin, bool, error) {
+func (s *Service) UpdatePlugin(ctx context.Context, id uuid.UUID, input domain.PluginInput, enabled bool, actor string) (domain.Plugin, error) {
 	input, err := domain.NewPluginInput(input)
 	if err != nil {
-		return domain.Plugin{}, false, err
+		return domain.Plugin{}, err
 	}
 	previous, err := s.repo.Plugin(ctx, id)
 	if err != nil {
-		return domain.Plugin{}, false, err
+		return domain.Plugin{}, err
 	}
 	record, err := s.repo.UpdatePlugin(ctx, id, input, enabled, actor)
 	if err != nil {
-		return domain.Plugin{}, false, err
+		return domain.Plugin{}, err
 	}
 	if previous.Repository.String() != input.Repository.String() || previous.Branch != input.Branch || previous.Runtime != input.Runtime {
 		if err := s.manager.Sync(ctx, definition(record), true); err != nil {
 			s.log.ErrorContext(ctx, "updated plugin sync failed", "plugin_id", id, "error", err)
-			return record, true, nil
 		}
 	}
-	return record, false, nil
+	return record, nil
 }
 
 func (s *Service) DeletePlugin(ctx context.Context, id uuid.UUID) error {

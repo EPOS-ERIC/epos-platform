@@ -14,7 +14,7 @@ func (h *ogenHandler) DiscoverResources(ctx context.Context, q gatewayapi.Discov
 	if err != nil {
 		return nil, err
 	}
-	response, err := h.metadataLifecycle.SearchResources(ctx, actor, request)
+	response, err := h.metadataLifecycleClient.SearchResources(ctx, actor, request)
 	if err != nil {
 		return nil, fmt.Errorf("search resources: %w", err)
 	}

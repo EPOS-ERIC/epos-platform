@@ -12,7 +12,7 @@ import (
 )
 
 func (h *ogenHandler) ListGroups(ctx context.Context) ([]gatewayapi.Group, error) {
-	v, err := h.metadataLifecycle.ListGroups(ctx)
+	v, err := h.metadataLifecycleClient.ListGroups(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list groups: %w", err)
 	}
@@ -86,7 +86,7 @@ func toProtoGroupConcept(value string) metadatalifecyclev1.TopLevelConcept {
 }
 
 func (h *ogenHandler) GetGroup(ctx context.Context, q gatewayapi.GetGroupParams) (*gatewayapi.Group, error) {
-	v, err := h.metadataLifecycle.GetGroup(ctx, &metadatalifecyclev1.GetGroupRequest{GroupId: q.GroupId.String()})
+	v, err := h.metadataLifecycleClient.GetGroup(ctx, &metadatalifecyclev1.GetGroupRequest{GroupId: q.GroupId.String()})
 	if err != nil {
 		return nil, fmt.Errorf("get group: %w", err)
 	}
@@ -114,7 +114,7 @@ func (h *ogenHandler) CreateGroup(ctx context.Context, q *gatewayapi.CreateGroup
 	if q.Position.Set {
 		in.Position = q.Position.Value
 	}
-	v, err := h.metadataLifecycle.CreateGroup(ctx, actor, in)
+	v, err := h.metadataLifecycleClient.CreateGroup(ctx, actor, in)
 	if err != nil {
 		return nil, fmt.Errorf("create group: %w", err)
 	}
@@ -143,7 +143,7 @@ func (h *ogenHandler) ReplaceGroup(ctx context.Context, q *gatewayapi.ReplaceGro
 	if q.Position.Set {
 		in.Position = q.Position.Value
 	}
-	v, err := h.metadataLifecycle.ReplaceGroup(ctx, a, in)
+	v, err := h.metadataLifecycleClient.ReplaceGroup(ctx, a, in)
 	if err != nil {
 		return nil, fmt.Errorf("replace group: %w", err)
 	}
@@ -155,7 +155,7 @@ func (h *ogenHandler) ReplaceGroup(ctx context.Context, q *gatewayapi.ReplaceGro
 }
 
 func (h *ogenHandler) ListGroupCategories(ctx context.Context, q gatewayapi.ListGroupCategoriesParams) ([]gatewayapi.Category, error) {
-	v, err := h.metadataLifecycle.ListCategories(ctx, &metadatalifecyclev1.ListCategoriesRequest{GroupId: q.GroupId.String()})
+	v, err := h.metadataLifecycleClient.ListCategories(ctx, &metadatalifecyclev1.ListCategoriesRequest{GroupId: q.GroupId.String()})
 	if err != nil {
 		return nil, fmt.Errorf("list categories: %w", err)
 	}
@@ -171,7 +171,7 @@ func (h *ogenHandler) ListGroupCategories(ctx context.Context, q gatewayapi.List
 }
 
 func (h *ogenHandler) GetGroupCategory(ctx context.Context, q gatewayapi.GetGroupCategoryParams) (*gatewayapi.Category, error) {
-	v, err := h.metadataLifecycle.GetCategory(ctx, &metadatalifecyclev1.GetCategoryRequest{
+	v, err := h.metadataLifecycleClient.GetCategory(ctx, &metadatalifecyclev1.GetCategoryRequest{
 		GroupId:    q.GroupId.String(),
 		CategoryId: q.CategoryId.String(),
 	})
@@ -194,7 +194,7 @@ func (h *ogenHandler) CreateGroupCategory(ctx context.Context, q *gatewayapi.Cre
 	if q.ParentCategoryID.Set && !q.ParentCategoryID.Null {
 		in.ParentCategoryId = new(q.ParentCategoryID.Value.String())
 	}
-	v, err := h.metadataLifecycle.CreateCategory(ctx, a, in)
+	v, err := h.metadataLifecycleClient.CreateCategory(ctx, a, in)
 	if err != nil {
 		return nil, fmt.Errorf("create category: %w", err)
 	}
@@ -214,7 +214,7 @@ func (h *ogenHandler) ReplaceGroupCategory(ctx context.Context, q *gatewayapi.Re
 	if !q.ParentCategoryID.Null {
 		in.ParentCategoryId = new(q.ParentCategoryID.Value.String())
 	}
-	v, err := h.metadataLifecycle.ReplaceCategory(ctx, a, in)
+	v, err := h.metadataLifecycleClient.ReplaceCategory(ctx, a, in)
 	if err != nil {
 		return nil, fmt.Errorf("replace category: %w", err)
 	}
@@ -234,7 +234,7 @@ func (h *ogenHandler) DecideGroupRoleRequest(ctx context.Context, p gatewayapi.D
 	if err != nil {
 		return nil, err
 	}
-	v, err := h.metadataLifecycle.DecideRoleRequest(ctx, p.GroupId.String(), p.RequestId.String(), decision, a)
+	v, err := h.metadataLifecycleClient.DecideRoleRequest(ctx, p.GroupId.String(), p.RequestId.String(), decision, a)
 	if err != nil {
 		return nil, fmt.Errorf("decide role request: %w", err)
 	}
@@ -254,7 +254,7 @@ func (h *ogenHandler) AssignGroupRole(ctx context.Context, p gatewayapi.AssignGr
 	if err != nil {
 		return err
 	}
-	if err := h.metadataLifecycle.AssignGroupRole(ctx, p.GroupId.String(), p.UserId, role, a); err != nil {
+	if err := h.metadataLifecycleClient.AssignGroupRole(ctx, p.GroupId.String(), p.UserId, role, a); err != nil {
 		return fmt.Errorf("assign group role: %w", err)
 	}
 	return nil
@@ -269,7 +269,7 @@ func (h *ogenHandler) RemoveGroupRole(ctx context.Context, p gatewayapi.RemoveGr
 	if err != nil {
 		return err
 	}
-	if err := h.metadataLifecycle.RemoveGroupRole(ctx, p.GroupId.String(), p.UserId, role, a); err != nil {
+	if err := h.metadataLifecycleClient.RemoveGroupRole(ctx, p.GroupId.String(), p.UserId, role, a); err != nil {
 		return fmt.Errorf("remove group role: %w", err)
 	}
 	return nil
@@ -284,7 +284,7 @@ func (h *ogenHandler) GrantGroupPermission(ctx context.Context, p gatewayapi.Gra
 	if err != nil {
 		return fmt.Errorf("map group permission: %w", err)
 	}
-	if err := h.metadataLifecycle.GrantGroupPermission(ctx, p.GroupId.String(), p.UserId, permission, a); err != nil {
+	if err := h.metadataLifecycleClient.GrantGroupPermission(ctx, p.GroupId.String(), p.UserId, permission, a); err != nil {
 		return fmt.Errorf("grant group permission: %w", err)
 	}
 	return nil
@@ -299,7 +299,7 @@ func (h *ogenHandler) RevokeGroupPermission(ctx context.Context, p gatewayapi.Re
 	if err != nil {
 		return fmt.Errorf("map group permission: %w", err)
 	}
-	if err := h.metadataLifecycle.RevokeGroupPermission(ctx, p.GroupId.String(), p.UserId, permission, a); err != nil {
+	if err := h.metadataLifecycleClient.RevokeGroupPermission(ctx, p.GroupId.String(), p.UserId, permission, a); err != nil {
 		return fmt.Errorf("revoke group permission: %w", err)
 	}
 	return nil
@@ -310,7 +310,7 @@ func (h *ogenHandler) WithdrawGroupMembershipRequest(ctx context.Context, p gate
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if err := h.metadataLifecycle.WithdrawMembershipRequest(ctx, p.GroupId.String(), a); err != nil {
+	if err := h.metadataLifecycleClient.WithdrawMembershipRequest(ctx, p.GroupId.String(), a); err != nil {
 		return fmt.Errorf("withdraw membership request: %w", err)
 	}
 	return nil
@@ -321,7 +321,7 @@ func (h *ogenHandler) WithdrawGroupRoleRequest(ctx context.Context, p gatewayapi
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if err := h.metadataLifecycle.WithdrawRoleRequest(ctx, p.GroupId.String(), p.RequestId.String(), a); err != nil {
+	if err := h.metadataLifecycleClient.WithdrawRoleRequest(ctx, p.GroupId.String(), p.RequestId.String(), a); err != nil {
 		return fmt.Errorf("withdraw role request: %w", err)
 	}
 	return nil
@@ -336,7 +336,7 @@ func (h *ogenHandler) RequestGroupRole(ctx context.Context, q *gatewayapi.Create
 	if err != nil {
 		return nil, err
 	}
-	v, err := h.metadataLifecycle.RequestRole(ctx, p.GroupId.String(), role, a)
+	v, err := h.metadataLifecycleClient.RequestRole(ctx, p.GroupId.String(), role, a)
 	if err != nil {
 		return nil, fmt.Errorf("request role: %w", err)
 	}
@@ -352,7 +352,7 @@ func (h *ogenHandler) DeleteGroupCategory(ctx context.Context, params gatewayapi
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if _, err := h.metadataLifecycle.DeleteCategory(ctx, a, &metadatalifecyclev1.DeleteCategoryRequest{GroupId: params.GroupId.String(), CategoryId: params.CategoryId.String()}); err != nil {
+	if _, err := h.metadataLifecycleClient.DeleteCategory(ctx, a, &metadatalifecyclev1.DeleteCategoryRequest{GroupId: params.GroupId.String(), CategoryId: params.CategoryId.String()}); err != nil {
 		return fmt.Errorf("delete category: %w", err)
 	}
 	return nil
@@ -363,7 +363,7 @@ func (h *ogenHandler) DeleteGroup(ctx context.Context, p gatewayapi.DeleteGroupP
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if _, err := h.metadataLifecycle.DeleteGroup(ctx, a, &metadatalifecyclev1.DeleteGroupRequest{GroupId: p.GroupId.String()}); err != nil {
+	if _, err := h.metadataLifecycleClient.DeleteGroup(ctx, a, &metadatalifecyclev1.DeleteGroupRequest{GroupId: p.GroupId.String()}); err != nil {
 		return fmt.Errorf("delete group: %w", err)
 	}
 	return nil
@@ -374,7 +374,7 @@ func (h *ogenHandler) ListGroupMemberships(ctx context.Context, params gatewayap
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	v, err := h.metadataLifecycle.ListGroupMemberships(ctx, a, &metadatalifecyclev1.ListGroupMembershipsRequest{GroupId: params.GroupId.String()})
+	v, err := h.metadataLifecycleClient.ListGroupMemberships(ctx, a, &metadatalifecyclev1.ListGroupMembershipsRequest{GroupId: params.GroupId.String()})
 	if err != nil {
 		return nil, fmt.Errorf("list group memberships: %w", err)
 	}
@@ -402,7 +402,7 @@ func (h *ogenHandler) RequestGroupMembership(ctx context.Context, q *gatewayapi.
 		}
 		roles[i] = role
 	}
-	v, err := h.metadataLifecycle.RequestMembership(ctx, params.GroupId.String(), a, roles)
+	v, err := h.metadataLifecycleClient.RequestMembership(ctx, params.GroupId.String(), a, roles)
 	if err != nil {
 		return nil, fmt.Errorf("request membership: %w", err)
 	}
@@ -422,7 +422,7 @@ func (h *ogenHandler) DecideGroupMembership(ctx context.Context, params gatewaya
 	if err != nil {
 		return nil, err
 	}
-	v, err := h.metadataLifecycle.DecideMembership(ctx, params.GroupId.String(), params.UserId, decision, a)
+	v, err := h.metadataLifecycleClient.DecideMembership(ctx, params.GroupId.String(), params.UserId, decision, a)
 	if err != nil {
 		return nil, fmt.Errorf("decide membership: %w", err)
 	}

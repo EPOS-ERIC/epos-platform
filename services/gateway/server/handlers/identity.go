@@ -16,7 +16,7 @@ func (h *ogenHandler) ListUsers(ctx context.Context) ([]gatewayapi.UserListItem,
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	response, err := h.metadataLifecycle.ListUsers(ctx, actor)
+	response, err := h.metadataLifecycleClient.ListUsers(ctx, actor)
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}
@@ -256,7 +256,7 @@ func (h *ogenHandler) GrantGlobalPermission(ctx context.Context, p gatewayapi.Gr
 	if err != nil {
 		return fmt.Errorf("map global permission: %w", err)
 	}
-	if err := h.metadataLifecycle.GrantGlobalPermission(ctx, a, p.ID, permission); err != nil {
+	if err := h.metadataLifecycleClient.GrantGlobalPermission(ctx, a, p.ID, permission); err != nil {
 		return fmt.Errorf("grant global permission: %w", err)
 	}
 	return nil
@@ -271,7 +271,7 @@ func (h *ogenHandler) RevokeGlobalPermission(ctx context.Context, p gatewayapi.R
 	if err != nil {
 		return fmt.Errorf("map global permission: %w", err)
 	}
-	if err := h.metadataLifecycle.RevokeGlobalPermission(ctx, a, p.ID, permission); err != nil {
+	if err := h.metadataLifecycleClient.RevokeGlobalPermission(ctx, a, p.ID, permission); err != nil {
 		return fmt.Errorf("revoke global permission: %w", err)
 	}
 	return nil
@@ -286,7 +286,7 @@ func (h *ogenHandler) AssignGlobalRole(ctx context.Context, p gatewayapi.AssignG
 	if err != nil {
 		return err
 	}
-	if err := h.metadataLifecycle.AssignGlobalRole(ctx, a, p.ID, role); err != nil {
+	if err := h.metadataLifecycleClient.AssignGlobalRole(ctx, a, p.ID, role); err != nil {
 		return fmt.Errorf("assign global role: %w", err)
 	}
 	return nil
@@ -301,7 +301,7 @@ func (h *ogenHandler) RemoveGlobalRole(ctx context.Context, p gatewayapi.RemoveG
 	if err != nil {
 		return err
 	}
-	if err := h.metadataLifecycle.RemoveGlobalRole(ctx, a, p.ID, role); err != nil {
+	if err := h.metadataLifecycleClient.RemoveGlobalRole(ctx, a, p.ID, role); err != nil {
 		return fmt.Errorf("remove global role: %w", err)
 	}
 	return nil
@@ -312,7 +312,7 @@ func (h *ogenHandler) BlockUser(ctx context.Context, q *gatewayapi.BlockUserRequ
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if err := h.metadataLifecycle.BlockUser(ctx, a, p.ID, string(q.Reason)); err != nil {
+	if err := h.metadataLifecycleClient.BlockUser(ctx, a, p.ID, string(q.Reason)); err != nil {
 		return fmt.Errorf("block user: %w", err)
 	}
 	return nil
@@ -323,7 +323,7 @@ func (h *ogenHandler) UnblockUser(ctx context.Context, p gatewayapi.UnblockUserP
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if err := h.metadataLifecycle.UnblockUser(ctx, a, p.ID); err != nil {
+	if err := h.metadataLifecycleClient.UnblockUser(ctx, a, p.ID); err != nil {
 		return fmt.Errorf("unblock user: %w", err)
 	}
 	return nil

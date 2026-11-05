@@ -492,7 +492,6 @@ func (x *UpdatePluginRequest) GetEnabled() bool {
 type CreatePluginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Plugin        *Plugin                `protobuf:"bytes,1,opt,name=plugin,proto3" json:"plugin,omitempty"`
-	SyncFailed    bool                   `protobuf:"varint,2,opt,name=sync_failed,json=syncFailed,proto3" json:"sync_failed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -534,17 +533,9 @@ func (x *CreatePluginResponse) GetPlugin() *Plugin {
 	return nil
 }
 
-func (x *CreatePluginResponse) GetSyncFailed() bool {
-	if x != nil {
-		return x.SyncFailed
-	}
-	return false
-}
-
 type UpdatePluginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Plugin        *Plugin                `protobuf:"bytes,1,opt,name=plugin,proto3" json:"plugin,omitempty"`
-	SyncFailed    bool                   `protobuf:"varint,2,opt,name=sync_failed,json=syncFailed,proto3" json:"sync_failed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -584,13 +575,6 @@ func (x *UpdatePluginResponse) GetPlugin() *Plugin {
 		return x.Plugin
 	}
 	return nil
-}
-
-func (x *UpdatePluginResponse) GetSyncFailed() bool {
-	if x != nil {
-		return x.SyncFailed
-	}
-	return false
 }
 
 type GetPluginRequest struct {
@@ -1729,15 +1713,11 @@ const file_converter_v1_converter_proto_rawDesc = "" +
 	"\x13UpdatePluginRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12/\n" +
 	"\x05input\x18\x02 \x01(\v2\x19.converter.v1.PluginInputR\x05input\x12\x18\n" +
-	"\aenabled\x18\x03 \x01(\bR\aenabled\"e\n" +
+	"\aenabled\x18\x03 \x01(\bR\aenabled\"D\n" +
 	"\x14CreatePluginResponse\x12,\n" +
-	"\x06plugin\x18\x01 \x01(\v2\x14.converter.v1.PluginR\x06plugin\x12\x1f\n" +
-	"\vsync_failed\x18\x02 \x01(\bR\n" +
-	"syncFailed\"e\n" +
+	"\x06plugin\x18\x01 \x01(\v2\x14.converter.v1.PluginR\x06plugin\"D\n" +
 	"\x14UpdatePluginResponse\x12,\n" +
-	"\x06plugin\x18\x01 \x01(\v2\x14.converter.v1.PluginR\x06plugin\x12\x1f\n" +
-	"\vsync_failed\x18\x02 \x01(\bR\n" +
-	"syncFailed\"\"\n" +
+	"\x06plugin\x18\x01 \x01(\v2\x14.converter.v1.PluginR\x06plugin\"\"\n" +
 	"\x10GetPluginRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"A\n" +
 	"\x11GetPluginResponse\x12,\n" +

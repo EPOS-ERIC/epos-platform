@@ -1698,6 +1698,7 @@ inserted_datetime_parameter_schemas AS (
 distributions AS (
     INSERT INTO
         distributions (
+            id,
             resource_id,
             dataset_version_id,
             title,
@@ -1712,6 +1713,15 @@ distributions AS (
             web_service_id
         )
     SELECT
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            distribution.id::text
+        ),
         CASE
             WHEN (
                 SELECT
@@ -2404,6 +2414,49 @@ func (q *Queries) GetPublishedLifecycleDatasetVersion(ctx context.Context, datas
 		&i.RejectionNote,
 	)
 	return i, err
+}
+
+const listClonedLifecycleDistributions = `-- name: ListClonedLifecycleDistributions :many
+SELECT
+    source.id AS source_id,
+    uuid_generate_v5(
+        $1::uuid,
+        source.id::text
+    )::uuid AS target_id
+FROM
+    distributions AS source
+WHERE
+    source.dataset_version_id = $2
+`
+
+type ListClonedLifecycleDistributionsParams struct {
+	TargetVersionID uuid.UUID
+	SourceVersionID uuid.UUID
+}
+
+type ListClonedLifecycleDistributionsRow struct {
+	SourceID uuid.UUID
+	TargetID uuid.UUID
+}
+
+func (q *Queries) ListClonedLifecycleDistributions(ctx context.Context, arg ListClonedLifecycleDistributionsParams) ([]ListClonedLifecycleDistributionsRow, error) {
+	rows, err := q.db.Query(ctx, listClonedLifecycleDistributions, arg.TargetVersionID, arg.SourceVersionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListClonedLifecycleDistributionsRow
+	for rows.Next() {
+		var i ListClonedLifecycleDistributionsRow
+		if err := rows.Scan(&i.SourceID, &i.TargetID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listLifecycleBooleanParameterSchemas = `-- name: ListLifecycleBooleanParameterSchemas :many

@@ -16,6 +16,7 @@
 - `docker/` contains repository-level local development assets.
 - `helm/` contains deployment charts and values.
 - Keep service-specific code and infrastructure in its owning module. Put code shared across modules in `packages/`.
+- Gateway is the only supported application client of downstream service APIs. Route application access to those services through Gateway; do not add direct clients in other applications or services.
 
 ## Change Rules
 

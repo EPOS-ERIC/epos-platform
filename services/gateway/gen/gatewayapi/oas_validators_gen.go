@@ -1179,22 +1179,6 @@ func (s *CreateContactPointRequest) Validate() error {
 	return nil
 }
 
-func (s *CreateConversionPluginAccepted) Validate() error {
-	alias := (*ManagedConversionPlugin)(s)
-	if err := alias.Validate(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *CreateConversionPluginCreated) Validate() error {
-	alias := (*ManagedConversionPlugin)(s)
-	if err := alias.Validate(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (s *CreateConversionPluginRequest) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -6700,22 +6684,6 @@ func (s *ReplaceContactPointRequest) Validate() error {
 	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s *ReplaceConversionPluginAccepted) Validate() error {
-	alias := (*ManagedConversionPlugin)(s)
-	if err := alias.Validate(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *ReplaceConversionPluginOK) Validate() error {
-	alias := (*ManagedConversionPlugin)(s)
-	if err := alias.Validate(); err != nil {
-		return err
 	}
 	return nil
 }

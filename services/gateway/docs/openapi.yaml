@@ -87,12 +87,7 @@ paths:
             schema: { $ref: "#/components/schemas/CreateConversionPluginRequest" }
       responses:
         "201":
-          description: Plugin registered and installed
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
-        "202":
-          description: Plugin registered, but initial installation failed and will be retried
+          description: Plugin registered; installation status is included in the response
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
@@ -132,11 +127,6 @@ paths:
       responses:
         "200":
           description: Plugin settings saved
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
-        "202":
-          description: Plugin settings saved, but synchronization failed and will be retried
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }

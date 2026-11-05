@@ -4,6 +4,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatav1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
@@ -13,21 +14,30 @@ import (
 
 type metadataLifecycle interface {
 	GetResourceVersion(context.Context, string, domain.ResourceType, uuid.UUID, uuid.UUID) (*metadatav1.GetResourceVersionResponse, domain.ResourceVersion, error)
+	CopyResource(context.Context, string, string, metadatav1.ResourceType, string) (*metadatav1.CopyPublishedResourceResponse, map[uuid.UUID]uuid.UUID, error)
+	CreateResourceDraftFromPublication(context.Context, string, metadatav1.ResourceType, string) (*metadatav1.DraftResourceFromPublicationResponse, map[uuid.UUID]uuid.UUID, error)
+	CreateResourceDraftFromArchive(context.Context, string, metadatav1.ResourceType, string) (*metadatav1.DraftResourceFromLatestArchiveResponse, map[uuid.UUID]uuid.UUID, error)
+	ReplaceResourceDraft(context.Context, string, string, string, *metadatav1.ReplaceResourceDraftRequest) (*metadatav1.ReplaceResourceDraftResponse, []uuid.UUID, error)
+	DiscardResourceDraft(context.Context, string, metadatav1.ResourceType, string, string) ([]uuid.UUID, error)
 }
 
 type converter interface {
 	AvailableConversions(context.Context) ([]domain.AvailableConversion, error)
+	CopyRelations(context.Context, string, map[uuid.UUID]uuid.UUID) error
+	RemoveRelations(context.Context, string, []uuid.UUID) error
 }
 
 type Service struct {
 	metadata  metadataLifecycle
 	converter converter
+	log       *slog.Logger
 }
 
-func New(metadata metadataLifecycle, converter converter) *Service {
+func New(log *slog.Logger, metadata metadataLifecycle, converter converter) *Service {
 	return &Service{
 		metadata:  metadata,
 		converter: converter,
+		log:       log,
 	}
 }
 
@@ -55,4 +65,69 @@ func (s *Service) GetVersion(ctx context.Context, actor string, resourceType dom
 	}
 
 	return response, resource, nil
+}
+
+func (s *Service) Copy(ctx context.Context, actor, group string, kind metadatav1.ResourceType, id string) (*metadatav1.CopyPublishedResourceResponse, error) {
+	response, pairs, err := s.metadata.CopyResource(ctx, actor, group, kind, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.converter.CopyRelations(ctx, actor, pairs); err != nil {
+		s.log.ErrorContext(ctx, "copy converter relations failed", "resource_id", id, "distribution_pairs", pairs, "error", err)
+	}
+
+	return response, nil
+}
+
+func (s *Service) DraftPublication(ctx context.Context, actor string, kind metadatav1.ResourceType, id string) (*metadatav1.DraftResourceFromPublicationResponse, error) {
+	response, pairs, err := s.metadata.CreateResourceDraftFromPublication(ctx, actor, kind, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.converter.CopyRelations(ctx, actor, pairs); err != nil {
+		s.log.ErrorContext(ctx, "copy converter relations failed", "resource_id", id, "distribution_pairs", pairs, "error", err)
+	}
+
+	return response, nil
+}
+
+func (s *Service) DraftArchive(ctx context.Context, actor string, kind metadatav1.ResourceType, id string) (*metadatav1.DraftResourceFromLatestArchiveResponse, error) {
+	response, pairs, err := s.metadata.CreateResourceDraftFromArchive(ctx, actor, kind, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.converter.CopyRelations(ctx, actor, pairs); err != nil {
+		s.log.ErrorContext(ctx, "copy converter relations failed", "resource_id", id, "distribution_pairs", pairs, "error", err)
+	}
+
+	return response, nil
+}
+
+func (s *Service) Replace(ctx context.Context, actor, id, version string, request *metadatav1.ReplaceResourceDraftRequest) (*metadatav1.ReplaceResourceDraftResponse, error) {
+	response, removed, err := s.metadata.ReplaceResourceDraft(ctx, actor, id, version, request)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.converter.RemoveRelations(ctx, actor, removed); err != nil {
+		s.log.ErrorContext(ctx, "remove converter relations failed", "resource_id", id, "removed_distribution_ids", removed, "error", err)
+	}
+
+	return response, nil
+}
+
+func (s *Service) Discard(ctx context.Context, actor string, kind metadatav1.ResourceType, id, version string) error {
+	removed, err := s.metadata.DiscardResourceDraft(ctx, actor, kind, id, version)
+	if err != nil {
+		return err
+	}
+
+	if err := s.converter.RemoveRelations(ctx, actor, removed); err != nil {
+		s.log.ErrorContext(ctx, "remove converter relations failed", "resource_id", id, "removed_distribution_ids", removed, "error", err)
+	}
+
+	return nil
 }

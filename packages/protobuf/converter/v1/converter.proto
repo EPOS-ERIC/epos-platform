@@ -54,11 +54,9 @@ message UpdatePluginRequest {
 }
 message CreatePluginResponse {
   Plugin plugin = 1;
-  bool sync_failed = 2;
 }
 message UpdatePluginResponse {
   Plugin plugin = 1;
-  bool sync_failed = 2;
 }
 message GetPluginRequest {
   string id = 1;

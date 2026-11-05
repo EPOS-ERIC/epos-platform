@@ -1047,6 +1047,7 @@ inserted_datetime_parameter_schemas AS (
 distributions AS (
     INSERT INTO
         distributions (
+            id,
             resource_id,
             dataset_version_id,
             title,
@@ -1061,6 +1062,15 @@ distributions AS (
             web_service_id
         )
     SELECT
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            distribution.id::text
+        ),
         CASE
             WHEN (
                 SELECT
@@ -1112,6 +1122,18 @@ SELECT
     dataset_id
 FROM
     inserted;
+
+-- name: ListClonedLifecycleDistributions :many
+SELECT
+    source.id AS source_id,
+    uuid_generate_v5(
+        sqlc.arg(target_version_id)::uuid,
+        source.id::text
+    )::uuid AS target_id
+FROM
+    distributions AS source
+WHERE
+    source.dataset_version_id = sqlc.arg(source_version_id);
 
 -- name: AddLifecycleDatasetIdentifier :exec
 INSERT INTO

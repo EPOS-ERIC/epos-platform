@@ -6,8 +6,25 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func toProtoDistributionIDs(ids []uuid.UUID) []string {
+	result := make([]string, 0, len(ids))
+	for _, id := range ids {
+		result = append(result, id.String())
+	}
+	return result
+}
+
+func toProtoDistributionIDPairs(pairs map[uuid.UUID]uuid.UUID) map[string]string {
+	result := make(map[string]string, len(pairs))
+	for sourceID, targetID := range pairs {
+		result[sourceID.String()] = targetID.String()
+	}
+	return result
+}
 
 func toDomainDistributionAccessInput(value *metadatalifecyclev1.PrepareDistributionAccessRequest) (domain.DistributionAccessInput, error) {
 	if value == nil {

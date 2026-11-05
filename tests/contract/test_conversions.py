@@ -17,7 +17,7 @@ class ConversionsContractTest(DistributionContractTestCase):
     def create_plugin(self) -> tuple[dict[str, Any], dict[str, Any]]:
         payload = self.plugin_payload()
         response = self.gateway.post("/conversion-plugins", json=payload)
-        self.assertIn(response.status_code, (201, 202))
+        self.assertEqual(response.status_code, 201)
         return payload, response.json()
 
     def assert_rejected(self, response: Any) -> None:
@@ -46,7 +46,7 @@ class ConversionsContractTest(DistributionContractTestCase):
         updated = self.gateway.put(
             "/conversion-plugins/{pluginId}", pluginId=plugin_id, json=replacement,
         )
-        self.assertIn(updated.status_code, (200, 202))
+        self.assertEqual(updated.status_code, 200)
         self.assertEqual(updated.json()["id"], plugin_id)
         self.assertEqual(updated.json()["created_by"], created["created_by"])
         for key, value in replacement.items():
@@ -67,7 +67,7 @@ class ConversionsContractTest(DistributionContractTestCase):
         """Verify failed installs and syncs preserve plugin settings and safe errors."""
         payload = self.plugin_payload()
         response = self.gateway.post("/conversion-plugins", json=payload)
-        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.status_code, 201)
         plugin = response.json()
         self.assertFalse(plugin["installed"])
         self.assertIsNone(plugin["installed_commit"])
@@ -94,7 +94,7 @@ class ConversionsContractTest(DistributionContractTestCase):
                 updated = self.gateway.put(
                     "/conversion-plugins/{pluginId}", pluginId=plugin_id, json=settings,
                 )
-                self.assertEqual(updated.status_code, 202)
+                self.assertEqual(updated.status_code, 200)
                 self.assertEqual(updated.json()[field], value)
                 self.assertFalse(updated.json()["installed"])
                 self.assertIsNone(updated.json()["installed_commit"])
@@ -122,7 +122,7 @@ class ConversionsContractTest(DistributionContractTestCase):
                 created = self.gateway.post("/conversion-plugins", json={
                     **self.plugin_payload(), "runtime": runtime, "arguments": args,
                 })
-                self.assertIn(created.status_code, (201, 202))
+                self.assertEqual(created.status_code, 201)
                 self.assertEqual(created.json()["runtime"], runtime)
                 self.assertEqual(created.json()["arguments"], args)
                 fetched = self.gateway.get(
@@ -231,7 +231,7 @@ class ConversionsContractTest(DistributionContractTestCase):
             "/conversion-plugins/{pluginId}", pluginId=plugin["id"],
             json={**payload, "enabled": False},
         )
-        self.assertIn(updated.status_code, (200, 202))
+        self.assertEqual(updated.status_code, 200)
         self.assertFalse(updated.json()["installed"])
         relation_ids = []
         for output_format in ("text/csv", "application/xml"):
@@ -317,7 +317,7 @@ class ConversionsContractTest(DistributionContractTestCase):
                         "/conversion-plugins/{pluginId}", pluginId=plugin["id"],
                         json={**payload, "enabled": False},
                     )
-                    self.assertIn(updated.status_code, (200, 202))
+                    self.assertEqual(updated.status_code, 200)
                     self.assertFalse(updated.json()["enabled"])
                 fetched = self.gateway.get(
                     "/conversion-relations/{conversionId}", conversionId=relation_id,
@@ -334,10 +334,12 @@ class ConversionsContractTest(DistributionContractTestCase):
                 ))
 
     def test_relation_validation_and_removed_distribution(self) -> None:
-        """Verify relation validation and persistence after its distribution is removed."""
-        _, plugin = self.create_plugin()
-        detail = self.create_draft([web_distribution()])
+        """Verify lifecycle propagation; regression: removed distributions left orphaned relations."""
+        plugin_input, plugin = self.create_plugin()
+        detail = self.create_draft([web_distribution(), web_distribution(), web_distribution()])
         distribution_id = detail["metadata"]["distributions"][0]["id"]
+        retained = detail["metadata"]["distributions"][1]
+        retained_other = detail["metadata"]["distributions"][2]
         payload = {
             "distribution_id": distribution_id, "plugin_id": plugin["id"],
             "input_format": "application/json", "output_format": "text/csv",
@@ -368,9 +370,27 @@ class ConversionsContractTest(DistributionContractTestCase):
         self.assertEqual(unchanged.status_code, 200)
         self.assertEqual(unchanged.json()["output_format"], "application/xml")
 
+        kept_relation = self.gateway.post("/conversion-relations", json={
+            **payload, "distribution_id": retained["id"],
+        })
+        self.assertEqual(kept_relation.status_code, 201)
+        extra_relations = []
+        for distribution, output_format in (
+            (retained, "application/xml"),
+            (retained_other, "application/geo+json"),
+        ):
+            response = self.gateway.post("/conversion-relations", json={
+                **payload, "distribution_id": distribution["id"], "output_format": output_format,
+            })
+            self.assertEqual(response.status_code, 201)
+            extra_relations.append(response.json())
+
         metadata = {
             "title": detail["metadata"]["title"], "description": "Removed distribution",
-            "distributions": [web_distribution()],
+            "distributions": [
+                {**web_distribution(), "resource_id": item["resource_id"]}
+                for item in (retained, retained_other)
+            ],
         }
         self.assertEqual(self.replace_response(detail, metadata).status_code, 200)
         relation_ids = [first.json()["id"], second.json()["id"]]
@@ -378,14 +398,117 @@ class ConversionsContractTest(DistributionContractTestCase):
             fetched = self.gateway.get(
                 "/conversion-relations/{conversionId}", conversionId=relation_id,
             )
-            self.assertEqual(fetched.status_code, 200)
-            self.assertEqual(fetched.json()["distribution_id"], distribution_id)
+            self.assertEqual(fetched.status_code, 404)
+        self.assertEqual(self.gateway.get(
+            "/conversion-relations/{conversionId}", conversionId=kept_relation.json()["id"],
+        ).status_code, 200)
         access = self.gateway.post(
             "/distributions/{distributionId}/access", distributionId=distribution_id,
             params={"conversion_id": relation_ids[0]}, json={"type": "HTTP", "parameters": []},
         )
         self.assertEqual(access.status_code, 404)
         self.assert_rejected(access)
+
+        disabled = self.gateway.put(
+            "/conversion-plugins/{pluginId}", pluginId=plugin["id"],
+            json={**plugin_input, "enabled": False},
+        )
+        self.assertEqual(disabled.status_code, 200)
+        source_relations = [kept_relation.json(), *extra_relations]
+
+        def relation_snapshot(distribution_ids: set[str]) -> set[tuple[str, ...]]:
+            response = self.gateway.get("/conversion-relations")
+            self.assertEqual(response.status_code, 200)
+            return {
+                tuple(item[key] for key in ("id", "distribution_id", "plugin_id", "input_format", "output_format"))
+                for item in response.json() if item["distribution_id"] in distribution_ids
+            }
+
+        source_ids = {retained["id"], retained_other["id"]}
+        expected_source = {
+            tuple(item[key] for key in ("id", "distribution_id", "plugin_id", "input_format", "output_format"))
+            for item in source_relations
+        }
+        detail = self.details(detail["resource_id"], detail["id"])
+        self.transition(detail, "submit")
+        self.transition(detail, "publish")
+        self.assertEqual(relation_snapshot(source_ids), expected_source)
+        source = self.details(detail["resource_id"], detail["id"])
+        source_distributions = source["metadata"]["distributions"]
+        self.assertEqual({item["id"] for item in source_distributions}, source_ids)
+
+        copied = self.gateway.post(
+            "/groups/{groupId}/resources/{resourceType}/{id}/copy",
+            groupId=detail["group_id"], resourceType="dataset", id=detail["resource_id"],
+        )
+        self.assertEqual(copied.status_code, 201)
+        copy_id = copied.json()["id"]
+        copy_version = self.version(copy_id, "DRAFT")
+        copy_distributions = self.details(copy_id, copy_version["id"])["metadata"]["distributions"]
+        self.assertTrue({item["resource_id"] for item in copy_distributions}.isdisjoint(
+            {item["resource_id"] for item in source_distributions},
+        ))
+
+        drafted = self.gateway.post(
+            "/resources/{resourceType}/{id}/draft-from-publication",
+            resourceType="dataset", id=detail["resource_id"],
+        )
+        self.assertEqual(drafted.status_code, 201)
+        draft = self.version(detail["resource_id"], "DRAFT")
+        draft_distributions = self.details(detail["resource_id"], draft["id"])["metadata"]["distributions"]
+        listed = self.gateway.get("/conversion-relations")
+        self.assertEqual(listed.status_code, 200)
+        relations = [item for item in listed.json() if item["plugin_id"] == plugin["id"]]
+
+        def signatures(distribution_id: str) -> set[tuple[str, str, str]]:
+            return {
+                (item["plugin_id"], item["input_format"], item["output_format"])
+                for item in relations if item["distribution_id"] == distribution_id
+            }
+
+        expected = {item["resource_id"]: signatures(item["id"]) for item in source_distributions}
+        self.assertEqual(len(expected), 2)
+        self.assertEqual(sorted(map(len, expected.values())), [1, 2])
+        self.assertEqual({item["resource_id"] for item in draft_distributions}, set(expected))
+        for item in draft_distributions:
+            self.assertEqual(signatures(item["id"]), expected[item["resource_id"]])
+        self.assertEqual(len(copy_distributions), 2)
+        self.assertCountEqual(
+            [signatures(item["id"]) for item in copy_distributions], list(expected.values()),
+        )
+        cloned_ids = {item["id"] for item in copy_distributions + draft_distributions}
+        cloned_relations = [item for item in relations if item["distribution_id"] in cloned_ids]
+        self.assertEqual(len(cloned_relations), 6)
+        self.assertEqual(len({item["id"] for item in cloned_relations + source_relations}), 9)
+
+        discarded = self.gateway.delete(
+            "/resources/{resourceType}/{id}/versions/{versionId}/draft",
+            resourceType="dataset", id=detail["resource_id"], versionId=draft["id"],
+        )
+        self.assertEqual(discarded.status_code, 204)
+        for item in cloned_relations:
+            if item["distribution_id"] in {distribution["id"] for distribution in draft_distributions}:
+                self.assertEqual(self.gateway.get(
+                    "/conversion-relations/{conversionId}", conversionId=item["id"],
+                ).status_code, 404)
+        self.transition(source, "unpublish")
+        self.assertEqual(relation_snapshot(source_ids), expected_source)
+        archived_draft = self.gateway.post(
+            "/resources/{resourceType}/{id}/draft-from-archive",
+            resourceType="dataset", id=detail["resource_id"],
+        )
+        self.assertEqual(archived_draft.status_code, 201)
+        archive_version = self.version(detail["resource_id"], "DRAFT")
+        archive_distributions = self.details(detail["resource_id"], archive_version["id"])["metadata"]["distributions"]
+        listed = self.gateway.get("/conversion-relations")
+        self.assertEqual(listed.status_code, 200)
+        relations = [item for item in listed.json() if item["plugin_id"] == plugin["id"]]
+        self.assertEqual({item["resource_id"] for item in archive_distributions}, set(expected))
+        for item in archive_distributions:
+            self.assertEqual(signatures(item["id"]), expected[item["resource_id"]])
+        archive_relations = [item for item in relations if item["distribution_id"] in {d["id"] for d in archive_distributions}]
+        self.assertEqual(len(archive_relations), 3)
+        self.assertEqual(len({item["id"] for item in archive_relations + cloned_relations + source_relations}), 12)
 
         deleted = self.gateway.delete("/conversion-plugins/{pluginId}", pluginId=plugin["id"])
         self.assertEqual(deleted.status_code, 204)
@@ -505,6 +628,44 @@ class ConversionsContractTest(DistributionContractTestCase):
                     self.assert_rejected(response)
                     self.assertIn(response.status_code, (401, 403))
 
+        private = denied.get(
+            "/resources/{resourceType}/{id}/versions/{versionId}", resourceType="dataset",
+            id=detail["resource_id"], versionId=detail["id"],
+        )
+        self.assertEqual(private.status_code, 404)
+        group_id = detail["group_id"]
+        membership = denied.post(
+            "/groups/{groupId}/membership-requests", groupId=group_id, json={"roles": []},
+        )
+        self.assertEqual(membership.status_code, 201)
+        accepted = self.gateway.post(
+            "/groups/{groupId}/memberships/{userId}/{decision}",
+            groupId=group_id, userId=user_id, decision="accept",
+        )
+        self.assertEqual(accepted.status_code, 200)
+        assigned = self.gateway.put(
+            "/groups/{groupId}/memberships/{userId}/roles/{role}",
+            groupId=group_id, userId=user_id, role="EDITOR",
+        )
+        self.assertEqual(assigned.status_code, 204)
+        self.transition(detail, "submit")
+        self.transition(detail, "publish")
+        drafted = denied.post(
+            "/resources/{resourceType}/{id}/draft-from-publication",
+            resourceType="dataset", id=detail["resource_id"],
+        )
+        self.assertEqual(drafted.status_code, 201)
+        draft_version = self.version(detail["resource_id"], "DRAFT")
+        draft_distribution = self.details(detail["resource_id"], draft_version["id"])["metadata"]["distributions"][0]
+        propagated = self.gateway.get("/conversion-relations")
+        self.assertTrue(any(item["distribution_id"] == draft_distribution["id"] and item["plugin_id"] == plugin_id for item in propagated.json()))
+        self.assertEqual(denied.delete(
+            "/resources/{resourceType}/{id}/versions/{versionId}/draft",
+            resourceType="dataset", id=detail["resource_id"], versionId=draft_version["id"],
+        ).status_code, 204)
+        propagated = self.gateway.get("/conversion-relations")
+        self.assertFalse(any(item["distribution_id"] == draft_distribution["id"] for item in propagated.json()))
+
         granted = self.gateway.put(
             "/users/{id}/global-permissions/{permission}",
             id=user_id, permission="global.converter.manage",
@@ -514,16 +675,11 @@ class ConversionsContractTest(DistributionContractTestCase):
             with self.subTest(granted=path):
                 self.assertEqual(denied.get(path).status_code, 200)
 
-        private = denied.get(
-            "/resources/{resourceType}/{id}/versions/{versionId}", resourceType="dataset",
-            id=detail["resource_id"], versionId=detail["id"],
-        )
-        self.assertEqual(private.status_code, 404)
         plugin_update = denied.put(
             "/conversion-plugins/{pluginId}", pluginId=plugin_id,
             json={**payload, "name": f"{payload['name']}-manager", "enabled": False},
         )
-        self.assertIn(plugin_update.status_code, (200, 202))
+        self.assertEqual(plugin_update.status_code, 200)
         self.assertEqual(plugin_update.json()["created_by"], plugin["created_by"])
         self.assertEqual(plugin_update.json()["updated_by"], user_id)
         self.assertNotEqual(plugin_update.json()["created_by"], user_id)

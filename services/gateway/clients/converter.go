@@ -40,76 +40,124 @@ func (c *Converter) wrapError(ctx context.Context, operation string, err error) 
 	return wrapRPCError(c.log, ctx, "converter", operation, err)
 }
 
-func (c *Converter) CreatePlugin(ctx context.Context, actor string, request *converterv1.CreatePluginRequest) (*converterv1.CreatePluginResponse, error) {
-	response, err := c.client.CreatePlugin(converterActor(ctx, actor), request)
+func (c *Converter) CreatePlugin(ctx context.Context, actor string, input domain.PluginInput) (domain.Plugin, error) {
+	request, err := toProtoPluginInput(input)
 	if err != nil {
-		return nil, c.wrapError(ctx, "create plugin", err)
+		return domain.Plugin{}, err
 	}
-	return response, nil
+
+	response, err := c.client.CreatePlugin(converterActor(ctx, actor), &converterv1.CreatePluginRequest{Input: request})
+	if err != nil {
+		return domain.Plugin{}, c.wrapError(ctx, "create plugin", err)
+	}
+
+	return fromProtoPlugin(response.GetPlugin())
 }
 
-func (c *Converter) GetPlugin(ctx context.Context, actor string, request *converterv1.GetPluginRequest) (*converterv1.GetPluginResponse, error) {
-	response, err := c.client.GetPlugin(converterActor(ctx, actor), request)
+func (c *Converter) GetPlugin(ctx context.Context, actor string, id uuid.UUID) (domain.Plugin, error) {
+	response, err := c.client.GetPlugin(converterActor(ctx, actor), &converterv1.GetPluginRequest{Id: id.String()})
 	if err != nil {
-		return nil, c.wrapError(ctx, "get plugin", err)
+		return domain.Plugin{}, c.wrapError(ctx, "get plugin", err)
 	}
-	return response, nil
+
+	return fromProtoPlugin(response.GetPlugin())
 }
 
-func (c *Converter) ListPlugins(ctx context.Context, actor string) (*converterv1.ListPluginsResponse, error) {
+func (c *Converter) ListPlugins(ctx context.Context, actor string) ([]domain.Plugin, error) {
 	response, err := c.client.ListPlugins(converterActor(ctx, actor), &converterv1.ListPluginsRequest{})
 	if err != nil {
 		return nil, c.wrapError(ctx, "list plugins", err)
 	}
-	return response, nil
-}
 
-func (c *Converter) UpdatePlugin(ctx context.Context, actor string, request *converterv1.UpdatePluginRequest) (*converterv1.UpdatePluginResponse, error) {
-	response, err := c.client.UpdatePlugin(converterActor(ctx, actor), request)
-	if err != nil {
-		return nil, c.wrapError(ctx, "update plugin", err)
+	plugins := make([]domain.Plugin, 0, len(response.GetPlugins()))
+	for _, value := range response.GetPlugins() {
+		plugin, err := fromProtoPlugin(value)
+		if err != nil {
+			return nil, err
+		}
+
+		plugins = append(plugins, plugin)
 	}
-	return response, nil
+
+	return plugins, nil
 }
 
-func (c *Converter) DeletePlugin(ctx context.Context, actor string, request *converterv1.DeletePluginRequest) error {
-	_, err := c.client.DeletePlugin(converterActor(ctx, actor), request)
+func (c *Converter) UpdatePlugin(ctx context.Context, actor string, id uuid.UUID, input domain.PluginInput, enabled bool) (domain.Plugin, error) {
+	request, err := toProtoPluginInput(input)
+	if err != nil {
+		return domain.Plugin{}, err
+	}
+
+	response, err := c.client.UpdatePlugin(converterActor(ctx, actor), &converterv1.UpdatePluginRequest{Id: id.String(), Input: request, Enabled: enabled})
+	if err != nil {
+		return domain.Plugin{}, c.wrapError(ctx, "update plugin", err)
+	}
+
+	return fromProtoPlugin(response.GetPlugin())
+}
+
+func (c *Converter) DeletePlugin(ctx context.Context, actor string, id uuid.UUID) error {
+	_, err := c.client.DeletePlugin(converterActor(ctx, actor), &converterv1.DeletePluginRequest{Id: id.String()})
 	if err != nil {
 		return c.wrapError(ctx, "delete plugin", err)
 	}
+
 	return nil
 }
 
-func (c *Converter) SyncPlugin(ctx context.Context, actor string, request *converterv1.SyncPluginRequest) (*converterv1.SyncPluginResponse, error) {
-	response, err := c.client.SyncPlugin(converterActor(ctx, actor), request)
+func (c *Converter) SyncPlugin(ctx context.Context, actor string, id uuid.UUID) (domain.Plugin, error) {
+	response, err := c.client.SyncPlugin(converterActor(ctx, actor), &converterv1.SyncPluginRequest{Id: id.String()})
 	if err != nil {
-		return nil, c.wrapError(ctx, "sync plugin", err)
+		return domain.Plugin{}, c.wrapError(ctx, "sync plugin", err)
 	}
-	return response, nil
+
+	return fromProtoPlugin(response.GetPlugin())
 }
 
-func (c *Converter) CreateRelation(ctx context.Context, actor string, request *converterv1.CreateRelationRequest) (*converterv1.CreateRelationResponse, error) {
-	response, err := c.client.CreateRelation(converterActor(ctx, actor), request)
-	if err != nil {
-		return nil, c.wrapError(ctx, "create relation", err)
-	}
-	return response, nil
-}
-
-func (c *Converter) GetRelation(ctx context.Context, actor string, request *converterv1.GetRelationRequest) (*converterv1.GetRelationResponse, error) {
+func (c *Converter) getRelation(ctx context.Context, actor string, request *converterv1.GetRelationRequest) (*converterv1.GetRelationResponse, error) {
 	response, err := c.client.GetRelation(converterActor(ctx, actor), request)
 	if err != nil {
 		return nil, c.wrapError(ctx, "get relation", err)
 	}
+
 	return response, nil
 }
 
-func (c *Converter) ListRelations(ctx context.Context, actor string) (*converterv1.ListRelationsResponse, error) {
+func (c *Converter) ListRelations(ctx context.Context, actor string) ([]domain.Relation, error) {
 	response, err := c.client.ListRelations(converterActor(ctx, actor), &converterv1.ListRelationsRequest{})
 	if err != nil {
 		return nil, c.wrapError(ctx, "list relations", err)
 	}
-	return response, nil
+
+	result := make([]domain.Relation, 0, len(response.GetRelations()))
+	for _, relation := range response.GetRelations() {
+		mapped, err := fromProtoRelation(relation)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, mapped)
+	}
+
+	return result, nil
+}
+
+func (c *Converter) CreateRelation(ctx context.Context, actor string, relation domain.Relation) (domain.Relation, error) {
+	response, err := c.client.CreateRelation(converterActor(ctx, actor), &converterv1.CreateRelationRequest{Input: toProtoRelationInput(relation)})
+	if err != nil {
+		return domain.Relation{}, c.wrapError(ctx, "create relation", err)
+	}
+
+	return fromProtoRelation(response.GetRelation())
+}
+
+func (c *Converter) GetRelation(ctx context.Context, actor string, id uuid.UUID) (domain.Relation, error) {
+	response, err := c.getRelation(ctx, actor, &converterv1.GetRelationRequest{Id: id.String()})
+	if err != nil {
+		return domain.Relation{}, err
+	}
+
+	return fromProtoRelation(response.GetRelation())
 }
 
 func (c *Converter) ListDistributionRelations(ctx context.Context, actor string, distributionID uuid.UUID) (*converterv1.ListDistributionRelationsResponse, error) {
@@ -185,96 +233,54 @@ func (c *Converter) DistributionRelations(ctx context.Context, actor string, dis
 	return result, nil
 }
 
-func (c *Converter) UpdateRelation(ctx context.Context, actor string, request *converterv1.UpdateRelationRequest) (*converterv1.UpdateRelationResponse, error) {
-	response, err := c.client.UpdateRelation(converterActor(ctx, actor), request)
+func (c *Converter) UpdateRelation(ctx context.Context, actor string, id uuid.UUID, relation domain.Relation) (domain.Relation, error) {
+	response, err := c.client.UpdateRelation(converterActor(ctx, actor), &converterv1.UpdateRelationRequest{
+		Id:    id.String(),
+		Input: toProtoRelationInput(relation),
+	})
 	if err != nil {
-		return nil, c.wrapError(ctx, "update relation", err)
+		return domain.Relation{}, c.wrapError(ctx, "update relation", err)
 	}
-	return response, nil
+
+	return fromProtoRelation(response.GetRelation())
 }
 
-func (c *Converter) DeleteRelation(ctx context.Context, actor string, request *converterv1.DeleteRelationRequest) error {
-	_, err := c.client.DeleteRelation(converterActor(ctx, actor), request)
+func (c *Converter) DeleteRelation(ctx context.Context, actor string, id uuid.UUID) error {
+	_, err := c.client.DeleteRelation(converterActor(ctx, actor), &converterv1.DeleteRelationRequest{Id: id.String()})
 	if err != nil {
 		return c.wrapError(ctx, "delete relation", err)
 	}
+
 	return nil
 }
 
 // Conversion returns the minimal relation data needed by distribution access.
 func (c *Converter) Conversion(ctx context.Context, id uuid.UUID) (domain.ConversionRelation, error) {
-	response, err := c.GetRelation(ctx, "", &converterv1.GetRelationRequest{Id: id.String()})
+	response, err := c.getRelation(ctx, "", &converterv1.GetRelationRequest{Id: id.String()})
 	if err != nil {
 		return domain.ConversionRelation{}, err
 	}
+
 	relation := response.GetRelation()
 	if relation == nil || relation.GetInput() == nil {
 		return domain.ConversionRelation{}, apperror.Default(apperror.CodeInternal)
 	}
+
 	relationID, err := uuid.Parse(relation.GetId())
 	if err != nil {
 		return domain.ConversionRelation{}, apperror.Wrap(apperror.CodeInternal, "", err)
 	}
+
 	distributionID, err := uuid.Parse(relation.GetInput().GetDistributionId())
 	if err != nil {
 		return domain.ConversionRelation{}, apperror.Wrap(apperror.CodeInternal, "", err)
 	}
+
 	return domain.ConversionRelation{
 		ID:             relationID,
 		DistributionID: distributionID,
 		InputFormat:    relation.GetInput().GetInputFormat(),
 	}, nil
-}
-
-func (c *Converter) AvailableConversions(ctx context.Context) ([]domain.AvailableConversion, error) {
-	plugins, err := c.ListPlugins(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-
-	relations, err := c.ListRelations(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-	available := make(map[string]*converterv1.Plugin)
-	for _, p := range plugins.GetPlugins() {
-		if p != nil && p.GetEnabled() && p.GetInstalled() && p.GetInput() != nil {
-			available[p.GetId()] = p
-		}
-	}
-	result := make([]domain.AvailableConversion, 0, len(relations.GetRelations()))
-	for _, relation := range relations.GetRelations() {
-		if relation == nil || relation.GetInput() == nil {
-			return nil, apperror.Default(apperror.CodeInternal)
-		}
-		input := relation.GetInput()
-		p := available[input.GetPluginId()]
-		if p == nil {
-			continue
-		}
-		relationID, err := uuid.Parse(relation.GetId())
-		if err != nil {
-			return nil, apperror.Wrap(apperror.CodeInternal, "", err)
-		}
-		distributionID, err := uuid.Parse(input.GetDistributionId())
-		if err != nil {
-			return nil, apperror.Wrap(apperror.CodeInternal, "", err)
-		}
-		pluginID, err := uuid.Parse(p.GetId())
-		if err != nil {
-			return nil, apperror.Wrap(apperror.CodeInternal, "", err)
-		}
-		result = append(result, domain.AvailableConversion{
-			ID:                relationID,
-			DistributionID:    distributionID,
-			InputFormat:       input.GetInputFormat(),
-			OutputFormat:      input.GetOutputFormat(),
-			PluginID:          pluginID,
-			PluginName:        p.GetInput().GetName(),
-			PluginDescription: p.GetInput().GetDescription(),
-		})
-	}
-	return result, nil
 }
 
 func (c *Converter) Execute(ctx context.Context, conversionID, distributionID uuid.UUID, sourceURL string, input io.Reader) (io.ReadCloser, error) {
@@ -284,15 +290,19 @@ func (c *Converter) Execute(ctx context.Context, conversionID, distributionID uu
 		cancel()
 		return nil, c.wrapError(ctx, "start conversion", err)
 	}
+
 	send := func(request *converterv1.ExecuteRequest) error {
 		if err := stream.Send(request); err != nil {
 			if err == io.EOF {
 				_, err = stream.Recv()
 			}
+
 			return c.wrapError(ctx, "send conversion input", err)
 		}
+
 		return nil
 	}
+
 	if err := send(&converterv1.ExecuteRequest{
 		Event: &converterv1.ExecuteRequest_Header{
 			Header: &converterv1.ExecuteHeader{
@@ -305,6 +315,7 @@ func (c *Converter) Execute(ctx context.Context, conversionID, distributionID uu
 		cancel()
 		return nil, err
 	}
+
 	buffer := make([]byte, 64*1024)
 	for {
 		n, readErr := input.Read(buffer)
@@ -314,30 +325,37 @@ func (c *Converter) Execute(ctx context.Context, conversionID, distributionID uu
 				return nil, err
 			}
 		}
+
 		if readErr == io.EOF {
 			break
 		}
+
 		if readErr != nil {
 			cancel()
 			return nil, readErr
 		}
 	}
+
 	if err := stream.CloseSend(); err != nil {
 		cancel()
 		return nil, c.wrapError(ctx, "finish conversion input", err)
 	}
+
 	first, err := stream.Recv()
 	if err != nil {
 		cancel()
 		if err == io.EOF {
 			return nil, apperror.Default(apperror.CodeInternal)
 		}
+
 		return nil, c.wrapError(ctx, "execute conversion", err)
 	}
+
 	if len(first.GetChunk()) == 0 {
 		cancel()
 		return nil, apperror.Default(apperror.CodeInternal)
 	}
+
 	return &conversionBody{
 		stream:  stream,
 		pending: first.GetChunk(),
@@ -357,21 +375,26 @@ func (b *conversionBody) Read(p []byte) (int, error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
+
 	if len(b.pending) == 0 {
 		response, err := b.stream.Recv()
 		if err == io.EOF {
 			return 0, io.EOF
 		}
+
 		if err != nil {
 			return 0, b.client.wrapError(b.stream.Context(), "read conversion output", err)
 		}
+
 		b.pending = response.GetChunk()
 		if len(b.pending) == 0 {
 			return 0, apperror.Default(apperror.CodeInternal)
 		}
 	}
+
 	n := copy(p, b.pending)
 	b.pending = b.pending[n:]
+
 	return n, nil
 }
 

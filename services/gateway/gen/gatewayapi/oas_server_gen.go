@@ -66,7 +66,7 @@ type Handler interface {
 	// is attempted immediately. Failed installation is retried periodically.
 	//
 	// POST /conversion-plugins
-	CreateConversionPlugin(ctx context.Context, req *CreateConversionPluginRequest) (CreateConversionPluginRes, error)
+	CreateConversionPlugin(ctx context.Context, req *CreateConversionPluginRequest) (*ManagedConversionPlugin, error)
 	// CreateConversionRelation implements createConversionRelation operation.
 	//
 	// Requires the global.converter.manage permission. Input format must match a current native format of
@@ -445,7 +445,7 @@ type Handler interface {
 	// synchronization. A failed update retains the last working installation and is retried periodically.
 	//
 	// PUT /conversion-plugins/{pluginId}
-	ReplaceConversionPlugin(ctx context.Context, req *ReplaceConversionPluginRequest, params ReplaceConversionPluginParams) (ReplaceConversionPluginRes, error)
+	ReplaceConversionPlugin(ctx context.Context, req *ReplaceConversionPluginRequest, params ReplaceConversionPluginParams) (*ManagedConversionPlugin, error)
 	// ReplaceConversionRelation implements replaceConversionRelation operation.
 	//
 	// Requires the global.converter.manage permission. Input format must match a current native format of

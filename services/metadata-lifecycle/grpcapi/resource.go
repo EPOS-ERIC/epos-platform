@@ -263,11 +263,12 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, err
 		}
-		result, err := s.datasets.ReplaceDraft(ctx, actor, resourceID, versionID, input)
+		result, removed, err := s.datasets.ReplaceDraft(ctx, actor, resourceID, versionID, input)
 		if err != nil {
 			return nil, err
 		}
 		return &metadatalifecyclev1.ReplaceResourceDraftResponse{
+			RemovedDistributionIds: toProtoDistributionIDs(removed),
 			Resource: &metadatalifecyclev1.ResourceRecord{
 				ResourceId: result.DatasetID.String(),
 				VersionId:  result.VersionID.String(),
@@ -339,9 +340,10 @@ func (s *ResourceServer) DiscardResourceDraft(ctx context.Context, request *meta
 	if err != nil {
 		return nil, err
 	}
+	var removed []uuid.UUID
 	switch request.GetResourceType() {
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
-		err = s.datasets.Discard(ctx, actor, resourceID, versionID)
+		removed, err = s.datasets.Discard(ctx, actor, resourceID, versionID)
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
 		err = s.applications.Discard(ctx, actor, resourceID, versionID)
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
@@ -352,7 +354,9 @@ func (s *ResourceServer) DiscardResourceDraft(ctx context.Context, request *meta
 	if err != nil {
 		return nil, err
 	}
-	return &metadatalifecyclev1.DiscardResourceDraftResponse{}, nil
+	return &metadatalifecyclev1.DiscardResourceDraftResponse{
+		RemovedDistributionIds: toProtoDistributionIDs(removed),
+	}, nil
 }
 
 //nolint:dupl // Resource lifecycle transitions intentionally mirror per-resource services.
@@ -553,19 +557,25 @@ func (s *ResourceServer) UnpublishResource(ctx context.Context, request *metadat
 }
 
 func (s *ResourceServer) DraftResourceFromPublication(ctx context.Context, request *metadatalifecyclev1.DraftResourceFromPublicationRequest) (*metadatalifecyclev1.DraftResourceFromPublicationResponse, error) {
-	record, err := s.draftResource(ctx, request, "publication")
+	record, pairs, err := s.draftResource(ctx, request, "publication")
 	if err != nil {
 		return nil, err
 	}
-	return &metadatalifecyclev1.DraftResourceFromPublicationResponse{Resource: record}, nil
+	return &metadatalifecyclev1.DraftResourceFromPublicationResponse{
+		Resource:            record,
+		CopiedDistributions: toProtoDistributionIDPairs(pairs),
+	}, nil
 }
 
 func (s *ResourceServer) DraftResourceFromLatestArchive(ctx context.Context, request *metadatalifecyclev1.DraftResourceFromLatestArchiveRequest) (*metadatalifecyclev1.DraftResourceFromLatestArchiveResponse, error) {
-	record, err := s.draftResource(ctx, request, "archive")
+	record, pairs, err := s.draftResource(ctx, request, "archive")
 	if err != nil {
 		return nil, err
 	}
-	return &metadatalifecyclev1.DraftResourceFromLatestArchiveResponse{Resource: record}, nil
+	return &metadatalifecyclev1.DraftResourceFromLatestArchiveResponse{
+		Resource:            record,
+		CopiedDistributions: toProtoDistributionIDPairs(pairs),
+	}, nil
 }
 
 func (s *ResourceServer) CopyPublishedResource(ctx context.Context, request *metadatalifecyclev1.CopyPublishedResourceRequest) (*metadatalifecyclev1.CopyPublishedResourceResponse, error) {
@@ -586,12 +596,15 @@ func (s *ResourceServer) CopyPublishedResource(ctx context.Context, request *met
 	}
 	switch request.GetResourceType() {
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
-		result, e := s.datasets.CopyPublished(ctx, actor, sourceID, groupID)
+		result, pairs, e := s.datasets.CopyPublished(ctx, actor, sourceID, groupID)
 		if e != nil {
 			return nil, e
 		}
 		record, e := lifecycleResponse(result)
-		return &metadatalifecyclev1.CopyPublishedResourceResponse{Resource: record}, e
+		return &metadatalifecyclev1.CopyPublishedResourceResponse{
+			Resource:            record,
+			CopiedDistributions: toProtoDistributionIDPairs(pairs),
+		}, e
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
 		result, e := s.applications.CopyPublished(ctx, actor, sourceID, groupID)
 		if e != nil {
@@ -670,25 +683,26 @@ type draftResourceRequest interface {
 	GetResourceId() string
 }
 
-func (s *ResourceServer) draftResource(ctx context.Context, request draftResourceRequest, source string) (*metadatalifecyclev1.ResourceRecord, error) {
+func (s *ResourceServer) draftResource(ctx context.Context, request draftResourceRequest, source string) (*metadatalifecyclev1.ResourceRecord, map[uuid.UUID]uuid.UUID, error) {
 	if request == nil {
-		return nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
+		return nil, nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
 	}
 	actor, err := actorFromContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	id, err := parseUUIDAt(request.GetResourceId(), "resource id", "id")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var result any
+	var pairs map[uuid.UUID]uuid.UUID
 	switch request.GetResourceType() {
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 		if source == "publication" {
-			result, err = s.datasets.DraftFromPublication(ctx, actor, id)
+			result, pairs, err = s.datasets.DraftFromPublication(ctx, actor, id)
 		} else {
-			result, err = s.datasets.DraftFromLatestArchive(ctx, actor, id)
+			result, pairs, err = s.datasets.DraftFromLatestArchive(ctx, actor, id)
 		}
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
 		if source == "publication" {
@@ -703,12 +717,14 @@ func (s *ResourceServer) draftResource(ctx context.Context, request draftResourc
 			result, err = s.sourceCodes.DraftFromLatestArchive(ctx, actor, id)
 		}
 	default:
-		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required")
+		return nil, nil, apperror.New(apperror.CodeValidationFailed, "resource type is required")
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return lifecycleResponse(result)
+	record, err := lifecycleResponse(result)
+
+	return record, pairs, err
 }
 
 func lifecycleResponse(value any) (*metadatalifecyclev1.ResourceRecord, error) {
