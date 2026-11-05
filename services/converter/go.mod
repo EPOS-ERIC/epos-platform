@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/services/converter
 
-go 1.27
+go 1.27.3
 
 require (
 	github.com/EPOS-ERIC/epos-platform/packages/go/apperror v0.0.0
