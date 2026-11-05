@@ -9,6 +9,11 @@ service DatasetImportService {
   rpc ImportDatasets(ImportDatasetsRequest) returns (ImportDatasetsResponse);
 }
 
+// Imports datasets and software resources supported by the selected mapping.
+service ResourceImportService {
+  rpc ImportResources(ImportResourcesRequest) returns (ImportResourcesResponse);
+}
+
 message ImportDatasetsRequest {
   bytes turtle = 1;
   string base_uri = 2;
@@ -17,6 +22,39 @@ message ImportDatasetsRequest {
   string group_id = 5;
   // Explicit links to already-existing Metadata Lifecycle entities.
   repeated ReferenceBinding references = 6;
+}
+
+message ImportResourcesRequest {
+  bytes turtle = 1;
+  string base_uri = 2;
+  string mapping_id = 3;
+  int32 mapping_version = 4;
+  // Deprecated: ResourceImportService derives groups from referenced SKOS concepts.
+  // Retained only so existing serialized requests remain wire-compatible.
+  string group_id = 5 [deprecated = true];
+  repeated ReferenceBinding references = 6;
+}
+
+enum ImportedResourceKind {
+  IMPORTED_RESOURCE_KIND_UNSPECIFIED = 0;
+  IMPORTED_RESOURCE_KIND_DATASET = 1;
+  IMPORTED_RESOURCE_KIND_SOFTWARE_APPLICATION = 2;
+  IMPORTED_RESOURCE_KIND_SOFTWARE_SOURCE_CODE = 3;
+}
+
+message ImportedResource {
+  string subject = 1;
+  string resource_id = 2;
+  string version_id = 3;
+  ImportedResourceKind kind = 4;
+}
+
+message ImportResourcesResponse {
+  repeated ImportedResource imported = 1;
+  // Deprecated: imports now continue after per-resource failures.
+  ImportFailure failure = 2;
+  // Resources skipped during an otherwise successful import.
+  repeated ImportFailure warnings = 3;
 }
 
 enum ReferenceKind {
@@ -54,6 +92,8 @@ message ImportFailure {
   // When true, the upstream may have created an entity despite the error.
   bool outcome_unknown = 3;
   ImportPhase phase = 4;
+  // Safe validation detail for the rejected import item.
+  string message = 5;
 }
 
 enum ImportPhase {

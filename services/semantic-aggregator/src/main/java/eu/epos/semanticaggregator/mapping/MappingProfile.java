@@ -7,8 +7,9 @@ import java.util.Set;
 
 /** A validated versioned dataset mapping definition. */
 public record MappingProfile(String id, int version, String datasetType, Map<String, List<String>> fields,
-                             Map<String, String> parameterRoles, Map<String, EntityMapping> entityMappings,
-                             PrimaryIdentifierMapping primaryIdentifier) {
+                               Map<String, String> parameterRoles, Map<String, EntityMapping> entityMappings,
+                               PrimaryIdentifierMapping primaryIdentifier, Map<String, SoftwareMapping> softwareMappings,
+                               SchemeMapping schemeMapping) {
     private static final Set<String> SCALARS = Set.of("title", "description", "keywords");
     private static final Set<String> NESTED = Set.of("spatial_coverage", "temporal_start", "temporal_end",
             "identifier_type", "identifier_value");
@@ -215,6 +216,36 @@ public record MappingProfile(String id, int version, String datasetType, Map<Str
                 throw new IllegalArgumentException("invalid primary identifier mapping");
             }
         }
+        if (softwareMappings == null) softwareMappings = Map.of();
+        for (var entry : softwareMappings.entrySet()) {
+            if (!Set.of("application", "source_code").contains(entry.getKey())) {
+                throw new IllegalArgumentException("unsupported software mapping: " + entry.getKey());
+            }
+            SoftwareMapping mapping = entry.getValue();
+            if (mapping == null || mapping.fields() == null || !mapping.fields().keySet().containsAll(Set.of("name", "description"))) {
+                throw new IllegalArgumentException("software mapping requires name and description");
+            }
+            validateIri(mapping.rdfType());
+            mapping.fields().forEach((name, predicate) -> {
+                if (!Set.of("name", "description", "identifier", "keywords", "main_entity_of_page", "license", "version",
+                        "download_url", "requirements", "operating_system", "programming_language", "repository",
+                        "runtime_platform", "creators", "categories", "contact_points").contains(name)) {
+                    throw new IllegalArgumentException("unsupported software field: " + name);
+                }
+                validateIri(predicate);
+            });
+        }
+        softwareMappings = Map.copyOf(softwareMappings);
+        if (schemeMapping == null || schemeMapping.fields() == null
+                || !schemeMapping.fields().keySet().equals(Set.of("name", "label", "description", "logo", "page", "color", "position", "concept"))
+                || schemeMapping.category() == null || schemeMapping.category().fields() == null
+                || !schemeMapping.category().fields().keySet().equals(Set.of("name", "scheme", "parent"))) {
+            throw new IllegalArgumentException("invalid scheme mapping");
+        }
+        validateIri(schemeMapping.rdfType());
+        schemeMapping.fields().values().forEach(MappingProfile::validateIri);
+        validateIri(schemeMapping.category().rdfType());
+        schemeMapping.category().fields().values().forEach(MappingProfile::validateIri);
         if (fields.containsKey("distribution_title")) {
             var children = new java.util.HashSet<String>();
             children.add(org.apache.jena.vocabulary.RDF.type.getURI());
@@ -256,6 +287,24 @@ public record MappingProfile(String id, int version, String datasetType, Map<Str
     }
 
     public record PrimaryIdentifierMapping(String predicate, String stringType, String uriType) {}
+
+    public record SoftwareMapping(String rdfType, Map<String, String> fields) {
+        public SoftwareMapping {
+            if (fields != null) fields = Map.copyOf(fields);
+        }
+    }
+
+    public record SchemeMapping(String rdfType, Map<String, String> fields, CategoryMapping category) {
+        public SchemeMapping {
+            if (fields != null) fields = Map.copyOf(fields);
+        }
+    }
+
+    public record CategoryMapping(String rdfType, Map<String, String> fields) {
+        public CategoryMapping {
+            if (fields != null) fields = Map.copyOf(fields);
+        }
+    }
 
     public record AddressMapping(String predicate, String rdfType, Map<String, String> fields) {
         public AddressMapping {

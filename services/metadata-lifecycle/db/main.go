@@ -17,7 +17,6 @@ import (
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dataset"
 	discoverydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/discovery"
 	groupdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/groups"
-	importdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/metadataimport"
 	notificationdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/notifications"
 	organizationdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/organizations"
 	softwareapplicationsdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwareapplications"
@@ -42,7 +41,6 @@ type PostgresDB struct {
 	ContactPoints        *contactpointdb.Repo
 	Discovery            *discoverydb.Repo
 	Datasets             *datasetdb.Repo
-	Imports              *importdb.Repo
 	SoftwareApplications *softwareapplicationsdb.Repo
 	SoftwareSourceCodes  *softwaresourcecodesdb.Repo
 	Notifications        *notificationdb.Repo
@@ -99,7 +97,6 @@ func Open(ctx context.Context, log *slog.Logger, cfg config.Config) (*PostgresDB
 		ContactPoints:        contactpointdb.New(db),
 		Discovery:            discoverydb.New(log, db),
 		Datasets:             datasetdb.New(db),
-		Imports:              importdb.New(db),
 		SoftwareApplications: softwareapplicationsdb.New(db),
 		SoftwareSourceCodes:  softwaresourcecodesdb.New(db),
 		Notifications:        notificationdb.New(db),

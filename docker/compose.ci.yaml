@@ -28,6 +28,7 @@ services:
       - TRIPLESTORE_REPOSITORY_URL=http://semantic-aggregator-fuseki-ci:3030/ds/data
       - TRIPLESTORE_USERNAME=admin
       - TRIPLESTORE_PASSWORD=${ADMIN_PASSWORD:-semantic-aggregator-ci}
+      - AGGREGATION_REFRESH_INTERVAL=PT15M
       - IDENTITY_STATE_DIR=/state
     volumes:
       - semantic-aggregator-state-ci:/state

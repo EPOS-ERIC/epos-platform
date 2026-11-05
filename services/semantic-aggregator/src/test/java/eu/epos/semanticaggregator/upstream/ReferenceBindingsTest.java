@@ -33,4 +33,14 @@ class ReferenceBindingsTest {
                 new DatasetMapping.Reference(ORGANIZATION, "https://example.org/a"),
                 new DatasetMapping.Reference(ORGANIZATION, "https://example.org/b"))));
     }
+
+    @Test
+    void omitsUnresolvedContactPoints() {
+        var bindings = new ReferenceBindings();
+        bindings.register(ORGANIZATION, "https://example.org/organization", ID);
+
+        assertEquals(List.of(ID), bindings.resolveAll(List.of(
+                new DatasetMapping.Reference(ORGANIZATION, "https://example.org/organization"),
+                new DatasetMapping.Reference(DatasetMapping.ReferenceKind.CONTACT_POINT, "https://example.org/contact"))));
+    }
 }

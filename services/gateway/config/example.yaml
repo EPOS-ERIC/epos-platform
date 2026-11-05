@@ -9,6 +9,8 @@ server:
 services:
   metadata-lifecycle:
     url: "metadata-lifecycle:5000"
+  semantic-aggregator:
+    url: "semantic-aggregator-service:8300"
   data-retriever:
     url: "data-retriever:8100"
   sharing:

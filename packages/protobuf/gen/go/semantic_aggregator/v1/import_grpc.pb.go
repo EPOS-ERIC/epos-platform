@@ -123,3 +123,109 @@ var DatasetImportService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "semantic_aggregator/v1/import.proto",
 }
+
+const (
+	ResourceImportService_ImportResources_FullMethodName = "/semantic_aggregator.v1.ResourceImportService/ImportResources"
+)
+
+// ResourceImportServiceClient is the client API for ResourceImportService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Imports datasets and software resources supported by the selected mapping.
+type ResourceImportServiceClient interface {
+	ImportResources(ctx context.Context, in *ImportResourcesRequest, opts ...grpc.CallOption) (*ImportResourcesResponse, error)
+}
+
+type resourceImportServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewResourceImportServiceClient(cc grpc.ClientConnInterface) ResourceImportServiceClient {
+	return &resourceImportServiceClient{cc}
+}
+
+func (c *resourceImportServiceClient) ImportResources(ctx context.Context, in *ImportResourcesRequest, opts ...grpc.CallOption) (*ImportResourcesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ImportResourcesResponse)
+	err := c.cc.Invoke(ctx, ResourceImportService_ImportResources_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ResourceImportServiceServer is the server API for ResourceImportService service.
+// All implementations must embed UnimplementedResourceImportServiceServer
+// for forward compatibility.
+//
+// Imports datasets and software resources supported by the selected mapping.
+type ResourceImportServiceServer interface {
+	ImportResources(context.Context, *ImportResourcesRequest) (*ImportResourcesResponse, error)
+	mustEmbedUnimplementedResourceImportServiceServer()
+}
+
+// UnimplementedResourceImportServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedResourceImportServiceServer struct{}
+
+func (UnimplementedResourceImportServiceServer) ImportResources(context.Context, *ImportResourcesRequest) (*ImportResourcesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ImportResources not implemented")
+}
+func (UnimplementedResourceImportServiceServer) mustEmbedUnimplementedResourceImportServiceServer() {}
+func (UnimplementedResourceImportServiceServer) testEmbeddedByValue()                               {}
+
+// UnsafeResourceImportServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ResourceImportServiceServer will
+// result in compilation errors.
+type UnsafeResourceImportServiceServer interface {
+	mustEmbedUnimplementedResourceImportServiceServer()
+}
+
+func RegisterResourceImportServiceServer(s grpc.ServiceRegistrar, srv ResourceImportServiceServer) {
+	// If the following call panics, it indicates UnimplementedResourceImportServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&ResourceImportService_ServiceDesc, srv)
+}
+
+func _ResourceImportService_ImportResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ImportResourcesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceImportServiceServer).ImportResources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceImportService_ImportResources_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceImportServiceServer).ImportResources(ctx, req.(*ImportResourcesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ResourceImportService_ServiceDesc is the grpc.ServiceDesc for ResourceImportService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ResourceImportService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "semantic_aggregator.v1.ResourceImportService",
+	HandlerType: (*ResourceImportServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ImportResources",
+			Handler:    _ResourceImportService_ImportResources_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "semantic_aggregator/v1/import.proto",
+}

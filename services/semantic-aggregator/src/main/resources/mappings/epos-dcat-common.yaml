@@ -1,10 +1,61 @@
 id: epos-dcat-common
 version: 1
 dataset_type: "http://www.w3.org/ns/dcat#Dataset"
+scheme_mapping:
+  rdf_type: "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+  fields:
+    name: "http://purl.org/dc/terms/title"
+    label: "http://www.w3.org/2004/02/skos/core#prefLabel"
+    description: "http://purl.org/dc/terms/description"
+    logo: "http://xmlns.com/foaf/0.1/logo"
+    page: "http://xmlns.com/foaf/0.1/homepage"
+    color: "http://schema.org/color"
+    position: "http://schema.org/orderItemNumber"
+    concept: "http://www.w3.org/2004/02/skos/core#hasTopConcept"
+  category:
+    rdf_type: "http://www.w3.org/2004/02/skos/core#Concept"
+    fields:
+      name: "http://www.w3.org/2004/02/skos/core#prefLabel"
+      scheme: "http://www.w3.org/2004/02/skos/core#inScheme"
+      parent: "http://www.w3.org/2004/02/skos/core#broader"
 primary_identifier:
   predicate: "http://purl.org/dc/terms/identifier"
   string_type: "EPOS-DCAT-AP:dct:identifier:xsd:string"
   uri_type: "EPOS-DCAT-AP:dct:identifier:xsd:anyURI"
+software_mappings:
+  application:
+    rdf_type: "http://schema.org/SoftwareApplication"
+    fields:
+      name: "http://schema.org/name"
+      description: "http://schema.org/description"
+      identifier: "http://schema.org/identifier"
+      keywords: "http://schema.org/keywords"
+      main_entity_of_page: "http://schema.org/mainEntityOfPage"
+      license: "http://schema.org/license"
+      version: "http://schema.org/softwareVersion"
+      download_url: "http://schema.org/downloadUrl"
+      requirements: "http://schema.org/softwareRequirements"
+      operating_system: "http://schema.org/operatingSystem"
+      creators: "http://schema.org/creator"
+      categories: "http://www.w3.org/ns/dcat#theme"
+      contact_points: "http://schema.org/contactPoint"
+  source_code:
+    rdf_type: "http://schema.org/SoftwareSourceCode"
+    fields:
+      name: "http://schema.org/name"
+      description: "http://schema.org/description"
+      identifier: "http://schema.org/identifier"
+      keywords: "http://schema.org/keywords"
+      main_entity_of_page: "http://schema.org/mainEntityOfPage"
+      license: "http://schema.org/license"
+      version: "http://schema.org/version"
+      programming_language: "http://schema.org/programmingLanguage"
+      repository: "http://schema.org/codeRepository"
+      requirements: "http://schema.org/softwareRequirements"
+      runtime_platform: "http://schema.org/runtimePlatform"
+      creators: "http://schema.org/creator"
+      categories: "http://www.w3.org/ns/dcat#theme"
+      contact_points: "http://schema.org/contactPoint"
 entity_mappings:
   organization:
     rdf_type: "http://schema.org/Organization"

@@ -26,10 +26,11 @@ type Service struct {
 }
 
 type Services struct {
-	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
-	DataRetriever     Service `yaml:"data-retriever"`
-	Sharing           Service `yaml:"sharing"`
-	Auth              Service `yaml:"auth"`
+	MetadataLifecycle  Service `yaml:"metadata-lifecycle"`
+	SemanticAggregator Service `yaml:"semantic-aggregator"`
+	DataRetriever      Service `yaml:"data-retriever"`
+	Sharing            Service `yaml:"sharing"`
+	Auth               Service `yaml:"auth"`
 }
 
 type Notifications struct {
@@ -52,10 +53,11 @@ func Default() Config {
 			CORSAllowOrigin: "",
 		},
 		Services: Services{
-			MetadataLifecycle: Service{URL: ""},
-			DataRetriever:     Service{URL: ""},
-			Sharing:           Service{URL: ""},
-			Auth:              Service{URL: ""},
+			MetadataLifecycle:  Service{URL: ""},
+			SemanticAggregator: Service{URL: ""},
+			DataRetriever:      Service{URL: ""},
+			Sharing:            Service{URL: ""},
+			Auth:               Service{URL: ""},
 		},
 		Notifications: Notifications{Mailgun: Mailgun{
 			Enable:    false,
@@ -101,6 +103,9 @@ func (c *Config) Validate() error {
 
 	if c.Services.MetadataLifecycle.URL == "" {
 		return fmt.Errorf("services.metadata-lifecycle.url is required")
+	}
+	if c.Services.SemanticAggregator.URL == "" {
+		return fmt.Errorf("services.semantic-aggregator.url is required")
 	}
 	if c.Services.DataRetriever.URL == "" {
 		return fmt.Errorf("services.data-retriever.url is required")

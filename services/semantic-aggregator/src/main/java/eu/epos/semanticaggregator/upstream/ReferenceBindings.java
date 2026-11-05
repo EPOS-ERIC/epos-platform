@@ -68,6 +68,7 @@ public final class ReferenceBindings {
         List<String> result = new ArrayList<>();
         var seen = new HashSet<String>();
         for (var reference : references) {
+            if (reference.kind() == DatasetMapping.ReferenceKind.CONTACT_POINT && !contains(reference)) continue;
             String id = resolve(reference);
             if (!seen.add(id)) throw new IllegalArgumentException("multiple references map to the same entity: " + id);
             result.add(id);

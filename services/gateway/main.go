@@ -55,6 +55,11 @@ func main() {
 		log.Error("invalid metadata-lifecycle service configuration", "error", err)
 		panic("invalid metadata-lifecycle service configuration")
 	}
+	semanticAggregatorClient, err := clients.NewSemanticAggregator(log, cfg.Services.SemanticAggregator.URL)
+	if err != nil {
+		log.Error("invalid semantic-aggregator service configuration", "error", err)
+		panic("invalid semantic-aggregator service configuration")
+	}
 	dataRetrieverClient, err := clients.NewDataRetriever(log, cfg.Services.DataRetriever.URL)
 	if err != nil {
 		log.Error("invalid data-retriever service configuration", "error", err)
@@ -73,7 +78,7 @@ func main() {
 		panic("invalid auth service configuration")
 	}
 
-	if err := server.Run(*cfg, log, metadataLifecycleClient, dataRetrieverClient, sharingClient, authService); err != nil {
+	if err := server.Run(*cfg, log, metadataLifecycleClient, semanticAggregatorClient, dataRetrieverClient, sharingClient, authService); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}

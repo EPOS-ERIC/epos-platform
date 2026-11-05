@@ -27,7 +27,6 @@ type MetadataLifecycle struct {
 	access        metadatalifecyclev1.GroupAccessServiceClient
 	resources     metadatalifecyclev1.ResourceServiceClient
 	discovery     metadatalifecyclev1.DiscoveryServiceClient
-	import_       metadatalifecyclev1.ImportServiceClient
 	identity      metadatalifecyclev1.IdentityServiceClient
 	notifications metadatalifecyclev1.NotificationServiceClient
 }
@@ -61,7 +60,6 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher Notificat
 		access:        metadatalifecyclev1.NewGroupAccessServiceClient(conn),
 		resources:     metadatalifecyclev1.NewResourceServiceClient(conn),
 		discovery:     metadatalifecyclev1.NewDiscoveryServiceClient(conn),
-		import_:       metadatalifecyclev1.NewImportServiceClient(conn),
 		identity:      metadatalifecyclev1.NewIdentityServiceClient(conn),
 		notifications: metadatalifecyclev1.NewNotificationServiceClient(conn),
 	}
@@ -340,13 +338,4 @@ func (c *MetadataLifecycle) UnblockUser(ctx context.Context, actorID, userID str
 		return c.wrapError(ctx, "unblock metadata-lifecycle user", err)
 	}
 	return nil
-}
-
-func (c *MetadataLifecycle) ImportTurtle(ctx context.Context, actorID string, request *metadatalifecyclev1.ImportTurtleRequest) (*metadatalifecyclev1.ImportTurtleResponse, error) {
-	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.import_.ImportTurtle(ctx, request)
-	if err != nil {
-		return nil, c.wrapError(ctx, "import metadata-lifecycle Turtle", err)
-	}
-	return response, nil
 }

@@ -1820,22 +1820,92 @@ export type ResourceVersionReference = {
   name: string;
 };
 
-export type ImportResult = {
-  groups: number;
-  categories: number;
-  organizations: number;
-  contact_points: number;
-  datasets: number;
-  software_applications: number;
-  software_source_codes: number;
-  warnings: ImportDiagnostic[];
+export type ImportResourcesRequest = {
+  /**
+   * RDF Turtle document to import.
+   *
+   * @minLength 1
+   * @maxLength 10485760
+   */
+  turtle: string;
+  /**
+   * Absolute base URI used to resolve relative Turtle IRIs.
+   *
+   * @format uri
+   * @minLength 1
+   */
+  baseUri: string;
+  /**
+   * @minLength 1
+   */
+  mappingId: string;
+  /**
+   * @minimum 1
+   */
+  mappingVersion: number;
+  /**
+   * @uniqueItems true
+   */
+  references?: ImportReferenceBinding[];
 };
 
-export type ImportDiagnostic = {
-  severity: string;
+export type ImportReferenceBinding = {
+  kind: "organization" | "contact-point" | "category";
+  /**
+   * @format uri
+   * @minLength 1
+   */
+  iri: string;
+  /**
+   * @format uuid
+   */
+  id: string;
+};
+
+export type ImportResourcesResult = {
+  imported: ImportedResource[];
+  failure?: ImportResourceFailure;
+  /**
+   * Resources skipped while the remaining import completed.
+   */
+  warnings?: ImportResourceFailure[];
+};
+
+export type ImportedResource = {
+  /**
+   * @minLength 1
+   */
   subject: string;
-  predicate: string;
-  message: string;
+  /**
+   * @format uuid
+   */
+  resourceId: string;
+  /**
+   * @format uuid
+   */
+  versionId: string;
+  kind: "dataset" | "software-application" | "software-source-code";
+};
+
+export type ImportResourceFailure = {
+  /**
+   * @minLength 1
+   */
+  subject: string;
+  /**
+   * @minLength 1
+   */
+  code: string;
+  outcomeUnknown: boolean;
+  /**
+   * @minLength 1
+   */
+  message?: string;
+  phase?:
+    | "contact-resolution"
+    | "dataset-creation"
+    | "category-creation"
+    | "organization-creation";
 };
 
 /**

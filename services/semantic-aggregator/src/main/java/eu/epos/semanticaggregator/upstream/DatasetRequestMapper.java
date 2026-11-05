@@ -14,10 +14,6 @@ public final class DatasetRequestMapper {
     }
 
     public Resource.CreateResourceRequest toRequest(DatasetMapping mapping, String groupId, ReferenceBindings bindings) {
-        if (!mapping.unsupportedPredicates().isEmpty()) {
-            throw new IllegalArgumentException("Unsupported RDF properties for " + mapping.subject() + ": "
-                    + String.join(", ", mapping.unsupportedPredicates()));
-        }
         UUID group = UUID.fromString(groupId);
         if (!group.toString().equalsIgnoreCase(groupId)) {
             throw new IllegalArgumentException("groupId must be a canonical UUID");
@@ -82,7 +78,9 @@ public final class DatasetRequestMapper {
                     switch (parameter.schema()) {
                         case DatasetMapping.StringSchema schema -> {
                             var value = Resource.StringParameter.newBuilder().setMultipleValues(schema.multipleValues());
-                            if (schema.defaultValue() != null) value.setDefault(schema.defaultValue());
+                            if (schema.defaultValue() != null && !schema.defaultValue().isBlank()) {
+                                value.setDefault(schema.defaultValue());
+                            }
                             if (schema.pattern() != null) value.setPattern(schema.pattern());
                             for (String option : schema.allowedValues()) {
                                 value.addEnum(Resource.StringEnumOption.newBuilder().setValue(option));

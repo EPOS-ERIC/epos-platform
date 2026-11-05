@@ -308,7 +308,6 @@
 		adms:schemeAgency "DDSS-ID";
 		skos:notation "WP08-DDSS-024";
 	];
-	dct:type "http://purl.org/dc/dcmitype/Dataset"^^xsd:anyURI;
 	dct:accrualPeriodicity "http://purl.org/cld/freq/irregular"^^xsd:anyURI;
 	dct:created "2010-06-01"^^xsd:date;
 	dct:modified "2018-09-10"^^xsd:date;
@@ -321,50 +320,36 @@
 	];
 	dcat:theme <category:earthquakeparameters>;
 	dcat:keyword "event", "earthquake", "seismicity", "catalogue", "magnitude";
-    schema:variableMeasured "https://vocab.nerc.ac.uk/collection/EXV/current/EXV017/","https://vocab.nerc.ac.uk/collection/EXV/current/EXV018/","https://vocab.nerc.ac.uk/collection/R03/current/TEMP/";  #EXV(s) usata solo in ENVRI - stringa - cardinalità n - optional
 	dqv:hasQualityAnnotation [ a oa:Annotation ;
 		oa:hasBody "https://www.emidius.eu/AHEAD/data_quality_assurance.php"^^xsd:anyURI  ;
 	];
 	dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact>;
 	dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint>;
 	dct:publisher <PIC:999472675>;
-	prov:qualifiedAttribution <PIC:999472675/test> ;
 	dcat:distribution <https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful>;
     dct:accessRights "https://publications.europa.eu/resource/authority/access-right/PUBLIC"^^xsd:anyURI ;
 .
 
-<PIC:999472675/test> a prov:Attribution ;
-    dcat:hadRole "test" ; # role
-    prov:agent <PIC:999472675> . # Organization
-
-
 <https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful> a dcat:Distribution;
 	dct:title "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event";
 	dct:description "The distribution of event parameters via the FDSN-event web service is the main and preferred way to access historical earthquake data archived in AHEAD.";
-	dct:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful";
 	dct:issued "2017-10-25"^^xsd:date;
 	dct:modified "2017-10-25"^^xsd:date;
 	dct:type "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
 	dct:conformsTo <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event>;
 	dcat:accessURL <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation>;
 	dct:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI;
-	dct:format "http://publications.europa.eu/resource/authority/file-type/XML"^^xsd:anyURI;
+	dct:format "application/xml";
 .
 
 <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event> a epos:WebService;
-	schema:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event";
 	schema:description "FDSN-event web service providing event parameters for historical earthquakes from AHEAD, the European Archive of Historical Earthquake Data";
 	schema:name "TEST1- Historical earthquakes 1000-1899 (FDSN-event)";
-	hydra:entrypoint "https://www.emidius.eu/fdsnws/event/1/application.wadl"^^xsd:anyURI;
 	schema:provider <PIC:999472675>;
-	schema:datePublished "2012-12-01"^^xsd:date;
-	schema:dateModified "2018-09-10"^^xsd:date;
 	dct:spatial [ a dct:Location;
 		locn:geometry "POLYGON((-33.5 73.5,34.0 73.5,34.0 33.5,-33.5 33.5,-33.5 73.5))"^^gsp:wktLiteral;
 	];
 	hydra:supportedOperation <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation>;
-	schema:keywords "seismology, seismicity, catalogue, earthquake, magnitude";
-	dct:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI;
 	dct:temporal [ a dct:PeriodOfTime;
 		schema:startDate "1000-01-01T00:00:00Z"^^xsd:dateTime;
 		schema:endDate "1899-12-31T23:59:59Z"^^xsd:dateTime;
@@ -383,7 +368,6 @@
 <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation> a hydra:Operation;
 	hydra:method "GET"^^xsd:string;
 	hydra:returns "application/xml";
-	hydra:expects <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/payload>; #this property is used to link the hydra:Class that contains the payload description 
 	hydra:property[ a hydra:IriTemplate;
 		hydra:template "https://www.emidius.eu/fdsnws/event/1/query{?starttime, endtime, eventid, minlatitude, maxlatitude, minlongitude, maxlongitude, latitude, longitude, maxradiuskm, minmagnitude, maxmagnitude, orderby, includeallorigins, includeallmagnitudes, limit, nodata}"^^xsd:string;
 			hydra:mapping[ a hydra:IriTemplateMapping;
@@ -392,9 +376,9 @@
 				schema:valuePattern "YYYY-MM-DDThh:mm:ss";
 				rdfs:range "xsd:dateTime";
 				rdfs:label "Start time" ;
-				schema:minValue "1000-01-01T00:00:00";
-				schema:maxValue "1899-12-31T23:59:59";
-				schema:defaultValue "1000-01-01T00:00:00";
+				schema:minValue "1000-01-01T00:00:00Z";
+				schema:maxValue "1899-12-31T23:59:59Z";
+				schema:defaultValue "1000-01-01T00:00:00Z";
 				hydra:required "true"^^xsd:boolean;
 			];
 			hydra:mapping[ a hydra:IriTemplateMapping;
@@ -403,9 +387,9 @@
 				schema:valuePattern "YYYY-MM-DDThh:mm:ss";
 				rdfs:range "xsd:dateTime";
 				rdfs:label "End time" ;
-				schema:minValue "1000-01-01T00:00:00";
-				schema:maxValue "1899-12-31T23:59:59";
-				schema:defaultValue "1899-12-31T23:59:59";
+				schema:minValue "1000-01-01T00:00:00Z";
+				schema:maxValue "1899-12-31T23:59:59Z";
+				schema:defaultValue "1899-12-31T23:59:59Z";
 				hydra:required "true"^^xsd:boolean;
 			];
 			hydra:mapping[ a hydra:IriTemplateMapping;
@@ -525,8 +509,6 @@
 				rdfs:range "xsd:boolean";
 				rdfs:label "Include all origins" ;
 				schema:defaultValue "false";
-				http:paramValue "true";
-				http:paramValue "false";
 				hydra:required "false"^^xsd:boolean;
 			];
 			hydra:mapping[ a hydra:IriTemplateMapping;
@@ -534,8 +516,6 @@
 				rdfs:range "xsd:boolean";
 				rdfs:label "Include all magnitudes" ;
 				schema:defaultValue "false";
-				http:paramValue "true";
-				http:paramValue "false";
 				hydra:required "false"^^xsd:boolean;
 			];
 			hydra:mapping[ a hydra:IriTemplateMapping;
@@ -591,7 +571,6 @@
 		adms:schemeAgency "DDSS-ID";
 		skos:notation "WP08-DDSS-026";
 	];
-	dct:type "http://purl.org/dc/dcmitype/Dataset"^^xsd:anyURI;
 	dct:accrualPeriodicity "http://purl.org/cld/freq/irregular"^^xsd:anyURI;
 	dct:created "2010-06-01"^^xsd:date;
 	dct:modified "2018-09-10"^^xsd:date;
@@ -615,34 +594,26 @@
 <https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful> a dcat:Distribution;
 	dct:title "TEST2 - Bibliography for historical earthquakes";
 	dct:description "The distribution of bibliographical metadata via the restful web service is the main and preferred way to access the description of each data source considered in AHEAD, the European Archive of Historical Earthquake Data.";
-	dct:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful";
 	dct:issued "2017-10-25"^^xsd:date;
 	dct:modified "2017-10-25"^^xsd:date;
 	dct:type "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
 	dct:conformsTo <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography>;
 	dcat:accessURL <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography/Operation>;
 	dct:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI;
-	dct:format "http://publications.europa.eu/resource/authority/file-type/JSON"^^xsd:anyURI;
+	dct:format "application/epos.table.geo+json";
 .
 
 <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography> a epos:WebService;
-	schema:identifier "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography";
 	schema:description "Bibliography web service providing bibliographical metadata of the data sources in AHEAD, the European Archive of Historical Earthquake Data.";
 	schema:name "Bibliography metadata for historical earthquake";
-	hydra:entrypoint "https://www.emidius.eu/services/bibliography/query?"^^xsd:anyURI;
 	schema:provider <PIC:999472675>;
-	schema:datePublished "2017-07-30"^^xsd:date;
-	schema:dateModified "2017-08-31"^^xsd:date;
 	dct:spatial [ a dct:Location;
 		locn:geometry "POLYGON((-33.5 73.5,34.0 73.5,34.0 33.5,-33.5 33.5,-33.5 73.5))"^^gsp:wktLiteral;
 	];
 	hydra:supportedOperation <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/bibliography/Operation>;
-	schema:keywords "bibliography, metadata, historical earthquake studies";
-	dct:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI;
 	dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint>;
 	dcat:contactPoint <https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact>;
 	dct:conformsTo <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/APIDocumentation/restful/bibliography>;
-	dct:relation <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event>;
 .
 
 <https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/APIDocumentation/restful/bibliography> a hydra:ApiDocumentation;
@@ -666,7 +637,6 @@
 				hydra:variable "title"^^xsd:string;
 				rdfs:range "xsd:string";
 				rdfs:label "Title" ;
-				schema:defaultValue "";
 				hydra:required "false"^^xsd:boolean;
 			];
 			hydra:mapping[ a hydra:IriTemplateMapping;
@@ -697,8 +667,8 @@
 				schema:valuePattern "YYYY";
 				rdfs:range "xsd:dateTime";
 				rdfs:label "Year of publication (min)" ;
-				schema:minValue "1900";
-				schema:defaultValue "1900";
+				schema:minValue "1900-01-01T00:00:00Z";
+				schema:defaultValue "1900-01-01T00:00:00Z";
 				hydra:required "false"^^xsd:boolean;
 			];
 			hydra:mapping[ a hydra:IriTemplateMapping;
@@ -707,7 +677,7 @@
 				schema:valuePattern "YYYY";
 				rdfs:range "xsd:dateTime";
 				rdfs:label "Year of publication (max)" ;
-				schema:minValue "1900";
+				schema:minValue "1900-01-01T00:00:00Z";
 				hydra:required "false"^^xsd:boolean;
 			];
 			hydra:mapping[ a hydra:IriTemplateMapping;
@@ -842,10 +812,7 @@
     	    skos:notation "10.13127/esm/flatfile.1.0" ;
 	];
         dct:created "2018-01-01T00:00:00Z"^^xsd:dateTime ;
-        dct:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
         dct:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
-        owl:versionInfo "1.0.0" ;
-        dct:type "http://purl.org/dc/dcmitype/Dataset"^^xsd:anyURI ;
         dct:accrualPeriodicity "http://purl.org/cld/freq/annual"^^xsd:anyURI ;
         dcat:theme <category:tsuteststrgmotiparameters>;
         dcat:keyword "earthquake","event","seismic waveform","seismicity","station","waveform","PGA","PGV","PGD","Epicentral Distance","Hypocentral distance","Joyner-Boore distance","Response spectrum","Rupture distance" ;
@@ -855,7 +822,6 @@
         dcat:contactPoint <http://orcid.org/0000-0001-7947-4281/scientificContact> ;
         dct:publisher <https://doi.org/10.7914/SN/IT>;
         dct:publisher <MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8>;
-		prov:qualifiedAttribution <PIC:999472675/owner> ; #non usato
         dcat:distribution <http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001/Distribution/001> ;
         dct:spatial [ a dct:Location ;
           locn:geometry "POLYGON((-26.0 72.0, 68.5 72.0, 68.5 23.5, -26.0 23.5, -26.0 72.0))"^^gsp:wktLiteral ;
@@ -868,13 +834,7 @@
         # dct:hasPart <http://www.epos-eu.org/epos-dcat-ap/Seismology/EngineeringStrongMotionDatabase/Dataset/001> ;
 .
 
-<PIC:999472675/owner> a prov:Attribution ; #non usato
-    dcat:hadRole "owner" ; # role
-    prov:agent <PIC:999472675> . # Organization
-
-
 <http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001/Distribution/001> a dcat:Distribution ;
-        dct:identifier "http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001/Distribution/001" ;
         dct:title "TEST3 - Engineering Strong-Motion (ESM) Flatfile 2018" ;
         dct:description "This distribution (https://esm-db.eu/#/products/flat_file/) is a parametric table which contains metadata and intensity measures of manually processed waveforms recorded by accelerometers for magnitude (moment Mw, local ML or surface waves Ms) higher or equal than 4.0. It is encoded in a zip file contains 3 parametric tables in csv format separated by ';'. It covers the time interval 1960-2016 and is limited to the Pan-European region" ;
         dct:issued "2018-01-01"^^xsd:date ;
@@ -925,7 +885,6 @@
 
 
 <https://doi.org/10.5281/zenodo.17598403> a schema:SoftwareSourceCode;
-  schema:identifier "https://doi.org/10.5281/zenodo.17598403" ;
   schema:name "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab." ;
   schema:description "This repository contains a Jupyter Notebook with documentation for demonstrating multidisciplinary interaction with diverse EPOS data services, data integration and simple visualisation. The notebook uses data from TCS Geological Information and Modelling, GNSS data, and Seismology, and some data that is loaded from other sources. To get started, follow the steps explained in the HTML-documentation. The only file that you need to copy to your working directory is the notebook." ;
   schema:identifier [ a schema:PropertyValue ;
@@ -937,7 +896,7 @@
         schema:value "WP" ; 
     ];   
   dcat:theme <category:software_jup_conc_multi>;  
-  schema:keywords "EPOS, JupyterLab, notebook, introduction, GIM, GNSS, seismology, OGC, OWS, EIDA, GLASS framework, web mapping, web services";
+  schema:keywords "EPOS", "JupyterLab", "notebook", "introduction", "GIM", "GNSS", "seismology", "OGC", "OWS", "EIDA", "GLASS framework", "web mapping", "web services";
   schema:contactPoint <https://orcid.org/0000-0001-6095-2941>;
   schema:creator <ROR:048a87296>;  
   schema:codeRepository "https://raw.githubusercontent.com/daoane/epos-multidisciplinary-service-integration/refs/heads/main/Basic_workflows_service_integration.ipynb"^^xsd:anyURI ;
@@ -966,7 +925,7 @@
   		schema:mainEntityOfPage "https://episodesplatform.eu/#app:CatalogToXls"^^xsd:anyURI ;
 		schema:license "https://creativecommons.org/licenses/by/4.0/"^^xsd:anyURI ;
 		schema:softwareVersion "1.0";
-		schema:keywords "format conversion, data download, data export" ;
+		schema:keywords "format conversion", "data download", "data export" ;
   		dcat:theme <category:software_appl_conc_multi>;
 		schema:downloadUrl "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0/download"^^xsd:anyURI;
 		schema:softwareRequirements "Windows 7";

@@ -21,6 +21,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ImportedResourceKind int32
+
+const (
+	ImportedResourceKind_IMPORTED_RESOURCE_KIND_UNSPECIFIED          ImportedResourceKind = 0
+	ImportedResourceKind_IMPORTED_RESOURCE_KIND_DATASET              ImportedResourceKind = 1
+	ImportedResourceKind_IMPORTED_RESOURCE_KIND_SOFTWARE_APPLICATION ImportedResourceKind = 2
+	ImportedResourceKind_IMPORTED_RESOURCE_KIND_SOFTWARE_SOURCE_CODE ImportedResourceKind = 3
+)
+
+// Enum value maps for ImportedResourceKind.
+var (
+	ImportedResourceKind_name = map[int32]string{
+		0: "IMPORTED_RESOURCE_KIND_UNSPECIFIED",
+		1: "IMPORTED_RESOURCE_KIND_DATASET",
+		2: "IMPORTED_RESOURCE_KIND_SOFTWARE_APPLICATION",
+		3: "IMPORTED_RESOURCE_KIND_SOFTWARE_SOURCE_CODE",
+	}
+	ImportedResourceKind_value = map[string]int32{
+		"IMPORTED_RESOURCE_KIND_UNSPECIFIED":          0,
+		"IMPORTED_RESOURCE_KIND_DATASET":              1,
+		"IMPORTED_RESOURCE_KIND_SOFTWARE_APPLICATION": 2,
+		"IMPORTED_RESOURCE_KIND_SOFTWARE_SOURCE_CODE": 3,
+	}
+)
+
+func (x ImportedResourceKind) Enum() *ImportedResourceKind {
+	p := new(ImportedResourceKind)
+	*p = x
+	return p
+}
+
+func (x ImportedResourceKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ImportedResourceKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_semantic_aggregator_v1_import_proto_enumTypes[0].Descriptor()
+}
+
+func (ImportedResourceKind) Type() protoreflect.EnumType {
+	return &file_semantic_aggregator_v1_import_proto_enumTypes[0]
+}
+
+func (x ImportedResourceKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ImportedResourceKind.Descriptor instead.
+func (ImportedResourceKind) EnumDescriptor() ([]byte, []int) {
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{0}
+}
+
 type ReferenceKind int32
 
 const (
@@ -57,11 +109,11 @@ func (x ReferenceKind) String() string {
 }
 
 func (ReferenceKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_semantic_aggregator_v1_import_proto_enumTypes[0].Descriptor()
+	return file_semantic_aggregator_v1_import_proto_enumTypes[1].Descriptor()
 }
 
 func (ReferenceKind) Type() protoreflect.EnumType {
-	return &file_semantic_aggregator_v1_import_proto_enumTypes[0]
+	return &file_semantic_aggregator_v1_import_proto_enumTypes[1]
 }
 
 func (x ReferenceKind) Number() protoreflect.EnumNumber {
@@ -70,7 +122,7 @@ func (x ReferenceKind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ReferenceKind.Descriptor instead.
 func (ReferenceKind) EnumDescriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{0}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{1}
 }
 
 type DatasetImportOutcome int32
@@ -108,11 +160,11 @@ func (x DatasetImportOutcome) String() string {
 }
 
 func (DatasetImportOutcome) Descriptor() protoreflect.EnumDescriptor {
-	return file_semantic_aggregator_v1_import_proto_enumTypes[1].Descriptor()
+	return file_semantic_aggregator_v1_import_proto_enumTypes[2].Descriptor()
 }
 
 func (DatasetImportOutcome) Type() protoreflect.EnumType {
-	return &file_semantic_aggregator_v1_import_proto_enumTypes[1]
+	return &file_semantic_aggregator_v1_import_proto_enumTypes[2]
 }
 
 func (x DatasetImportOutcome) Number() protoreflect.EnumNumber {
@@ -121,7 +173,7 @@ func (x DatasetImportOutcome) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DatasetImportOutcome.Descriptor instead.
 func (DatasetImportOutcome) EnumDescriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{1}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{2}
 }
 
 type ImportPhase int32
@@ -163,11 +215,11 @@ func (x ImportPhase) String() string {
 }
 
 func (ImportPhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_semantic_aggregator_v1_import_proto_enumTypes[2].Descriptor()
+	return file_semantic_aggregator_v1_import_proto_enumTypes[3].Descriptor()
 }
 
 func (ImportPhase) Type() protoreflect.EnumType {
-	return &file_semantic_aggregator_v1_import_proto_enumTypes[2]
+	return &file_semantic_aggregator_v1_import_proto_enumTypes[3]
 }
 
 func (x ImportPhase) Number() protoreflect.EnumNumber {
@@ -176,7 +228,7 @@ func (x ImportPhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ImportPhase.Descriptor instead.
 func (ImportPhase) EnumDescriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{2}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{3}
 }
 
 type ImportDatasetsRequest struct {
@@ -264,6 +316,225 @@ func (x *ImportDatasetsRequest) GetReferences() []*ReferenceBinding {
 	return nil
 }
 
+type ImportResourcesRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Turtle         []byte                 `protobuf:"bytes,1,opt,name=turtle,proto3" json:"turtle,omitempty"`
+	BaseUri        string                 `protobuf:"bytes,2,opt,name=base_uri,json=baseUri,proto3" json:"base_uri,omitempty"`
+	MappingId      string                 `protobuf:"bytes,3,opt,name=mapping_id,json=mappingId,proto3" json:"mapping_id,omitempty"`
+	MappingVersion int32                  `protobuf:"varint,4,opt,name=mapping_version,json=mappingVersion,proto3" json:"mapping_version,omitempty"`
+	// Deprecated: ResourceImportService derives groups from referenced SKOS concepts.
+	// Retained only so existing serialized requests remain wire-compatible.
+	//
+	// Deprecated: Marked as deprecated in semantic_aggregator/v1/import.proto.
+	GroupId       string              `protobuf:"bytes,5,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	References    []*ReferenceBinding `protobuf:"bytes,6,rep,name=references,proto3" json:"references,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImportResourcesRequest) Reset() {
+	*x = ImportResourcesRequest{}
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImportResourcesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImportResourcesRequest) ProtoMessage() {}
+
+func (x *ImportResourcesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImportResourcesRequest.ProtoReflect.Descriptor instead.
+func (*ImportResourcesRequest) Descriptor() ([]byte, []int) {
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ImportResourcesRequest) GetTurtle() []byte {
+	if x != nil {
+		return x.Turtle
+	}
+	return nil
+}
+
+func (x *ImportResourcesRequest) GetBaseUri() string {
+	if x != nil {
+		return x.BaseUri
+	}
+	return ""
+}
+
+func (x *ImportResourcesRequest) GetMappingId() string {
+	if x != nil {
+		return x.MappingId
+	}
+	return ""
+}
+
+func (x *ImportResourcesRequest) GetMappingVersion() int32 {
+	if x != nil {
+		return x.MappingVersion
+	}
+	return 0
+}
+
+// Deprecated: Marked as deprecated in semantic_aggregator/v1/import.proto.
+func (x *ImportResourcesRequest) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+func (x *ImportResourcesRequest) GetReferences() []*ReferenceBinding {
+	if x != nil {
+		return x.References
+	}
+	return nil
+}
+
+type ImportedResource struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Subject       string                 `protobuf:"bytes,1,opt,name=subject,proto3" json:"subject,omitempty"`
+	ResourceId    string                 `protobuf:"bytes,2,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	VersionId     string                 `protobuf:"bytes,3,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	Kind          ImportedResourceKind   `protobuf:"varint,4,opt,name=kind,proto3,enum=semantic_aggregator.v1.ImportedResourceKind" json:"kind,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImportedResource) Reset() {
+	*x = ImportedResource{}
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImportedResource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImportedResource) ProtoMessage() {}
+
+func (x *ImportedResource) ProtoReflect() protoreflect.Message {
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImportedResource.ProtoReflect.Descriptor instead.
+func (*ImportedResource) Descriptor() ([]byte, []int) {
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ImportedResource) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *ImportedResource) GetResourceId() string {
+	if x != nil {
+		return x.ResourceId
+	}
+	return ""
+}
+
+func (x *ImportedResource) GetVersionId() string {
+	if x != nil {
+		return x.VersionId
+	}
+	return ""
+}
+
+func (x *ImportedResource) GetKind() ImportedResourceKind {
+	if x != nil {
+		return x.Kind
+	}
+	return ImportedResourceKind_IMPORTED_RESOURCE_KIND_UNSPECIFIED
+}
+
+type ImportResourcesResponse struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Imported []*ImportedResource    `protobuf:"bytes,1,rep,name=imported,proto3" json:"imported,omitempty"`
+	// Deprecated: imports now continue after per-resource failures.
+	Failure *ImportFailure `protobuf:"bytes,2,opt,name=failure,proto3" json:"failure,omitempty"`
+	// Resources skipped during an otherwise successful import.
+	Warnings      []*ImportFailure `protobuf:"bytes,3,rep,name=warnings,proto3" json:"warnings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImportResourcesResponse) Reset() {
+	*x = ImportResourcesResponse{}
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImportResourcesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImportResourcesResponse) ProtoMessage() {}
+
+func (x *ImportResourcesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImportResourcesResponse.ProtoReflect.Descriptor instead.
+func (*ImportResourcesResponse) Descriptor() ([]byte, []int) {
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ImportResourcesResponse) GetImported() []*ImportedResource {
+	if x != nil {
+		return x.Imported
+	}
+	return nil
+}
+
+func (x *ImportResourcesResponse) GetFailure() *ImportFailure {
+	if x != nil {
+		return x.Failure
+	}
+	return nil
+}
+
+func (x *ImportResourcesResponse) GetWarnings() []*ImportFailure {
+	if x != nil {
+		return x.Warnings
+	}
+	return nil
+}
+
 type ReferenceBinding struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Kind          ReferenceKind          `protobuf:"varint,1,opt,name=kind,proto3,enum=semantic_aggregator.v1.ReferenceKind" json:"kind,omitempty"`
@@ -275,7 +546,7 @@ type ReferenceBinding struct {
 
 func (x *ReferenceBinding) Reset() {
 	*x = ReferenceBinding{}
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[1]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -287,7 +558,7 @@ func (x *ReferenceBinding) String() string {
 func (*ReferenceBinding) ProtoMessage() {}
 
 func (x *ReferenceBinding) ProtoReflect() protoreflect.Message {
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[1]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -300,7 +571,7 @@ func (x *ReferenceBinding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReferenceBinding.ProtoReflect.Descriptor instead.
 func (*ReferenceBinding) Descriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{1}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ReferenceBinding) GetKind() ReferenceKind {
@@ -336,7 +607,7 @@ type ImportedDataset struct {
 
 func (x *ImportedDataset) Reset() {
 	*x = ImportedDataset{}
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[2]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -348,7 +619,7 @@ func (x *ImportedDataset) String() string {
 func (*ImportedDataset) ProtoMessage() {}
 
 func (x *ImportedDataset) ProtoReflect() protoreflect.Message {
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[2]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -361,7 +632,7 @@ func (x *ImportedDataset) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportedDataset.ProtoReflect.Descriptor instead.
 func (*ImportedDataset) Descriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{2}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ImportedDataset) GetSubject() string {
@@ -400,13 +671,15 @@ type ImportFailure struct {
 	// When true, the upstream may have created an entity despite the error.
 	OutcomeUnknown bool        `protobuf:"varint,3,opt,name=outcome_unknown,json=outcomeUnknown,proto3" json:"outcome_unknown,omitempty"`
 	Phase          ImportPhase `protobuf:"varint,4,opt,name=phase,proto3,enum=semantic_aggregator.v1.ImportPhase" json:"phase,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Safe validation detail for the rejected import item.
+	Message       string `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ImportFailure) Reset() {
 	*x = ImportFailure{}
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[3]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -418,7 +691,7 @@ func (x *ImportFailure) String() string {
 func (*ImportFailure) ProtoMessage() {}
 
 func (x *ImportFailure) ProtoReflect() protoreflect.Message {
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[3]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -431,7 +704,7 @@ func (x *ImportFailure) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportFailure.ProtoReflect.Descriptor instead.
 func (*ImportFailure) Descriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{3}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ImportFailure) GetSubject() string {
@@ -462,6 +735,13 @@ func (x *ImportFailure) GetPhase() ImportPhase {
 	return ImportPhase_IMPORT_PHASE_UNSPECIFIED
 }
 
+func (x *ImportFailure) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 type ResolvedContact struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Iri   string                 `protobuf:"bytes,1,opt,name=iri,proto3" json:"iri,omitempty"`
@@ -474,7 +754,7 @@ type ResolvedContact struct {
 
 func (x *ResolvedContact) Reset() {
 	*x = ResolvedContact{}
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[4]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -486,7 +766,7 @@ func (x *ResolvedContact) String() string {
 func (*ResolvedContact) ProtoMessage() {}
 
 func (x *ResolvedContact) ProtoReflect() protoreflect.Message {
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[4]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -499,7 +779,7 @@ func (x *ResolvedContact) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolvedContact.ProtoReflect.Descriptor instead.
 func (*ResolvedContact) Descriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{4}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ResolvedContact) GetIri() string {
@@ -533,7 +813,7 @@ type CreatedCategory struct {
 
 func (x *CreatedCategory) Reset() {
 	*x = CreatedCategory{}
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[5]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -545,7 +825,7 @@ func (x *CreatedCategory) String() string {
 func (*CreatedCategory) ProtoMessage() {}
 
 func (x *CreatedCategory) ProtoReflect() protoreflect.Message {
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[5]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -558,7 +838,7 @@ func (x *CreatedCategory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatedCategory.ProtoReflect.Descriptor instead.
 func (*CreatedCategory) Descriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{5}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CreatedCategory) GetIri() string {
@@ -585,7 +865,7 @@ type CreatedOrganization struct {
 
 func (x *CreatedOrganization) Reset() {
 	*x = CreatedOrganization{}
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[6]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -597,7 +877,7 @@ func (x *CreatedOrganization) String() string {
 func (*CreatedOrganization) ProtoMessage() {}
 
 func (x *CreatedOrganization) ProtoReflect() protoreflect.Message {
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[6]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -610,7 +890,7 @@ func (x *CreatedOrganization) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatedOrganization.ProtoReflect.Descriptor instead.
 func (*CreatedOrganization) Descriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{6}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreatedOrganization) GetIri() string {
@@ -644,7 +924,7 @@ type ImportDatasetsResponse struct {
 
 func (x *ImportDatasetsResponse) Reset() {
 	*x = ImportDatasetsResponse{}
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[7]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -656,7 +936,7 @@ func (x *ImportDatasetsResponse) String() string {
 func (*ImportDatasetsResponse) ProtoMessage() {}
 
 func (x *ImportDatasetsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[7]
+	mi := &file_semantic_aggregator_v1_import_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -669,7 +949,7 @@ func (x *ImportDatasetsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportDatasetsResponse.ProtoReflect.Descriptor instead.
 func (*ImportDatasetsResponse) Descriptor() ([]byte, []int) {
-	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{7}
+	return file_semantic_aggregator_v1_import_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ImportDatasetsResponse) GetImported() []*ImportedDataset {
@@ -721,7 +1001,28 @@ const file_semantic_aggregator_v1_import_proto_rawDesc = "" +
 	"\bgroup_id\x18\x05 \x01(\tR\agroupId\x12H\n" +
 	"\n" +
 	"references\x18\x06 \x03(\v2(.semantic_aggregator.v1.ReferenceBindingR\n" +
-	"references\"o\n" +
+	"references\"\xfc\x01\n" +
+	"\x16ImportResourcesRequest\x12\x16\n" +
+	"\x06turtle\x18\x01 \x01(\fR\x06turtle\x12\x19\n" +
+	"\bbase_uri\x18\x02 \x01(\tR\abaseUri\x12\x1d\n" +
+	"\n" +
+	"mapping_id\x18\x03 \x01(\tR\tmappingId\x12'\n" +
+	"\x0fmapping_version\x18\x04 \x01(\x05R\x0emappingVersion\x12\x1d\n" +
+	"\bgroup_id\x18\x05 \x01(\tB\x02\x18\x01R\agroupId\x12H\n" +
+	"\n" +
+	"references\x18\x06 \x03(\v2(.semantic_aggregator.v1.ReferenceBindingR\n" +
+	"references\"\xae\x01\n" +
+	"\x10ImportedResource\x12\x18\n" +
+	"\asubject\x18\x01 \x01(\tR\asubject\x12\x1f\n" +
+	"\vresource_id\x18\x02 \x01(\tR\n" +
+	"resourceId\x12\x1d\n" +
+	"\n" +
+	"version_id\x18\x03 \x01(\tR\tversionId\x12@\n" +
+	"\x04kind\x18\x04 \x01(\x0e2,.semantic_aggregator.v1.ImportedResourceKindR\x04kind\"\xe3\x01\n" +
+	"\x17ImportResourcesResponse\x12D\n" +
+	"\bimported\x18\x01 \x03(\v2(.semantic_aggregator.v1.ImportedResourceR\bimported\x12?\n" +
+	"\afailure\x18\x02 \x01(\v2%.semantic_aggregator.v1.ImportFailureR\afailure\x12A\n" +
+	"\bwarnings\x18\x03 \x03(\v2%.semantic_aggregator.v1.ImportFailureR\bwarnings\"o\n" +
 	"\x10ReferenceBinding\x129\n" +
 	"\x04kind\x18\x01 \x01(\x0e2%.semantic_aggregator.v1.ReferenceKindR\x04kind\x12\x10\n" +
 	"\x03iri\x18\x02 \x01(\tR\x03iri\x12\x0e\n" +
@@ -732,12 +1033,13 @@ const file_semantic_aggregator_v1_import_proto_rawDesc = "" +
 	"resourceId\x12\x1d\n" +
 	"\n" +
 	"version_id\x18\x03 \x01(\tR\tversionId\x12F\n" +
-	"\aoutcome\x18\x04 \x01(\x0e2,.semantic_aggregator.v1.DatasetImportOutcomeR\aoutcome\"\xa1\x01\n" +
+	"\aoutcome\x18\x04 \x01(\x0e2,.semantic_aggregator.v1.DatasetImportOutcomeR\aoutcome\"\xbb\x01\n" +
 	"\rImportFailure\x12\x18\n" +
 	"\asubject\x18\x01 \x01(\tR\asubject\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12'\n" +
 	"\x0foutcome_unknown\x18\x03 \x01(\bR\x0eoutcomeUnknown\x129\n" +
-	"\x05phase\x18\x04 \x01(\x0e2#.semantic_aggregator.v1.ImportPhaseR\x05phase\"M\n" +
+	"\x05phase\x18\x04 \x01(\x0e2#.semantic_aggregator.v1.ImportPhaseR\x05phase\x12\x18\n" +
+	"\amessage\x18\x05 \x01(\tR\amessage\"M\n" +
 	"\x0fResolvedContact\x12\x10\n" +
 	"\x03iri\x18\x01 \x01(\tR\x03iri\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x18\n" +
@@ -755,7 +1057,12 @@ const file_semantic_aggregator_v1_import_proto_rawDesc = "" +
 	"\n" +
 	"categories\x18\x04 \x03(\v2'.semantic_aggregator.v1.CreatedCategoryR\n" +
 	"categories\x12Q\n" +
-	"\rorganizations\x18\x05 \x03(\v2+.semantic_aggregator.v1.CreatedOrganizationR\rorganizations*\x8f\x01\n" +
+	"\rorganizations\x18\x05 \x03(\v2+.semantic_aggregator.v1.CreatedOrganizationR\rorganizations*\xc4\x01\n" +
+	"\x14ImportedResourceKind\x12&\n" +
+	"\"IMPORTED_RESOURCE_KIND_UNSPECIFIED\x10\x00\x12\"\n" +
+	"\x1eIMPORTED_RESOURCE_KIND_DATASET\x10\x01\x12/\n" +
+	"+IMPORTED_RESOURCE_KIND_SOFTWARE_APPLICATION\x10\x02\x12/\n" +
+	"+IMPORTED_RESOURCE_KIND_SOFTWARE_SOURCE_CODE\x10\x03*\x8f\x01\n" +
 	"\rReferenceKind\x12\x1e\n" +
 	"\x1aREFERENCE_KIND_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bREFERENCE_KIND_ORGANIZATION\x10\x01\x12 \n" +
@@ -772,7 +1079,9 @@ const file_semantic_aggregator_v1_import_proto_rawDesc = "" +
 	"\x1eIMPORT_PHASE_CATEGORY_CREATION\x10\x03\x12&\n" +
 	"\"IMPORT_PHASE_ORGANIZATION_CREATION\x10\x042\x87\x01\n" +
 	"\x14DatasetImportService\x12o\n" +
-	"\x0eImportDatasets\x12-.semantic_aggregator.v1.ImportDatasetsRequest\x1a..semantic_aggregator.v1.ImportDatasetsResponseBiZggithub.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/semantic_aggregator/v1;semanticaggregatorv1b\x06proto3"
+	"\x0eImportDatasets\x12-.semantic_aggregator.v1.ImportDatasetsRequest\x1a..semantic_aggregator.v1.ImportDatasetsResponse2\x8b\x01\n" +
+	"\x15ResourceImportService\x12r\n" +
+	"\x0fImportResources\x12..semantic_aggregator.v1.ImportResourcesRequest\x1a/.semantic_aggregator.v1.ImportResourcesResponseBiZggithub.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/semantic_aggregator/v1;semanticaggregatorv1b\x06proto3"
 
 var (
 	file_semantic_aggregator_v1_import_proto_rawDescOnce sync.Once
@@ -786,38 +1095,49 @@ func file_semantic_aggregator_v1_import_proto_rawDescGZIP() []byte {
 	return file_semantic_aggregator_v1_import_proto_rawDescData
 }
 
-var file_semantic_aggregator_v1_import_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_semantic_aggregator_v1_import_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_semantic_aggregator_v1_import_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_semantic_aggregator_v1_import_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_semantic_aggregator_v1_import_proto_goTypes = []any{
-	(ReferenceKind)(0),             // 0: semantic_aggregator.v1.ReferenceKind
-	(DatasetImportOutcome)(0),      // 1: semantic_aggregator.v1.DatasetImportOutcome
-	(ImportPhase)(0),               // 2: semantic_aggregator.v1.ImportPhase
-	(*ImportDatasetsRequest)(nil),  // 3: semantic_aggregator.v1.ImportDatasetsRequest
-	(*ReferenceBinding)(nil),       // 4: semantic_aggregator.v1.ReferenceBinding
-	(*ImportedDataset)(nil),        // 5: semantic_aggregator.v1.ImportedDataset
-	(*ImportFailure)(nil),          // 6: semantic_aggregator.v1.ImportFailure
-	(*ResolvedContact)(nil),        // 7: semantic_aggregator.v1.ResolvedContact
-	(*CreatedCategory)(nil),        // 8: semantic_aggregator.v1.CreatedCategory
-	(*CreatedOrganization)(nil),    // 9: semantic_aggregator.v1.CreatedOrganization
-	(*ImportDatasetsResponse)(nil), // 10: semantic_aggregator.v1.ImportDatasetsResponse
+	(ImportedResourceKind)(0),       // 0: semantic_aggregator.v1.ImportedResourceKind
+	(ReferenceKind)(0),              // 1: semantic_aggregator.v1.ReferenceKind
+	(DatasetImportOutcome)(0),       // 2: semantic_aggregator.v1.DatasetImportOutcome
+	(ImportPhase)(0),                // 3: semantic_aggregator.v1.ImportPhase
+	(*ImportDatasetsRequest)(nil),   // 4: semantic_aggregator.v1.ImportDatasetsRequest
+	(*ImportResourcesRequest)(nil),  // 5: semantic_aggregator.v1.ImportResourcesRequest
+	(*ImportedResource)(nil),        // 6: semantic_aggregator.v1.ImportedResource
+	(*ImportResourcesResponse)(nil), // 7: semantic_aggregator.v1.ImportResourcesResponse
+	(*ReferenceBinding)(nil),        // 8: semantic_aggregator.v1.ReferenceBinding
+	(*ImportedDataset)(nil),         // 9: semantic_aggregator.v1.ImportedDataset
+	(*ImportFailure)(nil),           // 10: semantic_aggregator.v1.ImportFailure
+	(*ResolvedContact)(nil),         // 11: semantic_aggregator.v1.ResolvedContact
+	(*CreatedCategory)(nil),         // 12: semantic_aggregator.v1.CreatedCategory
+	(*CreatedOrganization)(nil),     // 13: semantic_aggregator.v1.CreatedOrganization
+	(*ImportDatasetsResponse)(nil),  // 14: semantic_aggregator.v1.ImportDatasetsResponse
 }
 var file_semantic_aggregator_v1_import_proto_depIdxs = []int32{
-	4,  // 0: semantic_aggregator.v1.ImportDatasetsRequest.references:type_name -> semantic_aggregator.v1.ReferenceBinding
-	0,  // 1: semantic_aggregator.v1.ReferenceBinding.kind:type_name -> semantic_aggregator.v1.ReferenceKind
-	1,  // 2: semantic_aggregator.v1.ImportedDataset.outcome:type_name -> semantic_aggregator.v1.DatasetImportOutcome
-	2,  // 3: semantic_aggregator.v1.ImportFailure.phase:type_name -> semantic_aggregator.v1.ImportPhase
-	5,  // 4: semantic_aggregator.v1.ImportDatasetsResponse.imported:type_name -> semantic_aggregator.v1.ImportedDataset
-	6,  // 5: semantic_aggregator.v1.ImportDatasetsResponse.failure:type_name -> semantic_aggregator.v1.ImportFailure
-	7,  // 6: semantic_aggregator.v1.ImportDatasetsResponse.contacts:type_name -> semantic_aggregator.v1.ResolvedContact
-	8,  // 7: semantic_aggregator.v1.ImportDatasetsResponse.categories:type_name -> semantic_aggregator.v1.CreatedCategory
-	9,  // 8: semantic_aggregator.v1.ImportDatasetsResponse.organizations:type_name -> semantic_aggregator.v1.CreatedOrganization
-	3,  // 9: semantic_aggregator.v1.DatasetImportService.ImportDatasets:input_type -> semantic_aggregator.v1.ImportDatasetsRequest
-	10, // 10: semantic_aggregator.v1.DatasetImportService.ImportDatasets:output_type -> semantic_aggregator.v1.ImportDatasetsResponse
-	10, // [10:11] is the sub-list for method output_type
-	9,  // [9:10] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	8,  // 0: semantic_aggregator.v1.ImportDatasetsRequest.references:type_name -> semantic_aggregator.v1.ReferenceBinding
+	8,  // 1: semantic_aggregator.v1.ImportResourcesRequest.references:type_name -> semantic_aggregator.v1.ReferenceBinding
+	0,  // 2: semantic_aggregator.v1.ImportedResource.kind:type_name -> semantic_aggregator.v1.ImportedResourceKind
+	6,  // 3: semantic_aggregator.v1.ImportResourcesResponse.imported:type_name -> semantic_aggregator.v1.ImportedResource
+	10, // 4: semantic_aggregator.v1.ImportResourcesResponse.failure:type_name -> semantic_aggregator.v1.ImportFailure
+	10, // 5: semantic_aggregator.v1.ImportResourcesResponse.warnings:type_name -> semantic_aggregator.v1.ImportFailure
+	1,  // 6: semantic_aggregator.v1.ReferenceBinding.kind:type_name -> semantic_aggregator.v1.ReferenceKind
+	2,  // 7: semantic_aggregator.v1.ImportedDataset.outcome:type_name -> semantic_aggregator.v1.DatasetImportOutcome
+	3,  // 8: semantic_aggregator.v1.ImportFailure.phase:type_name -> semantic_aggregator.v1.ImportPhase
+	9,  // 9: semantic_aggregator.v1.ImportDatasetsResponse.imported:type_name -> semantic_aggregator.v1.ImportedDataset
+	10, // 10: semantic_aggregator.v1.ImportDatasetsResponse.failure:type_name -> semantic_aggregator.v1.ImportFailure
+	11, // 11: semantic_aggregator.v1.ImportDatasetsResponse.contacts:type_name -> semantic_aggregator.v1.ResolvedContact
+	12, // 12: semantic_aggregator.v1.ImportDatasetsResponse.categories:type_name -> semantic_aggregator.v1.CreatedCategory
+	13, // 13: semantic_aggregator.v1.ImportDatasetsResponse.organizations:type_name -> semantic_aggregator.v1.CreatedOrganization
+	4,  // 14: semantic_aggregator.v1.DatasetImportService.ImportDatasets:input_type -> semantic_aggregator.v1.ImportDatasetsRequest
+	5,  // 15: semantic_aggregator.v1.ResourceImportService.ImportResources:input_type -> semantic_aggregator.v1.ImportResourcesRequest
+	14, // 16: semantic_aggregator.v1.DatasetImportService.ImportDatasets:output_type -> semantic_aggregator.v1.ImportDatasetsResponse
+	7,  // 17: semantic_aggregator.v1.ResourceImportService.ImportResources:output_type -> semantic_aggregator.v1.ImportResourcesResponse
+	16, // [16:18] is the sub-list for method output_type
+	14, // [14:16] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_semantic_aggregator_v1_import_proto_init() }
@@ -830,10 +1150,10 @@ func file_semantic_aggregator_v1_import_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_semantic_aggregator_v1_import_proto_rawDesc), len(file_semantic_aggregator_v1_import_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   8,
+			NumEnums:      4,
+			NumMessages:   11,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_semantic_aggregator_v1_import_proto_goTypes,
 		DependencyIndexes: file_semantic_aggregator_v1_import_proto_depIdxs,

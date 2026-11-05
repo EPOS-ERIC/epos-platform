@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Durable namespace-scoped IRI→UUID associations.
@@ -60,6 +61,28 @@ public final class IdentityStore {
                 values.put(reference, id);
                 write(values);
                 return new Resolution(id.toString(), true);
+            }
+        }
+    }
+
+    /** Resolves or creates an identity while holding the same durable lock as {@link #remember}. */
+    public UUID resolveOrCreate(DatasetMapping.Reference reference, Supplier<UUID> create) throws IOException {
+        Objects.requireNonNull(reference, "reference");
+        Objects.requireNonNull(create, "create");
+        validateReference(reference);
+        Files.createDirectories(directory);
+        synchronized (LOCKS.computeIfAbsent(file, ignored -> new Object())) {
+            try (var channel = FileChannel.open(directory.resolve("references.lock"),
+                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE);
+                 var lock = channel.lock()) {
+                var values = new LinkedHashMap<>(read());
+                UUID existing = values.get(reference);
+                if (existing != null) return existing;
+                UUID created = Objects.requireNonNull(create.get(), "created identity");
+                if (created.equals(new UUID(0, 0))) throw new IllegalArgumentException("zero UUID is not allowed");
+                values.put(reference, created);
+                write(values);
+                return created;
             }
         }
     }

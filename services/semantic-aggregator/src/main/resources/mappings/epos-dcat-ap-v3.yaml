@@ -1,0 +1,50 @@
+id: epos-dcat-ap
+version: 3
+dataset_type: "http://www.w3.org/ns/dcat#Dataset"
+scheme_mapping:
+  rdf_type: "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+  fields:
+    name: "http://purl.org/dc/terms/title"
+    label: "http://www.w3.org/2004/02/skos/core#prefLabel"
+    description: "http://purl.org/dc/terms/description"
+    logo: "http://xmlns.com/foaf/0.1/logo"
+    page: "http://xmlns.com/foaf/0.1/homepage"
+    color: "http://schema.org/color"
+    position: "http://schema.org/orderItemNumber"
+    concept: "http://www.w3.org/2004/02/skos/core#hasTopConcept"
+  category:
+    rdf_type: "http://www.w3.org/2004/02/skos/core#Concept"
+    fields:
+      name: "http://www.w3.org/2004/02/skos/core#prefLabel"
+      scheme: "http://www.w3.org/2004/02/skos/core#inScheme"
+      parent: "http://www.w3.org/2004/02/skos/core#broader"
+primary_identifier:
+  predicate: "http://purl.org/dc/terms/identifier"
+  string_type: "EPOS-DCAT-AP:dct:identifier:xsd:string"
+  uri_type: "EPOS-DCAT-AP:dct:identifier:xsd:anyURI"
+fields:
+  title: ["http://purl.org/dc/terms/title"]
+  description: ["http://purl.org/dc/terms/description"]
+  keywords: ["http://www.w3.org/ns/dcat#keyword"]
+  providers: ["http://purl.org/dc/terms/publisher"]
+  contact_points: ["http://www.w3.org/ns/dcat#contactPoint"]
+  categories: ["http://www.w3.org/ns/dcat#theme"]
+  accrual_periodicity: ["http://purl.org/dc/terms/accrualPeriodicity"]
+  access_right: ["http://purl.org/dc/terms/accessRights"]
+  created: ["http://purl.org/dc/terms/created"]
+  updated: ["http://purl.org/dc/terms/modified"]
+  quality_annotation: ["http://www.w3.org/ns/dqv#hasQualityAnnotation", "http://www.w3.org/ns/oa#hasBody"]
+  spatial_coverage: ["http://purl.org/dc/terms/spatial", "http://www.w3.org/ns/locn#geometry"]
+  temporal_start: ["http://purl.org/dc/terms/temporal", "http://www.w3.org/ns/dcat#startDate"]
+  temporal_end: ["http://purl.org/dc/terms/temporal", "http://www.w3.org/ns/dcat#endDate"]
+  identifier_type: ["http://www.w3.org/ns/adms#identifier", "http://www.w3.org/ns/adms#schemeAgency"]
+  identifier_value: ["http://www.w3.org/ns/adms#identifier", "http://www.w3.org/2004/02/skos/core#notation"]
+  distribution_title: ["http://www.w3.org/ns/dcat#distribution", "http://purl.org/dc/terms/title"]
+  distribution_description: ["http://www.w3.org/ns/dcat#distribution", "http://purl.org/dc/terms/description"]
+  distribution_type: ["http://www.w3.org/ns/dcat#distribution", "http://purl.org/dc/terms/type"]
+  distribution_url: ["http://www.w3.org/ns/dcat#distribution", "http://www.w3.org/ns/dcat#downloadURL"]
+  distribution_format: ["http://www.w3.org/ns/dcat#distribution", "http://purl.org/dc/terms/format"]
+  distribution_license: ["http://www.w3.org/ns/dcat#distribution", "http://purl.org/dc/terms/license"]
+  distribution_issued: ["http://www.w3.org/ns/dcat#distribution", "http://purl.org/dc/terms/issued"]
+  distribution_modified: ["http://www.w3.org/ns/dcat#distribution", "http://purl.org/dc/terms/modified"]
+  distribution_byte_size: ["http://www.w3.org/ns/dcat#distribution", "http://www.w3.org/ns/dcat#byteSize"]

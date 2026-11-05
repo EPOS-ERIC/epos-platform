@@ -10,6 +10,9 @@ AUTH_CLIENT_ID=${AUTH_CLIENT_ID:-local-dev-client}
 AUTH_CLIENT_SECRET=${AUTH_CLIENT_SECRET:-dev-secret}
 AUTH_USERNAME=${AUTH_USERNAME:-admin@admin.org}
 AUTH_PASSWORD=${AUTH_PASSWORD:-adminadmin}
+IMPORT_BASE_URI=${IMPORT_BASE_URI:-https://www.epos-eu.org/epos-dcat-ap/}
+IMPORT_MAPPING_ID=${IMPORT_MAPPING_ID:-epos-dcat-ap}
+IMPORT_MAPPING_VERSION=${IMPORT_MAPPING_VERSION:-1}
 
 if [ ! -f "$TTL_FILE" ]; then
   printf 'Turtle file not found: %s\n' "$TTL_FILE" >&2
@@ -41,6 +44,12 @@ fi
 IMPORT_URL="$GATEWAY_API_URL/imports/turtle"
 printf 'Importing %s through %s\n' "$TTL_FILE" "$IMPORT_URL"
 
+jq -n \
+  --rawfile turtle "$TTL_FILE" \
+  --arg base_uri "$IMPORT_BASE_URI" \
+  --arg mapping_id "$IMPORT_MAPPING_ID" \
+  --argjson mapping_version "$IMPORT_MAPPING_VERSION" \
+  '{turtle: $turtle, baseUri: $base_uri, mappingId: $mapping_id, mappingVersion: $mapping_version}' | \
 curl \
   --silent \
   --show-error \
@@ -48,6 +57,6 @@ curl \
   --request POST \
   "$IMPORT_URL" \
   --header "Authorization: Bearer $TOKEN" \
-  --header 'Content-Type: text/turtle' \
-  --data-binary "@$TTL_FILE"
+  --header 'Content-Type: application/json' \
+  --data-binary @-
 printf '\n'

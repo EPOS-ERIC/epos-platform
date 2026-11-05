@@ -224,20 +224,29 @@ func RequestManagedToken(root, email, password string) (string, error) {
 	return response.AccessToken, nil
 }
 
-// SendTurtleImport uploads a prepared Turtle payload and displays the result.
+// SendTurtleImport uploads a prepared Turtle payload with the bundled EPOS-DCAT-AP v1 profile.
 func SendTurtleImport(baseURL, token string, payload []byte) error {
 	endpoint, err := url.JoinPath(baseURL, "imports/turtle")
 	if err != nil {
 		return fmt.Errorf("build import URL: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint, io.NopCloser(bytes.NewReader(payload)))
+	body, err := json.Marshal(struct {
+		Turtle         string `json:"turtle"`
+		BaseURI        string `json:"baseUri"`
+		MappingID      string `json:"mappingId"`
+		MappingVersion int    `json:"mappingVersion"`
+	}{string(payload), "https://www.epos-eu.org/epos-dcat-ap/", "epos-dcat-ap", 1})
+	if err != nil {
+		return fmt.Errorf("encode import request: %w", err)
+	}
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("create import request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "text/turtle")
+	req.Header.Set("Content-Type", "application/json")
 
 	res, err := importClient.Do(req)
 	if err != nil {
@@ -274,31 +283,13 @@ func SendTurtleImport(baseURL, token string, payload []byte) error {
 		return fmt.Errorf("import request failed with HTTP status %d", res.StatusCode)
 	}
 
-	var result struct {
-		Groups               int `json:"groups"`
-		Categories           int `json:"categories"`
-		Organizations        int `json:"organizations"`
-		ContactPoints        int `json:"contact_points"`
-		Datasets             int `json:"datasets"`
-		SoftwareApplications int `json:"software_applications"`
-		SoftwareSourceCodes  int `json:"software_source_codes"`
-		Warnings             []struct {
-			Severity  string `json:"severity"`
-			Subject   string `json:"subject"`
-			Predicate string `json:"predicate"`
-			Message   string `json:"message"`
-		} `json:"warnings"`
-	}
+	var result struct { Imported []struct { Kind string `json:"kind"` } `json:"imported"` }
 
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
 		return fmt.Errorf("import succeeded but response could not be read; do not retry without checking the environment: %w", err)
 	}
 
-	display.Info("Import counts: groups=%d categories=%d organizations=%d contact_points=%d datasets=%d software_applications=%d software_source_codes=%d", result.Groups, result.Categories, result.Organizations, result.ContactPoints, result.Datasets, result.SoftwareApplications, result.SoftwareSourceCodes)
-
-	for _, warning := range result.Warnings {
-		display.Warn("Import %s: subject=%s predicate=%s: %s", warning.Severity, warning.Subject, warning.Predicate, warning.Message)
-	}
+	display.Info("Imported resources: %d", len(result.Imported))
 
 	return nil
 }

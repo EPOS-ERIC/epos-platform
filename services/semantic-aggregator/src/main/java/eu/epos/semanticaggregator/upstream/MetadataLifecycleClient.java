@@ -5,6 +5,7 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.MetadataUtils;
 import eu.epos.semanticaggregator.ingest.EntityDescription;
+import eu.epos.semanticaggregator.ingest.LegacySchemeMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,7 +19,8 @@ import metadata_lifecycle.v1.ContactPointOuterClass;
 import metadata_lifecycle.v1.ContactPointServiceGrpc;
 import metadata_lifecycle.v1.Category;
 import metadata_lifecycle.v1.CategoryServiceGrpc;
-import metadata_lifecycle.v1.Common;
+import metadata_lifecycle.v1.GroupOuterClass;
+import metadata_lifecycle.v1.GroupServiceGrpc;
 
 /** Client for resource creation using the shared Metadata Lifecycle contract. */
 public final class MetadataLifecycleClient implements AutoCloseable {
@@ -112,6 +114,31 @@ public final class MetadataLifecycleClient implements AutoCloseable {
 
     public record ContactKey(String email, String role) {}
 
+    /** Lists canonical organizations so callers can reuse only compatible RDF descriptions. */
+    public Map<String, Organization> listOrganizations(String actorId) {
+        var response = OrganizationServiceGrpc.newBlockingStub(channel)
+                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(actorMetadata(actorId)))
+                .withDeadlineAfter(10, TimeUnit.SECONDS)
+                .listOrganizations(OrganizationOuterClass.ListOrganizationsRequest.getDefaultInstance());
+        Map<String, Organization> organizations = new java.util.HashMap<>();
+        for (var organization : response.getOrganizationsList()) {
+            try {
+                var id = java.util.UUID.fromString(organization.getId());
+                if (!id.toString().equalsIgnoreCase(organization.getId()) || id.equals(new java.util.UUID(0, 0))
+                        || organization.getName().isBlank()) {
+                    throw new IllegalArgumentException("invalid organization");
+                }
+                String name = organization.getName().toLowerCase(java.util.Locale.ROOT);
+                if (organizations.putIfAbsent(name, new Organization(id.toString(), organizationFields(organization))) != null) {
+                    throw new IllegalArgumentException("duplicate organization name");
+                }
+            } catch (IllegalArgumentException exception) {
+                throw Status.INTERNAL.withDescription("invalid organization list response").asRuntimeException();
+            }
+        }
+        return Map.copyOf(organizations);
+    }
+
     /** Lists existing canonical organization names; callers must not infer RDF identity from a match. */
     public java.util.Set<String> listOrganizationNames(String actorId) {
         var response = OrganizationServiceGrpc.newBlockingStub(channel)
@@ -125,6 +152,23 @@ public final class MetadataLifecycleClient implements AutoCloseable {
             }
         }
         return java.util.Set.copyOf(names);
+    }
+
+    public record Organization(String id, Map<String, String> fields) {}
+
+    /** Lists canonical organization IDs keyed by their unique LEI codes. */
+    public Map<String, String> listOrganizationLeiIds(String actorId) {
+        var response = OrganizationServiceGrpc.newBlockingStub(channel)
+                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(actorMetadata(actorId)))
+                .withDeadlineAfter(10, TimeUnit.SECONDS)
+                .listOrganizations(OrganizationOuterClass.ListOrganizationsRequest.getDefaultInstance());
+        Map<String, String> ids = new java.util.HashMap<>();
+        for (var organization : response.getOrganizationsList()) {
+            if (!organization.getLeiCode().isBlank() && ids.put(organization.getLeiCode(), organization.getId()) != null) {
+                throw Status.INTERNAL.withDescription("duplicate organization LEI in list response").asRuntimeException();
+            }
+        }
+        return ids;
     }
 
     /** Creates a canonical organization with the supported RDF attributes. */
@@ -186,12 +230,21 @@ public final class MetadataLifecycleClient implements AutoCloseable {
 
     /** Creates a root category; the upstream enforces group/name uniqueness. */
     public String createRootCategory(String groupId, String name, String actorId) {
+        return createCategory(groupId, name, null, actorId);
+    }
+
+    /** Creates a category, optionally below a category in the same group. */
+    public String createCategory(String groupId, String name, String parentCategoryId, String actorId) {
+        var request = Category.CreateCategoryRequest.newBuilder().setGroupId(groupId).setName(name);
+        if (parentCategoryId != null) request.setParentCategoryId(parentCategoryId);
         var response = CategoryServiceGrpc.newBlockingStub(channel)
                 .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(actorMetadata(actorId)))
                 .withDeadlineAfter(10, TimeUnit.SECONDS)
-                .createCategory(Category.CreateCategoryRequest.newBuilder().setGroupId(groupId).setName(name).build());
+                .createCategory(request.build());
         if (!response.hasCategory() || !groupId.equalsIgnoreCase(response.getCategory().getGroupId())
-                || !name.equals(response.getCategory().getName()) || response.getCategory().hasParentCategoryId()) {
+                || !name.equals(response.getCategory().getName())
+                || (parentCategoryId == null ? response.getCategory().hasParentCategoryId()
+                        : !parentCategoryId.equalsIgnoreCase(response.getCategory().getParentCategoryId()))) {
             throw Status.INTERNAL.withDescription("invalid category creation response").asRuntimeException();
         }
         String id = response.getCategory().getId();
@@ -204,6 +257,46 @@ public final class MetadataLifecycleClient implements AutoCloseable {
         } catch (IllegalArgumentException exception) {
             throw Status.INTERNAL.withDescription("invalid category creation response").asRuntimeException();
         }
+    }
+
+    /** Creates a group from legacy scheme metadata and validates the returned identity. */
+    public String createGroup(LegacySchemeMapper.Scheme scheme, String actorId) {
+        var request = GroupOuterClass.CreateGroupRequest.newBuilder().setName(scheme.name()).setPosition(scheme.position()).setConcept(switch (scheme.topLevelConcept()) {
+            case "DATA" -> Common.TopLevelConcept.TOP_LEVEL_CONCEPT_DATA;
+            case "FACILITIES" -> Common.TopLevelConcept.TOP_LEVEL_CONCEPT_FACILITIES;
+            case "SOFTWARE" -> Common.TopLevelConcept.TOP_LEVEL_CONCEPT_SOFTWARE;
+            default -> throw new IllegalArgumentException("unsupported top-level concept");
+        });
+        if (scheme.description() != null) request.setDescription(scheme.description());
+        if (scheme.label() != null) request.setLabel(scheme.label());
+        if (scheme.logo() != null) request.setLogo(scheme.logo());
+        if (scheme.page() != null) request.setPage(scheme.page());
+        if (scheme.color() != null) request.setColor(scheme.color());
+        var response = GroupServiceGrpc.newBlockingStub(channel)
+                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(actorMetadata(actorId)))
+                .withDeadlineAfter(10, TimeUnit.SECONDS).createGroup(request.build());
+        if (!response.hasGroup() || !scheme.name().equals(response.getGroup().getName())
+                || response.getGroup().getPosition() != scheme.position()
+                || response.getGroup().getConcept() != request.getConcept()
+                || !matchesOptional(scheme.description(), response.getGroup().hasDescription(), response.getGroup().getDescription())
+                || !matchesOptional(scheme.label(), response.getGroup().hasLabel(), response.getGroup().getLabel())
+                || !matchesOptional(scheme.logo(), response.getGroup().hasLogo(), response.getGroup().getLogo())
+                || !matchesOptional(scheme.page(), response.getGroup().hasPage(), response.getGroup().getPage())
+                || !matchesOptional(scheme.color(), response.getGroup().hasColor(), response.getGroup().getColor())) {
+            throw Status.INTERNAL.withDescription("invalid group creation response").asRuntimeException();
+        }
+        String id = response.getGroup().getId();
+        try {
+            var parsed = java.util.UUID.fromString(id);
+            if (!parsed.toString().equalsIgnoreCase(id) || parsed.equals(new java.util.UUID(0, 0))) throw new IllegalArgumentException();
+            return parsed.toString();
+        } catch (IllegalArgumentException exception) {
+            throw Status.INTERNAL.withDescription("invalid group creation response").asRuntimeException();
+        }
+    }
+
+    private static boolean matchesOptional(String expected, boolean present, String actual) {
+        return expected == null ? !present : present && expected.equals(actual);
     }
 
     /** Creates a contact; the upstream enforces uniqueness of email and role. */

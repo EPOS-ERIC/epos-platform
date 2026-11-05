@@ -17,6 +17,7 @@ func TestValidateMailgunRequiresAPIKeyEnv(t *testing.T) {
 		t.Fatalf("default Mailgun API key environment variable = %q", cfg.Notifications.Mailgun.APIKeyEnv)
 	}
 	cfg.Services.MetadataLifecycle.URL = "metadata-lifecycle:5000"
+	cfg.Services.SemanticAggregator.URL = "semantic-aggregator:8300"
 	cfg.Services.DataRetriever.URL = "data-retriever:8100"
 	cfg.Services.Sharing.URL = "sharing:8200"
 	cfg.Services.Auth.URL = "http://auth:8080"
@@ -32,5 +33,17 @@ func TestValidateMailgunRequiresAPIKeyEnv(t *testing.T) {
 	cfg.Notifications.Mailgun.APIKeyEnv = "MAILGUN_API_TOKEN"
 	if err := cfg.Validate(); err != nil {
 		t.Fatalf("Validate() error = %v", err)
+	}
+}
+
+func TestValidateRequiresSemanticAggregator(t *testing.T) {
+	cfg := Default()
+	cfg.Services.MetadataLifecycle.URL = "metadata-lifecycle:5000"
+	cfg.Services.DataRetriever.URL = "data-retriever:8100"
+	cfg.Services.Sharing.URL = "sharing:8200"
+	cfg.Services.Auth.URL = "http://auth:8080"
+
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("Validate() succeeded without Semantic Aggregator URL")
 	}
 }

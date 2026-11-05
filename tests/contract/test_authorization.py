@@ -1257,40 +1257,43 @@ class AuthorizationContractTest(unittest.TestCase):
         self.assertEqual(publication_draft.status_code, 201)
 
     def test_turtle_import_authorization(self) -> None:
-        """Verify Turtle import is restricted to global administrators."""
+        """Verify Turtle import requires authentication and accepts JSON import requests."""
 
         suffix = str(uuid4())
-        denied, _ = self.create_user("import-denied", suffix)
         turtle = f"""
 @prefix dcat: <http://www.w3.org/ns/dcat#> .
 @prefix dct: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 <category:auth-scheme-{suffix}> a skos:ConceptScheme ;
     dct:title "Authorization import scheme {suffix}" ;
-    skos:hasTopConcept <category:facets/dataset-theme> .
+    ex:topLevelConcept "DATA" .
 <category:auth-category-{suffix}> a skos:Concept ;
     skos:inScheme <category:auth-scheme-{suffix}> ;
     skos:prefLabel "Authorization import category {suffix}" .
 <dataset:auth-{suffix}> a dcat:Dataset ;
     dct:title "Authorization import dataset {suffix}" ;
+    dct:description "Authorization import description {suffix}" ;
     dcat:theme <category:auth-category-{suffix}> .
 """.strip()
 
-        denied_import = denied.post(
+        import_request = {
+            "turtle": turtle,
+            "baseUri": "https://www.epos-eu.org/epos-dcat-ap/",
+            "mappingId": "epos-dcat-ap",
+            "mappingVersion": 1,
+        }
+        unauthenticated_import = self.gateway.post(
             "/imports/turtle",
-            data=turtle,
-            headers={"Content-Type": "text/turtle"},
+            json=import_request,
+            headers=NO_AUTH_HEADERS,
         )
-        self.assert_forbidden(denied_import)
-        imported = self.gateway.post(
-            "/imports/turtle",
-            data=turtle,
-            headers={"Content-Type": "text/turtle"},
-        )
+        self.assert_unauthorized(unauthenticated_import)
+        imported = self.gateway.post("/imports/turtle", json=import_request)
         self.assertEqual(imported.status_code, 200)
         result = imported.json()
-        self.assertGreaterEqual(result["datasets"], 1)
+        self.assertGreaterEqual(len(result["imported"]), 1)
 
     def user_id(self, client: GatewayClient) -> str:
         response = client.get("/users/{id}", id="self")

@@ -48,7 +48,7 @@ tags:
   - name: Memberships
     description: Request, review, and administer group membership and access.
   - name: Imports
-    description: Import RDF Turtle metadata into draft resources.
+    description: Import RDF Turtle resources into drafts using semantic mappings.
   - name: Sharing
     description: Store and retrieve shared workspace configurations.
   - name: Notifications
@@ -254,23 +254,22 @@ paths:
       tags:
         - Imports
       summary: Import Turtle metadata
-      description: Imports valid RDF Turtle metadata and creates or updates draft content. Invalid entities and invalid optional relations are skipped and reported in warnings. Requires global administrator access.
+      description: Imports supported RDF Turtle resources into the specified group using the selected semantic mapping. Requires authentication.
       operationId: importTurtleMetadata
       security:
         - bearerAuth: []
       requestBody:
         required: true
         content:
-          text/turtle:
-            schema:
-              type: string
+          application/json:
+            schema: { $ref: "#/components/schemas/ImportResourcesRequest" }
       responses:
         "200":
-          description: Import completed. Counts include persisted entities; warnings include skipped entities and omitted relations.
+          description: Import completed. Processing stops at the first resource-level failure.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ImportResult"
+                $ref: "#/components/schemas/ImportResourcesResult"
         default:
           description: Gateway error
           content:
@@ -4284,41 +4283,73 @@ components:
         name: { type: string }
 
     # -------------------------------------------------------------------------
-    # Resource write schemas
+    # Resource import schemas
     # -------------------------------------------------------------------------
-    ImportResult:
+    ImportResourcesRequest:
       type: object
-      required:
-        [
-          groups,
-          categories,
-          organizations,
-          contact_points,
-          datasets,
-          software_applications,
-          software_source_codes,
-          warnings,
-        ]
+      required: [turtle, baseUri, mappingId, mappingVersion]
       properties:
-        groups: { type: integer }
-        categories: { type: integer }
-        organizations: { type: integer }
-        contact_points: { type: integer }
-        datasets: { type: integer }
-        software_applications: { type: integer }
-        software_source_codes: { type: integer }
+        turtle:
+          type: string
+          minLength: 1
+          maxLength: 10485760
+          description: RDF Turtle document to import.
+        baseUri:
+          type: string
+          format: uri
+          minLength: 1
+          description: Absolute base URI used to resolve relative Turtle IRIs.
+        mappingId: { type: string, minLength: 1 }
+        mappingVersion: { type: integer, minimum: 1 }
+        references:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/ImportReferenceBinding"
+    ImportReferenceBinding:
+      type: object
+      required: [kind, iri, id]
+      properties:
+        kind:
+          type: string
+          enum: [organization, contact-point, category]
+        iri: { type: string, format: uri, minLength: 1 }
+        id: { type: string, format: uuid }
+    ImportResourcesResult:
+      type: object
+      required: [imported]
+      properties:
+        imported:
+          type: array
+          items: { $ref: "#/components/schemas/ImportedResource" }
+        failure:
+          $ref: "#/components/schemas/ImportResourceFailure"
         warnings:
           type: array
+          description: Resources skipped while the remaining import completed.
           items:
-            $ref: "#/components/schemas/ImportDiagnostic"
-    ImportDiagnostic:
+            $ref: "#/components/schemas/ImportResourceFailure"
+    ImportedResource:
       type: object
-      required: [severity, subject, predicate, message]
+      required: [subject, resourceId, versionId, kind]
       properties:
-        severity: { type: string }
-        subject: { type: string }
-        predicate: { type: string }
-        message: { type: string }
+        subject: { type: string, minLength: 1 }
+        resourceId: { type: string, format: uuid }
+        versionId: { type: string, format: uuid }
+        kind:
+          type: string
+          enum: [dataset, software-application, software-source-code]
+    ImportResourceFailure:
+      type: object
+      required: [subject, code, outcomeUnknown]
+      properties:
+        subject: { type: string, minLength: 1 }
+        code: { type: string, minLength: 1 }
+        outcomeUnknown: { type: boolean }
+        message: { type: string, minLength: 1 }
+        phase:
+          type: string
+          enum: [contact-resolution, dataset-creation, category-creation, organization-creation]
 
     WriteResourceType:
       type: string

@@ -20,10 +20,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// ogenHandler is the HTTP boundary. Pure proxy operations call the concrete
-// Metadata Lifecycle client; identity orchestration remains in identity.Service.
+// ogenHandler is the HTTP boundary. Pure proxy operations call concrete client
+// adapters; identity orchestration remains in identity.Service.
 type ogenHandler struct {
 	metadataLifecycle  *clients.MetadataLifecycle
+	semanticAggregator *clients.SemanticAggregator
 	sharing            *sharingservice.Service
 	identity           *identity.Service
 	membership         *membership.Service
@@ -31,9 +32,10 @@ type ogenHandler struct {
 	log                *slog.Logger
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, sharing *sharingservice.Service, d *distributionaccess.Service, log *slog.Logger) *ogenHandler {
+func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, semanticAggregator *clients.SemanticAggregator, sharing *sharingservice.Service, d *distributionaccess.Service, log *slog.Logger) *ogenHandler {
 	return &ogenHandler{
 		metadataLifecycle:  metadataLifecycle,
+		semanticAggregator: semanticAggregator,
 		sharing:            sharing,
 		identity:           i,
 		membership:         m,

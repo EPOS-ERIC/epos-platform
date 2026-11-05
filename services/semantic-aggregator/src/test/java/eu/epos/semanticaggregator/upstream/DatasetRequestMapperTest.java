@@ -10,6 +10,7 @@ import eu.epos.semanticaggregator.rdf.TurtleReader;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import metadata_lifecycle.v1.Resource;
 import org.junit.jupiter.api.Test;
 
 class DatasetRequestMapperTest {
@@ -85,13 +86,13 @@ class DatasetRequestMapperTest {
     }
 
     @Test
-    void preventsCreatingAnIncompleteDataset() {
+    void ignoresUnsupportedDatasetProperties() {
         var model = read(PREFIXES + "ex:dataset a dcat:Dataset; dct:title \"Title\"; "
                 + "dct:description \"Description\"; ex:unknown \"value\" .");
         try {
             var mapping = mapper().map(model).getFirst();
-            assertThrows(IllegalArgumentException.class,
-                    () -> new DatasetRequestMapper().toRequest(mapping, "123e4567-e89b-12d3-a456-426614174000"));
+            assertEquals(Resource.CreateResourceRequest.MetadataCase.DATASET,
+                    new DatasetRequestMapper().toRequest(mapping, "123e4567-e89b-12d3-a456-426614174000").getMetadataCase());
         } finally {
             model.close();
         }

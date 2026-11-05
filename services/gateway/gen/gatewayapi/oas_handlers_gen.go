@@ -6724,8 +6724,8 @@ func (s *Server) handleGrantGroupPermissionRequest(args [3]string, argsEscaped b
 
 // handleImportTurtleMetadataRequest handles importTurtleMetadata operation.
 //
-// Imports valid RDF Turtle metadata and creates or updates draft content. Invalid entities and invalid
-// optional relations are skipped and reported in warnings. Requires global administrator access.
+// Imports supported RDF Turtle resources into the specified group using the selected semantic mapping.
+// Requires authentication.
 //
 // POST /imports/turtle
 func (s *Server) handleImportTurtleMetadataRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -6863,7 +6863,7 @@ func (s *Server) handleImportTurtleMetadataRequest(args [0]string, argsEscaped b
 		}
 	}()
 
-	var response *ImportResult
+	var response *ImportResourcesResult
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -6877,9 +6877,9 @@ func (s *Server) handleImportTurtleMetadataRequest(args [0]string, argsEscaped b
 		}
 
 		type (
-			Request  = ImportTurtleMetadataReq
+			Request  = *ImportResourcesRequest
 			Params   = struct{}
-			Response = *ImportResult
+			Response = *ImportResourcesResult
 		)
 		response, err = middleware.HookMiddleware[
 			Request,

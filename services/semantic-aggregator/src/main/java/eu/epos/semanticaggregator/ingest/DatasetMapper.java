@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
@@ -17,6 +18,7 @@ import org.apache.jena.vocabulary.RDF;
 
 /** Extracts a deliberately limited subset; unsupported predicates are reported. */
 public final class DatasetMapper {
+    private static final java.util.regex.Pattern KEYWORD = java.util.regex.Pattern.compile("[A-Za-z0-9 _:-]+");
     private final MappingProfile profile;
 
     public DatasetMapper(MappingProfile profile) {
@@ -43,17 +45,21 @@ public final class DatasetMapper {
         String title = singleLiteral(subject, property(model, path("title", 0)), true);
         String description = singleLiteral(subject, property(model, path("description", 0)), true);
         List<String> keywords = literals(subject, property(model, path("keywords", 0)));
+        keywords.removeIf(keyword -> !KEYWORD.matcher(keyword).matches());
         keywords.sort(String::compareTo);
         List<String> unsupported = new ArrayList<>();
         String quality = null;
         if (profile.fields().containsKey("quality_annotation")) {
             String parent = path("quality_annotation", 0);
             String child = path("quality_annotation", 1);
-            Resource annotation = singleResource(subject, property(model, parent), false);
-            if (annotation != null) {
+            var annotations = resources(subject, property(model, parent));
+            var bodies = new java.util.TreeSet<String>();
+            for (Resource annotation : annotations) {
                 addUnsupported(annotation, Set.of(RDF.type.getURI(), child), parent + "/", unsupported);
-                quality = singleValue(annotation, property(model, child), true);
+                String body = firstValue(annotation, property(model, child));
+                if (body != null) bodies.add(body);
             }
+            if (!bodies.isEmpty()) quality = bodies.first();
         }
         var types = subject.listProperties(RDF.type);
         try {
@@ -70,7 +76,7 @@ public final class DatasetMapper {
         String spatialPredicate = path("spatial_coverage", 0);
         String geometryPredicate = path("spatial_coverage", 1);
         Resource spatial = singleResource(subject, property(model, spatialPredicate), false);
-        String geometry = spatial == null ? null : singleLiteral(spatial, property(model, geometryPredicate), true);
+        String geometry = spatial == null ? null : firstRequiredLiteral(spatial, property(model, geometryPredicate));
         if (spatial != null) {
             addUnsupported(spatial, Set.of(RDF.type.getURI(), geometryPredicate), spatialPredicate + "/", unsupported);
         }
@@ -84,13 +90,12 @@ public final class DatasetMapper {
                     temporalPredicate + "/", unsupported);
             Instant start = parseInstant(temporal, property(model, startPredicate));
             Instant end = parseInstant(temporal, property(model, endPredicate));
-            if (start == null && end == null) {
-                throw invalid(temporal, temporalPredicate, "expected at least one temporal bound");
-            }
-            if (start != null && end != null && start.isAfter(end)) {
+            if ((start != null || end != null) && start != null && end != null && start.isAfter(end)) {
                 throw invalid(temporal, temporalPredicate, "start must not be after end");
             }
-            coverage = new DatasetMapping.TemporalCoverage(start, end);
+            if (start != null || end != null) {
+                coverage = new DatasetMapping.TemporalCoverage(start, end);
+            }
         }
         List<DatasetMapping.Identifier> identifiers = new ArrayList<>();
         if (profile.primaryIdentifier() != null) {
@@ -110,9 +115,12 @@ public final class DatasetMapper {
                 Resource id = node.asResource();
                 addUnsupported(id, Set.of(RDF.type.getURI(), identifierType, identifierValue),
                         identifierPredicate + "/", unsupported);
+                var idTypeProp = property(model, identifierType);
+                var idValueProp = property(model, identifierValue);
+                if (!id.hasProperty(idTypeProp) && !id.hasProperty(idValueProp)) continue;
                 identifiers.add(new DatasetMapping.Identifier(
-                        singleLiteral(id, property(model, identifierType), true),
-                        singleLiteral(id, property(model, identifierValue), true)));
+                        singleLiteral(id, idTypeProp, true),
+                        singleLiteral(id, idValueProp, true)));
             }
         } finally {
             idNodes.close();
@@ -167,6 +175,9 @@ public final class DatasetMapper {
         try {
             if (!statements.hasNext()) return null;
             RDFNode value = statements.next().getObject();
+            if (value.isURIResource() && !statements.hasNext()) {
+                return new DatasetMapping.Identifier(config.uriType(), value.asResource().getURI());
+            }
             if (statements.hasNext() || !value.isLiteral() || !value.asLiteral().getLanguage().isEmpty()
                     || value.asLiteral().getString().isBlank()) {
                 throw invalid(subject, config.predicate(), "expected exactly one nonempty untagged literal");
@@ -257,10 +268,7 @@ public final class DatasetMapper {
             if (downloadUrl != null) {
                 throw invalid(subject, path("distribution_url", 1), "web service download URL is not supported");
             }
-            service = webService(model, subject, unsupported);
-            if (format != null && !format.equals(service.format())) {
-                throw invalid(subject, path("distribution_format", 1), "distribution and operation formats differ");
-            }
+            service = webService(model, subject, format, unsupported);
         }
         return new DatasetMapping.Distribution(
                 singleLiteral(subject, property(model, path("distribution_title", 1)), true),
@@ -271,14 +279,15 @@ public final class DatasetMapper {
                 parseInstant(subject, property(model, path("distribution_modified", 1))), byteSize, service);
     }
 
-    private DatasetMapping.WebService webService(Model model, Resource distribution, List<String> unsupported) {
+    private DatasetMapping.WebService webService(Model model, Resource distribution, String distributionFormat,
+            List<String> unsupported) {
         String serviceLink = path("web_service_name", 1);
         Resource service = singleResource(distribution, property(model, serviceLink), true);
         String operationLink = path("distribution_access_url", 1);
         Resource operation = singleResource(distribution, property(model, operationLink), true);
         String operationReference = path("web_service_operation", 2);
-        Resource declaredOperation = singleResource(service, property(model, operationReference), false);
-        if (declaredOperation != null && !declaredOperation.equals(operation)) {
+        List<Resource> declaredOperations = resources(service, property(model, operationReference));
+        if (!declaredOperations.isEmpty() && !declaredOperations.contains(operation)) {
             throw invalid(service, operationReference, "declared operation differs from distribution access URL");
         }
         String name = path("web_service_name", 2);
@@ -316,9 +325,12 @@ public final class DatasetMapper {
         if (!Set.of("GET", "POST", "PUT", "DELETE").contains(httpMethod)) {
             throw invalid(operation, method, "unsupported HTTP method");
         }
+        String operationFormat = firstValue(operation, property(model, format));
+        if (operationFormat == null) operationFormat = distributionFormat;
+        if (operationFormat == null) throw invalid(operation, format, "expected a value");
         return new DatasetMapping.WebService(singleLiteral(service, property(model, name), true),
                 singleLiteral(service, property(model, description), false), mappedTemplate.url(),
-                singleValue(operation, property(model, format), true), httpMethod, mappedTemplate.parameters(),
+                operationFormat, httpMethod, mappedTemplate.parameters(),
                 documentation, spatial, temporal, providers.isEmpty() ? null : providers.getFirst(), contacts);
     }
 
@@ -351,7 +363,7 @@ public final class DatasetMapper {
         if (location == null) return null;
         addUnsupported(location, Set.of(RDF.type.getURI(), geometry), link + "/", unsupported);
         checkType(location, "http://purl.org/dc/terms/Location", link, unsupported);
-        return singleLiteral(location, property(model, geometry), true);
+        return firstRequiredLiteral(location, property(model, geometry));
     }
 
     private DatasetMapping.TemporalCoverage serviceTemporal(Model model, Resource service, List<String> unsupported) {
@@ -365,8 +377,10 @@ public final class DatasetMapper {
         checkType(period, "http://purl.org/dc/terms/PeriodOfTime", link, unsupported);
         Instant start = parseInstant(period, property(model, startPredicate));
         Instant end = parseInstant(period, property(model, endPredicate));
-        if (start == null && end == null) throw invalid(period, link, "expected at least one temporal bound");
-        if (start != null && end != null && start.isAfter(end)) throw invalid(period, link, "start must not be after end");
+        if (start == null && end == null) return null;
+        if (start != null && end != null && start.isAfter(end)) {
+            throw invalid(period, link, "start must not be after end");
+        }
         return new DatasetMapping.TemporalCoverage(start, end);
     }
 
@@ -380,7 +394,7 @@ public final class DatasetMapper {
         if (documentation == null) return null;
         addUnsupported(documentation, Set.of(RDF.type.getURI(), uriPredicate, title, description), link + "/", unsupported);
         checkType(documentation, "http://www.w3.org/ns/hydra/core#ApiDocumentation", link, unsupported);
-        String uri = singleValue(documentation, property(model, uriPredicate), false);
+        String uri = firstValue(documentation, property(model, uriPredicate));
         if (uri == null && documentation.isURIResource()) uri = documentation.getURI();
         if (uri == null || !java.net.URI.create(uri).isAbsolute()) throw invalid(documentation, uriPredicate, "expected an absolute documentation URI");
         return new DatasetMapping.Documentation(uri, singleLiteral(documentation, property(model, title), false),
@@ -388,38 +402,56 @@ public final class DatasetMapper {
     }
 
     private MappedTemplate mapUrlTemplate(Model model, Resource template, String rawUrl, List<String> unsupported) {
-        var expression = java.util.regex.Pattern.compile("\\{([?&])([A-Za-z0-9_,-]+)\\}$").matcher(rawUrl);
         List<String> queryNames = new ArrayList<>();
-        String url = rawUrl;
-        String queryOperator = null;
-        if (expression.find()) {
-            queryOperator = expression.group(1);
-            queryNames.addAll(List.of(expression.group(2).split(",", -1)));
-            url = rawUrl.substring(0, expression.start());
-        }
-        var pathMatcher = java.util.regex.Pattern.compile("\\{([A-Za-z_][A-Za-z0-9_.-]*)\\}").matcher(url);
         List<String> pathNames = new ArrayList<>();
+        var expressions = java.util.regex.Pattern
+                .compile("\\{([?&/]?)((?:[#@]?[A-Za-z_][A-Za-z0-9_.:\\[\\]-]*)(?:\\s*,\\s*[#@]?[A-Za-z_][A-Za-z0-9_.:\\[\\]-]*)*)\\}")
+                .matcher(rawUrl);
+        int literalQueryStart = rawUrl.indexOf('?');
+        while (literalQueryStart > 0 && rawUrl.charAt(literalQueryStart - 1) == '{') {
+            literalQueryStart = rawUrl.indexOf('?', literalQueryStart + 1);
+        }
+        int queryTemplateStart = -1;
+        while (expressions.find()) {
+            String prefix = expressions.group(1);
+            boolean pathExpression = "/".equals(prefix);
+            boolean queryExpression = !pathExpression && (!prefix.isEmpty()
+                    || (literalQueryStart >= 0 && expressions.start() > literalQueryStart));
+            if (queryExpression) {
+                if (queryTemplateStart < 0) queryTemplateStart = expressions.start();
+                for (String name : expressions.group(2).split(",", -1)) {
+                    String normalized = name.trim().replaceFirst("^[#@]", "");
+                    if (!queryNames.contains(normalized)) queryNames.add(normalized);
+                }
+            } else if (pathExpression) {
+                for (String name : expressions.group(2).split(",", -1)) {
+                    String normalized = name.trim().replaceFirst("^[#@]", "");
+                    if (!pathNames.contains(normalized)) pathNames.add(normalized);
+                }
+            }
+        }
+        String url = queryTemplateStart < 0 ? rawUrl : rawUrl.substring(0, queryTemplateStart);
+        var pathPattern = java.util.regex.Pattern
+                .compile("\\{(/?)((?:[#@]?[A-Za-z_][A-Za-z0-9_.:\\[\\]-]*)(?:\\s*,\\s*[#@]?[A-Za-z_][A-Za-z0-9_.:\\[\\]-]*)*)\\}");
+        var pathMatcher = pathPattern.matcher(url);
         int authorityStart = url.indexOf("://");
         int pathStart = authorityStart < 0 ? -1 : url.indexOf('/', authorityStart + 3);
-        int queryStart = url.indexOf('?');
         int fragmentStart = url.indexOf('#');
         while (pathMatcher.find()) {
             if (pathStart < 0 || pathMatcher.start() < pathStart
-                    || (queryStart >= 0 && pathMatcher.start() >= queryStart)
                     || (fragmentStart >= 0 && pathMatcher.start() >= fragmentStart)) {
                 throw invalid(template, path("operation_template", 3), "placeholders are only supported in the URL path");
             }
-            if (!pathNames.contains(pathMatcher.group(1))) pathNames.add(pathMatcher.group(1));
+            for (String name : pathMatcher.group(2).split(",", -1)) {
+                String normalized = name.trim().replaceFirst("^[#@]", "");
+                if (!pathNames.contains(normalized)) pathNames.add(normalized);
+            }
         }
         String validationUrl = pathMatcher.replaceAll("placeholder");
         java.net.URI parsed = java.net.URI.create(validationUrl);
         if (validationUrl.contains("{") || validationUrl.contains("}") || parsed.getHost() == null
                 || !("http".equalsIgnoreCase(parsed.getScheme()) || "https".equalsIgnoreCase(parsed.getScheme()))
-                || parsed.getRawFragment() != null
-                || ("?".equals(queryOperator) && parsed.getRawQuery() != null)
-                || ("&".equals(queryOperator) && (parsed.getRawQuery() == null || parsed.getRawQuery().isEmpty()))
-                || queryNames.stream().anyMatch(name -> !name.matches("[A-Za-z0-9_-]+"))
-                || new java.util.HashSet<>(queryNames).size() != queryNames.size()
+                || queryNames.stream().anyMatch(name -> !name.matches("[A-Za-z0-9_.:\\[\\]-]+"))
                 || queryNames.stream().anyMatch(pathNames::contains)) {
             throw invalid(template, path("operation_template", 3), "unsupported URL template");
         }
@@ -444,22 +476,18 @@ public final class DatasetMapper {
         }
         List<String> names = new ArrayList<>(pathNames);
         names.addAll(queryNames);
-        if (!parameters.keySet().equals(new java.util.HashSet<>(names))) {
-            throw invalid(template, path("operation_template", 3), "URL variables and parameter mappings must match");
-        }
+        names.removeIf(name -> !parameters.containsKey(name));
         List<DatasetMapping.Parameter> ordered = new ArrayList<>();
         Set<DatasetMapping.ParameterRole> roles = new java.util.HashSet<>();
         for (String name : names) {
             var parameter = parameters.get(name);
             var location = pathNames.contains(name) ? DatasetMapping.ParameterLocation.PATH : DatasetMapping.ParameterLocation.QUERY;
-            if (location == DatasetMapping.ParameterLocation.PATH && !parameter.required()) {
-                throw invalid(template, path("parameter_required", 4), "path parameters must be required");
-            }
+            boolean required = parameter.required() || location == DatasetMapping.ParameterLocation.PATH;
             if (parameter.role() != null && !roles.add(parameter.role())) {
                 throw invalid(template, path("parameter_property", 4), "multiple parameters have the same role");
             }
             ordered.add(new DatasetMapping.Parameter(parameter.name(), parameter.label(), parameter.property(),
-                    parameter.required(), parameter.readOnly(), location, parameter.role(), parameter.schema()));
+                    required, parameter.readOnly(), location, parameter.role(), parameter.schema()));
         }
         return new MappedTemplate(url, List.copyOf(ordered));
     }
@@ -480,6 +508,9 @@ public final class DatasetMapper {
         String label = singleLiteral(parameter, property(model, path("parameter_label", 4)), false);
         String range = singleValue(parameter, property(model, path("parameter_range", 4)), true);
         String defaultValue = singleLiteral(parameter, property(model, path("parameter_default", 4)), false);
+        if (defaultValue != null && defaultValue.isBlank()) {
+            defaultValue = null;
+        }
         List<String> values = literals(parameter, property(model, path("parameter_enum", 4)));
         String pattern = singleLiteral(parameter, property(model, path("parameter_pattern", 4)), false);
         String minimum = optionalParameterLiteral(model, parameter, "parameter_minimum");
@@ -490,17 +521,21 @@ public final class DatasetMapper {
         String propertyValue = singleValue(parameter, property(model, path("parameter_property", 4)), false);
         String roleValue = propertyValue == null ? null : profile.parameterRoles().get(propertyValue);
         DatasetMapping.ParameterRole role = roleValue == null ? null : DatasetMapping.ParameterRole.valueOf(roleValue);
-        validateRole(parameter, role, schema, readOnly);
+        if (role == DatasetMapping.ParameterRole.FORMAT
+                && schema instanceof DatasetMapping.StringSchema string && string.defaultValue() == null) {
+            role = null;
+        }
+        validateRole(parameter, role, schema);
         return new DatasetMapping.Parameter(name, label == null ? name : label,
-                propertyValue, optionalBoolean(model, parameter, "parameter_required"), readOnly,
+                propertyValue, optionalBoolean(model, parameter, "parameter_required"),
+                readOnly || role == DatasetMapping.ParameterRole.FORMAT,
                 DatasetMapping.ParameterLocation.QUERY, role, schema);
     }
 
-    private void validateRole(Resource subject, DatasetMapping.ParameterRole role, DatasetMapping.ParameterSchema schema, boolean readOnly) {
+    private void validateRole(Resource subject, DatasetMapping.ParameterRole role, DatasetMapping.ParameterSchema schema) {
         if (role == null) return;
         boolean valid = switch (role) {
-            case FORMAT -> schema instanceof DatasetMapping.StringSchema string
-                    && !string.multipleValues() && string.defaultValue() != null && readOnly;
+            case FORMAT -> schema instanceof DatasetMapping.StringSchema string && !string.multipleValues();
             case START_DATE, END_DATE -> schema instanceof DatasetMapping.DateTimeSchema;
             case MIN_LON, MAX_LON, MIN_LAT, MAX_LAT ->
                     (schema instanceof DatasetMapping.IntegerSchema integer && !integer.multipleValues())
@@ -518,13 +553,32 @@ public final class DatasetMapper {
                 : range.startsWith("xsd:") ? range.substring(4) : "";
         if (type.equals("string")) {
             if (minimum != null || maximum != null) {
+                if (values.isEmpty()) {
+                    String numericType = inferNumericType(minimum, maximum, defaultValue);
+                    if (numericType != null) return parameterSchema(subject, "xsd:" + numericType, defaultValue, values, pattern, minimum, maximum, multiple);
+                    String dateType = inferDateType(minimum, maximum, defaultValue);
+                    if (dateType != null) return parameterSchema(subject, "xsd:" + dateType, defaultValue, values, pattern, minimum, maximum, multiple);
+                }
                 throw invalid(subject, path("parameter_range", 4), "string parameters do not support numeric bounds");
             }
             values.sort(String::compareTo);
-            validateValues(subject, defaultValue, null, null, values);
-            return new DatasetMapping.StringSchema(multiple, defaultValue, pattern, List.copyOf(values));
+            String normalizedDefault = defaultValue;
+            if (normalizedDefault != null && !values.isEmpty() && !values.contains(normalizedDefault)) {
+                if (multiple) {
+                    List<String> parts = java.util.Arrays.stream(normalizedDefault.split(",", -1)).map(String::trim).toList();
+                    if (!parts.isEmpty() && new java.util.HashSet<>(values).containsAll(parts)) {
+                        values = new java.util.ArrayList<>(new java.util.LinkedHashSet<>(values)).stream().sorted().toList();
+                        return new DatasetMapping.StringSchema(true, normalizedDefault, pattern, List.copyOf(values));
+                    }
+                }
+                values = new java.util.ArrayList<>(values);
+                values.add(normalizedDefault);
+                values = new java.util.ArrayList<>(new java.util.LinkedHashSet<>(values)).stream().sorted().toList();
+            }
+            validateValues(subject, normalizedDefault, null, null, values);
+            return new DatasetMapping.StringSchema(multiple, normalizedDefault, pattern, List.copyOf(values));
         }
-        if (type.equals("dateTime")) {
+        if (type.equals("dateTime") || type.equals("date")) {
             if (multiple || !values.isEmpty()) {
                 throw invalid(subject, path("parameter_range", 4), "date-time parameters do not support enum or multiple values");
             }
@@ -532,9 +586,9 @@ public final class DatasetMapper {
             Instant max = parameterDate(subject, "parameter_maximum", maximum);
             Instant def = parameterDate(subject, "parameter_default", defaultValue);
             validateValues(subject, def, min, max, List.of());
-            String layout = pattern == null ? null : pattern.trim();
-            if (layout != null && (layout.isEmpty() || !layout.matches("(?:(?:YYYY|MM|DD|hh|mm|ss)|[^YyMDHhms])+"))) {
-                throw invalid(subject, path("parameter_pattern", 4), "unsupported date-time layout");
+            String layout = normalizeDateTimeLayout(pattern);
+            if (layout != null && (layout.isEmpty() || !layout.matches("(?:(?:YYYY|MM|DD|hh|mm|ss|SSS)|[^YyMDHhmsS])+"))) {
+                throw invalid(subject, path("parameter_pattern", 4), "unsupported date-time layout: '" + layout + "'");
             }
             return new DatasetMapping.DateTimeSchema(min, max, def, layout);
         }
@@ -542,13 +596,16 @@ public final class DatasetMapper {
             throw invalid(subject, path("parameter_pattern", 4), "pattern is supported only for string and date-time parameters");
         }
         if (type.equals("boolean")) {
-            if (multiple || minimum != null || maximum != null || !values.isEmpty()) {
-                throw invalid(subject, path("parameter_range", 4), "boolean parameters do not support bounds, enum or multiple values");
+            if (multiple || minimum != null || maximum != null) {
+                throw invalid(subject, path("parameter_range", 4), "boolean parameters do not support bounds or multiple values");
             }
             Boolean value = defaultValue == null ? null : booleanValue(subject, path("parameter_default", 4), defaultValue);
             return new DatasetMapping.BooleanSchema(value);
         }
-        if (type.equals("integer") || type.equals("long")) {
+        if (type.equals("integer") || type.equals("long") || type.equals("int") || type.equals("short") || type.equals("byte")
+                || type.equals("positiveInteger") || type.equals("nonNegativeInteger") || type.equals("nonPositiveInteger")
+                || type.equals("negativeInteger") || type.equals("unsignedLong") || type.equals("unsignedInt")
+                || type.equals("unsignedShort") || type.equals("unsignedByte")) {
             Long min = integerValue(subject, minimum);
             Long max = integerValue(subject, maximum);
             Long def = integerValue(subject, defaultValue);
@@ -556,7 +613,7 @@ public final class DatasetMapper {
             validateValues(subject, def, min, max, options);
             return new DatasetMapping.IntegerSchema(multiple, min, max, def, options);
         }
-        if (type.equals("double") || type.equals("decimal") || type.equals("float")) {
+        if (type.equals("double") || type.equals("decimal") || type.equals("float") || type.equals("number") || type.equals("numeric")) {
             Double min = floatValue(subject, minimum);
             Double max = floatValue(subject, maximum);
             Double def = floatValue(subject, defaultValue);
@@ -565,6 +622,16 @@ public final class DatasetMapper {
             return new DatasetMapping.FloatSchema(multiple, min, max, def, options);
         }
         throw invalid(subject, path("parameter_range", 4), "unsupported parameter type " + range);
+    }
+
+    private static String normalizeDateTimeLayout(String pattern) {
+        if (pattern == null) return null;
+        String layout = pattern.trim().replace("HH", "hh");
+        int hour = layout.indexOf("hh");
+        if (hour < 0) return layout;
+        String date = layout.substring(0, hour + 2);
+        String time = layout.substring(hour + 2).replace("MM", "mm").replaceAll("(?<!S)SS(?!S)", "ss");
+        return date + time;
     }
 
     private <T extends Comparable<T>> void validateValues(Resource subject, T value, T minimum, T maximum, List<T> options) {
@@ -587,6 +654,38 @@ public final class DatasetMapper {
         }
     }
 
+    private static String inferNumericType(String minimum, String maximum, String defaultValue) {
+        boolean integral = true;
+        boolean valid = true;
+        for (String value : new String[]{minimum, maximum, defaultValue}) {
+            if (value == null) continue;
+            try {
+                Long.parseLong(value);
+            } catch (NumberFormatException e) {
+                integral = false;
+                try {
+                    double parsed = Double.parseDouble(value);
+                    if (!Double.isFinite(parsed) || new java.math.BigDecimal(value).compareTo(java.math.BigDecimal.valueOf(parsed)) != 0) return null;
+                } catch (NumberFormatException e2) {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        if (!valid) return null;
+        return integral ? "integer" : "float";
+    }
+
+    private static String inferDateType(String minimum, String maximum, String defaultValue) {
+        boolean onlyDate = true;
+        for (String value : new String[]{minimum, maximum, defaultValue}) {
+            if (value == null) continue;
+            if (!value.matches("\\d{4}-\\d{2}-\\d{2}.*")) return null;
+            if (!value.matches("\\d{4}-\\d{2}-\\d{2}")) onlyDate = false;
+        }
+        return onlyDate ? "date" : "dateTime";
+    }
+
     private Long integerValue(Resource subject, String value) {
         if (value == null) return null;
         try {
@@ -599,7 +698,26 @@ public final class DatasetMapper {
     private Instant parameterDate(Resource subject, String field, String value) {
         if (value == null) return null;
         try {
-            Instant instant = OffsetDateTime.parse(value).toInstant();
+            String trimmed = value.trim();
+            Instant instant;
+            if (trimmed.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                instant = LocalDate.parse(trimmed).atStartOfDay().toInstant(ZoneOffset.UTC);
+            } else if (trimmed.matches("\\d{8}")) {
+                instant = LocalDate.parse(trimmed, java.time.format.DateTimeFormatter.BASIC_ISO_DATE).atStartOfDay().toInstant(ZoneOffset.UTC);
+            } else if (trimmed.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}")) {
+                instant = LocalDateTime.parse(trimmed).toInstant(ZoneOffset.UTC);
+            } else if (trimmed.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-].*")
+                    || trimmed.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")) {
+                instant = OffsetDateTime.parse(trimmed).toInstant();
+            } else if (trimmed.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+Z?")) {
+                instant = trimmed.endsWith("Z")
+                        ? OffsetDateTime.parse(trimmed).toInstant()
+                        : LocalDateTime.parse(trimmed.substring(0, trimmed.length())).toInstant(ZoneOffset.UTC);
+            } else if (trimmed.matches("\\d{4}")) {
+                instant = LocalDate.parse(trimmed + "-01-01").atStartOfDay().toInstant(ZoneOffset.UTC);
+            } else {
+                throw new DateTimeParseException("unsupported", trimmed, 0);
+            }
             if (instant.isBefore(Instant.parse("0001-01-01T00:00:00Z"))
                     || instant.isAfter(Instant.parse("9999-12-31T23:59:59.999999999Z"))) {
                 throw new IllegalArgumentException("timestamp outside protobuf range");
@@ -613,8 +731,8 @@ public final class DatasetMapper {
     private Double floatValue(Resource subject, String value) {
         if (value == null) return null;
         try {
-            double result = Double.parseDouble(value);
-            if (!Double.isFinite(result) || new java.math.BigDecimal(value).compareTo(java.math.BigDecimal.valueOf(result)) != 0) {
+            double result = Double.parseDouble(value.trim());
+            if (!Double.isFinite(result)) {
                 throw new NumberFormatException();
             }
             return result == 0 ? 0.0 : result;
@@ -636,8 +754,9 @@ public final class DatasetMapper {
     }
 
     private boolean booleanValue(Resource subject, String predicate, String value) {
-        if (value.equals("false") || value.equals("0")) return false;
-        if (value.equals("true") || value.equals("1")) return true;
+        String normalized = value.toLowerCase(java.util.Locale.ROOT);
+        if (normalized.equals("false") || normalized.equals("0")) return false;
+        if (normalized.equals("true") || normalized.equals("1")) return true;
         throw invalid(subject, predicate, "expected an RDF boolean");
     }
 
@@ -663,6 +782,27 @@ public final class DatasetMapper {
 
     private Instant optionalDate(Model model, Resource subject, String field) {
         return profile.fields().containsKey(field) ? parseInstant(subject, property(model, path(field, 0))) : null;
+    }
+
+    private static String firstValue(Resource subject, Property predicate) {
+        var statements = subject.listProperties(predicate);
+        try {
+            String best = null;
+            while (statements.hasNext()) {
+                RDFNode node = statements.next().getObject();
+                String value = null;
+                if (node.isURIResource()) {
+                    value = node.asResource().getURI();
+                } else if (node.isLiteral()) {
+                    String text = node.asLiteral().getString();
+                    if (!text.isBlank()) value = text;
+                }
+                if (value != null && (best == null || value.compareTo(best) < 0)) best = value;
+            }
+            return best;
+        } finally {
+            statements.close();
+        }
     }
 
     private static String singleValue(Resource subject, Property predicate, boolean required) {
@@ -729,19 +869,43 @@ public final class DatasetMapper {
         }
     }
 
+    private static String singleLiteral(Resource subject, Property predicate, boolean required) {
+        String value = optionalLiteral(subject, predicate);
+        if (value == null && required) {
+            throw invalid(subject, predicate.getURI(), "expected exactly one value");
+        }
+        return value;
+    }
+
+    private static String firstRequiredLiteral(Resource subject, Property predicate) {
+        List<String> values = literals(subject, predicate);
+        if (values.isEmpty()) {
+            throw invalid(subject, predicate.getURI(), "expected exactly one value");
+        }
+        return values.getFirst();
+    }
+
+    private static String optionalLiteral(Resource subject, Property predicate) {
+        List<String> values = literals(subject, predicate);
+        if (values.size() > 1) {
+            throw invalid(subject, predicate.getURI(), "expected exactly one value");
+        }
+        return values.isEmpty() ? null : values.getFirst();
+    }
+
     private static List<String> literals(Resource subject, Property predicate) {
         List<String> values = new ArrayList<>();
         var statements = subject.listProperties(predicate);
         try {
             while (statements.hasNext()) {
                 RDFNode node = statements.next().getObject();
-                if (!node.isLiteral() || node.asLiteral().getString().isBlank()) {
+                if (!node.isLiteral()) {
                     throw invalid(subject, predicate.getURI(), "expected a nonempty literal");
                 }
-                if (!node.asLiteral().getLanguage().isEmpty()) {
-                    throw invalid(subject, predicate.getURI(), "language-tagged literals are not yet supported");
+                String value = node.asLiteral().getString();
+                if (!value.isBlank()) {
+                    values.add(value);
                 }
-                values.add(node.asLiteral().getString());
             }
         } finally {
             statements.close();
@@ -749,31 +913,35 @@ public final class DatasetMapper {
         return values;
     }
 
-    private static String singleLiteral(Resource subject, Property predicate, boolean required) {
-        List<String> values = literals(subject, predicate);
-        if (values.size() > 1 || (required && values.isEmpty())) {
-            throw invalid(subject, predicate.getURI(), "expected exactly one value");
+    private static Resource singleResource(Resource subject, Property predicate, boolean required) {
+        List<Resource> values = resources(subject, predicate);
+        if (values.size() > 1) {
+            throw invalid(subject, predicate.getURI(), "expected exactly one resource");
         }
-        return values.isEmpty() ? null : values.getFirst();
+        if (values.isEmpty()) {
+            if (required) {
+                throw invalid(subject, predicate.getURI(), "expected a resource");
+            }
+            return null;
+        }
+        return values.getFirst();
     }
 
-    private static Resource singleResource(Resource subject, Property predicate, boolean required) {
+    private static List<Resource> resources(Resource subject, Property predicate) {
+        List<Resource> values = new ArrayList<>();
         var statements = subject.listProperties(predicate);
         try {
-            if (!statements.hasNext()) {
-                if (required) {
+            while (statements.hasNext()) {
+                RDFNode node = statements.next().getObject();
+                if (!node.isResource()) {
                     throw invalid(subject, predicate.getURI(), "expected a resource");
                 }
-                return null;
+                values.add(node.asResource());
             }
-            RDFNode node = statements.next().getObject();
-            if (!node.isResource() || statements.hasNext()) {
-                throw invalid(subject, predicate.getURI(), "expected exactly one resource");
-            }
-            return node.asResource();
         } finally {
             statements.close();
         }
+        return values;
     }
 
     private static IllegalArgumentException invalid(Resource subject, String predicate, String reason) {

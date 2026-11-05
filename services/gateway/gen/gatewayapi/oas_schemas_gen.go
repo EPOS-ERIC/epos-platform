@@ -7166,158 +7166,398 @@ func (s *IdentifierInput) SetValue(val NonBlankString) {
 	s.Value = val
 }
 
-// Ref: #/components/schemas/ImportDiagnostic
-type ImportDiagnostic struct {
-	Severity  string `json:"severity"`
-	Subject   string `json:"subject"`
-	Predicate string `json:"predicate"`
-	Message   string `json:"message"`
+// Ref: #/components/schemas/ImportReferenceBinding
+type ImportReferenceBinding struct {
+	Kind ImportReferenceBindingKind `json:"kind"`
+	Iri  url.URL                    `json:"iri"`
+	ID   uuid.UUID                  `json:"id"`
 }
 
-// GetSeverity returns the value of Severity.
-func (s *ImportDiagnostic) GetSeverity() string {
-	return s.Severity
+// GetKind returns the value of Kind.
+func (s *ImportReferenceBinding) GetKind() ImportReferenceBindingKind {
+	return s.Kind
+}
+
+// GetIri returns the value of Iri.
+func (s *ImportReferenceBinding) GetIri() url.URL {
+	return s.Iri
+}
+
+// GetID returns the value of ID.
+func (s *ImportReferenceBinding) GetID() uuid.UUID {
+	return s.ID
+}
+
+// SetKind sets the value of Kind.
+func (s *ImportReferenceBinding) SetKind(val ImportReferenceBindingKind) {
+	s.Kind = val
+}
+
+// SetIri sets the value of Iri.
+func (s *ImportReferenceBinding) SetIri(val url.URL) {
+	s.Iri = val
+}
+
+// SetID sets the value of ID.
+func (s *ImportReferenceBinding) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+type ImportReferenceBindingKind string
+
+const (
+	ImportReferenceBindingKindOrganization ImportReferenceBindingKind = "organization"
+	ImportReferenceBindingKindContactPoint ImportReferenceBindingKind = "contact-point"
+	ImportReferenceBindingKindCategory     ImportReferenceBindingKind = "category"
+)
+
+// AllValues returns all ImportReferenceBindingKind values.
+func (ImportReferenceBindingKind) AllValues() []ImportReferenceBindingKind {
+	return []ImportReferenceBindingKind{
+		ImportReferenceBindingKindOrganization,
+		ImportReferenceBindingKindContactPoint,
+		ImportReferenceBindingKindCategory,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ImportReferenceBindingKind) MarshalText() ([]byte, error) {
+	switch s {
+	case ImportReferenceBindingKindOrganization:
+		return []byte(s), nil
+	case ImportReferenceBindingKindContactPoint:
+		return []byte(s), nil
+	case ImportReferenceBindingKindCategory:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ImportReferenceBindingKind) UnmarshalText(data []byte) error {
+	switch ImportReferenceBindingKind(data) {
+	case ImportReferenceBindingKindOrganization:
+		*s = ImportReferenceBindingKindOrganization
+		return nil
+	case ImportReferenceBindingKindContactPoint:
+		*s = ImportReferenceBindingKindContactPoint
+		return nil
+	case ImportReferenceBindingKindCategory:
+		*s = ImportReferenceBindingKindCategory
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ImportResourceFailure
+type ImportResourceFailure struct {
+	Subject        string                        `json:"subject"`
+	Code           string                        `json:"code"`
+	OutcomeUnknown bool                          `json:"outcomeUnknown"`
+	Message        OptString                     `json:"message"`
+	Phase          OptImportResourceFailurePhase `json:"phase"`
 }
 
 // GetSubject returns the value of Subject.
-func (s *ImportDiagnostic) GetSubject() string {
+func (s *ImportResourceFailure) GetSubject() string {
 	return s.Subject
 }
 
-// GetPredicate returns the value of Predicate.
-func (s *ImportDiagnostic) GetPredicate() string {
-	return s.Predicate
+// GetCode returns the value of Code.
+func (s *ImportResourceFailure) GetCode() string {
+	return s.Code
+}
+
+// GetOutcomeUnknown returns the value of OutcomeUnknown.
+func (s *ImportResourceFailure) GetOutcomeUnknown() bool {
+	return s.OutcomeUnknown
 }
 
 // GetMessage returns the value of Message.
-func (s *ImportDiagnostic) GetMessage() string {
+func (s *ImportResourceFailure) GetMessage() OptString {
 	return s.Message
 }
 
-// SetSeverity sets the value of Severity.
-func (s *ImportDiagnostic) SetSeverity(val string) {
-	s.Severity = val
+// GetPhase returns the value of Phase.
+func (s *ImportResourceFailure) GetPhase() OptImportResourceFailurePhase {
+	return s.Phase
 }
 
 // SetSubject sets the value of Subject.
-func (s *ImportDiagnostic) SetSubject(val string) {
+func (s *ImportResourceFailure) SetSubject(val string) {
 	s.Subject = val
 }
 
-// SetPredicate sets the value of Predicate.
-func (s *ImportDiagnostic) SetPredicate(val string) {
-	s.Predicate = val
+// SetCode sets the value of Code.
+func (s *ImportResourceFailure) SetCode(val string) {
+	s.Code = val
+}
+
+// SetOutcomeUnknown sets the value of OutcomeUnknown.
+func (s *ImportResourceFailure) SetOutcomeUnknown(val bool) {
+	s.OutcomeUnknown = val
 }
 
 // SetMessage sets the value of Message.
-func (s *ImportDiagnostic) SetMessage(val string) {
+func (s *ImportResourceFailure) SetMessage(val OptString) {
 	s.Message = val
 }
 
-// Ref: #/components/schemas/ImportResult
-type ImportResult struct {
-	Groups               int                `json:"groups"`
-	Categories           int                `json:"categories"`
-	Organizations        int                `json:"organizations"`
-	ContactPoints        int                `json:"contact_points"`
-	Datasets             int                `json:"datasets"`
-	SoftwareApplications int                `json:"software_applications"`
-	SoftwareSourceCodes  int                `json:"software_source_codes"`
-	Warnings             []ImportDiagnostic `json:"warnings"`
+// SetPhase sets the value of Phase.
+func (s *ImportResourceFailure) SetPhase(val OptImportResourceFailurePhase) {
+	s.Phase = val
 }
 
-// GetGroups returns the value of Groups.
-func (s *ImportResult) GetGroups() int {
-	return s.Groups
+type ImportResourceFailurePhase string
+
+const (
+	ImportResourceFailurePhaseContactResolution    ImportResourceFailurePhase = "contact-resolution"
+	ImportResourceFailurePhaseDatasetCreation      ImportResourceFailurePhase = "dataset-creation"
+	ImportResourceFailurePhaseCategoryCreation     ImportResourceFailurePhase = "category-creation"
+	ImportResourceFailurePhaseOrganizationCreation ImportResourceFailurePhase = "organization-creation"
+)
+
+// AllValues returns all ImportResourceFailurePhase values.
+func (ImportResourceFailurePhase) AllValues() []ImportResourceFailurePhase {
+	return []ImportResourceFailurePhase{
+		ImportResourceFailurePhaseContactResolution,
+		ImportResourceFailurePhaseDatasetCreation,
+		ImportResourceFailurePhaseCategoryCreation,
+		ImportResourceFailurePhaseOrganizationCreation,
+	}
 }
 
-// GetCategories returns the value of Categories.
-func (s *ImportResult) GetCategories() int {
-	return s.Categories
+// MarshalText implements encoding.TextMarshaler.
+func (s ImportResourceFailurePhase) MarshalText() ([]byte, error) {
+	switch s {
+	case ImportResourceFailurePhaseContactResolution:
+		return []byte(s), nil
+	case ImportResourceFailurePhaseDatasetCreation:
+		return []byte(s), nil
+	case ImportResourceFailurePhaseCategoryCreation:
+		return []byte(s), nil
+	case ImportResourceFailurePhaseOrganizationCreation:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// GetOrganizations returns the value of Organizations.
-func (s *ImportResult) GetOrganizations() int {
-	return s.Organizations
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ImportResourceFailurePhase) UnmarshalText(data []byte) error {
+	switch ImportResourceFailurePhase(data) {
+	case ImportResourceFailurePhaseContactResolution:
+		*s = ImportResourceFailurePhaseContactResolution
+		return nil
+	case ImportResourceFailurePhaseDatasetCreation:
+		*s = ImportResourceFailurePhaseDatasetCreation
+		return nil
+	case ImportResourceFailurePhaseCategoryCreation:
+		*s = ImportResourceFailurePhaseCategoryCreation
+		return nil
+	case ImportResourceFailurePhaseOrganizationCreation:
+		*s = ImportResourceFailurePhaseOrganizationCreation
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-// GetContactPoints returns the value of ContactPoints.
-func (s *ImportResult) GetContactPoints() int {
-	return s.ContactPoints
+// Ref: #/components/schemas/ImportResourcesRequest
+type ImportResourcesRequest struct {
+	// RDF Turtle document to import.
+	Turtle string `json:"turtle"`
+	// Absolute base URI used to resolve relative Turtle IRIs.
+	BaseUri        url.URL                  `json:"baseUri"`
+	MappingId      string                   `json:"mappingId"`
+	MappingVersion int                      `json:"mappingVersion"`
+	References     []ImportReferenceBinding `json:"references"`
 }
 
-// GetDatasets returns the value of Datasets.
-func (s *ImportResult) GetDatasets() int {
-	return s.Datasets
+// GetTurtle returns the value of Turtle.
+func (s *ImportResourcesRequest) GetTurtle() string {
+	return s.Turtle
 }
 
-// GetSoftwareApplications returns the value of SoftwareApplications.
-func (s *ImportResult) GetSoftwareApplications() int {
-	return s.SoftwareApplications
+// GetBaseUri returns the value of BaseUri.
+func (s *ImportResourcesRequest) GetBaseUri() url.URL {
+	return s.BaseUri
 }
 
-// GetSoftwareSourceCodes returns the value of SoftwareSourceCodes.
-func (s *ImportResult) GetSoftwareSourceCodes() int {
-	return s.SoftwareSourceCodes
+// GetMappingId returns the value of MappingId.
+func (s *ImportResourcesRequest) GetMappingId() string {
+	return s.MappingId
+}
+
+// GetMappingVersion returns the value of MappingVersion.
+func (s *ImportResourcesRequest) GetMappingVersion() int {
+	return s.MappingVersion
+}
+
+// GetReferences returns the value of References.
+func (s *ImportResourcesRequest) GetReferences() []ImportReferenceBinding {
+	return s.References
+}
+
+// SetTurtle sets the value of Turtle.
+func (s *ImportResourcesRequest) SetTurtle(val string) {
+	s.Turtle = val
+}
+
+// SetBaseUri sets the value of BaseUri.
+func (s *ImportResourcesRequest) SetBaseUri(val url.URL) {
+	s.BaseUri = val
+}
+
+// SetMappingId sets the value of MappingId.
+func (s *ImportResourcesRequest) SetMappingId(val string) {
+	s.MappingId = val
+}
+
+// SetMappingVersion sets the value of MappingVersion.
+func (s *ImportResourcesRequest) SetMappingVersion(val int) {
+	s.MappingVersion = val
+}
+
+// SetReferences sets the value of References.
+func (s *ImportResourcesRequest) SetReferences(val []ImportReferenceBinding) {
+	s.References = val
+}
+
+// Ref: #/components/schemas/ImportResourcesResult
+type ImportResourcesResult struct {
+	Imported []ImportedResource       `json:"imported"`
+	Failure  OptImportResourceFailure `json:"failure"`
+	// Resources skipped while the remaining import completed.
+	Warnings []ImportResourceFailure `json:"warnings"`
+}
+
+// GetImported returns the value of Imported.
+func (s *ImportResourcesResult) GetImported() []ImportedResource {
+	return s.Imported
+}
+
+// GetFailure returns the value of Failure.
+func (s *ImportResourcesResult) GetFailure() OptImportResourceFailure {
+	return s.Failure
 }
 
 // GetWarnings returns the value of Warnings.
-func (s *ImportResult) GetWarnings() []ImportDiagnostic {
+func (s *ImportResourcesResult) GetWarnings() []ImportResourceFailure {
 	return s.Warnings
 }
 
-// SetGroups sets the value of Groups.
-func (s *ImportResult) SetGroups(val int) {
-	s.Groups = val
+// SetImported sets the value of Imported.
+func (s *ImportResourcesResult) SetImported(val []ImportedResource) {
+	s.Imported = val
 }
 
-// SetCategories sets the value of Categories.
-func (s *ImportResult) SetCategories(val int) {
-	s.Categories = val
-}
-
-// SetOrganizations sets the value of Organizations.
-func (s *ImportResult) SetOrganizations(val int) {
-	s.Organizations = val
-}
-
-// SetContactPoints sets the value of ContactPoints.
-func (s *ImportResult) SetContactPoints(val int) {
-	s.ContactPoints = val
-}
-
-// SetDatasets sets the value of Datasets.
-func (s *ImportResult) SetDatasets(val int) {
-	s.Datasets = val
-}
-
-// SetSoftwareApplications sets the value of SoftwareApplications.
-func (s *ImportResult) SetSoftwareApplications(val int) {
-	s.SoftwareApplications = val
-}
-
-// SetSoftwareSourceCodes sets the value of SoftwareSourceCodes.
-func (s *ImportResult) SetSoftwareSourceCodes(val int) {
-	s.SoftwareSourceCodes = val
+// SetFailure sets the value of Failure.
+func (s *ImportResourcesResult) SetFailure(val OptImportResourceFailure) {
+	s.Failure = val
 }
 
 // SetWarnings sets the value of Warnings.
-func (s *ImportResult) SetWarnings(val []ImportDiagnostic) {
+func (s *ImportResourcesResult) SetWarnings(val []ImportResourceFailure) {
 	s.Warnings = val
 }
 
-type ImportTurtleMetadataReq struct {
-	Data io.Reader
+// Ref: #/components/schemas/ImportedResource
+type ImportedResource struct {
+	Subject    string               `json:"subject"`
+	ResourceId uuid.UUID            `json:"resourceId"`
+	VersionId  uuid.UUID            `json:"versionId"`
+	Kind       ImportedResourceKind `json:"kind"`
 }
 
-// Read reads data from the Data reader.
-//
-// Kept to satisfy the io.Reader interface.
-func (s ImportTurtleMetadataReq) Read(p []byte) (n int, err error) {
-	if s.Data == nil {
-		return 0, io.EOF
+// GetSubject returns the value of Subject.
+func (s *ImportedResource) GetSubject() string {
+	return s.Subject
+}
+
+// GetResourceId returns the value of ResourceId.
+func (s *ImportedResource) GetResourceId() uuid.UUID {
+	return s.ResourceId
+}
+
+// GetVersionId returns the value of VersionId.
+func (s *ImportedResource) GetVersionId() uuid.UUID {
+	return s.VersionId
+}
+
+// GetKind returns the value of Kind.
+func (s *ImportedResource) GetKind() ImportedResourceKind {
+	return s.Kind
+}
+
+// SetSubject sets the value of Subject.
+func (s *ImportedResource) SetSubject(val string) {
+	s.Subject = val
+}
+
+// SetResourceId sets the value of ResourceId.
+func (s *ImportedResource) SetResourceId(val uuid.UUID) {
+	s.ResourceId = val
+}
+
+// SetVersionId sets the value of VersionId.
+func (s *ImportedResource) SetVersionId(val uuid.UUID) {
+	s.VersionId = val
+}
+
+// SetKind sets the value of Kind.
+func (s *ImportedResource) SetKind(val ImportedResourceKind) {
+	s.Kind = val
+}
+
+type ImportedResourceKind string
+
+const (
+	ImportedResourceKindDataset             ImportedResourceKind = "dataset"
+	ImportedResourceKindSoftwareApplication ImportedResourceKind = "software-application"
+	ImportedResourceKindSoftwareSourceCode  ImportedResourceKind = "software-source-code"
+)
+
+// AllValues returns all ImportedResourceKind values.
+func (ImportedResourceKind) AllValues() []ImportedResourceKind {
+	return []ImportedResourceKind{
+		ImportedResourceKindDataset,
+		ImportedResourceKindSoftwareApplication,
+		ImportedResourceKindSoftwareSourceCode,
 	}
-	return s.Data.Read(p)
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ImportedResourceKind) MarshalText() ([]byte, error) {
+	switch s {
+	case ImportedResourceKindDataset:
+		return []byte(s), nil
+	case ImportedResourceKindSoftwareApplication:
+		return []byte(s), nil
+	case ImportedResourceKindSoftwareSourceCode:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ImportedResourceKind) UnmarshalText(data []byte) error {
+	switch ImportedResourceKind(data) {
+	case ImportedResourceKindDataset:
+		*s = ImportedResourceKindDataset
+		return nil
+	case ImportedResourceKindSoftwareApplication:
+		*s = ImportedResourceKindSoftwareApplication
+		return nil
+	case ImportedResourceKindSoftwareSourceCode:
+		*s = ImportedResourceKindSoftwareSourceCode
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Ref: #/components/schemas/IntegerEnumOption
@@ -9112,6 +9352,98 @@ func (o OptGeologicalTemporalCoverage) Get() (v GeologicalTemporalCoverage, ok b
 
 // Or returns value if set, or given parameter if does not.
 func (o OptGeologicalTemporalCoverage) Or(d GeologicalTemporalCoverage) GeologicalTemporalCoverage {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptImportResourceFailure returns new OptImportResourceFailure with value set to v.
+func NewOptImportResourceFailure(v ImportResourceFailure) OptImportResourceFailure {
+	return OptImportResourceFailure{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptImportResourceFailure is optional ImportResourceFailure.
+type OptImportResourceFailure struct {
+	Value ImportResourceFailure
+	Set   bool
+}
+
+// IsSet returns true if OptImportResourceFailure was set.
+func (o OptImportResourceFailure) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptImportResourceFailure) Reset() {
+	var v ImportResourceFailure
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptImportResourceFailure) SetTo(v ImportResourceFailure) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptImportResourceFailure) Get() (v ImportResourceFailure, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptImportResourceFailure) Or(d ImportResourceFailure) ImportResourceFailure {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptImportResourceFailurePhase returns new OptImportResourceFailurePhase with value set to v.
+func NewOptImportResourceFailurePhase(v ImportResourceFailurePhase) OptImportResourceFailurePhase {
+	return OptImportResourceFailurePhase{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptImportResourceFailurePhase is optional ImportResourceFailurePhase.
+type OptImportResourceFailurePhase struct {
+	Value ImportResourceFailurePhase
+	Set   bool
+}
+
+// IsSet returns true if OptImportResourceFailurePhase was set.
+func (o OptImportResourceFailurePhase) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptImportResourceFailurePhase) Reset() {
+	var v ImportResourceFailurePhase
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptImportResourceFailurePhase) SetTo(v ImportResourceFailurePhase) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptImportResourceFailurePhase) Get() (v ImportResourceFailurePhase, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptImportResourceFailurePhase) Or(d ImportResourceFailurePhase) ImportResourceFailurePhase {
 	if v, ok := o.Get(); ok {
 		return v
 	}

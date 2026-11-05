@@ -61,11 +61,15 @@ public final class MappingRegistry {
 
     public static MappingRegistry withDefaults() throws IOException {
         MappingRegistry registry = new MappingRegistry();
-        try (InputStream input = MappingRegistry.class.getResourceAsStream("/mappings/epos-dcat-common.yaml")) {
-            if (input == null) {
-                throw new IOException("bundled mapping epos-dcat-common.yaml not found");
+        for (String mapping : new String[] {
+                "epos-dcat-common.yaml", "epos-dcat-ap-v1.yaml", "epos-dcat-ap-v2.yaml", "epos-dcat-ap-v3.yaml"
+        }) {
+            try (InputStream input = MappingRegistry.class.getResourceAsStream("/mappings/" + mapping)) {
+                if (input == null) {
+                    throw new IOException("bundled mapping " + mapping + " not found");
+                }
+                registry.register(input);
             }
-            registry.register(input);
         }
         return registry;
     }

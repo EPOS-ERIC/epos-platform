@@ -1,6 +1,7 @@
 package eu.epos.semanticaggregator.mapping;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import eu.epos.semanticaggregator.ingest.DatasetMapper;
@@ -44,6 +45,24 @@ class MappingRegistryTest {
     }
 
     @Test
+    void loadsBundledEposDcatApProfiles() throws IOException {
+        var registry = MappingRegistry.withDefaults();
+
+        assertEquals(4, registry.size());
+        for (int version = 1; version <= 3; version++) {
+            var profile = registry.get("epos-dcat-ap", version);
+            assertEquals(version, profile.version());
+            assertEquals("http://www.w3.org/ns/dcat#Dataset", profile.datasetType());
+        }
+        assertEquals(2, registry.get("epos-dcat-ap", 1).softwareMappings().size());
+        assertEquals(0, registry.get("epos-dcat-ap", 2).softwareMappings().size());
+        assertEquals(0, registry.get("epos-dcat-ap", 3).softwareMappings().size());
+        assertFalse(registry.get("epos-dcat-ap", 2).fields().containsKey("web_service_name"));
+        assertFalse(registry.get("epos-dcat-ap", 3).fields().containsKey("web_service_name"));
+        assertThrows(java.util.NoSuchElementException.class, () -> registry.get("epos-dcat-ap", 4));
+    }
+
+    @Test
     void rejectsInvalidProfiles() {
         var registry = new MappingRegistry();
         assertThrows(IOException.class, () -> registry.register(bytes("id: bad\nversion: 1\ndataset_type: relative\nfields: {}\n")));
@@ -81,7 +100,7 @@ class MappingRegistryTest {
         Files.writeString(directory.resolve("ignored.txt"), "not yaml");
         var registry = MappingRegistry.withDefaults();
         registry.registerDirectory(directory);
-        assertEquals(2, registry.size());
+        assertEquals(5, registry.size());
         assertEquals("custom", registry.get("custom", 1).id());
     }
 
