@@ -48,8 +48,8 @@ func validateIdentifier(value Identifier, requireID bool) error {
 func validateContactPoints(values []ContactPoint, label string) error {
 	seen := make(map[uuid.UUID]struct{}, len(values))
 	for _, value := range values {
-		if value.ID == uuid.Nil || strings.TrimSpace(value.Email) == "" || strings.TrimSpace(value.Role) == "" {
-			return fmt.Errorf("%s requires ID, email, and role: %w", label, apperror.Default(apperror.CodeValidationFailed))
+		if value.ID == uuid.Nil || strings.TrimSpace(value.Email) == "" {
+			return fmt.Errorf("%s requires ID and email: %w", label, apperror.Default(apperror.CodeValidationFailed))
 		}
 		if _, exists := seen[value.ID]; exists {
 			return fmt.Errorf("duplicate %s %q: %w", label, value.ID, apperror.Default(apperror.CodeValidationFailed))

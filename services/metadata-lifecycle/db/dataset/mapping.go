@@ -26,7 +26,7 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 		Keywords:                   value.Keywords,
 		AccrualPeriodicity:         value.AccrualPeriodicity,
 		QualityAnnotation:          value.QualityAnnotation,
-		AccessRight:                value.AccessRight,
+		AccessRight:                accessRightToSQLC(value.AccessRight),
 		SourceCreatedAt:            value.SourceCreated,
 		SourceUpdatedAt:            value.SourceUpdated,
 		SpatialCoverage:            value.SpatialCoverage,
@@ -124,26 +124,14 @@ func geologicalTemporal(start, end *float64) *domain.GeologicalTemporal {
 }
 
 func toDomainWebService(value sqlc.WebService) domain.WebService {
-	var documentation *domain.Documentation
-	if value.DocumentationUri != nil {
-		documentation = &domain.Documentation{
-			Title:       value.DocumentationTitle,
-			Description: value.DocumentationDescription,
-			URI:         *value.DocumentationUri,
-		}
-	}
 	return domain.WebService{
 		ID:               value.ID,
 		ResourceID:       value.ResourceID,
-		Name:             value.Name,
-		Description:      value.Description,
 		Type:             domain.WebServiceType(value.Type),
 		Configuration:    nil,
 		VisibleOn:        domainVisibleOnValues(value.VisibleOn),
 		Provider:         nil,
-		Documentation:    documentation,
-		SpatialCoverage:  value.SpatialCoverage,
-		TemporalCoverage: temporal(value.TemporalStart, value.TemporalEnd),
+		DocumentationURI: value.DocumentationUri,
 		ContactPoints:    nil,
 	}
 }
@@ -167,8 +155,6 @@ func toDomainDistribution(value sqlc.Distribution, services map[uuid.UUID]domain
 		Description:      value.Description,
 		License:          value.License,
 		Type:             domain.DistributionType(value.Type),
-		Issued:           value.SourceIssuedAt,
-		Modified:         value.SourceModifiedAt,
 		ByteSize:         nil,
 		WebService:       nil,
 		DownloadableFile: nil,
@@ -229,8 +215,23 @@ func toDomainContactPoint(value sqlc.ContactPoint) domain.ContactPoint {
 	return domain.ContactPoint{
 		ID:    value.ID,
 		Email: value.Email,
-		Role:  value.Role,
 	}
+}
+
+func accessRightToSQLC(value *domain.AccessRight) *sqlc.DatasetAccessRight {
+	if value == nil {
+		return nil
+	}
+	converted := sqlc.DatasetAccessRight(*value)
+	return &converted
+}
+
+func accessRightFromSQLC(value *sqlc.DatasetAccessRight) *domain.AccessRight {
+	if value == nil {
+		return nil
+	}
+	converted := domain.AccessRight(*value)
+	return &converted
 }
 
 func toDomainIdentifier(value sqlc.Identifier) domain.Identifier {

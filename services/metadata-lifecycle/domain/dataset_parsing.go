@@ -22,7 +22,11 @@ func NewDatasetInput(value DatasetInput) (DatasetInput, error) {
 	}
 	value.AccrualPeriodicity = optionalTrimmedString(value.AccrualPeriodicity)
 	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
-	value.AccessRight = optionalTrimmedString(value.AccessRight)
+	accessRight, err := optionalAccessRight(value.AccessRight)
+	if err != nil {
+		return DatasetInput{}, err
+	}
+	value.AccessRight = accessRight
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return DatasetInput{}, invalidField("keywords", "Keywords must not be blank.", err)
@@ -116,7 +120,10 @@ func NewDatasetMetadata(value DatasetMetadata) (result DatasetMetadata, err erro
 	}
 	value.AccrualPeriodicity = optionalTrimmedString(value.AccrualPeriodicity)
 	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
-	value.AccessRight = optionalTrimmedString(value.AccessRight)
+	value.AccessRight, err = optionalAccessRight(value.AccessRight)
+	if err != nil {
+		return DatasetMetadata{}, fmt.Errorf("dataset access right: %w", err)
+	}
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return DatasetMetadata{}, fmt.Errorf("dataset keywords: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
@@ -418,8 +425,6 @@ func distributionInput(value Distribution) DistributionInput {
 		Description:      value.Description,
 		License:          value.License,
 		Type:             value.Type,
-		Issued:           value.Issued,
-		Modified:         value.Modified,
 		ByteSize:         value.ByteSize,
 		WebService:       nil,
 		DownloadableFile: value.DownloadableFile,
@@ -443,17 +448,27 @@ func (value WebService) Input() WebServiceInput {
 	}
 	return WebServiceInput{
 		ResourceID:       &value.ResourceID,
-		Name:             value.Name,
-		Description:      value.Description,
 		Type:             value.Type,
 		Configuration:    webServiceConfigurationInput(value.Configuration),
 		VisibleOn:        value.VisibleOn,
 		ProviderID:       providerID,
-		Documentation:    value.Documentation,
-		SpatialCoverage:  value.SpatialCoverage,
-		TemporalCoverage: value.TemporalCoverage,
+		DocumentationURI: value.DocumentationURI,
 		ContactPointIDs:  contactPointIDs,
 	}
+}
+
+func optionalAccessRight(value *AccessRight) (*AccessRight, error) {
+	if value == nil {
+		return nil, nil
+	}
+	normalized := AccessRight(strings.ToUpper(strings.TrimSpace(string(*value))))
+	if normalized == "" {
+		return nil, nil
+	}
+	if !normalized.Valid() {
+		return nil, invalidField("access_right", "Access right is not supported.", nil)
+	}
+	return &normalized, nil
 }
 
 func webServiceConfigurationInput(value WebServiceConfiguration) WebServiceConfigurationInput {

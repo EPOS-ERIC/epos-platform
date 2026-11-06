@@ -13,29 +13,26 @@ import (
 
 const createContactPoint = `-- name: CreateContactPoint :one
 INSERT INTO
-    contact_points (id, email, role)
+    contact_points (id, email)
 VALUES
     (
         $1,
-        $2,
-        $3
+        $2
     )
 RETURNING
     id,
-    email,
-    role
+    email
 `
 
 type CreateContactPointParams struct {
 	ID    uuid.UUID
 	Email string
-	Role  string
 }
 
 func (q *Queries) CreateContactPoint(ctx context.Context, arg CreateContactPointParams) (ContactPoint, error) {
-	row := q.db.QueryRow(ctx, createContactPoint, arg.ID, arg.Email, arg.Role)
+	row := q.db.QueryRow(ctx, createContactPoint, arg.ID, arg.Email)
 	var i ContactPoint
-	err := row.Scan(&i.ID, &i.Email, &i.Role)
+	err := row.Scan(&i.ID, &i.Email)
 	return i, err
 }
 
@@ -57,8 +54,7 @@ func (q *Queries) DeleteContactPoint(ctx context.Context, id uuid.UUID) (int64, 
 const getContactPoint = `-- name: GetContactPoint :one
 SELECT
     id,
-    email,
-    role
+    email
 FROM
     contact_points
 WHERE
@@ -68,20 +64,18 @@ WHERE
 func (q *Queries) GetContactPoint(ctx context.Context, id uuid.UUID) (ContactPoint, error) {
 	row := q.db.QueryRow(ctx, getContactPoint, id)
 	var i ContactPoint
-	err := row.Scan(&i.ID, &i.Email, &i.Role)
+	err := row.Scan(&i.ID, &i.Email)
 	return i, err
 }
 
 const listContactPoints = `-- name: ListContactPoints :many
 SELECT
     id,
-    email,
-    role
+    email
 FROM
     contact_points
 ORDER BY
     email,
-    role,
     id
 `
 
@@ -94,7 +88,7 @@ func (q *Queries) ListContactPoints(ctx context.Context) ([]ContactPoint, error)
 	var items []ContactPoint
 	for rows.Next() {
 		var i ContactPoint
-		if err := rows.Scan(&i.ID, &i.Email, &i.Role); err != nil {
+		if err := rows.Scan(&i.ID, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -109,25 +103,22 @@ const replaceContactPoint = `-- name: ReplaceContactPoint :one
 UPDATE
     contact_points
 SET
-    email = $1,
-    role = $2
+    email = $1
 WHERE
-    id = $3
+    id = $2
 RETURNING
     id,
-    email,
-    role
+    email
 `
 
 type ReplaceContactPointParams struct {
 	Email string
-	Role  string
 	ID    uuid.UUID
 }
 
 func (q *Queries) ReplaceContactPoint(ctx context.Context, arg ReplaceContactPointParams) (ContactPoint, error) {
-	row := q.db.QueryRow(ctx, replaceContactPoint, arg.Email, arg.Role, arg.ID)
+	row := q.db.QueryRow(ctx, replaceContactPoint, arg.Email, arg.ID)
 	var i ContactPoint
-	err := row.Scan(&i.ID, &i.Email, &i.Role)
+	err := row.Scan(&i.ID, &i.Email)
 	return i, err
 }

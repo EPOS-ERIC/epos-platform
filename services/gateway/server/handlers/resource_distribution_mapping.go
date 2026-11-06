@@ -28,8 +28,6 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 			Description: value.Description,
 			License:     toAPINilString(value.License),
 			Type:        gatewayapi.DownloadableFileDistributionType(value.Type),
-			Issued:      toAPINilTime(value.Issued),
-			Modified:    toAPINilTime(value.Modified),
 			ByteSize:    toAPINilInt64(value.ByteSize),
 			DownloadableFile: gatewayapi.DownloadableFile{
 				URL:    gatewayapi.NonBlankString(v.Url),
@@ -57,8 +55,6 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 			Description:      value.Description,
 			License:          toAPINilString(value.License),
 			Type:             gatewayapi.WebServiceDistributionType(value.Type),
-			Issued:           toAPINilTime(value.Issued),
-			Modified:         toAPINilTime(value.Modified),
 			ByteSize:         toAPINilInt64(value.ByteSize),
 			WebService:       webService,
 			AvailableFormats: formats,
@@ -107,15 +103,11 @@ func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.WebServi
 		return gatewayapi.WebService{}, err
 	}
 	result := gatewayapi.WebService{
-		ID:               id,
-		ResourceID:       resourceID,
-		Name:             value.Name,
-		Description:      toAPINilString(value.Description),
-		VisibleOn:        visibleOn,
-		Configuration:    configuration,
-		SpatialCoverage:  toAPINilString(value.SpatialCoverage),
-		TemporalCoverage: toAPITemporalCoverage(value.TemporalCoverage),
-		ContactPoints:    make([]uuid.UUID, 0, len(value.ContactPoints)),
+		ID:            id,
+		ResourceID:    resourceID,
+		VisibleOn:     visibleOn,
+		Configuration: configuration,
+		ContactPoints: make([]uuid.UUID, 0, len(value.ContactPoints)),
 	}
 	if value.ProviderReference != nil {
 		providerID, err := parseUUID("web_service.provider_id", value.ProviderReference.GetId())
@@ -127,13 +119,11 @@ func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.WebServi
 			Name: value.ProviderReference.GetName(),
 		})
 	}
-	if value.Documentation != nil {
-		result.Documentation = gatewayapi.NewOptDocumentation(gatewayapi.Documentation{
-			URI:         gatewayapi.NonBlankString(value.Documentation.GetUri()),
-			Title:       toAPINilString(value.Documentation.Title),
-			Description: toAPINilString(value.Documentation.Description),
-		})
+	documentationURI, err := toAPIOptURI("web_service.documentation_uri", value.DocumentationUri)
+	if err != nil {
+		return gatewayapi.WebService{}, err
 	}
+	result.DocumentationURI = documentationURI
 	for _, contactPoint := range value.ContactPoints {
 		id, err := parseUUID("web_service.contact_point_id", contactPoint)
 		if err != nil {
@@ -740,16 +730,6 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	default:
 		return gatewayapi.ScalarParameter{}, fmt.Errorf("unsupported upstream scalar parameter type")
 	}
-}
-
-func toAPITemporalCoverage(value *metadatalifecyclev1.Temporal) gatewayapi.OptTemporalCoverage {
-	if value == nil {
-		return gatewayapi.OptTemporalCoverage{}
-	}
-	return gatewayapi.NewOptTemporalCoverage(gatewayapi.TemporalCoverage{
-		Start: toAPINilTime(value.Start),
-		End:   toAPINilTime(value.End),
-	})
 }
 
 func toAPINilTime(value *timestamppb.Timestamp) gatewayapi.OptNilDateTime {

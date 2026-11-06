@@ -225,7 +225,7 @@ func TestParserMergesCanonicalContactPoints(t *testing.T) {
     schema:contactType "owner".
 <contact:two> a schema:ContactPoint;
     schema:email "owner@example.com";
-    schema:contactType "owner".
+    schema:contactType "support".
 <dataset:one> a dcat:Dataset;
     dct:title "Dataset one";
     dct:description "Dataset description";

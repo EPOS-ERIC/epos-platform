@@ -31,9 +31,11 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 	if v.QualityAnnotation.Set && !v.QualityAnnotation.Null {
 		r.QualityAnnotation = new(v.QualityAnnotation.Value)
 	}
-	if v.AccessRight.Set && !v.AccessRight.Null {
-		r.AccessRight = new(v.AccessRight.Value)
+	accessRight, err := toProtoDatasetAccessRight(v.AccessRight)
+	if err != nil {
+		return nil, err
 	}
+	r.AccessRight = accessRight
 	if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
 		r.SpatialCoverage = new(v.SpatialCoverage.Value)
 	}

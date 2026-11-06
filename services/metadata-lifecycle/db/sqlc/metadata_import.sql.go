@@ -418,16 +418,14 @@ WITH existing_natural_key AS (
         contact_points
     WHERE
         contact_points.email = $1
-        AND contact_points.role = $2
 ),
 updated_id AS (
     UPDATE
         contact_points
     SET
-        email = $1,
-        role = $2
+        email = $1
     WHERE
-        contact_points.id = $3
+        contact_points.id = $2
         AND NOT EXISTS (
             SELECT
                 1
@@ -439,11 +437,10 @@ updated_id AS (
 ),
 inserted AS (
     INSERT INTO
-        contact_points (id, email, role)
+        contact_points (id, email)
     SELECT
-        $3,
-        $1,
-        $2
+        $2,
+        $1
     WHERE
         NOT EXISTS (
             SELECT
@@ -482,12 +479,11 @@ LIMIT
 
 type UpsertImportContactPointParams struct {
 	Email string
-	Role  string
 	ID    uuid.UUID
 }
 
 func (q *Queries) UpsertImportContactPoint(ctx context.Context, arg UpsertImportContactPointParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, upsertImportContactPoint, arg.Email, arg.Role, arg.ID)
+	row := q.db.QueryRow(ctx, upsertImportContactPoint, arg.Email, arg.ID)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err

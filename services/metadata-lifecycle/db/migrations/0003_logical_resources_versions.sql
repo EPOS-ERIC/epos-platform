@@ -1,6 +1,15 @@
 -- +goose Up
 
 CREATE TYPE resource_status AS ENUM ('DRAFT', 'SUBMITTED', 'REJECTED', 'PUBLISHED', 'ARCHIVED');
+CREATE TYPE dataset_access_right AS ENUM (
+    'NON_PUBLIC',
+    'NORMAL',
+    'OP_DATPRO',
+    'PUBLIC',
+    'RESTRICTED',
+    'CONFIDENTIAL',
+    'SENSITIVE'
+);
 
 CREATE TABLE datasets (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -34,7 +43,7 @@ CREATE TABLE dataset_versions (
     keywords            nonblank_text[] NOT NULL DEFAULT '{}',
     accrual_periodicity nonblank_text_opt,
     quality_annotation  nonblank_text_opt,
-    access_right        nonblank_text_opt,
+    access_right        dataset_access_right,
     -- Source timestamps describe upstream dataset metadata. They are distinct
     -- from metadata-lifecycle record and lifecycle timestamps below.
     source_created_at   timestamptz,
@@ -182,3 +191,4 @@ CREATE UNIQUE INDEX software_source_code_versions_published_uq ON software_sourc
 
 DROP TABLE IF EXISTS software_source_code_versions, software_application_versions, dataset_versions, software_source_codes, software_applications, datasets;
 DROP TYPE IF EXISTS resource_status;
+DROP TYPE IF EXISTS dataset_access_right;

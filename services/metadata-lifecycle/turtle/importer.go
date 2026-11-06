@@ -421,8 +421,18 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 		}
 	}
 
-	if value := m.optionalString(source, dctAccessRights); value != "" {
-		dataset.AccessRight = &value
+	if value := strings.TrimSpace(m.optionalString(source, dctAccessRights)); value != "" {
+		accessRight := domain.AccessRight(value)
+		if accessRight.Valid() {
+			dataset.AccessRight = &accessRight
+		} else {
+			m.addWarning(domain.ImportDiagnostic{
+				Severity:  domain.ImportSeverityWarning,
+				Subject:   source,
+				Predicate: dctAccessRights,
+				Message:   fmt.Sprintf("access right %q omitted: value is not supported", value),
+			})
+		}
 	}
 
 	if created := m.date(source, dctCreated); !created.IsZero() {
@@ -505,7 +515,7 @@ func (m *mapper) importedDescription(source, predicate, kind, title string) stri
 
 func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distribution, error) {
 	if err := m.checkSingleValues(source,
-		dctTitle, dctDescription, dctLicense, dctIssued, dctModified,
+		dctTitle, dctDescription, dctLicense,
 		dctType, dcatByteSize, dctConformsTo, dctFormat, dcatDownloadURL, dcatAccessURL,
 	); err != nil {
 		return domain.Distribution{}, err
@@ -516,8 +526,6 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 		Description:      m.optionalString(source, dctDescription),
 		License:          nil,
 		Type:             "",
-		Issued:           nil,
-		Modified:         nil,
 		ByteSize:         m.intPtr(source, dcatByteSize),
 		WebService:       nil,
 		DownloadableFile: nil,
@@ -525,14 +533,6 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 
 	if license, ok := m.firstString(source, dctLicense); ok {
 		distribution.License = &license
-	}
-
-	if issued := m.date(source, dctIssued); !issued.IsZero() {
-		distribution.Issued = &issued
-	}
-
-	if modified := m.date(source, dctModified); !modified.IsZero() {
-		distribution.Modified = &modified
 	}
 
 	distributionType := normalizeDistributionType(m.optionalString(source, dctType))
@@ -582,8 +582,6 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 		Description:      distribution.Description,
 		License:          distribution.License,
 		Type:             distribution.Type,
-		Issued:           distribution.Issued,
-		Modified:         distribution.Modified,
 		ByteSize:         distribution.ByteSize,
 		DownloadableFile: distribution.DownloadableFile,
 	}
@@ -618,11 +616,6 @@ func (m *mapper) webServiceForDistribution(distribution, source string, owner uu
 }
 
 func (m *mapper) webService(source string, owner uuid.UUID, operationSource string) (domain.WebService, error) {
-	if err := m.checkSingleValues(source,
-		schemaName, schemaDescription, dctTitle, dctTemporal, dctSpatial,
-	); err != nil {
-		return domain.WebService{}, err
-	}
 	if err := m.checkSingleValues(operationSource, hydraReturns); err != nil {
 		return domain.WebService{}, err
 	}
@@ -631,30 +624,14 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 		Format: m.optionalString(operationSource, hydraReturns),
 	}
 	service := domain.WebService{
-		ID:          ownedID(owner.String(), "web-service", source),
-		Name:        m.optionalString(source, schemaName),
-		Description: stringPtr(m.optionalString(source, schemaDescription)),
-		Type:        domain.WebServiceTypeHTTP,
+		ID:   ownedID(owner.String(), "web-service", source),
+		Type: domain.WebServiceTypeHTTP,
 		// TODO: Import visible-on targets from source metadata.
 		VisibleOn:        nil,
 		Configuration:    configuration,
 		Provider:         nil,
-		Documentation:    nil,
-		SpatialCoverage:  nil,
-		TemporalCoverage: nil,
+		DocumentationURI: nil,
 		ContactPoints:    nil,
-	}
-
-	if service.Name == "" {
-		service.Name = m.optionalString(source, dctTitle)
-	}
-
-	if value, ok := m.first(source, dctTemporal); ok {
-		service.TemporalCoverage = m.temporal(value.RawValue())
-	}
-
-	if value, ok := m.first(source, dctSpatial); ok {
-		service.SpatialCoverage = m.spatial(value.RawValue())
 	}
 	method := strings.ToUpper(m.optionalString(operationSource, hydraMethod))
 	if method == "" {
@@ -686,15 +663,11 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 
 	for _, documentation := range m.graph.refs(source, dctConformsTo) {
 		if m.graph.hasType(documentation, hydraAPIDocumentation) {
-			item := domain.Documentation{
-				Title:       stringPtr(m.optionalString(documentation, hydraTitle)),
-				Description: stringPtr(m.optionalString(documentation, hydraDescription)),
-				URI:         m.optionalString(documentation, hydraEntrypoint),
+			uri := m.optionalString(documentation, hydraEntrypoint)
+			if uri == "" {
+				uri = documentation
 			}
-			if item.URI == "" {
-				item.URI = documentation
-			}
-			service.Documentation = &item
+			service.DocumentationURI = &uri
 		}
 	}
 
@@ -1092,22 +1065,20 @@ func (m *mapper) contact(source string) (domain.ContactPoint, error) {
 	if value, ok := m.contacts[source]; ok {
 		return value, nil
 	}
-	if err := m.checkSingleValues(source, schemaEmail, schemaContactType); err != nil {
+	if err := m.checkSingleValues(source, schemaEmail); err != nil {
 		return domain.ContactPoint{}, err
 	}
 	email := m.optionalString(source, schemaEmail)
-	role := m.optionalString(source, schemaContactType)
-	if email == "" || role == "" {
-		return domain.ContactPoint{}, fmt.Errorf("contact point %q requires email and role", source)
+	if email == "" {
+		return domain.ContactPoint{}, fmt.Errorf("contact point %q requires email", source)
 	}
 	result, err := domain.NewContactPoint(sharedID("contact-point", source), domain.ContactPointInput{
 		Email: email,
-		Role:  role,
 	})
 	if err != nil {
 		return domain.ContactPoint{}, fmt.Errorf("contact point %q is invalid: %w", source, err)
 	}
-	key := result.Email + "\x00" + result.Role
+	key := result.Email
 	if canonicalSource, ok := m.contactKeys[key]; ok {
 		result = m.contacts[canonicalSource]
 		m.addWarning(domain.ImportDiagnostic{

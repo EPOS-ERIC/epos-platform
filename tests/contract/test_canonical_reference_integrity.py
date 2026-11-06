@@ -22,7 +22,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
             "/contact-points",
             json={
                 "email": f"canonical-integrity-{suffix}@example.org",
-                "role": "canonical-integrity",
             },
         )
         self.assertEqual(response.status_code, 201)
@@ -189,7 +188,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
                         "description": "Canonical reference integrity service",
                         "type": "WEB_SERVICE",
                         "web_service": {
-                            "name": f"Canonical Service {suffix}",
                             "configuration": {
                                 "type": "WMS",
                                 "capabilities_url": "https://example.org/canonical",

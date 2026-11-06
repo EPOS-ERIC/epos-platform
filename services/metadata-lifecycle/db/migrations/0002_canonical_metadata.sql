@@ -53,10 +53,8 @@ CREATE TABLE contact_points (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 
     -- Contact-point metadata
-    email      nonblank_text NOT NULL,
-    role       nonblank_text NOT NULL,
+    email      nonblank_text NOT NULL UNIQUE
 
-    UNIQUE (email, role)
 );
 CREATE TABLE organization_contact_points (
     organization_id  uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,

@@ -766,7 +766,7 @@ func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.
 		Keywords:           value.Keywords,
 		AccrualPeriodicity: value.AccrualPeriodicity,
 		QualityAnnotation:  value.QualityAnnotation,
-		AccessRight:        value.AccessRight,
+		AccessRight:        datasetAccessRightOutput(value.AccessRight),
 		SpatialCoverage:    geometryString(value.SpatialCoverage),
 		Created:            timestampOutput(value.SourceCreated),
 		Updated:            timestampOutput(value.SourceUpdated),
@@ -903,8 +903,6 @@ func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribu
 		Description: value.Description,
 		License:     value.License,
 		Type:        string(value.Type),
-		Issued:      timestampOutput(value.Issued),
-		Modified:    timestampOutput(value.Modified),
 		ByteSize:    value.ByteSize,
 	}
 	if value.DownloadableFile != nil {
@@ -915,13 +913,6 @@ func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribu
 		result.NativeFormats = toProtoNativeFormats(value.NativeFormats)
 	}
 	return result
-}
-
-func documentationOutput(value *domain.Documentation) *metadatalifecyclev1.Documentation {
-	if value == nil {
-		return nil
-	}
-	return &metadatalifecyclev1.Documentation{Title: value.Title, Description: value.Description, Uri: value.URI}
 }
 
 func parameterOutput(value domain.WebServiceParameter) *metadatalifecyclev1.Parameter {
@@ -1141,6 +1132,10 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
+	accessRight, err := datasetAccessRightInput(value.AccessRight)
+	if err != nil {
+		return domain.DatasetInput{}, err
+	}
 	temporal, err := temporalInput(value.GetTemporalCoverage())
 	if err != nil {
 		return domain.DatasetInput{}, fmt.Errorf("map temporal coverage: %w", apperror.PrefixTarget(err, "temporal_coverage"))
@@ -1176,7 +1171,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 		Keywords:                   value.GetKeywords(),
 		AccrualPeriodicity:         value.AccrualPeriodicity,
 		QualityAnnotation:          value.QualityAnnotation,
-		AccessRight:                value.AccessRight,
+		AccessRight:                accessRight,
 		Distributions:              distributions,
 		SpatialCoverage:            spatial,
 		TemporalCoverage:           temporal,
@@ -1199,21 +1194,11 @@ func distributionInput(value *metadatalifecyclev1.DistributionInput) (domain.Dis
 	if value == nil {
 		return domain.DistributionInput{}, apperror.New(apperror.CodeValidationFailed, "distribution is required")
 	}
-	issued, err := timestampInput(value.GetIssued())
-	if err != nil {
-		return domain.DistributionInput{}, fmt.Errorf("map issued timestamp: %w", apperror.PrefixTarget(err, "issued"))
-	}
-	modified, err := timestampInput(value.GetModified())
-	if err != nil {
-		return domain.DistributionInput{}, fmt.Errorf("map modified timestamp: %w", apperror.PrefixTarget(err, "modified"))
-	}
 	result := domain.DistributionInput{
 		Title:       value.GetTitle(),
 		Description: value.GetDescription(),
 		License:     value.License,
 		Type:        domain.DistributionType(value.GetType()),
-		Issued:      issued,
-		Modified:    modified,
 		ByteSize:    value.ByteSize,
 	}
 	if value.ResourceId != nil {
@@ -1620,11 +1605,56 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (doma
 	return parameter, nil
 }
 
-func documentationInput(value *metadatalifecyclev1.Documentation) (*domain.Documentation, error) {
+func datasetAccessRightInput(value *metadatalifecyclev1.DatasetAccessRight) (*domain.AccessRight, error) {
 	if value == nil {
 		return nil, nil
 	}
-	return &domain.Documentation{Title: value.Title, Description: value.Description, URI: value.GetUri()}, nil
+	var result domain.AccessRight
+	switch *value {
+	case metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_NON_PUBLIC:
+		result = domain.AccessRightNonPublic
+	case metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_NORMAL:
+		result = domain.AccessRightNormal
+	case metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_OP_DATPRO:
+		result = domain.AccessRightOpDatpro
+	case metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_PUBLIC:
+		result = domain.AccessRightPublic
+	case metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_RESTRICTED:
+		result = domain.AccessRightRestricted
+	case metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_CONFIDENTIAL:
+		result = domain.AccessRightConfidential
+	case metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_SENSITIVE:
+		result = domain.AccessRightSensitive
+	default:
+		return nil, apperror.Field("access_right", "Access right is not supported.", nil)
+	}
+	return &result, nil
+}
+
+func datasetAccessRightOutput(value *domain.AccessRight) *metadatalifecyclev1.DatasetAccessRight {
+	if value == nil {
+		return nil
+	}
+	var result metadatalifecyclev1.DatasetAccessRight
+	switch *value {
+	case domain.AccessRightNonPublic:
+		result = metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_NON_PUBLIC
+	case domain.AccessRightNormal:
+		result = metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_NORMAL
+	case domain.AccessRightOpDatpro:
+		result = metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_OP_DATPRO
+	case domain.AccessRightPublic:
+		result = metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_PUBLIC
+	case domain.AccessRightRestricted:
+		result = metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_RESTRICTED
+	case domain.AccessRightConfidential:
+		result = metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_CONFIDENTIAL
+	case domain.AccessRightSensitive:
+		result = metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_SENSITIVE
+	default:
+		result = metadatalifecyclev1.DatasetAccessRight_DATASET_ACCESS_RIGHT_UNSPECIFIED
+	}
+	return &result
 }
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.

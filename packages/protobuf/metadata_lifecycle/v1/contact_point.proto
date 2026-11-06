@@ -10,7 +10,6 @@ option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go
 message ContactPoint {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string email = 2 [(buf.validate.field).string.email = true];
-  string role = 3 [(buf.validate.field).string.min_len = 1];
 }
 
 message ListContactPointsRequest {}
@@ -29,7 +28,6 @@ message GetContactPointResponse {
 
 message CreateContactPointRequest {
   string email = 1 [(buf.validate.field).string.email = true];
-  string role = 2 [(buf.validate.field).string.min_len = 1];
 }
 
 message CreateContactPointResponse {
@@ -39,7 +37,6 @@ message CreateContactPointResponse {
 message ReplaceContactPointRequest {
   string contact_point_id = 1 [(buf.validate.field).string.uuid = true];
   string email = 2 [(buf.validate.field).string.email = true];
-  string role = 3 [(buf.validate.field).string.min_len = 1];
 }
 
 message ReplaceContactPointResponse {

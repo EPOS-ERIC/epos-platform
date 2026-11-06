@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"net/url"
 	"slices"
 	"testing"
 
@@ -112,8 +113,12 @@ func TestScalarParameterArraysRejectTemplateValues(t *testing.T) {
 }
 
 func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
+	documentationURI, err := url.Parse("https://example.test/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
 	draft := gatewayapi.WebServiceDraft{
-		Name: gatewayapi.NonBlankString("service"),
+		DocumentationURI: gatewayapi.NewOptURI(*documentationURI),
 		VisibleOn: gatewayapi.NewOptNilWebServiceVisibleOnArray([]gatewayapi.WebServiceVisibleOn{
 			gatewayapi.WebServiceVisibleOnMAP,
 			gatewayapi.WebServiceVisibleOnGRAPH,
@@ -139,6 +144,9 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		},
 	}
 	proto := toProtoWebServiceDraft(draft)
+	if proto.GetDocumentationUri() != documentationURI.String() {
+		t.Fatalf("protobuf documentation URI = %q, want %q", proto.GetDocumentationUri(), documentationURI)
+	}
 	parameters := proto.GetGeneric().GetParameters()
 	if len(parameters) != 1 || !parameters[0].GetExplode() {
 		t.Fatalf("protobuf parameters = %+v, want explode parameter", parameters)
@@ -176,10 +184,10 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	}
 
 	service, err := toAPIWebService(&metadatalifecyclev1.WebService{
-		Id:         id.String(),
-		ResourceId: id.String(),
-		Name:       "service",
-		Type:       metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
+		Id:               id.String(),
+		ResourceId:       id.String(),
+		DocumentationUri: new(documentationURI.String()),
+		Type:             metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
 		VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
 			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP,
 			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
@@ -197,6 +205,9 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	if !ok || service.Configuration.Type != gatewayapi.GenericWebServiceConfigurationWebServiceConfiguration || len(visibleOn) != 2 || visibleOn[0] != gatewayapi.WebServiceVisibleOnMAP || visibleOn[1] != gatewayapi.WebServiceVisibleOnGRAPH {
 		t.Fatalf("API web-service fields = configuration type %q, visible on %v", service.Configuration.Type, visibleOn)
 	}
+	if uri, ok := service.DocumentationURI.Get(); !ok || uri.String() != documentationURI.String() {
+		t.Fatalf("API documentation URI = %q, %t; want %q", uri.String(), ok, documentationURI.String())
+	}
 }
 
 func TestWebServiceMappingRejectsUnspecifiedUpstreamEnums(t *testing.T) {
@@ -204,7 +215,6 @@ func TestWebServiceMappingRejectsUnspecifiedUpstreamEnums(t *testing.T) {
 	base := func() *metadatalifecyclev1.WebService {
 		return &metadatalifecyclev1.WebService{
 			Id:   id,
-			Name: "service",
 			Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
 			VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
 				metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,

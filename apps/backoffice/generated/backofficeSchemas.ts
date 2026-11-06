@@ -431,13 +431,23 @@ export type DiscoveryConcept = "DATA" | "FACILITIES" | "SOFTWARE";
 export type VersioningStatus =
   "PUBLISHED" | "DRAFT" | "SUBMITTED" | "ARCHIVED" | "REJECTED";
 
+export type DatasetAccessRight =
+  | "NON_PUBLIC"
+  | "NORMAL"
+  | "OP_DATPRO"
+  | "PUBLIC"
+  | "RESTRICTED"
+  | "CONFIDENTIAL"
+  | "SENSITIVE"
+  | null;
+
 export type DatasetDraftMetadata = {
   title: NonBlankString;
   description: NonBlankString;
   keywords?: Keyword[];
   accrual_periodicity?: string | null;
   quality_annotation?: string | null;
-  access_right?: string | null;
+  access_right?: DatasetAccessRight;
   distributions?: DistributionDraft[];
   /**
    * WKT POINT or POLYGON geometry in EPSG:4326.
@@ -537,14 +547,6 @@ export type WebServiceDistributionDraft = {
   license?: string | null;
   type: "WEB_SERVICE";
   /**
-   * @format date-time
-   */
-  issued?: string | null;
-  /**
-   * @format date-time
-   */
-  modified?: string | null;
-  /**
    * @format int64
    * @minimum 1
    */
@@ -562,14 +564,6 @@ export type DownloadableFileDistributionDraft = {
   license?: string | null;
   type: "DOWNLOADABLE_FILE";
   /**
-   * @format date-time
-   */
-  issued?: string | null;
-  /**
-   * @format date-time
-   */
-  modified?: string | null;
-  /**
    * @format int64
    * @minimum 1
    */
@@ -582,11 +576,6 @@ export type WebServiceDraft = {
    * @format uuid
    */
   resource_id?: string;
-  name: NonBlankString;
-  /**
-   * @minLength 1
-   */
-  description?: string | null;
   /**
    * @minItems 1
    */
@@ -595,15 +584,11 @@ export type WebServiceDraft = {
    * @format uuid
    */
   provider?: string;
-  documentation?: Documentation;
   /**
-   * WKT POINT or POLYGON geometry in EPSG:4326.
-   *
+   * @format uri
    * @minLength 1
-   * @example POINT (12.5 41.9)
    */
-  spatial_coverage?: string | null;
-  temporal_coverage?: TemporalCoverage;
+  documentation_uri?: string;
   contact_points?: string[];
   configuration: WebServiceConfigurationDraft;
 };
@@ -1528,12 +1513,6 @@ export type DownloadableFile = {
   format: NonBlankString;
 };
 
-export type Documentation = {
-  title?: string | null;
-  description?: string | null;
-  uri: NonBlankString;
-};
-
 export type TemporalCoverage = {
   /**
    * @format date-time
@@ -1744,7 +1723,7 @@ export type DatasetResourceMetadata = {
   keywords: Keyword[];
   accrual_periodicity?: string | null;
   quality_annotation?: string | null;
-  access_right?: string | null;
+  access_right?: DatasetAccessRight;
   distributions: Distribution[];
   /**
    * WKT POINT or POLYGON geometry in EPSG:4326.
@@ -1824,14 +1803,6 @@ export type WebServiceDistribution = {
   license?: string | null;
   type: "WEB_SERVICE";
   /**
-   * @format date-time
-   */
-  issued?: string | null;
-  /**
-   * @format date-time
-   */
-  modified?: string | null;
-  /**
    * @format int64
    * @minimum 1
    */
@@ -1885,14 +1856,6 @@ export type DownloadableFileDistribution = {
   license?: string | null;
   type: "DOWNLOADABLE_FILE";
   /**
-   * @format date-time
-   */
-  issued?: string | null;
-  /**
-   * @format date-time
-   */
-  modified?: string | null;
-  /**
    * @format int64
    * @minimum 1
    */
@@ -1909,25 +1872,16 @@ export type WebService = {
    * @format uuid
    */
   resource_id: string;
-  name: string;
-  /**
-   * @minLength 1
-   */
-  description?: string | null;
   /**
    * @minItems 1
    */
   visible_on?: WebServiceVisibleOn[] | null;
   provider?: ResourceVersionReference;
-  documentation?: Documentation;
   /**
-   * WKT POINT or POLYGON geometry in EPSG:4326.
-   *
+   * @format uri
    * @minLength 1
-   * @example POINT (12.5 41.9)
    */
-  spatial_coverage?: string | null;
-  temporal_coverage?: TemporalCoverage;
+  documentation_uri?: string;
   contact_points?: string[];
   configuration: WebServiceConfiguration;
 };
@@ -2458,10 +2412,6 @@ export type ContactPoint = {
    * @minLength 1
    */
   email: string;
-  /**
-   * @minLength 1
-   */
-  role: string;
 };
 
 export type CreateContactPointRequest = {
@@ -2470,7 +2420,6 @@ export type CreateContactPointRequest = {
    * @minLength 1
    */
   email: string;
-  role: NonBlankString;
 };
 
 export type ReplaceContactPointRequest = {
@@ -2479,7 +2428,6 @@ export type ReplaceContactPointRequest = {
    * @minLength 1
    */
   email: string;
-  role: NonBlankString;
 };
 
 export type OrganizationAddress = {

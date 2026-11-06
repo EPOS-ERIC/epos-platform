@@ -561,7 +561,6 @@ class AuthorizationContractTest(unittest.TestCase):
 
         contact_payload = {
             "email": f"cp-{suffix}@example.org",
-            "role": "authorization-test",
         }
         denied_contact_create = denied.post(
             "/contact-points",
@@ -592,7 +591,6 @@ class AuthorizationContractTest(unittest.TestCase):
 
         updated_contact_payload = {
             "email": f"cp-updated-{suffix}@example.org",
-            "role": "authorization-test-updated",
         }
         denied_contact_replace = denied.put(
             "/contact-points/{contactPointId}",

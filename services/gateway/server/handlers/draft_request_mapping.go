@@ -38,9 +38,11 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 		if v.QualityAnnotation.Set && !v.QualityAnnotation.Null {
 			metadata.QualityAnnotation = new(v.QualityAnnotation.Value)
 		}
-		if v.AccessRight.Set && !v.AccessRight.Null {
-			metadata.AccessRight = new(v.AccessRight.Value)
+		accessRight, err := toProtoDatasetAccessRight(v.AccessRight)
+		if err != nil {
+			return nil, "", err
 		}
+		metadata.AccessRight = accessRight
 		if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
 			metadata.SpatialCoverage = new(v.SpatialCoverage.Value)
 		}

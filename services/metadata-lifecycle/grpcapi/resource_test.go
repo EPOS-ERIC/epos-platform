@@ -60,9 +60,10 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 
 	contentType := "application/json"
 	bodyTemplate := "{{.value}}"
+	documentationURI := "https://example.test/docs"
 	service, err := toDomainWebServiceInput(&metadatalifecyclev1.WebServiceInput{
-		Name: "service",
-		Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
+		Type:             metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
+		DocumentationUri: &documentationURI,
 		Configuration: &metadatalifecyclev1.WebServiceInput_Generic{Generic: &metadatalifecyclev1.GenericWebServiceConfigurationInput{
 			TemplateUrl:     "https://example.test",
 			Method:          metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_POST,
@@ -80,6 +81,9 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("toDomainWebServiceInput() error = %v", err)
+	}
+	if service.DocumentationURI == nil || *service.DocumentationURI != documentationURI {
+		t.Fatalf("documentation URI = %v, want %q", service.DocumentationURI, documentationURI)
 	}
 	configuration := service.Configuration.(domain.GenericWebServiceConfigurationInput)
 	if configuration.Body == nil || len(configuration.Body.Parameters) != 1 {
@@ -100,7 +104,6 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		Explode:  true,
 	}
 	input, err := toDomainWebServiceInput(&metadatalifecyclev1.WebServiceInput{
-		Name: "service",
 		Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
 		VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
 			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
@@ -129,10 +132,11 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 
 	id := uuid.New()
 	property := "https://example.test/value"
+	documentationURI := "https://example.test/docs"
 	output := toProtoWebService(domain.WebService{
-		ID:   id,
-		Name: "service",
-		Type: domain.WebServiceTypeHTTP,
+		ID:               id,
+		Type:             domain.WebServiceTypeHTTP,
+		DocumentationURI: &documentationURI,
 		VisibleOn: []domain.WebServiceVisibleOn{
 			domain.WebServiceVisibleOnGraph,
 			domain.WebServiceVisibleOnMap,
@@ -161,12 +165,14 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	if output.Type != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP || len(output.VisibleOn) != 2 || output.VisibleOn[0] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH || output.VisibleOn[1] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP {
 		t.Fatalf("output web-service fields = type %q, visible on %v", output.Type, output.VisibleOn)
 	}
+	if output.GetDocumentationUri() != documentationURI {
+		t.Fatalf("documentation URI = %q, want %q", output.GetDocumentationUri(), documentationURI)
+	}
 }
 
 func TestWebServiceInputRejectsUnspecifiedEnums(t *testing.T) {
 	base := func() *metadatalifecyclev1.WebServiceInput {
 		return &metadatalifecyclev1.WebServiceInput{
-			Name: "service",
 			Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
 			Configuration: &metadatalifecyclev1.WebServiceInput_Generic{Generic: &metadatalifecyclev1.GenericWebServiceConfigurationInput{
 				TemplateUrl: "https://example.test",

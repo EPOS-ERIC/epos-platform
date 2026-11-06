@@ -43,7 +43,6 @@ class DistributionFormatsContractTest(unittest.TestCase):
             "description": "Contract format discovery",
             "type": "WEB_SERVICE",
             "web_service": {
-                "name": title,
                 "configuration": {
                     "template_url": "https://example.org/formats",
                     "method": "GET",

@@ -163,7 +163,7 @@ class ChildIdentityContractTest(DistributionContractTestCase):
                     configuration["get_tile_parameters"] = []
                 distribution = {
                     "title": kind, "description": "Map service", "type": "WEB_SERVICE",
-                    "web_service": {"name": kind, "visible_on": ["MAP"], "configuration": configuration},
+                    "web_service": {"visible_on": ["MAP"], "configuration": configuration},
                 }
                 detail = self.create_draft([distribution])
                 original = detail["metadata"]["distributions"][0]

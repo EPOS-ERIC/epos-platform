@@ -8,7 +8,6 @@ def wfs_distribution(**configuration: Any) -> dict[str, Any]:
     return {
         "type": "WEB_SERVICE", "title": "WFS", "description": "Synthetic WFS contract",
         "web_service": {
-            "name": "WFS",
             "configuration": {
                 "type": "WFS", "get_feature_template_url": "https://provider.invalid/ows",
                 "version": "2.0.0", "feature_types": ["example:faults", "example:quakes"],

@@ -7,6 +7,28 @@ import (
 	"github.com/twpayne/go-geom"
 )
 
+type AccessRight string
+
+const (
+	AccessRightNonPublic    AccessRight = "NON_PUBLIC"
+	AccessRightNormal       AccessRight = "NORMAL"
+	AccessRightOpDatpro     AccessRight = "OP_DATPRO"
+	AccessRightPublic       AccessRight = "PUBLIC"
+	AccessRightRestricted   AccessRight = "RESTRICTED"
+	AccessRightConfidential AccessRight = "CONFIDENTIAL"
+	AccessRightSensitive    AccessRight = "SENSITIVE"
+)
+
+func (value AccessRight) Valid() bool {
+	switch value {
+	case AccessRightNonPublic, AccessRightNormal, AccessRightOpDatpro, AccessRightPublic,
+		AccessRightRestricted, AccessRightConfidential, AccessRightSensitive:
+		return true
+	default:
+		return false
+	}
+}
+
 // DatasetInput contains caller-controlled dataset version fields.
 type DatasetInput struct {
 	Title                      string
@@ -14,7 +36,7 @@ type DatasetInput struct {
 	Keywords                   []string
 	AccrualPeriodicity         *string
 	QualityAnnotation          *string
-	AccessRight                *string
+	AccessRight                *AccessRight
 	Distributions              []DistributionInput
 	SpatialCoverage            geom.T
 	TemporalCoverage           *Temporal
@@ -46,7 +68,7 @@ type DatasetMetadata struct {
 	Keywords                   []string
 	AccrualPeriodicity         *string
 	QualityAnnotation          *string
-	AccessRight                *string
+	AccessRight                *AccessRight
 	Distributions              []Distribution
 	SpatialCoverage            geom.T
 	TemporalCoverage           *Temporal
@@ -66,8 +88,6 @@ type DistributionInput struct {
 	Description      string
 	License          *string
 	Type             DistributionType
-	Issued           *time.Time
-	Modified         *time.Time
 	ByteSize         *int64
 	WebService       *WebServiceInput
 	DownloadableFile *DownloadableFile
@@ -81,8 +101,6 @@ type Distribution struct {
 	Description      string
 	License          *string
 	Type             DistributionType
-	Issued           *time.Time
-	Modified         *time.Time
 	ByteSize         *int64
 	WebService       *WebService
 	DownloadableFile *DownloadableFile
@@ -92,15 +110,11 @@ type Distribution struct {
 // WebServiceInput contains caller-controlled web-service fields.
 type WebServiceInput struct {
 	ResourceID       *uuid.UUID
-	Name             string
-	Description      *string
 	Type             WebServiceType
 	Configuration    WebServiceConfigurationInput
 	VisibleOn        []WebServiceVisibleOn
 	ProviderID       *uuid.UUID
-	Documentation    *Documentation
-	SpatialCoverage  geom.T
-	TemporalCoverage *Temporal
+	DocumentationURI *string
 	ContactPointIDs  []uuid.UUID
 }
 
@@ -108,15 +122,11 @@ type WebServiceInput struct {
 type WebService struct {
 	ID               uuid.UUID
 	ResourceID       uuid.UUID
-	Name             string
-	Description      *string
 	Type             WebServiceType
 	Configuration    WebServiceConfiguration
 	VisibleOn        []WebServiceVisibleOn
 	Provider         *OrganizationMetadata
-	Documentation    *Documentation
-	SpatialCoverage  geom.T
-	TemporalCoverage *Temporal
+	DocumentationURI *string
 	ContactPoints    []ContactPoint
 }
 
@@ -264,12 +274,6 @@ type DistributionDownload struct {
 	ResourceID uuid.UUID
 	VersionID  uuid.UUID
 	URL        string
-}
-
-type Documentation struct {
-	Title       *string
-	Description *string
-	URI         string
 }
 
 type Temporal struct {

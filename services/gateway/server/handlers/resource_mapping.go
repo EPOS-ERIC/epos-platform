@@ -193,10 +193,13 @@ func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatew
 		Keywords:           toAPIKeywords(v.GetKeywords()),
 		AccrualPeriodicity: toAPINilString(v.AccrualPeriodicity),
 		QualityAnnotation:  toAPINilString(v.QualityAnnotation),
-		AccessRight:        toAPINilString(v.AccessRight),
 		SpatialCoverage:    toAPINilString(v.SpatialCoverage),
 		Created:            toAPINilTime(v.Created),
 		Updated:            toAPINilTime(v.Updated),
+	}
+	result.AccessRight, err = toAPIDatasetAccessRight(v.AccessRight)
+	if err != nil {
+		return gatewayapi.DatasetResourceMetadata{}, err
 	}
 	if temporal := v.GetTemporalCoverage(); temporal != nil {
 		result.TemporalCoverage = gatewayapi.NewOptTemporalCoverage(gatewayapi.TemporalCoverage{
