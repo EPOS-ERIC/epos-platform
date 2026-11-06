@@ -260,7 +260,7 @@ type AddLifecycleFloatParameterSchemaParams struct {
 	ParameterID    uuid.UUID
 	Minimum        *float64
 	Maximum        *float64
-	DefaultValue   *float64
+	DefaultValue   []float64
 	Enum           []types.FloatEnumOption
 	MultipleValues bool
 }
@@ -331,7 +331,7 @@ type AddLifecycleIntegerParameterSchemaParams struct {
 	ParameterID    uuid.UUID
 	Minimum        *int64
 	Maximum        *int64
-	DefaultValue   *int64
+	DefaultValue   []int64
 	Enum           []types.IntegerEnumOption
 	MultipleValues bool
 }
@@ -518,7 +518,7 @@ VALUES
 type AddLifecycleStringParameterSchemaParams struct {
 	ParameterID    uuid.UUID
 	Pattern        *string
-	DefaultValue   *string
+	DefaultValue   []string
 	Enum           []types.StringEnumOption
 	MultipleValues bool
 }

@@ -6068,7 +6068,7 @@ func (x *FloatEnumOption) GetLabel() string {
 
 type StringParameter struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	Default        *string                `protobuf:"bytes,1,opt,name=default,proto3,oneof" json:"default,omitempty"`
+	Default        []string               `protobuf:"bytes,1,rep,name=default,proto3" json:"default,omitempty"`
 	Enum           []*StringEnumOption    `protobuf:"bytes,2,rep,name=enum,proto3" json:"enum,omitempty"`
 	Pattern        *string                `protobuf:"bytes,3,opt,name=pattern,proto3,oneof" json:"pattern,omitempty"`
 	MultipleValues bool                   `protobuf:"varint,4,opt,name=multiple_values,json=multipleValues,proto3" json:"multiple_values,omitempty"`
@@ -6106,11 +6106,11 @@ func (*StringParameter) Descriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{60}
 }
 
-func (x *StringParameter) GetDefault() string {
-	if x != nil && x.Default != nil {
-		return *x.Default
+func (x *StringParameter) GetDefault() []string {
+	if x != nil {
+		return x.Default
 	}
-	return ""
+	return nil
 }
 
 func (x *StringParameter) GetEnum() []*StringEnumOption {
@@ -6182,7 +6182,7 @@ type IntegerParameter struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Minimum        *int64                 `protobuf:"varint,1,opt,name=minimum,proto3,oneof" json:"minimum,omitempty"`
 	Maximum        *int64                 `protobuf:"varint,2,opt,name=maximum,proto3,oneof" json:"maximum,omitempty"`
-	Default        *int64                 `protobuf:"varint,3,opt,name=default,proto3,oneof" json:"default,omitempty"`
+	Default        []int64                `protobuf:"varint,3,rep,packed,name=default,proto3" json:"default,omitempty"`
 	Enum           []*IntegerEnumOption   `protobuf:"bytes,4,rep,name=enum,proto3" json:"enum,omitempty"`
 	MultipleValues bool                   `protobuf:"varint,5,opt,name=multiple_values,json=multipleValues,proto3" json:"multiple_values,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -6233,11 +6233,11 @@ func (x *IntegerParameter) GetMaximum() int64 {
 	return 0
 }
 
-func (x *IntegerParameter) GetDefault() int64 {
-	if x != nil && x.Default != nil {
-		return *x.Default
+func (x *IntegerParameter) GetDefault() []int64 {
+	if x != nil {
+		return x.Default
 	}
-	return 0
+	return nil
 }
 
 func (x *IntegerParameter) GetEnum() []*IntegerEnumOption {
@@ -6258,7 +6258,7 @@ type FloatParameter struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Minimum        *float64               `protobuf:"fixed64,1,opt,name=minimum,proto3,oneof" json:"minimum,omitempty"`
 	Maximum        *float64               `protobuf:"fixed64,2,opt,name=maximum,proto3,oneof" json:"maximum,omitempty"`
-	Default        *float64               `protobuf:"fixed64,3,opt,name=default,proto3,oneof" json:"default,omitempty"`
+	Default        []float64              `protobuf:"fixed64,3,rep,packed,name=default,proto3" json:"default,omitempty"`
 	Enum           []*FloatEnumOption     `protobuf:"bytes,4,rep,name=enum,proto3" json:"enum,omitempty"`
 	MultipleValues bool                   `protobuf:"varint,5,opt,name=multiple_values,json=multipleValues,proto3" json:"multiple_values,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -6309,11 +6309,11 @@ func (x *FloatParameter) GetMaximum() float64 {
 	return 0
 }
 
-func (x *FloatParameter) GetDefault() float64 {
-	if x != nil && x.Default != nil {
-		return *x.Default
+func (x *FloatParameter) GetDefault() []float64 {
+	if x != nil {
+		return x.Default
 	}
-	return 0
+	return nil
 }
 
 func (x *FloatParameter) GetEnum() []*FloatEnumOption {
@@ -6504,7 +6504,7 @@ func (x *TemplateParameterInput) GetParameters() []*ScalarParameterInput {
 
 type ScalarStringParameter struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Default       *string                `protobuf:"bytes,1,opt,name=default,proto3,oneof" json:"default,omitempty"`
+	Default       []string               `protobuf:"bytes,1,rep,name=default,proto3" json:"default,omitempty"`
 	Enum          []*StringEnumOption    `protobuf:"bytes,2,rep,name=enum,proto3" json:"enum,omitempty"`
 	Pattern       *string                `protobuf:"bytes,3,opt,name=pattern,proto3,oneof" json:"pattern,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -6541,11 +6541,11 @@ func (*ScalarStringParameter) Descriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{67}
 }
 
-func (x *ScalarStringParameter) GetDefault() string {
-	if x != nil && x.Default != nil {
-		return *x.Default
+func (x *ScalarStringParameter) GetDefault() []string {
+	if x != nil {
+		return x.Default
 	}
-	return ""
+	return nil
 }
 
 func (x *ScalarStringParameter) GetEnum() []*StringEnumOption {
@@ -6610,7 +6610,7 @@ type ScalarIntegerParameter struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Minimum       *int64                 `protobuf:"varint,1,opt,name=minimum,proto3,oneof" json:"minimum,omitempty"`
 	Maximum       *int64                 `protobuf:"varint,2,opt,name=maximum,proto3,oneof" json:"maximum,omitempty"`
-	Default       *int64                 `protobuf:"varint,3,opt,name=default,proto3,oneof" json:"default,omitempty"`
+	Default       []int64                `protobuf:"varint,3,rep,packed,name=default,proto3" json:"default,omitempty"`
 	Enum          []*IntegerEnumOption   `protobuf:"bytes,4,rep,name=enum,proto3" json:"enum,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -6660,11 +6660,11 @@ func (x *ScalarIntegerParameter) GetMaximum() int64 {
 	return 0
 }
 
-func (x *ScalarIntegerParameter) GetDefault() int64 {
-	if x != nil && x.Default != nil {
-		return *x.Default
+func (x *ScalarIntegerParameter) GetDefault() []int64 {
+	if x != nil {
+		return x.Default
 	}
-	return 0
+	return nil
 }
 
 func (x *ScalarIntegerParameter) GetEnum() []*IntegerEnumOption {
@@ -6678,7 +6678,7 @@ type ScalarFloatParameter struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Minimum       *float64               `protobuf:"fixed64,1,opt,name=minimum,proto3,oneof" json:"minimum,omitempty"`
 	Maximum       *float64               `protobuf:"fixed64,2,opt,name=maximum,proto3,oneof" json:"maximum,omitempty"`
-	Default       *float64               `protobuf:"fixed64,3,opt,name=default,proto3,oneof" json:"default,omitempty"`
+	Default       []float64              `protobuf:"fixed64,3,rep,packed,name=default,proto3" json:"default,omitempty"`
 	Enum          []*FloatEnumOption     `protobuf:"bytes,4,rep,name=enum,proto3" json:"enum,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -6728,11 +6728,11 @@ func (x *ScalarFloatParameter) GetMaximum() float64 {
 	return 0
 }
 
-func (x *ScalarFloatParameter) GetDefault() float64 {
-	if x != nil && x.Default != nil {
-		return *x.Default
+func (x *ScalarFloatParameter) GetDefault() []float64 {
+	if x != nil {
+		return x.Default
 	}
-	return 0
+	return nil
 }
 
 func (x *ScalarFloatParameter) GetEnum() []*FloatEnumOption {
@@ -8993,44 +8993,38 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x0fFloatEnumOption\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\x01R\x05value\x12\"\n" +
 	"\x05label\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x05label\x88\x01\x01B\b\n" +
-	"\x06_label\"\xdf\x01\n" +
-	"\x0fStringParameter\x12&\n" +
-	"\adefault\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\adefault\x88\x01\x01\x12;\n" +
+	"\x06_label\"\xc5\x01\n" +
+	"\x0fStringParameter\x12\x18\n" +
+	"\adefault\x18\x01 \x03(\tR\adefault\x12;\n" +
 	"\x04enum\x18\x02 \x03(\v2'.metadata_lifecycle.v1.StringEnumOptionR\x04enum\x12&\n" +
-	"\apattern\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\apattern\x88\x01\x01\x12'\n" +
+	"\apattern\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\apattern\x88\x01\x01\x12'\n" +
 	"\x0fmultiple_values\x18\x04 \x01(\bR\x0emultipleValuesB\n" +
-	"\n" +
-	"\b_defaultB\n" +
 	"\n" +
 	"\b_pattern\"=\n" +
 	"\x10BooleanParameter\x12\x1d\n" +
 	"\adefault\x18\x01 \x01(\bH\x00R\adefault\x88\x01\x01B\n" +
 	"\n" +
-	"\b_default\"\xfa\x01\n" +
+	"\b_default\"\xe9\x01\n" +
 	"\x10IntegerParameter\x12\x1d\n" +
 	"\aminimum\x18\x01 \x01(\x03H\x00R\aminimum\x88\x01\x01\x12\x1d\n" +
-	"\amaximum\x18\x02 \x01(\x03H\x01R\amaximum\x88\x01\x01\x12\x1d\n" +
-	"\adefault\x18\x03 \x01(\x03H\x02R\adefault\x88\x01\x01\x12<\n" +
+	"\amaximum\x18\x02 \x01(\x03H\x01R\amaximum\x88\x01\x01\x12\x18\n" +
+	"\adefault\x18\x03 \x03(\x03R\adefault\x12<\n" +
 	"\x04enum\x18\x04 \x03(\v2(.metadata_lifecycle.v1.IntegerEnumOptionR\x04enum\x12'\n" +
 	"\x0fmultiple_values\x18\x05 \x01(\bR\x0emultipleValuesB\n" +
 	"\n" +
 	"\b_minimumB\n" +
 	"\n" +
-	"\b_maximumB\n" +
-	"\n" +
-	"\b_default\"\xf6\x01\n" +
+	"\b_maximum\"\xe5\x01\n" +
 	"\x0eFloatParameter\x12\x1d\n" +
 	"\aminimum\x18\x01 \x01(\x01H\x00R\aminimum\x88\x01\x01\x12\x1d\n" +
-	"\amaximum\x18\x02 \x01(\x01H\x01R\amaximum\x88\x01\x01\x12\x1d\n" +
-	"\adefault\x18\x03 \x01(\x01H\x02R\adefault\x88\x01\x01\x12:\n" +
+	"\amaximum\x18\x02 \x01(\x01H\x01R\amaximum\x88\x01\x01\x12\x18\n" +
+	"\adefault\x18\x03 \x03(\x01R\adefault\x12:\n" +
 	"\x04enum\x18\x04 \x03(\v2&.metadata_lifecycle.v1.FloatEnumOptionR\x04enum\x12'\n" +
 	"\x0fmultiple_values\x18\x05 \x01(\bR\x0emultipleValuesB\n" +
 	"\n" +
 	"\b_minimumB\n" +
 	"\n" +
-	"\b_maximumB\n" +
-	"\n" +
-	"\b_default\"\x99\x02\n" +
+	"\b_maximum\"\x99\x02\n" +
 	"\x11DateTimeParameter\x129\n" +
 	"\aminimum\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\aminimum\x88\x01\x01\x129\n" +
 	"\amaximum\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampH\x01R\amaximum\x88\x01\x01\x129\n" +
@@ -9052,41 +9046,35 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\btemplate\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\btemplate\x12K\n" +
 	"\n" +
 	"parameters\x18\x02 \x03(\v2+.metadata_lifecycle.v1.ScalarParameterInputR\n" +
-	"parameters\"\xbc\x01\n" +
-	"\x15ScalarStringParameter\x12&\n" +
-	"\adefault\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\adefault\x88\x01\x01\x12;\n" +
+	"parameters\"\xa2\x01\n" +
+	"\x15ScalarStringParameter\x12\x18\n" +
+	"\adefault\x18\x01 \x03(\tR\adefault\x12;\n" +
 	"\x04enum\x18\x02 \x03(\v2'.metadata_lifecycle.v1.StringEnumOptionR\x04enum\x12&\n" +
-	"\apattern\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\apattern\x88\x01\x01B\n" +
-	"\n" +
-	"\b_defaultB\n" +
+	"\apattern\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\apattern\x88\x01\x01B\n" +
 	"\n" +
 	"\b_pattern\"C\n" +
 	"\x16ScalarBooleanParameter\x12\x1d\n" +
 	"\adefault\x18\x01 \x01(\bH\x00R\adefault\x88\x01\x01B\n" +
 	"\n" +
-	"\b_default\"\xd7\x01\n" +
+	"\b_default\"\xc6\x01\n" +
 	"\x16ScalarIntegerParameter\x12\x1d\n" +
 	"\aminimum\x18\x01 \x01(\x03H\x00R\aminimum\x88\x01\x01\x12\x1d\n" +
-	"\amaximum\x18\x02 \x01(\x03H\x01R\amaximum\x88\x01\x01\x12\x1d\n" +
-	"\adefault\x18\x03 \x01(\x03H\x02R\adefault\x88\x01\x01\x12<\n" +
+	"\amaximum\x18\x02 \x01(\x03H\x01R\amaximum\x88\x01\x01\x12\x18\n" +
+	"\adefault\x18\x03 \x03(\x03R\adefault\x12<\n" +
 	"\x04enum\x18\x04 \x03(\v2(.metadata_lifecycle.v1.IntegerEnumOptionR\x04enumB\n" +
 	"\n" +
 	"\b_minimumB\n" +
 	"\n" +
-	"\b_maximumB\n" +
-	"\n" +
-	"\b_default\"\xd3\x01\n" +
+	"\b_maximum\"\xc2\x01\n" +
 	"\x14ScalarFloatParameter\x12\x1d\n" +
 	"\aminimum\x18\x01 \x01(\x01H\x00R\aminimum\x88\x01\x01\x12\x1d\n" +
-	"\amaximum\x18\x02 \x01(\x01H\x01R\amaximum\x88\x01\x01\x12\x1d\n" +
-	"\adefault\x18\x03 \x01(\x01H\x02R\adefault\x88\x01\x01\x12:\n" +
+	"\amaximum\x18\x02 \x01(\x01H\x01R\amaximum\x88\x01\x01\x12\x18\n" +
+	"\adefault\x18\x03 \x03(\x01R\adefault\x12:\n" +
 	"\x04enum\x18\x04 \x03(\v2&.metadata_lifecycle.v1.FloatEnumOptionR\x04enumB\n" +
 	"\n" +
 	"\b_minimumB\n" +
 	"\n" +
-	"\b_maximumB\n" +
-	"\n" +
-	"\b_default\"\x9f\x02\n" +
+	"\b_maximum\"\x9f\x02\n" +
 	"\x17ScalarDateTimeParameter\x129\n" +
 	"\aminimum\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\aminimum\x88\x01\x01\x129\n" +
 	"\amaximum\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampH\x01R\amaximum\x88\x01\x01\x129\n" +

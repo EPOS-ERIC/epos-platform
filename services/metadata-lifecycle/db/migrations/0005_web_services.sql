@@ -29,32 +29,51 @@ CREATE TYPE float_parameter_enum_option AS (
 -- +goose StatementBegin
 CREATE FUNCTION is_valid_enum_option_list(
     input_value jsonb,
-    default_value text DEFAULT NULL
+    default_values text[] DEFAULT NULL
 ) RETURNS boolean
 LANGUAGE sql
 IMMUTABLE
 AS $$
     SELECT
-        input_value IS NULL
-        OR (
-            jsonb_array_length(input_value) > 0
-            AND NOT EXISTS (
-                SELECT 1
-                FROM jsonb_array_elements(input_value) AS elem
-                WHERE elem ->> 'value' IS NULL
-                   OR elem ->> 'value' = ''
-                   OR (elem -> 'label' IS NOT NULL AND btrim(elem ->> 'label') = '')
-            )
-            AND (
-                SELECT count(DISTINCT elem -> 'value')
-                FROM jsonb_array_elements(input_value) AS elem
-            ) = jsonb_array_length(input_value)
-            AND (
-                default_value IS NULL
-                OR EXISTS (
+        (
+            input_value IS NULL
+            OR (
+                jsonb_array_length(input_value) > 0
+                AND NOT EXISTS (
                     SELECT 1
                     FROM jsonb_array_elements(input_value) AS elem
-                    WHERE elem ->> 'value' = default_value
+                    WHERE elem ->> 'value' IS NULL
+                       OR elem ->> 'value' = ''
+                       OR (elem -> 'label' IS NOT NULL AND btrim(elem ->> 'label') = '')
+                )
+                AND (
+                    SELECT count(DISTINCT elem -> 'value')
+                    FROM jsonb_array_elements(input_value) AS elem
+                ) = jsonb_array_length(input_value)
+            )
+        )
+        AND (
+            default_values IS NULL
+            OR (
+                array_ndims(default_values) = 1
+                AND cardinality(default_values) > 0
+                AND array_position(default_values, NULL) IS NULL
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM unnest(default_values) AS default_item(value)
+                    WHERE btrim(default_item.value) = ''
+                )
+                AND (
+                    input_value IS NULL
+                    OR NOT EXISTS (
+                        SELECT 1
+                        FROM unnest(default_values) AS default_item(value)
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM jsonb_array_elements(input_value) AS elem
+                            WHERE elem ->> 'value' = default_item.value
+                        )
+                    )
                 )
             )
         )
@@ -69,26 +88,44 @@ CREATE FUNCTION enum_option_list_matches_bounds(
     input_value jsonb,
     minimum_value numeric,
     maximum_value numeric,
-    default_value numeric
+    default_values numeric[]
 ) RETURNS boolean
 LANGUAGE sql
 IMMUTABLE
 AS $$
     SELECT
-        input_value IS NULL
-        OR (
-            NOT EXISTS (
+        (
+            input_value IS NULL
+            OR NOT EXISTS (
                 SELECT 1
                 FROM jsonb_array_elements(input_value) AS elem
                 WHERE (minimum_value IS NOT NULL AND (elem ->> 'value')::numeric < minimum_value)
                    OR (maximum_value IS NOT NULL AND (elem ->> 'value')::numeric > maximum_value)
             )
-            AND (
-                default_value IS NULL
-                OR EXISTS (
+        )
+        AND (
+            default_values IS NULL
+            OR (
+                array_ndims(default_values) = 1
+                AND cardinality(default_values) > 0
+                AND array_position(default_values, NULL) IS NULL
+                AND NOT EXISTS (
                     SELECT 1
-                    FROM jsonb_array_elements(input_value) AS elem
-                    WHERE (elem ->> 'value')::numeric = default_value
+                    FROM unnest(default_values) AS default_item(value)
+                    WHERE (minimum_value IS NOT NULL AND default_item.value < minimum_value)
+                       OR (maximum_value IS NOT NULL AND default_item.value > maximum_value)
+                )
+                AND (
+                    input_value IS NULL
+                    OR NOT EXISTS (
+                        SELECT 1
+                        FROM unnest(default_values) AS default_item(value)
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM jsonb_array_elements(input_value) AS elem
+                            WHERE (elem ->> 'value')::numeric = default_item.value
+                        )
+                    )
                 )
             )
         )
@@ -306,14 +343,15 @@ CREATE TABLE string_parameter_schemas (
     parameter_id    uuid PRIMARY KEY,
     schema_kind    parameter_schema_kind NOT NULL DEFAULT 'STRING',
     pattern        nonblank_text_opt,
-    default_value  nonblank_text_opt,
+    default_value  text[],
     enum           string_parameter_enum_option[],
     multiple_values boolean NOT NULL DEFAULT false,
 
     FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
     CHECK (schema_kind = 'STRING'),
     CHECK (is_valid_enum_option_list(to_jsonb(enum), default_value)),
-    CHECK (NOT multiple_values OR enum IS NOT NULL)
+    CHECK (NOT multiple_values OR enum IS NOT NULL),
+    CHECK (multiple_values OR cardinality(default_value) <= 1)
 );
 
 CREATE TABLE boolean_parameter_schemas (
@@ -330,18 +368,17 @@ CREATE TABLE integer_parameter_schemas (
     schema_kind     parameter_schema_kind NOT NULL DEFAULT 'INTEGER',
     minimum         bigint,
     maximum         bigint,
-    default_value   bigint,
+    default_value   bigint[],
     enum            integer_parameter_enum_option[],
     multiple_values boolean NOT NULL DEFAULT false,
 
     FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
     CHECK (schema_kind = 'INTEGER'),
     CHECK (is_valid_enum_option_list(to_jsonb(enum))),
-    CHECK (enum_option_list_matches_bounds(to_jsonb(enum), minimum, maximum, default_value)),
+    CHECK (enum_option_list_matches_bounds(to_jsonb(enum), minimum, maximum, default_value::numeric[])),
     CHECK (NOT multiple_values OR enum IS NOT NULL),
     CHECK (minimum IS NULL OR maximum IS NULL OR minimum <= maximum),
-    CHECK (default_value IS NULL OR minimum IS NULL OR default_value >= minimum),
-    CHECK (default_value IS NULL OR maximum IS NULL OR default_value <= maximum)
+    CHECK (multiple_values OR cardinality(default_value) <= 1)
 );
 
 CREATE TABLE float_parameter_schemas (
@@ -349,7 +386,7 @@ CREATE TABLE float_parameter_schemas (
     schema_kind     parameter_schema_kind NOT NULL DEFAULT 'FLOAT',
     minimum         double precision,
     maximum         double precision,
-    default_value   double precision,
+    default_value   double precision[],
     enum            float_parameter_enum_option[],
     multiple_values boolean NOT NULL DEFAULT false,
 
@@ -357,11 +394,10 @@ CREATE TABLE float_parameter_schemas (
     CHECK (schema_kind = 'FLOAT'),
     CHECK (is_valid_enum_option_list(to_jsonb(enum))),
     CHECK (enum IS NULL OR NOT enum_option_list_has_non_finite_float(enum)),
-    CHECK (enum_option_list_matches_bounds(to_jsonb(enum), minimum::numeric, maximum::numeric, default_value::numeric)),
+    CHECK (enum_option_list_matches_bounds(to_jsonb(enum), minimum::numeric, maximum::numeric, default_value::numeric[])),
     CHECK (NOT multiple_values OR enum IS NOT NULL),
     CHECK (minimum IS NULL OR maximum IS NULL OR minimum <= maximum),
-    CHECK (default_value IS NULL OR minimum IS NULL OR default_value >= minimum),
-    CHECK (default_value IS NULL OR maximum IS NULL OR default_value <= maximum)
+    CHECK (multiple_values OR cardinality(default_value) <= 1)
 );
 
 CREATE TABLE datetime_parameter_schemas (
@@ -578,6 +614,7 @@ DROP FUNCTION IF EXISTS is_valid_wmts_styles(text[]);
 DROP FUNCTION IF EXISTS validate_web_service_configuration();
 DROP FUNCTION IF EXISTS validate_parameter_schema();
 DROP FUNCTION IF EXISTS enum_option_list_has_non_finite_float(float_parameter_enum_option[]);
-DROP FUNCTION IF EXISTS enum_option_list_matches_bounds(jsonb, numeric, numeric, numeric);
-DROP FUNCTION IF EXISTS is_valid_enum_option_list(jsonb, text);
+DROP FUNCTION IF EXISTS float_parameter_values_have_non_finite(double precision[]);
+DROP FUNCTION IF EXISTS enum_option_list_matches_bounds(jsonb, numeric, numeric, numeric[]);
+DROP FUNCTION IF EXISTS is_valid_enum_option_list(jsonb, text[]);
 DROP TYPE IF EXISTS float_parameter_enum_option, integer_parameter_enum_option, string_parameter_enum_option, parameter_schema_kind, web_service_parameter_role, web_service_parameter_location, web_service_visible_on, web_service_type, web_service_http_method;

@@ -97,9 +97,9 @@ func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
 		name   string
 		schema ParameterSchema
 	}{
-		{name: "string", schema: StringSchema{Enum: []StringEnumOption{{Value: "json"}, {Value: "xml"}}, MultipleValues: true}},
-		{name: "integer", schema: IntegerSchema{Enum: []IntegerEnumOption{{Value: 1}, {Value: 2}}, MultipleValues: true}},
-		{name: "float", schema: FloatSchema{Enum: []FloatEnumOption{{Value: 1.5}, {Value: 2.5}}, MultipleValues: true}},
+		{name: "string", schema: StringSchema{Default: []string{"json", "xml"}, Enum: []StringEnumOption{{Value: "json"}, {Value: "xml"}}, MultipleValues: true}},
+		{name: "integer", schema: IntegerSchema{Default: []int64{1, 2}, Enum: []IntegerEnumOption{{Value: 1}, {Value: 2}}, MultipleValues: true}},
+		{name: "float", schema: FloatSchema{Default: []float64{1.5, 2.5}, Enum: []FloatEnumOption{{Value: 1.5}, {Value: 2.5}}, MultipleValues: true}},
 	}
 
 	for _, test := range tests {
@@ -117,7 +117,25 @@ func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
 			if !input.Schema.AllowsMultipleValues() {
 				t.Fatal("schema multiple values = false, want true")
 			}
+			defaults, ok := input.Schema.DefaultValue().(AccessArray)
+			if !ok || len(defaults) != 2 {
+				t.Fatalf("default value = %#v, want two-value array", input.Schema.DefaultValue())
+			}
 		})
+	}
+
+	for _, defaults := range [][]string{{}, {"json", "xml"}} {
+		_, err := NewWebServiceParameterInput(WebServiceParameterInput{
+			Name: "value", Label: "Value",
+			Schema: StringSchema{
+				Default: defaults,
+				Enum:    []StringEnumOption{{Value: "json"}, {Value: "xml"}},
+			},
+			Location: ParameterLocationQuery,
+		})
+		if !apperror.IsCode(err, apperror.CodeValidationFailed) {
+			t.Fatalf("scalar defaults %v error = %v, want validation_failed", defaults, err)
+		}
 	}
 }
 
@@ -127,7 +145,8 @@ func TestNewWebServiceParameterInputNormalizesEnumLabels(t *testing.T) {
 		Name:  "format",
 		Label: "Format",
 		Schema: StringSchema{
-			Enum: []StringEnumOption{{Value: "json", Label: &label}, {Value: "xml"}},
+			Default: []string{"json"},
+			Enum:    []StringEnumOption{{Value: "json", Label: &label}, {Value: "xml"}},
 		},
 		Location: ParameterLocationQuery,
 	})
@@ -138,6 +157,9 @@ func TestNewWebServiceParameterInputNormalizesEnumLabels(t *testing.T) {
 	schema := input.Schema.(StringSchema)
 	if schema.Enum[0].Label == nil || *schema.Enum[0].Label != "JSON document" {
 		t.Fatalf("enum label = %v, want normalized label", schema.Enum[0].Label)
+	}
+	if got := schema.DefaultValue(); got != AccessString("json") {
+		t.Fatalf("default value = %#v, want scalar json", got)
 	}
 }
 

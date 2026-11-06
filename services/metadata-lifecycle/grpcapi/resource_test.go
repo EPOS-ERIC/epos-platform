@@ -92,6 +92,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		Name:  "value",
 		Label: "Value",
 		Value: &metadatalifecyclev1.ParameterInput_String_{String_: &metadatalifecyclev1.StringParameter{
+			Default:        []string{"one", "two"},
 			Enum:           []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
 			MultipleValues: true,
 		}},
@@ -119,6 +120,9 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	if len(configuration.Parameters) != 1 || !configuration.Parameters[0].Explode {
 		t.Fatalf("input parameters = %+v, want explode parameter", configuration.Parameters)
 	}
+	if got := configuration.Parameters[0].Schema.(domain.StringSchema).Default; !slices.Equal(got, []string{"one", "two"}) {
+		t.Fatalf("input default = %v, want [one two]", got)
+	}
 	if input.Type != domain.WebServiceTypeHTTP || !slices.Equal(input.VisibleOn, []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnGraph, domain.WebServiceVisibleOnMap}) {
 		t.Fatalf("input web-service fields = type %q, visible on %v", input.Type, input.VisibleOn)
 	}
@@ -140,7 +144,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 			Parameters: []domain.WebServiceParameter{{
 				Name:     "value",
 				Label:    "Value",
-				Schema:   domain.StringSchema{Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: true},
+				Schema:   domain.StringSchema{Default: []string{"one", "two"}, Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: true},
 				ID:       id,
 				Property: &property,
 				Location: domain.ParameterLocationQuery,
@@ -150,6 +154,9 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	})
 	if len(output.GetGeneric().GetParameters()) != 1 || !output.GetGeneric().GetParameters()[0].GetExplode() {
 		t.Fatalf("output parameters = %+v, want explode parameter", output.GetGeneric().GetParameters())
+	}
+	if got := output.GetGeneric().GetParameters()[0].GetString_().Default; !slices.Equal(got, []string{"one", "two"}) {
+		t.Fatalf("output default = %v, want [one two]", got)
 	}
 	if output.Type != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP || len(output.VisibleOn) != 2 || output.VisibleOn[0] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH || output.VisibleOn[1] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP {
 		t.Fatalf("output web-service fields = type %q, visible on %v", output.Type, output.VisibleOn)

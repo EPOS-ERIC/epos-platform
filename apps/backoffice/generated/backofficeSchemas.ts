@@ -834,7 +834,10 @@ export type StringParameterDraft = {
   explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
-  ["default"]?: string | null;
+  /**
+   * @minItems 1
+   */
+  ["default"]?: string[] | null;
   /**
    * @minItems 1
    */
@@ -893,9 +896,9 @@ export type IntegerParameterDraft = {
    */
   maximum?: number | null;
   /**
-   * @format int64
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
 
@@ -928,9 +931,9 @@ export type FloatParameterDraft = {
    */
   maximum?: number | null;
   /**
-   * @format double
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
 
@@ -992,7 +995,10 @@ export type StringParameter = {
   explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
-  ["default"]?: string | null;
+  /**
+   * @minItems 1
+   */
+  ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
@@ -1056,9 +1062,9 @@ export type IntegerParameter = {
    */
   maximum?: number | null;
   /**
-   * @format int64
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
 
@@ -1095,9 +1101,9 @@ export type FloatParameter = {
    */
   maximum?: number | null;
   /**
-   * @format double
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
 
@@ -1212,7 +1218,10 @@ export type StringScalarParameterDraft = {
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
-  ["default"]?: string | null;
+  /**
+   * @minItems 1
+   */
+  ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
@@ -1263,9 +1272,9 @@ export type IntegerScalarParameterDraft = {
    */
   maximum?: number | null;
   /**
-   * @format int64
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
 
@@ -1295,9 +1304,9 @@ export type FloatScalarParameterDraft = {
    */
   maximum?: number | null;
   /**
-   * @format double
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
 
@@ -1354,7 +1363,10 @@ export type StringScalarParameter = {
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
-  ["default"]?: string | null;
+  /**
+   * @minItems 1
+   */
+  ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
@@ -1413,9 +1425,9 @@ export type IntegerScalarParameter = {
    */
   maximum?: number | null;
   /**
-   * @format int64
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
 
@@ -1449,9 +1461,9 @@ export type FloatScalarParameter = {
    */
   maximum?: number | null;
   /**
-   * @format double
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
 

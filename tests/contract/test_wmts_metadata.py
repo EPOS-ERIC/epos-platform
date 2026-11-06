@@ -46,8 +46,8 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
         self.assertNotIn("default_style", actual["layers"][3])
         self.assertEqual(actual["layers"][3]["styles"], ["default", "alternate"])
         self.assertEqual(set(actual), set(configuration))
-        self.assertEqual(actual[fields[0]][0]["default"], "tile-time")
-        self.assertEqual(actual[fields[1]][0]["default"], "info-time")
+        self.assertEqual(actual[fields[0]][0]["default"], ["tile-time"])
+        self.assertEqual(actual[fields[1]][0]["default"], ["info-time"])
         self.assertNotEqual(actual[fields[0]][0]["id"], actual[fields[1]][0]["id"])
         self.assertIn("image/png", [item["output_format"] for item in saved_distribution["available_formats"]])
 
@@ -131,7 +131,7 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
                     if source["kind"] == "TEMPLATE":
                         self.assertEqual(source["template"], target["template"])
                         self.assertNotEqual(source["parameters"][0]["id"], target["parameters"][0]["id"])
-                        self.assertEqual(target["parameters"][0]["default"], "tile-filter")
+                        self.assertEqual(target["parameters"][0]["default"], ["tile-filter"])
             if resource_id == detail["resource_id"]:
                 detail = clone
 

@@ -806,20 +806,28 @@ func (m *mapper) parameter(source string) (domain.ParameterInput, error) {
 		return parameter, nil
 	case rdfsDatatypeInteger:
 		defaultValue := m.intPtr(source, schemaDefaultValue)
+		var defaults []int64
+		if defaultValue != nil {
+			defaults = []int64{*defaultValue}
+		}
 		parameter.Schema = domain.IntegerSchema{
 			Minimum:        m.intPtr(source, schemaMinValue),
 			Maximum:        m.intPtr(source, schemaMaxValue),
-			Default:        defaultValue,
+			Default:        defaults,
 			Enum:           intEnumOptions(m.validIntValues(source, defaultValue)),
 			MultipleValues: multipleValues,
 		}
 		return parameter, nil
 	case rdfsDatatypeFloat:
 		defaultValue := m.floatPtr(source, schemaDefaultValue)
+		var defaults []float64
+		if defaultValue != nil {
+			defaults = []float64{*defaultValue}
+		}
 		parameter.Schema = domain.FloatSchema{
 			Minimum:        m.floatPtr(source, schemaMinValue),
 			Maximum:        m.floatPtr(source, schemaMaxValue),
-			Default:        defaultValue,
+			Default:        defaults,
 			Enum:           floatEnumOptions(m.validFloatValues(source, defaultValue)),
 			MultipleValues: multipleValues,
 		}
@@ -847,8 +855,12 @@ func (m *mapper) parameter(source string) (domain.ParameterInput, error) {
 			})
 			allowed = nil
 		}
+		var defaults []string
+		if pointer != nil {
+			defaults = []string{*pointer}
+		}
 		parameter.Schema = domain.StringSchema{
-			Default:        pointer,
+			Default:        defaults,
 			Enum:           stringEnumOptions(allowed),
 			Pattern:        stringPtr(m.optionalString(source, schemaValuePattern)),
 			MultipleValues: multipleValues,
@@ -1466,7 +1478,7 @@ func mergeParameter(existing, incoming domain.ParameterInput) domain.ParameterIn
 		}
 		current.MultipleValues = current.MultipleValues || other.MultipleValues
 		current.Enum = nilIfEmpty(mergeStringValues(current.Enum, other.Enum))
-		current.Default = mergeStringDefault(current.Default, other.Default)
+		current.Default = mergeSliceDefault(current.Default, other.Default)
 		if !sameStringPointer(current.Pattern, other.Pattern) {
 			current.Pattern = nil
 		}
@@ -1485,7 +1497,7 @@ func mergeParameter(existing, incoming domain.ParameterInput) domain.ParameterIn
 		current.MultipleValues = current.MultipleValues || other.MultipleValues
 		current.Minimum = mergeIntDefault(current.Minimum, other.Minimum)
 		current.Maximum = mergeIntDefault(current.Maximum, other.Maximum)
-		current.Default = mergeIntDefault(current.Default, other.Default)
+		current.Default = mergeSliceDefault(current.Default, other.Default)
 		current.Enum = nilIfEmpty(mergeIntValues(current.Enum, other.Enum))
 		merged.Schema = current
 	case domain.FloatSchema:
@@ -1496,7 +1508,7 @@ func mergeParameter(existing, incoming domain.ParameterInput) domain.ParameterIn
 		current.MultipleValues = current.MultipleValues || other.MultipleValues
 		current.Minimum = mergeFloatDefault(current.Minimum, other.Minimum)
 		current.Maximum = mergeFloatDefault(current.Maximum, other.Maximum)
-		current.Default = mergeFloatDefault(current.Default, other.Default)
+		current.Default = mergeSliceDefault(current.Default, other.Default)
 		current.Enum = nilIfEmpty(mergeFloatValues(current.Enum, other.Enum))
 		merged.Schema = current
 	case domain.DateTimeSchema:
@@ -1635,6 +1647,16 @@ func mergeStringDefault(first, second *string) *string {
 		return second
 	}
 	if second == nil || *first == *second {
+		return first
+	}
+	return nil
+}
+
+func mergeSliceDefault[T comparable](first, second []T) []T {
+	if first == nil {
+		return second
+	}
+	if second == nil || slices.Equal(first, second) {
 		return first
 	}
 	return nil

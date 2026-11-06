@@ -5741,7 +5741,7 @@ type FloatParameter struct {
 	ReadOnly       bool                `json:"read_only"`
 	Minimum        OptNilFloat64       `json:"minimum"`
 	Maximum        OptNilFloat64       `json:"maximum"`
-	Default        OptNilFloat64       `json:"default"`
+	Default        OptNilFloat64Array  `json:"default"`
 	Enum           []FloatEnumOption   `json:"enum"`
 }
 
@@ -5826,7 +5826,7 @@ func (s *FloatParameter) GetMaximum() OptNilFloat64 {
 }
 
 // GetDefault returns the value of Default.
-func (s *FloatParameter) GetDefault() OptNilFloat64 {
+func (s *FloatParameter) GetDefault() OptNilFloat64Array {
 	return s.Default
 }
 
@@ -5916,7 +5916,7 @@ func (s *FloatParameter) SetMaximum(val OptNilFloat64) {
 }
 
 // SetDefault sets the value of Default.
-func (s *FloatParameter) SetDefault(val OptNilFloat64) {
+func (s *FloatParameter) SetDefault(val OptNilFloat64Array) {
 	s.Default = val
 }
 
@@ -5942,7 +5942,7 @@ type FloatParameterDraft struct {
 	ReadOnly       bool                    `json:"read_only"`
 	Minimum        OptNilFloat64           `json:"minimum"`
 	Maximum        OptNilFloat64           `json:"maximum"`
-	Default        OptNilFloat64           `json:"default"`
+	Default        OptNilFloat64Array      `json:"default"`
 	Enum           []FloatEnumOption       `json:"enum"`
 }
 
@@ -6022,7 +6022,7 @@ func (s *FloatParameterDraft) GetMaximum() OptNilFloat64 {
 }
 
 // GetDefault returns the value of Default.
-func (s *FloatParameterDraft) GetDefault() OptNilFloat64 {
+func (s *FloatParameterDraft) GetDefault() OptNilFloat64Array {
 	return s.Default
 }
 
@@ -6107,7 +6107,7 @@ func (s *FloatParameterDraft) SetMaximum(val OptNilFloat64) {
 }
 
 // SetDefault sets the value of Default.
-func (s *FloatParameterDraft) SetDefault(val OptNilFloat64) {
+func (s *FloatParameterDraft) SetDefault(val OptNilFloat64Array) {
 	s.Default = val
 }
 
@@ -6199,7 +6199,7 @@ type FloatScalarParameter struct {
 	ReadOnly    bool                     `json:"read_only"`
 	Minimum     OptNilFloat64            `json:"minimum"`
 	Maximum     OptNilFloat64            `json:"maximum"`
-	Default     OptNilFloat64            `json:"default"`
+	Default     OptNilFloat64Array       `json:"default"`
 	Enum        []FloatEnumOption        `json:"enum"`
 }
 
@@ -6269,7 +6269,7 @@ func (s *FloatScalarParameter) GetMaximum() OptNilFloat64 {
 }
 
 // GetDefault returns the value of Default.
-func (s *FloatScalarParameter) GetDefault() OptNilFloat64 {
+func (s *FloatScalarParameter) GetDefault() OptNilFloat64Array {
 	return s.Default
 }
 
@@ -6344,7 +6344,7 @@ func (s *FloatScalarParameter) SetMaximum(val OptNilFloat64) {
 }
 
 // SetDefault sets the value of Default.
-func (s *FloatScalarParameter) SetDefault(val OptNilFloat64) {
+func (s *FloatScalarParameter) SetDefault(val OptNilFloat64Array) {
 	s.Default = val
 }
 
@@ -6367,7 +6367,7 @@ type FloatScalarParameterDraft struct {
 	ReadOnly    bool                          `json:"read_only"`
 	Minimum     OptNilFloat64                 `json:"minimum"`
 	Maximum     OptNilFloat64                 `json:"maximum"`
-	Default     OptNilFloat64                 `json:"default"`
+	Default     OptNilFloat64Array            `json:"default"`
 	Enum        []FloatEnumOption             `json:"enum"`
 }
 
@@ -6432,7 +6432,7 @@ func (s *FloatScalarParameterDraft) GetMaximum() OptNilFloat64 {
 }
 
 // GetDefault returns the value of Default.
-func (s *FloatScalarParameterDraft) GetDefault() OptNilFloat64 {
+func (s *FloatScalarParameterDraft) GetDefault() OptNilFloat64Array {
 	return s.Default
 }
 
@@ -6502,7 +6502,7 @@ func (s *FloatScalarParameterDraft) SetMaximum(val OptNilFloat64) {
 }
 
 // SetDefault sets the value of Default.
-func (s *FloatScalarParameterDraft) SetDefault(val OptNilFloat64) {
+func (s *FloatScalarParameterDraft) SetDefault(val OptNilFloat64Array) {
 	s.Default = val
 }
 
@@ -7946,7 +7946,7 @@ type IntegerParameter struct {
 	ReadOnly       bool                 `json:"read_only"`
 	Minimum        OptNilInt64          `json:"minimum"`
 	Maximum        OptNilInt64          `json:"maximum"`
-	Default        OptNilInt64          `json:"default"`
+	Default        OptNilInt64Array     `json:"default"`
 	Enum           []IntegerEnumOption  `json:"enum"`
 }
 
@@ -8031,7 +8031,7 @@ func (s *IntegerParameter) GetMaximum() OptNilInt64 {
 }
 
 // GetDefault returns the value of Default.
-func (s *IntegerParameter) GetDefault() OptNilInt64 {
+func (s *IntegerParameter) GetDefault() OptNilInt64Array {
 	return s.Default
 }
 
@@ -8121,7 +8121,7 @@ func (s *IntegerParameter) SetMaximum(val OptNilInt64) {
 }
 
 // SetDefault sets the value of Default.
-func (s *IntegerParameter) SetDefault(val OptNilInt64) {
+func (s *IntegerParameter) SetDefault(val OptNilInt64Array) {
 	s.Default = val
 }
 
@@ -8147,7 +8147,7 @@ type IntegerParameterDraft struct {
 	ReadOnly       bool                      `json:"read_only"`
 	Minimum        OptNilInt64               `json:"minimum"`
 	Maximum        OptNilInt64               `json:"maximum"`
-	Default        OptNilInt64               `json:"default"`
+	Default        OptNilInt64Array          `json:"default"`
 	Enum           []IntegerEnumOption       `json:"enum"`
 }
 
@@ -8227,7 +8227,7 @@ func (s *IntegerParameterDraft) GetMaximum() OptNilInt64 {
 }
 
 // GetDefault returns the value of Default.
-func (s *IntegerParameterDraft) GetDefault() OptNilInt64 {
+func (s *IntegerParameterDraft) GetDefault() OptNilInt64Array {
 	return s.Default
 }
 
@@ -8312,7 +8312,7 @@ func (s *IntegerParameterDraft) SetMaximum(val OptNilInt64) {
 }
 
 // SetDefault sets the value of Default.
-func (s *IntegerParameterDraft) SetDefault(val OptNilInt64) {
+func (s *IntegerParameterDraft) SetDefault(val OptNilInt64Array) {
 	s.Default = val
 }
 
@@ -8404,7 +8404,7 @@ type IntegerScalarParameter struct {
 	ReadOnly    bool                       `json:"read_only"`
 	Minimum     OptNilInt64                `json:"minimum"`
 	Maximum     OptNilInt64                `json:"maximum"`
-	Default     OptNilInt64                `json:"default"`
+	Default     OptNilInt64Array           `json:"default"`
 	Enum        []IntegerEnumOption        `json:"enum"`
 }
 
@@ -8474,7 +8474,7 @@ func (s *IntegerScalarParameter) GetMaximum() OptNilInt64 {
 }
 
 // GetDefault returns the value of Default.
-func (s *IntegerScalarParameter) GetDefault() OptNilInt64 {
+func (s *IntegerScalarParameter) GetDefault() OptNilInt64Array {
 	return s.Default
 }
 
@@ -8549,7 +8549,7 @@ func (s *IntegerScalarParameter) SetMaximum(val OptNilInt64) {
 }
 
 // SetDefault sets the value of Default.
-func (s *IntegerScalarParameter) SetDefault(val OptNilInt64) {
+func (s *IntegerScalarParameter) SetDefault(val OptNilInt64Array) {
 	s.Default = val
 }
 
@@ -8572,7 +8572,7 @@ type IntegerScalarParameterDraft struct {
 	ReadOnly    bool                            `json:"read_only"`
 	Minimum     OptNilInt64                     `json:"minimum"`
 	Maximum     OptNilInt64                     `json:"maximum"`
-	Default     OptNilInt64                     `json:"default"`
+	Default     OptNilInt64Array                `json:"default"`
 	Enum        []IntegerEnumOption             `json:"enum"`
 }
 
@@ -8637,7 +8637,7 @@ func (s *IntegerScalarParameterDraft) GetMaximum() OptNilInt64 {
 }
 
 // GetDefault returns the value of Default.
-func (s *IntegerScalarParameterDraft) GetDefault() OptNilInt64 {
+func (s *IntegerScalarParameterDraft) GetDefault() OptNilInt64Array {
 	return s.Default
 }
 
@@ -8707,7 +8707,7 @@ func (s *IntegerScalarParameterDraft) SetMaximum(val OptNilInt64) {
 }
 
 // SetDefault sets the value of Default.
-func (s *IntegerScalarParameterDraft) SetDefault(val OptNilInt64) {
+func (s *IntegerScalarParameterDraft) SetDefault(val OptNilInt64Array) {
 	s.Default = val
 }
 
@@ -10233,6 +10233,74 @@ func (o OptNilFloat64) Or(d float64) float64 {
 	return d
 }
 
+// NewOptNilFloat64Array returns new OptNilFloat64Array with value set to v.
+func NewOptNilFloat64Array(v []float64) OptNilFloat64Array {
+	return OptNilFloat64Array{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilFloat64Array is optional nullable []float64.
+type OptNilFloat64Array struct {
+	Value []float64
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilFloat64Array was set.
+func (o OptNilFloat64Array) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilFloat64Array) Reset() {
+	var v []float64
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilFloat64Array) SetTo(v []float64) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilFloat64Array) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilFloat64Array) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v []float64
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilFloat64Array) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilFloat64Array) Get() (v []float64, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilFloat64Array) Or(d []float64) []float64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilInt64 returns new OptNilInt64 with value set to v.
 func NewOptNilInt64(v int64) OptNilInt64 {
 	return OptNilInt64{
@@ -10295,6 +10363,74 @@ func (o OptNilInt64) Get() (v int64, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilInt64) Or(d int64) int64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilInt64Array returns new OptNilInt64Array with value set to v.
+func NewOptNilInt64Array(v []int64) OptNilInt64Array {
+	return OptNilInt64Array{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt64Array is optional nullable []int64.
+type OptNilInt64Array struct {
+	Value []int64
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt64Array was set.
+func (o OptNilInt64Array) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt64Array) Reset() {
+	var v []int64
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt64Array) SetTo(v []int64) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt64Array) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt64Array) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v []int64
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilInt64Array) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt64Array) Get() (v []int64, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt64Array) Or(d []int64) []int64 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -10431,6 +10567,74 @@ func (o OptNilString) Get() (v string, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilStringArray returns new OptNilStringArray with value set to v.
+func NewOptNilStringArray(v []string) OptNilStringArray {
+	return OptNilStringArray{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilStringArray is optional nullable []string.
+type OptNilStringArray struct {
+	Value []string
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilStringArray was set.
+func (o OptNilStringArray) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilStringArray) Reset() {
+	var v []string
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilStringArray) SetTo(v []string) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilStringArray) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilStringArray) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v []string
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilStringArray) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilStringArray) Get() (v []string, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilStringArray) Or(d []string) []string {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -14857,7 +15061,7 @@ type StringParameter struct {
 	Explode        bool                `json:"explode"`
 	MultipleValues bool                `json:"multiple_values"`
 	ReadOnly       bool                `json:"read_only"`
-	Default        OptNilString        `json:"default"`
+	Default        OptNilStringArray   `json:"default"`
 	Enum           []StringEnumOption  `json:"enum"`
 	Pattern        OptNilString        `json:"pattern"`
 }
@@ -14933,7 +15137,7 @@ func (s *StringParameter) GetReadOnly() bool {
 }
 
 // GetDefault returns the value of Default.
-func (s *StringParameter) GetDefault() OptNilString {
+func (s *StringParameter) GetDefault() OptNilStringArray {
 	return s.Default
 }
 
@@ -15018,7 +15222,7 @@ func (s *StringParameter) SetReadOnly(val bool) {
 }
 
 // SetDefault sets the value of Default.
-func (s *StringParameter) SetDefault(val OptNilString) {
+func (s *StringParameter) SetDefault(val OptNilStringArray) {
 	s.Default = val
 }
 
@@ -15047,7 +15251,7 @@ type StringParameterDraft struct {
 	Explode        bool                     `json:"explode"`
 	MultipleValues bool                     `json:"multiple_values"`
 	ReadOnly       bool                     `json:"read_only"`
-	Default        OptNilString             `json:"default"`
+	Default        OptNilStringArray        `json:"default"`
 	Enum           []StringEnumOption       `json:"enum"`
 	Pattern        OptNilString             `json:"pattern"`
 }
@@ -15118,7 +15322,7 @@ func (s *StringParameterDraft) GetReadOnly() bool {
 }
 
 // GetDefault returns the value of Default.
-func (s *StringParameterDraft) GetDefault() OptNilString {
+func (s *StringParameterDraft) GetDefault() OptNilStringArray {
 	return s.Default
 }
 
@@ -15198,7 +15402,7 @@ func (s *StringParameterDraft) SetReadOnly(val bool) {
 }
 
 // SetDefault sets the value of Default.
-func (s *StringParameterDraft) SetDefault(val OptNilString) {
+func (s *StringParameterDraft) SetDefault(val OptNilStringArray) {
 	s.Default = val
 }
 
@@ -15293,7 +15497,7 @@ type StringScalarParameter struct {
 	Role        OptNilParameterRole       `json:"role"`
 	Required    bool                      `json:"required"`
 	ReadOnly    bool                      `json:"read_only"`
-	Default     OptNilString              `json:"default"`
+	Default     OptNilStringArray         `json:"default"`
 	Enum        []StringEnumOption        `json:"enum"`
 	Pattern     OptNilString              `json:"pattern"`
 }
@@ -15354,7 +15558,7 @@ func (s *StringScalarParameter) GetReadOnly() bool {
 }
 
 // GetDefault returns the value of Default.
-func (s *StringScalarParameter) GetDefault() OptNilString {
+func (s *StringScalarParameter) GetDefault() OptNilStringArray {
 	return s.Default
 }
 
@@ -15424,7 +15628,7 @@ func (s *StringScalarParameter) SetReadOnly(val bool) {
 }
 
 // SetDefault sets the value of Default.
-func (s *StringScalarParameter) SetDefault(val OptNilString) {
+func (s *StringScalarParameter) SetDefault(val OptNilStringArray) {
 	s.Default = val
 }
 
@@ -15450,7 +15654,7 @@ type StringScalarParameterDraft struct {
 	Role        OptNilParameterRole            `json:"role"`
 	Required    bool                           `json:"required"`
 	ReadOnly    bool                           `json:"read_only"`
-	Default     OptNilString                   `json:"default"`
+	Default     OptNilStringArray              `json:"default"`
 	Enum        []StringEnumOption             `json:"enum"`
 	Pattern     OptNilString                   `json:"pattern"`
 }
@@ -15506,7 +15710,7 @@ func (s *StringScalarParameterDraft) GetReadOnly() bool {
 }
 
 // GetDefault returns the value of Default.
-func (s *StringScalarParameterDraft) GetDefault() OptNilString {
+func (s *StringScalarParameterDraft) GetDefault() OptNilStringArray {
 	return s.Default
 }
 
@@ -15571,7 +15775,7 @@ func (s *StringScalarParameterDraft) SetReadOnly(val bool) {
 }
 
 // SetDefault sets the value of Default.
-func (s *StringScalarParameterDraft) SetDefault(val OptNilString) {
+func (s *StringScalarParameterDraft) SetDefault(val OptNilStringArray) {
 	s.Default = val
 }
 

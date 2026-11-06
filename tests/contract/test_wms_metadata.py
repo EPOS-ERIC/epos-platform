@@ -50,7 +50,7 @@ class WMSMetadataContractTest(DistributionContractTestCase):
         self.assertEqual(set(actual), set(configuration))
         for field, default in (("get_map_parameters", "map-value"), ("get_feature_info_parameters", "inspect-value")):
             self.assertEqual(actual[field][0]["name"], "time")
-            self.assertEqual(actual[field][0]["default"], default)
+            self.assertEqual(actual[field][0]["default"], [default])
             self.assertTrue(actual[field][0]["id"])
 
         invalid_cases = [
@@ -150,7 +150,7 @@ class WMSMetadataContractTest(DistributionContractTestCase):
                     if source["kind"] == "TEMPLATE":
                         self.assertEqual(source["template"], target["template"])
                         self.assertNotEqual(source["parameters"][0]["id"], target["parameters"][0]["id"])
-                        self.assertEqual(target["parameters"][0]["default"], "map-filter")
+                        self.assertEqual(target["parameters"][0]["default"], ["map-filter"])
             if resource_id == detail["resource_id"]:
                 detail = clone
 

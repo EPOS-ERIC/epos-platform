@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
@@ -131,6 +132,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 					Location:       gatewayapi.ParameterLocationQUERY,
 					Explode:        true,
 					MultipleValues: true,
+					Default:        gatewayapi.NewOptNilStringArray([]string{"one", "two"}),
 					Enum:           []gatewayapi.StringEnumOption{{Value: "one"}, {Value: "two"}},
 				})},
 			},
@@ -140,6 +142,9 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	parameters := proto.GetGeneric().GetParameters()
 	if len(parameters) != 1 || !parameters[0].GetExplode() {
 		t.Fatalf("protobuf parameters = %+v, want explode parameter", parameters)
+	}
+	if got := parameters[0].GetString_().Default; !slices.Equal(got, []string{"one", "two"}) {
+		t.Fatalf("protobuf default = %v, want [one two]", got)
 	}
 	if proto.Type != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP || len(proto.VisibleOn) != 2 || proto.VisibleOn[0] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP || proto.VisibleOn[1] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH {
 		t.Fatalf("protobuf web-service fields = type %q, visible on %v", proto.Type, proto.VisibleOn)
@@ -154,6 +159,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		Location:   metadatalifecyclev1.WebServiceParameterLocation_WEB_SERVICE_PARAMETER_LOCATION_QUERY,
 		Explode:    true,
 		Value: &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{
+			Default:        []string{"one", "two"},
 			Enum:           []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
 			MultipleValues: true,
 		}},
@@ -164,6 +170,9 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	apiParameter, ok := value.GetStringParameter()
 	if !ok || !apiParameter.Explode {
 		t.Fatal("API parameter Explode = false, want true")
+	}
+	if defaults, ok := apiParameter.Default.Get(); !ok || !slices.Equal(defaults, []string{"one", "two"}) {
+		t.Fatalf("API default = %v, %v; want [one two]", defaults, ok)
 	}
 
 	service, err := toAPIWebService(&metadatalifecyclev1.WebService{

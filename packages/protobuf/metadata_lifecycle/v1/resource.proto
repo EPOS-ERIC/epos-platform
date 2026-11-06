@@ -658,7 +658,7 @@ message FloatEnumOption {
 }
 
 message StringParameter {
-  optional string default = 1 [(buf.validate.field).string.min_len = 1];
+  repeated string default = 1;
   repeated StringEnumOption enum = 2;
   optional string pattern = 3 [(buf.validate.field).string.min_len = 1];
   bool multiple_values = 4;
@@ -671,7 +671,7 @@ message BooleanParameter {
 message IntegerParameter {
   optional int64 minimum = 1;
   optional int64 maximum = 2;
-  optional int64 default = 3;
+  repeated int64 default = 3;
   repeated IntegerEnumOption enum = 4;
   bool multiple_values = 5;
 }
@@ -679,7 +679,7 @@ message IntegerParameter {
 message FloatParameter {
   optional double minimum = 1;
   optional double maximum = 2;
-  optional double default = 3;
+  repeated double default = 3;
   repeated FloatEnumOption enum = 4;
   bool multiple_values = 5;
 }
@@ -702,7 +702,7 @@ message TemplateParameterInput {
 }
 
 message ScalarStringParameter {
-  optional string default = 1 [(buf.validate.field).string.min_len = 1];
+  repeated string default = 1;
   repeated StringEnumOption enum = 2;
   optional string pattern = 3 [(buf.validate.field).string.min_len = 1];
 }
@@ -714,14 +714,14 @@ message ScalarBooleanParameter {
 message ScalarIntegerParameter {
   optional int64 minimum = 1;
   optional int64 maximum = 2;
-  optional int64 default = 3;
+  repeated int64 default = 3;
   repeated IntegerEnumOption enum = 4;
 }
 
 message ScalarFloatParameter {
   optional double minimum = 1;
   optional double maximum = 2;
-  optional double default = 3;
+  repeated double default = 3;
   repeated FloatEnumOption enum = 4;
 }
 

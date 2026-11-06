@@ -33,7 +33,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.ParameterInput_String_{String_: &metadatalifecyclev1.StringParameter{
-			Default:        protoOptionalString(x.Default),
+			Default:        protoOptionalStringArray(x.Default),
 			Enum:           toProtoStringEnumOptions(x.Enum),
 			Pattern:        protoOptionalString(x.Pattern),
 			MultipleValues: x.MultipleValues,
@@ -68,7 +68,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Value = &metadatalifecyclev1.ParameterInput_Integer{Integer: &metadatalifecyclev1.IntegerParameter{
 			Minimum:        protoOptionalInt64(x.Minimum),
 			Maximum:        protoOptionalInt64(x.Maximum),
-			Default:        protoOptionalInt64(x.Default),
+			Default:        protoOptionalInt64Array(x.Default),
 			Enum:           toProtoIntegerEnumOptions(x.Enum),
 			MultipleValues: x.MultipleValues,
 		}}
@@ -88,7 +88,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Value = &metadatalifecyclev1.ParameterInput_Float{Float: &metadatalifecyclev1.FloatParameter{
 			Minimum:        protoOptionalFloat(x.Minimum),
 			Maximum:        protoOptionalFloat(x.Maximum),
-			Default:        protoOptionalFloat(x.Default),
+			Default:        protoOptionalFloatArray(x.Default),
 			Enum:           toProtoFloatEnumOptions(x.Enum),
 			MultipleValues: x.MultipleValues,
 		}}
@@ -149,7 +149,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
-			Default: protoOptionalString(x.Default),
+			Default: protoOptionalStringArray(x.Default),
 			Enum:    toProtoStringEnumOptions(x.Enum),
 			Pattern: protoOptionalString(x.Pattern),
 		}}
@@ -177,7 +177,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_Integer{Integer: &metadatalifecyclev1.ScalarIntegerParameter{
 			Minimum: protoOptionalInt64(x.Minimum),
 			Maximum: protoOptionalInt64(x.Maximum),
-			Default: protoOptionalInt64(x.Default),
+			Default: protoOptionalInt64Array(x.Default),
 			Enum:    toProtoIntegerEnumOptions(x.Enum),
 		}}
 	case v.IsFloatScalarParameterDraft():
@@ -193,7 +193,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_Float{Float: &metadatalifecyclev1.ScalarFloatParameter{
 			Minimum: protoOptionalFloat(x.Minimum),
 			Maximum: protoOptionalFloat(x.Maximum),
-			Default: protoOptionalFloat(x.Default),
+			Default: protoOptionalFloatArray(x.Default),
 			Enum:    toProtoFloatEnumOptions(x.Enum),
 		}}
 	case v.IsDateTimeScalarParameterDraft():
@@ -221,6 +221,30 @@ func protoOptionalString(v gatewayapi.OptNilString) *string {
 		return nil
 	}
 	return new(v.Value)
+}
+
+func protoOptionalStringArray(v gatewayapi.OptNilStringArray) []string {
+	values, ok := v.Get()
+	if !ok {
+		return nil
+	}
+	return values
+}
+
+func protoOptionalInt64Array(v gatewayapi.OptNilInt64Array) []int64 {
+	values, ok := v.Get()
+	if !ok {
+		return nil
+	}
+	return values
+}
+
+func protoOptionalFloatArray(v gatewayapi.OptNilFloat64Array) []float64 {
+	values, ok := v.Get()
+	if !ok {
+		return nil
+	}
+	return values
 }
 
 func toProtoStringEnumOptions(values []gatewayapi.StringEnumOption) []*metadatalifecyclev1.StringEnumOption {
