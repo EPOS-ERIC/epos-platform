@@ -196,10 +196,14 @@ func toProtoWMSWebServiceConfigurationDraft(value gatewayapi.WmsWebServiceConfig
 	return result
 }
 
-func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.DistributionInput {
+func toProtoDistribution(v gatewayapi.DistributionDraft) (*metadatalifecyclev1.DistributionInput, error) {
 	title, description, license, byteSize := distributionFields(v)
+	distributionType, err := toProtoDistributionType(v.Type)
+	if err != nil {
+		return nil, err
+	}
 	r := &metadatalifecyclev1.DistributionInput{
-		Type:        string(v.Type),
+		Type:        distributionType,
 		Title:       title,
 		Description: description,
 		License:     license,
@@ -211,7 +215,7 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.Di
 		r.Delivery = &metadatalifecyclev1.DistributionInput_WebService{
 			WebService: toProtoWebServiceDraft(x.WebService),
 		}
-		return r
+		return r, nil
 	}
 
 	x := v.DownloadableFileDistributionDraft
@@ -222,7 +226,7 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.Di
 			Format: string(x.DownloadableFile.Format),
 		},
 	}
-	return r
+	return r, nil
 }
 
 func distributionFields(v gatewayapi.DistributionDraft) (string, string, *string, *int64) {

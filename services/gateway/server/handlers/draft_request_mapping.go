@@ -22,6 +22,11 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			Providers:     uuidStrings(v.Providers),
 			Categories:    uuidStrings(v.Categories),
 		}
+		accrualPeriodicity, err := toProtoDatasetAccrualPeriodicity(v.AccrualPeriodicity)
+		if err != nil {
+			return nil, "", err
+		}
+		metadata.AccrualPeriodicity = accrualPeriodicity
 		temporalRange, err := toProtoDatasetTemporalRange(v.TemporalCoverage, v.GeologicalTemporalCoverage)
 		if err != nil {
 			return nil, "", err
@@ -31,9 +36,6 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.TemporalRange = &metadatalifecyclev1.DatasetInput_TemporalCoverage{TemporalCoverage: temporalRange.temporal}
 		case temporalRange.geological != nil:
 			metadata.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: temporalRange.geological}
-		}
-		if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
-			metadata.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)
 		}
 		if v.QualityAnnotation.Set && !v.QualityAnnotation.Null {
 			metadata.QualityAnnotation = new(v.QualityAnnotation.Value)
@@ -56,7 +58,11 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.PersistentIdentifiers = append(metadata.PersistentIdentifiers, toProtoVersionedIdentifierInput(id))
 		}
 		for _, distribution := range v.Distributions {
-			metadata.Distributions = append(metadata.Distributions, toProtoDistribution(distribution))
+			mapped, err := toProtoDistribution(distribution)
+			if err != nil {
+				return nil, "", err
+			}
+			metadata.Distributions = append(metadata.Distributions, mapped)
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_Dataset{Dataset: metadata}
 		return request, gatewayapi.WriteResourceTypeDataset, nil

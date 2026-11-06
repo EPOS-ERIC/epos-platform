@@ -1805,6 +1805,47 @@ func (s DatasetAccessRight) Validate() error {
 	}
 }
 
+func (s DatasetAccrualPeriodicity) Validate() error {
+	switch s {
+	case "TRIENNIAL":
+		return nil
+	case "BIENNIAL":
+		return nil
+	case "ANNUAL":
+		return nil
+	case "SEMIANNUAL":
+		return nil
+	case "THREE_TIMES_A_YEAR":
+		return nil
+	case "QUARTERLY":
+		return nil
+	case "BIMONTHLY":
+		return nil
+	case "MONTHLY":
+		return nil
+	case "SEMIMONTHLY":
+		return nil
+	case "BIWEEKLY":
+		return nil
+	case "THREE_TIMES_A_MONTH":
+		return nil
+	case "WEEKLY":
+		return nil
+	case "SEMIWEEKLY":
+		return nil
+	case "THREE_TIMES_A_WEEK":
+		return nil
+	case "DAILY":
+		return nil
+	case "CONTINUOUS":
+		return nil
+	case "IRREGULAR":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *DatasetDiscoveryItem) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -1934,6 +1975,24 @@ func (s *DatasetDraftMetadata) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "keywords",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.AccrualPeriodicity.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "accrual_periodicity",
 			Error: err,
 		})
 	}
@@ -2101,6 +2160,24 @@ func (s *DatasetResourceMetadata) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "keywords",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.AccrualPeriodicity.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "accrual_periodicity",
 			Error: err,
 		})
 	}

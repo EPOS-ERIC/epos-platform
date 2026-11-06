@@ -441,11 +441,31 @@ export type DatasetAccessRight =
   | "SENSITIVE"
   | null;
 
+export type DatasetAccrualPeriodicity =
+  | "TRIENNIAL"
+  | "BIENNIAL"
+  | "ANNUAL"
+  | "SEMIANNUAL"
+  | "THREE_TIMES_A_YEAR"
+  | "QUARTERLY"
+  | "BIMONTHLY"
+  | "MONTHLY"
+  | "SEMIMONTHLY"
+  | "BIWEEKLY"
+  | "THREE_TIMES_A_MONTH"
+  | "WEEKLY"
+  | "SEMIWEEKLY"
+  | "THREE_TIMES_A_WEEK"
+  | "DAILY"
+  | "CONTINUOUS"
+  | "IRREGULAR"
+  | null;
+
 export type DatasetDraftMetadata = {
   title: NonBlankString;
   description: NonBlankString;
   keywords?: Keyword[];
-  accrual_periodicity?: string | null;
+  accrual_periodicity?: DatasetAccrualPeriodicity;
   quality_annotation?: string | null;
   access_right?: DatasetAccessRight;
   distributions?: DistributionDraft[];
@@ -1721,7 +1741,7 @@ export type DatasetResourceMetadata = {
   title: string;
   description: string;
   keywords: Keyword[];
-  accrual_periodicity?: string | null;
+  accrual_periodicity?: DatasetAccrualPeriodicity;
   quality_annotation?: string | null;
   access_right?: DatasetAccessRight;
   distributions: Distribution[];

@@ -764,7 +764,7 @@ func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.
 		Title:              value.Title,
 		Description:        value.Description,
 		Keywords:           value.Keywords,
-		AccrualPeriodicity: value.AccrualPeriodicity,
+		AccrualPeriodicity: toProtoAccrualPeriodicity(value.AccrualPeriodicity),
 		QualityAnnotation:  value.QualityAnnotation,
 		AccessRight:        datasetAccessRightOutput(value.AccessRight),
 		SpatialCoverage:    geometryString(value.SpatialCoverage),
@@ -902,7 +902,7 @@ func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribu
 		Title:       value.Title,
 		Description: value.Description,
 		License:     value.License,
-		Type:        string(value.Type),
+		Type:        toProtoDistributionType(value.Type),
 		ByteSize:    value.ByteSize,
 	}
 	if value.DownloadableFile != nil {
@@ -1136,6 +1136,10 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
+	accrualPeriodicity, err := toDomainAccrualPeriodicity(value.AccrualPeriodicity)
+	if err != nil {
+		return domain.DatasetInput{}, err
+	}
 	temporal, err := temporalInput(value.GetTemporalCoverage())
 	if err != nil {
 		return domain.DatasetInput{}, fmt.Errorf("map temporal coverage: %w", apperror.PrefixTarget(err, "temporal_coverage"))
@@ -1169,7 +1173,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 		Title:                      value.GetTitle(),
 		Description:                value.GetDescription(),
 		Keywords:                   value.GetKeywords(),
-		AccrualPeriodicity:         value.AccrualPeriodicity,
+		AccrualPeriodicity:         accrualPeriodicity,
 		QualityAnnotation:          value.QualityAnnotation,
 		AccessRight:                accessRight,
 		Distributions:              distributions,
@@ -1198,9 +1202,13 @@ func distributionInput(value *metadatalifecyclev1.DistributionInput) (domain.Dis
 		Title:       value.GetTitle(),
 		Description: value.GetDescription(),
 		License:     value.License,
-		Type:        domain.DistributionType(value.GetType()),
 		ByteSize:    value.ByteSize,
 	}
+	distributionType, err := toDomainDistributionType(value.GetType())
+	if err != nil {
+		return domain.DistributionInput{}, err
+	}
+	result.Type = distributionType
 	if value.ResourceId != nil {
 		id, err := parseUUIDAt(*value.ResourceId, "distribution resource ID", "resource_id")
 		if err != nil {

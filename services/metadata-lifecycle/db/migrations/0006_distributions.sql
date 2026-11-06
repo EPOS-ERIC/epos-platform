@@ -1,5 +1,7 @@
 -- +goose Up
 
+CREATE TYPE distribution_type AS ENUM ('WEB_SERVICE', 'DOWNLOADABLE_FILE');
+
 CREATE TABLE distributions (
     -- Version-owned distribution identity
     id                       uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -13,7 +15,7 @@ CREATE TABLE distributions (
     byte_size                integer,
 
     -- Delivery method. Constraint below requires one complete representation.
-    type                     text NOT NULL,
+    type                     distribution_type NOT NULL,
     downloadable_file_url    nonblank_text_opt,
     downloadable_file_format nonblank_text_opt,
     web_service_id           uuid UNIQUE REFERENCES web_services(id) ON DELETE CASCADE,
@@ -72,3 +74,4 @@ FOR EACH ROW EXECUTE FUNCTION validate_web_service_distribution();
 DROP TABLE IF EXISTS distributions;
 DROP TRIGGER IF EXISTS web_service_distribution_owner ON web_services;
 DROP FUNCTION IF EXISTS validate_web_service_distribution();
+DROP TYPE IF EXISTS distribution_type;

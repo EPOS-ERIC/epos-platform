@@ -205,11 +205,38 @@ enum DatasetAccessRight {
   DATASET_ACCESS_RIGHT_SENSITIVE = 7;
 }
 
+enum DatasetAccrualPeriodicity {
+  DATASET_ACCRUAL_PERIODICITY_UNSPECIFIED = 0;
+  DATASET_ACCRUAL_PERIODICITY_TRIENNIAL = 1;
+  DATASET_ACCRUAL_PERIODICITY_BIENNIAL = 2;
+  DATASET_ACCRUAL_PERIODICITY_ANNUAL = 3;
+  DATASET_ACCRUAL_PERIODICITY_SEMIANNUAL = 4;
+  DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_YEAR = 5;
+  DATASET_ACCRUAL_PERIODICITY_QUARTERLY = 6;
+  DATASET_ACCRUAL_PERIODICITY_BIMONTHLY = 7;
+  DATASET_ACCRUAL_PERIODICITY_MONTHLY = 8;
+  DATASET_ACCRUAL_PERIODICITY_SEMIMONTHLY = 9;
+  DATASET_ACCRUAL_PERIODICITY_BIWEEKLY = 10;
+  DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_MONTH = 11;
+  DATASET_ACCRUAL_PERIODICITY_WEEKLY = 12;
+  DATASET_ACCRUAL_PERIODICITY_SEMIWEEKLY = 13;
+  DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_WEEK = 14;
+  DATASET_ACCRUAL_PERIODICITY_DAILY = 15;
+  DATASET_ACCRUAL_PERIODICITY_CONTINUOUS = 16;
+  DATASET_ACCRUAL_PERIODICITY_IRREGULAR = 17;
+}
+
+enum DistributionType {
+  DISTRIBUTION_TYPE_UNSPECIFIED = 0;
+  DISTRIBUTION_TYPE_WEB_SERVICE = 1;
+  DISTRIBUTION_TYPE_DOWNLOADABLE_FILE = 2;
+}
+
 message DatasetResourceMetadata {
   string title = 2 [(buf.validate.field).string.min_len = 1];
   string description = 3 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
-  optional string accrual_periodicity = 5 [(buf.validate.field).string.min_len = 1];
+  optional DatasetAccrualPeriodicity accrual_periodicity = 5 [(buf.validate.field).enum.defined_only = true];
   optional string quality_annotation = 6 [(buf.validate.field).string.min_len = 1];
   optional DatasetAccessRight access_right = 7 [(buf.validate.field).enum.defined_only = true];
   repeated Distribution distributions = 8;
@@ -293,7 +320,7 @@ message DatasetInput {
   string title = 1 [(buf.validate.field).string.min_len = 1];
   string description = 2 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 3 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
-  optional string accrual_periodicity = 4 [(buf.validate.field).string.min_len = 1];
+  optional DatasetAccrualPeriodicity accrual_periodicity = 4 [(buf.validate.field).enum.defined_only = true];
   optional string quality_annotation = 5 [(buf.validate.field).string.min_len = 1];
   optional DatasetAccessRight access_right = 6 [(buf.validate.field).enum.defined_only = true];
   repeated DistributionInput distributions = 7;
@@ -314,8 +341,7 @@ message DistributionInput {
   string title = 1 [(buf.validate.field).string.min_len = 1];
   string description = 2 [(buf.validate.field).string.min_len = 1];
   optional string license = 3 [(buf.validate.field).string.min_len = 1];
-  // TODO: this can be either downloadable file or web service, use an enum like in the db
-  string type = 4;
+  DistributionType type = 4 [(buf.validate.field).enum.defined_only = true];
   optional int64 byte_size = 7 [(buf.validate.field).int64.gte = 1];
   oneof delivery {
     option (buf.validate.oneof).required = true;
@@ -329,7 +355,7 @@ message Distribution {
   string title = 1 [(buf.validate.field).string.min_len = 1];
   string description = 2 [(buf.validate.field).string.min_len = 1];
   optional string license = 3 [(buf.validate.field).string.min_len = 1];
-  string type = 4 [(buf.validate.field).string.min_len = 1];
+  DistributionType type = 4 [(buf.validate.field).enum.defined_only = true];
   optional int64 byte_size = 7 [(buf.validate.field).int64.gte = 1];
   oneof delivery {
     WebService web_service = 8;

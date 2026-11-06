@@ -10,6 +10,25 @@ CREATE TYPE dataset_access_right AS ENUM (
     'CONFIDENTIAL',
     'SENSITIVE'
 );
+CREATE TYPE dataset_accrual_periodicity AS ENUM (
+    'TRIENNIAL',
+    'BIENNIAL',
+    'ANNUAL',
+    'SEMIANNUAL',
+    'THREE_TIMES_A_YEAR',
+    'QUARTERLY',
+    'BIMONTHLY',
+    'MONTHLY',
+    'SEMIMONTHLY',
+    'BIWEEKLY',
+    'THREE_TIMES_A_MONTH',
+    'WEEKLY',
+    'SEMIWEEKLY',
+    'THREE_TIMES_A_WEEK',
+    'DAILY',
+    'CONTINUOUS',
+    'IRREGULAR'
+);
 
 CREATE TABLE datasets (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -41,7 +60,7 @@ CREATE TABLE dataset_versions (
     title               nonblank_text NOT NULL,
     description         nonblank_text NOT NULL,
     keywords            nonblank_text[] NOT NULL DEFAULT '{}',
-    accrual_periodicity nonblank_text_opt,
+    accrual_periodicity dataset_accrual_periodicity,
     quality_annotation  nonblank_text_opt,
     access_right        dataset_access_right,
     -- Source timestamps describe upstream dataset metadata. They are distinct
@@ -192,3 +211,4 @@ CREATE UNIQUE INDEX software_source_code_versions_published_uq ON software_sourc
 DROP TABLE IF EXISTS software_source_code_versions, software_application_versions, dataset_versions, software_source_codes, software_applications, datasets;
 DROP TYPE IF EXISTS resource_status;
 DROP TYPE IF EXISTS dataset_access_right;
+DROP TYPE IF EXISTS dataset_accrual_periodicity;

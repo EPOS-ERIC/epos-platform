@@ -412,7 +412,16 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 	}
 
 	if value := m.optionalString(source, dctAccrualPeriodicity); value != "" {
-		dataset.AccrualPeriodicity = &value
+		if periodicity, ok := accrualPeriodicity(value); ok {
+			dataset.AccrualPeriodicity = &periodicity
+		} else {
+			m.addWarning(domain.ImportDiagnostic{
+				Severity:  domain.ImportSeverityWarning,
+				Subject:   source,
+				Predicate: dctAccrualPeriodicity,
+				Message:   fmt.Sprintf("accrual periodicity %q omitted: value is not supported", value),
+			})
+		}
 	}
 
 	if annotation, ok := m.firstString(source, dqvHasQualityAnnotation); ok {
@@ -495,6 +504,51 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 	}
 
 	return dataset, nil
+}
+
+func accrualPeriodicity(value string) (domain.AccrualPeriodicity, bool) {
+	const uriPrefix = "http://purl.org/cld/freq/"
+	if !strings.HasPrefix(value, uriPrefix) {
+		return "", false
+	}
+	switch strings.TrimPrefix(value, uriPrefix) {
+	case "triennial":
+		return domain.AccrualPeriodicityTriennial, true
+	case "biennial":
+		return domain.AccrualPeriodicityBiennial, true
+	case "annual":
+		return domain.AccrualPeriodicityAnnual, true
+	case "semiannual":
+		return domain.AccrualPeriodicitySemiannual, true
+	case "threeTimesAYear":
+		return domain.AccrualPeriodicityThreeTimesAYear, true
+	case "quarterly":
+		return domain.AccrualPeriodicityQuarterly, true
+	case "bimonthly":
+		return domain.AccrualPeriodicityBimonthly, true
+	case "monthly":
+		return domain.AccrualPeriodicityMonthly, true
+	case "semimonthly":
+		return domain.AccrualPeriodicitySemimonthly, true
+	case "biweekly":
+		return domain.AccrualPeriodicityBiweekly, true
+	case "threeTimesAMonth":
+		return domain.AccrualPeriodicityThreeTimesAMonth, true
+	case "weekly":
+		return domain.AccrualPeriodicityWeekly, true
+	case "semiweekly":
+		return domain.AccrualPeriodicitySemiweekly, true
+	case "threeTimesAWeek":
+		return domain.AccrualPeriodicityThreeTimesAWeek, true
+	case "daily":
+		return domain.AccrualPeriodicityDaily, true
+	case "continuous":
+		return domain.AccrualPeriodicityContinuous, true
+	case "irregular":
+		return domain.AccrualPeriodicityIrregular, true
+	default:
+		return "", false
+	}
 }
 
 func (m *mapper) importedDescription(source, predicate, kind, title string) string {

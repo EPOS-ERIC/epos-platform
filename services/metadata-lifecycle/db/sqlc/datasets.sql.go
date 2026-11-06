@@ -204,7 +204,7 @@ type AddLifecycleDistributionParams struct {
 	Description            string
 	License                *string
 	ByteSize               *int32
-	Type                   string
+	Type                   DistributionType
 	DownloadableFileUrl    *string
 	DownloadableFileFormat *string
 	WebServiceID           *uuid.UUID
@@ -1820,7 +1820,7 @@ type CreateLifecycleDatasetVersionParams struct {
 	Title                      string
 	Description                string
 	Keywords                   []string
-	AccrualPeriodicity         *string
+	AccrualPeriodicity         *DatasetAccrualPeriodicity
 	QualityAnnotation          *string
 	AccessRight                *DatasetAccessRight
 	SourceCreatedAt            *time.Time
@@ -2235,7 +2235,7 @@ type GetLifecycleDatasetVersionRow struct {
 	Title                      string
 	Description                string
 	Keywords                   []string
-	AccrualPeriodicity         *string
+	AccrualPeriodicity         *DatasetAccrualPeriodicity
 	QualityAnnotation          *string
 	AccessRight                *DatasetAccessRight
 	SourceCreatedAt            *time.Time
@@ -3692,7 +3692,7 @@ type ReplaceLifecycleDatasetDraftParams struct {
 	Title                      string
 	Description                string
 	Keywords                   []string
-	AccrualPeriodicity         *string
+	AccrualPeriodicity         *DatasetAccrualPeriodicity
 	QualityAnnotation          *string
 	AccessRight                *DatasetAccessRight
 	SourceCreatedAt            *time.Time

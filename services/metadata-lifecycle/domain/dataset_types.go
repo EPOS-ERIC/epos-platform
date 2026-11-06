@@ -29,12 +29,48 @@ func (value AccessRight) Valid() bool {
 	}
 }
 
+type AccrualPeriodicity string
+
+const (
+	AccrualPeriodicityTriennial        AccrualPeriodicity = "TRIENNIAL"
+	AccrualPeriodicityBiennial         AccrualPeriodicity = "BIENNIAL"
+	AccrualPeriodicityAnnual           AccrualPeriodicity = "ANNUAL"
+	AccrualPeriodicitySemiannual       AccrualPeriodicity = "SEMIANNUAL"
+	AccrualPeriodicityThreeTimesAYear  AccrualPeriodicity = "THREE_TIMES_A_YEAR"
+	AccrualPeriodicityQuarterly        AccrualPeriodicity = "QUARTERLY"
+	AccrualPeriodicityBimonthly        AccrualPeriodicity = "BIMONTHLY"
+	AccrualPeriodicityMonthly          AccrualPeriodicity = "MONTHLY"
+	AccrualPeriodicitySemimonthly      AccrualPeriodicity = "SEMIMONTHLY"
+	AccrualPeriodicityBiweekly         AccrualPeriodicity = "BIWEEKLY"
+	AccrualPeriodicityThreeTimesAMonth AccrualPeriodicity = "THREE_TIMES_A_MONTH"
+	AccrualPeriodicityWeekly           AccrualPeriodicity = "WEEKLY"
+	AccrualPeriodicitySemiweekly       AccrualPeriodicity = "SEMIWEEKLY"
+	AccrualPeriodicityThreeTimesAWeek  AccrualPeriodicity = "THREE_TIMES_A_WEEK"
+	AccrualPeriodicityDaily            AccrualPeriodicity = "DAILY"
+	AccrualPeriodicityContinuous       AccrualPeriodicity = "CONTINUOUS"
+	AccrualPeriodicityIrregular        AccrualPeriodicity = "IRREGULAR"
+)
+
+func (value AccrualPeriodicity) Valid() bool {
+	switch value {
+	case AccrualPeriodicityTriennial, AccrualPeriodicityBiennial, AccrualPeriodicityAnnual,
+		AccrualPeriodicitySemiannual, AccrualPeriodicityThreeTimesAYear, AccrualPeriodicityQuarterly,
+		AccrualPeriodicityBimonthly, AccrualPeriodicityMonthly, AccrualPeriodicitySemimonthly,
+		AccrualPeriodicityBiweekly, AccrualPeriodicityThreeTimesAMonth, AccrualPeriodicityWeekly,
+		AccrualPeriodicitySemiweekly, AccrualPeriodicityThreeTimesAWeek, AccrualPeriodicityDaily,
+		AccrualPeriodicityContinuous, AccrualPeriodicityIrregular:
+		return true
+	default:
+		return false
+	}
+}
+
 // DatasetInput contains caller-controlled dataset version fields.
 type DatasetInput struct {
 	Title                      string
 	Description                string
 	Keywords                   []string
-	AccrualPeriodicity         *string
+	AccrualPeriodicity         *AccrualPeriodicity
 	QualityAnnotation          *string
 	AccessRight                *AccessRight
 	Distributions              []DistributionInput
@@ -66,7 +102,7 @@ type DatasetMetadata struct {
 	Title                      string
 	Description                string
 	Keywords                   []string
-	AccrualPeriodicity         *string
+	AccrualPeriodicity         *AccrualPeriodicity
 	QualityAnnotation          *string
 	AccessRight                *AccessRight
 	Distributions              []Distribution

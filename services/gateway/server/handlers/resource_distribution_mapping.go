@@ -16,6 +16,9 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 	}
 	switch {
 	case value.GetDownloadableFile() != nil:
+		if value.GetType() != metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_DOWNLOADABLE_FILE {
+			return gatewayapi.Distribution{}, fmt.Errorf("upstream distribution type does not match downloadable-file delivery")
+		}
 		v := value.GetDownloadableFile()
 		id, err := parseUUID("downloadable_file_distribution.id", value.Id)
 		if err != nil {
@@ -27,7 +30,7 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 			Title:       value.Title,
 			Description: value.Description,
 			License:     toAPINilString(value.License),
-			Type:        gatewayapi.DownloadableFileDistributionType(value.Type),
+			Type:        gatewayapi.DownloadableFileDistributionTypeDOWNLOADABLEFILE,
 			ByteSize:    toAPINilInt64(value.ByteSize),
 			DownloadableFile: gatewayapi.DownloadableFile{
 				URL:    gatewayapi.NonBlankString(v.Url),
@@ -35,6 +38,9 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 			},
 		}), nil
 	case value.GetWebService() != nil:
+		if value.GetType() != metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_WEB_SERVICE {
+			return gatewayapi.Distribution{}, fmt.Errorf("upstream distribution type does not match web-service delivery")
+		}
 		v := value.GetWebService()
 		id, err := parseUUID("web_service_distribution.id", value.Id)
 		if err != nil {
@@ -54,7 +60,7 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 			Title:            value.Title,
 			Description:      value.Description,
 			License:          toAPINilString(value.License),
-			Type:             gatewayapi.WebServiceDistributionType(value.Type),
+			Type:             gatewayapi.WebServiceDistributionTypeWEBSERVICE,
 			ByteSize:         toAPINilInt64(value.ByteSize),
 			WebService:       webService,
 			AvailableFormats: formats,

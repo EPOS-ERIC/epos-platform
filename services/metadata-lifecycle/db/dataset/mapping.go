@@ -24,7 +24,7 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 		Title:                      value.Title,
 		Description:                value.Description,
 		Keywords:                   value.Keywords,
-		AccrualPeriodicity:         value.AccrualPeriodicity,
+		AccrualPeriodicity:         (*sqlc.DatasetAccrualPeriodicity)(value.AccrualPeriodicity),
 		QualityAnnotation:          value.QualityAnnotation,
 		AccessRight:                (*sqlc.DatasetAccessRight)(value.AccessRight),
 		SourceCreatedAt:            value.SourceCreated,

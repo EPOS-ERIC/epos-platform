@@ -2484,6 +2484,153 @@ func (s *DatasetAccessRight) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/DatasetAccrualPeriodicity
+type DatasetAccrualPeriodicity string
+
+const (
+	DatasetAccrualPeriodicityTRIENNIAL        DatasetAccrualPeriodicity = "TRIENNIAL"
+	DatasetAccrualPeriodicityBIENNIAL         DatasetAccrualPeriodicity = "BIENNIAL"
+	DatasetAccrualPeriodicityANNUAL           DatasetAccrualPeriodicity = "ANNUAL"
+	DatasetAccrualPeriodicitySEMIANNUAL       DatasetAccrualPeriodicity = "SEMIANNUAL"
+	DatasetAccrualPeriodicityTHREETIMESAYEAR  DatasetAccrualPeriodicity = "THREE_TIMES_A_YEAR"
+	DatasetAccrualPeriodicityQUARTERLY        DatasetAccrualPeriodicity = "QUARTERLY"
+	DatasetAccrualPeriodicityBIMONTHLY        DatasetAccrualPeriodicity = "BIMONTHLY"
+	DatasetAccrualPeriodicityMONTHLY          DatasetAccrualPeriodicity = "MONTHLY"
+	DatasetAccrualPeriodicitySEMIMONTHLY      DatasetAccrualPeriodicity = "SEMIMONTHLY"
+	DatasetAccrualPeriodicityBIWEEKLY         DatasetAccrualPeriodicity = "BIWEEKLY"
+	DatasetAccrualPeriodicityTHREETIMESAMONTH DatasetAccrualPeriodicity = "THREE_TIMES_A_MONTH"
+	DatasetAccrualPeriodicityWEEKLY           DatasetAccrualPeriodicity = "WEEKLY"
+	DatasetAccrualPeriodicitySEMIWEEKLY       DatasetAccrualPeriodicity = "SEMIWEEKLY"
+	DatasetAccrualPeriodicityTHREETIMESAWEEK  DatasetAccrualPeriodicity = "THREE_TIMES_A_WEEK"
+	DatasetAccrualPeriodicityDAILY            DatasetAccrualPeriodicity = "DAILY"
+	DatasetAccrualPeriodicityCONTINUOUS       DatasetAccrualPeriodicity = "CONTINUOUS"
+	DatasetAccrualPeriodicityIRREGULAR        DatasetAccrualPeriodicity = "IRREGULAR"
+)
+
+// AllValues returns all DatasetAccrualPeriodicity values.
+func (DatasetAccrualPeriodicity) AllValues() []DatasetAccrualPeriodicity {
+	return []DatasetAccrualPeriodicity{
+		DatasetAccrualPeriodicityTRIENNIAL,
+		DatasetAccrualPeriodicityBIENNIAL,
+		DatasetAccrualPeriodicityANNUAL,
+		DatasetAccrualPeriodicitySEMIANNUAL,
+		DatasetAccrualPeriodicityTHREETIMESAYEAR,
+		DatasetAccrualPeriodicityQUARTERLY,
+		DatasetAccrualPeriodicityBIMONTHLY,
+		DatasetAccrualPeriodicityMONTHLY,
+		DatasetAccrualPeriodicitySEMIMONTHLY,
+		DatasetAccrualPeriodicityBIWEEKLY,
+		DatasetAccrualPeriodicityTHREETIMESAMONTH,
+		DatasetAccrualPeriodicityWEEKLY,
+		DatasetAccrualPeriodicitySEMIWEEKLY,
+		DatasetAccrualPeriodicityTHREETIMESAWEEK,
+		DatasetAccrualPeriodicityDAILY,
+		DatasetAccrualPeriodicityCONTINUOUS,
+		DatasetAccrualPeriodicityIRREGULAR,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DatasetAccrualPeriodicity) MarshalText() ([]byte, error) {
+	switch s {
+	case DatasetAccrualPeriodicityTRIENNIAL:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityBIENNIAL:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityANNUAL:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicitySEMIANNUAL:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityTHREETIMESAYEAR:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityQUARTERLY:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityBIMONTHLY:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityMONTHLY:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicitySEMIMONTHLY:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityBIWEEKLY:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityTHREETIMESAMONTH:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityWEEKLY:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicitySEMIWEEKLY:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityTHREETIMESAWEEK:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityDAILY:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityCONTINUOUS:
+		return []byte(s), nil
+	case DatasetAccrualPeriodicityIRREGULAR:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DatasetAccrualPeriodicity) UnmarshalText(data []byte) error {
+	switch DatasetAccrualPeriodicity(data) {
+	case DatasetAccrualPeriodicityTRIENNIAL:
+		*s = DatasetAccrualPeriodicityTRIENNIAL
+		return nil
+	case DatasetAccrualPeriodicityBIENNIAL:
+		*s = DatasetAccrualPeriodicityBIENNIAL
+		return nil
+	case DatasetAccrualPeriodicityANNUAL:
+		*s = DatasetAccrualPeriodicityANNUAL
+		return nil
+	case DatasetAccrualPeriodicitySEMIANNUAL:
+		*s = DatasetAccrualPeriodicitySEMIANNUAL
+		return nil
+	case DatasetAccrualPeriodicityTHREETIMESAYEAR:
+		*s = DatasetAccrualPeriodicityTHREETIMESAYEAR
+		return nil
+	case DatasetAccrualPeriodicityQUARTERLY:
+		*s = DatasetAccrualPeriodicityQUARTERLY
+		return nil
+	case DatasetAccrualPeriodicityBIMONTHLY:
+		*s = DatasetAccrualPeriodicityBIMONTHLY
+		return nil
+	case DatasetAccrualPeriodicityMONTHLY:
+		*s = DatasetAccrualPeriodicityMONTHLY
+		return nil
+	case DatasetAccrualPeriodicitySEMIMONTHLY:
+		*s = DatasetAccrualPeriodicitySEMIMONTHLY
+		return nil
+	case DatasetAccrualPeriodicityBIWEEKLY:
+		*s = DatasetAccrualPeriodicityBIWEEKLY
+		return nil
+	case DatasetAccrualPeriodicityTHREETIMESAMONTH:
+		*s = DatasetAccrualPeriodicityTHREETIMESAMONTH
+		return nil
+	case DatasetAccrualPeriodicityWEEKLY:
+		*s = DatasetAccrualPeriodicityWEEKLY
+		return nil
+	case DatasetAccrualPeriodicitySEMIWEEKLY:
+		*s = DatasetAccrualPeriodicitySEMIWEEKLY
+		return nil
+	case DatasetAccrualPeriodicityTHREETIMESAWEEK:
+		*s = DatasetAccrualPeriodicityTHREETIMESAWEEK
+		return nil
+	case DatasetAccrualPeriodicityDAILY:
+		*s = DatasetAccrualPeriodicityDAILY
+		return nil
+	case DatasetAccrualPeriodicityCONTINUOUS:
+		*s = DatasetAccrualPeriodicityCONTINUOUS
+		return nil
+	case DatasetAccrualPeriodicityIRREGULAR:
+		*s = DatasetAccrualPeriodicityIRREGULAR
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/DatasetDiscoveryItem
 type DatasetDiscoveryItem struct {
 	Type       DatasetDiscoveryItemType `json:"type"`
@@ -2657,13 +2804,13 @@ func (s *DatasetDiscoveryItemType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/DatasetDraftMetadata
 type DatasetDraftMetadata struct {
-	Title              NonBlankString           `json:"title"`
-	Description        NonBlankString           `json:"description"`
-	Keywords           []Keyword                `json:"keywords"`
-	AccrualPeriodicity OptNilString             `json:"accrual_periodicity"`
-	QualityAnnotation  OptNilString             `json:"quality_annotation"`
-	AccessRight        OptNilDatasetAccessRight `json:"access_right"`
-	Distributions      []DistributionDraft      `json:"distributions"`
+	Title              NonBlankString                  `json:"title"`
+	Description        NonBlankString                  `json:"description"`
+	Keywords           []Keyword                       `json:"keywords"`
+	AccrualPeriodicity OptNilDatasetAccrualPeriodicity `json:"accrual_periodicity"`
+	QualityAnnotation  OptNilString                    `json:"quality_annotation"`
+	AccessRight        OptNilDatasetAccessRight        `json:"access_right"`
+	Distributions      []DistributionDraft             `json:"distributions"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
@@ -2693,7 +2840,7 @@ func (s *DatasetDraftMetadata) GetKeywords() []Keyword {
 }
 
 // GetAccrualPeriodicity returns the value of AccrualPeriodicity.
-func (s *DatasetDraftMetadata) GetAccrualPeriodicity() OptNilString {
+func (s *DatasetDraftMetadata) GetAccrualPeriodicity() OptNilDatasetAccrualPeriodicity {
 	return s.AccrualPeriodicity
 }
 
@@ -2773,7 +2920,7 @@ func (s *DatasetDraftMetadata) SetKeywords(val []Keyword) {
 }
 
 // SetAccrualPeriodicity sets the value of AccrualPeriodicity.
-func (s *DatasetDraftMetadata) SetAccrualPeriodicity(val OptNilString) {
+func (s *DatasetDraftMetadata) SetAccrualPeriodicity(val OptNilDatasetAccrualPeriodicity) {
 	s.AccrualPeriodicity = val
 }
 
@@ -2843,7 +2990,7 @@ type DatasetResourceMetadata struct {
 	Title              string                              `json:"title"`
 	Description        string                              `json:"description"`
 	Keywords           []Keyword                           `json:"keywords"`
-	AccrualPeriodicity OptNilString                        `json:"accrual_periodicity"`
+	AccrualPeriodicity OptNilDatasetAccrualPeriodicity     `json:"accrual_periodicity"`
 	QualityAnnotation  OptNilString                        `json:"quality_annotation"`
 	AccessRight        OptNilDatasetAccessRight            `json:"access_right"`
 	Distributions      []Distribution                      `json:"distributions"`
@@ -2881,7 +3028,7 @@ func (s *DatasetResourceMetadata) GetKeywords() []Keyword {
 }
 
 // GetAccrualPeriodicity returns the value of AccrualPeriodicity.
-func (s *DatasetResourceMetadata) GetAccrualPeriodicity() OptNilString {
+func (s *DatasetResourceMetadata) GetAccrualPeriodicity() OptNilDatasetAccrualPeriodicity {
 	return s.AccrualPeriodicity
 }
 
@@ -2966,7 +3113,7 @@ func (s *DatasetResourceMetadata) SetKeywords(val []Keyword) {
 }
 
 // SetAccrualPeriodicity sets the value of AccrualPeriodicity.
-func (s *DatasetResourceMetadata) SetAccrualPeriodicity(val OptNilString) {
+func (s *DatasetResourceMetadata) SetAccrualPeriodicity(val OptNilDatasetAccrualPeriodicity) {
 	s.AccrualPeriodicity = val
 }
 
@@ -10087,6 +10234,74 @@ func (o OptNilDatasetAccessRight) Get() (v DatasetAccessRight, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilDatasetAccessRight) Or(d DatasetAccessRight) DatasetAccessRight {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilDatasetAccrualPeriodicity returns new OptNilDatasetAccrualPeriodicity with value set to v.
+func NewOptNilDatasetAccrualPeriodicity(v DatasetAccrualPeriodicity) OptNilDatasetAccrualPeriodicity {
+	return OptNilDatasetAccrualPeriodicity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilDatasetAccrualPeriodicity is optional nullable DatasetAccrualPeriodicity.
+type OptNilDatasetAccrualPeriodicity struct {
+	Value DatasetAccrualPeriodicity
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilDatasetAccrualPeriodicity was set.
+func (o OptNilDatasetAccrualPeriodicity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilDatasetAccrualPeriodicity) Reset() {
+	var v DatasetAccrualPeriodicity
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilDatasetAccrualPeriodicity) SetTo(v DatasetAccrualPeriodicity) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilDatasetAccrualPeriodicity) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilDatasetAccrualPeriodicity) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v DatasetAccrualPeriodicity
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilDatasetAccrualPeriodicity) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilDatasetAccrualPeriodicity) Get() (v DatasetAccrualPeriodicity, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilDatasetAccrualPeriodicity) Or(d DatasetAccrualPeriodicity) DatasetAccrualPeriodicity {
 	if v, ok := o.Get(); ok {
 		return v
 	}

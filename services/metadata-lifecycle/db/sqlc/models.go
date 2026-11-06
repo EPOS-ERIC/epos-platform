@@ -61,6 +61,105 @@ func (ns NullDatasetAccessRight) Value() (driver.Value, error) {
 	return string(ns.DatasetAccessRight), nil
 }
 
+type DatasetAccrualPeriodicity string
+
+const (
+	DatasetAccrualPeriodicityTRIENNIAL        DatasetAccrualPeriodicity = "TRIENNIAL"
+	DatasetAccrualPeriodicityBIENNIAL         DatasetAccrualPeriodicity = "BIENNIAL"
+	DatasetAccrualPeriodicityANNUAL           DatasetAccrualPeriodicity = "ANNUAL"
+	DatasetAccrualPeriodicitySEMIANNUAL       DatasetAccrualPeriodicity = "SEMIANNUAL"
+	DatasetAccrualPeriodicityTHREETIMESAYEAR  DatasetAccrualPeriodicity = "THREE_TIMES_A_YEAR"
+	DatasetAccrualPeriodicityQUARTERLY        DatasetAccrualPeriodicity = "QUARTERLY"
+	DatasetAccrualPeriodicityBIMONTHLY        DatasetAccrualPeriodicity = "BIMONTHLY"
+	DatasetAccrualPeriodicityMONTHLY          DatasetAccrualPeriodicity = "MONTHLY"
+	DatasetAccrualPeriodicitySEMIMONTHLY      DatasetAccrualPeriodicity = "SEMIMONTHLY"
+	DatasetAccrualPeriodicityBIWEEKLY         DatasetAccrualPeriodicity = "BIWEEKLY"
+	DatasetAccrualPeriodicityTHREETIMESAMONTH DatasetAccrualPeriodicity = "THREE_TIMES_A_MONTH"
+	DatasetAccrualPeriodicityWEEKLY           DatasetAccrualPeriodicity = "WEEKLY"
+	DatasetAccrualPeriodicitySEMIWEEKLY       DatasetAccrualPeriodicity = "SEMIWEEKLY"
+	DatasetAccrualPeriodicityTHREETIMESAWEEK  DatasetAccrualPeriodicity = "THREE_TIMES_A_WEEK"
+	DatasetAccrualPeriodicityDAILY            DatasetAccrualPeriodicity = "DAILY"
+	DatasetAccrualPeriodicityCONTINUOUS       DatasetAccrualPeriodicity = "CONTINUOUS"
+	DatasetAccrualPeriodicityIRREGULAR        DatasetAccrualPeriodicity = "IRREGULAR"
+)
+
+func (e *DatasetAccrualPeriodicity) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DatasetAccrualPeriodicity(s)
+	case string:
+		*e = DatasetAccrualPeriodicity(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DatasetAccrualPeriodicity: %T", src)
+	}
+	return nil
+}
+
+type NullDatasetAccrualPeriodicity struct {
+	DatasetAccrualPeriodicity DatasetAccrualPeriodicity
+	Valid                     bool // Valid is true if DatasetAccrualPeriodicity is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDatasetAccrualPeriodicity) Scan(value interface{}) error {
+	if value == nil {
+		ns.DatasetAccrualPeriodicity, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DatasetAccrualPeriodicity.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDatasetAccrualPeriodicity) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DatasetAccrualPeriodicity), nil
+}
+
+type DistributionType string
+
+const (
+	DistributionTypeWEBSERVICE       DistributionType = "WEB_SERVICE"
+	DistributionTypeDOWNLOADABLEFILE DistributionType = "DOWNLOADABLE_FILE"
+)
+
+func (e *DistributionType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DistributionType(s)
+	case string:
+		*e = DistributionType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DistributionType: %T", src)
+	}
+	return nil
+}
+
+type NullDistributionType struct {
+	DistributionType DistributionType
+	Valid            bool // Valid is true if DistributionType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDistributionType) Scan(value interface{}) error {
+	if value == nil {
+		ns.DistributionType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DistributionType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDistributionType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DistributionType), nil
+}
+
 type MembershipRole string
 
 const (
@@ -751,7 +850,7 @@ type DatasetVersion struct {
 	Title                      string
 	Description                string
 	Keywords                   []string
-	AccrualPeriodicity         *string
+	AccrualPeriodicity         *DatasetAccrualPeriodicity
 	QualityAnnotation          *string
 	AccessRight                *DatasetAccessRight
 	SourceCreatedAt            *time.Time
@@ -808,7 +907,7 @@ type Distribution struct {
 	Description            string
 	License                *string
 	ByteSize               *int32
-	Type                   string
+	Type                   DistributionType
 	DownloadableFileUrl    *string
 	DownloadableFileFormat *string
 	WebServiceID           *uuid.UUID

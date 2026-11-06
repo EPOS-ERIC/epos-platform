@@ -2995,6 +2995,30 @@ components:
       nullable: true
       enum: [NON_PUBLIC, NORMAL, OP_DATPRO, PUBLIC, RESTRICTED, CONFIDENTIAL, SENSITIVE]
 
+    DatasetAccrualPeriodicity:
+      type: string
+      nullable: true
+      enum:
+        [
+          TRIENNIAL,
+          BIENNIAL,
+          ANNUAL,
+          SEMIANNUAL,
+          THREE_TIMES_A_YEAR,
+          QUARTERLY,
+          BIMONTHLY,
+          MONTHLY,
+          SEMIMONTHLY,
+          BIWEEKLY,
+          THREE_TIMES_A_MONTH,
+          WEEKLY,
+          SEMIWEEKLY,
+          THREE_TIMES_A_WEEK,
+          DAILY,
+          CONTINUOUS,
+          IRREGULAR,
+        ]
+
     DatasetDraftMetadata:
       type: object
       additionalProperties: false
@@ -3005,7 +3029,7 @@ components:
         keywords:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
-        accrual_periodicity: { type: string, nullable: true }
+        accrual_periodicity: { $ref: "#/components/schemas/DatasetAccrualPeriodicity" }
         quality_annotation: { type: string, nullable: true }
         access_right: { $ref: "#/components/schemas/DatasetAccessRight" }
         distributions:
@@ -4247,7 +4271,7 @@ components:
         keywords:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
-        accrual_periodicity: { type: string, nullable: true }
+        accrual_periodicity: { $ref: "#/components/schemas/DatasetAccrualPeriodicity" }
         quality_annotation: { type: string, nullable: true }
         access_right: { $ref: "#/components/schemas/DatasetAccessRight" }
         distributions:

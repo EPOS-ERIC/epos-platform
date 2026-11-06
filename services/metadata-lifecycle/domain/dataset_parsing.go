@@ -20,7 +20,11 @@ func NewDatasetInput(value DatasetInput) (DatasetInput, error) {
 	if value.Description == "" {
 		return DatasetInput{}, invalidField("description", "Description must not be blank.", nil)
 	}
-	value.AccrualPeriodicity = optionalTrimmedString(value.AccrualPeriodicity)
+	accrualPeriodicity, err := optionalAccrualPeriodicity(value.AccrualPeriodicity)
+	if err != nil {
+		return DatasetInput{}, err
+	}
+	value.AccrualPeriodicity = accrualPeriodicity
 	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
 	accessRight, err := optionalAccessRight(value.AccessRight)
 	if err != nil {
@@ -118,7 +122,10 @@ func NewDatasetMetadata(value DatasetMetadata) (result DatasetMetadata, err erro
 	if value.Description == "" {
 		return DatasetMetadata{}, fmt.Errorf("dataset description is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	value.AccrualPeriodicity = optionalTrimmedString(value.AccrualPeriodicity)
+	value.AccrualPeriodicity, err = optionalAccrualPeriodicity(value.AccrualPeriodicity)
+	if err != nil {
+		return DatasetMetadata{}, fmt.Errorf("dataset accrual periodicity: %w", err)
+	}
 	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
 	value.AccessRight, err = optionalAccessRight(value.AccessRight)
 	if err != nil {
@@ -467,6 +474,20 @@ func optionalAccessRight(value *AccessRight) (*AccessRight, error) {
 	}
 	if !normalized.Valid() {
 		return nil, invalidField("access_right", "Access right is not supported.", nil)
+	}
+	return &normalized, nil
+}
+
+func optionalAccrualPeriodicity(value *AccrualPeriodicity) (*AccrualPeriodicity, error) {
+	if value == nil {
+		return nil, nil
+	}
+	normalized := AccrualPeriodicity(strings.ToUpper(strings.TrimSpace(string(*value))))
+	if normalized == "" {
+		return nil, nil
+	}
+	if !normalized.Valid() {
+		return nil, invalidField("accrual_periodicity", "Accrual periodicity is not supported.", nil)
 	}
 	return &normalized, nil
 }

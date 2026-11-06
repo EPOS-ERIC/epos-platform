@@ -187,15 +187,18 @@ func toAPIResourceMetadata(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.R
 func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatewayapi.DatasetResourceMetadata, error) {
 	var err error
 	result := gatewayapi.DatasetResourceMetadata{
-		ResourceType:       gatewayapi.DatasetResourceMetadataResourceTypeDataset,
-		Title:              v.GetTitle(),
-		Description:        v.GetDescription(),
-		Keywords:           toAPIKeywords(v.GetKeywords()),
-		AccrualPeriodicity: toAPINilString(v.AccrualPeriodicity),
-		QualityAnnotation:  toAPINilString(v.QualityAnnotation),
-		SpatialCoverage:    toAPINilString(v.SpatialCoverage),
-		Created:            toAPINilTime(v.Created),
-		Updated:            toAPINilTime(v.Updated),
+		ResourceType:      gatewayapi.DatasetResourceMetadataResourceTypeDataset,
+		Title:             v.GetTitle(),
+		Description:       v.GetDescription(),
+		Keywords:          toAPIKeywords(v.GetKeywords()),
+		QualityAnnotation: toAPINilString(v.QualityAnnotation),
+		SpatialCoverage:   toAPINilString(v.SpatialCoverage),
+		Created:           toAPINilTime(v.Created),
+		Updated:           toAPINilTime(v.Updated),
+	}
+	result.AccrualPeriodicity, err = toAPIDatasetAccrualPeriodicity(v.AccrualPeriodicity)
+	if err != nil {
+		return gatewayapi.DatasetResourceMetadata{}, err
 	}
 	result.AccessRight, err = toAPIDatasetAccessRight(v.AccessRight)
 	if err != nil {

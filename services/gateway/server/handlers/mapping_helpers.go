@@ -101,6 +101,109 @@ func toAPIDatasetAccessRight(value *metadatalifecyclev1.DatasetAccessRight) (gat
 	return result, nil
 }
 
+func toProtoDatasetAccrualPeriodicity(value gatewayapi.OptNilDatasetAccrualPeriodicity) (*metadatalifecyclev1.DatasetAccrualPeriodicity, error) {
+	if !value.Set || value.Null {
+		return nil, nil
+	}
+	var result metadatalifecyclev1.DatasetAccrualPeriodicity
+	switch value.Value {
+	case gatewayapi.DatasetAccrualPeriodicityTRIENNIAL:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_TRIENNIAL
+	case gatewayapi.DatasetAccrualPeriodicityBIENNIAL:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIENNIAL
+	case gatewayapi.DatasetAccrualPeriodicityANNUAL:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_ANNUAL
+	case gatewayapi.DatasetAccrualPeriodicitySEMIANNUAL:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIANNUAL
+	case gatewayapi.DatasetAccrualPeriodicityTHREETIMESAYEAR:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_YEAR
+	case gatewayapi.DatasetAccrualPeriodicityQUARTERLY:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_QUARTERLY
+	case gatewayapi.DatasetAccrualPeriodicityBIMONTHLY:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIMONTHLY
+	case gatewayapi.DatasetAccrualPeriodicityMONTHLY:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_MONTHLY
+	case gatewayapi.DatasetAccrualPeriodicitySEMIMONTHLY:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIMONTHLY
+	case gatewayapi.DatasetAccrualPeriodicityBIWEEKLY:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIWEEKLY
+	case gatewayapi.DatasetAccrualPeriodicityTHREETIMESAMONTH:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_MONTH
+	case gatewayapi.DatasetAccrualPeriodicityWEEKLY:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_WEEKLY
+	case gatewayapi.DatasetAccrualPeriodicitySEMIWEEKLY:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIWEEKLY
+	case gatewayapi.DatasetAccrualPeriodicityTHREETIMESAWEEK:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_WEEK
+	case gatewayapi.DatasetAccrualPeriodicityDAILY:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_DAILY
+	case gatewayapi.DatasetAccrualPeriodicityCONTINUOUS:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_CONTINUOUS
+	case gatewayapi.DatasetAccrualPeriodicityIRREGULAR:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_IRREGULAR
+	default:
+		return nil, fmt.Errorf("unsupported dataset accrual periodicity %q", value.Value)
+	}
+	return &result, nil
+}
+
+func toAPIDatasetAccrualPeriodicity(value *metadatalifecyclev1.DatasetAccrualPeriodicity) (gatewayapi.OptNilDatasetAccrualPeriodicity, error) {
+	result := gatewayapi.OptNilDatasetAccrualPeriodicity{}
+	if value == nil {
+		return result, nil
+	}
+	switch *value {
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_TRIENNIAL:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityTRIENNIAL)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIENNIAL:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityBIENNIAL)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_ANNUAL:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityANNUAL)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIANNUAL:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicitySEMIANNUAL)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_YEAR:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityTHREETIMESAYEAR)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_QUARTERLY:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityQUARTERLY)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIMONTHLY:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityBIMONTHLY)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_MONTHLY:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityMONTHLY)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIMONTHLY:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicitySEMIMONTHLY)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIWEEKLY:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityBIWEEKLY)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_MONTH:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityTHREETIMESAMONTH)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_WEEKLY:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityWEEKLY)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIWEEKLY:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicitySEMIWEEKLY)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_WEEK:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityTHREETIMESAWEEK)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_DAILY:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityDAILY)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_CONTINUOUS:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityCONTINUOUS)
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_IRREGULAR:
+		result.SetTo(gatewayapi.DatasetAccrualPeriodicityIRREGULAR)
+	default:
+		return gatewayapi.OptNilDatasetAccrualPeriodicity{}, fmt.Errorf("unsupported upstream dataset accrual periodicity %d", *value)
+	}
+	return result, nil
+}
+
+func toProtoDistributionType(value gatewayapi.DistributionDraftType) (metadatalifecyclev1.DistributionType, error) {
+	switch value {
+	case gatewayapi.WebServiceDistributionDraftDistributionDraft:
+		return metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_WEB_SERVICE, nil
+	case gatewayapi.DownloadableFileDistributionDraftDistributionDraft:
+		return metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_DOWNLOADABLE_FILE, nil
+	default:
+		return metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_UNSPECIFIED, fmt.Errorf("unsupported distribution type %q", value)
+	}
+}
+
 func parseUUID(field, value string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil {

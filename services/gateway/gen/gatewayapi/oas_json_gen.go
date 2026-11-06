@@ -5271,6 +5271,76 @@ func (s *DatasetAccessRight) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes DatasetAccrualPeriodicity as json.
+func (s DatasetAccrualPeriodicity) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes DatasetAccrualPeriodicity from json.
+func (s *DatasetAccrualPeriodicity) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DatasetAccrualPeriodicity to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch DatasetAccrualPeriodicity(v) {
+	case DatasetAccrualPeriodicityTRIENNIAL:
+		*s = DatasetAccrualPeriodicityTRIENNIAL
+	case DatasetAccrualPeriodicityBIENNIAL:
+		*s = DatasetAccrualPeriodicityBIENNIAL
+	case DatasetAccrualPeriodicityANNUAL:
+		*s = DatasetAccrualPeriodicityANNUAL
+	case DatasetAccrualPeriodicitySEMIANNUAL:
+		*s = DatasetAccrualPeriodicitySEMIANNUAL
+	case DatasetAccrualPeriodicityTHREETIMESAYEAR:
+		*s = DatasetAccrualPeriodicityTHREETIMESAYEAR
+	case DatasetAccrualPeriodicityQUARTERLY:
+		*s = DatasetAccrualPeriodicityQUARTERLY
+	case DatasetAccrualPeriodicityBIMONTHLY:
+		*s = DatasetAccrualPeriodicityBIMONTHLY
+	case DatasetAccrualPeriodicityMONTHLY:
+		*s = DatasetAccrualPeriodicityMONTHLY
+	case DatasetAccrualPeriodicitySEMIMONTHLY:
+		*s = DatasetAccrualPeriodicitySEMIMONTHLY
+	case DatasetAccrualPeriodicityBIWEEKLY:
+		*s = DatasetAccrualPeriodicityBIWEEKLY
+	case DatasetAccrualPeriodicityTHREETIMESAMONTH:
+		*s = DatasetAccrualPeriodicityTHREETIMESAMONTH
+	case DatasetAccrualPeriodicityWEEKLY:
+		*s = DatasetAccrualPeriodicityWEEKLY
+	case DatasetAccrualPeriodicitySEMIWEEKLY:
+		*s = DatasetAccrualPeriodicitySEMIWEEKLY
+	case DatasetAccrualPeriodicityTHREETIMESAWEEK:
+		*s = DatasetAccrualPeriodicityTHREETIMESAWEEK
+	case DatasetAccrualPeriodicityDAILY:
+		*s = DatasetAccrualPeriodicityDAILY
+	case DatasetAccrualPeriodicityCONTINUOUS:
+		*s = DatasetAccrualPeriodicityCONTINUOUS
+	case DatasetAccrualPeriodicityIRREGULAR:
+		*s = DatasetAccrualPeriodicityIRREGULAR
+	default:
+		*s = DatasetAccrualPeriodicity(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s DatasetAccrualPeriodicity) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DatasetAccrualPeriodicity) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode implements json.Marshaler.
 func (s *DatasetDiscoveryItem) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -18569,6 +18639,55 @@ func (s OptNilDatasetAccessRight) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptNilDatasetAccessRight) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes DatasetAccrualPeriodicity as json.
+func (o OptNilDatasetAccrualPeriodicity) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes DatasetAccrualPeriodicity from json.
+func (o *OptNilDatasetAccrualPeriodicity) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilDatasetAccrualPeriodicity to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v DatasetAccrualPeriodicity
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilDatasetAccrualPeriodicity) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilDatasetAccrualPeriodicity) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
