@@ -530,12 +530,10 @@ func TestAppendUniqueIdentifierDeduplicatesTypeAndValue(t *testing.T) {
 }
 
 func TestAppendUniqueParameterMergesConflictingDefaults(t *testing.T) {
-	firstDefault := "json"
-	secondDefault := "xml"
 	first := domain.WebServiceParameter{
 		Name: "format",
 		Schema: domain.StringSchema{
-			Default:        &firstDefault,
+			Default:        []string{"json"},
 			Enum:           []domain.StringEnumOption{{Value: "json"}},
 			MultipleValues: true,
 		},
@@ -544,7 +542,7 @@ func TestAppendUniqueParameterMergesConflictingDefaults(t *testing.T) {
 		Name:     "format",
 		Required: true,
 		Schema: domain.StringSchema{
-			Default: &secondDefault,
+			Default: []string{"xml"},
 			Enum:    []domain.StringEnumOption{{Value: "xml"}},
 		},
 	}
@@ -559,7 +557,7 @@ func TestAppendUniqueParameterMergesConflictingDefaults(t *testing.T) {
 	merged := values[0]
 	schema := merged.Schema.(domain.StringSchema)
 	if schema.Default != nil {
-		t.Fatalf("default = %q, want nil after conflict", *schema.Default)
+		t.Fatalf("default = %q, want nil after conflict", schema.Default)
 	}
 	if len(schema.Enum) != 2 || schema.Enum[0].Value != "json" || schema.Enum[1].Value != "xml" {
 		t.Fatalf("allowed values = %v, want [json xml]", schema.Enum)

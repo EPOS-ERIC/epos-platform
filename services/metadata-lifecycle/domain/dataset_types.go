@@ -460,7 +460,7 @@ type StringEnumOption struct {
 type StringSchema struct {
 	Pattern        *string
 	Enum           []StringEnumOption
-	Default        *string
+	Default        []string
 	MultipleValues bool
 }
 
@@ -473,16 +473,25 @@ func (value StringSchema) HasEnum() bool { return len(value.Enum) > 0 }
 // AllowsMultipleValues reports whether the schema expects an array.
 func (value StringSchema) AllowsMultipleValues() bool { return value.MultipleValues }
 
-// DefaultValue returns the string default, wrapped in an array for multi-value schemas.
-func (value StringSchema) DefaultValue() AccessValue {
-	if value.Default == nil {
+func defaultAccessValue[T any](defaults []T, multipleValues bool, scalar func(T) AccessScalar) AccessValue {
+	if len(defaults) == 0 {
 		return nil
 	}
-	result := AccessString(*value.Default)
-	if value.MultipleValues {
-		return AccessArray{result}
+	if !multipleValues {
+		return scalar(defaults[0])
+	}
+	result := make(AccessArray, len(defaults))
+	for i, item := range defaults {
+		result[i] = scalar(item)
 	}
 	return result
+}
+
+// DefaultValue returns the configured string defaults using the schema's value shape.
+func (value StringSchema) DefaultValue() AccessValue {
+	return defaultAccessValue(value.Default, value.MultipleValues, func(item string) AccessScalar {
+		return AccessString(item)
+	})
 }
 
 type BooleanSchema struct {
@@ -515,7 +524,7 @@ type IntegerSchema struct {
 	Minimum        *int64
 	Maximum        *int64
 	Enum           []IntegerEnumOption
-	Default        *int64
+	Default        []int64
 	MultipleValues bool
 }
 
@@ -528,16 +537,11 @@ func (value IntegerSchema) HasEnum() bool { return len(value.Enum) > 0 }
 // AllowsMultipleValues reports whether the schema expects an array.
 func (value IntegerSchema) AllowsMultipleValues() bool { return value.MultipleValues }
 
-// DefaultValue returns the integer default, wrapped in an array for multi-value schemas.
+// DefaultValue returns the configured integer defaults using the schema's value shape.
 func (value IntegerSchema) DefaultValue() AccessValue {
-	if value.Default == nil {
-		return nil
-	}
-	result := AccessInteger(*value.Default)
-	if value.MultipleValues {
-		return AccessArray{result}
-	}
-	return result
+	return defaultAccessValue(value.Default, value.MultipleValues, func(item int64) AccessScalar {
+		return AccessInteger(item)
+	})
 }
 
 type FloatEnumOption struct {
@@ -549,7 +553,7 @@ type FloatSchema struct {
 	Minimum        *float64
 	Maximum        *float64
 	Enum           []FloatEnumOption
-	Default        *float64
+	Default        []float64
 	MultipleValues bool
 }
 
@@ -562,16 +566,11 @@ func (value FloatSchema) HasEnum() bool { return len(value.Enum) > 0 }
 // AllowsMultipleValues reports whether the schema expects an array.
 func (value FloatSchema) AllowsMultipleValues() bool { return value.MultipleValues }
 
-// DefaultValue returns the float default, wrapped in an array for multi-value schemas.
+// DefaultValue returns the configured float defaults using the schema's value shape.
 func (value FloatSchema) DefaultValue() AccessValue {
-	if value.Default == nil {
-		return nil
-	}
-	result := AccessFloat(*value.Default)
-	if value.MultipleValues {
-		return AccessArray{result}
-	}
-	return result
+	return defaultAccessValue(value.Default, value.MultipleValues, func(item float64) AccessScalar {
+		return AccessFloat(item)
+	})
 }
 
 type DateTimeSchema struct {

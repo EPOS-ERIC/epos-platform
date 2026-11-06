@@ -16,6 +16,9 @@ def parameter(name: str = "value", kind: str = "STRING", **fields: Any) -> dict[
     if kind not in ("BOOLEAN", "DATETIME", "TEMPLATE"):
         result["multiple_values"] = False
     result.update(fields)
+    if kind in ("STRING", "INTEGER", "FLOAT") and "default" in result:
+        if result["default"] is not None and not isinstance(result["default"], list):
+            result["default"] = [result["default"]]
     return result
 
 

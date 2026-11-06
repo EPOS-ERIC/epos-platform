@@ -775,7 +775,7 @@ type FloatParameterSchema struct {
 	SchemaKind     ParameterSchemaKind
 	Minimum        *float64
 	Maximum        *float64
-	DefaultValue   *float64
+	DefaultValue   []float64
 	Enum           []types.FloatEnumOption
 	MultipleValues bool
 }
@@ -871,7 +871,7 @@ type IntegerParameterSchema struct {
 	SchemaKind     ParameterSchemaKind
 	Minimum        *int64
 	Maximum        *int64
-	DefaultValue   *int64
+	DefaultValue   []int64
 	Enum           []types.IntegerEnumOption
 	MultipleValues bool
 }
@@ -1073,7 +1073,7 @@ type StringParameterSchema struct {
 	ParameterID    uuid.UUID
 	SchemaKind     ParameterSchemaKind
 	Pattern        *string
-	DefaultValue   *string
+	DefaultValue   []string
 	Enum           []types.StringEnumOption
 	MultipleValues bool
 }

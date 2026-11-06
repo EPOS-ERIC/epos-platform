@@ -31,7 +31,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
             "multiple_values": False,
             "property": "schema:encodingFormat",
             "role": "FORMAT",
-            "default": "xml_dc",
+            "default": ["xml_dc"],
             **overrides,
         }
 
@@ -142,7 +142,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
             ),
             self.distribution(
                 "header", "unused-format",
-                [self.format_parameter(location="HEADER", default="header-format")],
+                [self.format_parameter(location="HEADER", default=["header-format"])],
             ),
             self.distribution(
                 "other-property", "fallback-format",
@@ -180,7 +180,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         self.assert_formats(draft["metadata"]["distributions"][0], [("format-A", "format-A")])
 
         metadata["distributions"][0]["web_service"]["configuration"]["parameters"] = [
-            self.format_parameter(default="format-B")
+            self.format_parameter(default=["format-B"])
         ]
         draft = self.replace_draft(draft, metadata)
         self.assert_formats(draft["metadata"]["distributions"][0], [("format-B", "format-B")])
@@ -205,7 +205,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         self.assertEqual(copied_parameter["property"], "schema:encodingFormat")
         metadata["distributions"][0]["web_service"]["configuration"]["parameters"] = [
             self.format_parameter(
-                default="format-C",
+                default=["format-C"],
                 enum=[{"value": "format-C", "label": "New format"}],
             )
         ]

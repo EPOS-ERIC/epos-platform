@@ -1035,16 +1035,24 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 		}
 	}
 	if value.Default != nil {
-		if strings.TrimSpace(*value.Default) == "" {
-			return StringSchema{}, fmt.Errorf("string default cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
+		if len(value.Default) == 0 {
+			return StringSchema{}, fmt.Errorf("string defaults cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
-		if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(*value.Default) {
-			return StringSchema{}, fmt.Errorf("string default does not match pattern: %w", apperror.Default(apperror.CodeValidationFailed))
+		if !value.MultipleValues && len(value.Default) > 1 {
+			return StringSchema{}, fmt.Errorf("scalar string parameters allow at most one default: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
-		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item StringEnumOption) bool {
-			return item.Value == *value.Default
-		}) {
-			return StringSchema{}, fmt.Errorf("string default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+		for _, defaultValue := range value.Default {
+			if strings.TrimSpace(defaultValue) == "" {
+				return StringSchema{}, fmt.Errorf("string default cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
+			if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(defaultValue) {
+				return StringSchema{}, fmt.Errorf("string default does not match pattern: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
+			if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item StringEnumOption) bool {
+				return item.Value == defaultValue
+			}) {
+				return StringSchema{}, fmt.Errorf("string default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
 		}
 	}
 	return value, nil
@@ -1076,13 +1084,21 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 		}
 	}
 	if value.Default != nil {
-		if !integerInRange(*value.Default, value.Minimum, value.Maximum) {
-			return IntegerSchema{}, fmt.Errorf("integer default is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
+		if len(value.Default) == 0 {
+			return IntegerSchema{}, fmt.Errorf("integer defaults cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
-		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item IntegerEnumOption) bool {
-			return item.Value == *value.Default
-		}) {
-			return IntegerSchema{}, fmt.Errorf("integer default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+		if !value.MultipleValues && len(value.Default) > 1 {
+			return IntegerSchema{}, fmt.Errorf("scalar integer parameters allow at most one default: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		for _, defaultValue := range value.Default {
+			if !integerInRange(defaultValue, value.Minimum, value.Maximum) {
+				return IntegerSchema{}, fmt.Errorf("integer default is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
+			if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item IntegerEnumOption) bool {
+				return item.Value == defaultValue
+			}) {
+				return IntegerSchema{}, fmt.Errorf("integer default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
 		}
 	}
 	return value, nil
@@ -1114,13 +1130,21 @@ func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
 		return FloatSchema{}, fmt.Errorf("float minimum must not exceed maximum: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if value.Default != nil {
-		if !floatInRange(*value.Default, value.Minimum, value.Maximum) {
-			return FloatSchema{}, fmt.Errorf("float default is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
+		if len(value.Default) == 0 {
+			return FloatSchema{}, fmt.Errorf("float defaults cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
-		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item FloatEnumOption) bool {
-			return item.Value == *value.Default
-		}) {
-			return FloatSchema{}, fmt.Errorf("float default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+		if !value.MultipleValues && len(value.Default) > 1 {
+			return FloatSchema{}, fmt.Errorf("scalar float parameters allow at most one default: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		for _, defaultValue := range value.Default {
+			if math.IsNaN(defaultValue) || math.IsInf(defaultValue, 0) || !floatInRange(defaultValue, value.Minimum, value.Maximum) {
+				return FloatSchema{}, fmt.Errorf("float default is invalid or outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
+			if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item FloatEnumOption) bool {
+				return item.Value == defaultValue
+			}) {
+				return FloatSchema{}, fmt.Errorf("float default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
 		}
 	}
 	return value, nil

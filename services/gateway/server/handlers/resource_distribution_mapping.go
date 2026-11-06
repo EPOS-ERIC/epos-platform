@@ -489,7 +489,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			Explode:        value.Explode,
 			MultipleValues: v.MultipleValues,
 			ReadOnly:       value.ReadOnly,
-			Default:        toAPINilString(v.Default),
+			Default:        toAPINilStringArray(v.Default),
 			Enum:           enum,
 			Pattern:        toAPINilString(v.Pattern),
 		}), nil
@@ -534,7 +534,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			ReadOnly:       value.ReadOnly,
 			Minimum:        toAPINilInt64(v.Minimum),
 			Maximum:        toAPINilInt64(v.Maximum),
-			Default:        toAPINilInt64(v.Default),
+			Default:        toAPINilInt64Array(v.Default),
 			Enum:           enum,
 		}), nil
 	case value.GetFloat() != nil:
@@ -560,7 +560,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			ReadOnly:       value.ReadOnly,
 			Minimum:        toAPINilFloat64(v.Minimum),
 			Maximum:        toAPINilFloat64(v.Maximum),
-			Default:        toAPINilFloat64(v.Default),
+			Default:        toAPINilFloat64Array(v.Default),
 			Enum:           enum,
 		}), nil
 	case value.GetDateTime() != nil:
@@ -652,7 +652,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			Description: description,
 			Required:    value.Required,
 			ReadOnly:    value.ReadOnly,
-			Default:     toAPINilString(v.Default),
+			Default:     toAPINilStringArray(v.Default),
 			Enum:        enum,
 			Pattern:     toAPINilString(v.Pattern),
 		}), nil
@@ -692,7 +692,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			ReadOnly:    value.ReadOnly,
 			Minimum:     toAPINilInt64(v.Minimum),
 			Maximum:     toAPINilInt64(v.Maximum),
-			Default:     toAPINilInt64(v.Default),
+			Default:     toAPINilInt64Array(v.Default),
 			Enum:        enum,
 		}), nil
 	case value.GetFloat() != nil:
@@ -715,7 +715,7 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			ReadOnly:    value.ReadOnly,
 			Minimum:     toAPINilFloat64(v.Minimum),
 			Maximum:     toAPINilFloat64(v.Maximum),
-			Default:     toAPINilFloat64(v.Default),
+			Default:     toAPINilFloat64Array(v.Default),
 			Enum:        enum,
 		}), nil
 	case value.GetDateTime() != nil:
@@ -780,6 +780,30 @@ func toAPINilFloat64(value *float64) gatewayapi.OptNilFloat64 {
 	result := gatewayapi.OptNilFloat64{}
 	if value != nil {
 		result.SetTo(*value)
+	}
+	return result
+}
+
+func toAPINilStringArray(value []string) gatewayapi.OptNilStringArray {
+	result := gatewayapi.OptNilStringArray{}
+	if value != nil {
+		result.SetTo(value)
+	}
+	return result
+}
+
+func toAPINilInt64Array(value []int64) gatewayapi.OptNilInt64Array {
+	result := gatewayapi.OptNilInt64Array{}
+	if value != nil {
+		result.SetTo(value)
+	}
+	return result
+}
+
+func toAPINilFloat64Array(value []float64) gatewayapi.OptNilFloat64Array {
+	result := gatewayapi.OptNilFloat64Array{}
+	if value != nil {
+		result.SetTo(value)
 	}
 	return result
 }
