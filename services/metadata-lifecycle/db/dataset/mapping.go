@@ -26,7 +26,7 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 		Keywords:                   value.Keywords,
 		AccrualPeriodicity:         value.AccrualPeriodicity,
 		QualityAnnotation:          value.QualityAnnotation,
-		AccessRight:                accessRightToSQLC(value.AccessRight),
+		AccessRight:                (*sqlc.DatasetAccessRight)(value.AccessRight),
 		SourceCreatedAt:            value.SourceCreated,
 		SourceUpdatedAt:            value.SourceUpdated,
 		SpatialCoverage:            value.SpatialCoverage,
@@ -216,22 +216,6 @@ func toDomainContactPoint(value sqlc.ContactPoint) domain.ContactPoint {
 		ID:    value.ID,
 		Email: value.Email,
 	}
-}
-
-func accessRightToSQLC(value *domain.AccessRight) *sqlc.DatasetAccessRight {
-	if value == nil {
-		return nil
-	}
-	converted := sqlc.DatasetAccessRight(*value)
-	return &converted
-}
-
-func accessRightFromSQLC(value *sqlc.DatasetAccessRight) *domain.AccessRight {
-	if value == nil {
-		return nil
-	}
-	converted := domain.AccessRight(*value)
-	return &converted
 }
 
 func toDomainIdentifier(value sqlc.Identifier) domain.Identifier {

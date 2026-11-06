@@ -822,7 +822,7 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		Keywords:                   version.Keywords,
 		AccrualPeriodicity:         version.AccrualPeriodicity,
 		QualityAnnotation:          version.QualityAnnotation,
-		AccessRight:                accessRightFromSQLC(version.AccessRight),
+		AccessRight:                (*domain.AccessRight)(version.AccessRight),
 		Distributions:              nil,
 		SpatialCoverage:            version.SpatialCoverage,
 		TemporalCoverage:           temporal(version.TemporalStart, version.TemporalEnd),
