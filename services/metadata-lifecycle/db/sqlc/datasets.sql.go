@@ -174,8 +174,6 @@ INSERT INTO
         title,
         description,
         license,
-        source_issued_at,
-        source_modified_at,
         byte_size,
         TYPE,
         downloadable_file_url,
@@ -194,9 +192,7 @@ VALUES
         $8,
         $9,
         $10,
-        $11,
-        $12,
-        $13
+        $11
     )
 `
 
@@ -207,8 +203,6 @@ type AddLifecycleDistributionParams struct {
 	Title                  string
 	Description            string
 	License                *string
-	SourceIssuedAt         *time.Time
-	SourceModifiedAt       *time.Time
 	ByteSize               *int32
 	Type                   string
 	DownloadableFileUrl    *string
@@ -224,8 +218,6 @@ func (q *Queries) AddLifecycleDistribution(ctx context.Context, arg AddLifecycle
 		arg.Title,
 		arg.Description,
 		arg.License,
-		arg.SourceIssuedAt,
-		arg.SourceModifiedAt,
 		arg.ByteSize,
 		arg.Type,
 		arg.DownloadableFileUrl,
@@ -746,17 +738,10 @@ INSERT INTO
         id,
         resource_id,
         dataset_version_id,
-        name,
-        description,
         TYPE,
         visible_on,
         provider_organization_id,
-        documentation_title,
-        documentation_description,
-        documentation_uri,
-        spatial_coverage,
-        temporal_start,
-        temporal_end
+        documentation_uri
     )
 VALUES
     (
@@ -766,34 +751,20 @@ VALUES
         $4,
         $5,
         $6,
-        $7,
-        $8,
-        $9,
-        $10,
-        $11,
-        $12,
-        $13,
-        $14
+        $7
     )
 RETURNING
-    id, resource_id, dataset_version_id, name, description, type, visible_on, provider_organization_id, documentation_title, documentation_description, documentation_uri, spatial_coverage, temporal_start, temporal_end
+    id, resource_id, dataset_version_id, type, visible_on, provider_organization_id, documentation_uri
 `
 
 type AddLifecycleWebServiceParams struct {
-	ID                       uuid.UUID
-	ResourceID               uuid.UUID
-	DatasetVersionID         uuid.UUID
-	Name                     string
-	Description              *string
-	Type                     WebServiceType
-	VisibleOn                []WebServiceVisibleOn
-	ProviderOrganizationID   *uuid.UUID
-	DocumentationTitle       *string
-	DocumentationDescription *string
-	DocumentationUri         *string
-	SpatialCoverage          go_geom.T
-	TemporalStart            *time.Time
-	TemporalEnd              *time.Time
+	ID                     uuid.UUID
+	ResourceID             uuid.UUID
+	DatasetVersionID       uuid.UUID
+	Type                   WebServiceType
+	VisibleOn              []WebServiceVisibleOn
+	ProviderOrganizationID *uuid.UUID
+	DocumentationUri       *string
 }
 
 func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWebServiceParams) (WebService, error) {
@@ -801,34 +772,20 @@ func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWe
 		arg.ID,
 		arg.ResourceID,
 		arg.DatasetVersionID,
-		arg.Name,
-		arg.Description,
 		arg.Type,
 		arg.VisibleOn,
 		arg.ProviderOrganizationID,
-		arg.DocumentationTitle,
-		arg.DocumentationDescription,
 		arg.DocumentationUri,
-		arg.SpatialCoverage,
-		arg.TemporalStart,
-		arg.TemporalEnd,
 	)
 	var i WebService
 	err := row.Scan(
 		&i.ID,
 		&i.ResourceID,
 		&i.DatasetVersionID,
-		&i.Name,
-		&i.Description,
 		&i.Type,
 		&i.VisibleOn,
 		&i.ProviderOrganizationID,
-		&i.DocumentationTitle,
-		&i.DocumentationDescription,
 		&i.DocumentationUri,
-		&i.SpatialCoverage,
-		&i.TemporalStart,
-		&i.TemporalEnd,
 	)
 	return i, err
 }
@@ -1051,17 +1008,10 @@ inserted_web_services AS (
             id,
             resource_id,
             dataset_version_id,
-            name,
-            description,
             TYPE,
             visible_on,
             provider_organization_id,
-            documentation_title,
-            documentation_description,
-            documentation_uri,
-            spatial_coverage,
-            temporal_start,
-            temporal_end
+            documentation_uri
         )
     SELECT
         uuid_generate_v5(
@@ -1088,17 +1038,10 @@ inserted_web_services AS (
             FROM
                 inserted
         ),
-        name,
-        description,
         TYPE,
         visible_on,
         provider_organization_id,
-        documentation_title,
-        documentation_description,
-        documentation_uri,
-        spatial_coverage,
-        temporal_start,
-        temporal_end
+        documentation_uri
     FROM
         web_services AS source
     WHERE
@@ -1704,8 +1647,6 @@ distributions AS (
             title,
             description,
             license,
-            source_issued_at,
-            source_modified_at,
             byte_size,
             TYPE,
             downloadable_file_url,
@@ -1740,8 +1681,6 @@ distributions AS (
         distribution.title,
         distribution.description,
         distribution.license,
-        distribution.source_issued_at,
-        distribution.source_modified_at,
         distribution.byte_size,
         distribution.type,
         distribution.downloadable_file_url,
@@ -1883,7 +1822,7 @@ type CreateLifecycleDatasetVersionParams struct {
 	Keywords                   []string
 	AccrualPeriodicity         *string
 	QualityAnnotation          *string
-	AccessRight                *string
+	AccessRight                *DatasetAccessRight
 	SourceCreatedAt            *time.Time
 	SourceUpdatedAt            *time.Time
 	SpatialCoverage            go_geom.T
@@ -2298,7 +2237,7 @@ type GetLifecycleDatasetVersionRow struct {
 	Keywords                   []string
 	AccrualPeriodicity         *string
 	QualityAnnotation          *string
-	AccessRight                *string
+	AccessRight                *DatasetAccessRight
 	SourceCreatedAt            *time.Time
 	SourceUpdatedAt            *time.Time
 	SpatialCoverage            go_geom.T
@@ -2535,8 +2474,7 @@ func (q *Queries) ListLifecycleDatasetCategories(ctx context.Context, datasetVer
 const listLifecycleDatasetContactPoints = `-- name: ListLifecycleDatasetContactPoints :many
 SELECT
     contact.id,
-    contact.email,
-    contact.role
+    contact.email
 FROM
     dataset_version_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id
@@ -2555,7 +2493,7 @@ func (q *Queries) ListLifecycleDatasetContactPoints(ctx context.Context, dataset
 	var items []ContactPoint
 	for rows.Next() {
 		var i ContactPoint
-		if err := rows.Scan(&i.ID, &i.Email, &i.Role); err != nil {
+		if err := rows.Scan(&i.ID, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -2789,7 +2727,7 @@ func (q *Queries) ListLifecycleDatetimeParameterSchemas(ctx context.Context, par
 
 const listLifecycleDistributions = `-- name: ListLifecycleDistributions :many
 SELECT
-    id, resource_id, dataset_version_id, title, description, license, source_issued_at, source_modified_at, byte_size, type, downloadable_file_url, downloadable_file_format, web_service_id
+    id, resource_id, dataset_version_id, title, description, license, byte_size, type, downloadable_file_url, downloadable_file_format, web_service_id
 FROM
     distributions
 WHERE
@@ -2814,8 +2752,6 @@ func (q *Queries) ListLifecycleDistributions(ctx context.Context, datasetVersion
 			&i.Title,
 			&i.Description,
 			&i.License,
-			&i.SourceIssuedAt,
-			&i.SourceModifiedAt,
 			&i.ByteSize,
 			&i.Type,
 			&i.DownloadableFileUrl,
@@ -2956,7 +2892,7 @@ func (q *Queries) ListLifecycleIntegerParameterSchemas(ctx context.Context, para
 const listLifecycleOrganizationContactPoints = `-- name: ListLifecycleOrganizationContactPoints :many
 SELECT
     link.organization_id,
-    contact.id, contact.email, contact.role
+    contact.id, contact.email
 FROM
     organization_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id
@@ -2981,12 +2917,7 @@ func (q *Queries) ListLifecycleOrganizationContactPoints(ctx context.Context, or
 	var items []ListLifecycleOrganizationContactPointsRow
 	for rows.Next() {
 		var i ListLifecycleOrganizationContactPointsRow
-		if err := rows.Scan(
-			&i.OrganizationID,
-			&i.ContactPoint.ID,
-			&i.ContactPoint.Email,
-			&i.ContactPoint.Role,
-		); err != nil {
+		if err := rows.Scan(&i.OrganizationID, &i.ContactPoint.ID, &i.ContactPoint.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -3415,7 +3346,7 @@ func (q *Queries) ListLifecycleWebServiceBodies(ctx context.Context, webServiceI
 const listLifecycleWebServiceContactPoints = `-- name: ListLifecycleWebServiceContactPoints :many
 SELECT
     link.web_service_id,
-    contact.id, contact.email, contact.role
+    contact.id, contact.email
 FROM
     web_service_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id
@@ -3440,12 +3371,7 @@ func (q *Queries) ListLifecycleWebServiceContactPoints(ctx context.Context, webS
 	var items []ListLifecycleWebServiceContactPointsRow
 	for rows.Next() {
 		var i ListLifecycleWebServiceContactPointsRow
-		if err := rows.Scan(
-			&i.WebServiceID,
-			&i.ContactPoint.ID,
-			&i.ContactPoint.Email,
-			&i.ContactPoint.Role,
-		); err != nil {
+		if err := rows.Scan(&i.WebServiceID, &i.ContactPoint.ID, &i.ContactPoint.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -3528,7 +3454,7 @@ func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServ
 
 const listLifecycleWebServices = `-- name: ListLifecycleWebServices :many
 SELECT
-    service.id, service.resource_id, service.dataset_version_id, service.name, service.description, service.type, service.visible_on, service.provider_organization_id, service.documentation_title, service.documentation_description, service.documentation_uri, service.spatial_coverage, service.temporal_start, service.temporal_end
+    service.id, service.resource_id, service.dataset_version_id, service.type, service.visible_on, service.provider_organization_id, service.documentation_uri
 FROM
     web_services AS service
 WHERE
@@ -3554,17 +3480,10 @@ func (q *Queries) ListLifecycleWebServices(ctx context.Context, datasetVersionID
 			&i.WebService.ID,
 			&i.WebService.ResourceID,
 			&i.WebService.DatasetVersionID,
-			&i.WebService.Name,
-			&i.WebService.Description,
 			&i.WebService.Type,
 			&i.WebService.VisibleOn,
 			&i.WebService.ProviderOrganizationID,
-			&i.WebService.DocumentationTitle,
-			&i.WebService.DocumentationDescription,
 			&i.WebService.DocumentationUri,
-			&i.WebService.SpatialCoverage,
-			&i.WebService.TemporalStart,
-			&i.WebService.TemporalEnd,
 		); err != nil {
 			return nil, err
 		}
@@ -3775,7 +3694,7 @@ type ReplaceLifecycleDatasetDraftParams struct {
 	Keywords                   []string
 	AccrualPeriodicity         *string
 	QualityAnnotation          *string
-	AccessRight                *string
+	AccessRight                *DatasetAccessRight
 	SourceCreatedAt            *time.Time
 	SourceUpdatedAt            *time.Time
 	SpatialCoverage            go_geom.T

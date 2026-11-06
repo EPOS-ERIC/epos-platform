@@ -33,7 +33,7 @@ class WMSMetadataContractTest(DistributionContractTestCase):
             "title": "Manual WMS", "description": "Author-supplied WMS configuration",
             "type": "WEB_SERVICE",
             "web_service": {
-                "name": "Manual WMS", "visible_on": ["MAP"], "configuration": configuration,
+                "visible_on": ["MAP"], "configuration": configuration,
             },
         }
         detail = self.create_draft([distribution])

@@ -978,29 +978,6 @@ func (s *ContactPoint) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if err := (validate.String{
-			MinLength:     1,
-			MinLengthSet:  true,
-			MaxLength:     0,
-			MaxLengthSet:  false,
-			Email:         false,
-			Hostname:      false,
-			Regex:         nil,
-			MinNumeric:    0,
-			MinNumericSet: false,
-			MaxNumeric:    0,
-			MaxNumericSet: false,
-		}).Validate(string(s.Role)); err != nil {
-			return errors.Wrap(err, "string")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "role",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -1159,17 +1136,6 @@ func (s *CreateContactPointRequest) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "email",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Role.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "role",
 			Error: err,
 		})
 	}
@@ -1818,6 +1784,27 @@ func (s CreateSoftwareSourceCodeResourceRequestResourceType) Validate() error {
 	}
 }
 
+func (s DatasetAccessRight) Validate() error {
+	switch s {
+	case "NON_PUBLIC":
+		return nil
+	case "NORMAL":
+		return nil
+	case "OP_DATPRO":
+		return nil
+	case "PUBLIC":
+		return nil
+	case "RESTRICTED":
+		return nil
+	case "CONFIDENTIAL":
+		return nil
+	case "SENSITIVE":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *DatasetDiscoveryItem) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -1947,6 +1934,24 @@ func (s *DatasetDraftMetadata) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "keywords",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.AccessRight.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "access_right",
 			Error: err,
 		})
 	}
@@ -2096,6 +2101,24 @@ func (s *DatasetResourceMetadata) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "keywords",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.AccessRight.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "access_right",
 			Error: err,
 		})
 	}
@@ -2924,29 +2947,6 @@ func (s DistributionDraft) Validate() error {
 	default:
 		return errors.Errorf("invalid type %q", s.Type)
 	}
-}
-
-func (s *Documentation) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.URI.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "uri",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
 }
 
 func (s *DownloadableFile) Validate() error {
@@ -6875,17 +6875,6 @@ func (s *ReplaceContactPointRequest) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if err := s.Role.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "role",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -10053,36 +10042,6 @@ func (s *WebService) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if value, ok := s.Description.Get(); ok {
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(value)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "description",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if value, ok := s.VisibleOn.Get(); ok {
 			if err := func() error {
 				if value == nil {
@@ -10122,54 +10081,6 @@ func (s *WebService) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "visible_on",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Documentation.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "documentation",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.SpatialCoverage.Get(); ok {
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(value)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "spatial_coverage",
 			Error: err,
 		})
 	}
@@ -10431,47 +10342,6 @@ func (s *WebServiceDraft) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := s.Name.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "name",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Description.Get(); ok {
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(value)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "description",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if value, ok := s.VisibleOn.Get(); ok {
 			if err := func() error {
 				if value == nil {
@@ -10511,54 +10381,6 @@ func (s *WebServiceDraft) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "visible_on",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Documentation.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "documentation",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.SpatialCoverage.Get(); ok {
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(value)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "spatial_coverage",
 			Error: err,
 		})
 	}

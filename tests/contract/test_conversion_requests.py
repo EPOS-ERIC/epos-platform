@@ -32,7 +32,6 @@ class ConversionRequestsContractTest(unittest.TestCase):
                         "description": "Test service distribution",
                         "type": "WEB_SERVICE",
                         "web_service": {
-                            "name": "Test service",
                             "configuration": {
                                 "template_url": "https://example.org/data",
                                 "method": "GET",

@@ -12,7 +12,6 @@ func toCreateContactPointParams(id uuid.UUID, input domain.ContactPointInput) sq
 	return sqlc.CreateContactPointParams{
 		ID:    id,
 		Email: input.Email,
-		Role:  input.Role,
 	}
 }
 
@@ -20,14 +19,12 @@ func toReplaceContactPointParams(id uuid.UUID, input domain.ContactPointInput) s
 	return sqlc.ReplaceContactPointParams{
 		ID:    id,
 		Email: input.Email,
-		Role:  input.Role,
 	}
 }
 
 func toDomainContactPoint(row sqlc.ContactPoint) (domain.ContactPoint, error) {
 	contactPoint, err := domain.NewContactPoint(row.ID, domain.ContactPointInput{
 		Email: row.Email,
-		Role:  row.Role,
 	})
 	if err != nil {
 		return domain.ContactPoint{}, fmt.Errorf("bad contact point: %w", err)

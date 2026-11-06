@@ -120,7 +120,7 @@ func TestProblemResponseUsesSharedErrorAndTrace(t *testing.T) {
 }
 
 func TestProblemResponseReportsNestedEmptyParameterLabel(t *testing.T) {
-	const body = `{"resource_type":"dataset","revision":1,"metadata":{"title":"title","description":"description","distributions":[{"title":"distribution","type":"WEB_SERVICE","web_service":{"name":"service","configuration":{"type":"HTTP","template_url":"https://example.org/query","method":"GET","format":"application/json","parameters":[{"kind":"DATETIME","position":0,"name":"starttime","label":"","required":true,"read_only":false,"location":"QUERY","explode":false}]}}}]}}`
+	const body = `{"resource_type":"dataset","revision":1,"metadata":{"title":"title","description":"description","distributions":[{"title":"distribution","type":"WEB_SERVICE","web_service":{"configuration":{"type":"HTTP","template_url":"https://example.org/query","method":"GET","format":"application/json","parameters":[{"kind":"DATETIME","position":0,"name":"starttime","label":"","required":true,"read_only":false,"location":"QUERY","explode":false}]}}}]}}`
 	var request gatewayapi.ReplaceResourceDraftRequest
 	if err := json.Unmarshal([]byte(body), &request); err != nil {
 		t.Fatal(err)

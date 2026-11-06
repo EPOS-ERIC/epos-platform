@@ -30,7 +30,6 @@ func ToContactPoint(value sqlc.ContactPoint) domain.ContactPoint {
 	return domain.ContactPoint{
 		ID:    value.ID,
 		Email: value.Email,
-		Role:  value.Role,
 	}
 }
 

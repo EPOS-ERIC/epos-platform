@@ -156,21 +156,12 @@ CREATE TABLE web_services (
     dataset_version_id        uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,
 
     -- Web service metadata
-    name                      nonblank_text NOT NULL,
-    description               nonblank_text_opt,
     type                      web_service_type NOT NULL,
     visible_on                web_service_visible_on[],
     provider_organization_id  uuid REFERENCES organizations(id) ON DELETE SET NULL,
-    documentation_title       nonblank_text_opt,
-    documentation_description nonblank_text_opt,
     documentation_uri         nonblank_text_opt,
-    spatial_coverage          geometry(Geometry, 4326),
-    temporal_start            timestamptz,
-    temporal_end              timestamptz,
 
     UNIQUE (dataset_version_id, resource_id),
-    CHECK (temporal_start IS NULL OR temporal_end IS NULL OR temporal_start <= temporal_end),
-    CHECK ((documentation_title IS NULL AND documentation_description IS NULL AND documentation_uri IS NULL) OR documentation_uri IS NOT NULL),
     CHECK (visible_on IS NULL OR cardinality(visible_on) > 0)
 );
 

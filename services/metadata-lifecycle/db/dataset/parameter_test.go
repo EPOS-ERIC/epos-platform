@@ -211,7 +211,6 @@ func TestWebServicePersistenceMappingPreservesTypeAndVisibleOn(t *testing.T) {
 	id := uuid.New()
 	service := toDomainWebService(sqlc.WebService{
 		ID:        id,
-		Name:      "service",
 		Type:      sqlc.WebServiceTypeHTTP,
 		VisibleOn: []sqlc.WebServiceVisibleOn{sqlc.WebServiceVisibleOnMAP, sqlc.WebServiceVisibleOnGRAPH},
 	})

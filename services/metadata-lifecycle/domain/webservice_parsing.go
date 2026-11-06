@@ -25,16 +25,7 @@ var (
 )
 
 func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
-	value.Name = strings.TrimSpace(value.Name)
-	description, err := optionalWebServiceDescription(value.Description)
-	if err != nil {
-		return WebServiceInput{}, prefixOrField(err, "description", "description", "Description must not be blank.")
-	}
-	value.Description = description
 	value.Type = WebServiceType(strings.ToUpper(strings.TrimSpace(string(value.Type))))
-	if value.Name == "" {
-		return WebServiceInput{}, invalidField("name", "Name must not be blank.", nil)
-	}
 	if !value.Type.Valid() {
 		return WebServiceInput{}, invalidField("type", "Type is not supported.", nil)
 	}
@@ -51,21 +42,16 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 		return WebServiceInput{}, invalidField("visible_on", "Audience selection must contain supported values.", err)
 	}
 	value.VisibleOn = visibleOn
-	if err := validateTemporal(value.TemporalCoverage); err != nil {
-		return WebServiceInput{}, invalidField("temporal_coverage", "Start must not be after end.", err)
-	}
 	if value.ProviderID != nil && *value.ProviderID == uuid.Nil {
 		return WebServiceInput{}, invalidField("provider", "Provider must be a valid UUID.", nil)
 	}
 	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
 		return WebServiceInput{}, err
 	}
-	if value.Documentation != nil {
-		value.Documentation.Title = optionalTrimmedString(value.Documentation.Title)
-		value.Documentation.Description = optionalTrimmedString(value.Documentation.Description)
-		value.Documentation.URI = strings.TrimSpace(value.Documentation.URI)
-		if value.Documentation.URI == "" {
-			return WebServiceInput{}, invalidField("documentation.uri", "URI must not be blank.", nil)
+	if value.DocumentationURI != nil {
+		*value.DocumentationURI = strings.TrimSpace(*value.DocumentationURI)
+		if *value.DocumentationURI == "" {
+			return WebServiceInput{}, invalidField("documentation_uri", "Documentation URI must not be blank.", nil)
 		}
 	}
 
@@ -463,10 +449,9 @@ func NewWebService(value WebService) (result WebService, err error) {
 	if err != nil {
 		return WebService{}, err
 	}
-	value.Name = input.Name
-	value.Description = input.Description
 	value.Type = input.Type
 	value.VisibleOn = input.VisibleOn
+	value.DocumentationURI = input.DocumentationURI
 	value.Configuration, err = restoreWebServiceConfiguration(input.Configuration, value.Configuration)
 	if err != nil {
 		return WebService{}, fmt.Errorf("restore configuration parameter IDs: %w", err)
@@ -1270,17 +1255,6 @@ func optionalTrimmedString(value *string) *string {
 		return nil
 	}
 	return &trimmed
-}
-
-func optionalWebServiceDescription(value *string) (*string, error) {
-	if value == nil {
-		return nil, nil
-	}
-	trimmed := strings.TrimSpace(*value)
-	if trimmed == "" {
-		return nil, fmt.Errorf("web service description cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
-	}
-	return &trimmed, nil
 }
 
 func integerInRange(value int64, minimum, maximum *int64) bool {

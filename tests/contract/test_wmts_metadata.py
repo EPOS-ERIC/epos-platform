@@ -28,7 +28,7 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
         distribution = {
             "title": "Manual WMTS", "description": "Author-supplied WMTS configuration",
             "type": "WEB_SERVICE",
-            "web_service": {"name": "Manual WMTS", "visible_on": ["MAP"], "configuration": configuration},
+            "web_service": {"visible_on": ["MAP"], "configuration": configuration},
         }
         detail = self.create_draft([distribution])
         saved_distribution = detail["metadata"]["distributions"][0]

@@ -85,7 +85,6 @@ class DistributionParameterRolesContractTest(DistributionContractTestCase):
                 parameter("value", kind, role=role),
             ])
             distribution["title"] = title
-            distribution["web_service"]["name"] = title
             distributions.append(distribution)
 
         detail = self.create_draft(distributions)

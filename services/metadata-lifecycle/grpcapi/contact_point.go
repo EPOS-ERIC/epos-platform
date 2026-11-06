@@ -57,7 +57,7 @@ func (c *ContactPointServer) CreateContactPoint(ctx context.Context, request *me
 	if err != nil {
 		return nil, err
 	}
-	input, err := contactPointInput(request.GetEmail(), request.GetRole())
+	input, err := contactPointInput(request.GetEmail())
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (c *ContactPointServer) ReplaceContactPoint(ctx context.Context, request *m
 	if err != nil {
 		return nil, err
 	}
-	input, err := contactPointInput(request.GetEmail(), request.GetRole())
+	input, err := contactPointInput(request.GetEmail())
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +103,8 @@ func (c *ContactPointServer) DeleteContactPoint(ctx context.Context, request *me
 	return &metadatalifecyclev1.DeleteContactPointResponse{}, nil
 }
 
-func contactPointInput(email, role string) (domain.ContactPointInput, error) {
-	result, err := domain.NewContactPointInput(domain.ContactPointInput{Email: email, Role: role})
+func contactPointInput(email string) (domain.ContactPointInput, error) {
+	result, err := domain.NewContactPointInput(domain.ContactPointInput{Email: email})
 	if err != nil {
 		return domain.ContactPointInput{}, fmt.Errorf("validate contact point input: %w", err)
 	}
@@ -120,5 +120,8 @@ func parseContactPointID(value string) (uuid.UUID, error) {
 }
 
 func toProtoContactPoint(value domain.ContactPoint) *metadatalifecyclev1.ContactPoint {
-	return &metadatalifecyclev1.ContactPoint{Id: value.ID.String(), Email: value.Email, Role: value.Role}
+	return &metadatalifecyclev1.ContactPoint{
+		Id:    value.ID.String(),
+		Email: value.Email,
+	}
 }

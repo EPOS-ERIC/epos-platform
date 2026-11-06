@@ -14,6 +14,53 @@ import (
 	go_geom "github.com/twpayne/go-geom"
 )
 
+type DatasetAccessRight string
+
+const (
+	DatasetAccessRightNONPUBLIC    DatasetAccessRight = "NON_PUBLIC"
+	DatasetAccessRightNORMAL       DatasetAccessRight = "NORMAL"
+	DatasetAccessRightOPDATPRO     DatasetAccessRight = "OP_DATPRO"
+	DatasetAccessRightPUBLIC       DatasetAccessRight = "PUBLIC"
+	DatasetAccessRightRESTRICTED   DatasetAccessRight = "RESTRICTED"
+	DatasetAccessRightCONFIDENTIAL DatasetAccessRight = "CONFIDENTIAL"
+	DatasetAccessRightSENSITIVE    DatasetAccessRight = "SENSITIVE"
+)
+
+func (e *DatasetAccessRight) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DatasetAccessRight(s)
+	case string:
+		*e = DatasetAccessRight(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DatasetAccessRight: %T", src)
+	}
+	return nil
+}
+
+type NullDatasetAccessRight struct {
+	DatasetAccessRight DatasetAccessRight
+	Valid              bool // Valid is true if DatasetAccessRight is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDatasetAccessRight) Scan(value interface{}) error {
+	if value == nil {
+		ns.DatasetAccessRight, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DatasetAccessRight.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDatasetAccessRight) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DatasetAccessRight), nil
+}
+
 type MembershipRole string
 
 const (
@@ -687,7 +734,6 @@ type Category struct {
 type ContactPoint struct {
 	ID    uuid.UUID
 	Email string
-	Role  string
 }
 
 type Dataset struct {
@@ -707,7 +753,7 @@ type DatasetVersion struct {
 	Keywords                   []string
 	AccrualPeriodicity         *string
 	QualityAnnotation          *string
-	AccessRight                *string
+	AccessRight                *DatasetAccessRight
 	SourceCreatedAt            *time.Time
 	SourceUpdatedAt            *time.Time
 	SpatialCoverage            go_geom.T
@@ -761,8 +807,6 @@ type Distribution struct {
 	Title                  string
 	Description            string
 	License                *string
-	SourceIssuedAt         *time.Time
-	SourceModifiedAt       *time.Time
 	ByteSize               *int32
 	Type                   string
 	DownloadableFileUrl    *string
@@ -1099,20 +1143,13 @@ type UserGlobalRole struct {
 }
 
 type WebService struct {
-	ID                       uuid.UUID
-	ResourceID               uuid.UUID
-	DatasetVersionID         uuid.UUID
-	Name                     string
-	Description              *string
-	Type                     WebServiceType
-	VisibleOn                []WebServiceVisibleOn
-	ProviderOrganizationID   *uuid.UUID
-	DocumentationTitle       *string
-	DocumentationDescription *string
-	DocumentationUri         *string
-	SpatialCoverage          go_geom.T
-	TemporalStart            *time.Time
-	TemporalEnd              *time.Time
+	ID                     uuid.UUID
+	ResourceID             uuid.UUID
+	DatasetVersionID       uuid.UUID
+	Type                   WebServiceType
+	VisibleOn              []WebServiceVisibleOn
+	ProviderOrganizationID *uuid.UUID
+	DocumentationUri       *string
 }
 
 type WebServiceBody struct {

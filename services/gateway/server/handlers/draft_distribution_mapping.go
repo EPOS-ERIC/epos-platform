@@ -54,32 +54,14 @@ func toProtoGeologicalTemporal(v gatewayapi.GeologicalTemporalCoverage) *metadat
 	return result
 }
 
-func toProtoDocumentation(v gatewayapi.OptDocumentation) *metadatalifecyclev1.Documentation {
-	if !v.Set {
-		return nil
-	}
-	r := &metadatalifecyclev1.Documentation{Uri: string(v.Value.URI)}
-	if v.Value.Title.Set && !v.Value.Title.Null {
-		r.Title = new(v.Value.Title.Value)
-	}
-	if v.Value.Description.Set && !v.Value.Description.Null {
-		r.Description = new(v.Value.Description.Value)
-	}
-	return r
-}
-
 func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.WebServiceInput {
 	r := &metadatalifecyclev1.WebServiceInput{
-		ResourceId:       protoOptionalUUID(v.ResourceID),
-		Name:             string(v.Name),
-		Description:      protoOptString(v.Description),
-		VisibleOn:        toProtoWebServiceVisibleOn(v.VisibleOn),
-		TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
-		Documentation:    toProtoDocumentation(v.Documentation),
-		ContactPoints:    uuidStrings(v.ContactPoints),
+		ResourceId:    protoOptionalUUID(v.ResourceID),
+		VisibleOn:     toProtoWebServiceVisibleOn(v.VisibleOn),
+		ContactPoints: uuidStrings(v.ContactPoints),
 	}
-	if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
-		r.SpatialCoverage = new(v.SpatialCoverage.Value)
+	if v.DocumentationURI.Set {
+		r.DocumentationUri = new(v.DocumentationURI.Value.String())
 	}
 	if v.Provider.Set {
 		r.ProviderId = new(v.Provider.Value.String())
@@ -215,14 +197,12 @@ func toProtoWMSWebServiceConfigurationDraft(value gatewayapi.WmsWebServiceConfig
 }
 
 func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.DistributionInput {
-	title, description, license, issued, modified, byteSize := distributionFields(v)
+	title, description, license, byteSize := distributionFields(v)
 	r := &metadatalifecyclev1.DistributionInput{
 		Type:        string(v.Type),
 		Title:       title,
 		Description: description,
 		License:     license,
-		Issued:      issued,
-		Modified:    modified,
 		ByteSize:    byteSize,
 	}
 	if v.IsWebServiceDistributionDraft() {
@@ -245,13 +225,13 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.Di
 	return r
 }
 
-func distributionFields(v gatewayapi.DistributionDraft) (string, string, *string, *timestamppb.Timestamp, *timestamppb.Timestamp, *int64) {
+func distributionFields(v gatewayapi.DistributionDraft) (string, string, *string, *int64) {
 	if v.IsWebServiceDistributionDraft() {
 		x := v.WebServiceDistributionDraft
-		return x.Title, x.Description.Value, protoOptString(x.License), protoOptTime(x.Issued), protoOptTime(x.Modified), protoOptInt64(x.ByteSize)
+		return x.Title, x.Description.Value, protoOptString(x.License), protoOptInt64(x.ByteSize)
 	}
 	x := v.DownloadableFileDistributionDraft
-	return x.Title, x.Description.Value, protoOptString(x.License), protoOptTime(x.Issued), protoOptTime(x.Modified), protoOptInt64(x.ByteSize)
+	return x.Title, x.Description.Value, protoOptString(x.License), protoOptInt64(x.ByteSize)
 }
 
 func protoOptString(v gatewayapi.OptNilString) *string {
@@ -259,13 +239,6 @@ func protoOptString(v gatewayapi.OptNilString) *string {
 		return nil
 	}
 	return new(v.Value)
-}
-
-func protoOptTime(v gatewayapi.OptNilDateTime) *timestamppb.Timestamp {
-	if !v.Set || v.Null {
-		return nil
-	}
-	return timestamppb.New(v.Value)
 }
 
 func protoOptInt64(v gatewayapi.OptNilInt64) *int64 {

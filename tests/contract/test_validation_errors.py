@@ -266,7 +266,7 @@ class ValidationErrorsContractTest(unittest.TestCase):
             self.assert_bad_request(
                 self.gateway.post(
                     "/contact-points",
-                    json={"email": f"valid-{suffix}@example.org"},
+                    json={},
                 )
             )
         with self.subTest(operation="createContactPoint", case="unknown field"):
@@ -276,25 +276,21 @@ class ValidationErrorsContractTest(unittest.TestCase):
                     json={
                         "email": f"unknown-{suffix}@example.org",
                         "role": "validation",
-                        "unexpected": True,
                     },
                 )
             )
-        with self.subTest(operation="createContactPoint", case="blank role"):
+        with self.subTest(operation="createContactPoint", case="blank email"):
             self.assert_bad_request(
                 self.gateway.post(
                     "/contact-points",
-                    json={
-                        "email": f"blank-{suffix}@example.org",
-                        "role": " ",
-                    },
+                    json={"email": " "},
                 )
             )
         with self.subTest(operation="createContactPoint", case="invalid email"):
             self.assert_bad_request(
                 self.gateway.post(
                     "/contact-points",
-                    json={"email": "not-an-email", "role": "validation"},
+                    json={"email": "not-an-email"},
                 )
             )
 

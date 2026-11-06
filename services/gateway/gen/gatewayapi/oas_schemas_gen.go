@@ -1325,7 +1325,6 @@ func (s *ConfigurationWriteRequest) SetIsPublic(val OptNilBool) {
 type ContactPoint struct {
 	ID    uuid.UUID `json:"id"`
 	Email string    `json:"email"`
-	Role  string    `json:"role"`
 }
 
 // GetID returns the value of ID.
@@ -1338,11 +1337,6 @@ func (s *ContactPoint) GetEmail() string {
 	return s.Email
 }
 
-// GetRole returns the value of Role.
-func (s *ContactPoint) GetRole() string {
-	return s.Role
-}
-
 // SetID sets the value of ID.
 func (s *ContactPoint) SetID(val uuid.UUID) {
 	s.ID = val
@@ -1351,11 +1345,6 @@ func (s *ContactPoint) SetID(val uuid.UUID) {
 // SetEmail sets the value of Email.
 func (s *ContactPoint) SetEmail(val string) {
 	s.Email = val
-}
-
-// SetRole sets the value of Role.
-func (s *ContactPoint) SetRole(val string) {
-	s.Role = val
 }
 
 // Ref: #/components/schemas/ConversionPlugin
@@ -1701,8 +1690,7 @@ func (s *CreateCategoryRequest) SetParentCategoryID(val OptNilUUID) {
 
 // Ref: #/components/schemas/CreateContactPointRequest
 type CreateContactPointRequest struct {
-	Email string         `json:"email"`
-	Role  NonBlankString `json:"role"`
+	Email string `json:"email"`
 }
 
 // GetEmail returns the value of Email.
@@ -1710,19 +1698,9 @@ func (s *CreateContactPointRequest) GetEmail() string {
 	return s.Email
 }
 
-// GetRole returns the value of Role.
-func (s *CreateContactPointRequest) GetRole() NonBlankString {
-	return s.Role
-}
-
 // SetEmail sets the value of Email.
 func (s *CreateContactPointRequest) SetEmail(val string) {
 	s.Email = val
-}
-
-// SetRole sets the value of Role.
-func (s *CreateContactPointRequest) SetRole(val NonBlankString) {
-	s.Role = val
 }
 
 // Ref: #/components/schemas/CreateConversionPluginRequest
@@ -2429,6 +2407,83 @@ func (s *CreateSoftwareSourceCodeResourceRequestResourceType) UnmarshalText(data
 	}
 }
 
+// Ref: #/components/schemas/DatasetAccessRight
+type DatasetAccessRight string
+
+const (
+	DatasetAccessRightNONPUBLIC    DatasetAccessRight = "NON_PUBLIC"
+	DatasetAccessRightNORMAL       DatasetAccessRight = "NORMAL"
+	DatasetAccessRightOPDATPRO     DatasetAccessRight = "OP_DATPRO"
+	DatasetAccessRightPUBLIC       DatasetAccessRight = "PUBLIC"
+	DatasetAccessRightRESTRICTED   DatasetAccessRight = "RESTRICTED"
+	DatasetAccessRightCONFIDENTIAL DatasetAccessRight = "CONFIDENTIAL"
+	DatasetAccessRightSENSITIVE    DatasetAccessRight = "SENSITIVE"
+)
+
+// AllValues returns all DatasetAccessRight values.
+func (DatasetAccessRight) AllValues() []DatasetAccessRight {
+	return []DatasetAccessRight{
+		DatasetAccessRightNONPUBLIC,
+		DatasetAccessRightNORMAL,
+		DatasetAccessRightOPDATPRO,
+		DatasetAccessRightPUBLIC,
+		DatasetAccessRightRESTRICTED,
+		DatasetAccessRightCONFIDENTIAL,
+		DatasetAccessRightSENSITIVE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DatasetAccessRight) MarshalText() ([]byte, error) {
+	switch s {
+	case DatasetAccessRightNONPUBLIC:
+		return []byte(s), nil
+	case DatasetAccessRightNORMAL:
+		return []byte(s), nil
+	case DatasetAccessRightOPDATPRO:
+		return []byte(s), nil
+	case DatasetAccessRightPUBLIC:
+		return []byte(s), nil
+	case DatasetAccessRightRESTRICTED:
+		return []byte(s), nil
+	case DatasetAccessRightCONFIDENTIAL:
+		return []byte(s), nil
+	case DatasetAccessRightSENSITIVE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DatasetAccessRight) UnmarshalText(data []byte) error {
+	switch DatasetAccessRight(data) {
+	case DatasetAccessRightNONPUBLIC:
+		*s = DatasetAccessRightNONPUBLIC
+		return nil
+	case DatasetAccessRightNORMAL:
+		*s = DatasetAccessRightNORMAL
+		return nil
+	case DatasetAccessRightOPDATPRO:
+		*s = DatasetAccessRightOPDATPRO
+		return nil
+	case DatasetAccessRightPUBLIC:
+		*s = DatasetAccessRightPUBLIC
+		return nil
+	case DatasetAccessRightRESTRICTED:
+		*s = DatasetAccessRightRESTRICTED
+		return nil
+	case DatasetAccessRightCONFIDENTIAL:
+		*s = DatasetAccessRightCONFIDENTIAL
+		return nil
+	case DatasetAccessRightSENSITIVE:
+		*s = DatasetAccessRightSENSITIVE
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/DatasetDiscoveryItem
 type DatasetDiscoveryItem struct {
 	Type       DatasetDiscoveryItemType `json:"type"`
@@ -2602,13 +2657,13 @@ func (s *DatasetDiscoveryItemType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/DatasetDraftMetadata
 type DatasetDraftMetadata struct {
-	Title              NonBlankString      `json:"title"`
-	Description        NonBlankString      `json:"description"`
-	Keywords           []Keyword           `json:"keywords"`
-	AccrualPeriodicity OptNilString        `json:"accrual_periodicity"`
-	QualityAnnotation  OptNilString        `json:"quality_annotation"`
-	AccessRight        OptNilString        `json:"access_right"`
-	Distributions      []DistributionDraft `json:"distributions"`
+	Title              NonBlankString           `json:"title"`
+	Description        NonBlankString           `json:"description"`
+	Keywords           []Keyword                `json:"keywords"`
+	AccrualPeriodicity OptNilString             `json:"accrual_periodicity"`
+	QualityAnnotation  OptNilString             `json:"quality_annotation"`
+	AccessRight        OptNilDatasetAccessRight `json:"access_right"`
+	Distributions      []DistributionDraft      `json:"distributions"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
@@ -2648,7 +2703,7 @@ func (s *DatasetDraftMetadata) GetQualityAnnotation() OptNilString {
 }
 
 // GetAccessRight returns the value of AccessRight.
-func (s *DatasetDraftMetadata) GetAccessRight() OptNilString {
+func (s *DatasetDraftMetadata) GetAccessRight() OptNilDatasetAccessRight {
 	return s.AccessRight
 }
 
@@ -2728,7 +2783,7 @@ func (s *DatasetDraftMetadata) SetQualityAnnotation(val OptNilString) {
 }
 
 // SetAccessRight sets the value of AccessRight.
-func (s *DatasetDraftMetadata) SetAccessRight(val OptNilString) {
+func (s *DatasetDraftMetadata) SetAccessRight(val OptNilDatasetAccessRight) {
 	s.AccessRight = val
 }
 
@@ -2790,7 +2845,7 @@ type DatasetResourceMetadata struct {
 	Keywords           []Keyword                           `json:"keywords"`
 	AccrualPeriodicity OptNilString                        `json:"accrual_periodicity"`
 	QualityAnnotation  OptNilString                        `json:"quality_annotation"`
-	AccessRight        OptNilString                        `json:"access_right"`
+	AccessRight        OptNilDatasetAccessRight            `json:"access_right"`
 	Distributions      []Distribution                      `json:"distributions"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
@@ -2836,7 +2891,7 @@ func (s *DatasetResourceMetadata) GetQualityAnnotation() OptNilString {
 }
 
 // GetAccessRight returns the value of AccessRight.
-func (s *DatasetResourceMetadata) GetAccessRight() OptNilString {
+func (s *DatasetResourceMetadata) GetAccessRight() OptNilDatasetAccessRight {
 	return s.AccessRight
 }
 
@@ -2921,7 +2976,7 @@ func (s *DatasetResourceMetadata) SetQualityAnnotation(val OptNilString) {
 }
 
 // SetAccessRight sets the value of AccessRight.
-func (s *DatasetResourceMetadata) SetAccessRight(val OptNilString) {
+func (s *DatasetResourceMetadata) SetAccessRight(val OptNilDatasetAccessRight) {
 	s.AccessRight = val
 }
 
@@ -4942,43 +4997,6 @@ func NewDownloadableFileDistributionDraftDistributionDraft(v DownloadableFileDis
 	return s
 }
 
-// Ref: #/components/schemas/Documentation
-type Documentation struct {
-	Title       OptNilString   `json:"title"`
-	Description OptNilString   `json:"description"`
-	URI         NonBlankString `json:"uri"`
-}
-
-// GetTitle returns the value of Title.
-func (s *Documentation) GetTitle() OptNilString {
-	return s.Title
-}
-
-// GetDescription returns the value of Description.
-func (s *Documentation) GetDescription() OptNilString {
-	return s.Description
-}
-
-// GetURI returns the value of URI.
-func (s *Documentation) GetURI() NonBlankString {
-	return s.URI
-}
-
-// SetTitle sets the value of Title.
-func (s *Documentation) SetTitle(val OptNilString) {
-	s.Title = val
-}
-
-// SetDescription sets the value of Description.
-func (s *Documentation) SetDescription(val OptNilString) {
-	s.Description = val
-}
-
-// SetURI sets the value of URI.
-func (s *Documentation) SetURI(val NonBlankString) {
-	s.URI = val
-}
-
 type DownloadDistribution2XX struct {
 	Data io.Reader
 }
@@ -5053,8 +5071,6 @@ type DownloadableFileDistribution struct {
 	Description      string                           `json:"description"`
 	License          OptNilString                     `json:"license"`
 	Type             DownloadableFileDistributionType `json:"type"`
-	Issued           OptNilDateTime                   `json:"issued"`
-	Modified         OptNilDateTime                   `json:"modified"`
 	ByteSize         OptNilInt64                      `json:"byte_size"`
 	DownloadableFile DownloadableFile                 `json:"downloadable_file"`
 }
@@ -5087,16 +5103,6 @@ func (s *DownloadableFileDistribution) GetLicense() OptNilString {
 // GetType returns the value of Type.
 func (s *DownloadableFileDistribution) GetType() DownloadableFileDistributionType {
 	return s.Type
-}
-
-// GetIssued returns the value of Issued.
-func (s *DownloadableFileDistribution) GetIssued() OptNilDateTime {
-	return s.Issued
-}
-
-// GetModified returns the value of Modified.
-func (s *DownloadableFileDistribution) GetModified() OptNilDateTime {
-	return s.Modified
 }
 
 // GetByteSize returns the value of ByteSize.
@@ -5139,16 +5145,6 @@ func (s *DownloadableFileDistribution) SetType(val DownloadableFileDistributionT
 	s.Type = val
 }
 
-// SetIssued sets the value of Issued.
-func (s *DownloadableFileDistribution) SetIssued(val OptNilDateTime) {
-	s.Issued = val
-}
-
-// SetModified sets the value of Modified.
-func (s *DownloadableFileDistribution) SetModified(val OptNilDateTime) {
-	s.Modified = val
-}
-
 // SetByteSize sets the value of ByteSize.
 func (s *DownloadableFileDistribution) SetByteSize(val OptNilInt64) {
 	s.ByteSize = val
@@ -5166,8 +5162,6 @@ type DownloadableFileDistributionDraft struct {
 	Description      OptString                             `json:"description"`
 	License          OptNilString                          `json:"license"`
 	Type             DownloadableFileDistributionDraftType `json:"type"`
-	Issued           OptNilDateTime                        `json:"issued"`
-	Modified         OptNilDateTime                        `json:"modified"`
 	ByteSize         OptNilInt64                           `json:"byte_size"`
 	DownloadableFile DownloadableFile                      `json:"downloadable_file"`
 }
@@ -5195,16 +5189,6 @@ func (s *DownloadableFileDistributionDraft) GetLicense() OptNilString {
 // GetType returns the value of Type.
 func (s *DownloadableFileDistributionDraft) GetType() DownloadableFileDistributionDraftType {
 	return s.Type
-}
-
-// GetIssued returns the value of Issued.
-func (s *DownloadableFileDistributionDraft) GetIssued() OptNilDateTime {
-	return s.Issued
-}
-
-// GetModified returns the value of Modified.
-func (s *DownloadableFileDistributionDraft) GetModified() OptNilDateTime {
-	return s.Modified
 }
 
 // GetByteSize returns the value of ByteSize.
@@ -5240,16 +5224,6 @@ func (s *DownloadableFileDistributionDraft) SetLicense(val OptNilString) {
 // SetType sets the value of Type.
 func (s *DownloadableFileDistributionDraft) SetType(val DownloadableFileDistributionDraftType) {
 	s.Type = val
-}
-
-// SetIssued sets the value of Issued.
-func (s *DownloadableFileDistributionDraft) SetIssued(val OptNilDateTime) {
-	s.Issued = val
-}
-
-// SetModified sets the value of Modified.
-func (s *DownloadableFileDistributionDraft) SetModified(val OptNilDateTime) {
-	s.Modified = val
 }
 
 // SetByteSize sets the value of ByteSize.
@@ -9799,52 +9773,6 @@ func (o OptDateTime) Or(d time.Time) time.Time {
 	return d
 }
 
-// NewOptDocumentation returns new OptDocumentation with value set to v.
-func NewOptDocumentation(v Documentation) OptDocumentation {
-	return OptDocumentation{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDocumentation is optional Documentation.
-type OptDocumentation struct {
-	Value Documentation
-	Set   bool
-}
-
-// IsSet returns true if OptDocumentation was set.
-func (o OptDocumentation) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDocumentation) Reset() {
-	var v Documentation
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDocumentation) SetTo(v Documentation) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDocumentation) Get() (v Documentation, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDocumentation) Or(d Documentation) Documentation {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptGeologicalTemporalCoverage returns new OptGeologicalTemporalCoverage with value set to v.
 func NewOptGeologicalTemporalCoverage(v GeologicalTemporalCoverage) OptGeologicalTemporalCoverage {
 	return OptGeologicalTemporalCoverage{
@@ -10091,6 +10019,74 @@ func (o OptNilBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilDatasetAccessRight returns new OptNilDatasetAccessRight with value set to v.
+func NewOptNilDatasetAccessRight(v DatasetAccessRight) OptNilDatasetAccessRight {
+	return OptNilDatasetAccessRight{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilDatasetAccessRight is optional nullable DatasetAccessRight.
+type OptNilDatasetAccessRight struct {
+	Value DatasetAccessRight
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilDatasetAccessRight was set.
+func (o OptNilDatasetAccessRight) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilDatasetAccessRight) Reset() {
+	var v DatasetAccessRight
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilDatasetAccessRight) SetTo(v DatasetAccessRight) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilDatasetAccessRight) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilDatasetAccessRight) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v DatasetAccessRight
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilDatasetAccessRight) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilDatasetAccessRight) Get() (v DatasetAccessRight, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilDatasetAccessRight) Or(d DatasetAccessRight) DatasetAccessRight {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -12360,8 +12356,7 @@ func (s *ReplaceCategoryRequest) SetParentCategoryID(val NilUUID) {
 
 // Ref: #/components/schemas/ReplaceContactPointRequest
 type ReplaceContactPointRequest struct {
-	Email string         `json:"email"`
-	Role  NonBlankString `json:"role"`
+	Email string `json:"email"`
 }
 
 // GetEmail returns the value of Email.
@@ -12369,19 +12364,9 @@ func (s *ReplaceContactPointRequest) GetEmail() string {
 	return s.Email
 }
 
-// GetRole returns the value of Role.
-func (s *ReplaceContactPointRequest) GetRole() NonBlankString {
-	return s.Role
-}
-
 // SetEmail sets the value of Email.
 func (s *ReplaceContactPointRequest) SetEmail(val string) {
 	s.Email = val
-}
-
-// SetRole sets the value of Role.
-func (s *ReplaceContactPointRequest) SetRole(val NonBlankString) {
-	s.Role = val
 }
 
 // Ref: #/components/schemas/ReplaceConversionPluginRequest
@@ -16929,18 +16914,13 @@ func (s *WFSDistributionAccessRequestType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/WebService
 type WebService struct {
-	ID            uuid.UUID                      `json:"id"`
-	ResourceID    uuid.UUID                      `json:"resource_id"`
-	Name          string                         `json:"name"`
-	Description   OptNilString                   `json:"description"`
-	VisibleOn     OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider      OptResourceVersionReference    `json:"provider"`
-	Documentation OptDocumentation               `json:"documentation"`
-	// WKT POINT or POLYGON geometry in EPSG:4326.
-	SpatialCoverage  OptNilString            `json:"spatial_coverage"`
-	TemporalCoverage OptTemporalCoverage     `json:"temporal_coverage"`
-	ContactPoints    []uuid.UUID             `json:"contact_points"`
-	Configuration    WebServiceConfiguration `json:"configuration"`
+	ID               uuid.UUID                      `json:"id"`
+	ResourceID       uuid.UUID                      `json:"resource_id"`
+	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider         OptResourceVersionReference    `json:"provider"`
+	DocumentationURI OptURI                         `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID                    `json:"contact_points"`
+	Configuration    WebServiceConfiguration        `json:"configuration"`
 }
 
 // GetID returns the value of ID.
@@ -16953,16 +16933,6 @@ func (s *WebService) GetResourceID() uuid.UUID {
 	return s.ResourceID
 }
 
-// GetName returns the value of Name.
-func (s *WebService) GetName() string {
-	return s.Name
-}
-
-// GetDescription returns the value of Description.
-func (s *WebService) GetDescription() OptNilString {
-	return s.Description
-}
-
 // GetVisibleOn returns the value of VisibleOn.
 func (s *WebService) GetVisibleOn() OptNilWebServiceVisibleOnArray {
 	return s.VisibleOn
@@ -16973,19 +16943,9 @@ func (s *WebService) GetProvider() OptResourceVersionReference {
 	return s.Provider
 }
 
-// GetDocumentation returns the value of Documentation.
-func (s *WebService) GetDocumentation() OptDocumentation {
-	return s.Documentation
-}
-
-// GetSpatialCoverage returns the value of SpatialCoverage.
-func (s *WebService) GetSpatialCoverage() OptNilString {
-	return s.SpatialCoverage
-}
-
-// GetTemporalCoverage returns the value of TemporalCoverage.
-func (s *WebService) GetTemporalCoverage() OptTemporalCoverage {
-	return s.TemporalCoverage
+// GetDocumentationURI returns the value of DocumentationURI.
+func (s *WebService) GetDocumentationURI() OptURI {
+	return s.DocumentationURI
 }
 
 // GetContactPoints returns the value of ContactPoints.
@@ -17008,16 +16968,6 @@ func (s *WebService) SetResourceID(val uuid.UUID) {
 	s.ResourceID = val
 }
 
-// SetName sets the value of Name.
-func (s *WebService) SetName(val string) {
-	s.Name = val
-}
-
-// SetDescription sets the value of Description.
-func (s *WebService) SetDescription(val OptNilString) {
-	s.Description = val
-}
-
 // SetVisibleOn sets the value of VisibleOn.
 func (s *WebService) SetVisibleOn(val OptNilWebServiceVisibleOnArray) {
 	s.VisibleOn = val
@@ -17028,19 +16978,9 @@ func (s *WebService) SetProvider(val OptResourceVersionReference) {
 	s.Provider = val
 }
 
-// SetDocumentation sets the value of Documentation.
-func (s *WebService) SetDocumentation(val OptDocumentation) {
-	s.Documentation = val
-}
-
-// SetSpatialCoverage sets the value of SpatialCoverage.
-func (s *WebService) SetSpatialCoverage(val OptNilString) {
-	s.SpatialCoverage = val
-}
-
-// SetTemporalCoverage sets the value of TemporalCoverage.
-func (s *WebService) SetTemporalCoverage(val OptTemporalCoverage) {
-	s.TemporalCoverage = val
+// SetDocumentationURI sets the value of DocumentationURI.
+func (s *WebService) SetDocumentationURI(val OptURI) {
+	s.DocumentationURI = val
 }
 
 // SetContactPoints sets the value of ContactPoints.
@@ -17369,8 +17309,6 @@ type WebServiceDistribution struct {
 	Description string                     `json:"description"`
 	License     OptNilString               `json:"license"`
 	Type        WebServiceDistributionType `json:"type"`
-	Issued      OptNilDateTime             `json:"issued"`
-	Modified    OptNilDateTime             `json:"modified"`
 	ByteSize    OptNilInt64                `json:"byte_size"`
 	WebService  WebService                 `json:"web_service"`
 	// Native formats and conversions whose plugins are enabled and locally installed. If converter is
@@ -17407,16 +17345,6 @@ func (s *WebServiceDistribution) GetLicense() OptNilString {
 // GetType returns the value of Type.
 func (s *WebServiceDistribution) GetType() WebServiceDistributionType {
 	return s.Type
-}
-
-// GetIssued returns the value of Issued.
-func (s *WebServiceDistribution) GetIssued() OptNilDateTime {
-	return s.Issued
-}
-
-// GetModified returns the value of Modified.
-func (s *WebServiceDistribution) GetModified() OptNilDateTime {
-	return s.Modified
 }
 
 // GetByteSize returns the value of ByteSize.
@@ -17464,16 +17392,6 @@ func (s *WebServiceDistribution) SetType(val WebServiceDistributionType) {
 	s.Type = val
 }
 
-// SetIssued sets the value of Issued.
-func (s *WebServiceDistribution) SetIssued(val OptNilDateTime) {
-	s.Issued = val
-}
-
-// SetModified sets the value of Modified.
-func (s *WebServiceDistribution) SetModified(val OptNilDateTime) {
-	s.Modified = val
-}
-
 // SetByteSize sets the value of ByteSize.
 func (s *WebServiceDistribution) SetByteSize(val OptNilInt64) {
 	s.ByteSize = val
@@ -17496,8 +17414,6 @@ type WebServiceDistributionDraft struct {
 	Description OptString                       `json:"description"`
 	License     OptNilString                    `json:"license"`
 	Type        WebServiceDistributionDraftType `json:"type"`
-	Issued      OptNilDateTime                  `json:"issued"`
-	Modified    OptNilDateTime                  `json:"modified"`
 	ByteSize    OptNilInt64                     `json:"byte_size"`
 	WebService  WebServiceDraft                 `json:"web_service"`
 }
@@ -17525,16 +17441,6 @@ func (s *WebServiceDistributionDraft) GetLicense() OptNilString {
 // GetType returns the value of Type.
 func (s *WebServiceDistributionDraft) GetType() WebServiceDistributionDraftType {
 	return s.Type
-}
-
-// GetIssued returns the value of Issued.
-func (s *WebServiceDistributionDraft) GetIssued() OptNilDateTime {
-	return s.Issued
-}
-
-// GetModified returns the value of Modified.
-func (s *WebServiceDistributionDraft) GetModified() OptNilDateTime {
-	return s.Modified
 }
 
 // GetByteSize returns the value of ByteSize.
@@ -17570,16 +17476,6 @@ func (s *WebServiceDistributionDraft) SetLicense(val OptNilString) {
 // SetType sets the value of Type.
 func (s *WebServiceDistributionDraft) SetType(val WebServiceDistributionDraftType) {
 	s.Type = val
-}
-
-// SetIssued sets the value of Issued.
-func (s *WebServiceDistributionDraft) SetIssued(val OptNilDateTime) {
-	s.Issued = val
-}
-
-// SetModified sets the value of Modified.
-func (s *WebServiceDistributionDraft) SetModified(val OptNilDateTime) {
-	s.Modified = val
 }
 
 // SetByteSize sets the value of ByteSize.
@@ -17662,32 +17558,17 @@ func (s *WebServiceDistributionType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/WebServiceDraft
 type WebServiceDraft struct {
-	ResourceID    OptUUID                        `json:"resource_id"`
-	Name          NonBlankString                 `json:"name"`
-	Description   OptNilString                   `json:"description"`
-	VisibleOn     OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider      OptUUID                        `json:"provider"`
-	Documentation OptDocumentation               `json:"documentation"`
-	// WKT POINT or POLYGON geometry in EPSG:4326.
-	SpatialCoverage  OptNilString                 `json:"spatial_coverage"`
-	TemporalCoverage OptTemporalCoverage          `json:"temporal_coverage"`
-	ContactPoints    []uuid.UUID                  `json:"contact_points"`
-	Configuration    WebServiceConfigurationDraft `json:"configuration"`
+	ResourceID       OptUUID                        `json:"resource_id"`
+	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider         OptUUID                        `json:"provider"`
+	DocumentationURI OptURI                         `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID                    `json:"contact_points"`
+	Configuration    WebServiceConfigurationDraft   `json:"configuration"`
 }
 
 // GetResourceID returns the value of ResourceID.
 func (s *WebServiceDraft) GetResourceID() OptUUID {
 	return s.ResourceID
-}
-
-// GetName returns the value of Name.
-func (s *WebServiceDraft) GetName() NonBlankString {
-	return s.Name
-}
-
-// GetDescription returns the value of Description.
-func (s *WebServiceDraft) GetDescription() OptNilString {
-	return s.Description
 }
 
 // GetVisibleOn returns the value of VisibleOn.
@@ -17700,19 +17581,9 @@ func (s *WebServiceDraft) GetProvider() OptUUID {
 	return s.Provider
 }
 
-// GetDocumentation returns the value of Documentation.
-func (s *WebServiceDraft) GetDocumentation() OptDocumentation {
-	return s.Documentation
-}
-
-// GetSpatialCoverage returns the value of SpatialCoverage.
-func (s *WebServiceDraft) GetSpatialCoverage() OptNilString {
-	return s.SpatialCoverage
-}
-
-// GetTemporalCoverage returns the value of TemporalCoverage.
-func (s *WebServiceDraft) GetTemporalCoverage() OptTemporalCoverage {
-	return s.TemporalCoverage
+// GetDocumentationURI returns the value of DocumentationURI.
+func (s *WebServiceDraft) GetDocumentationURI() OptURI {
+	return s.DocumentationURI
 }
 
 // GetContactPoints returns the value of ContactPoints.
@@ -17730,16 +17601,6 @@ func (s *WebServiceDraft) SetResourceID(val OptUUID) {
 	s.ResourceID = val
 }
 
-// SetName sets the value of Name.
-func (s *WebServiceDraft) SetName(val NonBlankString) {
-	s.Name = val
-}
-
-// SetDescription sets the value of Description.
-func (s *WebServiceDraft) SetDescription(val OptNilString) {
-	s.Description = val
-}
-
 // SetVisibleOn sets the value of VisibleOn.
 func (s *WebServiceDraft) SetVisibleOn(val OptNilWebServiceVisibleOnArray) {
 	s.VisibleOn = val
@@ -17750,19 +17611,9 @@ func (s *WebServiceDraft) SetProvider(val OptUUID) {
 	s.Provider = val
 }
 
-// SetDocumentation sets the value of Documentation.
-func (s *WebServiceDraft) SetDocumentation(val OptDocumentation) {
-	s.Documentation = val
-}
-
-// SetSpatialCoverage sets the value of SpatialCoverage.
-func (s *WebServiceDraft) SetSpatialCoverage(val OptNilString) {
-	s.SpatialCoverage = val
-}
-
-// SetTemporalCoverage sets the value of TemporalCoverage.
-func (s *WebServiceDraft) SetTemporalCoverage(val OptTemporalCoverage) {
-	s.TemporalCoverage = val
+// SetDocumentationURI sets the value of DocumentationURI.
+func (s *WebServiceDraft) SetDocumentationURI(val OptURI) {
+	s.DocumentationURI = val
 }
 
 // SetContactPoints sets the value of ContactPoints.

@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
@@ -578,30 +577,15 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			continue
 		}
 		service := distribution.WebService
-		var start, end *time.Time
-		if service.TemporalCoverage != nil {
-			start, end = service.TemporalCoverage.Start, service.TemporalCoverage.End
-		}
 		providerID := service.ProviderID
-		var title, description, uri *string
-		if service.Documentation != nil {
-			title, description, uri = service.Documentation.Title, service.Documentation.Description, &service.Documentation.URI
-		}
 		created, err := q.AddLifecycleWebService(ctx, sqlc.AddLifecycleWebServiceParams{
-			ID:                       distributions[i].serviceID,
-			ResourceID:               distributions[i].serviceResourceID,
-			DatasetVersionID:         versionID,
-			Name:                     service.Name,
-			Description:              service.Description,
-			Type:                     sqlc.WebServiceType(service.Type),
-			VisibleOn:                visibleOnValues(service.VisibleOn),
-			ProviderOrganizationID:   providerID,
-			DocumentationTitle:       title,
-			DocumentationDescription: description,
-			DocumentationUri:         uri,
-			SpatialCoverage:          service.SpatialCoverage,
-			TemporalStart:            start,
-			TemporalEnd:              end,
+			ID:                     distributions[i].serviceID,
+			ResourceID:             distributions[i].serviceResourceID,
+			DatasetVersionID:       versionID,
+			Type:                   sqlc.WebServiceType(service.Type),
+			VisibleOn:              visibleOnValues(service.VisibleOn),
+			ProviderOrganizationID: providerID,
+			DocumentationUri:       service.DocumentationURI,
 		})
 		if err != nil {
 			return fmt.Errorf("add web service: %w", err)
@@ -753,8 +737,6 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			Title:                  distribution.Title,
 			Description:            distribution.Description,
 			License:                distribution.License,
-			SourceIssuedAt:         distribution.Issued,
-			SourceModifiedAt:       distribution.Modified,
 			ByteSize:               nil,
 			Type:                   string(distribution.Type),
 			DownloadableFileUrl:    nil,
@@ -840,7 +822,7 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		Keywords:                   version.Keywords,
 		AccrualPeriodicity:         version.AccrualPeriodicity,
 		QualityAnnotation:          version.QualityAnnotation,
-		AccessRight:                version.AccessRight,
+		AccessRight:                (*domain.AccessRight)(version.AccessRight),
 		Distributions:              nil,
 		SpatialCoverage:            version.SpatialCoverage,
 		TemporalCoverage:           temporal(version.TemporalStart, version.TemporalEnd),

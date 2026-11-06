@@ -547,7 +547,6 @@ func importContactPoints(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, contac
 			id, err = q.UpsertImportContactPoint(ctx, sqlc.UpsertImportContactPointParams{
 				ID:    contact.ID,
 				Email: contact.Email,
-				Role:  string(contact.Role),
 			})
 			if err != nil {
 				return fmt.Errorf("upsert contact point %q: %w", contact.ID, err)

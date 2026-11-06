@@ -132,14 +132,12 @@ WITH existing_natural_key AS (
         contact_points
     WHERE
         contact_points.email = sqlc.arg(email)
-        AND contact_points.role = sqlc.arg(role)
 ),
 updated_id AS (
     UPDATE
         contact_points
     SET
-        email = sqlc.arg(email),
-        role = sqlc.arg(role)
+        email = sqlc.arg(email)
     WHERE
         contact_points.id = sqlc.arg(id)
         AND NOT EXISTS (
@@ -153,11 +151,10 @@ updated_id AS (
 ),
 inserted AS (
     INSERT INTO
-        contact_points (id, email, role)
+        contact_points (id, email)
     SELECT
         sqlc.arg(id),
-        sqlc.arg(email),
-        sqlc.arg(role)
+        sqlc.arg(email)
     WHERE
         NOT EXISTS (
             SELECT

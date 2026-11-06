@@ -200,7 +200,6 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                     "description": "Discovery web service with display metadata",
                     "type": "WEB_SERVICE",
                     "web_service": {
-                        "name": f"discovery-service-{suffix}",
                         "configuration": {
                             "template_url": "https://example.org/discovery",
                             "method": "GET",
@@ -216,7 +215,6 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                     "description": "Discovery web service without optional metadata",
                     "type": "WEB_SERVICE",
                     "web_service": {
-                        "name": f"discovery-service-optional-{suffix}",
                         "configuration": {
                             "template_url": "https://example.org/discovery/optional",
                             "method": "GET",

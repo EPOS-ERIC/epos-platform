@@ -2990,6 +2990,11 @@ components:
         - ARCHIVED
         - REJECTED
 
+    DatasetAccessRight:
+      type: string
+      nullable: true
+      enum: [NON_PUBLIC, NORMAL, OP_DATPRO, PUBLIC, RESTRICTED, CONFIDENTIAL, SENSITIVE]
+
     DatasetDraftMetadata:
       type: object
       additionalProperties: false
@@ -3002,7 +3007,7 @@ components:
           items: { $ref: "#/components/schemas/Keyword" }
         accrual_periodicity: { type: string, nullable: true }
         quality_annotation: { type: string, nullable: true }
-        access_right: { type: string, nullable: true }
+        access_right: { $ref: "#/components/schemas/DatasetAccessRight" }
         distributions:
           {
             type: array,
@@ -3122,8 +3127,6 @@ components:
           type: string
           enum:
             - "WEB_SERVICE"
-        issued: { type: string, format: date-time, nullable: true }
-        modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         web_service: { $ref: "#/components/schemas/WebServiceDraft" }
 
@@ -3140,33 +3143,22 @@ components:
           type: string
           enum:
             - "DOWNLOADABLE_FILE"
-        issued: { type: string, format: date-time, nullable: true }
-        modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
 
     WebServiceDraft:
       type: object
       additionalProperties: false
-      required: [name, configuration]
+      required: [configuration]
       properties:
         resource_id: { type: string, format: uuid }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        description: { type: string, nullable: true, minLength: 1 }
         visible_on:
           type: array
           nullable: true
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         provider: { type: string, format: uuid }
-        documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage:
-          type: string
-          nullable: true
-          minLength: 1
-          description: WKT POINT or POLYGON geometry in EPSG:4326.
-          example: POINT (12.5 41.9)
-        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        documentation_uri: { type: string, format: uri, minLength: 1 }
         contact_points: { type: array, items: { type: string, format: uuid } }
         configuration: { $ref: "#/components/schemas/WebServiceConfigurationDraft" }
 
@@ -4046,15 +4038,6 @@ components:
         url: { $ref: "#/components/schemas/NonBlankString" }
         format: { $ref: "#/components/schemas/NonBlankString" }
 
-    Documentation:
-      type: object
-      additionalProperties: false
-      required: [uri]
-      properties:
-        title: { type: string, nullable: true }
-        description: { type: string, nullable: true }
-        uri: { $ref: "#/components/schemas/NonBlankString" }
-
     TemporalCoverage:
       type: object
       additionalProperties: false
@@ -4266,7 +4249,7 @@ components:
           items: { $ref: "#/components/schemas/Keyword" }
         accrual_periodicity: { type: string, nullable: true }
         quality_annotation: { type: string, nullable: true }
-        access_right: { type: string, nullable: true }
+        access_right: { $ref: "#/components/schemas/DatasetAccessRight" }
         distributions:
           type: array
           items: { $ref: "#/components/schemas/Distribution" }
@@ -4405,8 +4388,6 @@ components:
           type: string
           enum:
             - "WEB_SERVICE"
-        issued: { type: string, format: date-time, nullable: true }
-        modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         web_service: { $ref: "#/components/schemas/WebService" }
         available_formats:
@@ -4467,33 +4448,22 @@ components:
           type: string
           enum:
             - "DOWNLOADABLE_FILE"
-        issued: { type: string, format: date-time, nullable: true }
-        modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
 
     WebService:
       type: object
-      required: [id, resource_id, name, configuration]
+      required: [id, resource_id, configuration]
       properties:
         id: { type: string, format: uuid }
         resource_id: { type: string, format: uuid }
-        name: { type: string }
-        description: { type: string, nullable: true, minLength: 1 }
         visible_on:
           type: array
           nullable: true
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         provider: { $ref: "#/components/schemas/ResourceVersionReference" }
-        documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage:
-          type: string
-          nullable: true
-          minLength: 1
-          description: WKT POINT or POLYGON geometry in EPSG:4326.
-          example: POINT (12.5 41.9)
-        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        documentation_uri: { type: string, format: uri, minLength: 1 }
         contact_points:
           type: array
           items: { type: string, format: uuid }
@@ -5072,25 +5042,22 @@ components:
         concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
     ContactPoint:
       type: object
-      required: [id, email, role]
+      required: [id, email]
       properties:
         id: { type: string, format: uuid }
         email: { type: string, format: email, minLength: 1 }
-        role: { type: string, minLength: 1 }
     CreateContactPointRequest:
       type: object
-      required: [email, role]
+      required: [email]
       additionalProperties: false
       properties:
         email: { type: string, format: email, minLength: 1 }
-        role: { $ref: "#/components/schemas/NonBlankString" }
     ReplaceContactPointRequest:
       type: object
-      required: [email, role]
+      required: [email]
       additionalProperties: false
       properties:
         email: { type: string, format: email, minLength: 1 }
-        role: { $ref: "#/components/schemas/NonBlankString" }
     OrganizationAddress:
       type: object
       required: [street, locality, postal_code, country]

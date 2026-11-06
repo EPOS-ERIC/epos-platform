@@ -13,13 +13,9 @@ func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService 
 	result := &metadatalifecyclev1.WebService{
 		Id:               value.ID.String(),
 		ResourceId:       value.ResourceID.String(),
-		Name:             value.Name,
-		Description:      value.Description,
 		Type:             webServiceTypeOutput(value.Type),
 		VisibleOn:        webServiceVisibleOnOutput(value.VisibleOn),
-		Documentation:    documentationOutput(value.Documentation),
-		SpatialCoverage:  geometryString(value.SpatialCoverage),
-		TemporalCoverage: temporalOutput(value.TemporalCoverage),
+		DocumentationUri: value.DocumentationURI,
 	}
 	switch configuration := value.Configuration.(type) {
 	case domain.GenericWebServiceConfiguration:
@@ -151,18 +147,6 @@ func toDomainWebServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain
 		}
 		providerID = &id
 	}
-	spatialCoverage, err := geometryInput(value.SpatialCoverage, "spatial_coverage")
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	temporalCoverage, err := temporalInput(value.GetTemporalCoverage())
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	documentation, err := documentationInput(value.GetDocumentation())
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
 	serviceType, err := webServiceTypeInput(value.GetType())
 	if err != nil {
 		return domain.WebServiceInput{}, err
@@ -177,15 +161,11 @@ func toDomainWebServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain
 	}
 	return domain.WebServiceInput{
 		ResourceID:       resourceID,
-		Name:             value.GetName(),
-		Description:      value.Description,
 		Type:             serviceType,
 		Configuration:    configuration,
 		VisibleOn:        visibleOn,
 		ProviderID:       providerID,
-		Documentation:    documentation,
-		SpatialCoverage:  spatialCoverage,
-		TemporalCoverage: temporalCoverage,
+		DocumentationURI: value.DocumentationUri,
 		ContactPointIDs:  contactPoints,
 	}, nil
 }

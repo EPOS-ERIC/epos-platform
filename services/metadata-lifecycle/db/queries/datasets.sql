@@ -400,17 +400,10 @@ inserted_web_services AS (
             id,
             resource_id,
             dataset_version_id,
-            name,
-            description,
             TYPE,
             visible_on,
             provider_organization_id,
-            documentation_title,
-            documentation_description,
-            documentation_uri,
-            spatial_coverage,
-            temporal_start,
-            temporal_end
+            documentation_uri
         )
     SELECT
         uuid_generate_v5(
@@ -437,17 +430,10 @@ inserted_web_services AS (
             FROM
                 inserted
         ),
-        name,
-        description,
         TYPE,
         visible_on,
         provider_organization_id,
-        documentation_title,
-        documentation_description,
-        documentation_uri,
-        spatial_coverage,
-        temporal_start,
-        temporal_end
+        documentation_uri
     FROM
         web_services AS source
     WHERE
@@ -1053,8 +1039,6 @@ distributions AS (
             title,
             description,
             license,
-            source_issued_at,
-            source_modified_at,
             byte_size,
             TYPE,
             downloadable_file_url,
@@ -1089,8 +1073,6 @@ distributions AS (
         distribution.title,
         distribution.description,
         distribution.license,
-        distribution.source_issued_at,
-        distribution.source_modified_at,
         distribution.byte_size,
         distribution.type,
         distribution.downloadable_file_url,
@@ -1184,34 +1166,20 @@ INSERT INTO
         id,
         resource_id,
         dataset_version_id,
-        name,
-        description,
         TYPE,
         visible_on,
         provider_organization_id,
-        documentation_title,
-        documentation_description,
-        documentation_uri,
-        spatial_coverage,
-        temporal_start,
-        temporal_end
+        documentation_uri
     )
 VALUES
     (
         sqlc.arg(id),
         sqlc.arg(resource_id),
         sqlc.arg(dataset_version_id),
-        sqlc.arg(name),
-        sqlc.arg(description),
         sqlc.arg(TYPE),
         sqlc.arg(visible_on),
         sqlc.narg(provider_organization_id),
-        sqlc.narg(documentation_title),
-        sqlc.narg(documentation_description),
-        sqlc.narg(documentation_uri),
-        sqlc.narg(spatial_coverage),
-        sqlc.narg(temporal_start),
-        sqlc.narg(temporal_end)
+        sqlc.narg(documentation_uri)
     )
 RETURNING
     *;
@@ -1504,8 +1472,6 @@ INSERT INTO
         title,
         description,
         license,
-        source_issued_at,
-        source_modified_at,
         byte_size,
         TYPE,
         downloadable_file_url,
@@ -1520,8 +1486,6 @@ VALUES
         sqlc.arg(title),
         sqlc.arg(description),
         sqlc.narg(license),
-        sqlc.narg(source_issued_at),
-        sqlc.narg(source_modified_at),
         sqlc.narg(byte_size),
         sqlc.arg(TYPE),
         sqlc.narg(downloadable_file_url),
@@ -1706,8 +1670,7 @@ ORDER BY
 -- name: ListLifecycleDatasetContactPoints :many
 SELECT
     contact.id,
-    contact.email,
-    contact.role
+    contact.email
 FROM
     dataset_version_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id

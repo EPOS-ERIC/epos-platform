@@ -10,8 +10,6 @@ CREATE TABLE distributions (
     title                    nonblank_text NOT NULL,
     description              nonblank_text NOT NULL,
     license                  nonblank_text_opt,
-    source_issued_at         timestamptz,
-    source_modified_at       timestamptz,
     byte_size                integer,
 
     -- Delivery method. Constraint below requires one complete representation.

@@ -65,7 +65,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
     def create_contact_point(self, suffix: str) -> str:
         response = self.gateway.post(
             "/contact-points",
-            json={"email": f"variants-{suffix}@example.org", "role": "creator"},
+            json={"email": f"variants-{suffix}@example.org"},
         )
         self.assertEqual(response.status_code, 201)
         return response.json()["id"]
@@ -294,7 +294,6 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             parameter("west", "FLOAT", position=1, role="MIN_LON", property="custom:west"),
         ])
         role_distribution["title"] = f"Role metadata {suffix}"
-        role_distribution["web_service"]["name"] = f"Role metadata {suffix}"
         dataset_metadata["distributions"].append(role_distribution)
         application_metadata = {
             "name": f"Application {suffix}",

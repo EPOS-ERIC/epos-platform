@@ -114,7 +114,6 @@ func (h *ogenHandler) CreateContactPoint(ctx context.Context, q *gatewayapi.Crea
 	}
 	v, err := h.metadataLifecycleClient.CreateContactPoint(ctx, a, &metadatalifecyclev1.CreateContactPointRequest{
 		Email: string(q.Email),
-		Role:  string(q.Role),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create contact point: %w", err)
@@ -134,7 +133,6 @@ func (h *ogenHandler) ReplaceContactPoint(ctx context.Context, q *gatewayapi.Rep
 	v, err := h.metadataLifecycleClient.ReplaceContactPoint(ctx, a, &metadatalifecyclev1.ReplaceContactPointRequest{
 		ContactPointId: p.ContactPointId.String(),
 		Email:          string(q.Email),
-		Role:           string(q.Role),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("replace contact point: %w", err)
