@@ -20,6 +20,7 @@ export type DatasetGeologicalTemporalForm = {
 
 export type DatasetPersistentIdentifierForm = {
   id?: string;
+  resourceId?: string;
   type: string;
   value: string;
 };
@@ -41,6 +42,7 @@ export type DatasetEnumOptionForm = {
 };
 
 export type DatasetWebServiceScalarParameterCommonForm = {
+  resourceId?: string;
   position: number;
   name: string;
   label: string;
@@ -162,6 +164,7 @@ export type DatasetWfsWebServiceConfigurationForm = {
 };
 
 export type DatasetWmsLayerForm = {
+  resourceId?: string;
   name: string;
   defaultStyle: string;
   styles: string[];
@@ -179,6 +182,7 @@ export type DatasetWmsWebServiceConfigurationForm = {
 };
 
 export type DatasetWmtsLayerForm = {
+  resourceId?: string;
   name: string;
   defaultStyle: string;
   styles: string[];
@@ -200,6 +204,7 @@ export type DatasetWebServiceConfigurationForm =
   | DatasetWmtsWebServiceConfigurationForm;
 
 export type DatasetWebServiceForm = {
+  resourceId?: string;
   visibleOn: WebServiceVisibleOn[];
   documentationUri: string;
   provider: DatasetWebServiceProviderForm;
@@ -209,6 +214,7 @@ export type DatasetWebServiceForm = {
 
 export type DatasetDistributionCommonForm = {
   id?: string;
+  resourceId?: string;
   nativeFormats?: string[];
   title: string;
   description: string;

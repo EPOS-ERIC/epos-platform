@@ -14,6 +14,12 @@ import type {
   DatasetProviderForm
 } from '../../../../models/dataset-detail-form';
 
+type ParameterCollection =
+  | 'parameters'
+  | 'getMapParameters'
+  | 'getFeatureInfoParameters'
+  | 'getTileParameters';
+
 @Component({
   selector: 'app-web-service',
   imports: [FormsModule, NgTemplateOutlet, ContactPointsComponent, DistributionConversionsComponent, ProvidersComponent, ScalarParametersEditorComponent, WebServiceParametersComponent],
@@ -28,7 +34,9 @@ export class WebServiceComponent {
   @Input() disabled = false;
   @Input() comparisonMode = false;
   @Input() comparisonSide: 'left' | 'right' = 'left';
+  @Input() comparisonSelectedParameterResourceId: string | null = null;
   @Output() modelChange = new EventEmitter<DatasetWebServiceForm>();
+  @Output() comparisonSelectedParameterResourceIdChange = new EventEmitter<string>();
 
   protected readonly methods = ['GET', 'POST', 'PUT', 'DELETE'] as const;
   protected readonly types: readonly DatasetWebServiceConfigurationForm['type'][] = ['HTTP', 'DYNAMIC', 'WFS', 'WMS', 'WMTS'];
@@ -78,6 +86,28 @@ export class WebServiceComponent {
 
   protected splitValues(value: string): string[] {
     return value.split(',').map((item) => item.trim()).filter(Boolean);
+  }
+
+  protected comparisonParameters(collection: ParameterCollection): DatasetWebServiceParameterForm[] {
+    const configuration = this.comparisonModel?.configuration;
+    if (!configuration) {
+      return [];
+    }
+
+    switch (collection) {
+      case 'parameters':
+        return configuration.type === 'HTTP' || configuration.type === 'DYNAMIC' || configuration.type === 'WFS'
+          ? configuration.parameters
+          : [];
+      case 'getMapParameters':
+        return configuration.type === 'WMS' ? configuration.getMapParameters : [];
+      case 'getFeatureInfoParameters':
+        return configuration.type === 'WMS' || configuration.type === 'WMTS'
+          ? configuration.getFeatureInfoParameters
+          : [];
+      case 'getTileParameters':
+        return configuration.type === 'WMTS' ? configuration.getTileParameters : [];
+    }
   }
 
   protected addLayer(): void {

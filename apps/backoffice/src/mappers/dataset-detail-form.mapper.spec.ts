@@ -139,7 +139,12 @@ function datasetMetadata(): DatasetResourceMetadata {
     ],
     spatial_coverage: null,
     temporal_coverage: { start: 'invalid-start', end: null },
-    persistent_identifiers: [{ id: 'identifier-id', resource_id: 'identifier-resource-id', type: 'DOI', value: '10.123/example' }],
+    persistent_identifiers: [{
+      id: 'identifier-id',
+      resource_id: 'identifier-resource-id',
+      type: 'DOI',
+      value: '10.123/example',
+    }],
     contact_points: ['contact-id'],
     providers: [{ id: 'provider-id', name: 'Provider' }],
     categories: [{ id: 'category-id', name: 'Category' }],
@@ -286,10 +291,12 @@ describe('toDatasetDetailForm', () => {
     });
     expect(form.distributions[0]).toMatchObject({
       id: 'distribution-id',
+      resourceId: 'distribution-resource-id',
       nativeFormats: ['application/json'],
       kind: 'web-service',
       byteSize: '',
       webService: {
+        resourceId: 'service-resource-id',
         visibleOn: ['GRAPH', 'MAP'],
         documentationUri: 'https://example.test/docs',
         configuration: {
@@ -301,6 +308,7 @@ describe('toDatasetDetailForm', () => {
           bodyParameters: [
           {
             kind: 'DATETIME',
+            resourceId: 'body-parameter-resource-id',
             position: 12,
             name: 'when',
             description: '',
@@ -312,6 +320,7 @@ describe('toDatasetDetailForm', () => {
           {
             kind: 'FLOAT',
             id: 'parameter-id',
+            resourceId: 'parameter-resource-id',
             position: 8,
             name: 'value',
             property: 'schema:value',
@@ -325,10 +334,11 @@ describe('toDatasetDetailForm', () => {
           },
           {
             kind: 'TEMPLATE',
+            resourceId: 'template-resource-id',
             template: '{code}:{enabled}',
             parameters: [
-              { kind: 'STRING', name: 'code', allowedValues: [{ value: 'A', label: 'Alpha' }, { value: 'B', label: '' }], pattern: '[A-Z]' },
-              { kind: 'BOOLEAN', name: 'enabled', defaultValue: false },
+              { kind: 'STRING', resourceId: 'code-parameter-resource-id', name: 'code', allowedValues: [{ value: 'A', label: 'Alpha' }, { value: 'B', label: '' }], pattern: '[A-Z]' },
+              { kind: 'BOOLEAN', resourceId: 'enabled-parameter-resource-id', name: 'enabled', defaultValue: false },
             ],
           },
           ],
@@ -396,7 +406,9 @@ describe('toDatasetSaveRequest', () => {
     const distribution = request.metadata.distributions?.[0];
 
     expect(distribution).toMatchObject({
+      resource_id: 'distribution-resource-id',
       web_service: {
+        resource_id: 'service-resource-id',
         visible_on: ['GRAPH', 'MAP'],
         configuration: {
           method: 'POST',
@@ -407,6 +419,7 @@ describe('toDatasetSaveRequest', () => {
           body_parameters: [
           {
             kind: 'DATETIME',
+            resource_id: 'body-parameter-resource-id',
             position: 0,
             name: 'when',
             description: undefined,
@@ -417,6 +430,7 @@ describe('toDatasetSaveRequest', () => {
           parameters: [
           {
             kind: 'FLOAT',
+            resource_id: 'parameter-resource-id',
             position: 0,
             name: 'value',
             description: 'Numeric value',
@@ -428,18 +442,24 @@ describe('toDatasetSaveRequest', () => {
           },
           {
             kind: 'TEMPLATE',
+            resource_id: 'template-resource-id',
             position: 1,
             property: undefined,
             template: '{code}:{enabled}',
             parameters: [
-              { kind: 'STRING', position: 0, enum: [{ value: 'A', label: 'Alpha' }, { value: 'B', label: undefined }], pattern: '[A-Z]' },
-              { kind: 'BOOLEAN', position: 1, default: false },
+              { kind: 'STRING', resource_id: 'code-parameter-resource-id', position: 0, enum: [{ value: 'A', label: 'Alpha' }, { value: 'B', label: undefined }], pattern: '[A-Z]' },
+              { kind: 'BOOLEAN', resource_id: 'enabled-parameter-resource-id', position: 1, default: false },
             ],
           },
           ],
         },
       },
     });
+    expect(request.metadata.persistent_identifiers).toEqual([{
+      resource_id: 'identifier-resource-id',
+      type: 'DOI',
+      value: '10.123/example',
+    }]);
     expect(distribution).not.toHaveProperty('id');
   });
 
@@ -461,7 +481,13 @@ describe('toDatasetSaveRequest', () => {
         type: 'WMS',
         capabilities_url: 'https://example.test/wms?service=WMS&request=GetCapabilities',
         default_layer: 'stations',
-        layers: [{ id: 'wms-layer-id', resource_id: 'wms-layer-resource-id', name: 'stations', default_style: '', styles: [''] }],
+        layers: [{
+          id: 'wms-layer-id',
+          resource_id: 'wms-layer-resource-id',
+          name: 'stations',
+          default_style: '',
+          styles: [''],
+        }],
         transparency_editable: true,
         default_transparency: false,
         get_map_parameters: [],
@@ -471,7 +497,13 @@ describe('toDatasetSaveRequest', () => {
         type: 'WMTS',
         capabilities_url: 'https://example.test/wmts/capabilities.xml',
         default_layer: 'stations',
-        layers: [{ id: 'wmts-layer-id', resource_id: 'wmts-layer-resource-id', name: 'stations', default_style: 'standard', styles: ['standard'] }],
+        layers: [{
+          id: 'wmts-layer-id',
+          resource_id: 'wmts-layer-resource-id',
+          name: 'stations',
+          default_style: 'standard',
+          styles: ['standard'],
+        }],
         get_tile_parameters: [],
         get_feature_info_parameters: [],
       },
@@ -492,7 +524,7 @@ describe('toDatasetSaveRequest', () => {
       const expectedConfiguration = configuration.type === 'WMS' || configuration.type === 'WMTS'
         ? {
             ...configuration,
-            layers: configuration.layers.map(({ id: _id, resource_id: _resourceId, ...layer }) => layer)
+            layers: configuration.layers.map(({ id: _id, ...layer }) => layer)
           }
         : configuration;
       expect(requestDistribution.web_service.configuration).toEqual(expectedConfiguration);

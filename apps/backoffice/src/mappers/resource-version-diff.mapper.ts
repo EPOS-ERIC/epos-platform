@@ -2,7 +2,10 @@ import type { ResourceVersion } from '../../generated/backofficeSchemas';
 import type { ResourceVersionDiffRow, ResourceVersionDiffValue } from '../models/resource-version-comparison';
 
 type FlatValue = { value: unknown };
-type PathSegment = { kind: 'field'; key: string } | { kind: 'item'; index: number };
+type PathSegment =
+  | { kind: 'field'; key: string }
+  | { kind: 'item'; index: number; stableId?: string };
+type StableArrayIndexes = Map<string, Map<string, number>>;
 type ResourceVersionDiffReferences = {
   contactPoints?: ReadonlyMap<string, string>;
 };
@@ -40,8 +43,9 @@ export function mapResourceVersionDiff(
   rightVersion: ResourceVersion,
   references: ResourceVersionDiffReferences = {}
 ): ResourceVersionDiffRow[] {
-  const left = flatten(leftVersion);
-  const right = flatten(rightVersion);
+  const stableArrayIndexes: StableArrayIndexes = new Map();
+  const left = flatten(leftVersion, stableArrayIndexes);
+  const right = flatten(rightVersion, stableArrayIndexes);
   const paths = [...left.keys(), ...[...right.keys()].filter((path) => !left.has(path))];
 
   return paths.map((path) => {
@@ -60,7 +64,7 @@ export function mapResourceVersionDiff(
   });
 }
 
-function flatten(value: unknown): Map<string, FlatValue> {
+function flatten(value: unknown, stableArrayIndexes: StableArrayIndexes): Map<string, FlatValue> {
   const result = new Map<string, FlatValue>();
 
   const visit = (current: unknown, segments: PathSegment[]): void => {
@@ -69,7 +73,14 @@ function flatten(value: unknown): Map<string, FlatValue> {
         result.set(serializePath(segments), { value: [] });
         return;
       }
-      current.forEach((item, index) => visit(item, [...segments, { kind: 'item', index }]));
+      const arrayPath = serializePath(segments);
+      current.forEach((item, index) => {
+        const stableId = itemStableId(item, segments);
+        const stableIndex = stableId
+          ? stableItemIndex(stableArrayIndexes, arrayPath, stableId)
+          : index;
+        visit(item, [...segments, { kind: 'item', index: stableIndex, stableId }]);
+      });
       return;
     }
 
@@ -112,7 +123,7 @@ function shouldIgnorePath(segments: PathSegment[]): boolean {
     return true;
   }
 
-  return path.startsWith('metadata.') && path.endsWith('.id');
+  return path.startsWith('metadata.') && (path.endsWith('.id') || path.endsWith('.resource_id'));
 }
 
 function readablePath(
@@ -134,8 +145,8 @@ function readablePath(
     }
 
     const itemLabel = singularLabel(labels.at(-1) ?? 'Item');
-    const leftItem = arrayValue(leftValue, segment.index);
-    const rightItem = arrayValue(rightValue, segment.index);
+    const leftItem = arrayValue(leftValue, segment);
+    const rightItem = arrayValue(rightValue, segment);
     const description = itemDescription(leftItem, rightItem);
     labels.push(`${itemLabel} ${segment.index + 1}${description ? ` (${description})` : ''}`);
     leftValue = leftItem;
@@ -167,8 +178,66 @@ function propertyValue(value: unknown, key: string): unknown {
   return isRecord(value) ? value[key] : undefined;
 }
 
-function arrayValue(value: unknown, index: number): unknown {
-  return Array.isArray(value) ? value[index] : undefined;
+function arrayValue(value: unknown, segment: Extract<PathSegment, { kind: 'item' }>): unknown {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  if (!segment.stableId) {
+    return value[segment.index];
+  }
+  return value.find((item) => matchesStableId(item, segment.stableId!));
+}
+
+function itemStableId(value: unknown, segments: PathSegment[]): string | undefined {
+  if (isRecord(value)) {
+    const resourceId = value['resource_id'];
+    if (typeof resourceId === 'string' && resourceId.trim()) {
+      return `resource:${resourceId}`;
+    }
+    const collection = [...segments].reverse().find(
+      (segment): segment is Extract<PathSegment, { kind: 'field' }> => segment.kind === 'field'
+    )?.key;
+    const id = value['id'];
+    if ((collection === 'providers' || collection === 'categories') && typeof id === 'string' && id.trim()) {
+      return `id:${id}`;
+    }
+  }
+
+  const collection = [...segments].reverse().find(
+    (segment): segment is Extract<PathSegment, { kind: 'field' }> => segment.kind === 'field'
+  )?.key;
+  return collection === 'contact_points' && typeof value === 'string' && value.trim()
+    ? `value:${value}`
+    : undefined;
+}
+
+function matchesStableId(value: unknown, stableId: string): boolean {
+  if (stableId.startsWith('resource:')) {
+    return isRecord(value) && value['resource_id'] === stableId.slice('resource:'.length);
+  }
+  if (stableId.startsWith('id:')) {
+    return isRecord(value) && value['id'] === stableId.slice('id:'.length);
+  }
+  return typeof value === 'string' && stableId === `value:${value}`;
+}
+
+function stableItemIndex(
+  stableArrayIndexes: StableArrayIndexes,
+  arrayPath: string,
+  resourceId: string
+): number {
+  let indexes = stableArrayIndexes.get(arrayPath);
+  if (!indexes) {
+    indexes = new Map();
+    stableArrayIndexes.set(arrayPath, indexes);
+  }
+  const existing = indexes.get(resourceId);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const index = indexes.size;
+  indexes.set(resourceId, index);
+  return index;
 }
 
 function itemDescription(left: unknown, right: unknown): string {

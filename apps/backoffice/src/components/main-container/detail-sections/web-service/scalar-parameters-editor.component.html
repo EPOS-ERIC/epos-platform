@@ -17,8 +17,8 @@
   </header>
 
   <div class="scalar-editor-list">
-    @for (parameter of model; track $index) {
-      <details class="scalar-item" [open]="$first">
+    @for (parameter of model; track parameter.resourceId ?? $index) {
+      <details class="scalar-item" [attr.data-comparison-resource-id]="parameter.resourceId ?? null" [open]="$first">
         <summary>
           <span><b>{{ parameter.kind }}</b> {{ parameter.label || parameter.name || 'Unnamed parameter' }}</span>
           @if (!disabled) {

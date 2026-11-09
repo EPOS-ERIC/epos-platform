@@ -73,7 +73,7 @@ describe('software save request mappers', () => {
         operating_system: 'Linux',
         main_entity_of_page: undefined,
         creators: ['creator-id'],
-        identifiers: [{ type: 'DOI', value: '10.123/example' }],
+        identifiers: [{ resource_id: 'identifier-resource-id', type: 'DOI', value: '10.123/example' }],
         categories: ['category-id'],
         contact_points: ['contact-id']
       }

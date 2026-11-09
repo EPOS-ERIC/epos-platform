@@ -21,15 +21,30 @@
   @if (model.length) {
     <div class="detail-fieldset">
       <div class="tab-bar">
-        @for (distribution of model; track $index) {
-          <button type="button" class="tab-button" [class.active]="distributionTabs === $index" (click)="selectDistributionTab($index)">
-            {{ distribution.title || 'Distribution ' + ($index + 1) }}
+        @for (item of displayedDistributions(); track item.distribution.resourceId ?? item.globalIndex) {
+          <button
+            type="button"
+            class="tab-button"
+            [class.active]="distributionTabs === item.globalIndex"
+            [class.tab-button--positive]="distributionHasPositiveDiff(item.distribution)"
+            [class.tab-button--negative]="distributionHasNegativeDiff(item.distribution)"
+            (click)="selectDistributionTab(item.globalIndex)"
+          >
+            <span>{{ item.distribution.title || 'Distribution ' + ($index + 1) }}</span>
+            @if (distributionComparisonStatus(item.distribution) !== 'unchanged') {
+              <span class="distribution-change-badge">{{ distributionStatusLabel(item.distribution) }}</span>
+            }
           </button>
         }
       </div>
 
       @if (selectedDistribution(); as distribution) {
-          <div class="distribution-body">
+          <div
+            class="distribution-body"
+            [attr.data-comparison-resource-id]="distribution.resourceId ?? null"
+            [attr.data-comparison-key]="comparisonMode ? distributionComparisonKey(distribution) : null"
+            [attr.data-comparison-status]="comparisonMode ? distributionComparisonStatus(distribution) : null"
+          >
             <div class="distribution-level-heading">
               <div class="distribution-level-title">
                 <strong>{{ distribution.title || 'Selected distribution' }}</strong>
@@ -73,6 +88,8 @@
               [disabled]="disabled"
               [comparisonMode]="comparisonMode"
               [comparisonSide]="comparisonSide"
+              [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId"
+              (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)"
               (modelChange)="emitModelChange()"
             ></app-web-service>
           } @else if (distribution.kind === 'downloadable-file') {

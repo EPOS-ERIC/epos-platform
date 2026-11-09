@@ -55,6 +55,7 @@ export function toDatasetDetailForm(metadata: DatasetResourceMetadata): DatasetD
     persistentIdentifiers: metadata.persistent_identifiers?.length
       ? metadata.persistent_identifiers.map((identifier) => ({
           id: identifier.id,
+          resourceId: identifier.resource_id,
           type: identifier.type,
           value: identifier.value,
         }))
@@ -99,7 +100,11 @@ export function toDatasetSaveRequest(
           (identifier) =>
             hasIdentifierValue(identifier.type) && hasIdentifierValue(identifier.value),
         )
-        .map((identifier) => ({ type: identifier.type, value: identifier.value })),
+        .map((identifier) => ({
+          resource_id: identifier.resourceId,
+          type: identifier.type,
+          value: identifier.value,
+        })),
       contact_points: form.contactPoints.filter(hasIdentifierValue),
       providers: form.providers
         .filter((provider) => hasIdentifierValue(provider.id))
@@ -354,6 +359,7 @@ export function geologicalTemporalValidationError(form: DatasetDetailForm): stri
 function buildDistributionForm(distribution: Distribution): DatasetDistributionForm {
   const base = {
     id: distribution.id,
+    resourceId: distribution.resource_id,
     nativeFormats: distribution.type === 'WEB_SERVICE'
       ? distribution.available_formats
           .filter((format) => format.kind === 'ORIGINAL')
@@ -373,6 +379,7 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
       ...base,
       kind: 'web-service',
       webService: {
+        resourceId: webService.resource_id,
         visibleOn: webService.visible_on ?? [],
         documentationUri: webService.documentation_uri ?? '',
         provider: webService.provider
@@ -441,6 +448,7 @@ function buildWebServiceConfigurationForm(
         capabilitiesUrl: configuration.capabilities_url,
         defaultLayer: configuration.default_layer,
         layers: configuration.layers.map((layer) => ({
+          resourceId: layer.resource_id,
           name: layer.name,
           defaultStyle: layer.default_style,
           styles: [...layer.styles],
@@ -456,6 +464,7 @@ function buildWebServiceConfigurationForm(
         capabilitiesUrl: configuration.capabilities_url,
         defaultLayer: configuration.default_layer,
         layers: configuration.layers.map((layer) => ({
+          resourceId: layer.resource_id,
           name: layer.name,
           defaultStyle: layer.default_style ?? '',
           styles: [...(layer.styles ?? [])],
@@ -475,6 +484,7 @@ function parameterForms(parameters: Parameter[] | undefined): DatasetWebServiceP
 function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServiceParameterForm {
   const common = {
     id: parameter.id,
+    resourceId: parameter.resource_id,
     position: parameter.position,
     name: parameter.name,
     label: parameter.label,
@@ -542,6 +552,7 @@ function buildWebServiceScalarParameterForm(
   parameter: ScalarParameter,
 ): DatasetWebServiceScalarParameterForm {
   const common = {
+    resourceId: parameter.resource_id,
     position: parameter.position,
     name: parameter.name,
     label: parameter.label,
@@ -607,6 +618,7 @@ function buildEmptyWebServiceParameterForm(): DatasetWebServiceParameterForm {
 
 function buildDistributionDraft(distribution: DatasetDistributionForm): DistributionDraft {
   const base = {
+    resource_id: distribution.resourceId,
     title: distribution.title,
     description: undefinedIfBlank(distribution.description),
     license: undefinedIfBlank(distribution.license),
@@ -632,6 +644,7 @@ function buildWebServiceDraft(
   webService: DatasetWebServiceForm,
 ): WebServiceDistributionDraft['web_service'] {
   return {
+    resource_id: webService.resourceId,
     visible_on: webService.visibleOn.length ? webService.visibleOn : undefined,
     provider: hasIdentifierValue(webService.provider.id) ? webService.provider.id : undefined,
     documentation_uri: undefinedIfBlank(webService.documentationUri),
@@ -685,7 +698,12 @@ function buildWebServiceConfigurationDraft(
           const styles = layer.styles.includes(layer.defaultStyle)
             ? layer.styles
             : [layer.defaultStyle, ...layer.styles];
-          return { name: layer.name, default_style: layer.defaultStyle, styles };
+          return {
+            resource_id: layer.resourceId,
+            name: layer.name,
+            default_style: layer.defaultStyle,
+            styles,
+          };
         }),
         transparency_editable: configuration.transparencyEditable,
         default_transparency: configuration.defaultTransparency,
@@ -698,6 +716,7 @@ function buildWebServiceConfigurationDraft(
         capabilities_url: configuration.capabilitiesUrl,
         default_layer: configuration.defaultLayer,
         layers: configuration.layers.map((layer) => ({
+          resource_id: layer.resourceId,
           name: layer.name,
           default_style: undefinedIfBlank(layer.defaultStyle),
           styles: layer.styles.length ? layer.styles : undefined,
@@ -719,6 +738,7 @@ function buildWebServiceParameterDraft(
   position: number,
 ): ParameterDraft {
   const common = {
+    resource_id: parameter.resourceId,
     position,
     name: parameter.name,
     label: parameter.label,
@@ -787,6 +807,7 @@ function buildWebServiceScalarParameterDraft(
   position: number,
 ): ScalarParameterDraft {
   const common = {
+    resource_id: parameter.resourceId,
     position,
     name: parameter.name,
     label: parameter.label,

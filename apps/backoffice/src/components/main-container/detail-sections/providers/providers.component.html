@@ -21,7 +21,7 @@
     @if (selectedProviders().length) {
       <ul class="providers-list">
         @for (provider of selectedProviders(); track provider.id) {
-          <li class="provider-row provider-row--selected"><strong>{{ provider.name }}</strong></li>
+          <li class="provider-row provider-row--selected" [attr.data-comparison-key]="'provider:' + provider.id"><strong>{{ provider.name }}</strong></li>
         }
       </ul>
     } @else {

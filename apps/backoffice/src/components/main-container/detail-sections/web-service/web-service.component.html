@@ -100,25 +100,25 @@
 
     @switch (model.configuration.type) {
       @case ('HTTP') {
-        <app-web-service-parameters [model]="model.configuration.parameters" [disabled]="disabled" (modelChange)="model.configuration.parameters = $event; emitModelChange()" />
+        <app-web-service-parameters [model]="model.configuration.parameters" [comparisonModel]="comparisonParameters('parameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.parameters = $event; emitModelChange()" />
       }
       @case ('DYNAMIC') {
-        <app-web-service-parameters [model]="model.configuration.parameters" [disabled]="disabled" [dynamic]="true" (modelChange)="model.configuration.parameters = $event; emitModelChange()" />
+        <app-web-service-parameters [model]="model.configuration.parameters" [comparisonModel]="comparisonParameters('parameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" [dynamic]="true" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.parameters = $event; emitModelChange()" />
       }
       @case ('WFS') {
-        <app-web-service-parameters [model]="model.configuration.parameters" [disabled]="disabled" (modelChange)="model.configuration.parameters = $event; emitModelChange()" />
+        <app-web-service-parameters [model]="model.configuration.parameters" [comparisonModel]="comparisonParameters('parameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.parameters = $event; emitModelChange()" />
       }
       @case ('WMS') {
         <h4 class="distribution-subtitle">GetMap parameters</h4>
-        <app-web-service-parameters [model]="model.configuration.getMapParameters" [disabled]="disabled" (modelChange)="model.configuration.getMapParameters = $event; emitModelChange()" />
+        <app-web-service-parameters [model]="model.configuration.getMapParameters" [comparisonModel]="comparisonParameters('getMapParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getMapParameters = $event; emitModelChange()" />
         <h4 class="distribution-subtitle">GetFeatureInfo parameters</h4>
-        <app-web-service-parameters [model]="model.configuration.getFeatureInfoParameters" [disabled]="disabled" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
+        <app-web-service-parameters [model]="model.configuration.getFeatureInfoParameters" [comparisonModel]="comparisonParameters('getFeatureInfoParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
       }
       @case ('WMTS') {
         <h4 class="distribution-subtitle">GetTile parameters</h4>
-        <app-web-service-parameters [model]="model.configuration.getTileParameters" [disabled]="disabled" (modelChange)="model.configuration.getTileParameters = $event; emitModelChange()" />
+        <app-web-service-parameters [model]="model.configuration.getTileParameters" [comparisonModel]="comparisonParameters('getTileParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getTileParameters = $event; emitModelChange()" />
         <h4 class="distribution-subtitle">GetFeatureInfo parameters</h4>
-        <app-web-service-parameters [model]="model.configuration.getFeatureInfoParameters" [disabled]="disabled" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
+        <app-web-service-parameters [model]="model.configuration.getFeatureInfoParameters" [comparisonModel]="comparisonParameters('getFeatureInfoParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
       }
     }
 
@@ -186,8 +186,8 @@
       <label class="detail-field detail-field--full"><span class="detail-label">Capabilities URL *</span><input class="app-input" [(ngModel)]="configuration.capabilitiesUrl" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required /></label>
       <label class="detail-field"><span class="detail-label">Default layer *</span><input class="app-input" [(ngModel)]="configuration.defaultLayer" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required /></label>
     </div>
-    @for (layer of configuration.layers; track $index) {
-      <div class="detail-form-grid">
+    @for (layer of configuration.layers; track layer.resourceId ?? $index) {
+      <div class="detail-form-grid" [attr.data-comparison-resource-id]="layer.resourceId ?? null">
         <label class="detail-field"><span class="detail-label">Layer name *</span><input class="app-input" [(ngModel)]="layer.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
         <label class="detail-field"><span class="detail-label">Default style</span><input class="app-input" [(ngModel)]="layer.defaultStyle" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
         <label class="detail-field"><span class="detail-label">Styles</span><input class="app-input" [ngModel]="joinValues(layer.styles)" [ngModelOptions]="{ standalone: true }" (ngModelChange)="layer.styles = splitValues($event); emitModelChange()" /></label>

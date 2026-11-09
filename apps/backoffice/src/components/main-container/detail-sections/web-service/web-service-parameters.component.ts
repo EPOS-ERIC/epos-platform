@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AppIconComponent } from '../../../../shared/ui/app-icon.component';
@@ -20,15 +20,17 @@ interface ParameterListItem {
   templateUrl: './web-service-parameters.component.html',
   styleUrl: './web-service-parameters.component.css'
 })
-export class WebServiceParametersComponent {
+export class WebServiceParametersComponent implements OnChanges {
   @Input() model: DatasetWebServiceParameterForm[] = [];
   @Input() comparisonModel: DatasetWebServiceParameterForm[] = [];
   @Input() disabled = false;
   @Input() comparisonMode = false;
   @Input() comparisonSide: 'left' | 'right' = 'left';
+  @Input() comparisonSelectedParameterResourceId: string | null = null;
   @Input() reversed = false;
   @Input() dynamic = false;
   @Output() modelChange = new EventEmitter<DatasetWebServiceParameterForm[]>();
+  @Output() comparisonSelectedParameterResourceIdChange = new EventEmitter<string>();
 
   protected parameterPage = 0;
   protected selectedParameterIndex = 0;
@@ -43,6 +45,27 @@ export class WebServiceParametersComponent {
   protected parameterListCollapsed = false;
   protected draggedParameterIndex: number | null = null;
   protected dragOverParameterIndex: number | null = null;
+
+  ngOnChanges(): void {
+    if (this.comparisonSelectedParameterResourceId) {
+      const selectedIndex = this.model.findIndex(
+        (parameter) => parameter.resourceId === this.comparisonSelectedParameterResourceId
+      );
+      if (selectedIndex >= 0) {
+        this.parameterSearchQuery = '';
+        this.selectedParameterIndex = selectedIndex;
+        this.parameterPage = Math.floor(
+          this.filteredParameterEntries().findIndex((entry) => entry.globalIndex === selectedIndex) /
+          this.parameterPageSize
+        );
+      }
+      return;
+    }
+
+    if (this.comparisonMode && this.comparisonSide === 'right') {
+      this.selectedParameterIndex = this.filteredParameterEntries()[0]?.globalIndex ?? 0;
+    }
+  }
 
   protected toggleParameterList(): void {
     this.parameterListCollapsed = !this.parameterListCollapsed;
@@ -109,6 +132,10 @@ export class WebServiceParametersComponent {
   }
 
   protected parameterComparisonKey(parameter: DatasetWebServiceParameterForm): string {
+    if (parameter.resourceId?.trim()) {
+      return `resource:${parameter.resourceId}`;
+    }
+
     const name = parameter.name.trim().toLocaleLowerCase();
     if (name) {
       return `name:${name}`;
@@ -156,6 +183,10 @@ export class WebServiceParametersComponent {
 
   protected selectParameter(globalIndex: number): void {
     this.selectedParameterIndex = globalIndex;
+    const resourceId = this.model[globalIndex]?.resourceId;
+    if (this.comparisonMode && resourceId) {
+      this.comparisonSelectedParameterResourceIdChange.emit(resourceId);
+    }
   }
 
   protected moveParameterToPosition(
@@ -327,9 +358,19 @@ export class WebServiceParametersComponent {
 
   private filteredParameterEntries(model = this.model): ParameterListItem[] {
     const query = this.parameterSearchQuery.trim().toLocaleLowerCase();
+    const entries = model.map((parameter, globalIndex) => ({ parameter, globalIndex }));
+    if (this.comparisonMode && this.comparisonSide === 'right') {
+      const comparisonOrder = new Map(
+        this.comparisonModel.map((parameter, index) => [this.parameterComparisonKey(parameter), index])
+      );
+      entries.sort((left, right) => {
+        const leftIndex = comparisonOrder.get(this.parameterComparisonKey(left.parameter)) ?? Number.MAX_SAFE_INTEGER;
+        const rightIndex = comparisonOrder.get(this.parameterComparisonKey(right.parameter)) ?? Number.MAX_SAFE_INTEGER;
+        return leftIndex - rightIndex || left.globalIndex - right.globalIndex;
+      });
+    }
 
-    return model
-      .map((parameter, globalIndex) => ({ parameter, globalIndex }))
+    return entries
       .filter(({ parameter }) => !query || [
         parameter.kind,
         parameter.label,
@@ -343,7 +384,7 @@ export class WebServiceParametersComponent {
   }
 
   private parameterComparableValue(parameter: DatasetWebServiceParameterForm): string {
-    const { id: _id, position: _position, ...visibleValue } = parameter;
+    const { id: _id, resourceId: _resourceId, position: _position, ...visibleValue } = parameter;
     return JSON.stringify(visibleValue);
   }
 

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import type {
   DatasetResourceMetadata,
@@ -39,6 +39,10 @@ type SoftwareMetadata = SoftwareApplicationResourceMetadata | SoftwareSourceCode
 export class ResourceVersionSectionComponent {
   @Input({ required: true }) sectionTitle = '';
   @Input() comparisonSide: 'left' | 'right' = 'left';
+  @Input() comparisonSelectedParameterResourceId: string | null = null;
+  @Input() comparisonSelectedDistributionResourceId: string | null = null;
+  @Output() comparisonSelectedParameterResourceIdChange = new EventEmitter<string>();
+  @Output() comparisonSelectedDistributionResourceIdChange = new EventEmitter<string>();
 
   protected currentVersion: ResourceVersion | null = null;
   protected datasetForm: DatasetDetailForm | null = null;
@@ -67,5 +71,14 @@ export class ResourceVersionSectionComponent {
 
   protected softwareResourceType(): 'software-application' | 'software-source-code' {
     return this.softwareMetadata?.resource_type ?? 'software-application';
+  }
+
+  protected softwareIdentifiers(): DatasetDetailForm['persistentIdentifiers'] {
+    return this.softwareMetadata?.identifiers.map((identifier) => ({
+      id: identifier.id,
+      resourceId: identifier.resource_id,
+      type: identifier.type,
+      value: identifier.value
+    })) ?? [];
   }
 }

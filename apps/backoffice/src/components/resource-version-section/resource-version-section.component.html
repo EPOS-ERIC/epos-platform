@@ -37,7 +37,7 @@
         />
       } @else if (softwareMetadata; as metadata) {
         <app-identifiers
-          [model]="metadata.identifiers"
+          [model]="softwareIdentifiers()"
           [disabled]="true"
           [neutralAppearance]="true"
           title="Persistent Identifiers"
@@ -86,6 +86,10 @@
           [disabled]="true"
           [comparisonMode]="true"
           [comparisonSide]="comparisonSide"
+          [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId"
+          (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)"
+          [comparisonSelectedDistributionResourceId]="comparisonSelectedDistributionResourceId"
+          (comparisonSelectedDistributionResourceIdChange)="comparisonSelectedDistributionResourceIdChange.emit($event)"
         />
       }
     }

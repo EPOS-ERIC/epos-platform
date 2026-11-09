@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import type { ResourceVersion } from '../../../generated/backofficeSchemas';
@@ -16,12 +16,21 @@ import { ComparisonFieldsDirective } from './comparison-fields.directive';
 })
 export class ResourceVersionComparisonPageComponent {
   protected readonly store = inject(ResourceVersionComparisonStore);
+  protected readonly selectedParameterResourceId = signal<string | null>(null);
+  protected readonly selectedDistributionResourceId = signal<string | null>(null);
   protected comparisonContext: ResourceVersionComparisonContext | null = null;
 
   @Input({ required: true })
   set context(context: ResourceVersionComparisonContext) {
     this.comparisonContext = context;
+    this.selectedParameterResourceId.set(null);
+    this.selectedDistributionResourceId.set(null);
     this.store.load(context);
+  }
+
+  protected selectDistribution(resourceId: string): void {
+    this.selectedDistributionResourceId.set(resourceId);
+    this.selectedParameterResourceId.set(null);
   }
 
   protected versionLabel(version: ResourceVersion): string {

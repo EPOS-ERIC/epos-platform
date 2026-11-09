@@ -36,4 +36,5 @@ describe('CategoriesComponent', () => {
     expect(fixture.nativeElement.querySelector('.category-remove')).toBeNull();
     expect(fixture.nativeElement.querySelector('.subtitle')).toBeNull();
   });
+
 });
