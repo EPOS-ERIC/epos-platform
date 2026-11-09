@@ -55,12 +55,9 @@
       }
     }
 
-    <fieldset class="detail-fieldset" [disabled]="disabled">
-      <label class="detail-field detail-field--full">
-        <span class="detail-label">Documentation URI</span>
-        <input class="app-input" type="url" [(ngModel)]="model.documentationUri" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
-      </label>
-    </fieldset>
+    @if (model.configuration.type !== 'HTTP' && model.configuration.type !== 'DYNAMIC') {
+      <ng-container *ngTemplateOutlet="documentation"></ng-container>
+    }
 
     <details id="webservice-provider" class="webservice-subsection">
       <summary class="webservice-subsection-summary">
@@ -128,6 +125,17 @@
   }
 </div>
 
+<ng-template #documentation>
+  @if (model; as webService) {
+    <fieldset id="webservice-documentation" class="detail-fieldset" [disabled]="disabled">
+      <label class="detail-field detail-field--full">
+        <span class="detail-label">Documentation URI</span>
+        <input class="app-input" type="url" [(ngModel)]="webService.documentationUri" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+      </label>
+    </fieldset>
+  }
+</ng-template>
+
 <ng-template #httpConfiguration let-configuration="configuration" let-dynamic="dynamic">
   @if (dynamic) {
     <p class="temporal-warning temporal-warning--warning dynamic-configuration-hint" role="note">
@@ -152,6 +160,7 @@
       </label>
     </div>
   </fieldset>
+  <ng-container *ngTemplateOutlet="documentation"></ng-container>
   <details id="webservice-body" class="webservice-subsection">
     <summary class="webservice-subsection-summary">
       <span class="distribution-subtitle">Request Body</span>

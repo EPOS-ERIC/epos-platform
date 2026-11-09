@@ -104,6 +104,15 @@ describe('ResourceDetailStore', () => {
     expect(store.title()).toBe('Mapped dataset');
     expect(store.keywords()).toEqual(['earth', 'science']);
     expect(store.navigationItems()[1]?.anchor).toBe('spatial-coverage');
+    const webServiceNavigation = store.navigationItems()
+      .find((item) => item.anchor === 'distributions')
+      ?.children?.find((item) => item.anchor === 'web-service');
+    expect(webServiceNavigation?.children?.map((item) => item.anchor)).toEqual([
+      'webservice-documentation',
+      'webservice-provider',
+      'webservice-contact-points',
+      'webservice-parameters'
+    ]);
   });
 
   it('resolves a rejection author for dataset versions', () => {

@@ -110,8 +110,6 @@ const DATASET_NAVIGATION_ITEMS: ResourceDetailNavigationItem[] = [
           { label: 'Documentation', anchor: 'webservice-documentation' },
           { label: 'Provider', anchor: 'webservice-provider' },
           { label: 'Contact Points', anchor: 'webservice-contact-points' },
-          { label: 'Spatial Coverage', anchor: 'webservice-spatial-coverage' },
-          { label: 'Temporal Coverage', anchor: 'webservice-temporal-coverage' },
           { label: 'Parameters', anchor: 'webservice-parameters' }
         ]
       }

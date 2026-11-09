@@ -23,8 +23,6 @@ export function toastTargetAnchor(target: string): string | null {
     const webServiceAnchors: ReadonlyArray<readonly [string, string]> = [
       ['documentation', 'webservice-documentation'],
       ['contact_points', 'webservice-contact-points'],
-      ['spatial_coverage', 'webservice-spatial-coverage'],
-      ['temporal_coverage', 'webservice-temporal-coverage'],
       ['parameters', 'webservice-parameters'],
       ['provider', 'webservice-provider'],
       ['body', 'webservice-body']
