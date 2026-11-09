@@ -36,8 +36,8 @@ describe('ResourceVersionComparisonStore', () => {
     expect(apiService.getResourceVersion).toHaveBeenNthCalledWith(2, 'dataset', 'resource-id', 'right');
     expect(store.loading()).toBe(false);
     expect(store.error()).toBe('');
-    expect(store.leftVersion()?.version_id).toBe('left');
-    expect(store.rightVersion()?.version_id).toBe('right');
+    expect(store.leftVersion()?.id).toBe('left');
+    expect(store.rightVersion()?.id).toBe('right');
     expect(store.diffRows().find((row) => row.path === 'Title')?.changed).toBe(true);
     expect(store.diffRows().some((row) => row.path === 'Revision')).toBe(false);
     expect(store.diffSections()[0]).toMatchObject({
@@ -72,8 +72,8 @@ describe('ResourceVersionComparisonStore', () => {
 
     store.load(context());
 
-    expect(store.leftVersion()?.version_id).toBe('older');
-    expect(store.rightVersion()?.version_id).toBe('newer');
+    expect(store.leftVersion()?.id).toBe('older');
+    expect(store.rightVersion()?.id).toBe('newer');
   });
 
   it('cancels both requests from an earlier comparison and ignores stale emissions', () => {
@@ -99,8 +99,8 @@ describe('ResourceVersionComparisonStore', () => {
     currentRight.next(version('current-right'));
     currentRight.complete();
 
-    expect(store.leftVersion()?.version_id).toBe('current-left');
-    expect(store.rightVersion()?.version_id).toBe('current-right');
+    expect(store.leftVersion()?.id).toBe('current-left');
+    expect(store.rightVersion()?.id).toBe('current-right');
   });
 
   function context(): ResourceVersionComparisonContext {
@@ -118,7 +118,7 @@ describe('ResourceVersionComparisonStore', () => {
   function version(versionId: string, overrides: Partial<ResourceVersion> = {}): ResourceVersionResponse<'dataset'> {
     return {
       resource_id: 'resource-id',
-      version_id: versionId,
+      id: versionId,
       revision: 1,
       status: 'DRAFT',
       created_by: 'user',
@@ -128,7 +128,6 @@ describe('ResourceVersionComparisonStore', () => {
       updated_at: '2026-01-02T00:00:00Z',
       metadata: {
         resource_type: 'dataset',
-        id: 'resource-id',
         title: 'Dataset',
         description: 'Description',
         keywords: [],

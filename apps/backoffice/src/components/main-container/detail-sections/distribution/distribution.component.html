@@ -56,7 +56,7 @@
                     @if (field === 'description') {
                       <textarea class="app-input detail-textarea" rows="3" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required></textarea>
                     } @else {
-                      <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="field === 'title'" />
+                      <input class="app-input" [type]="field === 'byteSize' ? 'number' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="field === 'title'" />
                     }
                   </label>
                 }

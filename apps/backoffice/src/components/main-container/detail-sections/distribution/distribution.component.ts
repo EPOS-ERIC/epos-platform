@@ -18,7 +18,7 @@ export class DistributionComponent {
   @Input() comparisonSide: 'left' | 'right' = 'left';
   @Output() modelChange = new EventEmitter<DatasetDistributionForm[]>();
 
-  protected readonly distributionFields: Array<keyof DatasetDistributionCommonForm> = ['title', 'description', 'issued', 'modified', 'license', 'type'];
+  protected readonly distributionFields: Array<keyof DatasetDistributionCommonForm> = ['title', 'description', 'license', 'byteSize', 'type'];
   protected distributionTabs = 0;
   protected newDistributionKind: DatasetDistributionForm['kind'] = 'web-service';
 
@@ -70,9 +70,8 @@ export class DistributionComponent {
       nativeFormats: 'Native formats',
       title: 'Title',
       description: 'Description',
-      issued: 'Issued',
-      modified: 'Modified',
       license: 'License',
+      byteSize: 'Byte size',
       type: 'Type'
     };
 
@@ -83,9 +82,8 @@ export class DistributionComponent {
     const common = {
       title: '',
       description: '',
-      issued: '',
-      modified: '',
-      license: ''
+      license: '',
+      byteSize: ''
     };
 
     if (kind === 'downloadable-file') {
@@ -102,14 +100,10 @@ export class DistributionComponent {
       kind,
       type: 'WEB_SERVICE',
       webService: {
-        name: '',
-        description: '',
         visibleOn: [],
-        documentation: { title: '', description: '', uri: '' },
+        documentationUri: '',
         provider: { id: '', name: '' },
         contactPoints: [],
-        spatialCoverage: null,
-        temporalCoverage: { start: '', end: '' },
         configuration: {
           type: 'HTTP',
           templateUrl: '',

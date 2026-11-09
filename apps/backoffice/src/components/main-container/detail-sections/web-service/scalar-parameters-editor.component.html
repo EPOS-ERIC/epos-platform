@@ -39,7 +39,7 @@
           @switch (parameter.kind) {
             @case ('STRING') {
               <div class="scalar-grid scalar-kind-fields">
-                <label><span>Default</span><input class="app-input" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label><span>Defaults</span><input class="app-input" [ngModel]="parameter.defaultValue.join(', ')" [ngModelOptions]="{ standalone: true }" (ngModelChange)="parameter.defaultValue = splitDefaultValues($event); emitModelChange()" /></label>
                 <label><span>Pattern</span><input class="app-input" [(ngModel)]="parameter.pattern" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
               </div>
               <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
@@ -51,7 +51,7 @@
               <div class="scalar-grid scalar-kind-fields">
                 <label><span>Minimum</span><input class="app-input" type="number" step="1" [(ngModel)]="parameter.minimum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
                 <label><span>Maximum</span><input class="app-input" type="number" step="1" [(ngModel)]="parameter.maximum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
-                <label class="scalar-full"><span>Default</span><input class="app-input" type="number" step="1" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label class="scalar-full"><span>Defaults</span><input class="app-input" [ngModel]="parameter.defaultValue.join(', ')" [ngModelOptions]="{ standalone: true }" (ngModelChange)="parameter.defaultValue = splitDefaultValues($event); emitModelChange()" /></label>
               </div>
               <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
             }
@@ -59,7 +59,7 @@
               <div class="scalar-grid scalar-kind-fields">
                 <label><span>Minimum</span><input class="app-input" type="number" step="any" [(ngModel)]="parameter.minimum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
                 <label><span>Maximum</span><input class="app-input" type="number" step="any" [(ngModel)]="parameter.maximum" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
-                <label class="scalar-full"><span>Default</span><input class="app-input" type="number" step="any" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+                <label class="scalar-full"><span>Defaults</span><input class="app-input" [ngModel]="parameter.defaultValue.join(', ')" [ngModelOptions]="{ standalone: true }" (ngModelChange)="parameter.defaultValue = splitDefaultValues($event); emitModelChange()" /></label>
               </div>
               <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
             }

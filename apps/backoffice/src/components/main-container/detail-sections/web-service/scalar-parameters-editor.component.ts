@@ -84,14 +84,18 @@ export class ScalarParametersEditorComponent {
 
     switch (kind) {
       case 'STRING':
-        return { kind, ...common, defaultValue: null, allowedValues: [], pattern: '' };
+        return { kind, ...common, defaultValue: [], allowedValues: [], pattern: '' };
       case 'BOOLEAN':
         return { kind, ...common, defaultValue: null };
       case 'INTEGER':
       case 'FLOAT':
-        return { kind, ...common, minimum: '', maximum: '', defaultValue: '', allowedValues: [] };
+        return { kind, ...common, minimum: '', maximum: '', defaultValue: [], allowedValues: [] };
       case 'DATETIME':
         return { kind, ...common, minimum: '', maximum: '', defaultValue: '', layout: '' };
     }
+  }
+
+  protected splitDefaultValues(value: string): string[] {
+    return value.split(',').map((item) => item.trim()).filter(Boolean);
   }
 }

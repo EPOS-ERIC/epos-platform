@@ -9,7 +9,7 @@ type ResourceVersionDiffReferences = {
 
 const IGNORED_PATHS = new Set([
   'resource_id',
-  'version_id',
+  'id',
   'revision',
   'status',
   'created_by',

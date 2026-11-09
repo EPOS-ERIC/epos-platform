@@ -364,16 +364,20 @@ export class WebServiceParametersComponent {
 
     switch (kind) {
       case 'STRING':
-        return { kind, ...common, multipleValues: false, defaultValue: null, allowedValues: [], pattern: '' };
+        return { kind, ...common, multipleValues: false, defaultValue: [], allowedValues: [], pattern: '' };
       case 'BOOLEAN':
         return { kind, ...common, defaultValue: null };
       case 'INTEGER':
       case 'FLOAT':
-        return { kind, ...common, multipleValues: false, minimum: '', maximum: '', defaultValue: '', allowedValues: [] };
+        return { kind, ...common, multipleValues: false, minimum: '', maximum: '', defaultValue: [], allowedValues: [] };
       case 'DATETIME':
         return { kind, ...common, minimum: '', maximum: '', defaultValue: '', layout: '' };
       case 'TEMPLATE':
         return { kind, ...common, template: '', parameters: [] };
     }
+  }
+
+  protected splitDefaultValues(value: string): string[] {
+    return value.split(',').map((item) => item.trim()).filter(Boolean);
   }
 }

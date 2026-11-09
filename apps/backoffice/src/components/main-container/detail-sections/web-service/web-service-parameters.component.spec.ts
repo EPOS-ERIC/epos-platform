@@ -23,7 +23,7 @@ describe('WebServiceParametersComponent', () => {
         required: false,
         multipleValues: false,
         readOnly: false,
-        defaultValue: null,
+        defaultValue: [],
         allowedValues: [],
         pattern: ''
       },
@@ -221,7 +221,7 @@ describe('WebServiceParametersComponent', () => {
       required: false,
       multipleValues: false,
       readOnly: false,
-      defaultValue: null,
+      defaultValue: [],
       allowedValues: [],
       pattern: ''
     };
@@ -282,7 +282,7 @@ function createStringParameter(label: string, name: string, position: number): D
     required: false,
     multipleValues: false,
     readOnly: false,
-    defaultValue: null,
+    defaultValue: [],
     allowedValues: [],
     pattern: ''
   };

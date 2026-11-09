@@ -13,7 +13,7 @@ import type { DatasetEnumOptionForm } from '../../../../models/dataset-detail-fo
 export class AllowedValuesEditorComponent {
   @Input() values: DatasetEnumOptionForm[] = [];
   @Input() kind: 'STRING' | 'INTEGER' | 'FLOAT' = 'STRING';
-  @Input() defaultValue: string | null = null;
+  @Input() defaultValue: string[] = [];
   @Input() disabled = false;
   @Output() valuesChange = new EventEmitter<DatasetEnumOptionForm[]>();
 
@@ -33,17 +33,20 @@ export class AllowedValuesEditorComponent {
   }
 
   protected defaultOutsideAllowedValues(): boolean {
-    if (!this.values.length || this.defaultValue === null || !this.defaultValue.trim()) {
+    const defaults = this.defaultValue.filter((value) => value.trim());
+    if (!this.values.length || !defaults.length) {
       return false;
     }
 
     if (this.kind === 'STRING') {
-      return !this.values.some((option) => option.value === this.defaultValue);
+      return defaults.some((value) => !this.values.some((option) => option.value === value));
     }
 
-    const defaultValue = Number(this.defaultValue.replace(',', '.'));
-    return Number.isFinite(defaultValue)
-      && !this.values.some((option) => Number(option.value.replace(',', '.')) === defaultValue);
+    return defaults.some((value) => {
+      const defaultValue = Number(value.replace(',', '.'));
+      return Number.isFinite(defaultValue)
+        && !this.values.some((option) => Number(option.value.replace(',', '.')) === defaultValue);
+    });
   }
 
   protected updateValue(index: number, value: string, input: HTMLInputElement): void {

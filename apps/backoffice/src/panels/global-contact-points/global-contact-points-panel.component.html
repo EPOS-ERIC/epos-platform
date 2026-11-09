@@ -9,7 +9,7 @@
     <div class="contact-points-header-actions">
       <label class="contact-point-search">
         <span class="app-visually-hidden">Search contact points</span>
-        <input class="app-input" type="search" placeholder="Search by email or role" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" />
+        <input class="app-input" type="search" placeholder="Search by email" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" />
       </label>
       <button type="button" class="app-button app-button--primary add-contact-point-button" (click)="openCreateEditor()">
         <span aria-hidden="true">+</span>
@@ -30,7 +30,6 @@
             <span class="contact-point-mark"><app-icon name="at-sign" [size]="22" /></span>
             <div>
               <h3>{{ contactPoint.email }}</h3>
-              <p>Role: {{ contactPoint.role }}</p>
             </div>
           </div>
           <div class="contact-point-actions">
@@ -74,10 +73,6 @@
         <label class="form-field">
           <span>Email *</span>
           <input class="app-input" name="email" type="email" required email [(ngModel)]="contactPointForm.email" />
-        </label>
-        <label class="form-field">
-          <span>Role *</span>
-          <input class="app-input" name="role" required [(ngModel)]="contactPointForm.role" />
         </label>
         <div class="dialog-actions">
           <button type="button" class="app-button app-button--ghost" (click)="closeEditor()" [disabled]="editorSaving()">Cancel</button>

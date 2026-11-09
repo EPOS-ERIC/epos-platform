@@ -9,8 +9,7 @@ import { GlobalContactPointsPanelComponent } from './global-contact-points-panel
 describe('GlobalContactPointsPanelComponent', () => {
   const contactPoint: ContactPoint = {
     id: 'contact-1',
-    email: 'data@example.org',
-    role: 'Data support'
+    email: 'data@example.org'
   };
   const apiService = {
     getContactPoints: vi.fn(),
@@ -28,7 +27,7 @@ describe('GlobalContactPointsPanelComponent', () => {
     });
   });
 
-  it('loads and filters contact points by email or role', () => {
+  it('loads and filters contact points by email', () => {
     const fixture = TestBed.createComponent(GlobalContactPointsPanelComponent);
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
@@ -47,8 +46,7 @@ describe('GlobalContactPointsPanelComponent', () => {
   it('paginates contact points in groups of ten and resets the page when searching', async () => {
     const contactPoints = Array.from({ length: 12 }, (_, index): ContactPoint => ({
       id: `contact-${index + 1}`,
-      email: `contact-${String(index + 1).padStart(2, '0')}@example.org`,
-      role: 'Support'
+      email: `contact-${String(index + 1).padStart(2, '0')}@example.org`
     }));
     apiService.getContactPoints.mockReturnValue(of(contactPoints));
     const fixture = TestBed.createComponent(GlobalContactPointsPanelComponent);
@@ -81,7 +79,7 @@ describe('GlobalContactPointsPanelComponent', () => {
   });
 
   it('creates a contact point from the add dialog', async () => {
-    const created: ContactPoint = { id: 'contact-2', email: 'help@example.org', role: 'Help desk' };
+    const created: ContactPoint = { id: 'contact-2', email: 'help@example.org' };
     apiService.createContactPoint.mockReturnValue(of(created));
     const fixture = TestBed.createComponent(GlobalContactPointsPanelComponent);
     fixture.detectChanges();
@@ -90,18 +88,17 @@ describe('GlobalContactPointsPanelComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     setInput(fixture.nativeElement, 'email', created.email);
-    setInput(fixture.nativeElement, 'role', created.role);
     await fixture.whenStable();
     fixture.detectChanges();
     submitForm(fixture.nativeElement);
     fixture.detectChanges();
 
-    expect(apiService.createContactPoint).toHaveBeenCalledWith({ email: created.email, role: created.role });
+    expect(apiService.createContactPoint).toHaveBeenCalledWith({ email: created.email });
     expect(fixture.nativeElement.textContent).toContain(created.email);
   });
 
   it('updates an existing contact point from the edit dialog', async () => {
-    const updated: ContactPoint = { ...contactPoint, role: 'Updated support' };
+    const updated: ContactPoint = { ...contactPoint, email: 'updated@example.org' };
     apiService.replaceContactPoint.mockReturnValue(of(updated));
     const fixture = TestBed.createComponent(GlobalContactPointsPanelComponent);
     fixture.detectChanges();
@@ -109,17 +106,16 @@ describe('GlobalContactPointsPanelComponent', () => {
     clickButton(fixture.nativeElement, 'Edit');
     fixture.detectChanges();
     await fixture.whenStable();
-    setInput(fixture.nativeElement, 'role', updated.role);
+    setInput(fixture.nativeElement, 'email', updated.email);
     await fixture.whenStable();
     fixture.detectChanges();
     submitForm(fixture.nativeElement);
     fixture.detectChanges();
 
     expect(apiService.replaceContactPoint).toHaveBeenCalledWith(contactPoint.id, {
-      email: contactPoint.email,
-      role: updated.role
+      email: updated.email
     });
-    expect(fixture.nativeElement.textContent).toContain(updated.role);
+    expect(fixture.nativeElement.textContent).toContain(updated.email);
   });
 
   it('deletes a contact point after confirmation', () => {

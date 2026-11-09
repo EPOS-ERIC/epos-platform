@@ -12,7 +12,6 @@ import {
 function applicationForm(): SoftwareApplicationResourceMetadata {
   return {
     resource_type: 'software-application',
-    id: 'application-id',
     name: '',
     description: 'Application description',
     keywords: ['catalogue'],
@@ -27,8 +26,8 @@ function applicationForm(): SoftwareApplicationResourceMetadata {
       { id: '', name: 'Ignored' }
     ],
     identifiers: [
-      { id: 'identifier-id', type: 'DOI', value: '10.123/example' },
-      { id: 'ignored-id', type: ' ', value: 'ignored' }
+      { id: 'identifier-id', resource_id: 'identifier-resource-id', type: 'DOI', value: '10.123/example' },
+      { id: 'ignored-id', resource_id: 'ignored-resource-id', type: ' ', value: 'ignored' }
     ],
     contact_points: ['contact-id', ' '],
     categories: [
@@ -41,7 +40,6 @@ function applicationForm(): SoftwareApplicationResourceMetadata {
 function sourceCodeForm(): SoftwareSourceCodeResourceMetadata {
   return {
     resource_type: 'software-source-code',
-    id: 'source-id',
     name: '',
     description: 'Source description',
     programming_language: 'TypeScript',
@@ -53,7 +51,7 @@ function sourceCodeForm(): SoftwareSourceCodeResourceMetadata {
     main_entity_of_page: null,
     version: '2.0',
     creators: [{ id: 'creator-id', name: 'Creator' }],
-    identifiers: [{ id: 'ignored-id', type: 'URL', value: ' ' }],
+    identifiers: [{ id: 'ignored-id', resource_id: 'ignored-resource-id', type: 'URL', value: ' ' }],
     contact_points: null,
     categories: [{ id: '', name: 'Ignored' }]
   };

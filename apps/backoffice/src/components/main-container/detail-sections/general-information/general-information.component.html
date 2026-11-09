@@ -30,7 +30,12 @@
 
     <label class="detail-field">
       <span class="detail-label">Accrual periodicity</span>
-      <input class="app-input" type="text" [(ngModel)]="model.accrualPeriodicity" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+      <select class="app-input" [(ngModel)]="model.accrualPeriodicity" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()">
+        <option value="">Not specified</option>
+        @for (periodicity of accrualPeriodicities; track periodicity) {
+          <option [value]="periodicity">{{ periodicity }}</option>
+        }
+      </select>
     </label>
 
     <label class="detail-field detail-field--full">

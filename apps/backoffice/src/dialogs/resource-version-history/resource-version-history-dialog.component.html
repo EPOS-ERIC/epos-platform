@@ -23,24 +23,24 @@
           <div class="history-error" role="alert">{{ store.historyError() }}</div>
         } @else if (store.historyItems().length) {
           <div class="history-list" role="group" aria-label="Available resource versions">
-            @for (item of store.historyItems(); track item.version_id) {
+            @for (item of store.historyItems(); track item.id) {
               <label
                 class="history-item"
-                [class.history-item--selected]="store.isVersionSelected(item.version_id)"
-                [class.history-item--disabled]="store.isVersionSelectionDisabled(item.version_id)"
+                [class.history-item--selected]="store.isVersionSelected(item.id)"
+                [class.history-item--disabled]="store.isVersionSelectionDisabled(item.id)"
               >
                 <input
                   type="checkbox"
-                  [checked]="store.isVersionSelected(item.version_id)"
-                  [disabled]="store.isVersionSelectionDisabled(item.version_id)"
-                  (change)="store.toggleVersionSelection(item.version_id)"
+                  [checked]="store.isVersionSelected(item.id)"
+                  [disabled]="store.isVersionSelectionDisabled(item.id)"
+                  (change)="store.toggleVersionSelection(item.id)"
                 />
                 <span class="history-item-content">
                   <span class="history-item-heading">
                     <strong>{{ item.status }}</strong>
                     <span class="history-date">{{ item.updated_at }}</span>
                   </span>
-                  <span class="history-version-id">{{ item.version_id }}</span>
+                  <span class="history-version-id">{{ item.id }}</span>
                 </span>
               </label>
             }

@@ -5,16 +5,6 @@
     <fieldset class="detail-fieldset" [disabled]="disabled">
       <div class="detail-form-grid">
         <label class="detail-field">
-          <span class="detail-label">Name *</span>
-          <input class="app-input" type="text" [(ngModel)]="model.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required />
-        </label>
-
-        <label class="detail-field detail-field--full">
-          <span class="detail-label">Description</span>
-          <textarea class="app-input detail-textarea" rows="3" [(ngModel)]="model.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea>
-        </label>
-
-        <label class="detail-field">
           <span class="detail-label">Web service type</span>
           <select class="app-input" [ngModel]="model.configuration.type" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onConfigurationTypeChange($event)">
             @for (type of types; track type) { <option [ngValue]="type">{{ type }}</option> }
@@ -65,7 +55,12 @@
       }
     }
 
-    <app-web-service-documentation [model]="model.documentation" [disabled]="disabled" (modelChange)="onDocumentationChange($event)"></app-web-service-documentation>
+    <fieldset class="detail-fieldset" [disabled]="disabled">
+      <label class="detail-field detail-field--full">
+        <span class="detail-label">Documentation URI</span>
+        <input class="app-input" type="url" [(ngModel)]="model.documentationUri" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+      </label>
+    </fieldset>
 
     <details id="webservice-provider" class="webservice-subsection">
       <summary class="webservice-subsection-summary">
@@ -100,26 +95,6 @@
           [neutralAppearance]="comparisonMode"
           (modelChange)="onContactPointsChange($event)"
         ></app-contact-points>
-      </div>
-    </details>
-
-    <details id="webservice-spatial-coverage" class="webservice-subsection">
-      <summary class="webservice-subsection-summary">
-        <span class="distribution-subtitle">Spatial Coverage</span>
-        <span class="webservice-summary-hint">Closed</span>
-      </summary>
-      <div class="webservice-subsection-body">
-        <app-spatial-coverage [model]="model.spatialCoverage" [disabled]="disabled" [embedded]="true" (modelChange)="onSpatialChange($event)" />
-      </div>
-    </details>
-
-    <details id="webservice-temporal-coverage" class="webservice-subsection">
-      <summary class="webservice-subsection-summary">
-        <span class="distribution-subtitle">Temporal Coverage</span>
-        <span class="webservice-summary-hint">Closed</span>
-      </summary>
-      <div class="webservice-subsection-body">
-        <app-temporal-coverage [model]="model.temporalCoverage" [disabled]="disabled" [embedded]="true" (modelChange)="onTemporalChange($event)"></app-temporal-coverage>
       </div>
     </details>
 

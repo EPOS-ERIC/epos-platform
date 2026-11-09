@@ -128,7 +128,7 @@ describe('mapResourceVersionDiff', () => {
   function version(overrides: Partial<ResourceVersion> = {}): ResourceVersion {
     return {
       resource_id: 'resource-id',
-      version_id: 'version-id',
+      id: 'version-id',
       revision: 1,
       status: 'DRAFT',
       created_by: 'user',

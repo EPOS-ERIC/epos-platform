@@ -24,32 +24,27 @@ const WEB_SERVICE_TYPE = 'WEB_SERVICE' as const;
 function datasetMetadata(): DatasetResourceMetadata {
   return {
     resource_type: 'dataset',
-    id: 'dataset-id',
     title: 'Dataset title',
     description: 'Dataset description',
     keywords: ['seismic', 'catalogue'],
     accrual_periodicity: null,
     quality_annotation: 'reviewed',
-    access_right: 'restricted',
+    access_right: 'RESTRICTED',
     distributions: [
       {
         id: 'distribution-id',
+        resource_id: 'distribution-resource-id',
         title: 'Service distribution',
         description: 'Distribution description',
         type: WEB_SERVICE_TYPE,
-        issued: null,
-        modified: 'invalid-date',
         available_formats: [{ kind: 'ORIGINAL', output_format: 'application/json', label: 'JSON' }],
         web_service: {
           id: 'service-id',
-          name: 'Service',
-          description: null,
+          resource_id: 'service-resource-id',
           visible_on: ['GRAPH', 'MAP'],
           provider: { id: 'provider-id', name: 'Provider' },
-          documentation: { title: null, description: null, uri: 'https://example.test/docs' },
+          documentation_uri: 'https://example.test/docs',
           contact_points: ['contact-id'],
-          spatial_coverage: 'POINT (12.5 41.9)',
-          temporal_coverage: { start: 'invalid-start', end: null },
           configuration: {
             type: 'HTTP',
             template_url: 'https://example.test/{value}',
@@ -61,6 +56,7 @@ function datasetMetadata(): DatasetResourceMetadata {
             body_parameters: [
               {
                 id: 'body-parameter-id',
+                resource_id: 'body-parameter-resource-id',
                 kind: 'DATETIME',
                 position: 12,
                 name: 'when',
@@ -77,6 +73,7 @@ function datasetMetadata(): DatasetResourceMetadata {
             parameters: [
             {
               id: 'parameter-id',
+              resource_id: 'parameter-resource-id',
               kind: 'FLOAT',
               position: 8,
               name: 'value',
@@ -90,11 +87,12 @@ function datasetMetadata(): DatasetResourceMetadata {
               read_only: false,
               minimum: 1.5,
               maximum: null,
-              default: 2.5,
+              default: [2.5],
               enum: [{ value: 1.5, label: 'Low' }, { value: 2.5 }],
             },
             {
               id: 'template-id',
+              resource_id: 'template-resource-id',
               kind: 'TEMPLATE',
               position: 9,
               name: 'filter',
@@ -109,6 +107,7 @@ function datasetMetadata(): DatasetResourceMetadata {
               parameters: [
                 {
                   id: 'code-parameter-id',
+                  resource_id: 'code-parameter-resource-id',
                   kind: 'STRING',
                   position: 4,
                   name: 'code',
@@ -116,12 +115,13 @@ function datasetMetadata(): DatasetResourceMetadata {
                   description: 'Filter code',
                   required: true,
                   read_only: false,
-                  default: 'A',
+                  default: ['A'],
                   enum: [{ value: 'A', label: 'Alpha' }, { value: 'B' }],
                   pattern: '[A-Z]',
                 },
                 {
                   id: 'enabled-parameter-id',
+                  resource_id: 'enabled-parameter-resource-id',
                   kind: 'BOOLEAN',
                   position: 5,
                   name: 'enabled',
@@ -139,7 +139,7 @@ function datasetMetadata(): DatasetResourceMetadata {
     ],
     spatial_coverage: null,
     temporal_coverage: { start: 'invalid-start', end: null },
-    persistent_identifiers: [{ id: 'identifier-id', type: 'DOI', value: '10.123/example' }],
+    persistent_identifiers: [{ id: 'identifier-id', resource_id: 'identifier-resource-id', type: 'DOI', value: '10.123/example' }],
     contact_points: ['contact-id'],
     providers: [{ id: 'provider-id', name: 'Provider' }],
     categories: [{ id: 'category-id', name: 'Category' }],
@@ -170,7 +170,7 @@ function emptyDatasetForm(): DatasetDetailForm {
 }
 
 function parameter(
-  defaultValue: string | null,
+  defaultValue: string[],
   required = true,
 ): Extract<DatasetWebServiceParameterForm, { kind: 'STRING' }> {
   return {
@@ -193,7 +193,7 @@ function parameter(
 }
 
 function scalarParameter(
-  defaultValue: string | null,
+  defaultValue: string[],
   required = true,
 ): Extract<DatasetWebServiceScalarParameterForm, { kind: 'STRING' }> {
   return {
@@ -229,7 +229,7 @@ function coordinateParameter(
     readOnly: false,
     minimum: '',
     maximum: '',
-    defaultValue: '',
+    defaultValue: [],
     allowedValues: [],
   };
 }
@@ -245,19 +245,14 @@ function formWithParameters(
         kind: 'web-service',
         title: '',
         description: '',
-        issued: '',
-        modified: '',
         license: '',
+        byteSize: '',
         type: WEB_SERVICE_TYPE,
         webService: {
-          name: 'Service',
-          description: '',
           visibleOn: [],
-          documentation: { title: '', description: '', uri: 'https://example.test/docs' },
+          documentationUri: 'https://example.test/docs',
           provider: { id: '', name: '' },
           contactPoints: [],
-          spatialCoverage: null,
-          temporalCoverage: { start: '', end: '' },
           configuration: {
             type: 'HTTP',
             templateUrl: 'https://example.test/{value}',
@@ -293,12 +288,10 @@ describe('toDatasetDetailForm', () => {
       id: 'distribution-id',
       nativeFormats: ['application/json'],
       kind: 'web-service',
-      issued: '',
-      modified: 'invalid-date',
+      byteSize: '',
       webService: {
-        description: '',
         visibleOn: ['GRAPH', 'MAP'],
-        documentation: { title: '', description: '', uri: 'https://example.test/docs' },
+        documentationUri: 'https://example.test/docs',
         configuration: {
           type: 'HTTP',
           method: 'POST',
@@ -327,7 +320,7 @@ describe('toDatasetDetailForm', () => {
             multipleValues: true,
             minimum: '1.5',
             maximum: '',
-            defaultValue: '2.5',
+            defaultValue: ['2.5'],
             allowedValues: [{ value: '1.5', label: 'Low' }, { value: '2.5', label: '' }],
           },
           {
@@ -387,7 +380,7 @@ describe('toDatasetDetailForm', () => {
               label: '',
               location: 'QUERY',
               multipleValues: false,
-              defaultValue: null,
+              defaultValue: [],
             },
           ],
         },
@@ -404,8 +397,6 @@ describe('toDatasetSaveRequest', () => {
 
     expect(distribution).toMatchObject({
       web_service: {
-        name: 'Service',
-        description: undefined,
         visible_on: ['GRAPH', 'MAP'],
         configuration: {
           method: 'POST',
@@ -470,7 +461,7 @@ describe('toDatasetSaveRequest', () => {
         type: 'WMS',
         capabilities_url: 'https://example.test/wms?service=WMS&request=GetCapabilities',
         default_layer: 'stations',
-        layers: [{ name: 'stations', default_style: '', styles: [''] }],
+        layers: [{ id: 'wms-layer-id', resource_id: 'wms-layer-resource-id', name: 'stations', default_style: '', styles: [''] }],
         transparency_editable: true,
         default_transparency: false,
         get_map_parameters: [],
@@ -480,7 +471,7 @@ describe('toDatasetSaveRequest', () => {
         type: 'WMTS',
         capabilities_url: 'https://example.test/wmts/capabilities.xml',
         default_layer: 'stations',
-        layers: [{ name: 'stations', default_style: 'standard', styles: ['standard'] }],
+        layers: [{ id: 'wmts-layer-id', resource_id: 'wmts-layer-resource-id', name: 'stations', default_style: 'standard', styles: ['standard'] }],
         get_tile_parameters: [],
         get_feature_info_parameters: [],
       },
@@ -498,18 +489,23 @@ describe('toDatasetSaveRequest', () => {
         throw new Error('Expected web service draft');
       }
 
-      expect(requestDistribution.web_service.configuration).toEqual(configuration);
+      const expectedConfiguration = configuration.type === 'WMS' || configuration.type === 'WMTS'
+        ? {
+            ...configuration,
+            layers: configuration.layers.map(({ id: _id, resource_id: _resourceId, ...layer }) => layer)
+          }
+        : configuration;
+      expect(requestDistribution.web_service.configuration).toEqual(expectedConfiguration);
     }
   });
 
   it('serializes blank optional strings and empty visibleOn as undefined', () => {
-    const form = formWithParameters([parameter(null)]);
+    const form = formWithParameters([parameter([])]);
     form.description = '   ';
     form.distributions[0].description = ' ';
     const webService =
       form.distributions[0].kind === 'web-service' ? form.distributions[0].webService : undefined;
     if (!webService) throw new Error('Expected a web service');
-    webService.description = ' ';
     if (webService.configuration.type !== 'HTTP') throw new Error('Expected HTTP configuration');
     webService.configuration.bodyContentType = '';
     webService.configuration.bodyTemplate = '   ';
@@ -521,7 +517,6 @@ describe('toDatasetSaveRequest', () => {
     expect(distribution?.description).toBeUndefined();
     if (!distribution || distribution.type !== WEB_SERVICE_TYPE)
       throw new Error('Expected web service draft');
-    expect(distribution.web_service.description).toBeUndefined();
     expect(distribution.web_service.visible_on).toBeUndefined();
     if (distribution.web_service.configuration.type !== 'HTTP')
       throw new Error('Expected HTTP configuration');
@@ -532,19 +527,19 @@ describe('toDatasetSaveRequest', () => {
     expect(stringDraft.enum).toBeUndefined();
   });
 
-  it('omits empty optional web service documentation', () => {
+  it('omits an empty optional web service documentation URI', () => {
     const form = formWithParameters([]);
     const webService = form.distributions[0].kind === 'web-service'
       ? form.distributions[0].webService
       : undefined;
     if (!webService) throw new Error('Expected a web service');
-    webService.documentation = { title: '', description: '', uri: '' };
+    webService.documentationUri = '';
 
     const distribution = toDatasetSaveRequest(form, 1, datasetMetadata()).metadata.distributions?.[0];
 
     if (!distribution || distribution.type !== WEB_SERVICE_TYPE)
       throw new Error('Expected web service draft');
-    expect(distribution.web_service.documentation).toBeUndefined();
+    expect(distribution.web_service.documentation_uri).toBeUndefined();
   });
 
   it('normalizes comma decimals and maps numeric enum values by kind', () => {
@@ -563,7 +558,7 @@ describe('toDatasetSaveRequest', () => {
       readOnly: false,
       minimum: '1,5',
       maximum: '   ',
-      defaultValue: '2,75',
+      defaultValue: ['2,75'],
       allowedValues: [
         { value: '3.5', label: 'Three and a half' },
         { value: '4,5', label: '' },
@@ -585,7 +580,7 @@ describe('toDatasetSaveRequest', () => {
               position: 0,
               minimum: 1.5,
               maximum: null,
-              default: 2.75,
+              default: [2.75],
               enum: [{ value: 3.5, label: 'Three and a half' }, { value: 4.5, label: undefined }],
             },
           ],
@@ -604,10 +599,6 @@ describe('distributionValidationError', () => {
     expect(distributionValidationError(form)).toBe('Distribution 1: description is required.');
     form.distributions[0].description = 'API distribution description';
     if (form.distributions[0].kind !== 'web-service') throw new Error('Expected a web service');
-    form.distributions[0].webService.name = '';
-    expect(distributionValidationError(form)).toBe('Distribution 1: web service name is required.');
-
-    form.distributions[0].webService.name = 'API';
     const configuration = form.distributions[0].webService.configuration;
     if (configuration.type !== 'HTTP') throw new Error('Expected HTTP configuration');
     configuration.templateUrl = '';
@@ -623,9 +614,8 @@ describe('distributionValidationError', () => {
       kind: 'downloadable-file',
       title: 'Download',
       description: 'Downloadable distribution',
-      issued: '',
-      modified: '',
       license: '',
+      byteSize: '',
       type: 'DOWNLOADABLE_FILE',
       downloadableFile: { url: '', format: '' },
     }];
@@ -637,18 +627,13 @@ describe('distributionValidationError', () => {
     expect(distributionValidationError(form)).toBe('Distribution 1: downloadable file format is required.');
   });
 
-  it('requires a URI only when documentation content is provided', () => {
+  it('accepts an optional documentation URI', () => {
     const form = formWithParameters([]);
     form.distributions[0].title = 'API distribution';
     form.distributions[0].description = 'API distribution description';
     if (form.distributions[0].kind !== 'web-service') throw new Error('Expected a web service');
-    form.distributions[0].webService.documentation = { title: '', description: '', uri: '' };
+    form.distributions[0].webService.documentationUri = '';
     expect(distributionValidationError(form)).toBeNull();
-
-    form.distributions[0].webService.documentation.title = 'Guide';
-    expect(distributionValidationError(form)).toBe(
-      'Distribution 1: documentation URI is required when documentation is provided.',
-    );
   });
 
   it('lets the backend validate DYNAMIC coordinate parameters and preserves their roles', () => {
@@ -695,12 +680,12 @@ describe('dataset validation helpers', () => {
   });
 
   it('checks enum defaults on full, template scalar, and body scalar parameters', () => {
-    const full = parameter('fallback');
+    const full = parameter(['fallback']);
     full.allowedValues = [{ value: 'first', label: '' }, { value: 'second', label: '' }];
-    const nested = scalarParameter('3');
+    const nested = scalarParameter(['3']);
     nested.allowedValues = [{ value: '1', label: '' }, { value: '2', label: '' }];
     const template: DatasetWebServiceParameterForm = {
-      ...parameter(null, false),
+      ...parameter([], false),
       kind: 'TEMPLATE',
       template: '{nested}',
       parameters: [nested],
@@ -714,7 +699,7 @@ describe('dataset validation helpers', () => {
   });
 
   it('requires a non-empty enum when multiple values are enabled', () => {
-    const multipleParameter = parameter(null);
+    const multipleParameter = parameter([]);
     multipleParameter.multipleValues = true;
 
     expect(hasMultipleParameterWithoutAllowedValues(formWithParameters([multipleParameter]))).toBe(true);
@@ -723,7 +708,7 @@ describe('dataset validation helpers', () => {
   });
 
   it('requires explode parameters to be multiple-value query parameters', () => {
-    const explodedParameter = parameter(null);
+    const explodedParameter = parameter([]);
     explodedParameter.explode = true;
 
     expect(hasInvalidExplodeParameter(formWithParameters([explodedParameter]))).toBe(true);
@@ -733,7 +718,7 @@ describe('dataset validation helpers', () => {
     expect(hasInvalidExplodeParameter(formWithParameters([explodedParameter]))).toBe(false);
 
     const templateParameter: DatasetWebServiceParameterForm = {
-      ...parameter(null, false),
+      ...parameter([], false),
       kind: 'TEMPLATE',
       explode: true,
       template: '{}',

@@ -63,9 +63,8 @@ describe('DistributionComponent', () => {
         type: 'DOWNLOADABLE_FILE',
         title: 'First',
         description: 'First distribution',
-        issued: '',
-        modified: '',
         license: '',
+        byteSize: '',
         downloadableFile: { url: 'https://example.test/first', format: 'text/csv' }
       },
       {
@@ -73,9 +72,8 @@ describe('DistributionComponent', () => {
         type: 'DOWNLOADABLE_FILE',
         title: 'Second',
         description: 'Second distribution',
-        issued: '',
-        modified: '',
         license: '',
+        byteSize: '',
         downloadableFile: { url: 'https://example.test/second', format: 'application/json' }
       }
     ];

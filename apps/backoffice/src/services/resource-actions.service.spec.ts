@@ -112,7 +112,7 @@ describe('ResourceActionsService', () => {
     };
     const savedVersion: ResourceVersion = {
       resource_id: context.resourceId,
-      version_id: context.versionId,
+      id: context.versionId,
       revision: 1,
       status: 'DRAFT',
       created_by: 'user-id',
@@ -122,7 +122,6 @@ describe('ResourceActionsService', () => {
       updated_at: '2026-10-20T08:00:00Z',
       metadata: {
         resource_type: 'software-application',
-        id: context.resourceId,
         name: 'Application',
         description: 'Description',
         keywords: [],

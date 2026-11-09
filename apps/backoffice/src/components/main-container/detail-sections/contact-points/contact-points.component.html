@@ -11,7 +11,7 @@
       <div>
         <h2>Contact Points</h2>
         @if (!selectedOnlyView()) {
-          <p class="subtitle app-muted">Search the catalog, filter by role, then add the contact points you need.</p>
+          <p class="subtitle app-muted">Search the catalog, then add the contact points you need.</p>
         }
       </div>
     </div>
@@ -28,7 +28,6 @@
           <li class="contact-point-row contact-point-row--selected">
             <div class="contact-point-copy">
               <strong class="contact-point-email">{{ contactPoint.email }}</strong>
-              <span class="contact-point-role">Role: {{ contactPointDescription(contactPoint) }}</span>
             </div>
           </li>
         }
@@ -47,17 +46,7 @@
         <div class="contact-points-toolbar">
           <label class="contact-points-control contact-points-control--search">
             <span class="detail-label">Search contact points</span>
-            <input class="app-input" type="text" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" placeholder="Search by email or role" />
-          </label>
-
-          <label class="contact-points-control contact-points-control--filter">
-            <span class="detail-label">Filter by role</span>
-            <select class="app-input" [ngModel]="roleFilter()" (ngModelChange)="onRoleFilterChange($event)" [ngModelOptions]="{ standalone: true }">
-              <option value="all">All roles</option>
-              @for (role of availableRoles(); track role) {
-                <option [value]="role">{{ role }}</option>
-              }
-            </select>
+            <input class="app-input" type="text" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" placeholder="Search by email" />
           </label>
         </div>
 
@@ -67,7 +56,6 @@
               <li class="contact-point-row">
                 <div class="contact-point-copy">
                   <strong class="contact-point-email">{{ contactPoint.email }}</strong>
-                  <span class="contact-point-role">Role: {{ contactPointDescription(contactPoint) }}</span>
                 </div>
 
                 @if (isSelected(contactPoint.id)) {
@@ -95,7 +83,6 @@
               <li class="contact-point-row contact-point-row--selected">
                 <div class="contact-point-copy">
                   <strong class="contact-point-email">{{ contactPoint.email }}</strong>
-                  <span class="contact-point-role">Role: {{ contactPointDescription(contactPoint) }}</span>
                 </div>
 
                 @if (editable) {

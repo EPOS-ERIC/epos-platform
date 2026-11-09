@@ -11,6 +11,11 @@ import { KeywordChipsComponent } from '../../../../shared/ui/keyword-chips.compo
   styleUrl: './general-information.component.css'
 })
 export class GeneralInformationComponent {
+  protected readonly accrualPeriodicities: readonly Exclude<DatasetDetailForm['accrualPeriodicity'], ''>[] = [
+    'TRIENNIAL', 'BIENNIAL', 'ANNUAL', 'SEMIANNUAL', 'THREE_TIMES_A_YEAR', 'QUARTERLY',
+    'BIMONTHLY', 'MONTHLY', 'SEMIMONTHLY', 'BIWEEKLY', 'THREE_TIMES_A_MONTH', 'WEEKLY',
+    'SEMIWEEKLY', 'THREE_TIMES_A_WEEK', 'DAILY', 'CONTINUOUS', 'IRREGULAR'
+  ];
   @Input() model: DatasetDetailForm | null = null;
   @Input() disabled = false;
   @Output() modelChange = new EventEmitter<DatasetDetailForm>();
