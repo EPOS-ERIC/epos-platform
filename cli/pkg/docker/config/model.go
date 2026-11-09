@@ -76,10 +76,11 @@ type Gateway struct {
 }
 
 type Mailgun struct {
-	Enable bool   `yaml:"enable"`
-	Domain string `yaml:"domain"`
-	From   string `yaml:"from"`
-	APIKey string `yaml:"api_key"`
+	Enable             bool     `yaml:"enable"`
+	Domain             string   `yaml:"domain"`
+	From               string   `yaml:"from"`
+	APIKey             string   `yaml:"api_key"`
+	RecipientOverrides []string `yaml:"recipient_overrides"`
 }
 
 // GUI configures a generic GUI service endpoint.

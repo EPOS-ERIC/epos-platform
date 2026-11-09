@@ -10,6 +10,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactrequest"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/converter"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
@@ -27,6 +28,7 @@ func NewRouter(
 	identityService *identity.Service,
 	membershipService *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
+	contactRequestSender contactrequest.EmailSender,
 	dataRetrieverClient *clients.DataRetriever,
 	converterClient *clients.Converter,
 	sharingService *sharingservice.Service,
@@ -64,6 +66,7 @@ func NewRouter(
 
 	securityHandler := handlers.NewSecurityHandler(authService, identityService)
 	accessService := distributionaccess.NewService(metadataLifecycleClient, dataRetrieverClient, converterClient)
+	contactRequestService := contactrequest.New(metadataLifecycleClient, contactRequestSender)
 	converterService := converter.New(converterClient, metadataLifecycleClient)
 	resourceService := resource.New(log, metadataLifecycleClient, converterService)
 	generatedHandler := handlers.NewOgenHandler(
@@ -72,6 +75,7 @@ func NewRouter(
 		metadataLifecycleClient,
 		sharingService,
 		accessService,
+		contactRequestService,
 		resourceService,
 		converterService,
 		log,

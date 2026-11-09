@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"net/mail"
 	"os"
 	"time"
 
@@ -38,11 +39,12 @@ type Notifications struct {
 }
 
 type Mailgun struct {
-	Enable    bool          `yaml:"enable"`
-	Domain    string        `yaml:"domain"`
-	From      string        `yaml:"from"`
-	APIKeyEnv string        `yaml:"api_key_env"`
-	Timeout   time.Duration `yaml:"timeout"`
+	Enable             bool          `yaml:"enable"`
+	Domain             string        `yaml:"domain"`
+	From               string        `yaml:"from"`
+	APIKeyEnv          string        `yaml:"api_key_env"`
+	Timeout            time.Duration `yaml:"timeout"`
+	RecipientOverrides []string      `yaml:"recipient_overrides"`
 }
 
 func Default() Config {
@@ -120,6 +122,12 @@ func (c *Config) Validate() error {
 	}
 
 	mailgun := c.Notifications.Mailgun
+	for i, recipient := range mailgun.RecipientOverrides {
+		address, err := mail.ParseAddress(recipient)
+		if err != nil || address.Address != recipient {
+			return fmt.Errorf("notifications.mailgun.recipient_overrides[%d] must be a valid email address", i)
+		}
+	}
 	if mailgun.Enable {
 		if mailgun.Domain == "" {
 			return fmt.Errorf("notifications.mailgun.domain is required when Mailgun is enabled")

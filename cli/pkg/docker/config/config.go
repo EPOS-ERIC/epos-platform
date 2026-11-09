@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"net/mail"
 	"net/url"
 	"os"
 	"strconv"
@@ -206,6 +207,12 @@ func (e *EnvConfig) EnsurePortsFree() error {
 
 // Validate checks whether the configuration contains all required values.
 func (e *EnvConfig) Validate() error {
+	for i, recipient := range e.Components.Gateway.Mailgun.RecipientOverrides {
+		address, err := mail.ParseAddress(recipient)
+		if err != nil || address.Address != recipient {
+			return fmt.Errorf("components.gateway.mailgun.recipient_overrides[%d] must be a valid email address", i)
+		}
+	}
 	if m := e.Components.Gateway.Mailgun; m.Enable && (m.Domain == "" || m.From == "" || m.APIKey == "") {
 		return fmt.Errorf("Mailgun domain, sender and API key are required when enabled")
 	}

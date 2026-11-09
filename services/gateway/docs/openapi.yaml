@@ -330,6 +330,38 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/Problem" }
+  /distributions/{distributionId}/contact-requests:
+    post:
+      tags: [Resources]
+      summary: Contact a web-service distribution
+      description: >-
+        Sends the message separately to each contact point on the published web service. Requires authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+      operationId: requestDistributionContact
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContactRequestMessage" }
+      responses:
+        "204": { description: At least one email was accepted by Mailgun }
+        "404":
+          description: Published web-service distribution or its contact points were not found
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "503":
+          description: Mailgun did not accept any email
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        default:
+          $ref: "#/components/responses/GatewayError"
   /distributions/{distributionId}/access:
     post:
       tags: [Access]
@@ -1923,6 +1955,36 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /resources/{resourceType}/{id}/contact-requests:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Resources]
+      summary: Contact a published resource
+      description: >-
+        Sends the message separately to each contact point on the published resource. Requires authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+      operationId: requestResourceContact
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContactRequestMessage" }
+      responses:
+        "204": { description: At least one email was accepted by Mailgun }
+        "404":
+          description: Published resource or its contact points were not found
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "503":
+          description: Mailgun did not accept any email
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        default:
+          $ref: "#/components/responses/GatewayError"
   /resources/{resourceType}/{id}/versions:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -5070,6 +5132,12 @@ components:
       properties:
         id: { type: string, format: uuid }
         email: { type: string, format: email, minLength: 1 }
+    ContactRequestMessage:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties:
+        message: { $ref: "#/components/schemas/NonBlankString" }
     CreateContactPointRequest:
       type: object
       required: [email]

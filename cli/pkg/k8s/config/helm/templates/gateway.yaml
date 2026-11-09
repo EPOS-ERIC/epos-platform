@@ -30,6 +30,7 @@ data:
         enable: {{ .Values.components.gateway.mailgun.enable }}
         domain: {{ .Values.components.gateway.mailgun.domain | quote }}
         from: {{ .Values.components.gateway.mailgun.from | quote }}
+        recipient_overrides: {{ .Values.components.gateway.mailgun.recipient_overrides | default list | toJson }}
 ---
 apiVersion: apps/v1
 kind: Deployment

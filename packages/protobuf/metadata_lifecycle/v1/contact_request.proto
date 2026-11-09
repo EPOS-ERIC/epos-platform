@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+import "metadata_lifecycle/v1/common.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message ContactRequestResource {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+}
+
+message PrepareEmailsRequest {
+  oneof target {
+    option (buf.validate.oneof).required = true;
+    ContactRequestResource resource = 1;
+    string distribution_id = 2 [(buf.validate.field).string.uuid = true];
+  }
+  string message = 3 [(buf.validate.field).string.min_len = 1];
+}
+
+message PreparedContactEmail {
+  string target_email = 1 [(buf.validate.field).string.email = true];
+  string subject = 2 [(buf.validate.field).string.min_len = 1];
+  string body = 3 [(buf.validate.field).string.min_len = 1];
+}
+
+message PrepareEmailsResponse {
+  repeated PreparedContactEmail emails = 1 [(buf.validate.field).repeated.min_items = 1];
+}
+
+service ContactRequestService {
+  rpc PrepareEmails(PrepareEmailsRequest) returns (PrepareEmailsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

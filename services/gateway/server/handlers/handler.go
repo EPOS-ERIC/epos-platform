@@ -10,6 +10,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactrequest"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/converter"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
@@ -30,6 +31,7 @@ type ogenHandler struct {
 	identity                *identity.Service
 	membership              *membership.Service
 	distributionAccess      *distributionaccess.Service
+	contactRequest          *contactrequest.Service
 	resource                *resource.Service
 	converter               *converter.Service
 	log                     *slog.Logger
@@ -41,6 +43,7 @@ func NewOgenHandler(
 	metadataLifecycleClient *clients.MetadataLifecycle,
 	sharing *sharing.Service,
 	distributionAccess *distributionaccess.Service,
+	contactRequest *contactrequest.Service,
 	resources *resource.Service,
 	converter *converter.Service,
 	log *slog.Logger,
@@ -51,6 +54,7 @@ func NewOgenHandler(
 		identity:                identity,
 		membership:              membership,
 		distributionAccess:      distributionAccess,
+		contactRequest:          contactRequest,
 		resource:                resources,
 		converter:               converter,
 		log:                     log,

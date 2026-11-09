@@ -10,6 +10,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func toDomainResourceType(value metadatalifecyclev1.ResourceType) (domain.ResourceType, bool) {
+	switch value {
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
+		return domain.Dataset, true
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
+		return domain.SoftwareApplication, true
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
+		return domain.SoftwareSourceCode, true
+	default:
+		return "", false
+	}
+}
+
 func toProtoDistributionIDs(ids []uuid.UUID) []string {
 	result := make([]string, 0, len(ids))
 	for _, id := range ids {

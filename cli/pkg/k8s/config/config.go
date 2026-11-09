@@ -6,6 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"net/mail"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -153,6 +154,12 @@ func validateIngressTLSSecret(serviceName string, tls TLS) error {
 
 // Validate checks whether the configuration contains all required values.
 func (c *Config) Validate() error {
+	for i, recipient := range c.Components.Gateway.Mailgun.RecipientOverrides {
+		address, err := mail.ParseAddress(recipient)
+		if err != nil || address.Address != recipient {
+			return fmt.Errorf("components.gateway.mailgun.recipient_overrides[%d] must be a valid email address", i)
+		}
+	}
 	if m := c.Components.Gateway.Mailgun; m.Enable && (m.Domain == "" || m.From == "" || m.APIKey == "") {
 		return fmt.Errorf("Mailgun domain, sender and API key are required when enabled")
 	}

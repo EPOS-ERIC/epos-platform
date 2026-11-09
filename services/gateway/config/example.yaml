@@ -23,3 +23,5 @@ notifications:
     from: ""
     api_key_env: "MAILGUN_API_TOKEN"
     timeout: "10s"
+    # Nonempty list redirects every email to these addresses instead of real recipients.
+    recipient_overrides: []
