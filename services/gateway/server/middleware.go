@@ -92,7 +92,7 @@ func recoverer(log *slog.Logger) func(http.Handler) http.Handler {
 	log = log.With("component", "recovery")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
+			defer func() { //nolint:contextcheck // Request context is captured from r.
 				if err := recover(); err != nil {
 					log.ErrorContext(r.Context(), "panic recovered", "error", err)
 					if err := handlers.WritePanicProblem(w, r); err != nil {

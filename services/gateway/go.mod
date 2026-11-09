@@ -73,7 +73,6 @@ replace github.com/EPOS-ERIC/epos-platform/packages/go/apperror => ../../package
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/apidocs => ../../packages/go/apidocs
 
-
 replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => ../../packages/go/observability
 
 replace github.com/EPOS-ERIC/epos-platform/packages/protobuf => ../../packages/protobuf
