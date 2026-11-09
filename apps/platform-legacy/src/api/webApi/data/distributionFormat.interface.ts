@@ -4,6 +4,10 @@ import { Usable } from './usable';
  * A (DDSS) distrubution can support multiple formats, those formats are represented by this interface.
  */
 export interface DistributionFormat extends Usable {
+  resourceAccess?: {
+    type: string;
+    parameters: Array<{ id: string; name: string; kind: string; role?: string }>;
+  };
   /**
    * Display label for the format.
    */

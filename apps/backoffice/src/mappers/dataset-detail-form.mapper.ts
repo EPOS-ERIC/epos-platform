@@ -364,6 +364,12 @@ export function geologicalTemporalValidationError(form: DatasetDetailForm): stri
 
 function buildDistributionForm(distribution: Distribution): DatasetDistributionForm {
   const base = {
+    id: distribution.id,
+    nativeFormats: distribution.type === 'WEB_SERVICE'
+      ? distribution.available_formats
+          .filter((format) => format.kind === 'ORIGINAL')
+          .map((format) => format.output_format)
+      : [],
     title: distribution.title,
     description: distribution.description,
     issued: distribution.issued ? toDateTimeLocalValue(distribution.issued) : '',

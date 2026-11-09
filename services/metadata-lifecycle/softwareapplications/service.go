@@ -127,11 +127,10 @@ func (s *Service) Submit(ctx context.Context, actor domain.Actor, applicationID,
 		return domain.SoftwareApplicationVersion{}, nil, operationError("submit draft", err)
 	}
 
-	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourceSubmitted,
+	notifications, buildErr := s.notifier.Build(ctx, domain.ResourceSubmitted{
 		ActorID:  actor,
-		GroupID:  &application.Group.ID,
-		Resource: applicationNotificationResource(application),
+		GroupID:  application.Group.ID,
+		Resource: *applicationNotificationResource(application),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceSubmitted, "error", buildErr)
@@ -159,11 +158,10 @@ func (s *Service) Reject(ctx context.Context, actor domain.Actor, applicationID,
 		return domain.SoftwareApplicationVersion{}, nil, operationError("reject submission", err)
 	}
 
-	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourceRejected,
+	notifications, buildErr := s.notifier.Build(ctx, domain.ResourceRejected{
 		ActorID:  actor,
-		GroupID:  &application.Group.ID,
-		Resource: applicationNotificationResource(application),
+		GroupID:  application.Group.ID,
+		Resource: *applicationNotificationResource(application),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceRejected, "error", buildErr)
@@ -192,11 +190,10 @@ func (s *Service) Publish(ctx context.Context, actor domain.Actor, applicationID
 		return domain.SoftwareApplicationVersion{}, nil, operationError("publish version", err)
 	}
 
-	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourcePublished,
+	notifications, buildErr := s.notifier.Build(ctx, domain.ResourcePublished{
 		ActorID:  actor,
-		GroupID:  &application.Group.ID,
-		Resource: applicationNotificationResource(application),
+		GroupID:  application.Group.ID,
+		Resource: *applicationNotificationResource(application),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourcePublished, "error", buildErr)
@@ -224,11 +221,10 @@ func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, application
 		return domain.SoftwareApplicationVersion{}, nil, operationError("unpublish version", err)
 	}
 
-	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourceUnpublished,
+	notifications, buildErr := s.notifier.Build(ctx, domain.ResourceUnpublished{
 		ActorID:  actor,
-		GroupID:  &application.Group.ID,
-		Resource: applicationNotificationResource(application),
+		GroupID:  application.Group.ID,
+		Resource: *applicationNotificationResource(application),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceUnpublished, "error", buildErr)

@@ -127,8 +127,7 @@ describe('Data and service provider filter', () => {
     cy.getByDataCy('data-provider-filter-dialog-section-item').first().click();
 
     // Intercept the request to filter the results
-    cy.intercept('GET',
-      new RegExp('.*/search\\?q=&organisations=fd2d5412-6073-4bb3-ba85-ea43b43905c4'),
+    cy.intercept({ method: 'GET', pathname: '**/api/v1/search', query: { provider: 'fd2d5412-6073-4bb3-ba85-ea43b43905c4' } },
       { fixture: 'data_providers_search.json' },
     ).as('filtered-search');
 
@@ -136,7 +135,7 @@ describe('Data and service provider filter', () => {
     cy.getByDataCy('data-provider-filter-dialog-apply').click();
 
     // Wait for the search to be filtered
-    cy.wait('@search');
+    cy.wait('@filtered-search');
 
     // There should be a 'providers' chip
     cy.getByDataCy('search-panel-filters-mat-chip-list').contains('Providers');

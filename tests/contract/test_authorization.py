@@ -107,7 +107,7 @@ class AuthorizationContractTest(unittest.TestCase):
             if version["status"] == "DRAFT"
         ]
         self.assertEqual(len(drafts), 1)
-        return resource_id, drafts[0]["version_id"]
+        return resource_id, drafts[0]["id"]
 
     def assert_forbidden(self, response: Any) -> None:
         assert_problem(self, response, 403, "permission_denied")
@@ -154,6 +154,7 @@ class AuthorizationContractTest(unittest.TestCase):
             "global.configuration.manage": "GLOBAL",
             "group.category.manage": "GROUP",
             "global.category.manage": "GLOBAL",
+            "global.converter.manage": "GLOBAL",
         }
 
         response = self.gateway.get("/permissions", headers=NO_AUTH_HEADERS)
@@ -375,6 +376,7 @@ class AuthorizationContractTest(unittest.TestCase):
                 "global.resource.publish",
                 "global.resource.unpublish",
                 "global.category.manage",
+                "global.converter.manage",
             ],
         )
 
@@ -559,7 +561,6 @@ class AuthorizationContractTest(unittest.TestCase):
 
         contact_payload = {
             "email": f"cp-{suffix}@example.org",
-            "role": "authorization-test",
         }
         denied_contact_create = denied.post(
             "/contact-points",
@@ -590,7 +591,6 @@ class AuthorizationContractTest(unittest.TestCase):
 
         updated_contact_payload = {
             "email": f"cp-updated-{suffix}@example.org",
-            "role": "authorization-test-updated",
         }
         denied_contact_replace = denied.put(
             "/contact-points/{contactPointId}",
@@ -937,7 +937,7 @@ class AuthorizationContractTest(unittest.TestCase):
         replaced = operator.put(
             "/resources/{id}/versions/{versionId}/draft",
             id=resource_id,
-            versionId=draft["version_id"],
+            versionId=draft["id"],
             json={
                 "resource_type": "dataset",
                 "revision": draft["revision"],
@@ -1034,7 +1034,7 @@ class AuthorizationContractTest(unittest.TestCase):
             json=replace_payload,
         )
         self.assertEqual(replaced.status_code, 200)
-        draft_version_id = get_version(draft_resource_id, "DRAFT")["version_id"]
+        draft_version_id = get_version(draft_resource_id, "DRAFT")["id"]
         denied_discard = denied.delete(
             "/resources/{resourceType}/{id}/versions/{versionId}/draft",
             resourceType="dataset",
@@ -1058,7 +1058,7 @@ class AuthorizationContractTest(unittest.TestCase):
         self.assertEqual(created.status_code, 201)
         resource_id = created.json()["id"]
         draft = get_version(resource_id, "DRAFT")
-        version_id = draft["version_id"]
+        version_id = draft["id"]
 
         denied_get = denied.get(
             "/resources/{resourceType}/{id}/versions/{versionId}",
@@ -1224,7 +1224,7 @@ class AuthorizationContractTest(unittest.TestCase):
         )
         self.assertEqual(publication_resource.status_code, 201)
         publication_id = publication_resource.json()["id"]
-        publication_version_id = get_version(publication_id, "DRAFT")["version_id"]
+        publication_version_id = get_version(publication_id, "DRAFT")["id"]
         self.assertEqual(
             editor.post(
                 "/resources/{resourceType}/{id}/versions/{versionId}/submit",

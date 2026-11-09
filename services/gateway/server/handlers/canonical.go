@@ -15,7 +15,7 @@ func (h *ogenHandler) ListContactPoints(ctx context.Context) ([]gatewayapi.Conta
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	v, err := h.metadataLifecycle.ListContactPoints(ctx, actor)
+	v, err := h.metadataLifecycleClient.ListContactPoints(ctx, actor)
 	if err != nil {
 		return nil, fmt.Errorf("list contact points: %w", err)
 	}
@@ -35,7 +35,7 @@ func (h *ogenHandler) GetContactPoint(ctx context.Context, q gatewayapi.GetConta
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	v, err := h.metadataLifecycle.GetContactPoint(ctx, actor, q.ContactPointId.String())
+	v, err := h.metadataLifecycleClient.GetContactPoint(ctx, actor, q.ContactPointId.String())
 	if err != nil {
 		return nil, fmt.Errorf("get contact point: %w", err)
 	}
@@ -47,7 +47,7 @@ func (h *ogenHandler) GetContactPoint(ctx context.Context, q gatewayapi.GetConta
 }
 
 func (h *ogenHandler) ListOrganizations(ctx context.Context) ([]gatewayapi.CanonicalOrganization, error) {
-	v, err := h.metadataLifecycle.ListOrganizations(ctx)
+	v, err := h.metadataLifecycleClient.ListOrganizations(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list organizations: %w", err)
 	}
@@ -63,7 +63,7 @@ func (h *ogenHandler) ListOrganizations(ctx context.Context) ([]gatewayapi.Canon
 }
 
 func (h *ogenHandler) GetOrganization(ctx context.Context, p gatewayapi.GetOrganizationParams) (*gatewayapi.CanonicalOrganization, error) {
-	v, err := h.metadataLifecycle.GetOrganization(ctx, p.OrganizationId.String())
+	v, err := h.metadataLifecycleClient.GetOrganization(ctx, p.OrganizationId.String())
 	if err != nil {
 		return nil, fmt.Errorf("get organization: %w", err)
 	}
@@ -79,7 +79,7 @@ func (h *ogenHandler) CreateOrganization(ctx context.Context, q *gatewayapi.Crea
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	v, err := h.metadataLifecycle.CreateOrganization(ctx, a, toProtoCreateOrganizationRequest(q))
+	v, err := h.metadataLifecycleClient.CreateOrganization(ctx, a, toProtoCreateOrganizationRequest(q))
 	if err != nil {
 		return nil, fmt.Errorf("create organization: %w", err)
 	}
@@ -96,7 +96,7 @@ func (h *ogenHandler) ReplaceOrganization(ctx context.Context, q *gatewayapi.Rep
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	in := toProtoReplaceOrganizationRequest(q, p.OrganizationId.String())
-	v, err := h.metadataLifecycle.ReplaceOrganization(ctx, a, in)
+	v, err := h.metadataLifecycleClient.ReplaceOrganization(ctx, a, in)
 	if err != nil {
 		return nil, fmt.Errorf("replace organization: %w", err)
 	}
@@ -112,9 +112,8 @@ func (h *ogenHandler) CreateContactPoint(ctx context.Context, q *gatewayapi.Crea
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	v, err := h.metadataLifecycle.CreateContactPoint(ctx, a, &metadatalifecyclev1.CreateContactPointRequest{
+	v, err := h.metadataLifecycleClient.CreateContactPoint(ctx, a, &metadatalifecyclev1.CreateContactPointRequest{
 		Email: string(q.Email),
-		Role:  string(q.Role),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create contact point: %w", err)
@@ -131,10 +130,9 @@ func (h *ogenHandler) ReplaceContactPoint(ctx context.Context, q *gatewayapi.Rep
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	v, err := h.metadataLifecycle.ReplaceContactPoint(ctx, a, &metadatalifecyclev1.ReplaceContactPointRequest{
+	v, err := h.metadataLifecycleClient.ReplaceContactPoint(ctx, a, &metadatalifecyclev1.ReplaceContactPointRequest{
 		ContactPointId: p.ContactPointId.String(),
 		Email:          string(q.Email),
-		Role:           string(q.Role),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("replace contact point: %w", err)
@@ -151,7 +149,7 @@ func (h *ogenHandler) DeleteContactPoint(ctx context.Context, p gatewayapi.Delet
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if _, err := h.metadataLifecycle.DeleteContactPoint(ctx, a, &metadatalifecyclev1.DeleteContactPointRequest{ContactPointId: p.ContactPointId.String()}); err != nil {
+	if _, err := h.metadataLifecycleClient.DeleteContactPoint(ctx, a, &metadatalifecyclev1.DeleteContactPointRequest{ContactPointId: p.ContactPointId.String()}); err != nil {
 		return fmt.Errorf("delete contact point: %w", err)
 	}
 	return nil
@@ -162,7 +160,7 @@ func (h *ogenHandler) DeleteOrganization(ctx context.Context, p gatewayapi.Delet
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if _, err := h.metadataLifecycle.DeleteOrganization(ctx, a, &metadatalifecyclev1.DeleteOrganizationRequest{OrganizationId: p.OrganizationId.String()}); err != nil {
+	if _, err := h.metadataLifecycleClient.DeleteOrganization(ctx, a, &metadatalifecyclev1.DeleteOrganizationRequest{OrganizationId: p.OrganizationId.String()}); err != nil {
 		return fmt.Errorf("delete organization: %w", err)
 	}
 	return nil

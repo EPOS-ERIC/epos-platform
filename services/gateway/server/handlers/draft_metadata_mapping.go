@@ -25,15 +25,19 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 		r.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: temporalRange.geological}
 	}
 	r.Description = string(v.Description)
-	if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
-		r.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)
+	accrualPeriodicity, err := toProtoDatasetAccrualPeriodicity(v.AccrualPeriodicity)
+	if err != nil {
+		return nil, err
 	}
+	r.AccrualPeriodicity = accrualPeriodicity
 	if v.QualityAnnotation.Set && !v.QualityAnnotation.Null {
 		r.QualityAnnotation = new(v.QualityAnnotation.Value)
 	}
-	if v.AccessRight.Set && !v.AccessRight.Null {
-		r.AccessRight = new(v.AccessRight.Value)
+	accessRight, err := toProtoDatasetAccessRight(v.AccessRight)
+	if err != nil {
+		return nil, err
 	}
+	r.AccessRight = accessRight
 	if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
 		r.SpatialCoverage = new(v.SpatialCoverage.Value)
 	}
@@ -44,13 +48,14 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 		r.Updated = timestamppb.New(v.Updated.Value)
 	}
 	for _, id := range v.PersistentIdentifiers {
-		r.PersistentIdentifiers = append(r.PersistentIdentifiers, &metadatalifecyclev1.IdentifierInput{
-			Type:  string(id.Type),
-			Value: string(id.Value),
-		})
+		r.PersistentIdentifiers = append(r.PersistentIdentifiers, toProtoVersionedIdentifierInput(id))
 	}
 	for _, distribution := range v.Distributions {
-		r.Distributions = append(r.Distributions, toProtoDistribution(distribution))
+		mapped, err := toProtoDistribution(distribution)
+		if err != nil {
+			return nil, err
+		}
+		r.Distributions = append(r.Distributions, mapped)
 	}
 	return r, nil
 }
@@ -84,10 +89,7 @@ func toProtoSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDra
 		r.OperatingSystem = new(v.OperatingSystem.Value)
 	}
 	for _, id := range v.Identifiers {
-		r.Identifiers = append(r.Identifiers, &metadatalifecyclev1.IdentifierInput{
-			Type:  string(id.Type),
-			Value: string(id.Value),
-		})
+		r.Identifiers = append(r.Identifiers, toProtoVersionedIdentifierInput(id))
 	}
 	return r
 }
@@ -123,10 +125,16 @@ func toProtoSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraft
 		r.Version = new(v.Version.Value)
 	}
 	for _, id := range v.Identifiers {
-		r.Identifiers = append(r.Identifiers, &metadatalifecyclev1.IdentifierInput{
-			Type:  string(id.Type),
-			Value: string(id.Value),
-		})
+		r.Identifiers = append(r.Identifiers, toProtoVersionedIdentifierInput(id))
 	}
 	return r
+}
+
+func toProtoVersionedIdentifierInput(value gatewayapi.VersionedIdentifierInput) *metadatalifecyclev1.VersionedIdentifierInput {
+	result := &metadatalifecyclev1.VersionedIdentifierInput{
+		ResourceId: protoOptionalUUID(value.ResourceID),
+		Type:       string(value.Type),
+		Value:      string(value.Value),
+	}
+	return result
 }

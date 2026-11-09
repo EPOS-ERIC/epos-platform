@@ -22,7 +22,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
             "/contact-points",
             json={
                 "email": f"canonical-integrity-{suffix}@example.org",
-                "role": "canonical-integrity",
             },
         )
         self.assertEqual(response.status_code, 201)
@@ -132,14 +131,14 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
             "/resources/{resourceType}/{id}/versions/{versionId}/submit",
             resourceType=resource_type,
             id=resource_id,
-            versionId=first_draft["version_id"],
+            versionId=first_draft["id"],
         )
         self.assertEqual(submitted.status_code, 200)
         published = self.gateway.post(
             "/resources/{resourceType}/{id}/versions/{versionId}/publish",
             resourceType=resource_type,
             id=resource_id,
-            versionId=first_draft["version_id"],
+            versionId=first_draft["id"],
         )
         self.assertEqual(published.status_code, 200)
 
@@ -154,14 +153,14 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
             "/resources/{resourceType}/{id}/versions/{versionId}/submit",
             resourceType=resource_type,
             id=resource_id,
-            versionId=second_draft["version_id"],
+            versionId=second_draft["id"],
         )
         self.assertEqual(submitted.status_code, 200)
         published = self.gateway.post(
             "/resources/{resourceType}/{id}/versions/{versionId}/publish",
             resourceType=resource_type,
             id=resource_id,
-            versionId=second_draft["version_id"],
+            versionId=second_draft["id"],
         )
         self.assertEqual(published.status_code, 200)
 
@@ -189,7 +188,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
                         "description": "Canonical reference integrity service",
                         "type": "WEB_SERVICE",
                         "web_service": {
-                            "name": f"Canonical Service {suffix}",
                             "configuration": {
                                 "type": "WMS",
                                 "capabilities_url": "https://example.org/canonical",
@@ -290,7 +288,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         identifiers_by_version: dict[tuple[str, str], list[dict[str, Any]]] = {}
         for resource_type, (resource_id, published, archived) in resources.items():
             for version in (published, archived):
-                details = self.details(resource_type, resource_id, version["version_id"])
+                details = self.details(resource_type, resource_id, version["id"])
                 self.assert_reference_presence(
                     resource_type,
                     details,
@@ -303,7 +301,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
                     if resource_type == "dataset"
                     else "identifiers"
                 )
-                identifiers_by_version[(resource_type, version["version_id"])] = details[
+                identifiers_by_version[(resource_type, version["id"])] = details[
                     "metadata"
                 ][identifier_key]
 
@@ -324,7 +322,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         self.assertEqual(child.json()["parents"], [])
         for resource_type, (resource_id, published, archived) in resources.items():
             for version in (published, archived):
-                details = self.details(resource_type, resource_id, version["version_id"])
+                details = self.details(resource_type, resource_id, version["id"])
                 metadata = details["metadata"]
                 self.assertEqual(metadata["contact_points"], [contact_point_id])
                 if resource_type == "dataset":
@@ -339,7 +337,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
                 )
                 self.assertEqual(
                     metadata[identifier_key],
-                    identifiers_by_version[(resource_type, version["version_id"])],
+                    identifiers_by_version[(resource_type, version["id"])],
                 )
 
         deleted_contact_point = self.gateway.delete(
@@ -359,7 +357,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         self.assertEqual(child.json()["contact_point_ids"], [])
         for resource_type, (resource_id, published, archived) in resources.items():
             for version in (published, archived):
-                details = self.details(resource_type, resource_id, version["version_id"])
+                details = self.details(resource_type, resource_id, version["id"])
                 self.assertFalse(details["metadata"]["contact_points"])
                 if resource_type == "dataset":
                     self.assertEqual(
@@ -384,7 +382,7 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
             )
         for resource_type, (resource_id, published, archived) in resources.items():
             for version in (published, archived):
-                details = self.details(resource_type, resource_id, version["version_id"])
+                details = self.details(resource_type, resource_id, version["id"])
                 self.assertEqual(details["metadata"]["categories"], [])
 
         self.delete_problem(self.gateway.delete("/groups/{groupId}", groupId=group_id))

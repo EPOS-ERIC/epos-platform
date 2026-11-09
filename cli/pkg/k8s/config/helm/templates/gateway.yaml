@@ -19,6 +19,8 @@ data:
         url: "metadata-lifecycle:5000"
       data-retriever:
         url: "data-retriever:8100"
+      converter:
+        url: "converter:8200"
       sharing:
         url: "sharing:8200"
       auth:
@@ -28,17 +30,7 @@ data:
         enable: {{ .Values.components.gateway.mailgun.enable }}
         domain: {{ .Values.components.gateway.mailgun.domain | quote }}
         from: {{ .Values.components.gateway.mailgun.from | quote }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gateway-mailgun
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: gateway
-type: Opaque
-stringData:
-  api_key: {{ .Values.components.gateway.mailgun.api_key | quote }}
+        recipient_overrides: {{ .Values.components.gateway.mailgun.recipient_overrides | default list | toJson }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -75,6 +67,8 @@ spec:
                 secretKeyRef:
                   name: gateway-mailgun
                   key: api_key
+            - name: LOG_LEVEL
+              value: {{ ternary "DEBUG" "INFO" .Values.debug | quote }}
             - name: OTEL_SDK_DISABLED
               value: {{ not .Values.components.otel.enabled | quote }}
             - name: OTEL_SERVICE_NAME
@@ -131,7 +125,9 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.domain | quote }}
+    - {{- if (include "epos.ingressHost" .) }}
+      host: {{ include "epos.ingressHost" . | quote }}
+      {{- end }}
       http:
         paths:
           - path: {{ if .Values.url_prefix_namespace }}/{{ .Release.Namespace }}{{ end }}{{ trimSuffix "/" .Values.components.gateway.base_url }}(/|$)(.*)
@@ -160,7 +156,9 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.domain | quote }}
+    - {{- if (include "epos.ingressHost" .) }}
+      host: {{ include "epos.ingressHost" . | quote }}
+      {{- end }}
       http:
         paths:
           - path: {{ if .Values.url_prefix_namespace }}/{{ .Release.Namespace }}{{ end }}/(scalar|swagger|openapi.yaml)(/.*|$)

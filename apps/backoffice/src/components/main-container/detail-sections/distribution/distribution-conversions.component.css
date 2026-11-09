@@ -1,0 +1,124 @@
+@import '../detail-shared.css';
+
+.conversions-body,
+.conversion-request {
+  display: grid;
+  gap: 16px;
+}
+
+.conversions-description,
+.conversion-state,
+.conversion-request h4,
+.conversion-request p {
+  margin: 0;
+}
+
+.conversion-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #b91c1c;
+}
+
+.conversion-table-wrap {
+  overflow-x: auto;
+}
+
+.conversion-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.conversion-table th,
+.conversion-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.conversion-table th {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.conversion-table td {
+  min-width: 160px;
+}
+
+.conversion-table strong,
+.conversion-cell-detail,
+.conversion-repository {
+  display: block;
+}
+
+.conversion-cell-detail {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.conversion-repository {
+  margin-top: 6px;
+  color: var(--olive-600);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.conversion-format {
+  white-space: nowrap;
+}
+
+.conversion-arrow {
+  margin: 0 8px;
+  color: var(--text-muted);
+}
+
+.conversion-status {
+  display: inline-flex;
+  margin: 0 6px 6px 0;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #b91c1c 12%, var(--surface));
+  color: #b91c1c;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.conversion-status--available {
+  background: color-mix(in srgb, #15803d 12%, var(--surface));
+  color: #15803d;
+}
+
+.conversion-request {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.conversion-visualizations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  min-height: 40px;
+  align-items: center;
+}
+
+.conversion-visualizations label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .conversion-error {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

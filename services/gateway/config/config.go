@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"net/mail"
 	"os"
 	"time"
 
@@ -29,6 +30,7 @@ type Services struct {
 	MetadataLifecycle  Service `yaml:"metadata-lifecycle"`
 	SemanticAggregator Service `yaml:"semantic-aggregator"`
 	DataRetriever      Service `yaml:"data-retriever"`
+	Converter          Service `yaml:"converter"`
 	Sharing            Service `yaml:"sharing"`
 	Auth               Service `yaml:"auth"`
 }
@@ -38,11 +40,12 @@ type Notifications struct {
 }
 
 type Mailgun struct {
-	Enable    bool          `yaml:"enable"`
-	Domain    string        `yaml:"domain"`
-	From      string        `yaml:"from"`
-	APIKeyEnv string        `yaml:"api_key_env"`
-	Timeout   time.Duration `yaml:"timeout"`
+	Enable             bool          `yaml:"enable"`
+	Domain             string        `yaml:"domain"`
+	From               string        `yaml:"from"`
+	APIKeyEnv          string        `yaml:"api_key_env"`
+	Timeout            time.Duration `yaml:"timeout"`
+	RecipientOverrides []string      `yaml:"recipient_overrides"`
 }
 
 func Default() Config {
@@ -56,6 +59,7 @@ func Default() Config {
 			MetadataLifecycle:  Service{URL: ""},
 			SemanticAggregator: Service{URL: ""},
 			DataRetriever:      Service{URL: ""},
+			Converter:          Service{URL: ""},
 			Sharing:            Service{URL: ""},
 			Auth:               Service{URL: ""},
 		},
@@ -110,6 +114,9 @@ func (c *Config) Validate() error {
 	if c.Services.DataRetriever.URL == "" {
 		return fmt.Errorf("services.data-retriever.url is required")
 	}
+	if c.Services.Converter.URL == "" {
+		return fmt.Errorf("services.converter.url is required")
+	}
 
 	if c.Services.Sharing.URL == "" {
 		return fmt.Errorf("services.sharing.url is required")
@@ -120,6 +127,12 @@ func (c *Config) Validate() error {
 	}
 
 	mailgun := c.Notifications.Mailgun
+	for i, recipient := range mailgun.RecipientOverrides {
+		address, err := mail.ParseAddress(recipient)
+		if err != nil || address.Address != recipient {
+			return fmt.Errorf("notifications.mailgun.recipient_overrides[%d] must be a valid email address", i)
+		}
+	}
 	if mailgun.Enable {
 		if mailgun.Domain == "" {
 			return fmt.Errorf("notifications.mailgun.domain is required when Mailgun is enabled")

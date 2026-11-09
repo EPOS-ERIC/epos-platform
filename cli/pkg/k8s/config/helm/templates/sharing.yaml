@@ -1,0 +1,143 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sharing
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sharing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "epos.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sharing
+  template:
+    metadata:
+      labels:
+        {{- include "epos.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: sharing
+    spec:
+      {{- include "epos.image_pull_secrets" . | nindent 6 }}
+      containers:
+        - name: sharing
+          image: {{ .Values.images.sharing_service | quote }}
+          imagePullPolicy: {{ .Values.image_pull_policy }}
+          ports:
+            - containerPort: 8200
+          env:
+            - name: SERVER_PORT
+              value: "8200"
+            - name: DB_HOST
+              value: {{ if .Values.components.sharing_database.enabled }}"sharing-db"{{ else }}{{ .Values.components.sharing_database.host | quote }}{{ end }}
+            - name: DB_PORT
+              value: {{ if .Values.components.sharing_database.enabled }}"5432"{{ else }}{{ .Values.components.sharing_database.port | quote }}{{ end }}
+            - name: DB_NAME
+              value: {{ .Values.components.sharing_database.db_name | quote }}
+            - name: DB_USER
+              value: {{ .Values.components.sharing_database.user | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sharing-db
+                  key: password
+            - name: LOG_LEVEL
+              value: {{ ternary "DEBUG" "INFO" .Values.debug | quote }}
+            - name: OTEL_SDK_DISABLED
+              value: {{ not .Values.components.otel.enabled | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: "sharing"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ if .Values.components.otel.enabled }}{{ default "http://otel-lgtm:4318" .Values.components.otel.endpoint | quote }}{{ else }}""{{ end }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "http/protobuf"
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "5000"
+
+          readinessProbe:
+            tcpSocket:
+              port: 8200
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sharing
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sharing
+spec:
+  ports:
+    - port: 8200
+      targetPort: 8200
+  selector:
+    {{- include "epos.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: sharing
+
+{{- if .Values.components.sharing_database.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sharing-db
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sharing-db
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "epos.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sharing-db
+  template:
+    metadata:
+      labels:
+        {{- include "epos.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: sharing-db
+    spec:
+      {{- include "epos.image_pull_secrets" . | nindent 6 }}
+      containers:
+        - name: sharing-db
+          image: {{ .Values.images.sharing_database | quote }}
+          imagePullPolicy: {{ .Values.image_pull_policy }}
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.components.sharing_database.user | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.components.sharing_database.db_name | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sharing-db
+                  key: password
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sharing-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sharing-db
+  labels:
+    {{- include "epos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sharing-db
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    {{- include "epos.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: sharing-db
+{{- end }}

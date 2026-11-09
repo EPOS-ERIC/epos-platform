@@ -98,6 +98,23 @@ services:
       timeout: 5s
       retries: 20
 
+  converter-db:
+    image: postgres:18-alpine
+    user: "70:70"
+    environment:
+      - POSTGRES_DB=converter
+      - POSTGRES_USER=converter
+      - POSTGRES_PASSWORD=converter
+    volumes:
+      - converter-db-data:/var/lib/postgresql
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U converter -d converter || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
   gateway-service:
     image: epos-gateway-dev:local
     ports:
@@ -136,7 +153,7 @@ services:
     environment:
       - LOG_LEVEL=DEBUG
       - SERVER_PORT=5000
-      - GATEWAY_PUBLIC_URL=http://localhost:33000
+      - BACKOFFICE_URL=http://localhost:34000
       - DB_HOST=metadata-lifecycle-db
       - DB_PORT=5432
       - DB_NAME=metadata-lifecycle
@@ -189,6 +206,37 @@ services:
       retries: 20
       start_period: 20s
 
+  converter-service:
+    image: epos-converter-dev:local
+    depends_on:
+      converter-db:
+        condition: service_healthy
+    environment:
+      - LOG_LEVEL=DEBUG
+      - SERVER_PORT=8200
+      - DB_HOST=converter-db
+      - DB_PORT=5432
+      - DB_NAME=converter
+      - DB_USER=converter
+      - DB_PASSWORD=converter
+      - OTEL_SERVICE_NAME=converter
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
+    volumes:
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/home/appuser/.cache/go-build
+      - converter-plugins:/data/plugins
+    restart: on-failure
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   data-retriever-service:
     image: epos-data-retriever-dev:local
     depends_on:
@@ -228,6 +276,11 @@ services:
     ports:
       - "35000:8080"
     environment:
+      - LOG_LEVEL=DEBUG
+      - OTEL_SERVICE_NAME=aai-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
       - OSS_AAI_LISTEN_ADDR=:8080
       - APP_CORS_ALLOW_ORIGIN=*
       - OIDC_ISSUER=http://localhost:35000/oauth2
@@ -295,6 +348,8 @@ volumes:
   metadata-lifecycle-db-data:
   data-retriever-db-data:
   sharing-db-data:
+  converter-db-data:
+  converter-plugins:
   oss-aai-data:
 
 networks:

@@ -97,11 +97,11 @@ class ValidationErrorsContractTest(unittest.TestCase):
             "/resources/{resourceType}/{id}/versions/{versionId}/submit",
             resourceType="dataset",
             id=resource_id,
-            versionId=draft["version_id"],
+            versionId=draft["id"],
         )
         self.assertEqual(submitted.status_code, 200)
         submitted_version = self.get_version(resource_id, "SUBMITTED")
-        return resource_id, submitted_version["version_id"]
+        return resource_id, submitted_version["id"]
 
     def assert_bad_request(self, response: Any) -> None:
         assert_problem(self, response, 400, "validation_failed")
@@ -266,7 +266,7 @@ class ValidationErrorsContractTest(unittest.TestCase):
             self.assert_bad_request(
                 self.gateway.post(
                     "/contact-points",
-                    json={"email": f"valid-{suffix}@example.org"},
+                    json={},
                 )
             )
         with self.subTest(operation="createContactPoint", case="unknown field"):
@@ -276,25 +276,21 @@ class ValidationErrorsContractTest(unittest.TestCase):
                     json={
                         "email": f"unknown-{suffix}@example.org",
                         "role": "validation",
-                        "unexpected": True,
                     },
                 )
             )
-        with self.subTest(operation="createContactPoint", case="blank role"):
+        with self.subTest(operation="createContactPoint", case="blank email"):
             self.assert_bad_request(
                 self.gateway.post(
                     "/contact-points",
-                    json={
-                        "email": f"blank-{suffix}@example.org",
-                        "role": " ",
-                    },
+                    json={"email": " "},
                 )
             )
         with self.subTest(operation="createContactPoint", case="invalid email"):
             self.assert_bad_request(
                 self.gateway.post(
                     "/contact-points",
-                    json={"email": "not-an-email", "role": "validation"},
+                    json={"email": "not-an-email"},
                 )
             )
 
@@ -313,7 +309,7 @@ class ValidationErrorsContractTest(unittest.TestCase):
                 self.gateway.put(
                     "/resources/{id}/versions/{versionId}/draft",
                     id=draft_resource_id,
-                    versionId=draft["version_id"],
+                    versionId=draft["id"],
                     json=payload,
                 )
             )
@@ -324,7 +320,7 @@ class ValidationErrorsContractTest(unittest.TestCase):
                 self.gateway.put(
                     "/resources/{id}/versions/{versionId}/draft",
                     id=draft_resource_id,
-                    versionId=draft["version_id"],
+                    versionId=draft["id"],
                     json=payload,
                 )
             )
@@ -335,7 +331,7 @@ class ValidationErrorsContractTest(unittest.TestCase):
                 self.gateway.put(
                     "/resources/{id}/versions/{versionId}/draft",
                     id=draft_resource_id,
-                    versionId=draft["version_id"],
+                    versionId=draft["id"],
                     json=payload,
                 )
             )
@@ -349,7 +345,7 @@ class ValidationErrorsContractTest(unittest.TestCase):
                 self.gateway.put(
                     "/resources/{id}/versions/{versionId}/draft",
                     id=draft_resource_id,
-                    versionId=draft["version_id"],
+                    versionId=draft["id"],
                     json=payload,
                 )
             )

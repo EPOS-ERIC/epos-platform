@@ -59,8 +59,8 @@ func (UnimplementedHandler) BlockUser(ctx context.Context, req *BlockUserRequest
 
 // CopyResource implements copyResource operation.
 //
-// Creates a draft copy in the group identified by `groupId`. The target group is taken from the URL,
-// not the request body.
+// Creates an independent draft copy in the group identified by `groupId`, with new resource and child
+// identities. The target group is taken from the URL, not the request body.
 //
 // POST /groups/{groupId}/resources/{resourceType}/{id}/copy
 func (UnimplementedHandler) CopyResource(ctx context.Context, params CopyResourceParams) (r *WriteResult, _ error) {
@@ -83,6 +83,26 @@ func (UnimplementedHandler) CreateConfiguration(ctx context.Context, req *Config
 //
 // POST /contact-points
 func (UnimplementedHandler) CreateContactPoint(ctx context.Context, req *CreateContactPointRequest) (r *ContactPoint, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CreateConversionPlugin implements createConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. The plugin is enabled by default and installation
+// is attempted immediately. Failed installation is retried periodically.
+//
+// POST /conversion-plugins
+func (UnimplementedHandler) CreateConversionPlugin(ctx context.Context, req *CreateConversionPluginRequest) (r *ManagedConversionPlugin, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CreateConversionRelation implements createConversionRelation operation.
+//
+// Requires the global.converter.manage permission. Input format must match a current native format of
+// the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+//
+// POST /conversion-relations
+func (UnimplementedHandler) CreateConversionRelation(ctx context.Context, req *ConversionRelationInput) (r *ConversionRelation, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -158,6 +178,24 @@ func (UnimplementedHandler) DeleteConfiguration(ctx context.Context, params Dele
 //
 // DELETE /contact-points/{contactPointId}
 func (UnimplementedHandler) DeleteContactPoint(ctx context.Context, params DeleteContactPointParams) error {
+	return ht.ErrNotImplemented
+}
+
+// DeleteConversionPlugin implements deleteConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. Deletes its relations and installation.
+//
+// DELETE /conversion-plugins/{pluginId}
+func (UnimplementedHandler) DeleteConversionPlugin(ctx context.Context, params DeleteConversionPluginParams) error {
+	return ht.ErrNotImplemented
+}
+
+// DeleteConversionRelation implements deleteConversionRelation operation.
+//
+// Requires the global.converter.manage permission.
+//
+// DELETE /conversion-relations/{conversionId}
+func (UnimplementedHandler) DeleteConversionRelation(ctx context.Context, params DeleteConversionRelationParams) error {
 	return ht.ErrNotImplemented
 }
 
@@ -240,7 +278,8 @@ func (UnimplementedHandler) DownloadDistribution(ctx context.Context, params Dow
 
 // DraftFromArchive implements draftFromArchive operation.
 //
-// Create draft from archive.
+// Creates a draft version with new version-specific IDs and the same logical resource IDs as the
+// latest archived version.
 //
 // POST /resources/{resourceType}/{id}/draft-from-archive
 func (UnimplementedHandler) DraftFromArchive(ctx context.Context, params DraftFromArchiveParams) (r *WriteResult, _ error) {
@@ -249,7 +288,8 @@ func (UnimplementedHandler) DraftFromArchive(ctx context.Context, params DraftFr
 
 // DraftFromPublication implements draftFromPublication operation.
 //
-// Create draft from publication.
+// Creates a draft version with new version-specific IDs and the same logical resource IDs as the
+// published version.
 //
 // POST /resources/{resourceType}/{id}/draft-from-publication
 func (UnimplementedHandler) DraftFromPublication(ctx context.Context, params DraftFromPublicationParams) (r *WriteResult, _ error) {
@@ -272,6 +312,25 @@ func (UnimplementedHandler) GetConfiguration(ctx context.Context, params GetConf
 //
 // GET /contact-points/{contactPointId}
 func (UnimplementedHandler) GetContactPoint(ctx context.Context, params GetContactPointParams) (r *ContactPoint, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetConversionPlugin implements getConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. Installation status is local to the responding
+// converter instance.
+//
+// GET /conversion-plugins/{pluginId}
+func (UnimplementedHandler) GetConversionPlugin(ctx context.Context, params GetConversionPluginParams) (r *ManagedConversionPlugin, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetConversionRelation implements getConversionRelation operation.
+//
+// Requires the global.converter.manage permission.
+//
+// GET /conversion-relations/{conversionId}
+func (UnimplementedHandler) GetConversionRelation(ctx context.Context, params GetConversionRelationParams) (r *ConversionRelation, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -366,6 +425,34 @@ func (UnimplementedHandler) ListConfigurations(ctx context.Context, params ListC
 //
 // GET /contact-points
 func (UnimplementedHandler) ListContactPoints(ctx context.Context) (r []ContactPoint, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListConversionPlugins implements listConversionPlugins operation.
+//
+// Requires the global.converter.manage permission. Installation status is local to the responding
+// converter instance.
+//
+// GET /conversion-plugins
+func (UnimplementedHandler) ListConversionPlugins(ctx context.Context) (r []ManagedConversionPlugin, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListConversionRelations implements listConversionRelations operation.
+//
+// Requires the global.converter.manage permission.
+//
+// GET /conversion-relations
+func (UnimplementedHandler) ListConversionRelations(ctx context.Context) (r []ConversionRelation, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListDistributionConversionRelations implements listDistributionConversionRelations operation.
+//
+// Requires permission to read the distribution. Includes disabled and uninstalled plugins.
+//
+// GET /distributions/{distributionId}/conversion-relations
+func (UnimplementedHandler) ListDistributionConversionRelations(ctx context.Context, params ListDistributionConversionRelationsParams) (r []DistributionConversionPlugin, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -546,6 +633,26 @@ func (UnimplementedHandler) ReplaceContactPoint(ctx context.Context, req *Replac
 	return r, ht.ErrNotImplemented
 }
 
+// ReplaceConversionPlugin implements replaceConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. Changing repository or branch triggers immediate
+// synchronization. A failed update retains the last working installation and is retried periodically.
+//
+// PUT /conversion-plugins/{pluginId}
+func (UnimplementedHandler) ReplaceConversionPlugin(ctx context.Context, req *ReplaceConversionPluginRequest, params ReplaceConversionPluginParams) (r *ManagedConversionPlugin, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ReplaceConversionRelation implements replaceConversionRelation operation.
+//
+// Requires the global.converter.manage permission. Input format must match a current native format of
+// the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+//
+// PUT /conversion-relations/{conversionId}
+func (UnimplementedHandler) ReplaceConversionRelation(ctx context.Context, req *ConversionRelationInput, params ReplaceConversionRelationParams) (r *ConversionRelation, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ReplaceGroup implements replaceGroup operation.
 //
 // Replace group.
@@ -575,12 +682,37 @@ func (UnimplementedHandler) ReplaceOrganization(ctx context.Context, req *Replac
 
 // ReplaceResourceDraftVersion implements replaceResourceDraftVersion operation.
 //
-// Replaces an editable draft only. Request body shape is selected by `resource_type` and includes the
-// current revision.
+// Replaces all metadata in an editable draft. Request shape is selected by `resource_type` and
+// includes the current revision. To retain a distribution, web service, parameter, layer, or
+// identifier, send its `resource_id` from the draft read response. Omit `resource_id` for a new child;
+// omit an existing child from its collection to remove it. IDs must belong to the same draft and
+// parent. Parameters cannot move between collections or web services. Changing a parameter's PATH,
+// QUERY, or HEADER location within its collection is an edit. Child `id` identifies the
+// version-specific record and is not sent on writes.
 //
 // PUT /resources/{id}/versions/{versionId}/draft
 func (UnimplementedHandler) ReplaceResourceDraftVersion(ctx context.Context, req ReplaceResourceDraftRequest, params ReplaceResourceDraftVersionParams) (r *WriteResult, _ error) {
 	return r, ht.ErrNotImplemented
+}
+
+// RequestDistributionContact implements requestDistributionContact operation.
+//
+// Sends the message separately to each contact point on the published web service. Requires
+// authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+//
+// POST /distributions/{distributionId}/contact-requests
+func (UnimplementedHandler) RequestDistributionContact(ctx context.Context, req *ContactRequestMessage, params RequestDistributionContactParams) (r RequestDistributionContactRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// RequestDistributionConversion implements requestDistributionConversion operation.
+//
+// Requires edit permission for a draft dataset and a web-service distribution. Email delivery is
+// asynchronous and best effort.
+//
+// POST /distributions/{distributionId}/conversion-requests
+func (UnimplementedHandler) RequestDistributionConversion(ctx context.Context, req *RequestDistributionConversionReq, params RequestDistributionConversionParams) error {
+	return ht.ErrNotImplemented
 }
 
 // RequestGroupMembership implements requestGroupMembership operation.
@@ -598,6 +730,16 @@ func (UnimplementedHandler) RequestGroupMembership(ctx context.Context, req *Cre
 //
 // POST /groups/{groupId}/role-requests
 func (UnimplementedHandler) RequestGroupRole(ctx context.Context, req *CreateRoleRequest, params RequestGroupRoleParams) (r *RoleRequest, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// RequestResourceContact implements requestResourceContact operation.
+//
+// Sends the message separately to each contact point on the published resource. Requires
+// authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+//
+// POST /resources/{resourceType}/{id}/contact-requests
+func (UnimplementedHandler) RequestResourceContact(ctx context.Context, req *ContactRequestMessage, params RequestResourceContactParams) (r RequestResourceContactRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -655,6 +797,15 @@ func (UnimplementedHandler) SubscribeGroupUserNotification(ctx context.Context, 
 // PUT /users/{userId}/notification-subscriptions/{topicKey}
 func (UnimplementedHandler) SubscribeUserNotification(ctx context.Context, params SubscribeUserNotificationParams) error {
 	return ht.ErrNotImplemented
+}
+
+// SyncConversionPlugin implements syncConversionPlugin operation.
+//
+// Requires the global.converter.manage permission. Waits for synchronization to finish.
+//
+// POST /conversion-plugins/{pluginId}/sync
+func (UnimplementedHandler) SyncConversionPlugin(ctx context.Context, params SyncConversionPluginParams) (r *ManagedConversionPlugin, _ error) {
+	return r, ht.ErrNotImplemented
 }
 
 // UnblockUser implements unblockUser operation.

@@ -6,6 +6,49 @@ import (
 	"github.com/google/uuid"
 )
 
+type ConversionRuntime string
+
+const (
+	ConversionRuntimePython ConversionRuntime = "python"
+	ConversionRuntimeJava   ConversionRuntime = "java"
+	ConversionRuntimeBinary ConversionRuntime = "binary"
+)
+
+type PluginInput struct {
+	Name        string
+	Description string
+	Repository  string
+	Branch      string
+	Runtime     ConversionRuntime
+	Arguments   []string
+}
+
+type Plugin struct {
+	PluginInput
+	ID              uuid.UUID
+	Enabled         bool
+	Installed       bool
+	InstalledCommit *string
+	CreatedBy       string
+	UpdatedBy       string
+}
+
+type DistributionPluginRelation struct {
+	PluginID       uuid.UUID
+	Name           string
+	Description    string
+	Repository     string
+	Branch         string
+	Runtime        ConversionRuntime
+	Arguments      []string
+	Enabled        bool
+	Installed      bool
+	RelationID     uuid.UUID
+	DistributionID uuid.UUID
+	InputFormat    string
+	OutputFormat   string
+}
+
 type AccessRequest struct {
 	DistributionID uuid.UUID
 	OutputFormat   *string
@@ -111,4 +154,18 @@ type PreparedRequest struct {
 type RetrievalResponse struct {
 	StatusCode int
 	Body       io.ReadCloser
+}
+
+type ConversionRelation struct {
+	ID             uuid.UUID
+	DistributionID uuid.UUID
+	InputFormat    string
+	OutputFormat   string
+}
+
+type AvailableConversion struct {
+	ConversionRelation
+	PluginID          uuid.UUID
+	PluginName        string
+	PluginDescription string
 }

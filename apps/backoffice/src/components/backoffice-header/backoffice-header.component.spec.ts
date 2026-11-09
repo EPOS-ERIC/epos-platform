@@ -62,6 +62,23 @@ describe('BackofficeHeaderComponent', () => {
     expect(fixture.nativeElement.querySelector('.admin-subtitle')).toBeNull();
   });
 
+  it('opens an attached user menu with a link to memberships', () => {
+    const fixture = TestBed.createComponent(BackofficeHeaderComponent);
+    fixture.componentRef.setInput('selectedGroupId', 'group-id');
+    fixture.componentRef.setInput('accountReturnUrl', '/software?groupId=group-id');
+    fixture.detectChanges();
+
+    const userButton = fixture.nativeElement.querySelector('.admin-chip') as HTMLButtonElement;
+    userButton.click();
+    fixture.detectChanges();
+
+    expect(userButton.classList.contains('admin-chip--menu-open')).toBe(true);
+    const membershipsLink = fixture.nativeElement.querySelector('.user-menu-item') as HTMLAnchorElement;
+    expect(membershipsLink.textContent).toContain('My Memberships');
+    expect(membershipsLink.querySelector('app-icon')).not.toBeNull();
+    expect(membershipsLink.getAttribute('href')).toBe('/memberships?groupId=group-id&returnUrl=%2Fsoftware%3FgroupId%3Dgroup-id');
+  });
+
   it('shows resource creation only when allowed for the selected group', () => {
     const fixture = TestBed.createComponent(BackofficeHeaderComponent);
     fixture.componentRef.setInput('showSearchActions', true);

@@ -1,0 +1,5 @@
+<h1>Membership requested</h1>
+<p><strong>Requester:</strong> {{with pageURL "/global-manage?panel=members"}}<a href="{{.}}">{{subjectLabel $.SubjectID}}</a>{{else}}{{subjectLabel .SubjectID}}{{end}}</p>
+<p><strong>Group:</strong> {{groupLabel .GroupID}}</p>
+{{with groupRequestsURL .GroupID .GroupConcept}}<p><a href="{{.}}">Review group requests</a></p>{{end}}
+{{with pageURL "/global-manage?panel=requests"}}<p><a href="{{.}}">Review global requests</a></p>{{end}}

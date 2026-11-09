@@ -16,6 +16,9 @@ def parameter(name: str = "value", kind: str = "STRING", **fields: Any) -> dict[
     if kind not in ("BOOLEAN", "DATETIME", "TEMPLATE"):
         result["multiple_values"] = False
     result.update(fields)
+    if kind in ("STRING", "INTEGER", "FLOAT") and "default" in result:
+        if result["default"] is not None and not isinstance(result["default"], list):
+            result["default"] = [result["default"]]
     return result
 
 
@@ -33,7 +36,6 @@ def web_distribution(
         "title": "prepared-service", "description": "Synthetic preparation contract",
         "type": "WEB_SERVICE",
         "web_service": {
-            "name": "prepared-service",
             "configuration": {
                 "template_url": "https://provider.invalid/query",
                 "method": "GET", "type": "HTTP", "format": "application/json",
@@ -67,7 +69,7 @@ class DistributionContractTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 201)
         resource_id = response.json()["id"]
-        return self.details(resource_id, self.version(resource_id, "DRAFT")["version_id"])
+        return self.details(resource_id, self.version(resource_id, "DRAFT")["id"])
 
     def version(self, resource_id: str, status: str) -> dict[str, Any]:
         response = self.gateway.get(
@@ -89,14 +91,14 @@ class DistributionContractTestCase(unittest.TestCase):
     def replace_response(self, detail: dict[str, Any], metadata: dict[str, Any]) -> Any:
         return self.gateway.put(
             "/resources/{id}/versions/{versionId}/draft", id=detail["resource_id"],
-            versionId=detail["version_id"],
+            versionId=detail["id"],
             json={"resource_type": "dataset", "revision": detail["revision"], "metadata": metadata},
         )
 
     def transition(self, detail: dict[str, Any], action: str, **kwargs: Any) -> None:
         response = self.gateway.post(
             "/resources/{resourceType}/{id}/versions/{versionId}/" + action,
-            resourceType="dataset", id=detail["resource_id"], versionId=detail["version_id"],
+            resourceType="dataset", id=detail["resource_id"], versionId=detail["id"],
             **kwargs,
         )
         self.assertEqual(response.status_code, 200)

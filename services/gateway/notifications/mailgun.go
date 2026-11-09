@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
@@ -21,11 +22,12 @@ import (
 var tracer = otel.Tracer("github.com/EPOS-ERIC/epos-platform/services/gateway/notifications")
 
 type Mailgun struct {
-	log     *slog.Logger
-	domain  string
-	from    string
-	client  mailgun.Mailgun
-	timeout time.Duration
+	log                *slog.Logger
+	domain             string
+	from               string
+	client             mailgun.Mailgun
+	timeout            time.Duration
+	recipientOverrides []string
 }
 
 func NewMailgun(log *slog.Logger, cfg config.Mailgun) (*Mailgun, error) {
@@ -53,11 +55,15 @@ func NewMailgun(log *slog.Logger, cfg config.Mailgun) (*Mailgun, error) {
 	})
 
 	mailer := &Mailgun{
-		log:     log.With("component", "mailgun-notifications"),
-		domain:  cfg.Domain,
-		from:    cfg.From,
-		client:  client,
-		timeout: cfg.Timeout,
+		log:                log.With("component", "mailgun-notifications"),
+		domain:             cfg.Domain,
+		from:               cfg.From,
+		client:             client,
+		timeout:            cfg.Timeout,
+		recipientOverrides: slices.Clone(cfg.RecipientOverrides),
+	}
+	if len(mailer.recipientOverrides) > 0 {
+		mailer.log.Warn("all outgoing email recipients are overridden", "recipient_count", len(mailer.recipientOverrides))
 	}
 
 	return mailer, nil
@@ -73,6 +79,18 @@ func (m *Mailgun) Dispatch(ctx context.Context, notifications []domain.Notificat
 	}
 }
 
+// SendContactRequest synchronously sends a prepared contact-request email.
+func (m *Mailgun) SendContactRequest(ctx context.Context, email domain.ContactRequestEmail) error {
+	ctx, cancel := context.WithTimeout(ctx, m.timeout)
+	defer cancel()
+
+	return m.send(ctx, domain.Notification{
+		TargetEmail: email.TargetEmail,
+		Subject:     email.Subject,
+		Body:        email.Body,
+	})
+}
+
 func (m *Mailgun) sendAsync(ctx context.Context, notification domain.Notification) {
 	ctx = context.WithoutCancel(ctx)
 	ctx, span := tracer.Start(ctx, "notification.send")
@@ -82,6 +100,7 @@ func (m *Mailgun) sendAsync(ctx context.Context, notification domain.Notificatio
 		attribute.String("notification.channel", string(notification.Channel)),
 		attribute.String("notification.event_kind", notification.EventKind),
 		attribute.String("notification.provider", "mailgun"),
+		attribute.String("notification.recipient", notification.TargetEmail),
 	)
 
 	ctx, cancel := context.WithTimeout(ctx, m.timeout)
@@ -89,18 +108,26 @@ func (m *Mailgun) sendAsync(ctx context.Context, notification domain.Notificatio
 
 	if err := m.send(ctx, notification); err != nil {
 		span.RecordError(err)
-		span.SetStatus(codes.Error, "notification send failed")
+		span.SetStatus(codes.Error, err.Error())
 		m.log.ErrorContext(ctx, "send notification failed", "target", notification.TargetEmail, "event", notification.EventKind, "error", err)
+		return
 	}
+
+	m.log.DebugContext(ctx, "notification accepted by Mailgun", "target", notification.TargetEmail, "event", notification.EventKind)
 }
 
 func (m *Mailgun) send(ctx context.Context, notification domain.Notification) error {
+	recipients := m.recipientOverrides
+	if len(recipients) == 0 {
+		recipients = []string{notification.TargetEmail}
+	}
+
 	message := mailgun.NewMessage(
 		m.domain,
 		m.from,
 		notification.Subject,
 		"",
-		notification.TargetEmail,
+		recipients...,
 	)
 
 	message.SetHTML(notification.Body)

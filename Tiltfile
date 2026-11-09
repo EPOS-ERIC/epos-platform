@@ -93,6 +93,33 @@ docker_build(
 )
 
 docker_build(
+    'epos-converter-dev:local',
+    '.',
+    dockerfile='services/converter/Dockerfile.dev',
+    only=[
+        'services/converter',
+        'packages/go/apperror',
+        'packages/go/grpcserver',
+        'packages/go/logging',
+        'packages/go/observability',
+        'packages/go/postgres',
+        'packages/protobuf',
+        'packages/scripts/epos-banner.sh',
+    ],
+    live_update=[
+        sync('services/converter', '/workspace/services/converter'),
+        sync('packages/go/apperror', '/workspace/packages/go/apperror'),
+        sync('packages/go/grpcserver', '/workspace/packages/go/grpcserver'),
+        sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
+        sync('packages/go/postgres', '/workspace/packages/go/postgres'),
+        sync('packages/protobuf', '/workspace/packages/protobuf'),
+        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
+        restart_container(),
+    ],
+)
+
+docker_build(
     'epos-data-retriever-dev:local',
     '.',
     dockerfile='services/data-retriever/Dockerfile.dev',
@@ -125,6 +152,8 @@ docker_build(
     dockerfile='services/oss-aai-service/Dockerfile.dev',
     only=[
         'services/oss-aai-service',
+        'packages/go/logging',
+        'packages/go/observability',
         'packages/scripts/epos-banner.sh',
     ],
     ignore=[
@@ -132,6 +161,8 @@ docker_build(
     ],
     live_update=[
         sync('services/oss-aai-service', '/workspace/services/oss-aai-service'),
+        sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
         restart_container(),
     ],
@@ -222,6 +253,7 @@ local_resource(
         -c 'buf generate' ''',
     deps=[
         'packages/protobuf/configuration',
+        'packages/protobuf/converter',
         'packages/protobuf/data_retriever',
         'packages/protobuf/metadata_lifecycle',
         'packages/protobuf/semantic_aggregator',
@@ -250,7 +282,7 @@ local_resource(
     labels=['codegen'],
 )
 
-for service in ['metadata-lifecycle', 'sharing', 'data-retriever']:
+for service in ['metadata-lifecycle', 'sharing', 'data-retriever', 'converter']:
     local_resource(
         service + '-sqlc',
         cmd='''mkdir -p "$HOME/.cache/epos-tilt-codegen" && docker run --rm --user "$(id -u):$(id -g)" \
@@ -273,12 +305,14 @@ dc_resource('data-retriever-db', labels=['infra'])
 dc_resource('metadata-lifecycle-db', labels=['infra'])
 dc_resource('sharing-db', labels=['infra'])
 dc_resource('semantic-aggregator-fuseki', labels=['infra'])
-dc_resource('data-retriever-service', labels=['service'], resource_deps=['data-retriever-db', 'protobuf-codegen', 'data-retriever-sqlc'])
-dc_resource('oss-aai-service', labels=['service'])
-dc_resource('semantic-aggregator-service', labels=['service'], resource_deps=['protobuf-codegen'])
-dc_resource('gateway-service', labels=['service'], resource_deps=['protobuf-codegen', 'gateway-codegen'])
-dc_resource('metadata-lifecycle-service', labels=['service'], resource_deps=['metadata-lifecycle-db', 'protobuf-codegen', 'metadata-lifecycle-sqlc'])
-dc_resource('sharing-service', labels=['service'], resource_deps=['sharing-db', 'protobuf-codegen', 'sharing-sqlc'])
+dc_resource('converter-db', labels=['infra'])
+dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db', 'protobuf-codegen', 'data-retriever-sqlc'])
+dc_resource('oss-aai-service', labels=['app'])
+dc_resource('semantic-aggregator-service', labels=['app'], resource_deps=['protobuf-codegen'])
+dc_resource('gateway-service', labels=['app'], resource_deps=['protobuf-codegen', 'gateway-codegen'])
+dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['metadata-lifecycle-db', 'protobuf-codegen', 'metadata-lifecycle-sqlc'])
+dc_resource('sharing-service', labels=['app'], resource_deps=['sharing-db', 'protobuf-codegen', 'sharing-sqlc'])
+dc_resource('converter-service', labels=['app'], resource_deps=['converter-db', 'protobuf-codegen', 'converter-sqlc'])
 dc_resource('otel-lgtm', labels=['observability'])
 dc_resource('platform-legacy', labels=['app'])
 dc_resource('backoffice', labels=['app'], resource_deps=['backoffice-codegen'])

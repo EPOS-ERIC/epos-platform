@@ -34,16 +34,34 @@ func TestConfigRender(t *testing.T) {
 			wantFiles: []string{
 				"templates/dataportal.yaml",
 				"templates/gateway.yaml",
-				"templates/application-databases.yaml",
-				"templates/metadata-database.yaml",
-				"templates/application-services.yaml",
+				"templates/metadata-lifecycle.yaml",
+				"templates/data-retriever.yaml",
+				"templates/converter.yaml",
+				"templates/sharing.yaml",
 			},
 			wantContains: map[string][]string{
-				"templates/dataportal.yaml":            {"name: dataportal", `value: "http://localhost/test-default/aai"`},
-				"templates/gateway.yaml":               {"name: gateway", `url: "http://aai-service:8080"`, "imagePullPolicy: IfNotPresent", `nginx.ingress.kubernetes.io/proxy-body-size: "10m"`},
-				"templates/application-databases.yaml": {"name: retriever-db", "name: sharing-db"},
-				"templates/metadata-database.yaml":     {"name: metadata-database"},
-				"templates/application-services.yaml":  {"name: metadata-lifecycle", "name: data-retriever", "name: sharing"},
+				"templates/dataportal.yaml":         {"name: dataportal", `value: "http://localhost/test-default/aai"`},
+				"templates/gateway.yaml":            {"name: gateway", `url: "http://aai-service:8080"`, `url: "converter:8200"`, "imagePullPolicy: IfNotPresent", `nginx.ingress.kubernetes.io/proxy-body-size: "10m"`},
+				"templates/metadata-lifecycle.yaml": {"name: metadata-lifecycle", "name: metadata-database", "claimName: psqldata"},
+				"templates/data-retriever.yaml":     {"name: data-retriever", "name: retriever-db"},
+				"templates/converter.yaml":          {"name: converter", "name: converter-db", "claimName: converter-plugins", "type: Recreate", "fsGroup: 1000"},
+				"templates/sharing.yaml":            {"name: sharing", "name: sharing-db"},
+				"templates/pvc.yaml":                {"name: psqldata", "name: retriever-db", "name: converter-db", "name: converter-plugins", "name: sharing-db", "ReadWriteOnce"},
+			},
+		},
+		{
+			name: "external converter database",
+			mutate: func(cfg *config.Config) {
+				cfg.Name = "test-external-converter-db"
+				cfg.Components.ConverterDatabase.Enabled = false
+				cfg.Components.ConverterDatabase.Host = "external-db"
+			},
+			wantContains: map[string][]string{
+				"templates/converter.yaml": {`value: "external-db"`, "name: converter"},
+			},
+			notContains: map[string][]string{
+				"templates/converter.yaml": {"claimName: converter-db"},
+				"templates/pvc.yaml":       {"name: converter-db"},
 			},
 		},
 		{
@@ -53,15 +71,14 @@ func TestConfigRender(t *testing.T) {
 				cfg.ImagePullPolicy = "Always"
 			},
 			wantContains: map[string][]string{
-				"templates/gateway.yaml":              {"imagePullPolicy: Always"},
-				"templates/application-services.yaml": {"imagePullPolicy: Always"},
+				"templates/gateway.yaml":   {"imagePullPolicy: Always"},
+				"templates/converter.yaml": {"imagePullPolicy: Always"},
 			},
 		},
 		{
 			name: "backoffice enabled renders UI",
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-backoffice"
-				cfg.Components.Backoffice.Enabled = true
 			},
 			wantContains: map[string][]string{
 				"templates/backoffice-ui.yaml": {"name: backoffice-ui", `value: "http://localhost/test-backoffice/aai"`},
@@ -74,8 +91,8 @@ func TestConfigRender(t *testing.T) {
 				cfg.Components.SharingDatabase.Enabled = true
 			},
 			wantContains: map[string][]string{
-				"templates/gateway.yaml":              {`url: "sharing:8200"`},
-				"templates/application-services.yaml": {"name: sharing"},
+				"templates/gateway.yaml": {`url: "sharing:8200"`},
+				"templates/sharing.yaml": {"name: sharing"},
 			},
 		},
 		{
@@ -84,7 +101,6 @@ func TestConfigRender(t *testing.T) {
 				cfg.Name = "test-aai"
 				cfg.Components.Gateway.AAI.Enabled = true
 				cfg.Components.AAIService.Enabled = true
-				cfg.Components.Backoffice.Enabled = true
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
@@ -95,6 +111,7 @@ func TestConfigRender(t *testing.T) {
 				},
 				"templates/aai-service.yaml": {
 					"name: aai-service",
+					"securityContext:\n        fsGroup: 1000",
 					"kind: Ingress",
 					"path: /test-aai/aai(/|$)(.*)",
 					`INITIAL_ADMIN_NAME: "EPOS"`,
@@ -114,7 +131,6 @@ func TestConfigRender(t *testing.T) {
 				cfg.URLPrefixNamespace = false
 				cfg.Components.Gateway.AAI.Enabled = true
 				cfg.Components.AAIService.Enabled = true
-				cfg.Components.Backoffice.Enabled = true
 			},
 			wantContains: map[string][]string{
 				"templates/aai-service.yaml": {
@@ -188,7 +204,6 @@ func TestConfigRender(t *testing.T) {
 				cfg.Components.PlatformUI.TLS.SecretName = dataportalTLSSecret
 				cfg.Components.Gateway.TLS.Enabled = true
 				cfg.Components.Gateway.TLS.SecretName = gatewayTLSSecret
-				cfg.Components.Backoffice.Enabled = true
 				cfg.Components.Backoffice.TLS.Enabled = true
 				cfg.Components.Backoffice.TLS.SecretName = "backoffice-tls"
 				cfg.Components.AAIService.Enabled = true
@@ -297,6 +312,61 @@ func TestConfigRender(t *testing.T) {
 				contentExcludes(t, content, suffix, substrings)
 			}
 		})
+	}
+}
+
+func TestIngressHost(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		host *string
+		want string
+	}{
+		{name: "default", want: `host: "localhost"`},
+		{name: "any host", host: new(string)},
+		{name: "custom", host: func() *string { s := "ingress.example.org"; return &s }(), want: `host: "ingress.example.org"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.GetDefaultConfig()
+			cfg.Name = "test-ingress"
+			cfg.IngressHost = tc.host
+			cfg.Components.AAIService.Enabled = true
+			cfg.Components.OpenTelemetry.Enabled = true
+			files, err := cfg.Render()
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, name := range []string{"gateway", "dataportal", "backoffice-ui", "aai-service", "otel"} {
+				content := files["epos/templates/"+name+".yaml"]
+				if content == "" {
+					t.Fatalf("missing template %s", name)
+				}
+				if tc.want == "" && strings.Contains(content, "host:") {
+					t.Errorf("%s contains ingress host", name)
+				} else if tc.want != "" && !strings.Contains(content, tc.want) {
+					t.Errorf("%s missing %s", name, tc.want)
+				}
+			}
+			if !strings.Contains(files["epos/templates/aai-service.yaml"], "http://localhost/test-ingress/aai") {
+				t.Error("public AAI URL changed")
+			}
+		})
+	}
+}
+
+func TestIngressHostCertManagerValidation(t *testing.T) {
+	cfg := config.GetDefaultConfig()
+	cfg.Name = "test-ingress"
+	cfg.Protocol = "https"
+	cfg.Components.Gateway.TLS.Enabled = true
+	cfg.Components.Gateway.TLS.SecretName = "gateway-tls"
+	host := "other.example.org"
+	cfg.IngressHost = &host
+	if err := cfg.Validate(); err == nil || !strings.Contains(err.Error(), "ingress_host must match domain") {
+		t.Fatalf("unexpected validation error: %v", err)
+	}
+	host = ""
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("hostless ingress validation: %v", err)
 	}
 }
 

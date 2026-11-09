@@ -25,16 +25,7 @@ var (
 )
 
 func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
-	value.Name = strings.TrimSpace(value.Name)
-	description, err := optionalWebServiceDescription(value.Description)
-	if err != nil {
-		return WebServiceInput{}, prefixOrField(err, "description", "description", "Description must not be blank.")
-	}
-	value.Description = description
 	value.Type = WebServiceType(strings.ToUpper(strings.TrimSpace(string(value.Type))))
-	if value.Name == "" {
-		return WebServiceInput{}, invalidField("name", "Name must not be blank.", nil)
-	}
 	if !value.Type.Valid() {
 		return WebServiceInput{}, invalidField("type", "Type is not supported.", nil)
 	}
@@ -51,21 +42,16 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 		return WebServiceInput{}, invalidField("visible_on", "Audience selection must contain supported values.", err)
 	}
 	value.VisibleOn = visibleOn
-	if err := validateTemporal(value.TemporalCoverage); err != nil {
-		return WebServiceInput{}, invalidField("temporal_coverage", "Start must not be after end.", err)
-	}
 	if value.ProviderID != nil && *value.ProviderID == uuid.Nil {
 		return WebServiceInput{}, invalidField("provider", "Provider must be a valid UUID.", nil)
 	}
 	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
 		return WebServiceInput{}, err
 	}
-	if value.Documentation != nil {
-		value.Documentation.Title = optionalTrimmedString(value.Documentation.Title)
-		value.Documentation.Description = optionalTrimmedString(value.Documentation.Description)
-		value.Documentation.URI = strings.TrimSpace(value.Documentation.URI)
-		if value.Documentation.URI == "" {
-			return WebServiceInput{}, invalidField("documentation.uri", "URI must not be blank.", nil)
+	if value.DocumentationURI != nil {
+		*value.DocumentationURI = strings.TrimSpace(*value.DocumentationURI)
+		if *value.DocumentationURI == "" {
+			return WebServiceInput{}, invalidField("documentation_uri", "Documentation URI must not be blank.", nil)
 		}
 	}
 
@@ -463,10 +449,9 @@ func NewWebService(value WebService) (result WebService, err error) {
 	if err != nil {
 		return WebService{}, err
 	}
-	value.Name = input.Name
-	value.Description = input.Description
 	value.Type = input.Type
 	value.VisibleOn = input.VisibleOn
+	value.DocumentationURI = input.DocumentationURI
 	value.Configuration, err = restoreWebServiceConfiguration(input.Configuration, value.Configuration)
 	if err != nil {
 		return WebService{}, fmt.Errorf("restore configuration parameter IDs: %w", err)
@@ -588,7 +573,14 @@ func restoreWebServiceConfiguration(input WebServiceConfigurationInput, existing
 		if err != nil {
 			return nil, fmt.Errorf("GetFeatureInfo parameters: %w", err)
 		}
-		return WMTSConfiguration{CapabilitiesURL: configuration.CapabilitiesURL, DefaultLayer: configuration.DefaultLayer, Layers: configuration.Layers, GetTileParameters: tile, GetFeatureInfoParameters: info}, nil
+		return WMTSConfiguration{
+			CapabilitiesURL:          configuration.CapabilitiesURL,
+			DefaultLayer:             configuration.DefaultLayer,
+			Layers:                   persisted.Layers,
+			GetTileParameters:        tile,
+			GetFeatureInfoParameters: info,
+		}, nil
+
 	case WMSConfigurationInput:
 		persisted, ok := existing.(WMSConfiguration)
 		if !ok {
@@ -605,12 +597,13 @@ func restoreWebServiceConfiguration(input WebServiceConfigurationInput, existing
 		return WMSConfiguration{
 			CapabilitiesURL:          configuration.CapabilitiesURL,
 			DefaultLayer:             configuration.DefaultLayer,
-			Layers:                   configuration.Layers,
+			Layers:                   persisted.Layers,
 			TransparencyEditable:     configuration.TransparencyEditable,
 			DefaultTransparency:      configuration.DefaultTransparency,
 			GetMapParameters:         mapParameters,
 			GetFeatureInfoParameters: featureInfoParameters,
 		}, nil
+
 	default:
 		return nil, fmt.Errorf("web service input configuration is unsupported: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
@@ -799,6 +792,9 @@ func webServiceParameterInputs(values []WebServiceParameter) []WebServiceParamet
 
 func (value Parameter) Input() ParameterInput {
 	input := value.ParameterInput
+	if value.ResourceID != uuid.Nil {
+		input.ResourceID = &value.ResourceID
+	}
 	input.Schema = parameterSchemaInput(input.Schema)
 	return input
 }
@@ -858,7 +854,11 @@ func restoreParameter(value ParameterInput, existing Parameter) (Parameter, erro
 	if existing.ID == uuid.Nil {
 		return Parameter{}, fmt.Errorf("parameter ID is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	result := Parameter{ParameterInput: value, ID: existing.ID}
+	result := Parameter{
+		ParameterInput: value,
+		ID:             existing.ID,
+		ResourceID:     existing.ResourceID,
+	}
 	if schema, ok := value.Schema.(TemplateSchemaInput); ok {
 		existingSchema, ok := existing.Schema.(TemplateSchema)
 		if !ok {
@@ -868,7 +868,10 @@ func restoreParameter(value ParameterInput, existing Parameter) (Parameter, erro
 		if err != nil {
 			return Parameter{}, err
 		}
-		result.Schema = TemplateSchema{Template: schema.Template, Parameters: parameters}
+		result.Schema = TemplateSchema{
+			Template:   schema.Template,
+			Parameters: parameters,
+		}
 	}
 	return result, nil
 }
@@ -1017,16 +1020,24 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 		}
 	}
 	if value.Default != nil {
-		if strings.TrimSpace(*value.Default) == "" {
-			return StringSchema{}, fmt.Errorf("string default cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
+		if len(value.Default) == 0 {
+			return StringSchema{}, fmt.Errorf("string defaults cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
-		if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(*value.Default) {
-			return StringSchema{}, fmt.Errorf("string default does not match pattern: %w", apperror.Default(apperror.CodeValidationFailed))
+		if !value.MultipleValues && len(value.Default) > 1 {
+			return StringSchema{}, fmt.Errorf("scalar string parameters allow at most one default: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
-		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item StringEnumOption) bool {
-			return item.Value == *value.Default
-		}) {
-			return StringSchema{}, fmt.Errorf("string default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+		for _, defaultValue := range value.Default {
+			if strings.TrimSpace(defaultValue) == "" {
+				return StringSchema{}, fmt.Errorf("string default cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
+			if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(defaultValue) {
+				return StringSchema{}, fmt.Errorf("string default does not match pattern: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
+			if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item StringEnumOption) bool {
+				return item.Value == defaultValue
+			}) {
+				return StringSchema{}, fmt.Errorf("string default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
 		}
 	}
 	return value, nil
@@ -1058,13 +1069,21 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 		}
 	}
 	if value.Default != nil {
-		if !integerInRange(*value.Default, value.Minimum, value.Maximum) {
-			return IntegerSchema{}, fmt.Errorf("integer default is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
+		if len(value.Default) == 0 {
+			return IntegerSchema{}, fmt.Errorf("integer defaults cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
-		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item IntegerEnumOption) bool {
-			return item.Value == *value.Default
-		}) {
-			return IntegerSchema{}, fmt.Errorf("integer default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+		if !value.MultipleValues && len(value.Default) > 1 {
+			return IntegerSchema{}, fmt.Errorf("scalar integer parameters allow at most one default: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		for _, defaultValue := range value.Default {
+			if !integerInRange(defaultValue, value.Minimum, value.Maximum) {
+				return IntegerSchema{}, fmt.Errorf("integer default is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
+			if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item IntegerEnumOption) bool {
+				return item.Value == defaultValue
+			}) {
+				return IntegerSchema{}, fmt.Errorf("integer default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
 		}
 	}
 	return value, nil
@@ -1096,13 +1115,21 @@ func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
 		return FloatSchema{}, fmt.Errorf("float minimum must not exceed maximum: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	if value.Default != nil {
-		if !floatInRange(*value.Default, value.Minimum, value.Maximum) {
-			return FloatSchema{}, fmt.Errorf("float default is outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
+		if len(value.Default) == 0 {
+			return FloatSchema{}, fmt.Errorf("float defaults cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
 		}
-		if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item FloatEnumOption) bool {
-			return item.Value == *value.Default
-		}) {
-			return FloatSchema{}, fmt.Errorf("float default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+		if !value.MultipleValues && len(value.Default) > 1 {
+			return FloatSchema{}, fmt.Errorf("scalar float parameters allow at most one default: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
+		for _, defaultValue := range value.Default {
+			if math.IsNaN(defaultValue) || math.IsInf(defaultValue, 0) || !floatInRange(defaultValue, value.Minimum, value.Maximum) {
+				return FloatSchema{}, fmt.Errorf("float default is invalid or outside allowed range: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
+			if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item FloatEnumOption) bool {
+				return item.Value == defaultValue
+			}) {
+				return FloatSchema{}, fmt.Errorf("float default is not an allowed value: %w", apperror.Default(apperror.CodeValidationFailed))
+			}
 		}
 	}
 	return value, nil
@@ -1228,17 +1255,6 @@ func optionalTrimmedString(value *string) *string {
 		return nil
 	}
 	return &trimmed
-}
-
-func optionalWebServiceDescription(value *string) (*string, error) {
-	if value == nil {
-		return nil, nil
-	}
-	trimmed := strings.TrimSpace(*value)
-	if trimmed == "" {
-		return nil, fmt.Errorf("web service description cannot be empty: %w", apperror.Default(apperror.CodeValidationFailed))
-	}
-	return &trimmed, nil
 }
 
 func integerInRange(value int64, minimum, maximum *int64) bool {

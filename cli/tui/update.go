@@ -28,8 +28,7 @@ func (u *updateFormData) cleanupConfigSession() {
 }
 
 // showUpdateForm displays the environment update form for Docker or K8s.
-func (a *App) showUpdateForm() {
-	envName, isDocker, k8sContext := a.envList.GetSelected()
+func (a *App) showUpdateForm(envName string, isDocker bool, k8sContext string) {
 	if envName == "" {
 		return
 	}

@@ -72,7 +72,8 @@ func fromProtoNotification(value *metadatalifecyclev1.Notification) (domain.Noti
 		metadatalifecyclev1.NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_SUBMITTED,
 		metadatalifecyclev1.NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED,
 		metadatalifecyclev1.NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED,
-		metadatalifecyclev1.NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED:
+		metadatalifecyclev1.NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED,
+		metadatalifecyclev1.NotificationEventKind_NOTIFICATION_EVENT_KIND_CONVERSION_REQUESTED:
 	default:
 		return domain.Notification{}, fmt.Errorf("unsupported notification event kind: %q", eventKind)
 	}

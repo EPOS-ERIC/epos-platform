@@ -7,14 +7,72 @@ import (
 	"github.com/twpayne/go-geom"
 )
 
+type AccessRight string
+
+const (
+	AccessRightNonPublic    AccessRight = "NON_PUBLIC"
+	AccessRightNormal       AccessRight = "NORMAL"
+	AccessRightOpDatpro     AccessRight = "OP_DATPRO"
+	AccessRightPublic       AccessRight = "PUBLIC"
+	AccessRightRestricted   AccessRight = "RESTRICTED"
+	AccessRightConfidential AccessRight = "CONFIDENTIAL"
+	AccessRightSensitive    AccessRight = "SENSITIVE"
+)
+
+func (value AccessRight) Valid() bool {
+	switch value {
+	case AccessRightNonPublic, AccessRightNormal, AccessRightOpDatpro, AccessRightPublic,
+		AccessRightRestricted, AccessRightConfidential, AccessRightSensitive:
+		return true
+	default:
+		return false
+	}
+}
+
+type AccrualPeriodicity string
+
+const (
+	AccrualPeriodicityTriennial        AccrualPeriodicity = "TRIENNIAL"
+	AccrualPeriodicityBiennial         AccrualPeriodicity = "BIENNIAL"
+	AccrualPeriodicityAnnual           AccrualPeriodicity = "ANNUAL"
+	AccrualPeriodicitySemiannual       AccrualPeriodicity = "SEMIANNUAL"
+	AccrualPeriodicityThreeTimesAYear  AccrualPeriodicity = "THREE_TIMES_A_YEAR"
+	AccrualPeriodicityQuarterly        AccrualPeriodicity = "QUARTERLY"
+	AccrualPeriodicityBimonthly        AccrualPeriodicity = "BIMONTHLY"
+	AccrualPeriodicityMonthly          AccrualPeriodicity = "MONTHLY"
+	AccrualPeriodicitySemimonthly      AccrualPeriodicity = "SEMIMONTHLY"
+	AccrualPeriodicityBiweekly         AccrualPeriodicity = "BIWEEKLY"
+	AccrualPeriodicityThreeTimesAMonth AccrualPeriodicity = "THREE_TIMES_A_MONTH"
+	AccrualPeriodicityWeekly           AccrualPeriodicity = "WEEKLY"
+	AccrualPeriodicitySemiweekly       AccrualPeriodicity = "SEMIWEEKLY"
+	AccrualPeriodicityThreeTimesAWeek  AccrualPeriodicity = "THREE_TIMES_A_WEEK"
+	AccrualPeriodicityDaily            AccrualPeriodicity = "DAILY"
+	AccrualPeriodicityContinuous       AccrualPeriodicity = "CONTINUOUS"
+	AccrualPeriodicityIrregular        AccrualPeriodicity = "IRREGULAR"
+)
+
+func (value AccrualPeriodicity) Valid() bool {
+	switch value {
+	case AccrualPeriodicityTriennial, AccrualPeriodicityBiennial, AccrualPeriodicityAnnual,
+		AccrualPeriodicitySemiannual, AccrualPeriodicityThreeTimesAYear, AccrualPeriodicityQuarterly,
+		AccrualPeriodicityBimonthly, AccrualPeriodicityMonthly, AccrualPeriodicitySemimonthly,
+		AccrualPeriodicityBiweekly, AccrualPeriodicityThreeTimesAMonth, AccrualPeriodicityWeekly,
+		AccrualPeriodicitySemiweekly, AccrualPeriodicityThreeTimesAWeek, AccrualPeriodicityDaily,
+		AccrualPeriodicityContinuous, AccrualPeriodicityIrregular:
+		return true
+	default:
+		return false
+	}
+}
+
 // DatasetInput contains caller-controlled dataset version fields.
 type DatasetInput struct {
 	Title                      string
 	Description                string
 	Keywords                   []string
-	AccrualPeriodicity         *string
+	AccrualPeriodicity         *AccrualPeriodicity
 	QualityAnnotation          *string
-	AccessRight                *string
+	AccessRight                *AccessRight
 	Distributions              []DistributionInput
 	SpatialCoverage            geom.T
 	TemporalCoverage           *Temporal
@@ -44,9 +102,9 @@ type DatasetMetadata struct {
 	Title                      string
 	Description                string
 	Keywords                   []string
-	AccrualPeriodicity         *string
+	AccrualPeriodicity         *AccrualPeriodicity
 	QualityAnnotation          *string
-	AccessRight                *string
+	AccessRight                *AccessRight
 	Distributions              []Distribution
 	SpatialCoverage            geom.T
 	TemporalCoverage           *Temporal
@@ -61,12 +119,11 @@ type DatasetMetadata struct {
 
 // DistributionInput contains caller-controlled distribution fields.
 type DistributionInput struct {
+	ResourceID       *uuid.UUID
 	Title            string
 	Description      string
 	License          *string
 	Type             DistributionType
-	Issued           *time.Time
-	Modified         *time.Time
 	ByteSize         *int64
 	WebService       *WebServiceInput
 	DownloadableFile *DownloadableFile
@@ -75,12 +132,11 @@ type DistributionInput struct {
 // Distribution is persisted distribution metadata.
 type Distribution struct {
 	ID               uuid.UUID
+	ResourceID       uuid.UUID
 	Title            string
 	Description      string
 	License          *string
 	Type             DistributionType
-	Issued           *time.Time
-	Modified         *time.Time
 	ByteSize         *int64
 	WebService       *WebService
 	DownloadableFile *DownloadableFile
@@ -89,30 +145,24 @@ type Distribution struct {
 
 // WebServiceInput contains caller-controlled web-service fields.
 type WebServiceInput struct {
-	Name             string
-	Description      *string
+	ResourceID       *uuid.UUID
 	Type             WebServiceType
 	Configuration    WebServiceConfigurationInput
 	VisibleOn        []WebServiceVisibleOn
 	ProviderID       *uuid.UUID
-	Documentation    *Documentation
-	SpatialCoverage  geom.T
-	TemporalCoverage *Temporal
+	DocumentationURI *string
 	ContactPointIDs  []uuid.UUID
 }
 
 // WebService is persisted web-service metadata.
 type WebService struct {
 	ID               uuid.UUID
-	Name             string
-	Description      *string
+	ResourceID       uuid.UUID
 	Type             WebServiceType
 	Configuration    WebServiceConfiguration
 	VisibleOn        []WebServiceVisibleOn
 	Provider         *OrganizationMetadata
-	Documentation    *Documentation
-	SpatialCoverage  geom.T
-	TemporalCoverage *Temporal
+	DocumentationURI *string
 	ContactPoints    []ContactPoint
 }
 
@@ -179,7 +229,7 @@ func (WFSConfiguration) webServiceConfiguration() {}
 type WMSConfigurationInput struct {
 	CapabilitiesURL          string
 	DefaultLayer             string
-	Layers                   []WMSLayer
+	Layers                   []WMSLayerInput
 	TransparencyEditable     bool
 	DefaultTransparency      bool
 	GetMapParameters         []WebServiceParameterInput
@@ -200,7 +250,16 @@ type WMSConfiguration struct {
 
 func (WMSConfiguration) webServiceConfiguration() {}
 
+type WMSLayerInput struct {
+	ResourceID   *uuid.UUID
+	Name         string
+	DefaultStyle string
+	Styles       []string
+}
+
 type WMSLayer struct {
+	ID           uuid.UUID
+	ResourceID   uuid.UUID
 	Name         string
 	DefaultStyle string
 	Styles       []string
@@ -209,7 +268,7 @@ type WMSLayer struct {
 type WMTSConfigurationInput struct {
 	CapabilitiesURL          string
 	DefaultLayer             string
-	Layers                   []WMTSLayer
+	Layers                   []WMTSLayerInput
 	GetTileParameters        []WebServiceParameterInput
 	GetFeatureInfoParameters []WebServiceParameterInput
 }
@@ -226,7 +285,16 @@ type WMTSConfiguration struct {
 
 func (WMTSConfiguration) webServiceConfiguration() {}
 
+type WMTSLayerInput struct {
+	ResourceID   *uuid.UUID
+	Name         string
+	DefaultStyle *string
+	Styles       []string
+}
+
 type WMTSLayer struct {
+	ID           uuid.UUID
+	ResourceID   uuid.UUID
 	Name         string
 	DefaultStyle *string
 	Styles       []string
@@ -242,12 +310,6 @@ type DistributionDownload struct {
 	ResourceID uuid.UUID
 	VersionID  uuid.UUID
 	URL        string
-}
-
-type Documentation struct {
-	Title       *string
-	Description *string
-	URI         string
 }
 
 type Temporal struct {
@@ -364,6 +426,7 @@ func (r WebServiceParameterRole) Valid() bool {
 
 // ParameterInput contains caller-controlled scalar or template parameter fields.
 type ParameterInput struct {
+	ResourceID  *uuid.UUID
 	Position    int
 	Name        string
 	Label       string
@@ -378,7 +441,8 @@ type ParameterInput struct {
 // Parameter is persisted scalar or template parameter metadata.
 type Parameter struct {
 	ParameterInput
-	ID uuid.UUID
+	ID         uuid.UUID
+	ResourceID uuid.UUID
 }
 
 type WebServiceParameterInput struct {
@@ -436,7 +500,7 @@ type StringEnumOption struct {
 type StringSchema struct {
 	Pattern        *string
 	Enum           []StringEnumOption
-	Default        *string
+	Default        []string
 	MultipleValues bool
 }
 
@@ -449,16 +513,25 @@ func (value StringSchema) HasEnum() bool { return len(value.Enum) > 0 }
 // AllowsMultipleValues reports whether the schema expects an array.
 func (value StringSchema) AllowsMultipleValues() bool { return value.MultipleValues }
 
-// DefaultValue returns the string default, wrapped in an array for multi-value schemas.
-func (value StringSchema) DefaultValue() AccessValue {
-	if value.Default == nil {
+func defaultAccessValue[T any](defaults []T, multipleValues bool, scalar func(T) AccessScalar) AccessValue {
+	if len(defaults) == 0 {
 		return nil
 	}
-	result := AccessString(*value.Default)
-	if value.MultipleValues {
-		return AccessArray{result}
+	if !multipleValues {
+		return scalar(defaults[0])
+	}
+	result := make(AccessArray, len(defaults))
+	for i, item := range defaults {
+		result[i] = scalar(item)
 	}
 	return result
+}
+
+// DefaultValue returns the configured string defaults using the schema's value shape.
+func (value StringSchema) DefaultValue() AccessValue {
+	return defaultAccessValue(value.Default, value.MultipleValues, func(item string) AccessScalar {
+		return AccessString(item)
+	})
 }
 
 type BooleanSchema struct {
@@ -491,7 +564,7 @@ type IntegerSchema struct {
 	Minimum        *int64
 	Maximum        *int64
 	Enum           []IntegerEnumOption
-	Default        *int64
+	Default        []int64
 	MultipleValues bool
 }
 
@@ -504,16 +577,11 @@ func (value IntegerSchema) HasEnum() bool { return len(value.Enum) > 0 }
 // AllowsMultipleValues reports whether the schema expects an array.
 func (value IntegerSchema) AllowsMultipleValues() bool { return value.MultipleValues }
 
-// DefaultValue returns the integer default, wrapped in an array for multi-value schemas.
+// DefaultValue returns the configured integer defaults using the schema's value shape.
 func (value IntegerSchema) DefaultValue() AccessValue {
-	if value.Default == nil {
-		return nil
-	}
-	result := AccessInteger(*value.Default)
-	if value.MultipleValues {
-		return AccessArray{result}
-	}
-	return result
+	return defaultAccessValue(value.Default, value.MultipleValues, func(item int64) AccessScalar {
+		return AccessInteger(item)
+	})
 }
 
 type FloatEnumOption struct {
@@ -525,7 +593,7 @@ type FloatSchema struct {
 	Minimum        *float64
 	Maximum        *float64
 	Enum           []FloatEnumOption
-	Default        *float64
+	Default        []float64
 	MultipleValues bool
 }
 
@@ -538,16 +606,11 @@ func (value FloatSchema) HasEnum() bool { return len(value.Enum) > 0 }
 // AllowsMultipleValues reports whether the schema expects an array.
 func (value FloatSchema) AllowsMultipleValues() bool { return value.MultipleValues }
 
-// DefaultValue returns the float default, wrapped in an array for multi-value schemas.
+// DefaultValue returns the configured float defaults using the schema's value shape.
 func (value FloatSchema) DefaultValue() AccessValue {
-	if value.Default == nil {
-		return nil
-	}
-	result := AccessFloat(*value.Default)
-	if value.MultipleValues {
-		return AccessArray{result}
-	}
-	return result
+	return defaultAccessValue(value.Default, value.MultipleValues, func(item float64) AccessScalar {
+		return AccessFloat(item)
+	})
 }
 
 type DateTimeSchema struct {

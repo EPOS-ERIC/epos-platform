@@ -1,23 +1,5 @@
 {{- if and .Values.components.otel.enabled (not .Values.components.otel.endpoint) }}
 {{- $path := printf "%s/grafana" (ternary (printf "/%s" .Release.Namespace) "" .Values.url_prefix_namespace) }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: otel-lgtm
-type: Opaque
-stringData:
-  admin-password: {{ .Values.components.otel.admin_password | quote }}
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: otel-lgtm
-spec:
-  accessModes: [ReadWriteOnce]
-  resources:
-    requests:
-      storage: 5Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -105,7 +87,9 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.domain | quote }}
+    - {{- if (include "epos.ingressHost" .) }}
+      host: {{ include "epos.ingressHost" . | quote }}
+      {{- end }}
       http:
         paths:
           - path: {{ $path }}(/|$)(.*)

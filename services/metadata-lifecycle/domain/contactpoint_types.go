@@ -6,11 +6,9 @@ import "github.com/google/uuid"
 type ContactPoint struct {
 	ID    uuid.UUID
 	Email string
-	Role  string
 }
 
 // ContactPointInput contains fields editable through contact-point CRUD.
 type ContactPointInput struct {
 	Email string
-	Role  string
 }

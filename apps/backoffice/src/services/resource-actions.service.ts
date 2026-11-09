@@ -32,6 +32,7 @@ export class ResourceActionsService {
   readonly pendingAction = this.pendingActionState.asReadonly();
   readonly error = this.errorState.asReadonly();
   readonly saving = computed(() => this.pendingActionState() === 'save' || this.pendingActionState() === 'submit');
+  readonly withdrawing = computed(() => this.pendingActionState() === 'withdraw');
   readonly publishing = computed(() => this.pendingActionState() === 'publish');
   readonly creatingDraft = computed(() => this.pendingActionState() === 'create-new-draft');
   readonly archiving = computed(() => this.pendingActionState() === 'archive');
@@ -45,14 +46,6 @@ export class ResourceActionsService {
 
   setError(message: string): void {
     this.errorState.set(message);
-  }
-
-  setValidationError(message: string, label: string): void {
-    this.errorState.set(message);
-    this.toastService.error('Resource could not be saved.', {
-      duration: null,
-      issues: [{ label, message }]
-    });
   }
 
   sidebarActions(status: VersioningStatus | null, permissions: readonly GroupPermission[]): ResourceActionItem[] {
@@ -85,6 +78,9 @@ export class ResourceActionsService {
       }
       if (capabilities.reject) {
         actions.push(this.action('reject', 'Reject', undefined, 'danger', pending));
+      }
+      if (capabilities.withdraw) {
+        actions.push(this.action('withdraw', 'Withdraw Submission', 'Withdrawing...', 'ghost', pending));
       }
       return actions;
     }
@@ -138,6 +134,16 @@ export class ResourceActionsService {
       'Failed to submit resource version.',
       'Failed to submit resource version',
       `Successfully Submitted ${resourceName}`
+    );
+  }
+
+  withdraw(context: ResourceVersionContext, resourceName: string): Observable<WriteResult | null> {
+    return this.run(
+      'withdraw',
+      () => this.apiService.withdrawResourceVersion(context.resourceType, context.resourceId, context.versionId),
+      'Failed to withdraw resource submission.',
+      'Failed to withdraw resource submission',
+      `Successfully Withdrew ${resourceName} to Draft`
     );
   }
 

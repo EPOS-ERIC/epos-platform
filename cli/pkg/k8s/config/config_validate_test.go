@@ -76,7 +76,6 @@ func TestConfigValidate_Requirements(t *testing.T) {
 		{
 			name: "backoffice tls secret_name required when backoffice and tls enabled",
 			mutate: func(cfg *Config) {
-				cfg.Components.Backoffice.Enabled = true
 				cfg.Components.Backoffice.TLS.Enabled = true
 				cfg.Components.Gateway.AAI.Enabled = true
 			},

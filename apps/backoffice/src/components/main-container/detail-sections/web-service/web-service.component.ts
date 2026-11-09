@@ -8,6 +8,7 @@ import { WebServiceDocumentationComponent } from './web-service-documentation.co
 import { ProvidersComponent } from '../providers/providers.component';
 import { WebServiceParametersComponent } from './web-service-parameters.component';
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
+import { DistributionConversionsComponent } from '../distribution/distribution-conversions.component';
 import type {
   DatasetTemporalForm,
   DatasetWebServiceConfigurationForm,
@@ -20,12 +21,14 @@ import type {
 
 @Component({
   selector: 'app-web-service',
-  imports: [FormsModule, NgTemplateOutlet, ContactPointsComponent, ProvidersComponent, ScalarParametersEditorComponent, SpatialCoverageComponent, TemporalCoverageComponent, WebServiceDocumentationComponent, WebServiceParametersComponent],
+  imports: [FormsModule, NgTemplateOutlet, ContactPointsComponent, DistributionConversionsComponent, ProvidersComponent, ScalarParametersEditorComponent, SpatialCoverageComponent, TemporalCoverageComponent, WebServiceDocumentationComponent, WebServiceParametersComponent],
   templateUrl: './web-service.component.html',
   styleUrl: './web-service.component.css'
 })
 export class WebServiceComponent {
   @Input() model: DatasetWebServiceForm | null = null;
+  @Input() distributionId = '';
+  @Input() nativeFormats: string[] = [];
   @Input() comparisonModel: DatasetWebServiceForm | null = null;
   @Input() disabled = false;
   @Input() comparisonMode = false;

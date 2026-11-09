@@ -10,11 +10,14 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactrequest"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/converter"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
-	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/resource"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/validate"
 	"go.opentelemetry.io/otel/trace"
@@ -23,24 +26,41 @@ import (
 // ogenHandler is the HTTP boundary. Pure proxy operations call concrete client
 // adapters; identity orchestration remains in identity.Service.
 type ogenHandler struct {
-	metadataLifecycle  *clients.MetadataLifecycle
-	semanticAggregator *clients.SemanticAggregator
-	sharing            *sharingservice.Service
-	identity           *identity.Service
-	membership         *membership.Service
-	distributionAccess *distributionaccess.Service
-	log                *slog.Logger
+	metadataLifecycleClient *clients.MetadataLifecycle
+	semanticAggregator      *clients.SemanticAggregator
+	sharing                 *sharing.Service
+	identity                *identity.Service
+	membership              *membership.Service
+	distributionAccess      *distributionaccess.Service
+	contactRequest          *contactrequest.Service
+	resource                *resource.Service
+	converter               *converter.Service
+	log                     *slog.Logger
 }
 
-func NewOgenHandler(i *identity.Service, m *membership.Service, metadataLifecycle *clients.MetadataLifecycle, semanticAggregator *clients.SemanticAggregator, sharing *sharingservice.Service, d *distributionaccess.Service, log *slog.Logger) *ogenHandler {
+func NewOgenHandler(
+	identity *identity.Service,
+	membership *membership.Service,
+	metadataLifecycleClient *clients.MetadataLifecycle,
+	semanticAggregator *clients.SemanticAggregator,
+	sharing *sharing.Service,
+	distributionAccess *distributionaccess.Service,
+	contactRequest *contactrequest.Service,
+	resources *resource.Service,
+	converter *converter.Service,
+	log *slog.Logger,
+) *ogenHandler {
 	return &ogenHandler{
-		metadataLifecycle:  metadataLifecycle,
-		semanticAggregator: semanticAggregator,
-		sharing:            sharing,
-		identity:           i,
-		membership:         m,
-		distributionAccess: d,
-		log:                log,
+		metadataLifecycleClient: metadataLifecycleClient,
+		semanticAggregator:      semanticAggregator,
+		sharing:                 sharing,
+		identity:                identity,
+		membership:              membership,
+		distributionAccess:      distributionAccess,
+		contactRequest:          contactRequest,
+		resource:                resources,
+		converter:               converter,
+		log:                     log,
 	}
 }
 

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"net/url"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
@@ -17,7 +16,7 @@ func toAPIProtoContactPoint(v *metadatalifecyclev1.ContactPoint) (gatewayapi.Con
 	if err != nil {
 		return gatewayapi.ContactPoint{}, err
 	}
-	return gatewayapi.ContactPoint{ID: id, Email: v.Email, Role: v.Role}, nil
+	return gatewayapi.ContactPoint{ID: id, Email: v.Email}, nil
 }
 
 func toAPIProtoOrganization(v *metadatalifecyclev1.Organization) (gatewayapi.CanonicalOrganization, error) {
@@ -89,11 +88,11 @@ func setProtoOptURI(out *gatewayapi.OptNilURI, value *string) error {
 	if value == nil {
 		return nil
 	}
-	parsed, err := url.Parse(*value)
+	parsed, err := parseURI(*value)
 	if err != nil {
-		return fmt.Errorf("parse URI: %w", err)
+		return err
 	}
-	out.SetTo(*parsed)
+	out.SetTo(parsed)
 	return nil
 }
 

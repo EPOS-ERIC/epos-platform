@@ -217,6 +217,7 @@ export class DialogService extends BaseDialogService {
     context: string,
     domains: Array<Domain>,
     width = '50vw',
+    resourceVersion?: DetailsDataIn['resourceVersion'],
   ): Promise<null | DialogData> {
 
     const elemPosition = this.getLeftSidenavPosition();
@@ -230,6 +231,7 @@ export class DialogService extends BaseDialogService {
         distId: distId,
         context: context,
         domains: domains,
+        resourceVersion,
       },
       {
         width: width,

@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AppIconComponent } from '../../../../shared/ui/app-icon.component';
 import type { DatasetEnumOptionForm } from '../../../../models/dataset-detail-form';
-import { ToastService } from '../../../../services/toast.service';
 
 @Component({
   selector: 'app-allowed-values-editor',
@@ -12,8 +11,6 @@ import { ToastService } from '../../../../services/toast.service';
   styleUrl: './allowed-values-editor.component.css'
 })
 export class AllowedValuesEditorComponent {
-  private readonly toast = inject(ToastService);
-
   @Input() values: DatasetEnumOptionForm[] = [];
   @Input() kind: 'STRING' | 'INTEGER' | 'FLOAT' = 'STRING';
   @Input() defaultValue: string | null = null;
@@ -53,7 +50,6 @@ export class AllowedValuesEditorComponent {
     if (value.trim() && this.values.some(
       (option, currentIndex) => currentIndex !== index && this.optionKey(option.value) === this.optionKey(value)
     )) {
-      this.notifyDuplicate(value);
       input.value = this.values[index]?.value ?? '';
       return;
     }
@@ -138,7 +134,6 @@ export class AllowedValuesEditorComponent {
     });
     if (duplicate) {
       this.bulkValuesError = `The option "${duplicate}" already exists.`;
-      this.notifyDuplicate(duplicate);
       return;
     }
 
@@ -156,9 +151,5 @@ export class AllowedValuesEditorComponent {
     }
 
     return String(Number(trimmedValue.replace(',', '.')));
-  }
-
-  private notifyDuplicate(value: string): void {
-    this.toast.error(`The option "${value.trim()}" already exists.`);
   }
 }

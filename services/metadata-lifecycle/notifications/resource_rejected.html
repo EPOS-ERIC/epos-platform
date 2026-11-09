@@ -1,0 +1,10 @@
+<h1>Resource rejected: {{.Resource.Name}}</h1>
+{{with resourceURL .Resource}}<p><a href="{{.}}">View resource</a></p>{{end}}
+<p><strong>Rejected by:</strong> {{userLabel .ActorID}}</p>
+<p><strong>Group:</strong> {{groupLabel .GroupID}}</p>
+<p><strong>Resource type:</strong> {{.Resource.Type}}</p>
+<p><strong>Resource ID:</strong> {{.Resource.ResourceID}}</p>
+<p><strong>Version ID:</strong> {{.Resource.VersionID}}</p>
+<p><strong>Revision:</strong> {{.Resource.Revision}}</p>
+<p><strong>Status:</strong> {{.Resource.Status}}</p>
+{{if .Resource.RejectionNote}}<p><strong>Rejection note:</strong> {{.Resource.RejectionNote}}</p>{{end}}

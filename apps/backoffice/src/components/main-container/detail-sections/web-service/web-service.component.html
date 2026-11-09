@@ -78,7 +78,7 @@
           [single]="true"
           [disabled]="disabled"
           [embedded]="true"
-          [readonlyView]="comparisonMode"
+          [readonlyView]="comparisonMode || disabled"
           [neutralAppearance]="comparisonMode"
           (modelChange)="onProviderChange($any($event))"
         ></app-providers>
@@ -96,7 +96,7 @@
           [editable]="!comparisonMode"
           [disabled]="disabled"
           [embedded]="true"
-          [readonlyView]="comparisonMode"
+          [readonlyView]="comparisonMode || disabled"
           [neutralAppearance]="comparisonMode"
           (modelChange)="onContactPointsChange($event)"
         ></app-contact-points>
@@ -145,6 +145,10 @@
         <h4 class="distribution-subtitle">GetFeatureInfo parameters</h4>
         <app-web-service-parameters [model]="model.configuration.getFeatureInfoParameters" [disabled]="disabled" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
       }
+    }
+
+    @if (distributionId) {
+      <app-distribution-conversions [distributionId]="distributionId" [nativeFormats]="nativeFormats" [disabled]="disabled" />
     }
   }
 </div>
@@ -212,9 +216,13 @@
         <label class="detail-field"><span class="detail-label">Layer name *</span><input class="app-input" [(ngModel)]="layer.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
         <label class="detail-field"><span class="detail-label">Default style</span><input class="app-input" [(ngModel)]="layer.defaultStyle" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
         <label class="detail-field"><span class="detail-label">Styles</span><input class="app-input" [ngModel]="joinValues(layer.styles)" [ngModelOptions]="{ standalone: true }" (ngModelChange)="layer.styles = splitValues($event); emitModelChange()" /></label>
-        <button type="button" class="app-button app-button--ghost" (click)="removeLayer($index)" [disabled]="disabled">Remove layer</button>
+        @if (!disabled) {
+          <button type="button" class="app-button app-button--ghost" (click)="removeLayer($index)">Remove layer</button>
+        }
       </div>
     }
-    <button type="button" class="app-button app-button--ghost" (click)="addLayer()" [disabled]="disabled">Add layer</button>
+    @if (!disabled) {
+      <button type="button" class="app-button app-button--ghost" (click)="addLayer()">Add layer</button>
+    }
   </fieldset>
 </ng-template>

@@ -2,11 +2,23 @@
   <div class="detail-section-header">
     <div>
       <h2>Categories</h2>
-      <p class="subtitle app-muted">Choose categories from the resource group.</p>
+      @if (!selectedOnlyView()) {
+        <p class="subtitle app-muted">Choose categories from the resource group.</p>
+      }
     </div>
   </div>
 
-  @if (groupId) {
+  @if (selectedOnlyView()) {
+    @if (selectedCategories().length) {
+      <ul class="categories-list">
+        @for (category of selectedCategories(); track category.id) {
+          <li class="category-row category-row--selected"><strong>{{ category.name }}</strong></li>
+        }
+      </ul>
+    } @else {
+      <div class="detail-empty">No category selected.</div>
+    }
+  } @else if (groupId) {
     <div class="categories-grid">
       <section class="categories-box">
         <div class="categories-box-header">

@@ -64,7 +64,7 @@ func (r *Repo) Create(
 				ID:             identifierID,
 				Type:           identifier.Type,
 				Value:          identifier.Value,
-				OrganizationID: &organizationID,
+				OrganizationID: organizationID,
 			})
 			if err != nil {
 				if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
@@ -154,7 +154,7 @@ func (r *Repo) Replace(
 			return fmt.Errorf("update organization: %w", err)
 		}
 
-		if err := q.DeleteOrganizationIdentifiers(ctx, &id); err != nil {
+		if err := q.DeleteOrganizationIdentifiers(ctx, id); err != nil {
 			return fmt.Errorf("replace organization identifiers: %w", err)
 		}
 
@@ -210,7 +210,7 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 			ID:             identifierID,
 			Type:           identifier.Type,
 			Value:          identifier.Value,
-			OrganizationID: &id,
+			OrganizationID: id,
 		})
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
@@ -324,10 +324,7 @@ func (r *Repo) loadWithQueries(ctx context.Context, q *sqlc.Queries, rows []sqlc
 	parentsByOrganization := make(map[uuid.UUID][]uuid.UUID, len(rows))
 	contactsByOrganization := make(map[uuid.UUID][]uuid.UUID, len(rows))
 	for _, item := range identifiers {
-		if item.OrganizationID == nil {
-			continue
-		}
-		identifiersByOrganization[*item.OrganizationID] = append(identifiersByOrganization[*item.OrganizationID], toDomainOrganizationIdentifier(item))
+		identifiersByOrganization[item.OrganizationID] = append(identifiersByOrganization[item.OrganizationID], toDomainOrganizationIdentifier(item))
 	}
 	for _, item := range parents {
 		parentsByOrganization[item.ChildOrganizationID] = append(parentsByOrganization[item.ChildOrganizationID], item.ParentOrganizationID)

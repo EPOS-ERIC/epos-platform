@@ -39,7 +39,7 @@ class DistributionParameterRolesContractTest(DistributionContractTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        updated = self.details(detail["resource_id"], detail["version_id"])
+        updated = self.details(detail["resource_id"], detail["id"])
         self.assert_role_metadata(updated, expected)
 
     def test_role_can_be_omitted_or_cleared(self) -> None:
@@ -68,7 +68,7 @@ class DistributionParameterRolesContractTest(DistributionContractTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        updated = self.details(detail["resource_id"], detail["version_id"])
+        updated = self.details(detail["resource_id"], detail["id"])
         params = self.parameters(updated)
         self.assertIsNone(params["date"].get("role"))
         self.assertEqual(params["date"]["property"], "schema:startDate")
@@ -85,7 +85,6 @@ class DistributionParameterRolesContractTest(DistributionContractTestCase):
                 parameter("value", kind, role=role),
             ])
             distribution["title"] = title
-            distribution["web_service"]["name"] = title
             distributions.append(distribution)
 
         detail = self.create_draft(distributions)

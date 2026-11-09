@@ -52,6 +52,7 @@
       <button
         type="button"
         class="app-chip admin-chip"
+        [class.admin-chip--menu-open]="userMenuOpen()"
         (click)="toggleUserMenu($event)"
         aria-haspopup="menu"
         [attr.aria-expanded]="userMenuOpen()"
@@ -70,7 +71,17 @@
 
       @if (userMenuOpen()) {
         <div class="user-menu-panel app-card" role="menu" (click)="$event.stopPropagation()">
-          <button type="button" class="app-button user-menu-logout" role="menuitem" (click)="logout()">
+          <a
+            class="app-button user-menu-item"
+            role="menuitem"
+            routerLink="/memberships"
+            [queryParams]="membershipsQueryParams()"
+            (click)="closeUserMenu()"
+          >
+            <app-icon name="users" [size]="16" />
+            <span>My Memberships</span>
+          </a>
+          <button type="button" class="app-button user-menu-item user-menu-logout" role="menuitem" (click)="logout()">
             Logout
           </button>
         </div>

@@ -15,6 +15,8 @@ services:
     url: "data-retriever-service:8100"
   sharing:
     url: "sharing-service:8200"
+  converter:
+    url: "converter-service:8200"
   auth:
     url: "http://oss-aai-service:8080/"
 
@@ -25,3 +27,5 @@ notifications:
     from: "epos-ics-c@epos-ip.org"
     api_key_env: "MAILGUN_API_TOKEN"
     timeout: "10s"
+    # Set test addresses before enabling Mailgun; an empty list sends to real recipients.
+    recipient_overrides: []

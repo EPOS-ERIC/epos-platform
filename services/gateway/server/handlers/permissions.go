@@ -9,7 +9,7 @@ import (
 )
 
 func (h *ogenHandler) ListPermissions(ctx context.Context) ([]gatewayapi.Permission, error) {
-	response, err := h.metadataLifecycle.ListPermissions(ctx)
+	response, err := h.metadataLifecycleClient.ListPermissions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list permissions: %w", err)
 	}

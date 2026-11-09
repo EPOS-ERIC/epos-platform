@@ -15,6 +15,7 @@ type EnvConfig struct {
 	Name       string     `yaml:"name"`
 	Domain     string     `yaml:"domain"`
 	Protocol   string     `yaml:"protocol"`
+	Debug      bool       `yaml:"debug"`
 	Components Components `yaml:"components"`
 	Images     Images     `yaml:"images"`
 }
@@ -26,10 +27,12 @@ type Images struct {
 	GatewayImage           string `yaml:"gateway"`
 	MetadataLifecycleImage string `yaml:"metadata_lifecycle"`
 	DataRetrieverImage     string `yaml:"data_retriever"`
+	ConverterImage         string `yaml:"converter"`
 	SharingServiceImage    string `yaml:"sharing_service"`
 	AAIServiceImage        string `yaml:"aai_service"`
 	MetadataDatabaseImage  string `yaml:"metadata_database"`
 	DataRetrieverDBImage   string `yaml:"data_retriever_database"`
+	ConverterDBImage       string `yaml:"converter_database"`
 	SharingDBImage         string `yaml:"sharing_database"`
 	OTelLGTMImage          string `yaml:"otel_lgtm"`
 }
@@ -73,10 +76,11 @@ type Gateway struct {
 }
 
 type Mailgun struct {
-	Enable bool   `yaml:"enable"`
-	Domain string `yaml:"domain"`
-	From   string `yaml:"from"`
-	APIKey string `yaml:"api_key"`
+	Enable             bool     `yaml:"enable"`
+	Domain             string   `yaml:"domain"`
+	From               string   `yaml:"from"`
+	APIKey             string   `yaml:"api_key"`
+	RecipientOverrides []string `yaml:"recipient_overrides"`
 }
 
 // GUI configures a generic GUI service endpoint.
@@ -139,6 +143,7 @@ type Components struct {
 	Backoffice            Backoffice       `yaml:"backoffice"`
 	MetadataDatabase      MetadataDatabase `yaml:"metadata_database"`
 	DataRetrieverDatabase MetadataDatabase `yaml:"data_retriever_database"`
+	ConverterDatabase     MetadataDatabase `yaml:"converter_database"`
 	SharingDatabase       MetadataDatabase `yaml:"sharing_database"`
 	AAIService            AAIService       `yaml:"aai_service"`
 	OpenTelemetry         OpenTelemetry    `yaml:"otel"`
@@ -165,6 +170,7 @@ func (e *EnvConfig) ActiveImages() []common.NamedImage {
 		{Name: "Gateway", Ref: e.Images.GatewayImage},
 		{Name: "Metadata Lifecycle", Ref: e.Images.MetadataLifecycleImage},
 		{Name: "Data Retriever", Ref: e.Images.DataRetrieverImage},
+		{Name: "Converter", Ref: e.Images.ConverterImage},
 		{Name: "Sharing", Ref: e.Images.SharingServiceImage},
 	}
 	if e.Components.MetadataDatabase.Enabled {
@@ -172,6 +178,9 @@ func (e *EnvConfig) ActiveImages() []common.NamedImage {
 	}
 	if e.Components.DataRetrieverDatabase.Enabled {
 		images = append(images, common.NamedImage{Name: "Data Retriever Database", Ref: e.Images.DataRetrieverDBImage})
+	}
+	if e.Components.ConverterDatabase.Enabled {
+		images = append(images, common.NamedImage{Name: "Converter Database", Ref: e.Images.ConverterDBImage})
 	}
 	if e.Components.SharingDatabase.Enabled {
 		images = append(images, common.NamedImage{Name: "Sharing Database", Ref: e.Images.SharingDBImage})
@@ -224,11 +233,6 @@ func (e *EnvConfig) AAIAuthRootURL() string {
 	}
 
 	return ""
-}
-
-// GatewayPublicURL returns the externally reachable gateway root URL for the Compose template.
-func (e *EnvConfig) GatewayPublicURL() string {
-	return fmt.Sprintf("%s://%s", e.Protocol, net.JoinHostPort(e.Domain, strconv.Itoa(e.Components.Gateway.Port)))
 }
 
 // AAIServiceEndpoint returns gateway-reachable AAI service endpoint.

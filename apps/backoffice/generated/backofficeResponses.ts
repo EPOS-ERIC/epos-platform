@@ -3,6 +3,8 @@
  *
  * @version 1.0.0
  */
+export type GatewayError = void;
+
 export type BadRequest = void;
 
 export type Unauthorized = void;

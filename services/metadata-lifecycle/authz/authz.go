@@ -171,6 +171,37 @@ func (a *Authorizer) CanManageGroupNotificationSubscriptions(ctx context.Context
 	return domain.Result{Allowed: false, Reason: "group notification permission required"}, nil
 }
 
+// CanSubscribeToNotificationTopic checks the target user's current eligibility.
+func (a *Authorizer) CanSubscribeToNotificationTopic(ctx context.Context, userID string, groupID *uuid.UUID, permissions []string) (domain.Result, error) {
+	_, result, err := a.activeUser(ctx, userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+
+	if len(permissions) == 0 {
+		return domain.Result{Allowed: true}, nil
+	}
+
+	for _, permission := range permissions {
+		var allowed bool
+		if groupID == nil {
+			allowed, err = a.repository.HasGlobalPermission(ctx, userID, domain.GlobalPermission(permission))
+		} else {
+			allowed, err = a.repository.HasGroupPermission(ctx, userID, *groupID, domain.GroupPermission(permission))
+		}
+
+		if err != nil {
+			return domain.Result{}, fmt.Errorf("check notification topic permission: %w", err)
+		}
+
+		if allowed {
+			return domain.Result{Allowed: true}, nil
+		}
+	}
+
+	return domain.Result{Allowed: false, Reason: "notification topic permission required"}, nil
+}
+
 // GroupsWithAnyPermissionForActiveMember lists groups where actor has any requested permission and target has an active membership.
 func (a *Authorizer) GroupsWithAnyPermissionForActiveMember(ctx context.Context, actorID, targetID string, permissions []domain.GroupPermission) (groupIDs []uuid.UUID, err error) {
 	defer func() {

@@ -18,20 +18,21 @@ type Store interface {
 	GetPublished(context.Context, uuid.UUID) (domain.DatasetVersion, error)
 	GetActive(context.Context, uuid.UUID) (domain.DatasetVersion, error)
 	CreateDraft(context.Context, string, uuid.UUID, domain.DatasetInput) (domain.DatasetVersion, error)
-	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, domain.DatasetDraftInput) (domain.DatasetVersion, error)
+	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, domain.DatasetDraftInput) (domain.DatasetVersion, []uuid.UUID, error)
 	Submit(context.Context, string, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
 	Withdraw(context.Context, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
 	Reject(context.Context, string, uuid.UUID, uuid.UUID, domain.DatasetRejectionInput) (domain.DatasetVersion, error)
 	Reopen(context.Context, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
 	Publish(context.Context, string, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
-	Discard(context.Context, uuid.UUID, uuid.UUID) error
+	Discard(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error)
 	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
-	DraftFromPublication(context.Context, string, uuid.UUID) (domain.DatasetVersion, error)
-	DraftFromLatestArchive(context.Context, string, uuid.UUID) (domain.DatasetVersion, error)
-	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
+	DraftFromPublication(context.Context, string, uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error)
+	DraftFromLatestArchive(context.Context, string, uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error)
 }
 
 type Authorizer interface {
+	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
 	AuthorizeGroup(context.Context, string, uuid.UUID, domain.GroupPermission) (domain.Result, error)
 	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, domain.GroupPermission) (domain.Result, error)
 	CanReadResourceVersions(context.Context, string, domain.ResourceType, uuid.UUID) (domain.Result, error)
@@ -72,17 +73,17 @@ func (s *Service) CreateDraft(ctx context.Context, actor domain.Actor, groupID u
 	return dataset, nil
 }
 
-func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, datasetID, versionID uuid.UUID, value domain.DatasetDraftInput) (domain.DatasetVersion, error) {
+func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, datasetID, versionID uuid.UUID, value domain.DatasetDraftInput) (domain.DatasetVersion, []uuid.UUID, error) {
 	if err := s.authorizeResource(ctx, actor, datasetID, domain.GroupPermissionResourceEdit); err != nil {
-		return domain.DatasetVersion{}, operationError("authorize draft replacement", err)
+		return domain.DatasetVersion{}, nil, operationError("authorize draft replacement", err)
 	}
 
-	dataset, err := s.store.ReplaceDraft(ctx, datasetID, versionID, value)
+	dataset, removed, err := s.store.ReplaceDraft(ctx, datasetID, versionID, value)
 	if err != nil {
-		return domain.DatasetVersion{}, operationError("replace draft", err)
+		return domain.DatasetVersion{}, nil, operationError("replace draft", err)
 	}
 
-	return dataset, nil
+	return dataset, removed, nil
 }
 
 func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, versionID uuid.UUID) (domain.DatasetVersion, error) {
@@ -168,11 +169,10 @@ func (s *Service) Submit(ctx context.Context, actor domain.Actor, datasetID, ver
 		return domain.DatasetVersion{}, nil, operationError("submit draft", err)
 	}
 
-	notification, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourceSubmitted,
+	notification, buildErr := s.notifier.Build(ctx, domain.ResourceSubmitted{
 		ActorID:  actor,
-		GroupID:  &dataset.Group.ID,
-		Resource: datasetNotificationResource(dataset),
+		GroupID:  dataset.Group.ID,
+		Resource: *datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourceSubmitted, "error", buildErr)
@@ -200,11 +200,10 @@ func (s *Service) Reject(ctx context.Context, actor domain.Actor, datasetID, ver
 		return domain.DatasetVersion{}, nil, operationError("reject submission", err)
 	}
 
-	notification, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourceRejected,
+	notification, buildErr := s.notifier.Build(ctx, domain.ResourceRejected{
 		ActorID:  actor,
-		GroupID:  &dataset.Group.ID,
-		Resource: datasetNotificationResource(dataset),
+		GroupID:  dataset.Group.ID,
+		Resource: *datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourceRejected, "error", buildErr)
@@ -233,11 +232,10 @@ func (s *Service) Publish(ctx context.Context, actor domain.Actor, datasetID, ve
 		return domain.DatasetVersion{}, nil, operationError("publish version", err)
 	}
 
-	notification, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourcePublished,
+	notification, buildErr := s.notifier.Build(ctx, domain.ResourcePublished{
 		ActorID:  actor,
-		GroupID:  &dataset.Group.ID,
-		Resource: datasetNotificationResource(dataset),
+		GroupID:  dataset.Group.ID,
+		Resource: *datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourcePublished, "error", buildErr)
@@ -247,11 +245,13 @@ func (s *Service) Publish(ctx context.Context, actor domain.Actor, datasetID, ve
 	return dataset, notification, nil
 }
 
-func (s *Service) Discard(ctx context.Context, actor domain.Actor, datasetID, versionID uuid.UUID) error {
+func (s *Service) Discard(ctx context.Context, actor domain.Actor, datasetID, versionID uuid.UUID) ([]uuid.UUID, error) {
 	if err := s.authorizeResource(ctx, actor, datasetID, domain.GroupPermissionResourceDiscard); err != nil {
-		return operationError("authorize discard", err)
+		return nil, operationError("authorize discard", err)
 	}
-	return operationError("discard version", s.store.Discard(ctx, datasetID, versionID))
+
+	removed, err := s.store.Discard(ctx, datasetID, versionID)
+	return removed, operationError("discard version", err)
 }
 
 //nolint:dupl // Resource lifecycle notification paths intentionally mirror each other.
@@ -265,11 +265,10 @@ func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, datasetID, 
 		return domain.DatasetVersion{}, nil, operationError("unpublish version", err)
 	}
 
-	notification, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:     domain.NotificationEventResourceUnpublished,
+	notification, buildErr := s.notifier.Build(ctx, domain.ResourceUnpublished{
 		ActorID:  actor,
-		GroupID:  &dataset.Group.ID,
-		Resource: datasetNotificationResource(dataset),
+		GroupID:  dataset.Group.ID,
+		Resource: *datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourceUnpublished, "error", buildErr)
@@ -292,28 +291,28 @@ func datasetNotificationResource(value domain.DatasetVersion) *domain.Notificati
 	}
 }
 
-func (s *Service) DraftFromPublication(ctx context.Context, actor domain.Actor, datasetID uuid.UUID) (domain.DatasetVersion, error) {
+func (s *Service) DraftFromPublication(ctx context.Context, actor domain.Actor, datasetID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	if err := s.authorizeResource(ctx, actor, datasetID, domain.GroupPermissionResourceCreate); err != nil {
-		return domain.DatasetVersion{}, operationError("authorize draft creation", err)
+		return domain.DatasetVersion{}, nil, operationError("authorize draft creation", err)
 	}
-	dataset, err := s.store.DraftFromPublication(ctx, string(actor), datasetID)
-	return dataset, operationError("create draft from publication", err)
+	dataset, pairs, err := s.store.DraftFromPublication(ctx, string(actor), datasetID)
+	return dataset, pairs, operationError("create draft from publication", err)
 }
 
-func (s *Service) DraftFromLatestArchive(ctx context.Context, actor domain.Actor, datasetID uuid.UUID) (domain.DatasetVersion, error) {
+func (s *Service) DraftFromLatestArchive(ctx context.Context, actor domain.Actor, datasetID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	if err := s.authorizeResource(ctx, actor, datasetID, domain.GroupPermissionResourceCreate); err != nil {
-		return domain.DatasetVersion{}, operationError("authorize draft creation", err)
+		return domain.DatasetVersion{}, nil, operationError("authorize draft creation", err)
 	}
-	dataset, err := s.store.DraftFromLatestArchive(ctx, string(actor), datasetID)
-	return dataset, operationError("create draft from archive", err)
+	dataset, pairs, err := s.store.DraftFromLatestArchive(ctx, string(actor), datasetID)
+	return dataset, pairs, operationError("create draft from archive", err)
 }
 
-func (s *Service) CopyPublished(ctx context.Context, actor domain.Actor, sourceDatasetID, targetGroupID uuid.UUID) (domain.DatasetVersion, error) {
+func (s *Service) CopyPublished(ctx context.Context, actor domain.Actor, sourceDatasetID, targetGroupID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	if err := s.authorizeGroup(ctx, actor, targetGroupID, domain.GroupPermissionResourceCreate); err != nil {
-		return domain.DatasetVersion{}, operationError("authorize dataset copy", err)
+		return domain.DatasetVersion{}, nil, operationError("authorize dataset copy", err)
 	}
-	dataset, err := s.store.CopyPublished(ctx, string(actor), sourceDatasetID, targetGroupID)
-	return dataset, operationError("copy published dataset", err)
+	dataset, pairs, err := s.store.CopyPublished(ctx, string(actor), sourceDatasetID, targetGroupID)
+	return dataset, pairs, operationError("copy published dataset", err)
 }
 
 func (s *Service) authorizeGroup(ctx context.Context, actor domain.Actor, groupID uuid.UUID, permission domain.GroupPermission) error {

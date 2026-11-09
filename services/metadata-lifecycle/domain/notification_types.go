@@ -34,6 +34,7 @@ const (
 	NotificationEventResourcePublished   NotificationEventKind = "resource.published"
 	NotificationEventResourceRejected    NotificationEventKind = "resource.rejected"
 	NotificationEventResourceUnpublished NotificationEventKind = "resource.unpublished"
+	NotificationEventConversionRequested NotificationEventKind = "conversion.requested"
 )
 
 // NotificationTopicKey identifies a subscription and recipient route.
@@ -57,6 +58,7 @@ const (
 	NotificationTopicGroupResourcePublished     NotificationTopicKey = "group.resource.published"
 	NotificationTopicGlobalResourceSubmitted    NotificationTopicKey = "global.resource.submitted"
 	NotificationTopicGlobalResourcePublished    NotificationTopicKey = "global.resource.published"
+	NotificationTopicGlobalConversionRequested  NotificationTopicKey = "global.conversion.requested"
 )
 
 // NotificationTopic is fixed catalog metadata used for routing and eligibility.
@@ -86,11 +88,6 @@ type NotificationRecipient struct {
 // Notification contains a complete email for Gateway delivery.
 type Notification struct {
 	EventKind    NotificationEventKind
-	GroupID      *uuid.UUID
-	ResourceType ResourceType
-	ResourceID   *uuid.UUID
-	VersionID    *uuid.UUID
-	AccessID     *uuid.UUID
 	TargetUserID string
 	TargetEmail  string
 	Subject      string
@@ -110,15 +107,171 @@ type NotificationResource struct {
 	RejectionNote *string
 }
 
-// NotificationEvent is the canonical event input to the route builder.
-type NotificationEvent struct {
-	Kind         NotificationEventKind
-	ActorID      Actor
+// NotificationEvent is an event accepted by the notification builder.
+type NotificationEvent interface {
+	NotificationKind() NotificationEventKind
+}
+
+// NotificationEventCommon contains data shared by all notification events.
+type NotificationEventCommon struct {
+	ActorID Actor
+}
+
+type MembershipRequested struct {
+	NotificationEventCommon
 	SubjectID    string
-	GroupID      *uuid.UUID
+	GroupID      uuid.UUID
+	GroupConcept TopLevelConcept
+	TargetUserID string
+}
+
+func (MembershipRequested) NotificationKind() NotificationEventKind {
+	return NotificationEventMembershipRequested
+}
+
+type MembershipAccepted struct {
+	NotificationEventCommon
+	SubjectID    string
+	GroupID      uuid.UUID
+	TargetUserID string
+}
+
+func (MembershipAccepted) NotificationKind() NotificationEventKind {
+	return NotificationEventMembershipAccepted
+}
+
+type MembershipRejectedEvent struct {
+	NotificationEventCommon
+	SubjectID    string
+	GroupID      uuid.UUID
+	TargetUserID string
+}
+
+func (MembershipRejectedEvent) NotificationKind() NotificationEventKind {
+	return NotificationEventMembershipRejected
+}
+
+type RoleRequested struct {
+	NotificationEventCommon
+	SubjectID    string
+	GroupID      uuid.UUID
+	GroupConcept TopLevelConcept
 	TargetUserID string
 	Role         string
 	Permission   string
 	AccessID     *uuid.UUID
-	Resource     *NotificationResource
+}
+
+func (RoleRequested) NotificationKind() NotificationEventKind {
+	return NotificationEventRoleRequested
+}
+
+type RoleRequestAcceptedEvent struct {
+	NotificationEventCommon
+	SubjectID    string
+	GroupID      uuid.UUID
+	TargetUserID string
+	Role         string
+	Permission   string
+	AccessID     uuid.UUID
+}
+
+func (RoleRequestAcceptedEvent) NotificationKind() NotificationEventKind {
+	return NotificationEventRoleRequestAccepted
+}
+
+type RoleRequestRejectedEvent struct {
+	NotificationEventCommon
+	SubjectID    string
+	GroupID      uuid.UUID
+	TargetUserID string
+	Role         string
+	Permission   string
+	AccessID     uuid.UUID
+}
+
+func (RoleRequestRejectedEvent) NotificationKind() NotificationEventKind {
+	return NotificationEventRoleRequestRejected
+}
+
+type RoleAssigned struct {
+	NotificationEventCommon
+	SubjectID    string
+	GroupID      uuid.UUID
+	TargetUserID string
+	Role         string
+	Permission   string
+	AccessID     uuid.UUID
+}
+
+func (RoleAssigned) NotificationKind() NotificationEventKind {
+	return NotificationEventRoleAssigned
+}
+
+type PermissionAssigned struct {
+	NotificationEventCommon
+	SubjectID    string
+	GroupID      uuid.UUID
+	TargetUserID string
+	Role         string
+	Permission   string
+	AccessID     uuid.UUID
+}
+
+func (PermissionAssigned) NotificationKind() NotificationEventKind {
+	return NotificationEventPermissionAssigned
+}
+
+type ResourceSubmitted struct {
+	NotificationEventCommon
+	GroupID  uuid.UUID
+	Resource NotificationResource
+}
+
+func (ResourceSubmitted) NotificationKind() NotificationEventKind {
+	return NotificationEventResourceSubmitted
+}
+
+type ResourcePublished struct {
+	NotificationEventCommon
+	GroupID  uuid.UUID
+	Resource NotificationResource
+}
+
+func (ResourcePublished) NotificationKind() NotificationEventKind {
+	return NotificationEventResourcePublished
+}
+
+type ResourceRejected struct {
+	NotificationEventCommon
+	GroupID  uuid.UUID
+	Resource NotificationResource
+}
+
+func (ResourceRejected) NotificationKind() NotificationEventKind {
+	return NotificationEventResourceRejected
+}
+
+type ResourceUnpublished struct {
+	NotificationEventCommon
+	GroupID  uuid.UUID
+	Resource NotificationResource
+}
+
+func (ResourceUnpublished) NotificationKind() NotificationEventKind {
+	return NotificationEventResourceUnpublished
+}
+
+type ConversionRequested struct {
+	NotificationEventCommon
+	Resource          NotificationResource
+	DistributionID    uuid.UUID
+	DistributionTitle string
+	WebServiceType    WebServiceType
+	Input             ConversionRequestInput
+	DefaultURL        string
+}
+
+func (ConversionRequested) NotificationKind() NotificationEventKind {
+	return NotificationEventConversionRequested
 }

@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AppIconComponent } from '../../../../shared/ui/app-icon.component';
 import type { DatasetEnumOptionForm, DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
-import { ToastService } from '../../../../services/toast.service';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
 
@@ -22,8 +21,6 @@ interface ParameterListItem {
   styleUrl: './web-service-parameters.component.css'
 })
 export class WebServiceParametersComponent {
-  private readonly toast = inject(ToastService);
-
   @Input() model: DatasetWebServiceParameterForm[] = [];
   @Input() comparisonModel: DatasetWebServiceParameterForm[] = [];
   @Input() disabled = false;
@@ -71,7 +68,6 @@ export class WebServiceParametersComponent {
       (candidate) => candidate !== parameter && candidate.name.trim().toLocaleLowerCase() === normalizedName
     );
     if (duplicate) {
-      this.toast.error(`A parameter named "${name.trim()}" already exists.`);
       input.value = parameter.name;
       return;
     }

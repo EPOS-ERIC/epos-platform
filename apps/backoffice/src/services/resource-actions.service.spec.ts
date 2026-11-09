@@ -21,7 +21,8 @@ describe('ResourceActionsService', () => {
   const apiService = {
     getResourceVersion: vi.fn(),
     saveResourceVersionDraft: vi.fn(),
-    submitResourceVersion: vi.fn()
+    submitResourceVersion: vi.fn(),
+    withdrawResourceVersion: vi.fn()
   };
   const toastService = {
     dismiss: vi.fn(),
@@ -51,8 +52,22 @@ describe('ResourceActionsService', () => {
     expect(service.sidebarActions('DRAFT', ['group.resource.submit']).map((action) => action.key)).toEqual(['submit']);
     expect(service.sidebarActions('SUBMITTED', ['group.resource.publish']).map((action) => action.key)).toEqual(['publish']);
     expect(service.sidebarActions('SUBMITTED', ['group.resource.reject']).map((action) => action.key)).toEqual(['reject']);
+    expect(service.sidebarActions('SUBMITTED', ['group.resource.withdraw']).map((action) => action.key)).toEqual(['withdraw']);
     expect(service.sidebarActions('PUBLISHED', ['group.resource.create']).map((action) => action.key)).toEqual(['create-new-draft']);
     expect(service.sidebarActions('PUBLISHED', ['group.resource.unpublish']).map((action) => action.key)).toEqual(['archive']);
+  });
+
+  it('withdraws a submitted resource to draft', () => {
+    apiService.withdrawResourceVersion.mockReturnValue(of({
+      id: context.resourceId,
+      resourceType: context.resourceType,
+      status: 'DRAFT'
+    }));
+
+    service.withdraw(context, 'Resource title').subscribe();
+
+    expect(apiService.withdrawResourceVersion).toHaveBeenCalledWith('dataset', 'resource-id', 'version-id');
+    expect(toastService.success).toHaveBeenCalledWith('Successfully Withdrew Resource title to Draft');
   });
 
   it('tracks a pending action and disables the other lifecycle actions', () => {
@@ -159,19 +174,6 @@ describe('ResourceActionsService', () => {
         message: 'Value must be valid WKT geometry.',
         reference: 'trace-id',
         target: 'metadata.spatial_coverage'
-      }]
-    });
-  });
-
-  it('shows frontend validation failures as persistent issues', () => {
-    service.setValidationError('Distribution 1: title is required.', 'Distributions');
-
-    expect(service.error()).toBe('Distribution 1: title is required.');
-    expect(toastService.error).toHaveBeenCalledWith('Resource could not be saved.', {
-      duration: null,
-      issues: [{
-        label: 'Distributions',
-        message: 'Distribution 1: title is required.'
       }]
     });
   });

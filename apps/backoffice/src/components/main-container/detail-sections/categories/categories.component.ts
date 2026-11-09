@@ -31,6 +31,7 @@ export class CategoriesComponent {
 
   @Input() model: ResourceVersionReference[] = [];
   @Input() disabled = false;
+  @Input() readonlyView = false;
   @Input() neutralAppearance = false;
   @Output() modelChange = new EventEmitter<ResourceVersionReference[]>();
 
@@ -58,6 +59,10 @@ export class CategoriesComponent {
     }
 
     return Array.from(selected.values());
+  }
+
+  protected selectedOnlyView(): boolean {
+    return this.readonlyView || this.disabled;
   }
 
   protected isSelected(categoryId: string): boolean {

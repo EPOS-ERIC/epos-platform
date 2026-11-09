@@ -1,4 +1,5 @@
-import { Component, DOCUMENT, EventEmitter, Input, Output, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, DOCUMENT, DestroyRef, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AppIconComponent, type IconName } from '../../shared/ui/app-icon.component';
@@ -17,16 +18,26 @@ type NavigationItem = {
 
 @Component({
   selector: 'app-navigation-sidebar',
-  imports: [AppIconComponent, RouterLink],
+  imports: [AppIconComponent, NgTemplateOutlet, RouterLink],
   templateUrl: './navigation-sidebar.component.html',
   styleUrl: './navigation-sidebar.component.css'
 })
 export class NavigationSidebarComponent {
   private readonly document = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private detailNavigationItems: NavigationItem[] = [];
+  private scrollFrame?: number;
 
   @Input() canAccessGlobalManage = false;
-  @Input() detailItems: NavigationItem[] = [];
+  @Input()
+  set detailItems(value: NavigationItem[]) {
+    this.detailNavigationItems = value;
+    this.scheduleActiveDetailSync();
+  }
+  get detailItems(): NavigationItem[] {
+    return this.detailNavigationItems;
+  }
   @Input() detailSectionLabel = 'Detail';
   @Input() detailRootLabel = '';
   @Input() detailActions: ResourceActionItem[] = [];
@@ -51,6 +62,8 @@ export class NavigationSidebarComponent {
   @Output() detailAction = new EventEmitter<ResourceActionKey>();
 
   protected readonly collapsed = signal(false);
+  protected readonly activeDetailAnchor = signal<string | null>(null);
+  protected readonly detailRootExpanded = signal(true);
   protected readonly expandedNodes = signal<Set<string>>(new Set());
   protected readonly expandedMainRoute = signal<string | null>(null);
 
@@ -66,6 +79,17 @@ export class NavigationSidebarComponent {
   ];
   protected readonly groupIconPath = groupIconPath;
   private currentSection = '';
+
+  constructor() {
+    const onScroll = () => this.scheduleActiveDetailSync();
+    this.document.addEventListener('scroll', onScroll, true);
+    this.destroyRef.onDestroy(() => {
+      this.document.removeEventListener('scroll', onScroll, true);
+      if (this.scrollFrame !== undefined) {
+        this.document.defaultView?.cancelAnimationFrame(this.scrollFrame);
+      }
+    });
+  }
 
   protected get detailRootIcon(): IconName | undefined {
     if (this.detailRootLabel === 'Dataset') {
@@ -83,6 +107,14 @@ export class NavigationSidebarComponent {
     return undefined;
   }
 
+  protected get detailRootItems(): NavigationItem[] {
+    return this.detailItems.filter((item) => !this.isDistributionItem(item));
+  }
+
+  protected get detailSiblingItems(): NavigationItem[] {
+    return this.detailItems.filter((item) => this.isDistributionItem(item));
+  }
+
   protected get adminItems(): NavigationItem[] {
     return this.canAccessGlobalManage ? this.allAdminItems : [];
   }
@@ -93,6 +125,14 @@ export class NavigationSidebarComponent {
 
   protected toggleSidebar(): void {
     this.collapsed.update((value) => !value);
+  }
+
+  protected toggleDetailRoot(): void {
+    this.detailRootExpanded.update((value) => !value);
+  }
+
+  private isDistributionItem(item: NavigationItem): boolean {
+    return item.anchor === 'distributions' || item.anchor === 'compare-distributions';
   }
 
   protected groupsForItem(item: NavigationItem): Group[] {
@@ -178,6 +218,7 @@ export class NavigationSidebarComponent {
     event.preventDefault();
 
     const target = this.document.getElementById(anchor);
+    this.setActiveDetailAnchor(anchor);
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     this.document.location.hash = anchor;
   }
@@ -187,7 +228,59 @@ export class NavigationSidebarComponent {
   }
 
   protected isDetailAnchorActive(anchor: string | undefined): boolean {
-    return !!anchor && this.document.location.hash.slice(1) === anchor;
+    return !!anchor && (this.activeDetailAnchor() ?? this.document.location.hash.slice(1)) === anchor;
+  }
+
+  private scheduleActiveDetailSync(): void {
+    const window = this.document.defaultView;
+    if (!window || this.scrollFrame !== undefined || !this.detailItems.length) {
+      return;
+    }
+
+    this.scrollFrame = window.requestAnimationFrame(() => {
+      this.scrollFrame = undefined;
+      this.syncActiveDetailAnchor();
+    });
+  }
+
+  private syncActiveDetailAnchor(): void {
+    const anchors = this.flattenDetailAnchors(this.detailItems);
+    const positions = anchors
+      .map((anchor) => ({ anchor, top: this.document.getElementById(anchor)?.getBoundingClientRect().top }))
+      .filter((entry): entry is { anchor: string; top: number } => entry.top !== undefined);
+    if (!positions.length) {
+      return;
+    }
+
+    const activationOffset = 32;
+    const passed = positions.filter((entry) => entry.top <= activationOffset);
+    const active = passed.length
+      ? passed.reduce((closest, entry) => entry.top > closest.top ? entry : closest)
+      : positions.reduce((closest, entry) => entry.top < closest.top ? entry : closest);
+    this.setActiveDetailAnchor(active.anchor);
+  }
+
+  private setActiveDetailAnchor(anchor: string): void {
+    if (this.activeDetailAnchor() === anchor) {
+      return;
+    }
+
+    this.activeDetailAnchor.set(anchor);
+    this.expandAncestors(anchor);
+    if (this.detailRootItems.some((item) => this.containsAnchor(item, anchor))) {
+      this.detailRootExpanded.set(true);
+    }
+  }
+
+  private flattenDetailAnchors(items: NavigationItem[]): string[] {
+    return items.flatMap((item) => [
+      ...(item.anchor ? [item.anchor] : []),
+      ...this.flattenDetailAnchors(item.children ?? [])
+    ]);
+  }
+
+  private containsAnchor(item: NavigationItem, anchor: string): boolean {
+    return item.anchor === anchor || !!item.children?.some((child) => this.containsAnchor(child, anchor));
   }
 
   private expandAncestors(anchor: string | undefined): void {

@@ -114,7 +114,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         drafts = [version for version in versions.json() if version["status"] == "DRAFT"]
         self.assertEqual(len(drafts), 1)
         draft = drafts[0]
-        version_id = draft["version_id"]
+        version_id = draft["id"]
         replaced = client.put(
             "/resources/{id}/versions/{versionId}/draft",
             id=resource_id,
@@ -200,7 +200,6 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                     "description": "Discovery web service with display metadata",
                     "type": "WEB_SERVICE",
                     "web_service": {
-                        "name": f"discovery-service-{suffix}",
                         "configuration": {
                             "template_url": "https://example.org/discovery",
                             "method": "GET",
@@ -216,7 +215,6 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                     "description": "Discovery web service without optional metadata",
                     "type": "WEB_SERVICE",
                     "web_service": {
-                        "name": f"discovery-service-optional-{suffix}",
                         "configuration": {
                             "template_url": "https://example.org/discovery/optional",
                             "method": "GET",

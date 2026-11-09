@@ -31,7 +31,9 @@
                 </label>
               </div>
 
-              <button type="button" class="app-button app-button--ghost identifier-remove" (click)="removeItem($index)" [attr.aria-label]="'Remove identifier ' + ($index + 1)">Remove</button>
+              @if (!disabled) {
+                <button type="button" class="app-button app-button--ghost identifier-remove" (click)="removeItem($index)" [attr.aria-label]="'Remove identifier ' + ($index + 1)">Remove</button>
+              }
             </li>
           }
         </ul>
@@ -39,8 +41,10 @@
         <div class="detail-empty">No identifiers added.</div>
       }
     </div>
-    <div class="identifiers-actions">
-      <button type="button" class="app-button app-button--primary" (click)="addItem()" [disabled]="disabled">Add identifier</button>
-    </div>
+    @if (!disabled) {
+      <div class="identifiers-actions">
+        <button type="button" class="app-button app-button--primary" (click)="addItem()">Add identifier</button>
+      </div>
+    }
   </fieldset>
 </section>

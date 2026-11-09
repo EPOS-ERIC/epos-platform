@@ -98,6 +98,32 @@ func encodeCreateContactPointResponse(response *ContactPoint, w http.ResponseWri
 	return nil
 }
 
+func encodeCreateConversionPluginResponse(response *ManagedConversionPlugin, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(201)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeCreateConversionRelationResponse(response *ConversionRelation, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(201)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeCreateGroupResponse(response *Group, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
@@ -183,6 +209,18 @@ func encodeDeleteConfigurationResponse(response *DeleteConfigurationNoContent, w
 }
 
 func encodeDeleteContactPointResponse(response *DeleteContactPointNoContent, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(204)
+
+	return nil
+}
+
+func encodeDeleteConversionPluginResponse(response *DeleteConversionPluginNoContent, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(204)
+
+	return nil
+}
+
+func encodeDeleteConversionRelationResponse(response *DeleteConversionRelationNoContent, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(204)
 
 	return nil
@@ -313,6 +351,32 @@ func encodeGetContactPointResponse(response *ContactPoint, w http.ResponseWriter
 	return nil
 }
 
+func encodeGetConversionPluginResponse(response *ManagedConversionPlugin, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeGetConversionRelationResponse(response *ConversionRelation, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeGetGroupResponse(response *Group, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
@@ -421,6 +485,57 @@ func encodeListConfigurationsResponse(response []ConfigurationSummary, w http.Re
 }
 
 func encodeListContactPointsResponse(response []ContactPoint, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	e.ArrStart()
+	for _, elem := range response {
+		elem.Encode(e)
+	}
+	e.ArrEnd()
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeListConversionPluginsResponse(response []ManagedConversionPlugin, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	e.ArrStart()
+	for _, elem := range response {
+		elem.Encode(e)
+	}
+	e.ArrEnd()
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeListConversionRelationsResponse(response []ConversionRelation, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	e.ArrStart()
+	for _, elem := range response {
+		elem.Encode(e)
+	}
+	e.ArrEnd()
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeListDistributionConversionRelationsResponse(response []DistributionConversionPlugin, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 
@@ -713,6 +828,32 @@ func encodeReplaceContactPointResponse(response *ContactPoint, w http.ResponseWr
 	return nil
 }
 
+func encodeReplaceConversionPluginResponse(response *ManagedConversionPlugin, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
+func encodeReplaceConversionRelationResponse(response *ConversionRelation, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeReplaceGroupResponse(response *Group, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
@@ -765,6 +906,49 @@ func encodeReplaceResourceDraftVersionResponse(response *WriteResult, w http.Res
 	return nil
 }
 
+func encodeRequestDistributionContactResponse(response RequestDistributionContactRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *RequestDistributionContactNoContent:
+		w.WriteHeader(204)
+
+		return nil
+
+	case *RequestDistributionContactNotFound:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *RequestDistributionContactServiceUnavailable:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(503)
+		span.SetStatus(codes.Error, http.StatusText(503))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeRequestDistributionConversionResponse(response *RequestDistributionConversionAccepted, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(202)
+
+	return nil
+}
+
 func encodeRequestGroupMembershipResponse(response *GroupMembership, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(201)
@@ -789,6 +973,43 @@ func encodeRequestGroupRoleResponse(response *RoleRequest, w http.ResponseWriter
 	}
 
 	return nil
+}
+
+func encodeRequestResourceContactResponse(response RequestResourceContactRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *RequestResourceContactNoContent:
+		w.WriteHeader(204)
+
+		return nil
+
+	case *RequestResourceContactNotFound:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *RequestResourceContactServiceUnavailable:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(503)
+		span.SetStatus(codes.Error, http.StatusText(503))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
 }
 
 func encodeRevokeGlobalPermissionResponse(response *RevokeGlobalPermissionNoContent, w http.ResponseWriter, span trace.Span) error {
@@ -837,6 +1058,19 @@ func encodeSubscribeGroupUserNotificationResponse(response *SubscribeGroupUserNo
 
 func encodeSubscribeUserNotificationResponse(response *SubscribeUserNotificationNoContent, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(204)
+
+	return nil
+}
+
+func encodeSyncConversionPluginResponse(response *ManagedConversionPlugin, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
 
 	return nil
 }

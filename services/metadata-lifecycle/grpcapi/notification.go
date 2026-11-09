@@ -175,6 +175,8 @@ func toDomainNotificationTopicKey(value metadatalifecyclev1.NotificationTopicKey
 		return domain.NotificationTopicGlobalResourceSubmitted, nil
 	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED:
 		return domain.NotificationTopicGlobalResourcePublished, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED:
+		return domain.NotificationTopicGlobalConversionRequested, nil
 	default:
 		return "", apperror.New(apperror.CodeValidationFailed, "invalid notification topic key")
 	}
@@ -198,6 +200,8 @@ func toProtoNotificationTopicKey(value domain.NotificationTopicKey) (metadatalif
 		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED, nil
 	case domain.NotificationTopicGlobalResourcePublished:
 		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED, nil
+	case domain.NotificationTopicGlobalConversionRequested:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED, nil
 	case domain.NotificationTopicDirectMembershipAccepted,
 		domain.NotificationTopicDirectMembershipRejected,
 		domain.NotificationTopicDirectRoleRequestAccepted,

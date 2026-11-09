@@ -35,7 +35,7 @@ class DistributionMetadataContractTest(DistributionContractTestCase):
             )],
         }
         self.assertEqual(self.replace_response(detail, metadata).status_code, 200)
-        updated = self.details(detail["resource_id"], detail["version_id"])
+        updated = self.details(detail["resource_id"], detail["id"])
         self.assertEqual(updated["revision"], detail["revision"] + 1)
         distribution = updated["metadata"]["distributions"][0]
         self.assertIs(distribution["web_service"]["configuration"]["body_required"], False)
@@ -92,7 +92,7 @@ class DistributionMetadataContractTest(DistributionContractTestCase):
                         response = self.replace_response(detail, metadata)
                     self.assert_prepare_problem(response, target="metadata.distributions[0].web_service")
                     if method == "PUT":
-                        unchanged = self.details(detail["resource_id"], detail["version_id"])
+                        unchanged = self.details(detail["resource_id"], detail["id"])
                         self.assertEqual(unchanged["revision"], detail["revision"])
                         self.assertEqual(unchanged["metadata"]["distributions"][0]["id"], original["id"])
                         self.assertEqual(self.prepare(original), expected)

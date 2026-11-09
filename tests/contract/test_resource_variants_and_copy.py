@@ -65,7 +65,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
     def create_contact_point(self, suffix: str) -> str:
         response = self.gateway.post(
             "/contact-points",
-            json={"email": f"variants-{suffix}@example.org", "role": "creator"},
+            json={"email": f"variants-{suffix}@example.org"},
         )
         self.assertEqual(response.status_code, 201)
         return response.json()["id"]
@@ -143,14 +143,14 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             "/resources/{resourceType}/{id}/versions/{versionId}/submit",
             resourceType=resource_type,
             id=resource_id,
-            versionId=draft["version_id"],
+            versionId=draft["id"],
         )
         self.assertEqual(submitted.status_code, 200)
         published = self.gateway.post(
             "/resources/{resourceType}/{id}/versions/{versionId}/publish",
             resourceType=resource_type,
             id=resource_id,
-            versionId=draft["version_id"],
+            versionId=draft["id"],
         )
         self.assertEqual(published.status_code, 200)
         return resource_id
@@ -160,6 +160,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         source_metadata: dict[str, Any],
         copy_metadata: dict[str, Any],
         identifier_key: str,
+        same_resource: bool = False,
     ) -> None:
         source_identifiers = source_metadata[identifier_key]
         copied_identifiers = copy_metadata[identifier_key]
@@ -171,6 +172,12 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             {item["id"] for item in copied_identifiers},
             {item["id"] for item in source_metadata[identifier_key]},
         )
+        source_ids = {item["resource_id"] for item in source_identifiers}
+        copied_ids = {item["resource_id"] for item in copied_identifiers}
+        if same_resource:
+            self.assertEqual(copied_ids, source_ids)
+        else:
+            self.assertTrue(copied_ids.isdisjoint(source_ids))
 
     def assert_link_ids(
         self,
@@ -218,7 +225,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         resource_id = self.create_and_publish(group_id, "dataset", metadata)
         published_version = self.version("dataset", resource_id, "PUBLISHED")
         published_details = self.details(
-            "dataset", resource_id, published_version["version_id"]
+            "dataset", resource_id, published_version["id"]
         )
         source_distribution = published_details["metadata"]["distributions"][0]
         source_service = source_distribution["web_service"]
@@ -234,7 +241,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         self.assertEqual(drafted.json()["status"], "DRAFT")
 
         draft_version = self.version("dataset", resource_id, "DRAFT")
-        draft_details = self.details("dataset", resource_id, draft_version["version_id"])
+        draft_details = self.details("dataset", resource_id, draft_version["id"])
         draft_service = draft_details["metadata"]["distributions"][0]["web_service"]
         draft_parameter = draft_service["configuration"]["body_parameters"][0]
         self.assertEqual(draft_parameter["name"], source_parameter["name"])
@@ -287,7 +294,6 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             parameter("west", "FLOAT", position=1, role="MIN_LON", property="custom:west"),
         ])
         role_distribution["title"] = f"Role metadata {suffix}"
-        role_distribution["web_service"]["name"] = f"Role metadata {suffix}"
         dataset_metadata["distributions"].append(role_distribution)
         application_metadata = {
             "name": f"Application {suffix}",
@@ -339,7 +345,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             source_id = source_ids[resource_type]
             source_version = self.version(resource_type, source_id, "PUBLISHED")
             source_details = self.details(
-                resource_type, source_id, source_version["version_id"]
+                resource_type, source_id, source_version["id"]
             )
             source_result_metadata = source_details["metadata"]
             self.assertEqual(source_result_metadata["resource_type"], resource_type)
@@ -360,7 +366,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
 
             copied_version = self.version(resource_type, copied_id, "DRAFT")
             copied_details = self.details(
-                resource_type, copied_id, copied_version["version_id"]
+                resource_type, copied_id, copied_version["id"]
             )
             copied_metadata = copied_details["metadata"]
             self.assertEqual(copied_details["group_id"], target_group_id)
@@ -408,7 +414,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             invalid_category = editor.put(
                 "/resources/{id}/versions/{versionId}/draft",
                 id=copied_id,
-                versionId=copied_version["version_id"],
+                versionId=copied_version["id"],
                 json={
                     "resource_type": resource_type,
                     "revision": copied_version["revision"],
@@ -418,12 +424,16 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             self.assertEqual(invalid_category.status_code, 400)
 
             replacement = copy.deepcopy(source_metadata)
+            replacement[identifier_key] = [
+                {"resource_id": item["resource_id"], "type": item["type"], "value": item["value"]}
+                for item in copied_metadata[identifier_key]
+            ]
             replacement["categories"] = [target_category_id]
             replacement[name_key] = f"{source_metadata[name_key]} replaced"
             replaced = editor.put(
                 "/resources/{id}/versions/{versionId}/draft",
                 id=copied_id,
-                versionId=copied_version["version_id"],
+                versionId=copied_version["id"],
                 json={
                     "resource_type": resource_type,
                     "revision": copied_version["revision"],
@@ -434,9 +444,12 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             replaced_details = self.details(
                 resource_type,
                 copied_id,
-                self.version(resource_type, copied_id, "DRAFT")["version_id"],
+                self.version(resource_type, copied_id, "DRAFT")["id"],
             )
             self.assertEqual(replaced_details["metadata"][name_key], replacement[name_key])
+            self.assertEqual(
+                replaced_details["metadata"][identifier_key], copied_metadata[identifier_key]
+            )
             self.assertEqual(
                 [item["id"] for item in replaced_details["metadata"]["categories"]],
                 [target_category_id],
@@ -452,7 +465,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             self.assertEqual(drafted.json()["status"], "DRAFT")
             publication_draft = self.version(resource_type, source_id, "DRAFT")
             publication_draft_details = self.details(
-                resource_type, source_id, publication_draft["version_id"]
+                resource_type, source_id, publication_draft["id"]
             )
             publication_metadata = publication_draft_details["metadata"]
             self.assertEqual(publication_metadata[name_key], source_result_metadata[name_key])
@@ -463,7 +476,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                 publication_metadata["keywords"], source_result_metadata["keywords"]
             )
             self.assert_identifier_clones(
-                source_result_metadata, publication_metadata, identifier_key
+                source_result_metadata, publication_metadata, identifier_key, same_resource=True
             )
             self.assertEqual(
                 [item["id"] for item in publication_metadata["categories"]],

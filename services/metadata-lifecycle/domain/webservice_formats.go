@@ -41,11 +41,17 @@ func (value GenericWebServiceConfiguration) NativeFormats() []NativeFormat {
 	}
 
 	if formatSchema == nil {
-		return []NativeFormat{{OutputFormat: value.Format, Label: value.Format}}
+		return []NativeFormat{{
+			OutputFormat: value.Format,
+			Label:        value.Format,
+		}}
 	}
 
 	if len(formatSchema.Enum) == 0 {
-		return []NativeFormat{{OutputFormat: *formatSchema.Default, Label: *formatSchema.Default}}
+		return []NativeFormat{{
+			OutputFormat: formatSchema.Default[0],
+			Label:        formatSchema.Default[0],
+		}}
 	}
 
 	result := make([]NativeFormat, 0, len(formatSchema.Enum))
@@ -141,7 +147,7 @@ func validateParameterRole(serviceType WebServiceType, parameter ParameterInput,
 		if !parameter.ReadOnly {
 			return invalidField(target+".read_only", "FORMAT role requires a read-only parameter.", nil)
 		}
-		if schema.Default == nil {
+		if len(schema.Default) == 0 {
 			return invalidField(target+".default", "FORMAT role requires a default.", nil)
 		}
 	case WebServiceParameterRoleStartDate, WebServiceParameterRoleEndDate:
@@ -175,7 +181,7 @@ func validateParameterRole(serviceType WebServiceType, parameter ParameterInput,
 		if schema.MultipleValues {
 			return invalidField(target+".multiple_values", "DYNAMIC coordinate parameters must have a single value.", nil)
 		}
-		if schema.Default != nil {
+		if len(schema.Default) != 0 {
 			return invalidField(target+".default", "DYNAMIC coordinate parameters must not have a default.", nil)
 		}
 		if len(schema.Enum) != 0 {

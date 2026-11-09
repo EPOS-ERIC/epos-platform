@@ -3,6 +3,7 @@ import { DistributionSummary } from '../data/distributionSummary.interface';
 import { Moment } from 'moment';
 import { BoundingBox } from '../data/boundingBox.interface';
 import { Domain } from '../data/domain.interface';
+import { DatasetSummary } from '../data/datasetSummary.interface';
 
 export interface DiscoverApi {
   discover(request: DiscoverRequest): Promise<null | DiscoverResponse>;
@@ -15,6 +16,8 @@ export interface DiscoverApi {
 export interface DiscoverResponse {
   filters(): FacetModel<void>;
   results(): FacetModel<DistributionSummary>;
+  datasets?(): DatasetSummary[];
+  loadCategories?(groupId?: string): Promise<FacetModel<DistributionSummary>>;
 }
 
 export interface DiscoverRequest {

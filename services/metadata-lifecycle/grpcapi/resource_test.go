@@ -60,9 +60,10 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 
 	contentType := "application/json"
 	bodyTemplate := "{{.value}}"
+	documentationURI := "https://example.test/docs"
 	service, err := toDomainWebServiceInput(&metadatalifecyclev1.WebServiceInput{
-		Name: "service",
-		Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
+		Type:             metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
+		DocumentationUri: &documentationURI,
 		Configuration: &metadatalifecyclev1.WebServiceInput_Generic{Generic: &metadatalifecyclev1.GenericWebServiceConfigurationInput{
 			TemplateUrl:     "https://example.test",
 			Method:          metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_POST,
@@ -81,6 +82,9 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 	if err != nil {
 		t.Fatalf("toDomainWebServiceInput() error = %v", err)
 	}
+	if service.DocumentationURI == nil || *service.DocumentationURI != documentationURI {
+		t.Fatalf("documentation URI = %v, want %q", service.DocumentationURI, documentationURI)
+	}
 	configuration := service.Configuration.(domain.GenericWebServiceConfigurationInput)
 	if configuration.Body == nil || len(configuration.Body.Parameters) != 1 {
 		t.Fatalf("mapped body = %+v, want one scalar child", configuration.Body)
@@ -92,6 +96,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		Name:  "value",
 		Label: "Value",
 		Value: &metadatalifecyclev1.ParameterInput_String_{String_: &metadatalifecyclev1.StringParameter{
+			Default:        []string{"one", "two"},
 			Enum:           []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
 			MultipleValues: true,
 		}},
@@ -99,7 +104,6 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		Explode:  true,
 	}
 	input, err := toDomainWebServiceInput(&metadatalifecyclev1.WebServiceInput{
-		Name: "service",
 		Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
 		VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
 			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
@@ -119,16 +123,20 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	if len(configuration.Parameters) != 1 || !configuration.Parameters[0].Explode {
 		t.Fatalf("input parameters = %+v, want explode parameter", configuration.Parameters)
 	}
+	if got := configuration.Parameters[0].Schema.(domain.StringSchema).Default; !slices.Equal(got, []string{"one", "two"}) {
+		t.Fatalf("input default = %v, want [one two]", got)
+	}
 	if input.Type != domain.WebServiceTypeHTTP || !slices.Equal(input.VisibleOn, []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnGraph, domain.WebServiceVisibleOnMap}) {
 		t.Fatalf("input web-service fields = type %q, visible on %v", input.Type, input.VisibleOn)
 	}
 
 	id := uuid.New()
 	property := "https://example.test/value"
+	documentationURI := "https://example.test/docs"
 	output := toProtoWebService(domain.WebService{
-		ID:   id,
-		Name: "service",
-		Type: domain.WebServiceTypeHTTP,
+		ID:               id,
+		Type:             domain.WebServiceTypeHTTP,
+		DocumentationURI: &documentationURI,
 		VisibleOn: []domain.WebServiceVisibleOn{
 			domain.WebServiceVisibleOnGraph,
 			domain.WebServiceVisibleOnMap,
@@ -140,7 +148,7 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 			Parameters: []domain.WebServiceParameter{{
 				Name:     "value",
 				Label:    "Value",
-				Schema:   domain.StringSchema{Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: true},
+				Schema:   domain.StringSchema{Default: []string{"one", "two"}, Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: true},
 				ID:       id,
 				Property: &property,
 				Location: domain.ParameterLocationQuery,
@@ -151,15 +159,20 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	if len(output.GetGeneric().GetParameters()) != 1 || !output.GetGeneric().GetParameters()[0].GetExplode() {
 		t.Fatalf("output parameters = %+v, want explode parameter", output.GetGeneric().GetParameters())
 	}
+	if got := output.GetGeneric().GetParameters()[0].GetString_().Default; !slices.Equal(got, []string{"one", "two"}) {
+		t.Fatalf("output default = %v, want [one two]", got)
+	}
 	if output.Type != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP || len(output.VisibleOn) != 2 || output.VisibleOn[0] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH || output.VisibleOn[1] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP {
 		t.Fatalf("output web-service fields = type %q, visible on %v", output.Type, output.VisibleOn)
+	}
+	if output.GetDocumentationUri() != documentationURI {
+		t.Fatalf("documentation URI = %q, want %q", output.GetDocumentationUri(), documentationURI)
 	}
 }
 
 func TestWebServiceInputRejectsUnspecifiedEnums(t *testing.T) {
 	base := func() *metadatalifecyclev1.WebServiceInput {
 		return &metadatalifecyclev1.WebServiceInput{
-			Name: "service",
 			Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
 			Configuration: &metadatalifecyclev1.WebServiceInput_Generic{Generic: &metadatalifecyclev1.GenericWebServiceConfigurationInput{
 				TemplateUrl: "https://example.test",

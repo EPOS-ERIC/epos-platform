@@ -28,12 +28,77 @@ describe('NavigationSidebarComponent', () => {
     fixture.componentRef.setInput('detailSectionLabel', 'Compare');
     fixture.componentRef.setInput('detailRootLabel', 'Dataset');
     fixture.componentRef.setInput('detailItems', [
-      { label: 'General Information', anchor: 'compare-general-information' }
+      { label: 'General Information', anchor: 'compare-general-information' },
+      { label: 'Distributions', anchor: 'compare-distributions' }
     ]);
     fixture.detectChanges();
 
     expect((fixture.nativeElement.querySelector('.nav-section-title') as HTMLElement).textContent?.trim()).toBe('Compare');
-    expect(fixture.nativeElement.querySelector('.nav-item--tree-link')?.getAttribute('href')).toBe('#compare-general-information');
+    const root = fixture.nativeElement.querySelector('.nav-tree-item--root') as HTMLElement;
+    const rootChildren = root.querySelector('.nav-tree-children--root') as HTMLElement;
+    expect(root.querySelector('.nav-root-label')?.textContent?.trim()).toBe('Dataset');
+    expect(root.querySelector('.nav-item--tree-link')?.getAttribute('href')).toBe('#compare-general-information');
+    expect(rootChildren.classList.contains('nav-tree-children--bounded')).toBe(true);
+    expect(root.querySelector('[href="#compare-distributions"]')).toBeNull();
+    const distributions = fixture.nativeElement.querySelector('[href="#compare-distributions"]') as HTMLAnchorElement;
+    expect(distributions.closest('.nav-tree-item')?.parentElement).toBe(fixture.nativeElement.querySelector('.nav-section--detail'));
+
+    const rootToggle = root.querySelector('.detail-root-toggle-button') as HTMLButtonElement;
+    expect(rootToggle.getAttribute('aria-expanded')).toBe('true');
+    rootToggle.click();
+    fixture.detectChanges();
+
+    expect(rootToggle.getAttribute('aria-expanded')).toBe('false');
+    expect(root.querySelector('.nav-item--tree-link')).toBeNull();
+  });
+
+  it('renders distributions alongside the resource root', async () => {
+    await TestBed.configureTestingModule({
+      imports: [NavigationSidebarComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(NavigationSidebarComponent);
+    fixture.componentRef.setInput('detailRootLabel', 'Dataset');
+    fixture.componentRef.setInput('detailItems', [
+      { label: 'General Information', anchor: 'general-information' },
+      { label: 'Distributions', anchor: 'distributions' }
+    ]);
+    fixture.detectChanges();
+
+    const detailSection = fixture.nativeElement.querySelector('.nav-section--detail') as HTMLElement;
+    const root = detailSection.querySelector('.nav-tree-item--root') as HTMLElement;
+    const distributions = detailSection.querySelector('[href="#distributions"]') as HTMLAnchorElement;
+    expect(root.querySelector('[href="#general-information"]')).not.toBeNull();
+    expect(root.querySelector('[href="#distributions"]')).toBeNull();
+    expect(distributions.closest('.nav-tree-item')?.parentElement).toBe(detailSection);
+  });
+
+  it('keeps the active detail item in sync with manual scrolling', async () => {
+    await TestBed.configureTestingModule({
+      imports: [NavigationSidebarComponent],
+      providers: [provideRouter([])]
+    }).compileComponents();
+    const general = document.createElement('section');
+    general.id = 'general-information';
+    general.getBoundingClientRect = () => ({ top: -200 }) as DOMRect;
+    const spatial = document.createElement('section');
+    spatial.id = 'spatial-coverage';
+    spatial.getBoundingClientRect = () => ({ top: 20 }) as DOMRect;
+    document.body.append(general, spatial);
+
+    const fixture = TestBed.createComponent(NavigationSidebarComponent);
+    fixture.componentRef.setInput('detailRootLabel', 'Dataset');
+    fixture.componentRef.setInput('detailItems', [
+      { label: 'General Information', anchor: 'general-information' },
+      { label: 'Spatial Coverage', anchor: 'spatial-coverage' }
+    ]);
+    fixture.detectChanges();
+    (fixture.componentInstance as unknown as { syncActiveDetailAnchor(): void }).syncActiveDetailAnchor();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.nav-item--tree-link.active')?.getAttribute('href')).toBe('#spatial-coverage');
+    general.remove();
+    spatial.remove();
   });
 
   it('shows a single global management entry when an admin capability is granted', async () => {
@@ -118,14 +183,16 @@ describe('NavigationSidebarComponent', () => {
     const fixture = TestBed.createComponent(NavigationSidebarComponent);
     fixture.componentRef.setInput('groups', [
       { id: 'group-1', name: 'First Group', position: 1, concept: 'DATA' },
-      { id: 'group-2', name: 'Second Group', position: 2, concept: 'DATA' }
+      { id: 'b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2', name: 'Geochemistry', position: 2, concept: 'DATA' }
     ]);
     fixture.componentRef.setInput('currentSectionPath', 'data');
-    fixture.componentRef.setInput('selectedGroupId', 'group-2');
+    fixture.componentRef.setInput('selectedGroupId', 'b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2');
     fixture.detectChanges();
 
     const selected = fixture.nativeElement.querySelector('.nav-item--sub.active') as HTMLAnchorElement;
-    expect(selected.textContent).toContain('Second Group');
-    expect(selected.getAttribute('href')).toBe('/data?groupId=group-2');
+    expect(selected.textContent).toContain('Geochemistry');
+    expect(selected.getAttribute('href')).toBe('/data?groupId=b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2');
+    expect((selected.querySelector('.group-nav-icon') as HTMLImageElement).getAttribute('src'))
+      .toBe('group-icons/b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2.png');
   });
 });

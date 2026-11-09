@@ -83,8 +83,8 @@ func organizationIdentifierInputs(values []domain.OrganizationIdentifier) []doma
 // toDomainOrganizationIdentifier converts a joined identifier row into its domain type.
 func toDomainOrganizationIdentifier(item sqlc.ListOrganizationIdentifiersRow) domain.OrganizationIdentifier {
 	return domain.OrganizationIdentifier{
-		ID:    item.Identifier.ID,
-		Type:  item.Identifier.Type,
-		Value: item.Identifier.Value,
+		ID:    item.OrganizationIdentifier.ID,
+		Type:  item.OrganizationIdentifier.Type,
+		Value: item.OrganizationIdentifier.Value,
 	}
 }

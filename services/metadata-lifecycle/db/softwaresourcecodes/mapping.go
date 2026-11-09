@@ -49,8 +49,15 @@ func ToReplaceDraftParams(sourceCodeID, versionID uuid.UUID, revision int32, val
 
 // PersistChildren persists source-code references for one version.
 func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.SoftwareSourceCodeInput) error {
+	return persistChildren(ctx, q, versionID, value, nil)
+}
+
+func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.SoftwareSourceCodeInput, identities map[uuid.UUID]domain.Identifier) error {
 	for _, identifier := range value.Identifiers {
+		id, resourceID := resourcedb.IdentifierIDs(identifier, identities)
 		if err := q.AddLifecycleSoftwareSourceCodeIdentifier(ctx, sqlc.AddLifecycleSoftwareSourceCodeIdentifierParams{
+			ID:                          id,
+			ResourceID:                  resourceID,
 			Type:                        string(identifier.Type),
 			Value:                       identifier.Value,
 			SoftwareSourceCodeVersionID: &versionID,

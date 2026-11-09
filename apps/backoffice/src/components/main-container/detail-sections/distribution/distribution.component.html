@@ -4,7 +4,7 @@
       <h2>Distributions</h2>
       <p class="subtitle app-muted">Multiple distributions with typed internal payloads.</p>
     </div>
-    @if (!comparisonMode) {
+    @if (!comparisonMode && !disabled) {
       <div class="distribution-actions">
         <label>
           <span class="visually-hidden">Distribution type</span>
@@ -32,10 +32,9 @@
           <div class="distribution-body">
             <div class="distribution-level-heading">
               <div class="distribution-level-title">
-                <span class="app-badge app-badge--blue">Distribution</span>
                 <strong>{{ distribution.title || 'Selected distribution' }}</strong>
               </div>
-              @if (!comparisonMode) {
+              @if (!comparisonMode && !disabled) {
                 <button
                   type="button"
                   class="app-button detail-delete-button distribution-delete-button"
@@ -52,9 +51,13 @@
               @for (field of distributionFields; track field) {
                 <!-- Render distribution fields but not "type" (= no need to expose it as an input field) -->
                 @if (field !== 'type') {
-                  <label class="detail-field">
+                  <label class="detail-field" [class.detail-field--full]="field === 'description'">
                     <span class="detail-label">{{ distributionFieldLabel(field) }}{{ field === 'title' || field === 'description' ? ' *' : '' }}</span>
-                    <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="field === 'title' || field === 'description'" />
+                    @if (field === 'description') {
+                      <textarea class="app-input detail-textarea" rows="3" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required></textarea>
+                    } @else {
+                      <input class="app-input" [type]="field === 'issued' || field === 'modified' ? 'datetime-local' : 'text'" [(ngModel)]="distribution[field]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" [required]="field === 'title'" />
+                    }
                   </label>
                 }
               }
@@ -64,6 +67,8 @@
           @if (distribution.kind === 'web-service') {
             <app-web-service
               [model]="distribution.webService"
+              [distributionId]="comparisonMode ? '' : (distribution.id ?? '')"
+              [nativeFormats]="distribution.nativeFormats ?? []"
               [comparisonModel]="selectedComparisonWebService()"
               [disabled]="disabled"
               [comparisonMode]="comparisonMode"

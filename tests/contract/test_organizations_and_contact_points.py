@@ -72,7 +72,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
             for contact_point in contact_points
             if isinstance(contact_point, dict)
             and contact_point.get("email") == "andrea.rovida@ingv.it"
-            and contact_point.get("role") == "scientificContact"
         ]
         self.assertEqual(len(contact_matches), 1)
         contact_point_id = contact_matches[0]["id"]
@@ -85,16 +84,12 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         contact_point = contact_point_response.json()
         self.assertEqual(contact_point["id"], contact_point_id)
         self.assertEqual(contact_point["email"], "andrea.rovida@ingv.it")
-        self.assertEqual(contact_point["role"], "scientificContact")
 
     def test_organization_and_contact_point_crud(self) -> None:
         """Verify canonical links are retained and removed through CRUD."""
 
         suffix = str(uuid4())
-        contact_payload = {
-            "email": f"contract-{suffix}@example.org",
-            "role": "contract-test",
-        }
+        contact_payload = {"email": f"contract-{suffix}@example.org"}
         created_contact_response = self.gateway.post(
             "/contact-points",
             json=contact_payload,
@@ -102,7 +97,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         self.assertEqual(created_contact_response.status_code, 201)
         created_contact = created_contact_response.json()
         self.assertEqual(created_contact["email"], contact_payload["email"])
-        self.assertEqual(created_contact["role"], contact_payload["role"])
         contact_point_id = created_contact["id"]
 
         duplicate_contact_response = self.gateway.post(
@@ -178,10 +172,7 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         self.assertEqual(child["parents"], [parent_id])
         self.assertEqual(child["contact_point_ids"], [contact_point_id])
 
-        updated_contact_payload = {
-            "email": f"updated-{suffix}@example.org",
-            "role": "updated-contract-test",
-        }
+        updated_contact_payload = {"email": f"updated-{suffix}@example.org"}
         updated_contact_response = self.gateway.put(
             "/contact-points/{contactPointId}",
             contactPointId=contact_point_id,
@@ -191,7 +182,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         updated_contact = updated_contact_response.json()
         self.assertEqual(updated_contact["id"], contact_point_id)
         self.assertEqual(updated_contact["email"], updated_contact_payload["email"])
-        self.assertEqual(updated_contact["role"], updated_contact_payload["role"])
 
         updated_child_name = f"{child_name}-updated"
         updated_child_payload = {

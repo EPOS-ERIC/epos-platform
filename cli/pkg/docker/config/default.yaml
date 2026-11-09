@@ -1,6 +1,7 @@
 # Public host and protocol. HTTPS requires an external reverse proxy.
 domain: "localhost"
 protocol: "http"
+debug: false
 
 components:
   platform_ui:
@@ -14,6 +15,8 @@ components:
       domain: "epos-ip.org"
       from: "epos-ics-c@epos-ip.org"
       api_key: ""
+      # When at least one email is set, all emails sent by mailgun will go to the recipients in this list instead of the real recipients.
+      recipient_overrides: []
     aai:
       enabled: true
       # Public provider URL and optional gateway-reachable override.
@@ -54,6 +57,13 @@ components:
     user: "sharing"
     password: ""
     db_name: "sharing"
+  converter_database:
+    enabled: true
+    host: "converter-db"
+    port: 5432
+    user: "converter"
+    password: ""
+    db_name: "converter"
   # Set enabled to export telemetry. Empty endpoint uses managed LGTM; set a container-reachable OTLP/HTTP endpoint for external collectors.
   otel:
     enabled: false
@@ -68,9 +78,11 @@ images:
   gateway: "ghcr.io/epos-eric/epos-platform/gateway:main"
   metadata_lifecycle: "ghcr.io/epos-eric/epos-platform/metadata-lifecycle:main"
   data_retriever: "ghcr.io/epos-eric/epos-platform/data-retriever:main"
+  converter: "ghcr.io/epos-eric/epos-platform/converter:main"
   sharing_service: "ghcr.io/epos-eric/epos-platform/sharing:main"
   aai_service: "ghcr.io/epos-eric/epos-platform/oss-aai-service:main"
   metadata_database: "postgis/postgis:18-3.6-alpine"
   data_retriever_database: "postgres:18-alpine"
+  converter_database: "postgres:18-alpine"
   sharing_database: "postgres:18-alpine"
   otel_lgtm: "grafana/otel-lgtm:latest"

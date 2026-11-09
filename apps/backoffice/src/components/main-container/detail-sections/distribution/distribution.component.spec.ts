@@ -31,10 +31,7 @@ describe('DistributionComponent', () => {
     fixture.componentRef.setInput('disabled', true);
     fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('.distribution-actions button') as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-    button.click();
-
+    expect(fixture.nativeElement.querySelector('.distribution-actions')).toBeNull();
     expect(emissions).toHaveLength(0);
   });
 
@@ -164,5 +161,30 @@ describe('DistributionComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.parameter-editor h3')?.textContent?.trim()).toBe('Second parameter');
     expect((fixture.nativeElement.querySelector('.parameter-editor-fields') as HTMLFieldSetElement).disabled).toBe(true);
+  });
+
+  it('does not load current conversions in comparison mode', () => {
+    const listConversions = vi.fn(() => of([]));
+    TestBed.overrideProvider(ApiService, {
+      useValue: {
+        getContactPoints: () => of([]),
+        getOrganizations: () => of([]),
+        listDistributionConversionRelations: listConversions
+      }
+    });
+    const fixture = TestBed.createComponent(DistributionComponent);
+    const emissions: DatasetDistributionForm[][] = [];
+    fixture.componentInstance.modelChange.subscribe((model) => emissions.push(model));
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.distribution-actions button') as HTMLButtonElement).click();
+
+    const model = emissions[0];
+    model[0].id = 'distribution-id';
+    fixture.componentRef.setInput('model', model);
+    fixture.componentRef.setInput('comparisonMode', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-distribution-conversions')).toBeNull();
+    expect(listConversions).not.toHaveBeenCalled();
   });
 });

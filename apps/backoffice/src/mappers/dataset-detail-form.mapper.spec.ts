@@ -39,7 +39,7 @@ function datasetMetadata(): DatasetResourceMetadata {
         type: WEB_SERVICE_TYPE,
         issued: null,
         modified: 'invalid-date',
-        available_formats: [],
+        available_formats: [{ kind: 'ORIGINAL', output_format: 'application/json', label: 'JSON' }],
         web_service: {
           id: 'service-id',
           name: 'Service',
@@ -290,6 +290,8 @@ describe('toDatasetDetailForm', () => {
       temporal: { start: 'invalid-start', end: '' },
     });
     expect(form.distributions[0]).toMatchObject({
+      id: 'distribution-id',
+      nativeFormats: ['application/json'],
       kind: 'web-service',
       issued: '',
       modified: 'invalid-date',
@@ -447,6 +449,7 @@ describe('toDatasetSaveRequest', () => {
         },
       },
     });
+    expect(distribution).not.toHaveProperty('id');
   });
 
   it('roundtrips WFS, WMS, and WMTS configurations', () => {

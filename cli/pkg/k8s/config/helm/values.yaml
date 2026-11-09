@@ -1,5 +1,7 @@
 domain: "localhost"
+ingress_host: "localhost" # Empty matches any host.
 protocol: "http"
+debug: false
 url_prefix_namespace: true
 create_namespace: true
 image_pull_policy: "IfNotPresent"
@@ -17,6 +19,8 @@ components:
       domain: "epos-ip.org"
       from: "epos-ics-c@epos-ip.org"
       api_key: ""
+      # When at least one email is set, all emails sent by mailgun will go to the recipients in this list instead of the real recipients.
+      recipient_overrides: []
     aai:
       enabled: true
       service_endpoint: ""
@@ -25,7 +29,6 @@ components:
       enabled: false
       secret_name: ""
   backoffice:
-    enabled: true
     gui:
       base_url: "/backoffice/"
     tls:
@@ -52,6 +55,13 @@ components:
     user: "sharing"
     password: ""
     db_name: "sharing"
+  converter_database:
+    enabled: true
+    host: "converter-db"
+    port: 5432
+    user: "converter"
+    password: ""
+    db_name: "converter"
   aai_service:
     enabled: true
     name: "EPOS"
@@ -83,9 +93,11 @@ images:
   gateway: "ghcr.io/epos-eric/epos-platform/gateway:main"
   metadata_lifecycle: "ghcr.io/epos-eric/epos-platform/metadata-lifecycle:main"
   data_retriever: "ghcr.io/epos-eric/epos-platform/data-retriever:main"
+  converter: "ghcr.io/epos-eric/epos-platform/converter:main"
   sharing_service: "ghcr.io/epos-eric/epos-platform/sharing:main"
   aai_service: "ghcr.io/epos-eric/epos-platform/oss-aai-service:main"
   metadata_database: "postgis/postgis:18-3.6-alpine"
   data_retriever_database: "postgres:18-alpine"
+  converter_database: "postgres:18-alpine"
   sharing_database: "postgres:18-alpine"
   otel_lgtm: "grafana/otel-lgtm:latest"

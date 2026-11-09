@@ -10,12 +10,8 @@ import (
 // NewContactPointInput validates and normalizes editable contact-point fields.
 func NewContactPointInput(value ContactPointInput) (ContactPointInput, error) {
 	value.Email = strings.TrimSpace(value.Email)
-	value.Role = strings.TrimSpace(value.Role)
 	if value.Email == "" {
 		return ContactPointInput{}, invalidField("email", "Email must not be blank.", nil)
-	}
-	if value.Role == "" {
-		return ContactPointInput{}, invalidField("role", "Role must not be blank.", nil)
 	}
 	return value, nil
 }
@@ -37,6 +33,5 @@ func NewContactPoint(id uuid.UUID, value ContactPointInput) (result ContactPoint
 	return ContactPoint{
 		ID:    id,
 		Email: value.Email,
-		Role:  value.Role,
 	}, nil
 }

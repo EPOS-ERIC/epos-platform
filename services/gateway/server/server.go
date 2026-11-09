@@ -15,12 +15,13 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactrequest"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 )
 
-func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, semanticAggregatorClient *clients.SemanticAggregator, dataRetrieverClient *clients.DataRetriever, sharingClient *clients.Sharing, authService *auth.Service) error {
+func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, semanticAggregatorClient *clients.SemanticAggregator, dataRetrieverClient *clients.DataRetriever, converterClient *clients.Converter, sharingClient *clients.Sharing, authService *auth.Service, contactRequestSender contactrequest.EmailSender) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -43,7 +44,7 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 	identitySvc := identity.NewService(baseLog, metadataLifecycleClient)
 	membershipSvc := membership.NewService(baseLog, metadataLifecycleClient)
 	sharingSvc := sharingservice.NewService(sharingClient)
-	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, semanticAggregatorClient, dataRetrieverClient, sharingSvc, authService, cfg.Server.CORSAllowOrigin, cfg.Server.RequestTimeout)
+	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, semanticAggregatorClient, contactRequestSender, dataRetrieverClient, converterClient, sharingSvc, authService, cfg.Server.CORSAllowOrigin, cfg.Server.RequestTimeout)
 
 	// WriteTimeout stays disabled because distribution downloads stream large responses.
 	srv := &http.Server{

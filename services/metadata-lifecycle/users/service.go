@@ -122,8 +122,7 @@ func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Acto
 		return nil, nil
 	}
 
-	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:         domain.NotificationEventPermissionAssigned,
+	notifications, buildErr := s.notifier.Build(ctx, domain.PermissionAssigned{
 		ActorID:      actorID,
 		SubjectID:    userID,
 		TargetUserID: userID,
@@ -172,8 +171,7 @@ func (s *Service) AssignGlobalRole(ctx context.Context, actorID domain.Actor, us
 		return nil, nil
 	}
 
-	notifications, buildErr := s.notifier.Build(ctx, domain.NotificationEvent{
-		Kind:         domain.NotificationEventRoleAssigned,
+	notifications, buildErr := s.notifier.Build(ctx, domain.RoleAssigned{
 		ActorID:      actorID,
 		SubjectID:    userID,
 		TargetUserID: userID,

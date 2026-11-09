@@ -108,17 +108,12 @@ func optionalDiscoverySpatialFilter(value *string) (geom.T, error) {
 func toDomainDiscoveryResourceTypes(values []metadatalifecyclev1.ResourceType) ([]domain.ResourceType, error) {
 	result := make([]domain.ResourceType, 0, len(values))
 	for _, value := range values {
-		switch value {
-		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
-			result = append(result, domain.Dataset)
-		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
-			result = append(result, domain.SoftwareApplication)
-		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
-			result = append(result, domain.SoftwareSourceCode)
-		default:
+		resourceType, ok := toDomainResourceType(value)
+		if !ok {
 			cause := fmt.Errorf("unsupported resource type %q", value)
 			return nil, apperror.Wrap(apperror.CodeValidationFailed, "", cause)
 		}
+		result = append(result, resourceType)
 	}
 	return result, nil
 }

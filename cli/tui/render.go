@@ -16,9 +16,8 @@ type renderFormData struct {
 	outputPath string
 }
 
-func (a *App) showRenderForm() {
+func (a *App) showRenderForm(envName string, isDocker bool, k8sContext string) {
 	a.PushFocus()
-	envName, isDocker, k8sContext := a.envList.GetSelected()
 	if envName == "" {
 		return
 	}

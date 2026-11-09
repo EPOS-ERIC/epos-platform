@@ -111,14 +111,13 @@ func TestRenderOpts_ConfigRender_OptionalComponents(t *testing.T) {
 			},
 			wantGateway: []string{`url: "sharing:8200"`},
 			wantTemplates: map[string]string{
-				"templates/application-services.yaml": "name: sharing",
+				"templates/sharing.yaml": "name: sharing",
 			},
 		},
 		{
 			name:    "backoffice enabled renders UI",
 			envName: "test-backoffice",
 			mutate: func(cfg *config.Config) {
-				cfg.Components.Backoffice.Enabled = true
 			},
 			wantGateway: []string{`url: "metadata-lifecycle:5000"`},
 			wantTemplates: map[string]string{
@@ -134,7 +133,7 @@ func TestRenderOpts_ConfigRender_OptionalComponents(t *testing.T) {
 			},
 			wantGateway: []string{`value: "https://otel.example"`},
 			wantTemplates: map[string]string{
-				"templates/application-services.yaml": "name: metadata-lifecycle",
+				"templates/metadata-lifecycle.yaml": "name: metadata-lifecycle",
 			},
 		},
 	}

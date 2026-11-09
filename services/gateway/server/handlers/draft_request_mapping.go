@@ -22,6 +22,11 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			Providers:     uuidStrings(v.Providers),
 			Categories:    uuidStrings(v.Categories),
 		}
+		accrualPeriodicity, err := toProtoDatasetAccrualPeriodicity(v.AccrualPeriodicity)
+		if err != nil {
+			return nil, "", err
+		}
+		metadata.AccrualPeriodicity = accrualPeriodicity
 		temporalRange, err := toProtoDatasetTemporalRange(v.TemporalCoverage, v.GeologicalTemporalCoverage)
 		if err != nil {
 			return nil, "", err
@@ -32,15 +37,14 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 		case temporalRange.geological != nil:
 			metadata.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: temporalRange.geological}
 		}
-		if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
-			metadata.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)
-		}
 		if v.QualityAnnotation.Set && !v.QualityAnnotation.Null {
 			metadata.QualityAnnotation = new(v.QualityAnnotation.Value)
 		}
-		if v.AccessRight.Set && !v.AccessRight.Null {
-			metadata.AccessRight = new(v.AccessRight.Value)
+		accessRight, err := toProtoDatasetAccessRight(v.AccessRight)
+		if err != nil {
+			return nil, "", err
 		}
+		metadata.AccessRight = accessRight
 		if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
 			metadata.SpatialCoverage = new(v.SpatialCoverage.Value)
 		}
@@ -51,13 +55,14 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.Updated = timestamppb.New(v.Updated.Value)
 		}
 		for _, id := range v.PersistentIdentifiers {
-			metadata.PersistentIdentifiers = append(metadata.PersistentIdentifiers, &metadatalifecyclev1.IdentifierInput{
-				Type:  string(id.Type),
-				Value: string(id.Value),
-			})
+			metadata.PersistentIdentifiers = append(metadata.PersistentIdentifiers, toProtoVersionedIdentifierInput(id))
 		}
 		for _, distribution := range v.Distributions {
-			metadata.Distributions = append(metadata.Distributions, toProtoDistribution(distribution))
+			mapped, err := toProtoDistribution(distribution)
+			if err != nil {
+				return nil, "", err
+			}
+			metadata.Distributions = append(metadata.Distributions, mapped)
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_Dataset{Dataset: metadata}
 		return request, gatewayapi.WriteResourceTypeDataset, nil
@@ -90,10 +95,7 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.OperatingSystem = new(v.OperatingSystem.Value)
 		}
 		for _, id := range v.Identifiers {
-			metadata.Identifiers = append(metadata.Identifiers, &metadatalifecyclev1.IdentifierInput{
-				Type:  string(id.Type),
-				Value: string(id.Value),
-			})
+			metadata.Identifiers = append(metadata.Identifiers, toProtoVersionedIdentifierInput(id))
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_SoftwareApplication{SoftwareApplication: metadata}
 		return request, gatewayapi.WriteResourceTypeSoftwareApplication, nil
@@ -129,10 +131,7 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.MainEntityOfPage = new(v.MainEntityOfPage.Value.String())
 		}
 		for _, id := range v.Identifiers {
-			metadata.Identifiers = append(metadata.Identifiers, &metadatalifecyclev1.IdentifierInput{
-				Type:  string(id.Type),
-				Value: string(id.Value),
-			})
+			metadata.Identifiers = append(metadata.Identifiers, toProtoVersionedIdentifierInput(id))
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_SoftwareSourceCode{SoftwareSourceCode: metadata}
 		return request, gatewayapi.WriteResourceTypeSoftwareSourceCode, nil

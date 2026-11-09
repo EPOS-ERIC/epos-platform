@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
@@ -31,6 +30,21 @@ func New(pool *pgxpool.Pool) *Repo {
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.DatasetInput) (domain.DatasetVersion, error) {
 	var result domain.DatasetVersion
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
+		if _, err := resourcedb.IdentifierIdentities(value.PersistentIdentifiers, nil, "metadata.persistent_identifiers"); err != nil {
+			return err
+		}
+		distributions, err := distributionIdentities(value.Distributions, nil)
+		if err != nil {
+			return err
+		}
+		parameters, err := parameterIdentities(value.Distributions, nil)
+		if err != nil {
+			return err
+		}
+		layers, err := layerIdentities(value.Distributions, nil)
+		if err != nil {
+			return err
+		}
 		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
 		if err != nil {
 			return fmt.Errorf("validate dataset categories: %w", err)
@@ -57,7 +71,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 			return fmt.Errorf("create dataset version: %w", err)
 		}
 
-		if err := PersistChildren(ctx, q, version.ID, value); err != nil {
+		if err := persistChildren(ctx, q, version.ID, value, nil, distributions, parameters, layers); err != nil {
 			return fmt.Errorf("persist dataset metadata: %w", err)
 		}
 		result, err = datasetResultByID(ctx, q, version.DatasetID, version.ID)
@@ -74,8 +88,9 @@ func (r *Repo) ReplaceDraft(
 	datasetID,
 	versionID uuid.UUID,
 	value domain.DatasetDraftInput,
-) (domain.DatasetVersion, error) {
+) (domain.DatasetVersion, []uuid.UUID, error) {
 	var result domain.DatasetVersion
+	var removed []uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		if len(value.Metadata.CategoryIDs) > 0 {
 			dataset, err := q.GetLifecycleDataset(ctx, datasetID)
@@ -100,11 +115,40 @@ func (r *Repo) ReplaceDraft(
 		if err != nil {
 			return fmt.Errorf("replace draft: %w", err)
 		}
+		current, err := datasetResultByID(ctx, q, datasetID, versionID)
+		if err != nil {
+			return err
+		}
+		identities, err := resourcedb.IdentifierIdentities(value.Metadata.PersistentIdentifiers, current.Metadata.PersistentIdentifiers, "metadata.persistent_identifiers")
+		if err != nil {
+			return err
+		}
+		distributions, err := distributionIdentities(value.Metadata.Distributions, current.Metadata.Distributions)
+		if err != nil {
+			return err
+		}
+		retained := make(map[uuid.UUID]struct{}, len(distributions))
+		for _, distribution := range distributions {
+			retained[distribution.id] = struct{}{}
+		}
+		for _, distribution := range current.Metadata.Distributions {
+			if _, ok := retained[distribution.ID]; !ok {
+				removed = append(removed, distribution.ID)
+			}
+		}
+		parameters, err := parameterIdentities(value.Metadata.Distributions, current.Metadata.Distributions)
+		if err != nil {
+			return err
+		}
+		layers, err := layerIdentities(value.Metadata.Distributions, current.Metadata.Distributions)
+		if err != nil {
+			return err
+		}
 
 		if err := q.DeleteLifecycleDatasetVersionChildren(ctx, &version.ID); err != nil {
 			return fmt.Errorf("delete draft children: %w", err)
 		}
-		if err := PersistChildren(ctx, q, version.ID, value.Metadata); err != nil {
+		if err := persistChildren(ctx, q, version.ID, value.Metadata, identities, distributions, parameters, layers); err != nil {
 			return fmt.Errorf("persist draft metadata: %w", err)
 		}
 		result, err = datasetResultByID(ctx, q, version.DatasetID, version.ID)
@@ -113,7 +157,7 @@ func (r *Repo) ReplaceDraft(
 		}
 		return nil
 	})
-	return result, resourcedb.LifecycleError(err)
+	return result, removed, resourcedb.LifecycleError(err)
 }
 
 // Get returns one selected version with all version-owned metadata and canonical references.
@@ -299,12 +343,20 @@ func (r *Repo) Unpublish(ctx context.Context, actorID string, datasetID, version
 	return datasetResultByID(ctx, r.q, v.DatasetID, v.ID)
 }
 
-func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) error {
+func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) ([]uuid.UUID, error) {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
-		return fmt.Errorf("discard dataset: %w", err)
+		return nil, fmt.Errorf("discard dataset: %w", err)
 	}
 
+	var removed []uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
+		distributions, err := q.ListLifecycleDistributions(ctx, versionID)
+		if err != nil {
+			return fmt.Errorf("list discarded distributions: %w", err)
+		}
+		for _, distribution := range distributions {
+			removed = append(removed, distribution.ID)
+		}
 		id, err := q.DiscardLifecycleDatasetVersion(ctx, versionID)
 		if err != nil {
 			return fmt.Errorf("discard dataset version: %w", err)
@@ -315,25 +367,26 @@ func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) erro
 		return nil
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return apperror.Default(apperror.CodeConflict)
+		return nil, apperror.Default(apperror.CodeConflict)
 	}
 	if err != nil {
-		return fmt.Errorf("discard dataset transaction: %w", err)
+		return nil, fmt.Errorf("discard dataset transaction: %w", err)
 	}
 
-	return nil
+	return removed, nil
 }
 
-func (r *Repo) DraftFromPublication(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, error) {
+func (r *Repo) DraftFromPublication(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusPUBLISHED, uuid.Nil, true)
 }
 
-func (r *Repo) DraftFromLatestArchive(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, error) {
+func (r *Repo) DraftFromLatestArchive(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
 }
 
-func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID) (domain.DatasetVersion, error) {
+func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	var result domain.DatasetVersion
+	var pairs map[uuid.UUID]uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		source, err := q.GetPublishedLifecycleDatasetVersion(ctx, sourceDatasetID)
 		if err != nil {
@@ -357,13 +410,17 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetI
 		if err != nil {
 			return fmt.Errorf("clone published dataset version: %w", err)
 		}
+		pairs, err = clonedDistributions(ctx, q, source.ID, version.ID)
+		if err != nil {
+			return err
+		}
 		result, err = datasetResultByID(ctx, q, version.DatasetID, version.ID)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
-	return result, resourcedb.LifecycleError(err)
+	return result, pairs, resourcedb.LifecycleError(err)
 }
 
 func (r *Repo) clone(
@@ -374,8 +431,9 @@ func (r *Repo) clone(
 	status sqlc.ResourceStatus,
 	targetGroupID uuid.UUID,
 	categories bool,
-) (domain.DatasetVersion, error) {
+) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	var result domain.DatasetVersion
+	var pairs map[uuid.UUID]uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
 		var source sqlc.DatasetVersion
 		var err error
@@ -405,13 +463,31 @@ func (r *Repo) clone(
 		if err != nil {
 			return fmt.Errorf("clone dataset version: %w", err)
 		}
+		pairs, err = clonedDistributions(ctx, q, source.ID, v.ID)
+		if err != nil {
+			return err
+		}
 		result, err = datasetResultByID(ctx, q, v.DatasetID, v.ID)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
-	return result, resourcedb.LifecycleError(err)
+	return result, pairs, resourcedb.LifecycleError(err)
+}
+
+func clonedDistributions(ctx context.Context, q *sqlc.Queries, sourceID, targetID uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
+	rows, err := q.ListClonedLifecycleDistributions(ctx, sqlc.ListClonedLifecycleDistributionsParams{SourceVersionID: sourceID, TargetVersionID: targetID})
+	if err != nil {
+		return nil, fmt.Errorf("list cloned distributions: %w", err)
+	}
+
+	pairs := make(map[uuid.UUID]uuid.UUID, len(rows))
+	for _, row := range rows {
+		pairs[row.SourceID] = row.TargetID
+	}
+
+	return pairs, nil
 }
 
 func (r *Repo) ensureVersion(ctx context.Context, datasetID, versionID uuid.UUID) error {
@@ -448,8 +524,21 @@ func datasetResultFromRow(ctx context.Context, q *sqlc.Queries, version sqlc.Get
 }
 
 func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.DatasetInput) error {
+	return persistChildren(ctx, q, versionID, value, nil, nil, nil, nil)
+}
+
+func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value domain.DatasetInput, identities map[uuid.UUID]domain.Identifier, distributions []distributionIdentity, parameters map[uuid.UUID]domain.Parameter, layers map[uuid.UUID]uuid.UUID) error {
+	if distributions == nil {
+		distributions = make([]distributionIdentity, len(value.Distributions))
+		for i := range distributions {
+			distributions[i] = distributionIdentity{id: uuid.New(), resourceID: uuid.New(), serviceID: uuid.New(), serviceResourceID: uuid.New()}
+		}
+	}
 	for _, identifier := range value.PersistentIdentifiers {
+		id, resourceID := resourcedb.IdentifierIDs(identifier, identities)
 		if err := q.AddLifecycleDatasetIdentifier(ctx, sqlc.AddLifecycleDatasetIdentifierParams{
+			ID:               id,
+			ResourceID:       resourceID,
 			Type:             string(identifier.Type),
 			Value:            identifier.Value,
 			DatasetVersionID: &versionID,
@@ -488,28 +577,15 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			continue
 		}
 		service := distribution.WebService
-		var start, end *time.Time
-		if service.TemporalCoverage != nil {
-			start, end = service.TemporalCoverage.Start, service.TemporalCoverage.End
-		}
 		providerID := service.ProviderID
-		var title, description, uri *string
-		if service.Documentation != nil {
-			title, description, uri = service.Documentation.Title, service.Documentation.Description, &service.Documentation.URI
-		}
 		created, err := q.AddLifecycleWebService(ctx, sqlc.AddLifecycleWebServiceParams{
-			DatasetVersionID:         versionID,
-			Name:                     service.Name,
-			Description:              service.Description,
-			Type:                     sqlc.WebServiceType(service.Type),
-			VisibleOn:                visibleOnValues(service.VisibleOn),
-			ProviderOrganizationID:   providerID,
-			DocumentationTitle:       title,
-			DocumentationDescription: description,
-			DocumentationUri:         uri,
-			SpatialCoverage:          service.SpatialCoverage,
-			TemporalStart:            start,
-			TemporalEnd:              end,
+			ID:                     distributions[i].serviceID,
+			ResourceID:             distributions[i].serviceResourceID,
+			DatasetVersionID:       versionID,
+			Type:                   sqlc.WebServiceType(service.Type),
+			VisibleOn:              visibleOnValues(service.VisibleOn),
+			ProviderOrganizationID: providerID,
+			DocumentationUri:       service.DocumentationURI,
 		})
 		if err != nil {
 			return fmt.Errorf("add web service: %w", err)
@@ -546,14 +622,14 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				}
 				bodyID = &body.ID
 				for _, parameter := range configuration.Body.Parameters {
-					if _, err := persistParameter(ctx, q, parameter, parameterOwner{webServiceBodyID: bodyID}, nil, false); err != nil {
+					if _, err := persistParameter(ctx, q, parameter, parameterOwner{webServiceBodyID: bodyID}, nil, false, parameters); err != nil {
 						return fmt.Errorf("add web service body parameter: %w", err)
 					}
 				}
 			}
 			for _, parameter := range configuration.Parameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{webServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{webServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add web service parameter: %w", err)
 				}
 			}
@@ -573,7 +649,7 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.Parameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wfsServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wfsServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WFS parameter: %w", err)
 				}
 			}
@@ -584,25 +660,32 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				return fmt.Errorf("add WMTS configuration: %w", err)
 			}
 			for position, layer := range configuration.Layers {
+				id, resourceID := layerIDs(layer.ResourceID, layers)
 				styles := layer.Styles
 				if styles == nil {
 					styles = []string{}
 				}
 				if err := q.AddLifecycleWMTSLayer(ctx, sqlc.AddLifecycleWMTSLayerParams{
-					WebServiceID: created.ID, Name: layer.Name, Position: int32(position), DefaultStyle: layer.DefaultStyle, Styles: styles,
+					ID:           id,
+					ResourceID:   resourceID,
+					WebServiceID: created.ID,
+					Name:         layer.Name,
+					Position:     int32(position),
+					DefaultStyle: layer.DefaultStyle,
+					Styles:       styles,
 				}); err != nil {
 					return fmt.Errorf("add WMTS layer %q: %w", layer.Name, err)
 				}
 			}
 			for _, parameter := range configuration.GetTileParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetTileServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetTileServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMTS GetTile parameter: %w", err)
 				}
 			}
 			for _, parameter := range configuration.GetFeatureInfoParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMTS GetFeatureInfo parameter: %w", err)
 				}
 			}
@@ -617,7 +700,10 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				return fmt.Errorf("add WMS configuration: %w", err)
 			}
 			for layerPosition, layer := range configuration.Layers {
+				id, resourceID := layerIDs(layer.ResourceID, layers)
 				if err := q.AddLifecycleWMSLayer(ctx, sqlc.AddLifecycleWMSLayerParams{
+					ID:           id,
+					ResourceID:   resourceID,
 					WebServiceID: created.ID,
 					Name:         layer.Name,
 					Position:     int32(layerPosition),
@@ -629,13 +715,13 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.GetMapParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetMapServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetMapServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMS GetMap parameter: %w", err)
 				}
 			}
 			for _, parameter := range configuration.GetFeatureInfoParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMS GetFeatureInfo parameter: %w", err)
 				}
 			}
@@ -645,14 +731,14 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 	}
 	for i, distribution := range value.Distributions {
 		params := sqlc.AddLifecycleDistributionParams{
+			ID:                     distributions[i].id,
+			ResourceID:             distributions[i].resourceID,
 			DatasetVersionID:       versionID,
 			Title:                  distribution.Title,
 			Description:            distribution.Description,
 			License:                distribution.License,
-			SourceIssuedAt:         distribution.Issued,
-			SourceModifiedAt:       distribution.Modified,
 			ByteSize:               nil,
-			Type:                   string(distribution.Type),
+			Type:                   sqlc.DistributionType(distribution.Type),
 			DownloadableFileUrl:    nil,
 			DownloadableFileFormat: nil,
 			WebServiceID:           nil,
@@ -734,9 +820,9 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		Title:                      version.Title,
 		Description:                version.Description,
 		Keywords:                   version.Keywords,
-		AccrualPeriodicity:         version.AccrualPeriodicity,
+		AccrualPeriodicity:         (*domain.AccrualPeriodicity)(version.AccrualPeriodicity),
 		QualityAnnotation:          version.QualityAnnotation,
-		AccessRight:                version.AccessRight,
+		AccessRight:                (*domain.AccessRight)(version.AccessRight),
 		Distributions:              nil,
 		SpatialCoverage:            version.SpatialCoverage,
 		TemporalCoverage:           temporal(version.TemporalStart, version.TemporalEnd),
@@ -867,6 +953,8 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 			return nil, fmt.Errorf("WMS layer references non-WMS service %s", value.WebServiceID)
 		}
 		configuration.Layers = append(configuration.Layers, domain.WMSLayer{
+			ID:           value.ID,
+			ResourceID:   value.ResourceID,
 			Name:         value.Name,
 			DefaultStyle: value.DefaultStyle,
 			Styles:       value.Styles,
@@ -899,7 +987,13 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		if !ok {
 			return nil, fmt.Errorf("WMTS layer references non-WMTS service %s", value.WebServiceID)
 		}
-		configuration.Layers = append(configuration.Layers, domain.WMTSLayer{Name: value.Name, DefaultStyle: value.DefaultStyle, Styles: value.Styles})
+		configuration.Layers = append(configuration.Layers, domain.WMTSLayer{
+			ID:           value.ID,
+			ResourceID:   value.ResourceID,
+			Name:         value.Name,
+			DefaultStyle: value.DefaultStyle,
+			Styles:       value.Styles,
+		})
 		service.Configuration = configuration
 		result[value.WebServiceID] = service
 	}

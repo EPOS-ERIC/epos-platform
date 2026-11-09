@@ -5,6 +5,7 @@ services:
     ports:
       - "${GATEWAY_PORT}:5000"
     environment:
+      LOG_LEVEL: "${LOG_LEVEL}"
       MAILGUN_API_TOKEN: "${MAILGUN_API_TOKEN}"
       OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
       OTEL_SERVICE_NAME: gateway
@@ -27,8 +28,9 @@ services:
     image: ${METADATA_LIFECYCLE_IMAGE}
     platform: linux/amd64
     environment:
+      LOG_LEVEL: "${LOG_LEVEL}"
       SERVER_PORT: "5000"
-      GATEWAY_PUBLIC_URL: ${GATEWAY_PUBLIC_URL}
+      BACKOFFICE_URL: ${BACKOFFICE_URL}
       DB_HOST: ${METADATA_DB_HOST}
       DB_PORT: ${METADATA_DB_PORT}
       DB_NAME: ${METADATA_DB_NAME}
@@ -57,6 +59,7 @@ services:
     image: ${DATA_RETRIEVER_IMAGE}
     platform: linux/amd64
     environment:
+      LOG_LEVEL: "${LOG_LEVEL}"
       GRPC_LISTEN_ADDR: ":8100"
       DB_HOST: ${RETRIEVER_DB_HOST}
       DB_PORT: ${RETRIEVER_DB_PORT}
@@ -82,10 +85,42 @@ services:
       retries: 20
       start_period: 20s
 
+  converter:
+    image: ${CONVERTER_IMAGE}
+    platform: linux/amd64
+    environment:
+      LOG_LEVEL: "${LOG_LEVEL}"
+      SERVER_PORT: "8200"
+      DB_HOST: ${CONVERTER_DB_HOST}
+      DB_PORT: ${CONVERTER_DB_PORT}
+      DB_NAME: ${CONVERTER_DB_NAME}
+      DB_USER: ${CONVERTER_DB_USER}
+      DB_PASSWORD: ${CONVERTER_DB_PASSWORD:?converter database password is required}
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: converter
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
+{{- if .Components.ConverterDatabase.Enabled }}
+    depends_on:
+      converter-db:
+        condition: service_healthy
+{{- end }}
+    volumes: ["converter-plugins:/data/plugins"]
+    networks: [epos]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   sharing:
     image: ${SHARING_IMAGE}
     platform: linux/amd64
     environment:
+      LOG_LEVEL: "${LOG_LEVEL}"
       SERVER_PORT: "8200"
       DB_HOST: ${SHARING_DB_HOST}
       DB_PORT: ${SHARING_DB_PORT}
@@ -159,6 +194,23 @@ services:
     networks: [epos]
     restart: unless-stopped
 {{- end }}
+{{- if .Components.ConverterDatabase.Enabled }}
+  converter-db:
+    image: ${CONVERTER_DB_IMAGE}
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${CONVERTER_DB_NAME}
+      POSTGRES_USER: ${CONVERTER_DB_USER}
+      POSTGRES_PASSWORD: ${CONVERTER_DB_PASSWORD}
+    volumes: ["converter-db:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [epos]
+    restart: unless-stopped
+{{- end }}
 {{- if .Components.SharingDatabase.Enabled }}
   sharing-db:
     image: ${SHARING_DB_IMAGE}
@@ -182,6 +234,12 @@ services:
     platform: linux/amd64
     ports: ["${AAI_SERVICE_PORT}:8080"]
     environment:
+      LOG_LEVEL: "${LOG_LEVEL}"
+      OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED}"
+      OTEL_SERVICE_NAME: aai-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL}"
+      OTEL_METRIC_EXPORT_INTERVAL: "${OTEL_METRIC_EXPORT_INTERVAL}"
       APP_SECURE_COOKIES: ${SECURE_COOKIES}
       APP_CORS_ALLOW_ORIGIN: "*"
       INITIAL_ADMIN_NAME: ${ADMIN_NAME}
@@ -248,6 +306,8 @@ configs:
           url: "metadata-lifecycle:5000"
         data-retriever:
           url: "data-retriever:8100"
+        converter:
+          url: "converter:8200"
         sharing:
           url: "sharing:8200"
         auth:
@@ -257,10 +317,13 @@ configs:
           enable: {{.Components.Gateway.Mailgun.Enable}}
           domain: {{yamlString .Components.Gateway.Mailgun.Domain}}
           from: {{yamlString .Components.Gateway.Mailgun.From}}
+          recipient_overrides: [{{range $i, $email := .Components.Gateway.Mailgun.RecipientOverrides}}{{if $i}}, {{end}}{{yamlString $email}}{{end}}]
 
 volumes:
   metadata-db:
   retriever-db:
+  converter-db:
+  converter-plugins:
   sharing-db:
   aai:
   otel-lgtm:

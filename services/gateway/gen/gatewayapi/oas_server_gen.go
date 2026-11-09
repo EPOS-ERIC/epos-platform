@@ -42,8 +42,8 @@ type Handler interface {
 	BlockUser(ctx context.Context, req *BlockUserRequest, params BlockUserParams) error
 	// CopyResource implements copyResource operation.
 	//
-	// Creates a draft copy in the group identified by `groupId`. The target group is taken from the URL,
-	// not the request body.
+	// Creates an independent draft copy in the group identified by `groupId`, with new resource and child
+	// identities. The target group is taken from the URL, not the request body.
 	//
 	// POST /groups/{groupId}/resources/{resourceType}/{id}/copy
 	CopyResource(ctx context.Context, params CopyResourceParams) (*WriteResult, error)
@@ -60,6 +60,20 @@ type Handler interface {
 	//
 	// POST /contact-points
 	CreateContactPoint(ctx context.Context, req *CreateContactPointRequest) (*ContactPoint, error)
+	// CreateConversionPlugin implements createConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. The plugin is enabled by default and installation
+	// is attempted immediately. Failed installation is retried periodically.
+	//
+	// POST /conversion-plugins
+	CreateConversionPlugin(ctx context.Context, req *CreateConversionPluginRequest) (*ManagedConversionPlugin, error)
+	// CreateConversionRelation implements createConversionRelation operation.
+	//
+	// Requires the global.converter.manage permission. Input format must match a current native format of
+	// the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+	//
+	// POST /conversion-relations
+	CreateConversionRelation(ctx context.Context, req *ConversionRelationInput) (*ConversionRelation, error)
 	// CreateGroup implements createGroup operation.
 	//
 	// Create group.
@@ -111,6 +125,18 @@ type Handler interface {
 	//
 	// DELETE /contact-points/{contactPointId}
 	DeleteContactPoint(ctx context.Context, params DeleteContactPointParams) error
+	// DeleteConversionPlugin implements deleteConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. Deletes its relations and installation.
+	//
+	// DELETE /conversion-plugins/{pluginId}
+	DeleteConversionPlugin(ctx context.Context, params DeleteConversionPluginParams) error
+	// DeleteConversionRelation implements deleteConversionRelation operation.
+	//
+	// Requires the global.converter.manage permission.
+	//
+	// DELETE /conversion-relations/{conversionId}
+	DeleteConversionRelation(ctx context.Context, params DeleteConversionRelationParams) error
 	// DeleteGroup implements deleteGroup operation.
 	//
 	// Delete group.
@@ -169,13 +195,15 @@ type Handler interface {
 	DownloadDistribution(ctx context.Context, params DownloadDistributionParams) (*DownloadDistribution2XXStatusCode, error)
 	// DraftFromArchive implements draftFromArchive operation.
 	//
-	// Create draft from archive.
+	// Creates a draft version with new version-specific IDs and the same logical resource IDs as the
+	// latest archived version.
 	//
 	// POST /resources/{resourceType}/{id}/draft-from-archive
 	DraftFromArchive(ctx context.Context, params DraftFromArchiveParams) (*WriteResult, error)
 	// DraftFromPublication implements draftFromPublication operation.
 	//
-	// Create draft from publication.
+	// Creates a draft version with new version-specific IDs and the same logical resource IDs as the
+	// published version.
 	//
 	// POST /resources/{resourceType}/{id}/draft-from-publication
 	DraftFromPublication(ctx context.Context, params DraftFromPublicationParams) (*WriteResult, error)
@@ -192,6 +220,19 @@ type Handler interface {
 	//
 	// GET /contact-points/{contactPointId}
 	GetContactPoint(ctx context.Context, params GetContactPointParams) (*ContactPoint, error)
+	// GetConversionPlugin implements getConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. Installation status is local to the responding
+	// converter instance.
+	//
+	// GET /conversion-plugins/{pluginId}
+	GetConversionPlugin(ctx context.Context, params GetConversionPluginParams) (*ManagedConversionPlugin, error)
+	// GetConversionRelation implements getConversionRelation operation.
+	//
+	// Requires the global.converter.manage permission.
+	//
+	// GET /conversion-relations/{conversionId}
+	GetConversionRelation(ctx context.Context, params GetConversionRelationParams) (*ConversionRelation, error)
 	// GetGroup implements getGroup operation.
 	//
 	// Retrieve public group metadata from Metadata Lifecycle. Membership data is not included.
@@ -256,6 +297,25 @@ type Handler interface {
 	//
 	// GET /contact-points
 	ListContactPoints(ctx context.Context) ([]ContactPoint, error)
+	// ListConversionPlugins implements listConversionPlugins operation.
+	//
+	// Requires the global.converter.manage permission. Installation status is local to the responding
+	// converter instance.
+	//
+	// GET /conversion-plugins
+	ListConversionPlugins(ctx context.Context) ([]ManagedConversionPlugin, error)
+	// ListConversionRelations implements listConversionRelations operation.
+	//
+	// Requires the global.converter.manage permission.
+	//
+	// GET /conversion-relations
+	ListConversionRelations(ctx context.Context) ([]ConversionRelation, error)
+	// ListDistributionConversionRelations implements listDistributionConversionRelations operation.
+	//
+	// Requires permission to read the distribution. Includes disabled and uninstalled plugins.
+	//
+	// GET /distributions/{distributionId}/conversion-relations
+	ListDistributionConversionRelations(ctx context.Context, params ListDistributionConversionRelationsParams) ([]DistributionConversionPlugin, error)
 	// ListGroupCategories implements listGroupCategories operation.
 	//
 	// List group categories.
@@ -379,6 +439,20 @@ type Handler interface {
 	//
 	// PUT /contact-points/{contactPointId}
 	ReplaceContactPoint(ctx context.Context, req *ReplaceContactPointRequest, params ReplaceContactPointParams) (*ContactPoint, error)
+	// ReplaceConversionPlugin implements replaceConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. Changing repository or branch triggers immediate
+	// synchronization. A failed update retains the last working installation and is retried periodically.
+	//
+	// PUT /conversion-plugins/{pluginId}
+	ReplaceConversionPlugin(ctx context.Context, req *ReplaceConversionPluginRequest, params ReplaceConversionPluginParams) (*ManagedConversionPlugin, error)
+	// ReplaceConversionRelation implements replaceConversionRelation operation.
+	//
+	// Requires the global.converter.manage permission. Input format must match a current native format of
+	// the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+	//
+	// PUT /conversion-relations/{conversionId}
+	ReplaceConversionRelation(ctx context.Context, req *ConversionRelationInput, params ReplaceConversionRelationParams) (*ConversionRelation, error)
 	// ReplaceGroup implements replaceGroup operation.
 	//
 	// Replace group.
@@ -399,11 +473,30 @@ type Handler interface {
 	ReplaceOrganization(ctx context.Context, req *ReplaceOrganizationRequest, params ReplaceOrganizationParams) (*CanonicalOrganization, error)
 	// ReplaceResourceDraftVersion implements replaceResourceDraftVersion operation.
 	//
-	// Replaces an editable draft only. Request body shape is selected by `resource_type` and includes the
-	// current revision.
+	// Replaces all metadata in an editable draft. Request shape is selected by `resource_type` and
+	// includes the current revision. To retain a distribution, web service, parameter, layer, or
+	// identifier, send its `resource_id` from the draft read response. Omit `resource_id` for a new child;
+	// omit an existing child from its collection to remove it. IDs must belong to the same draft and
+	// parent. Parameters cannot move between collections or web services. Changing a parameter's PATH,
+	// QUERY, or HEADER location within its collection is an edit. Child `id` identifies the
+	// version-specific record and is not sent on writes.
 	//
 	// PUT /resources/{id}/versions/{versionId}/draft
 	ReplaceResourceDraftVersion(ctx context.Context, req ReplaceResourceDraftRequest, params ReplaceResourceDraftVersionParams) (*WriteResult, error)
+	// RequestDistributionContact implements requestDistributionContact operation.
+	//
+	// Sends the message separately to each contact point on the published web service. Requires
+	// authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+	//
+	// POST /distributions/{distributionId}/contact-requests
+	RequestDistributionContact(ctx context.Context, req *ContactRequestMessage, params RequestDistributionContactParams) (RequestDistributionContactRes, error)
+	// RequestDistributionConversion implements requestDistributionConversion operation.
+	//
+	// Requires edit permission for a draft dataset and a web-service distribution. Email delivery is
+	// asynchronous and best effort.
+	//
+	// POST /distributions/{distributionId}/conversion-requests
+	RequestDistributionConversion(ctx context.Context, req *RequestDistributionConversionReq, params RequestDistributionConversionParams) error
 	// RequestGroupMembership implements requestGroupMembership operation.
 	//
 	// Create the authenticated user's pending membership request with zero or more requested group roles.
@@ -416,6 +509,13 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/role-requests
 	RequestGroupRole(ctx context.Context, req *CreateRoleRequest, params RequestGroupRoleParams) (*RoleRequest, error)
+	// RequestResourceContact implements requestResourceContact operation.
+	//
+	// Sends the message separately to each contact point on the published resource. Requires
+	// authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+	//
+	// POST /resources/{resourceType}/{id}/contact-requests
+	RequestResourceContact(ctx context.Context, req *ContactRequestMessage, params RequestResourceContactParams) (RequestResourceContactRes, error)
 	// RevokeGlobalPermission implements revokeGlobalPermission operation.
 	//
 	// Revoke a global permission from a user. Requires global.permission.manage or global ADMIN.
@@ -454,6 +554,12 @@ type Handler interface {
 	//
 	// PUT /users/{userId}/notification-subscriptions/{topicKey}
 	SubscribeUserNotification(ctx context.Context, params SubscribeUserNotificationParams) error
+	// SyncConversionPlugin implements syncConversionPlugin operation.
+	//
+	// Requires the global.converter.manage permission. Waits for synchronization to finish.
+	//
+	// POST /conversion-plugins/{pluginId}/sync
+	SyncConversionPlugin(ctx context.Context, params SyncConversionPluginParams) (*ManagedConversionPlugin, error)
 	// UnblockUser implements unblockUser operation.
 	//
 	// Restore a blocked user to ACTIVE. Requires active global ADMIN.

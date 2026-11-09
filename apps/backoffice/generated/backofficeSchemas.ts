@@ -3,6 +3,169 @@
  *
  * @version 1.0.0
  */
+export type ConversionRuntime = "python" | "java" | "binary";
+
+export type CreateConversionPluginRequest = {
+  /**
+   * @minLength 1
+   */
+  name: string;
+  /**
+   * @default
+   */
+  description?: string;
+  /**
+   * Public Git repository URL.
+   */
+  repository: string;
+  /**
+   * @minLength 1
+   */
+  branch: string;
+  runtime: ConversionRuntime;
+  arguments?: string[];
+};
+
+export type ReplaceConversionPluginRequest = {
+  /**
+   * @minLength 1
+   */
+  name: string;
+  /**
+   * @default
+   */
+  description?: string;
+  /**
+   * Public Git repository URL.
+   */
+  repository: string;
+  /**
+   * @minLength 1
+   */
+  branch: string;
+  runtime: ConversionRuntime;
+  arguments?: string[];
+  enabled: boolean;
+};
+
+export type ManagedConversionPlugin = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  name: string;
+  description: string;
+  repository: string;
+  branch: string;
+  runtime: ConversionRuntime;
+  arguments: string[];
+  enabled: boolean;
+  /**
+   * Installation status on the responding converter instance.
+   */
+  installed: boolean;
+  /**
+   * Git commit installed on the responding converter instance.
+   */
+  installed_commit: string | null;
+  /**
+   * Immutable creator user ID.
+   */
+  created_by: string;
+  /**
+   * Last administrator to change the record.
+   */
+  updated_by: string;
+};
+
+export type DistributionConversionPlugin = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  name: string;
+  description: string;
+  repository: string;
+  enabled: boolean;
+  /**
+   * Installation status on the responding converter instance.
+   */
+  installed: boolean;
+  branch: string;
+  runtime: ConversionRuntime;
+  arguments: string[];
+  relations: DistributionConversionRelation[];
+};
+
+export type DistributionConversionRelation = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  input_format: string;
+  output_format: string;
+  /**
+   * @format uuid
+   */
+  distribution_id: string;
+};
+
+export type ConversionRelationInput = {
+  /**
+   * @format uuid
+   */
+  distribution_id: string;
+  /**
+   * @format uuid
+   */
+  plugin_id: string;
+  /**
+   * Exact native format string.
+   *
+   * @minLength 1
+   */
+  input_format: string;
+  /**
+   * Output MIME type.
+   *
+   * @minLength 1
+   */
+  output_format: string;
+};
+
+export type ConversionRelation = {
+  /**
+   * Conversion ID used to select this exact relation.
+   *
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format uuid
+   */
+  distribution_id: string;
+  /**
+   * @format uuid
+   */
+  plugin_id: string;
+  /**
+   * Exact native format string.
+   */
+  input_format: string;
+  /**
+   * Output MIME type.
+   */
+  output_format: string;
+  /**
+   * Immutable creator user ID.
+   */
+  created_by: string;
+  /**
+   * Last administrator to change the record.
+   */
+  updated_by: string;
+};
+
 export type PreparedDistributionRequest = {
   method: "GET" | "POST" | "PUT" | "DELETE";
   /**
@@ -143,7 +306,8 @@ export type GlobalPermission =
   | "global.resource.publish"
   | "global.resource.unpublish"
   | "global.category.manage"
-  | "global.configuration.manage";
+  | "global.configuration.manage"
+  | "global.converter.manage";
 
 /**
  * Group-scoped permission key.
@@ -181,13 +345,15 @@ export type NotificationTopicKey =
   | "group.resource.submitted"
   | "group.resource.published"
   | "global.resource.submitted"
-  | "global.resource.published";
+  | "global.resource.published"
+  | "global.conversion.requested";
 
 export type GlobalNotificationTopicKey =
   | "global.membership.requested"
   | "global.role_request.requested"
   | "global.resource.submitted"
-  | "global.resource.published";
+  | "global.resource.published"
+  | "global.conversion.requested";
 
 export type GroupNotificationTopicKey =
   | "group.membership.requested"
@@ -265,13 +431,43 @@ export type DiscoveryConcept = "DATA" | "FACILITIES" | "SOFTWARE";
 export type VersioningStatus =
   "PUBLISHED" | "DRAFT" | "SUBMITTED" | "ARCHIVED" | "REJECTED";
 
+export type DatasetAccessRight =
+  | "NON_PUBLIC"
+  | "NORMAL"
+  | "OP_DATPRO"
+  | "PUBLIC"
+  | "RESTRICTED"
+  | "CONFIDENTIAL"
+  | "SENSITIVE"
+  | null;
+
+export type DatasetAccrualPeriodicity =
+  | "TRIENNIAL"
+  | "BIENNIAL"
+  | "ANNUAL"
+  | "SEMIANNUAL"
+  | "THREE_TIMES_A_YEAR"
+  | "QUARTERLY"
+  | "BIMONTHLY"
+  | "MONTHLY"
+  | "SEMIMONTHLY"
+  | "BIWEEKLY"
+  | "THREE_TIMES_A_MONTH"
+  | "WEEKLY"
+  | "SEMIWEEKLY"
+  | "THREE_TIMES_A_WEEK"
+  | "DAILY"
+  | "CONTINUOUS"
+  | "IRREGULAR"
+  | null;
+
 export type DatasetDraftMetadata = {
   title: NonBlankString;
   description: NonBlankString;
   keywords?: Keyword[];
-  accrual_periodicity?: string | null;
+  accrual_periodicity?: DatasetAccrualPeriodicity;
   quality_annotation?: string | null;
-  access_right?: string | null;
+  access_right?: DatasetAccessRight;
   distributions?: DistributionDraft[];
   /**
    * WKT POINT or POLYGON geometry in EPSG:4326.
@@ -285,7 +481,7 @@ export type DatasetDraftMetadata = {
    * Mutually exclusive with temporal_coverage.
    */
   geological_temporal_coverage?: GeologicalTemporalCoverage;
-  persistent_identifiers?: IdentifierInput[];
+  persistent_identifiers?: VersionedIdentifierInput[];
   contact_points?: string[];
   providers?: string[];
   categories?: string[];
@@ -316,7 +512,7 @@ export type SoftwareApplicationDraftMetadata = {
    */
   main_entity_of_page?: string;
   creators?: string[];
-  identifiers?: IdentifierInput[];
+  identifiers?: VersionedIdentifierInput[];
   categories?: string[];
   contact_points?: string[];
 };
@@ -339,9 +535,18 @@ export type SoftwareSourceCodeDraftMetadata = {
   main_entity_of_page?: string;
   version?: string | null;
   creators?: string[];
-  identifiers?: IdentifierInput[];
+  identifiers?: VersionedIdentifierInput[];
   categories?: string[];
   contact_points?: string[];
+};
+
+export type VersionedIdentifierInput = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
+  type: NonBlankString;
+  value: NonBlankString;
 };
 
 export type IdentifierInput = {
@@ -353,18 +558,14 @@ export type DistributionDraft =
   WebServiceDistributionDraft | DownloadableFileDistributionDraft;
 
 export type WebServiceDistributionDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   title: string;
   description?: string;
   license?: string | null;
   type: "WEB_SERVICE";
-  /**
-   * @format date-time
-   */
-  issued?: string | null;
-  /**
-   * @format date-time
-   */
-  modified?: string | null;
   /**
    * @format int64
    * @minimum 1
@@ -374,18 +575,14 @@ export type WebServiceDistributionDraft = {
 };
 
 export type DownloadableFileDistributionDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   title: string;
   description?: string;
   license?: string | null;
   type: "DOWNLOADABLE_FILE";
-  /**
-   * @format date-time
-   */
-  issued?: string | null;
-  /**
-   * @format date-time
-   */
-  modified?: string | null;
   /**
    * @format int64
    * @minimum 1
@@ -395,11 +592,10 @@ export type DownloadableFileDistributionDraft = {
 };
 
 export type WebServiceDraft = {
-  name: NonBlankString;
   /**
-   * @minLength 1
+   * @format uuid
    */
-  description?: string | null;
+  resource_id?: string;
   /**
    * @minItems 1
    */
@@ -408,15 +604,11 @@ export type WebServiceDraft = {
    * @format uuid
    */
   provider?: string;
-  documentation?: Documentation;
   /**
-   * WKT POINT or POLYGON geometry in EPSG:4326.
-   *
+   * @format uri
    * @minLength 1
-   * @example POINT (12.5 41.9)
    */
-  spatial_coverage?: string | null;
-  temporal_coverage?: TemporalCoverage;
+  documentation_uri?: string;
   contact_points?: string[];
   configuration: WebServiceConfigurationDraft;
 };
@@ -558,6 +750,10 @@ export type WmtsWebServiceConfigurationDraft = {
 };
 
 export type WmtsLayerDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   name: NonBlankString;
   /**
    * Configured default style. When omitted, use the provider default if allowed by styles.
@@ -575,6 +771,10 @@ export type WmtsLayerDraft = {
 };
 
 export type WmsLayerDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   name: NonBlankString;
   /**
    * Default configured style. Empty string uses the provider default.
@@ -620,6 +820,10 @@ export type ScalarParameterDraft =
   | DateTimeScalarParameterDraft;
 
 export type StringParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "STRING";
   /**
    * @format int32
@@ -635,7 +839,10 @@ export type StringParameterDraft = {
   explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
-  ["default"]?: string | null;
+  /**
+   * @minItems 1
+   */
+  ["default"]?: string[] | null;
   /**
    * @minItems 1
    */
@@ -644,6 +851,10 @@ export type StringParameterDraft = {
 };
 
 export type BooleanParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "BOOLEAN";
   /**
    * @format int32
@@ -662,6 +873,10 @@ export type BooleanParameterDraft = {
 };
 
 export type IntegerParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "INTEGER";
   /**
    * @format int32
@@ -686,13 +901,17 @@ export type IntegerParameterDraft = {
    */
   maximum?: number | null;
   /**
-   * @format int64
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
 
 export type FloatParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "FLOAT";
   /**
    * @format int32
@@ -717,13 +936,17 @@ export type FloatParameterDraft = {
    */
   maximum?: number | null;
   /**
-   * @format double
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
 
 export type DateTimeParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "DATETIME";
   /**
    * @format int32
@@ -758,6 +981,10 @@ export type StringParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "STRING";
   /**
    * @format int32
@@ -773,7 +1000,10 @@ export type StringParameter = {
   explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
-  ["default"]?: string | null;
+  /**
+   * @minItems 1
+   */
+  ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
@@ -783,6 +1013,10 @@ export type BooleanParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "BOOLEAN";
   /**
    * @format int32
@@ -805,6 +1039,10 @@ export type IntegerParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "INTEGER";
   /**
    * @format int32
@@ -829,9 +1067,9 @@ export type IntegerParameter = {
    */
   maximum?: number | null;
   /**
-   * @format int64
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
 
@@ -840,6 +1078,10 @@ export type FloatParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "FLOAT";
   /**
    * @format int32
@@ -864,9 +1106,9 @@ export type FloatParameter = {
    */
   maximum?: number | null;
   /**
-   * @format double
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
 
@@ -875,6 +1117,10 @@ export type DateTimeParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "DATETIME";
   /**
    * @format int32
@@ -905,6 +1151,10 @@ export type DateTimeParameter = {
 };
 
 export type TemplateParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "TEMPLATE";
   /**
    * @format int32
@@ -931,6 +1181,10 @@ export type TemplateParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "TEMPLATE";
   /**
    * @format int32
@@ -953,6 +1207,10 @@ export type TemplateParameter = {
 };
 
 export type StringScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "STRING";
   /**
    * @format int32
@@ -965,12 +1223,19 @@ export type StringScalarParameterDraft = {
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
-  ["default"]?: string | null;
+  /**
+   * @minItems 1
+   */
+  ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
 
 export type BooleanScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "BOOLEAN";
   /**
    * @format int32
@@ -987,6 +1252,10 @@ export type BooleanScalarParameterDraft = {
 };
 
 export type IntegerScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "INTEGER";
   /**
    * @format int32
@@ -1008,13 +1277,17 @@ export type IntegerScalarParameterDraft = {
    */
   maximum?: number | null;
   /**
-   * @format int64
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
 
 export type FloatScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "FLOAT";
   /**
    * @format int32
@@ -1036,13 +1309,17 @@ export type FloatScalarParameterDraft = {
    */
   maximum?: number | null;
   /**
-   * @format double
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
 
 export type DateTimeScalarParameterDraft = {
+  /**
+   * @format uuid
+   */
+  resource_id?: string;
   kind: "DATETIME";
   /**
    * @format int32
@@ -1075,6 +1352,10 @@ export type StringScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "STRING";
   /**
    * @format int32
@@ -1087,7 +1368,10 @@ export type StringScalarParameter = {
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
-  ["default"]?: string | null;
+  /**
+   * @minItems 1
+   */
+  ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
@@ -1097,6 +1381,10 @@ export type BooleanScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "BOOLEAN";
   /**
    * @format int32
@@ -1117,6 +1405,10 @@ export type IntegerScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "INTEGER";
   /**
    * @format int32
@@ -1138,9 +1430,9 @@ export type IntegerScalarParameter = {
    */
   maximum?: number | null;
   /**
-   * @format int64
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
 
@@ -1149,6 +1441,10 @@ export type FloatScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "FLOAT";
   /**
    * @format int32
@@ -1170,9 +1466,9 @@ export type FloatScalarParameter = {
    */
   maximum?: number | null;
   /**
-   * @format double
+   * @minItems 1
    */
-  ["default"]?: number | null;
+  ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
 
@@ -1181,6 +1477,10 @@ export type DateTimeScalarParameter = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   kind: "DATETIME";
   /**
    * @format int32
@@ -1231,12 +1531,6 @@ export type WebServiceVisibleOn = "GRAPH" | "TABLE" | "MAP";
 export type DownloadableFile = {
   url: NonBlankString;
   format: NonBlankString;
-};
-
-export type Documentation = {
-  title?: string | null;
-  description?: string | null;
-  uri: NonBlankString;
 };
 
 export type TemporalCoverage = {
@@ -1327,13 +1621,17 @@ export type RejectResourceRequest = {
 
 export type ResourceVersion = {
   /**
+   * Logical resource identity shared across versions.
+   *
    * @format uuid
    */
   resource_id: string;
   /**
+   * Identity of this specific resource version.
+   *
    * @format uuid
    */
-  version_id: string;
+  id: string;
   /**
    * @format int32
    */
@@ -1377,7 +1675,7 @@ export type ResourceVersionSummary = {
   /**
    * @format uuid
    */
-  version_id: string;
+  id: string;
   /**
    * @format int32
    * @minimum 1
@@ -1440,16 +1738,12 @@ export type ResourceVersionSummary = {
 
 export type DatasetResourceMetadata = {
   resource_type: "dataset";
-  /**
-   * @format uuid
-   */
-  id: string;
   title: string;
   description: string;
   keywords: Keyword[];
-  accrual_periodicity?: string | null;
+  accrual_periodicity?: DatasetAccrualPeriodicity;
   quality_annotation?: string | null;
-  access_right?: string | null;
+  access_right?: DatasetAccessRight;
   distributions: Distribution[];
   /**
    * WKT POINT or POLYGON geometry in EPSG:4326.
@@ -1463,7 +1757,7 @@ export type DatasetResourceMetadata = {
    * Mutually exclusive with temporal_coverage.
    */
   geological_temporal_coverage?: GeologicalTemporalCoverage;
-  persistent_identifiers: Identifier[];
+  persistent_identifiers: VersionedIdentifier[];
   contact_points: string[] | null;
   providers: ResourceVersionReference[];
   categories: ResourceVersionReference[];
@@ -1479,10 +1773,6 @@ export type DatasetResourceMetadata = {
 
 export type SoftwareApplicationResourceMetadata = {
   resource_type: "software-application";
-  /**
-   * @format uuid
-   */
-  id: string;
   name: string;
   description: string;
   main_entity_of_page?: string | null;
@@ -1493,17 +1783,13 @@ export type SoftwareApplicationResourceMetadata = {
   requirements?: string | null;
   operating_system?: string | null;
   creators: ResourceVersionReference[];
-  identifiers: Identifier[];
+  identifiers: VersionedIdentifier[];
   contact_points: string[] | null;
   categories: ResourceVersionReference[];
 };
 
 export type SoftwareSourceCodeResourceMetadata = {
   resource_type: "software-source-code";
-  /**
-   * @format uuid
-   */
-  id: string;
   name: string;
   description: string;
   programming_language?: string | null;
@@ -1515,7 +1801,7 @@ export type SoftwareSourceCodeResourceMetadata = {
   main_entity_of_page?: string | null;
   version?: string | null;
   creators: ResourceVersionReference[];
-  identifiers: Identifier[];
+  identifiers: VersionedIdentifier[];
   contact_points: string[] | null;
   categories: ResourceVersionReference[];
 };
@@ -1528,18 +1814,14 @@ export type WebServiceDistribution = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   title: string;
   description: string;
   license?: string | null;
   type: "WEB_SERVICE";
-  /**
-   * @format date-time
-   */
-  issued?: string | null;
-  /**
-   * @format date-time
-   */
-  modified?: string | null;
   /**
    * @format int64
    * @minimum 1
@@ -1547,7 +1829,7 @@ export type WebServiceDistribution = {
   byte_size?: number | null;
   web_service: WebService;
   /**
-   * Computed formats for this resource version. Currently ORIGINAL entries only. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
+   * Native formats and conversions whose plugins are enabled and locally installed. If converter is unavailable, only native formats are returned. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
    */
   available_formats: AvailableFormat[];
 };
@@ -1585,18 +1867,14 @@ export type DownloadableFileDistribution = {
    * @format uuid
    */
   id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   title: string;
   description: string;
   license?: string | null;
   type: "DOWNLOADABLE_FILE";
-  /**
-   * @format date-time
-   */
-  issued?: string | null;
-  /**
-   * @format date-time
-   */
-  modified?: string | null;
   /**
    * @format int64
    * @minimum 1
@@ -1610,25 +1888,20 @@ export type WebService = {
    * @format uuid
    */
   id: string;
-  name: string;
   /**
-   * @minLength 1
+   * @format uuid
    */
-  description?: string | null;
+  resource_id: string;
   /**
    * @minItems 1
    */
   visible_on?: WebServiceVisibleOn[] | null;
   provider?: ResourceVersionReference;
-  documentation?: Documentation;
   /**
-   * WKT POINT or POLYGON geometry in EPSG:4326.
-   *
+   * @format uri
    * @minLength 1
-   * @example POINT (12.5 41.9)
    */
-  spatial_coverage?: string | null;
-  temporal_coverage?: TemporalCoverage;
+  documentation_uri?: string;
   contact_points?: string[];
   configuration: WebServiceConfiguration;
 };
@@ -1766,6 +2039,14 @@ export type WmtsWebServiceConfiguration = {
 };
 
 export type WmtsLayer = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   name: NonBlankString;
   /**
    * Configured default style. When omitted, use the provider default if allowed by styles.
@@ -1783,6 +2064,14 @@ export type WmtsLayer = {
 };
 
 export type WmsLayer = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
   name: NonBlankString;
   /**
    * Default configured style. Empty string uses the provider default.
@@ -1795,6 +2084,25 @@ export type WmsLayer = {
    * @uniqueItems true
    */
   styles: string[];
+};
+
+export type VersionedIdentifier = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
+  /**
+   * @minLength 1
+   */
+  type: string;
+  /**
+   * @minLength 1
+   */
+  value: string;
 };
 
 export type Identifier = {
@@ -2194,10 +2502,10 @@ export type ContactPoint = {
    * @minLength 1
    */
   email: string;
-  /**
-   * @minLength 1
-   */
-  role: string;
+};
+
+export type ContactRequestMessage = {
+  message: NonBlankString;
 };
 
 export type CreateContactPointRequest = {
@@ -2206,7 +2514,6 @@ export type CreateContactPointRequest = {
    * @minLength 1
    */
   email: string;
-  role: NonBlankString;
 };
 
 export type ReplaceContactPointRequest = {
@@ -2215,7 +2522,6 @@ export type ReplaceContactPointRequest = {
    * @minLength 1
    */
   email: string;
-  role: NonBlankString;
 };
 
 export type OrganizationAddress = {

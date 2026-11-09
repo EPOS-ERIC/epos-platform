@@ -6,8 +6,38 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func toDomainResourceType(value metadatalifecyclev1.ResourceType) (domain.ResourceType, bool) {
+	switch value {
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
+		return domain.Dataset, true
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
+		return domain.SoftwareApplication, true
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
+		return domain.SoftwareSourceCode, true
+	default:
+		return "", false
+	}
+}
+
+func toProtoDistributionIDs(ids []uuid.UUID) []string {
+	result := make([]string, 0, len(ids))
+	for _, id := range ids {
+		result = append(result, id.String())
+	}
+	return result
+}
+
+func toProtoDistributionIDPairs(pairs map[uuid.UUID]uuid.UUID) map[string]string {
+	result := make(map[string]string, len(pairs))
+	for sourceID, targetID := range pairs {
+		result[sourceID.String()] = targetID.String()
+	}
+	return result
+}
 
 func toDomainDistributionAccessInput(value *metadatalifecyclev1.PrepareDistributionAccessRequest) (domain.DistributionAccessInput, error) {
 	if value == nil {
@@ -136,7 +166,7 @@ func toProtoNativeFormats(values []domain.NativeFormat) []*metadatalifecyclev1.N
 func toProtoDatasetVersion(value domain.DatasetVersion) *metadatalifecyclev1.ResourceVersion {
 	return &metadatalifecyclev1.ResourceVersion{
 		ResourceId:    value.DatasetID.String(),
-		VersionId:     value.VersionID.String(),
+		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
 		CreatedBy:     string(value.CreatedBy),
@@ -151,6 +181,122 @@ func toProtoDatasetVersion(value domain.DatasetVersion) *metadatalifecyclev1.Res
 	}
 }
 
+func toDomainAccrualPeriodicity(value *metadatalifecyclev1.DatasetAccrualPeriodicity) (*domain.AccrualPeriodicity, error) {
+	if value == nil {
+		return nil, nil
+	}
+	var result domain.AccrualPeriodicity
+	switch *value {
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_TRIENNIAL:
+		result = domain.AccrualPeriodicityTriennial
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIENNIAL:
+		result = domain.AccrualPeriodicityBiennial
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_ANNUAL:
+		result = domain.AccrualPeriodicityAnnual
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIANNUAL:
+		result = domain.AccrualPeriodicitySemiannual
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_YEAR:
+		result = domain.AccrualPeriodicityThreeTimesAYear
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_QUARTERLY:
+		result = domain.AccrualPeriodicityQuarterly
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIMONTHLY:
+		result = domain.AccrualPeriodicityBimonthly
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_MONTHLY:
+		result = domain.AccrualPeriodicityMonthly
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIMONTHLY:
+		result = domain.AccrualPeriodicitySemimonthly
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIWEEKLY:
+		result = domain.AccrualPeriodicityBiweekly
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_MONTH:
+		result = domain.AccrualPeriodicityThreeTimesAMonth
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_WEEKLY:
+		result = domain.AccrualPeriodicityWeekly
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIWEEKLY:
+		result = domain.AccrualPeriodicitySemiweekly
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_WEEK:
+		result = domain.AccrualPeriodicityThreeTimesAWeek
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_DAILY:
+		result = domain.AccrualPeriodicityDaily
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_CONTINUOUS:
+		result = domain.AccrualPeriodicityContinuous
+	case metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_IRREGULAR:
+		result = domain.AccrualPeriodicityIrregular
+	default:
+		return nil, apperror.Field("accrual_periodicity", "Accrual periodicity is not supported.", nil)
+	}
+	return &result, nil
+}
+
+func toProtoAccrualPeriodicity(value *domain.AccrualPeriodicity) *metadatalifecyclev1.DatasetAccrualPeriodicity {
+	if value == nil {
+		return nil
+	}
+	var result metadatalifecyclev1.DatasetAccrualPeriodicity
+	switch *value {
+	case domain.AccrualPeriodicityTriennial:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_TRIENNIAL
+	case domain.AccrualPeriodicityBiennial:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIENNIAL
+	case domain.AccrualPeriodicityAnnual:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_ANNUAL
+	case domain.AccrualPeriodicitySemiannual:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIANNUAL
+	case domain.AccrualPeriodicityThreeTimesAYear:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_YEAR
+	case domain.AccrualPeriodicityQuarterly:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_QUARTERLY
+	case domain.AccrualPeriodicityBimonthly:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIMONTHLY
+	case domain.AccrualPeriodicityMonthly:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_MONTHLY
+	case domain.AccrualPeriodicitySemimonthly:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIMONTHLY
+	case domain.AccrualPeriodicityBiweekly:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_BIWEEKLY
+	case domain.AccrualPeriodicityThreeTimesAMonth:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_MONTH
+	case domain.AccrualPeriodicityWeekly:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_WEEKLY
+	case domain.AccrualPeriodicitySemiweekly:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_SEMIWEEKLY
+	case domain.AccrualPeriodicityThreeTimesAWeek:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_WEEK
+	case domain.AccrualPeriodicityDaily:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_DAILY
+	case domain.AccrualPeriodicityContinuous:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_CONTINUOUS
+	case domain.AccrualPeriodicityIrregular:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_IRREGULAR
+	default:
+		result = metadatalifecyclev1.DatasetAccrualPeriodicity_DATASET_ACCRUAL_PERIODICITY_UNSPECIFIED
+	}
+	return &result
+}
+
+func toDomainDistributionType(value metadatalifecyclev1.DistributionType) (domain.DistributionType, error) {
+	switch value {
+	case metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_UNSPECIFIED:
+		return "", nil
+	case metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_WEB_SERVICE:
+		return domain.DistributionTypeWebService, nil
+	case metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_DOWNLOADABLE_FILE:
+		return domain.DistributionTypeDownloadableFile, nil
+	default:
+		return "", apperror.Field("type", "Distribution type is not supported.", nil)
+	}
+}
+
+func toProtoDistributionType(value domain.DistributionType) metadatalifecyclev1.DistributionType {
+	switch value {
+	case domain.DistributionTypeWebService:
+		return metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_WEB_SERVICE
+	case domain.DistributionTypeDownloadableFile:
+		return metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_DOWNLOADABLE_FILE
+	default:
+		return metadatalifecyclev1.DistributionType_DISTRIBUTION_TYPE_UNSPECIFIED
+	}
+}
+
 func toProtoDistributionDownload(value domain.DistributionDownload) *metadatalifecyclev1.PrepareDistributionDownloadResponse {
 	return &metadatalifecyclev1.PrepareDistributionDownloadResponse{
 		ResourceId: value.ResourceID.String(),
@@ -162,7 +308,7 @@ func toProtoDistributionDownload(value domain.DistributionDownload) *metadatalif
 func toProtoSoftwareApplicationVersion(value domain.SoftwareApplicationVersion) *metadatalifecyclev1.ResourceVersion {
 	return &metadatalifecyclev1.ResourceVersion{
 		ResourceId:    value.SoftwareApplicationID.String(),
-		VersionId:     value.VersionID.String(),
+		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
 		CreatedBy:     string(value.CreatedBy),
@@ -180,7 +326,7 @@ func toProtoSoftwareApplicationVersion(value domain.SoftwareApplicationVersion) 
 func toProtoSoftwareSourceCodeVersion(value domain.SoftwareSourceCodeVersion) *metadatalifecyclev1.ResourceVersion {
 	return &metadatalifecyclev1.ResourceVersion{
 		ResourceId:    value.SoftwareSourceCodeID.String(),
-		VersionId:     value.VersionID.String(),
+		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
 		CreatedBy:     string(value.CreatedBy),

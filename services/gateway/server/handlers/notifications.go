@@ -11,7 +11,7 @@ import (
 )
 
 func (h *ogenHandler) ListNotificationTopics(ctx context.Context) ([]gatewayapi.NotificationTopic, error) {
-	response, err := h.metadataLifecycle.ListNotificationTopics(ctx)
+	response, err := h.metadataLifecycleClient.ListNotificationTopics(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list notification topics: %w", err)
 	}
@@ -34,7 +34,7 @@ func (h *ogenHandler) ListUserNotificationSubscriptions(ctx context.Context, par
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	target := notificationUserID(params.UserId, actor)
-	response, err := h.metadataLifecycle.ListNotificationSubscriptions(ctx, target, actor)
+	response, err := h.metadataLifecycleClient.ListNotificationSubscriptions(ctx, target, actor)
 	if err != nil {
 		return nil, fmt.Errorf("list notification subscriptions: %w", err)
 	}
@@ -60,7 +60,7 @@ func (h *ogenHandler) SubscribeUserNotification(ctx context.Context, params gate
 	if err != nil {
 		return fmt.Errorf("map global notification topic: %w", err)
 	}
-	if err := h.metadataLifecycle.SubscribeNotification(ctx, notificationUserID(params.UserId, actor), "", topicKey, actor); err != nil {
+	if err := h.metadataLifecycleClient.SubscribeNotification(ctx, notificationUserID(params.UserId, actor), "", topicKey, actor); err != nil {
 		return fmt.Errorf("subscribe notification: %w", err)
 	}
 	return nil
@@ -75,7 +75,7 @@ func (h *ogenHandler) UnsubscribeUserNotification(ctx context.Context, params ga
 	if err != nil {
 		return fmt.Errorf("map global notification topic: %w", err)
 	}
-	if err := h.metadataLifecycle.UnsubscribeNotification(ctx, notificationUserID(params.UserId, actor), "", topicKey, actor); err != nil {
+	if err := h.metadataLifecycleClient.UnsubscribeNotification(ctx, notificationUserID(params.UserId, actor), "", topicKey, actor); err != nil {
 		return fmt.Errorf("unsubscribe notification: %w", err)
 	}
 	return nil
@@ -90,7 +90,7 @@ func (h *ogenHandler) SubscribeGroupUserNotification(ctx context.Context, params
 	if err != nil {
 		return fmt.Errorf("map group notification topic: %w", err)
 	}
-	if err := h.metadataLifecycle.SubscribeNotification(ctx, notificationUserID(params.UserId, actor), params.GroupId.String(), topicKey, actor); err != nil {
+	if err := h.metadataLifecycleClient.SubscribeNotification(ctx, notificationUserID(params.UserId, actor), params.GroupId.String(), topicKey, actor); err != nil {
 		return fmt.Errorf("subscribe group notification: %w", err)
 	}
 	return nil
@@ -105,7 +105,7 @@ func (h *ogenHandler) UnsubscribeGroupUserNotification(ctx context.Context, para
 	if err != nil {
 		return fmt.Errorf("map group notification topic: %w", err)
 	}
-	if err := h.metadataLifecycle.UnsubscribeNotification(ctx, notificationUserID(params.UserId, actor), params.GroupId.String(), topicKey, actor); err != nil {
+	if err := h.metadataLifecycleClient.UnsubscribeNotification(ctx, notificationUserID(params.UserId, actor), params.GroupId.String(), topicKey, actor); err != nil {
 		return fmt.Errorf("unsubscribe group notification: %w", err)
 	}
 	return nil
@@ -128,6 +128,8 @@ func toProtoGlobalNotificationTopicKey(value gatewayapi.GlobalNotificationTopicK
 		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_SUBMITTED, nil
 	case gatewayapi.GlobalNotificationTopicKeyGlobalResourcePublished:
 		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED, nil
+	case gatewayapi.GlobalNotificationTopicKeyGlobalConversionRequested:
+		return metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED, nil
 	default:
 		return 0, fmt.Errorf("unknown global notification topic key: %q", value)
 	}
@@ -166,6 +168,8 @@ func fromProtoNotificationTopicKey(value metadatalifecyclev1.NotificationTopicKe
 		return gatewayapi.NotificationTopicKeyGlobalResourceSubmitted, nil
 	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_RESOURCE_PUBLISHED:
 		return gatewayapi.NotificationTopicKeyGlobalResourcePublished, nil
+	case metadatalifecyclev1.NotificationTopicKey_NOTIFICATION_TOPIC_KEY_GLOBAL_CONVERSION_REQUESTED:
+		return gatewayapi.NotificationTopicKeyGlobalConversionRequested, nil
 	default:
 		return "", fmt.Errorf("metadata-lifecycle returned unknown notification topic key %s", value.String())
 	}

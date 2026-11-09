@@ -8,7 +8,6 @@ def wfs_distribution(**configuration: Any) -> dict[str, Any]:
     return {
         "type": "WEB_SERVICE", "title": "WFS", "description": "Synthetic WFS contract",
         "web_service": {
-            "name": "WFS",
             "configuration": {
                 "type": "WFS", "get_feature_template_url": "https://provider.invalid/ows",
                 "version": "2.0.0", "feature_types": ["example:faults", "example:quakes"],
@@ -57,7 +56,7 @@ class WFSContractTest(DistributionContractTestCase):
             "distributions": [replacement],
         }
         self.assertEqual(self.replace_response(detail, metadata).status_code, 200)
-        updated = self.details(detail["resource_id"], detail["version_id"])
+        updated = self.details(detail["resource_id"], detail["id"])
         self.assertEqual(updated["revision"], detail["revision"] + 1)
         distribution = updated["metadata"]["distributions"][0]
         stored = distribution["web_service"]["configuration"]

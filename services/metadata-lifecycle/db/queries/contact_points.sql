@@ -1,20 +1,17 @@
 -- name: ListContactPoints :many
 SELECT
     id,
-    email,
-    role
+    email
 FROM
     contact_points
 ORDER BY
     email,
-    role,
     id;
 
 -- name: GetContactPoint :one
 SELECT
     id,
-    email,
-    role
+    email
 FROM
     contact_points
 WHERE
@@ -22,17 +19,15 @@ WHERE
 
 -- name: CreateContactPoint :one
 INSERT INTO
-    contact_points (id, email, role)
+    contact_points (id, email)
 VALUES
     (
         sqlc.arg(id),
-        sqlc.arg(email),
-        sqlc.arg(role)
+        sqlc.arg(email)
     )
 RETURNING
     id,
-    email,
-    role;
+    email;
 
 -- name: DeleteContactPoint :execrows
 DELETE FROM
@@ -44,11 +39,9 @@ WHERE
 UPDATE
     contact_points
 SET
-    email = sqlc.arg(email),
-    role = sqlc.arg(role)
+    email = sqlc.arg(email)
 WHERE
     id = sqlc.arg(id)
 RETURNING
     id,
-    email,
-    role;
+    email;

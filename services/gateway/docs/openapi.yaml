@@ -53,8 +53,200 @@ tags:
     description: Store and retrieve shared workspace configurations.
   - name: Notifications
     description: Manage notification topics and email subscriptions.
+  - name: Conversions
+    description: Manage conversion plugins and their distribution relations.
 
 paths:
+  /conversion-plugins:
+    get:
+      tags: [Conversions]
+      summary: List conversion plugins
+      description: Requires the global.converter.manage permission. Installation status is local to the responding converter instance.
+      operationId: listConversionPlugins
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Conversion plugins returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    post:
+      tags: [Conversions]
+      summary: Register a conversion plugin
+      description: Requires the global.converter.manage permission. The plugin is enabled by default and installation is attempted immediately. Failed installation is retried periodically.
+      operationId: createConversionPlugin
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateConversionPluginRequest" }
+      responses:
+        "201":
+          description: Plugin registered; installation status is included in the response
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+  /conversion-plugins/{pluginId}:
+    parameters:
+      - name: pluginId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Conversions]
+      summary: Get a conversion plugin
+      description: Requires the global.converter.manage permission. Installation status is local to the responding converter instance.
+      operationId: getConversionPlugin
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Conversion plugin returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    put:
+      tags: [Conversions]
+      summary: Replace conversion plugin settings
+      description: Requires the global.converter.manage permission. Changing repository or branch triggers immediate synchronization. A failed update retains the last working installation and is retried periodically.
+      operationId: replaceConversionPlugin
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceConversionPluginRequest" }
+      responses:
+        "200":
+          description: Plugin settings saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    delete:
+      tags: [Conversions]
+      summary: Delete a conversion plugin
+      description: Requires the global.converter.manage permission. Deletes its relations and installation.
+      operationId: deleteConversionPlugin
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Conversion plugin deleted }
+        default:
+          $ref: "#/components/responses/GatewayError"
+  /conversion-plugins/{pluginId}/sync:
+    post:
+      tags: [Conversions]
+      summary: Synchronize a conversion plugin
+      description: Requires the global.converter.manage permission. Waits for synchronization to finish.
+      operationId: syncConversionPlugin
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: pluginId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Plugin synchronized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedConversionPlugin" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+  /conversion-relations:
+    get:
+      tags: [Conversions]
+      summary: List conversion relations
+      description: Requires the global.converter.manage permission.
+      operationId: listConversionRelations
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Conversion relations returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ConversionRelation" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    post:
+      tags: [Conversions]
+      summary: Create a conversion relation
+      description: Requires the global.converter.manage permission. Input format must match a current native format of the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+      operationId: createConversionRelation
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConversionRelationInput" }
+      responses:
+        "201":
+          description: Conversion relation created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversionRelation" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+  /conversion-relations/{conversionId}:
+    parameters:
+      - name: conversionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Conversions]
+      summary: Get a conversion relation
+      description: Requires the global.converter.manage permission.
+      operationId: getConversionRelation
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Conversion relation returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversionRelation" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    put:
+      tags: [Conversions]
+      summary: Replace a conversion relation
+      description: Requires the global.converter.manage permission. Input format must match a current native format of the distribution. Duplicate distribution, plugin, input and output combinations are rejected.
+      operationId: replaceConversionRelation
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConversionRelationInput" }
+      responses:
+        "200":
+          description: Conversion relation replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversionRelation" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+    delete:
+      tags: [Conversions]
+      summary: Delete a conversion relation
+      description: Requires the global.converter.manage permission.
+      operationId: deleteConversionRelation
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Conversion relation deleted }
+        default:
+          $ref: "#/components/responses/GatewayError"
   /permissions:
     get:
       tags:
@@ -79,6 +271,97 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /distributions/{distributionId}/conversion-relations:
+    get:
+      tags: [Conversions]
+      summary: List conversion plugins and relations for a distribution
+      description: Requires permission to read the distribution. Includes disabled and uninstalled plugins.
+      operationId: listDistributionConversionRelations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Plugins and their relations for the distribution
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DistributionConversionPlugin" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /distributions/{distributionId}/conversion-requests:
+    post:
+      tags: [Conversions]
+      summary: Request a distribution conversion
+      description: Requires edit permission for a draft dataset and a web-service distribution. Email delivery is asynchronous and best effort.
+      operationId: requestDistributionConversion
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [input_format, visualizations, message]
+              properties:
+                input_format: { type: string, minLength: 1 }
+                visualizations:
+                  type: array
+                  minItems: 1
+                  items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
+                message: { type: string, minLength: 1 }
+      responses:
+        "202":
+          description: Request accepted; email delivery is not guaranteed
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /distributions/{distributionId}/contact-requests:
+    post:
+      tags: [Resources]
+      summary: Contact a web-service distribution
+      description: >-
+        Sends the message separately to each contact point on the published web service. Requires authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+      operationId: requestDistributionContact
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContactRequestMessage" }
+      responses:
+        "204": { description: At least one email was accepted by Mailgun }
+        "404":
+          description: Published web-service distribution or its contact points were not found
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "503":
+          description: Mailgun did not accept any email
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        default:
+          $ref: "#/components/responses/GatewayError"
   /distributions/{distributionId}/access:
     post:
       tags: [Access]
@@ -100,9 +383,8 @@ paths:
           schema: { type: string, minLength: 1 }
         - name: conversion_id
           in: query
-          description: Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for future conversion support.
+          description: Conversion relation UUID for this distribution. Cannot be repeated or combined with output_format.
           schema: { type: string, format: uuid }
-      # TODO: Connect conversion_id when converter and conversion-relation support exist.
       requestBody:
         required: true
         content:
@@ -128,7 +410,7 @@ paths:
                   parameters: []
       responses:
         "2XX":
-          description: Successful upstream response, streamed without buffering.
+          description: Successful response. Native responses stream directly; converted responses stream after conversion completes. Responses use application/octet-stream; the converted format's MIME type is available in distribution metadata.
           content:
             application/octet-stream:
               schema: { type: string, format: binary }
@@ -159,7 +441,7 @@ paths:
           schema: { type: string, minLength: 1 }
         - name: conversion_id
           in: query
-          description: Stored conversion relation UUID. Cannot be repeated or combined with output_format. Reserved for future conversion support; currently returns an internal error, matching access.
+          description: Not supported for preparation; requests containing this parameter are rejected.
           schema: { type: string, format: uuid }
       requestBody:
         required: true
@@ -1567,7 +1849,7 @@ paths:
       tags:
         - Resources
       summary: Copy resource
-      description: Creates a draft copy in the group identified by `groupId`. The target group is taken from the URL, not the request body.
+      description: Creates an independent draft copy in the group identified by `groupId`, with new resource and child identities. The target group is taken from the URL, not the request body.
       operationId: copyResource
       security:
         - bearerAuth: []
@@ -1592,7 +1874,15 @@ paths:
       tags:
         - Resources
       summary: Replace resource draft version
-      description: Replaces an editable draft only. Request body shape is selected by `resource_type` and includes the current revision.
+      description: >-
+        Replaces all metadata in an editable draft. Request shape is selected by
+        `resource_type` and includes the current revision. To retain a distribution,
+        web service, parameter, layer, or identifier, send its `resource_id` from
+        the draft read response. Omit `resource_id` for a new child; omit an existing
+        child from its collection to remove it. IDs must belong to the same draft and
+        parent. Parameters cannot move between collections or web services. Changing
+        a parameter's PATH, QUERY, or HEADER location within its collection is an edit.
+        Child `id` identifies the version-specific record and is not sent on writes.
       operationId: replaceResourceDraftVersion
       security:
         - bearerAuth: []
@@ -1664,6 +1954,36 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /resources/{resourceType}/{id}/contact-requests:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Resources]
+      summary: Contact a published resource
+      description: >-
+        Sends the message separately to each contact point on the published resource. Requires authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+      operationId: requestResourceContact
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContactRequestMessage" }
+      responses:
+        "204": { description: At least one email was accepted by Mailgun }
+        "404":
+          description: Published resource or its contact points were not found
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "503":
+          description: Mailgun did not accept any email
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        default:
+          $ref: "#/components/responses/GatewayError"
   /resources/{resourceType}/{id}/versions:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1856,6 +2176,7 @@ paths:
       tags:
         - Resources
       summary: Create draft from publication
+      description: Creates a draft version with new version-specific IDs and the same logical resource IDs as the published version.
       operationId: draftFromPublication
       security:
         - bearerAuth: []
@@ -1880,6 +2201,7 @@ paths:
       tags:
         - Resources
       summary: Create draft from archive
+      description: Creates a draft version with new version-specific IDs and the same logical resource IDs as the latest archived version.
       operationId: draftFromArchive
       security:
         - bearerAuth: []
@@ -2205,6 +2527,11 @@ components:
       explode: false
 
   responses:
+    GatewayError:
+      description: Gateway error
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
     BadRequest:
       description: Invalid request parameters
       content:
@@ -2325,6 +2652,109 @@ components:
                 detail: "A required service is unavailable."
 
   schemas:
+    ConversionRuntime:
+      type: string
+      enum: [python, java, binary]
+
+    CreateConversionPluginRequest:
+      type: object
+      additionalProperties: false
+      required: [name, repository, branch, runtime]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string, default: "" }
+        repository: { type: string, description: Public Git repository URL. }
+        branch: { type: string, minLength: 1 }
+        runtime: { $ref: "#/components/schemas/ConversionRuntime" }
+        arguments:
+          type: array
+          items: { type: string }
+
+    ReplaceConversionPluginRequest:
+      type: object
+      additionalProperties: false
+      required: [name, repository, branch, runtime, enabled]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string, default: "" }
+        repository: { type: string, description: Public Git repository URL. }
+        branch: { type: string, minLength: 1 }
+        runtime: { $ref: "#/components/schemas/ConversionRuntime" }
+        arguments:
+          type: array
+          items: { type: string }
+        enabled: { type: boolean }
+
+    ManagedConversionPlugin:
+      type: object
+      additionalProperties: false
+      required: [id, name, description, repository, branch, runtime, arguments, enabled, installed, installed_commit, created_by, updated_by]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        repository: { type: string }
+        branch: { type: string }
+        runtime: { $ref: "#/components/schemas/ConversionRuntime" }
+        arguments:
+          type: array
+          items: { type: string }
+        enabled: { type: boolean }
+        installed: { type: boolean, description: Installation status on the responding converter instance. }
+        installed_commit: { type: string, nullable: true, description: Git commit installed on the responding converter instance. }
+        created_by: { type: string, description: Immutable creator user ID. }
+        updated_by: { type: string, description: Last administrator to change the record. }
+
+    DistributionConversionPlugin:
+      type: object
+      additionalProperties: false
+      required: [id, name, description, repository, enabled, installed, branch, runtime, arguments, relations]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        repository: { type: string }
+        enabled: { type: boolean }
+        installed: { type: boolean, description: Installation status on the responding converter instance. }
+        branch: { type: string }
+        runtime: { $ref: "#/components/schemas/ConversionRuntime" }
+        arguments:
+          type: array
+          items: { type: string }
+        relations:
+          type: array
+          items: { $ref: "#/components/schemas/DistributionConversionRelation" }
+    DistributionConversionRelation:
+      type: object
+      additionalProperties: false
+      required: [id, input_format, output_format, distribution_id]
+      properties:
+        id: { type: string, format: uuid }
+        input_format: { type: string }
+        output_format: { type: string }
+        distribution_id: { type: string, format: uuid }
+    ConversionRelationInput:
+      type: object
+      additionalProperties: false
+      required: [distribution_id, plugin_id, input_format, output_format]
+      properties:
+        distribution_id: { type: string, format: uuid }
+        plugin_id: { type: string, format: uuid }
+        input_format: { type: string, minLength: 1, description: Exact native format string. }
+        output_format: { type: string, minLength: 1, description: Output MIME type. }
+
+    ConversionRelation:
+      type: object
+      additionalProperties: false
+      required: [id, distribution_id, plugin_id, input_format, output_format, created_by, updated_by]
+      properties:
+        id: { type: string, format: uuid, description: Conversion ID used to select this exact relation. }
+        distribution_id: { type: string, format: uuid }
+        plugin_id: { type: string, format: uuid }
+        input_format: { type: string, description: Exact native format string. }
+        output_format: { type: string, description: Output MIME type. }
+        created_by: { type: string, description: Immutable creator user ID. }
+        updated_by: { type: string, description: Last administrator to change the record. }
     PreparedDistributionRequest:
       type: object
       additionalProperties: false
@@ -2485,6 +2915,7 @@ components:
         - global.resource.unpublish
         - global.category.manage
         - global.configuration.manage
+        - global.converter.manage
 
     GroupPermission:
       type: string
@@ -2529,6 +2960,7 @@ components:
         - group.resource.published
         - global.resource.submitted
         - global.resource.published
+        - global.conversion.requested
 
     GlobalNotificationTopicKey:
       type: string
@@ -2537,6 +2969,7 @@ components:
         - global.role_request.requested
         - global.resource.submitted
         - global.resource.published
+        - global.conversion.requested
 
     GroupNotificationTopicKey:
       type: string
@@ -2618,6 +3051,35 @@ components:
         - ARCHIVED
         - REJECTED
 
+    DatasetAccessRight:
+      type: string
+      nullable: true
+      enum: [NON_PUBLIC, NORMAL, OP_DATPRO, PUBLIC, RESTRICTED, CONFIDENTIAL, SENSITIVE]
+
+    DatasetAccrualPeriodicity:
+      type: string
+      nullable: true
+      enum:
+        [
+          TRIENNIAL,
+          BIENNIAL,
+          ANNUAL,
+          SEMIANNUAL,
+          THREE_TIMES_A_YEAR,
+          QUARTERLY,
+          BIMONTHLY,
+          MONTHLY,
+          SEMIMONTHLY,
+          BIWEEKLY,
+          THREE_TIMES_A_MONTH,
+          WEEKLY,
+          SEMIWEEKLY,
+          THREE_TIMES_A_WEEK,
+          DAILY,
+          CONTINUOUS,
+          IRREGULAR,
+        ]
+
     DatasetDraftMetadata:
       type: object
       additionalProperties: false
@@ -2628,9 +3090,9 @@ components:
         keywords:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
-        accrual_periodicity: { type: string, nullable: true }
+        accrual_periodicity: { $ref: "#/components/schemas/DatasetAccrualPeriodicity" }
         quality_annotation: { type: string, nullable: true }
-        access_right: { type: string, nullable: true }
+        access_right: { $ref: "#/components/schemas/DatasetAccessRight" }
         distributions:
           {
             type: array,
@@ -2651,7 +3113,7 @@ components:
         persistent_identifiers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/IdentifierInput" },
+            items: { $ref: "#/components/schemas/VersionedIdentifierInput" },
           }
         contact_points: { type: array, items: { type: string, format: uuid } }
         providers: { type: array, items: { type: string, format: uuid } }
@@ -2679,7 +3141,7 @@ components:
         identifiers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/IdentifierInput" },
+            items: { $ref: "#/components/schemas/VersionedIdentifierInput" },
           }
         categories: { type: array, items: { type: string, format: uuid } }
         contact_points: { type: array, items: { type: string, format: uuid } }
@@ -2705,10 +3167,19 @@ components:
         identifiers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/IdentifierInput" },
+            items: { $ref: "#/components/schemas/VersionedIdentifierInput" },
           }
         categories: { type: array, items: { type: string, format: uuid } }
         contact_points: { type: array, items: { type: string, format: uuid } }
+
+    VersionedIdentifierInput:
+      type: object
+      additionalProperties: false
+      required: [type, value]
+      properties:
+        resource_id: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/NonBlankString" }
+        value: { $ref: "#/components/schemas/NonBlankString" }
 
     IdentifierInput:
       type: object
@@ -2733,6 +3204,7 @@ components:
       additionalProperties: false
       required: [title, type, web_service]
       properties:
+        resource_id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -2740,8 +3212,6 @@ components:
           type: string
           enum:
             - "WEB_SERVICE"
-        issued: { type: string, format: date-time, nullable: true }
-        modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         web_service: { $ref: "#/components/schemas/WebServiceDraft" }
 
@@ -2750,6 +3220,7 @@ components:
       additionalProperties: false
       required: [title, type, downloadable_file]
       properties:
+        resource_id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -2757,32 +3228,22 @@ components:
           type: string
           enum:
             - "DOWNLOADABLE_FILE"
-        issued: { type: string, format: date-time, nullable: true }
-        modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
 
     WebServiceDraft:
       type: object
       additionalProperties: false
-      required: [name, configuration]
+      required: [configuration]
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        description: { type: string, nullable: true, minLength: 1 }
+        resource_id: { type: string, format: uuid }
         visible_on:
           type: array
           nullable: true
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         provider: { type: string, format: uuid }
-        documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage:
-          type: string
-          nullable: true
-          minLength: 1
-          description: WKT POINT or POLYGON geometry in EPSG:4326.
-          example: POINT (12.5 41.9)
-        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        documentation_uri: { type: string, format: uri, minLength: 1 }
         contact_points: { type: array, items: { type: string, format: uuid } }
         configuration: { $ref: "#/components/schemas/WebServiceConfigurationDraft" }
 
@@ -2944,6 +3405,7 @@ components:
       additionalProperties: false
       required: [name]
       properties:
+        resource_id: { type: string, format: uuid }
         name: { $ref: "#/components/schemas/NonBlankString" }
         default_style:
           allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
@@ -2959,6 +3421,7 @@ components:
       additionalProperties: false
       required: [name, default_style, styles]
       properties:
+        resource_id: { type: string, format: uuid }
         name: { $ref: "#/components/schemas/NonBlankString" }
         default_style:
           type: string
@@ -3054,6 +3517,7 @@ components:
           multiple_values,
         ]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3066,7 +3530,7 @@ components:
         explode: { type: boolean }
         multiple_values: { type: boolean }
         read_only: { type: boolean }
-        default: { type: string, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: string } }
         enum: { type: array, minItems: 1, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
@@ -3076,6 +3540,7 @@ components:
       required:
         [kind, position, name, label, required, read_only, location, explode]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3105,6 +3570,7 @@ components:
           multiple_values,
         ]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3119,7 +3585,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
-        default: { type: integer, format: int64, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: integer, format: int64 } }
         enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatParameterDraft:
@@ -3138,6 +3604,7 @@ components:
           multiple_values,
         ]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3152,7 +3619,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
-        default: { type: number, format: double, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: number, format: double } }
         enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeParameterDraft:
@@ -3161,6 +3628,7 @@ components:
       required:
         [kind, position, name, label, required, read_only, location, explode]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3183,6 +3651,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3195,6 +3664,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3207,7 +3677,7 @@ components:
         explode: { type: boolean }
         multiple_values: { type: boolean }
         read_only: { type: boolean }
-        default: { type: string, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: string } }
         enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
@@ -3217,6 +3687,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3228,6 +3699,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3247,6 +3719,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3259,6 +3732,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3273,7 +3747,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
-        default: { type: integer, format: int64, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: integer, format: int64 } }
         enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatParameter:
@@ -3282,6 +3756,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3294,6 +3769,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3308,7 +3784,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
-        default: { type: number, format: double, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: number, format: double } }
         enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeParameter:
@@ -3317,6 +3793,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3328,6 +3805,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3361,6 +3839,7 @@ components:
           parameters,
         ]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [TEMPLATE] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3385,6 +3864,7 @@ components:
       required:
         [
           id,
+          resource_id,
           kind,
           position,
           name,
@@ -3398,6 +3878,7 @@ components:
         ]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [TEMPLATE] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3421,6 +3902,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3430,7 +3912,7 @@ components:
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
-        default: { type: string, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: string } }
         enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
@@ -3439,6 +3921,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3455,6 +3938,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3466,7 +3950,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
-        default: { type: integer, format: int64, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: integer, format: int64 } }
         enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatScalarParameterDraft:
@@ -3474,6 +3958,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3485,7 +3970,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
-        default: { type: number, format: double, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: number, format: double } }
         enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeScalarParameterDraft:
@@ -3493,6 +3978,7 @@ components:
       additionalProperties: false
       required: [kind, position, name, label, required, read_only]
       properties:
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3510,9 +3996,10 @@ components:
     StringScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3522,16 +4009,17 @@ components:
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
-        default: { type: string, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: string } }
         enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3546,9 +4034,10 @@ components:
     IntegerScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3560,15 +4049,16 @@ components:
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
-        default: { type: integer, format: int64, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: integer, format: int64 } }
         enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3580,15 +4070,16 @@ components:
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
-        default: { type: number, format: double, nullable: true }
+        default: { type: array, nullable: true, minItems: 1, items: { type: number, format: double } }
         enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeScalarParameter:
       type: object
       additionalProperties: false
-      required: [id, kind, position, name, label, required, read_only]
+      required: [id, resource_id, kind, position, name, label, required, read_only]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -3631,15 +4122,6 @@ components:
       properties:
         url: { $ref: "#/components/schemas/NonBlankString" }
         format: { $ref: "#/components/schemas/NonBlankString" }
-
-    Documentation:
-      type: object
-      additionalProperties: false
-      required: [uri]
-      properties:
-        title: { type: string, nullable: true }
-        description: { type: string, nullable: true }
-        uri: { $ref: "#/components/schemas/NonBlankString" }
 
     TemporalCoverage:
       type: object
@@ -3748,7 +4230,7 @@ components:
       required:
         [
           resource_id,
-          version_id,
+          id,
           revision,
           status,
           created_by,
@@ -3759,8 +4241,8 @@ components:
           metadata,
         ]
       properties:
-        resource_id: { type: string, format: uuid }
-        version_id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid, description: Logical resource identity shared across versions. }
+        id: { type: string, format: uuid, description: Identity of this specific resource version. }
         revision: { type: integer, format: int32 }
         status: { $ref: "#/components/schemas/VersioningStatus" }
         # TODO: make this not required, only have the creator if the user is authenticated and a member of a group, otherwise omit this field complitely, we don't want to leak other user's ids
@@ -3791,7 +4273,7 @@ components:
         [
           resource_type,
           resource_id,
-          version_id,
+          id,
           revision,
           status,
           name,
@@ -3811,7 +4293,7 @@ components:
       properties:
         resource_type: { $ref: "#/components/schemas/DiscoveryResourceType" }
         resource_id: { type: string, format: uuid }
-        version_id: { type: string, format: uuid }
+        id: { type: string, format: uuid }
         revision: { type: integer, format: int32, minimum: 1 }
         status: { $ref: "#/components/schemas/VersioningStatus" }
         name: { type: string, minLength: 1 }
@@ -3833,7 +4315,6 @@ components:
       required:
         [
           resource_type,
-          id,
           title,
           description,
           keywords,
@@ -3846,15 +4327,14 @@ components:
       additionalProperties: false
       properties:
         resource_type: { type: string, enum: [dataset] }
-        id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         keywords:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
-        accrual_periodicity: { type: string, nullable: true }
+        accrual_periodicity: { $ref: "#/components/schemas/DatasetAccrualPeriodicity" }
         quality_annotation: { type: string, nullable: true }
-        access_right: { type: string, nullable: true }
+        access_right: { $ref: "#/components/schemas/DatasetAccessRight" }
         distributions:
           type: array
           items: { $ref: "#/components/schemas/Distribution" }
@@ -3872,7 +4352,7 @@ components:
           }
         persistent_identifiers:
           type: array
-          items: { $ref: "#/components/schemas/Identifier" }
+          items: { $ref: "#/components/schemas/VersionedIdentifier" }
         contact_points:
           type: array
           nullable: true
@@ -3891,7 +4371,6 @@ components:
       required:
         [
           resource_type,
-          id,
           name,
           description,
           keywords,
@@ -3903,7 +4382,6 @@ components:
       additionalProperties: false
       properties:
         resource_type: { type: string, enum: [software-application] }
-        id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
         main_entity_of_page: { type: string, nullable: true }
@@ -3920,7 +4398,7 @@ components:
           items: { $ref: "#/components/schemas/ResourceVersionReference" }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/Identifier" }
+          items: { $ref: "#/components/schemas/VersionedIdentifier" }
         contact_points:
           type: array
           nullable: true
@@ -3934,7 +4412,6 @@ components:
       required:
         [
           resource_type,
-          id,
           name,
           description,
           keywords,
@@ -3946,7 +4423,6 @@ components:
       additionalProperties: false
       properties:
         resource_type: { type: string, enum: [software-source-code] }
-        id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
         programming_language: { type: string, nullable: true }
@@ -3964,7 +4440,7 @@ components:
           items: { $ref: "#/components/schemas/ResourceVersionReference" }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/Identifier" }
+          items: { $ref: "#/components/schemas/VersionedIdentifier" }
         contact_points:
           type: array
           nullable: true
@@ -3986,9 +4462,10 @@ components:
     WebServiceDistribution:
       type: object
       additionalProperties: false
-      required: [id, title, description, type, web_service, available_formats]
+      required: [id, resource_id, title, description, type, web_service, available_formats]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -3996,13 +4473,11 @@ components:
           type: string
           enum:
             - "WEB_SERVICE"
-        issued: { type: string, format: date-time, nullable: true }
-        modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         web_service: { $ref: "#/components/schemas/WebService" }
         available_formats:
           type: array
-          description: Computed formats for this resource version. Currently ORIGINAL entries only. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
+          description: Native formats and conversions whose plugins are enabled and locally installed. If converter is unavailable, only native formats are returned. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
           items: { $ref: "#/components/schemas/AvailableFormat" }
 
     AvailableFormat:
@@ -4047,9 +4522,10 @@ components:
     DownloadableFileDistribution:
       type: object
       additionalProperties: false
-      required: [id, title, description, type, downloadable_file]
+      required: [id, resource_id, title, description, type, downloadable_file]
       properties:
         id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -4057,32 +4533,22 @@ components:
           type: string
           enum:
             - "DOWNLOADABLE_FILE"
-        issued: { type: string, format: date-time, nullable: true }
-        modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
 
     WebService:
       type: object
-      required: [id, name, configuration]
+      required: [id, resource_id, configuration]
       properties:
         id: { type: string, format: uuid }
-        name: { type: string }
-        description: { type: string, nullable: true, minLength: 1 }
+        resource_id: { type: string, format: uuid }
         visible_on:
           type: array
           nullable: true
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         provider: { $ref: "#/components/schemas/ResourceVersionReference" }
-        documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage:
-          type: string
-          nullable: true
-          minLength: 1
-          description: WKT POINT or POLYGON geometry in EPSG:4326.
-          example: POINT (12.5 41.9)
-        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        documentation_uri: { type: string, format: uri, minLength: 1 }
         contact_points:
           type: array
           items: { type: string, format: uuid }
@@ -4240,8 +4706,10 @@ components:
 
     WmtsLayer:
       type: object
-      required: [name]
+      required: [id, resource_id, name]
       properties:
+        id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         name: { $ref: "#/components/schemas/NonBlankString" }
         default_style:
           allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
@@ -4254,8 +4722,10 @@ components:
 
     WmsLayer:
       type: object
-      required: [name, default_style, styles]
+      required: [id, resource_id, name, default_style, styles]
       properties:
+        id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
         name: { $ref: "#/components/schemas/NonBlankString" }
         default_style:
           type: string
@@ -4266,6 +4736,15 @@ components:
           uniqueItems: true
           description: Allowed styles in display order. Empty string uses the provider default; a single style fixes selection.
           items: { type: string }
+
+    VersionedIdentifier:
+      type: object
+      required: [id, resource_id, type, value]
+      properties:
+        id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
+        type: { type: string, minLength: 1 }
+        value: { type: string, minLength: 1 }
 
     Identifier:
       type: object
@@ -4680,25 +5159,28 @@ components:
         concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
     ContactPoint:
       type: object
-      required: [id, email, role]
+      required: [id, email]
       properties:
         id: { type: string, format: uuid }
         email: { type: string, format: email, minLength: 1 }
-        role: { type: string, minLength: 1 }
+    ContactRequestMessage:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties:
+        message: { $ref: "#/components/schemas/NonBlankString" }
     CreateContactPointRequest:
       type: object
-      required: [email, role]
+      required: [email]
       additionalProperties: false
       properties:
         email: { type: string, format: email, minLength: 1 }
-        role: { $ref: "#/components/schemas/NonBlankString" }
     ReplaceContactPointRequest:
       type: object
-      required: [email, role]
+      required: [email]
       additionalProperties: false
       properties:
         email: { type: string, format: email, minLength: 1 }
-        role: { $ref: "#/components/schemas/NonBlankString" }
     OrganizationAddress:
       type: object
       required: [street, locality, postal_code, country]

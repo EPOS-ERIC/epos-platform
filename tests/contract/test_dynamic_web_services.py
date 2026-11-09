@@ -109,7 +109,7 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
             "distributions": [source],
         }
         self.assertEqual(self.replace_response(detail, replacement).status_code, 200)
-        updated = self.details(detail["resource_id"], detail["version_id"])
+        updated = self.details(detail["resource_id"], detail["id"])
         replaced = updated["metadata"]["distributions"][0]
         self.assertEqual(replaced["web_service"]["configuration"]["type"], "DYNAMIC")
         self.assertEqual(self.request(replaced, "prepare", body).status_code, 200)
@@ -139,7 +139,7 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
         for resource_id in (copied.json()["id"], detail["resource_id"]):
             with self.subTest(resource_id=resource_id):
                 version = self.version(resource_id, "DRAFT")
-                clone = self.details(resource_id, version["version_id"])
+                clone = self.details(resource_id, version["id"])
                 distribution = clone["metadata"]["distributions"][0]
                 parameters = distribution["web_service"]["configuration"]["parameters"][0]["parameters"]
                 self.assertEqual(

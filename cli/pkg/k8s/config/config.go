@@ -6,6 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"net/mail"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -34,6 +35,7 @@ func GetDefaultConfig() *Config {
 	for _, password := range []*string{
 		&config.Components.MetadataDatabase.Password,
 		&config.Components.DataRetrieverDatabase.Password,
+		&config.Components.ConverterDatabase.Password,
 		&config.Components.SharingDatabase.Password,
 		&config.Components.AAIService.Password,
 		&config.Components.OpenTelemetry.AdminPassword,
@@ -82,7 +84,7 @@ func (c *Config) Save(path string) error {
 	return nil
 }
 
-// BuildEnvURLs builds GUI, API, and optional backoffice URLs from the configuration.
+// BuildEnvURLs builds GUI, API, and backoffice URLs from the configuration.
 func (c *Config) BuildEnvURLs() (*common.URLs, error) {
 	buildURL := func(paths ...string) (string, error) {
 		base := &url.URL{
@@ -123,14 +125,12 @@ func (c *Config) BuildEnvURLs() (*common.URLs, error) {
 		APIBaseURL: apiBaseURL,
 	}
 
-	if c.Components.Backoffice.Enabled {
-		backofficeURL, err := buildURL(c.Components.Backoffice.GUI.BaseURL)
-		if err != nil {
-			return nil, fmt.Errorf("error building Backoffice URL: %w", err)
-		}
-		backofficeURL = strings.TrimRight(backofficeURL, "/") + "/"
-		urls.BackofficeURL = &backofficeURL
+	backofficeURL, err := buildURL(c.Components.Backoffice.GUI.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("error building Backoffice URL: %w", err)
 	}
+	backofficeURL = strings.TrimRight(backofficeURL, "/") + "/"
+	urls.BackofficeURL = &backofficeURL
 
 	if c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" {
 		grafanaURL, err := buildURL("/grafana/")
@@ -154,6 +154,12 @@ func validateIngressTLSSecret(serviceName string, tls TLS) error {
 
 // Validate checks whether the configuration contains all required values.
 func (c *Config) Validate() error {
+	for i, recipient := range c.Components.Gateway.Mailgun.RecipientOverrides {
+		address, err := mail.ParseAddress(recipient)
+		if err != nil || address.Address != recipient {
+			return fmt.Errorf("components.gateway.mailgun.recipient_overrides[%d] must be a valid email address", i)
+		}
+	}
 	if m := c.Components.Gateway.Mailgun; m.Enable && (m.Domain == "" || m.From == "" || m.APIKey == "") {
 		return fmt.Errorf("Mailgun domain, sender and API key are required when enabled")
 	}
@@ -167,6 +173,13 @@ func (c *Config) Validate() error {
 	if c.Domain == "" {
 		return fmt.Errorf("domain is required")
 	}
+	if c.IngressHost != nil && *c.IngressHost != "" && *c.IngressHost != c.Domain && c.CertManagerIssuer != "" &&
+		(c.Components.PlatformUI.TLS.Enabled || c.Components.Gateway.TLS.Enabled ||
+			c.Components.Backoffice.TLS.Enabled ||
+			(c.Components.AAIService.Enabled && c.Components.AAIService.TLS.Enabled) ||
+			(c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" && c.Components.OpenTelemetry.TLS.Enabled)) {
+		return fmt.Errorf("ingress_host must match domain when cert-manager TLS is enabled")
+	}
 	if c.Protocol != "http" && c.Protocol != "https" {
 		return fmt.Errorf("protocol must be http or https")
 	}
@@ -176,17 +189,15 @@ func (c *Config) Validate() error {
 	if err := validateIngressTLSSecret("gateway", c.Components.Gateway.TLS); err != nil {
 		return err
 	}
-	if c.Components.Backoffice.Enabled {
-		if err := validateIngressTLSSecret("backoffice", c.Components.Backoffice.TLS); err != nil {
-			return err
-		}
+	if err := validateIngressTLSSecret("backoffice", c.Components.Backoffice.TLS); err != nil {
+		return err
 	}
 	if c.Components.AAIService.Enabled {
 		if err := validateIngressTLSSecret("aai service", c.Components.AAIService.TLS); err != nil {
 			return err
 		}
 	}
-	if c.Protocol != "https" && (c.Components.PlatformUI.TLS.Enabled || c.Components.Gateway.TLS.Enabled || (c.Components.Backoffice.Enabled && c.Components.Backoffice.TLS.Enabled) || (c.Components.AAIService.Enabled && c.Components.AAIService.TLS.Enabled) || (c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" && c.Components.OpenTelemetry.TLS.Enabled)) {
+	if c.Protocol != "https" && (c.Components.PlatformUI.TLS.Enabled || c.Components.Gateway.TLS.Enabled || c.Components.Backoffice.TLS.Enabled || (c.Components.AAIService.Enabled && c.Components.AAIService.TLS.Enabled) || (c.Components.OpenTelemetry.Enabled && c.Components.OpenTelemetry.Endpoint == "" && c.Components.OpenTelemetry.TLS.Enabled)) {
 		return fmt.Errorf("protocol must be https when ingress TLS is enabled")
 	}
 
@@ -203,11 +214,14 @@ func (c *Config) Validate() error {
 	if c.Components.AAIService.Enabled && c.Images.AAIServiceImage == "" {
 		return fmt.Errorf("aai service image is required when aai service is enabled")
 	}
-	if c.Images.MetadataLifecycleImage == "" || c.Images.DataRetrieverImage == "" || c.Images.SharingServiceImage == "" {
-		return fmt.Errorf("metadata lifecycle, data retriever, and sharing images are required")
+	if c.Images.MetadataLifecycleImage == "" || c.Images.DataRetrieverImage == "" || c.Images.ConverterImage == "" || c.Images.SharingServiceImage == "" {
+		return fmt.Errorf("metadata lifecycle, data retriever, converter, and sharing images are required")
 	}
 	if c.Components.DataRetrieverDatabase.Enabled && c.Images.DataRetrieverDBImage == "" {
 		return fmt.Errorf("data retriever database image is required when managed")
+	}
+	if c.Components.ConverterDatabase.Enabled && c.Images.ConverterDBImage == "" {
+		return fmt.Errorf("converter database image is required when managed")
 	}
 	if c.Components.SharingDatabase.Enabled && c.Images.SharingDBImage == "" {
 		return fmt.Errorf("sharing database image is required when managed")
@@ -289,19 +303,17 @@ func (c *Config) Validate() error {
 	}
 
 	// Backoffice validation
-	if c.Components.Backoffice.Enabled {
-		if c.Components.Backoffice.GUI.BaseURL == "" {
-			return fmt.Errorf("backoffice base url is required when backoffice is enabled")
-		}
-		if !strings.HasPrefix(c.Components.Backoffice.GUI.BaseURL, "/") {
-			return fmt.Errorf("backoffice base url must start with /")
-		}
-		if !strings.HasSuffix(c.Components.Backoffice.GUI.BaseURL, "/") {
-			return fmt.Errorf("backoffice base url must end with /")
-		}
-		if c.Images.BackofficeUIImage == "" {
-			return fmt.Errorf("backoffice ui image is required when backoffice is enabled")
-		}
+	if c.Components.Backoffice.GUI.BaseURL == "" {
+		return fmt.Errorf("backoffice base url is required")
+	}
+	if !strings.HasPrefix(c.Components.Backoffice.GUI.BaseURL, "/") {
+		return fmt.Errorf("backoffice base url must start with /")
+	}
+	if !strings.HasSuffix(c.Components.Backoffice.GUI.BaseURL, "/") {
+		return fmt.Errorf("backoffice base url must end with /")
+	}
+	if c.Images.BackofficeUIImage == "" {
+		return fmt.Errorf("backoffice ui image is required")
 	}
 
 	// Metadata database validation
@@ -310,6 +322,7 @@ func (c *Config) Validate() error {
 		db   MetadataDatabase
 	}{
 		{"data retriever", c.Components.DataRetrieverDatabase},
+		{"converter", c.Components.ConverterDatabase},
 		{"sharing", c.Components.SharingDatabase},
 	} {
 		if item.db.Host == "" || item.db.Port < 1 || item.db.Port > 65535 || item.db.User == "" || item.db.Password == "" || item.db.DBName == "" {

@@ -10,11 +10,14 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactrequest"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/converter"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 	"github.com/go-chi/chi/v5"
@@ -26,7 +29,9 @@ func NewRouter(
 	membershipService *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
 	semanticAggregatorClient *clients.SemanticAggregator,
+	contactRequestSender contactrequest.EmailSender,
 	dataRetrieverClient *clients.DataRetriever,
+	converterClient *clients.Converter,
 	sharingService *sharingservice.Service,
 	authService *auth.Service,
 	corsAllowOrigin string,
@@ -61,7 +66,10 @@ func NewRouter(
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
 	securityHandler := handlers.NewSecurityHandler(authService, identityService)
-	accessService := distributionaccess.NewService(metadataLifecycleClient, dataRetrieverClient)
+	accessService := distributionaccess.NewService(metadataLifecycleClient, dataRetrieverClient, converterClient)
+	contactRequestService := contactrequest.New(metadataLifecycleClient, contactRequestSender)
+	converterService := converter.New(converterClient, metadataLifecycleClient)
+	resourceService := resource.New(log, metadataLifecycleClient, converterService)
 	generatedHandler := handlers.NewOgenHandler(
 		identityService,
 		membershipService,
@@ -69,6 +77,9 @@ func NewRouter(
 		semanticAggregatorClient,
 		sharingService,
 		accessService,
+		contactRequestService,
+		resourceService,
+		converterService,
 		log,
 	)
 	generatedServer, err := gatewayapi.NewServer(

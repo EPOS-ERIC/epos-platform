@@ -13,6 +13,7 @@ export class BreadcrumbComponent {
 
   @Input() levels: Array<Array<DistributionLevel>>;
   @Input() showFirst: boolean;
+  @Input() filterFirst = false;
 
   public textSliceLimit = 30;
 

@@ -161,7 +161,7 @@ type ListDiscoveryDatasetDistributionsRow struct {
 	VersionID      uuid.UUID
 	ID             uuid.UUID
 	Name           string
-	Type           string
+	Type           DistributionType
 	WebServiceType *WebServiceType
 	VisibleOn      []WebServiceVisibleOn
 	ProviderID     *uuid.UUID

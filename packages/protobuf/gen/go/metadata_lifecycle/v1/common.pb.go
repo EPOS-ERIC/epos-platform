@@ -359,6 +359,7 @@ const (
 	GlobalPermission_GLOBAL_PERMISSION_CATEGORY_MANAGE        GlobalPermission = 16
 	GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE    GlobalPermission = 17
 	GlobalPermission_GLOBAL_PERMISSION_CONFIGURATION_MANAGE   GlobalPermission = 18
+	GlobalPermission_GLOBAL_PERMISSION_CONVERTER_MANAGE       GlobalPermission = 19
 )
 
 // Enum value maps for GlobalPermission.
@@ -383,6 +384,7 @@ var (
 		16: "GLOBAL_PERMISSION_CATEGORY_MANAGE",
 		17: "GLOBAL_PERMISSION_NOTIFICATION_MANAGE",
 		18: "GLOBAL_PERMISSION_CONFIGURATION_MANAGE",
+		19: "GLOBAL_PERMISSION_CONVERTER_MANAGE",
 	}
 	GlobalPermission_value = map[string]int32{
 		"GLOBAL_PERMISSION_UNSPECIFIED":            0,
@@ -404,6 +406,7 @@ var (
 		"GLOBAL_PERMISSION_CATEGORY_MANAGE":        16,
 		"GLOBAL_PERMISSION_NOTIFICATION_MANAGE":    17,
 		"GLOBAL_PERMISSION_CONFIGURATION_MANAGE":   18,
+		"GLOBAL_PERMISSION_CONVERTER_MANAGE":       19,
 	}
 )
 
@@ -633,6 +636,7 @@ const (
 	NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED     NotificationEventKind = 10
 	NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED      NotificationEventKind = 11
 	NotificationEventKind_NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED   NotificationEventKind = 12
+	NotificationEventKind_NOTIFICATION_EVENT_KIND_CONVERSION_REQUESTED   NotificationEventKind = 13
 )
 
 // Enum value maps for NotificationEventKind.
@@ -651,6 +655,7 @@ var (
 		10: "NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED",
 		11: "NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED",
 		12: "NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED",
+		13: "NOTIFICATION_EVENT_KIND_CONVERSION_REQUESTED",
 	}
 	NotificationEventKind_value = map[string]int32{
 		"NOTIFICATION_EVENT_KIND_UNSPECIFIED":            0,
@@ -666,6 +671,7 @@ var (
 		"NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED":     10,
 		"NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED":      11,
 		"NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED":   12,
+		"NOTIFICATION_EVENT_KIND_CONVERSION_REQUESTED":   13,
 	}
 )
 
@@ -751,16 +757,11 @@ func (RoleRequestStatus) EnumDescriptor() ([]byte, []int) {
 type Notification struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	EventKind     NotificationEventKind  `protobuf:"varint,1,opt,name=event_kind,json=eventKind,proto3,enum=metadata_lifecycle.v1.NotificationEventKind" json:"event_kind,omitempty"`
-	GroupId       *string                `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3,oneof" json:"group_id,omitempty"`
-	ResourceType  ResourceType           `protobuf:"varint,3,opt,name=resource_type,json=resourceType,proto3,enum=metadata_lifecycle.v1.ResourceType" json:"resource_type,omitempty"`
-	ResourceId    *string                `protobuf:"bytes,4,opt,name=resource_id,json=resourceId,proto3,oneof" json:"resource_id,omitempty"`
-	VersionId     *string                `protobuf:"bytes,5,opt,name=version_id,json=versionId,proto3,oneof" json:"version_id,omitempty"`
-	AccessId      *string                `protobuf:"bytes,6,opt,name=access_id,json=accessId,proto3,oneof" json:"access_id,omitempty"`
-	TargetUserId  string                 `protobuf:"bytes,7,opt,name=target_user_id,json=targetUserId,proto3" json:"target_user_id,omitempty"`
-	TargetEmail   string                 `protobuf:"bytes,8,opt,name=target_email,json=targetEmail,proto3" json:"target_email,omitempty"`
-	Subject       string                 `protobuf:"bytes,9,opt,name=subject,proto3" json:"subject,omitempty"`
-	Body          string                 `protobuf:"bytes,10,opt,name=body,proto3" json:"body,omitempty"`
-	Channel       NotificationChannel    `protobuf:"varint,11,opt,name=channel,proto3,enum=metadata_lifecycle.v1.NotificationChannel" json:"channel,omitempty"`
+	TargetUserId  string                 `protobuf:"bytes,2,opt,name=target_user_id,json=targetUserId,proto3" json:"target_user_id,omitempty"`
+	TargetEmail   string                 `protobuf:"bytes,3,opt,name=target_email,json=targetEmail,proto3" json:"target_email,omitempty"`
+	Subject       string                 `protobuf:"bytes,4,opt,name=subject,proto3" json:"subject,omitempty"`
+	Body          string                 `protobuf:"bytes,5,opt,name=body,proto3" json:"body,omitempty"`
+	Channel       NotificationChannel    `protobuf:"varint,6,opt,name=channel,proto3,enum=metadata_lifecycle.v1.NotificationChannel" json:"channel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -802,41 +803,6 @@ func (x *Notification) GetEventKind() NotificationEventKind {
 	return NotificationEventKind_NOTIFICATION_EVENT_KIND_UNSPECIFIED
 }
 
-func (x *Notification) GetGroupId() string {
-	if x != nil && x.GroupId != nil {
-		return *x.GroupId
-	}
-	return ""
-}
-
-func (x *Notification) GetResourceType() ResourceType {
-	if x != nil {
-		return x.ResourceType
-	}
-	return ResourceType_RESOURCE_TYPE_UNSPECIFIED
-}
-
-func (x *Notification) GetResourceId() string {
-	if x != nil && x.ResourceId != nil {
-		return *x.ResourceId
-	}
-	return ""
-}
-
-func (x *Notification) GetVersionId() string {
-	if x != nil && x.VersionId != nil {
-		return *x.VersionId
-	}
-	return ""
-}
-
-func (x *Notification) GetAccessId() string {
-	if x != nil && x.AccessId != nil {
-		return *x.AccessId
-	}
-	return ""
-}
-
 func (x *Notification) GetTargetUserId() string {
 	if x != nil {
 		return x.TargetUserId
@@ -872,118 +838,6 @@ func (x *Notification) GetChannel() NotificationChannel {
 	return NotificationChannel_NOTIFICATION_CHANNEL_UNSPECIFIED
 }
 
-type Identifier struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
-	Value         string                 `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Identifier) Reset() {
-	*x = Identifier{}
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Identifier) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Identifier) ProtoMessage() {}
-
-func (x *Identifier) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Identifier.ProtoReflect.Descriptor instead.
-func (*Identifier) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *Identifier) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *Identifier) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *Identifier) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type IdentifierInput struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *IdentifierInput) Reset() {
-	*x = IdentifierInput{}
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IdentifierInput) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IdentifierInput) ProtoMessage() {}
-
-func (x *IdentifierInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IdentifierInput.ProtoReflect.Descriptor instead.
-func (*IdentifierInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *IdentifierInput) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *IdentifierInput) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
 type EntityReference struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -994,7 +848,7 @@ type EntityReference struct {
 
 func (x *EntityReference) Reset() {
 	*x = EntityReference{}
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[3]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1006,7 +860,7 @@ func (x *EntityReference) String() string {
 func (*EntityReference) ProtoMessage() {}
 
 func (x *EntityReference) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[3]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1019,7 +873,7 @@ func (x *EntityReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityReference.ProtoReflect.Descriptor instead.
 func (*EntityReference) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{3}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *EntityReference) GetId() string {
@@ -1046,7 +900,7 @@ type UserReference struct {
 
 func (x *UserReference) Reset() {
 	*x = UserReference{}
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[4]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1058,7 +912,7 @@ func (x *UserReference) String() string {
 func (*UserReference) ProtoMessage() {}
 
 func (x *UserReference) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[4]
+	mi := &file_metadata_lifecycle_v1_common_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1071,7 +925,7 @@ func (x *UserReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserReference.ProtoReflect.Descriptor instead.
 func (*UserReference) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{4}
+	return file_metadata_lifecycle_v1_common_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *UserReference) GetId() string {
@@ -1092,36 +946,15 @@ var File_metadata_lifecycle_v1_common_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\"metadata_lifecycle/v1/common.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\"\x92\x05\n" +
+	"\"metadata_lifecycle/v1/common.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\"\xd0\x02\n" +
 	"\fNotification\x12U\n" +
 	"\n" +
-	"event_kind\x18\x01 \x01(\x0e2,.metadata_lifecycle.v1.NotificationEventKindB\b\xbaH\x05\x82\x01\x02\x10\x01R\teventKind\x12(\n" +
-	"\bgroup_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\agroupId\x88\x01\x01\x12R\n" +
-	"\rresource_type\x18\x03 \x01(\x0e2#.metadata_lifecycle.v1.ResourceTypeB\b\xbaH\x05\x82\x01\x02\x10\x01R\fresourceType\x12.\n" +
-	"\vresource_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x01R\n" +
-	"resourceId\x88\x01\x01\x12,\n" +
-	"\n" +
-	"version_id\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x02R\tversionId\x88\x01\x01\x12*\n" +
-	"\taccess_id\x18\x06 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x03R\baccessId\x88\x01\x01\x12-\n" +
-	"\x0etarget_user_id\x18\a \x01(\tB\a\xbaH\x04r\x02\x10\x01R\ftargetUserId\x12*\n" +
-	"\ftarget_email\x18\b \x01(\tB\a\xbaH\x04r\x02`\x01R\vtargetEmail\x12!\n" +
-	"\asubject\x18\t \x01(\tB\a\xbaH\x04r\x02\x10\x01R\asubject\x12\x1b\n" +
-	"\x04body\x18\n" +
-	" \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04body\x12N\n" +
-	"\achannel\x18\v \x01(\x0e2*.metadata_lifecycle.v1.NotificationChannelB\b\xbaH\x05\x82\x01\x02\x10\x01R\achannelB\v\n" +
-	"\t_group_idB\x0e\n" +
-	"\f_resource_idB\r\n" +
-	"\v_version_idB\f\n" +
-	"\n" +
-	"_access_id\"b\n" +
-	"\n" +
-	"Identifier\x12\x18\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
-	"\x04type\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04type\x12\x1d\n" +
-	"\x05value\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05value\"M\n" +
-	"\x0fIdentifierInput\x12\x1b\n" +
-	"\x04type\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04type\x12\x1d\n" +
-	"\x05value\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05value\"?\n" +
+	"event_kind\x18\x01 \x01(\x0e2,.metadata_lifecycle.v1.NotificationEventKindB\b\xbaH\x05\x82\x01\x02\x10\x01R\teventKind\x12-\n" +
+	"\x0etarget_user_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\ftargetUserId\x12*\n" +
+	"\ftarget_email\x18\x03 \x01(\tB\a\xbaH\x04r\x02`\x01R\vtargetEmail\x12!\n" +
+	"\asubject\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\asubject\x12\x1b\n" +
+	"\x04body\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04body\x12N\n" +
+	"\achannel\x18\x06 \x01(\x0e2*.metadata_lifecycle.v1.NotificationChannelB\b\xbaH\x05\x82\x01\x02\x10\x01R\achannel\"?\n" +
 	"\x0fEntityReference\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"<\n" +
@@ -1158,7 +991,7 @@ const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"\x16GROUP_ROLE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11GROUP_ROLE_EDITOR\x10\x01\x12\x17\n" +
 	"\x13GROUP_ROLE_REVIEWER\x10\x02\x12\x14\n" +
-	"\x10GROUP_ROLE_ADMIN\x10\x03*\x91\x06\n" +
+	"\x10GROUP_ROLE_ADMIN\x10\x03*\xb9\x06\n" +
 	"\x10GlobalPermission\x12!\n" +
 	"\x1dGLOBAL_PERMISSION_UNSPECIFIED\x10\x00\x12'\n" +
 	"#GLOBAL_PERMISSION_MEMBERSHIP_MANAGE\x10\x01\x12!\n" +
@@ -1179,7 +1012,8 @@ const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"$GLOBAL_PERMISSION_RESOURCE_UNPUBLISH\x10\x0f\x12%\n" +
 	"!GLOBAL_PERMISSION_CATEGORY_MANAGE\x10\x10\x12)\n" +
 	"%GLOBAL_PERMISSION_NOTIFICATION_MANAGE\x10\x11\x12*\n" +
-	"&GLOBAL_PERMISSION_CONFIGURATION_MANAGE\x10\x12*\xd0\x04\n" +
+	"&GLOBAL_PERMISSION_CONFIGURATION_MANAGE\x10\x12\x12&\n" +
+	"\"GLOBAL_PERMISSION_CONVERTER_MANAGE\x10\x13*\xd0\x04\n" +
 	"\x0fGroupPermission\x12 \n" +
 	"\x1cGROUP_PERMISSION_UNSPECIFIED\x10\x00\x12$\n" +
 	" GROUP_PERMISSION_RESOURCE_CREATE\x10\x01\x12\"\n" +
@@ -1204,7 +1038,7 @@ const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"\x19NOTIFICATION_SCOPE_GLOBAL\x10\x03*[\n" +
 	"\x13NotificationChannel\x12$\n" +
 	" NOTIFICATION_CHANNEL_UNSPECIFIED\x10\x00\x12\x1e\n" +
-	"\x1aNOTIFICATION_CHANNEL_EMAIL\x10\x01*\x8b\x05\n" +
+	"\x1aNOTIFICATION_CHANNEL_EMAIL\x10\x01*\xbd\x05\n" +
 	"\x15NotificationEventKind\x12'\n" +
 	"#NOTIFICATION_EVENT_KIND_UNSPECIFIED\x10\x00\x120\n" +
 	",NOTIFICATION_EVENT_KIND_MEMBERSHIP_REQUESTED\x10\x01\x12/\n" +
@@ -1219,7 +1053,8 @@ const file_metadata_lifecycle_v1_common_proto_rawDesc = "" +
 	"*NOTIFICATION_EVENT_KIND_RESOURCE_PUBLISHED\x10\n" +
 	"\x12-\n" +
 	")NOTIFICATION_EVENT_KIND_RESOURCE_REJECTED\x10\v\x120\n" +
-	",NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED\x10\f*\x9d\x01\n" +
+	",NOTIFICATION_EVENT_KIND_RESOURCE_UNPUBLISHED\x10\f\x120\n" +
+	",NOTIFICATION_EVENT_KIND_CONVERSION_REQUESTED\x10\r*\x9d\x01\n" +
 	"\x11RoleRequestStatus\x12#\n" +
 	"\x1fROLE_REQUEST_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bROLE_REQUEST_STATUS_PENDING\x10\x01\x12 \n" +
@@ -1239,7 +1074,7 @@ func file_metadata_lifecycle_v1_common_proto_rawDescGZIP() []byte {
 }
 
 var file_metadata_lifecycle_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 12)
-var file_metadata_lifecycle_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_metadata_lifecycle_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_metadata_lifecycle_v1_common_proto_goTypes = []any{
 	(ResourceType)(0),          // 0: metadata_lifecycle.v1.ResourceType
 	(VersioningStatus)(0),      // 1: metadata_lifecycle.v1.VersioningStatus
@@ -1254,20 +1089,17 @@ var file_metadata_lifecycle_v1_common_proto_goTypes = []any{
 	(NotificationEventKind)(0), // 10: metadata_lifecycle.v1.NotificationEventKind
 	(RoleRequestStatus)(0),     // 11: metadata_lifecycle.v1.RoleRequestStatus
 	(*Notification)(nil),       // 12: metadata_lifecycle.v1.Notification
-	(*Identifier)(nil),         // 13: metadata_lifecycle.v1.Identifier
-	(*IdentifierInput)(nil),    // 14: metadata_lifecycle.v1.IdentifierInput
-	(*EntityReference)(nil),    // 15: metadata_lifecycle.v1.EntityReference
-	(*UserReference)(nil),      // 16: metadata_lifecycle.v1.UserReference
+	(*EntityReference)(nil),    // 13: metadata_lifecycle.v1.EntityReference
+	(*UserReference)(nil),      // 14: metadata_lifecycle.v1.UserReference
 }
 var file_metadata_lifecycle_v1_common_proto_depIdxs = []int32{
 	10, // 0: metadata_lifecycle.v1.Notification.event_kind:type_name -> metadata_lifecycle.v1.NotificationEventKind
-	0,  // 1: metadata_lifecycle.v1.Notification.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	9,  // 2: metadata_lifecycle.v1.Notification.channel:type_name -> metadata_lifecycle.v1.NotificationChannel
-	3,  // [3:3] is the sub-list for method output_type
-	3,  // [3:3] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	9,  // 1: metadata_lifecycle.v1.Notification.channel:type_name -> metadata_lifecycle.v1.NotificationChannel
+	2,  // [2:2] is the sub-list for method output_type
+	2,  // [2:2] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_common_proto_init() }
@@ -1275,14 +1107,13 @@ func file_metadata_lifecycle_v1_common_proto_init() {
 	if File_metadata_lifecycle_v1_common_proto != nil {
 		return
 	}
-	file_metadata_lifecycle_v1_common_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_common_proto_rawDesc), len(file_metadata_lifecycle_v1_common_proto_rawDesc)),
 			NumEnums:      12,
-			NumMessages:   5,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

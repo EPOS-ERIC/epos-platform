@@ -64,7 +64,14 @@ export class DataSearchConfigurablesServiceRegistry extends DataSearchConfigurab
   public createConfigurable(
     distId: string,
   ): Promise<DataConfigurableRegistrySearch> {
-    return this.searchService.getDetailsById(distId, CONTEXT_FACILITY)
+    const summary = this.model.dataDiscoverResponseReg.get()?.results().getFlatData()
+      .find(item => item.getIdentifier() === distId);
+    const resourceVersion = summary?.resourceVersion;
+    const details = resourceVersion != null
+      ? this.searchService.getResourceVersionDistributionDetails(
+        resourceVersion.resourceType, resourceVersion.resourceId, resourceVersion.versionId, distId, summary!,
+      ) : this.searchService.getDetailsById(distId, CONTEXT_FACILITY);
+    return details
       .then((distributionDetails: DistributionDetails) => {
         const paramDefs = distributionDetails.getParameters();
 

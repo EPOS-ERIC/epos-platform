@@ -9,8 +9,8 @@ import (
 )
 
 type Config struct {
-	ServerPort       string `envconfig:"SERVER_PORT" default:"5001"`
-	GatewayPublicURL string `envconfig:"GATEWAY_PUBLIC_URL"`
+	ServerPort    string `envconfig:"SERVER_PORT" default:"5001"`
+	BackofficeURL string `envconfig:"BACKOFFICE_URL"`
 
 	DBHost     string `envconfig:"DB_HOST" default:"localhost"`
 	DBPort     string `envconfig:"DB_PORT" default:"5432"`
@@ -38,9 +38,9 @@ func (c *Config) Validate() error {
 	if c.ServerPort == "" {
 		return fmt.Errorf("server_port is required")
 	}
-	publicURL, err := url.Parse(c.GatewayPublicURL)
+	publicURL, err := url.Parse(c.BackofficeURL)
 	if err != nil || publicURL.Host == "" || (publicURL.Scheme != "http" && publicURL.Scheme != "https") || publicURL.RawQuery != "" || publicURL.Fragment != "" {
-		return fmt.Errorf("gateway_public_url must be an absolute HTTP(S) URL without a query or fragment")
+		return fmt.Errorf("backoffice_url must be an absolute HTTP(S) URL without a query or fragment")
 	}
 	if c.DBHost == "" {
 		return fmt.Errorf("db_host is required")

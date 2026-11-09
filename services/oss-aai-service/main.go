@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
@@ -8,7 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,6 +18,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 )
 
 const (
@@ -61,24 +65,42 @@ func main() {
 		fmt.Printf("oss-aai-service version %s\n", version)
 		return
 	}
+	logger := logging.New("aai-service").With("service", "aai-service")
+	if err := run(logger); err != nil {
+		logger.Error("server failed", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run(logger *slog.Logger) error {
+	shutdown, err := observability.Start(context.Background(), observability.Config{})
+	if err != nil {
+		return fmt.Errorf("setup observability: %w", err)
+	}
+	defer func() {
+		if err := shutdown(context.Background()); err != nil {
+			logger.Error("otel shutdown failed", "error", err)
+		}
+	}()
+
 	store, err := newLocalStore(filepath.Join("data", "auth.db"))
 	if err != nil {
-		log.Fatalf("init store: %v", err)
+		return fmt.Errorf("init store: %w", err)
 	}
 
 	tmpl, err := template.ParseGlob("templates/*.tmpl")
 	if err != nil {
-		log.Fatalf("parse templates: %v", err)
+		return fmt.Errorf("parse templates: %w", err)
 	}
 
 	oidcSigner, err := newOIDCSigner(store)
 	if err != nil {
-		log.Fatalf("init OIDC signer: %v", err)
+		return fmt.Errorf("init OIDC signer: %w", err)
 	}
 
 	prefix, err := publicPrefixFromIssuer(os.Getenv("OIDC_ISSUER"))
 	if err != nil {
-		log.Fatalf("invalid OIDC_ISSUER: %v", err)
+		return fmt.Errorf("invalid OIDC_ISSUER: %w", err)
 	}
 	a := &app{store: store, templates: tmpl, oidc: oidcSigner, publicPrefix: prefix}
 	mux := http.NewServeMux()
@@ -110,14 +132,15 @@ func main() {
 
 	server := &http.Server{
 		Addr:              listenAddr,
-		Handler:           loggingMiddleware(corsMiddleware(mux)),
+		Handler:           observability.NewHTTPHandler(loggingMiddleware(logger, corsMiddleware(mux)), "/"),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	log.Printf("server started on %s", listenAddr)
+	logger.Info("server started", "listen", listenAddr)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("listen: %v", err)
+		return fmt.Errorf("listen: %w", err)
 	}
+	return nil
 }
 
 func (a *app) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -720,8 +743,11 @@ func bearerToken(r *http.Request) string {
 	return strings.TrimSpace(parts[1])
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
+func loggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !isQuietHealthRequest(r) {
+			logger.DebugContext(r.Context(), "handling http request", "method", r.Method, "path", r.URL.Path)
+		}
 		rw := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(rw, r)
 
@@ -729,7 +755,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		log.Printf("%s %s", r.Method, r.URL.Path)
+		logger.InfoContext(r.Context(), "http request", "method", r.Method, "path", r.URL.Path, "status", rw.status)
 	})
 }
 

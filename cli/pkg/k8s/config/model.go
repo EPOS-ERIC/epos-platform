@@ -6,7 +6,9 @@ import "github.com/EPOS-ERIC/epos-platform/cli/common"
 type Config struct {
 	Name               string           `yaml:"name"`
 	Domain             string           `yaml:"domain"`
+	IngressHost        *string          `yaml:"ingress_host,omitempty"`
 	Protocol           string           `yaml:"protocol"`
+	Debug              bool             `yaml:"debug"`
 	URLPrefixNamespace bool             `yaml:"url_prefix_namespace"`
 	CreateNamespace    bool             `yaml:"create_namespace"`
 	ImagePullPolicy    string           `yaml:"image_pull_policy"`
@@ -44,10 +46,11 @@ type Gateway struct {
 }
 
 type Mailgun struct {
-	Enable bool   `yaml:"enable"`
-	Domain string `yaml:"domain"`
-	From   string `yaml:"from"`
-	APIKey string `yaml:"api_key"`
+	Enable             bool     `yaml:"enable"`
+	Domain             string   `yaml:"domain"`
+	From               string   `yaml:"from"`
+	APIKey             string   `yaml:"api_key"`
+	RecipientOverrides []string `yaml:"recipient_overrides"`
 }
 
 // GUI configures a generic GUI service endpoint.
@@ -57,9 +60,8 @@ type GUI struct {
 
 // Backoffice configures the backoffice UI.
 type Backoffice struct {
-	Enabled bool `yaml:"enabled"`
-	GUI     GUI  `yaml:"gui"`
-	TLS     TLS  `yaml:"tls"`
+	GUI GUI `yaml:"gui"`
+	TLS TLS `yaml:"tls"`
 }
 
 // MetadataDatabase configures a database connection.
@@ -89,6 +91,7 @@ type Components struct {
 	Backoffice            Backoffice       `yaml:"backoffice"`
 	MetadataDatabase      MetadataDatabase `yaml:"metadata_database"`
 	DataRetrieverDatabase MetadataDatabase `yaml:"data_retriever_database"`
+	ConverterDatabase     MetadataDatabase `yaml:"converter_database"`
 	SharingDatabase       MetadataDatabase `yaml:"sharing_database"`
 	AAIService            AAIService       `yaml:"aai_service"`
 	OpenTelemetry         OpenTelemetry    `yaml:"otel"`

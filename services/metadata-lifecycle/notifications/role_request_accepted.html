@@ -1,0 +1,5 @@
+<h1>Role request accepted</h1>
+<p>Your request for the <strong>{{.Role}}</strong> role was accepted.</p>
+<p><strong>Group:</strong> {{groupLabel .GroupID}}</p>
+<p><strong>Accepted by:</strong> {{userLabel .ActorID}}</p>
+{{with pageURL "/memberships"}}<p><a href="{{.}}">View your memberships</a></p>{{end}}

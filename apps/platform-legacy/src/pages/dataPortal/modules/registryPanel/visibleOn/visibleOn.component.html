@@ -7,6 +7,9 @@
       <div class="hflex" *ngSwitchCase="VIEW_TYPE_ENUM.TABLE" (click)="tablePanelToggle(item)" matTooltip="Open table data">
         <span class="link pointer">View List of Equipment</span>
       </div>
+      <div class="hflex" *ngSwitchCase="VIEW_TYPE_ENUM.GRAPH" (click)="graphPanelToggle(item)" matTooltip="Open graph data">
+        <span class="link pointer">View on Graph</span>
+      </div>
     </ng-container>
   </div>
 </div>

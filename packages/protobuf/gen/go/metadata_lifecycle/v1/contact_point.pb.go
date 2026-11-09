@@ -26,7 +26,6 @@ type ContactPoint struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Role          string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -71,13 +70,6 @@ func (x *ContactPoint) GetId() string {
 func (x *ContactPoint) GetEmail() string {
 	if x != nil {
 		return x.Email
-	}
-	return ""
-}
-
-func (x *ContactPoint) GetRole() string {
-	if x != nil {
-		return x.Role
 	}
 	return ""
 }
@@ -253,7 +245,6 @@ func (x *GetContactPointResponse) GetContactPoint() *ContactPoint {
 type CreateContactPointRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Role          string                 `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -291,13 +282,6 @@ func (*CreateContactPointRequest) Descriptor() ([]byte, []int) {
 func (x *CreateContactPointRequest) GetEmail() string {
 	if x != nil {
 		return x.Email
-	}
-	return ""
-}
-
-func (x *CreateContactPointRequest) GetRole() string {
-	if x != nil {
-		return x.Role
 	}
 	return ""
 }
@@ -350,7 +334,6 @@ type ReplaceContactPointRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ContactPointId string                 `protobuf:"bytes,1,opt,name=contact_point_id,json=contactPointId,proto3" json:"contact_point_id,omitempty"`
 	Email          string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Role           string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -395,13 +378,6 @@ func (x *ReplaceContactPointRequest) GetContactPointId() string {
 func (x *ReplaceContactPointRequest) GetEmail() string {
 	if x != nil {
 		return x.Email
-	}
-	return ""
-}
-
-func (x *ReplaceContactPointRequest) GetRole() string {
-	if x != nil {
-		return x.Role
 	}
 	return ""
 }
@@ -534,27 +510,24 @@ var File_metadata_lifecycle_v1_contact_point_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_contact_point_proto_rawDesc = "" +
 	"\n" +
-	")metadata_lifecycle/v1/contact_point.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\"d\n" +
+	")metadata_lifecycle/v1/contact_point.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\"G\n" +
 	"\fContactPoint\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1d\n" +
-	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12\x1b\n" +
-	"\x04role\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04role\"\x1a\n" +
+	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\"\x1a\n" +
 	"\x18ListContactPointsRequest\"g\n" +
 	"\x19ListContactPointsResponse\x12J\n" +
 	"\x0econtact_points\x18\x01 \x03(\v2#.metadata_lifecycle.v1.ContactPointR\rcontactPoints\"L\n" +
 	"\x16GetContactPointRequest\x122\n" +
 	"\x10contact_point_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0econtactPointId\"c\n" +
 	"\x17GetContactPointResponse\x12H\n" +
-	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\"W\n" +
+	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\":\n" +
 	"\x19CreateContactPointRequest\x12\x1d\n" +
-	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12\x1b\n" +
-	"\x04role\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04role\"f\n" +
+	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\"f\n" +
 	"\x1aCreateContactPointResponse\x12H\n" +
-	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\"\x8c\x01\n" +
+	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\"o\n" +
 	"\x1aReplaceContactPointRequest\x122\n" +
 	"\x10contact_point_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0econtactPointId\x12\x1d\n" +
-	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12\x1b\n" +
-	"\x04role\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04role\"g\n" +
+	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\"g\n" +
 	"\x1bReplaceContactPointResponse\x12H\n" +
 	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\"O\n" +
 	"\x19DeleteContactPointRequest\x122\n" +

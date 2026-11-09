@@ -1,0 +1,20 @@
+<h1>Conversion requested: {{.Resource.Name}}</h1>
+
+<p><strong>Requested by:</strong> {{userLabel .ActorID}}</p>
+<p><strong>Distribution:</strong> {{with resourceURL .Resource}}<a href="{{.}}#distributions">{{$.DistributionTitle}}</a>{{else}}{{.DistributionTitle}}{{end}} (Distribution ID: {{.DistributionID}})</p>
+<p><strong>Dataset:</strong> {{with resourceURL .Resource}}<a href="{{.}}">{{$.Resource.Name}}</a>{{else}}{{.Resource.Name}}{{end}}</p>
+<p><strong>Dataset ID:</strong> {{.Resource.ResourceID}}; <strong>Dataset version ID:</strong> {{.Resource.VersionID}}</p>
+<p><strong>Distribution type:</strong> Web service ({{.WebServiceType}})</p>
+
+<p><strong>Requested visualizations:</strong>
+{{range $index, $item := .Input.Visualizations}}{{if $index}}, {{end}}{{$item}}{{end}}
+</p>
+
+<p><strong>Input format to use:</strong> {{.Input.InputFormat}}</p>
+
+{{if eq .WebServiceType "HTTP"}}
+<p><strong>Service default URL:</strong> {{if .DefaultURL}}<a href="{{.DefaultURL}}">{{.DefaultURL}}</a>{{else}}Unavailable{{end}}</p>
+{{end}}
+
+<p><strong>Message:</strong></p>
+<p style="white-space: pre-wrap">{{.Input.Message}}</p>

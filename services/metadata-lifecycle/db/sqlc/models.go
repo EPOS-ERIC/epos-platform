@@ -14,6 +14,152 @@ import (
 	go_geom "github.com/twpayne/go-geom"
 )
 
+type DatasetAccessRight string
+
+const (
+	DatasetAccessRightNONPUBLIC    DatasetAccessRight = "NON_PUBLIC"
+	DatasetAccessRightNORMAL       DatasetAccessRight = "NORMAL"
+	DatasetAccessRightOPDATPRO     DatasetAccessRight = "OP_DATPRO"
+	DatasetAccessRightPUBLIC       DatasetAccessRight = "PUBLIC"
+	DatasetAccessRightRESTRICTED   DatasetAccessRight = "RESTRICTED"
+	DatasetAccessRightCONFIDENTIAL DatasetAccessRight = "CONFIDENTIAL"
+	DatasetAccessRightSENSITIVE    DatasetAccessRight = "SENSITIVE"
+)
+
+func (e *DatasetAccessRight) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DatasetAccessRight(s)
+	case string:
+		*e = DatasetAccessRight(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DatasetAccessRight: %T", src)
+	}
+	return nil
+}
+
+type NullDatasetAccessRight struct {
+	DatasetAccessRight DatasetAccessRight
+	Valid              bool // Valid is true if DatasetAccessRight is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDatasetAccessRight) Scan(value interface{}) error {
+	if value == nil {
+		ns.DatasetAccessRight, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DatasetAccessRight.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDatasetAccessRight) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DatasetAccessRight), nil
+}
+
+type DatasetAccrualPeriodicity string
+
+const (
+	DatasetAccrualPeriodicityTRIENNIAL        DatasetAccrualPeriodicity = "TRIENNIAL"
+	DatasetAccrualPeriodicityBIENNIAL         DatasetAccrualPeriodicity = "BIENNIAL"
+	DatasetAccrualPeriodicityANNUAL           DatasetAccrualPeriodicity = "ANNUAL"
+	DatasetAccrualPeriodicitySEMIANNUAL       DatasetAccrualPeriodicity = "SEMIANNUAL"
+	DatasetAccrualPeriodicityTHREETIMESAYEAR  DatasetAccrualPeriodicity = "THREE_TIMES_A_YEAR"
+	DatasetAccrualPeriodicityQUARTERLY        DatasetAccrualPeriodicity = "QUARTERLY"
+	DatasetAccrualPeriodicityBIMONTHLY        DatasetAccrualPeriodicity = "BIMONTHLY"
+	DatasetAccrualPeriodicityMONTHLY          DatasetAccrualPeriodicity = "MONTHLY"
+	DatasetAccrualPeriodicitySEMIMONTHLY      DatasetAccrualPeriodicity = "SEMIMONTHLY"
+	DatasetAccrualPeriodicityBIWEEKLY         DatasetAccrualPeriodicity = "BIWEEKLY"
+	DatasetAccrualPeriodicityTHREETIMESAMONTH DatasetAccrualPeriodicity = "THREE_TIMES_A_MONTH"
+	DatasetAccrualPeriodicityWEEKLY           DatasetAccrualPeriodicity = "WEEKLY"
+	DatasetAccrualPeriodicitySEMIWEEKLY       DatasetAccrualPeriodicity = "SEMIWEEKLY"
+	DatasetAccrualPeriodicityTHREETIMESAWEEK  DatasetAccrualPeriodicity = "THREE_TIMES_A_WEEK"
+	DatasetAccrualPeriodicityDAILY            DatasetAccrualPeriodicity = "DAILY"
+	DatasetAccrualPeriodicityCONTINUOUS       DatasetAccrualPeriodicity = "CONTINUOUS"
+	DatasetAccrualPeriodicityIRREGULAR        DatasetAccrualPeriodicity = "IRREGULAR"
+)
+
+func (e *DatasetAccrualPeriodicity) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DatasetAccrualPeriodicity(s)
+	case string:
+		*e = DatasetAccrualPeriodicity(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DatasetAccrualPeriodicity: %T", src)
+	}
+	return nil
+}
+
+type NullDatasetAccrualPeriodicity struct {
+	DatasetAccrualPeriodicity DatasetAccrualPeriodicity
+	Valid                     bool // Valid is true if DatasetAccrualPeriodicity is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDatasetAccrualPeriodicity) Scan(value interface{}) error {
+	if value == nil {
+		ns.DatasetAccrualPeriodicity, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DatasetAccrualPeriodicity.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDatasetAccrualPeriodicity) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DatasetAccrualPeriodicity), nil
+}
+
+type DistributionType string
+
+const (
+	DistributionTypeWEBSERVICE       DistributionType = "WEB_SERVICE"
+	DistributionTypeDOWNLOADABLEFILE DistributionType = "DOWNLOADABLE_FILE"
+)
+
+func (e *DistributionType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DistributionType(s)
+	case string:
+		*e = DistributionType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DistributionType: %T", src)
+	}
+	return nil
+}
+
+type NullDistributionType struct {
+	DistributionType DistributionType
+	Valid            bool // Valid is true if DistributionType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDistributionType) Scan(value interface{}) error {
+	if value == nil {
+		ns.DistributionType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DistributionType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDistributionType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DistributionType), nil
+}
+
 type MembershipRole string
 
 const (
@@ -687,7 +833,6 @@ type Category struct {
 type ContactPoint struct {
 	ID    uuid.UUID
 	Email string
-	Role  string
 }
 
 type Dataset struct {
@@ -705,9 +850,9 @@ type DatasetVersion struct {
 	Title                      string
 	Description                string
 	Keywords                   []string
-	AccrualPeriodicity         *string
+	AccrualPeriodicity         *DatasetAccrualPeriodicity
 	QualityAnnotation          *string
-	AccessRight                *string
+	AccessRight                *DatasetAccessRight
 	SourceCreatedAt            *time.Time
 	SourceUpdatedAt            *time.Time
 	SpatialCoverage            go_geom.T
@@ -756,14 +901,13 @@ type DatetimeParameterSchema struct {
 
 type Distribution struct {
 	ID                     uuid.UUID
+	ResourceID             uuid.UUID
 	DatasetVersionID       uuid.UUID
 	Title                  string
 	Description            string
 	License                *string
-	SourceIssuedAt         *time.Time
-	SourceModifiedAt       *time.Time
 	ByteSize               *int32
-	Type                   string
+	Type                   DistributionType
 	DownloadableFileUrl    *string
 	DownloadableFileFormat *string
 	WebServiceID           *uuid.UUID
@@ -774,7 +918,7 @@ type FloatParameterSchema struct {
 	SchemaKind     ParameterSchemaKind
 	Minimum        *float64
 	Maximum        *float64
-	DefaultValue   *float64
+	DefaultValue   []float64
 	Enum           []types.FloatEnumOption
 	MultipleValues bool
 }
@@ -857,10 +1001,10 @@ type GroupRoleRequest struct {
 
 type Identifier struct {
 	ID                           uuid.UUID
+	ResourceID                   uuid.UUID
 	Type                         string
 	Value                        string
 	DatasetVersionID             *uuid.UUID
-	OrganizationID               *uuid.UUID
 	SoftwareApplicationVersionID *uuid.UUID
 	SoftwareSourceCodeVersionID  *uuid.UUID
 }
@@ -870,7 +1014,7 @@ type IntegerParameterSchema struct {
 	SchemaKind     ParameterSchemaKind
 	Minimum        *int64
 	Maximum        *int64
-	DefaultValue   *int64
+	DefaultValue   []int64
 	Enum           []types.IntegerEnumOption
 	MultipleValues bool
 }
@@ -906,6 +1050,13 @@ type OrganizationContactPoint struct {
 	ContactPointID uuid.UUID
 }
 
+type OrganizationIdentifier struct {
+	ID             uuid.UUID
+	OrganizationID uuid.UUID
+	Type           string
+	Value          string
+}
+
 type OrganizationMembership struct {
 	ChildOrganizationID  uuid.UUID
 	ParentOrganizationID uuid.UUID
@@ -913,6 +1064,7 @@ type OrganizationMembership struct {
 
 type Parameter struct {
 	ID                          uuid.UUID
+	ResourceID                  uuid.UUID
 	Position                    int32
 	Name                        string
 	Label                       string
@@ -1064,7 +1216,7 @@ type StringParameterSchema struct {
 	ParameterID    uuid.UUID
 	SchemaKind     ParameterSchemaKind
 	Pattern        *string
-	DefaultValue   *string
+	DefaultValue   []string
 	Enum           []types.StringEnumOption
 	MultipleValues bool
 }
@@ -1090,19 +1242,13 @@ type UserGlobalRole struct {
 }
 
 type WebService struct {
-	ID                       uuid.UUID
-	DatasetVersionID         uuid.UUID
-	Name                     string
-	Description              *string
-	Type                     WebServiceType
-	VisibleOn                []WebServiceVisibleOn
-	ProviderOrganizationID   *uuid.UUID
-	DocumentationTitle       *string
-	DocumentationDescription *string
-	DocumentationUri         *string
-	SpatialCoverage          go_geom.T
-	TemporalStart            *time.Time
-	TemporalEnd              *time.Time
+	ID                     uuid.UUID
+	ResourceID             uuid.UUID
+	DatasetVersionID       uuid.UUID
+	Type                   WebServiceType
+	VisibleOn              []WebServiceVisibleOn
+	ProviderOrganizationID *uuid.UUID
+	DocumentationUri       *string
 }
 
 type WebServiceBody struct {
@@ -1131,6 +1277,8 @@ type WfsService struct {
 }
 
 type WmsLayer struct {
+	ID           uuid.UUID
+	ResourceID   uuid.UUID
 	WebServiceID uuid.UUID
 	Name         string
 	Position     int32
@@ -1147,6 +1295,8 @@ type WmsService struct {
 }
 
 type WmtsLayer struct {
+	ID           uuid.UUID
+	ResourceID   uuid.UUID
 	WebServiceID uuid.UUID
 	Name         string
 	Position     int32

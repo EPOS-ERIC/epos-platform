@@ -86,6 +86,8 @@ func (q *Queries) AddLifecycleSoftwareSourceCodeCreator(ctx context.Context, arg
 const addLifecycleSoftwareSourceCodeIdentifier = `-- name: AddLifecycleSoftwareSourceCodeIdentifier :exec
 INSERT INTO
     identifiers (
+        id,
+        resource_id,
         TYPE,
         value,
         software_source_code_version_id
@@ -94,18 +96,28 @@ VALUES
     (
         $1,
         $2,
-        $3
+        $3,
+        $4,
+        $5
     )
 `
 
 type AddLifecycleSoftwareSourceCodeIdentifierParams struct {
+	ID                          uuid.UUID
+	ResourceID                  uuid.UUID
 	Type                        string
 	Value                       string
 	SoftwareSourceCodeVersionID *uuid.UUID
 }
 
 func (q *Queries) AddLifecycleSoftwareSourceCodeIdentifier(ctx context.Context, arg AddLifecycleSoftwareSourceCodeIdentifierParams) error {
-	_, err := q.db.Exec(ctx, addLifecycleSoftwareSourceCodeIdentifier, arg.Type, arg.Value, arg.SoftwareSourceCodeVersionID)
+	_, err := q.db.Exec(ctx, addLifecycleSoftwareSourceCodeIdentifier,
+		arg.ID,
+		arg.ResourceID,
+		arg.Type,
+		arg.Value,
+		arg.SoftwareSourceCodeVersionID,
+	)
 	return err
 }
 
@@ -178,11 +190,21 @@ inserted AS (
 identifiers AS (
     INSERT INTO
         identifiers (
+            resource_id,
             TYPE,
             value,
             software_source_code_version_id
         )
     SELECT
+        CASE
+            WHEN (
+                SELECT
+                    software_source_code_id
+                FROM
+                    source
+            ) = $3 THEN resource_id
+            ELSE uuid_generate_v4()
+        END,
         TYPE,
         value,
         (
@@ -884,7 +906,7 @@ func (q *Queries) ListLifecycleSoftwareSourceCodeCategories(ctx context.Context,
 
 const listLifecycleSoftwareSourceCodeContactPoints = `-- name: ListLifecycleSoftwareSourceCodeContactPoints :many
 SELECT
-    contact.id, contact.email, contact.role
+    contact.id, contact.email
 FROM
     software_source_code_version_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id
@@ -907,7 +929,7 @@ func (q *Queries) ListLifecycleSoftwareSourceCodeContactPoints(ctx context.Conte
 	var items []ListLifecycleSoftwareSourceCodeContactPointsRow
 	for rows.Next() {
 		var i ListLifecycleSoftwareSourceCodeContactPointsRow
-		if err := rows.Scan(&i.ContactPoint.ID, &i.ContactPoint.Email, &i.ContactPoint.Role); err != nil {
+		if err := rows.Scan(&i.ContactPoint.ID, &i.ContactPoint.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -963,7 +985,7 @@ func (q *Queries) ListLifecycleSoftwareSourceCodeCreators(ctx context.Context, v
 
 const listLifecycleSoftwareSourceCodeIdentifiers = `-- name: ListLifecycleSoftwareSourceCodeIdentifiers :many
 SELECT
-    identifier.id, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
+    identifier.id, identifier.resource_id, identifier.type, identifier.value, identifier.dataset_version_id, identifier.software_application_version_id, identifier.software_source_code_version_id
 FROM
     identifiers AS identifier
 WHERE
@@ -987,10 +1009,10 @@ func (q *Queries) ListLifecycleSoftwareSourceCodeIdentifiers(ctx context.Context
 		var i ListLifecycleSoftwareSourceCodeIdentifiersRow
 		if err := rows.Scan(
 			&i.Identifier.ID,
+			&i.Identifier.ResourceID,
 			&i.Identifier.Type,
 			&i.Identifier.Value,
 			&i.Identifier.DatasetVersionID,
-			&i.Identifier.OrganizationID,
 			&i.Identifier.SoftwareApplicationVersionID,
 			&i.Identifier.SoftwareSourceCodeVersionID,
 		); err != nil {

@@ -32,9 +32,8 @@ type populateState struct {
 }
 
 // showPopulateForm displays the dynamic populate form.
-func (a *App) showPopulateForm() {
+func (a *App) showPopulateForm(envName string, isDocker bool, k8sContext string) {
 	a.PushFocus()
-	envName, isDocker, k8sContext := a.envList.GetSelected()
 
 	if envName == "" {
 		return

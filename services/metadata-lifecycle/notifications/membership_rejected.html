@@ -1,0 +1,5 @@
+<h1>Membership rejected</h1>
+<p>Your membership request was rejected.</p>
+<p><strong>Group:</strong> {{groupLabel .GroupID}}</p>
+<p><strong>Rejected by:</strong> {{userLabel .ActorID}}</p>
+{{with pageURL "/memberships"}}<p><a href="{{.}}">View your memberships</a></p>{{end}}

@@ -30,10 +30,12 @@ type Images struct {
 	GatewayImage           string `yaml:"gateway"`
 	MetadataLifecycleImage string `yaml:"metadata_lifecycle"`
 	DataRetrieverImage     string `yaml:"data_retriever"`
+	ConverterImage         string `yaml:"converter"`
 	SharingServiceImage    string `yaml:"sharing_service"`
 	AAIServiceImage        string `yaml:"aai_service"`
 	MetadataDatabaseImage  string `yaml:"metadata_database"`
 	DataRetrieverDBImage   string `yaml:"data_retriever_database"`
+	ConverterDBImage       string `yaml:"converter_database"`
 	SharingDBImage         string `yaml:"sharing_database"`
 	OTelLGTMImage          string `yaml:"otel_lgtm"`
 }

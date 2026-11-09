@@ -104,7 +104,7 @@
     "@types/proj4": "^2.5.2",
     "@typescript-eslint/eslint-plugin": "^6.1.0",
     "@typescript-eslint/parser": "^6.1.0",
-    "cypress": "^13.7.1",
+    "cypress": "^16.2.1",
     "eslint": "^8.23.0",
     "eslint-plugin-angular": "4.1.0",
     "eslint-plugin-import": "2.27.5",

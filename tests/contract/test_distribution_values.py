@@ -1,6 +1,7 @@
 from urllib.parse import parse_qs, urlsplit
 
 from distribution_fixtures import DistributionContractTestCase, parameter, web_distribution
+from fixtures import assert_problem
 
 
 class DistributionValuesContractTest(DistributionContractTestCase):
@@ -114,20 +115,30 @@ class DistributionValuesContractTest(DistributionContractTestCase):
                     )
 
     def test_defaults_overrides_and_missing_required_values(self) -> None:
-        """Verify omitted defaults, explicit overrides and required-value checks."""
+        """Verify scalar default limits, typed array defaults, overrides and required values."""
         detail = self.create_draft([web_distribution([
             parameter("required", required=True),
-            parameter("defaulted", position=1, required=True, default="default"),
+            parameter("defaulted", position=1, required=True, default=["default"]),
             parameter("optional", position=2),
-            parameter("multiple", position=3, multiple_values=True, explode=True, default="one",
+            parameter("multiple", position=3, multiple_values=True, explode=True, default=["one", "three"],
                       enum=[{"value": value} for value in ("one", "two", "three")]),
+            parameter("joined", position=4, multiple_values=True, default=["one", "three"],
+                      enum=[{"value": value} for value in ("one", "two", "three")]),
+            parameter("integer_multiple", "INTEGER", position=5, multiple_values=True, explode=True,
+                      default=[1, 3], enum=[{"value": value} for value in (1, 2, 3)]),
+            parameter("float_joined", "FLOAT", position=6, multiple_values=True,
+                      default=[0.5, 2.5], enum=[{"value": value} for value in (0.5, 1.5, 2.5)]),
         ])])
         distribution = detail["metadata"]["distributions"][0]
         identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["configuration"]["parameters"]}
         self.assert_prepare_problem(self.prepare_response(distribution), target="parameters")
         prepared = self.prepare(distribution, values={identifiers["required"]: "supplied"})
         query = parse_qs(urlsplit(prepared["url"]).query)
-        self.assertEqual(query, {"required": ["supplied"], "defaulted": ["default"], "multiple": ["one"]})
+        self.assertEqual(query, {
+            "required": ["supplied"], "defaulted": ["default"],
+            "multiple": ["one", "three"], "joined": ["one,three"],
+            "integer_multiple": ["1", "3"], "float_joined": ["0.5,2.5"],
+        })
         prepared = self.prepare(distribution, values={
             identifiers["required"]: "supplied", identifiers["defaulted"]: "override",
             identifiers["multiple"]: ["two", "three"],
@@ -136,3 +147,18 @@ class DistributionValuesContractTest(DistributionContractTestCase):
         self.assertEqual(query["defaulted"], ["override"])
         self.assertEqual(query["multiple"], ["two", "three"])
         self.assertNotIn("optional", query)
+
+        invalid = self.replace_response(detail, {
+            "title": detail["metadata"]["title"],
+            "description": "Reject multiple defaults for scalar parameters",
+            "distributions": [web_distribution([parameter("scalar", default=["one", "two"])])],
+        })
+        problem = assert_problem(self, invalid, 400, "validation_failed")
+        self.assertTrue(
+            problem.get("target", "").startswith(
+                "metadata.distributions[0].web_service.configuration.parameters[0]"
+            ),
+            problem,
+        )
+        unchanged = self.details(detail["resource_id"], detail["id"])
+        self.assertEqual(unchanged["revision"], detail["revision"])

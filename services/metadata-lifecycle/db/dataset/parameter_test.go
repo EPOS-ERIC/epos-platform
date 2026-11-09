@@ -13,11 +13,10 @@ import (
 func TestParameterMappingRoundTrip(t *testing.T) {
 	minimum := int64(1)
 	maximum := int64(10)
-	floatDefault := 1.5
 	booleanDefault := false
 	date := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
 	description := "parameter description"
-	stringDefault := "json"
+	stringDefaults := []string{"json", "xml"}
 	pattern := "^[a-z]+$"
 	layout := "YYYY-MM-DD"
 	tests := []struct {
@@ -33,7 +32,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 				Description: &description,
 				Required:    true,
 				Schema: domain.StringSchema{
-					Default:        &stringDefault,
+					Default:        stringDefaults,
 					Enum:           []domain.StringEnumOption{{Value: "json", Label: new("JSON")}, {Value: "xml"}},
 					Pattern:        &pattern,
 					MultipleValues: true,
@@ -55,7 +54,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 				Position: 3,
 				Name:     "count",
 				Label:    "Count",
-				Schema:   domain.IntegerSchema{Minimum: &minimum, Maximum: &maximum, Default: &minimum, Enum: []domain.IntegerEnumOption{{Value: 1}, {Value: 5}, {Value: 10}}},
+				Schema:   domain.IntegerSchema{Minimum: &minimum, Maximum: &maximum, Default: []int64{1, 5}, Enum: []domain.IntegerEnumOption{{Value: 1}, {Value: 5}, {Value: 10}}, MultipleValues: true},
 			},
 		},
 		{
@@ -64,7 +63,7 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 				Position: 4,
 				Name:     "ratio",
 				Label:    "Ratio",
-				Schema:   domain.FloatSchema{Default: &floatDefault, Enum: []domain.FloatEnumOption{{Value: 1.5}, {Value: 2.5}}},
+				Schema:   domain.FloatSchema{Default: []float64{1.5, 2.5}, Enum: []domain.FloatEnumOption{{Value: 1.5}, {Value: 2.5}}, MultipleValues: true},
 			},
 		},
 		{
@@ -120,6 +119,23 @@ func TestParameterMappingRoundTrip(t *testing.T) {
 				t.Fatalf("parameter = %#v, want %#v", got.Input(), test.value)
 			}
 		})
+	}
+
+	resourceID := uuid.New()
+	parameter := domain.Parameter{ID: uuid.New(), ResourceID: resourceID}
+	inputs := []domain.ParameterInput{{ResourceID: &resourceID}}
+	identities := make(map[uuid.UUID]domain.Parameter)
+	if err := matchParameters(inputs, []domain.Parameter{parameter}, "parameters", identities); err != nil {
+		t.Fatalf("match existing parameter: %v", err)
+	}
+	if identities[resourceID].ID != parameter.ID {
+		t.Fatal("existing parameter identity not preserved")
+	}
+	if err := matchParameters(inputs, nil, "other_parameters", make(map[uuid.UUID]domain.Parameter)); err == nil {
+		t.Fatal("parameter accepted in a different collection")
+	}
+	if err := matchParameters(append(inputs, inputs...), []domain.Parameter{parameter}, "parameters", make(map[uuid.UUID]domain.Parameter)); err == nil {
+		t.Fatal("duplicate parameter identity accepted")
 	}
 }
 
@@ -195,7 +211,6 @@ func TestWebServicePersistenceMappingPreservesTypeAndVisibleOn(t *testing.T) {
 	id := uuid.New()
 	service := toDomainWebService(sqlc.WebService{
 		ID:        id,
-		Name:      "service",
 		Type:      sqlc.WebServiceTypeHTTP,
 		VisibleOn: []sqlc.WebServiceVisibleOn{sqlc.WebServiceVisibleOnMAP, sqlc.WebServiceVisibleOnGRAPH},
 	})

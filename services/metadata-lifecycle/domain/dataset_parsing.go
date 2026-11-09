@@ -20,9 +20,17 @@ func NewDatasetInput(value DatasetInput) (DatasetInput, error) {
 	if value.Description == "" {
 		return DatasetInput{}, invalidField("description", "Description must not be blank.", nil)
 	}
-	value.AccrualPeriodicity = optionalTrimmedString(value.AccrualPeriodicity)
+	accrualPeriodicity, err := optionalAccrualPeriodicity(value.AccrualPeriodicity)
+	if err != nil {
+		return DatasetInput{}, err
+	}
+	value.AccrualPeriodicity = accrualPeriodicity
 	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
-	value.AccessRight = optionalTrimmedString(value.AccessRight)
+	accessRight, err := optionalAccessRight(value.AccessRight)
+	if err != nil {
+		return DatasetInput{}, err
+	}
+	value.AccessRight = accessRight
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return DatasetInput{}, invalidField("keywords", "Keywords must not be blank.", err)
@@ -114,9 +122,15 @@ func NewDatasetMetadata(value DatasetMetadata) (result DatasetMetadata, err erro
 	if value.Description == "" {
 		return DatasetMetadata{}, fmt.Errorf("dataset description is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	value.AccrualPeriodicity = optionalTrimmedString(value.AccrualPeriodicity)
+	value.AccrualPeriodicity, err = optionalAccrualPeriodicity(value.AccrualPeriodicity)
+	if err != nil {
+		return DatasetMetadata{}, fmt.Errorf("dataset accrual periodicity: %w", err)
+	}
 	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
-	value.AccessRight = optionalTrimmedString(value.AccessRight)
+	value.AccessRight, err = optionalAccessRight(value.AccessRight)
+	if err != nil {
+		return DatasetMetadata{}, fmt.Errorf("dataset access right: %w", err)
+	}
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return DatasetMetadata{}, fmt.Errorf("dataset keywords: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
@@ -257,7 +271,11 @@ func (value DatasetMetadata) Validate() error {
 func (value DatasetMetadata) Input() DatasetInput {
 	identifiers := make([]IdentifierInput, len(value.PersistentIdentifiers))
 	for i, identifier := range value.PersistentIdentifiers {
-		identifiers[i] = IdentifierInput{Type: identifier.Type, Value: identifier.Value}
+		identifiers[i] = IdentifierInput{
+			ResourceID: &identifier.ResourceID,
+			Type:       identifier.Type,
+			Value:      identifier.Value,
+		}
 	}
 	providerIDs := make([]uuid.UUID, len(value.Providers))
 	for i, provider := range value.Providers {
@@ -409,12 +427,11 @@ func validateDatasetTemporal(temporal *Temporal, geological *GeologicalTemporal)
 
 func distributionInput(value Distribution) DistributionInput {
 	result := DistributionInput{
+		ResourceID:       &value.ResourceID,
 		Title:            value.Title,
 		Description:      value.Description,
 		License:          value.License,
 		Type:             value.Type,
-		Issued:           value.Issued,
-		Modified:         value.Modified,
 		ByteSize:         value.ByteSize,
 		WebService:       nil,
 		DownloadableFile: value.DownloadableFile,
@@ -437,17 +454,42 @@ func (value WebService) Input() WebServiceInput {
 		contactPointIDs[i] = contact.ID
 	}
 	return WebServiceInput{
-		Name:             value.Name,
-		Description:      value.Description,
+		ResourceID:       &value.ResourceID,
 		Type:             value.Type,
 		Configuration:    webServiceConfigurationInput(value.Configuration),
 		VisibleOn:        value.VisibleOn,
 		ProviderID:       providerID,
-		Documentation:    value.Documentation,
-		SpatialCoverage:  value.SpatialCoverage,
-		TemporalCoverage: value.TemporalCoverage,
+		DocumentationURI: value.DocumentationURI,
 		ContactPointIDs:  contactPointIDs,
 	}
+}
+
+func optionalAccessRight(value *AccessRight) (*AccessRight, error) {
+	if value == nil {
+		return nil, nil
+	}
+	normalized := AccessRight(strings.ToUpper(strings.TrimSpace(string(*value))))
+	if normalized == "" {
+		return nil, nil
+	}
+	if !normalized.Valid() {
+		return nil, invalidField("access_right", "Access right is not supported.", nil)
+	}
+	return &normalized, nil
+}
+
+func optionalAccrualPeriodicity(value *AccrualPeriodicity) (*AccrualPeriodicity, error) {
+	if value == nil {
+		return nil, nil
+	}
+	normalized := AccrualPeriodicity(strings.ToUpper(strings.TrimSpace(string(*value))))
+	if normalized == "" {
+		return nil, nil
+	}
+	if !normalized.Valid() {
+		return nil, invalidField("accrual_periodicity", "Accrual periodicity is not supported.", nil)
+	}
+	return &normalized, nil
 }
 
 func webServiceConfigurationInput(value WebServiceConfiguration) WebServiceConfigurationInput {
@@ -482,20 +524,40 @@ func (value WFSConfiguration) Input() WebServiceConfigurationInput {
 }
 
 func (value WMTSConfiguration) Input() WebServiceConfigurationInput {
+	layers := make([]WMTSLayerInput, len(value.Layers))
+	for i, layer := range value.Layers {
+		layers[i] = WMTSLayerInput{
+			ResourceID:   &layer.ResourceID,
+			Name:         layer.Name,
+			DefaultStyle: layer.DefaultStyle,
+			Styles:       layer.Styles,
+		}
+	}
+
 	return WMTSConfigurationInput{
 		CapabilitiesURL:          value.CapabilitiesURL,
 		DefaultLayer:             value.DefaultLayer,
-		Layers:                   value.Layers,
+		Layers:                   layers,
 		GetTileParameters:        webServiceParameterInputs(value.GetTileParameters),
 		GetFeatureInfoParameters: webServiceParameterInputs(value.GetFeatureInfoParameters),
 	}
 }
 
 func (value WMSConfiguration) Input() WebServiceConfigurationInput {
+	layers := make([]WMSLayerInput, len(value.Layers))
+	for i, layer := range value.Layers {
+		layers[i] = WMSLayerInput{
+			ResourceID:   &layer.ResourceID,
+			Name:         layer.Name,
+			DefaultStyle: layer.DefaultStyle,
+			Styles:       layer.Styles,
+		}
+	}
+
 	return WMSConfigurationInput{
 		CapabilitiesURL:          value.CapabilitiesURL,
 		DefaultLayer:             value.DefaultLayer,
-		Layers:                   value.Layers,
+		Layers:                   layers,
 		TransparencyEditable:     value.TransparencyEditable,
 		DefaultTransparency:      value.DefaultTransparency,
 		GetMapParameters:         webServiceParameterInputs(value.GetMapParameters),

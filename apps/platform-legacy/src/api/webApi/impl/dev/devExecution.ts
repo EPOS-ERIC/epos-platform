@@ -40,6 +40,9 @@ export class DevExecutionApi implements ExecutionApi {
     params: null | Array<ParameterValue>,
     asBlob: boolean,
   ): Promise<Record<string, unknown> | Blob> {
+    if (format.resourceAccess != null) {
+      return this.rest.post(format.getUrl(), this.resourceRequest(format, params), false, {}, asBlob) as Promise<Record<string, unknown> | Blob>;
+    }
     const url = this.getExecuteUrl(format, params);
     return this.rest.get(url, false, asBlob) as Promise<Record<string, unknown> | Blob>;
   }
@@ -60,6 +63,11 @@ export class DevExecutionApi implements ExecutionApi {
   }
 
   public getOriginatorUrl(distribution: DistributionSummary, params: null | Array<ParameterValue>): Promise<string> {
+    const format = distribution.getFormats().find(item => item.resourceAccess != null && item.getType() === 'ORIGINAL');
+    if (format != null) {
+      return this.rest.post(format.getUrl().replace('/access?', '/prepare?'), this.resourceRequest(format, params))
+        .then((response: { url: string }) => response.url);
+    }
 
     const urlBuilder = this.baseUrl.urlBuilder().addPathElements(DevExecutionApi.GET_ORIGINAL,distribution.getIdentifier());
 
@@ -82,6 +90,20 @@ export class DevExecutionApi implements ExecutionApi {
         return Promise.resolve(optional.get()!);
       });
 
+  }
+
+  private resourceRequest(format: DistributionFormat, params: null | Array<ParameterValue>): Record<string, unknown> {
+    const access = format.resourceAccess!;
+    const parameters = (params ?? []).map(param => {
+      const definition = access.parameters.find(item => item.name === param.name);
+      if (definition == null) {
+        throw new Error(`Unknown resource parameter: ${param.name}`);
+      }
+      const value = definition.kind === 'FLOAT' || definition.kind === 'INTEGER' ? Number(param.value)
+        : definition.kind === 'BOOLEAN' ? param.value === 'true' : param.value;
+      return { id: definition.id, value };
+    });
+    return { type: access.type, parameters };
   }
 
   private paramsArrayToObject(params: Array<ParameterValue>): Record<string, unknown> {

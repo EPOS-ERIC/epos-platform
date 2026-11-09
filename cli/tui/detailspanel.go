@@ -84,6 +84,10 @@ func (dp *DetailsPanel) GetCurrentDetailsContext() string {
 	return dp.currentDetailsContext
 }
 
+func (dp *DetailsPanel) selectedEnvironment() (string, bool, string) {
+	return dp.currentDetailsName, dp.currentDetailsType == string(DockerKey), dp.currentDetailsContext
+}
+
 func (dp *DetailsPanel) cleanupConfigViewSession() {
 	if dp.configViewSession == nil {
 		return
@@ -171,23 +175,23 @@ func (dp *DetailsPanel) buildUI() {
 	dp.nameDirButtons = []*tview.Button{}
 
 	dp.deleteButton = NewStyledButton("Delete", func() {
-		dp.app.showDeleteConfirm()
+		dp.app.showDeleteConfirm(dp.selectedEnvironment())
 	})
 
 	dp.cleanButton = NewStyledButton("Clean", func() {
-		dp.app.showCleanConfirm()
+		dp.app.showCleanConfirm(dp.currentDetailsName, dp.currentDetailsType == string(DockerKey))
 	})
 
 	dp.updateButton = NewStyledButton("Update", func() {
-		dp.app.showUpdateForm()
+		dp.app.showUpdateForm(dp.selectedEnvironment())
 	})
 
 	dp.renderButton = NewStyledButton("Render", func() {
-		dp.app.showRenderForm()
+		dp.app.showRenderForm(dp.selectedEnvironment())
 	})
 
 	dp.populateButton = NewStyledButton("Populate", func() {
-		dp.app.showPopulateForm()
+		dp.app.showPopulateForm(dp.selectedEnvironment())
 	})
 
 	dp.buttonsFlex = tview.NewFlex().SetDirection(tview.FlexColumn)
@@ -291,6 +295,7 @@ func (dp *DetailsPanel) Update(name, envType, context string, focus bool) {
 	dp.currentDetailsName = name
 	dp.currentDetailsType = envType
 	dp.currentDetailsContext = context
+	dp.app.envList.syncDetailsSelection(false)
 	dp.updateActionButtons()
 
 	nameDirGridCount := 2
@@ -746,21 +751,21 @@ func (dp *DetailsPanel) SetupInput() {
 		case event.Key() == tcell.KeyEnter:
 			return event // Let the table handle via SetSelectedFunc
 		case event.Rune() == 'd':
-			dp.app.showDeleteConfirm()
+			dp.app.showDeleteConfirm(dp.selectedEnvironment())
 			return nil
 		case event.Rune() == 'c':
 			if dp.currentDetailsType == string(DockerKey) {
-				dp.app.showCleanConfirm()
+				dp.app.showCleanConfirm(dp.currentDetailsName, true)
 				return nil
 			}
 		case event.Rune() == 'u':
-			dp.app.showUpdateForm()
+			dp.app.showUpdateForm(dp.selectedEnvironment())
 			return nil
 		case event.Rune() == 'r':
-			dp.app.showRenderForm()
+			dp.app.showRenderForm(dp.selectedEnvironment())
 			return nil
 		case event.Rune() == 'p':
-			dp.app.showPopulateForm()
+			dp.app.showPopulateForm(dp.selectedEnvironment())
 			return nil
 		case event.Rune() == 'g':
 			if dp.detailsShown && len(dp.currentDetailsRows) > 0 {
