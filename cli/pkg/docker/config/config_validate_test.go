@@ -33,6 +33,7 @@ func TestConfigValidate(t *testing.T) {
 		{"missing name", func() { cfg.Name = "" }},
 		{"missing domain", func() { cfg.Domain = "" }},
 		{"invalid protocol", func() { cfg.Protocol = "ftp" }},
+		{"invalid Mailgun recipient override", func() { cfg.Components.Gateway.Mailgun.RecipientOverrides = []string{"invalid"} }},
 		{"invalid domain", func() { cfg.Domain = "host/path" }},
 		{"missing database password", func() { cfg.Components.MetadataDatabase.Password = "" }},
 		{"missing retriever password", func() { cfg.Components.DataRetrieverDatabase.Password = "" }},

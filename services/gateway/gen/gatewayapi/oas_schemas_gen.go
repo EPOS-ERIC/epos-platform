@@ -1347,6 +1347,21 @@ func (s *ContactPoint) SetEmail(val string) {
 	s.Email = val
 }
 
+// Ref: #/components/schemas/ContactRequestMessage
+type ContactRequestMessage struct {
+	Message NonBlankString `json:"message"`
+}
+
+// GetMessage returns the value of Message.
+func (s *ContactRequestMessage) GetMessage() NonBlankString {
+	return s.Message
+}
+
+// SetMessage sets the value of Message.
+func (s *ContactRequestMessage) SetMessage(val NonBlankString) {
+	s.Message = val
+}
+
 // Ref: #/components/schemas/ConversionPlugin
 type ConversionPlugin struct {
 	ID          uuid.UUID `json:"id"`
@@ -13220,6 +13235,19 @@ func (s *ReplaceSoftwareSourceCodeDraftRequestResourceType) UnmarshalText(data [
 	}
 }
 
+// RequestDistributionContactNoContent is response for RequestDistributionContact operation.
+type RequestDistributionContactNoContent struct{}
+
+func (*RequestDistributionContactNoContent) requestDistributionContactRes() {}
+
+type RequestDistributionContactNotFound Problem
+
+func (*RequestDistributionContactNotFound) requestDistributionContactRes() {}
+
+type RequestDistributionContactServiceUnavailable Problem
+
+func (*RequestDistributionContactServiceUnavailable) requestDistributionContactRes() {}
+
 // RequestDistributionConversionAccepted is response for RequestDistributionConversion operation.
 type RequestDistributionConversionAccepted struct{}
 
@@ -13258,6 +13286,19 @@ func (s *RequestDistributionConversionReq) SetVisualizations(val []WebServiceVis
 func (s *RequestDistributionConversionReq) SetMessage(val string) {
 	s.Message = val
 }
+
+// RequestResourceContactNoContent is response for RequestResourceContact operation.
+type RequestResourceContactNoContent struct{}
+
+func (*RequestResourceContactNoContent) requestResourceContactRes() {}
+
+type RequestResourceContactNotFound Problem
+
+func (*RequestResourceContactNotFound) requestResourceContactRes() {}
+
+type RequestResourceContactServiceUnavailable Problem
+
+func (*RequestResourceContactServiceUnavailable) requestResourceContactRes() {}
 
 // Ref: #/components/schemas/ResourceVersion
 type ResourceVersion struct {

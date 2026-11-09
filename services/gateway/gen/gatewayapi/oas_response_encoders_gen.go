@@ -906,6 +906,43 @@ func encodeReplaceResourceDraftVersionResponse(response *WriteResult, w http.Res
 	return nil
 }
 
+func encodeRequestDistributionContactResponse(response RequestDistributionContactRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *RequestDistributionContactNoContent:
+		w.WriteHeader(204)
+
+		return nil
+
+	case *RequestDistributionContactNotFound:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *RequestDistributionContactServiceUnavailable:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(503)
+		span.SetStatus(codes.Error, http.StatusText(503))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
 func encodeRequestDistributionConversionResponse(response *RequestDistributionConversionAccepted, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(202)
 
@@ -936,6 +973,43 @@ func encodeRequestGroupRoleResponse(response *RoleRequest, w http.ResponseWriter
 	}
 
 	return nil
+}
+
+func encodeRequestResourceContactResponse(response RequestResourceContactRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *RequestResourceContactNoContent:
+		w.WriteHeader(204)
+
+		return nil
+
+	case *RequestResourceContactNotFound:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *RequestResourceContactServiceUnavailable:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(503)
+		span.SetStatus(codes.Error, http.StatusText(503))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
 }
 
 func encodeRevokeGlobalPermissionResponse(response *RevokeGlobalPermissionNoContent, w http.ResponseWriter, span trace.Span) error {

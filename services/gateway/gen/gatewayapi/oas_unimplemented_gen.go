@@ -695,6 +695,16 @@ func (UnimplementedHandler) ReplaceResourceDraftVersion(ctx context.Context, req
 	return r, ht.ErrNotImplemented
 }
 
+// RequestDistributionContact implements requestDistributionContact operation.
+//
+// Sends the message separately to each contact point on the published web service. Requires
+// authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+//
+// POST /distributions/{distributionId}/contact-requests
+func (UnimplementedHandler) RequestDistributionContact(ctx context.Context, req *ContactRequestMessage, params RequestDistributionContactParams) (r RequestDistributionContactRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // RequestDistributionConversion implements requestDistributionConversion operation.
 //
 // Requires edit permission for a draft dataset and a web-service distribution. Email delivery is
@@ -720,6 +730,16 @@ func (UnimplementedHandler) RequestGroupMembership(ctx context.Context, req *Cre
 //
 // POST /groups/{groupId}/role-requests
 func (UnimplementedHandler) RequestGroupRole(ctx context.Context, req *CreateRoleRequest, params RequestGroupRoleParams) (r *RoleRequest, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// RequestResourceContact implements requestResourceContact operation.
+//
+// Sends the message separately to each contact point on the published resource. Requires
+// authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+//
+// POST /resources/{resourceType}/{id}/contact-requests
+func (UnimplementedHandler) RequestResourceContact(ctx context.Context, req *ContactRequestMessage, params RequestResourceContactParams) (r RequestResourceContactRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

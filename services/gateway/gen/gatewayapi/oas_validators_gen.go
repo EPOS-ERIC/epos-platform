@@ -984,6 +984,29 @@ func (s *ContactPoint) Validate() error {
 	return nil
 }
 
+func (s *ContactRequestMessage) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Message.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "message",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *ConversionRelationInput) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -7582,6 +7605,22 @@ func (s ReplaceSoftwareSourceCodeDraftRequestResourceType) Validate() error {
 	}
 }
 
+func (s *RequestDistributionContactNotFound) Validate() error {
+	alias := (*Problem)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *RequestDistributionContactServiceUnavailable) Validate() error {
+	alias := (*Problem)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *RequestDistributionConversionReq) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -7672,6 +7711,22 @@ func (s *RequestDistributionConversionReq) Validate() error {
 	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *RequestResourceContactNotFound) Validate() error {
+	alias := (*Problem)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *RequestResourceContactServiceUnavailable) Validate() error {
+	alias := (*Problem)(s)
+	if err := alias.Validate(); err != nil {
+		return err
 	}
 	return nil
 }

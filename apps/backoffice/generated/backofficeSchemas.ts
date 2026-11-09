@@ -2434,6 +2434,10 @@ export type ContactPoint = {
   email: string;
 };
 
+export type ContactRequestMessage = {
+  message: NonBlankString;
+};
+
 export type CreateContactPointRequest = {
   /**
    * @format email

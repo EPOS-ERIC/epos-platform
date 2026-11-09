@@ -17,19 +17,20 @@ import (
 // TODO: clean up this package, create a sub package metadatalifecycle and in there split the grpc functions into logical files
 
 type MetadataLifecycle struct {
-	log           *slog.Logger
-	authorization metadatalifecyclev1.AuthorizationServiceClient
-	users         metadatalifecyclev1.UserServiceClient
-	groups        metadatalifecyclev1.GroupServiceClient
-	categories    metadatalifecyclev1.CategoryServiceClient
-	contactPoints metadatalifecyclev1.ContactPointServiceClient
-	organizations metadatalifecyclev1.OrganizationServiceClient
-	access        metadatalifecyclev1.GroupAccessServiceClient
-	resources     metadatalifecyclev1.ResourceServiceClient
-	discovery     metadatalifecyclev1.DiscoveryServiceClient
-	import_       metadatalifecyclev1.ImportServiceClient
-	identity      metadatalifecyclev1.IdentityServiceClient
-	notifications metadatalifecyclev1.NotificationServiceClient
+	log             *slog.Logger
+	authorization   metadatalifecyclev1.AuthorizationServiceClient
+	users           metadatalifecyclev1.UserServiceClient
+	groups          metadatalifecyclev1.GroupServiceClient
+	categories      metadatalifecyclev1.CategoryServiceClient
+	contactPoints   metadatalifecyclev1.ContactPointServiceClient
+	organizations   metadatalifecyclev1.OrganizationServiceClient
+	access          metadatalifecyclev1.GroupAccessServiceClient
+	resources       metadatalifecyclev1.ResourceServiceClient
+	discovery       metadatalifecyclev1.DiscoveryServiceClient
+	import_         metadatalifecyclev1.ImportServiceClient
+	identity        metadatalifecyclev1.IdentityServiceClient
+	notifications   metadatalifecyclev1.NotificationServiceClient
+	contactRequests metadatalifecyclev1.ContactRequestServiceClient
 }
 
 type NotificationDispatcher interface {
@@ -51,19 +52,20 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher Notificat
 	}
 
 	client := &MetadataLifecycle{
-		log:           log,
-		authorization: metadatalifecyclev1.NewAuthorizationServiceClient(conn),
-		users:         metadatalifecyclev1.NewUserServiceClient(conn),
-		groups:        metadatalifecyclev1.NewGroupServiceClient(conn),
-		categories:    metadatalifecyclev1.NewCategoryServiceClient(conn),
-		contactPoints: metadatalifecyclev1.NewContactPointServiceClient(conn),
-		organizations: metadatalifecyclev1.NewOrganizationServiceClient(conn),
-		access:        metadatalifecyclev1.NewGroupAccessServiceClient(conn),
-		resources:     metadatalifecyclev1.NewResourceServiceClient(conn),
-		discovery:     metadatalifecyclev1.NewDiscoveryServiceClient(conn),
-		import_:       metadatalifecyclev1.NewImportServiceClient(conn),
-		identity:      metadatalifecyclev1.NewIdentityServiceClient(conn),
-		notifications: metadatalifecyclev1.NewNotificationServiceClient(conn),
+		log:             log,
+		authorization:   metadatalifecyclev1.NewAuthorizationServiceClient(conn),
+		users:           metadatalifecyclev1.NewUserServiceClient(conn),
+		groups:          metadatalifecyclev1.NewGroupServiceClient(conn),
+		categories:      metadatalifecyclev1.NewCategoryServiceClient(conn),
+		contactPoints:   metadatalifecyclev1.NewContactPointServiceClient(conn),
+		organizations:   metadatalifecyclev1.NewOrganizationServiceClient(conn),
+		access:          metadatalifecyclev1.NewGroupAccessServiceClient(conn),
+		resources:       metadatalifecyclev1.NewResourceServiceClient(conn),
+		discovery:       metadatalifecyclev1.NewDiscoveryServiceClient(conn),
+		import_:         metadatalifecyclev1.NewImportServiceClient(conn),
+		identity:        metadatalifecyclev1.NewIdentityServiceClient(conn),
+		notifications:   metadatalifecyclev1.NewNotificationServiceClient(conn),
+		contactRequests: metadatalifecyclev1.NewContactRequestServiceClient(conn),
 	}
 
 	return client, nil

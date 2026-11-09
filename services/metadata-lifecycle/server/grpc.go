@@ -12,6 +12,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactrequests"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasets"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
@@ -43,6 +44,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	datasetSvc := datasets.New(log, db.Datasets, authorizer, notificationsSvc)
 	applicationSvc := softwareapplications.New(log, db.SoftwareApplications, authorizer, notificationsSvc)
 	sourceCodeSvc := softwaresourcecodes.New(log, db.SoftwareSourceCodes, authorizer, notificationsSvc)
+	contactRequestsSvc := contactrequests.New(db.ContactRequests, usersSvc)
 	discoverySvc := discovery.New(log, db.Discovery, authorizer)
 
 	return sharedgrpc.Run(ctx, sharedgrpc.Config{
@@ -64,6 +66,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 			metadatalifecyclev1.RegisterGroupServiceServer(server, grpcapi.NewGroup(groupsSvc))
 			metadatalifecyclev1.RegisterCategoryServiceServer(server, grpcapi.NewCategory(categoriesSvc))
 			metadatalifecyclev1.RegisterContactPointServiceServer(server, grpcapi.NewContactPoint(contactPointsSvc))
+			metadatalifecyclev1.RegisterContactRequestServiceServer(server, grpcapi.NewContactRequest(contactRequestsSvc))
 			metadatalifecyclev1.RegisterGroupAccessServiceServer(server, grpcapi.NewAccess(accessSvc))
 			metadatalifecyclev1.RegisterOrganizationServiceServer(server, grpcapi.NewOrganization(organizationsSvc))
 			metadatalifecyclev1.RegisterResourceServiceServer(server, grpcapi.NewResource(datasetSvc, applicationSvc, sourceCodeSvc))

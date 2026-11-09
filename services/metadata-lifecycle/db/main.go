@@ -14,6 +14,7 @@ import (
 	authdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/authz"
 	categorydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/categories"
 	contactpointdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/contactpoints"
+	contactrequestdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/contactrequests"
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dataset"
 	discoverydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/discovery"
 	groupdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/groups"
@@ -40,6 +41,7 @@ type PostgresDB struct {
 	Categories           *categorydb.Repo
 	Organizations        *organizationdb.Repo
 	ContactPoints        *contactpointdb.Repo
+	ContactRequests      *contactrequestdb.Repo
 	Discovery            *discoverydb.Repo
 	Datasets             *datasetdb.Repo
 	Imports              *importdb.Repo
@@ -97,6 +99,7 @@ func Open(ctx context.Context, log *slog.Logger, cfg config.Config) (*PostgresDB
 		Categories:           categorydb.New(db),
 		Organizations:        organizationdb.New(db),
 		ContactPoints:        contactpointdb.New(db),
+		ContactRequests:      contactrequestdb.New(db),
 		Discovery:            discoverydb.New(log, db),
 		Datasets:             datasetdb.New(db),
 		Imports:              importdb.New(db),

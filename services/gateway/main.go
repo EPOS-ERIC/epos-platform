@@ -9,6 +9,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactrequest"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/notifications"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server"
 )
@@ -37,6 +38,7 @@ func main() {
 	log.Debug("config loaded", "listen", cfg.Server.Listen)
 
 	var dispatcher clients.NotificationDispatcher
+	var contactRequestSender contactrequest.EmailSender
 	if cfg.Notifications.Mailgun.Enable {
 		mailer, mailerErr := notifications.NewMailgun(log, cfg.Notifications.Mailgun)
 		if mailerErr != nil {
@@ -44,6 +46,7 @@ func main() {
 			panic("invalid Mailgun notification configuration")
 		}
 		dispatcher = mailer
+		contactRequestSender = mailer
 	}
 
 	metadataLifecycleClient, err := clients.NewMetadataLifecycle(
@@ -80,7 +83,7 @@ func main() {
 		panic("invalid auth service configuration")
 	}
 
-	if err := server.Run(*cfg, log, metadataLifecycleClient, dataRetrieverClient, converterClient, sharingClient, authService); err != nil {
+	if err := server.Run(*cfg, log, metadataLifecycleClient, dataRetrieverClient, converterClient, sharingClient, authService, contactRequestSender); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}

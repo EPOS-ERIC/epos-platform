@@ -317,6 +317,7 @@ configs:
           enable: {{.Components.Gateway.Mailgun.Enable}}
           domain: {{yamlString .Components.Gateway.Mailgun.Domain}}
           from: {{yamlString .Components.Gateway.Mailgun.From}}
+          recipient_overrides: [{{range $i, $email := .Components.Gateway.Mailgun.RecipientOverrides}}{{if $i}}, {{end}}{{yamlString $email}}{{end}}]
 
 volumes:
   metadata-db:

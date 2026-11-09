@@ -483,6 +483,13 @@ type Handler interface {
 	//
 	// PUT /resources/{id}/versions/{versionId}/draft
 	ReplaceResourceDraftVersion(ctx context.Context, req ReplaceResourceDraftRequest, params ReplaceResourceDraftVersionParams) (*WriteResult, error)
+	// RequestDistributionContact implements requestDistributionContact operation.
+	//
+	// Sends the message separately to each contact point on the published web service. Requires
+	// authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+	//
+	// POST /distributions/{distributionId}/contact-requests
+	RequestDistributionContact(ctx context.Context, req *ContactRequestMessage, params RequestDistributionContactParams) (RequestDistributionContactRes, error)
 	// RequestDistributionConversion implements requestDistributionConversion operation.
 	//
 	// Requires edit permission for a draft dataset and a web-service distribution. Email delivery is
@@ -502,6 +509,13 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/role-requests
 	RequestGroupRole(ctx context.Context, req *CreateRoleRequest, params RequestGroupRoleParams) (*RoleRequest, error)
+	// RequestResourceContact implements requestResourceContact operation.
+	//
+	// Sends the message separately to each contact point on the published resource. Requires
+	// authentication but no resource permission. Returns success when Mailgun accepts at least one email.
+	//
+	// POST /resources/{resourceType}/{id}/contact-requests
+	RequestResourceContact(ctx context.Context, req *ContactRequestMessage, params RequestResourceContactParams) (RequestResourceContactRes, error)
 	// RevokeGlobalPermission implements revokeGlobalPermission operation.
 	//
 	// Revoke a global permission from a user. Requires global.permission.manage or global ADMIN.
