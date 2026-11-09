@@ -39,6 +39,41 @@ WHERE
                 array_to_string(version.keywords, ' ')
             )
         ) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                dataset_version_providers AS provider
+                JOIN organizations AS organization ON organization.id = provider.organization_id
+            WHERE
+                provider.dataset_version_id = version.id
+                AND lower(organization.name) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        )
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                dataset_version_categories AS link
+                JOIN categories AS category ON category.id = link.category_id
+            WHERE
+                link.dataset_version_id = version.id
+                AND lower(category.name) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        )
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                distributions AS distribution
+            WHERE
+                distribution.dataset_version_id = version.id
+                AND lower(
+                    concat_ws(
+                        ' ',
+                        distribution.title,
+                        distribution.description
+                    )
+                ) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        )
     )
     AND (
         sqlc.narg(spatial_filter)::geometry IS NULL
@@ -144,6 +179,26 @@ WHERE
                 array_to_string(version.keywords, ' ')
             )
         ) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                software_application_version_creators AS link
+                JOIN organizations AS organization ON organization.id = link.organization_id
+            WHERE
+                link.software_application_version_id = version.id
+                AND lower(organization.name) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        )
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                software_application_version_categories AS link
+                JOIN categories AS category ON category.id = link.category_id
+            WHERE
+                link.software_application_version_id = version.id
+                AND lower(category.name) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        )
     )
     AND (
         cardinality(sqlc.arg(provider_ids)::uuid []) = 0
@@ -228,6 +283,26 @@ WHERE
                 array_to_string(version.keywords, ' ')
             )
         ) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                software_source_code_version_creators AS link
+                JOIN organizations AS organization ON organization.id = link.organization_id
+            WHERE
+                link.software_source_code_version_id = version.id
+                AND lower(organization.name) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        )
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                software_source_code_version_categories AS link
+                JOIN categories AS category ON category.id = link.category_id
+            WHERE
+                link.software_source_code_version_id = version.id
+                AND lower(category.name) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
+        )
     )
     AND (
         cardinality(sqlc.arg(provider_ids)::uuid []) = 0

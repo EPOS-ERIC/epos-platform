@@ -2382,7 +2382,7 @@ components:
       name: q
       in: query
       required: false
-      description: Free-text query used to search catalogue resources.
+      description: Case-insensitive substring search over resource title or name, description, and keywords; linked provider or software creator organization names; and category names. Dataset distribution titles and descriptions are also searched.
       schema:
         type: string
         example: "historical earthquakes"

@@ -2082,7 +2082,9 @@ func decodeDiscardResourceDraftVersionParams(args [3]string, argsEscaped bool, r
 
 // DiscoverResourcesParams is parameters of discoverResources operation.
 type DiscoverResourcesParams struct {
-	// Free-text query used to search catalogue resources.
+	// Case-insensitive substring search over resource title or name, description, and keywords; linked
+	// provider or software creator organization names; and category names. Dataset distribution titles and
+	// descriptions are also searched.
 	Q OptString `json:",omitempty,omitzero"`
 	// Filter results to one or more resource types. When omitted, all supported resource types are
 	// returned. Pass comma-separated values in a single parameter: `?type=dataset,software-application`.
