@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
@@ -42,10 +41,10 @@ func NewRouter(
 	r := chi.NewRouter()
 
 	if corsAllowOrigin != "" {
-		r.Use(middleware.CORSAllowOrigin(corsAllowOrigin))
+		r.Use(corsMiddleware(corsAllowOrigin))
 	}
-	r.Use(middleware.Logger(log))
-	r.Use(middleware.RecovererWithResponse(log, handlers.WritePanicProblem))
+	r.Use(requestLogger(log))
+	r.Use(recoverer(log))
 
 	// TODO: maybe we can have this endpoint be outside of the logger middleware so that we can siplify the middleware to not manually exclude health logs
 	r.Get("/health", health)

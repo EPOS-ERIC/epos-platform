@@ -14,7 +14,7 @@
 - Generated protobuf responses may pass from `clients/` to handlers for pure proxies or unchanged response data alongside separate orchestration enrichment. Never expose protobuf types in the external API; map them to explicit API types defined by OpenAPI.
 - Orchestration paths map protobuf to a minimal Gateway domain type before applying Gateway behavior. Do not store protobuf messages in Gateway domain objects or request context.
 - Do not create Gateway domain DTOs, services, or mappers that merely duplicate an upstream protobuf shape. Remove an obsolete proxy-only domain layer when the last caller migrates.
-- Keep shared HTTP middleware in `packages/go/middleware` instead of duplicating generic middleware in this service.
+- Keep Gateway HTTP middleware in `server/`.
 - Keep package-private helper code in `internal/`.
 - Keep `main.go` limited to application wiring and startup.
 - Extend an existing package when its responsibility matches. Create a new top-level package only for a genuine gateway domain or adapter boundary.
