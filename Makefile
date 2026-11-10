@@ -8,6 +8,9 @@ CLI_DIR := cli
 BACKOFFICE_DIR := apps/backoffice
 PLATFORM_LEGACY_DIR := apps/platform-legacy
 
+run-cli:
+	$(MAKE) -C $(CLI_DIR) run
+
 up: 
 	tilt up $(TILT_CONTEXT_ARG)
 

@@ -341,7 +341,6 @@ CREATE TABLE string_parameter_schemas (
     FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
     CHECK (schema_kind = 'STRING'),
     CHECK (is_valid_enum_option_list(to_jsonb(enum), default_value)),
-    CHECK (NOT multiple_values OR enum IS NOT NULL),
     CHECK (multiple_values OR cardinality(default_value) <= 1)
 );
 
@@ -367,7 +366,6 @@ CREATE TABLE integer_parameter_schemas (
     CHECK (schema_kind = 'INTEGER'),
     CHECK (is_valid_enum_option_list(to_jsonb(enum))),
     CHECK (enum_option_list_matches_bounds(to_jsonb(enum), minimum, maximum, default_value::numeric[])),
-    CHECK (NOT multiple_values OR enum IS NOT NULL),
     CHECK (minimum IS NULL OR maximum IS NULL OR minimum <= maximum),
     CHECK (multiple_values OR cardinality(default_value) <= 1)
 );
@@ -386,7 +384,6 @@ CREATE TABLE float_parameter_schemas (
     CHECK (is_valid_enum_option_list(to_jsonb(enum))),
     CHECK (enum IS NULL OR NOT enum_option_list_has_non_finite_float(enum)),
     CHECK (enum_option_list_matches_bounds(to_jsonb(enum), minimum::numeric, maximum::numeric, default_value::numeric[])),
-    CHECK (NOT multiple_values OR enum IS NOT NULL),
     CHECK (minimum IS NULL OR maximum IS NULL OR minimum <= maximum),
     CHECK (multiple_values OR cardinality(default_value) <= 1)
 );

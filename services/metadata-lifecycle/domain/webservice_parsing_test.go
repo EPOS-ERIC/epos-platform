@@ -101,6 +101,9 @@ func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
 		{name: "string", schema: StringSchema{Default: []string{"json", "xml"}, Enum: []StringEnumOption{{Value: "json"}, {Value: "xml"}}, MultipleValues: true}},
 		{name: "integer", schema: IntegerSchema{Default: []int64{1, 2}, Enum: []IntegerEnumOption{{Value: 1}, {Value: 2}}, MultipleValues: true}},
 		{name: "float", schema: FloatSchema{Default: []float64{1.5, 2.5}, Enum: []FloatEnumOption{{Value: 1.5}, {Value: 2.5}}, MultipleValues: true}},
+		{name: "string without enum", schema: StringSchema{Default: []string{"json", "xml"}, MultipleValues: true}},
+		{name: "integer without enum", schema: IntegerSchema{Default: []int64{1, 2}, MultipleValues: true}},
+		{name: "float without enum", schema: FloatSchema{Default: []float64{1.5, 2.5}, MultipleValues: true}},
 	}
 
 	for _, test := range tests {
@@ -202,14 +205,16 @@ func TestNewWebServiceParameterInputRejectsInvalidExplode(t *testing.T) {
 	}
 }
 
-func TestNewWebServiceParameterInputRejectsMultipleValuesWithoutEnum(t *testing.T) {
+func TestNewWebServiceParameterInputAllowsMultipleValuesWithoutEnum(t *testing.T) {
 	_, err := NewWebServiceParameterInput(WebServiceParameterInput{
 		Name:     "value",
 		Label:    "Value",
 		Schema:   StringSchema{MultipleValues: true},
 		Location: ParameterLocationQuery,
 	})
-	assertInputValidation(t, err, "schema.enum")
+	if err != nil {
+		t.Fatalf("NewWebServiceParameterInput() error = %v", err)
+	}
 }
 
 func TestNewWebServiceInputRejectsInvalidType(t *testing.T) {
