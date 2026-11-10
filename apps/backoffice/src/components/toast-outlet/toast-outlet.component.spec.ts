@@ -7,6 +7,8 @@ describe('ToastOutletComponent', () => {
   it('maps backend validation targets to detail section anchors', () => {
     expect(toastTargetAnchor('metadata.spatial_coverage')).toBe('spatial-coverage');
     expect(toastTargetAnchor('metadata.distributions.0.web_service.parameters.0.name')).toBe('webservice-parameters');
+    expect(toastTargetAnchor('metadata.distributions.0.web_service.documentation_uri')).toBe('webservice-documentation');
+    expect(toastTargetAnchor('metadata.distributions.0.web_service.spatial_coverage')).toBe('web-service');
     expect(toastTargetAnchor('metadata.description')).toBe('general-information');
     expect(toastTargetAnchor('request')).toBeNull();
   });

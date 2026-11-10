@@ -1,4 +1,5 @@
 import type {
+  DatasetAccrualPeriodicity,
   ParameterLocation,
   ParameterRole,
   WebServiceMethod,
@@ -19,6 +20,7 @@ export type DatasetGeologicalTemporalForm = {
 
 export type DatasetPersistentIdentifierForm = {
   id?: string;
+  resourceId?: string;
   type: string;
   value: string;
 };
@@ -30,12 +32,6 @@ export type DatasetProviderForm = {
 
 export type DatasetCategoryForm = DatasetProviderForm;
 
-export type DatasetWebServiceDocumentationForm = {
-  title: string;
-  description: string;
-  uri: string;
-};
-
 export type DatasetWebServiceContactPointForm = string;
 
 export type DatasetWebServiceProviderForm = DatasetProviderForm;
@@ -46,6 +42,7 @@ export type DatasetEnumOptionForm = {
 };
 
 export type DatasetWebServiceScalarParameterCommonForm = {
+  resourceId?: string;
   position: number;
   name: string;
   label: string;
@@ -59,7 +56,7 @@ export type DatasetWebServiceScalarParameterForm = DatasetWebServiceScalarParame
   (
     | {
         kind: 'STRING';
-        defaultValue: string | null;
+        defaultValue: string[];
         allowedValues: DatasetEnumOptionForm[];
         pattern: string;
       }
@@ -71,14 +68,14 @@ export type DatasetWebServiceScalarParameterForm = DatasetWebServiceScalarParame
         kind: 'INTEGER';
         minimum: string;
         maximum: string;
-        defaultValue: string;
+        defaultValue: string[];
         allowedValues: DatasetEnumOptionForm[];
       }
     | {
         kind: 'FLOAT';
         minimum: string;
         maximum: string;
-        defaultValue: string;
+        defaultValue: string[];
         allowedValues: DatasetEnumOptionForm[];
       }
     | {
@@ -103,7 +100,7 @@ export type DatasetWebServiceParameterForm = DatasetWebServiceParameterCommonFor
     | {
         kind: 'STRING';
         multipleValues: boolean;
-        defaultValue: string | null;
+        defaultValue: string[];
         allowedValues: DatasetEnumOptionForm[];
         pattern: string;
       }
@@ -116,7 +113,7 @@ export type DatasetWebServiceParameterForm = DatasetWebServiceParameterCommonFor
         multipleValues: boolean;
         minimum: string;
         maximum: string;
-        defaultValue: string;
+        defaultValue: string[];
         allowedValues: DatasetEnumOptionForm[];
       }
     | {
@@ -124,7 +121,7 @@ export type DatasetWebServiceParameterForm = DatasetWebServiceParameterCommonFor
         multipleValues: boolean;
         minimum: string;
         maximum: string;
-        defaultValue: string;
+        defaultValue: string[];
         allowedValues: DatasetEnumOptionForm[];
       }
     | {
@@ -167,6 +164,7 @@ export type DatasetWfsWebServiceConfigurationForm = {
 };
 
 export type DatasetWmsLayerForm = {
+  resourceId?: string;
   name: string;
   defaultStyle: string;
   styles: string[];
@@ -184,6 +182,7 @@ export type DatasetWmsWebServiceConfigurationForm = {
 };
 
 export type DatasetWmtsLayerForm = {
+  resourceId?: string;
   name: string;
   defaultStyle: string;
   styles: string[];
@@ -205,25 +204,22 @@ export type DatasetWebServiceConfigurationForm =
   | DatasetWmtsWebServiceConfigurationForm;
 
 export type DatasetWebServiceForm = {
-  name: string;
-  description: string;
+  resourceId?: string;
   visibleOn: WebServiceVisibleOn[];
-  documentation: DatasetWebServiceDocumentationForm;
+  documentationUri: string;
   provider: DatasetWebServiceProviderForm;
   contactPoints: DatasetWebServiceContactPointForm[];
-  spatialCoverage: DatasetSpatialForm;
-  temporalCoverage: DatasetTemporalForm;
   configuration: DatasetWebServiceConfigurationForm;
 };
 
 export type DatasetDistributionCommonForm = {
   id?: string;
+  resourceId?: string;
   nativeFormats?: string[];
   title: string;
   description: string;
-  issued: string;
-  modified: string;
   license: string;
+  byteSize: string;
   type: 'WEB_SERVICE' | 'DOWNLOADABLE_FILE';
 };
 
@@ -248,7 +244,7 @@ export type DatasetDetailForm = {
   title: string;
   description: string;
   keywords: string[];
-  accrualPeriodicity: string;
+  accrualPeriodicity: Exclude<DatasetAccrualPeriodicity, null> | '';
   qualityAnnotation: string;
   created: string;
   updated: string;

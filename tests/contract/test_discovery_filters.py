@@ -179,11 +179,22 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         return response.json()
 
     def test_discovery_filters_and_visibility(self) -> None:
-        """Verify discovery filters and group-scoped creator projection."""
+        """Verify filters, visibility, and regression for missing related-metadata matches."""
 
         suffix = uuid4().hex
         data_group = create_group(self.gateway, f"discovery-data-{suffix}")
         software_group = create_group(self.gateway, f"discovery-software-{suffix}", "SOFTWARE")
+        categories = {}
+        for group in (data_group, software_group):
+            categories[group] = []
+            for number in (1, 2):
+                response = self.gateway.post(
+                    "/groups/{groupId}/categories",
+                    groupId=group,
+                    json={"name": f"Discovery category {suffix} {number}"},
+                )
+                self.assertEqual(response.status_code, 201)
+                categories[group].append(response.json()["id"])
         provider_id = self.create_organization(suffix)
         editor, editor_id = self.create_user("editor", suffix)
         outsider, _ = self.create_user("outsider", suffix)
@@ -225,7 +236,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                 },
                 {
                     "title": f"discovery-file-{suffix}",
-                    "description": "Discovery downloadable file",
+                    "description": f"Downloadable description {suffix}",
                     "type": "DOWNLOADABLE_FILE",
                     "downloadable_file": {
                         "url": "https://example.org/discovery.csv",
@@ -234,6 +245,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                 },
             ],
             "providers": [provider_id],
+            "categories": categories[data_group],
             "spatial_coverage": "POINT (12.5 41.9)",
             "temporal_coverage": {
                 "start": "2020-01-01T00:00:00Z",
@@ -294,6 +306,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                 "description": f"application description {suffix}",
                 "keywords": [f"software-keyword-{suffix}", "shared-keyword"],
                 "creators": [provider_id],
+                "categories": categories[software_group],
             },
         )
         self.publish("software-application", application_id, application_version_id)
@@ -308,6 +321,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                 "description": f"source description {suffix}",
                 "keywords": [f"source-keyword-{suffix}", "shared-keyword"],
                 "creators": [provider_id],
+                "categories": categories[software_group],
             },
         )
         self.publish("software-source-code", source_id, source_version_id)
@@ -394,6 +408,22 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         for params, expected in cases:
             with self.subTest(params=params):
                 self.assert_ids(self.search(self.gateway, **params), expected)
+
+        # Regression: related metadata must be searchable without duplicating resources.
+        related_cases = [
+            ({"q": f"PROVIDER {suffix}"}, {dataset_id, application_id, source_id}),
+            ({"q": f"CATEGORY {suffix}"}, {dataset_id, application_id, source_id}),
+            ({"q": f"discovery-file-{suffix}"}, {dataset_id}),
+            ({"q": f"downloadable description {suffix}"}, {dataset_id}),
+            ({"q": f"category {suffix}", "type": "dataset"}, {dataset_id}),
+            ({"q": f"category {suffix}", "concept": "SOFTWARE"}, {application_id, source_id}),
+            ({"q": f"missing-{suffix}"}, set()),
+        ]
+        for params, expected in related_cases:
+            with self.subTest(params=params):
+                items = self.search(self.gateway, headers=NO_AUTH_HEADERS, **params)
+                self.assert_ids(items, expected)
+                self.assertEqual(len(items), len(expected))
 
         self.assertEqual(self.details(next(item for item in admin_items if item["resource_id"] == dataset_id))["status"], "PUBLISHED")
         self.assertEqual(self.details(next(item for item in member_items if item["resource_id"] == draft_id))["status"], "DRAFT")

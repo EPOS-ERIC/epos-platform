@@ -3,7 +3,6 @@ import type {
   DatasetResourceMetadata,
   Distribution,
   DistributionDraft,
-  Documentation,
   DownloadableFileDistribution,
   DownloadableFileDistributionDraft,
   Parameter,
@@ -24,7 +23,6 @@ import type {
   DatasetGeologicalTemporalForm,
   DatasetSpatialForm,
   DatasetTemporalForm,
-  DatasetWebServiceDocumentationForm,
   DatasetWebServiceConfigurationForm,
   DatasetWebServiceForm,
   DatasetWebServiceParameterForm,
@@ -57,6 +55,7 @@ export function toDatasetDetailForm(metadata: DatasetResourceMetadata): DatasetD
     persistentIdentifiers: metadata.persistent_identifiers?.length
       ? metadata.persistent_identifiers.map((identifier) => ({
           id: identifier.id,
+          resourceId: identifier.resource_id,
           type: identifier.type,
           value: identifier.value,
         }))
@@ -88,7 +87,7 @@ export function toDatasetSaveRequest(
       title: form.title || 'Untitled dataset',
       description: form.description.trim(),
       keywords: [...form.keywords],
-      accrual_periodicity: undefinedIfBlank(form.accrualPeriodicity),
+      accrual_periodicity: form.accrualPeriodicity || undefined,
       quality_annotation: undefinedIfBlank(form.qualityAnnotation),
       access_right: preservedMetadata.access_right ?? undefined,
       distributions: form.distributions.map(buildDistributionDraft),
@@ -101,7 +100,11 @@ export function toDatasetSaveRequest(
           (identifier) =>
             hasIdentifierValue(identifier.type) && hasIdentifierValue(identifier.value),
         )
-        .map((identifier) => ({ type: identifier.type, value: identifier.value })),
+        .map((identifier) => ({
+          resource_id: identifier.resourceId,
+          type: identifier.type,
+          value: identifier.value,
+        })),
       contact_points: form.contactPoints.filter(hasIdentifierValue),
       providers: form.providers
         .filter((provider) => hasIdentifierValue(provider.id))
@@ -187,9 +190,6 @@ export function distributionValidationError(form: DatasetDetailForm): string | n
       continue;
     }
 
-    if (!hasIdentifierValue(distribution.webService.name)) {
-      return `${label}: web service name is required.`;
-    }
     const configurationError = webServiceConfigurationValidationError(
       distribution.webService.configuration,
     );
@@ -197,12 +197,6 @@ export function distributionValidationError(form: DatasetDetailForm): string | n
       return `${label}: ${configurationError}`;
     }
 
-    const documentation = distribution.webService.documentation;
-    const hasDocumentation = [documentation.title, documentation.description, documentation.uri]
-      .some(hasIdentifierValue);
-    if (hasDocumentation && !hasIdentifierValue(documentation.uri)) {
-      return `${label}: documentation URI is required when documentation is provided.`;
-    }
   }
 
   return null;
@@ -365,6 +359,7 @@ export function geologicalTemporalValidationError(form: DatasetDetailForm): stri
 function buildDistributionForm(distribution: Distribution): DatasetDistributionForm {
   const base = {
     id: distribution.id,
+    resourceId: distribution.resource_id,
     nativeFormats: distribution.type === 'WEB_SERVICE'
       ? distribution.available_formats
           .filter((format) => format.kind === 'ORIGINAL')
@@ -372,9 +367,8 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
       : [],
     title: distribution.title,
     description: distribution.description,
-    issued: distribution.issued ? toDateTimeLocalValue(distribution.issued) : '',
-    modified: distribution.modified ? toDateTimeLocalValue(distribution.modified) : '',
     license: distribution.license ?? '',
+    byteSize: distribution.byte_size == null ? '' : String(distribution.byte_size),
     type: distribution.type,
   };
 
@@ -385,20 +379,15 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
       ...base,
       kind: 'web-service',
       webService: {
-        name: webService.name,
-        description: webService.description ?? '',
+        resourceId: webService.resource_id,
         visibleOn: webService.visible_on ?? [],
-        documentation: webService.documentation
-          ? buildWebServiceDocumentationForm(webService.documentation)
-          : { title: '', description: '', uri: '' },
+        documentationUri: webService.documentation_uri ?? '',
         provider: webService.provider
           ? buildWebServiceProviderForm(webService.provider)
           : { id: '', name: '' },
         contactPoints: webService.contact_points?.length
           ? webService.contact_points.map((contactPoint) => contactPoint)
           : [],
-        spatialCoverage: webService.spatial_coverage ?? null,
-        temporalCoverage: buildTemporalForm(webService.temporal_coverage),
         configuration: buildWebServiceConfigurationForm(webService.configuration),
       },
     };
@@ -413,16 +402,6 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
       url: downloadableFile.url,
       format: downloadableFile.format,
     },
-  };
-}
-
-function buildWebServiceDocumentationForm(
-  documentation: Documentation,
-): DatasetWebServiceDocumentationForm {
-  return {
-    title: documentation.title ?? '',
-    description: documentation.description ?? '',
-    uri: documentation.uri,
   };
 }
 
@@ -469,6 +448,7 @@ function buildWebServiceConfigurationForm(
         capabilitiesUrl: configuration.capabilities_url,
         defaultLayer: configuration.default_layer,
         layers: configuration.layers.map((layer) => ({
+          resourceId: layer.resource_id,
           name: layer.name,
           defaultStyle: layer.default_style,
           styles: [...layer.styles],
@@ -484,6 +464,7 @@ function buildWebServiceConfigurationForm(
         capabilitiesUrl: configuration.capabilities_url,
         defaultLayer: configuration.default_layer,
         layers: configuration.layers.map((layer) => ({
+          resourceId: layer.resource_id,
           name: layer.name,
           defaultStyle: layer.default_style ?? '',
           styles: [...(layer.styles ?? [])],
@@ -500,18 +481,10 @@ function parameterForms(parameters: Parameter[] | undefined): DatasetWebServiceP
     : [buildEmptyWebServiceParameterForm()];
 }
 
-function buildTemporalForm(
-  temporalCoverage: WebServiceDistribution['web_service']['temporal_coverage'],
-): DatasetTemporalForm {
-  return {
-    start: temporalCoverage?.start ? toDateTimeLocalValue(temporalCoverage.start) : '',
-    end: temporalCoverage?.end ? toDateTimeLocalValue(temporalCoverage.end) : '',
-  };
-}
-
 function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServiceParameterForm {
   const common = {
     id: parameter.id,
+    resourceId: parameter.resource_id,
     position: parameter.position,
     name: parameter.name,
     label: parameter.label,
@@ -530,7 +503,7 @@ function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServicePa
         kind: 'STRING',
         ...common,
         multipleValues: parameter.multiple_values,
-        defaultValue: parameter.default ?? null,
+        defaultValue: [...(parameter.default ?? [])],
         allowedValues: buildEnumOptionForms(parameter.enum),
         pattern: parameter.pattern ?? '',
       };
@@ -543,7 +516,7 @@ function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServicePa
         multipleValues: parameter.multiple_values,
         minimum: parameter.minimum == null ? '' : String(parameter.minimum),
         maximum: parameter.maximum == null ? '' : String(parameter.maximum),
-        defaultValue: parameter.default == null ? '' : String(parameter.default),
+        defaultValue: (parameter.default ?? []).map(String),
         allowedValues: buildEnumOptionForms(parameter.enum),
       };
     case 'FLOAT':
@@ -553,7 +526,7 @@ function buildWebServiceParameterForm(parameter: Parameter): DatasetWebServicePa
         multipleValues: parameter.multiple_values,
         minimum: parameter.minimum == null ? '' : String(parameter.minimum),
         maximum: parameter.maximum == null ? '' : String(parameter.maximum),
-        defaultValue: parameter.default == null ? '' : String(parameter.default),
+        defaultValue: (parameter.default ?? []).map(String),
         allowedValues: buildEnumOptionForms(parameter.enum),
       };
     case 'DATETIME':
@@ -579,6 +552,7 @@ function buildWebServiceScalarParameterForm(
   parameter: ScalarParameter,
 ): DatasetWebServiceScalarParameterForm {
   const common = {
+    resourceId: parameter.resource_id,
     position: parameter.position,
     name: parameter.name,
     label: parameter.label,
@@ -593,7 +567,7 @@ function buildWebServiceScalarParameterForm(
       return {
         kind: 'STRING',
         ...common,
-        defaultValue: parameter.default ?? null,
+        defaultValue: [...(parameter.default ?? [])],
         allowedValues: buildEnumOptionForms(parameter.enum),
         pattern: parameter.pattern ?? '',
       };
@@ -606,7 +580,7 @@ function buildWebServiceScalarParameterForm(
         ...common,
         minimum: parameter.minimum == null ? '' : String(parameter.minimum),
         maximum: parameter.maximum == null ? '' : String(parameter.maximum),
-        defaultValue: parameter.default == null ? '' : String(parameter.default),
+        defaultValue: (parameter.default ?? []).map(String),
         allowedValues: buildEnumOptionForms(parameter.enum),
       };
     case 'DATETIME':
@@ -636,7 +610,7 @@ function buildEmptyWebServiceParameterForm(): DatasetWebServiceParameterForm {
     explode: false,
     readOnly: false,
     multipleValues: false,
-    defaultValue: null,
+    defaultValue: [],
     allowedValues: [],
     pattern: '',
   };
@@ -644,11 +618,11 @@ function buildEmptyWebServiceParameterForm(): DatasetWebServiceParameterForm {
 
 function buildDistributionDraft(distribution: DatasetDistributionForm): DistributionDraft {
   const base = {
+    resource_id: distribution.resourceId,
     title: distribution.title,
     description: undefinedIfBlank(distribution.description),
     license: undefinedIfBlank(distribution.license),
-    issued: toIsoDateTimeOrNull(distribution.issued),
-    modified: toIsoDateTimeOrNull(distribution.modified),
+    byte_size: toNumberOrNull(distribution.byteSize),
   };
 
   if (distribution.kind === 'web-service') {
@@ -670,19 +644,10 @@ function buildWebServiceDraft(
   webService: DatasetWebServiceForm,
 ): WebServiceDistributionDraft['web_service'] {
   return {
-    name: webService.name,
-    description: undefinedIfBlank(webService.description),
+    resource_id: webService.resourceId,
     visible_on: webService.visibleOn.length ? webService.visibleOn : undefined,
     provider: hasIdentifierValue(webService.provider.id) ? webService.provider.id : undefined,
-    documentation: hasIdentifierValue(webService.documentation.uri)
-      ? {
-          title: undefinedIfBlank(webService.documentation.title),
-          description: undefinedIfBlank(webService.documentation.description),
-          uri: webService.documentation.uri,
-        }
-      : undefined,
-    spatial_coverage: buildSpatialCoverageDraft(webService.spatialCoverage),
-    temporal_coverage: buildTemporalCoverageDraft(webService.temporalCoverage),
+    documentation_uri: undefinedIfBlank(webService.documentationUri),
     contact_points: webService.contactPoints.filter(hasIdentifierValue),
     configuration: buildWebServiceConfigurationDraft(webService.configuration),
   };
@@ -733,7 +698,12 @@ function buildWebServiceConfigurationDraft(
           const styles = layer.styles.includes(layer.defaultStyle)
             ? layer.styles
             : [layer.defaultStyle, ...layer.styles];
-          return { name: layer.name, default_style: layer.defaultStyle, styles };
+          return {
+            resource_id: layer.resourceId,
+            name: layer.name,
+            default_style: layer.defaultStyle,
+            styles,
+          };
         }),
         transparency_editable: configuration.transparencyEditable,
         default_transparency: configuration.defaultTransparency,
@@ -746,6 +716,7 @@ function buildWebServiceConfigurationDraft(
         capabilities_url: configuration.capabilitiesUrl,
         default_layer: configuration.defaultLayer,
         layers: configuration.layers.map((layer) => ({
+          resource_id: layer.resourceId,
           name: layer.name,
           default_style: undefinedIfBlank(layer.defaultStyle),
           styles: layer.styles.length ? layer.styles : undefined,
@@ -767,6 +738,7 @@ function buildWebServiceParameterDraft(
   position: number,
 ): ParameterDraft {
   const common = {
+    resource_id: parameter.resourceId,
     position,
     name: parameter.name,
     label: parameter.label,
@@ -785,7 +757,7 @@ function buildWebServiceParameterDraft(
         kind: 'STRING',
         ...common,
         multiple_values: parameter.multipleValues,
-        default: blankToNull(parameter.defaultValue),
+        default: stringDefaults(parameter.defaultValue),
         enum: stringEnum(parameter.allowedValues),
         pattern: undefinedIfBlank(parameter.pattern),
       };
@@ -798,7 +770,7 @@ function buildWebServiceParameterDraft(
         multiple_values: parameter.multipleValues,
         minimum: toNumberOrNull(parameter.minimum),
         maximum: toNumberOrNull(parameter.maximum),
-        default: toNumberOrNull(parameter.defaultValue),
+        default: numericDefaults(parameter.defaultValue, Number.isInteger),
         enum: numericEnum(parameter.allowedValues, Number.isInteger),
       };
     case 'FLOAT':
@@ -808,7 +780,7 @@ function buildWebServiceParameterDraft(
         multiple_values: parameter.multipleValues,
         minimum: toNumberOrNull(parameter.minimum),
         maximum: toNumberOrNull(parameter.maximum),
-        default: toNumberOrNull(parameter.defaultValue),
+        default: numericDefaults(parameter.defaultValue),
         enum: numericEnum(parameter.allowedValues),
       };
     case 'DATETIME':
@@ -835,6 +807,7 @@ function buildWebServiceScalarParameterDraft(
   position: number,
 ): ScalarParameterDraft {
   const common = {
+    resource_id: parameter.resourceId,
     position,
     name: parameter.name,
     label: parameter.label,
@@ -849,7 +822,7 @@ function buildWebServiceScalarParameterDraft(
       return {
         kind: 'STRING',
         ...common,
-        default: blankToNull(parameter.defaultValue),
+        default: stringDefaults(parameter.defaultValue),
         enum: stringEnum(parameter.allowedValues),
         pattern: undefinedIfBlank(parameter.pattern),
       };
@@ -861,7 +834,7 @@ function buildWebServiceScalarParameterDraft(
         ...common,
         minimum: toNumberOrNull(parameter.minimum),
         maximum: toNumberOrNull(parameter.maximum),
-        default: toNumberOrNull(parameter.defaultValue),
+        default: numericDefaults(parameter.defaultValue, Number.isInteger),
         enum: numericEnum(parameter.allowedValues, Number.isInteger),
       };
     case 'FLOAT':
@@ -870,7 +843,7 @@ function buildWebServiceScalarParameterDraft(
         ...common,
         minimum: toNumberOrNull(parameter.minimum),
         maximum: toNumberOrNull(parameter.maximum),
-        default: toNumberOrNull(parameter.defaultValue),
+        default: numericDefaults(parameter.defaultValue),
         enum: numericEnum(parameter.allowedValues),
       };
     case 'DATETIME':
@@ -921,7 +894,7 @@ function isEmptyWebServiceParameter(parameter: DatasetWebServiceParameterForm): 
     case 'STRING':
       return (
         isMetadataEmpty &&
-        !hasIdentifierValue(parameter.defaultValue ?? '') &&
+        !parameter.defaultValue.some(hasIdentifierValue) &&
         !parameter.allowedValues.length &&
         !hasIdentifierValue(parameter.pattern)
       );
@@ -933,7 +906,7 @@ function isEmptyWebServiceParameter(parameter: DatasetWebServiceParameterForm): 
         isMetadataEmpty &&
         !hasIdentifierValue(parameter.minimum) &&
         !hasIdentifierValue(parameter.maximum) &&
-        !hasIdentifierValue(parameter.defaultValue) &&
+        !parameter.defaultValue.some(hasIdentifierValue) &&
         !parameter.allowedValues.length
       );
     case 'DATETIME':
@@ -958,7 +931,7 @@ function hasScalarDefaultOutsideAllowedValues(
     return parameter.parameters.some(hasScalarDefaultOutsideAllowedValues);
   }
 
-  if (!('allowedValues' in parameter) || parameter.defaultValue === null) {
+  if (!('allowedValues' in parameter) || !parameter.defaultValue.length) {
     return false;
   }
 
@@ -966,16 +939,31 @@ function hasScalarDefaultOutsideAllowedValues(
   if (!allowedValues.length) return false;
 
   if (parameter.kind === 'STRING') {
-    return (
-      !!parameter.defaultValue.trim() && !allowedValues.some((option) => option.value === parameter.defaultValue)
+    return parameter.defaultValue.some(
+      (value) => hasIdentifierValue(value) && !allowedValues.some((option) => option.value === value)
     );
   }
 
-  const defaultValue = toNumberOrNull(parameter.defaultValue);
-  return (
-    defaultValue !== null &&
-    !allowedValues.some((option) => toNumberOrNull(option.value) === defaultValue)
-  );
+  return parameter.defaultValue.some((value) => {
+    const defaultValue = toNumberOrNull(value);
+    return defaultValue !== null
+      && !allowedValues.some((option) => toNumberOrNull(option.value) === defaultValue);
+  });
+}
+
+function stringDefaults(values: string[]): string[] | null {
+  const defaults = values.filter(hasIdentifierValue);
+  return defaults.length ? defaults : null;
+}
+
+function numericDefaults(
+  values: string[],
+  predicate: (value: number) => boolean = Number.isFinite,
+): number[] | null {
+  const defaults = values
+    .map(toNumberOrNull)
+    .filter((value): value is number => value !== null && predicate(value));
+  return defaults.length ? defaults : null;
 }
 
 function stringEnum(values: DatasetEnumOptionForm[]): Array<{ value: string; label?: string }> | undefined {

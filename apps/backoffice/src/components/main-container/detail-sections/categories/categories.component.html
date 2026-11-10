@@ -12,7 +12,7 @@
     @if (selectedCategories().length) {
       <ul class="categories-list">
         @for (category of selectedCategories(); track category.id) {
-          <li class="category-row category-row--selected"><strong>{{ category.name }}</strong></li>
+          <li class="category-row category-row--selected" [attr.data-comparison-key]="'category:' + category.id"><strong>{{ category.name }}</strong></li>
         }
       </ul>
     } @else {

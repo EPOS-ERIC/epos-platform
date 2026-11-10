@@ -27,7 +27,7 @@ describe('ScalarParametersEditorComponent', () => {
         required: false,
         readOnly: false,
         role: '',
-        defaultValue: null,
+        defaultValue: [],
         allowedValues: [],
         pattern: ''
       }

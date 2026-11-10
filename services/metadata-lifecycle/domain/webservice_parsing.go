@@ -933,9 +933,6 @@ func parseParameter(value ParameterInput, allowTemplate, allowMultipleValues boo
 	if !allowMultipleValues && schema.AllowsMultipleValues() {
 		return ParameterInput{}, invalidField("schema.multiple_values", "Multiple values are not allowed here.", nil)
 	}
-	if schema.AllowsMultipleValues() && !schema.HasEnum() {
-		return ParameterInput{}, invalidField("schema.enum", "Multiple values require at least one allowed value.", nil)
-	}
 	value.Schema = schema
 	return value, nil
 }

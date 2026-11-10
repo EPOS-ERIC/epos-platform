@@ -23,7 +23,7 @@ describe('WebServiceParametersComponent', () => {
         required: false,
         multipleValues: false,
         readOnly: false,
-        defaultValue: null,
+        defaultValue: [],
         allowedValues: [],
         pattern: ''
       },
@@ -118,6 +118,63 @@ describe('WebServiceParametersComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.webservice-parameters--comparison')).not.toBeNull();
+  });
+
+  it('matches renamed parameters by stable resource id', async () => {
+    await TestBed.configureTestingModule({
+      imports: [WebServiceParametersComponent]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(WebServiceParametersComponent);
+    const current = createStringParameter('Renamed parameter', 'renamed', 0);
+    const previous = createStringParameter('Original parameter', 'original', 0);
+    current.resourceId = 'parameter-resource-id';
+    previous.resourceId = 'parameter-resource-id';
+
+    fixture.componentRef.setInput('model', [current]);
+    fixture.componentRef.setInput('comparisonModel', [previous]);
+    fixture.componentRef.setInput('comparisonMode', true);
+    fixture.componentRef.setInput('comparisonSide', 'right');
+    fixture.detectChanges();
+
+    const item = fixture.nativeElement.querySelector('.parameter-list-item') as HTMLButtonElement;
+    const editor = fixture.nativeElement.querySelector('.parameter-editor') as HTMLElement;
+    expect(item.textContent).toContain('Changed');
+    expect(item.textContent).not.toContain('Added');
+    expect(item.classList.contains('parameter-list-item--positive')).toBe(true);
+    expect(editor.dataset['comparisonKey']).toBe('resource:parameter-resource-id');
+  });
+
+  it('aligns right-side navigation with the counterpart resource order', async () => {
+    await TestBed.configureTestingModule({
+      imports: [WebServiceParametersComponent]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(WebServiceParametersComponent);
+    const first = createStringParameter('First parameter', 'first', 0);
+    const second = createStringParameter('Second parameter', 'second', 1);
+    first.resourceId = 'first-resource-id';
+    second.resourceId = 'second-resource-id';
+
+    fixture.componentRef.setInput('model', [second, first]);
+    fixture.componentRef.setInput('comparisonModel', [first, second]);
+    fixture.componentRef.setInput('comparisonMode', true);
+    fixture.componentRef.setInput('comparisonSide', 'right');
+    const selections: string[] = [];
+    fixture.componentInstance.comparisonSelectedParameterResourceIdChange.subscribe((resourceId) => selections.push(resourceId));
+    fixture.detectChanges();
+
+    const items = fixture.nativeElement.querySelectorAll('.parameter-list-item') as NodeListOf<HTMLButtonElement>;
+    expect(items[0].textContent).toContain('First parameter');
+    expect(items[1].textContent).toContain('Second parameter');
+    expect(fixture.nativeElement.querySelector('.parameter-editor h3')?.textContent?.trim()).toBe('First parameter');
+
+    items[1].click();
+    fixture.detectChanges();
+    expect(selections).toEqual(['second-resource-id']);
+    expect(fixture.nativeElement.querySelector('.parameter-editor h3')?.textContent?.trim()).toBe('Second parameter');
+
+    fixture.componentRef.setInput('comparisonSelectedParameterResourceId', 'first-resource-id');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.parameter-editor h3')?.textContent?.trim()).toBe('First parameter');
   });
 
   it('offers longitude and latitude roles for DYNAMIC services', async () => {
@@ -221,7 +278,7 @@ describe('WebServiceParametersComponent', () => {
       required: false,
       multipleValues: false,
       readOnly: false,
-      defaultValue: null,
+      defaultValue: [],
       allowedValues: [],
       pattern: ''
     };
@@ -282,7 +339,7 @@ function createStringParameter(label: string, name: string, position: number): D
     required: false,
     multipleValues: false,
     readOnly: false,
-    defaultValue: null,
+    defaultValue: [],
     allowedValues: [],
     pattern: ''
   };

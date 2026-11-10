@@ -21,26 +21,11 @@ export class ContactPointsComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly searchTerm = signal('');
-  protected readonly roleFilter = signal('all');
   protected readonly availableContactPoints = computed(() => {
     const search = this.searchTerm().trim().toLowerCase();
-    const roleFilter = this.roleFilter();
-
-    return this.contactPoints().filter((contactPoint) => {
-      if (roleFilter !== 'all' && contactPoint.role !== roleFilter) {
-        return false;
-      }
-
-      if (!search) {
-        return true;
-      }
-
-      return [contactPoint.email, contactPoint.role].some((value) => value.toLowerCase().includes(search));
-    });
-  });
-  protected readonly availableRoles = computed(() => {
-    const roles = new Set(this.contactPoints().map((contactPoint) => contactPoint.role).filter((role) => role.trim().length > 0));
-    return Array.from(roles).sort((left, right) => left.localeCompare(right));
+    return search
+      ? this.contactPoints().filter((contactPoint) => contactPoint.email.toLowerCase().includes(search))
+      : this.contactPoints();
   });
 
   @Input() disabled = false;
@@ -110,16 +95,8 @@ export class ContactPointsComponent implements OnInit {
     this.modelChange.emit((this._model ?? []).filter((id) => id !== contactPointId));
   }
 
-  protected contactPointDescription(contactPoint: ContactPoint): string {
-    return contactPoint.role;
-  }
-
   protected onSearchChange(value: string): void {
     this.searchTerm.set(value);
-  }
-
-  protected onRoleFilterChange(value: string): void {
-    this.roleFilter.set(value);
   }
 
   private loadContactPoints(): void {

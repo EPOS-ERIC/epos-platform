@@ -16,8 +16,8 @@
 
       @if (model.length) {
         <ul class="identifiers-list">
-          @for (identifier of model; track $index) {
-            <li class="identifier-list-row">
+          @for (identifier of model; track identifier.resourceId ?? $index) {
+            <li class="identifier-list-row" [attr.data-comparison-resource-id]="identifier.resourceId ?? null">
               <span class="identifier-number" aria-hidden="true">{{ $index + 1 }}</span>
               <div class="identifier-fields">
                 <label class="detail-field">

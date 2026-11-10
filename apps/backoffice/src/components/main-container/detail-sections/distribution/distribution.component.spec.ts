@@ -63,9 +63,8 @@ describe('DistributionComponent', () => {
         type: 'DOWNLOADABLE_FILE',
         title: 'First',
         description: 'First distribution',
-        issued: '',
-        modified: '',
         license: '',
+        byteSize: '',
         downloadableFile: { url: 'https://example.test/first', format: 'text/csv' }
       },
       {
@@ -73,9 +72,8 @@ describe('DistributionComponent', () => {
         type: 'DOWNLOADABLE_FILE',
         title: 'Second',
         description: 'Second distribution',
-        issued: '',
-        modified: '',
         license: '',
+        byteSize: '',
         downloadableFile: { url: 'https://example.test/second', format: 'application/json' }
       }
     ];
@@ -161,6 +159,162 @@ describe('DistributionComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.parameter-editor h3')?.textContent?.trim()).toBe('Second parameter');
     expect((fixture.nativeElement.querySelector('.parameter-editor-fields') as HTMLFieldSetElement).disabled).toBe(true);
+  });
+
+  it('propagates mirrored comparison state and matches parameters through resource ids', () => {
+    TestBed.overrideProvider(ApiService, {
+      useValue: {
+        getContactPoints: () => of([]),
+        getOrganizations: () => of([])
+      }
+    });
+    const fixture = TestBed.createComponent(DistributionComponent);
+    const emissions: DatasetDistributionForm[][] = [];
+    const selections: string[] = [];
+    fixture.componentInstance.modelChange.subscribe((model) => emissions.push(model));
+    fixture.componentInstance.comparisonSelectedParameterResourceIdChange.subscribe((resourceId) => selections.push(resourceId));
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.distribution-actions button') as HTMLButtonElement).click();
+
+    const current = emissions[0];
+    const currentDistribution = current[0];
+    if (currentDistribution.kind !== 'web-service' || currentDistribution.webService.configuration.type !== 'HTTP') {
+      throw new Error('Expected an HTTP web service distribution');
+    }
+    currentDistribution.resourceId = 'distribution-resource-id';
+    currentDistribution.webService.configuration.parameters = [{
+      kind: 'BOOLEAN',
+      id: 'current-parameter-id',
+      resourceId: 'parameter-resource-id',
+      position: 0,
+      label: 'Renamed parameter',
+      name: 'renamed',
+      description: '',
+      property: '',
+      location: 'QUERY',
+      explode: false,
+      required: false,
+      readOnly: false,
+      defaultValue: null
+    }];
+    const comparison = structuredClone(current);
+    const comparisonDistribution = comparison[0];
+    if (comparisonDistribution.kind !== 'web-service' || comparisonDistribution.webService.configuration.type !== 'HTTP') {
+      throw new Error('Expected an HTTP comparison web service distribution');
+    }
+    comparisonDistribution.webService.configuration.parameters[0].id = 'previous-parameter-id';
+    comparisonDistribution.webService.configuration.parameters[0].label = 'Original parameter';
+    comparisonDistribution.webService.configuration.parameters[0].name = 'original';
+
+    fixture.componentRef.setInput('model', current);
+    fixture.componentRef.setInput('comparisonModel', comparison);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.componentRef.setInput('comparisonMode', true);
+    fixture.componentRef.setInput('comparisonSide', 'right');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.parameter-workspace--reversed')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.parameter-list-item')?.textContent).toContain('Changed');
+    expect((fixture.nativeElement.querySelector('.parameter-editor') as HTMLElement).dataset['comparisonKey'])
+      .toBe('resource:parameter-resource-id');
+    (fixture.nativeElement.querySelector('.parameter-list-item') as HTMLButtonElement).click();
+    expect(selections).toEqual(['parameter-resource-id']);
+  });
+
+  it('aligns right-side distribution tabs by resource id', () => {
+    const fixture = TestBed.createComponent(DistributionComponent);
+    const first: DatasetDistributionForm = {
+      kind: 'downloadable-file',
+      type: 'DOWNLOADABLE_FILE',
+      resourceId: 'first-resource-id',
+      title: 'First',
+      description: '',
+      license: '',
+      byteSize: '',
+      downloadableFile: { url: 'https://example.test/first', format: 'text/csv' }
+    };
+    const second: DatasetDistributionForm = {
+      ...first,
+      resourceId: 'second-resource-id',
+      title: 'Second',
+      downloadableFile: { url: 'https://example.test/second', format: 'application/json' }
+    };
+
+    fixture.componentRef.setInput('model', [second, first]);
+    fixture.componentRef.setInput('comparisonModel', [first, second]);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.componentRef.setInput('comparisonMode', true);
+    fixture.componentRef.setInput('comparisonSide', 'right');
+    fixture.detectChanges();
+
+    const tabs = fixture.nativeElement.querySelectorAll('.tab-button') as NodeListOf<HTMLButtonElement>;
+    expect(tabs[0].textContent?.trim()).toBe('First');
+    expect(tabs[1].textContent?.trim()).toBe('Second');
+    expect(fixture.nativeElement.querySelector('.distribution-level-title')?.textContent?.trim()).toBe('First');
+  });
+
+  it('marks added distributions and emits their resource id when selected', () => {
+    const fixture = TestBed.createComponent(DistributionComponent);
+    const selections: string[] = [];
+    const existing: DatasetDistributionForm = {
+      kind: 'downloadable-file',
+      type: 'DOWNLOADABLE_FILE',
+      resourceId: 'existing-resource-id',
+      title: 'Existing',
+      description: '',
+      license: '',
+      byteSize: '',
+      downloadableFile: { url: 'https://example.test/existing', format: 'text/csv' }
+    };
+    const added: DatasetDistributionForm = {
+      ...existing,
+      resourceId: 'added-resource-id',
+      title: 'Added distribution',
+      downloadableFile: { url: 'https://example.test/added', format: 'application/json' }
+    };
+    fixture.componentInstance.comparisonSelectedDistributionResourceIdChange.subscribe(
+      (resourceId) => selections.push(resourceId)
+    );
+    fixture.componentRef.setInput('model', [existing, added]);
+    fixture.componentRef.setInput('comparisonModel', [structuredClone(existing)]);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.componentRef.setInput('comparisonMode', true);
+    fixture.componentRef.setInput('comparisonSide', 'right');
+    fixture.detectChanges();
+
+    const tabs = fixture.nativeElement.querySelectorAll('.tab-button') as NodeListOf<HTMLButtonElement>;
+    expect(tabs[0].textContent).not.toContain('Changed');
+    expect(tabs[1].textContent).toContain('Added');
+    expect(tabs[1].classList.contains('tab-button--positive')).toBe(true);
+
+    tabs[1].click();
+    expect(selections).toEqual(['added-resource-id']);
+  });
+
+  it('keeps its current distribution when the selected counterpart is absent', () => {
+    const fixture = TestBed.createComponent(DistributionComponent);
+    const existing: DatasetDistributionForm = {
+      kind: 'downloadable-file',
+      type: 'DOWNLOADABLE_FILE',
+      resourceId: 'existing-resource-id',
+      title: 'Existing',
+      description: '',
+      license: '',
+      byteSize: '',
+      downloadableFile: { url: 'https://example.test/existing', format: 'text/csv' }
+    };
+    fixture.componentRef.setInput('model', [existing]);
+    fixture.componentRef.setInput('comparisonModel', []);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.componentRef.setInput('comparisonMode', true);
+    fixture.componentRef.setInput('comparisonSide', 'left');
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('comparisonSelectedDistributionResourceId', 'missing-resource-id');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.tab-button.active')?.textContent).toContain('Existing');
+    expect(fixture.nativeElement.querySelector('.distribution-level-title')?.textContent).toContain('Existing');
   });
 
   it('does not load current conversions in comparison mode', () => {

@@ -1,7 +1,7 @@
 import { AfterViewInit, Directive, ElementRef, Input, OnChanges, OnDestroy, inject } from '@angular/core';
 
 const FIELD_SELECTOR = 'input:not([type="button"]):not([type="submit"]):not(.parameter-search-input), textarea, select';
-const READONLY_ROW_SELECTOR = '.contact-point-row, .provider-row, .identifier-item';
+const READONLY_ROW_SELECTOR = '.contact-point-row, .provider-row, .identifier-item, .category-row';
 const LEFT_CLASS = 'comparison-value--left';
 const RIGHT_CLASS = 'comparison-value--right';
 
@@ -70,16 +70,9 @@ export class ComparisonFieldsDirective implements AfterViewInit, OnChanges, OnDe
       return;
     }
 
-    this.compareElements(
-      this.controls(leftPane),
-      this.controls(rightPane),
-      (element) => this.controlValue(element)
-    );
-    this.compareElements(
-      this.readonlyRows(leftPane),
-      this.readonlyRows(rightPane),
-      (element) => this.normalizedText(element)
-    );
+    this.compareControls(this.controls(leftPane), this.controls(rightPane));
+    this.compareReadonlyRows(this.readonlyRows(leftPane), this.readonlyRows(rightPane));
+    this.compareSelectedDistributions(leftPane, rightPane);
     this.compareSelectedParameters(leftPane, rightPane);
   }
 
@@ -99,7 +92,9 @@ export class ComparisonFieldsDirective implements AfterViewInit, OnChanges, OnDe
   }
 
   private controls(pane: HTMLElement): Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> {
-    return this.controlsWithin(pane).filter((control) => !control.closest('.parameter-editor'));
+    return this.controlsWithin(pane).filter(
+      (control) => !control.closest('.parameter-editor, .distribution-body')
+    );
   }
 
   private controlsWithin(element: HTMLElement): Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> {
@@ -112,32 +107,156 @@ export class ComparisonFieldsDirective implements AfterViewInit, OnChanges, OnDe
   }
 
   private compareSelectedParameters(leftPane: HTMLElement, rightPane: HTMLElement): void {
-    const leftEditor = leftPane.querySelector<HTMLElement>('.parameter-editor[data-comparison-key]');
-    const rightEditor = rightPane.querySelector<HTMLElement>('.parameter-editor[data-comparison-key]');
-    const leftControls = leftEditor ? this.controlsWithin(leftEditor) : [];
-    const rightControls = rightEditor ? this.controlsWithin(rightEditor) : [];
+    const leftEditors = Array.from(
+      leftPane.querySelectorAll<HTMLElement>('.parameter-editor[data-comparison-key]')
+    );
+    const rightEditors = Array.from(
+      rightPane.querySelectorAll<HTMLElement>('.parameter-editor[data-comparison-key]')
+    );
+    const keyedEditors = (editors: HTMLElement[]): Map<string, HTMLElement> => new Map(
+      editors.map((editor) => [editor.dataset['comparisonKey']!, editor])
+    );
+    const leftKeyed = keyedEditors(leftEditors);
+    const rightKeyed = keyedEditors(rightEditors);
+
+    leftEditors.forEach((editor) => this.toggleComparisonClass(this.controlsWithin(editor), LEFT_CLASS, false));
+    rightEditors.forEach((editor) => this.toggleComparisonClass(this.controlsWithin(editor), RIGHT_CLASS, false));
+
+    new Set([...leftKeyed.keys(), ...rightKeyed.keys()]).forEach((key) => {
+      const leftEditor = leftKeyed.get(key);
+      const rightEditor = rightKeyed.get(key);
+      const leftControls = leftEditor ? this.controlsWithin(leftEditor) : [];
+      const rightControls = rightEditor ? this.controlsWithin(rightEditor) : [];
+      if (leftEditor && rightEditor) {
+        this.compareControls(leftControls, rightControls);
+        return;
+      }
+
+      this.toggleComparisonClass(leftControls, LEFT_CLASS, leftEditor?.dataset['comparisonStatus'] === 'removed');
+      this.toggleComparisonClass(rightControls, RIGHT_CLASS, rightEditor?.dataset['comparisonStatus'] === 'added');
+    });
+  }
+
+  private compareSelectedDistributions(leftPane: HTMLElement, rightPane: HTMLElement): void {
+    const leftDistribution = leftPane.querySelector<HTMLElement>('.distribution-body[data-comparison-key]');
+    const rightDistribution = rightPane.querySelector<HTMLElement>('.distribution-body[data-comparison-key]');
+    const leftControls = leftDistribution ? this.controlsWithin(leftDistribution) : [];
+    const rightControls = rightDistribution ? this.controlsWithin(rightDistribution) : [];
 
     this.toggleComparisonClass(leftControls, LEFT_CLASS, false);
     this.toggleComparisonClass(rightControls, RIGHT_CLASS, false);
 
-    const leftKey = leftEditor?.dataset['comparisonKey'];
-    const rightKey = rightEditor?.dataset['comparisonKey'];
+    const leftKey = leftDistribution?.dataset['comparisonKey'];
+    const rightKey = rightDistribution?.dataset['comparisonKey'];
     if (leftKey && leftKey === rightKey) {
-      this.compareElements(leftControls, rightControls, (element) => this.controlValue(element));
+      this.compareControls(leftControls, rightControls);
       return;
     }
 
-    this.toggleComparisonClass(leftControls, LEFT_CLASS, leftEditor?.dataset['comparisonStatus'] === 'removed');
-    this.toggleComparisonClass(rightControls, RIGHT_CLASS, rightEditor?.dataset['comparisonStatus'] === 'added');
+    this.toggleComparisonClass(leftControls, LEFT_CLASS, leftDistribution?.dataset['comparisonStatus'] === 'removed');
+    this.toggleComparisonClass(rightControls, RIGHT_CLASS, rightDistribution?.dataset['comparisonStatus'] === 'added');
   }
 
   private toggleComparisonClass(elements: HTMLElement[], className: string, enabled: boolean): void {
     elements.forEach((element) => element.classList.toggle(className, enabled));
   }
 
+  private compareControls(
+    leftControls: Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    rightControls: Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ): void {
+    const leftKeyed = this.keyedControls(leftControls);
+    const rightKeyed = this.keyedControls(rightControls);
+    const keyedControls = new Set([...leftKeyed.keys(), ...rightKeyed.keys()]);
+
+    this.toggleComparisonClass(leftControls, LEFT_CLASS, false);
+    this.toggleComparisonClass(rightControls, RIGHT_CLASS, false);
+
+    keyedControls.forEach((key) => {
+      const left = leftKeyed.get(key);
+      const right = rightKeyed.get(key);
+      const changed = !left || !right || this.controlValue(left) !== this.controlValue(right);
+      left?.classList.toggle(LEFT_CLASS, changed);
+      right?.classList.toggle(RIGHT_CLASS, changed);
+    });
+
+    this.compareElements(
+      leftControls.filter((control) => !this.controlComparisonKey(control)),
+      rightControls.filter((control) => !this.controlComparisonKey(control)),
+      (element) => this.controlValue(element)
+    );
+  }
+
+  private keyedControls(
+    controls: Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ): Map<string, HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> {
+    const result = new Map<string, HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>();
+    controls.forEach((control) => {
+      const key = this.controlComparisonKey(control);
+      if (key) {
+        result.set(key, control);
+      }
+    });
+    return result;
+  }
+
+  private controlComparisonKey(
+    control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+  ): string | null {
+    const item = control.closest<HTMLElement>('[data-comparison-resource-id]');
+    const resourceId = item?.dataset['comparisonResourceId'];
+    if (!resourceId) {
+      return null;
+    }
+
+    const label = this.controlLabel(control);
+    const matchingControls = Array.from(
+      item.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(FIELD_SELECTOR)
+    ).filter((candidate) =>
+      candidate.closest('[data-comparison-resource-id]') === item
+      && this.controlLabel(candidate) === label
+    );
+    return `${resourceId}:${label}:${matchingControls.indexOf(control)}`;
+  }
+
+  private controlLabel(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): string {
+    const label = control.closest('label');
+    const labelText = label?.querySelector<HTMLElement>('.detail-label, span')?.textContent
+      ?? label?.textContent
+      ?? control.getAttribute('aria-label')
+      ?? control.type;
+    return this.normalizedTextValue(labelText);
+  }
+
   private readonlyRows(pane: HTMLElement): HTMLElement[] {
     return Array.from(pane.querySelectorAll<HTMLElement>(READONLY_ROW_SELECTOR))
       .filter((row) => !row.querySelector(FIELD_SELECTOR));
+  }
+
+  private compareReadonlyRows(leftRows: HTMLElement[], rightRows: HTMLElement[]): void {
+    const leftKeyed = new Map(
+      leftRows.flatMap((row) => row.dataset['comparisonKey'] ? [[row.dataset['comparisonKey'], row] as const] : [])
+    );
+    const rightKeyed = new Map(
+      rightRows.flatMap((row) => row.dataset['comparisonKey'] ? [[row.dataset['comparisonKey'], row] as const] : [])
+    );
+
+    this.toggleComparisonClass(leftRows, LEFT_CLASS, false);
+    this.toggleComparisonClass(rightRows, RIGHT_CLASS, false);
+
+    new Set([...leftKeyed.keys(), ...rightKeyed.keys()]).forEach((key) => {
+      const left = leftKeyed.get(key);
+      const right = rightKeyed.get(key);
+      const changed = !left || !right || this.normalizedText(left) !== this.normalizedText(right);
+      left?.classList.toggle(LEFT_CLASS, changed);
+      right?.classList.toggle(RIGHT_CLASS, changed);
+    });
+
+    this.compareElements(
+      leftRows.filter((row) => !row.dataset['comparisonKey']),
+      rightRows.filter((row) => !row.dataset['comparisonKey']),
+      (element) => this.normalizedText(element)
+    );
   }
 
   private controlValue(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): string {
@@ -148,6 +267,10 @@ export class ComparisonFieldsDirective implements AfterViewInit, OnChanges, OnDe
   }
 
   private normalizedText(element: HTMLElement): string {
-    return (element.textContent ?? '').replace(/\s+/g, ' ').trim();
+    return this.normalizedTextValue(element.textContent ?? '');
+  }
+
+  private normalizedTextValue(value: string): string {
+    return value.replace(/\s+/g, ' ').replace('*', '').trim().toLocaleLowerCase();
   }
 }

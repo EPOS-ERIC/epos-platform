@@ -110,8 +110,6 @@ const DATASET_NAVIGATION_ITEMS: ResourceDetailNavigationItem[] = [
           { label: 'Documentation', anchor: 'webservice-documentation' },
           { label: 'Provider', anchor: 'webservice-provider' },
           { label: 'Contact Points', anchor: 'webservice-contact-points' },
-          { label: 'Spatial Coverage', anchor: 'webservice-spatial-coverage' },
-          { label: 'Temporal Coverage', anchor: 'webservice-temporal-coverage' },
           { label: 'Parameters', anchor: 'webservice-parameters' }
         ]
       }
@@ -406,17 +404,17 @@ export class ResourceDetailStore {
       return;
     }
 
-    const firstVersion = this.historyItems().find((item) => item.version_id === firstVersionId);
-    const secondVersion = this.historyItems().find((item) => item.version_id === secondVersionId);
+    const firstVersion = this.historyItems().find((item) => item.id === firstVersionId);
+    const secondVersion = this.historyItems().find((item) => item.id === secondVersionId);
     const [leftVersionId, rightVersionId] = firstVersion && secondVersion
-      ? orderVersionsByCreatedAt(firstVersion, secondVersion).map((item) => item.version_id)
+      ? orderVersionsByCreatedAt(firstVersion, secondVersion).map((item) => item.id)
       : [firstVersionId, secondVersionId];
 
     void this.router.navigate(['/', context.sectionPath, version.resource_id, 'compare'], {
       queryParams: {
         leftVersionId,
         rightVersionId,
-        sourceVersionId: version.version_id,
+        sourceVersionId: version.id,
         groupId: version.group_id,
         dataType: context.resourceType,
         returnUrl: context.returnUrl
@@ -487,7 +485,7 @@ export class ResourceDetailStore {
       return {
         resourceType: 'dataset',
         resourceId: datasetVersion.resource_id,
-        versionId: datasetVersion.version_id,
+        versionId: datasetVersion.id,
         targetStatus,
         payload: toDatasetSaveRequest(datasetForm, datasetVersion.revision, datasetVersion.metadata)
       };
@@ -499,7 +497,7 @@ export class ResourceDetailStore {
       return {
         resourceType: 'software-application',
         resourceId: resourceVersion.resource_id,
-        versionId: resourceVersion.version_id,
+        versionId: resourceVersion.id,
         targetStatus,
         payload: toSoftwareApplicationSaveRequest(applicationForm, resourceVersion.revision)
       };
@@ -510,7 +508,7 @@ export class ResourceDetailStore {
       return {
         resourceType: 'software-source-code',
         resourceId: resourceVersion.resource_id,
-        versionId: resourceVersion.version_id,
+        versionId: resourceVersion.id,
         targetStatus,
         payload: toSoftwareSourceCodeSaveRequest(sourceCodeForm, resourceVersion.revision)
       };
@@ -775,7 +773,7 @@ export class ResourceDetailStore {
     return {
       resourceType: routeContext.resourceType,
       resourceId: version.resource_id,
-      versionId: version.version_id,
+      versionId: version.id,
       groupId: version.group_id
     };
   }

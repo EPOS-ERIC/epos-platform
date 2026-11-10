@@ -253,7 +253,7 @@
                           <div class="detail-form-grid distribution-parameter-grid">
                              <label class="detail-field">
                                <span class="detail-label">Default</span>
-                               <input class="app-input" type="text" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+                               <input class="app-input" type="text" [ngModel]="parameter.defaultValue.join(', ')" [ngModelOptions]="{ standalone: true }" (ngModelChange)="parameter.defaultValue = splitDefaultValues($event); emitModelChange()" placeholder="value1, value2" />
                             </label>
                             <label class="detail-field">
                               <span class="detail-label">Pattern</span>
@@ -286,7 +286,7 @@
                             </label>
                             <label class="detail-field detail-field--full">
                               <span class="detail-label">Default</span>
-                              <input class="app-input" type="number" step="1" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+                               <input class="app-input" type="text" [ngModel]="parameter.defaultValue.join(', ')" [ngModelOptions]="{ standalone: true }" (ngModelChange)="parameter.defaultValue = splitDefaultValues($event); emitModelChange()" placeholder="1, 2" />
                             </label>
                           </div>
                           <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
@@ -303,7 +303,7 @@
                             </label>
                             <label class="detail-field detail-field--full">
                               <span class="detail-label">Default</span>
-                              <input class="app-input" type="number" step="any" [(ngModel)]="parameter.defaultValue" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+                               <input class="app-input" type="text" [ngModel]="parameter.defaultValue.join(', ')" [ngModelOptions]="{ standalone: true }" (ngModelChange)="parameter.defaultValue = splitDefaultValues($event); emitModelChange()" placeholder="1.5, 2.5" />
                             </label>
                           </div>
                           <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />

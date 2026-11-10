@@ -364,6 +364,26 @@ WHERE
                 array_to_string(version.keywords, ' ')
             )
         ) LIKE '%' || lower($7::text) || '%'
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                software_application_version_creators AS link
+                JOIN organizations AS organization ON organization.id = link.organization_id
+            WHERE
+                link.software_application_version_id = version.id
+                AND lower(organization.name) LIKE '%' || lower($7::text) || '%'
+        )
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                software_application_version_categories AS link
+                JOIN categories AS category ON category.id = link.category_id
+            WHERE
+                link.software_application_version_id = version.id
+                AND lower(category.name) LIKE '%' || lower($7::text) || '%'
+        )
     )
     AND (
         cardinality($8::uuid []) = 0
@@ -516,6 +536,41 @@ WHERE
                 array_to_string(version.keywords, ' ')
             )
         ) LIKE '%' || lower($4::text) || '%'
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                dataset_version_providers AS provider
+                JOIN organizations AS organization ON organization.id = provider.organization_id
+            WHERE
+                provider.dataset_version_id = version.id
+                AND lower(organization.name) LIKE '%' || lower($4::text) || '%'
+        )
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                dataset_version_categories AS link
+                JOIN categories AS category ON category.id = link.category_id
+            WHERE
+                link.dataset_version_id = version.id
+                AND lower(category.name) LIKE '%' || lower($4::text) || '%'
+        )
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                distributions AS distribution
+            WHERE
+                distribution.dataset_version_id = version.id
+                AND lower(
+                    concat_ws(
+                        ' ',
+                        distribution.title,
+                        distribution.description
+                    )
+                ) LIKE '%' || lower($4::text) || '%'
+        )
     )
     AND (
         $5::geometry IS NULL
@@ -692,6 +747,26 @@ WHERE
                 array_to_string(version.keywords, ' ')
             )
         ) LIKE '%' || lower($7::text) || '%'
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                software_source_code_version_creators AS link
+                JOIN organizations AS organization ON organization.id = link.organization_id
+            WHERE
+                link.software_source_code_version_id = version.id
+                AND lower(organization.name) LIKE '%' || lower($7::text) || '%'
+        )
+        OR EXISTS (
+            SELECT
+                1
+            FROM
+                software_source_code_version_categories AS link
+                JOIN categories AS category ON category.id = link.category_id
+            WHERE
+                link.software_source_code_version_id = version.id
+                AND lower(category.name) LIKE '%' || lower($7::text) || '%'
+        )
     )
     AND (
         cardinality($8::uuid []) = 0

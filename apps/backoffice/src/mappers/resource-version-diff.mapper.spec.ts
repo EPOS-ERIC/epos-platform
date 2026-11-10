@@ -8,7 +8,7 @@ describe('mapResourceVersionDiff', () => {
         resource_type: 'dataset',
         title: 'Original',
         nullable: null,
-        persistent_identifiers: [{ id: 'identifier-id', type: 'DOI', value: '10.1234/example' }],
+        persistent_identifiers: [{ id: 'identifier-id', resource_id: 'identifier-resource-id', type: 'DOI', value: '10.1234/example' }],
         providers: [{ id: 'provider-id', name: 'Provider' }],
         categories: [{ id: 'category-id', name: 'Category' }],
         contact_points: ['contact-ada'],
@@ -21,7 +21,7 @@ describe('mapResourceVersionDiff', () => {
         resource_type: 'dataset',
         title: 'Updated',
         nullable: 'null',
-        persistent_identifiers: [{ id: 'identifier-id', type: 'DOI', value: '10.1234/example' }],
+        persistent_identifiers: [{ id: 'identifier-id', resource_id: 'identifier-resource-id', type: 'DOI', value: '10.1234/example' }],
         providers: [{ id: 'provider-id', name: 'Provider' }],
         categories: [{ id: 'category-id', name: 'Category' }],
         contact_points: ['contact-ada', 'contact-lin'],
@@ -70,7 +70,11 @@ describe('mapResourceVersionDiff', () => {
     const left = version({
       metadata: metadata({
         title: 'Same title',
-        distributions: [{ id: 'left-distribution-id', title: 'Distribution' }]
+        distributions: [{
+          id: 'left-distribution-id',
+          resource_id: 'distribution-resource-id',
+          title: 'Distribution'
+        }]
       })
     });
     const right = version({
@@ -80,11 +84,82 @@ describe('mapResourceVersionDiff', () => {
       updated_at: '2026-02-02T00:00:00Z',
       metadata: metadata({
         title: 'Same title',
-        distributions: [{ id: 'right-distribution-id', title: 'Distribution' }]
+        distributions: [{
+          id: 'right-distribution-id',
+          resource_id: 'distribution-resource-id',
+          title: 'Distribution'
+        }]
       })
     });
 
     expect(mapResourceVersionDiff(left, right).every((item) => !item.changed)).toBe(true);
+  });
+
+  it('matches reordered and renamed versioned items by resource id', () => {
+    const left = version({
+      metadata: metadata({
+        parameters: [
+          { resource_id: 'parameter-a', name: 'Alpha', property: 'old:property' },
+          { resource_id: 'parameter-b', name: 'Beta', property: 'stable:property' }
+        ]
+      })
+    });
+    const right = version({
+      metadata: metadata({
+        parameters: [
+          { resource_id: 'parameter-b', name: 'Beta', property: 'stable:property' },
+          { resource_id: 'parameter-a', name: 'Renamed Alpha', property: 'new:property' }
+        ]
+      })
+    });
+
+    const rows = mapResourceVersionDiff(left, right);
+
+    expect(row(rows, 'Parameters > Parameter 1 (Alpha / Renamed Alpha) > Name')).toMatchObject({
+      left: { kind: 'value', value: 'Alpha' },
+      right: { kind: 'value', value: 'Renamed Alpha' },
+      changed: true
+    });
+    expect(row(rows, 'Parameters > Parameter 1 (Alpha / Renamed Alpha) > Property')).toMatchObject({
+      left: { kind: 'value', value: 'old:property' },
+      right: { kind: 'value', value: 'new:property' },
+      changed: true
+    });
+    expect(row(rows, 'Parameters > Parameter 2 (Beta) > Name').changed).toBe(false);
+    expect(row(rows, 'Parameters > Parameter 2 (Beta) > Property').changed).toBe(false);
+  });
+
+  it('matches reordered catalog references by their stable ids', () => {
+    const left = version({
+      metadata: metadata({
+        contact_points: ['contact-a', 'contact-b'],
+        providers: [{ id: 'provider-a', name: 'Provider A' }],
+        categories: [{ id: 'category-a', name: 'Category A' }]
+      })
+    });
+    const right = version({
+      metadata: metadata({
+        contact_points: ['contact-c', 'contact-b', 'contact-a'],
+        providers: [
+          { id: 'provider-b', name: 'Provider B' },
+          { id: 'provider-a', name: 'Provider A' }
+        ],
+        categories: [
+          { id: 'category-b', name: 'Category B' },
+          { id: 'category-a', name: 'Category A' }
+        ]
+      })
+    });
+
+    const rows = mapResourceVersionDiff(left, right);
+    const changedBySection = (section: string) => rows.filter((item) => item.section === section && item.changed);
+
+    expect(changedBySection('Contact Points')).toHaveLength(1);
+    expect(changedBySection('Providers')).toHaveLength(1);
+    expect(changedBySection('Categories')).toHaveLength(1);
+    expect(rows.filter((item) => item.path.includes('Contact Point') && !item.changed)).toHaveLength(2);
+    expect(rows.filter((item) => item.path.includes('Provider') && !item.changed)).toHaveLength(1);
+    expect(rows.filter((item) => item.path.includes('Category') && !item.changed)).toHaveLength(1);
   });
 
   it('distinguishes strings, null, missing values, and empty containers', () => {
@@ -108,12 +183,17 @@ describe('mapResourceVersionDiff', () => {
     });
   });
 
-  it('does not expose unresolved contact point ids but still compares their raw values', () => {
+  it('does not expose unresolved contact point ids but still distinguishes added and removed values', () => {
     const left = version({ metadata: metadata({ contact_points: ['left-contact-id'] }) });
     const right = version({ metadata: metadata({ contact_points: ['right-contact-id'] }) });
 
     expect(row(mapResourceVersionDiff(left, right), 'Contact Point 1')).toMatchObject({
       left: { kind: 'value', value: 'Contact point unavailable' },
+      right: { kind: 'missing' },
+      changed: true
+    });
+    expect(row(mapResourceVersionDiff(left, right), 'Contact Point 2')).toMatchObject({
+      left: { kind: 'missing' },
       right: { kind: 'value', value: 'Contact point unavailable' },
       changed: true
     });
@@ -128,7 +208,7 @@ describe('mapResourceVersionDiff', () => {
   function version(overrides: Partial<ResourceVersion> = {}): ResourceVersion {
     return {
       resource_id: 'resource-id',
-      version_id: 'version-id',
+      id: 'version-id',
       revision: 1,
       status: 'DRAFT',
       created_by: 'user',

@@ -23,7 +23,6 @@ import { ResourceDetailStore, type ResourceDetailRouteContext } from './resource
 describe('ResourceDetailStore', () => {
   const datasetMetadata: DatasetResourceMetadata = {
     resource_type: 'dataset',
-    id: 'dataset-id',
     title: 'Mapped dataset',
     description: 'Dataset description',
     keywords: ['earth', 'science'],
@@ -35,7 +34,6 @@ describe('ResourceDetailStore', () => {
   };
   const softwareMetadata: SoftwareApplicationResourceMetadata = {
     resource_type: 'software-application',
-    id: 'software-id',
     name: 'Software name',
     description: 'Software description',
     keywords: ['tool'],
@@ -106,6 +104,15 @@ describe('ResourceDetailStore', () => {
     expect(store.title()).toBe('Mapped dataset');
     expect(store.keywords()).toEqual(['earth', 'science']);
     expect(store.navigationItems()[1]?.anchor).toBe('spatial-coverage');
+    const webServiceNavigation = store.navigationItems()
+      .find((item) => item.anchor === 'distributions')
+      ?.children?.find((item) => item.anchor === 'web-service');
+    expect(webServiceNavigation?.children?.map((item) => item.anchor)).toEqual([
+      'webservice-documentation',
+      'webservice-provider',
+      'webservice-contact-points',
+      'webservice-parameters'
+    ]);
   });
 
   it('resolves a rejection author for dataset versions', () => {
@@ -157,9 +164,8 @@ describe('ResourceDetailStore', () => {
       kind: 'downloadable-file',
       title: '',
       description: '',
-      issued: '',
-      modified: '',
       license: '',
+      byteSize: '',
       type: 'DOWNLOADABLE_FILE',
       downloadableFile: { url: '', format: '' }
     }]);
@@ -283,7 +289,7 @@ describe('ResourceDetailStore', () => {
     expect(apiService.listResourceVersions).toHaveBeenCalledWith('dataset', 'loaded-resource');
     expect(store.historyOpen()).toBe(true);
     expect(store.historyLoading()).toBe(false);
-    expect(store.historyItems().map((item) => item.version_id)).toEqual(['newer', 'older']);
+    expect(store.historyItems().map((item) => item.id)).toEqual(['newer', 'older']);
   });
 
   it('selects at most two versions and enables comparison for exactly two', () => {
@@ -378,7 +384,7 @@ describe('ResourceDetailStore', () => {
   function datasetVersion(overrides: Partial<ResourceVersion> = {}): ResourceVersionResponse<'dataset'> {
     return {
       resource_id: 'dataset-id',
-      version_id: 'version-id',
+      id: 'version-id',
       revision: 3,
       status: 'DRAFT',
       created_by: 'user',
@@ -396,7 +402,7 @@ describe('ResourceDetailStore', () => {
   ): ResourceVersionResponse<'software-application'> {
     return {
       resource_id: 'software-id',
-      version_id: 'version-id',
+      id: 'version-id',
       revision: 1,
       status: 'DRAFT',
       created_by: 'user',
@@ -432,7 +438,7 @@ describe('ResourceDetailStore', () => {
     return {
       resource_type: 'dataset',
       resource_id: 'dataset-id',
-      version_id: versionId,
+      id: versionId,
       revision: 1,
       name: `Version ${versionId}`,
       status: 'DRAFT',

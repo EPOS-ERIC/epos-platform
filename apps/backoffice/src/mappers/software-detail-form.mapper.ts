@@ -29,7 +29,11 @@ export function toSoftwareApplicationSaveRequest(
       creators: form.creators.filter((creator) => hasIdentifierValue(creator.id)).map((creator) => creator.id),
       identifiers: form.identifiers
         .filter((identifier) => hasIdentifierValue(identifier.type) && hasIdentifierValue(identifier.value))
-        .map((identifier) => ({ type: identifier.type, value: identifier.value })),
+        .map((identifier) => ({
+          resource_id: identifier.resource_id,
+          type: identifier.type,
+          value: identifier.value
+        })),
       categories: form.categories.filter((category) => hasIdentifierValue(category.id)).map((category) => category.id),
       contact_points: (form.contact_points ?? []).filter(hasIdentifierValue)
     }
@@ -57,7 +61,11 @@ export function toSoftwareSourceCodeSaveRequest(
       creators: form.creators.filter((creator) => hasIdentifierValue(creator.id)).map((creator) => creator.id),
       identifiers: form.identifiers
         .filter((identifier) => hasIdentifierValue(identifier.type) && hasIdentifierValue(identifier.value))
-        .map((identifier) => ({ type: identifier.type, value: identifier.value })),
+        .map((identifier) => ({
+          resource_id: identifier.resource_id,
+          type: identifier.type,
+          value: identifier.value
+        })),
       categories: form.categories.filter((category) => hasIdentifierValue(category.id)).map((category) => category.id),
       contact_points: (form.contact_points ?? []).filter(hasIdentifierValue)
     }

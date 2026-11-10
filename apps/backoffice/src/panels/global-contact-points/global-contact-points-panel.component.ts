@@ -14,10 +14,9 @@ import { ListPaginationComponent } from '../../shared/ui/list-pagination.compone
 
 type ContactPointForm = {
   email: string;
-  role: string;
 };
 
-const emptyContactPointForm = (): ContactPointForm => ({ email: '', role: '' });
+const emptyContactPointForm = (): ContactPointForm => ({ email: '' });
 
 @Component({
   selector: 'app-global-contact-points-panel',
@@ -48,7 +47,7 @@ export class GlobalContactPointsPanelComponent {
   protected readonly filteredContactPoints = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
     const contactPoints = query
-      ? this.contactPoints().filter(({ email, role }) => `${email} ${role}`.toLowerCase().includes(query))
+      ? this.contactPoints().filter(({ email }) => email.toLowerCase().includes(query))
       : this.contactPoints();
     return [...contactPoints].sort((left, right) => left.email.localeCompare(right.email));
   });
@@ -80,7 +79,7 @@ export class GlobalContactPointsPanelComponent {
 
   protected openEditEditor(contactPoint: ContactPoint): void {
     this.editingContactPoint.set(contactPoint);
-    this.contactPointForm = { email: contactPoint.email, role: contactPoint.role };
+    this.contactPointForm = { email: contactPoint.email };
     this.editorError.set('');
     this.editorOpen.set(true);
   }
@@ -108,11 +107,10 @@ export class GlobalContactPointsPanelComponent {
 
   protected saveContactPoint(): void {
     const email = this.contactPointForm.email.trim();
-    const role = this.contactPointForm.role.trim();
-    if (!email || !role || this.editorSaving()) return;
+    if (!email || this.editorSaving()) return;
 
     const editing = this.editingContactPoint();
-    const payload = { email, role };
+    const payload = { email };
     const request = editing
       ? this.apiService.replaceContactPoint(editing.id, payload satisfies ReplaceContactPointRequest)
       : this.apiService.createContactPoint(payload satisfies CreateContactPointRequest);
