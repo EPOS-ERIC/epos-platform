@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, EventEmitter, HostListener, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterContentInit, Component, EventEmitter, HostListener, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { DiscoverResponse } from 'api/webApi/classes/discoverApi.interface';
@@ -40,6 +40,8 @@ import { AAAIUser } from 'api/aaai/aaaiUser.interface';
 import { CONTEXT_FACILITY, CONTEXT_RESOURCE } from 'api/api.service.factory';
 import { DatasetSummary } from 'api/webApi/data/datasetSummary.interface';
 import { ViewType } from 'api/webApi/data/viewType.enum';
+import { ExecutionService } from 'services/execution.service';
+import { ApiService } from 'api/api.service';
 
 @Unsubscriber(['domainSubscription', 'subscriptions'])
 @Component({
@@ -110,6 +112,8 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
   private selectedDatasetFacets = new Set<string>();
   private discoverResponse: DiscoverResponse | null = null;
   private readonly providerOrganizationUrls = new Map<string, Promise<string>>();
+  private readonly executionService = inject(ExecutionService);
+  private readonly apiService = inject(ApiService);
 
   constructor(
     public readonly configurables: DataSearchConfigurablesService,
@@ -412,6 +416,9 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
     this.messageShow = false;
 
     if (this.expandedElement !== null) {
+      if (this.expandedElement.distSummary.resourceVersion != null) {
+        void this.accessExpandedDistribution(this.expandedElement);
+      }
       if (this.expandedElement.distSummary.resourceVersion != null && !this.expandedElement.metadataLoaded) {
         void this.loadCardMetadata(this.expandedElement).catch(error => console.error('Unable to load resource card metadata', error));
       }
@@ -800,6 +807,31 @@ export class BaseResultsPanelComponent implements OnInit, AfterContentInit {
         creator.url = await this.getProviderOrganizationUrl(creator.uid);
       }
     }));
+  }
+
+  private async accessExpandedDistribution(item: DistributionItem): Promise<void> {
+    const resourceVersion = item.distSummary.resourceVersion!;
+    try {
+      const details = await this.searchService.getResourceVersionDistributionDetails(
+        resourceVersion.resourceType, resourceVersion.resourceId, resourceVersion.versionId, item.distId, item.distSummary,
+      );
+      const visualFormat = [
+        ...(details.isMappable ? details.getMappableFormats() : []),
+        ...(details.isTabularable ? details.getTabularableFormats() : []),
+        ...(details.isGraphable ? details.getGraphableFormats() : []),
+      ].find(candidate => candidate.resourceAccess?.type === 'HTTP' || candidate.resourceAccess?.type === 'WFS');
+      const format = visualFormat ?? details.getFormats()
+        .find(candidate => candidate.resourceAccess?.type === 'HTTP' || candidate.resourceAccess?.type === 'WFS');
+      if (format != null) {
+        if (visualFormat != null) {
+          await this.executionService.executeDistributionFormat(details, format);
+        } else {
+          await this.apiService.executeDistributionFormat(format, null, true);
+        }
+      }
+    } catch (error) {
+      console.error('Unable to access expanded distribution', error);
+    }
   }
 
   private getProviderOrganizationUrl(providerId: string): Promise<string> {

@@ -134,8 +134,12 @@ export class JSONDistributionFactory {
     const rawParameters = configuration == null ? [] : [
       ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(configuration, 'parameters', false) ?? []),
       ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(configuration, 'body_parameters', false) ?? []),
+      ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(configuration, 'get_map_parameters', false) ?? []),
+      ...(ObjectAccessUtility.getObjectArray<Record<string, unknown>>(configuration, 'get_tile_parameters', false) ?? []),
     ];
-    const serviceParameters = rawParameters.map(parameter => this.normalizeResourceParameter(parameter));
+    const scalarParameters = rawParameters.flatMap(parameter => parameter.kind === 'TEMPLATE'
+      ? ObjectAccessUtility.getObjectArray<Record<string, unknown>>(parameter, 'parameters', false) ?? [] : [parameter]);
+    const serviceParameters = scalarParameters.map(parameter => this.normalizeResourceParameter(parameter));
     const availableFormats = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(distribution, 'available_formats', false) ?? [];
     const formats = availableFormats.map(availableFormat => {
       const kind = ObjectAccessUtility.getObjectValueString(availableFormat, 'kind', true);
@@ -144,22 +148,32 @@ export class JSONDistributionFactory {
       const selector = kind === 'CONVERTED'
         ? `conversion_id=${encodeURIComponent(ObjectAccessUtility.getObjectValueString(availableFormat, 'conversion_id', true))}`
         : `output_format=${encodeURIComponent(outputFormat)}`;
+      const tileService = configuration?.type === 'WMS' || configuration?.type === 'WMTS';
+      const formatType = tileService ? `application/vnd.ogc.${String(configuration!.type).toLowerCase()}_xml` : outputFormat;
       const format = SimpleDistributionFormat.make(
         kind === 'CONVERTED' ? ObjectAccessUtility.getObjectValueString(plugin!, 'name', true)
           : ObjectAccessUtility.getObjectValueString(availableFormat, 'label', true),
-        outputFormat,
+        formatType,
         kind === 'CONVERTED' ? ObjectAccessUtility.getObjectValueString(availableFormat, 'input_format', true) : outputFormat,
         `${accessUrl}?${selector}`,
         kind,
       );
       format.resourceAccess = {
         type: ObjectAccessUtility.getObjectValueString(configuration!, 'type', true),
-        parameters: rawParameters.map(parameter => ({
+        parameters: scalarParameters.map(parameter => ({
           id: ObjectAccessUtility.getObjectValueString(parameter, 'id', true),
           name: ObjectAccessUtility.getObjectValueString(parameter, 'name', true),
           kind: ObjectAccessUtility.getObjectValueString(parameter, 'kind', true),
           role: ObjectAccessUtility.getObjectValueString(parameter, 'role', false),
+          defaultValue: parameter.default == null ? '' : String(parameter.default),
         })),
+        ...(tileService ? {
+          capabilitiesUrl: ObjectAccessUtility.getObjectValueString(configuration!, 'capabilities_url', true),
+          defaultLayer: ObjectAccessUtility.getObjectValueString(configuration!, 'default_layer', true),
+          defaultStyle: ObjectAccessUtility.getObjectArray<Record<string, unknown>>(configuration!, 'layers', false)
+            ?.find(layer => layer.name === configuration!.default_layer)?.default_style as string | undefined,
+          defaultTransparency: configuration!.default_transparency as boolean | undefined,
+        } : {}),
       };
       return format;
     });
@@ -178,7 +192,8 @@ export class JSONDistributionFactory {
     const groupName = ObjectAccessUtility.getObjectValueString(json, 'group_name', false, '');
     const spatialCoverage = ObjectAccessUtility.getObjectValueString(metadata, 'spatial_coverage', false);
     const endpoint = configuration != null
-      ? ObjectAccessUtility.getObjectValueString(configuration, configuration.type === 'WFS' ? 'get_feature_template_url' : 'template_url', false, '')
+      ? ObjectAccessUtility.getObjectValueString(configuration, configuration.type === 'WFS' ? 'get_feature_template_url'
+        : configuration.type === 'WMS' || configuration.type === 'WMTS' ? 'capabilities_url' : 'template_url', false, '')
       : downloadableFile != null ? ObjectAccessUtility.getObjectValueString(downloadableFile, 'url', false, '') : '';
     const normalizedDetails: Record<string, unknown> = {
       id: distributionId,
@@ -233,10 +248,10 @@ export class JSONDistributionFactory {
       contactPoints: ObjectAccessUtility.getObjectArray<string>(metadata, 'contact_points', false) ?? [],
     };
 
-    summary.isMappable = visibleOn.includes('MAP');
-    summary.isTabularable = visibleOn.includes('TABLE');
+    summary.isMappable = configuration?.type !== 'DYNAMIC' && visibleOn.includes('MAP');
+    summary.isTabularable = configuration?.type !== 'DYNAMIC' && visibleOn.includes('TABLE');
     summary.isGraphable = visibleOn.includes('GRAPH');
-    summary.isDownloadable = formats.length > 0 || downloadableFile != null;
+    summary.isDownloadable = (configuration?.type !== 'WMS' && configuration?.type !== 'WMTS' && formats.length > 0) || downloadableFile != null;
     return this.buildStandardDetails(normalizedDetails, null, summary);
   }
 

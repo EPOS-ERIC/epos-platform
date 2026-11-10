@@ -8,28 +8,12 @@
   (tourEnterFunction)="handleFreeTextEnter(filterPanel)"
   class="text-search mat-elevation-z2">
   <mat-label>Free text search</mat-label>
-  <mat-chip-list #chipList>
-    <mat-chip *ngFor="let key of listKeyString" (removed)="removeKeyString(key)">
-      <span matTooltip="{{ key.length > 15 ? key : '' }}">{{ key.length > 15 ? (key | slice : 0 : 15) + '...' : key }}</span>
-      <button matChipRemove matTooltip="remove '{{ key }}'">
-        <i class="fas fa-times icon" aria-hidden="true"></i>
-      </button>
-    </mat-chip>
-    <input
-      #matInput
-      type="text"
-      [matAutocomplete]="auto"
-      [formControl]="autoCompleteFormControl"
-      [matChipInputFor]="chipList"
-      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-      (matChipInputTokenEnd)="addKeyString($event)"
-      data-cy="search-panel-free-text-input" />
-  </mat-chip-list>
-  <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayLeafItem" class="nice-scrollbar" (optionSelected)="selectedKey($event)">
-    <mat-option *ngFor="let leafItem of filteredKeys | async" [value]="leafItem">
-      {{ leafItem.label }}
-    </mat-option>
-  </mat-autocomplete>
+  <input matInput #matInput type="text" [formControl]="autoCompleteFormControl"
+    (input)="onFreeTextChange()" data-cy="search-panel-free-text-input" />
+  <button *ngIf="autoCompleteFormControl.value" matSuffix mat-flat-button color="primary" type="button" class="clear-text-button"
+    aria-label="Clear free text search" (click)="clearTextClicked()">
+    <i class="fas fa-times icon" aria-hidden="true"></i>
+  </button>
 </mat-form-field>
 
 <mat-expansion-panel

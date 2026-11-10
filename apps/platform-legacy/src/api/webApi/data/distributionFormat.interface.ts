@@ -6,7 +6,11 @@ import { Usable } from './usable';
 export interface DistributionFormat extends Usable {
   resourceAccess?: {
     type: string;
-    parameters: Array<{ id: string; name: string; kind: string; role?: string }>;
+    parameters: Array<{ id: string; name: string; kind: string; role?: string; defaultValue?: string }>;
+    capabilitiesUrl?: string;
+    defaultLayer?: string;
+    defaultStyle?: string;
+    defaultTransparency?: boolean;
   };
   /**
    * Display label for the format.

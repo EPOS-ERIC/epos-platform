@@ -23,6 +23,26 @@ import { CONTEXT_FACILITY, CONTEXT_RESOURCE } from 'api/api.service.factory';
 import { Popover } from 'driver.js';
 import { environment } from 'environments/environment';
 
+const UPDATE_FREQUENCY_LABELS = new Map<string, string>([
+  ['TRIENNIAL', 'Triennial'],
+  ['BIENNIAL', 'Biennial'],
+  ['ANNUAL', 'Annual'],
+  ['SEMIANNUAL', 'Semiannual'],
+  ['THREE_TIMES_A_YEAR', 'Three times a year'],
+  ['QUARTERLY', 'Quarterly'],
+  ['BIMONTHLY', 'Bimonthly'],
+  ['MONTHLY', 'Monthly'],
+  ['SEMIMONTHLY', 'Semimonthly'],
+  ['BIWEEKLY', 'Biweekly'],
+  ['THREE_TIMES_A_MONTH', 'Three times a month'],
+  ['WEEKLY', 'Weekly'],
+  ['SEMIWEEKLY', 'Semiweekly'],
+  ['THREE_TIMES_A_WEEK', 'Three times a week'],
+  ['DAILY', 'Daily'],
+  ['CONTINUOUS', 'Continuous'],
+  ['IRREGULAR', 'Irregular'],
+]);
+
 export interface DetailsDataIn {
   distId: string;
   context: string;
@@ -411,7 +431,8 @@ export class DetailsDialogComponent implements OnInit, AfterViewInit, OnDestroy 
 
     // 11. Update Frequency
     if (isWebService) {
-      tableData.push(this.makeKeyValue('Update Frequency', this.stringOrElse(itemDetails.getFrequencyUpdate(), alt)));
+      const frequency = itemDetails.getFrequencyUpdate();
+      tableData.push(this.makeKeyValue('Update Frequency', this.stringOrElse(UPDATE_FREQUENCY_LABELS.get(frequency) ?? frequency, alt)));
     }
 
     // 12. Quality Assurance
@@ -443,9 +464,6 @@ export class DetailsDialogComponent implements OnInit, AfterViewInit, OnDestroy 
       if (itemDetails.isOnlyDownloadable) { // it is a downloadable file
         tableData.push(this.makeKeyValue('Download URL', this.stringOrElse(itemDetails.getDownloadURL(), alt)));
       } else {
-        tableService.push(this.makeKeyValue('Service Name', this.stringOrElse(itemDetails.getWebServiceName(), alt)));
-        tableService.push(this.makeKeyValue('Service Description', this.stringOrElse(itemDetails.getWebServiceDescription(), alt)));
-
         const serviceProvider = itemDetails.getWebServiceProvider();
         tableService.push(this.makeKeyValue('Service Provider', serviceProvider));
 

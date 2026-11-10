@@ -47,6 +47,7 @@ export class DistributionFormatType {
   ];
 
   private static tabularableFormats = [
+    DistributionFormatType.APP_GEOJSON,
     DistributionFormatType.APP_EPOS_GEOJSON,
     DistributionFormatType.APP_EPOS_TABLE_GEOJSON,
     DistributionFormatType.APP_OGC_WMTS,

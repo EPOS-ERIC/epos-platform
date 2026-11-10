@@ -20,6 +20,7 @@ import L from 'leaflet';
 import { DataSearchConfigurablesServiceResource } from 'pages/dataPortal/modules/dataPanel/services/dataSearchConfigurables.service';
 import { DataSearchConfigurablesServiceRegistry } from 'pages/dataPortal/modules/registryPanel/services/dataSearchConfigurables.service';
 import { DataConfigurableDataSearch } from 'utility/configurablesDataSearch/dataConfigurableDataSearch';
+import { CONTEXT_FACILITY, CONTEXT_RESOURCE } from 'api/api.service.factory';
 
 /** The `MapLayerGenerator` class is responsible for generating map layers based on configurable data
 and map configurations. */
@@ -119,11 +120,18 @@ export class MapLayerGenerator {
             dataConfigurable,
             mapConfig,
             factory,
-            () => Promise.resolve(this.executionService.getExecuteUrl(format)),
+            () => Promise.resolve(format.resourceAccess?.capabilitiesUrl ?? this.executionService.getExecuteUrl(format)),
           );
           wmsLayers.forEach(layer => {
             if (layer instanceof WmsTileLayer && dataConfigurable instanceof DataConfigurableDataSearch) {
-              layer.setServiceUrlRetriever(() => dataConfigurable.getOriginatorUrl());
+              if (format.resourceAccess?.type === 'WMS') {
+                layer.options.set('customLayerOptionCapabilitiesUrl', format.resourceAccess.capabilitiesUrl);
+                layer.options.set('layers', format.resourceAccess.defaultLayer);
+                layer.options.set('styles', format.resourceAccess.defaultStyle ?? '');
+                layer.options.set('transparent', format.resourceAccess.defaultTransparency ?? true);
+              } else {
+                layer.setServiceUrlRetriever(() => dataConfigurable.getOriginatorUrl());
+              }
             }
           });
           allLayers.push(...wmsLayers);
@@ -134,11 +142,19 @@ export class MapLayerGenerator {
             dataConfigurable,
             mapConfig,
             factory,
-            () => Promise.resolve(this.executionService.getExecuteUrl(format)),
+            () => Promise.resolve(format.resourceAccess?.capabilitiesUrl ?? this.executionService.getExecuteUrl(format)),
           );
           wmtsLayers.forEach(layer => {
             if (layer instanceof WmtsTileLayer && dataConfigurable instanceof DataConfigurableDataSearch) {
-              layer.setServiceUrlRetriever(() => dataConfigurable.getOriginatorUrl());
+              if (format.resourceAccess?.type === 'WMTS') {
+                layer.options.set('customLayerOptionCapabilitiesUrl', format.resourceAccess.capabilitiesUrl);
+                layer.options.set('LAYER', format.resourceAccess.defaultLayer);
+                if (format.resourceAccess.defaultStyle != null) {
+                  layer.options.set('STYLE', format.resourceAccess.defaultStyle);
+                }
+              } else {
+                layer.setServiceUrlRetriever(() => dataConfigurable.getOriginatorUrl());
+              }
             }
           });
           allLayers.push(...wmtsLayers);
@@ -280,10 +296,7 @@ export class MapLayerGenerator {
               bounds = this.retrieveBoundsFromPlainFeatureCollection(features);
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            void this.dataSearchConfigurablesServiceResource.updateLayerBbox(dataConfigurable.id, bounds); // --
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            void this.dataSearchConfigurablesServiceRegistry.updateLayerBbox(dataConfigurable.id, bounds);
+            this.updateLayerBbox(dataConfigurable, bounds);
 
           }
           // if type 'Coverage'
@@ -304,10 +317,7 @@ export class MapLayerGenerator {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const bounds: number[] = [north, east, south, west];
 
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                void this.dataSearchConfigurablesServiceResource.updateLayerBbox(dataConfigurable.id, bounds); // --
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                void this.dataSearchConfigurablesServiceRegistry.updateLayerBbox(dataConfigurable.id, bounds);
+                this.updateLayerBbox(dataConfigurable, bounds);
 
               }
               catch (e) {
@@ -349,10 +359,7 @@ export class MapLayerGenerator {
                   properties: {}
                 }));
                 const bounds = this.retrieveBoundsFromPlainFeatureCollection(features as GeoJSON.Feature[]);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                void this.dataSearchConfigurablesServiceResource.updateLayerBbox(dataConfigurable.id, bounds);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                void this.dataSearchConfigurablesServiceRegistry.updateLayerBbox(dataConfigurable.id, bounds);
+                this.updateLayerBbox(dataConfigurable, bounds);
               } catch (e) {
                 console.log(e);
               }
@@ -370,6 +377,14 @@ export class MapLayerGenerator {
       }
       return returnPromise;
     };
+  }
+
+  private updateLayerBbox(dataConfigurable: DataConfigurable, bounds: Array<number>): void {
+    if (dataConfigurable.context === CONTEXT_RESOURCE) {
+      void this.dataSearchConfigurablesServiceResource.updateLayerBbox(dataConfigurable.id, bounds);
+    } else if (dataConfigurable.context === CONTEXT_FACILITY) {
+      void this.dataSearchConfigurablesServiceRegistry.updateLayerBbox(dataConfigurable.id, bounds);
+    }
   }
 
 }

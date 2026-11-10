@@ -275,7 +275,7 @@ export class TableDisplayComponent implements OnInit, AfterViewInit, OnDestroy, 
           } else {
             switch (true) {
               // eslint-disable-next-line max-len
-              case (DistributionFormatType.in(distributionFormat.getFormat(), [DistributionFormatType.APP_EPOS_GEOJSON, DistributionFormatType.APP_EPOS_TABLE_GEOJSON])):
+              case (DistributionFormatType.in(distributionFormat.getFormat(), [DistributionFormatType.APP_GEOJSON, DistributionFormatType.APP_EPOS_GEOJSON, DistributionFormatType.APP_EPOS_TABLE_GEOJSON])):
                 this.data = data as FeatureCollection;
                 this.setTableHeaders(this.data);
                 this.updateTable(this.customHeaders);
@@ -380,7 +380,7 @@ export class TableDisplayComponent implements OnInit, AfterViewInit, OnDestroy, 
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
-    if (!changes.interactiveSources?.firstChange && this.matPaginator != null) {
+    if (changes.interactiveSources && !changes.interactiveSources.firstChange && this.interactiveSources != null && this.matPaginator != null) {
       this.initializeInteractiveTable();
     }
   }
@@ -1127,6 +1127,10 @@ export class TableDisplayComponent implements OnInit, AfterViewInit, OnDestroy, 
   private getWmtsDownloadLinks(): Promise<Array<PopupProperty>> {
     if (this.wmtsDownloadLinksPromise === null) {
       const distributionFormat = this.dataConfigurable.getDistributionDetails().getTabularableFormats()[0];
+
+      if (distributionFormat.resourceAccess?.type === 'WMTS') {
+        return Promise.resolve<Array<PopupProperty>>([]);
+      }
 
       this.wmtsDownloadLinksPromise = this.executionService.executeDistributionFormat(
         this.dataConfigurable.getDistributionDetails(),
