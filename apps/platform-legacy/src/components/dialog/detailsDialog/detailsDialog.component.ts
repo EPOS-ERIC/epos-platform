@@ -80,7 +80,7 @@ export class DetailsDialogComponent implements OnInit, AfterViewInit, OnDestroy 
   public dataProvider: MatTableDataSource<DataProvider>;
   public creatorSource: MatTableDataSource<Creator>;
 
-  public hasContactUsButton = true;
+  public hasContactUsButton = false;
   public readonly showFairAssessment = environment.showFairAssessment;
 
   public webPageUrl: string | null = null;
@@ -196,12 +196,17 @@ export class DetailsDialogComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   public openSendEmailForm(): void {
-    if (this.detailsData !== undefined) {
+    const resourceVersion = this.detailsData?.resourceVersion;
+    if (this.detailsData !== undefined && this.hasContactUsButton && resourceVersion !== undefined) {
       this.localStoragePersister.set(LocalStorageVariables.LS_CONFIGURABLES, this.detailsData.getIdentifier(), false, LocalStorageVariables.LS_LAST_DETAIL_DIALOG_ID);
 
       if (this.authService.authenticatedContactForm()) {
         // if logged in
-        void this.dialogService.openContactFormDialog(this.detailsData.getIdentifier());
+        void this.dialogService.openContactFormDialog({
+          resourceType: resourceVersion.resourceType,
+          resourceId: resourceVersion.resourceId,
+          details: this.detailsData,
+        });
       }
     }
   }
@@ -299,12 +304,9 @@ export class DetailsDialogComponent implements OnInit, AfterViewInit, OnDestroy 
    * Helper function to determine if the "Contact Us" button should be displayed.
    */
   private configureContactButton(itemDetails: DistributionDetails) {
-    // Matches the original logic: check if length is 0
-    if (itemDetails.getAvailableContactPoints().length === 0) {
-      this.hasContactUsButton = false;
-    } else {
-      this.hasContactUsButton = true;
-    }
+    const resourceVersion = itemDetails.resourceVersion;
+    this.hasContactUsButton = resourceVersion != null && !!resourceVersion.resourceId
+      && ['dataset', 'software-application', 'software-source-code'].includes(resourceVersion.resourceType);
   }
 
   /**
