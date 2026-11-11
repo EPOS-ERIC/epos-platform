@@ -11,7 +11,7 @@ import { DownloadsDialogComponent } from './downloadsDialog/downloadsDialog.comp
 import { DataConfigurableI } from 'utility/configurables/dataConfigurableI.interface';
 import { VideoGuidesDialogComponent } from './videoGuidesDialog/videoGuidesDialog.component';
 import { MobileDisclaimerDialogComponent } from './mobileDisclaimerDialog/mobileDisclaimerDialog.component';
-import { ContactFormDialogComponent } from './contactFormDialog/contactFormDialog.component';
+import { ContactFormDialogComponent, DetailsDataIn as ContactFormDataIn } from './contactFormDialog/contactFormDialog.component';
 import { AddEditEnvironmentDialogDataIn, CreateEnvironmentFormDialogComponent } from './analysisDialogs/createEnvironmentFormDialog/createEnvironmentFormDialog.component';
 import { Environment } from 'api/webApi/data/environments/environment.interface';
 import { PoliciesComponent } from './policies&InformationDialog/policies.component';
@@ -88,16 +88,14 @@ export class DialogService extends BaseDialogService {
     );
   }
 
-  public openContactFormDialog(distId: string): Promise<null | DialogData> {
+  public openContactFormDialog(data: ContactFormDataIn): Promise<null | DialogData> {
 
     return this.openDialog(
       'contactForm',
       ContactFormDialogComponent,
       'epos-dialog',
       false,
-      {
-        distId: distId
-      },
+      { ...data },
       {
         width: '30vw',
       }
