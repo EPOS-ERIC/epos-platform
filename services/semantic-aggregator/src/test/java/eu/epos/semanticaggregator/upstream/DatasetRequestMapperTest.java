@@ -113,10 +113,10 @@ class DatasetRequestMapperTest {
         try {
             var mapping = mapper().map(model).getFirst();
             var dataset = new DatasetRequestMapper().toRequest(mapping, "123e4567-e89b-12d3-a456-426614174000").getDataset();
-            assertEquals("https://example.org/daily", dataset.getAccrualPeriodicity());
+            assertEquals(Resource.DatasetAccrualPeriodicity.DATASET_ACCRUAL_PERIODICITY_DAILY, dataset.getAccrualPeriodicity());
             assertEquals("https://example.org/quality", dataset.getQualityAnnotation());
             assertEquals(Instant.parse("2020-01-01T00:00:00Z").getEpochSecond(), dataset.getCreated().getSeconds());
-            assertEquals("DOWNLOADABLE_FILE", dataset.getDistributions(0).getType());
+            assertEquals(Resource.DistributionType.DISTRIBUTION_TYPE_DOWNLOADABLE_FILE, dataset.getDistributions(0).getType());
             assertEquals("https://example.org/data.csv", dataset.getDistributions(0).getDownloadableFile().getUrl());
             assertEquals("text/csv", dataset.getDistributions(0).getDownloadableFile().getFormat());
             assertEquals(42, dataset.getDistributions(0).getByteSize());
@@ -163,6 +163,168 @@ class DatasetRequestMapperTest {
     }
 
     @Test
+    void mapsMultipleDefaultsForStringIntegerAndFloatParameters() {
+        var model = read(PREFIXES + """
+                @prefix hydra: <http://www.w3.org/ns/hydra/core#> .
+                @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+                @prefix http: <http://www.w3.org/2006/http#> .
+                @prefix schema: <http://schema.org/> .
+                @prefix epos: <https://www.epos-eu.org/epos-dcat-ap#> .
+                ex:dataset a dcat:Dataset; dct:title "Dataset"; dct:description "Description"; dcat:distribution ex:distribution .
+                ex:distribution a dcat:Distribution; dct:title "Distribution"; dct:description "Description";
+                    dct:type "WEB_SERVICE"; dct:format "application/json"; dct:conformsTo ex:service; dcat:accessURL ex:operation .
+                ex:service a epos:WebService; schema:name "Service"; hydra:supportedOperation ex:operation .
+                ex:operation a hydra:Operation; hydra:method "GET"; hydra:property [ a hydra:IriTemplate;
+                    hydra:template "https://example.org/query{?labels,ids,weights}";
+                    hydra:mapping [ a hydra:IriTemplateMapping; hydra:variable "labels"; rdfs:range "xsd:string";
+                        schema:multipleValues true; schema:defaultValue "one", "two"; http:paramValue "one", "two" ];
+                    hydra:mapping [ a hydra:IriTemplateMapping; hydra:variable "ids"; rdfs:range "xsd:integer";
+                        schema:multipleValues true; schema:defaultValue "1", "2"; http:paramValue "1", "2" ];
+                    hydra:mapping [ a hydra:IriTemplateMapping; hydra:variable "weights"; rdfs:range "xsd:float";
+                        schema:multipleValues true; schema:defaultValue "1.5", "2.5"; http:paramValue "1.5", "2.5" ] ] .
+                """);
+        try {
+            var request = new DatasetRequestMapper().toRequest(mapper().map(model).getFirst(),
+                    "123e4567-e89b-12d3-a456-426614174000");
+            var parameters = request.getDataset().getDistributions(0).getWebService().getGeneric().getParametersList();
+            assertEquals(java.util.Set.of("one", "two"), java.util.Set.copyOf(parameters.get(0).getString().getDefaultList()));
+            assertEquals(java.util.Set.of(1L, 2L), java.util.Set.copyOf(parameters.get(1).getInteger().getDefaultList()));
+            assertEquals(java.util.Set.of(1.5, 2.5), java.util.Set.copyOf(parameters.get(2).getFloat().getDefaultList()));
+        } finally {
+            model.close();
+        }
+    }
+
+    @Test
+    void mapsWmsConfigurationAndMapVisibility() {
+        var model = webService("""
+                hydra:template "https://example.org/wms{?service,request,layers,format}";
+                hydra:mapping [ hydra:variable "service"; rdfs:range "xsd:string"; schema:defaultValue "WMS" ];
+                hydra:mapping [ hydra:variable "request"; rdfs:range "xsd:string"; schema:defaultValue "GetMap" ];
+                hydra:mapping [ hydra:variable "layers"; rdfs:range "xsd:string"; schema:defaultValue "geology"; http:paramValue "geology" ];
+                hydra:mapping [ hydra:variable "format"; rdfs:range "xsd:string"; schema:defaultValue "image/png"; hydra:property schema:encodingFormat ]
+                """, "image/png");
+        try {
+            var service = request(model).getDataset().getDistributions(0).getWebService();
+            assertEquals(Resource.WebServiceType.WEB_SERVICE_TYPE_WMS, service.getType());
+            assertEquals(java.util.List.of(Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_MAP), service.getVisibleOnList());
+            assertEquals("https://example.org/wms?service=WMS&request=GetCapabilities", service.getWms().getCapabilitiesUrl());
+            assertEquals("geology", service.getWms().getDefaultLayer());
+        } finally {
+            model.close();
+        }
+    }
+
+    @Test
+    void mapsWmtsConfigurationAndMapTableVisibility() {
+        var model = webService("""
+                hydra:template "https://example.org/wmts{?service,request,layer,format}";
+                hydra:mapping [ hydra:variable "service"; rdfs:range "xsd:string"; schema:defaultValue "WMTS" ];
+                hydra:mapping [ hydra:variable "request"; rdfs:range "xsd:string"; schema:defaultValue "GetTile" ];
+                hydra:mapping [ hydra:variable "layer"; rdfs:range "xsd:string"; schema:defaultValue "displacement"; http:paramValue "displacement" ];
+                hydra:mapping [ hydra:variable "format"; rdfs:range "xsd:string"; schema:defaultValue "image/png"; hydra:property schema:encodingFormat ]
+                """, "image/png");
+        try {
+            var service = request(model).getDataset().getDistributions(0).getWebService();
+            assertEquals(Resource.WebServiceType.WEB_SERVICE_TYPE_WMTS, service.getType());
+            assertEquals(java.util.List.of(Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_MAP,
+                    Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_TABLE), service.getVisibleOnList());
+            assertEquals("displacement", service.getWmts().getDefaultLayer());
+        } finally {
+            model.close();
+        }
+    }
+
+    @Test
+    void normalizesWfsTwoDotZeroDotTwoAndMapsMapTableVisibility() {
+        var model = webService("""
+                hydra:template "https://example.org/wfs{?service,request,typenames,version,outputFormat,count}";
+                hydra:mapping [ hydra:variable "service"; rdfs:range "xsd:string"; schema:defaultValue "WFS" ];
+                hydra:mapping [ hydra:variable "request"; rdfs:range "xsd:string"; schema:defaultValue "GetFeature" ];
+                hydra:mapping [ hydra:variable "typenames"; rdfs:range "xsd:string"; schema:defaultValue "boreholes"; http:paramValue "boreholes" ];
+                hydra:mapping [ hydra:variable "version"; rdfs:range "xsd:string"; schema:defaultValue "2.0.2" ];
+                hydra:mapping [ hydra:variable "outputFormat"; rdfs:range "xsd:string"; schema:defaultValue "json"; http:paramValue "json"; hydra:property schema:encodingFormat ];
+                hydra:mapping [ hydra:variable "count"; rdfs:range "xsd:string"; schema:defaultValue "100" ]
+                """, "application/gml+xml");
+        try {
+            var service = request(model).getDataset().getDistributions(0).getWebService();
+            assertEquals(Resource.WebServiceType.WEB_SERVICE_TYPE_WFS, service.getType());
+            assertEquals("2.0.0", service.getWfs().getVersion());
+            assertEquals(100, service.getWfs().getResultLimit());
+            assertEquals(java.util.List.of(Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_MAP,
+                    Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_TABLE), service.getVisibleOnList());
+        } finally {
+            model.close();
+        }
+    }
+
+    @Test
+    void mapsLegacyWfsCqlFilterToAQueryParameter() {
+        var model = webService("""
+                hydra:template "https://example.org/wfs{?service,request,typenames,version,outputFormat,gml:identifier}";
+                hydra:mapping [ hydra:variable "service"; rdfs:range "xsd:string"; schema:defaultValue "WFS" ];
+                hydra:mapping [ hydra:variable "request"; rdfs:range "xsd:string"; schema:defaultValue "GetFeature" ];
+                hydra:mapping [ hydra:variable "typenames"; rdfs:range "xsd:string"; schema:defaultValue "boreholes"; http:paramValue "boreholes" ];
+                hydra:mapping [ hydra:variable "version"; rdfs:range "xsd:string"; schema:defaultValue "2.0.0" ];
+                hydra:mapping [ hydra:variable "outputFormat"; rdfs:range "xsd:string"; schema:defaultValue "json"; http:paramValue "json" ];
+                hydra:mapping [ hydra:variable "CQL_FILTER=gml:identifier"; rdfs:range "xsd:string" ]
+                """, "application/gml+xml");
+        try {
+            var parameters = request(model).getDataset().getDistributions(0).getWebService().getWfs().getParametersList();
+            assertEquals(1, parameters.size());
+            assertEquals("CQL_FILTER", parameters.getFirst().getName());
+            assertEquals(Resource.WebServiceParameterLocation.WEB_SERVICE_PARAMETER_LOCATION_QUERY,
+                    parameters.getFirst().getLocation());
+            assertTrue(parameters.getFirst().getTemplate().getTemplate().contains("gml:identifier = {{cql .}}"));
+            assertEquals("CQL_FILTER=gml:identifier", parameters.getFirst().getTemplate().getParameters(0).getLabel());
+        } finally {
+            model.close();
+        }
+    }
+
+    @Test
+    void mapsMultipleLegacyCqlFiltersIntoOneTemplateParameter() {
+        var model = webService("""
+                hydra:template "https://example.org/wfs{?service,request,typenames,version,outputFormat,gml:identifier,gml:name}";
+                hydra:mapping [ hydra:variable "service"; rdfs:range "xsd:string"; schema:defaultValue "WFS" ];
+                hydra:mapping [ hydra:variable "request"; rdfs:range "xsd:string"; schema:defaultValue "GetFeature" ];
+                hydra:mapping [ hydra:variable "typenames"; rdfs:range "xsd:string"; schema:defaultValue "boreholes"; http:paramValue "boreholes" ];
+                hydra:mapping [ hydra:variable "version"; rdfs:range "xsd:string"; schema:defaultValue "2.0.0" ];
+                hydra:mapping [ hydra:variable "outputFormat"; rdfs:range "xsd:string"; schema:defaultValue "json"; http:paramValue "json" ];
+                hydra:mapping [ hydra:variable "CQL_FILTER=gml:identifier"; rdfs:range "xsd:string" ];
+                hydra:mapping [ hydra:variable "CQL_FILTER=gml:name"; rdfs:range "xsd:string" ]
+                """, "application/gml+xml");
+        try {
+            var template = request(model).getDataset().getDistributions(0).getWebService().getWfs().getParameters(0).getTemplate();
+            assertEquals(2, template.getParametersCount());
+            assertTrue(template.getTemplate().contains("gml:identifier = {{cql .}}"));
+            assertTrue(template.getTemplate().contains("gml:name = {{cql .}}"));
+        } finally {
+            model.close();
+        }
+    }
+
+    @Test
+    void infersVisibilityFromGeoJsonAndCovJsonFormats() {
+        for (var expected : java.util.Map.of(
+                "application/geo+json", java.util.List.of(Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_MAP,
+                        Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_TABLE),
+                "application/geo%2Bjson", java.util.List.of(Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_MAP,
+                        Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_TABLE),
+                "application/geo-json", java.util.List.of(Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_MAP,
+                        Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_TABLE),
+                "application/vnd.cov+json", java.util.List.of(Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_MAP,
+                        Resource.WebServiceVisibleOn.WEB_SERVICE_VISIBLE_ON_GRAPH)).entrySet()) {
+            var model = webService("hydra:template \"https://example.org/data\"", expected.getKey());
+            try {
+                assertEquals(expected.getValue(), request(model).getDataset().getDistributions(0).getWebService().getVisibleOnList());
+            } finally {
+                model.close();
+            }
+        }
+    }
+
+    @Test
     void rejectsReversedTemporalRange() {
         var model = read(PREFIXES + """
                 ex:dataset a dcat:Dataset; dct:title "Title"; dct:description "Description";
@@ -178,6 +340,24 @@ class DatasetRequestMapperTest {
     private static org.apache.jena.rdf.model.Model read(String turtle) {
         return new TurtleReader().read(new ByteArrayInputStream(turtle.getBytes(StandardCharsets.UTF_8)),
                 "https://example.org/");
+    }
+
+    private static org.apache.jena.rdf.model.Model webService(String template, String format) {
+        return read(PREFIXES + """
+                @prefix hydra: <http://www.w3.org/ns/hydra/core#> .
+                @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+                @prefix http: <http://www.w3.org/2006/http#> .
+                @prefix epos: <https://www.epos-eu.org/epos-dcat-ap#> .
+                ex:dataset a dcat:Dataset; dct:title "Dataset"; dct:description "Description"; dcat:distribution ex:distribution .
+                ex:distribution a dcat:Distribution; dct:title "Distribution"; dct:description "Description";
+                    dct:type "WEB_SERVICE"; dct:format "%s"; dct:conformsTo ex:service; dcat:accessURL ex:operation .
+                ex:service a epos:WebService; schema:name "Service"; hydra:supportedOperation ex:operation .
+                ex:operation a hydra:Operation; hydra:method "GET"; hydra:property [ a hydra:IriTemplate; %s ] .
+                """.formatted(format, template));
+    }
+
+    private static Resource.CreateResourceRequest request(org.apache.jena.rdf.model.Model model) {
+        return new DatasetRequestMapper().toRequest(mapper().map(model).getFirst(), "123e4567-e89b-12d3-a456-426614174000");
     }
 
     private static DatasetMapper mapper() {

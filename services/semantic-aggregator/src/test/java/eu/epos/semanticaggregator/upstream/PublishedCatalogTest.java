@@ -98,7 +98,7 @@ class PublishedCatalogTest {
     void fetchesFullPublishedVersionAndRejectsChangedOrMismatchedVersions() {
         response.set(Discovery.SearchResourcesResponse.newBuilder().addItems(dataset(Common.VersioningStatus.VERSIONING_STATUS_PUBLISHED)).build());
         var reference = catalog.fetch().getFirst();
-        var data = Resource.ResourceVersion.newBuilder().setResourceId(RESOURCE).setVersionId(VERSION)
+        var data = Resource.ResourceVersion.newBuilder().setResourceId(RESOURCE).setId(VERSION)
                 .setStatus(Common.VersioningStatus.VERSIONING_STATUS_PUBLISHED)
                 .setDataset(Resource.DatasetResourceMetadata.newBuilder().setTitle("Dataset")).build();
         version.set(Resource.GetResourceVersionResponse.newBuilder().setResource(data).build());
@@ -112,7 +112,7 @@ class PublishedCatalogTest {
                 .clearDataset().setSoftwareApplication(Resource.SoftwareApplicationResourceMetadata.getDefaultInstance())).build());
         assertThrows(IllegalStateException.class, () -> catalog.fetchVersion(reference));
         version.set(Resource.GetResourceVersionResponse.newBuilder().setResource(data.toBuilder()
-                .setVersionId(RESOURCE)).build());
+                .setId(RESOURCE)).build());
         assertThrows(IllegalStateException.class, () -> catalog.fetchVersion(reference));
     }
 

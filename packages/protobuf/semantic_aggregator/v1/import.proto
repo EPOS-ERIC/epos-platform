@@ -53,8 +53,15 @@ message ImportResourcesResponse {
   repeated ImportedResource imported = 1;
   // Deprecated: imports now continue after per-resource failures.
   ImportFailure failure = 2;
+  // Automatic corrections applied while importing a resource.
+  repeated ImportWarning warnings = 3;
   // Resources skipped during an otherwise successful import.
-  repeated ImportFailure warnings = 3;
+  repeated ImportFailure errors = 4;
+}
+
+message ImportWarning {
+  string subject = 1;
+  string message = 2;
 }
 
 enum ReferenceKind {

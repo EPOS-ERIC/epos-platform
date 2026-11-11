@@ -341,30 +341,26 @@ func (service GenericWebServiceConfiguration) selectAccessFormat(selected *strin
 // renderTemplate renders a parameter or body template with typed child values
 // using text/template, without JSON escaping. Required templates reject missing
 // required children and missing keys evaluated during execution; optional children
-// in unexecuted branches may be absent. Optional templates require every
-// declared child to resolve: unresolved templates are omitted when no children
-// were supplied, otherwise preparation fails. A nil result means omitted; a
-// non-nil result may contain an empty string.
+// in unexecuted branches may be absent. Optional templates are omitted when a
+// child is unresolved and none were supplied; otherwise they execute with supplied values and defaults. A
+// nil result means omitted; a non-nil result may contain an empty string.
 func (values accessValues) renderTemplate(source string, parameters []Parameter, required bool) (*string, error) {
 	data := make(map[string]AccessScalar, len(parameters))
-	missing, supplied := false, false
+	missing := false
+	supplied := false
 
 	for _, parameter := range parameters {
 		items := values.resolved[parameter.ID]
-		if items == nil {
-			missing = true
-		} else {
+		if items != nil {
 			data[parameter.Name] = items[0]
+		} else {
+			missing = true
 		}
 
 		supplied = supplied || values.supplied[parameter.ID]
 	}
 
-	if !required && missing {
-		if supplied {
-			return nil, invalidField("parameters", "Supply all children of an optional template when supplying any child.", nil)
-		}
-
+	if !required && missing && !supplied {
 		return nil, nil
 	}
 
@@ -376,7 +372,7 @@ func (values accessValues) renderTemplate(source string, parameters []Parameter,
 		}
 	}
 
-	parsed, err := template.New("request").Option("missingkey=error").Parse(source)
+	parsed, err := template.New("request").Funcs(cqlTemplateFunctions).Option("missingkey=error").Parse(source)
 	if err != nil {
 		return nil, internalValidationError(err)
 	}
@@ -387,4 +383,17 @@ func (values accessValues) renderTemplate(source string, parameters []Parameter,
 	}
 
 	return new(rendered.String()), nil
+}
+
+var cqlTemplateFunctions = template.FuncMap{
+	"cql": cql,
+}
+
+// cql renders a validated scalar as a CQL literal. Strings are single-quoted
+// and embedded apostrophes are doubled; booleans and numbers remain unquoted.
+func cql(value AccessScalar) string {
+	if text, ok := value.(AccessString); ok {
+		return "'" + strings.ReplaceAll(string(text), "'", "''") + "'"
+	}
+	return value.Text()
 }

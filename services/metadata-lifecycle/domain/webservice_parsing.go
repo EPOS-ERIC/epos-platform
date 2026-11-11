@@ -734,7 +734,7 @@ func parseTemplateDefinition(source string, values []ParameterInput) (string, []
 	if source == "" {
 		return "", nil, fmt.Errorf("template is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	if _, err := template.New("parameter").Option("missingkey=error").Parse(source); err != nil {
+	if _, err := template.New("parameter").Funcs(cqlTemplateFunctions).Option("missingkey=error").Parse(source); err != nil {
 		return "", nil, fmt.Errorf("parse template: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	parameters, err := parseParameters(values)

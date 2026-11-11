@@ -1,11 +1,12 @@
 package eu.epos.semanticaggregator.upstream;
 
 import eu.epos.semanticaggregator.ingest.SoftwareMapping;
-import metadata_lifecycle.v1.Common;
 import metadata_lifecycle.v1.Resource;
 
 /** Maps validated software RDF extraction to Metadata Lifecycle resource inputs. */
 public final class SoftwareRequestMapper {
+    private static final java.util.regex.Pattern KEYWORD = java.util.regex.Pattern.compile("^[A-Za-z0-9 _:-]+$");
+
     public Resource.CreateResourceRequest toRequest(SoftwareMapping mapping, String groupId, ReferenceBindings bindings) {
         validateGroupId(groupId);
         return switch (mapping.kind()) {
@@ -18,7 +19,7 @@ public final class SoftwareRequestMapper {
 
     private static Resource.SoftwareApplicationInput application(SoftwareMapping mapping, ReferenceBindings bindings) {
         var input = Resource.SoftwareApplicationInput.newBuilder().setName(mapping.name())
-                .addAllKeywords(mapping.keywords()).addAllCreators(bindings.resolveAll(mapping.creators()))
+                .addAllKeywords(validatedKeywords(mapping.keywords())).addAllCreators(bindings.resolveAll(mapping.creators()))
                 .addAllCategories(bindings.resolveAll(mapping.categories())).addAllContactPoints(bindings.resolveAll(mapping.contactPoints()));
         if (mapping.description() != null) input.setDescription(mapping.description());
         if (mapping.mainEntityOfPage() != null) input.setMainEntityOfPage(mapping.mainEntityOfPage());
@@ -27,14 +28,14 @@ public final class SoftwareRequestMapper {
         if (mapping.downloadUrl() != null) input.setDownloadUrl(mapping.downloadUrl());
         if (mapping.requirements() != null) input.setRequirements(mapping.requirements());
         if (mapping.operatingSystem() != null) input.setOperatingSystem(mapping.operatingSystem());
-        mapping.identifiers().forEach(identifier -> input.addIdentifiers(Common.IdentifierInput.newBuilder()
+        mapping.identifiers().forEach(identifier -> input.addIdentifiers(Resource.VersionedIdentifierInput.newBuilder()
                 .setType(identifier.type()).setValue(identifier.value())));
         return input.build();
     }
 
     private static Resource.SoftwareSourceCodeInput sourceCode(SoftwareMapping mapping, ReferenceBindings bindings) {
         var input = Resource.SoftwareSourceCodeInput.newBuilder().setName(mapping.name())
-                .addAllKeywords(mapping.keywords()).addAllCreators(bindings.resolveAll(mapping.creators()))
+                .addAllKeywords(validatedKeywords(mapping.keywords())).addAllCreators(bindings.resolveAll(mapping.creators()))
                 .addAllCategories(bindings.resolveAll(mapping.categories())).addAllContactPoints(bindings.resolveAll(mapping.contactPoints()));
         if (mapping.description() != null) input.setDescription(mapping.description());
         if (mapping.programmingLanguage() != null) input.setProgrammingLanguage(mapping.programmingLanguage());
@@ -44,7 +45,7 @@ public final class SoftwareRequestMapper {
         if (mapping.runtimePlatform() != null) input.setRuntimePlatform(mapping.runtimePlatform());
         if (mapping.mainEntityOfPage() != null) input.setMainEntityOfPage(mapping.mainEntityOfPage());
         if (mapping.version() != null) input.setVersion(mapping.version());
-        mapping.identifiers().forEach(identifier -> input.addIdentifiers(Common.IdentifierInput.newBuilder()
+        mapping.identifiers().forEach(identifier -> input.addIdentifiers(Resource.VersionedIdentifierInput.newBuilder()
                 .setType(identifier.type()).setValue(identifier.value())));
         return input.build();
     }
@@ -54,5 +55,14 @@ public final class SoftwareRequestMapper {
         if (!parsed.toString().equalsIgnoreCase(groupId) || parsed.equals(new java.util.UUID(0, 0))) {
             throw new IllegalArgumentException("group_id must be a nonzero canonical UUID");
         }
+    }
+
+    private static java.util.List<String> validatedKeywords(java.util.List<String> keywords) {
+        for (String keyword : keywords) {
+            if (!KEYWORD.matcher(keyword).matches()) {
+                throw new IllegalArgumentException("invalid keyword: " + keyword);
+            }
+        }
+        return keywords;
     }
 }

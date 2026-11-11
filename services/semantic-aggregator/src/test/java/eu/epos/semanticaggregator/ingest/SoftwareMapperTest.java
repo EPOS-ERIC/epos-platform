@@ -20,7 +20,7 @@ class SoftwareMapperTest {
     void mapsApplicationAndSourceCodeUsingProfilePredicates() {
         var model = read(PREFIXES + """
                 ex:app a schema:SoftwareApplication; schema:name "Client"; schema:description "Desktop client";
-                    schema:keywords "seismic", "client"; schema:softwareVersion "1.2";
+                    schema:keywords "seismic, geophysics", "client"; schema:softwareVersion "1.2";
                     schema:identifier [ a schema:PropertyValue; schema:propertyID "doi"; schema:value "10.1/client" ];
                     schema:creator ex:org; dcat:theme ex:category; schema:contactPoint ex:contact .
                 ex:source a schema:SoftwareSourceCode; schema:name "Client source"; schema:description "Source";
@@ -31,7 +31,8 @@ class SoftwareMapperTest {
             assertEquals(2, mapped.size());
             var application = mapped.getFirst();
             assertEquals(SoftwareMapping.Kind.APPLICATION, application.kind());
-            assertEquals(java.util.List.of("client", "seismic"), application.keywords());
+            assertEquals(java.util.List.of("client", "geophysics", "seismic"), application.keywords());
+            assertEquals(java.util.List.of("split comma-delimited keyword", "trimmed keyword whitespace"), application.warnings());
             assertEquals(new SoftwareMapping.Identifier("doi", "10.1/client"), application.identifiers().getFirst());
             assertEquals(new DatasetMapping.Reference(DatasetMapping.ReferenceKind.ORGANIZATION, "https://example.org/org"),
                     application.creators().getFirst());

@@ -221,9 +221,9 @@ class ResourceImportServerTest {
 
         var retried = stub.importResources(request(true));
 
-        assertEquals("https://example.org/facilities", retried.getWarnings(0).getSubject());
-        assertEquals("NOT_FOUND", retried.getWarnings(0).getCode());
-        org.junit.jupiter.api.Assertions.assertTrue(retried.getWarnings(0).getMessage()
+        assertEquals("https://example.org/facilities", retried.getErrors(0).getSubject());
+        assertEquals("NOT_FOUND", retried.getErrors(0).getCode());
+        org.junit.jupiter.api.Assertions.assertTrue(retried.getErrors(0).getMessage()
                 .contains("verify category https://example.org/facility-category"));
         assertEquals(java.util.List.of("Data", "Facilities", "Software"), createdSchemeNames);
         assertEquals(3, createdCategories.size());
@@ -238,9 +238,9 @@ class ResourceImportServerTest {
 
         var retried = stub.importResources(request(true));
 
-        assertEquals("https://example.org/facilities", retried.getWarnings(0).getSubject());
-        assertEquals("NOT_FOUND", retried.getWarnings(0).getCode());
-        org.junit.jupiter.api.Assertions.assertTrue(retried.getWarnings(0).getMessage()
+        assertEquals("https://example.org/facilities", retried.getErrors(0).getSubject());
+        assertEquals("NOT_FOUND", retried.getErrors(0).getCode());
+        org.junit.jupiter.api.Assertions.assertTrue(retried.getErrors(0).getMessage()
                 .contains("verify category https://example.org/facility-category"));
         assertEquals(java.util.List.of("Data", "Facilities", "Software"), createdSchemeNames);
         assertEquals(3, createdCategories.size());
@@ -254,10 +254,10 @@ class ResourceImportServerTest {
         var response = authenticatedStub().importResources(request(true));
 
         assertEquals(3, response.getImportedCount());
-        assertEquals(1, response.getWarningsCount());
-        assertEquals("https://example.org/dataset-one", response.getWarnings(0).getSubject());
-        assertEquals("INVALID_ARGUMENT", response.getWarnings(0).getCode());
-        assertEquals("dataset metadata is invalid", response.getWarnings(0).getMessage());
+        assertEquals(1, response.getErrorsCount());
+        assertEquals("https://example.org/dataset-one", response.getErrors(0).getSubject());
+        assertEquals("INVALID_ARGUMENT", response.getErrors(0).getCode());
+        assertEquals("dataset metadata is invalid", response.getErrors(0).getMessage());
         assertEquals(4, createdResources.size());
     }
 
@@ -278,10 +278,10 @@ class ResourceImportServerTest {
                 .replace("ex:app a", "ex:organization-one a <http://schema.org/Organization>; <http://schema.org/legalName> \"Example Organization\"; <http://schema.org/email> \"info@example.org\" .\n"
                         + "ex:organization-two a <http://schema.org/Organization>; <http://schema.org/legalName> \"Example Organization\"; <http://schema.org/email> \"info@example.org\" .\n"
                         + "ex:app a")
-                .replace("<http://www.w3.org/ns/dcat#theme> ex:facility-category .",
-                        "<http://www.w3.org/ns/dcat#theme> ex:facility-category; <http://purl.org/dc/terms/publisher> ex:organization-one .")
-                .replace("<http://www.w3.org/ns/dcat#theme> ex:data-category .",
-                        "<http://www.w3.org/ns/dcat#theme> ex:data-category; <http://purl.org/dc/terms/publisher> ex:organization-two .");
+                .replace("<http://purl.org/dc/terms/description> \"Description\"; <http://www.w3.org/ns/dcat#theme> ex:facility-category .",
+                        "<http://purl.org/dc/terms/description> \"Description\"; <http://www.w3.org/ns/dcat#theme> ex:facility-category; <http://purl.org/dc/terms/publisher> ex:organization-one .")
+                .replace("<http://purl.org/dc/terms/description> \"Description\"; <http://www.w3.org/ns/dcat#theme> ex:data-category .",
+                        "<http://purl.org/dc/terms/description> \"Description\"; <http://www.w3.org/ns/dcat#theme> ex:data-category; <http://purl.org/dc/terms/publisher> ex:organization-two .");
         var request = Import.ImportResourcesRequest.newBuilder().setTurtle(com.google.protobuf.ByteString.copyFrom(turtle, StandardCharsets.UTF_8))
                 .setBaseUri("https://example.org/").setMappingId("epos-dcat-common").setMappingVersion(1).build();
 
@@ -298,18 +298,18 @@ class ResourceImportServerTest {
                 .replace("ex:app a", "ex:organization-one a <http://schema.org/Organization>; <http://schema.org/legalName> \"Example Organization\"; <http://schema.org/email> \"one@example.org\" .\n"
                         + "ex:organization-two a <http://schema.org/Organization>; <http://schema.org/legalName> \"Example Organization\"; <http://schema.org/email> \"two@example.org\" .\n"
                         + "ex:app a")
-                .replace("<http://www.w3.org/ns/dcat#theme> ex:facility-category .",
-                        "<http://www.w3.org/ns/dcat#theme> ex:facility-category; <http://purl.org/dc/terms/publisher> ex:organization-one .")
-                .replace("<http://www.w3.org/ns/dcat#theme> ex:data-category .",
-                        "<http://www.w3.org/ns/dcat#theme> ex:data-category; <http://purl.org/dc/terms/publisher> ex:organization-two .");
+                .replace("<http://purl.org/dc/terms/description> \"Description\"; <http://www.w3.org/ns/dcat#theme> ex:facility-category .",
+                        "<http://purl.org/dc/terms/description> \"Description\"; <http://www.w3.org/ns/dcat#theme> ex:facility-category; <http://purl.org/dc/terms/publisher> ex:organization-one .")
+                .replace("<http://purl.org/dc/terms/description> \"Description\"; <http://www.w3.org/ns/dcat#theme> ex:data-category .",
+                        "<http://purl.org/dc/terms/description> \"Description\"; <http://www.w3.org/ns/dcat#theme> ex:data-category; <http://purl.org/dc/terms/publisher> ex:organization-two .");
         var request = Import.ImportResourcesRequest.newBuilder().setTurtle(com.google.protobuf.ByteString.copyFrom(turtle, StandardCharsets.UTF_8))
                 .setBaseUri("https://example.org/").setMappingId("epos-dcat-common").setMappingVersion(1).build();
 
         var response = authenticatedStub().importResources(request);
 
         assertEquals(3, response.getImportedCount());
-        assertEquals(1, response.getWarningsCount());
-        assertEquals(Status.Code.ALREADY_EXISTS.name(), response.getWarnings(0).getCode());
+        assertEquals(1, response.getErrorsCount());
+        assertEquals(Status.Code.ALREADY_EXISTS.name(), response.getErrors(0).getCode());
         assertEquals(1, organizations.size());
     }
 

@@ -2,6 +2,7 @@ package eu.epos.semanticaggregator.ingest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.epos.semanticaggregator.rdf.TurtleReader;
 import java.io.ByteArrayInputStream;
@@ -22,7 +23,7 @@ class DatasetMapperTest {
     void flattensBlankNodesAndReportsUnsupportedProperties() {
         var model = read(PREFIXES + """
                 ex:dataset a dcat:Dataset; dct:title "Title"; dct:description "Description";
-                    dcat:keyword "z", "a"; ex:unmapped "value";
+                    dcat:keyword "z, x", "a"; ex:unmapped "value";
                     dct:spatial [ locn:geometry "POINT (12.5 41.9)"; ex:extra "x" ];
                     adms:identifier [ adms:schemeAgency "DOI"; skos:notation "10.123/test" ] .
                 """);
@@ -30,7 +31,8 @@ class DatasetMapperTest {
             var result = mapper().map(model).getFirst();
             assertEquals("https://example.org/dataset", result.subject());
             assertEquals("POINT (12.5 41.9)", result.spatialCoverage());
-            assertEquals(java.util.List.of("a", "z"), result.keywords());
+            assertEquals(java.util.List.of("a", "x", "z"), result.keywords());
+            assertTrue(result.warnings().contains("split comma-delimited keyword"));
             assertEquals(new DatasetMapping.Identifier("DOI", "10.123/test"), result.identifiers().getFirst());
             assertEquals(2, result.unsupportedPredicates().size());
         } finally {
@@ -56,6 +58,8 @@ class DatasetMapperTest {
                 """);
         try {
             assertEquals(java.util.List.of("Valid keyword"), mapper().map(model).getFirst().keywords());
+            assertEquals(java.util.List.of("ignored keywords outside the Lifecycle contract: 3D/4D Model"),
+                    mapper().map(model).getFirst().warnings());
         } finally {
             model.close();
         }

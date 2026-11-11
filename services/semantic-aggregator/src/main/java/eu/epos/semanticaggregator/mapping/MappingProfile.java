@@ -47,7 +47,7 @@ public record MappingProfile(String id, int version, String datasetType, Map<Str
         for (var entry : entityMappings.entrySet()) {
             Set<String> expected = switch (entry.getKey()) {
                 case "organization" -> Set.of("name", "legal_name");
-                case "contact_point" -> Set.of("email", "role");
+                case "contact_point" -> Set.of("email");
                 case "category" -> Set.of("name");
                 default -> throw new IllegalArgumentException("unsupported entity mapping: " + entry.getKey());
             };

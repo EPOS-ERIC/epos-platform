@@ -2174,9 +2174,13 @@ export type ImportResourcesResult = {
   imported: ImportedResource[];
   failure?: ImportResourceFailure;
   /**
+   * Automatic corrections applied while importing a resource.
+   */
+  warnings?: ImportResourceWarning[];
+  /**
    * Resources skipped while the remaining import completed.
    */
-  warnings?: ImportResourceFailure[];
+  errors?: ImportResourceFailure[];
 };
 
 export type ImportedResource = {
@@ -2214,6 +2218,17 @@ export type ImportResourceFailure = {
     | "dataset-creation"
     | "category-creation"
     | "organization-creation";
+};
+
+export type ImportResourceWarning = {
+  /**
+   * @minLength 1
+   */
+  subject: string;
+  /**
+   * @minLength 1
+   */
+  message: string;
 };
 
 /**

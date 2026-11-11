@@ -78,7 +78,7 @@ public final class PublishedCatalog {
         var version = result.getResource();
         if (version.getStatus() != Common.VersioningStatus.VERSIONING_STATUS_PUBLISHED
                 || !uuid(version.getResourceId()).equals(reference.resourceId())
-                || !uuid(version.getVersionId()).equals(reference.versionId())) {
+                || !uuid(version.getId()).equals(reference.versionId())) {
             throw new IllegalStateException("Published resource version changed or does not match the requested identity");
         }
         boolean kindMatches = switch (reference.kind()) {

@@ -54,6 +54,8 @@ func TestToAPIImportResourcesResult(t *testing.T) {
 			OutcomeUnknown: true,
 			Message:        "upstream is unavailable",
 		},
+		Warnings: []*semanticaggregatorv1.ImportWarning{{Subject: "https://example.org/application", Message: "split comma-delimited keyword"}},
+		Errors: []*semanticaggregatorv1.ImportFailure{{Subject: "https://example.org/rejected", Code: "INVALID_ARGUMENT"}},
 	})
 	if err != nil {
 		t.Fatalf("toAPIImportResourcesResult() error = %v", err)
@@ -69,5 +71,11 @@ func TestToAPIImportResourcesResult(t *testing.T) {
 	}
 	if !result.Failure.Value.Message.IsSet() || result.Failure.Value.Message.Value != "upstream is unavailable" {
 		t.Errorf("Failure.Message = %#v, want upstream message", result.Failure.Value.Message)
+	}
+	if got, want := result.Warnings[0].Message, "split comma-delimited keyword"; got != want {
+		t.Errorf("Warnings[0].Message = %q, want %q", got, want)
+	}
+	if got, want := result.Errors[0].Code, "INVALID_ARGUMENT"; got != want {
+		t.Errorf("Errors[0].Code = %q, want %q", got, want)
 	}
 }

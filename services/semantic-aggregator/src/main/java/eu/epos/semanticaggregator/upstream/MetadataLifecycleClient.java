@@ -71,8 +71,7 @@ public final class MetadataLifecycleClient implements AutoCloseable {
                 if (!response.hasContactPoint() || !reference.id().equalsIgnoreCase(response.getContactPoint().getId())) {
                     throw Status.INTERNAL.withDescription("invalid contact response").asRuntimeException();
                 }
-                verifyDescriptions(descriptions, Map.of("email", response.getContactPoint().getEmail(),
-                        "role", response.getContactPoint().getRole()));
+                verifyDescriptions(descriptions, Map.of("email", response.getContactPoint().getEmail()));
             }
             case CATEGORY -> {
                 var response = CategoryServiceGrpc.newBlockingStub(channel).withInterceptors(interceptor)
@@ -87,7 +86,7 @@ public final class MetadataLifecycleClient implements AutoCloseable {
         }
     }
 
-    /** Returns canonical contacts indexed by the upstream unique email/role key. */
+    /** Returns canonical contacts indexed by their upstream-unique email. */
     public Map<ContactKey, String> listContactKeys(String actorId) {
         var response = ContactPointServiceGrpc.newBlockingStub(channel)
                 .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(actorMetadata(actorId)))
@@ -98,10 +97,10 @@ public final class MetadataLifecycleClient implements AutoCloseable {
             try {
                 var id = java.util.UUID.fromString(contact.getId());
                 if (!id.toString().equalsIgnoreCase(contact.getId()) || id.equals(new java.util.UUID(0, 0))
-                        || contact.getEmail().isBlank() || contact.getRole().isBlank()) {
+                        || contact.getEmail().isBlank()) {
                     throw new IllegalArgumentException("invalid contact point");
                 }
-                var key = new ContactKey(contact.getEmail(), contact.getRole());
+                var key = new ContactKey(contact.getEmail());
                 if (contacts.putIfAbsent(key, id.toString()) != null) {
                     throw new IllegalArgumentException("duplicate contact key");
                 }
@@ -112,7 +111,7 @@ public final class MetadataLifecycleClient implements AutoCloseable {
         return Map.copyOf(contacts);
     }
 
-    public record ContactKey(String email, String role) {}
+    public record ContactKey(String email) {}
 
     /** Lists canonical organizations so callers can reuse only compatible RDF descriptions. */
     public Map<String, Organization> listOrganizations(String actorId) {
@@ -299,15 +298,13 @@ public final class MetadataLifecycleClient implements AutoCloseable {
         return expected == null ? !present : present && expected.equals(actual);
     }
 
-    /** Creates a contact; the upstream enforces uniqueness of email and role. */
+    /** Creates a contact; the upstream enforces uniqueness of its email. */
     public String createContact(ContactKey key, String actorId) {
         var response = ContactPointServiceGrpc.newBlockingStub(channel)
                 .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(actorMetadata(actorId)))
                 .withDeadlineAfter(10, TimeUnit.SECONDS)
-                .createContactPoint(ContactPointOuterClass.CreateContactPointRequest.newBuilder()
-                        .setEmail(key.email()).setRole(key.role()).build());
-        if (!response.hasContactPoint() || !key.email().equals(response.getContactPoint().getEmail())
-                || !key.role().equals(response.getContactPoint().getRole())) {
+                .createContactPoint(ContactPointOuterClass.CreateContactPointRequest.newBuilder().setEmail(key.email()).build());
+        if (!response.hasContactPoint() || !key.email().equals(response.getContactPoint().getEmail())) {
             throw Status.INTERNAL.withDescription("invalid contact creation response").asRuntimeException();
         }
         String id = response.getContactPoint().getId();
@@ -325,7 +322,7 @@ public final class MetadataLifecycleClient implements AutoCloseable {
     private static void verifyDescriptions(List<EntityDescription> descriptions, Map<String, String> actual) {
         for (var description : descriptions) {
             for (var field : description.fields().entrySet()) {
-                if (!field.getValue().equals(actual.get(field.getKey()))) {
+                if (actual.containsKey(field.getKey()) && !field.getValue().equals(actual.get(field.getKey()))) {
                     throw new EntityMismatchException();
                 }
             }

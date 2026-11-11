@@ -182,7 +182,7 @@ public final class DatasetImportServer extends DatasetImportServiceGrpc.DatasetI
                                     var resolved = upstream.getVersion(existingIdentity.resourceId(), existingIdentity.versionId(), actor);
                                     response.addImported(Import.ImportedDataset.newBuilder().setSubject(dataset.subject())
                                             .setResourceId(existingIdentity.resourceId())
-                                            .setVersionId(resolved.getVersionId())
+                                            .setVersionId(resolved.getId())
                                             .setOutcome(Import.DatasetImportOutcome.DATASET_IMPORT_OUTCOME_REUSED));
                                 }
                             } else {
@@ -403,7 +403,7 @@ public final class DatasetImportServer extends DatasetImportServiceGrpc.DatasetI
             if (bindings.contains(reference)) continue;
             var fields = descriptions.get(reference).fields();
             boolean resolvable = switch (reference.kind()) {
-                case CONTACT_POINT -> fields.containsKey("email") && fields.containsKey("role");
+                case CONTACT_POINT -> fields.containsKey("email");
                 case CATEGORY -> fields.containsKey("name");
                 case ORGANIZATION -> fields.containsKey("name") || fields.containsKey("legal_name");
             };
@@ -457,7 +457,7 @@ public final class DatasetImportServer extends DatasetImportServiceGrpc.DatasetI
         List<Import.ResolvedContact> reused = new ArrayList<>();
         for (var reference : missing) {
             var fields = descriptions.get(reference).fields();
-            var key = new MetadataLifecycleClient.ContactKey(fields.get("email"), fields.get("role"));
+            var key = new MetadataLifecycleClient.ContactKey(fields.get("email"));
             String id = contacts.get(key);
             if (id != null) {
                 bindings.register(reference.kind(), reference.iri(), id);

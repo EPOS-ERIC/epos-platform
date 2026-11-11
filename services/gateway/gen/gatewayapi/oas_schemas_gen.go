@@ -8083,6 +8083,32 @@ func (s *ImportResourceFailurePhase) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/ImportResourceWarning
+type ImportResourceWarning struct {
+	Subject string `json:"subject"`
+	Message string `json:"message"`
+}
+
+// GetSubject returns the value of Subject.
+func (s *ImportResourceWarning) GetSubject() string {
+	return s.Subject
+}
+
+// GetMessage returns the value of Message.
+func (s *ImportResourceWarning) GetMessage() string {
+	return s.Message
+}
+
+// SetSubject sets the value of Subject.
+func (s *ImportResourceWarning) SetSubject(val string) {
+	s.Subject = val
+}
+
+// SetMessage sets the value of Message.
+func (s *ImportResourceWarning) SetMessage(val string) {
+	s.Message = val
+}
+
 // Ref: #/components/schemas/ImportResourcesRequest
 type ImportResourcesRequest struct {
 	// RDF Turtle document to import.
@@ -8148,8 +8174,10 @@ func (s *ImportResourcesRequest) SetReferences(val []ImportReferenceBinding) {
 type ImportResourcesResult struct {
 	Imported []ImportedResource       `json:"imported"`
 	Failure  OptImportResourceFailure `json:"failure"`
+	// Automatic corrections applied while importing a resource.
+	Warnings []ImportResourceWarning `json:"warnings"`
 	// Resources skipped while the remaining import completed.
-	Warnings []ImportResourceFailure `json:"warnings"`
+	Errors []ImportResourceFailure `json:"errors"`
 }
 
 // GetImported returns the value of Imported.
@@ -8163,8 +8191,13 @@ func (s *ImportResourcesResult) GetFailure() OptImportResourceFailure {
 }
 
 // GetWarnings returns the value of Warnings.
-func (s *ImportResourcesResult) GetWarnings() []ImportResourceFailure {
+func (s *ImportResourcesResult) GetWarnings() []ImportResourceWarning {
 	return s.Warnings
+}
+
+// GetErrors returns the value of Errors.
+func (s *ImportResourcesResult) GetErrors() []ImportResourceFailure {
+	return s.Errors
 }
 
 // SetImported sets the value of Imported.
@@ -8178,8 +8211,13 @@ func (s *ImportResourcesResult) SetFailure(val OptImportResourceFailure) {
 }
 
 // SetWarnings sets the value of Warnings.
-func (s *ImportResourcesResult) SetWarnings(val []ImportResourceFailure) {
+func (s *ImportResourcesResult) SetWarnings(val []ImportResourceWarning) {
 	s.Warnings = val
+}
+
+// SetErrors sets the value of Errors.
+func (s *ImportResourcesResult) SetErrors(val []ImportResourceFailure) {
+	s.Errors = val
 }
 
 // Ref: #/components/schemas/ImportedResource

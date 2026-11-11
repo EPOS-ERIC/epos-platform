@@ -63,7 +63,8 @@ func toAPIImportResourcesResult(response *semanticaggregatorv1.ImportResourcesRe
 	}
 	result := &gatewayapi.ImportResourcesResult{
 		Imported: make([]gatewayapi.ImportedResource, 0, len(response.Imported)),
-		Warnings: make([]gatewayapi.ImportResourceFailure, 0, len(response.Warnings)),
+		Warnings: make([]gatewayapi.ImportResourceWarning, 0, len(response.Warnings)),
+		Errors:   make([]gatewayapi.ImportResourceFailure, 0, len(response.Errors)),
 	}
 	for i, imported := range response.Imported {
 		value, err := toAPIImportedResource(imported)
@@ -80,13 +81,27 @@ func toAPIImportResourcesResult(response *semanticaggregatorv1.ImportResourcesRe
 		result.Failure = gatewayapi.NewOptImportResourceFailure(failure)
 	}
 	for i, warning := range response.Warnings {
-		value, err := toAPIImportResourceFailure(warning)
+		value, err := toAPIImportResourceWarning(warning)
 		if err != nil {
 			return nil, fmt.Errorf("map semantic-aggregator import warning %d: %w", i, err)
 		}
 		result.Warnings = append(result.Warnings, value)
 	}
+	for i, importError := range response.Errors {
+		value, err := toAPIImportResourceFailure(importError)
+		if err != nil {
+			return nil, fmt.Errorf("map semantic-aggregator import error %d: %w", i, err)
+		}
+		result.Errors = append(result.Errors, value)
+	}
 	return result, nil
+}
+
+func toAPIImportResourceWarning(value *semanticaggregatorv1.ImportWarning) (gatewayapi.ImportResourceWarning, error) {
+	if value == nil || value.Subject == "" || value.Message == "" {
+		return gatewayapi.ImportResourceWarning{}, fmt.Errorf("import warning is incomplete")
+	}
+	return gatewayapi.ImportResourceWarning{Subject: value.Subject, Message: value.Message}, nil
 }
 
 func toAPIImportedResource(value *semanticaggregatorv1.ImportedResource) (gatewayapi.ImportedResource, error) {

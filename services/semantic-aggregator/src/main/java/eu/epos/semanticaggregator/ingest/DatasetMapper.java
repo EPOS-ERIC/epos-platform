@@ -44,8 +44,13 @@ public final class DatasetMapper {
         String name = subject.isURIResource() ? subject.getURI() : "_:" + subject.getId().getLabelString();
         String title = singleLiteral(subject, property(model, path("title", 0)), true);
         String description = singleLiteral(subject, property(model, path("description", 0)), true);
-        List<String> keywords = literals(subject, property(model, path("keywords", 0)));
-        keywords.removeIf(keyword -> !KEYWORD.matcher(keyword).matches());
+        var normalizedKeywords = KeywordNormalizer.normalize(literals(subject, property(model, path("keywords", 0))));
+        List<String> keywords = new ArrayList<>(normalizedKeywords.values());
+        List<String> warnings = new ArrayList<>(normalizedKeywords.warnings());
+        var invalidKeywords = keywords.stream().filter(keyword -> !KEYWORD.matcher(keyword).matches()).sorted().toList();
+        if (!invalidKeywords.isEmpty()) warnings.add("ignored keywords outside the Lifecycle contract: "
+                + String.join(", ", invalidKeywords));
+        keywords.removeAll(invalidKeywords);
         keywords.sort(String::compareTo);
         List<String> unsupported = new ArrayList<>();
         String quality = null;
@@ -160,13 +165,15 @@ public final class DatasetMapper {
         if (profile.primaryIdentifier() != null) rootPredicates.add(profile.primaryIdentifier().predicate());
         addUnsupported(subject, rootPredicates, "", unsupported);
         unsupported.sort(String::compareTo);
+        unsupported.forEach(predicate -> warnings.add("ignored unsupported RDF property: " + predicate));
+        warnings.sort(String::compareTo);
         return new DatasetMapping(name, title, description, List.copyOf(keywords), geometry, coverage,
                 optionalValue(model, subject, "accrual_periodicity"), optionalValue(model, subject, "access_right"),
                 quality, optionalDate(model, subject, "created"), optionalDate(model, subject, "updated"),
                 List.copyOf(identifiers), references(model, subject, "providers", 0, DatasetMapping.ReferenceKind.ORGANIZATION),
                 references(model, subject, "contact_points", 0, DatasetMapping.ReferenceKind.CONTACT_POINT),
                 references(model, subject, "categories", 0, DatasetMapping.ReferenceKind.CATEGORY),
-                List.copyOf(distributions), List.copyOf(unsupported));
+                List.copyOf(distributions), List.copyOf(unsupported), List.copyOf(warnings));
     }
 
     private DatasetMapping.Identifier primaryIdentifier(Model model, Resource subject) {
@@ -456,6 +463,7 @@ public final class DatasetMapper {
             throw invalid(template, path("operation_template", 3), "unsupported URL template");
         }
         var parameters = new java.util.HashMap<String, DatasetMapping.Parameter>();
+        var cqlFilters = new ArrayList<CqlFilter>();
         if (profile.fields().containsKey("parameter_name")) {
             String link = path("parameter_name", 3);
             var mappings = template.listProperties(property(model, link));
@@ -466,7 +474,30 @@ public final class DatasetMapper {
                         throw invalid(template, link, "expected a parameter resource");
                     }
                     var parameter = parameter(model, node.asResource(), unsupported);
-                    if (parameters.putIfAbsent(parameter.name(), parameter) != null) {
+                    String templateName = parameter.name();
+                    int assignment = templateName.indexOf('=');
+                    if (assignment >= 0) {
+                        String queryName = templateName.substring(0, assignment).trim();
+                        templateName = templateName.substring(assignment + 1).trim();
+                        if (queryName.isEmpty() || templateName.isEmpty() || templateName.contains("=")) {
+                            throw invalid(node.asResource(), path("parameter_name", 4), "invalid query parameter mapping");
+                        }
+                        if (queryName.equalsIgnoreCase("CQL_FILTER")) {
+                            if (!templateName.matches("[A-Za-z_][A-Za-z0-9_.:]*")) {
+                                throw invalid(node.asResource(), path("parameter_name", 4), "invalid CQL field name");
+                            }
+                            if (parameter.schema() instanceof DatasetMapping.StringSchema string && string.multipleValues()
+                                    || parameter.schema() instanceof DatasetMapping.IntegerSchema integer && integer.multipleValues()
+                                    || parameter.schema() instanceof DatasetMapping.FloatSchema floating && floating.multipleValues()) {
+                                throw invalid(node.asResource(), path("parameter_name", 4), "CQL filters do not support multiple values");
+                            }
+                            cqlFilters.add(new CqlFilter(templateName, parameter));
+                            continue;
+                        }
+                        parameter = new DatasetMapping.Parameter(queryName, parameter.label(), parameter.property(),
+                                parameter.required(), parameter.readOnly(), parameter.location(), parameter.role(), parameter.schema());
+                    }
+                    if (parameters.putIfAbsent(templateName, parameter) != null) {
                         throw invalid(template, link, "duplicate parameter " + parameter.name());
                     }
                 }
@@ -489,7 +520,25 @@ public final class DatasetMapper {
             ordered.add(new DatasetMapping.Parameter(parameter.name(), parameter.label(), parameter.property(),
                     required, parameter.readOnly(), location, parameter.role(), parameter.schema()));
         }
+        if (!cqlFilters.isEmpty()) ordered.add(cqlFilterParameter(cqlFilters));
         return new MappedTemplate(url, List.copyOf(ordered));
+    }
+
+    private static DatasetMapping.Parameter cqlFilterParameter(List<CqlFilter> filters) {
+        var children = new ArrayList<DatasetMapping.Parameter>(filters.size());
+        var template = new StringBuilder("{{$has := false}}");
+        for (int i = 0; i < filters.size(); i++) {
+            var filter = filters.get(i);
+            String name = "filter_" + i;
+            var parameter = filter.parameter();
+            children.add(new DatasetMapping.Parameter(name, parameter.label(), filter.field(), parameter.required(),
+                    parameter.readOnly(), DatasetMapping.ParameterLocation.QUERY, null, parameter.schema()));
+            template.append("{{with index . \"").append(name).append("\"}}{{if $has}} AND {{end}}")
+                    .append(filter.field()).append(" = {{cql .}}{{$has = true}}{{end}}");
+        }
+        return new DatasetMapping.Parameter("CQL_FILTER", "CQL filter", null, false, false,
+                DatasetMapping.ParameterLocation.QUERY, null,
+                new DatasetMapping.TemplateSchema(template.toString(), List.copyOf(children)));
     }
 
     private DatasetMapping.Parameter parameter(Model model, Resource parameter, List<String> unsupported) {
@@ -507,22 +556,20 @@ public final class DatasetMapper {
         String name = singleLiteral(parameter, property(model, path("parameter_name", 4)), true);
         String label = singleLiteral(parameter, property(model, path("parameter_label", 4)), false);
         String range = singleValue(parameter, property(model, path("parameter_range", 4)), true);
-        String defaultValue = singleLiteral(parameter, property(model, path("parameter_default", 4)), false);
-        if (defaultValue != null && defaultValue.isBlank()) {
-            defaultValue = null;
-        }
+        List<String> defaultValues = literals(parameter, property(model, path("parameter_default", 4)));
+        defaultValues.removeIf(String::isBlank);
         List<String> values = literals(parameter, property(model, path("parameter_enum", 4)));
         String pattern = singleLiteral(parameter, property(model, path("parameter_pattern", 4)), false);
         String minimum = optionalParameterLiteral(model, parameter, "parameter_minimum");
         String maximum = optionalParameterLiteral(model, parameter, "parameter_maximum");
         boolean multiple = optionalBoolean(model, parameter, "parameter_multiple");
-        DatasetMapping.ParameterSchema schema = parameterSchema(parameter, range, defaultValue, values, pattern, minimum, maximum, multiple);
+        DatasetMapping.ParameterSchema schema = parameterSchema(parameter, range, defaultValues, values, pattern, minimum, maximum, multiple);
         boolean readOnly = optionalBoolean(model, parameter, "parameter_readonly");
         String propertyValue = singleValue(parameter, property(model, path("parameter_property", 4)), false);
         String roleValue = propertyValue == null ? null : profile.parameterRoles().get(propertyValue);
         DatasetMapping.ParameterRole role = roleValue == null ? null : DatasetMapping.ParameterRole.valueOf(roleValue);
         if (role == DatasetMapping.ParameterRole.FORMAT
-                && schema instanceof DatasetMapping.StringSchema string && string.defaultValue() == null) {
+                && schema instanceof DatasetMapping.StringSchema string && string.defaultValues().isEmpty()) {
             role = null;
         }
         validateRole(parameter, role, schema);
@@ -546,37 +593,34 @@ public final class DatasetMapper {
         }
     }
 
-    private DatasetMapping.ParameterSchema parameterSchema(Resource subject, String range, String defaultValue,
+    private DatasetMapping.ParameterSchema parameterSchema(Resource subject, String range, List<String> defaultValues,
             List<String> values, String pattern, String minimum, String maximum, boolean multiple) {
         String type = range.startsWith("http://www.w3.org/2001/XMLSchema#")
                 ? range.substring("http://www.w3.org/2001/XMLSchema#".length())
                 : range.startsWith("xsd:") ? range.substring(4) : "";
         if (type.equals("string")) {
+            if (!multiple && defaultValues.size() > 1) {
+                throw invalid(subject, path("parameter_default", 4), "scalar parameter has multiple defaults");
+            }
             if (minimum != null || maximum != null) {
                 if (values.isEmpty()) {
-                    String numericType = inferNumericType(minimum, maximum, defaultValue);
-                    if (numericType != null) return parameterSchema(subject, "xsd:" + numericType, defaultValue, values, pattern, minimum, maximum, multiple);
-                    String dateType = inferDateType(minimum, maximum, defaultValue);
-                    if (dateType != null) return parameterSchema(subject, "xsd:" + dateType, defaultValue, values, pattern, minimum, maximum, multiple);
+                    String numericType = inferNumericType(minimum, maximum, defaultValues);
+                    if (numericType != null) return parameterSchema(subject, "xsd:" + numericType, defaultValues, values, pattern, minimum, maximum, multiple);
+                    String dateType = inferDateType(minimum, maximum, defaultValues);
+                    if (dateType != null) return parameterSchema(subject, "xsd:" + dateType, defaultValues, values, pattern, minimum, maximum, multiple);
                 }
                 throw invalid(subject, path("parameter_range", 4), "string parameters do not support numeric bounds");
             }
             values.sort(String::compareTo);
-            String normalizedDefault = defaultValue;
-            if (normalizedDefault != null && !values.isEmpty() && !values.contains(normalizedDefault)) {
-                if (multiple) {
-                    List<String> parts = java.util.Arrays.stream(normalizedDefault.split(",", -1)).map(String::trim).toList();
-                    if (!parts.isEmpty() && new java.util.HashSet<>(values).containsAll(parts)) {
-                        values = new java.util.ArrayList<>(new java.util.LinkedHashSet<>(values)).stream().sorted().toList();
-                        return new DatasetMapping.StringSchema(true, normalizedDefault, pattern, List.copyOf(values));
-                    }
-                }
+            List<String> normalizedDefaults = normalizeStringDefaults(defaultValues, values, multiple);
+            for (String defaultValue : normalizedDefaults) {
+                if (values.isEmpty() || values.contains(defaultValue)) continue;
                 values = new java.util.ArrayList<>(values);
-                values.add(normalizedDefault);
+                values.add(defaultValue);
                 values = new java.util.ArrayList<>(new java.util.LinkedHashSet<>(values)).stream().sorted().toList();
             }
-            validateValues(subject, normalizedDefault, null, null, values);
-            return new DatasetMapping.StringSchema(multiple, normalizedDefault, pattern, List.copyOf(values));
+            validateValues(subject, normalizedDefaults, null, null, values);
+            return new DatasetMapping.StringSchema(multiple, normalizedDefaults, pattern, List.copyOf(values));
         }
         if (type.equals("dateTime") || type.equals("date")) {
             if (multiple || !values.isEmpty()) {
@@ -584,8 +628,8 @@ public final class DatasetMapper {
             }
             Instant min = parameterDate(subject, "parameter_minimum", minimum);
             Instant max = parameterDate(subject, "parameter_maximum", maximum);
-            Instant def = parameterDate(subject, "parameter_default", defaultValue);
-            validateValues(subject, def, min, max, List.of());
+            Instant def = singleDefault(subject, defaultValues, value -> parameterDate(subject, "parameter_default", value));
+            validateValues(subject, def == null ? List.of() : List.of(def), min, max, List.of());
             String layout = normalizeDateTimeLayout(pattern);
             if (layout != null && (layout.isEmpty() || !layout.matches("(?:(?:YYYY|MM|DD|hh|mm|ss|SSS)|[^YyMDHhmsS])+"))) {
                 throw invalid(subject, path("parameter_pattern", 4), "unsupported date-time layout: '" + layout + "'");
@@ -599,27 +643,33 @@ public final class DatasetMapper {
             if (multiple || minimum != null || maximum != null) {
                 throw invalid(subject, path("parameter_range", 4), "boolean parameters do not support bounds or multiple values");
             }
-            Boolean value = defaultValue == null ? null : booleanValue(subject, path("parameter_default", 4), defaultValue);
+            Boolean value = singleDefault(subject, defaultValues, item -> booleanValue(subject, path("parameter_default", 4), item));
             return new DatasetMapping.BooleanSchema(value);
         }
         if (type.equals("integer") || type.equals("long") || type.equals("int") || type.equals("short") || type.equals("byte")
                 || type.equals("positiveInteger") || type.equals("nonNegativeInteger") || type.equals("nonPositiveInteger")
                 || type.equals("negativeInteger") || type.equals("unsignedLong") || type.equals("unsignedInt")
                 || type.equals("unsignedShort") || type.equals("unsignedByte")) {
+            if (!multiple && defaultValues.size() > 1) {
+                throw invalid(subject, path("parameter_default", 4), "scalar parameter has multiple defaults");
+            }
             Long min = integerValue(subject, minimum);
             Long max = integerValue(subject, maximum);
-            Long def = integerValue(subject, defaultValue);
+            List<Long> defaults = defaultValues.stream().map(value -> integerValue(subject, value)).toList();
             List<Long> options = values.stream().map(value -> integerValue(subject, value)).sorted().toList();
-            validateValues(subject, def, min, max, options);
-            return new DatasetMapping.IntegerSchema(multiple, min, max, def, options);
+            validateValues(subject, defaults, min, max, options);
+            return new DatasetMapping.IntegerSchema(multiple, min, max, defaults, options);
         }
         if (type.equals("double") || type.equals("decimal") || type.equals("float") || type.equals("number") || type.equals("numeric")) {
+            if (!multiple && defaultValues.size() > 1) {
+                throw invalid(subject, path("parameter_default", 4), "scalar parameter has multiple defaults");
+            }
             Double min = floatValue(subject, minimum);
             Double max = floatValue(subject, maximum);
-            Double def = floatValue(subject, defaultValue);
+            List<Double> defaults = defaultValues.stream().map(value -> floatValue(subject, value)).toList();
             List<Double> options = values.stream().map(value -> floatValue(subject, value)).sorted().toList();
-            validateValues(subject, def, min, max, options);
-            return new DatasetMapping.FloatSchema(multiple, min, max, def, options);
+            validateValues(subject, defaults, min, max, options);
+            return new DatasetMapping.FloatSchema(multiple, min, max, defaults, options);
         }
         throw invalid(subject, path("parameter_range", 4), "unsupported parameter type " + range);
     }
@@ -634,7 +684,19 @@ public final class DatasetMapper {
         return date + time;
     }
 
-    private <T extends Comparable<T>> void validateValues(Resource subject, T value, T minimum, T maximum, List<T> options) {
+    private static List<String> normalizeStringDefaults(List<String> defaults, List<String> values, boolean multiple) {
+        if (!multiple || defaults.size() != 1 || values.isEmpty()) return List.copyOf(defaults);
+        List<String> parts = java.util.Arrays.stream(defaults.getFirst().split(",", -1)).map(String::trim).toList();
+        return !parts.isEmpty() && new java.util.HashSet<>(values).containsAll(parts) ? parts : List.copyOf(defaults);
+    }
+
+    private static <T> T singleDefault(Resource subject, List<String> values, java.util.function.Function<String, T> parser) {
+        if (values.isEmpty()) return null;
+        if (values.size() != 1) throw invalid(subject, "default", "parameter type does not support multiple defaults");
+        return parser.apply(values.getFirst());
+    }
+
+    private <T extends Comparable<T>> void validateValues(Resource subject, List<T> defaults, T minimum, T maximum, List<T> options) {
         if (minimum != null && maximum != null && minimum.compareTo(maximum) > 0) {
             throw invalid(subject, path("parameter_range", 4), "minimum exceeds maximum");
         }
@@ -642,10 +704,8 @@ public final class DatasetMapper {
             throw invalid(subject, path("parameter_enum", 4), "duplicate allowed values");
         }
         List<T> all = new ArrayList<>(options);
-        if (value != null) {
-            if (!options.isEmpty() && !options.contains(value)) {
-                throw invalid(subject, path("parameter_default", 4), "default must be an allowed value");
-            }
+        for (T value : defaults) {
+            if (!options.isEmpty() && !options.contains(value)) throw invalid(subject, path("parameter_default", 4), "default must be an allowed value");
             all.add(value);
         }
         if (all.stream().anyMatch(item -> (minimum != null && item.compareTo(minimum) < 0)
@@ -654,10 +714,13 @@ public final class DatasetMapper {
         }
     }
 
-    private static String inferNumericType(String minimum, String maximum, String defaultValue) {
+    private static String inferNumericType(String minimum, String maximum, List<String> defaultValues) {
         boolean integral = true;
         boolean valid = true;
-        for (String value : new String[]{minimum, maximum, defaultValue}) {
+        List<String> inputs = new ArrayList<>(defaultValues);
+        inputs.add(minimum);
+        inputs.add(maximum);
+        for (String value : inputs) {
             if (value == null) continue;
             try {
                 Long.parseLong(value);
@@ -676,9 +739,12 @@ public final class DatasetMapper {
         return integral ? "integer" : "float";
     }
 
-    private static String inferDateType(String minimum, String maximum, String defaultValue) {
+    private static String inferDateType(String minimum, String maximum, List<String> defaultValues) {
         boolean onlyDate = true;
-        for (String value : new String[]{minimum, maximum, defaultValue}) {
+        List<String> inputs = new ArrayList<>(defaultValues);
+        inputs.add(minimum);
+        inputs.add(maximum);
+        for (String value : inputs) {
             if (value == null) continue;
             if (!value.matches("\\d{4}-\\d{2}-\\d{2}.*")) return null;
             if (!value.matches("\\d{4}-\\d{2}-\\d{2}")) onlyDate = false;
@@ -760,6 +826,7 @@ public final class DatasetMapper {
         throw invalid(subject, predicate, "expected an RDF boolean");
     }
 
+    private record CqlFilter(String field, DatasetMapping.Parameter parameter) {}
     private record MappedTemplate(String url, List<DatasetMapping.Parameter> parameters) {}
 
     private static void checkType(Resource subject, String expected, String path, List<String> unsupported) {

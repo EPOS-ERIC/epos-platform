@@ -19,14 +19,13 @@ class PublishedGraphBuilderTest {
     @Test
     void mapsPublishedDatasetProtobufToStableDcatResource() throws Exception {
         var source = Resource.ResourceVersion.newBuilder()
-                .setResourceId(REF.resourceId().toString()).setVersionId(REF.versionId().toString())
+                .setResourceId(REF.resourceId().toString()).setId(REF.versionId().toString())
                 .setRevision(7).setStatus(Common.VersioningStatus.VERSIONING_STATUS_PUBLISHED)
                 .setCreatedAt(Timestamp.newBuilder().setSeconds(1_700_000_000L))
-                .setDataset(Resource.DatasetResourceMetadata.newBuilder().setId("123e4567-e89b-12d3-a456-426614174003")
-                        .setTitle("Earthquakes").setDescription("Observed earthquakes").addKeywords("seismic")
+                .setDataset(Resource.DatasetResourceMetadata.newBuilder().setTitle("Earthquakes").setDescription("Observed earthquakes").addKeywords("seismic")
                         .addDistributions(Resource.Distribution.newBuilder()
                                 .setId("123e4567-e89b-12d3-a456-426614174004")
-                                .setTitle("CSV").setDescription("CSV download").setType("DOWNLOADABLE_FILE")
+                                .setTitle("CSV").setDescription("CSV download").setType(Resource.DistributionType.DISTRIBUTION_TYPE_DOWNLOADABLE_FILE)
                                 .setDownloadableFile(Resource.DownloadableFile.newBuilder()
                                         .setUrl("https://example.org/data.csv").setFormat("text/csv"))))
                 .build();
@@ -47,16 +46,15 @@ class PublishedGraphBuilderTest {
     @Test
     void mapsGenericWebServiceDistributionAndItsParameters() throws Exception {
         var source = Resource.ResourceVersion.newBuilder()
-                .setResourceId(REF.resourceId().toString()).setVersionId(REF.versionId().toString())
+                .setResourceId(REF.resourceId().toString()).setId(REF.versionId().toString())
                 .setStatus(Common.VersioningStatus.VERSIONING_STATUS_PUBLISHED)
-                .setDataset(Resource.DatasetResourceMetadata.newBuilder().setId("123e4567-e89b-12d3-a456-426614174003")
-                        .setTitle("Earthquakes").setDescription("Observed earthquakes")
+                .setDataset(Resource.DatasetResourceMetadata.newBuilder().setTitle("Earthquakes").setDescription("Observed earthquakes")
                         .addDistributions(Resource.Distribution.newBuilder()
                                 .setId("123e4567-e89b-12d3-a456-426614174004")
-                                .setTitle("API").setDescription("HTTP API").setType("WEB_SERVICE")
+                                .setTitle("API").setDescription("HTTP API").setType(Resource.DistributionType.DISTRIBUTION_TYPE_WEB_SERVICE)
                                 .setWebService(Resource.WebService.newBuilder()
                                         .setId("123e4567-e89b-12d3-a456-426614174005")
-                                        .setName("Search").setType(Resource.WebServiceType.WEB_SERVICE_TYPE_HTTP)
+                                        .setType(Resource.WebServiceType.WEB_SERVICE_TYPE_HTTP)
                                         .setGeneric(Resource.GenericWebServiceConfiguration.newBuilder()
                                                 .setTemplateUrl("https://example.org/search{?q}").setFormat("application/json")
                                                 .setMethod(Resource.WebServiceMethod.WEB_SERVICE_METHOD_GET)
@@ -85,10 +83,9 @@ class PublishedGraphBuilderTest {
                 UUID.fromString("123e4567-e89b-12d3-a456-426614174010"),
                 UUID.fromString("123e4567-e89b-12d3-a456-426614174011"));
         var source = Resource.ResourceVersion.newBuilder()
-                .setResourceId(software.resourceId().toString()).setVersionId(software.versionId().toString())
+                .setResourceId(software.resourceId().toString()).setId(software.versionId().toString())
                 .setStatus(Common.VersioningStatus.VERSIONING_STATUS_PUBLISHED)
-                .setSoftwareSourceCode(Resource.SoftwareSourceCodeResourceMetadata.newBuilder()
-                        .setId("123e4567-e89b-12d3-a456-426614174012").setName("Exporter")
+                .setSoftwareSourceCode(Resource.SoftwareSourceCodeResourceMetadata.newBuilder().setName("Exporter")
                         .setDescription("RDF exporter").setRepository("https://example.org/repository")
                         .setProgrammingLanguage("Java").setRuntimePlatform("JVM")
                         .setMainEntityOfPage("https://example.org/exporter")
@@ -97,8 +94,9 @@ class PublishedGraphBuilderTest {
                         .addCategories(metadata_lifecycle.v1.Common.EntityReference.newBuilder()
                                 .setId("123e4567-e89b-12d3-a456-426614174014").setName("Software"))
                         .addContactPoints("123e4567-e89b-12d3-a456-426614174015")
-                        .addIdentifiers(metadata_lifecycle.v1.Common.Identifier.newBuilder()
-                                .setId("123e4567-e89b-12d3-a456-426614174016").setType("DOI").setValue("10.1234/exporter")))
+                        .addIdentifiers(Resource.VersionedIdentifier.newBuilder()
+                                .setId("123e4567-e89b-12d3-a456-426614174016").setResourceId(software.resourceId().toString())
+                                .setType("DOI").setValue("10.1234/exporter")))
                 .build();
 
         var graph = new PublishedGraphBuilder(reference -> source).build(AggregateRefresh.Version.V1, List.of(software));

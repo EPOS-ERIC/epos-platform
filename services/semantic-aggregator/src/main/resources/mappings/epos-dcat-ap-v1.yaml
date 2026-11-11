@@ -78,7 +78,6 @@ entity_mappings:
     rdf_type: "http://schema.org/ContactPoint"
     fields:
       email: "http://schema.org/email"
-      role: "http://schema.org/contactType"
   category:
     rdf_type: "http://www.w3.org/2004/02/skos/core#Concept"
     fields:

@@ -59,18 +59,19 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
                     ensureSchemeAndCategories(scheme, prepared, actor);
                 } catch (StatusRuntimeException exception) {
                     Status.Code code = exception.getStatus().getCode();
-                    response.addWarnings(failure(scheme.iri(), code, outcomeUnknown(code), exception.getStatus().getDescription()));
+                    response.addErrors(failure(scheme.iri(), code, outcomeUnknown(code), exception.getStatus().getDescription()));
                 } catch (java.io.IOException exception) {
-                    response.addWarnings(failure(scheme.iri(), Status.Code.UNAVAILABLE, true,
+                    response.addErrors(failure(scheme.iri(), Status.Code.UNAVAILABLE, true,
                             "Unable to manage scheme identities"));
                 }
             }
             for (DatasetMapping dataset : prepared.datasets()) {
+                addWarnings(response, dataset.subject(), dataset.warnings());
                 List<List<DatasetMapping.Reference>> categorySets;
                 try {
                     categorySets = categoriesByScheme(dataset.categories(), prepared);
                 } catch (IllegalArgumentException exception) {
-                    response.addWarnings(failure(dataset.subject(), Status.Code.INVALID_ARGUMENT, false, exception.getMessage()));
+                    response.addErrors(failure(dataset.subject(), Status.Code.INVALID_ARGUMENT, false, exception.getMessage()));
                     continue;
                 }
                 for (var categories : categorySets) {
@@ -82,7 +83,7 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
                                 new DatasetRequestMapper().toRequest(copy, groupId, prepared.bindings()), actor);
                          if (!created.hasResource() || !validId(created.getResource().getResourceId())
                                  || !validId(created.getResource().getVersionId())) {
-                            response.addWarnings(failure(copy.subject(), Status.Code.INTERNAL, true));
+                            response.addErrors(failure(copy.subject(), Status.Code.INTERNAL, true));
                             continue;
                         }
                         response.addImported(Import.ImportedResource.newBuilder().setSubject(copy.subject())
@@ -90,21 +91,22 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
                                 .setKind(Import.ImportedResourceKind.IMPORTED_RESOURCE_KIND_DATASET));
                     } catch (StatusRuntimeException exception) {
                         Status.Code code = exception.getStatus().getCode();
-                        response.addWarnings(failure(copy.subject(), code, outcomeUnknown(code), exception.getStatus().getDescription()));
+                        response.addErrors(failure(copy.subject(), code, outcomeUnknown(code), exception.getStatus().getDescription()));
                     } catch (java.io.IOException exception) {
-                        response.addWarnings(failure(copy.subject(), Status.Code.UNAVAILABLE, true,
+                        response.addErrors(failure(copy.subject(), Status.Code.UNAVAILABLE, true,
                                 "Unable to manage scheme identities"));
                     } catch (IllegalArgumentException exception) {
-                        response.addWarnings(failure(copy.subject(), Status.Code.INVALID_ARGUMENT, false, exception.getMessage()));
+                        response.addErrors(failure(copy.subject(), Status.Code.INVALID_ARGUMENT, false, exception.getMessage()));
                     }
                 }
             }
             for (SoftwareMapping software : prepared.software()) {
+                addWarnings(response, software.subject(), software.warnings());
                 List<List<DatasetMapping.Reference>> categorySets;
                 try {
                     categorySets = categoriesByScheme(software.categories(), prepared);
                 } catch (IllegalArgumentException exception) {
-                    response.addWarnings(failure(software.subject(), Status.Code.INVALID_ARGUMENT, false, exception.getMessage()));
+                    response.addErrors(failure(software.subject(), Status.Code.INVALID_ARGUMENT, false, exception.getMessage()));
                     continue;
                 }
                 for (var categories : categorySets) {
@@ -116,7 +118,7 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
                                 new SoftwareRequestMapper().toRequest(copy, groupId, prepared.bindings()), actor);
                         if (!created.hasResource() || !validId(created.getResource().getResourceId())
                                 || !validId(created.getResource().getVersionId())) {
-                            response.addWarnings(failure(copy.subject(), Status.Code.INTERNAL, true));
+                            response.addErrors(failure(copy.subject(), Status.Code.INTERNAL, true));
                             continue;
                         }
                         response.addImported(Import.ImportedResource.newBuilder().setSubject(copy.subject())
@@ -126,12 +128,12 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
                                         : Import.ImportedResourceKind.IMPORTED_RESOURCE_KIND_SOFTWARE_SOURCE_CODE));
                     } catch (StatusRuntimeException exception) {
                         Status.Code code = exception.getStatus().getCode();
-                        response.addWarnings(failure(copy.subject(), code, outcomeUnknown(code), exception.getStatus().getDescription()));
+                        response.addErrors(failure(copy.subject(), code, outcomeUnknown(code), exception.getStatus().getDescription()));
                     } catch (java.io.IOException exception) {
-                        response.addWarnings(failure(copy.subject(), Status.Code.UNAVAILABLE, true,
+                        response.addErrors(failure(copy.subject(), Status.Code.UNAVAILABLE, true,
                                 "Unable to manage scheme identities"));
                     } catch (IllegalArgumentException exception) {
-                        response.addWarnings(failure(copy.subject(), Status.Code.INVALID_ARGUMENT, false, exception.getMessage()));
+                        response.addErrors(failure(copy.subject(), Status.Code.INVALID_ARGUMENT, false, exception.getMessage()));
                     }
                 }
             }
@@ -189,7 +191,7 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
                 var description = entityMapper.map(model, reference, true).description();
                 descriptions.put(reference, description);
                 if (reference.kind() == DatasetMapping.ReferenceKind.CONTACT_POINT
-                        && (!description.fields().containsKey("email") || !description.fields().containsKey("role"))) continue;
+                        && !description.fields().containsKey("email")) continue;
                 if (!bindings.contains(reference)) validateEntityDescription(reference, description);
             }
             return new PreparedImport(datasets, software, bindings, profile.id(), profile.version(), schemeByIri, categoryByIri,
@@ -208,6 +210,11 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
         };
     }
 
+    private static void addWarnings(Import.ImportResourcesResponse.Builder response, String subject, List<String> warnings) {
+        warnings.stream().distinct().sorted().forEach(message -> response.addWarnings(Import.ImportWarning.newBuilder()
+                .setSubject(subject).setMessage(message)));
+    }
+
     private static List<List<DatasetMapping.Reference>> categoriesByScheme(List<DatasetMapping.Reference> categories,
                                                                             PreparedImport prepared) {
         var byScheme = new java.util.TreeMap<String, List<DatasetMapping.Reference>>();
@@ -223,14 +230,14 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
         return new DatasetMapping(dataset.subject(), dataset.title(), dataset.description(), dataset.keywords(), dataset.spatialCoverage(),
                 dataset.temporalCoverage(), dataset.accrualPeriodicity(), dataset.accessRight(), dataset.qualityAnnotation(), dataset.created(),
                 dataset.updated(), dataset.identifiers(), dataset.providers(), dataset.contactPoints(), categories, dataset.distributions(),
-                dataset.unsupportedPredicates());
+                dataset.unsupportedPredicates(), dataset.warnings());
     }
 
     private static SoftwareMapping withCategories(SoftwareMapping software, List<DatasetMapping.Reference> categories) {
         return new SoftwareMapping(software.subject(), software.kind(), software.name(), software.description(), software.keywords(),
                 software.mainEntityOfPage(), software.license(), software.version(), software.downloadUrl(), software.requirements(),
                 software.operatingSystem(), software.programmingLanguage(), software.repository(), software.runtimePlatform(),
-                software.identifiers(), software.creators(), categories, software.contactPoints());
+                software.identifiers(), software.creators(), categories, software.contactPoints(), software.warnings());
     }
 
     private void verifyReferences(java.util.List<DatasetMapping.Reference> references, String groupId,
@@ -250,8 +257,8 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
             var description = prepared.descriptions().get(reference);
             if (reference.kind() == DatasetMapping.ReferenceKind.CONTACT_POINT
                     && !prepared.bindings().contains(reference)
-                    && (description == null || !description.fields().containsKey("email") || !description.fields().containsKey("role"))) {
-                continue;
+                    && (description == null || !description.fields().containsKey("email"))) {
+                throw new IllegalArgumentException("contact point must provide an email: " + reference.iri());
             }
             String id;
             if (prepared.bindings().contains(reference)) {
@@ -481,7 +488,7 @@ public final class ResourceImportServer extends ResourceImportServiceGrpc.Resour
 
         private String createOrReuseContact(EntityDescription description, String actor) {
             if (contactKeys == null) contactKeys = new java.util.HashMap<>(upstream.listContactKeys(actor));
-            var key = new MetadataLifecycleClient.ContactKey(description.fields().get("email"), description.fields().get("role"));
+            var key = new MetadataLifecycleClient.ContactKey(description.fields().get("email"));
             String existing = contactKeys.get(key);
             if (existing != null) return existing;
             try {

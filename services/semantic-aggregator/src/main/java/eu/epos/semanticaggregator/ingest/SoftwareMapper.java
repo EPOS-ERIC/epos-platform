@@ -54,7 +54,8 @@ public final class SoftwareMapper {
         }
         String name = singleString(subject, property(model, mapping, "name"), true);
         String description = singleString(subject, property(model, mapping, "description"), true);
-        List<String> keywords = strings(subject, property(model, mapping, "keywords"));
+        var normalizedKeywords = KeywordNormalizer.normalize(strings(subject, property(model, mapping, "keywords")));
+        List<String> keywords = new ArrayList<>(normalizedKeywords.values());
         keywords.sort(String::compareTo);
         List<SoftwareMapping.Identifier> identifiers = identifiers(model, subject, mapping);
         identifiers.sort(java.util.Comparator.comparing(SoftwareMapping.Identifier::type)
@@ -67,7 +68,8 @@ public final class SoftwareMapper {
                 stringField(model, subject, mapping, "runtime_platform"), List.copyOf(identifiers),
                 references(subject, property(model, mapping, "creators"), DatasetMapping.ReferenceKind.ORGANIZATION),
                 references(subject, property(model, mapping, "categories"), DatasetMapping.ReferenceKind.CATEGORY),
-                references(subject, property(model, mapping, "contact_points"), DatasetMapping.ReferenceKind.CONTACT_POINT));
+                references(subject, property(model, mapping, "contact_points"), DatasetMapping.ReferenceKind.CONTACT_POINT),
+                normalizedKeywords.warnings());
     }
 
     private static List<SoftwareMapping.Identifier> identifiers(Model model, Resource subject, MappingProfile.SoftwareMapping mapping) {

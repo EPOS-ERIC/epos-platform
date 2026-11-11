@@ -80,8 +80,8 @@ public final class PublishedGraphBuilder implements AggregateRefresh.Builder {
         text(target, DCT + "title", source.getTitle());
         text(target, DCT + "description", source.getDescription());
         for (String keyword : source.getKeywordsList()) text(target, DCAT + "keyword", keyword);
-        optional(target, DCT + "accrualPeriodicity", source.hasAccrualPeriodicity(), source.getAccrualPeriodicity());
-        optional(target, DCT + "accessRights", source.hasAccessRight(), source.getAccessRight());
+        optional(target, DCT + "accrualPeriodicity", source.hasAccrualPeriodicity(), source.getAccrualPeriodicity().name());
+        optional(target, DCT + "accessRights", source.hasAccessRight(), source.getAccessRight().name());
         optional(target, "http://www.w3.org/ns/dqv#hasQualityAnnotation", source.hasQualityAnnotation(), source.getQualityAnnotation());
         optional(target, "http://purl.org/dc/terms/spatial", source.hasSpatialCoverage(), source.getSpatialCoverage());
         addTimestamp(target, DCT + "created", source.getCreated());
@@ -112,8 +112,6 @@ public final class PublishedGraphBuilder implements AggregateRefresh.Builder {
         text(distribution, DCT + "title", source.getTitle());
         text(distribution, DCT + "description", source.getDescription());
         optional(distribution, DCT + "license", source.hasLicense(), source.getLicense());
-        addTimestamp(distribution, DCT + "issued", source.getIssued());
-        addTimestamp(distribution, DCT + "modified", source.getModified());
         if (source.hasByteSize()) distribution.addLiteral(property(DCAT + "byteSize"), source.getByteSize());
         if (source.hasDownloadableFile()) {
             distribution.addProperty(property(DCAT + "downloadURL"), model.createResource(source.getDownloadableFile().getUrl()));
@@ -129,8 +127,6 @@ public final class PublishedGraphBuilder implements AggregateRefresh.Builder {
     private static void mapWebService(Model model, org.apache.jena.rdf.model.Resource distribution, Resource.WebService source) {
         var service = model.createResource(distribution.getURI() + "/service/" + source.getId());
         service.addProperty(property(RDF + "type"), model.createResource(DCAT + "DataService"));
-        text(service, DCT + "title", source.getName());
-        optional(service, DCT + "description", source.hasDescription(), source.getDescription());
         service.addLiteral(property(EPOS + "webServiceType"), source.getType().name());
         if (!source.getProviderReference().getId().isEmpty()) {
             service.addProperty(property(DCT + "publisher"), entity(model, "organization", source.getProviderReference().getId()));
@@ -138,13 +134,8 @@ public final class PublishedGraphBuilder implements AggregateRefresh.Builder {
         for (String contactId : source.getContactPointsList()) {
             service.addProperty(property(DCAT + "contactPoint"), entity(model, "contact-point", contactId));
         }
-        optional(service, DCT + "spatial", source.hasSpatialCoverage(), source.getSpatialCoverage());
-        if (source.hasTemporalCoverage()) {
-            addTimestamp(service, SCHEMA + "startDate", source.getTemporalCoverage().getStart());
-            addTimestamp(service, SCHEMA + "endDate", source.getTemporalCoverage().getEnd());
-        }
-        if (!source.getDocumentation().getUri().isEmpty()) {
-            service.addProperty(property("http://xmlns.com/foaf/0.1/page"), model.createResource(source.getDocumentation().getUri()));
+        if (source.hasDocumentationUri()) {
+            service.addProperty(property("http://xmlns.com/foaf/0.1/page"), model.createResource(source.getDocumentationUri()));
         }
         distribution.addProperty(property(DCAT + "accessService"), service);
         switch (source.getConfigurationCase()) {
@@ -262,7 +253,7 @@ public final class PublishedGraphBuilder implements AggregateRefresh.Builder {
     }
 
     private static void mapIdentifiers(Model model, org.apache.jena.rdf.model.Resource target,
-                                       List<metadata_lifecycle.v1.Common.Identifier> identifiers) {
+                                       List<Resource.VersionedIdentifier> identifiers) {
         for (var identifier : identifiers) {
             var node = model.createResource();
             node.addLiteral(property("http://www.w3.org/2004/02/skos/core#notation"), identifier.getValue());

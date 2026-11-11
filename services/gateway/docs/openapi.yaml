@@ -4805,6 +4805,11 @@ components:
           $ref: "#/components/schemas/ImportResourceFailure"
         warnings:
           type: array
+          description: Automatic corrections applied while importing a resource.
+          items:
+            $ref: "#/components/schemas/ImportResourceWarning"
+        errors:
+          type: array
           description: Resources skipped while the remaining import completed.
           items:
             $ref: "#/components/schemas/ImportResourceFailure"
@@ -4829,6 +4834,12 @@ components:
         phase:
           type: string
           enum: [contact-resolution, dataset-creation, category-creation, organization-creation]
+    ImportResourceWarning:
+      type: object
+      required: [subject, message]
+      properties:
+        subject: { type: string, minLength: 1 }
+        message: { type: string, minLength: 1 }
 
     WriteResourceType:
       type: string

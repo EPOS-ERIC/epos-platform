@@ -25,11 +25,11 @@ class ReferenceBindingsTest {
     }
 
     @Test
-    void rejectsTwoIrisBoundToTheSameEntityInOneList() {
+    void deduplicatesTwoIrisBoundToTheSameEntityInOneList() {
         var bindings = new ReferenceBindings();
         bindings.register(ORGANIZATION, "https://example.org/a", ID);
         bindings.register(ORGANIZATION, "https://example.org/b", ID);
-        assertThrows(IllegalArgumentException.class, () -> bindings.resolveAll(List.of(
+        assertEquals(List.of(ID), bindings.resolveAll(List.of(
                 new DatasetMapping.Reference(ORGANIZATION, "https://example.org/a"),
                 new DatasetMapping.Reference(ORGANIZATION, "https://example.org/b"))));
     }

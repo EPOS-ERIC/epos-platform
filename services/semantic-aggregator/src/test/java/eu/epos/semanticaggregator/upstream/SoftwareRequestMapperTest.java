@@ -57,4 +57,16 @@ class SoftwareRequestMapperTest {
         assertEquals("Source", request.getSoftwareSourceCode().getName());
         assertEquals("", request.getSoftwareSourceCode().getDescription());
     }
+
+    @Test
+    void reportsTheInvalidKeyword() {
+        var mapping = new SoftwareMapping("https://example.org/source", SoftwareMapping.Kind.SOURCE_CODE, "Source", null,
+                List.of("notebook/jupyter"), null, null, null, null, null, null, null, null, null,
+                List.of(), List.of(), List.of(), List.of());
+
+        var error = assertThrows(IllegalArgumentException.class,
+                () -> new SoftwareRequestMapper().toRequest(mapping, GROUP, new ReferenceBindings()));
+
+        assertEquals("invalid keyword: notebook/jupyter", error.getMessage());
+    }
 }

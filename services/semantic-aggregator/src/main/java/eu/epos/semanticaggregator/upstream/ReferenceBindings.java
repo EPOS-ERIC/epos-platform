@@ -70,8 +70,7 @@ public final class ReferenceBindings {
         for (var reference : references) {
             if (reference.kind() == DatasetMapping.ReferenceKind.CONTACT_POINT && !contains(reference)) continue;
             String id = resolve(reference);
-            if (!seen.add(id)) throw new IllegalArgumentException("multiple references map to the same entity: " + id);
-            result.add(id);
+            if (seen.add(id)) result.add(id);
         }
         return List.copyOf(result);
     }
