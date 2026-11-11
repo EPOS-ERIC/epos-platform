@@ -31,7 +31,7 @@
             <label><span>Name *</span><input #scalarNameInput class="app-input" [ngModel]="parameter.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateParameterName(parameter, $event, scalarNameInput)" required /></label>
             <label><span>Label *</span><input class="app-input" [(ngModel)]="parameter.label" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required /></label>
             <label class="scalar-full"><span>Description</span><textarea class="app-input" rows="2" [(ngModel)]="parameter.description" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()"></textarea></label>
-            <label><span>Semantic role</span><select class="app-input" [(ngModel)]="parameter.role" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()">@for (role of roles(); track role) { <option [ngValue]="role">{{ role || 'None' }}</option> }</select></label>
+            <label><span>Semantic role</span><select class="app-input" [(ngModel)]="parameter.role" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()">@for (role of roles(); track role) { <option [ngValue]="role">{{ enumLabel(role) }}</option> }</select></label>
             <label class="scalar-check"><input type="checkbox" [(ngModel)]="parameter.required" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /> Required</label>
             <label class="scalar-check"><input type="checkbox" [(ngModel)]="parameter.readOnly" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /> Read only</label>
           </div>

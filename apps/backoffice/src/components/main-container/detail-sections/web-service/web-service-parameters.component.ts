@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import { AppIconComponent } from '../../../../shared/ui/app-icon.component';
 import type { DatasetEnumOptionForm, DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
+import { enumLabel } from '../../../../shared/enum-label';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 import { DefaultValuesEditorComponent } from './default-values-editor.component';
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
@@ -22,6 +23,7 @@ interface ParameterListItem {
   styleUrl: './web-service-parameters.component.css'
 })
 export class WebServiceParametersComponent implements OnChanges {
+  protected readonly enumLabel = enumLabel;
   @Input() model: DatasetWebServiceParameterForm[] = [];
   @Input() comparisonModel: DatasetWebServiceParameterForm[] = [];
   @Input() disabled = false;

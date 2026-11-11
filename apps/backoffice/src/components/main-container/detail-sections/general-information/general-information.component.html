@@ -33,7 +33,7 @@
       <select class="app-input" [(ngModel)]="model.accrualPeriodicity" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()">
         <option value="">Not specified</option>
         @for (periodicity of accrualPeriodicities; track periodicity) {
-          <option [value]="periodicity">{{ periodicity }}</option>
+          <option [value]="periodicity">{{ enumLabel(periodicity) }}</option>
         }
       </select>
     </label>

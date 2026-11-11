@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import type { DatasetDetailForm } from '../../../../models/dataset-detail-form';
+import { enumLabel } from '../../../../shared/enum-label';
 import { KeywordChipsComponent } from '../../../../shared/ui/keyword-chips.component';
 
 @Component({
@@ -11,6 +12,7 @@ import { KeywordChipsComponent } from '../../../../shared/ui/keyword-chips.compo
   styleUrl: './general-information.component.css'
 })
 export class GeneralInformationComponent {
+  protected readonly enumLabel = enumLabel;
   protected readonly accrualPeriodicities: readonly Exclude<DatasetDetailForm['accrualPeriodicity'], ''>[] = [
     'TRIENNIAL', 'BIENNIAL', 'ANNUAL', 'SEMIANNUAL', 'THREE_TIMES_A_YEAR', 'QUARTERLY',
     'BIMONTHLY', 'MONTHLY', 'SEMIMONTHLY', 'BIWEEKLY', 'THREE_TIMES_A_MONTH', 'WEEKLY',

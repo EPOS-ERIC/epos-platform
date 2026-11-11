@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import type { DatasetEnumOptionForm, DatasetWebServiceScalarParameterForm } from '../../../../models/dataset-detail-form';
+import { enumLabel } from '../../../../shared/enum-label';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
 import { DefaultValuesEditorComponent } from './default-values-editor.component';
 
@@ -16,6 +17,7 @@ type ScalarParameterKind = DatasetWebServiceScalarParameterForm['kind'];
   styleUrl: './scalar-parameters-editor.component.css'
 })
 export class ScalarParametersEditorComponent {
+  protected readonly enumLabel = enumLabel;
   @Input() model: DatasetWebServiceScalarParameterForm[] = [];
   @Input() disabled = false;
   @Input() dynamic = false;

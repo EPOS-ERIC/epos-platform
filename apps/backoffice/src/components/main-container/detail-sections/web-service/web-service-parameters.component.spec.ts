@@ -190,8 +190,8 @@ describe('WebServiceParametersComponent', () => {
       .find((field) => field.querySelector('.detail-label')?.textContent?.trim() === 'Semantic role');
     const options = Array.from((roleField?.querySelector('select') as HTMLSelectElement).options)
       .map((option) => option.textContent?.trim());
-    expect(options).toContain('LONGITUDE');
-    expect(options).toContain('LATITUDE');
+    expect(options).toContain('Longitude');
+    expect(options).toContain('Latitude');
   });
 
   it('reorders parameters from the drag handle and updates every position', async () => {
