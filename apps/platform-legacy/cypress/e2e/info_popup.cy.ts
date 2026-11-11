@@ -142,19 +142,16 @@ describe('Test info popup', () => {
     cy.getByDataCy('details-dialog-service-value').then(($values) => {
       cy.getByDataCy('details-dialog-service-key').then(($keys) => {
 
-        expect($values).to.have.length(5);
+        expect($values).to.have.length(3);
+        expect([...$keys].map(key => key.textContent.trim())).to.deep.equal([
+          'Service Provider', 'Service Endpoint', 'Service Documentation',
+        ]);
         // Check if the values are populated correctly
         $values.each((i, value) => {
           const key = $keys[i].textContent.trim();
           const val = value.textContent.trim();
 
           switch (key) {
-            case 'Service Name':
-              expect(val).to.eq('GNSS Stations With Products');
-              break;
-            case 'Service Description':
-              expect(val).to.eq('Displays the GNSS stations that provide GNSS Products on the map. Returns their metadata as a json, geojson, or csv file.');
-              break;
             case 'Service Provider':
               expect(val).to.eq('UBI - University of Beira Interior');
               break;
