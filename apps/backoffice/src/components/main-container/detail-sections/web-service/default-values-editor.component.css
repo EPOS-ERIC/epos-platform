@@ -1,0 +1,52 @@
+:host {
+  display: block;
+  min-width: 0;
+  align-self: start;
+}
+
+.default-values-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.default-values-title {
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.default-values-list {
+  display: grid;
+  gap: 8px;
+  max-height: 128px;
+  padding-right: 4px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.default-value-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.default-value-remove,
+.default-value-add {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.default-value-remove {
+  color: #b91c1c;
+}
+
+.default-value-add {
+  justify-self: start;
+  padding: 2px 0;
+  color: var(--olive-700);
+}

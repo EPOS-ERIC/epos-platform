@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import type { DatasetEnumOptionForm, DatasetWebServiceScalarParameterForm } from '../../../../models/dataset-detail-form';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
+import { DefaultValuesEditorComponent } from './default-values-editor.component';
 
 type ScalarParameterKind = DatasetWebServiceScalarParameterForm['kind'];
 
@@ -10,7 +11,7 @@ type ScalarParameterKind = DatasetWebServiceScalarParameterForm['kind'];
 // (= parameters used inside of the Template parameters; do not have 'location', 'explode' and 'multiple_values' (but they have enum for options) properties)
 @Component({
   selector: 'app-scalar-parameters-editor',
-  imports: [AllowedValuesEditorComponent, FormsModule],
+  imports: [AllowedValuesEditorComponent, DefaultValuesEditorComponent, FormsModule],
   templateUrl: './scalar-parameters-editor.component.html',
   styleUrl: './scalar-parameters-editor.component.css'
 })
@@ -95,7 +96,4 @@ export class ScalarParametersEditorComponent {
     }
   }
 
-  protected splitDefaultValues(value: string): string[] {
-    return value.split(',').map((item) => item.trim()).filter(Boolean);
-  }
 }

@@ -9,6 +9,10 @@
   margin-top: 14px;
 }
 
+.distribution-parameter-grid > * {
+  align-self: start;
+}
+
 .parameter-table {
   border: 1px solid var(--line);
 }

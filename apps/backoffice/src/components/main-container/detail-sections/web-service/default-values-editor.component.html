@@ -1,0 +1,26 @@
+<section class="default-values-editor">
+  <span class="default-values-title">Default values</span>
+  <div class="default-values-list">
+    @for (value of displayedValues(); track $index) {
+      <div class="default-value-row">
+        <input
+          class="app-input"
+          type="text"
+          [attr.inputmode]="kind === 'STRING' ? null : 'decimal'"
+          [attr.aria-label]="'Default value ' + ($index + 1)"
+          [ngModel]="value"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="updateValue($index, $event)"
+          [disabled]="disabled"
+          [placeholder]="'Default value ' + ($index + 1)"
+        />
+        @if (!disabled && allowMultiple && displayedValues().length > 1) {
+          <button type="button" class="default-value-remove" (click)="removeValue($index)">Remove</button>
+        }
+      </div>
+    }
+  </div>
+  @if (!disabled && allowMultiple) {
+    <button type="button" class="default-value-add" (click)="addValue()">+ Add value</button>
+  }
+</section>

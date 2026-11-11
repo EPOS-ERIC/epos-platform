@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AppIconComponent } from '../../../../shared/ui/app-icon.component';
 import type { DatasetEnumOptionForm, DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
 import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
+import { DefaultValuesEditorComponent } from './default-values-editor.component';
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
 
 type ParameterFormKind = DatasetWebServiceParameterForm['kind'];
@@ -16,7 +17,7 @@ interface ParameterListItem {
 
 @Component({
   selector: 'app-web-service-parameters',
-  imports: [AllowedValuesEditorComponent, AppIconComponent, FormsModule, ScalarParametersEditorComponent],
+  imports: [AllowedValuesEditorComponent, AppIconComponent, DefaultValuesEditorComponent, FormsModule, ScalarParametersEditorComponent],
   templateUrl: './web-service-parameters.component.html',
   styleUrl: './web-service-parameters.component.css'
 })
@@ -333,7 +334,10 @@ export class WebServiceParametersComponent implements OnChanges {
   protected onMultipleValuesChange(
     parameter: Extract<DatasetWebServiceParameterForm, { kind: 'STRING' | 'INTEGER' | 'FLOAT' }>,
   ): void {
-    if (!parameter.multipleValues) parameter.explode = false;
+    if (!parameter.multipleValues) {
+      parameter.explode = false;
+      parameter.defaultValue = parameter.defaultValue.slice(0, 1);
+    }
     this.emitModelChange();
   }
 
@@ -418,7 +422,4 @@ export class WebServiceParametersComponent implements OnChanges {
     }
   }
 
-  protected splitDefaultValues(value: string): string[] {
-    return value.split(',').map((item) => item.trim()).filter(Boolean);
-  }
 }
