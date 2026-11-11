@@ -506,49 +506,6 @@ func (ns NullRoleRequestStatus) Value() (driver.Value, error) {
 	return string(ns.RoleRequestStatus), nil
 }
 
-type TopLevelConcept string
-
-const (
-	TopLevelConceptDATA       TopLevelConcept = "DATA"
-	TopLevelConceptFACILITIES TopLevelConcept = "FACILITIES"
-	TopLevelConceptSOFTWARE   TopLevelConcept = "SOFTWARE"
-)
-
-func (e *TopLevelConcept) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = TopLevelConcept(s)
-	case string:
-		*e = TopLevelConcept(s)
-	default:
-		return fmt.Errorf("unsupported scan type for TopLevelConcept: %T", src)
-	}
-	return nil
-}
-
-type NullTopLevelConcept struct {
-	TopLevelConcept TopLevelConcept
-	Valid           bool // Valid is true if TopLevelConcept is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullTopLevelConcept) Scan(value interface{}) error {
-	if value == nil {
-		ns.TopLevelConcept, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.TopLevelConcept.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullTopLevelConcept) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.TopLevelConcept), nil
-}
-
 type UserStatus string
 
 const (
@@ -830,6 +787,11 @@ type Category struct {
 	UpdatedAt        time.Time
 }
 
+type Concept struct {
+	ID   uuid.UUID
+	Name string
+}
+
 type ContactPoint struct {
 	ID    uuid.UUID
 	Email string
@@ -947,7 +909,7 @@ type Group struct {
 	ID          uuid.UUID
 	Name        string
 	Description *string
-	Concept     TopLevelConcept
+	ConceptID   uuid.UUID
 	Label       *string
 	Logo        *string
 	Page        *string

@@ -329,22 +329,24 @@ SELECT
     version.status,
     version.name,
     version.updated_at,
-    resource_group.concept,
+    resource_group.concept_id,
+    concept.name AS concept_name,
     version.created_by AS created_by_id,
     concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     software_applications AS resource
     JOIN software_application_versions AS version ON version.software_application_id = resource.id
     JOIN groups AS resource_group ON resource_group.id = resource.group_id
+    JOIN concepts AS concept ON concept.id = resource_group.concept_id
     JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         $1::text []::resource_status []
     )
     AND (
-        cardinality($2::text []) = 0
-        OR resource_group.concept = ANY(
-            $2::text []::top_level_concept []
+        cardinality($2::uuid []) = 0
+        OR resource_group.concept_id = ANY(
+            $2::uuid []
         )
     )
     AND (
@@ -427,7 +429,7 @@ WHERE
 
 type SearchDiscoveryApplicationsParams struct {
 	VersioningStatuses []string
-	Concepts           []string
+	Concepts           []uuid.UUID
 	GroupID            *uuid.UUID
 	SpatialFilter      go_geom.T
 	DateFrom           *time.Time
@@ -447,7 +449,8 @@ type SearchDiscoveryApplicationsRow struct {
 	Status        ResourceStatus
 	Name          string
 	UpdatedAt     time.Time
-	Concept       TopLevelConcept
+	ConceptID     uuid.UUID
+	ConceptName   string
 	CreatedByID   string
 	CreatedByName string
 }
@@ -481,7 +484,8 @@ func (q *Queries) SearchDiscoveryApplications(ctx context.Context, arg SearchDis
 			&i.Status,
 			&i.Name,
 			&i.UpdatedAt,
-			&i.Concept,
+			&i.ConceptID,
+			&i.ConceptName,
 			&i.CreatedByID,
 			&i.CreatedByName,
 		); err != nil {
@@ -504,22 +508,24 @@ SELECT
     version.status,
     version.title AS name,
     version.updated_at,
-    resource_group.concept,
+    resource_group.concept_id,
+    concept.name AS concept_name,
     version.created_by AS created_by_id,
     concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     datasets AS dataset
     JOIN dataset_versions AS version ON version.dataset_id = dataset.id
     JOIN groups AS resource_group ON resource_group.id = dataset.group_id
+    JOIN concepts AS concept ON concept.id = resource_group.concept_id
     JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         $1::text []::resource_status []
     )
     AND (
-        cardinality($2::text []) = 0
-        OR resource_group.concept = ANY(
-            $2::text []::top_level_concept []
+        cardinality($2::uuid []) = 0
+        OR resource_group.concept_id = ANY(
+            $2::uuid []
         )
     )
     AND (
@@ -635,7 +641,7 @@ ORDER BY
 
 type SearchDiscoveryDatasetsParams struct {
 	VersioningStatuses []string
-	Concepts           []string
+	Concepts           []uuid.UUID
 	GroupID            *uuid.UUID
 	Query              *string
 	SpatialFilter      go_geom.T
@@ -655,7 +661,8 @@ type SearchDiscoveryDatasetsRow struct {
 	Status        ResourceStatus
 	Name          string
 	UpdatedAt     time.Time
-	Concept       TopLevelConcept
+	ConceptID     uuid.UUID
+	ConceptName   string
 	CreatedByID   string
 	CreatedByName string
 }
@@ -689,7 +696,8 @@ func (q *Queries) SearchDiscoveryDatasets(ctx context.Context, arg SearchDiscove
 			&i.Status,
 			&i.Name,
 			&i.UpdatedAt,
-			&i.Concept,
+			&i.ConceptID,
+			&i.ConceptName,
 			&i.CreatedByID,
 			&i.CreatedByName,
 		); err != nil {
@@ -712,22 +720,24 @@ SELECT
     version.status,
     version.name,
     version.updated_at,
-    resource_group.concept,
+    resource_group.concept_id,
+    concept.name AS concept_name,
     version.created_by AS created_by_id,
     concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     software_source_codes AS resource
     JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
     JOIN groups AS resource_group ON resource_group.id = resource.group_id
+    JOIN concepts AS concept ON concept.id = resource_group.concept_id
     JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         $1::text []::resource_status []
     )
     AND (
-        cardinality($2::text []) = 0
-        OR resource_group.concept = ANY(
-            $2::text []::top_level_concept []
+        cardinality($2::uuid []) = 0
+        OR resource_group.concept_id = ANY(
+            $2::uuid []
         )
     )
     AND (
@@ -810,7 +820,7 @@ WHERE
 
 type SearchDiscoverySourceCodesParams struct {
 	VersioningStatuses []string
-	Concepts           []string
+	Concepts           []uuid.UUID
 	GroupID            *uuid.UUID
 	SpatialFilter      go_geom.T
 	DateFrom           *time.Time
@@ -830,7 +840,8 @@ type SearchDiscoverySourceCodesRow struct {
 	Status        ResourceStatus
 	Name          string
 	UpdatedAt     time.Time
-	Concept       TopLevelConcept
+	ConceptID     uuid.UUID
+	ConceptName   string
 	CreatedByID   string
 	CreatedByName string
 }
@@ -864,7 +875,8 @@ func (q *Queries) SearchDiscoverySourceCodes(ctx context.Context, arg SearchDisc
 			&i.Status,
 			&i.Name,
 			&i.UpdatedAt,
-			&i.Concept,
+			&i.ConceptID,
+			&i.ConceptName,
 			&i.CreatedByID,
 			&i.CreatedByName,
 		); err != nil {

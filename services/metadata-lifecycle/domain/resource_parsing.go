@@ -113,20 +113,6 @@ func validateCategory(value CategoryMetadata) error {
 	if value.ID == uuid.Nil || strings.TrimSpace(value.Name) == "" {
 		return fmt.Errorf("category requires ID and name: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	if value.Scheme.ID != uuid.Nil || value.Scheme.Name != "" || value.Scheme.Concept != "" {
-		if _, err := NewGroup(value.Scheme.ID, GroupInput{
-			Name:        value.Scheme.Name,
-			Description: value.Scheme.Description,
-			Label:       value.Scheme.Label,
-			Logo:        value.Scheme.Logo,
-			Page:        value.Scheme.Page,
-			Color:       value.Scheme.Color,
-			Position:    value.Scheme.Position,
-			Concept:     value.Scheme.Concept,
-		}); err != nil {
-			return fmt.Errorf("category scheme: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
-		}
-	}
 	for _, child := range value.Children {
 		if err := validateCategory(child); err != nil {
 			return err

@@ -721,7 +721,7 @@ const getLifecycleSoftwareApplicationVersion = `-- name: GetLifecycleSoftwareApp
 SELECT
     version.id, version.software_application_id, version.status, version.revision, version.name, version.description, version.main_entity_of_page, version.license, version.version, version.keywords, version.download_url, version.requirements, version.operating_system, version.created_by, version.created_at, version.updated_at, version.submitted_by, version.submitted_at, version.published_by, version.published_at, version.archived_by, version.archived_at, version.rejected_by, version.rejected_at, version.rejection_note,
     application.id, application.group_id, application.created_by, application.created_at,
-    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept_id, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     software_application_versions AS version
     JOIN software_applications AS application ON application.id = version.software_application_id
@@ -778,7 +778,7 @@ func (q *Queries) GetLifecycleSoftwareApplicationVersion(ctx context.Context, ar
 		&i.Group.ID,
 		&i.Group.Name,
 		&i.Group.Description,
-		&i.Group.Concept,
+		&i.Group.ConceptID,
 		&i.Group.Label,
 		&i.Group.Logo,
 		&i.Group.Page,
@@ -836,7 +836,7 @@ func (q *Queries) GetPublishedLifecycleSoftwareApplicationVersion(ctx context.Co
 const listLifecycleSoftwareApplicationCategories = `-- name: ListLifecycleSoftwareApplicationCategories :many
 SELECT
     category.id, category.group_id, category.parent_category_id, category.name, category.created_at, category.updated_at,
-    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept_id, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     software_application_version_categories AS link
     JOIN categories AS category ON category.id = link.category_id
@@ -871,7 +871,7 @@ func (q *Queries) ListLifecycleSoftwareApplicationCategories(ctx context.Context
 			&i.Group.ID,
 			&i.Group.Name,
 			&i.Group.Description,
-			&i.Group.Concept,
+			&i.Group.ConceptID,
 			&i.Group.Label,
 			&i.Group.Logo,
 			&i.Group.Page,

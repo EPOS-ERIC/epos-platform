@@ -36,7 +36,7 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 	result := domain.ImportResult{Warnings: batch.Warnings}
 
 	err := dbtx.RunWithTx(ctx, r.db, r.q, func(q *sqlc.Queries, tx pgx.Tx) error {
-		groupIDs, err := importGroups(ctx, tx, q, batch.CategorySchemes, &result)
+		groupIDs, err := importGroups(ctx, tx, q, batch.Groups, &result)
 		if err != nil {
 			return err
 		}
@@ -174,7 +174,7 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID str
 		return fmt.Errorf("software application %q: %w", value.ID, err)
 	}
 	remapSoftwareApplicationReferences(&value, organizationIDs, contactIDs, categoryIDs)
-	existing, err := q.GetImportSoftwareApplication(ctx, value.ID)
+	_, err = q.GetImportSoftwareApplication(ctx, value.ID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		logical, err := q.CreateImportSoftwareApplication(ctx, sqlc.CreateImportSoftwareApplicationParams{
 			ID:        value.ID,
@@ -191,38 +191,18 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID str
 		if err := softwareapplicationsdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
 			return fmt.Errorf("persist imported application metadata: %w", err)
 		}
+		if _, err := q.SubmitLifecycleSoftwareApplicationVersion(ctx, sqlc.SubmitLifecycleSoftwareApplicationVersionParams{ID: version.ID, ActorID: &actorID}); err != nil {
+			return fmt.Errorf("submit imported application: %w", err)
+		}
+		if _, err := q.PublishLifecycleSoftwareApplicationVersion(ctx, sqlc.PublishLifecycleSoftwareApplicationVersionParams{VersionID: version.ID, ActorID: &actorID}); err != nil {
+			return fmt.Errorf("publish imported application: %w", err)
+		}
 		return nil
 	}
 	if err != nil {
 		return fmt.Errorf("load imported application: %w", err)
 	}
-	if existing.GroupID != groupID {
-		return fmt.Errorf("application %q belongs to another group: %w", value.ID, apperror.Default(apperror.CodeConflict))
-	}
-	if existing.ActiveVersionID == nil {
-		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwareapplicationsdb.ToCreateVersionParams(existing.ID, actorID, value.Input()))
-		if err != nil {
-			return fmt.Errorf("create imported application draft: %w", err)
-		}
-		if err := softwareapplicationsdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
-			return fmt.Errorf("persist imported application metadata: %w", err)
-		}
-		return nil
-	}
-	if *existing.ActiveStatus != sqlc.ResourceStatusDRAFT {
-		return fmt.Errorf("application %q has non-draft active change: %w", value.ID, apperror.Default(apperror.CodeConflict))
-	}
-	version, err := q.ReplaceLifecycleSoftwareApplicationDraft(ctx, softwareapplicationsdb.ToReplaceDraftParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, value.Input()))
-	if err != nil {
-		return fmt.Errorf("replace imported application draft: %w", err)
-	}
-	if err := q.DeleteLifecycleSoftwareApplicationVersionChildren(ctx, &version.ID); err != nil {
-		return fmt.Errorf("clear imported application draft: %w", err)
-	}
-	if err := softwareapplicationsdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
-		return fmt.Errorf("persist imported application metadata: %w", err)
-	}
-	return nil
+	return fmt.Errorf("application %q already exists: %w", value.ID, apperror.Default(apperror.CodeConflict))
 }
 
 //nolint:dupl // Typed application and source-code imports use distinct SQLC operations.
@@ -232,7 +212,7 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 		return fmt.Errorf("software source code %q: %w", value.ID, err)
 	}
 	remapSoftwareSourceCodeReferences(&value, organizationIDs, contactIDs, categoryIDs)
-	existing, err := q.GetImportSoftwareSourceCode(ctx, value.ID)
+	_, err = q.GetImportSoftwareSourceCode(ctx, value.ID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		logical, err := q.CreateImportSoftwareSourceCode(ctx, sqlc.CreateImportSoftwareSourceCodeParams{
 			ID:        value.ID,
@@ -249,47 +229,27 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 		if err := softwaresourcecodesdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
 			return fmt.Errorf("persist imported source code metadata: %w", err)
 		}
+		if _, err := q.SubmitLifecycleSoftwareSourceCodeVersion(ctx, sqlc.SubmitLifecycleSoftwareSourceCodeVersionParams{ID: version.ID, ActorID: &actorID}); err != nil {
+			return fmt.Errorf("submit imported source code: %w", err)
+		}
+		if _, err := q.PublishLifecycleSoftwareSourceCodeVersion(ctx, sqlc.PublishLifecycleSoftwareSourceCodeVersionParams{VersionID: version.ID, ActorID: &actorID}); err != nil {
+			return fmt.Errorf("publish imported source code: %w", err)
+		}
 		return nil
 	}
 	if err != nil {
 		return fmt.Errorf("load imported source code: %w", err)
 	}
-	if existing.GroupID != groupID {
-		return fmt.Errorf("source code %q belongs to another group: %w", value.ID, apperror.Default(apperror.CodeConflict))
-	}
-	if existing.ActiveVersionID == nil {
-		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaresourcecodesdb.ToCreateVersionParams(existing.ID, actorID, value.Input()))
-		if err != nil {
-			return fmt.Errorf("create imported source code draft: %w", err)
-		}
-		if err := softwaresourcecodesdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
-			return fmt.Errorf("persist imported source code metadata: %w", err)
-		}
-		return nil
-	}
-	if *existing.ActiveStatus != sqlc.ResourceStatusDRAFT {
-		return fmt.Errorf("source code %q has non-draft active change: %w", value.ID, apperror.Default(apperror.CodeConflict))
-	}
-	version, err := q.ReplaceLifecycleSoftwareSourceCodeDraft(ctx, softwaresourcecodesdb.ToReplaceDraftParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, value.Input()))
-	if err != nil {
-		return fmt.Errorf("replace imported source code draft: %w", err)
-	}
-	if err := q.DeleteLifecycleSoftwareSourceCodeVersionChildren(ctx, &version.ID); err != nil {
-		return fmt.Errorf("clear imported source code draft: %w", err)
-	}
-	if err := softwaresourcecodesdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
-		return fmt.Errorf("persist imported source code metadata: %w", err)
-	}
-	return nil
+	return fmt.Errorf("source code %q already exists: %w", value.ID, apperror.Default(apperror.CodeConflict))
 }
 
 func softwareGroupID(categories []domain.CategoryMetadata, groupIDs map[uuid.UUID]uuid.UUID) (uuid.UUID, error) {
 	if len(categories) == 0 {
 		return uuid.Nil, fmt.Errorf("no category group: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	groupID, ok := groupIDs[categories[0].Scheme.ID]
+	groupID, ok := groupIDs[categories[0].GroupID]
 	if !ok {
-		return uuid.Nil, fmt.Errorf("unknown category scheme: %w", apperror.Default(apperror.CodeValidationFailed))
+		return uuid.Nil, fmt.Errorf("unknown category group: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	return groupID, nil
 }
@@ -318,25 +278,25 @@ func remapSoftwareSourceCodeReferences(value *domain.SoftwareSourceCodeMetadata,
 	}
 }
 
-func importGroups(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, schemes []domain.Group, result *domain.ImportResult) (map[uuid.UUID]uuid.UUID, error) {
-	ids := make(map[uuid.UUID]uuid.UUID, len(schemes))
-	for _, scheme := range schemes {
+func importGroups(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, groups []domain.ImportGroup, result *domain.ImportResult) (map[uuid.UUID]uuid.UUID, error) {
+	ids := make(map[uuid.UUID]uuid.UUID, len(groups))
+	for _, group := range groups {
 		var id uuid.UUID
-		imported, err := importEntity(ctx, tx, "category scheme", scheme.ID.String(), result, func() error {
+		imported, err := importEntity(ctx, tx, "group", group.ID.String(), result, func() error {
 			var err error
 			id, err = q.UpsertImportGroup(ctx, sqlc.UpsertImportGroupParams{
-				ID:          scheme.ID,
-				Name:        scheme.Name,
-				Description: scheme.Description,
-				Concept:     sqlc.TopLevelConcept(scheme.Concept),
-				Label:       scheme.Label,
-				Logo:        scheme.Logo,
-				Page:        scheme.Page,
-				Color:       scheme.Color,
-				Position:    scheme.Position,
+				ID:          group.ID,
+				Name:        group.Name,
+				Description: group.Description,
+				Concept:     string(group.Concept),
+				Label:       group.Label,
+				Logo:        group.Logo,
+				Page:        group.Page,
+				Color:       group.Color,
+				Position:    group.Position,
 			})
 			if err != nil {
-				return fmt.Errorf("upsert group %q: %w", scheme.ID, err)
+				return fmt.Errorf("upsert group %q: %w", group.ID, err)
 			}
 			return nil
 		})
@@ -346,7 +306,7 @@ func importGroups(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, schemes []dom
 		if !imported {
 			continue
 		}
-		ids[scheme.ID] = id
+		ids[group.ID] = id
 		result.Groups++
 	}
 	return ids, nil
@@ -571,12 +531,12 @@ func importCategories(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, batch dom
 	ids := make(map[uuid.UUID]uuid.UUID, len(batch.Categories))
 	groups := make(map[uuid.UUID]uuid.UUID, len(batch.Categories))
 	for _, category := range batch.Categories {
-		groupID, ok := groupIDs[category.Scheme.ID]
+		groupID, ok := groupIDs[category.GroupID]
 		if !ok {
 			addImportDiagnostic(result, domain.ImportDiagnostic{
 				Severity: domain.ImportSeverityError,
 				Subject:  category.ID.String(),
-				Message:  fmt.Sprintf("category skipped: category scheme %q is unavailable", category.Scheme.ID),
+				Message:  fmt.Sprintf("category skipped: group %q is unavailable", category.GroupID),
 			})
 			continue
 		}
@@ -814,9 +774,9 @@ func importDataset(
 	if len(value.Categories) == 0 {
 		return fmt.Errorf("dataset %q has no category group: %w", value.ID, apperror.Default(apperror.CodeValidationFailed))
 	}
-	groupID, ok := groupIDs[value.Categories[0].Scheme.ID]
+	groupID, ok := groupIDs[value.Categories[0].GroupID]
 	if !ok {
-		return fmt.Errorf("dataset %q references unknown category scheme: %w", value.ID, apperror.Default(apperror.CodeValidationFailed))
+		return fmt.Errorf("dataset %q references unknown group: %w", value.ID, apperror.Default(apperror.CodeValidationFailed))
 	}
 	valueInput := value.Input()
 	remapDatasetReferences(&valueInput, organizationIDs, contactIDs, categoryIDs)
@@ -825,7 +785,7 @@ func importDataset(
 		return fmt.Errorf("validate imported dataset %q: %w", value.ID, err)
 	}
 
-	existing, err := q.GetImportDataset(ctx, value.ID)
+	_, err = q.GetImportDataset(ctx, value.ID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		logical, createErr := q.CreateImportDataset(ctx, sqlc.CreateImportDatasetParams{
@@ -842,47 +802,22 @@ func importDataset(
 		}
 		version, createErr := q.CreateLifecycleDatasetVersion(ctx, params)
 		if createErr != nil {
-			return fmt.Errorf("create imported draft %q: %w", value.ID, createErr)
+			return fmt.Errorf("create imported dataset version %q: %w", value.ID, createErr)
 		}
 		if err := datasetdb.PersistChildren(ctx, q, version.ID, valueInput); err != nil {
 			return fmt.Errorf("persist imported dataset metadata: %w", err)
+		}
+		if _, err := q.SubmitLifecycleDatasetVersion(ctx, sqlc.SubmitLifecycleDatasetVersionParams{ID: version.ID, ActorID: &actorID}); err != nil {
+			return fmt.Errorf("submit imported dataset: %w", err)
+		}
+		if _, err := q.PublishLifecycleDatasetVersion(ctx, sqlc.PublishLifecycleDatasetVersionParams{VersionID: version.ID, ActorID: &actorID}); err != nil {
+			return fmt.Errorf("publish imported dataset: %w", err)
 		}
 		return nil
 	case err != nil:
 		return fmt.Errorf("load imported dataset %q: %w", value.ID, err)
-	case existing.GroupID != groupID:
-		return fmt.Errorf("dataset %q belongs to another group: %w", value.ID, apperror.Default(apperror.CodeConflict))
-	case existing.ActiveVersionID == nil:
-		params, buildErr := datasetdb.ToCreateVersionParams(existing.ID, actorID, valueInput)
-		if buildErr != nil {
-			return fmt.Errorf("build imported dataset version: %w", buildErr)
-		}
-		version, createErr := q.CreateLifecycleDatasetVersion(ctx, params)
-		if createErr != nil {
-			return fmt.Errorf("create imported draft %q: %w", value.ID, createErr)
-		}
-		if err := datasetdb.PersistChildren(ctx, q, version.ID, valueInput); err != nil {
-			return fmt.Errorf("persist imported dataset metadata: %w", err)
-		}
-		return nil
-	case *existing.ActiveStatus != sqlc.ResourceStatusDRAFT:
-		return fmt.Errorf("dataset %q has non-draft active change: %w", value.ID, apperror.Default(apperror.CodeConflict))
 	default:
-		params, buildErr := datasetdb.ToReplaceDraftParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, valueInput)
-		if buildErr != nil {
-			return fmt.Errorf("build imported draft replacement: %w", buildErr)
-		}
-		version, replaceErr := q.ReplaceLifecycleDatasetDraft(ctx, params)
-		if replaceErr != nil {
-			return fmt.Errorf("replace imported draft %q: %w", value.ID, replaceErr)
-		}
-		if err := q.DeleteLifecycleDatasetVersionChildren(ctx, &version.ID); err != nil {
-			return fmt.Errorf("clear imported draft %q: %w", value.ID, err)
-		}
-		if err := datasetdb.PersistChildren(ctx, q, version.ID, valueInput); err != nil {
-			return fmt.Errorf("persist imported dataset metadata: %w", err)
-		}
-		return nil
+		return fmt.Errorf("dataset %q already exists: %w", value.ID, apperror.Default(apperror.CodeConflict))
 	}
 }
 

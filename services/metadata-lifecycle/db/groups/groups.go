@@ -67,6 +67,10 @@ func (r *Repo) Create(ctx context.Context, input domain.GroupInput) (domain.Grou
 			return domain.Group{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("insert group: %w", err))
 		}
 
+		if ok && pgErr.Code == "23503" {
+			return domain.Group{}, apperror.Field("concept_id", "Concept does not exist.", err)
+		}
+
 		return domain.Group{}, fmt.Errorf("insert group: %w", err)
 	}
 
@@ -87,6 +91,10 @@ func (r *Repo) Replace(ctx context.Context, id uuid.UUID, input domain.GroupInpu
 		pgErr, ok := errors.AsType[*pgconn.PgError](err)
 		if ok && pgErr.Code == "23505" {
 			return domain.Group{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("update group: %w", err))
+		}
+
+		if ok && pgErr.Code == "23503" {
+			return domain.Group{}, apperror.Field("concept_id", "Concept does not exist.", err)
 		}
 
 		return domain.Group{}, fmt.Errorf("update group: %w", err)

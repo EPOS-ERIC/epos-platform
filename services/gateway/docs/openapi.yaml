@@ -41,6 +41,8 @@ tags:
     description: Read the fixed permission catalog.
   - name: Groups
     description: Read and manage groups and their categories.
+  - name: Concepts
+    description: Read and manage concepts that classify groups.
   - name: Contact Points
     description: Manage reusable metadata contact points.
   - name: Organizations
@@ -48,7 +50,7 @@ tags:
   - name: Memberships
     description: Request, review, and administer group membership and access.
   - name: Imports
-    description: Import RDF Turtle metadata into draft resources.
+    description: Import RDF Turtle metadata into published resources.
   - name: Sharing
     description: Store and retrieve shared workspace configurations.
   - name: Notifications
@@ -536,7 +538,7 @@ paths:
       tags:
         - Imports
       summary: Import Turtle metadata
-      description: Imports valid RDF Turtle metadata and creates or updates draft content. Invalid entities and invalid optional relations are skipped and reported in warnings. Requires global administrator access.
+      description: Imports valid RDF Turtle metadata and publishes new resources. Existing resources, invalid entities, and invalid optional relations are skipped and reported in warnings. Requires global administrator access.
       operationId: importTurtleMetadata
       security:
         - bearerAuth: []
@@ -1142,13 +1144,104 @@ paths:
                       description: "Geospatial data obtained from Satellite measurements"
                       label: "Satellite Data"
                       position: 0
-                      concept: "DATA"
+                      concept_id: "550e8400-e29b-41d4-a716-446655440002"
         default:
           description: Gateway error
           content:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /concepts:
+    get:
+      tags: [Concepts]
+      summary: List concepts
+      operationId: listConcepts
+      responses:
+        "200":
+          description: Concepts
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Concept" } }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+    post:
+      tags: [Concepts]
+      summary: Create concept
+      operationId: createConcept
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConceptInput" }
+      responses:
+        "201":
+          description: Concept created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Concept" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /concepts/{conceptId}:
+    parameters:
+      - name: conceptId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Concepts]
+      summary: Get concept
+      operationId: getConcept
+      responses:
+        "200":
+          description: Concept
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Concept" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+    put:
+      tags: [Concepts]
+      summary: Replace concept
+      operationId: replaceConcept
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConceptInput" }
+      responses:
+        "200":
+          description: Concept replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Concept" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+    delete:
+      tags: [Concepts]
+      summary: Delete concept
+      operationId: deleteConcept
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Concept deleted }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /groups/{groupId}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -2404,12 +2497,11 @@ components:
       explode: false
 
     ConceptFilter:
-      name: concept
+      name: conceptId
       in: query
       required: false
       description: |
-        Filter results to one or more catalogue concepts. Pass comma-separated
-        values in a single parameter: `?concept=DATA,SOFTWARE`.
+        Filter results by comma-separated concept UUIDs.
       schema:
         type: array
         items:
@@ -2904,7 +2996,8 @@ components:
         - global.notification.manage
         - global.organization.manage
         - global.contact_point.manage
-        - global.category_scheme.manage
+        - global.group.manage
+        - global.concept.manage
         - global.resource.create
         - global.resource.edit
         - global.resource.submit
@@ -3039,8 +3132,8 @@ components:
 
     DiscoveryConcept:
       type: string
-      description: Catalogue concept used to classify a resource.
-      enum: [DATA, FACILITIES, SOFTWARE]
+      format: uuid
+      description: Concept identifier.
 
     VersioningStatus:
       type: string
@@ -4869,7 +4962,7 @@ components:
         status:
           $ref: "#/components/schemas/VersioningStatus"
         updated_at: { type: string, format: date-time }
-        concept: { $ref: "#/components/schemas/DiscoveryConcept" }
+        concept: { $ref: "#/components/schemas/Reference" }
         created_by:
           description: Creator identity is returned only when caller may see
             identities for this resource group.
@@ -4940,7 +5033,7 @@ components:
         status:
           $ref: "#/components/schemas/VersioningStatus"
         updated_at: { type: string, format: date-time }
-        concept: { $ref: "#/components/schemas/DiscoveryConcept" }
+        concept: { $ref: "#/components/schemas/Reference" }
         created_by:
           description: Creator identity is returned only when caller may see
             identities for this resource group.
@@ -4973,7 +5066,7 @@ components:
         status:
           $ref: "#/components/schemas/VersioningStatus"
         updated_at: { type: string, format: date-time }
-        concept: { $ref: "#/components/schemas/DiscoveryConcept" }
+        concept: { $ref: "#/components/schemas/Reference" }
         created_by:
           description: Creator identity is returned only when caller may see
             identities for this resource group.
@@ -5100,9 +5193,21 @@ components:
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
         parent_category_id: { type: string, format: uuid, nullable: true }
+    Concept:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 1 }
+    ConceptInput:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name: { $ref: "#/components/schemas/NonBlankString" }
     CreateGroupRequest:
       type: object
-      required: [name, concept]
+      required: [name, concept_id]
       additionalProperties: false
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -5112,10 +5217,10 @@ components:
         page: { type: string, nullable: true, minLength: 1 }
         color: { type: string, nullable: true, minLength: 1 }
         position: { type: integer, format: int32 }
-        concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
+        concept_id: { type: string, format: uuid }
     ReplaceGroupRequest:
       type: object
-      required: [name, concept]
+      required: [name, concept_id]
       additionalProperties: false
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
@@ -5125,7 +5230,7 @@ components:
         page: { type: string, nullable: true, minLength: 1 }
         color: { type: string, nullable: true, minLength: 1 }
         position: { type: integer, format: int32 }
-        concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
+        concept_id: { type: string, format: uuid }
     ContactPoint:
       type: object
       required: [id, email]
@@ -5237,7 +5342,7 @@ components:
         - id
         - name
         - position
-        - concept
+        - concept_id
       properties:
         id:
           type: string
@@ -5268,9 +5373,9 @@ components:
         position:
           type: integer
           format: int32
-        concept:
+        concept_id:
           type: string
-          enum: [DATA, FACILITIES, SOFTWARE]
+          format: uuid
 
     UserMembershipSummary:
       type: object

@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
-from fixtures import assert_problem
+from fixtures import assert_problem, concept_id
 
 
 class MembershipContractTest(unittest.TestCase):
@@ -24,7 +24,7 @@ class MembershipContractTest(unittest.TestCase):
             "/groups",
             json={
                 "name": f"contract-membership-group-{suffix}",
-                "concept": "DATA",
+                "concept_id": concept_id(self.gateway, "Data"),
             },
         )
         self.assertEqual(created_group_response.status_code, 201)

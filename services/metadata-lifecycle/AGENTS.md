@@ -4,7 +4,6 @@
 
 - Keep business logic in the owning domain package like `identity/`, `authz/`, `groups/`.
 - Keep domain packages independent from `grpcapi/`, `server/`, protobuf-generated packages, and PostgreSQL implementation packages. Depend on interfaces where an adapter is required.
-- Keep RDF/Turtle parsing and mapping in `turtle/`; do not put parser-specific behavior in domain or transport packages.
 - Keep protobuf/domain conversion, metadata extraction, and service-specific validation/status mapping in `grpcapi/`. Use `packages/go/grpcserver` for generic validation mechanics and server runtime; keep service registration and dependency wiring in `server/` and process lifecycle in `main.go`.
 - Keep migration embedding, service-specific pool codecs, repositories, and persistence adapters in `db/`. Do not leak database or SQLC types into transport contracts or domain types.
 - Define API transport types separately from domain types. Map explicitly instead of aliasing types across boundaries.

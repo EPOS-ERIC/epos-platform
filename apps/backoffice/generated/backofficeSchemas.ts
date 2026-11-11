@@ -295,7 +295,8 @@ export type GlobalPermission =
   | "global.notification.manage"
   | "global.organization.manage"
   | "global.contact_point.manage"
-  | "global.category_scheme.manage"
+  | "global.group.manage"
+  | "global.concept.manage"
   | "global.resource.create"
   | "global.resource.edit"
   | "global.resource.submit"
@@ -421,9 +422,11 @@ export type DiscoveryResourceType =
   "dataset" | "software-application" | "software-source-code";
 
 /**
- * Catalogue concept used to classify a resource.
+ * Concept identifier.
+ *
+ * @format uuid
  */
-export type DiscoveryConcept = "DATA" | "FACILITIES" | "SOFTWARE";
+export type DiscoveryConcept = string;
 
 /**
  * Lifecycle state used by resource and discovery operations.
@@ -2187,7 +2190,7 @@ export type DatasetDiscoveryItem = {
    * @format date-time
    */
   updated_at: string;
-  concept: DiscoveryConcept;
+  concept: Reference;
   /**
    * Creator identity is returned only when caller may see identities for this resource group.
    */
@@ -2241,7 +2244,7 @@ export type SoftwareApplicationDiscoveryItem = {
    * @format date-time
    */
   updated_at: string;
-  concept: DiscoveryConcept;
+  concept: Reference;
   /**
    * Creator identity is returned only when caller may see identities for this resource group.
    */
@@ -2267,7 +2270,7 @@ export type SoftwareSourceCodeDiscoveryItem = {
    * @format date-time
    */
   updated_at: string;
-  concept: DiscoveryConcept;
+  concept: Reference;
   /**
    * Creator identity is returned only when caller may see identities for this resource group.
    */
@@ -2364,6 +2367,21 @@ export type ReplaceCategoryRequest = {
   parent_category_id: string | null;
 };
 
+export type Concept = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @minLength 1
+   */
+  name: string;
+};
+
+export type ConceptInput = {
+  name: NonBlankString;
+};
+
 export type CreateGroupRequest = {
   name: NonBlankString;
   /**
@@ -2390,7 +2408,10 @@ export type CreateGroupRequest = {
    * @format int32
    */
   position?: number;
-  concept: "DATA" | "FACILITIES" | "SOFTWARE";
+  /**
+   * @format uuid
+   */
+  concept_id: string;
 };
 
 export type ReplaceGroupRequest = {
@@ -2419,7 +2440,10 @@ export type ReplaceGroupRequest = {
    * @format int32
    */
   position?: number;
-  concept: "DATA" | "FACILITIES" | "SOFTWARE";
+  /**
+   * @format uuid
+   */
+  concept_id: string;
 };
 
 export type ContactPoint = {
@@ -2597,7 +2621,10 @@ export type Group = {
    * @format int32
    */
   position: number;
-  concept: "DATA" | "FACILITIES" | "SOFTWARE";
+  /**
+   * @format uuid
+   */
+  concept_id: string;
 };
 
 /**

@@ -41,7 +41,7 @@ func toDomainDiscoveryFilter(value *metadatalifecyclev1.SearchResourcesRequest) 
 	if err != nil {
 		return domain.DiscoveryFilter{}, err
 	}
-	concepts, err := toDomainDiscoveryConcepts(value.Concepts)
+	concepts, err := toDomainDiscoveryConcepts(value.ConceptIds)
 	if err != nil {
 		return domain.DiscoveryFilter{}, err
 	}
@@ -118,21 +118,17 @@ func toDomainDiscoveryResourceTypes(values []metadatalifecyclev1.ResourceType) (
 	return result, nil
 }
 
-func toDomainDiscoveryConcepts(values []metadatalifecyclev1.TopLevelConcept) ([]domain.TopLevelConcept, error) {
-	result := make([]domain.TopLevelConcept, 0, len(values))
+func toDomainDiscoveryConcepts(values []string) ([]uuid.UUID, error) {
+	result := make([]uuid.UUID, 0, len(values))
 	for _, value := range values {
-		switch value {
-		case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_DATA:
-			result = append(result, domain.TopLevelConceptData)
-		case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_FACILITIES:
-			result = append(result, domain.TopLevelConceptFacilities)
-		case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE:
-			result = append(result, domain.TopLevelConceptSoftware)
-		default:
-			cause := fmt.Errorf("unsupported discovery concept %q", value)
-			return nil, apperror.Wrap(apperror.CodeValidationFailed, "", cause)
+		id, err := uuid.Parse(value)
+		if err != nil || id == uuid.Nil {
+			return nil, apperror.Wrap(apperror.CodeValidationFailed, "", fmt.Errorf("invalid discovery concept %q", value))
 		}
+
+		result = append(result, id)
 	}
+
 	return result, nil
 }
 
@@ -176,7 +172,7 @@ func toProtoDiscoveryItem(value domain.DiscoveryItem) (*metadatalifecyclev1.Disc
 	name := value.Name
 	resourceStatus := toGRPCVersioningStatus(value.Status)
 	updatedAt := timestamppb.New(value.UpdatedAt)
-	concept := toProtoDiscoveryConcept(value.Concept)
+	concept := toProtoDiscoveryReference(value.Concept)
 	createdBy := toProtoDiscoveryCreatedBy(value.CreatedBy)
 	group := toProtoDiscoveryReference(value.Group)
 	switch value.Type {
@@ -239,19 +235,6 @@ func toProtoDiscoveryItem(value domain.DiscoveryItem) (*metadatalifecyclev1.Disc
 	default:
 		cause := fmt.Errorf("unsupported resource type %q", value.Type)
 		return nil, apperror.Wrap(apperror.CodeInternal, "", cause)
-	}
-}
-
-func toProtoDiscoveryConcept(value domain.TopLevelConcept) metadatalifecyclev1.TopLevelConcept {
-	switch value {
-	case domain.TopLevelConceptData:
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_DATA
-	case domain.TopLevelConceptFacilities:
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_FACILITIES
-	case domain.TopLevelConceptSoftware:
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE
-	default:
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_UNSPECIFIED
 	}
 }
 

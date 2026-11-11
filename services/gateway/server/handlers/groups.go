@@ -35,7 +35,7 @@ func toAPIProtoGroup(v *metadatalifecyclev1.Group) (gatewayapi.Group, error) {
 	if err != nil {
 		return gatewayapi.Group{}, err
 	}
-	concept, err := toAPIGroupConcept(v.Concept)
+	concept, err := parseUUID("group.concept_id", v.ConceptId)
 	if err != nil {
 		return gatewayapi.Group{}, err
 	}
@@ -48,7 +48,7 @@ func toAPIProtoGroup(v *metadatalifecyclev1.Group) (gatewayapi.Group, error) {
 		Page:        optionalString(v.Page),
 		Color:       optionalString(v.Color),
 		Position:    v.Position,
-		Concept:     concept,
+		ConceptID:   concept,
 	}, nil
 }
 
@@ -57,32 +57,6 @@ func optionalString(value *string) gatewayapi.OptNilString {
 		return gatewayapi.OptNilString{}
 	}
 	return gatewayapi.OptNilString{Value: *value, Set: true}
-}
-
-func toAPIGroupConcept(value metadatalifecyclev1.TopLevelConcept) (gatewayapi.GroupConcept, error) {
-	switch value {
-	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_DATA:
-		return gatewayapi.GroupConceptDATA, nil
-	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_FACILITIES:
-		return gatewayapi.GroupConceptFACILITIES, nil
-	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE:
-		return gatewayapi.GroupConceptSOFTWARE, nil
-	default:
-		return "", fmt.Errorf("metadata-lifecycle returned unknown group concept: %v", value)
-	}
-}
-
-func toProtoGroupConcept(value string) metadatalifecyclev1.TopLevelConcept {
-	switch value {
-	case string(gatewayapi.GroupConceptDATA):
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_DATA
-	case string(gatewayapi.GroupConceptFACILITIES):
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_FACILITIES
-	case string(gatewayapi.GroupConceptSOFTWARE):
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE
-	default:
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_UNSPECIFIED
-	}
 }
 
 func (h *ogenHandler) GetGroup(ctx context.Context, q gatewayapi.GetGroupParams) (*gatewayapi.Group, error) {
@@ -109,7 +83,7 @@ func (h *ogenHandler) CreateGroup(ctx context.Context, q *gatewayapi.CreateGroup
 		Logo:        toClientStringPtr(q.Logo),
 		Page:        toClientStringPtr(q.Page),
 		Color:       toClientStringPtr(q.Color),
-		Concept:     toProtoGroupConcept(string(q.Concept)),
+		ConceptId:   q.ConceptID.String(),
 	}
 	if q.Position.Set {
 		in.Position = q.Position.Value
@@ -138,7 +112,7 @@ func (h *ogenHandler) ReplaceGroup(ctx context.Context, q *gatewayapi.ReplaceGro
 		Logo:        toClientStringPtr(q.Logo),
 		Page:        toClientStringPtr(q.Page),
 		Color:       toClientStringPtr(q.Color),
-		Concept:     toProtoGroupConcept(string(q.Concept)),
+		ConceptId:   q.ConceptID.String(),
 	}
 	if q.Position.Set {
 		in.Position = q.Position.Value

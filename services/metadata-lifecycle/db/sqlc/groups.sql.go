@@ -17,7 +17,7 @@ INSERT INTO
         id,
         name,
         description,
-        concept,
+        concept_id,
         label,
         logo,
         PAGE,
@@ -40,7 +40,7 @@ RETURNING
     id,
     name,
     description,
-    concept,
+    concept_id,
     label,
     logo,
     PAGE,
@@ -54,7 +54,7 @@ type CreateGroupParams struct {
 	ID          uuid.UUID
 	Name        string
 	Description *string
-	Concept     TopLevelConcept
+	ConceptID   uuid.UUID
 	Label       *string
 	Logo        *string
 	Page        *string
@@ -67,7 +67,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 		arg.ID,
 		arg.Name,
 		arg.Description,
-		arg.Concept,
+		arg.ConceptID,
 		arg.Label,
 		arg.Logo,
 		arg.Page,
@@ -79,7 +79,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Concept,
+		&i.ConceptID,
 		&i.Label,
 		&i.Logo,
 		&i.Page,
@@ -167,7 +167,7 @@ SELECT
     id,
     name,
     description,
-    concept,
+    concept_id,
     label,
     logo,
     PAGE,
@@ -188,7 +188,7 @@ func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (Group, error)
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Concept,
+		&i.ConceptID,
 		&i.Label,
 		&i.Logo,
 		&i.Page,
@@ -205,7 +205,7 @@ SELECT
     id,
     name,
     description,
-    concept,
+    concept_id,
     label,
     logo,
     PAGE,
@@ -235,7 +235,7 @@ func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 			&i.ID,
 			&i.Name,
 			&i.Description,
-			&i.Concept,
+			&i.ConceptID,
 			&i.Label,
 			&i.Logo,
 			&i.Page,
@@ -265,14 +265,14 @@ SET
     PAGE = $5,
     color = $6,
     position = $7,
-    concept = $8
+    concept_id = $8
 WHERE
     id = $9
 RETURNING
     id,
     name,
     description,
-    concept,
+    concept_id,
     label,
     logo,
     PAGE,
@@ -290,7 +290,7 @@ type ReplaceGroupParams struct {
 	Page        *string
 	Color       *string
 	Position    int32
-	Concept     TopLevelConcept
+	ConceptID   uuid.UUID
 	ID          uuid.UUID
 }
 
@@ -303,7 +303,7 @@ func (q *Queries) ReplaceGroup(ctx context.Context, arg ReplaceGroupParams) (Gro
 		arg.Page,
 		arg.Color,
 		arg.Position,
-		arg.Concept,
+		arg.ConceptID,
 		arg.ID,
 	)
 	var i Group
@@ -311,7 +311,7 @@ func (q *Queries) ReplaceGroup(ctx context.Context, arg ReplaceGroupParams) (Gro
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Concept,
+		&i.ConceptID,
 		&i.Label,
 		&i.Logo,
 		&i.Page,

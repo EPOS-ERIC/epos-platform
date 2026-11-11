@@ -2,6 +2,12 @@ package domain
 
 import "github.com/google/uuid"
 
+// NotificationGroupContext contains the labels needed when rendering notifications.
+type NotificationGroupContext struct {
+	Name    string
+	Concept string
+}
+
 // NotificationChannel identifies a delivery channel.
 type NotificationChannel string
 
@@ -121,7 +127,7 @@ type MembershipRequested struct {
 	NotificationEventCommon
 	SubjectID    string
 	GroupID      uuid.UUID
-	GroupConcept TopLevelConcept
+	GroupConcept Concept
 	TargetUserID string
 }
 
@@ -155,7 +161,7 @@ type RoleRequested struct {
 	NotificationEventCommon
 	SubjectID    string
 	GroupID      uuid.UUID
-	GroupConcept TopLevelConcept
+	GroupConcept Concept
 	TargetUserID string
 	Role         string
 	Permission   string

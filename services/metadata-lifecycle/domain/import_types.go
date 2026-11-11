@@ -3,7 +3,7 @@ package domain
 import "github.com/google/uuid"
 
 type ImportBatch struct {
-	CategorySchemes      []Group
+	Groups               []ImportGroup
 	Categories           []CategoryMetadata
 	Organizations        []OrganizationMetadata
 	ContactPoints        []ContactPoint
@@ -13,6 +13,19 @@ type ImportBatch struct {
 	CategoryEdges        []ImportCategoryEdge
 	OrganizationEdges    []ImportOrganizationEdge
 	Warnings             []ImportDiagnostic
+}
+
+// ImportGroup contains Turtle group data before its concept name is resolved.
+type ImportGroup struct {
+	ID          uuid.UUID
+	Name        string
+	Description *string
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
+	Concept     ImportedConcept
 }
 
 type ImportCategoryEdge struct {

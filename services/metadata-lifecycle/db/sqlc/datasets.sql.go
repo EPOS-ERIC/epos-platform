@@ -2150,7 +2150,7 @@ func (q *Queries) GetLifecycleDataset(ctx context.Context, id uuid.UUID) (Datase
 
 const getLifecycleDatasetGroup = `-- name: GetLifecycleDatasetGroup :one
 SELECT
-    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept_id, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     datasets AS dataset
     JOIN groups AS owning_group ON owning_group.id = dataset.group_id
@@ -2169,7 +2169,7 @@ func (q *Queries) GetLifecycleDatasetGroup(ctx context.Context, datasetID uuid.U
 		&i.Group.ID,
 		&i.Group.Name,
 		&i.Group.Description,
-		&i.Group.Concept,
+		&i.Group.ConceptID,
 		&i.Group.Label,
 		&i.Group.Logo,
 		&i.Group.Page,
@@ -2212,7 +2212,7 @@ SELECT
     version.rejected_by,
     version.rejected_at,
     version.rejection_note,
-    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept_id, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     dataset_versions AS version
     JOIN datasets AS dataset ON dataset.id = version.dataset_id
@@ -2296,7 +2296,7 @@ func (q *Queries) GetLifecycleDatasetVersion(ctx context.Context, arg GetLifecyc
 		&i.Group.ID,
 		&i.Group.Name,
 		&i.Group.Description,
-		&i.Group.Concept,
+		&i.Group.ConceptID,
 		&i.Group.Label,
 		&i.Group.Logo,
 		&i.Group.Page,

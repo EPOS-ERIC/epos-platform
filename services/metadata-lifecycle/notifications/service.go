@@ -16,7 +16,7 @@ type Store interface {
 	ListTopics(context.Context) ([]domain.NotificationTopic, error)
 	ListSubscriptions(context.Context, string) ([]domain.NotificationSubscription, error)
 	GetNotificationUserContext(context.Context, string) (domain.UserSummary, error)
-	GetNotificationGroupContext(context.Context, uuid.UUID) (domain.Group, error)
+	GetNotificationGroupContext(context.Context, uuid.UUID) (domain.NotificationGroupContext, error)
 	CreateGlobalSubscription(context.Context, string, domain.NotificationTopicKey, domain.NotificationChannel) error
 	CreateGroupSubscription(context.Context, string, uuid.UUID, domain.NotificationTopicKey, domain.NotificationChannel) error
 	DeleteGlobalSubscription(context.Context, string, domain.NotificationTopicKey, domain.NotificationChannel) error

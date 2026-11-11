@@ -48,7 +48,7 @@ func ToCategoryMetadata(id uuid.UUID, name string, group sqlc.Group) domain.Cate
 	return domain.CategoryMetadata{
 		ID:       id,
 		Name:     name,
-		Scheme:   ToGroup(group),
+		GroupID:  group.ID,
 		Children: nil,
 	}
 }
@@ -64,6 +64,6 @@ func ToGroup(value sqlc.Group) domain.Group {
 		Page:        value.Page,
 		Color:       value.Color,
 		Position:    value.Position,
-		Concept:     string(value.Concept),
+		ConceptID:   value.ConceptID,
 	}
 }

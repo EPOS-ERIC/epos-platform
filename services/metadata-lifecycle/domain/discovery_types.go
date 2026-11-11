@@ -11,7 +11,7 @@ import (
 type DiscoveryFilter struct {
 	Query              *string
 	Types              []ResourceType
-	Concepts           []TopLevelConcept
+	Concepts           []uuid.UUID
 	GroupID            *uuid.UUID
 	SpatialFilter      geom.T
 	DateFrom           *time.Time
@@ -32,7 +32,7 @@ type DiscoveryCandidate struct {
 	Status     Status
 	Name       string
 	UpdatedAt  time.Time
-	Concept    TopLevelConcept
+	Concept    DiscoveryReference
 	CreatedBy  *DiscoveryCreatedBy
 }
 
@@ -52,7 +52,7 @@ type DiscoveryItem struct {
 	Name          string
 	Status        Status
 	UpdatedAt     time.Time
-	Concept       TopLevelConcept
+	Concept       DiscoveryReference
 	CreatedBy     *DiscoveryCreatedBy
 	Group         DiscoveryReference
 	Providers     []DiscoveryReference

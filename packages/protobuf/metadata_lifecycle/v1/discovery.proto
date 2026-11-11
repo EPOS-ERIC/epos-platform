@@ -13,7 +13,7 @@ option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go
 message SearchResourcesRequest {
   optional string query = 1 [(buf.validate.field).string.min_len = 1];
   repeated ResourceType resource_types = 2 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  repeated TopLevelConcept concepts = 3 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  repeated string concept_ids = 3 [(buf.validate.field).repeated.items.string.uuid = true];
   optional string group_id = 4 [(buf.validate.field).string.uuid = true];
   optional string spatial_filter = 5 [(buf.validate.field).string.min_len = 1];
   google.protobuf.Timestamp date_from = 6;
@@ -43,7 +43,7 @@ message DatasetDiscoveryItem {
   string name = 3 [(buf.validate.field).string.min_len = 1];
   VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
   google.protobuf.Timestamp updated_at = 5;
-  TopLevelConcept concept = 6 [(buf.validate.field).enum.defined_only = true];
+  EntityReference concept = 6;
   UserReference created_by = 7;
   EntityReference group = 8;
   repeated EntityReference providers = 9;
@@ -78,7 +78,7 @@ message SoftwareApplicationDiscoveryItem {
   string name = 3 [(buf.validate.field).string.min_len = 1];
   VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
   google.protobuf.Timestamp updated_at = 5;
-  TopLevelConcept concept = 6 [(buf.validate.field).enum.defined_only = true];
+  EntityReference concept = 6;
   UserReference created_by = 7;
   EntityReference group = 8;
   repeated EntityReference creators = 9;
@@ -91,7 +91,7 @@ message SoftwareSourceCodeDiscoveryItem {
   string name = 3 [(buf.validate.field).string.min_len = 1];
   VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
   google.protobuf.Timestamp updated_at = 5;
-  TopLevelConcept concept = 6 [(buf.validate.field).enum.defined_only = true];
+  EntityReference concept = 6;
   UserReference created_by = 7;
   EntityReference group = 8;
   repeated EntityReference creators = 9;

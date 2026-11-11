@@ -495,7 +495,7 @@ INSERT INTO
         id,
         name,
         description,
-        concept,
+        concept_id,
         label,
         logo,
         PAGE,
@@ -507,7 +507,14 @@ VALUES
         $1,
         $2,
         $3,
-        $4,
+        (
+            SELECT
+                id
+            FROM
+                concepts
+            WHERE
+                lower(name) = lower($4::text)
+        ),
         $5,
         $6,
         $7,
@@ -518,7 +525,7 @@ UPDATE
 SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
-    concept = EXCLUDED.concept,
+    concept_id = EXCLUDED.concept_id,
     label = EXCLUDED.label,
     logo = EXCLUDED.logo,
     PAGE = EXCLUDED.page,
@@ -533,7 +540,7 @@ type UpsertImportGroupParams struct {
 	ID          uuid.UUID
 	Name        string
 	Description *string
-	Concept     TopLevelConcept
+	Concept     string
 	Label       *string
 	Logo        *string
 	Page        *string

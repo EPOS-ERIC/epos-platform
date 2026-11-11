@@ -117,20 +117,31 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 	return result, nil
 }
 
-func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID string, roles []domain.GroupRole) (domain.GroupMembership, domain.TopLevelConcept, error) {
+func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID string, roles []domain.GroupRole) (domain.GroupMembership, domain.Concept, error) {
 	group, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.GroupMembership{}, "", apperror.Default(apperror.CodeNotFound)
-	} else if err != nil {
-		return domain.GroupMembership{}, "", fmt.Errorf("check group: %w", err)
+		return domain.GroupMembership{}, domain.Concept{}, apperror.Default(apperror.CodeNotFound)
+	}
+	if err != nil {
+		return domain.GroupMembership{}, domain.Concept{}, fmt.Errorf("check group: %w", err)
+	}
+
+	concept, err := r.GetConceptRecord(ctx, group.ConceptID)
+	if err != nil {
+		return domain.GroupMembership{}, domain.Concept{}, fmt.Errorf("get group concept: %w", err)
+	}
+
+	validatedConcept, err := domain.NewConcept(concept.ID, concept.Name)
+	if err != nil {
+		return domain.GroupMembership{}, domain.Concept{}, fmt.Errorf("construct group concept: %w", err)
 	}
 
 	user, err := r.GetUserByID(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.GroupMembership{}, "", apperror.Default(apperror.CodeNotFound)
+		return domain.GroupMembership{}, domain.Concept{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
-		return domain.GroupMembership{}, "", fmt.Errorf("check user: %w", err)
+		return domain.GroupMembership{}, domain.Concept{}, fmt.Errorf("check user: %w", err)
 	}
 
 	var membership domain.GroupMembership
@@ -184,10 +195,10 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 		return nil
 	})
 	if err != nil {
-		return domain.GroupMembership{}, "", fmt.Errorf("request membership transaction: %w", err)
+		return domain.GroupMembership{}, domain.Concept{}, fmt.Errorf("request membership transaction: %w", err)
 	}
 
-	return membership, domain.TopLevelConcept(group.Concept), nil
+	return membership, validatedConcept, nil
 }
 
 func (r *Repo) WithdrawMembershipRequest(ctx context.Context, groupID uuid.UUID, userID string) error {
@@ -233,21 +244,32 @@ func (r *Repo) RevokeMembership(ctx context.Context, groupID uuid.UUID, userID s
 	return nil
 }
 
-func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole) (domain.RoleRequest, domain.TopLevelConcept, error) {
+func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole) (domain.RoleRequest, domain.Concept, error) {
 	group, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.RoleRequest{}, "", apperror.Default(apperror.CodeNotFound)
-	} else if err != nil {
-		return domain.RoleRequest{}, "", fmt.Errorf("check group: %w", err)
+		return domain.RoleRequest{}, domain.Concept{}, apperror.Default(apperror.CodeNotFound)
+	}
+	if err != nil {
+		return domain.RoleRequest{}, domain.Concept{}, fmt.Errorf("check group: %w", err)
+	}
+
+	concept, err := r.GetConceptRecord(ctx, group.ConceptID)
+	if err != nil {
+		return domain.RoleRequest{}, domain.Concept{}, fmt.Errorf("get group concept: %w", err)
+	}
+
+	validatedConcept, err := domain.NewConcept(concept.ID, concept.Name)
+	if err != nil {
+		return domain.RoleRequest{}, domain.Concept{}, fmt.Errorf("construct group concept: %w", err)
 	}
 
 	if _, err := r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
 		GroupID: groupID,
 		UserID:  userID,
 	}); errors.Is(err, pgx.ErrNoRows) {
-		return domain.RoleRequest{}, "", apperror.Default(apperror.CodeNotFound)
+		return domain.RoleRequest{}, domain.Concept{}, apperror.Default(apperror.CodeNotFound)
 	} else if err != nil {
-		return domain.RoleRequest{}, "", fmt.Errorf("check membership: %w", err)
+		return domain.RoleRequest{}, domain.Concept{}, fmt.Errorf("check membership: %w", err)
 	}
 
 	request, err := r.CreateGroupRoleRequest(ctx, sqlc.CreateGroupRoleRequestParams{
@@ -256,21 +278,21 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string
 		RoleKey: string(role),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.RoleRequest{}, "", apperror.Default(apperror.CodeConflict)
+		return domain.RoleRequest{}, domain.Concept{}, apperror.Default(apperror.CodeConflict)
 	}
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-		return domain.RoleRequest{}, "", apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("create role request: %w", err))
+		return domain.RoleRequest{}, domain.Concept{}, apperror.Wrap(apperror.CodeConflict, "", fmt.Errorf("create role request: %w", err))
 	}
 	if err != nil {
-		return domain.RoleRequest{}, "", fmt.Errorf("create role request: %w", err)
+		return domain.RoleRequest{}, domain.Concept{}, fmt.Errorf("create role request: %w", err)
 	}
 
 	result, err := toDomainRoleRequest(request.ID, request.RoleKey, string(request.Status), request.RequestedAt)
 	if err != nil {
-		return domain.RoleRequest{}, "", fmt.Errorf("construct role request %s: %w", request.ID, err)
+		return domain.RoleRequest{}, domain.Concept{}, fmt.Errorf("construct role request %s: %w", request.ID, err)
 	}
 
-	return result, domain.TopLevelConcept(group.Concept), nil
+	return result, validatedConcept, nil
 }
 
 // DecideRoleRequest accepts or rejects a pending role request and records the

@@ -13,11 +13,11 @@ import (
 
 type Store interface {
 	ListMemberships(context.Context, uuid.UUID) ([]domain.GroupMembership, error)
-	RequestMembership(context.Context, uuid.UUID, string, []domain.GroupRole) (domain.GroupMembership, domain.TopLevelConcept, error)
+	RequestMembership(context.Context, uuid.UUID, string, []domain.GroupRole) (domain.GroupMembership, domain.Concept, error)
 	WithdrawMembershipRequest(context.Context, uuid.UUID, string) error
 	DecideMembership(context.Context, uuid.UUID, string, domain.Decision, string) (domain.GroupMembership, error)
 	RevokeMembership(context.Context, uuid.UUID, string) error
-	RequestRole(context.Context, uuid.UUID, string, domain.GroupRole) (domain.RoleRequest, domain.TopLevelConcept, error)
+	RequestRole(context.Context, uuid.UUID, string, domain.GroupRole) (domain.RoleRequest, domain.Concept, error)
 	DecideRoleRequest(context.Context, uuid.UUID, uuid.UUID, domain.Decision, string) (domain.RoleRequestDecision, error)
 	WithdrawRoleRequest(context.Context, uuid.UUID, uuid.UUID, string) error
 	AssignRole(context.Context, uuid.UUID, string, domain.GroupRole, string) (bool, error)

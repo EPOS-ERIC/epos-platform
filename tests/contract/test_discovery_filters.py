@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
-from fixtures import create_group
+from fixtures import create_group, concept_id
 
 NO_AUTH_HEADERS = {"Authorization": ""}
 RESOURCE_TYPES = (
@@ -391,8 +391,8 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         cases = [
             ({"type": "dataset", "q": suffix}, {dataset_id}),
             ({"type": "software-application,software-source-code", "q": suffix}, {application_id, source_id}),
-            ({"concept": "DATA", "q": suffix}, {dataset_id}),
-            ({"concept": "SOFTWARE", "q": suffix}, {application_id, source_id}),
+            ({"conceptId": concept_id(self.gateway, "Data"), "q": suffix}, {dataset_id}),
+            ({"conceptId": concept_id(self.gateway, "Software"), "q": suffix}, {application_id, source_id}),
             ({"groupId": data_group, "q": suffix}, {dataset_id}),
             ({"editorId": editor_id, "versioningStatus": "DRAFT", "q": suffix}, {draft_id}),
             ({"provider": provider_id, "q": suffix}, {dataset_id, application_id, source_id}),
@@ -402,7 +402,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
             ({"dateTo": "2020-01-01T00:00:00Z", "q": suffix}, {dataset_id}),
             ({"spatialFilter": "POINT (12.5 41.9)", "q": suffix}, {dataset_id}),
             ({"spatialFilter": "POINT (0 0)", "q": suffix}, set()),
-            ({"type": "dataset", "concept": "DATA", "groupId": data_group, "q": suffix}, {dataset_id}),
+            ({"type": "dataset", "conceptId": concept_id(self.gateway, "Data"), "groupId": data_group, "q": suffix}, {dataset_id}),
             ({"versioningStatus": "PUBLISHED,DRAFT", "q": suffix}, {dataset_id, draft_id, application_id, source_id}),
         ]
         for params, expected in cases:
@@ -416,7 +416,7 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
             ({"q": f"discovery-file-{suffix}"}, {dataset_id}),
             ({"q": f"downloadable description {suffix}"}, {dataset_id}),
             ({"q": f"category {suffix}", "type": "dataset"}, {dataset_id}),
-            ({"q": f"category {suffix}", "concept": "SOFTWARE"}, {application_id, source_id}),
+            ({"q": f"category {suffix}", "conceptId": concept_id(self.gateway, "Software")}, {application_id, source_id}),
             ({"q": f"missing-{suffix}"}, set()),
         ]
         for params, expected in related_cases:

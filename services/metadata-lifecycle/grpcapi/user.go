@@ -388,8 +388,10 @@ func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE, nil
 	case domain.GlobalPermissionContactPointManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE, nil
-	case domain.GlobalPermissionCategorySchemeManage:
-		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE, nil
+	case domain.GlobalPermissionGroupManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_GROUP_MANAGE, nil
+	case domain.GlobalPermissionConceptManage:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONCEPT_MANAGE, nil
 	case domain.GlobalPermissionResourceCreate:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE, nil
 	case domain.GlobalPermissionResourceEdit:
@@ -433,8 +435,10 @@ func toDomainGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domai
 		return domain.GlobalPermissionOrganizationManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONTACT_POINT_MANAGE:
 		return domain.GlobalPermissionContactPointManage, nil
-	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CATEGORY_SCHEME_MANAGE:
-		return domain.GlobalPermissionCategorySchemeManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_GROUP_MANAGE:
+		return domain.GlobalPermissionGroupManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_CONCEPT_MANAGE:
+		return domain.GlobalPermissionConceptManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_CREATE:
 		return domain.GlobalPermissionResourceCreate, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_RESOURCE_EDIT:

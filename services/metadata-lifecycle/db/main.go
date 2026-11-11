@@ -13,6 +13,7 @@ import (
 	accessdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/access"
 	authdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/authz"
 	categorydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/categories"
+	conceptdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/concepts"
 	contactpointdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/contactpoints"
 	contactrequestdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/contactrequests"
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dataset"
@@ -37,6 +38,7 @@ type PostgresDB struct {
 	Authorization        *authdb.Repo
 	Users                *usersdb.Repo
 	Groups               *groupdb.Repo
+	Concepts             *conceptdb.Repo
 	Access               *accessdb.Repo
 	Categories           *categorydb.Repo
 	Organizations        *organizationdb.Repo
@@ -95,6 +97,7 @@ func Open(ctx context.Context, log *slog.Logger, cfg config.Config) (*PostgresDB
 		Authorization:        authdb.New(db),
 		Users:                usersdb.New(db),
 		Groups:               groupdb.New(db),
+		Concepts:             conceptdb.New(db),
 		Access:               accessdb.New(db),
 		Categories:           categorydb.New(db),
 		Organizations:        organizationdb.New(db),

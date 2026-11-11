@@ -20,7 +20,6 @@ type Store interface {
 }
 
 type Authorizer interface {
-	AuthorizeAdmin(context.Context, string) (domain.Result, error)
 	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
 }
 
@@ -39,7 +38,7 @@ func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
 }
 
 func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain.GroupInput) (domain.Group, error) {
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionGroupManage)
 	if err != nil {
 		return domain.Group{}, fmt.Errorf("authorize group creation: %w", err)
 	}
@@ -60,7 +59,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 		return domain.Group{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionCategorySchemeManage)
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionGroupManage)
 	if err != nil {
 		return domain.Group{}, fmt.Errorf("authorize group replacement: %w", err)
 	}
@@ -81,7 +80,7 @@ func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID
 		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionGroupManage)
 	if err != nil {
 		return fmt.Errorf("authorize group deletion: %w", err)
 	}

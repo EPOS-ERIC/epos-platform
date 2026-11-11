@@ -10,6 +10,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/concepts"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactrequests"
@@ -37,6 +38,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	importSvc := metadataimport.New(log, db.Imports, authorizer)
 	turtler := turtle.New(log)
 	groupsSvc := groups.New(log, db.Groups, authorizer)
+	conceptsSvc := concepts.New(db.Concepts, authorizer)
 	categoriesSvc := categories.New(log, db.Categories, authorizer)
 	contactPointsSvc := contactpoints.New(log, db.ContactPoints, authorizer)
 	accessSvc := access.New(log, db.Access, authorizer, notificationsSvc)
@@ -64,6 +66,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 			metadatalifecyclev1.RegisterAuthorizationServiceServer(server, grpcapi.NewAuthorization(authorizer))
 			metadatalifecyclev1.RegisterImportServiceServer(server, grpcapi.NewImport(importSvc, turtler))
 			metadatalifecyclev1.RegisterGroupServiceServer(server, grpcapi.NewGroup(groupsSvc))
+			metadatalifecyclev1.RegisterConceptServiceServer(server, grpcapi.NewConcept(conceptsSvc))
 			metadatalifecyclev1.RegisterCategoryServiceServer(server, grpcapi.NewCategory(categoriesSvc))
 			metadatalifecyclev1.RegisterContactPointServiceServer(server, grpcapi.NewContactPoint(contactPointsSvc))
 			metadatalifecyclev1.RegisterContactRequestServiceServer(server, grpcapi.NewContactRequest(contactRequestsSvc))

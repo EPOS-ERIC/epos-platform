@@ -42,8 +42,10 @@ ci-sharing-image:
 ci-oss-aai-image:
 	+$(MAKE) -C $(OSS_AAI_SERVICE_DIR) docker
 
-test:
-	+$(MAKE) -j test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-converter test-oss-aai-service test-cli test-backoffice test-platform-legacy
+test-backend:
+	+$(MAKE) -j test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-converter test-oss-aai-service test-cli
+test-frontend:
+	+$(MAKE) -j test-backoffice test-platform-legacy
 test-gateway:
 	$(MAKE) -C $(GATEWAY_DIR) test
 test-metadata-lifecycle:

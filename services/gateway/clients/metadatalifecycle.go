@@ -21,6 +21,7 @@ type MetadataLifecycle struct {
 	authorization   metadatalifecyclev1.AuthorizationServiceClient
 	users           metadatalifecyclev1.UserServiceClient
 	groups          metadatalifecyclev1.GroupServiceClient
+	concepts        metadatalifecyclev1.ConceptServiceClient
 	categories      metadatalifecyclev1.CategoryServiceClient
 	contactPoints   metadatalifecyclev1.ContactPointServiceClient
 	organizations   metadatalifecyclev1.OrganizationServiceClient
@@ -56,6 +57,7 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher Notificat
 		authorization:   metadatalifecyclev1.NewAuthorizationServiceClient(conn),
 		users:           metadatalifecyclev1.NewUserServiceClient(conn),
 		groups:          metadatalifecyclev1.NewGroupServiceClient(conn),
+		concepts:        metadatalifecyclev1.NewConceptServiceClient(conn),
 		categories:      metadatalifecyclev1.NewCategoryServiceClient(conn),
 		contactPoints:   metadatalifecyclev1.NewContactPointServiceClient(conn),
 		organizations:   metadatalifecyclev1.NewOrganizationServiceClient(conn),

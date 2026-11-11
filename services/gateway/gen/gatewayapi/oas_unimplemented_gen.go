@@ -67,6 +67,15 @@ func (UnimplementedHandler) CopyResource(ctx context.Context, params CopyResourc
 	return r, ht.ErrNotImplemented
 }
 
+// CreateConcept implements createConcept operation.
+//
+// Create concept.
+//
+// POST /concepts
+func (UnimplementedHandler) CreateConcept(ctx context.Context, req *ConceptInput) (r *Concept, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateConfiguration implements createConfiguration operation.
 //
 // Creates a personal configuration for the authenticated user. Omitted or null `is_public` makes it
@@ -160,6 +169,15 @@ func (UnimplementedHandler) DecideGroupMembership(ctx context.Context, params De
 // POST /groups/{groupId}/role-requests/{requestId}/{decision}
 func (UnimplementedHandler) DecideGroupRoleRequest(ctx context.Context, params DecideGroupRoleRequestParams) (r *GroupMembership, _ error) {
 	return r, ht.ErrNotImplemented
+}
+
+// DeleteConcept implements deleteConcept operation.
+//
+// Delete concept.
+//
+// DELETE /concepts/{conceptId}
+func (UnimplementedHandler) DeleteConcept(ctx context.Context, params DeleteConceptParams) error {
+	return ht.ErrNotImplemented
 }
 
 // DeleteConfiguration implements deleteConfiguration operation.
@@ -296,6 +314,15 @@ func (UnimplementedHandler) DraftFromPublication(ctx context.Context, params Dra
 	return r, ht.ErrNotImplemented
 }
 
+// GetConcept implements getConcept operation.
+//
+// Get concept.
+//
+// GET /concepts/{conceptId}
+func (UnimplementedHandler) GetConcept(ctx context.Context, params GetConceptParams) (r *Concept, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetConfiguration implements getConfiguration operation.
 //
 // Returns configuration details by ID. Public configurations, including official ones, are readable
@@ -401,11 +428,21 @@ func (UnimplementedHandler) GrantGroupPermission(ctx context.Context, params Gra
 
 // ImportTurtleMetadata implements importTurtleMetadata operation.
 //
-// Imports valid RDF Turtle metadata and creates or updates draft content. Invalid entities and invalid
-// optional relations are skipped and reported in warnings. Requires global administrator access.
+// Imports valid RDF Turtle metadata and publishes new resources. Existing resources, invalid entities,
+// and invalid optional relations are skipped and reported in warnings. Requires global administrator
+// access.
 //
 // POST /imports/turtle
 func (UnimplementedHandler) ImportTurtleMetadata(ctx context.Context, req ImportTurtleMetadataReq) (r *ImportResult, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListConcepts implements listConcepts operation.
+//
+// List concepts.
+//
+// GET /concepts
+func (UnimplementedHandler) ListConcepts(ctx context.Context) (r []Concept, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -610,6 +647,15 @@ func (UnimplementedHandler) RemoveGroupRole(ctx context.Context, params RemoveGr
 //
 // POST /resources/{resourceType}/{id}/versions/{versionId}/reopen
 func (UnimplementedHandler) ReopenResourceVersion(ctx context.Context, params ReopenResourceVersionParams) (r *WriteResult, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ReplaceConcept implements replaceConcept operation.
+//
+// Replace concept.
+//
+// PUT /concepts/{conceptId}
+func (UnimplementedHandler) ReplaceConcept(ctx context.Context, req *ConceptInput, params ReplaceConceptParams) (r *Concept, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

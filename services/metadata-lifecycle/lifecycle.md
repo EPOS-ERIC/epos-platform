@@ -2,7 +2,7 @@
 
 ## Scope
 
-This document defines dataset and software versioning, linked-entity governance, group membership, category schemes, categories, authorization, and notification subscriptions for metadata lifecycle.
+This document defines dataset and software versioning, linked-entity governance, group membership, categories, authorization, and notification subscriptions for metadata lifecycle.
 
 It does not define HTTP endpoints, UI layouts, migration order, or notification event delivery.
 
@@ -15,14 +15,14 @@ It does not define HTTP endpoints, UI layouts, migration order, or notification 
 | Logical software        | Stable UUID shared by all versions of one software application or source code and owned by one group. |
 | Software version        | Editable or historical metadata for one logical software resource.                                    |
 | Active change version   | Single `DRAFT`, `SUBMITTED`, or `REJECTED` version for one logical resource.                          |
-| Group                   | Canonical category scheme, resource ownership, and authorization boundary stored in one `groups` row. |
-| Category scheme         | Category-hierarchy aspect of a group; not a separate authorization resource.                          |
-| Category                | Node inside category scheme. A subcategory is category with parent category, not separate type.       |
-| Canonical category      | Shared live category persisted in its owning group's category scheme.                                 |
+| Group                   | Category ownership, resource ownership, and authorization boundary stored in one `groups` row.        |
+| Concept                 | Named classification containing groups; each group belongs to exactly one concept.                    |
+| Category                | Node in a group's category hierarchy. A subcategory has a parent category.                            |
+| Canonical category      | Shared live category persisted in its owning group.                                                   |
 | Canonical organization  | Shared live organization managed directly in metadata lifecycle without lifecycle states.             |
 | Canonical contact point | Shared live contact record managed directly in metadata lifecycle without lifecycle states.           |
 | Identifier              | Value owned by exactly one resource version or organization; never shared.                            |
-| Group member            | Active, unblocked user with `ACTIVE` membership in group and access to its category scheme.           |
+| Group member            | Active, unblocked user with `ACTIVE` membership in group and access to its categories.                |
 | Granted permission      | Additive permission assigned outside a role.                                                          |
 
 ## Resource Lifecycle
@@ -87,10 +87,12 @@ Software application and software source code are independent resource types. Th
 | Canonical organization           | Select existing organization                   | No                    | `global.organization.manage`                        | Shared live reference.                                                                                                                                    |
 | Canonical contact point          | Select existing contact point                  | No                    | `global.contact_point.manage`                       | Shared live reference.                                                                                                                                    |
 | Identifier                       | Edit through owning entity                     | Yes with owner        | Through owner                                       | Exactly one owner; cloned rather than shared.                                                                                                             |
-| Category scheme                  | Use through group membership                   | No                    | `global.category_scheme.manage`                     | Shared live metadata stored with group.                                                                                                                   |
-| Canonical category               | Select from owning group's category scheme     | No                    | `group.category.manage` or `global.category.manage` | Shared live reference; category cannot move to another group.                                                                                             |
+| Group                            | Use through group membership                   | No                    | `global.group.manage`                               | Shared live group metadata.                                                                                                                               |
+| Canonical category               | Select from owning group                       | No                    | `group.category.manage` or `global.category.manage` | Shared live reference; category cannot move to another group.                                                                                             |
 
 Canonical organization, contact-point, group, and canonical-category changes appear immediately in every referencing version. No snapshots or history are required. Resource version category links retain only canonical category IDs; they never copy category fields.
+
+Concepts are seeded as `Data`, `Facilities`, and `Software` and managed with `global.concept.manage`. Their UUID and name are independent of resource types. A concept cannot be deleted while any group references it.
 
 Canonical organizations, contact points, categories, and groups may be deleted directly. The client is responsible for obtaining impact data, presenting any warning or preview to the user, and requesting deletion after confirmation. Metadata Lifecycle does not expose a separate preview or confirmation operation. Group deletion is blocked only while group owns logical dataset or software resource.
 
@@ -100,7 +102,7 @@ Canonical deletion is a direct atomic operation returning `204 No Content`. Clie
 
 Category deletion removes selected category, complete descendant subtree, all hierarchy links, and all dataset/software links to any category in subtree. Organization deletion removes its resource and hierarchy links, deletes its owned identifiers, then deletes organization; related organizations remain. Contact-point deletion removes all organization, dataset-version, software-version, and web-service links, then deletes contact point.
 
-Group deletion fails while any logical dataset, software application, or software source code belongs to group. Otherwise it deletes group/category scheme, canonical categories, memberships, group role assignments, grants, requests, and group notification subscriptions.
+Group deletion fails while any logical dataset, software application, or software source code belongs to group. Otherwise it deletes the group, canonical categories, memberships, group role assignments, grants, requests, and group notification subscriptions.
 
 ### Organizations
 
@@ -140,9 +142,9 @@ Future external organization management and migration are outside this document.
 
 ### Categories
 
-Category scheme is a tree or forest. Each canonical category has zero or one parent in same group and cannot participate in cycle. Category names are compared after trimming whitespace and case folding. Name must be unique among siblings; top-level name must be unique among top-level categories. Same normalized name may exist in different branches.
+A group's category hierarchy is a tree or forest. Each canonical category has zero or one parent in same group and cannot participate in cycle. Category names are compared after trimming whitespace and case folding. Name must be unique among siblings; top-level name must be unique among top-level categories. Same normalized name may exist in different branches.
 
-Categories are managed outside resource lifecycle. An active group member with `group.category.manage` in category's group may create, edit, reparent, or delete canonical categories in that group. A user with `global.category.manage` may perform the same actions in any group without membership. Editors may select only existing canonical categories from resource group's category scheme while editing a draft; they cannot create or propose categories through a resource. `global.category_scheme.manage` manages category-scheme metadata separately and does not grant category management.
+Categories are managed outside resource lifecycle. An active group member with `group.category.manage` in category's group may create, edit, reparent, or delete canonical categories in that group. A user with `global.category.manage` may perform the same actions in any group without membership. Editors may select only existing canonical categories from the resource's group while editing a draft; they cannot create or propose categories through a resource. `global.group.manage` manages groups and does not grant category management.
 
 Canonical category has stable UUID. Its group is immutable. Category changes take effect immediately for every dataset version and software resource that references category. Category deletion remains a confirmed destructive operation.
 
@@ -178,44 +180,45 @@ Users may hold both `EDITOR` and `REVIEWER` in same group. Active membership its
 
 ### Permission Catalog
 
-| Permission                      | Scope  | Meaning                                                                                                                                             |
-| ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `group.resource.create`         | Group  | Create logical dataset or software resource, draft, or copy in member group.                                                                        |
-| `global.resource.create`        | Global | Create logical dataset or software resource, draft, or copy in any group without membership.                                                        |
-| `group.resource.edit`           | Group  | Modify group resource draft.                                                                                                                        |
-| `global.resource.edit`          | Global | Modify resource drafts in any group without membership.                                                                                             |
-| `group.resource.submit`         | Group  | Submit group resource draft.                                                                                                                        |
-| `global.resource.submit`        | Global | Submit resource drafts in any group without membership.                                                                                             |
-| `group.resource.withdraw`       | Group  | Return submitted resource version to draft.                                                                                                         |
-| `global.resource.withdraw`      | Global | Return submitted resource versions to draft in any group without membership.                                                                        |
-| `group.resource.reopen`         | Group  | Return rejected resource version to draft.                                                                                                          |
-| `global.resource.reopen`        | Global | Return rejected resource versions to draft in any group without membership.                                                                         |
-| `group.resource.discard`        | Group  | Delete resource draft or rejected version.                                                                                                          |
-| `global.resource.discard`       | Global | Delete resource drafts or rejected versions in any group without membership.                                                                        |
-| `group.resource.reject`         | Group  | Reject submitted resource version.                                                                                                                  |
-| `global.resource.reject`        | Global | Reject submitted resource versions in any group without membership.                                                                                 |
-| `group.resource.publish`        | Group  | Publish submitted resource version.                                                                                                                 |
-| `global.resource.publish`       | Global | Publish submitted resource versions in any group without membership.                                                                                |
-| `group.resource.unpublish`      | Group  | Archive current published resource version without replacement.                                                                                     |
-| `global.resource.unpublish`     | Global | Archive published resource versions in any group without membership.                                                                                |
-| `group.membership.manage`       | Group  | View group membership roster and accept, reject, or revoke memberships.                                                                             |
-| `group.role.manage`             | Group  | View group membership roster; accept or reject role requests and assign or remove fixed group roles.                                                |
-| `group.permission.manage`       | Group  | View group membership roster and grant or revoke group-scoped granted permissions.                                                                  |
-| `global.membership.manage`      | Global | List and read users; view every group membership roster and accept, reject, or revoke memberships in every group.                                   |
-| `global.role.manage`            | Global | List and read users; view every group membership roster; accept or reject role requests and assign or remove fixed group roles in every group.      |
-| `global.permission.manage`      | Global | List and read users; grant or revoke globally scoped permissions.                                                                                   |
-| `global.organization.manage`    | Global | Manage canonical organizations, identifiers, and hierarchy.                                                                                         |
-| `global.contact_point.manage`   | Global | Manage canonical contact points.                                                                                                                    |
-| `global.category_scheme.manage` | Global | Manage groups' category-scheme metadata.                                                                                                            |
-| `group.category.manage`         | Group  | Manage canonical categories in owning group.                                                                                                        |
-| `global.category.manage`        | Global | Manage canonical categories in any group without membership.                                                                                        |
-| `global.configuration.manage`   | Global | Manage official configurations and every user's personal configurations in the Sharing service. See [Sharing authorization](../sharing/sharing.md). |
+| Permission                    | Scope  | Meaning                                                                                                                                             |
+| ----------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `group.resource.create`       | Group  | Create logical dataset or software resource, draft, or copy in member group.                                                                        |
+| `global.resource.create`      | Global | Create logical dataset or software resource, draft, or copy in any group without membership.                                                        |
+| `group.resource.edit`         | Group  | Modify group resource draft.                                                                                                                        |
+| `global.resource.edit`        | Global | Modify resource drafts in any group without membership.                                                                                             |
+| `group.resource.submit`       | Group  | Submit group resource draft.                                                                                                                        |
+| `global.resource.submit`      | Global | Submit resource drafts in any group without membership.                                                                                             |
+| `group.resource.withdraw`     | Group  | Return submitted resource version to draft.                                                                                                         |
+| `global.resource.withdraw`    | Global | Return submitted resource versions to draft in any group without membership.                                                                        |
+| `group.resource.reopen`       | Group  | Return rejected resource version to draft.                                                                                                          |
+| `global.resource.reopen`      | Global | Return rejected resource versions to draft in any group without membership.                                                                         |
+| `group.resource.discard`      | Group  | Delete resource draft or rejected version.                                                                                                          |
+| `global.resource.discard`     | Global | Delete resource drafts or rejected versions in any group without membership.                                                                        |
+| `group.resource.reject`       | Group  | Reject submitted resource version.                                                                                                                  |
+| `global.resource.reject`      | Global | Reject submitted resource versions in any group without membership.                                                                                 |
+| `group.resource.publish`      | Group  | Publish submitted resource version.                                                                                                                 |
+| `global.resource.publish`     | Global | Publish submitted resource versions in any group without membership.                                                                                |
+| `group.resource.unpublish`    | Group  | Archive current published resource version without replacement.                                                                                     |
+| `global.resource.unpublish`   | Global | Archive published resource versions in any group without membership.                                                                                |
+| `group.membership.manage`     | Group  | View group membership roster and accept, reject, or revoke memberships.                                                                             |
+| `group.role.manage`           | Group  | View group membership roster; accept or reject role requests and assign or remove fixed group roles.                                                |
+| `group.permission.manage`     | Group  | View group membership roster and grant or revoke group-scoped granted permissions.                                                                  |
+| `global.membership.manage`    | Global | List and read users; view every group membership roster and accept, reject, or revoke memberships in every group.                                   |
+| `global.role.manage`          | Global | List and read users; view every group membership roster; accept or reject role requests and assign or remove fixed group roles in every group.      |
+| `global.permission.manage`    | Global | List and read users; grant or revoke globally scoped permissions.                                                                                   |
+| `global.organization.manage`  | Global | Manage canonical organizations, identifiers, and hierarchy.                                                                                         |
+| `global.contact_point.manage` | Global | Manage canonical contact points.                                                                                                                    |
+| `global.group.manage`         | Global | Create, edit, and delete groups and their metadata.                                                                                                 |
+| `global.concept.manage`       | Global | Create, edit, and delete concepts.                                                                                                                  |
+| `group.category.manage`       | Group  | Manage canonical categories in owning group.                                                                                                        |
+| `global.category.manage`      | Global | Manage canonical categories in any group without membership.                                                                                        |
+| `global.configuration.manage` | Global | Manage official configurations and every user's personal configurations in the Sharing service. See [Sharing authorization](../sharing/sharing.md). |
 
-An active user with `global.permission.manage` grants and revokes globally scoped permissions. An active member with a `group.*` permission performs that action only in their group. A user with the corresponding `global.*` permission performs that action in every group without membership. Group role managers may assign or remove `EDITOR` and `REVIEWER` only; a user with `global.role.manage` may also assign or remove `GROUP_ADMIN`. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires `global.membership.manage`. Group permission managers grant and revoke group-scoped granted permissions in their group. `GROUP_ADMIN` includes all three group management permissions. Users with `global.organization.manage`, `global.contact_point.manage`, `global.category_scheme.manage`, or `global.category.manage` manage corresponding canonical entities globally. A user with `group.category.manage` manages canonical categories only in the group where permission is granted. Group creation and deletion, metadata import, global `ADMIN` assignment, user blocking, and non-public read/discovery retain explicit `AuthorizeAdmin` behavior for now; future permission-specific replacements are listed below.
+An active user with `global.permission.manage` grants and revokes globally scoped permissions. An active member with a `group.*` permission performs that action only in their group. A user with the corresponding `global.*` permission performs that action in every group without membership. Group role managers may assign or remove `EDITOR` and `REVIEWER` only; a user with `global.role.manage` may also assign or remove `GROUP_ADMIN`. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires `global.membership.manage`. Group permission managers grant and revoke group-scoped granted permissions in their group. `GROUP_ADMIN` includes all three group management permissions. Users with `global.organization.manage`, `global.contact_point.manage`, `global.group.manage`, `global.concept.manage`, or `global.category.manage` manage corresponding canonical entities globally. A user with `group.category.manage` manages canonical categories only in the group where permission is granted. Global `ADMIN` assignment, user blocking, and non-public read/discovery retain explicit `AuthorizeAdmin` behavior for now; future permission-specific replacements are listed below.
 
 `global.configuration.manage` is the permission for Sharing administration. It is granted to global `ADMIN` through `role_permissions` and may also be granted directly by a user with `global.permission.manage`. Its Sharing authorization flow is specified in [sharing.md](../sharing/sharing.md).
 
-Groups and categories are publicly readable without authentication. A group is also its canonical category scheme for authorization and API purposes. Public group metadata never includes memberships, roles, granted permissions, or role requests. A user with a global management permission may list users and read any user detail; users may also read their own detail. Group membership roster access requires a global membership/role management permission or an active membership with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` in that group. Roster entries expose member ID, given name, family name, email, membership status, assigned roles, granted group permissions, role-derived group permissions, and pending role requests. A user may read the same assigned roles, granted group permissions, and role-derived group permissions for their own memberships.
+Groups and categories are publicly readable without authentication. Public group metadata never includes memberships, roles, granted permissions, or role requests. A user with a global management permission may list users and read any user detail; users may also read their own detail. Group membership roster access requires a global membership/role management permission or an active membership with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` in that group. Roster entries expose member ID, given name, family name, email, membership status, assigned roles, granted group permissions, role-derived group permissions, and pending role requests. A user may read the same assigned roles, granted group permissions, and role-derived group permissions for their own memberships.
 
 User list and detail responses expose global `global_granted_permissions` and `global_role_permissions`. User membership summaries and group membership responses expose `granted_permissions` and `role_permissions`. These lists preserve their sources; a permission present in both sources appears in both lists. Group membership responses do not expose global roles or global permissions.
 
@@ -234,7 +237,7 @@ Group roles and additive group permissions may be assigned only to active member
 9. For resource category selection, require category `group_id` to equal resource `group_id`.
 10. Otherwise deny.
 
-Group, ownership, status, and category scheme association must be loaded from stored resource. Caller-provided ownership or group claims are not authorization inputs.
+Group, ownership, and status must be loaded from stored resource. Caller-provided ownership or group claims are not authorization inputs.
 
 ## Membership And Roles
 
@@ -273,21 +276,15 @@ Global `ADMIN` may block user with required non-empty reason and may later unblo
 
 Blocked identity remains attributable. Operations requiring or optionally accepting authentication reject blocked bearer tokens; fully public operations ignore supplied credentials and remain readable. Requests without user identity retain public-read access. Blocking last active global `ADMIN` is forbidden. An attempted authenticated action by a blocked user is denied and remains attributable in authorization/audit telemetry; it does not produce an email notification topic.
 
-## Metadata Import
-
-Metadata import is restricted to global `ADMIN`. Import may create/update canonical organizations, contact points, categories, category schemes, and resource `DRAFT` content only. Imported categories and category-scheme changes are applied to specified group and must obey group ownership and hierarchy invariants. Imported resources must obey one-active-change rule and cannot enter `SUBMITTED`, `REJECTED`, `PUBLISHED`, or `ARCHIVED` directly. Entity validation and import conflicts skip only affected entities and return diagnostics; invalid optional relations are omitted and their parents are revalidated. Syntax, authorization, timeout, and database failures roll back the entire request. Counts report entities persisted by the successful transaction. Publication always uses normal submit/publish lifecycle.
-
 ### Future Permission Work
 
 The following capabilities intentionally remain behind `AuthorizeAdmin` until explicit permissions are designed and implemented:
 
-| Current capability               | Future permission candidate | Required alignment                                                                                    |
-| -------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Create/delete groups             | `global.group.manage`       | Define whether delete requires separate destructive permission and preserve resource ownership rules. |
-| Metadata import                  | `global.metadata.import`    | Define entity-level scope, audit requirements, and transaction failure behavior.                      |
-| Assign/remove global `ADMIN`     | `global.admin.manage`       | Preserve last-active-admin invariant and prevent privilege escalation.                                |
-| Block/unblock users              | `global.user.block`         | Preserve reason, actor, timestamp, and security-event behavior.                                       |
-| Non-public read/discovery bypass | `global.read.private`       | Define exposure boundary for user, membership, contact-point, and unpublished-resource data.          |
+| Current capability               | Future permission candidate | Required alignment                                                                           |
+| -------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------- |
+| Assign/remove global `ADMIN`     | `global.admin.manage`       | Preserve last-active-admin invariant and prevent privilege escalation.                       |
+| Block/unblock users              | `global.user.block`         | Preserve reason, actor, timestamp, and security-event behavior.                              |
+| Non-public read/discovery bypass | `global.read.private`       | Define exposure boundary for user, membership, contact-point, and unpublished-resource data. |
 
 ## Notifications
 
@@ -401,14 +398,14 @@ If a user qualifies for multiple routes, Metadata deduplicates before returning 
 | Editor copies published dataset to another group                        | New logical dataset/draft uses new UUID, copied identifier values in new rows, and zero categories.                                                                                      |
 | Editor creates software-application draft from publication              | New version has same logical application UUID and cloned metadata, creators, identifiers, and category links.                                                                            |
 | Editor copies published software source code                            | New logical source code/draft has new UUID, cloned metadata, creators, and identifiers, and zero categories.                                                                             |
-| Editor links category from another group's category scheme              | Denied even when editor belongs to both groups.                                                                                                                                          |
+| Editor links category from another group                                | Denied even when editor belongs to both groups.                                                                                                                                          |
 | Editor attempts to create category through dataset draft                | Denied; category management is outside dataset lifecycle.                                                                                                                                |
 | Category manager creates category with duplicate sibling name           | Denied after normalized-name comparison.                                                                                                                                                 |
 | Client previews referenced category impact, then requests delete        | Full subtree and every dataset/software link are deleted atomically, including published/archived links.                                                                                 |
 | Client previews referenced organization impact, then requests delete    | Resource/hierarchy links and owned identifiers are removed, then organization is deleted.                                                                                                |
 | Contact-point manager edits canonical contact                           | Change is visible through every dataset-version/web-service reference.                                                                                                                   |
 | Client previews referenced contact-point impact, then requests delete   | All contact links are removed, then contact point is deleted.                                                                                                                            |
-| Group owns no resource                                                  | Category scheme, categories, memberships, access assignments, requests, and subscriptions are deleted with group.                                                                        |
+| Group owns no resource                                                  | Categories, memberships, access assignments, requests, and subscriptions are deleted with group.                                                                                         |
 | Group Admin unpublishes resource                                        | Public version becomes archived; later draft may publish normally.                                                                                                                       |
 | Group role manager tries to assign `GROUP_ADMIN`                        | Denied; a user with `global.role.manage` may assign it.                                                                                                                                  |
 | Membership is revoked                                                   | Membership and related access/subscriptions/pending requests are deleted; user may request again.                                                                                        |
@@ -423,6 +420,5 @@ If a user qualifies for multiple routes, Metadata deduplicates before returning 
 | Membership rejection cascades to pending role requests                  | One membership-rejected email; cascaded role-request changes produce no additional email.                                                                                                |
 | Role request is accepted                                                | One role-request-accepted email; implicit role assignment produces no second email.                                                                                                      |
 | Membership revocation cascades to roles, permissions, and subscriptions | Access removals are silent; group subscription is deleted and must be recreated after rejoining.                                                                                         |
-| Non-admin attempts metadata import                                      | Denied.                                                                                                                                                                                  |
 | Identifier is linked to second owner                                    | Denied; copy requires new identifier row.                                                                                                                                                |
 | Attempt blocks/removes last active System Admin                         | Denied.                                                                                                                                                                                  |

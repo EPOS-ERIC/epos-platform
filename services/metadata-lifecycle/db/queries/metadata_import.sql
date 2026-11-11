@@ -4,7 +4,7 @@ INSERT INTO
         id,
         name,
         description,
-        concept,
+        concept_id,
         label,
         logo,
         PAGE,
@@ -16,7 +16,14 @@ VALUES
         sqlc.arg(id),
         sqlc.arg(name),
         sqlc.narg(description),
-        sqlc.arg(concept),
+        (
+            SELECT
+                id
+            FROM
+                concepts
+            WHERE
+                lower(name) = lower(sqlc.arg(concept)::text)
+        ),
         sqlc.narg(label),
         sqlc.narg(logo),
         sqlc.narg(PAGE),
@@ -27,7 +34,7 @@ UPDATE
 SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
-    concept = EXCLUDED.concept,
+    concept_id = EXCLUDED.concept_id,
     label = EXCLUDED.label,
     logo = EXCLUDED.logo,
     PAGE = EXCLUDED.page,
