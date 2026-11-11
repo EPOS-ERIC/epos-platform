@@ -4,22 +4,25 @@ import { NotificationService } from 'components/notification/notification.servic
 import { InteractiveVisualisationService } from 'pages/dataPortal/services/interactiveVisualisation.service';
 import { DataConfigurableI } from 'utility/configurables/dataConfigurableI.interface';
 import { DataConfigurableDataSearchI } from 'utility/configurablesDataSearch/dataConfigurableDataSearchI.interface';
+import { DataConfigurableDataSearchLoading } from 'utility/configurablesDataSearch/dataConfigurableDataSearchLoading';
 import { DataSearchConfigurablesServiceResource } from '../../dataPanel/services/dataSearchConfigurables.service';
 import { PaleolatitudePoint, PaleolatitudeResponse, PALEOLATITUDE_CONFIG_ID, PALEOLATITUDE_TRACE_ID } from '../objects/paleolatitude.interface';
 import { Trace } from '../objects/trace';
 import { YAxisDisplayType } from '../objects/yAxisDisplayType.enum';
+import { DistributionFormat } from 'api/webApi/data/distributionFormat.interface';
+import { ParameterValue } from 'api/webApi/data/parameterValue.interface';
 
 export interface PaleolatitudeGraphRequest {
   normalizedLon: number;
   url: string;
+  format?: DistributionFormat;
+  parameters?: Array<ParameterValue>;
 }
 
 export interface PaleolatitudeGraphData {
   response: PaleolatitudeResponse;
   traces: Array<Trace>;
 }
-
-const PALEOLATITUDE_PATH_PARAMETER_NAMES = ['lat', 'lon', 'age', 'minage', 'maxage', 'model'];
 
 @Injectable({
   providedIn: 'root',
@@ -128,14 +131,17 @@ export class PaleolatitudeGraphService {
     }
 
     const normalizedLon = this.normalizeLongitude(lon);
-    const url = this.createUrl(configurable, lat, normalizedLon);
-    if (url == null) {
+    const format = configurable.getDistributionDetails().getFormats().find(item => item.resourceAccess?.type === 'DYNAMIC');
+    if (format == null) {
       return null;
     }
-
+    const coordinates = format.resourceAccess!.parameters.filter(item => item.role === 'LATITUDE' || item.role === 'LONGITUDE');
     return {
       normalizedLon,
-      url,
+      url: format.getUrl(),
+      format,
+      parameters: configurable.getNewParameterValues().filter(item => !coordinates.some(coordinate => coordinate.name === item.name))
+        .concat(coordinates.map(item => ({ name: item.name, value: String(item.role === 'LATITUDE' ? lat : normalizedLon) }))),
     };
   }
 
@@ -144,50 +150,16 @@ export class PaleolatitudeGraphService {
     configurableId: string,
     traceId: string,
   ): Promise<PaleolatitudeGraphData> {
-    const data = await this.apiService.executeUrl(request.url);
+    if (request.format == null || request.format.resourceAccess?.type !== 'DYNAMIC') {
+      throw new Error('Paleolatitude requires a dynamic distribution format.');
+    }
+    const data = await this.apiService.executeDistributionFormat(request.format, request.parameters ?? [], true) as Blob;
     const response = JSON.parse(await data.text()) as PaleolatitudeResponse;
 
     return {
       response,
       traces: this.createTrace(response, configurableId, traceId),
     };
-  }
-
-  private createUrl(configurable: DataConfigurableI, lat: number, lon: number): null | string {
-    const endpoint = configurable.getDistributionDetails().getWebServiceEndpoint();
-    if (endpoint.trim() === '') {
-      return null;
-    }
-
-    const parameterValues = new Map<string, string>(
-      configurable.getNewParameterValues().map((parameter): [string, string] => [
-        this.normalizeParameterName(parameter.name),
-        encodeURIComponent(parameter.value),
-      ]),
-    );
-    parameterValues.set('lat', encodeURIComponent(String(lat)));
-    parameterValues.set('lon', encodeURIComponent(String(lon)));
-
-    if (!endpoint.includes('{')) {
-      const values = PALEOLATITUDE_PATH_PARAMETER_NAMES.map(name => parameterValues.get(name));
-      if (values.some(value => value == null)) {
-        return null;
-      }
-
-      return `${endpoint.replace(/\/+$/, '')}/${values.join('/')}`;
-    }
-
-    let hasAllValues = true;
-    const url = endpoint.replace(/\{([^}]+)\}/g, (placeholder: string, name: string): string => {
-      const value = parameterValues.get(this.normalizeParameterName(name));
-      if (value == null) {
-        hasAllValues = false;
-        return placeholder;
-      }
-      return value;
-    });
-
-    return hasAllValues ? url : null;
   }
 
   private createTrace(response: PaleolatitudeResponse, configurableId: string, traceId: string): Array<Trace> {
@@ -221,13 +193,10 @@ export class PaleolatitudeGraphService {
     return ((((lon + 180) % 360) + 360) % 360) - 180;
   }
 
-  private normalizeParameterName(name: string): string {
-    return name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  }
-
   private getConfigurable(configurables: Array<DataConfigurableI>): DataConfigurableI | undefined {
     return configurables.find((item: DataConfigurableI) => {
-      return item.getDistributionDetails().getKeywords().some(keyword => keyword.trim().toLowerCase() === 'pointclick');
+      return !(item instanceof DataConfigurableDataSearchLoading)
+        && item.getDistributionDetails().getFormats().some(format => format.resourceAccess?.type === 'DYNAMIC');
     });
   }
 

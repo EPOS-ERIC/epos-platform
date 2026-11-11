@@ -137,7 +137,8 @@ export class GraphPanelComponent implements OnInit {
 
         if (dataConfigurables != null) {
           const graphableConfigurables = dataConfigurables.filter((thisConfig: DataConfigurable) => {
-            return thisConfig.isGraphable;
+            return thisConfig.isGraphable && !thisConfig.getDistributionDetails().getFormats()
+              .some(format => format.resourceAccess?.type === 'DYNAMIC');
           });
 
           // remove the configurables that have been remove in the interface

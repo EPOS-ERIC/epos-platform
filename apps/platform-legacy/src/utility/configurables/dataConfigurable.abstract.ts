@@ -109,12 +109,12 @@ export abstract class DataConfigurable implements DataConfigurableI {
     // we set to linked by default, if it's possible to link them
 
     this.spatialLinked = this.parameterDefinitions.hasSpatialParameters();
-    if (this.spatialLinked && (null != spatialOverrides)) {
+    if (this.spatialLinked && (null != spatialOverrides) && !distributionDetails.getFormats().some(format => format.resourceAccess != null)) {
       paramValues = this.parameterDefinitions.updateSpatialParamsUsingBounds(spatialOverrides, paramValues);
     }
 
     this.temporalLinked = this.parameterDefinitions.hasTemporalParameters();
-    if (this.temporalLinked && (null != temporalOverrides)) {
+    if (this.temporalLinked && (null != temporalOverrides) && !distributionDetails.getFormats().some(format => format.resourceAccess != null)) {
       paramValues = this.parameterDefinitions.updateTemporalParamsUsingRange(temporalOverrides, paramValues);
     }
 

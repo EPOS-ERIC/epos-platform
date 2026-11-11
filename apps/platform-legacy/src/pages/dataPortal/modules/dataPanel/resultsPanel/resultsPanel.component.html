@@ -108,15 +108,14 @@
                   <app-breadcrumb *ngIf="!element.distSummary.resourceVersion || element.levels.length > 0" [levels]="element.levels"
                     [filterFirst]="!!element.distSummary.resourceVersion"
                     [showFirst]="!!element.distSummary.resourceVersion || activeDomainData.code === 'FAV' || activeDomainData.code === 'ALL'"></app-breadcrumb>
-                  <div *ngIf="element.distSummary.resourceVersion" class="distribution-summary">
-                    <span *ngIf="element.visibility[0] !== ''">Visible on: —</span>
+                  <div *ngIf="element.distSummary.resourceVersion && element.visibility[0] === ''" class="distribution-summary">
                     <app-visible-on [item]="element" [configurables]="configurables"
                       data-cy="results-panel-visible-on"></app-visible-on>
                   </div>
                   <div class="informations-bottom">
                     <div class="informations-bottom-left">
                       <ng-container>
-                        <app-visible-on *ngIf="!element.distSummary.resourceVersion" [item]="element" [configurables]="configurables"
+                        <app-visible-on *ngIf="!element.distSummary.resourceVersion && element.visibility[0] === ''" [item]="element" [configurables]="configurables"
                           data-cy="results-panel-visible-on"></app-visible-on>
                       </ng-container>
                       <!-- Service Provider -->

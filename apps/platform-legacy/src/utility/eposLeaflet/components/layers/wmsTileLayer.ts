@@ -69,7 +69,16 @@ import * as L from 'leaflet';
                break;
            }
          });
-         return resolve(L.tileLayer.wms(this.url, optionsCopy));
+         const capabilitiesUrl = this.options.get<string>('customLayerOptionCapabilitiesUrl');
+         const tileUrl = capabilitiesUrl ? new URL(capabilitiesUrl) : null;
+         if (tileUrl != null) {
+           Array.from(tileUrl.searchParams.keys()).forEach(key => {
+             if (['service', 'request', 'version'].includes(key.toLowerCase())) {
+               tileUrl.searchParams.delete(key);
+             }
+           });
+         }
+         return resolve(L.tileLayer.wms(tileUrl?.toString() ?? this.url, optionsCopy));
        } catch (e) {
          // TODO send user an error?
          console.error('Layer not found');
@@ -140,13 +149,24 @@ import * as L from 'leaflet';
         params.set(key, value);
       });
 
-     const url =
+     let url =
        this.url +
        '?' +
        Array.from(params.keys())
          .filter((key) => null != params.get(key))
          .map((key) => `${key}=${params.get(key)}`)
          .join('&');
+
+     const capabilitiesUrl = this.options.get<string>('customLayerOptionCapabilitiesUrl');
+     if (capabilitiesUrl != null) {
+       const configuredUrl = new URL(capabilitiesUrl);
+       params.forEach((value, key) => {
+         if (!Array.from(configuredUrl.searchParams.keys()).some(existing => existing.toLowerCase() === key.toLowerCase())) {
+           configuredUrl.searchParams.set(key, value);
+         }
+       });
+       url = configuredUrl.toString();
+     }
 
      this.getCapabilitiesPromise = http
        .get(url, { responseType: 'text' })

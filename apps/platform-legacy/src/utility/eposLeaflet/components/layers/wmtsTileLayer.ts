@@ -208,6 +208,7 @@ export class WmtsTileLayer extends TileLayer {
 
             // PARSE GetCapabilities XML
             const selectedLayerIdentifier = this.options.get<string>(WMTSParameter.LAYER);
+            const configuredStyle = this.options.get<string>('STYLE');
             const capabilityLayers = capabilities.find('Layer').filter(function() {
               if (!selectedLayerIdentifier) {
                 return true;
@@ -273,6 +274,7 @@ export class WmtsTileLayer extends TileLayer {
                   console.warn('No Default Style Found. Applying first available style found');
                   style = layerEl.find('Style > ows\\:Identifier, Style > Identifier').first().text();
                 }
+                style = configuredStyle ?? style;
 
                 // these two flags are needed to signal if both cases of following ".each()" iteration have been tapped!
                 let tileJSONTapped = false;
@@ -463,13 +465,24 @@ export class WmtsTileLayer extends TileLayer {
       params.set(key, value);
     });
 
-    const url =
+    let url =
       this.url +
       '?' +
       Array.from(params.keys())
         .filter((key) => null != params.get(key))
         .map((key) => `${key}=${params.get(key)}`)
         .join('&');
+
+    const capabilitiesUrl = this.options.get<string>('customLayerOptionCapabilitiesUrl');
+    if (capabilitiesUrl != null) {
+      const configuredUrl = new URL(capabilitiesUrl);
+      params.forEach((value, key) => {
+        if (!Array.from(configuredUrl.searchParams.keys()).some(existing => existing.toLowerCase() === key.toLowerCase())) {
+          configuredUrl.searchParams.set(key, value);
+        }
+      });
+      url = configuredUrl.toString();
+    }
 
     this.getCapabilitiesPromise = http
       .get(url, { responseType: 'text' })

@@ -86,6 +86,7 @@ export class SearchFacilityComponent implements OnInit {
 
   /** Timer used to ensure that the search isn't done too many times in quick succession. */
   private searchTimer: NodeJS.Timeout;
+  private freeTextTimer: NodeJS.Timeout;
 
   private metadataStatusModeActive: boolean = false;
 
@@ -122,6 +123,7 @@ export class SearchFacilityComponent implements OnInit {
    */
   public ngOnInit(): void {
     this.subscriptions.push(
+      new Subscription(() => clearTimeout(this.freeTextTimer)),
 
       this.model.dataSearchTemporalRange.valueObs.subscribe(() => {
         this.triggerAdvancedSearch();
@@ -161,7 +163,10 @@ export class SearchFacilityComponent implements OnInit {
     );
 
     if (this.model.dataSearchKeywords.get() !== null) {
-      this.listKeyString = this.model.dataSearchKeywords.get();
+      const text = this.model.dataSearchKeywords.get().join(' ');
+      this.listKeyString = text ? [text] : [];
+      this.model.dataSearchKeywords.set(this.listKeyString);
+      this.autoCompleteFormControl.setValue(text);
     }
 
     this.handleMetadataPreviewStateChange();
@@ -228,6 +233,14 @@ export class SearchFacilityComponent implements OnInit {
   public clearTextClicked(): void {
     this.clearFreeText();
     this.triggerAdvancedSearch();
+  }
+
+  public onFreeTextChange(): void {
+    const text = this.autoCompleteFormControl.value as string;
+    this.listKeyString = text ? [text] : [];
+    this.model.dataSearchKeywords.set(this.listKeyString);
+    clearTimeout(this.freeTextTimer);
+    this.freeTextTimer = setTimeout(() => this.searchByFreeTextSearch(), 300);
   }
 
   /**
@@ -431,8 +444,10 @@ export class SearchFacilityComponent implements OnInit {
   }
 
   private clearFreeText(): void {
+    clearTimeout(this.freeTextTimer);
     this.newText = '';
     this.listKeyString = [];
+    this.model.dataSearchKeywords.set(this.listKeyString);
     this.autoCompleteFormControl.setValue(this.newText);
   }
 

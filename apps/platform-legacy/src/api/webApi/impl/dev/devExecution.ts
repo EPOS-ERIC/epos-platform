@@ -20,6 +20,7 @@ export class DevExecutionApi implements ExecutionApi {
   // params
   private static readonly ID = 'id';
   private static readonly PARAMS = 'params';
+  private readonly pendingResourceRequests = new Map<string, Promise<Record<string, unknown> | Blob>>();
 
   constructor(private readonly baseUrl: BaseUrl, private readonly rest: Rest) { }
 
@@ -41,7 +42,19 @@ export class DevExecutionApi implements ExecutionApi {
     asBlob: boolean,
   ): Promise<Record<string, unknown> | Blob> {
     if (format.resourceAccess != null) {
-      return this.rest.post(format.getUrl(), this.resourceRequest(format, params), false, {}, asBlob) as Promise<Record<string, unknown> | Blob>;
+      if (format.resourceAccess.type !== 'HTTP' && format.resourceAccess.type !== 'WFS' && format.resourceAccess.type !== 'DYNAMIC') {
+        return Promise.reject(new Error(`Distribution type ${format.resourceAccess.type} must be accessed directly.`));
+      }
+      const body = this.resourceRequest(format, params);
+      const key = JSON.stringify([format.getUrl(), body, asBlob]);
+      const pending = this.pendingResourceRequests.get(key);
+      if (pending != null) {
+        return pending;
+      }
+      const request = this.rest.post(format.getUrl(), body, false, {}, asBlob) as Promise<Record<string, unknown> | Blob>;
+      this.pendingResourceRequests.set(key, request);
+      void request.then(() => this.pendingResourceRequests.delete(key), () => this.pendingResourceRequests.delete(key));
+      return request;
     }
     const url = this.getExecuteUrl(format, params);
     return this.rest.get(url, false, asBlob) as Promise<Record<string, unknown> | Blob>;
@@ -65,6 +78,9 @@ export class DevExecutionApi implements ExecutionApi {
   public getOriginatorUrl(distribution: DistributionSummary, params: null | Array<ParameterValue>): Promise<string> {
     const format = distribution.getFormats().find(item => item.resourceAccess != null && item.getType() === 'ORIGINAL');
     if (format != null) {
+      if (format.resourceAccess?.type === 'WMS' || format.resourceAccess?.type === 'WMTS') {
+        return Promise.resolve(format.resourceAccess.capabilitiesUrl!);
+      }
       return this.rest.post(format.getUrl().replace('/access?', '/prepare?'), this.resourceRequest(format, params))
         .then((response: { url: string }) => response.url);
     }
@@ -94,16 +110,25 @@ export class DevExecutionApi implements ExecutionApi {
 
   private resourceRequest(format: DistributionFormat, params: null | Array<ParameterValue>): Record<string, unknown> {
     const access = format.resourceAccess!;
-    const parameters = (params ?? []).map(param => {
+    const values = params ?? [];
+    const coordinates: Record<string, number> = {};
+    const parameters = values.flatMap(param => {
       const definition = access.parameters.find(item => item.name === param.name);
       if (definition == null) {
         throw new Error(`Unknown resource parameter: ${param.name}`);
       }
+      if (access.type === 'DYNAMIC' && (definition.role === 'LONGITUDE' || definition.role === 'LATITUDE')) {
+        coordinates[definition.role.toLowerCase()] = Number(param.value);
+        return [];
+      }
+      if (param.value === (definition.defaultValue ?? '')) {
+        return [];
+      }
       const value = definition.kind === 'FLOAT' || definition.kind === 'INTEGER' ? Number(param.value)
         : definition.kind === 'BOOLEAN' ? param.value === 'true' : param.value;
-      return { id: definition.id, value };
+      return [{ id: definition.id, value }];
     });
-    return { type: access.type, parameters };
+    return { type: access.type, ...coordinates, parameters };
   }
 
   private paramsArrayToObject(params: Array<ParameterValue>): Record<string, unknown> {

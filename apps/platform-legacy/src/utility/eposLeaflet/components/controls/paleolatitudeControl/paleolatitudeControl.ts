@@ -70,7 +70,7 @@ class PaleolatitudeMarkerLayer extends MapLayer {
   }
 
   protected updateLeafletLayerOpacity(): void {
-    this.locationLayer.eachLayer((layer: L.Layer) => {
+    this.locationLayer?.eachLayer((layer: L.Layer) => {
       if (layer instanceof L.Marker) {
         layer.setOpacity(this.options.customLayerOptionOpacity.get()!);
       }
