@@ -120,6 +120,18 @@ describe('WebServiceParametersComponent', () => {
     expect(fixture.nativeElement.querySelector('.webservice-parameters--comparison')).not.toBeNull();
   });
 
+  it('uses a custom title for typed parameter collections', async () => {
+    await TestBed.configureTestingModule({
+      imports: [WebServiceParametersComponent]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(WebServiceParametersComponent);
+    fixture.componentRef.setInput('sectionTitle', 'GetMap parameters');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.webservice-subsection-summary')?.textContent)
+      .toContain('GetMap parameters');
+  });
+
   it('matches renamed parameters by stable resource id', async () => {
     await TestBed.configureTestingModule({
       imports: [WebServiceParametersComponent]

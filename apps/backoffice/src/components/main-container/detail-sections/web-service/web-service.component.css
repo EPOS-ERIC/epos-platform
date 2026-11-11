@@ -17,8 +17,101 @@
   font-weight: 600;
 }
 
+.web-service-checkbox-field {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.web-service-checkbox-field input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--olive-600);
+}
+
 .webservice-body-hint {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.8rem;
+}
+
+.layer-editor {
+  margin-top: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.layer-editor-header,
+.layer-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.layer-editor-header {
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--line);
+}
+
+.layer-editor-title,
+.layer-card-header strong {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.layer-editor-count {
+  margin-left: 7px;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.layer-add-button {
+  min-height: 32px;
+  padding: 5px 10px;
+  font-size: 0.76rem;
+}
+
+.layer-list {
+  display: grid;
+  gap: 10px;
+  max-height: 410px;
+  padding: 10px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.layer-list::-webkit-scrollbar {
+  display: none;
+}
+
+.layer-card {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.layer-card-header {
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line);
+}
+
+.layer-remove-button {
+  padding: 3px 6px;
+  border: 0;
+  background: transparent;
+  color: #b91c1c;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
 }

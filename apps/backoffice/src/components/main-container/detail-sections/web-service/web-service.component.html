@@ -46,8 +46,8 @@
       @case ('WMS') {
         <ng-container *ngTemplateOutlet="layerConfiguration; context: { configuration: model.configuration }"></ng-container>
         <fieldset class="detail-fieldset" [disabled]="disabled"><div class="detail-form-grid">
-          <label class="detail-field"><span class="detail-label">Transparency editable</span><input type="checkbox" [(ngModel)]="model.configuration.transparencyEditable" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
-          <label class="detail-field"><span class="detail-label">Default transparency</span><input type="checkbox" [(ngModel)]="model.configuration.defaultTransparency" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+          <label class="detail-field web-service-checkbox-field"><span class="detail-label">Transparency editable</span><input type="checkbox" [(ngModel)]="model.configuration.transparencyEditable" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+          <label class="detail-field web-service-checkbox-field"><span class="detail-label">Default transparency</span><input type="checkbox" [(ngModel)]="model.configuration.defaultTransparency" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
         </div></fieldset>
       }
       @case ('WMTS') {
@@ -106,16 +106,12 @@
         <app-web-service-parameters [model]="model.configuration.parameters" [comparisonModel]="comparisonParameters('parameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.parameters = $event; emitModelChange()" />
       }
       @case ('WMS') {
-        <h4 class="distribution-subtitle">GetMap parameters</h4>
-        <app-web-service-parameters [model]="model.configuration.getMapParameters" [comparisonModel]="comparisonParameters('getMapParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getMapParameters = $event; emitModelChange()" />
-        <h4 class="distribution-subtitle">GetFeatureInfo parameters</h4>
-        <app-web-service-parameters [model]="model.configuration.getFeatureInfoParameters" [comparisonModel]="comparisonParameters('getFeatureInfoParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
+        <app-web-service-parameters sectionTitle="GetMap parameters" [model]="model.configuration.getMapParameters" [comparisonModel]="comparisonParameters('getMapParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getMapParameters = $event; emitModelChange()" />
+        <app-web-service-parameters sectionTitle="GetFeatureInfo parameters" [model]="model.configuration.getFeatureInfoParameters" [comparisonModel]="comparisonParameters('getFeatureInfoParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
       }
       @case ('WMTS') {
-        <h4 class="distribution-subtitle">GetTile parameters</h4>
-        <app-web-service-parameters [model]="model.configuration.getTileParameters" [comparisonModel]="comparisonParameters('getTileParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getTileParameters = $event; emitModelChange()" />
-        <h4 class="distribution-subtitle">GetFeatureInfo parameters</h4>
-        <app-web-service-parameters [model]="model.configuration.getFeatureInfoParameters" [comparisonModel]="comparisonParameters('getFeatureInfoParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
+        <app-web-service-parameters sectionTitle="GetTile parameters" [model]="model.configuration.getTileParameters" [comparisonModel]="comparisonParameters('getTileParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getTileParameters = $event; emitModelChange()" />
+        <app-web-service-parameters sectionTitle="GetFeatureInfo parameters" [model]="model.configuration.getFeatureInfoParameters" [comparisonModel]="comparisonParameters('getFeatureInfoParameters')" [disabled]="disabled" [comparisonMode]="comparisonMode" [comparisonSide]="comparisonSide" [comparisonSelectedParameterResourceId]="comparisonSelectedParameterResourceId" [reversed]="comparisonMode && comparisonSide === 'right'" (comparisonSelectedParameterResourceIdChange)="comparisonSelectedParameterResourceIdChange.emit($event)" (modelChange)="model.configuration.getFeatureInfoParameters = $event; emitModelChange()" />
       }
     }
 
@@ -195,18 +191,33 @@
       <label class="detail-field detail-field--full"><span class="detail-label">Capabilities URL *</span><input class="app-input" [(ngModel)]="configuration.capabilitiesUrl" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required /></label>
       <label class="detail-field"><span class="detail-label">Default layer *</span><input class="app-input" [(ngModel)]="configuration.defaultLayer" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" required /></label>
     </div>
-    @for (layer of configuration.layers; track layer.resourceId ?? $index) {
-      <div class="detail-form-grid" [attr.data-comparison-resource-id]="layer.resourceId ?? null">
-        <label class="detail-field"><span class="detail-label">Layer name *</span><input class="app-input" [(ngModel)]="layer.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
-        <label class="detail-field"><span class="detail-label">Default style</span><input class="app-input" [(ngModel)]="layer.defaultStyle" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
-        <label class="detail-field"><span class="detail-label">Styles</span><input class="app-input" [ngModel]="joinValues(layer.styles)" [ngModelOptions]="{ standalone: true }" (ngModelChange)="layer.styles = splitValues($event); emitModelChange()" /></label>
+    <section class="layer-editor">
+      <header class="layer-editor-header">
+        <div>
+          <span class="layer-editor-title">Layers</span>
+          <span class="layer-editor-count">{{ configuration.layers.length }}</span>
+        </div>
         @if (!disabled) {
-          <button type="button" class="app-button app-button--ghost" (click)="removeLayer($index)">Remove layer</button>
+          <button type="button" class="app-button app-button--ghost layer-add-button" (click)="addLayer()">+ Add layer</button>
+        }
+      </header>
+      <div class="layer-list">
+        @for (layer of configuration.layers; track layer.resourceId ?? $index) {
+          <section class="layer-card" [attr.data-comparison-resource-id]="layer.resourceId ?? null">
+            <header class="layer-card-header">
+              <strong>{{ layer.name || 'Layer ' + ($index + 1) }}</strong>
+              @if (!disabled) {
+                <button type="button" class="layer-remove-button" (click)="removeLayer($index)">Remove</button>
+              }
+            </header>
+            <div class="detail-form-grid">
+              <label class="detail-field"><span class="detail-label">Layer name *</span><input class="app-input" [(ngModel)]="layer.name" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+              <label class="detail-field"><span class="detail-label">Default style</span><input class="app-input" [(ngModel)]="layer.defaultStyle" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" /></label>
+              <label class="detail-field detail-field--full"><span class="detail-label">Styles</span><input class="app-input" [ngModel]="joinValues(layer.styles)" [ngModelOptions]="{ standalone: true }" (ngModelChange)="layer.styles = splitValues($event); emitModelChange()" /></label>
+            </div>
+          </section>
         }
       </div>
-    }
-    @if (!disabled) {
-      <button type="button" class="app-button app-button--ghost" (click)="addLayer()">Add layer</button>
-    }
+    </section>
   </fieldset>
 </ng-template>

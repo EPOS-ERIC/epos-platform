@@ -26,6 +26,7 @@ export class WebServiceParametersComponent implements OnChanges {
   protected readonly enumLabel = enumLabel;
   @Input() model: DatasetWebServiceParameterForm[] = [];
   @Input() comparisonModel: DatasetWebServiceParameterForm[] = [];
+  @Input() sectionTitle = 'Parameters';
   @Input() disabled = false;
   @Input() comparisonMode = false;
   @Input() comparisonSide: 'left' | 'right' = 'left';
