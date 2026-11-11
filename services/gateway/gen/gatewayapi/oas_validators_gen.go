@@ -550,6 +550,64 @@ func (s *Category) Validate() error {
 	return nil
 }
 
+func (s *Concept) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     1,
+			MinLengthSet:  true,
+			MaxLength:     0,
+			MaxLengthSet:  false,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.Name)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "name",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *ConceptInput) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Name.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "name",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *ConfigurationDetail) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -1447,34 +1505,10 @@ func (s *CreateGroupRequest) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if err := s.Concept.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "concept",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
-}
-
-func (s CreateGroupRequestConcept) Validate() error {
-	switch s {
-	case "DATA":
-		return nil
-	case "FACILITIES":
-		return nil
-	case "SOFTWARE":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
 }
 
 func (s *CreateMembershipRequest) Validate() error {
@@ -1894,17 +1928,6 @@ func (s *DatasetDiscoveryItem) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "status",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Concept.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "concept",
 			Error: err,
 		})
 	}
@@ -2678,19 +2701,6 @@ func (s Decision) Validate() error {
 	case "accept":
 		return nil
 	case "reject":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s DiscoveryConcept) Validate() error {
-	switch s {
-	case "DATA":
-		return nil
-	case "FACILITIES":
-		return nil
-	case "SOFTWARE":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -4673,7 +4683,9 @@ func (s GlobalPermission) Validate() error {
 		return nil
 	case "global.contact_point.manage":
 		return nil
-	case "global.category_scheme.manage":
+	case "global.group.manage":
+		return nil
+	case "global.concept.manage":
 		return nil
 	case "global.resource.create":
 		return nil
@@ -4892,34 +4904,10 @@ func (s *Group) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if err := s.Concept.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "concept",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
-}
-
-func (s GroupConcept) Validate() error {
-	switch s {
-	case "DATA":
-		return nil
-	case "FACILITIES":
-		return nil
-	case "SOFTWARE":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
 }
 
 func (s *GroupMembership) Validate() error {
@@ -7281,34 +7269,10 @@ func (s *ReplaceGroupRequest) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if err := s.Concept.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "concept",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
-}
-
-func (s ReplaceGroupRequestConcept) Validate() error {
-	switch s {
-	case "DATA":
-		return nil
-	case "FACILITIES":
-		return nil
-	case "SOFTWARE":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
 }
 
 func (s *ReplaceOrganizationRequest) Validate() error {
@@ -8236,17 +8200,6 @@ func (s *SoftwareApplicationDiscoveryItem) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if err := s.Concept.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "concept",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -8481,17 +8434,6 @@ func (s *SoftwareSourceCodeDiscoveryItem) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "status",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Concept.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "concept",
 			Error: err,
 		})
 	}

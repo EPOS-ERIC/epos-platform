@@ -159,7 +159,7 @@ func discoveryCandidate(typ domain.ResourceType, resourceID, versionID, groupID 
 		Status:     domain.Published,
 		Name:       name,
 		UpdatedAt:  time.Unix(0, 0),
-		Concept:    domain.TopLevelConceptSoftware,
+		Concept:    domain.DiscoveryReference{ID: uuid.New(), Name: "Software"},
 		CreatedBy:  &domain.DiscoveryCreatedBy{ID: "creator", Name: "Creator"},
 	}
 }

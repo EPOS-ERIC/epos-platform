@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from auth import get_token
 from client import SCHEMA, GatewayClient
-from fixtures import assert_problem
+from fixtures import assert_problem, concept_id as find_concept_id
 
 
 class GroupAndCategoryContractTest(unittest.TestCase):
@@ -16,6 +16,28 @@ class GroupAndCategoryContractTest(unittest.TestCase):
             get_token(),
         )
 
+    def test_concept_crud_and_group_reference(self) -> None:
+        """Verify dynamic concepts are referenced by groups and protected from deletion."""
+        name = f"Contract Concept {uuid4()}"
+        defaults = self.gateway.get("/concepts")
+        self.assertEqual(defaults.status_code, 200)
+        self.assertTrue({"Data", "Facilities", "Software"}.issubset({v["name"] for v in defaults.json()}))
+        created = self.gateway.post("/concepts", json={"name": name})
+        self.assertEqual(created.status_code, 201)
+        concept_id = created.json()["id"]
+        group = self.gateway.post("/groups", json={"name": name, "concept_id": concept_id})
+        self.assertEqual(group.status_code, 201)
+        self.assertEqual(group.json()["concept_id"], concept_id)
+        conflict = self.gateway.delete("/concepts/{conceptId}", conceptId=concept_id)
+        self.assertEqual(conflict.status_code, 409)
+        renamed = self.gateway.put("/concepts/{conceptId}", conceptId=concept_id, json={"name": name + " updated"})
+        self.assertEqual(renamed.status_code, 200)
+        self.assertEqual(renamed.json()["name"], name + " updated")
+        fetched = self.gateway.get("/concepts/{conceptId}", conceptId=concept_id)
+        self.assertEqual(fetched.json()["name"], name + " updated")
+        self.assertEqual(self.gateway.delete("/groups/{groupId}", groupId=group.json()["id"]).status_code, 204)
+        self.assertEqual(self.gateway.delete("/concepts/{conceptId}", conceptId=concept_id).status_code, 204)
+
     def test_group_and_category_crud(self) -> None:
         """Verify admin group/category CRUD, normalization, and cascade deletion."""
 
@@ -24,20 +46,21 @@ class GroupAndCategoryContractTest(unittest.TestCase):
         updated_group_name = f"{group_name}-updated"
         group_description = "Contract test group"
         updated_group_description = "Updated contract test group"
+        concept_id = find_concept_id(self.gateway, "Data")
 
         created_group_response = self.gateway.post(
             "/groups",
             json={
                 "name": group_name,
                 "description": group_description,
-                "concept": "DATA",
+                "concept_id": concept_id,
             },
         )
         self.assertEqual(created_group_response.status_code, 201)
         created_group = created_group_response.json()
         self.assertEqual(created_group["name"], group_name)
         self.assertEqual(created_group["description"], group_description)
-        self.assertEqual(created_group["concept"], "DATA")
+        self.assertEqual(created_group["concept_id"], concept_id)
         group_id = created_group["id"]
 
         groups_response = self.gateway.get("/groups")
@@ -66,7 +89,7 @@ class GroupAndCategoryContractTest(unittest.TestCase):
             json={
                 "name": updated_group_name,
                 "description": updated_group_description,
-                "concept": "DATA",
+                "concept_id": concept_id,
             },
         )
         self.assertEqual(updated_group_response.status_code, 200)

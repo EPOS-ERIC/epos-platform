@@ -7,19 +7,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// NewTopLevelConcept validates and normalizes a top-level concept.
-func NewTopLevelConcept(value string) (TopLevelConcept, error) {
-	concept := TopLevelConcept(strings.ToUpper(strings.TrimSpace(value)))
-	if !concept.Valid() {
-		return "", apperror.Default(apperror.CodeValidationFailed)
-	}
-	return concept, nil
-}
-
 // NewGroupInput validates and normalizes editable group fields.
 func NewGroupInput(value GroupInput) (GroupInput, error) {
 	value.Name = strings.TrimSpace(value.Name)
-	value.Concept = strings.TrimSpace(value.Concept)
 	value.Description = optionalTrimmedString(value.Description)
 	value.Label = optionalTrimmedString(value.Label)
 	value.Logo = optionalTrimmedString(value.Logo)
@@ -28,14 +18,9 @@ func NewGroupInput(value GroupInput) (GroupInput, error) {
 	if value.Name == "" {
 		return GroupInput{}, invalidField("name", "Name must not be blank.", nil)
 	}
-	if value.Concept == "" {
-		return GroupInput{}, invalidField("concept", "Concept is required.", nil)
+	if value.ConceptID == uuid.Nil {
+		return GroupInput{}, invalidField("concept_id", "Concept ID is required.", nil)
 	}
-	concept, err := NewTopLevelConcept(value.Concept)
-	if err != nil {
-		return GroupInput{}, invalidField("concept", "Concept must be DATA, FACILITIES, or SOFTWARE.", nil)
-	}
-	value.Concept = string(concept)
 	return value, nil
 }
 
@@ -57,6 +42,6 @@ func NewGroup(id uuid.UUID, value GroupInput) (Group, error) {
 		Page:        value.Page,
 		Color:       value.Color,
 		Position:    value.Position,
-		Concept:     value.Concept,
+		ConceptID:   value.ConceptID,
 	}, nil
 }

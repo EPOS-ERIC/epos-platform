@@ -7,22 +7,24 @@ SELECT
     version.status,
     version.title AS name,
     version.updated_at,
-    resource_group.concept,
+    resource_group.concept_id,
+    concept.name AS concept_name,
     version.created_by AS created_by_id,
     concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     datasets AS dataset
     JOIN dataset_versions AS version ON version.dataset_id = dataset.id
     JOIN groups AS resource_group ON resource_group.id = dataset.group_id
+    JOIN concepts AS concept ON concept.id = resource_group.concept_id
     JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         sqlc.arg(versioning_statuses)::text []::resource_status []
     )
     AND (
-        cardinality(sqlc.arg(concepts)::text []) = 0
-        OR resource_group.concept = ANY(
-            sqlc.arg(concepts)::text []::top_level_concept []
+        cardinality(sqlc.arg(concepts)::uuid []) = 0
+        OR resource_group.concept_id = ANY(
+            sqlc.arg(concepts)::uuid []
         )
     )
     AND (
@@ -144,22 +146,24 @@ SELECT
     version.status,
     version.name,
     version.updated_at,
-    resource_group.concept,
+    resource_group.concept_id,
+    concept.name AS concept_name,
     version.created_by AS created_by_id,
     concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     software_applications AS resource
     JOIN software_application_versions AS version ON version.software_application_id = resource.id
     JOIN groups AS resource_group ON resource_group.id = resource.group_id
+    JOIN concepts AS concept ON concept.id = resource_group.concept_id
     JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         sqlc.arg(versioning_statuses)::text []::resource_status []
     )
     AND (
-        cardinality(sqlc.arg(concepts)::text []) = 0
-        OR resource_group.concept = ANY(
-            sqlc.arg(concepts)::text []::top_level_concept []
+        cardinality(sqlc.arg(concepts)::uuid []) = 0
+        OR resource_group.concept_id = ANY(
+            sqlc.arg(concepts)::uuid []
         )
     )
     AND (
@@ -248,22 +252,24 @@ SELECT
     version.status,
     version.name,
     version.updated_at,
-    resource_group.concept,
+    resource_group.concept_id,
+    concept.name AS concept_name,
     version.created_by AS created_by_id,
     concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     software_source_codes AS resource
     JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
     JOIN groups AS resource_group ON resource_group.id = resource.group_id
+    JOIN concepts AS concept ON concept.id = resource_group.concept_id
     JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         sqlc.arg(versioning_statuses)::text []::resource_status []
     )
     AND (
-        cardinality(sqlc.arg(concepts)::text []) = 0
-        OR resource_group.concept = ANY(
-            sqlc.arg(concepts)::text []::top_level_concept []
+        cardinality(sqlc.arg(concepts)::uuid []) = 0
+        OR resource_group.concept_id = ANY(
+            sqlc.arg(concepts)::uuid []
         )
     )
     AND (

@@ -177,19 +177,9 @@ func toDomainDistribution(value sqlc.Distribution, services map[uuid.UUID]domain
 
 func toDomainCategoryMetadata(value sqlc.ListLifecycleDatasetCategoriesRow) domain.CategoryMetadata {
 	return domain.CategoryMetadata{
-		ID:   value.ID,
-		Name: value.Name,
-		Scheme: domain.Group{
-			ID:          uuid.Nil,
-			Name:        "",
-			Description: nil,
-			Label:       nil,
-			Logo:        nil,
-			Page:        nil,
-			Color:       nil,
-			Position:    0,
-			Concept:     "",
-		},
+		ID:       value.ID,
+		Name:     value.Name,
+		GroupID:  uuid.Nil,
 		Children: nil,
 	}
 }
@@ -237,6 +227,6 @@ func toDomainGroup(value sqlc.Group) domain.Group {
 		Page:        value.Page,
 		Color:       value.Color,
 		Position:    value.Position,
-		Concept:     string(value.Concept),
+		ConceptID:   value.ConceptID,
 	}
 }

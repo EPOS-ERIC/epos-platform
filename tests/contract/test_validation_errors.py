@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
-from fixtures import assert_problem, create_group
+from fixtures import assert_problem, create_group, concept_id
 
 
 class ValidationErrorsContractTest(unittest.TestCase):
@@ -134,7 +134,7 @@ class ValidationErrorsContractTest(unittest.TestCase):
             )
         with self.subTest(operation="createGroup", case="missing field"):
             self.assert_bad_request(
-                self.gateway.post("/groups", json={"concept": "DATA"})
+                self.gateway.post("/groups", json={"concept_id": concept_id(self.gateway, "Data")})
             )
         with self.subTest(operation="createGroup", case="unknown field"):
             self.assert_bad_request(
@@ -142,7 +142,7 @@ class ValidationErrorsContractTest(unittest.TestCase):
                     "/groups",
                     json={
                         "name": f"validation-unknown-{suffix}",
-                        "concept": "DATA",
+                        "concept_id": concept_id(self.gateway, "Data"),
                         "unexpected": True,
                     },
                 )
@@ -151,16 +151,16 @@ class ValidationErrorsContractTest(unittest.TestCase):
             self.assert_bad_request(
                 self.gateway.post(
                     "/groups",
-                    json={"name": " ", "concept": "DATA"},
+                    json={"name": " ", "concept_id": concept_id(self.gateway, "Data")},
                 )
             )
-        with self.subTest(operation="createGroup", case="invalid enum"):
+        with self.subTest(operation="createGroup", case="invalid concept UUID"):
             self.assert_bad_request(
                 self.gateway.post(
                     "/groups",
                     json={
                         "name": f"validation-enum-{suffix}",
-                        "concept": "INVALID",
+                        "concept_id": "INVALID",
                     },
                 )
             )

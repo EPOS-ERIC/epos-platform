@@ -733,7 +733,7 @@ const getLifecycleSoftwareSourceCodeVersion = `-- name: GetLifecycleSoftwareSour
 SELECT
     version.id, version.software_source_code_id, version.status, version.revision, version.name, version.description, version.programming_language, version.keywords, version.repository, version.license, version.software_requirements, version.runtime_platform, version.main_entity_of_page, version.version, version.created_by, version.created_at, version.updated_at, version.submitted_by, version.submitted_at, version.published_by, version.published_at, version.archived_by, version.archived_at, version.rejected_by, version.rejected_at, version.rejection_note,
     source_code.id, source_code.group_id, source_code.created_by, source_code.created_at,
-    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept_id, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     software_source_code_versions AS version
     JOIN software_source_codes AS source_code ON source_code.id = version.software_source_code_id
@@ -791,7 +791,7 @@ func (q *Queries) GetLifecycleSoftwareSourceCodeVersion(ctx context.Context, arg
 		&i.Group.ID,
 		&i.Group.Name,
 		&i.Group.Description,
-		&i.Group.Concept,
+		&i.Group.ConceptID,
 		&i.Group.Label,
 		&i.Group.Logo,
 		&i.Group.Page,
@@ -850,7 +850,7 @@ func (q *Queries) GetPublishedLifecycleSoftwareSourceCodeVersion(ctx context.Con
 const listLifecycleSoftwareSourceCodeCategories = `-- name: ListLifecycleSoftwareSourceCodeCategories :many
 SELECT
     category.id, category.group_id, category.parent_category_id, category.name, category.created_at, category.updated_at,
-    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept_id, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     software_source_code_version_categories AS link
     JOIN categories AS category ON category.id = link.category_id
@@ -885,7 +885,7 @@ func (q *Queries) ListLifecycleSoftwareSourceCodeCategories(ctx context.Context,
 			&i.Group.ID,
 			&i.Group.Name,
 			&i.Group.Description,
-			&i.Group.Concept,
+			&i.Group.ConceptID,
 			&i.Group.Label,
 			&i.Group.Logo,
 			&i.Group.Page,

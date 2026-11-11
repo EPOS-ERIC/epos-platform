@@ -98,19 +98,23 @@ func (r *Repo) GetNotificationUserContext(ctx context.Context, userID string) (d
 	}, nil
 }
 
-func (r *Repo) GetNotificationGroupContext(ctx context.Context, groupID uuid.UUID) (domain.Group, error) {
+func (r *Repo) GetNotificationGroupContext(ctx context.Context, groupID uuid.UUID) (domain.NotificationGroupContext, error) {
 	row, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Group{}, apperror.Default(apperror.CodeNotFound)
+		return domain.NotificationGroupContext{}, apperror.Default(apperror.CodeNotFound)
 	}
 	if err != nil {
-		return domain.Group{}, fmt.Errorf("get notification group context: %w", err)
+		return domain.NotificationGroupContext{}, fmt.Errorf("get notification group context: %w", err)
 	}
 
-	return domain.Group{
-		ID:      row.ID,
+	concept, err := r.GetConceptRecord(ctx, row.ConceptID)
+	if err != nil {
+		return domain.NotificationGroupContext{}, fmt.Errorf("get notification group concept: %w", err)
+	}
+
+	return domain.NotificationGroupContext{
 		Name:    row.Name,
-		Concept: string(row.Concept),
+		Concept: concept.Name,
 	}, nil
 }
 

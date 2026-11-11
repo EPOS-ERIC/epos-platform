@@ -18,7 +18,7 @@ func toSearchDiscoveryDatasetsParams(filter domain.DiscoveryFilter) (sqlc.Search
 		Keywords:           filter.Keywords,
 		EditorID:           filter.EditorID,
 		ResourceTypes:      resourceTypeStrings(filter.Types),
-		Concepts:           topLevelConceptStrings(filter.Concepts),
+		Concepts:           filter.Concepts,
 		GroupID:            filter.GroupID,
 	}, nil
 }
@@ -34,7 +34,7 @@ func toSearchDiscoveryApplicationsParams(filter domain.DiscoveryFilter) sqlc.Sea
 		Keywords:           filter.Keywords,
 		EditorID:           filter.EditorID,
 		ResourceTypes:      resourceTypeStrings(filter.Types),
-		Concepts:           topLevelConceptStrings(filter.Concepts),
+		Concepts:           filter.Concepts,
 		GroupID:            filter.GroupID,
 	}
 }
@@ -50,7 +50,7 @@ func toSearchDiscoverySourceCodesParams(filter domain.DiscoveryFilter) sqlc.Sear
 		Keywords:           filter.Keywords,
 		EditorID:           filter.EditorID,
 		ResourceTypes:      resourceTypeStrings(filter.Types),
-		Concepts:           topLevelConceptStrings(filter.Concepts),
+		Concepts:           filter.Concepts,
 		GroupID:            filter.GroupID,
 	}
 }
@@ -67,7 +67,7 @@ func toDatasetCandidates(rows []sqlc.SearchDiscoveryDatasetsRow) ([]domain.Disco
 			Status:     domain.Status(row.Status),
 			Name:       row.Name,
 			UpdatedAt:  row.UpdatedAt,
-			Concept:    domain.TopLevelConcept(row.Concept),
+			Concept:    domain.DiscoveryReference{ID: row.ConceptID, Name: row.ConceptName},
 			CreatedBy:  &domain.DiscoveryCreatedBy{ID: row.CreatedByID, Name: row.CreatedByName},
 		})
 		if err != nil {
@@ -90,7 +90,7 @@ func toApplicationCandidates(rows []sqlc.SearchDiscoveryApplicationsRow) ([]doma
 			Status:     domain.Status(row.Status),
 			Name:       row.Name,
 			UpdatedAt:  row.UpdatedAt,
-			Concept:    domain.TopLevelConcept(row.Concept),
+			Concept:    domain.DiscoveryReference{ID: row.ConceptID, Name: row.ConceptName},
 			CreatedBy:  &domain.DiscoveryCreatedBy{ID: row.CreatedByID, Name: row.CreatedByName},
 		})
 		if err != nil {
@@ -113,7 +113,7 @@ func toSourceCodeCandidates(rows []sqlc.SearchDiscoverySourceCodesRow) ([]domain
 			Status:     domain.Status(row.Status),
 			Name:       row.Name,
 			UpdatedAt:  row.UpdatedAt,
-			Concept:    domain.TopLevelConcept(row.Concept),
+			Concept:    domain.DiscoveryReference{ID: row.ConceptID, Name: row.ConceptName},
 			CreatedBy:  &domain.DiscoveryCreatedBy{ID: row.CreatedByID, Name: row.CreatedByName},
 		})
 		if err != nil {
@@ -141,14 +141,6 @@ func statusStrings(values []domain.Status) []string {
 }
 
 func resourceTypeStrings(values []domain.ResourceType) []string {
-	result := make([]string, 0, len(values))
-	for _, value := range values {
-		result = append(result, string(value))
-	}
-	return result
-}
-
-func topLevelConceptStrings(values []domain.TopLevelConcept) []string {
 	result := make([]string, 0, len(values))
 	for _, value := range values {
 		result = append(result, string(value))

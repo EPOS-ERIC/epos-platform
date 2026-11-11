@@ -270,10 +270,12 @@ func (s *Service) resourceURL(resource domain.NotificationResource) string {
 	return fmt.Sprintf("%s/%s/%s/%s", s.publicURL, section, resource.ResourceID, resource.VersionID)
 }
 
-func (s *Service) groupRequestsURL(groupID uuid.UUID, concept domain.TopLevelConcept) string {
-	if s.publicURL == "" || groupID == uuid.Nil || !concept.Valid() {
+func (s *Service) groupRequestsURL(groupID uuid.UUID, concept domain.Concept) string {
+	section := strings.ToLower(concept.Name)
+	if s.publicURL == "" || groupID == uuid.Nil {
 		return ""
 	}
+	// TODO: update this with the right url for the backoffice page
 
-	return fmt.Sprintf("%s/%s/manage-group?groupId=%s&panel=membership-requests", s.publicURL, strings.ToLower(string(concept)), groupID)
+	return fmt.Sprintf("%s/%s/manage-group?groupId=%s&panel=membership-requests", s.publicURL, section, groupID)
 }

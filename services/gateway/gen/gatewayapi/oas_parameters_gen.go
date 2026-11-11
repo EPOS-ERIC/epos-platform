@@ -1267,6 +1267,71 @@ func decodeDecideGroupRoleRequestParams(args [3]string, argsEscaped bool, r *htt
 	return params, nil
 }
 
+// DeleteConceptParams is parameters of deleteConcept operation.
+type DeleteConceptParams struct {
+	ConceptId uuid.UUID
+}
+
+func unpackDeleteConceptParams(packed middleware.Parameters) (params DeleteConceptParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "conceptId",
+			In:   "path",
+		}
+		params.ConceptId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeDeleteConceptParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteConceptParams, _ error) {
+	// Decode path: conceptId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "conceptId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConceptId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "conceptId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DeleteConfigurationParams is parameters of deleteConfiguration operation.
 type DeleteConfigurationParams struct {
 	ConfigurationId uuid.UUID
@@ -2089,9 +2154,8 @@ type DiscoverResourcesParams struct {
 	// Filter results to one or more resource types. When omitted, all supported resource types are
 	// returned. Pass comma-separated values in a single parameter: `?type=dataset,software-application`.
 	Type []DiscoveryResourceType `json:",omitempty"`
-	// Filter results to one or more catalogue concepts. Pass comma-separated values in a single parameter:
-	// `?concept=DATA,SOFTWARE`.
-	Concept []DiscoveryConcept `json:",omitempty"`
+	// Filter results by comma-separated concept UUIDs.
+	ConceptId []DiscoveryConcept `json:",omitempty"`
 	// Filter results to resources belonging to the specified group.
 	GroupId OptUUID `json:",omitempty,omitzero"`
 	// Filter results by the user who created the resource version.
@@ -2142,11 +2206,11 @@ func unpackDiscoverResourcesParams(packed middleware.Parameters) (params Discove
 	}
 	{
 		key := middleware.ParameterKey{
-			Name: "concept",
+			Name: "conceptId",
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Concept = v.([]DiscoveryConcept)
+			params.ConceptId = v.([]DiscoveryConcept)
 		}
 	}
 	{
@@ -2333,68 +2397,53 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 			Err:  err,
 		}
 	}
-	// Decode query: concept.
+	// Decode query: conceptId.
 	if err := func() error {
 		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "concept",
+			Name:    "conceptId",
 			Style:   uri.QueryStyleForm,
 			Explode: false,
 		}
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				params.Concept = nil
+				params.ConceptId = nil
 				return d.DecodeArray(func(d uri.Decoder) error {
-					var paramsDotConceptVal DiscoveryConcept
+					var paramsDotConceptIdVal DiscoveryConcept
 					if err := func() error {
-						val, err := d.DecodeValue()
-						if err != nil {
+						var paramsDotConceptIdValVal uuid.UUID
+						if err := func() error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToUUID(val)
+							if err != nil {
+								return err
+							}
+
+							paramsDotConceptIdValVal = c
+							return nil
+						}(); err != nil {
 							return err
 						}
-
-						c, err := conv.ToString(val)
-						if err != nil {
-							return err
-						}
-
-						paramsDotConceptVal = DiscoveryConcept(c)
+						paramsDotConceptIdVal = DiscoveryConcept(paramsDotConceptIdValVal)
 						return nil
 					}(); err != nil {
 						return err
 					}
-					params.Concept = append(params.Concept, paramsDotConceptVal)
+					params.ConceptId = append(params.ConceptId, paramsDotConceptIdVal)
 					return nil
 				})
 			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				var failures []validate.FieldError
-				for i, elem := range params.Concept {
-					if err := func() error {
-						if err := elem.Validate(); err != nil {
-							return err
-						}
-						return nil
-					}(); err != nil {
-						failures = append(failures, validate.FieldError{
-							Name:  fmt.Sprintf("[%d]", i),
-							Error: err,
-						})
-					}
-				}
-				if len(failures) > 0 {
-					return &validate.Error{Fields: failures}
-				}
-				return nil
-			}(); err != nil {
 				return err
 			}
 		}
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "concept",
+			Name: "conceptId",
 			In:   "query",
 			Err:  err,
 		}
@@ -3116,6 +3165,71 @@ func decodeDraftFromPublicationParams(args [2]string, argsEscaped bool, r *http.
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetConceptParams is parameters of getConcept operation.
+type GetConceptParams struct {
+	ConceptId uuid.UUID
+}
+
+func unpackGetConceptParams(packed middleware.Parameters) (params GetConceptParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "conceptId",
+			In:   "path",
+		}
+		params.ConceptId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetConceptParams(args [1]string, argsEscaped bool, r *http.Request) (params GetConceptParams, _ error) {
+	// Decode path: conceptId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "conceptId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConceptId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "conceptId",
 			In:   "path",
 			Err:  err,
 		}
@@ -5808,6 +5922,71 @@ func decodeReopenResourceVersionParams(args [3]string, argsEscaped bool, r *http
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "versionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ReplaceConceptParams is parameters of replaceConcept operation.
+type ReplaceConceptParams struct {
+	ConceptId uuid.UUID
+}
+
+func unpackReplaceConceptParams(packed middleware.Parameters) (params ReplaceConceptParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "conceptId",
+			In:   "path",
+		}
+		params.ConceptId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeReplaceConceptParams(args [1]string, argsEscaped bool, r *http.Request) (params ReplaceConceptParams, _ error) {
+	// Decode path: conceptId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "conceptId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ConceptId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "conceptId",
 			In:   "path",
 			Err:  err,
 		}

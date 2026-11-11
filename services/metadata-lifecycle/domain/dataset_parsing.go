@@ -227,7 +227,7 @@ func NewDatasetVersion(
 		Page:        group.Page,
 		Color:       group.Color,
 		Position:    group.Position,
-		Concept:     group.Concept,
+		ConceptID:   group.ConceptID,
 	})
 	if err != nil {
 		return DatasetVersion{}, fmt.Errorf("dataset group: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))

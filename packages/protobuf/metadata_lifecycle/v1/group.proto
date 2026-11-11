@@ -4,7 +4,6 @@ package metadata_lifecycle.v1;
 
 import "buf/validate/validate.proto";
 import "metadata_lifecycle/v1/annotations.proto";
-import "metadata_lifecycle/v1/common.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
 
@@ -23,7 +22,7 @@ message Group {
   optional string page = 6 [(buf.validate.field).string.min_len = 1];
   optional string color = 7 [(buf.validate.field).string.min_len = 1];
   int32 position = 8;
-  TopLevelConcept concept = 9 [(buf.validate.field).enum.defined_only = true];
+  string concept_id = 9 [(buf.validate.field).string.uuid = true];
 }
 
 message ListGroupsResponse {
@@ -42,7 +41,7 @@ message CreateGroupRequest {
   optional string page = 5 [(buf.validate.field).string.min_len = 1];
   optional string color = 6 [(buf.validate.field).string.min_len = 1];
   int32 position = 7;
-  TopLevelConcept concept = 8 [(buf.validate.field).enum.defined_only = true];
+  string concept_id = 8 [(buf.validate.field).string.uuid = true];
 }
 
 message CreateGroupResponse {
@@ -58,7 +57,7 @@ message ReplaceGroupRequest {
   optional string page = 6 [(buf.validate.field).string.min_len = 1];
   optional string color = 7 [(buf.validate.field).string.min_len = 1];
   int32 position = 8;
-  TopLevelConcept concept = 9 [(buf.validate.field).enum.defined_only = true];
+  string concept_id = 9 [(buf.validate.field).string.uuid = true];
 }
 
 message ReplaceGroupResponse {

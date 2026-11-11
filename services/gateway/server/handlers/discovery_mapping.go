@@ -44,12 +44,8 @@ func toProtoSearchResourcesRequest(value gatewayapi.DiscoverResourcesParams) (*m
 		}
 		result.ResourceTypes = append(result.ResourceTypes, mapped)
 	}
-	for _, concept := range value.Concept {
-		mapped, err := toProtoDiscoveryConcept(concept)
-		if err != nil {
-			return nil, err
-		}
-		result.Concepts = append(result.Concepts, mapped)
+	for _, concept := range value.ConceptId {
+		result.ConceptIds = append(result.ConceptIds, uuid.UUID(concept).String())
 	}
 	for _, status := range value.VersioningStatus {
 		mapped, err := toProtoDiscoveryStatus(status)
@@ -71,19 +67,6 @@ func toProtoDiscoveryResourceType(value gatewayapi.DiscoveryResourceType) (metad
 		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE, nil
 	default:
 		return 0, fmt.Errorf("invalid discovery resource type %q", value)
-	}
-}
-
-func toProtoDiscoveryConcept(value gatewayapi.DiscoveryConcept) (metadatalifecyclev1.TopLevelConcept, error) {
-	switch value {
-	case gatewayapi.DiscoveryConceptDATA:
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_DATA, nil
-	case gatewayapi.DiscoveryConceptFACILITIES:
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_FACILITIES, nil
-	case gatewayapi.DiscoveryConceptSOFTWARE:
-		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE, nil
-	default:
-		return 0, fmt.Errorf("invalid discovery concept %q", value)
 	}
 }
 
@@ -110,12 +93,12 @@ type apiDiscoveryCommon struct {
 	Name       string
 	Status     gatewayapi.VersioningStatus
 	UpdatedAt  time.Time
-	Concept    gatewayapi.DiscoveryConcept
+	Concept    gatewayapi.Reference
 	CreatedBy  gatewayapi.OptReference
 	Group      gatewayapi.Reference
 }
 
-func toAPIDiscoveryCommon(resourceID, versionID, name string, status metadatalifecyclev1.VersioningStatus, updatedAt *timestamppb.Timestamp, concept metadatalifecyclev1.TopLevelConcept, createdBy *metadatalifecyclev1.UserReference, group *metadatalifecyclev1.EntityReference) (apiDiscoveryCommon, error) {
+func toAPIDiscoveryCommon(resourceID, versionID, name string, status metadatalifecyclev1.VersioningStatus, updatedAt *timestamppb.Timestamp, concept *metadatalifecyclev1.EntityReference, createdBy *metadatalifecyclev1.UserReference, group *metadatalifecyclev1.EntityReference) (apiDiscoveryCommon, error) {
 	parsedResourceID, err := parseUUID("discovery.resource_id", resourceID)
 	if err != nil {
 		return apiDiscoveryCommon{}, err
@@ -138,7 +121,7 @@ func toAPIDiscoveryCommon(resourceID, versionID, name string, status metadatalif
 	if err != nil {
 		return apiDiscoveryCommon{}, err
 	}
-	parsedConcept, err := toAPIDiscoveryConceptValue(concept)
+	parsedConcept, err := toAPIDiscoveryReference(concept)
 	if err != nil {
 		return apiDiscoveryCommon{}, err
 	}
@@ -239,7 +222,7 @@ func toAPIDiscovery(value *metadatalifecyclev1.DiscoveryItem) (gatewayapi.Discov
 	return gatewayapi.DiscoveryItem{}, errors.New("discovery item resource is required")
 }
 
-func toAPISoftwareDiscoveryFields(resourceID, versionID, name string, status metadatalifecyclev1.VersioningStatus, updatedAt *timestamppb.Timestamp, concept metadatalifecyclev1.TopLevelConcept, createdBy *metadatalifecyclev1.UserReference, group *metadatalifecyclev1.EntityReference, creators, categories []*metadatalifecyclev1.EntityReference) (apiDiscoveryCommon, []gatewayapi.Reference, []gatewayapi.Reference, error) {
+func toAPISoftwareDiscoveryFields(resourceID, versionID, name string, status metadatalifecyclev1.VersioningStatus, updatedAt *timestamppb.Timestamp, concept *metadatalifecyclev1.EntityReference, createdBy *metadatalifecyclev1.UserReference, group *metadatalifecyclev1.EntityReference, creators, categories []*metadatalifecyclev1.EntityReference) (apiDiscoveryCommon, []gatewayapi.Reference, []gatewayapi.Reference, error) {
 	common, err := toAPIDiscoveryCommon(resourceID, versionID, name, status, updatedAt, concept, createdBy, group)
 	if err != nil {
 		return apiDiscoveryCommon{}, nil, nil, err
@@ -253,19 +236,6 @@ func toAPISoftwareDiscoveryFields(resourceID, versionID, name string, status met
 		return apiDiscoveryCommon{}, nil, nil, err
 	}
 	return common, creatorReferences, categoryReferences, nil
-}
-
-func toAPIDiscoveryConceptValue(value metadatalifecyclev1.TopLevelConcept) (gatewayapi.DiscoveryConcept, error) {
-	switch value {
-	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_DATA:
-		return gatewayapi.DiscoveryConceptDATA, nil
-	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_FACILITIES:
-		return gatewayapi.DiscoveryConceptFACILITIES, nil
-	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE:
-		return gatewayapi.DiscoveryConceptSOFTWARE, nil
-	default:
-		return "", fmt.Errorf("unsupported discovery concept %q", value)
-	}
 }
 
 func toAPIDiscoveryUserReference(value *metadatalifecyclev1.UserReference) (gatewayapi.Reference, error) {

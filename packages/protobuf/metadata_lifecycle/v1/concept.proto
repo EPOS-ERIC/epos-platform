@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message Concept {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message ListConceptsRequest {}
+message ListConceptsResponse {
+  repeated Concept concepts = 1;
+}
+
+message GetConceptRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetConceptResponse {
+  Concept concept = 1;
+}
+
+message CreateConceptRequest {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+}
+message CreateConceptResponse {
+  Concept concept = 1;
+}
+
+message ReplaceConceptRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+}
+message ReplaceConceptResponse {
+  Concept concept = 1;
+}
+
+message DeleteConceptRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+message DeleteConceptResponse {}
+
+service ConceptService {
+  rpc ListConcepts(ListConceptsRequest) returns (ListConceptsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc GetConcept(GetConceptRequest) returns (GetConceptResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc CreateConcept(CreateConceptRequest) returns (CreateConceptResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ReplaceConcept(ReplaceConceptRequest) returns (ReplaceConceptResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DeleteConcept(DeleteConceptRequest) returns (DeleteConceptResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

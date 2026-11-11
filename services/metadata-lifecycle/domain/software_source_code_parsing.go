@@ -183,7 +183,7 @@ func NewSoftwareSourceCodeVersion(
 		Page:        group.Page,
 		Color:       group.Color,
 		Position:    group.Position,
-		Concept:     group.Concept,
+		ConceptID:   group.ConceptID,
 	})
 	if err != nil {
 		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code group: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))

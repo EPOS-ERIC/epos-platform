@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
-from fixtures import assert_problem, create_group
+from fixtures import assert_problem, create_group, concept_id
 
 
 NO_AUTH_HEADERS = {"Authorization": ""}
@@ -150,7 +150,8 @@ class AuthorizationContractTest(unittest.TestCase):
             "global.notification.manage": "GLOBAL",
             "global.organization.manage": "GLOBAL",
             "global.contact_point.manage": "GLOBAL",
-            "global.category_scheme.manage": "GLOBAL",
+            "global.group.manage": "GLOBAL",
+            "global.concept.manage": "GLOBAL",
             "global.configuration.manage": "GLOBAL",
             "group.category.manage": "GROUP",
             "global.category.manage": "GLOBAL",
@@ -364,7 +365,8 @@ class AuthorizationContractTest(unittest.TestCase):
                 "global.notification.manage",
                 "global.organization.manage",
                 "global.contact_point.manage",
-                "global.category_scheme.manage",
+                "global.group.manage",
+                "global.concept.manage",
                 "global.configuration.manage",
                 "global.resource.create",
                 "global.resource.edit",
@@ -487,7 +489,7 @@ class AuthorizationContractTest(unittest.TestCase):
             category_manager_id,
             "group.category.manage",
         )
-        self.grant_global_permission(scheme_manager_id, "global.category_scheme.manage")
+        self.grant_global_permission(scheme_manager_id, "global.group.manage")
         self.grant_global_permission(
             organization_manager_id,
             "global.organization.manage",
@@ -496,7 +498,7 @@ class AuthorizationContractTest(unittest.TestCase):
 
         group_payload = {
             "name": f"contract-auth-canonical-updated-{suffix}",
-            "concept": "DATA",
+            "concept_id": concept_id(self.gateway, "Data"),
         }
         denied_group_replace = denied.put(
             "/groups/{groupId}",
@@ -674,9 +676,17 @@ class AuthorizationContractTest(unittest.TestCase):
 
         denied_group_create = denied.post(
             "/groups",
-            json={"name": f"contract-auth-denied-group-{suffix}", "concept": "DATA"},
+            json={"name": f"contract-auth-denied-group-{suffix}", "concept_id": concept_id(self.gateway, "Data")},
         )
         self.assert_forbidden(denied_group_create)
+        manager_group = scheme_manager.post(
+            "/groups",
+            json={"name": f"contract-auth-managed-group-{suffix}", "concept_id": concept_id(self.gateway, "Data")},
+        )
+        self.assertEqual(manager_group.status_code, 201)
+        self.assertEqual(scheme_manager.delete("/groups/{groupId}", groupId=manager_group.json()["id"]).status_code, 204)
+        denied_concept = scheme_manager.post("/concepts", json={"name": f"contract-auth-concept-{suffix}"})
+        self.assert_forbidden(denied_concept)
         denied_group_delete = denied.delete(
             "/groups/{groupId}",
             groupId=group_id,
@@ -687,6 +697,17 @@ class AuthorizationContractTest(unittest.TestCase):
             groupId=group_id,
         )
         self.assertEqual(group_delete.status_code, 204)
+
+    def test_concept_permission(self) -> None:
+        """Verify top concept management requires its dedicated global permission."""
+        suffix = str(uuid4())
+        manager, manager_id = self.create_user("concept-manager", suffix)
+        self.grant_global_permission(manager_id, "global.concept.manage")
+        created = manager.post("/concepts", json={"name": f"contract-concept-{suffix}"})
+        self.assertEqual(created.status_code, 201)
+        concept_id = created.json()["id"]
+        self.assertEqual(manager.put("/concepts/{conceptId}", conceptId=concept_id, json={"name": f"contract-concept-updated-{suffix}"}).status_code, 200)
+        self.assertEqual(manager.delete("/concepts/{conceptId}", conceptId=concept_id).status_code, 204)
 
     def test_membership_and_access_authorization(self) -> None:
         """Verify membership, role, and group permission authorization."""

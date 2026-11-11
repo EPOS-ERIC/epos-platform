@@ -2,17 +2,17 @@ package domain
 
 import "github.com/google/uuid"
 
-type TopLevelConcept string
+type ImportedConcept string // TODO: remove this when the real import is implemented
 
 const (
-	TopLevelConceptData       TopLevelConcept = "DATA"
-	TopLevelConceptFacilities TopLevelConcept = "FACILITIES"
-	TopLevelConceptSoftware   TopLevelConcept = "SOFTWARE"
+	ImportedConceptData       ImportedConcept = "DATA"
+	ImportedConceptFacilities ImportedConcept = "FACILITIES"
+	ImportedConceptSoftware   ImportedConcept = "SOFTWARE"
 )
 
-func (c TopLevelConcept) Valid() bool {
+func (c ImportedConcept) Valid() bool {
 	switch c {
-	case TopLevelConceptData, TopLevelConceptFacilities, TopLevelConceptSoftware:
+	case ImportedConceptData, ImportedConceptFacilities, ImportedConceptSoftware:
 		return true
 	default:
 		return false
@@ -29,7 +29,7 @@ type Group struct {
 	Page        *string
 	Color       *string
 	Position    int32
-	Concept     string
+	ConceptID   uuid.UUID
 }
 
 // GroupInput contains fields editable through group CRUD.
@@ -41,5 +41,5 @@ type GroupInput struct {
 	Page        *string
 	Color       *string
 	Position    int32
-	Concept     string
+	ConceptID   uuid.UUID
 }

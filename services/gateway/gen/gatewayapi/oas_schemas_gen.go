@@ -1036,6 +1036,47 @@ func (s *Category) SetName(val string) {
 	s.Name = val
 }
 
+// Ref: #/components/schemas/Concept
+type Concept struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
+// GetID returns the value of ID.
+func (s *Concept) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *Concept) GetName() string {
+	return s.Name
+}
+
+// SetID sets the value of ID.
+func (s *Concept) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *Concept) SetName(val string) {
+	s.Name = val
+}
+
+// Ref: #/components/schemas/ConceptInput
+type ConceptInput struct {
+	Name NonBlankString `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *ConceptInput) GetName() NonBlankString {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *ConceptInput) SetName(val NonBlankString) {
+	s.Name = val
+}
+
 // Merged schema.
 // Ref: #/components/schemas/ConfigurationDetail
 type ConfigurationDetail struct {
@@ -1851,14 +1892,14 @@ func (s *CreateDatasetResourceRequestResourceType) UnmarshalText(data []byte) er
 
 // Ref: #/components/schemas/CreateGroupRequest
 type CreateGroupRequest struct {
-	Name        NonBlankString            `json:"name"`
-	Description OptNilString              `json:"description"`
-	Label       OptNilString              `json:"label"`
-	Logo        OptNilString              `json:"logo"`
-	Page        OptNilString              `json:"page"`
-	Color       OptNilString              `json:"color"`
-	Position    OptInt32                  `json:"position"`
-	Concept     CreateGroupRequestConcept `json:"concept"`
+	Name        NonBlankString `json:"name"`
+	Description OptNilString   `json:"description"`
+	Label       OptNilString   `json:"label"`
+	Logo        OptNilString   `json:"logo"`
+	Page        OptNilString   `json:"page"`
+	Color       OptNilString   `json:"color"`
+	Position    OptInt32       `json:"position"`
+	ConceptID   uuid.UUID      `json:"concept_id"`
 }
 
 // GetName returns the value of Name.
@@ -1896,9 +1937,9 @@ func (s *CreateGroupRequest) GetPosition() OptInt32 {
 	return s.Position
 }
 
-// GetConcept returns the value of Concept.
-func (s *CreateGroupRequest) GetConcept() CreateGroupRequestConcept {
-	return s.Concept
+// GetConceptID returns the value of ConceptID.
+func (s *CreateGroupRequest) GetConceptID() uuid.UUID {
+	return s.ConceptID
 }
 
 // SetName sets the value of Name.
@@ -1936,57 +1977,9 @@ func (s *CreateGroupRequest) SetPosition(val OptInt32) {
 	s.Position = val
 }
 
-// SetConcept sets the value of Concept.
-func (s *CreateGroupRequest) SetConcept(val CreateGroupRequestConcept) {
-	s.Concept = val
-}
-
-type CreateGroupRequestConcept string
-
-const (
-	CreateGroupRequestConceptDATA       CreateGroupRequestConcept = "DATA"
-	CreateGroupRequestConceptFACILITIES CreateGroupRequestConcept = "FACILITIES"
-	CreateGroupRequestConceptSOFTWARE   CreateGroupRequestConcept = "SOFTWARE"
-)
-
-// AllValues returns all CreateGroupRequestConcept values.
-func (CreateGroupRequestConcept) AllValues() []CreateGroupRequestConcept {
-	return []CreateGroupRequestConcept{
-		CreateGroupRequestConceptDATA,
-		CreateGroupRequestConceptFACILITIES,
-		CreateGroupRequestConceptSOFTWARE,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s CreateGroupRequestConcept) MarshalText() ([]byte, error) {
-	switch s {
-	case CreateGroupRequestConceptDATA:
-		return []byte(s), nil
-	case CreateGroupRequestConceptFACILITIES:
-		return []byte(s), nil
-	case CreateGroupRequestConceptSOFTWARE:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *CreateGroupRequestConcept) UnmarshalText(data []byte) error {
-	switch CreateGroupRequestConcept(data) {
-	case CreateGroupRequestConceptDATA:
-		*s = CreateGroupRequestConceptDATA
-		return nil
-	case CreateGroupRequestConceptFACILITIES:
-		*s = CreateGroupRequestConceptFACILITIES
-		return nil
-	case CreateGroupRequestConceptSOFTWARE:
-		*s = CreateGroupRequestConceptSOFTWARE
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
+// SetConceptID sets the value of ConceptID.
+func (s *CreateGroupRequest) SetConceptID(val uuid.UUID) {
+	s.ConceptID = val
 }
 
 // Ref: #/components/schemas/CreateMembershipRequest
@@ -2654,7 +2647,7 @@ type DatasetDiscoveryItem struct {
 	Name       string                   `json:"name"`
 	Status     VersioningStatus         `json:"status"`
 	UpdatedAt  time.Time                `json:"updated_at"`
-	Concept    DiscoveryConcept         `json:"concept"`
+	Concept    Reference                `json:"concept"`
 	// Creator identity is returned only when caller may see identities for this resource group.
 	CreatedBy     OptReference            `json:"created_by"`
 	Group         Reference               `json:"group"`
@@ -2694,7 +2687,7 @@ func (s *DatasetDiscoveryItem) GetUpdatedAt() time.Time {
 }
 
 // GetConcept returns the value of Concept.
-func (s *DatasetDiscoveryItem) GetConcept() DiscoveryConcept {
+func (s *DatasetDiscoveryItem) GetConcept() Reference {
 	return s.Concept
 }
 
@@ -2754,7 +2747,7 @@ func (s *DatasetDiscoveryItem) SetUpdatedAt(val time.Time) {
 }
 
 // SetConcept sets the value of Concept.
-func (s *DatasetDiscoveryItem) SetConcept(val DiscoveryConcept) {
+func (s *DatasetDiscoveryItem) SetConcept(val Reference) {
 	s.Concept = val
 }
 
@@ -4101,6 +4094,9 @@ func (s *Decision) UnmarshalText(data []byte) error {
 	}
 }
 
+// DeleteConceptNoContent is response for DeleteConcept operation.
+type DeleteConceptNoContent struct{}
+
 // DeleteConfigurationNoContent is response for DeleteConfiguration operation.
 type DeleteConfigurationNoContent struct{}
 
@@ -4128,55 +4124,7 @@ type DeleteOrganizationNoContent struct{}
 // DiscardResourceDraftVersionNoContent is response for DiscardResourceDraftVersion operation.
 type DiscardResourceDraftVersionNoContent struct{}
 
-// Catalogue concept used to classify a resource.
-// Ref: #/components/schemas/DiscoveryConcept
-type DiscoveryConcept string
-
-const (
-	DiscoveryConceptDATA       DiscoveryConcept = "DATA"
-	DiscoveryConceptFACILITIES DiscoveryConcept = "FACILITIES"
-	DiscoveryConceptSOFTWARE   DiscoveryConcept = "SOFTWARE"
-)
-
-// AllValues returns all DiscoveryConcept values.
-func (DiscoveryConcept) AllValues() []DiscoveryConcept {
-	return []DiscoveryConcept{
-		DiscoveryConceptDATA,
-		DiscoveryConceptFACILITIES,
-		DiscoveryConceptSOFTWARE,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s DiscoveryConcept) MarshalText() ([]byte, error) {
-	switch s {
-	case DiscoveryConceptDATA:
-		return []byte(s), nil
-	case DiscoveryConceptFACILITIES:
-		return []byte(s), nil
-	case DiscoveryConceptSOFTWARE:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DiscoveryConcept) UnmarshalText(data []byte) error {
-	switch DiscoveryConcept(data) {
-	case DiscoveryConceptDATA:
-		*s = DiscoveryConceptDATA
-		return nil
-	case DiscoveryConceptFACILITIES:
-		*s = DiscoveryConceptFACILITIES
-		return nil
-	case DiscoveryConceptSOFTWARE:
-		*s = DiscoveryConceptSOFTWARE
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
+type DiscoveryConcept uuid.UUID
 
 // Ref: #/components/schemas/DiscoveryDistribution
 // DiscoveryDistribution represents sum type.
@@ -7087,25 +7035,26 @@ func (s *GlobalNotificationTopicKey) UnmarshalText(data []byte) error {
 type GlobalPermission string
 
 const (
-	GlobalPermissionGlobalMembershipManage     GlobalPermission = "global.membership.manage"
-	GlobalPermissionGlobalRoleManage           GlobalPermission = "global.role.manage"
-	GlobalPermissionGlobalPermissionManage     GlobalPermission = "global.permission.manage"
-	GlobalPermissionGlobalNotificationManage   GlobalPermission = "global.notification.manage"
-	GlobalPermissionGlobalOrganizationManage   GlobalPermission = "global.organization.manage"
-	GlobalPermissionGlobalContactPointManage   GlobalPermission = "global.contact_point.manage"
-	GlobalPermissionGlobalCategorySchemeManage GlobalPermission = "global.category_scheme.manage"
-	GlobalPermissionGlobalResourceCreate       GlobalPermission = "global.resource.create"
-	GlobalPermissionGlobalResourceEdit         GlobalPermission = "global.resource.edit"
-	GlobalPermissionGlobalResourceSubmit       GlobalPermission = "global.resource.submit"
-	GlobalPermissionGlobalResourceWithdraw     GlobalPermission = "global.resource.withdraw"
-	GlobalPermissionGlobalResourceReopen       GlobalPermission = "global.resource.reopen"
-	GlobalPermissionGlobalResourceDiscard      GlobalPermission = "global.resource.discard"
-	GlobalPermissionGlobalResourceReject       GlobalPermission = "global.resource.reject"
-	GlobalPermissionGlobalResourcePublish      GlobalPermission = "global.resource.publish"
-	GlobalPermissionGlobalResourceUnpublish    GlobalPermission = "global.resource.unpublish"
-	GlobalPermissionGlobalCategoryManage       GlobalPermission = "global.category.manage"
-	GlobalPermissionGlobalConfigurationManage  GlobalPermission = "global.configuration.manage"
-	GlobalPermissionGlobalConverterManage      GlobalPermission = "global.converter.manage"
+	GlobalPermissionGlobalMembershipManage    GlobalPermission = "global.membership.manage"
+	GlobalPermissionGlobalRoleManage          GlobalPermission = "global.role.manage"
+	GlobalPermissionGlobalPermissionManage    GlobalPermission = "global.permission.manage"
+	GlobalPermissionGlobalNotificationManage  GlobalPermission = "global.notification.manage"
+	GlobalPermissionGlobalOrganizationManage  GlobalPermission = "global.organization.manage"
+	GlobalPermissionGlobalContactPointManage  GlobalPermission = "global.contact_point.manage"
+	GlobalPermissionGlobalGroupManage         GlobalPermission = "global.group.manage"
+	GlobalPermissionGlobalConceptManage       GlobalPermission = "global.concept.manage"
+	GlobalPermissionGlobalResourceCreate      GlobalPermission = "global.resource.create"
+	GlobalPermissionGlobalResourceEdit        GlobalPermission = "global.resource.edit"
+	GlobalPermissionGlobalResourceSubmit      GlobalPermission = "global.resource.submit"
+	GlobalPermissionGlobalResourceWithdraw    GlobalPermission = "global.resource.withdraw"
+	GlobalPermissionGlobalResourceReopen      GlobalPermission = "global.resource.reopen"
+	GlobalPermissionGlobalResourceDiscard     GlobalPermission = "global.resource.discard"
+	GlobalPermissionGlobalResourceReject      GlobalPermission = "global.resource.reject"
+	GlobalPermissionGlobalResourcePublish     GlobalPermission = "global.resource.publish"
+	GlobalPermissionGlobalResourceUnpublish   GlobalPermission = "global.resource.unpublish"
+	GlobalPermissionGlobalCategoryManage      GlobalPermission = "global.category.manage"
+	GlobalPermissionGlobalConfigurationManage GlobalPermission = "global.configuration.manage"
+	GlobalPermissionGlobalConverterManage     GlobalPermission = "global.converter.manage"
 )
 
 // AllValues returns all GlobalPermission values.
@@ -7117,7 +7066,8 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalNotificationManage,
 		GlobalPermissionGlobalOrganizationManage,
 		GlobalPermissionGlobalContactPointManage,
-		GlobalPermissionGlobalCategorySchemeManage,
+		GlobalPermissionGlobalGroupManage,
+		GlobalPermissionGlobalConceptManage,
 		GlobalPermissionGlobalResourceCreate,
 		GlobalPermissionGlobalResourceEdit,
 		GlobalPermissionGlobalResourceSubmit,
@@ -7148,7 +7098,9 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case GlobalPermissionGlobalContactPointManage:
 		return []byte(s), nil
-	case GlobalPermissionGlobalCategorySchemeManage:
+	case GlobalPermissionGlobalGroupManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalConceptManage:
 		return []byte(s), nil
 	case GlobalPermissionGlobalResourceCreate:
 		return []byte(s), nil
@@ -7200,8 +7152,11 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 	case GlobalPermissionGlobalContactPointManage:
 		*s = GlobalPermissionGlobalContactPointManage
 		return nil
-	case GlobalPermissionGlobalCategorySchemeManage:
-		*s = GlobalPermissionGlobalCategorySchemeManage
+	case GlobalPermissionGlobalGroupManage:
+		*s = GlobalPermissionGlobalGroupManage
+		return nil
+	case GlobalPermissionGlobalConceptManage:
+		*s = GlobalPermissionGlobalConceptManage
 		return nil
 	case GlobalPermissionGlobalResourceCreate:
 		*s = GlobalPermissionGlobalResourceCreate
@@ -7295,7 +7250,7 @@ type Group struct {
 	Page        OptNilString `json:"page"`
 	Color       OptNilString `json:"color"`
 	Position    int32        `json:"position"`
-	Concept     GroupConcept `json:"concept"`
+	ConceptID   uuid.UUID    `json:"concept_id"`
 }
 
 // GetID returns the value of ID.
@@ -7338,9 +7293,9 @@ func (s *Group) GetPosition() int32 {
 	return s.Position
 }
 
-// GetConcept returns the value of Concept.
-func (s *Group) GetConcept() GroupConcept {
-	return s.Concept
+// GetConceptID returns the value of ConceptID.
+func (s *Group) GetConceptID() uuid.UUID {
+	return s.ConceptID
 }
 
 // SetID sets the value of ID.
@@ -7383,57 +7338,9 @@ func (s *Group) SetPosition(val int32) {
 	s.Position = val
 }
 
-// SetConcept sets the value of Concept.
-func (s *Group) SetConcept(val GroupConcept) {
-	s.Concept = val
-}
-
-type GroupConcept string
-
-const (
-	GroupConceptDATA       GroupConcept = "DATA"
-	GroupConceptFACILITIES GroupConcept = "FACILITIES"
-	GroupConceptSOFTWARE   GroupConcept = "SOFTWARE"
-)
-
-// AllValues returns all GroupConcept values.
-func (GroupConcept) AllValues() []GroupConcept {
-	return []GroupConcept{
-		GroupConceptDATA,
-		GroupConceptFACILITIES,
-		GroupConceptSOFTWARE,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s GroupConcept) MarshalText() ([]byte, error) {
-	switch s {
-	case GroupConceptDATA:
-		return []byte(s), nil
-	case GroupConceptFACILITIES:
-		return []byte(s), nil
-	case GroupConceptSOFTWARE:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *GroupConcept) UnmarshalText(data []byte) error {
-	switch GroupConcept(data) {
-	case GroupConceptDATA:
-		*s = GroupConceptDATA
-		return nil
-	case GroupConceptFACILITIES:
-		*s = GroupConceptFACILITIES
-		return nil
-	case GroupConceptSOFTWARE:
-		*s = GroupConceptSOFTWARE
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
+// SetConceptID sets the value of ConceptID.
+func (s *Group) SetConceptID(val uuid.UUID) {
+	s.ConceptID = val
 }
 
 // Complete membership record returned after a membership decision.
@@ -12754,14 +12661,14 @@ func (s *ReplaceDatasetDraftRequestResourceType) UnmarshalText(data []byte) erro
 
 // Ref: #/components/schemas/ReplaceGroupRequest
 type ReplaceGroupRequest struct {
-	Name        NonBlankString             `json:"name"`
-	Description OptNilString               `json:"description"`
-	Label       OptNilString               `json:"label"`
-	Logo        OptNilString               `json:"logo"`
-	Page        OptNilString               `json:"page"`
-	Color       OptNilString               `json:"color"`
-	Position    OptInt32                   `json:"position"`
-	Concept     ReplaceGroupRequestConcept `json:"concept"`
+	Name        NonBlankString `json:"name"`
+	Description OptNilString   `json:"description"`
+	Label       OptNilString   `json:"label"`
+	Logo        OptNilString   `json:"logo"`
+	Page        OptNilString   `json:"page"`
+	Color       OptNilString   `json:"color"`
+	Position    OptInt32       `json:"position"`
+	ConceptID   uuid.UUID      `json:"concept_id"`
 }
 
 // GetName returns the value of Name.
@@ -12799,9 +12706,9 @@ func (s *ReplaceGroupRequest) GetPosition() OptInt32 {
 	return s.Position
 }
 
-// GetConcept returns the value of Concept.
-func (s *ReplaceGroupRequest) GetConcept() ReplaceGroupRequestConcept {
-	return s.Concept
+// GetConceptID returns the value of ConceptID.
+func (s *ReplaceGroupRequest) GetConceptID() uuid.UUID {
+	return s.ConceptID
 }
 
 // SetName sets the value of Name.
@@ -12839,57 +12746,9 @@ func (s *ReplaceGroupRequest) SetPosition(val OptInt32) {
 	s.Position = val
 }
 
-// SetConcept sets the value of Concept.
-func (s *ReplaceGroupRequest) SetConcept(val ReplaceGroupRequestConcept) {
-	s.Concept = val
-}
-
-type ReplaceGroupRequestConcept string
-
-const (
-	ReplaceGroupRequestConceptDATA       ReplaceGroupRequestConcept = "DATA"
-	ReplaceGroupRequestConceptFACILITIES ReplaceGroupRequestConcept = "FACILITIES"
-	ReplaceGroupRequestConceptSOFTWARE   ReplaceGroupRequestConcept = "SOFTWARE"
-)
-
-// AllValues returns all ReplaceGroupRequestConcept values.
-func (ReplaceGroupRequestConcept) AllValues() []ReplaceGroupRequestConcept {
-	return []ReplaceGroupRequestConcept{
-		ReplaceGroupRequestConceptDATA,
-		ReplaceGroupRequestConceptFACILITIES,
-		ReplaceGroupRequestConceptSOFTWARE,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s ReplaceGroupRequestConcept) MarshalText() ([]byte, error) {
-	switch s {
-	case ReplaceGroupRequestConceptDATA:
-		return []byte(s), nil
-	case ReplaceGroupRequestConceptFACILITIES:
-		return []byte(s), nil
-	case ReplaceGroupRequestConceptSOFTWARE:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ReplaceGroupRequestConcept) UnmarshalText(data []byte) error {
-	switch ReplaceGroupRequestConcept(data) {
-	case ReplaceGroupRequestConceptDATA:
-		*s = ReplaceGroupRequestConceptDATA
-		return nil
-	case ReplaceGroupRequestConceptFACILITIES:
-		*s = ReplaceGroupRequestConceptFACILITIES
-		return nil
-	case ReplaceGroupRequestConceptSOFTWARE:
-		*s = ReplaceGroupRequestConceptSOFTWARE
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
+// SetConceptID sets the value of ConceptID.
+func (s *ReplaceGroupRequest) SetConceptID(val uuid.UUID) {
+	s.ConceptID = val
 }
 
 // Ref: #/components/schemas/ReplaceOrganizationRequest
@@ -14248,7 +14107,7 @@ type SoftwareApplicationDiscoveryItem struct {
 	Name       string                               `json:"name"`
 	Status     VersioningStatus                     `json:"status"`
 	UpdatedAt  time.Time                            `json:"updated_at"`
-	Concept    DiscoveryConcept                     `json:"concept"`
+	Concept    Reference                            `json:"concept"`
 	// Creator identity is returned only when caller may see identities for this resource group.
 	CreatedBy  OptReference `json:"created_by"`
 	Group      Reference    `json:"group"`
@@ -14287,7 +14146,7 @@ func (s *SoftwareApplicationDiscoveryItem) GetUpdatedAt() time.Time {
 }
 
 // GetConcept returns the value of Concept.
-func (s *SoftwareApplicationDiscoveryItem) GetConcept() DiscoveryConcept {
+func (s *SoftwareApplicationDiscoveryItem) GetConcept() Reference {
 	return s.Concept
 }
 
@@ -14342,7 +14201,7 @@ func (s *SoftwareApplicationDiscoveryItem) SetUpdatedAt(val time.Time) {
 }
 
 // SetConcept sets the value of Concept.
-func (s *SoftwareApplicationDiscoveryItem) SetConcept(val DiscoveryConcept) {
+func (s *SoftwareApplicationDiscoveryItem) SetConcept(val Reference) {
 	s.Concept = val
 }
 
@@ -14747,7 +14606,7 @@ type SoftwareSourceCodeDiscoveryItem struct {
 	Name       string                              `json:"name"`
 	Status     VersioningStatus                    `json:"status"`
 	UpdatedAt  time.Time                           `json:"updated_at"`
-	Concept    DiscoveryConcept                    `json:"concept"`
+	Concept    Reference                           `json:"concept"`
 	// Creator identity is returned only when caller may see identities for this resource group.
 	CreatedBy  OptReference `json:"created_by"`
 	Group      Reference    `json:"group"`
@@ -14786,7 +14645,7 @@ func (s *SoftwareSourceCodeDiscoveryItem) GetUpdatedAt() time.Time {
 }
 
 // GetConcept returns the value of Concept.
-func (s *SoftwareSourceCodeDiscoveryItem) GetConcept() DiscoveryConcept {
+func (s *SoftwareSourceCodeDiscoveryItem) GetConcept() Reference {
 	return s.Concept
 }
 
@@ -14841,7 +14700,7 @@ func (s *SoftwareSourceCodeDiscoveryItem) SetUpdatedAt(val time.Time) {
 }
 
 // SetConcept sets the value of Concept.
-func (s *SoftwareSourceCodeDiscoveryItem) SetConcept(val DiscoveryConcept) {
+func (s *SoftwareSourceCodeDiscoveryItem) SetConcept(val Reference) {
 	s.Concept = val
 }
 

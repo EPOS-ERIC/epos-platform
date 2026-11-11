@@ -15,13 +15,9 @@ import (
 func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 	value.Query = normalizedOptionalString(value.Query)
 	value.EditorID = normalizedOptionalString(value.EditorID)
-	concepts := make([]TopLevelConcept, 0, len(value.Concepts))
+	concepts := make([]uuid.UUID, 0, len(value.Concepts))
 	for _, concept := range value.Concepts {
-		concept = TopLevelConcept(strings.ToUpper(strings.TrimSpace(string(concept))))
-		if concept == "" {
-			continue
-		}
-		if !concept.Valid() {
+		if concept == uuid.Nil {
 			return DiscoveryFilter{}, apperror.Default(apperror.CodeValidationFailed)
 		}
 		if !slices.Contains(concepts, concept) {

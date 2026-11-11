@@ -47,6 +47,12 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/resources/{resourceType}/{id}/copy
 	CopyResource(ctx context.Context, params CopyResourceParams) (*WriteResult, error)
+	// CreateConcept implements createConcept operation.
+	//
+	// Create concept.
+	//
+	// POST /concepts
+	CreateConcept(ctx context.Context, req *ConceptInput) (*Concept, error)
 	// CreateConfiguration implements createConfiguration operation.
 	//
 	// Creates a personal configuration for the authenticated user. Omitted or null `is_public` makes it
@@ -112,6 +118,12 @@ type Handler interface {
 	//
 	// POST /groups/{groupId}/role-requests/{requestId}/{decision}
 	DecideGroupRoleRequest(ctx context.Context, params DecideGroupRoleRequestParams) (*GroupMembership, error)
+	// DeleteConcept implements deleteConcept operation.
+	//
+	// Delete concept.
+	//
+	// DELETE /concepts/{conceptId}
+	DeleteConcept(ctx context.Context, params DeleteConceptParams) error
 	// DeleteConfiguration implements deleteConfiguration operation.
 	//
 	// Deletes a configuration by ID. Creators may delete non-official configurations; managers may delete
@@ -207,6 +219,12 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/draft-from-publication
 	DraftFromPublication(ctx context.Context, params DraftFromPublicationParams) (*WriteResult, error)
+	// GetConcept implements getConcept operation.
+	//
+	// Get concept.
+	//
+	// GET /concepts/{conceptId}
+	GetConcept(ctx context.Context, params GetConceptParams) (*Concept, error)
 	// GetConfiguration implements getConfiguration operation.
 	//
 	// Returns configuration details by ID. Public configurations, including official ones, are readable
@@ -279,11 +297,18 @@ type Handler interface {
 	GrantGroupPermission(ctx context.Context, params GrantGroupPermissionParams) error
 	// ImportTurtleMetadata implements importTurtleMetadata operation.
 	//
-	// Imports valid RDF Turtle metadata and creates or updates draft content. Invalid entities and invalid
-	// optional relations are skipped and reported in warnings. Requires global administrator access.
+	// Imports valid RDF Turtle metadata and publishes new resources. Existing resources, invalid entities,
+	// and invalid optional relations are skipped and reported in warnings. Requires global administrator
+	// access.
 	//
 	// POST /imports/turtle
 	ImportTurtleMetadata(ctx context.Context, req ImportTurtleMetadataReq) (*ImportResult, error)
+	// ListConcepts implements listConcepts operation.
+	//
+	// List concepts.
+	//
+	// GET /concepts
+	ListConcepts(ctx context.Context) ([]Concept, error)
 	// ListConfigurations implements listConfigurations operation.
 	//
 	// Lists your configurations, including official ones you created. Managers can filter by `owner_id` or
@@ -425,6 +450,12 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/versions/{versionId}/reopen
 	ReopenResourceVersion(ctx context.Context, params ReopenResourceVersionParams) (*WriteResult, error)
+	// ReplaceConcept implements replaceConcept operation.
+	//
+	// Replace concept.
+	//
+	// PUT /concepts/{conceptId}
+	ReplaceConcept(ctx context.Context, req *ConceptInput, params ReplaceConceptParams) (*Concept, error)
 	// ReplaceConfiguration implements replaceConfiguration operation.
 	//
 	// Replaces configuration content and metadata. Creators or managers may replace non-official

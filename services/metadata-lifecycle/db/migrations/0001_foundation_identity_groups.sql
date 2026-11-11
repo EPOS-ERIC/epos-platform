@@ -15,7 +15,13 @@ CREATE DOMAIN positive_int AS integer
 CREATE TYPE user_status AS ENUM ('ACTIVE', 'BLOCKED');
 CREATE TYPE membership_status AS ENUM ('PENDING', 'ACTIVE', 'REJECTED');
 CREATE TYPE membership_role AS ENUM ('EDITOR', 'REVIEWER', 'GROUP_ADMIN');
-CREATE TYPE top_level_concept AS ENUM ('DATA', 'FACILITIES', 'SOFTWARE');
+
+CREATE TABLE concepts (
+    id   uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name nonblank_text NOT NULL UNIQUE
+);
+
+INSERT INTO concepts (name) VALUES ('Data'), ('Facilities'), ('Software');
 
 CREATE TABLE users (
     id              text PRIMARY KEY,
@@ -37,8 +43,8 @@ CREATE TABLE groups (
     name        nonblank_text NOT NULL UNIQUE,
     description nonblank_text_opt,
 
-    -- Category scheme metadata: groups own exactly one scheme
-    concept     top_level_concept NOT NULL,
+    -- Group classification and display metadata
+    concept_id uuid NOT NULL REFERENCES concepts(id) ON DELETE RESTRICT,
     label       nonblank_text_opt,
     logo        nonblank_text_opt,
     page        nonblank_text_opt,
@@ -51,6 +57,6 @@ CREATE TABLE groups (
 
 -- +goose Down
 
-DROP TABLE IF EXISTS groups, users;
+DROP TABLE IF EXISTS groups, users, concepts;
 DROP DOMAIN IF EXISTS positive_int, nonblank_text_opt, nonblank_text;
-DROP TYPE IF EXISTS top_level_concept, membership_role, membership_status, user_status;
+DROP TYPE IF EXISTS membership_role, membership_status, user_status;

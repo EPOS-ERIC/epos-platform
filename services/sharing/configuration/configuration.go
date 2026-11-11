@@ -77,8 +77,11 @@ func (s *Service) List(ctx context.Context, caller domain.Caller, filter ListFil
 			return nil, apperror.Default(apperror.CodePermissionDenied)
 		}
 	case domain.ListScopeOfficial:
+	default:
 	}
+
 	filter.Caller = caller
+
 	return s.repo.List(ctx, filter)
 }
 

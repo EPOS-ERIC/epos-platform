@@ -112,7 +112,7 @@ type Group struct {
 	Page          *string                `protobuf:"bytes,6,opt,name=page,proto3,oneof" json:"page,omitempty"`
 	Color         *string                `protobuf:"bytes,7,opt,name=color,proto3,oneof" json:"color,omitempty"`
 	Position      int32                  `protobuf:"varint,8,opt,name=position,proto3" json:"position,omitempty"`
-	Concept       TopLevelConcept        `protobuf:"varint,9,opt,name=concept,proto3,enum=metadata_lifecycle.v1.TopLevelConcept" json:"concept,omitempty"`
+	ConceptId     string                 `protobuf:"bytes,9,opt,name=concept_id,json=conceptId,proto3" json:"concept_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -203,11 +203,11 @@ func (x *Group) GetPosition() int32 {
 	return 0
 }
 
-func (x *Group) GetConcept() TopLevelConcept {
+func (x *Group) GetConceptId() string {
 	if x != nil {
-		return x.Concept
+		return x.ConceptId
 	}
-	return TopLevelConcept_TOP_LEVEL_CONCEPT_UNSPECIFIED
+	return ""
 }
 
 type ListGroupsResponse struct {
@@ -307,7 +307,7 @@ type CreateGroupRequest struct {
 	Page          *string                `protobuf:"bytes,5,opt,name=page,proto3,oneof" json:"page,omitempty"`
 	Color         *string                `protobuf:"bytes,6,opt,name=color,proto3,oneof" json:"color,omitempty"`
 	Position      int32                  `protobuf:"varint,7,opt,name=position,proto3" json:"position,omitempty"`
-	Concept       TopLevelConcept        `protobuf:"varint,8,opt,name=concept,proto3,enum=metadata_lifecycle.v1.TopLevelConcept" json:"concept,omitempty"`
+	ConceptId     string                 `protobuf:"bytes,8,opt,name=concept_id,json=conceptId,proto3" json:"concept_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -391,11 +391,11 @@ func (x *CreateGroupRequest) GetPosition() int32 {
 	return 0
 }
 
-func (x *CreateGroupRequest) GetConcept() TopLevelConcept {
+func (x *CreateGroupRequest) GetConceptId() string {
 	if x != nil {
-		return x.Concept
+		return x.ConceptId
 	}
-	return TopLevelConcept_TOP_LEVEL_CONCEPT_UNSPECIFIED
+	return ""
 }
 
 type CreateGroupResponse struct {
@@ -452,7 +452,7 @@ type ReplaceGroupRequest struct {
 	Page          *string                `protobuf:"bytes,6,opt,name=page,proto3,oneof" json:"page,omitempty"`
 	Color         *string                `protobuf:"bytes,7,opt,name=color,proto3,oneof" json:"color,omitempty"`
 	Position      int32                  `protobuf:"varint,8,opt,name=position,proto3" json:"position,omitempty"`
-	Concept       TopLevelConcept        `protobuf:"varint,9,opt,name=concept,proto3,enum=metadata_lifecycle.v1.TopLevelConcept" json:"concept,omitempty"`
+	ConceptId     string                 `protobuf:"bytes,9,opt,name=concept_id,json=conceptId,proto3" json:"concept_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -543,11 +543,11 @@ func (x *ReplaceGroupRequest) GetPosition() int32 {
 	return 0
 }
 
-func (x *ReplaceGroupRequest) GetConcept() TopLevelConcept {
+func (x *ReplaceGroupRequest) GetConceptId() string {
 	if x != nil {
-		return x.Concept
+		return x.ConceptId
 	}
-	return TopLevelConcept_TOP_LEVEL_CONCEPT_UNSPECIFIED
+	return ""
 }
 
 type ReplaceGroupResponse struct {
@@ -678,10 +678,10 @@ var File_metadata_lifecycle_v1_group_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_group_proto_rawDesc = "" +
 	"\n" +
-	"!metadata_lifecycle/v1/group.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\x1a\"metadata_lifecycle/v1/common.proto\"\x13\n" +
+	"!metadata_lifecycle/v1/group.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\"\x13\n" +
 	"\x11ListGroupsRequest\"6\n" +
 	"\x0fGetGroupRequest\x12#\n" +
-	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\"\x98\x03\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\"\xf5\x02\n" +
 	"\x05Group\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12.\n" +
@@ -690,8 +690,9 @@ const file_metadata_lifecycle_v1_group_proto_rawDesc = "" +
 	"\x04logo\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\x04logo\x88\x01\x01\x12 \n" +
 	"\x04page\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\x04page\x88\x01\x01\x12\"\n" +
 	"\x05color\x18\a \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x05color\x88\x01\x01\x12\x1a\n" +
-	"\bposition\x18\b \x01(\x05R\bposition\x12J\n" +
-	"\aconcept\x18\t \x01(\x0e2&.metadata_lifecycle.v1.TopLevelConceptB\b\xbaH\x05\x82\x01\x02\x10\x01R\aconceptB\x0e\n" +
+	"\bposition\x18\b \x01(\x05R\bposition\x12'\n" +
+	"\n" +
+	"concept_id\x18\t \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tconceptIdB\x0e\n" +
 	"\f_descriptionB\b\n" +
 	"\x06_labelB\a\n" +
 	"\x05_logoB\a\n" +
@@ -700,7 +701,7 @@ const file_metadata_lifecycle_v1_group_proto_rawDesc = "" +
 	"\x12ListGroupsResponse\x124\n" +
 	"\x06groups\x18\x01 \x03(\v2\x1c.metadata_lifecycle.v1.GroupR\x06groups\"F\n" +
 	"\x10GetGroupResponse\x122\n" +
-	"\x05group\x18\x01 \x01(\v2\x1c.metadata_lifecycle.v1.GroupR\x05group\"\x8b\x03\n" +
+	"\x05group\x18\x01 \x01(\v2\x1c.metadata_lifecycle.v1.GroupR\x05group\"\xe8\x02\n" +
 	"\x12CreateGroupRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12.\n" +
 	"\vdescription\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\vdescription\x88\x01\x01\x12\"\n" +
@@ -708,15 +709,16 @@ const file_metadata_lifecycle_v1_group_proto_rawDesc = "" +
 	"\x04logo\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\x04logo\x88\x01\x01\x12 \n" +
 	"\x04page\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\x04page\x88\x01\x01\x12\"\n" +
 	"\x05color\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x05color\x88\x01\x01\x12\x1a\n" +
-	"\bposition\x18\a \x01(\x05R\bposition\x12J\n" +
-	"\aconcept\x18\b \x01(\x0e2&.metadata_lifecycle.v1.TopLevelConceptB\b\xbaH\x05\x82\x01\x02\x10\x01R\aconceptB\x0e\n" +
+	"\bposition\x18\a \x01(\x05R\bposition\x12'\n" +
+	"\n" +
+	"concept_id\x18\b \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tconceptIdB\x0e\n" +
 	"\f_descriptionB\b\n" +
 	"\x06_labelB\a\n" +
 	"\x05_logoB\a\n" +
 	"\x05_pageB\b\n" +
 	"\x06_color\"I\n" +
 	"\x13CreateGroupResponse\x122\n" +
-	"\x05group\x18\x01 \x01(\v2\x1c.metadata_lifecycle.v1.GroupR\x05group\"\xb1\x03\n" +
+	"\x05group\x18\x01 \x01(\v2\x1c.metadata_lifecycle.v1.GroupR\x05group\"\x8e\x03\n" +
 	"\x13ReplaceGroupRequest\x12#\n" +
 	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12.\n" +
@@ -725,8 +727,9 @@ const file_metadata_lifecycle_v1_group_proto_rawDesc = "" +
 	"\x04logo\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\x04logo\x88\x01\x01\x12 \n" +
 	"\x04page\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\x04page\x88\x01\x01\x12\"\n" +
 	"\x05color\x18\a \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x05color\x88\x01\x01\x12\x1a\n" +
-	"\bposition\x18\b \x01(\x05R\bposition\x12J\n" +
-	"\aconcept\x18\t \x01(\x0e2&.metadata_lifecycle.v1.TopLevelConceptB\b\xbaH\x05\x82\x01\x02\x10\x01R\aconceptB\x0e\n" +
+	"\bposition\x18\b \x01(\x05R\bposition\x12'\n" +
+	"\n" +
+	"concept_id\x18\t \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tconceptIdB\x0e\n" +
 	"\f_descriptionB\b\n" +
 	"\x06_labelB\a\n" +
 	"\x05_logoB\a\n" +
@@ -770,31 +773,27 @@ var file_metadata_lifecycle_v1_group_proto_goTypes = []any{
 	(*ReplaceGroupResponse)(nil), // 8: metadata_lifecycle.v1.ReplaceGroupResponse
 	(*DeleteGroupRequest)(nil),   // 9: metadata_lifecycle.v1.DeleteGroupRequest
 	(*DeleteGroupResponse)(nil),  // 10: metadata_lifecycle.v1.DeleteGroupResponse
-	(TopLevelConcept)(0),         // 11: metadata_lifecycle.v1.TopLevelConcept
 }
 var file_metadata_lifecycle_v1_group_proto_depIdxs = []int32{
-	11, // 0: metadata_lifecycle.v1.Group.concept:type_name -> metadata_lifecycle.v1.TopLevelConcept
-	2,  // 1: metadata_lifecycle.v1.ListGroupsResponse.groups:type_name -> metadata_lifecycle.v1.Group
-	2,  // 2: metadata_lifecycle.v1.GetGroupResponse.group:type_name -> metadata_lifecycle.v1.Group
-	11, // 3: metadata_lifecycle.v1.CreateGroupRequest.concept:type_name -> metadata_lifecycle.v1.TopLevelConcept
-	2,  // 4: metadata_lifecycle.v1.CreateGroupResponse.group:type_name -> metadata_lifecycle.v1.Group
-	11, // 5: metadata_lifecycle.v1.ReplaceGroupRequest.concept:type_name -> metadata_lifecycle.v1.TopLevelConcept
-	2,  // 6: metadata_lifecycle.v1.ReplaceGroupResponse.group:type_name -> metadata_lifecycle.v1.Group
-	0,  // 7: metadata_lifecycle.v1.GroupService.ListGroups:input_type -> metadata_lifecycle.v1.ListGroupsRequest
-	1,  // 8: metadata_lifecycle.v1.GroupService.GetGroup:input_type -> metadata_lifecycle.v1.GetGroupRequest
-	5,  // 9: metadata_lifecycle.v1.GroupService.CreateGroup:input_type -> metadata_lifecycle.v1.CreateGroupRequest
-	7,  // 10: metadata_lifecycle.v1.GroupService.ReplaceGroup:input_type -> metadata_lifecycle.v1.ReplaceGroupRequest
-	9,  // 11: metadata_lifecycle.v1.GroupService.DeleteGroup:input_type -> metadata_lifecycle.v1.DeleteGroupRequest
-	3,  // 12: metadata_lifecycle.v1.GroupService.ListGroups:output_type -> metadata_lifecycle.v1.ListGroupsResponse
-	4,  // 13: metadata_lifecycle.v1.GroupService.GetGroup:output_type -> metadata_lifecycle.v1.GetGroupResponse
-	6,  // 14: metadata_lifecycle.v1.GroupService.CreateGroup:output_type -> metadata_lifecycle.v1.CreateGroupResponse
-	8,  // 15: metadata_lifecycle.v1.GroupService.ReplaceGroup:output_type -> metadata_lifecycle.v1.ReplaceGroupResponse
-	10, // 16: metadata_lifecycle.v1.GroupService.DeleteGroup:output_type -> metadata_lifecycle.v1.DeleteGroupResponse
-	12, // [12:17] is the sub-list for method output_type
-	7,  // [7:12] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	2,  // 0: metadata_lifecycle.v1.ListGroupsResponse.groups:type_name -> metadata_lifecycle.v1.Group
+	2,  // 1: metadata_lifecycle.v1.GetGroupResponse.group:type_name -> metadata_lifecycle.v1.Group
+	2,  // 2: metadata_lifecycle.v1.CreateGroupResponse.group:type_name -> metadata_lifecycle.v1.Group
+	2,  // 3: metadata_lifecycle.v1.ReplaceGroupResponse.group:type_name -> metadata_lifecycle.v1.Group
+	0,  // 4: metadata_lifecycle.v1.GroupService.ListGroups:input_type -> metadata_lifecycle.v1.ListGroupsRequest
+	1,  // 5: metadata_lifecycle.v1.GroupService.GetGroup:input_type -> metadata_lifecycle.v1.GetGroupRequest
+	5,  // 6: metadata_lifecycle.v1.GroupService.CreateGroup:input_type -> metadata_lifecycle.v1.CreateGroupRequest
+	7,  // 7: metadata_lifecycle.v1.GroupService.ReplaceGroup:input_type -> metadata_lifecycle.v1.ReplaceGroupRequest
+	9,  // 8: metadata_lifecycle.v1.GroupService.DeleteGroup:input_type -> metadata_lifecycle.v1.DeleteGroupRequest
+	3,  // 9: metadata_lifecycle.v1.GroupService.ListGroups:output_type -> metadata_lifecycle.v1.ListGroupsResponse
+	4,  // 10: metadata_lifecycle.v1.GroupService.GetGroup:output_type -> metadata_lifecycle.v1.GetGroupResponse
+	6,  // 11: metadata_lifecycle.v1.GroupService.CreateGroup:output_type -> metadata_lifecycle.v1.CreateGroupResponse
+	8,  // 12: metadata_lifecycle.v1.GroupService.ReplaceGroup:output_type -> metadata_lifecycle.v1.ReplaceGroupResponse
+	10, // 13: metadata_lifecycle.v1.GroupService.DeleteGroup:output_type -> metadata_lifecycle.v1.DeleteGroupResponse
+	9,  // [9:14] is the sub-list for method output_type
+	4,  // [4:9] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_group_proto_init() }
@@ -803,7 +802,6 @@ func file_metadata_lifecycle_v1_group_proto_init() {
 		return
 	}
 	file_metadata_lifecycle_v1_annotations_proto_init()
-	file_metadata_lifecycle_v1_common_proto_init()
 	file_metadata_lifecycle_v1_group_proto_msgTypes[2].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_group_proto_msgTypes[5].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_group_proto_msgTypes[7].OneofWrappers = []any{}

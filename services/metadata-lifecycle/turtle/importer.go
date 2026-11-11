@@ -46,7 +46,7 @@ type mapper struct {
 	warnings          []domain.ImportDiagnostic
 	diagnosticKeys    map[string]struct{}
 	invalid           map[string]struct{}
-	schemes           map[string]domain.Group
+	schemes           map[string]domain.ImportGroup
 	categories        map[string]domain.CategoryMetadata
 	organizations     map[string]domain.OrganizationMetadata
 	contacts          map[string]domain.ContactPoint
@@ -61,7 +61,7 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 		warnings:          nil,
 		diagnosticKeys:    make(map[string]struct{}),
 		invalid:           make(map[string]struct{}),
-		schemes:           make(map[string]domain.Group),
+		schemes:           make(map[string]domain.ImportGroup),
 		categories:        make(map[string]domain.CategoryMetadata),
 		organizations:     make(map[string]domain.OrganizationMetadata),
 		contacts:          make(map[string]domain.ContactPoint),
@@ -139,7 +139,7 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 			continue
 		}
 		if _, err := m.scheme(source); err != nil {
-			m.recordInvalid("category scheme", source, err)
+			m.recordInvalid("group", source, err)
 		}
 	}
 	for _, source := range m.graph.subjects(rdfType, skosConcept) {
@@ -168,7 +168,7 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 	m.addUnsupportedWarnings()
 
 	batch, err := domain.NewImportBatch(domain.ImportBatch{
-		CategorySchemes:      mapValues(m.schemes),
+		Groups:               mapValues(m.schemes),
 		Categories:           mapValues(m.categories),
 		Organizations:        mapValues(m.organizations),
 		ContactPoints:        mapContactValues(m.contacts),
@@ -896,28 +896,28 @@ func (m *mapper) parameter(source string) (domain.ParameterInput, error) {
 	}
 }
 
-func (m *mapper) scheme(source string) (domain.Group, error) {
+func (m *mapper) scheme(source string) (domain.ImportGroup, error) {
 	if err := m.checkSingleValues(source,
 		dctTitle, dctDescription, skosPrefLabel, foafLogo, foafHomepage,
 		schemaColor, schemaOrderItemNumber, skosHasTopConcept,
 	); err != nil {
-		return domain.Group{}, err
+		return domain.ImportGroup{}, err
 	}
 	if value, ok := m.schemes[source]; ok {
 		return value, nil
 	}
-	concept := domain.TopLevelConcept("")
+	concept := domain.ImportedConcept("")
 	for _, top := range m.graph.refs(source, skosHasTopConcept) {
 		switch top {
 		case "category:facets/dataset-theme":
-			concept = domain.TopLevelConceptData
+			concept = domain.ImportedConceptData
 		case "category:facets/facility-theme":
-			concept = domain.TopLevelConceptFacilities
+			concept = domain.ImportedConceptFacilities
 		case "category:facets/software-theme":
-			concept = domain.TopLevelConceptSoftware
+			concept = domain.ImportedConceptSoftware
 		}
 	}
-	result := domain.Group{
+	result := domain.ImportGroup{
 		ID:          sharedID("category-scheme", source),
 		Name:        m.optionalString(source, dctTitle),
 		Description: stringPtr(m.optionalString(source, dctDescription)),
@@ -926,30 +926,21 @@ func (m *mapper) scheme(source string) (domain.Group, error) {
 		Page:        stringPtr(m.optionalString(source, foafHomepage)),
 		Color:       stringPtr(m.optionalString(source, schemaColor)),
 		Position:    int32(m.int64(source, schemaOrderItemNumber)),
-		Concept:     "",
+		Concept:     concept,
 	}
 	if result.Name == "" {
 		result.Name = m.optionalString(source, skosPrefLabel)
 	}
-	result.Concept = string(concept)
 	if !concept.Valid() {
-		err := fmt.Errorf("category scheme %q has unsupported top concept", source)
-		m.recordInvalid("category scheme", source, err)
-		return domain.Group{}, err
+		err := fmt.Errorf("group %q has unsupported SKOS top concept", source)
+		m.recordInvalid("group", source, err)
+		return domain.ImportGroup{}, err
 	}
-	if _, err := domain.NewGroup(result.ID, domain.GroupInput{
-		Name:        result.Name,
-		Description: result.Description,
-		Label:       result.Label,
-		Logo:        result.Logo,
-		Page:        result.Page,
-		Color:       result.Color,
-		Position:    result.Position,
-		Concept:     result.Concept,
-	}); err != nil {
-		err = fmt.Errorf("category scheme %q is invalid: %w", source, err)
-		m.recordInvalid("category scheme", source, err)
-		return domain.Group{}, err
+	result, err := domain.NewImportGroup(result)
+	if err != nil {
+		err = fmt.Errorf("group %q is invalid: %w", source, err)
+		m.recordInvalid("group", source, err)
+		return domain.ImportGroup{}, err
 	}
 	m.schemes[source] = result
 	return result, nil
@@ -987,7 +978,7 @@ func (m *mapper) category(source string, active map[string]bool) (domain.Categor
 	result := domain.CategoryMetadata{
 		ID:       sharedID("category", source),
 		Name:     m.requiredString(source, skosPrefLabel),
-		Scheme:   scheme,
+		GroupID:  scheme.ID,
 		Children: nil,
 	}
 	parents := m.graph.refs(source, skosBroader)

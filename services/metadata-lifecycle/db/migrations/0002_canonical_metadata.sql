@@ -1,7 +1,7 @@
 -- +goose Up
 
 CREATE TABLE categories (
-    -- Canonical category identity and owning scheme
+    -- Canonical category identity and owning group
     id                 uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     group_id           uuid NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     parent_category_id uuid,

@@ -13,7 +13,7 @@ func toCreateGroupParams(id uuid.UUID, input domain.GroupInput) sqlc.CreateGroup
 		ID:          id,
 		Name:        input.Name,
 		Description: input.Description,
-		Concept:     sqlc.TopLevelConcept(input.Concept),
+		ConceptID:   input.ConceptID,
 		Label:       input.Label,
 		Logo:        input.Logo,
 		Page:        input.Page,
@@ -32,7 +32,7 @@ func toReplaceGroupParams(id uuid.UUID, input domain.GroupInput) sqlc.ReplaceGro
 		Page:        input.Page,
 		Color:       input.Color,
 		Position:    input.Position,
-		Concept:     sqlc.TopLevelConcept(input.Concept),
+		ConceptID:   input.ConceptID,
 	}
 }
 
@@ -45,7 +45,7 @@ func toDomainGroup(row sqlc.Group) (domain.Group, error) {
 		Page:        row.Page,
 		Color:       row.Color,
 		Position:    row.Position,
-		Concept:     string(row.Concept),
+		ConceptID:   row.ConceptID,
 	})
 	if err != nil {
 		return domain.Group{}, fmt.Errorf("bad group: %w", err)

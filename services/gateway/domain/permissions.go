@@ -6,25 +6,26 @@ import "github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 type GlobalPermission string
 
 const (
-	GlobalPermissionMembershipManage     GlobalPermission = "global.membership.manage"
-	GlobalPermissionRoleManage           GlobalPermission = "global.role.manage"
-	GlobalPermissionPermissionManage     GlobalPermission = "global.permission.manage"
-	GlobalPermissionNotificationManage   GlobalPermission = "global.notification.manage"
-	GlobalPermissionOrganizationManage   GlobalPermission = "global.organization.manage"
-	GlobalPermissionContactPointManage   GlobalPermission = "global.contact_point.manage"
-	GlobalPermissionCategorySchemeManage GlobalPermission = "global.category_scheme.manage"
-	GlobalPermissionResourceCreate       GlobalPermission = "global.resource.create"
-	GlobalPermissionResourceEdit         GlobalPermission = "global.resource.edit"
-	GlobalPermissionResourceSubmit       GlobalPermission = "global.resource.submit"
-	GlobalPermissionResourceWithdraw     GlobalPermission = "global.resource.withdraw"
-	GlobalPermissionResourceReopen       GlobalPermission = "global.resource.reopen"
-	GlobalPermissionResourceDiscard      GlobalPermission = "global.resource.discard"
-	GlobalPermissionResourceReject       GlobalPermission = "global.resource.reject"
-	GlobalPermissionResourcePublish      GlobalPermission = "global.resource.publish"
-	GlobalPermissionResourceUnpublish    GlobalPermission = "global.resource.unpublish"
-	GlobalPermissionCategoryManage       GlobalPermission = "global.category.manage"
-	GlobalPermissionConfigurationManage  GlobalPermission = "global.configuration.manage"
-	GlobalPermissionConverterManage      GlobalPermission = "global.converter.manage"
+	GlobalPermissionMembershipManage    GlobalPermission = "global.membership.manage"
+	GlobalPermissionRoleManage          GlobalPermission = "global.role.manage"
+	GlobalPermissionPermissionManage    GlobalPermission = "global.permission.manage"
+	GlobalPermissionNotificationManage  GlobalPermission = "global.notification.manage"
+	GlobalPermissionOrganizationManage  GlobalPermission = "global.organization.manage"
+	GlobalPermissionContactPointManage  GlobalPermission = "global.contact_point.manage"
+	GlobalPermissionGroupManage         GlobalPermission = "global.group.manage"
+	GlobalPermissionConceptManage       GlobalPermission = "global.concept.manage"
+	GlobalPermissionResourceCreate      GlobalPermission = "global.resource.create"
+	GlobalPermissionResourceEdit        GlobalPermission = "global.resource.edit"
+	GlobalPermissionResourceSubmit      GlobalPermission = "global.resource.submit"
+	GlobalPermissionResourceWithdraw    GlobalPermission = "global.resource.withdraw"
+	GlobalPermissionResourceReopen      GlobalPermission = "global.resource.reopen"
+	GlobalPermissionResourceDiscard     GlobalPermission = "global.resource.discard"
+	GlobalPermissionResourceReject      GlobalPermission = "global.resource.reject"
+	GlobalPermissionResourcePublish     GlobalPermission = "global.resource.publish"
+	GlobalPermissionResourceUnpublish   GlobalPermission = "global.resource.unpublish"
+	GlobalPermissionCategoryManage      GlobalPermission = "global.category.manage"
+	GlobalPermissionConfigurationManage GlobalPermission = "global.configuration.manage"
+	GlobalPermissionConverterManage     GlobalPermission = "global.converter.manage"
 )
 
 // GroupPermission is a permission evaluated within a group's scope.
@@ -56,7 +57,8 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 		GlobalPermissionNotificationManage,
 		GlobalPermissionOrganizationManage,
 		GlobalPermissionContactPointManage,
-		GlobalPermissionCategorySchemeManage,
+		GlobalPermissionGroupManage,
+		GlobalPermissionConceptManage,
 		GlobalPermissionResourceCreate,
 		GlobalPermissionResourceEdit,
 		GlobalPermissionResourceSubmit,

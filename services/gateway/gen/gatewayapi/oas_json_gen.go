@@ -1949,6 +1949,213 @@ func (s *Category) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *Concept) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *Concept) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
+		e.FieldStart("name")
+		e.Str(s.Name)
+	}
+}
+
+var jsonFieldsNameOfConcept = [2]string{
+	0: "id",
+	1: "name",
+}
+
+// Decode decodes Concept from json.
+func (s *Concept) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Concept to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Name = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode Concept")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfConcept) {
+					name = jsonFieldsNameOfConcept[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *Concept) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Concept) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ConceptInput) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ConceptInput) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfConceptInput = [1]string{
+	0: "name",
+}
+
+// Decode decodes ConceptInput from json.
+func (s *ConceptInput) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ConceptInput to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "name":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ConceptInput")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfConceptInput) {
+					name = jsonFieldsNameOfConceptInput[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ConceptInput) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ConceptInput) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *ConfigurationDetail) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -4151,8 +4358,8 @@ func (s *CreateGroupRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("concept")
-		s.Concept.Encode(e)
+		e.FieldStart("concept_id")
+		json.EncodeUUID(e, s.ConceptID)
 	}
 }
 
@@ -4164,7 +4371,7 @@ var jsonFieldsNameOfCreateGroupRequest = [8]string{
 	4: "page",
 	5: "color",
 	6: "position",
-	7: "concept",
+	7: "concept_id",
 }
 
 // Decode decodes CreateGroupRequest from json.
@@ -4246,15 +4453,17 @@ func (s *CreateGroupRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"position\"")
 			}
-		case "concept":
+		case "concept_id":
 			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
-				if err := s.Concept.Decode(d); err != nil {
+				v, err := json.DecodeUUID(d)
+				s.ConceptID = v
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"concept\"")
+				return errors.Wrap(err, "decode field \"concept_id\"")
 			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
@@ -4308,48 +4517,6 @@ func (s *CreateGroupRequest) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *CreateGroupRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes CreateGroupRequestConcept as json.
-func (s CreateGroupRequestConcept) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes CreateGroupRequestConcept from json.
-func (s *CreateGroupRequestConcept) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode CreateGroupRequestConcept to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch CreateGroupRequestConcept(v) {
-	case CreateGroupRequestConceptDATA:
-		*s = CreateGroupRequestConceptDATA
-	case CreateGroupRequestConceptFACILITIES:
-		*s = CreateGroupRequestConceptFACILITIES
-	case CreateGroupRequestConceptSOFTWARE:
-		*s = CreateGroupRequestConceptSOFTWARE
-	default:
-		*s = CreateGroupRequestConcept(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s CreateGroupRequestConcept) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateGroupRequestConcept) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -8176,48 +8343,6 @@ func (s DateTimeScalarParameterKind) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *DateTimeScalarParameterKind) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes DiscoveryConcept as json.
-func (s DiscoveryConcept) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes DiscoveryConcept from json.
-func (s *DiscoveryConcept) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DiscoveryConcept to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch DiscoveryConcept(v) {
-	case DiscoveryConceptDATA:
-		*s = DiscoveryConceptDATA
-	case DiscoveryConceptFACILITIES:
-		*s = DiscoveryConceptFACILITIES
-	case DiscoveryConceptSOFTWARE:
-		*s = DiscoveryConceptSOFTWARE
-	default:
-		*s = DiscoveryConcept(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s DiscoveryConcept) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DiscoveryConcept) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -13910,8 +14035,10 @@ func (s *GlobalPermission) Decode(d *jx.Decoder) error {
 		*s = GlobalPermissionGlobalOrganizationManage
 	case GlobalPermissionGlobalContactPointManage:
 		*s = GlobalPermissionGlobalContactPointManage
-	case GlobalPermissionGlobalCategorySchemeManage:
-		*s = GlobalPermissionGlobalCategorySchemeManage
+	case GlobalPermissionGlobalGroupManage:
+		*s = GlobalPermissionGlobalGroupManage
+	case GlobalPermissionGlobalConceptManage:
+		*s = GlobalPermissionGlobalConceptManage
 	case GlobalPermissionGlobalResourceCreate:
 		*s = GlobalPermissionGlobalResourceCreate
 	case GlobalPermissionGlobalResourceEdit:
@@ -14008,8 +14135,8 @@ func (s *Group) encodeFields(e *jx.Encoder) {
 		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("concept")
-		s.Concept.Encode(e)
+		e.FieldStart("concept_id")
+		json.EncodeUUID(e, s.ConceptID)
 	}
 }
 
@@ -14022,7 +14149,7 @@ var jsonFieldsNameOfGroup = [9]string{
 	5: "page",
 	6: "color",
 	7: "position",
-	8: "concept",
+	8: "concept_id",
 }
 
 // Decode decodes Group from json.
@@ -14120,15 +14247,17 @@ func (s *Group) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"position\"")
 			}
-		case "concept":
+		case "concept_id":
 			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
-				if err := s.Concept.Decode(d); err != nil {
+				v, err := json.DecodeUUID(d)
+				s.ConceptID = v
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"concept\"")
+				return errors.Wrap(err, "decode field \"concept_id\"")
 			}
 		default:
 			return d.Skip()
@@ -14183,48 +14312,6 @@ func (s *Group) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *Group) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes GroupConcept as json.
-func (s GroupConcept) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes GroupConcept from json.
-func (s *GroupConcept) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode GroupConcept to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch GroupConcept(v) {
-	case GroupConceptDATA:
-		*s = GroupConceptDATA
-	case GroupConceptFACILITIES:
-		*s = GroupConceptFACILITIES
-	case GroupConceptSOFTWARE:
-		*s = GroupConceptSOFTWARE
-	default:
-		*s = GroupConcept(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s GroupConcept) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *GroupConcept) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -22860,8 +22947,8 @@ func (s *ReplaceGroupRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("concept")
-		s.Concept.Encode(e)
+		e.FieldStart("concept_id")
+		json.EncodeUUID(e, s.ConceptID)
 	}
 }
 
@@ -22873,7 +22960,7 @@ var jsonFieldsNameOfReplaceGroupRequest = [8]string{
 	4: "page",
 	5: "color",
 	6: "position",
-	7: "concept",
+	7: "concept_id",
 }
 
 // Decode decodes ReplaceGroupRequest from json.
@@ -22955,15 +23042,17 @@ func (s *ReplaceGroupRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"position\"")
 			}
-		case "concept":
+		case "concept_id":
 			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
-				if err := s.Concept.Decode(d); err != nil {
+				v, err := json.DecodeUUID(d)
+				s.ConceptID = v
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"concept\"")
+				return errors.Wrap(err, "decode field \"concept_id\"")
 			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
@@ -23017,48 +23106,6 @@ func (s *ReplaceGroupRequest) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *ReplaceGroupRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes ReplaceGroupRequestConcept as json.
-func (s ReplaceGroupRequestConcept) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes ReplaceGroupRequestConcept from json.
-func (s *ReplaceGroupRequestConcept) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ReplaceGroupRequestConcept to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch ReplaceGroupRequestConcept(v) {
-	case ReplaceGroupRequestConceptDATA:
-		*s = ReplaceGroupRequestConceptDATA
-	case ReplaceGroupRequestConceptFACILITIES:
-		*s = ReplaceGroupRequestConceptFACILITIES
-	case ReplaceGroupRequestConceptSOFTWARE:
-		*s = ReplaceGroupRequestConceptSOFTWARE
-	default:
-		*s = ReplaceGroupRequestConcept(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s ReplaceGroupRequestConcept) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ReplaceGroupRequestConcept) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

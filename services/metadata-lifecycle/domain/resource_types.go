@@ -111,6 +111,6 @@ type OrganizationMetadata struct {
 type CategoryMetadata struct {
 	ID       uuid.UUID
 	Name     string
-	Scheme   Group
+	GroupID  uuid.UUID
 	Children []CategoryMetadata
 }

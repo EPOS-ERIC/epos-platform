@@ -17,6 +17,16 @@ def assert_problem(
     return problem
 
 
+def concept_id(gateway: GatewayClient, name: str) -> str:
+    response = gateway.get("/concepts")
+    if response.status_code != 200:
+        raise AssertionError(f"listing concepts returned {response.status_code}: {response.text}")
+    for concept in response.json():
+        if concept["name"].casefold() == name.casefold():
+            return concept["id"]
+    raise AssertionError(f"concept {name!r} not found")
+
+
 def create_group(
     gateway: GatewayClient,
     name: str,
@@ -24,7 +34,7 @@ def create_group(
 ) -> str:
     response = gateway.post(
         "/groups",
-        json={"name": name, "concept": concept},
+        json={"name": name, "concept_id": concept_id(gateway, concept)},
     )
     if response.status_code != 201:
         raise AssertionError(

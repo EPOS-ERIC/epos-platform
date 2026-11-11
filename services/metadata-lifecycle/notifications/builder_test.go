@@ -20,8 +20,8 @@ func (s conversionStore) GetNotificationUserContext(_ context.Context, id string
 	return domain.UserSummary{ID: id, GivenName: "Preview", FamilyName: "User", Email: "preview@example.org"}, nil
 }
 
-func (s conversionStore) GetNotificationGroupContext(_ context.Context, id uuid.UUID) (domain.Group, error) {
-	return domain.Group{ID: id, Name: "Preview group", Concept: "DATA"}, nil
+func (s conversionStore) GetNotificationGroupContext(_ context.Context, _ uuid.UUID) (domain.NotificationGroupContext, error) {
+	return domain.NotificationGroupContext{Name: "Preview group", Concept: "DATA"}, nil
 }
 
 func (s conversionStore) GlobalRecipients(_ context.Context, topic domain.NotificationTopicKey) ([]domain.NotificationRecipient, error) {
