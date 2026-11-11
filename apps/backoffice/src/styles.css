@@ -196,10 +196,17 @@ app-navigation-sidebar .nav-tree-children--scrollable {
   background-position: right top, right -50%;
   background-size: 1px 100%, 2px 34%;
   background-repeat: no-repeat;
-  scrollbar-width: none;
   animation: sidebar-indent-shimmer 2.8s linear infinite;
 }
 
+app-navigation-sidebar .nav,
+app-navigation-sidebar .nav-tree-children--bounded,
+app-navigation-sidebar .nav-tree-children--scrollable {
+  scrollbar-width: none;
+}
+
+app-navigation-sidebar .nav::-webkit-scrollbar,
+app-navigation-sidebar .nav-tree-children--bounded::-webkit-scrollbar,
 app-navigation-sidebar .nav-tree-children--scrollable::-webkit-scrollbar {
   display: none;
 }
