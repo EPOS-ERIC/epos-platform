@@ -41,7 +41,7 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/dataportal.yaml":         {"name: dataportal", `value: "http://localhost/test-default/aai"`},
-				"templates/gateway.yaml":            {"name: gateway", `url: "http://aai-service:8080"`, `url: "converter:8200"`, "imagePullPolicy: IfNotPresent", `nginx.ingress.kubernetes.io/proxy-body-size: "10m"`},
+				"templates/gateway.yaml":            {"name: gateway", `url: "http://aai-service:8080/oauth2/userinfo"`, `url: "converter:8200"`, "imagePullPolicy: IfNotPresent", `nginx.ingress.kubernetes.io/proxy-body-size: "10m"`},
 				"templates/metadata-lifecycle.yaml": {"name: metadata-lifecycle", "name: metadata-database", "claimName: psqldata"},
 				"templates/data-retriever.yaml":     {"name: data-retriever", "name: retriever-db"},
 				"templates/converter.yaml":          {"name: converter", "name: converter-db", "claimName: converter-plugins", "type: Recreate", "fsGroup: 1000"},
@@ -104,7 +104,7 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
-					`url: "http://aai-service:8080"`,
+					`url: "http://aai-service:8080/oauth2/userinfo"`,
 				},
 				"templates/dataportal.yaml": {
 					`value: "http://localhost/test-aai/aai"`,
@@ -145,10 +145,11 @@ func TestConfigRender(t *testing.T) {
 				cfg.Components.Gateway.AAI.Enabled = true
 				cfg.Components.AAIService.Enabled = false
 				cfg.Components.Gateway.AAI.ServiceEndpoint = externalAAIUserinfoEndpoint
+				cfg.Components.Gateway.AAI.GatewayEndpoint = externalAAIUserinfoEndpoint
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
-					`url: "` + externalAAIAuthRootURL + `"`,
+					`url: "` + externalAAIUserinfoEndpoint + `"`,
 				},
 				"templates/dataportal.yaml": {
 					`value: "` + externalAAIAuthRootURL + `"`,
@@ -171,7 +172,7 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
-					`url: "https://gateway-auth.example.com"`,
+					`url: "` + gatewayAAIUserinfoEndpoint + `/"`,
 				},
 				"templates/dataportal.yaml": {
 					`value: "` + externalAAIAuthRootURL + `"`,
@@ -189,7 +190,7 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
-					`url: "` + gatewayAAIKeycloakUserinfo + `"`,
+					`url: "` + gatewayAAIKeycloakUserinfo + `/"`,
 				},
 				"templates/dataportal.yaml": {
 					`value: "` + externalAAIAuthRootURL + `"`,

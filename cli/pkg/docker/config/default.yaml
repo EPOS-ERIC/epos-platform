@@ -19,7 +19,7 @@ components:
       recipient_overrides: []
     aai:
       enabled: true
-      # Public provider URL and optional gateway-reachable override.
+      # Public provider auth root and gateway-reachable UserInfo URL.
       # Leave both empty for managed AAI; disable aai_service when using external endpoints.
       service_endpoint: ""
       gateway_endpoint: ""

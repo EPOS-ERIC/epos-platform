@@ -109,15 +109,12 @@ securityContext:
 
 {{- define "epos.gatewayAAIServiceEndpoint" -}}
 {{- if .Values.components.gateway.aai.enabled -}}
-{{- $gatewayEndpoint := .Values.components.gateway.aai.gateway_endpoint | default "" | trim | trimSuffix "/" | trimSuffix "/oauth2/userinfo" -}}
+{{- $gatewayEndpoint := .Values.components.gateway.aai.gateway_endpoint | default "" | trim -}}
 {{- if $gatewayEndpoint -}}
 {{- $gatewayEndpoint -}}
 {{- else -}}
-{{- $serviceEndpoint := .Values.components.gateway.aai.service_endpoint | default "" | trim | trimSuffix "/" | trimSuffix "/oauth2/userinfo" -}}
-{{- if $serviceEndpoint -}}
-{{- $serviceEndpoint -}}
-{{- else if .Values.components.aai_service.enabled -}}
-http://aai-service:8080
+{{- if .Values.components.aai_service.enabled -}}
+http://aai-service:8080/oauth2/userinfo
 {{- end -}}
 {{- end -}}
 {{- end -}}

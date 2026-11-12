@@ -16,7 +16,7 @@ services:
   converter:
     url: "converter-service:8200"
   auth:
-    url: "http://oss-aai-service:8080/"
+    url: "http://oss-aai-service:8080/oauth2/userinfo"
 
 notifications:
   mailgun:

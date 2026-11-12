@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"net/mail"
+	"net/url"
 	"os"
 	"time"
 
@@ -117,8 +118,9 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("services.sharing.url is required")
 	}
 
-	if c.Services.Auth.URL == "" {
-		return fmt.Errorf("services.auth.url is required")
+	authURL, err := url.Parse(c.Services.Auth.URL)
+	if err != nil || authURL.Hostname() == "" || (authURL.Scheme != "http" && authURL.Scheme != "https") || authURL.User != nil || authURL.RawQuery != "" || authURL.Fragment != "" {
+		return fmt.Errorf("services.auth.url must be an absolute HTTP(S) userinfo URL without credentials, query or fragment")
 	}
 
 	mailgun := c.Notifications.Mailgun

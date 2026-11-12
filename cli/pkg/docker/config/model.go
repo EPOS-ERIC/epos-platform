@@ -241,20 +241,12 @@ func (e *EnvConfig) AAIServiceEndpoint() string {
 		return ""
 	}
 
-	gatewayEndpoint := common.TrimAuthURL(e.Components.Gateway.AAI.GatewayEndpoint)
-
-	if gatewayEndpoint != "" {
-		return gatewayEndpoint
-	}
-
-	endpoint := common.TrimAuthURL(e.Components.Gateway.AAI.ServiceEndpoint)
-
-	if endpoint != "" {
+	if endpoint := strings.TrimSpace(e.Components.Gateway.AAI.GatewayEndpoint); endpoint != "" {
 		return endpoint
 	}
 
 	if e.Components.AAIService.Enabled {
-		return "http://aai-service:8080"
+		return "http://aai-service:8080/oauth2/userinfo"
 	}
 
 	return ""

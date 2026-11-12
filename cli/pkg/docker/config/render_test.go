@@ -11,6 +11,9 @@ func TestDockerEnvConfig_Render(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !strings.Contains(files[".env"], "GATEWAY_AUTH_URL='http://aai-service:8080/oauth2/userinfo'") {
+		t.Error("managed AAI UserInfo URL missing")
+	}
 	for _, name := range []string{"metadata-lifecycle:", "data-retriever:", "converter:", "converter-db:", "converter-plugins:/data/plugins", `url: "converter:8200"`, "sharing:", "metadata-db:", "gateway_config:"} {
 		if !strings.Contains(files["docker-compose.yaml"], name) {
 			t.Errorf("missing %s", name)

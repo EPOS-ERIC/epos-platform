@@ -282,6 +282,7 @@ func TestConfigValidate_GatewayAAIWithExternalEndpointIsValid(t *testing.T) {
 	cfg := GetDefaultConfig()
 	cfg.Components.Gateway.AAI.Enabled = true
 	cfg.Components.Gateway.AAI.ServiceEndpoint = externalAAIAuthRootURL
+	cfg.Components.Gateway.AAI.GatewayEndpoint = externalAAIUserinfoEndpoint
 	cfg.Components.AAIService.Enabled = false
 
 	if err := cfg.Validate(); err != nil {
@@ -293,6 +294,7 @@ func TestConfigValidate_GatewayAAIWithExternalUserinfoEndpointIsValid(t *testing
 	cfg := GetDefaultConfig()
 	cfg.Components.Gateway.AAI.Enabled = true
 	cfg.Components.Gateway.AAI.ServiceEndpoint = externalAAIUserinfoEndpoint
+	cfg.Components.Gateway.AAI.GatewayEndpoint = externalAAIUserinfoEndpoint
 	cfg.Components.AAIService.Enabled = false
 
 	if err := cfg.Validate(); err != nil {

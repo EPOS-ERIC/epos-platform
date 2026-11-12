@@ -23,6 +23,8 @@ components:
       recipient_overrides: []
     aai:
       enabled: true
+      # External AAI: browser-visible auth root and gateway-reachable UserInfo URL.
+      # Leave both empty for managed AAI.
       service_endpoint: ""
       gateway_endpoint: ""
     tls:

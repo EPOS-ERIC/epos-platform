@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/urlutil"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -29,21 +29,22 @@ type ValidationResult struct {
 }
 
 type Service struct {
-	log     *slog.Logger
-	baseURL string
-	client  *http.Client
+	log         *slog.Logger
+	userInfoURL string
+	client      *http.Client
 }
 
 // NewService builds auth service for token validation against external provider.
-func NewService(log *slog.Logger, baseURL string) (*Service, error) {
-	normalizedBaseURL, err := urlutil.NormalizeBaseURL(baseURL)
-	if err != nil {
-		return nil, fmt.Errorf("normalize auth base URL: %w", err)
+func NewService(log *slog.Logger, userInfoURL string) (*Service, error) {
+	userInfoURL = strings.TrimSpace(userInfoURL)
+	parsedURL, err := url.Parse(userInfoURL)
+	if err != nil || parsedURL.Hostname() == "" || (parsedURL.Scheme != "http" && parsedURL.Scheme != "https") || parsedURL.User != nil || parsedURL.RawQuery != "" || parsedURL.Fragment != "" {
+		return nil, fmt.Errorf("auth userinfo URL must be an absolute HTTP(S) URL without credentials, query or fragment")
 	}
 
 	return &Service{
-		log:     log.With("component", "auth-service"),
-		baseURL: normalizedBaseURL,
+		log:         log.With("component", "auth-service"),
+		userInfoURL: userInfoURL,
 		client: &http.Client{
 			Transport: otelhttp.NewTransport(http.DefaultTransport),
 			Timeout:   10 * time.Second,
@@ -85,7 +86,7 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Identity, err
 
 // Validate checks token state at external auth provider.
 func (s *Service) Validate(ctx context.Context, token string) (ValidationResult, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.baseURL+"/oauth/validate", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.userInfoURL, nil)
 	if err != nil {
 		return ValidationResult{}, fmt.Errorf("build auth validation request: %w", err)
 	}
@@ -105,7 +106,6 @@ func (s *Service) Validate(ctx context.Context, token string) (ValidationResult,
 	}
 
 	var payload struct {
-		Active     bool   `json:"active"`
 		AuthID     string `json:"eduPersonUniqueId"`
 		Email      string `json:"email"`
 		GivenName  string `json:"firstname"`
@@ -117,7 +117,7 @@ func (s *Service) Validate(ctx context.Context, token string) (ValidationResult,
 	}
 
 	return ValidationResult{
-		Active: payload.Active,
+		Active: true,
 		Identity: Identity{
 			AuthIdentifier: payload.AuthID,
 			Email:          payload.Email,

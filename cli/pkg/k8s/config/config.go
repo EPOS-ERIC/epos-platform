@@ -291,6 +291,9 @@ func (c *Config) Validate() error {
 		if aaiServiceEndpoint == "" && !c.Components.AAIService.Enabled {
 			return fmt.Errorf("aai service endpoint is required when aai is enabled and embedded aai service is disabled")
 		}
+		if strings.TrimSpace(c.Components.Gateway.AAI.GatewayEndpoint) == "" && !c.Components.AAIService.Enabled {
+			return fmt.Errorf("aai gateway userinfo endpoint is required when embedded aai service is disabled")
+		}
 	}
 	for _, endpoint := range []string{c.Components.Gateway.AAI.ServiceEndpoint, c.Components.Gateway.AAI.GatewayEndpoint} {
 		if endpoint == "" {
