@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/services/gateway
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/EPOS-ERIC/epos-platform/packages/go/apidocs v0.0.0
