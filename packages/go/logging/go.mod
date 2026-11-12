@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/libs/go/logging
 
-go 1.27.3
+go 1.27.4
 
 require go.opentelemetry.io/contrib/bridges/otelslog v0.19.0
 
