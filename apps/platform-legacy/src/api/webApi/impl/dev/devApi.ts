@@ -143,8 +143,8 @@ export class DevCompositeApi implements Api {
    * represents the configuration data that needs to be saved.
    * @returns The `saveConfigurables` function returns a Promise that resolves to a string value.
    */
-  saveConfigurables(value: string): Promise<string> {
-    return this.shareApi.saveConfigurables(value);
+  saveConfigurables(value: string, title?: string, description?: string): Promise<string> {
+    return this.shareApi.saveConfigurables(value, title, description);
   }
 
   /**

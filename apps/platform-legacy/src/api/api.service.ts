@@ -203,9 +203,9 @@ export class ApiService implements Api {
    * represents the configuration data that needs to be saved.
    * @returns The `saveConfigurables` method is returning a Promise that resolves to a string value.
    */
-  public saveConfigurables(value: string): Promise<string> {
+  public saveConfigurables(value: string, title?: string, description?: string): Promise<string> {
     this.checkApiBeforeCall();
-    return this.delegate!.saveConfigurables(value);
+    return this.delegate!.saveConfigurables(value, title, description);
   }
 
   /**

@@ -41,6 +41,23 @@
         font-weight: bold;
       }
 
+      mat-form-field {
+        margin-top: 1rem;
+
+        input,
+        textarea {
+          color: black;
+        }
+
+        ::ng-deep .mat-form-field-wrapper {
+          padding-bottom: 1.25em;
+        }
+
+        ::ng-deep .mat-form-field-underline {
+          bottom: 1.25em;
+        }
+      }
+
       .version-info {
         border: 2px solid red;
         padding: 10px;

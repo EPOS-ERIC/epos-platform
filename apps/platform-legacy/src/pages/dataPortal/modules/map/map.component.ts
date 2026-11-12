@@ -49,8 +49,8 @@ import { WmsCrsCheckService } from 'utility/eposLeaflet/services/wms-crs-check.s
 import { WmsCrsNotifierService } from 'utility/eposLeaflet/services/wms-crs-notifier.service';
 import { DataSearchConfigurablesServiceSoftware } from '../softwarePanel/services/dataSearchConfigurables.service';
 import { MeasureDistanceControl } from 'utility/eposLeaflet/components/controls/measureDistanceControl/measureDistanceControl';
-import { PaleolatitudeControl } from 'utility/eposLeaflet/components/controls/paleolatitudeControl/paleolatitudeControl';
-import { PaleolatitudeGraphService } from '../graphPanel/services/paleolatitudeGraph.service';
+import { DynamicModeControl } from 'utility/eposLeaflet/components/controls/dynamicModeControl/dynamicModeControl';
+import { DynamicModeGraphService } from '../graphPanel/services/dynamicModeGraph.service';
 import { InteractiveVisualisationService } from 'pages/dataPortal/services/interactiveVisualisation.service';
 import { HttpClient } from '@angular/common/http';
 import { WmtsTileJSON as TileJSON } from 'api/webApi/data/wmtsTileJSON.interface';
@@ -84,7 +84,7 @@ export class MapComponent implements OnInit {
   public readonly maxZoom3995 = RES_3995.length - 1; // use full resolution range of RES_3995
   private readonly subscriptions: Array<Subscription> = new Array<Subscription>();
   private measureControlInstance: MeasureDistanceControl | null = null;
-  private paleolatitudeControlInstance: PaleolatitudeControl | null = null;
+  private dynamicModeControlInstance: DynamicModeControl | null = null;
 
   private readonly mapLayerGenerator: MapLayerGenerator;
 
@@ -122,7 +122,7 @@ export class MapComponent implements OnInit {
     private readonly mapInteractionService: MapInteractionService,
     private readonly layersService: LayersService,
     private readonly panelsEvent: PanelsEmitterService,
-    private readonly paleolatitudeService: PaleolatitudeGraphService,
+    private readonly dynamicModeService: DynamicModeGraphService,
     private readonly interactiveVisualisations: InteractiveVisualisationService,
     private readonly localStoragePersister: LocalStoragePersister,
     private readonly wmsCheck: WmsCrsCheckService,
@@ -280,9 +280,9 @@ export class MapComponent implements OnInit {
     const customLayerControl = new CustomLayerControl(this.injector).setPosition('topright');
     const exportMapAsImage = new ExportMapAsImage(this.injector, this.componentFactoryResolver, this.viewContainerRef, this.exportMapAsImageService, this.dialogService);
     this.measureControlInstance = new MeasureDistanceControl(this.dialogService);
-    this.paleolatitudeControlInstance = new PaleolatitudeControl(
+    this.dynamicModeControlInstance = new DynamicModeControl(
       this.dialogService,
-      this.paleolatitudeService,
+      this.dynamicModeService,
       this.interactiveVisualisations,
     ).addTo(this.eposLeaflet);
     const scaleControl = L.control.scale({ metric: true, imperial: false, maxWidth: 200 }).setPosition('bottomright');
@@ -342,7 +342,7 @@ export class MapComponent implements OnInit {
   private configurablesExecute(dataConfigurables: Array<DataConfigurableI>, context: string) {
 
     if (context === CONTEXT_RESOURCE) {
-      this.paleolatitudeControlInstance?.setEnabled(this.paleolatitudeService.supports(dataConfigurables));
+      this.dynamicModeControlInstance?.setEnabled(this.dynamicModeService.supports(dataConfigurables));
     }
 
     // set context. TODO: move it on dataConfigurables creation logic
@@ -1184,7 +1184,7 @@ export class MapComponent implements OnInit {
     if (this.measureControlInstance) {
       this.measureControlInstance.stopMeasurement();
     }
-    this.paleolatitudeControlInstance?.remove();
+    this.dynamicModeControlInstance?.remove();
 
     try {
 

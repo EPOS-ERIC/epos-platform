@@ -32,6 +32,8 @@ interface ShareDataIn {
 export class ShareInformationsDialogComponent implements OnInit {
 
   public step = 'createUrl';
+  public shareTitle = '';
+  public shareDescription = '';
 
   public isLoaded: boolean;
 
@@ -123,7 +125,7 @@ export class ShareInformationsDialogComponent implements OnInit {
   public async confirm(): Promise<void> {
     if (this.step === 'createUrl') {
         this.data.dataOut = true;
-        this.share.createDataPortalUrl();
+        this.share.createDataPortalUrl(this.shareTitle, this.shareDescription);
         this.data.close();
     } else {
         try {

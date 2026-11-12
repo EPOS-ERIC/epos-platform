@@ -21,6 +21,15 @@
 
         <ng-template #createUrl>
           <div class="first-content">Share your current favorites, layer customizations, and settings with others using a unique link.</div>
+          <mat-form-field>
+            <mat-label>Title (optional)</mat-label>
+            <input matInput [(ngModel)]="shareTitle" maxlength="500" />
+            <mat-hint>Leave empty to generate a title automatically.</mat-hint>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Description (optional)</mat-label>
+            <textarea matInput [(ngModel)]="shareDescription" maxlength="10000" rows="3"></textarea>
+          </mat-form-field>
         </ng-template>
 
         <div class="container" novalidate>

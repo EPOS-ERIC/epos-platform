@@ -3,18 +3,26 @@
 
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { UserNotificationService } from 'components/userNotifications/userNotifications.service';
 import { Examples } from 'components/dialog/scientificExamplesDialog/scientificExamplesDialog.component';
+
+interface OfficialConfigurationSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  list_of_services: string[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
 
 
 export class ScientificExamplesService {
-  // Live credentials obtained during build, from gitlab variables.
-  private readonly endpoint = window.location.href + (window.location.href.endsWith('/') ? '' : '/') + 'api/v1/scientific_example';
+  private readonly endpoint = new URL('api/v1/official-configurations', document.baseURI).toString();
   private examplesSubject = new BehaviorSubject<Examples[]>([]);
   public examples$ = this.examplesSubject.asObservable();
 
@@ -23,38 +31,37 @@ export class ScientificExamplesService {
     private readonly userNotificationService: UserNotificationService,
 
   ) {
-    this.fetchScientificExamplesFromGitLab();
+    this.fetchScientificExamples();
   }
 
   getscientificExamples(): Observable<object> {
-    return this.http.get(this.endpoint
+    return this.http.get<OfficialConfigurationSummary[]>(this.endpoint
     ).pipe(
-      catchError((error) => {
+      map((response) => response.map((configuration): Examples => {
+        const sharingUrl = new URL(window.location.href);
+        sharingUrl.searchParams.set('share', configuration.id);
+        return {
+          example: configuration.id,
+          title: configuration.title,
+          description: configuration.description ?? '',
+          listOfServices: configuration.list_of_services,
+          sharingLinkUrl: sharingUrl.toString(),
+        };
+      })),
+      catchError((error: unknown) => {
         this.userNotificationService.sendErrorNotification(
-          'Error fetching steps from GitLab API.',
+          'Error fetching scientific examples.',
           6000,
         );
-        return throwError(error);
+        return throwError(() => error);
       })
     );
   }
 
-  private fetchScientificExamplesFromGitLab(): void {
+  private fetchScientificExamples(): void {
     this.getscientificExamples().subscribe({
-      next: (response: Examples[]) => {
-        try {
-          // Directly map the response if it's already an array
-          const examples = response.map((example) => ({
-            example: example.example,
-            title: example.title,
-            description: example.description,
-            listOfServices: example.listOfServices,
-            sharingLinkUrl: example.sharingLinkUrl,
-          }));
-          this.examplesSubject.next(examples);
-        } catch (error) {
-          console.error('Error processing response:', error);
-        }
+      next: (examples: Examples[]) => {
+        this.examplesSubject.next(examples);
       },
       error: (error) => {
         console.error('Error fetching examples:', error);
