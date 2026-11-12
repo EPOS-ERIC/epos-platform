@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/services/data-retriever
 
-go 1.27.3
+go 1.27.4
 
 require (
 	buf.build/go/protovalidate v1.3.0
