@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/services/oss-aai-service
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
