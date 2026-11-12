@@ -5,16 +5,16 @@ import { EposLeafletComponent } from '../../eposLeaflet.component';
 import { Stylable } from 'utility/styler/stylable.interface';
 import { Style } from 'utility/styler/style';
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { PALEOLATITUDE_CONFIG_ID } from 'pages/dataPortal/modules/graphPanel/objects/paleolatitude.interface';
-import { PaleolatitudeGraphService } from 'pages/dataPortal/modules/graphPanel/services/paleolatitudeGraph.service';
+import { DYNAMIC_MODE_CONFIG_ID } from 'pages/dataPortal/modules/graphPanel/objects/dynamicMode.interface';
+import { DynamicModeGraphService } from 'pages/dataPortal/modules/graphPanel/services/dynamicModeGraph.service';
 import { InteractiveVisualisationService } from 'pages/dataPortal/services/interactiveVisualisation.service';
 import { FeatureDisplayItem } from '../../featureDisplay/featureDisplayItem';
 import { MoveMethod } from '../../moveMethod.enum';
 
-const PALEOLATITUDE_MARKERS_LAYER_ID = 'paleolatitude-markers';
-const PALEOLATITUDE_MARKER_PENDING_COLOR = '#9e9e9e';
+const DYNAMIC_MODE_MARKERS_LAYER_ID = 'dynamic-mode-markers';
+const DYNAMIC_MODE_MARKER_PENDING_COLOR = '#9e9e9e';
 
-class PaleolatitudeMarkerLayer extends MapLayer {
+class DynamicModeMarkerLayer extends MapLayer {
   private readonly locationLayer = L.layerGroup();
   private readonly markers = new Map<string, L.Marker>();
 
@@ -22,12 +22,12 @@ class PaleolatitudeMarkerLayer extends MapLayer {
     private readonly onMarkerHover: (id: null | string) => void,
     private readonly onMarkerClick: (id: string, lat: number, lon: number) => void,
   ) {
-    super(PALEOLATITUDE_MARKERS_LAYER_ID, 'Paleolatitude markers');
+    super(DYNAMIC_MODE_MARKERS_LAYER_ID, 'Dynamic mode markers');
     this.options.pane.set(this.id);
     this.options.customLayerOptionOpacity.set(1);
     this.options.customLayerOptionMarkerType.set(MapLayer.MARKERTYPE_RAW);
 
-    const stylable = new PaleolatitudeMarkerStylable();
+    const stylable = new DynamicModeMarkerStylable();
     stylable.setStyle(new Style('#d71920'));
     this.options.customLayerOptionStylable.set(stylable);
   }
@@ -35,7 +35,7 @@ class PaleolatitudeMarkerLayer extends MapLayer {
   public addMarker(id: string, latLng: L.LatLng, normalizedLon: number): void {
     const marker = L.marker(latLng, {
       pane: this.id,
-      icon: this.createMarkerIcon(PALEOLATITUDE_MARKER_PENDING_COLOR),
+      icon: this.createMarkerIcon(DYNAMIC_MODE_MARKER_PENDING_COLOR),
     })
       .on('mouseover', () => this.onMarkerHover(id))
       .on('mouseout', () => this.onMarkerHover(null))
@@ -45,7 +45,7 @@ class PaleolatitudeMarkerLayer extends MapLayer {
   }
 
   public setMarkerColor(id: string, color: null | string): void {
-    this.markers.get(id)?.setIcon(this.createMarkerIcon(color ?? PALEOLATITUDE_MARKER_PENDING_COLOR));
+    this.markers.get(id)?.setIcon(this.createMarkerIcon(color ?? DYNAMIC_MODE_MARKER_PENDING_COLOR));
   }
 
   public removeMarker(id: string): void {
@@ -88,7 +88,7 @@ class PaleolatitudeMarkerLayer extends MapLayer {
 
 }
 
-class PaleolatitudeMarkerStylable implements Stylable {
+class DynamicModeMarkerStylable implements Stylable {
   private readonly styleSrc = new BehaviorSubject<null | Style>(null);
   // eslint-disable-next-line @typescript-eslint/member-ordering
   public readonly styleObs = this.styleSrc.asObservable();
@@ -102,23 +102,23 @@ class PaleolatitudeMarkerStylable implements Stylable {
   }
 }
 
-export class PaleolatitudeControl {
+export class DynamicModeControl {
   private map: L.Map;
   private eposLeaflet: EposLeafletComponent;
-  private readonly locationLayer: PaleolatitudeMarkerLayer;
+  private readonly locationLayer: DynamicModeMarkerLayer;
   private locationLayerAdded = false;
   private enabled = false;
   private readonly locationClickHandler: EventListener;
   private readonly keydownHandler: EventListener;
   private readonly subscriptions = new Array<Subscription>();
-  private paleolatitudeMarkerId = 0;
+  private dynamicModeMarkerId = 0;
 
   constructor(
     private dialogService: DialogService,
-    private paleolatitudeService: PaleolatitudeGraphService,
+    private dynamicModeService: DynamicModeGraphService,
     private interactiveVisualisations: InteractiveVisualisationService,
   ) {
-    this.locationLayer = new PaleolatitudeMarkerLayer(
+    this.locationLayer = new DynamicModeMarkerLayer(
       (id: null | string) => this.interactiveVisualisations.setHighlightedSource(id),
       (id: string, lat: number, lon: number) => this.showMarkerPopup(id, lat, lon),
     );
@@ -165,7 +165,7 @@ export class PaleolatitudeControl {
   private async activate(): Promise<void> {
     this.clearMarkers();
     (this.map.getContainer() as HTMLElement).blur();
-    await this.showPaleolatitudeDialog();
+    await this.showDynamicModeDialog();
 
     if (!this.enabled) {
       return;
@@ -183,14 +183,14 @@ export class PaleolatitudeControl {
     this.map.getContainer().removeEventListener('dblclick', this.locationClickHandler, true);
     document.removeEventListener('keydown', this.keydownHandler);
     this.clearMarkers();
-    this.paleolatitudeService.clear();
+    this.dynamicModeService.clear();
   }
 
   private handleKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault();
       this.clearMarkers();
-      this.paleolatitudeService.clear();
+      this.dynamicModeService.clear();
     }
   }
 
@@ -205,9 +205,9 @@ export class PaleolatitudeControl {
     event.stopPropagation();
     const latLng = this.map.mouseEventToLatLng(event);
     const normalizedLon = this.normalizeLongitude(latLng.lng);
-    const markerId = `${PALEOLATITUDE_CONFIG_ID}-${++this.paleolatitudeMarkerId}`;
+    const markerId = `${DYNAMIC_MODE_CONFIG_ID}-${++this.dynamicModeMarkerId}`;
     this.locationLayer.addMarker(markerId, latLng, normalizedLon);
-    void this.paleolatitudeService.request(markerId, latLng.lat, normalizedLon);
+    void this.dynamicModeService.request(markerId, latLng.lat, normalizedLon);
     if (!this.locationLayerAdded) {
       this.locationLayerAdded = true;
       this.eposLeaflet.addLayer(this.locationLayer);
@@ -227,8 +227,9 @@ export class PaleolatitudeControl {
   }
 
   private showMarkerPopup(id: string, lat: number, lon: number): void {
-    const plateName = this.interactiveVisualisations.getSource(id)?.metadata?.plateName;
-    const title = typeof plateName !== 'string' ? 'Paleolatitude' : `Paleolatitude - ${plateName}`;
+    const metadata = this.interactiveVisualisations.getSource(id)?.metadata;
+    const title = [metadata?.distributionTitle, metadata?.plateName]
+      .filter(part => typeof part === 'string' && part.length > 0).join(' - ');
     const content = document.createElement('div');
     const heading = document.createElement('h5');
     heading.className = 'popup-title';
@@ -240,13 +241,11 @@ export class PaleolatitudeControl {
 
     const table = document.createElement('table');
     table.className = 'layer-popup-table';
-    table.append(
-      this.createPopupRow('Latitude', lat.toFixed(6)),
-      this.createPopupRow('Longitude', lon.toFixed(6)),
-    );
+    const parameters = metadata?.popupParameters as Array<{ label: string; value: string }> | undefined;
+    parameters?.forEach(parameter => table.append(this.createPopupRow(parameter.label, parameter.value)));
     content.append(table);
     const removeMarkerAction = this.createPopupAction('Remove marker', 'fas fa-trash-alt', () => {
-      this.paleolatitudeService.remove(id);
+      this.dynamicModeService.remove(id);
       this.map.closePopup();
     });
     removeMarkerAction.style.margin = '8px auto';
@@ -303,7 +302,7 @@ export class PaleolatitudeControl {
     return button;
   }
 
-  private async showPaleolatitudeDialog(): Promise<boolean> {
+  private async showDynamicModeDialog(): Promise<boolean> {
     const message = `
     <p>To select a point on the map, double-click on it.</p>
     <p>To clear all markers, press ESC on the keyboard.</p>

@@ -29,7 +29,7 @@ export class DevShareApi implements ShareApi {
    * 'id' from the response body using `ObjectAccessUtility.getObjectValue` function. If the value is
    * found, it
    */
-  public saveConfigurables(value: string): Promise<string> {
+  public saveConfigurables(value: string, title?: string, description?: string): Promise<string> {
 
     const builder: UrlBuilder = this.baseUrl.urlBuilder();
     builder.addPathElements('configurations');
@@ -38,8 +38,8 @@ export class DevShareApi implements ShareApi {
     const url = builder.build();
     const body = {
       configuration: JSON.parse(value) as unknown,
-      title: 'Shared configuration ' + new Date().toISOString(),
-      description: null,
+      title: title?.trim() || 'Shared configuration ' + new Date().toISOString(),
+      description: description?.trim() || null,
       // eslint-disable-next-line @typescript-eslint/naming-convention
       list_of_services: [],
       // eslint-disable-next-line @typescript-eslint/naming-convention

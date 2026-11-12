@@ -6,28 +6,29 @@ import { DataConfigurableI } from 'utility/configurables/dataConfigurableI.inter
 import { DataConfigurableDataSearchI } from 'utility/configurablesDataSearch/dataConfigurableDataSearchI.interface';
 import { DataConfigurableDataSearchLoading } from 'utility/configurablesDataSearch/dataConfigurableDataSearchLoading';
 import { DataSearchConfigurablesServiceResource } from '../../dataPanel/services/dataSearchConfigurables.service';
-import { PaleolatitudePoint, PaleolatitudeResponse, PALEOLATITUDE_CONFIG_ID, PALEOLATITUDE_TRACE_ID } from '../objects/paleolatitude.interface';
+import { DynamicModePoint, DynamicModeResponse, DYNAMIC_MODE_CONFIG_ID, DYNAMIC_MODE_TRACE_ID } from '../objects/dynamicMode.interface';
 import { Trace } from '../objects/trace';
 import { YAxisDisplayType } from '../objects/yAxisDisplayType.enum';
 import { DistributionFormat } from 'api/webApi/data/distributionFormat.interface';
 import { ParameterValue } from 'api/webApi/data/parameterValue.interface';
+import { ParameterProperty } from 'api/webApi/data/parameterProperty.enum';
 
-export interface PaleolatitudeGraphRequest {
+export interface DynamicModeGraphRequest {
   normalizedLon: number;
   url: string;
   format?: DistributionFormat;
   parameters?: Array<ParameterValue>;
 }
 
-export interface PaleolatitudeGraphData {
-  response: PaleolatitudeResponse;
+export interface DynamicModeGraphData {
+  response: DynamicModeResponse;
   traces: Array<Trace>;
 }
 
 @Injectable({
   providedIn: 'root',
 })
-export class PaleolatitudeGraphService {
+export class DynamicModeGraphService {
 
   constructor(
     private readonly apiService: ApiService,
@@ -50,18 +51,29 @@ export class PaleolatitudeGraphService {
     }
 
     const serviceName = this.getConfigurable(this.configurables.getAll())?.name ?? 'Paleolatitude';
+    const popupParameters = this.getConfigurable(this.configurables.getAll())!.getDistributionDetails().getParameters().getParameters()
+      .filter(parameter => parameter.readOnlyValue !== 'true' && parameter.property !== ParameterProperty.OUTPUT_FORMAT)
+      .map(parameter => {
+        const role = request.format!.resourceAccess!.parameters.find(item => item.name === parameter.name)?.role;
+        const value = request.parameters!.find(item => item.name === parameter.name)?.value ?? parameter.defaultValue;
+        return {
+          label: parameter.label || parameter.name,
+          value: role === 'LATITUDE' ? lat.toFixed(6) : role === 'LONGITUDE' ? request.normalizedLon.toFixed(6) : value,
+        };
+      });
     const pendingName = `Paleolatitude (${request.normalizedLon.toFixed(4)}, ${lat.toFixed(4)})`;
     this.interactiveVisualisations.setSource({
       kind: 'interactive',
       id,
       name: pendingName,
-      groupId: PALEOLATITUDE_CONFIG_ID,
+      groupId: DYNAMIC_MODE_CONFIG_ID,
       traces: null,
+      metadata: { distributionTitle: serviceName, popupParameters },
     });
     this.interactiveVisualisations.viewSourceOnGraph(id);
 
     try {
-      const result = await this.executeRequest(request, id, `${PALEOLATITUDE_TRACE_ID}-${id}`);
+      const result = await this.executeRequest(request, id, `${DYNAMIC_MODE_TRACE_ID}-${id}`);
       if (this.interactiveVisualisations.getSource(id) == null) {
         return;
       }
@@ -74,7 +86,7 @@ export class PaleolatitudeGraphService {
       const plateLabel = result.response.plate?.name != null ? ` - ${result.response.plate.name}` : '';
       const resultName = `Paleolatitude${plateLabel} (${request.normalizedLon.toFixed(4)}, ${lat.toFixed(4)})`;
       result.traces.forEach((trace: Trace) => {
-        trace.axisGroup = PALEOLATITUDE_CONFIG_ID;
+        trace.axisGroup = DYNAMIC_MODE_CONFIG_ID;
         trace.persistSelection = false;
       });
       const resultDetails = {
@@ -89,12 +101,12 @@ export class PaleolatitudeGraphService {
         kind: 'interactive',
         id,
         name: resultName,
-        groupId: PALEOLATITUDE_CONFIG_ID,
+        groupId: DYNAMIC_MODE_CONFIG_ID,
         traces: result.traces,
         table: {
-          groupId: PALEOLATITUDE_CONFIG_ID,
+          groupId: DYNAMIC_MODE_CONFIG_ID,
           groupName: serviceName,
-          rows: (result.response.paleolatitude ?? []).map((point: PaleolatitudePoint) => ({
+          rows: (result.response.paleolatitude ?? []).map((point: DynamicModePoint) => ({
             ...resultDetails,
             ...point,
           })),
@@ -102,7 +114,7 @@ export class PaleolatitudeGraphService {
         },
         autoSelect: true,
         preferredDisplayType: YAxisDisplayType.OVERLAY,
-        metadata: resultDetails,
+        metadata: { ...resultDetails, distributionTitle: serviceName, popupParameters },
       });
     } catch {
       if (this.interactiveVisualisations.getSource(id) != null) {
@@ -117,14 +129,14 @@ export class PaleolatitudeGraphService {
   }
 
   public clear(): void {
-    this.interactiveVisualisations.clearSources(PALEOLATITUDE_CONFIG_ID);
+    this.interactiveVisualisations.clearSources(DYNAMIC_MODE_CONFIG_ID);
   }
 
   public createRequest(
     lat: number,
     lon: number,
     configurables: Array<DataConfigurableDataSearchI>,
-  ): null | PaleolatitudeGraphRequest {
+  ): null | DynamicModeGraphRequest {
     const configurable = this.getConfigurable(configurables);
     if (configurable == null) {
       return null;
@@ -146,15 +158,15 @@ export class PaleolatitudeGraphService {
   }
 
   public async executeRequest(
-    request: PaleolatitudeGraphRequest,
+    request: DynamicModeGraphRequest,
     configurableId: string,
     traceId: string,
-  ): Promise<PaleolatitudeGraphData> {
+  ): Promise<DynamicModeGraphData> {
     if (request.format == null || request.format.resourceAccess?.type !== 'DYNAMIC') {
-      throw new Error('Paleolatitude requires a dynamic distribution format.');
+      throw new Error('Dynamic mode requires a dynamic distribution format.');
     }
     const data = await this.apiService.executeDistributionFormat(request.format, request.parameters ?? [], true) as Blob;
-    const response = JSON.parse(await data.text()) as PaleolatitudeResponse;
+    const response = JSON.parse(await data.text()) as DynamicModeResponse;
 
     return {
       response,
@@ -162,7 +174,7 @@ export class PaleolatitudeGraphService {
     };
   }
 
-  private createTrace(response: PaleolatitudeResponse, configurableId: string, traceId: string): Array<Trace> {
+  private createTrace(response: DynamicModeResponse, configurableId: string, traceId: string): Array<Trace> {
     const points = response.paleolatitude ?? [];
     if (points.length === 0 || response.error != null || response.message != null) {
       return [];
@@ -176,14 +188,14 @@ export class PaleolatitudeGraphService {
       'Paleolatitude from selected map point',
       'deg',
       'Paleolatitude',
-      points.map((point: PaleolatitudePoint) => String(point.lat)),
-      points.map((point: PaleolatitudePoint) => String(point.age)),
+      points.map((point: DynamicModePoint) => String(point.lat)),
+      points.map((point: DynamicModePoint) => String(point.age)),
       'lines+markers',
     );
 
-    if (points.every((point: PaleolatitudePoint) => typeof point.lowerbound === 'number' && typeof point.upperbound === 'number')) {
-      trace.yErrorMinValues = points.map((point: PaleolatitudePoint) => String(Math.max(point.lat - point.lowerbound!, 0)));
-      trace.yErrorMaxValues = points.map((point: PaleolatitudePoint) => String(Math.max(point.upperbound! - point.lat, 0)));
+    if (points.every((point: DynamicModePoint) => typeof point.lowerbound === 'number' && typeof point.upperbound === 'number')) {
+      trace.yErrorMinValues = points.map((point: DynamicModePoint) => String(Math.max(point.lat - point.lowerbound!, 0)));
+      trace.yErrorMaxValues = points.map((point: DynamicModePoint) => String(Math.max(point.upperbound! - point.lat, 0)));
     }
 
     return [trace];

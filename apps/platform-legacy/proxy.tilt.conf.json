@@ -10,6 +10,7 @@
       "^/testpath/api/v1/organizations": "/v1/organizations",
       "^/testpath/api/v1/users/self": "/v1/users/self",
       "^/testpath/api/v1/configurations": "/v1/configurations",
+      "^/testpath/api/v1/official-configurations": "/v1/official-configurations",
       "^/testpath/api/v1/resources": "/v1/resources",
       "^/testpath/api/v1/distributions": "/v1/distributions",
       "^/testpath": ""

@@ -26,7 +26,7 @@ export class ShareService {
    * The function creates a data portal URL by retrieving data from local storage before
    * copying a citation to the clipboard.
    */
-  public createDataPortalUrl(): void {
+  public createDataPortalUrl(title?: string, description?: string): void {
 
     const url = new URL(window.location.href);
 
@@ -47,7 +47,7 @@ export class ShareService {
           };
 
           // save on DB
-          void this.apiService.saveConfigurables(JSON.stringify(shareConfiguration)).then(key => {
+          void this.apiService.saveConfigurables(JSON.stringify(shareConfiguration), title, description).then(key => {
             url.searchParams.set('share', key);
             this.copyCitationToClipboard(url.toString());
           }).catch((_) => {
