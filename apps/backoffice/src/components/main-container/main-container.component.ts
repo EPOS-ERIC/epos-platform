@@ -139,7 +139,7 @@ export class MainContainerComponent {
       item.type,
       item.resource_id,
       item.group.id,
-      item.concept === 'DATA' ? 'data' : item.concept === 'SOFTWARE' ? 'software' : 'facilities'
+      item.concept.name.toUpperCase() === 'DATA' ? 'data' : item.concept.name.toUpperCase() === 'SOFTWARE' ? 'software' : 'facilities'
     );
   }
   protected readonly comparisonContext = signal<ResourceVersionComparisonContext | null>(null);
@@ -400,7 +400,7 @@ export class MainContainerComponent {
       facilities: 'FACILITIES'
     };
     const concept = conceptBySection[this.sectionPath()];
-    return this.groups().find((group) => group.id === groupId && group.concept === concept);
+    return this.groups().find((group) => group.id === groupId && this.groupsStore.conceptName(group) === concept);
   }
 
   private toDiscoveryResourceType(value: string | null | undefined): DiscoveryResourceType | undefined {

@@ -7,6 +7,7 @@ import type { Category, CreateCategoryRequest, Group, ReplaceCategoryRequest } f
 import { ApiService } from '../../services/api.service';
 import { groupIconPath } from '../../group-icons';
 import { ListPaginationComponent } from '../../shared/ui/list-pagination.component';
+import { GroupsStore } from '../../stores/groups.store';
 
 type CategoryRow = {
   category: Category;
@@ -23,6 +24,7 @@ type CategoryRow = {
 export class CategoriesPanelComponent {
   private readonly apiService = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly groupsStore = inject(GroupsStore);
   private categoryRequest?: Subscription;
   private _groups: Group[] = [];
 
@@ -63,6 +65,10 @@ export class CategoriesPanelComponent {
   protected schemeLogoFailed = false;
 
   protected readonly selectedGroup = computed(() => this.groups.find(({ id }) => id === this.selectedGroupId()) ?? null);
+
+  protected conceptName(group: Group): string {
+    return this.groupsStore.conceptName(group) ?? 'Unknown';
+  }
   protected readonly categoryRows = computed<CategoryRow[]>(() => {
     const categories = this.categories();
     const byParent = new Map<string | null, Category[]>();

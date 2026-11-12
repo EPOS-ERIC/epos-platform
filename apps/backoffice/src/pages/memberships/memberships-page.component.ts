@@ -88,7 +88,9 @@ export class MembershipsPageComponent {
   }
 
   protected groupRoute(membership: UserMembershipSummary): string | null {
-    const concept = this.groupsStore.groups().find((group) => group.id === membership.group.id)?.concept;
+    const concept = this.groupsStore.conceptName(
+      this.groupsStore.groups().find((group) => group.id === membership.group.id)
+    );
     switch (concept) {
       case 'DATA':
         return '/data';

@@ -19,7 +19,7 @@ export const groupAdminGuard: CanActivateFn = async (route) => {
     facilities: 'FACILITIES'
   } as const;
   const groupMatchesSection = groupsStore.groups().some((group) =>
-    group.id === groupId && group.concept === conceptBySection[sectionPath as keyof typeof conceptBySection]
+    group.id === groupId && groupsStore.conceptName(group) === conceptBySection[sectionPath as keyof typeof conceptBySection]
   );
 
   const canManageGroup = !!groupId && groupMatchesSection && currentUserStore.canManageGroup(groupId);

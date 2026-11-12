@@ -36,7 +36,7 @@
               <h3>{{ group.label || group.name }}</h3>
               <p>{{ group.name }}</p>
               <div class="group-meta">
-                <span>{{ group.concept }}</span>
+                <span>{{ conceptName(group) }}</span>
                 <span>Position {{ group.position }}</span>
                 @if (group.page) {
                   <a [href]="group.page" target="_blank" rel="noopener noreferrer">Website</a>
@@ -92,10 +92,10 @@
         </label>
         <label class="form-field">
           <span>Concept *</span>
-          <select class="app-input" name="concept" required [(ngModel)]="groupForm.concept">
-            <option value="DATA">Data</option>
-            <option value="SOFTWARE">Software</option>
-            <option value="FACILITIES">Facilities</option>
+          <select class="app-input" name="concept" required [(ngModel)]="groupForm.conceptId">
+            @for (concept of concepts(); track concept.id) {
+              <option [value]="concept.id">{{ concept.name }}</option>
+            }
           </select>
         </label>
         <label class="form-field">

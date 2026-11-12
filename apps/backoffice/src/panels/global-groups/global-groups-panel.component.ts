@@ -1,9 +1,9 @@
 import { Component, DestroyRef, HostListener, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, catchError, finalize, of } from 'rxjs';
+import { EMPTY, catchError, finalize, forkJoin, of } from 'rxjs';
 
-import type { CreateGroupRequest, Group, ReplaceGroupRequest } from '../../../generated/backofficeSchemas';
+import type { Concept, CreateGroupRequest, Group, ReplaceGroupRequest } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import { ApiService } from '../../services/api.service';
 import { GroupsStore } from '../../stores/groups.store';
@@ -12,7 +12,7 @@ import { ListPaginationComponent } from '../../shared/ui/list-pagination.compone
 type GroupForm = {
   name: string;
   label: string;
-  concept: Group['concept'];
+  conceptId: string;
   position: number | null;
   description: string;
   logo: string;
@@ -23,7 +23,7 @@ type GroupForm = {
 const emptyGroupForm = (): GroupForm => ({
   name: '',
   label: '',
-  concept: 'DATA',
+  conceptId: '',
   position: null,
   description: '',
   logo: '',
@@ -43,6 +43,7 @@ export class GlobalGroupsPanelComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly groups = this.groupsStore.groups;
+  protected readonly concepts = this.groupsStore.concepts;
   protected readonly loading = signal(true);
   protected readonly loadError = signal('');
   protected readonly searchQuery = signal('');
@@ -62,7 +63,7 @@ export class GlobalGroupsPanelComponent {
     const query = this.searchQuery().trim().toLowerCase();
     const groups = query
       ? this.groups().filter((group) =>
-          [group.name, group.label, group.description, group.concept]
+          [group.name, group.label, group.description, this.conceptName(group)]
             .filter(Boolean)
             .some((value) => value!.toLowerCase().includes(query))
         )
@@ -104,7 +105,7 @@ export class GlobalGroupsPanelComponent {
 
   protected openCreateEditor(): void {
     this.editingGroup.set(null);
-    this.groupForm = emptyGroupForm();
+    this.groupForm = { ...emptyGroupForm(), conceptId: this.concepts()[0]?.id ?? '' };
     this.editorError.set('');
     this.editorOpen.set(true);
   }
@@ -114,7 +115,7 @@ export class GlobalGroupsPanelComponent {
     this.groupForm = {
       name: group.name,
       label: group.label ?? '',
-      concept: group.concept,
+      conceptId: group.concept_id,
       position: group.position,
       description: group.description ?? '',
       logo: group.logo ?? '',
@@ -140,7 +141,7 @@ export class GlobalGroupsPanelComponent {
     const payload = {
       name,
       label: this.toNullable(this.groupForm.label),
-      concept: this.groupForm.concept,
+      concept_id: this.groupForm.conceptId,
       position: this.groupForm.position ?? undefined,
       description: this.toNullable(this.groupForm.description),
       logo: this.toNullable(this.groupForm.logo),
@@ -209,20 +210,27 @@ export class GlobalGroupsPanelComponent {
     return groupIconPath(group.id) ?? group.logo ?? null;
   }
 
+  protected conceptName(group: Group): string {
+    return this.groupsStore.conceptName(group) ?? 'Unknown';
+  }
+
   private loadGroups(): void {
     this.loading.set(true);
     this.loadError.set('');
-    this.apiService.getGroups()
+    forkJoin({ groups: this.apiService.getGroups(), concepts: this.apiService.getConcepts() })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.loading.set(false)),
         catchError((error) => {
           console.error('Failed to load groups', error);
           this.loadError.set('Failed to load groups. This page requires group management access.');
-          return of([] as Group[]);
+          return of({ groups: [] as Group[], concepts: [] as Concept[] });
         })
       )
-      .subscribe((groups) => this.groupsStore.replaceAll(groups));
+      .subscribe(({ groups, concepts }) => {
+        this.groupsStore.replaceAll(groups);
+        this.groupsStore.replaceConcepts(concepts);
+      });
   }
 
   private toNullable(value: string): string | null {

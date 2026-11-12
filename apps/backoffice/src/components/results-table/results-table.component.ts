@@ -113,6 +113,7 @@ export class ResultsTableComponent implements OnChanges {
       return this.sectionPath;
     }
 
-    return item.concept === 'DATA' ? 'data' : item.concept === 'SOFTWARE' ? 'software' : 'facilities';
+    const concept = item.concept.name.toUpperCase();
+    return concept === 'DATA' ? 'data' : concept === 'SOFTWARE' ? 'software' : 'facilities';
   }
 }

@@ -11,7 +11,7 @@ describe('CategoriesPanelComponent', () => {
     id: 'group-1',
     name: 'Data Group',
     position: 1,
-    concept: 'DATA'
+    concept_id: 'data-concept'
   };
   const categories = Array.from({ length: 12 }, (_, index): Category => ({
     id: `category-${index + 1}`,

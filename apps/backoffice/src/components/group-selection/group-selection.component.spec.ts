@@ -2,18 +2,22 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import type { Group } from '../../../generated/backofficeSchemas';
+import { GroupsStore } from '../../stores/groups.store';
 import { GroupSelectionComponent } from './group-selection.component';
 
 describe('GroupSelectionComponent', () => {
   it('shows sorted groups for the current concept and links them to the results route', () => {
     const groups: Group[] = [
-      { id: 'data-2', name: 'Second Data Group', position: 2, concept: 'DATA' },
-      { id: 'software-1', name: 'Software Group', position: 1, concept: 'SOFTWARE' },
-      { id: 'data-1', name: 'First Data Group', label: 'First Group', description: 'Group description', logo: 'https://example.org/logo.png', position: 1, concept: 'DATA' }
+      { id: 'data-2', name: 'Second Data Group', position: 2, concept_id: 'data-concept' },
+      { id: 'software-1', name: 'Software Group', position: 1, concept_id: 'software-concept' },
+      { id: 'data-1', name: 'First Data Group', label: 'First Group', description: 'Group description', logo: 'https://example.org/logo.png', position: 1, concept_id: 'data-concept' }
     ];
     TestBed.configureTestingModule({
       imports: [GroupSelectionComponent],
-      providers: [provideRouter([])]
+      providers: [
+        provideRouter([]),
+        { provide: GroupsStore, useValue: { conceptName: (group: Group) => group.concept_id === 'data-concept' ? 'DATA' : 'SOFTWARE' } }
+      ]
     });
     const fixture = TestBed.createComponent(GroupSelectionComponent);
     fixture.componentRef.setInput('groups', groups);

@@ -11,7 +11,7 @@ import { MembershipRequestDialogService } from './membership-request-dialog.serv
 import { ToastService } from './toast.service';
 
 describe('MembershipRequestDialogService', () => {
-  const group: Group = { id: 'group-id', name: 'Data Group', position: 0, concept: 'DATA' };
+  const group: Group = { id: 'group-id', name: 'Data Group', position: 0, concept_id: 'data-concept' };
   const membership: GroupMembership = {
     user: { id: 'user-id', given_name: 'Test', family_name: 'User', email: 'user@example.org' },
     status: 'PENDING',

@@ -89,7 +89,10 @@ describe('MembershipsPageComponent', () => {
       providers: [
         { provide: ApiService, useValue: apiService },
         { provide: CurrentUserStore, useValue: currentUserStore },
-        { provide: GroupsStore, useValue: { groups: signal([{ id: '1375500a-fc04-5831-a7f5-39ea5fcb0445', name: 'Data Group', position: 0, concept: 'DATA' }]) } },
+        { provide: GroupsStore, useValue: {
+          groups: signal([{ id: '1375500a-fc04-5831-a7f5-39ea5fcb0445', name: 'Data Group', position: 0, concept_id: 'data-concept' }]),
+          conceptName: () => 'DATA'
+        } },
         { provide: DialogService, useValue: dialog },
         { provide: MembershipRequestDialogService, useValue: { open, groups: signal([{ id: 'group-id' }]), groupsLoading: signal(false) } },
         { provide: ToastService, useValue: toast },

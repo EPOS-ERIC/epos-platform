@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import type { Group } from '../../generated/backofficeSchemas';
+import type { Concept, Group } from '../../generated/backofficeSchemas';
 import { ApiService } from '../services/api.service';
 
 @Injectable({ providedIn: 'root' })
@@ -10,6 +10,7 @@ export class GroupsStore {
   private initialization?: Promise<void>;
 
   readonly groups = signal<Group[]>([]);
+  readonly concepts = signal<Concept[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -20,6 +21,14 @@ export class GroupsStore {
 
   replaceAll(groups: Group[]): void {
     this.groups.set(groups);
+  }
+
+  replaceConcepts(concepts: Concept[]): void {
+    this.concepts.set(concepts);
+  }
+
+  conceptName(group: Group | undefined): string | undefined {
+    return group ? this.concepts().find(({ id }) => id === group.concept_id)?.name.toUpperCase() : undefined;
   }
   // Updates or insert the Group
   upsert(group: Group): void {
@@ -38,7 +47,12 @@ export class GroupsStore {
     this.error.set(null);
 
     try {
-      this.groups.set(await firstValueFrom(this.apiService.getGroups()));
+      const [groups, concepts] = await Promise.all([
+        firstValueFrom(this.apiService.getGroups()),
+        firstValueFrom(this.apiService.getConcepts())
+      ]);
+      this.groups.set(groups);
+      this.concepts.set(concepts);
     } catch (error) {
       console.error('Failed to load groups', error);
       this.error.set('Failed to load groups.');

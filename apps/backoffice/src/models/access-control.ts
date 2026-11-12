@@ -10,7 +10,7 @@ export const GROUP_MANAGEMENT_PERMISSIONS = [
 
 export const GLOBAL_MANAGEMENT_PERMISSIONS = [
   'global.category.manage',
-  'global.category_scheme.manage',
+  'global.group.manage',
   'global.contact_point.manage',
   'global.membership.manage',
   'global.role.manage',

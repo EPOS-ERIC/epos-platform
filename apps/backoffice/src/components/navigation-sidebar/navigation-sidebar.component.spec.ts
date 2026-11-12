@@ -2,9 +2,17 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 
+import type { Group } from '../../../generated/backofficeSchemas';
+import { GroupsStore } from '../../stores/groups.store';
 import { NavigationSidebarComponent } from './navigation-sidebar.component';
 
 describe('NavigationSidebarComponent', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: GroupsStore, useValue: { conceptName: (_group: Group) => 'DATA' } }]
+    });
+  });
+
   it('links to the current user memberships page', async () => {
     await TestBed.configureTestingModule({
       imports: [NavigationSidebarComponent],
@@ -182,8 +190,8 @@ describe('NavigationSidebarComponent', () => {
     }).compileComponents();
     const fixture = TestBed.createComponent(NavigationSidebarComponent);
     fixture.componentRef.setInput('groups', [
-      { id: 'group-1', name: 'First Group', position: 1, concept: 'DATA' },
-      { id: 'b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2', name: 'Geochemistry', position: 2, concept: 'DATA' }
+      { id: 'group-1', name: 'First Group', position: 1, concept_id: 'data-concept' },
+      { id: 'b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2', name: 'Geochemistry', position: 2, concept_id: 'data-concept' }
     ]);
     fixture.componentRef.setInput('currentSectionPath', 'data');
     fixture.componentRef.setInput('selectedGroupId', 'b7bcbcdf-cfaa-555a-afbb-3892c08ed2d2');

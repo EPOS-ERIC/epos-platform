@@ -12,7 +12,7 @@ import { ResourceActionsService } from './resource-actions.service';
 import { ResourceCreationDialogService } from './resource-creation-dialog.service';
 
 describe('ResourceCreationDialogService', () => {
-  const targetGroup: Group = { id: 'target-group', name: 'Target Group', position: 0, concept: 'DATA' };
+  const targetGroup: Group = { id: 'target-group', name: 'Target Group', position: 0, concept_id: 'data-concept' };
   const copyResult: WriteResult = { id: 'copied-resource', resourceType: 'dataset', status: 'DRAFT' };
   const apiService = { createResourceDraft: vi.fn(), copyResource: vi.fn() };
   const resourceActions = { resolveCreatedResourceRoute: vi.fn() };

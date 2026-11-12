@@ -43,7 +43,7 @@ describe('ResultsTableComponent', () => {
       name: 'Dataset',
       status: 'PUBLISHED',
       updated_at: timestamp,
-      concept: 'DATA',
+      concept: { id: 'data-concept', name: 'DATA' },
       group: { id: 'group-id', name: 'Group' }
     };
 
@@ -71,7 +71,7 @@ describe('ResultsTableComponent', () => {
       name: 'Dataset',
       status: 'DRAFT',
       updated_at: '2026-09-10T07:34:26.486Z',
-      concept: 'DATA',
+      concept: { id: 'data-concept', name: 'DATA' },
       group: { id: 'group-id', name: 'Group' },
       created_by: { id: 'author-id', name: 'Author' }
     };
@@ -126,7 +126,7 @@ describe('ResultsTableComponent', () => {
       name: 'Published dataset',
       status: 'PUBLISHED',
       updated_at: '2026-09-10T07:34:26.486Z',
-      concept: 'DATA',
+      concept: { id: 'data-concept', name: 'DATA' },
       group: { id: 'source-group', name: 'Source Group' }
     };
     const draft: DiscoveryItem = {
@@ -163,7 +163,7 @@ describe('ResultsTableComponent', () => {
       name: 'Dataset',
       status: 'PUBLISHED',
       updated_at: '2026-09-10T07:34:26.486Z',
-      concept: 'DATA',
+      concept: { id: 'data-concept', name: 'DATA' },
       group: { id: groupId, name: 'Seismology' }
     };
 
@@ -190,7 +190,7 @@ describe('ResultsTableComponent', () => {
       name: 'Facility software',
       status: 'PUBLISHED',
       updated_at: '2026-09-10T07:34:26.486Z',
-      concept: 'FACILITIES',
+      concept: { id: 'facilities-concept', name: 'Facilities' },
       group: { id: groupId, name: 'Seismology' }
     };
 
@@ -221,7 +221,7 @@ describe('ResultsTableComponent', () => {
       name: `Dataset ${index + 1}`,
       status: 'PUBLISHED',
       updated_at: '2026-09-10T07:34:26.486Z',
-      concept: 'DATA',
+      concept: { id: 'data-concept', name: 'DATA' },
       group: { id: 'group-id', name: 'Group' }
     }));
 

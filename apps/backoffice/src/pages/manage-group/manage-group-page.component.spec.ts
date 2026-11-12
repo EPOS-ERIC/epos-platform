@@ -11,7 +11,7 @@ import { CurrentUserStore } from '../../stores/current-user.store';
 import { ManageGroupPageComponent } from './manage-group-page.component';
 
 describe('ManageGroupPageComponent', () => {
-  const group: Group = { id: 'group-id', name: 'Data Group', position: 0, concept: 'DATA' };
+  const group: Group = { id: 'group-id', name: 'Data Group', position: 0, concept_id: 'data-concept' };
   const groupAdmin: GroupMembership = {
     user: { id: 'admin-id', email: 'admin@example.org', given_name: 'Group', family_name: 'Admin' },
     status: 'ACTIVE',

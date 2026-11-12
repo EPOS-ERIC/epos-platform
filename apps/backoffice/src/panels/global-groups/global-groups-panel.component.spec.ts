@@ -12,10 +12,15 @@ describe('GlobalGroupsPanelComponent', () => {
     name: 'Group 01',
     label: 'First group',
     position: 1,
-    concept: 'DATA'
+    concept_id: 'data-concept'
   };
+  const concepts = [
+    { id: 'data-concept', name: 'Data' },
+    { id: 'software-concept', name: 'Software' }
+  ];
   const apiService = {
     getGroups: vi.fn(),
+    getConcepts: vi.fn(),
     createGroup: vi.fn(),
     replaceGroup: vi.fn(),
     deleteGroup: vi.fn()
@@ -24,6 +29,7 @@ describe('GlobalGroupsPanelComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     apiService.getGroups.mockReturnValue(of([group]));
+    apiService.getConcepts.mockReturnValue(of(concepts));
     TestBed.configureTestingModule({
       imports: [GlobalGroupsPanelComponent],
       providers: [{ provide: ApiService, useValue: apiService }]
@@ -35,7 +41,7 @@ describe('GlobalGroupsPanelComponent', () => {
       id: `group-${index + 1}`,
       name: `Group ${String(index + 1).padStart(2, '0')}`,
       position: index + 1,
-      concept: index % 2 ? 'SOFTWARE' : 'DATA'
+      concept_id: index % 2 ? 'software-concept' : 'data-concept'
     }));
     apiService.getGroups.mockReturnValue(of(groups));
     const fixture = TestBed.createComponent(GlobalGroupsPanelComponent);
@@ -59,7 +65,7 @@ describe('GlobalGroupsPanelComponent', () => {
   });
 
   it('creates a group', async () => {
-    const created: Group = { id: 'group-2', name: 'New Group', position: 0, concept: 'DATA' };
+    const created: Group = { id: 'group-2', name: 'New Group', position: 0, concept_id: 'data-concept' };
     apiService.createGroup.mockReturnValue(of(created));
     const fixture = TestBed.createComponent(GlobalGroupsPanelComponent);
     fixture.detectChanges();
@@ -75,7 +81,7 @@ describe('GlobalGroupsPanelComponent', () => {
     expect(apiService.createGroup).toHaveBeenCalledWith({
       name: created.name,
       label: null,
-      concept: 'DATA',
+      concept_id: 'data-concept',
       position: undefined,
       description: null,
       logo: null,
@@ -102,7 +108,7 @@ describe('GlobalGroupsPanelComponent', () => {
     expect(apiService.replaceGroup).toHaveBeenCalledWith(group.id, {
       name: group.name,
       label: updated.label,
-      concept: group.concept,
+      concept_id: group.concept_id,
       position: group.position,
       description: null,
       logo: null,

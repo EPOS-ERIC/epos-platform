@@ -238,7 +238,7 @@ describe('ResourceDetailStore', () => {
   });
 
   it('opens copy selection for a published resource when a writable target exists', () => {
-    copyGroups.set([{ id: 'target-group', name: 'Target Group', position: 0, concept: 'DATA' }]);
+    copyGroups.set([{ id: 'target-group', name: 'Target Group', position: 0, concept_id: 'data-concept' }]);
     apiService.getResourceVersion.mockReturnValue(of(datasetVersion({
       status: 'PUBLISHED',
       resource_id: 'published-resource',

@@ -313,7 +313,7 @@ export class ResourceActionsService {
   }
 
   private sectionPathForGroup(groupId: string, fallbackSectionPath: string): string {
-    switch (this.groupsStore.groups().find((group) => group.id === groupId)?.concept) {
+    switch (this.groupsStore.conceptName(this.groupsStore.groups().find((group) => group.id === groupId))) {
       case 'DATA':
         return 'data';
       case 'SOFTWARE':

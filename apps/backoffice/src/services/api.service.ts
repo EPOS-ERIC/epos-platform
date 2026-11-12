@@ -7,6 +7,7 @@ import type {
   CanonicalOrganization,
   Category,
   ContactPoint,
+  Concept,
   CreateCategoryRequest,
   CreateContactPointRequest,
   CreateGroupRequest,
@@ -416,6 +417,10 @@ export class ApiService {
 
   public getGroups(): Observable<Group[]> {
     return this.http.get<Group[]>(`${this.baseUrl}/groups`);
+  }
+
+  public getConcepts(): Observable<Concept[]> {
+    return this.http.get<Concept[]>(`${this.baseUrl}/concepts`);
   }
 
   public createGroup(payload: CreateGroupRequest): Observable<Group> {

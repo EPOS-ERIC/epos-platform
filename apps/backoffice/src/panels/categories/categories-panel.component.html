@@ -11,7 +11,7 @@
       <span>Category scheme</span>
       <select class="app-input" [ngModel]="selectedGroupId()" (ngModelChange)="selectGroup($event)" [disabled]="groupsLoading || !groups.length">
         @for (group of groups; track group.id) {
-          <option [value]="group.id">{{ group.name }} · {{ group.concept }}</option>
+          <option [value]="group.id">{{ group.name }} · {{ conceptName(group) }}</option>
         }
       </select>
     </label>
@@ -32,7 +32,7 @@
         }
       </div>
       <div>
-        <span class="scheme-concept">{{ group.concept }}</span>
+        <span class="scheme-concept">{{ conceptName(group) }}</span>
         <h3>{{ group.label || group.name }}</h3>
         @if (group.description) {
           <p>{{ group.description }}</p>

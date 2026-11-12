@@ -6,6 +6,7 @@ import { AppIconComponent, type IconName } from '../../shared/ui/app-icon.compon
 import type { DiscoveryConcept, Group } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
 import type { ResourceActionItem, ResourceActionKey } from '../../models/resource-actions';
+import { GroupsStore } from '../../stores/groups.store';
 
 type NavigationItem = {
   label: string;
@@ -26,6 +27,7 @@ export class NavigationSidebarComponent {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly groupsStore = inject(GroupsStore);
   private detailNavigationItems: NavigationItem[] = [];
   private scrollFrame?: number;
 
@@ -136,7 +138,7 @@ export class NavigationSidebarComponent {
   }
 
   protected groupsForItem(item: NavigationItem): Group[] {
-    return item.concept ? this.groups.filter((group) => group.concept === item.concept) : [];
+    return item.concept ? this.groups.filter((group) => this.groupsStore.conceptName(group) === item.concept) : [];
   }
 
   protected isMainSectionActive(item: NavigationItem): boolean {

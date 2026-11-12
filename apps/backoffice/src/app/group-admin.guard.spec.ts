@@ -34,7 +34,8 @@ describe('groupAdminGuard', () => {
   const currentUser = signal<User | null>(user);
   const currentUserStore = { user: currentUser, initialize: vi.fn(), canManageGroup: vi.fn() };
   const groupsStore = {
-    groups: signal([{ id: 'group-id', name: 'Data Group', position: 0, concept: 'DATA' as const }]),
+    groups: signal([{ id: 'group-id', name: 'Data Group', position: 0, concept_id: 'data-concept' }]),
+    conceptName: vi.fn(() => 'DATA'),
     initialize: vi.fn()
   };
   const router = { createUrlTree: vi.fn() };

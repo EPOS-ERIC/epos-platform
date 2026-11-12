@@ -50,7 +50,7 @@ export class GlobalManagePageComponent {
   protected readonly canManageNotifications = computed(() => this.hasPermission('global.notification.manage'));
   protected readonly canManageContactPoints = computed(() => this.hasPermission('global.contact_point.manage'));
   protected readonly canManageCategories = computed(() => this.hasPermission('global.category.manage'));
-  protected readonly canManageGroups = computed(() => this.hasPermission('global.category_scheme.manage'));
+  protected readonly canManageGroups = computed(() => this.hasPermission('global.group.manage'));
   protected readonly canManageOrganizations = computed(() => this.hasPermission('global.organization.manage'));
   protected readonly destinations = computed(() =>
     GLOBAL_MANAGE_DESTINATIONS.filter(({ panel }) => this.canAccessPanel(panel))

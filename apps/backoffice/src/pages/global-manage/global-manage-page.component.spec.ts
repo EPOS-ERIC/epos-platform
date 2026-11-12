@@ -11,7 +11,8 @@ describe('GlobalManagePageComponent', () => {
   const currentUserStore = { hasGlobalPermission: vi.fn() };
   const apiService = {
     getContactPoints: vi.fn(() => of([])),
-    getGroups: vi.fn(() => of([]))
+    getGroups: vi.fn(() => of([])),
+    getConcepts: vi.fn(() => of([]))
   };
 
   beforeEach(() => {
@@ -38,7 +39,7 @@ describe('GlobalManagePageComponent', () => {
 
   it('shows the categories destination to a category scheme manager', () => {
     currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
-      permission === 'global.category_scheme.manage'
+      permission === 'global.group.manage'
     );
     const fixture = TestBed.createComponent(GlobalManagePageComponent);
     fixture.detectChanges();
@@ -58,7 +59,7 @@ describe('GlobalManagePageComponent', () => {
 
   it('opens groups management within categories from a deep link', () => {
     currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
-      permission === 'global.category_scheme.manage'
+      permission === 'global.group.manage'
     );
     const fixture = TestBed.createComponent(GlobalManagePageComponent);
     fixture.componentRef.setInput('panel', 'categories');
@@ -71,7 +72,7 @@ describe('GlobalManagePageComponent', () => {
 
   it('shows both groups and categories panels when both permissions are present', () => {
     currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
-      permission === 'global.category_scheme.manage' || permission === 'global.category.manage'
+      permission === 'global.group.manage' || permission === 'global.category.manage'
     );
     const fixture = TestBed.createComponent(GlobalManagePageComponent);
     fixture.componentRef.setInput('panel', 'categories');

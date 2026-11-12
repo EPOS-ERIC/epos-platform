@@ -15,7 +15,7 @@ describe('GlobalMembersPanelComponent', () => {
     id: 'group-id',
     name: 'Data Group',
     position: 0,
-    concept: 'DATA'
+    concept_id: 'data-concept'
   };
   const userSummary: UserListItem = {
     id: 'user-id',
