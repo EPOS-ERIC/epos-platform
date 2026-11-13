@@ -1,8 +1,9 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
+import type { OAuthStorage } from 'angular-oauth2-oidc';
 
 @Injectable({ providedIn: 'root' })
-export class LocalStorageService {
+export class LocalStorageService implements OAuthStorage {
   private readonly document = inject(DOCUMENT);
 
   get(key: string): string | null {
@@ -11,6 +12,10 @@ export class LocalStorageService {
     } catch {
       return null;
     }
+  }
+
+  getItem(key: string): string | null {
+    return this.get(key);
   }
 
   getJson(key: string): unknown {
@@ -36,6 +41,10 @@ export class LocalStorageService {
     }
   }
 
+  setItem(key: string, value: string): void {
+    this.set(key, value);
+  }
+
   setJson(key: string, value: unknown): boolean {
     try {
       return this.set(key, JSON.stringify(value));
@@ -50,5 +59,9 @@ export class LocalStorageService {
     } catch {
       // Storage can be unavailable in restricted browser contexts.
     }
+  }
+
+  removeItem(key: string): void {
+    this.remove(key);
   }
 }

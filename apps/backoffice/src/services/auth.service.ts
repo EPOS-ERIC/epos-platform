@@ -25,6 +25,7 @@ export class AuthService {
     private readonly oauthService: OAuthService,
     private readonly localStorage: LocalStorageService
   ) {
+    this.oauthService.setStorage(this.localStorage);
     this.oauthService.events.subscribe(() => this.authenticated.set(this.oauthService.hasValidAccessToken()));
   }
 
@@ -34,20 +35,20 @@ export class AuthService {
   }
 
   login(returnUrl = '/data'): void {
-    sessionStorage.setItem(RETURN_URL_KEY, this.safeReturnUrl(returnUrl));
+    this.localStorage.set(RETURN_URL_KEY, this.safeReturnUrl(returnUrl));
     this.oauthService.initImplicitFlow();
   }
 
   logout(): void {
-    sessionStorage.removeItem(RETURN_URL_KEY);
+    this.localStorage.remove(RETURN_URL_KEY);
     this.oauthService.logOut(true);
     this.authenticated.set(false);
     window.location.assign(new URL('login', document.baseURI).toString());
   }
 
   consumeReturnUrl(): string {
-    const returnUrl = this.safeReturnUrl(sessionStorage.getItem(RETURN_URL_KEY) ?? '/data');
-    sessionStorage.removeItem(RETURN_URL_KEY);
+    const returnUrl = this.safeReturnUrl(this.localStorage.get(RETURN_URL_KEY) ?? '/data');
+    this.localStorage.remove(RETURN_URL_KEY);
     return returnUrl;
   }
 

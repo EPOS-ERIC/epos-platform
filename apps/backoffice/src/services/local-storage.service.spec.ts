@@ -1,5 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
+import { OAuthStorage } from 'angular-oauth2-oidc';
 
 import { LocalStorageService } from './local-storage.service';
 
@@ -20,7 +21,10 @@ describe('LocalStorageService', () => {
       setItem: (key, value) => values.set(key, value)
     };
     TestBed.configureTestingModule({
-      providers: [{ provide: DOCUMENT, useValue: { defaultView: { localStorage: storage } } }]
+      providers: [
+        { provide: DOCUMENT, useValue: { defaultView: { localStorage: storage } } },
+        { provide: OAuthStorage, useExisting: LocalStorageService }
+      ]
     });
     storage.clear();
     service = TestBed.inject(LocalStorageService);
@@ -37,5 +41,17 @@ describe('LocalStorageService', () => {
     storage.setItem('invalid', '{');
 
     expect(service.getJson('invalid')).toBeNull();
+  });
+
+  it('provides the OAuth storage interface using local storage', () => {
+    const oauthStorage = TestBed.inject(OAuthStorage);
+
+    expect(oauthStorage).toBe(service);
+    oauthStorage.setItem('access_token', 'token');
+    expect(storage.getItem('access_token')).toBe('token');
+    expect(oauthStorage.getItem('access_token')).toBe('token');
+
+    oauthStorage.removeItem('access_token');
+    expect(storage.getItem('access_token')).toBeNull();
   });
 });
