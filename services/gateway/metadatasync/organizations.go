@@ -143,6 +143,14 @@ func decodeOrganizations(r io.Reader) ([]remoteOrganization, error) {
 		return nil, errors.New("null response")
 	}
 
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		if err == nil {
+			return nil, errors.New("trailing data")
+		}
+		return nil, err
+	}
+
 	return nodes, nil
 }
 

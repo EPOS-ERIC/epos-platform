@@ -33,7 +33,7 @@ CREATE TABLE organizations (
     remote_nid  bigint UNIQUE,
 
     -- Schema.org organization metadata
-    name        nonblank_text NOT NULL,
+    name        nonblank_text NOT NULL UNIQUE,
     street      nonblank_text_opt,
     locality    nonblank_text_opt,
     postal_code nonblank_text_opt,

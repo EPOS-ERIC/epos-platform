@@ -132,8 +132,7 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
             "/organizations",
             json=parent_payload,
         )
-        self.assertEqual(duplicate_parent_response.status_code, 201)
-        self.assertNotEqual(duplicate_parent_response.json()["id"], parent_id)
+        assert_problem(self, duplicate_parent_response, 409, "conflict")
 
         child_name = f"contract-child-{suffix}"
         child_payload = {
