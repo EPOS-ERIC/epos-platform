@@ -137,11 +137,11 @@ func (s *Service) Build(ctx context.Context, input domain.NotificationEvent) ([]
 			continue
 		}
 		if recipient.ID == "" {
-			s.log.Debug("TODO")
+			s.log.DebugContext(ctx, "skip notification recipient with missing ID")
 			continue
 		}
 		if recipient.Email == "" {
-			s.log.Debug("TODO")
+			s.log.DebugContext(ctx, "skip notification recipient with missing email", "user_id", recipient.ID)
 			continue
 		}
 

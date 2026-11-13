@@ -21,6 +21,7 @@ services:
         condition: service_healthy
     environment:
       - SERVER_PORT=8200
+      - SYNC_CRON=*/5 * * * *
       - DB_HOST=converter-db
       - DB_PORT=5432
       - DB_NAME=converter

@@ -48,7 +48,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         ]
         self.assertEqual(len(identifier_matches), 1)
         self.assertEqual(identifier_matches[0]["value"], "999472675")
-        self.assertTrue(organization["parents"])
 
         organization_response = self.gateway.get(
             "/organizations/{organizationId}",
@@ -86,7 +85,7 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         self.assertEqual(contact_point["email"], "andrea.rovida@ingv.it")
 
     def test_organization_and_contact_point_crud(self) -> None:
-        """Verify canonical links are retained and removed through CRUD."""
+        """Verify organization hierarchy and contact point CRUD."""
 
         suffix = str(uuid4())
         contact_payload = {"email": f"contract-{suffix}@example.org"}
@@ -118,7 +117,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
                 {"type": "contract-test", "value": f"parent-{suffix}"}
             ],
             "parents": [],
-            "contact_point_ids": [contact_point_id],
         }
         created_parent_response = self.gateway.post(
             "/organizations",
@@ -128,14 +126,14 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         created_parent = created_parent_response.json()
         self.assertEqual(created_parent["name"], parent_name)
         self.assertEqual(created_parent["parents"], [])
-        self.assertEqual(created_parent["contact_point_ids"], [contact_point_id])
         parent_id = created_parent["id"]
 
         duplicate_parent_response = self.gateway.post(
             "/organizations",
             json=parent_payload,
         )
-        assert_problem(self, duplicate_parent_response, 409, "conflict")
+        self.assertEqual(duplicate_parent_response.status_code, 201)
+        self.assertNotEqual(duplicate_parent_response.json()["id"], parent_id)
 
         child_name = f"contract-child-{suffix}"
         child_payload = {
@@ -150,7 +148,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
                 {"type": "contract-test", "value": f"child-{suffix}"}
             ],
             "parents": [parent_id],
-            "contact_point_ids": [contact_point_id],
         }
         created_child_response = self.gateway.post(
             "/organizations",
@@ -159,7 +156,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         self.assertEqual(created_child_response.status_code, 201)
         created_child = created_child_response.json()
         self.assertEqual(created_child["parents"], [parent_id])
-        self.assertEqual(created_child["contact_point_ids"], [contact_point_id])
         child_id = created_child["id"]
 
         child_response = self.gateway.get(
@@ -170,7 +166,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         child = child_response.json()
         self.assertEqual(child["id"], child_id)
         self.assertEqual(child["parents"], [parent_id])
-        self.assertEqual(child["contact_point_ids"], [contact_point_id])
 
         updated_contact_payload = {"email": f"updated-{suffix}@example.org"}
         updated_contact_response = self.gateway.put(
@@ -190,10 +185,8 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
             "logo_url": None,
             "page_url": None,
             "email": None,
-            "lei_code": None,
             "identifiers": child_payload["identifiers"],
             "parents": [parent_id],
-            "contact_point_ids": [contact_point_id],
         }
         updated_child_response = self.gateway.put(
             "/organizations/{organizationId}",
@@ -205,7 +198,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
         self.assertEqual(updated_child["id"], child_id)
         self.assertEqual(updated_child["name"], updated_child_name)
         self.assertEqual(updated_child["parents"], [parent_id])
-        self.assertEqual(updated_child["contact_point_ids"], [contact_point_id])
 
         deleted_parent_response = self.gateway.delete(
             "/organizations/{organizationId}",
@@ -236,12 +228,6 @@ class OrganizationsAndContactPointsContractTest(unittest.TestCase):
             contactPointId=contact_point_id,
         )
         self.assertEqual(deleted_contact_get_response.status_code, 404)
-        child_after_contact_response = self.gateway.get(
-            "/organizations/{organizationId}",
-            organizationId=child_id,
-        )
-        self.assertEqual(child_after_contact_response.status_code, 200)
-        self.assertEqual(child_after_contact_response.json()["contact_point_ids"], [])
 
         deleted_child_response = self.gateway.delete(
             "/organizations/{organizationId}",

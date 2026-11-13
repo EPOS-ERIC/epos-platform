@@ -14,6 +14,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/mailgun/mailgun-go/v5 v5.19.3
 	github.com/ogen-go/ogen v1.24.0
+	github.com/robfig/cron/v3 v3.0.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0
 	go.opentelemetry.io/otel v1.46.0

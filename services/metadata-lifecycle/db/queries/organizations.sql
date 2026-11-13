@@ -1,6 +1,7 @@
 -- name: ListOrganizations :many
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -8,8 +9,7 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 ORDER BY
@@ -18,6 +18,7 @@ ORDER BY
 -- name: GetOrganization :one
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -25,8 +26,7 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 WHERE
@@ -35,6 +35,7 @@ WHERE
 -- name: GetOrganizationForUpdate :one
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -42,8 +43,7 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 WHERE
@@ -54,6 +54,7 @@ UPDATE
 -- name: ListOrganizationsByIDs :many
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -61,20 +62,11 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 WHERE
     id = ANY(sqlc.arg(organization_ids)::uuid []);
-
--- name: ListContactPointIDs :many
-SELECT
-    id
-FROM
-    contact_points
-WHERE
-    id = ANY(sqlc.arg(contact_point_ids)::uuid []);
 
 -- name: CreateOrganization :one
 INSERT INTO
@@ -87,8 +79,7 @@ INSERT INTO
         country,
         logo_url,
         page_url,
-        email,
-        lei_code
+        email
     )
 VALUES
     (
@@ -100,8 +91,7 @@ VALUES
         sqlc.narg(country),
         sqlc.narg(logo_url),
         sqlc.narg(page_url),
-        sqlc.narg(email),
-        sqlc.narg(lei_code)
+        sqlc.narg(email)
     )
 RETURNING
     *;
@@ -124,15 +114,6 @@ VALUES
     (
         sqlc.arg(child_organization_id),
         sqlc.arg(parent_organization_id)
-    );
-
--- name: CreateOrganizationContactPoint :exec
-INSERT INTO
-    organization_contact_points (organization_id, contact_point_id)
-VALUES
-    (
-        sqlc.arg(organization_id),
-        sqlc.arg(contact_point_id)
     );
 
 -- name: ListOrganizationIdentifiers :many
@@ -159,18 +140,6 @@ ORDER BY
     child_organization_id,
     parent_organization_id;
 
--- name: ListOrganizationContactPointIDs :many
-SELECT
-    organization_id,
-    contact_point_id
-FROM
-    organization_contact_points
-WHERE
-    organization_id = ANY(sqlc.arg(organization_ids)::uuid [])
-ORDER BY
-    organization_id,
-    contact_point_id;
-
 -- name: ReplaceOrganization :one
 UPDATE
     organizations
@@ -182,8 +151,7 @@ SET
     country = sqlc.narg(country),
     logo_url = sqlc.narg(logo_url),
     page_url = sqlc.narg(page_url),
-    email = sqlc.narg(email),
-    lei_code = sqlc.narg(lei_code)
+    email = sqlc.narg(email)
 WHERE
     id = sqlc.arg(id)
 RETURNING
@@ -194,6 +162,12 @@ DELETE FROM
     organization_identifiers
 WHERE
     organization_id = sqlc.arg(organization_id);
+
+-- name: DeleteOrganizationIdentifier :exec
+DELETE FROM
+    organization_identifiers
+WHERE
+    id = sqlc.arg(id);
 
 -- name: DeleteOrganization :execrows
 DELETE FROM
@@ -207,8 +181,49 @@ DELETE FROM
 WHERE
     child_organization_id = sqlc.arg(organization_id);
 
--- name: DeleteOrganizationContactPoints :exec
+-- name: UpsertSyncedOrganization :one
+INSERT INTO
+    organizations (
+        remote_nid,
+        name,
+        street,
+        locality,
+        postal_code,
+        country,
+        logo_url,
+        page_url,
+        email
+    )
+VALUES
+    (
+        sqlc.arg(remote_nid),
+        sqlc.arg(name),
+        sqlc.narg(street),
+        sqlc.narg(locality),
+        sqlc.narg(postal_code),
+        sqlc.narg(country),
+        sqlc.narg(logo_url),
+        sqlc.narg(page_url),
+        sqlc.narg(email)
+    ) ON CONFLICT (remote_nid) DO
+UPDATE
+SET
+    name = EXCLUDED.name,
+    street = EXCLUDED.street,
+    locality = EXCLUDED.locality,
+    postal_code = EXCLUDED.postal_code,
+    country = EXCLUDED.country,
+    logo_url = EXCLUDED.logo_url,
+    page_url = EXCLUDED.page_url,
+    email = EXCLUDED.email
+RETURNING
+    id;
+
+-- name: DeleteAbsentSyncedOrganizations :exec
 DELETE FROM
-    organization_contact_points
+    organizations
 WHERE
-    organization_id = sqlc.arg(organization_id);
+    remote_nid IS NOT NULL
+    AND NOT (
+        remote_nid = ANY(sqlc.arg(remote_nids)::bigint [])
+    );

@@ -16,8 +16,11 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactrequest"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/metadatasync"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/organizations"
 	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 )
 
@@ -44,7 +47,24 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 	identitySvc := identity.NewService(baseLog, metadataLifecycleClient)
 	membershipSvc := membership.NewService(baseLog, metadataLifecycleClient)
 	sharingSvc := sharingservice.NewService(sharingClient)
-	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, contactRequestSender, dataRetrieverClient, converterClient, sharingSvc, authService, cfg.Server.CORSAllowOrigin, cfg.Server.RequestTimeout)
+	organizationSvc := organizations.New(metadataLifecycleClient, cfg.MetadataSync.Enabled)
+	capabilities := domain.Capabilities{
+		OrganizationsSynced: cfg.MetadataSync.Enabled,
+		AuthRootURL:         cfg.Authentication.RootURL,
+		EmailEnabled:        cfg.Notifications.Mailgun.Enable,
+	}
+
+	var worker *metadatasync.Worker
+	if cfg.MetadataSync.Enabled {
+		worker, err = metadatasync.NewWorker(metadataLifecycleClient, cfg.MetadataSync, baseLog)
+		if err != nil {
+			return fmt.Errorf("configure organization sync: %w", err)
+		}
+
+		go worker.Run(ctx)
+	}
+
+	router := NewRouter(baseLog, identitySvc, membershipSvc, metadataLifecycleClient, contactRequestSender, dataRetrieverClient, converterClient, sharingSvc, authService, cfg.Server.CORSAllowOrigin, cfg.Server.RequestTimeout, organizationSvc, worker, capabilities)
 
 	// WriteTimeout stays disabled because distribution downloads stream large responses.
 	srv := &http.Server{

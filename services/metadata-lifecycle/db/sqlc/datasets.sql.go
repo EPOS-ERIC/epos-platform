@@ -2550,6 +2550,7 @@ func (q *Queries) ListLifecycleDatasetIdentifiers(ctx context.Context, datasetVe
 const listLifecycleDatasetProviders = `-- name: ListLifecycleDatasetProviders :many
 SELECT
     organization.id,
+    organization.remote_nid,
     organization.name,
     organization.street,
     organization.locality,
@@ -2557,8 +2558,7 @@ SELECT
     organization.country,
     organization.logo_url,
     organization.page_url,
-    organization.email,
-    organization.lei_code
+    organization.email
 FROM
     dataset_version_providers AS link
     JOIN organizations AS organization ON organization.id = link.organization_id
@@ -2579,6 +2579,7 @@ func (q *Queries) ListLifecycleDatasetProviders(ctx context.Context, datasetVers
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
+			&i.RemoteNid,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -2587,7 +2588,6 @@ func (q *Queries) ListLifecycleDatasetProviders(ctx context.Context, datasetVers
 			&i.LogoUrl,
 			&i.PageUrl,
 			&i.Email,
-			&i.LeiCode,
 		); err != nil {
 			return nil, err
 		}
@@ -2889,48 +2889,10 @@ func (q *Queries) ListLifecycleIntegerParameterSchemas(ctx context.Context, para
 	return items, nil
 }
 
-const listLifecycleOrganizationContactPoints = `-- name: ListLifecycleOrganizationContactPoints :many
-SELECT
-    link.organization_id,
-    contact.id, contact.email
-FROM
-    organization_contact_points AS link
-    JOIN contact_points AS contact ON contact.id = link.contact_point_id
-WHERE
-    link.organization_id = ANY($1::uuid [])
-ORDER BY
-    link.organization_id,
-    contact.id
-`
-
-type ListLifecycleOrganizationContactPointsRow struct {
-	OrganizationID uuid.UUID
-	ContactPoint   ContactPoint
-}
-
-func (q *Queries) ListLifecycleOrganizationContactPoints(ctx context.Context, organizationIds []uuid.UUID) ([]ListLifecycleOrganizationContactPointsRow, error) {
-	rows, err := q.db.Query(ctx, listLifecycleOrganizationContactPoints, organizationIds)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListLifecycleOrganizationContactPointsRow
-	for rows.Next() {
-		var i ListLifecycleOrganizationContactPointsRow
-		if err := rows.Scan(&i.OrganizationID, &i.ContactPoint.ID, &i.ContactPoint.Email); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listLifecycleOrganizations = `-- name: ListLifecycleOrganizations :many
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -2938,8 +2900,7 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 WHERE
@@ -2959,6 +2920,7 @@ func (q *Queries) ListLifecycleOrganizations(ctx context.Context, organizationId
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
+			&i.RemoteNid,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -2967,7 +2929,6 @@ func (q *Queries) ListLifecycleOrganizations(ctx context.Context, organizationId
 			&i.LogoUrl,
 			&i.PageUrl,
 			&i.Email,
-			&i.LeiCode,
 		); err != nil {
 			return nil, err
 		}

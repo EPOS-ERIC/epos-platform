@@ -1618,6 +1618,7 @@ ORDER BY
 -- name: ListLifecycleDatasetProviders :many
 SELECT
     organization.id,
+    organization.remote_nid,
     organization.name,
     organization.street,
     organization.locality,
@@ -1625,8 +1626,7 @@ SELECT
     organization.country,
     organization.logo_url,
     organization.page_url,
-    organization.email,
-    organization.lei_code
+    organization.email
 FROM
     dataset_version_providers AS link
     JOIN organizations AS organization ON organization.id = link.organization_id
@@ -1638,6 +1638,7 @@ ORDER BY
 -- name: ListLifecycleOrganizations :many
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -1645,27 +1646,13 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 WHERE
     id = ANY(sqlc.arg(organization_ids)::uuid [])
 ORDER BY
     id;
-
--- name: ListLifecycleOrganizationContactPoints :many
-SELECT
-    link.organization_id,
-    sqlc.embed(contact)
-FROM
-    organization_contact_points AS link
-    JOIN contact_points AS contact ON contact.id = link.contact_point_id
-WHERE
-    link.organization_id = ANY(sqlc.arg(organization_ids)::uuid [])
-ORDER BY
-    link.organization_id,
-    contact.id;
 
 -- name: ListLifecycleDatasetContactPoints :many
 SELECT

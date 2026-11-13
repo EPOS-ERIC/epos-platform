@@ -70,7 +70,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         return response.json()["id"]
 
-    def create_organization(self, suffix: str, contact_point_id: str) -> str:
+    def create_organization(self, suffix: str) -> str:
         response = self.gateway.post(
             "/organizations",
             json={
@@ -83,7 +83,6 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                 },
                 "identifiers": [{"type": "variants", "value": suffix}],
                 "parents": [],
-                "contact_point_ids": [contact_point_id],
             },
         )
         self.assertEqual(response.status_code, 201)
@@ -255,7 +254,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         source_group_id = create_group(self.gateway, f"variants-source-{suffix}")
         target_group_id = create_group(self.gateway, f"variants-target-{suffix}")
         contact_point_id = self.create_contact_point(suffix)
-        organization_id = self.create_organization(suffix, contact_point_id)
+        organization_id = self.create_organization(suffix)
         source_category_id = self.create_category(source_group_id, f"source-{suffix}")
         target_category_id = self.create_category(target_group_id, f"target-{suffix}")
 

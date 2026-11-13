@@ -72,10 +72,11 @@ func (ImportSeverity) EnumDescriptor() ([]byte, []int) {
 }
 
 type ImportTurtleRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Turtle        []byte                 `protobuf:"bytes,1,opt,name=turtle,proto3" json:"turtle,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                      protoimpl.MessageState `protogen:"open.v1"`
+	Turtle                     []byte                 `protobuf:"bytes,1,opt,name=turtle,proto3" json:"turtle,omitempty"`
+	ResolveSyncedOrganizations bool                   `protobuf:"varint,2,opt,name=resolve_synced_organizations,json=resolveSyncedOrganizations,proto3" json:"resolve_synced_organizations,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *ImportTurtleRequest) Reset() {
@@ -113,6 +114,13 @@ func (x *ImportTurtleRequest) GetTurtle() []byte {
 		return x.Turtle
 	}
 	return nil
+}
+
+func (x *ImportTurtleRequest) GetResolveSyncedOrganizations() bool {
+	if x != nil {
+		return x.ResolveSyncedOrganizations
+	}
+	return false
 }
 
 type ImportTurtleResponse struct {
@@ -331,9 +339,10 @@ var File_metadata_lifecycle_v1_import_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_import_proto_rawDesc = "" +
 	"\n" +
-	"\"metadata_lifecycle/v1/import.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\";\n" +
+	"\"metadata_lifecycle/v1/import.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\"}\n" +
 	"\x13ImportTurtleRequest\x12$\n" +
-	"\x06turtle\x18\x01 \x01(\fB\f\xbaH\tz\a\x10\x01\x18\x80\x80\x80\x05R\x06turtle\"S\n" +
+	"\x06turtle\x18\x01 \x01(\fB\f\xbaH\tz\a\x10\x01\x18\x80\x80\x80\x05R\x06turtle\x12@\n" +
+	"\x1cresolve_synced_organizations\x18\x02 \x01(\bR\x1aresolveSyncedOrganizations\"S\n" +
 	"\x14ImportTurtleResponse\x12;\n" +
 	"\x06result\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ImportResultR\x06result\"\xdd\x02\n" +
 	"\fImportResult\x12\x16\n" +

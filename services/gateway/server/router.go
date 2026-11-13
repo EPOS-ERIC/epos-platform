@@ -13,9 +13,12 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/converter"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/metadatasync"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	sharingservice "github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
@@ -34,6 +37,9 @@ func NewRouter(
 	authService *auth.Service,
 	corsAllowOrigin string,
 	requestTimeout time.Duration,
+	organizationService *organizations.Service,
+	metadataSync *metadatasync.Worker,
+	capabilities domain.Capabilities,
 ) http.Handler {
 	log = log.With("component", "http")
 	log.Info("creating HTTP handler")
@@ -78,6 +84,9 @@ func NewRouter(
 		resourceService,
 		converterService,
 		log,
+		organizationService,
+		metadataSync,
+		capabilities,
 	)
 	generatedServer, err := gatewayapi.NewServer(
 		generatedHandler,
@@ -95,10 +104,10 @@ func NewRouter(
 }
 
 func serveOpenAPISpec(log *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
 		if _, err := w.Write(docs.GetSpec()); err != nil {
-			log.Error("failed to write openapi spec", "error", err)
+			log.ErrorContext(r.Context(), "failed to write openapi spec", "error", err)
 		}
 	}
 }

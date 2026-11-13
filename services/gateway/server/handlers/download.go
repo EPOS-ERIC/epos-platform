@@ -65,7 +65,7 @@ func (h *ogenHandler) prepareRetrievalResponse(ctx context.Context, download dom
 		})
 		reportHTTPError(h.log, ctx, failure, problemStatus)
 
-		return domain.RetrievalResponse{}, &gatewayapi.ProblemStatusCode{StatusCode: problemStatus, Response: problem}
+		return domain.RetrievalResponse{}, &gatewayapi.GatewayErrorStatusCode{StatusCode: problemStatus, Response: problem}
 	}
 
 	if status == http.StatusNoContent || status == http.StatusResetContent || status == http.StatusNotModified {

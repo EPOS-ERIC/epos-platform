@@ -17,6 +17,7 @@ type Store interface {
 	Create(context.Context, domain.OrganizationInput) (domain.Organization, error)
 	Replace(context.Context, uuid.UUID, domain.OrganizationInput) (domain.Organization, error)
 	Delete(context.Context, uuid.UUID) error
+	Sync(context.Context, []domain.SyncedOrganization) error
 }
 
 type Authorizer interface {
@@ -35,6 +36,37 @@ func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
 		authorizer: authorizer,
 		log:        log.With("component", "organizations-service"),
 	}
+}
+
+// Sync applies a complete remote snapshot. The internal RPC is network restricted.
+func (s *Service) Sync(ctx context.Context, values []domain.SyncedOrganization) error {
+	seen := make(map[int64]bool, len(values))
+
+	for i := range values {
+		value := &values[i]
+		if value.NID <= 0 || seen[value.NID] {
+			return apperror.Field("organizations", "Organization NIDs must be positive and unique.", nil)
+		}
+
+		seen[value.NID] = true
+	}
+
+	for _, value := range values {
+		parents := make(map[int64]bool, len(value.ParentNIDs))
+		for _, parent := range value.ParentNIDs {
+			if !seen[parent] || parent == value.NID || parents[parent] {
+				return apperror.Field("organizations", "Parents must be unique, other organizations in the snapshot.", nil)
+			}
+
+			parents[parent] = true
+		}
+	}
+
+	if err := s.store.Sync(ctx, values); err != nil {
+		return fmt.Errorf("sync organizations: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain.OrganizationInput) (domain.Organization, error) {

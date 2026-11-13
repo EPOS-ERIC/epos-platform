@@ -12,26 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const addImportOrganizationContactPoint = `-- name: AddImportOrganizationContactPoint :exec
-INSERT INTO
-    organization_contact_points (organization_id, contact_point_id)
-VALUES
-    (
-        $1,
-        $2
-    )
-`
-
-type AddImportOrganizationContactPointParams struct {
-	OrganizationID uuid.UUID
-	ContactPointID uuid.UUID
-}
-
-func (q *Queries) AddImportOrganizationContactPoint(ctx context.Context, arg AddImportOrganizationContactPointParams) error {
-	_, err := q.db.Exec(ctx, addImportOrganizationContactPoint, arg.OrganizationID, arg.ContactPointID)
-	return err
-}
-
 const addImportOrganizationIdentifier = `-- name: AddImportOrganizationIdentifier :exec
 INSERT INTO
     organization_identifiers (TYPE, value, organization_id)
@@ -168,18 +148,6 @@ func (q *Queries) CreateImportSoftwareSourceCode(ctx context.Context, arg Create
 		&i.CreatedAt,
 	)
 	return i, err
-}
-
-const deleteImportOrganizationContactPoints = `-- name: DeleteImportOrganizationContactPoints :exec
-DELETE FROM
-    organization_contact_points
-WHERE
-    organization_id = $1
-`
-
-func (q *Queries) DeleteImportOrganizationContactPoints(ctx context.Context, organizationID uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteImportOrganizationContactPoints, organizationID)
-	return err
 }
 
 const deleteImportOrganizationIdentifiers = `-- name: DeleteImportOrganizationIdentifiers :exec
@@ -343,6 +311,36 @@ func (q *Queries) GetImportSoftwareSourceCode(ctx context.Context, id uuid.UUID)
 		&i.ActiveRevision,
 	)
 	return i, err
+}
+
+const listSyncedOrganizationsByName = `-- name: ListSyncedOrganizationsByName :many
+SELECT
+    id
+FROM
+    organizations
+WHERE
+    name = $1
+    AND remote_nid IS NOT NULL
+`
+
+func (q *Queries) ListSyncedOrganizationsByName(ctx context.Context, name string) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listSyncedOrganizationsByName, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const setImportCategoryParent = `-- name: SetImportCategoryParent :exec
@@ -576,8 +574,7 @@ INSERT INTO
         country,
         logo_url,
         page_url,
-        email,
-        lei_code
+        email
     )
 VALUES
     (
@@ -589,8 +586,7 @@ VALUES
         $6,
         $7,
         $8,
-        $9,
-        $10
+        $9
     ) ON CONFLICT (id) DO
 UPDATE
 SET
@@ -601,8 +597,7 @@ SET
     country = EXCLUDED.country,
     logo_url = EXCLUDED.logo_url,
     page_url = EXCLUDED.page_url,
-    email = EXCLUDED.email,
-    lei_code = EXCLUDED.lei_code
+    email = EXCLUDED.email
 RETURNING
     id
 `
@@ -617,7 +612,6 @@ type UpsertImportOrganizationParams struct {
 	LogoUrl    *string
 	PageUrl    *string
 	Email      *string
-	LeiCode    *string
 }
 
 func (q *Queries) UpsertImportOrganization(ctx context.Context, arg UpsertImportOrganizationParams) (uuid.UUID, error) {
@@ -631,7 +625,6 @@ func (q *Queries) UpsertImportOrganization(ctx context.Context, arg UpsertImport
 		arg.LogoUrl,
 		arg.PageUrl,
 		arg.Email,
-		arg.LeiCode,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

@@ -42,6 +42,7 @@ func (s *ImportServer) ImportTurtle(ctx context.Context, request *metadatalifecy
 		trace.SpanFromContext(ctx).RecordError(err)
 		return nil, fmt.Errorf("parse Turtle: %w: %w", apperror.Default(apperror.CodeValidationFailed), err)
 	}
+	batch.ResolveSyncedOrganizations = request.GetResolveSyncedOrganizations()
 
 	result, err := s.service.Import(ctx, actor, batch)
 	if err != nil {

@@ -27,6 +27,20 @@ func TestConfigRender(t *testing.T) {
 		notContains  map[string][]string
 	}{
 		{
+			name: "metadata sync",
+			mutate: func(cfg *config.Config) {
+				cfg.Name = "test-sync"
+				cfg.Components.Gateway.MetadataSync.Enabled = true
+				cfg.Components.Gateway.MetadataSync.Username = "sync-user"
+				cfg.Components.Gateway.MetadataSync.Password = "test-password"
+			},
+			wantContains: map[string][]string{
+				"templates/gateway.yaml": {`password_env: "METADATA_SYNC_PASSWORD"`, `cron: "*/15 * * * *"`, "name: gateway-metadata-sync"},
+				"templates/secret.yaml":  {"name: gateway-metadata-sync", `password: "test-password"`},
+			},
+			notContains: map[string][]string{"templates/gateway.yaml": {"test-password"}},
+		},
+		{
 			name: "default config renders current stack",
 			mutate: func(cfg *config.Config) {
 				cfg.Name = "test-default"
@@ -105,6 +119,7 @@ func TestConfigRender(t *testing.T) {
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
 					`url: "http://aai-service:8080/oauth2/userinfo"`,
+					`root_url: "http://localhost/test-aai/aai"`,
 				},
 				"templates/dataportal.yaml": {
 					`value: "http://localhost/test-aai/aai"`,
@@ -150,6 +165,7 @@ func TestConfigRender(t *testing.T) {
 			wantContains: map[string][]string{
 				"templates/gateway.yaml": {
 					`url: "` + externalAAIUserinfoEndpoint + `"`,
+					`root_url: "` + externalAAIAuthRootURL + `"`,
 				},
 				"templates/dataportal.yaml": {
 					`value: "` + externalAAIAuthRootURL + `"`,

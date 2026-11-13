@@ -3,6 +3,21 @@
  *
  * @version 1.0.0
  */
+export type Capabilities = {
+  organizations: {
+    management: "local" | "remote_sync";
+  };
+  authentication: {
+    /**
+     * Browser-reachable authentication root URL.
+     */
+    root_url: string;
+  };
+  notifications: {
+    email_enabled: boolean;
+  };
+};
+
 export type ConversionRuntime = "python" | "java" | "binary";
 
 export type CreateConversionPluginRequest = {
@@ -2522,13 +2537,8 @@ export type CanonicalOrganization = {
    * @minLength 1
    */
   email?: string | null;
-  /**
-   * @minLength 1
-   */
-  lei_code?: string | null;
   identifiers: Identifier[];
   parents: string[];
-  contact_point_ids: string[];
 };
 
 export type CreateOrganizationRequest = {
@@ -2549,13 +2559,8 @@ export type CreateOrganizationRequest = {
    * @minLength 1
    */
   email?: string | null;
-  /**
-   * @minLength 1
-   */
-  lei_code?: string | null;
   identifiers?: IdentifierInput[];
   parents?: string[];
-  contact_point_ids?: string[];
 };
 
 export type ReplaceOrganizationRequest = {
@@ -2576,13 +2581,8 @@ export type ReplaceOrganizationRequest = {
    * @minLength 1
    */
   email: string | null;
-  /**
-   * @minLength 1
-   */
-  lei_code: string | null;
   identifiers: IdentifierInput[];
   parents: string[];
-  contact_point_ids: string[];
 };
 
 /**

@@ -22,8 +22,7 @@ INSERT INTO
         country,
         logo_url,
         page_url,
-        email,
-        lei_code
+        email
     )
 VALUES
     (
@@ -35,11 +34,10 @@ VALUES
         $6,
         $7,
         $8,
-        $9,
-        $10
+        $9
     )
 RETURNING
-    id, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
+    id, remote_nid, name, street, locality, postal_code, country, logo_url, page_url, email
 `
 
 type CreateOrganizationParams struct {
@@ -52,7 +50,6 @@ type CreateOrganizationParams struct {
 	LogoUrl    *string
 	PageUrl    *string
 	Email      *string
-	LeiCode    *string
 }
 
 func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error) {
@@ -66,11 +63,11 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 		arg.LogoUrl,
 		arg.PageUrl,
 		arg.Email,
-		arg.LeiCode,
 	)
 	var i Organization
 	err := row.Scan(
 		&i.ID,
+		&i.RemoteNid,
 		&i.Name,
 		&i.Street,
 		&i.Locality,
@@ -79,29 +76,8 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 		&i.LogoUrl,
 		&i.PageUrl,
 		&i.Email,
-		&i.LeiCode,
 	)
 	return i, err
-}
-
-const createOrganizationContactPoint = `-- name: CreateOrganizationContactPoint :exec
-INSERT INTO
-    organization_contact_points (organization_id, contact_point_id)
-VALUES
-    (
-        $1,
-        $2
-    )
-`
-
-type CreateOrganizationContactPointParams struct {
-	OrganizationID uuid.UUID
-	ContactPointID uuid.UUID
-}
-
-func (q *Queries) CreateOrganizationContactPoint(ctx context.Context, arg CreateOrganizationContactPointParams) error {
-	_, err := q.db.Exec(ctx, createOrganizationContactPoint, arg.OrganizationID, arg.ContactPointID)
-	return err
 }
 
 const createOrganizationIdentifier = `-- name: CreateOrganizationIdentifier :exec
@@ -153,6 +129,21 @@ func (q *Queries) CreateOrganizationParent(ctx context.Context, arg CreateOrgani
 	return err
 }
 
+const deleteAbsentSyncedOrganizations = `-- name: DeleteAbsentSyncedOrganizations :exec
+DELETE FROM
+    organizations
+WHERE
+    remote_nid IS NOT NULL
+    AND NOT (
+        remote_nid = ANY($1::bigint [])
+    )
+`
+
+func (q *Queries) DeleteAbsentSyncedOrganizations(ctx context.Context, remoteNids []int64) error {
+	_, err := q.db.Exec(ctx, deleteAbsentSyncedOrganizations, remoteNids)
+	return err
+}
+
 const deleteOrganization = `-- name: DeleteOrganization :execrows
 DELETE FROM
     organizations
@@ -168,15 +159,15 @@ func (q *Queries) DeleteOrganization(ctx context.Context, id uuid.UUID) (int64, 
 	return result.RowsAffected(), nil
 }
 
-const deleteOrganizationContactPoints = `-- name: DeleteOrganizationContactPoints :exec
+const deleteOrganizationIdentifier = `-- name: DeleteOrganizationIdentifier :exec
 DELETE FROM
-    organization_contact_points
+    organization_identifiers
 WHERE
-    organization_id = $1
+    id = $1
 `
 
-func (q *Queries) DeleteOrganizationContactPoints(ctx context.Context, organizationID uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteOrganizationContactPoints, organizationID)
+func (q *Queries) DeleteOrganizationIdentifier(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteOrganizationIdentifier, id)
 	return err
 }
 
@@ -207,6 +198,7 @@ func (q *Queries) DeleteOrganizationParents(ctx context.Context, organizationID 
 const getOrganization = `-- name: GetOrganization :one
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -214,8 +206,7 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 WHERE
@@ -227,6 +218,7 @@ func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (Organizati
 	var i Organization
 	err := row.Scan(
 		&i.ID,
+		&i.RemoteNid,
 		&i.Name,
 		&i.Street,
 		&i.Locality,
@@ -235,7 +227,6 @@ func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (Organizati
 		&i.LogoUrl,
 		&i.PageUrl,
 		&i.Email,
-		&i.LeiCode,
 	)
 	return i, err
 }
@@ -243,6 +234,7 @@ func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (Organizati
 const getOrganizationForUpdate = `-- name: GetOrganizationForUpdate :one
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -250,8 +242,7 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 WHERE
@@ -264,6 +255,7 @@ func (q *Queries) GetOrganizationForUpdate(ctx context.Context, id uuid.UUID) (O
 	var i Organization
 	err := row.Scan(
 		&i.ID,
+		&i.RemoteNid,
 		&i.Name,
 		&i.Street,
 		&i.Locality,
@@ -272,71 +264,8 @@ func (q *Queries) GetOrganizationForUpdate(ctx context.Context, id uuid.UUID) (O
 		&i.LogoUrl,
 		&i.PageUrl,
 		&i.Email,
-		&i.LeiCode,
 	)
 	return i, err
-}
-
-const listContactPointIDs = `-- name: ListContactPointIDs :many
-SELECT
-    id
-FROM
-    contact_points
-WHERE
-    id = ANY($1::uuid [])
-`
-
-func (q *Queries) ListContactPointIDs(ctx context.Context, contactPointIds []uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := q.db.Query(ctx, listContactPointIDs, contactPointIds)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []uuid.UUID
-	for rows.Next() {
-		var id uuid.UUID
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		items = append(items, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listOrganizationContactPointIDs = `-- name: ListOrganizationContactPointIDs :many
-SELECT
-    organization_id,
-    contact_point_id
-FROM
-    organization_contact_points
-WHERE
-    organization_id = ANY($1::uuid [])
-ORDER BY
-    organization_id,
-    contact_point_id
-`
-
-func (q *Queries) ListOrganizationContactPointIDs(ctx context.Context, organizationIds []uuid.UUID) ([]OrganizationContactPoint, error) {
-	rows, err := q.db.Query(ctx, listOrganizationContactPointIDs, organizationIds)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []OrganizationContactPoint
-	for rows.Next() {
-		var i OrganizationContactPoint
-		if err := rows.Scan(&i.OrganizationID, &i.ContactPointID); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const listOrganizationIdentifiers = `-- name: ListOrganizationIdentifiers :many
@@ -419,6 +348,7 @@ func (q *Queries) ListOrganizationParents(ctx context.Context, organizationIds [
 const listOrganizations = `-- name: ListOrganizations :many
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -426,8 +356,7 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 ORDER BY
@@ -445,6 +374,7 @@ func (q *Queries) ListOrganizations(ctx context.Context) ([]Organization, error)
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
+			&i.RemoteNid,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -453,7 +383,6 @@ func (q *Queries) ListOrganizations(ctx context.Context) ([]Organization, error)
 			&i.LogoUrl,
 			&i.PageUrl,
 			&i.Email,
-			&i.LeiCode,
 		); err != nil {
 			return nil, err
 		}
@@ -468,6 +397,7 @@ func (q *Queries) ListOrganizations(ctx context.Context) ([]Organization, error)
 const listOrganizationsByIDs = `-- name: ListOrganizationsByIDs :many
 SELECT
     id,
+    remote_nid,
     name,
     street,
     locality,
@@ -475,8 +405,7 @@ SELECT
     country,
     logo_url,
     page_url,
-    email,
-    lei_code
+    email
 FROM
     organizations
 WHERE
@@ -494,6 +423,7 @@ func (q *Queries) ListOrganizationsByIDs(ctx context.Context, organizationIds []
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
+			&i.RemoteNid,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -502,7 +432,6 @@ func (q *Queries) ListOrganizationsByIDs(ctx context.Context, organizationIds []
 			&i.LogoUrl,
 			&i.PageUrl,
 			&i.Email,
-			&i.LeiCode,
 		); err != nil {
 			return nil, err
 		}
@@ -525,12 +454,11 @@ SET
     country = $5,
     logo_url = $6,
     page_url = $7,
-    email = $8,
-    lei_code = $9
+    email = $8
 WHERE
-    id = $10
+    id = $9
 RETURNING
-    id, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
+    id, remote_nid, name, street, locality, postal_code, country, logo_url, page_url, email
 `
 
 type ReplaceOrganizationParams struct {
@@ -542,7 +470,6 @@ type ReplaceOrganizationParams struct {
 	LogoUrl    *string
 	PageUrl    *string
 	Email      *string
-	LeiCode    *string
 	ID         uuid.UUID
 }
 
@@ -556,12 +483,12 @@ func (q *Queries) ReplaceOrganization(ctx context.Context, arg ReplaceOrganizati
 		arg.LogoUrl,
 		arg.PageUrl,
 		arg.Email,
-		arg.LeiCode,
 		arg.ID,
 	)
 	var i Organization
 	err := row.Scan(
 		&i.ID,
+		&i.RemoteNid,
 		&i.Name,
 		&i.Street,
 		&i.Locality,
@@ -570,7 +497,74 @@ func (q *Queries) ReplaceOrganization(ctx context.Context, arg ReplaceOrganizati
 		&i.LogoUrl,
 		&i.PageUrl,
 		&i.Email,
-		&i.LeiCode,
 	)
 	return i, err
+}
+
+const upsertSyncedOrganization = `-- name: UpsertSyncedOrganization :one
+INSERT INTO
+    organizations (
+        remote_nid,
+        name,
+        street,
+        locality,
+        postal_code,
+        country,
+        logo_url,
+        page_url,
+        email
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9
+    ) ON CONFLICT (remote_nid) DO
+UPDATE
+SET
+    name = EXCLUDED.name,
+    street = EXCLUDED.street,
+    locality = EXCLUDED.locality,
+    postal_code = EXCLUDED.postal_code,
+    country = EXCLUDED.country,
+    logo_url = EXCLUDED.logo_url,
+    page_url = EXCLUDED.page_url,
+    email = EXCLUDED.email
+RETURNING
+    id
+`
+
+type UpsertSyncedOrganizationParams struct {
+	RemoteNid  *int64
+	Name       string
+	Street     *string
+	Locality   *string
+	PostalCode *string
+	Country    *string
+	LogoUrl    *string
+	PageUrl    *string
+	Email      *string
+}
+
+func (q *Queries) UpsertSyncedOrganization(ctx context.Context, arg UpsertSyncedOrganizationParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, upsertSyncedOrganization,
+		arg.RemoteNid,
+		arg.Name,
+		arg.Street,
+		arg.Locality,
+		arg.PostalCode,
+		arg.Country,
+		arg.LogoUrl,
+		arg.PageUrl,
+		arg.Email,
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }

@@ -24,7 +24,112 @@ type Repo struct {
 }
 
 func New(db *pgxpool.Pool) *Repo {
-	return &Repo{Queries: sqlc.New(db), db: db}
+	return &Repo{
+		Queries: sqlc.New(db),
+		db:      db,
+	}
+}
+
+// Sync atomically replaces the remote-owned fields and hierarchy.
+func (r *Repo) Sync(ctx context.Context, values []domain.SyncedOrganization) error {
+	return dbtx.RunWithTx(ctx, r.db, r.Queries, func(q *sqlc.Queries, tx pgx.Tx) error {
+		// Lock to serialize snapshot writes across gateway replicas.
+		if _, err := tx.Exec(ctx, "SELECT pg_advisory_xact_lock(hashtext('organization-sync'))"); err != nil {
+			return fmt.Errorf("lock organization sync: %w", err)
+		}
+
+		ids := make(map[int64]uuid.UUID, len(values))
+		nids := make([]int64, 0, len(values))
+		for _, value := range values {
+			input := value.Input
+			id, err := q.UpsertSyncedOrganization(ctx, sqlc.UpsertSyncedOrganizationParams{
+				RemoteNid:  &value.NID,
+				Name:       input.Name,
+				Street:     input.Street,
+				Locality:   input.Locality,
+				PostalCode: input.PostalCode,
+				Country:    input.Country,
+				LogoUrl:    input.LogoURL,
+				PageUrl:    input.PageURL,
+				Email:      input.Email,
+			})
+			if err != nil {
+				return fmt.Errorf("upsert organization %d: %w", value.NID, err)
+			}
+
+			ids[value.NID] = id
+			nids = append(nids, value.NID)
+		}
+
+		if err := q.DeleteAbsentSyncedOrganizations(ctx, nids); err != nil {
+			return fmt.Errorf("delete absent organizations: %w", err)
+		}
+
+		// one identifier lookup per organization; batch if snapshot size makes this slow.
+		for _, organization := range values {
+			if err := syncIdentifiers(ctx, q, ids[organization.NID], organization.Input.Identifiers); err != nil {
+				return fmt.Errorf("sync organization %d identifiers: %w", organization.NID, err)
+			}
+		}
+
+		for _, value := range values {
+			if err := q.DeleteOrganizationParents(ctx, ids[value.NID]); err != nil {
+				return fmt.Errorf("clear organization parents: %w", err)
+			}
+		}
+
+		for _, value := range values {
+			for _, parent := range value.ParentNIDs {
+				if err := q.CreateOrganizationParent(ctx, sqlc.CreateOrganizationParentParams{
+					ChildOrganizationID:  ids[value.NID],
+					ParentOrganizationID: ids[parent],
+				}); err != nil {
+					return fmt.Errorf("link organization %d parent %d: %w", value.NID, parent, err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+// syncIdentifiers preserves IDs of unchanged identifiers and removes absent ones.
+func syncIdentifiers(ctx context.Context, q *sqlc.Queries, organizationID uuid.UUID, identifiers []domain.OrganizationIdentifierInput) error {
+	wanted := make(map[domain.OrganizationIdentifierInput]bool, len(identifiers))
+	for _, identifier := range identifiers {
+		wanted[identifier] = true
+	}
+
+	existing, err := q.ListOrganizationIdentifiers(ctx, []uuid.UUID{organizationID})
+	if err != nil {
+		return fmt.Errorf("list synced organization identifiers: %w", err)
+	}
+
+	for _, row := range existing {
+		identifier := row.OrganizationIdentifier
+		key := domain.OrganizationIdentifierInput{
+			Type:  identifier.Type,
+			Value: identifier.Value,
+		}
+		if wanted[key] {
+			delete(wanted, key)
+		} else if err := q.DeleteOrganizationIdentifier(ctx, identifier.ID); err != nil {
+			return fmt.Errorf("delete synced organization identifier: %w", err)
+		}
+	}
+
+	for identifier := range wanted {
+		if err := q.CreateOrganizationIdentifier(ctx, sqlc.CreateOrganizationIdentifierParams{
+			ID:             uuid.New(),
+			OrganizationID: organizationID,
+			Type:           identifier.Type,
+			Value:          identifier.Value,
+		}); err != nil {
+			return fmt.Errorf("create synced organization identifier: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (r *Repo) Create(
@@ -38,14 +143,6 @@ func (r *Repo) Create(
 			return fmt.Errorf("check organization parents: %w", err)
 		}
 		if err := missingReferenceError(input.Parents, organizationIDs(parentRows), "parents", "Parent organization"); err != nil {
-			return err
-		}
-
-		contactRows, err := q.ListContactPointIDs(ctx, input.ContactPoints)
-		if err != nil {
-			return fmt.Errorf("check contact points: %w", err)
-		}
-		if err := missingReferenceError(input.ContactPoints, contactRows, "contact_point_ids", "Contact point"); err != nil {
 			return err
 		}
 
@@ -81,15 +178,6 @@ func (r *Repo) Create(
 				ParentOrganizationID: parentID,
 			}); err != nil {
 				return fmt.Errorf("link organization parent: %w", err)
-			}
-		}
-
-		for _, contactPointID := range input.ContactPoints {
-			if err := q.CreateOrganizationContactPoint(ctx, sqlc.CreateOrganizationContactPointParams{
-				OrganizationID: organizationID,
-				ContactPointID: contactPointID,
-			}); err != nil {
-				return fmt.Errorf("link organization contact point: %w", err)
 			}
 		}
 
@@ -137,14 +225,6 @@ func (r *Repo) Replace(
 			return err
 		}
 
-		contactRows, err := q.ListContactPointIDs(ctx, input.ContactPoints)
-		if err != nil {
-			return fmt.Errorf("check contact points: %w", err)
-		}
-		if err := missingReferenceError(input.ContactPoints, contactRows, "contact_point_ids", "Contact point"); err != nil {
-			return err
-		}
-
 		_, err = q.ReplaceOrganization(ctx, toReplaceOrganizationParams(id, input))
 		if err != nil {
 			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
@@ -160,10 +240,6 @@ func (r *Repo) Replace(
 
 		if err := q.DeleteOrganizationParents(ctx, id); err != nil {
 			return fmt.Errorf("replace organization parents: %w", err)
-		}
-
-		if err := q.DeleteOrganizationContactPoints(ctx, id); err != nil {
-			return fmt.Errorf("replace organization contact points: %w", err)
 		}
 
 		if err := insertOrganizationChildren(ctx, q, id, input); err != nil {
@@ -231,16 +307,6 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 				return apperror.Wrap(apperror.CodeValidationFailed, "", fmt.Errorf("link organization parent: %w", err))
 			}
 			return fmt.Errorf("link organization parent: %w", err)
-		}
-	}
-
-	for _, contactPointID := range input.ContactPoints {
-		err := q.CreateOrganizationContactPoint(ctx, sqlc.CreateOrganizationContactPointParams{
-			OrganizationID: id,
-			ContactPointID: contactPointID,
-		})
-		if err != nil {
-			return fmt.Errorf("link organization contact point: %w", err)
 		}
 	}
 
@@ -315,22 +381,13 @@ func (r *Repo) loadWithQueries(ctx context.Context, q *sqlc.Queries, rows []sqlc
 	if err != nil {
 		return nil, fmt.Errorf("list organization parents: %w", err)
 	}
-	contactPoints, err := q.ListOrganizationContactPointIDs(ctx, ids)
-	if err != nil {
-		return nil, fmt.Errorf("list organization contact points: %w", err)
-	}
-
 	identifiersByOrganization := make(map[uuid.UUID][]domain.OrganizationIdentifier, len(rows))
 	parentsByOrganization := make(map[uuid.UUID][]uuid.UUID, len(rows))
-	contactsByOrganization := make(map[uuid.UUID][]uuid.UUID, len(rows))
 	for _, item := range identifiers {
 		identifiersByOrganization[item.OrganizationID] = append(identifiersByOrganization[item.OrganizationID], toDomainOrganizationIdentifier(item))
 	}
 	for _, item := range parents {
 		parentsByOrganization[item.ChildOrganizationID] = append(parentsByOrganization[item.ChildOrganizationID], item.ParentOrganizationID)
-	}
-	for _, item := range contactPoints {
-		contactsByOrganization[item.OrganizationID] = append(contactsByOrganization[item.OrganizationID], item.ContactPointID)
 	}
 
 	result := make([]domain.Organization, 0, len(rows))
@@ -339,7 +396,6 @@ func (r *Repo) loadWithQueries(ctx context.Context, q *sqlc.Queries, rows []sqlc
 			row,
 			identifiersByOrganization[row.ID],
 			parentsByOrganization[row.ID],
-			contactsByOrganization[row.ID],
 		)
 		if err != nil {
 			return nil, fmt.Errorf("construct organization %s: %w", row.ID, err)

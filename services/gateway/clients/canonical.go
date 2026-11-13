@@ -4,6 +4,7 @@ import (
 	"context"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -68,29 +69,67 @@ func (c *MetadataLifecycle) GetOrganization(ctx context.Context, id string) (*me
 	return response, nil
 }
 
-func (c *MetadataLifecycle) CreateOrganization(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateOrganizationRequest) (*metadatalifecyclev1.CreateOrganizationResponse, error) {
+func (c *MetadataLifecycle) CreateOrganization(ctx context.Context, actorID string, v domain.OrganizationInput) (*metadatalifecyclev1.Organization, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.organizations.CreateOrganization(ctx, request)
+	response, err := c.organizations.CreateOrganization(ctx, &metadatalifecyclev1.CreateOrganizationRequest{
+		Name:        v.Name,
+		Street:      v.Street,
+		Locality:    v.Locality,
+		PostalCode:  v.PostalCode,
+		Country:     v.Country,
+		LogoUrl:     v.LogoURL,
+		PageUrl:     v.PageURL,
+		Email:       v.Email,
+		Identifiers: organizationIdentifiers(v.Identifiers),
+		Parents:     v.Parents,
+	})
 	if err != nil {
 		return nil, c.wrapError(ctx, "create metadata-lifecycle organization", err)
 	}
-	return response, nil
+
+	return response.Organization, nil
 }
 
-func (c *MetadataLifecycle) ReplaceOrganization(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceOrganizationRequest) (*metadatalifecyclev1.ReplaceOrganizationResponse, error) {
+func (c *MetadataLifecycle) ReplaceOrganization(ctx context.Context, actorID, id string, v domain.OrganizationInput) (*metadatalifecyclev1.Organization, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.organizations.ReplaceOrganization(ctx, request)
+	response, err := c.organizations.ReplaceOrganization(ctx, &metadatalifecyclev1.ReplaceOrganizationRequest{
+		OrganizationId: id,
+		Name:           v.Name,
+		Street:         v.Street,
+		Locality:       v.Locality,
+		PostalCode:     v.PostalCode,
+		Country:        v.Country,
+		LogoUrl:        v.LogoURL,
+		PageUrl:        v.PageURL,
+		Email:          v.Email,
+		Identifiers:    organizationIdentifiers(v.Identifiers),
+		Parents:        v.Parents,
+	})
 	if err != nil {
 		return nil, c.wrapError(ctx, "replace metadata-lifecycle organization", err)
 	}
-	return response, nil
+
+	return response.Organization, nil
 }
 
-func (c *MetadataLifecycle) DeleteOrganization(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteOrganizationRequest) (*metadatalifecyclev1.DeleteOrganizationResponse, error) {
+func (c *MetadataLifecycle) DeleteOrganization(ctx context.Context, actorID, id string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.organizations.DeleteOrganization(ctx, request)
+	_, err := c.organizations.DeleteOrganization(ctx, &metadatalifecyclev1.DeleteOrganizationRequest{OrganizationId: id})
 	if err != nil {
-		return nil, c.wrapError(ctx, "delete metadata-lifecycle organization", err)
+		return c.wrapError(ctx, "delete metadata-lifecycle organization", err)
 	}
-	return response, nil
+
+	return nil
+}
+
+func organizationIdentifiers(values []domain.OrganizationIdentifier) []*metadatalifecyclev1.IdentifierInput {
+	result := make([]*metadatalifecyclev1.IdentifierInput, 0, len(values))
+	for _, value := range values {
+		result = append(result, &metadatalifecyclev1.IdentifierInput{
+			Type:  value.Type,
+			Value: value.Value,
+		})
+	}
+
+	return result
 }

@@ -19,14 +19,10 @@ func NewOrganizationInput(value OrganizationInput) (OrganizationInput, error) {
 	value.LogoURL = optionalTrimmedString(value.LogoURL)
 	value.PageURL = optionalTrimmedString(value.PageURL)
 	value.Email = optionalTrimmedString(value.Email)
-	value.LEICode = optionalTrimmedString(value.LEICode)
 	if value.Name == "" {
 		return OrganizationInput{}, invalidField("name", "Name must not be blank.", nil)
 	}
 	if err := validateUUIDListField(value.Parents, "parents", "Parent organization"); err != nil {
-		return OrganizationInput{}, err
-	}
-	if err := validateUUIDListField(value.ContactPoints, "contact_point_ids", "Contact point"); err != nil {
 		return OrganizationInput{}, err
 	}
 	for i := range value.Identifiers {
@@ -63,19 +59,17 @@ func NewOrganization(id uuid.UUID, value OrganizationInput, identifiers []Organi
 		}
 	}
 	return Organization{
-		ID:            id,
-		Name:          value.Name,
-		Street:        value.Street,
-		Locality:      value.Locality,
-		PostalCode:    value.PostalCode,
-		Country:       value.Country,
-		LogoURL:       value.LogoURL,
-		PageURL:       value.PageURL,
-		Email:         value.Email,
-		LEICode:       value.LEICode,
-		Identifiers:   identifiers,
-		Parents:       slices.Clone(value.Parents),
-		ContactPoints: slices.Clone(value.ContactPoints),
+		ID:          id,
+		Name:        value.Name,
+		Street:      value.Street,
+		Locality:    value.Locality,
+		PostalCode:  value.PostalCode,
+		Country:     value.Country,
+		LogoURL:     value.LogoURL,
+		PageURL:     value.PageURL,
+		Email:       value.Email,
+		Identifiers: identifiers,
+		Parents:     slices.Clone(value.Parents),
 	}, nil
 }
 

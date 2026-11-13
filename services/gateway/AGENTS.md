@@ -56,6 +56,7 @@
 - Keep generated gRPC clients behind concrete Gateway-owned adapters in `clients/`. Handlers must not call generated gRPC clients directly.
 - Pass actor identity through gRPC metadata from Gateway clients. Do not add actor identity to protobuf business requests or Gateway domain objects.
 - Gateway clients may return protobuf responses unchanged for pure proxies or passthrough enrichment. For orchestration decisions, adapter methods map required fields to minimal Gateway domain types.
+- When a Gateway service returns an unchanged protobuf response, add a comment explaining the passthrough, such as `// Protobuf passes through unchanged; no response orchestration.`
 
 ## Generated Assets
 

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/grpcserver"
@@ -19,6 +20,7 @@ import (
 	dbcatalogue "github.com/EPOS-ERIC/epos-platform/services/converter/db/catalogue"
 	"github.com/EPOS-ERIC/epos-platform/services/converter/grpcapi"
 	"github.com/EPOS-ERIC/epos-platform/services/converter/plugin"
+	"github.com/robfig/cron/v3"
 	"google.golang.org/grpc"
 )
 
@@ -42,6 +44,13 @@ func run() error {
 	cfg, err := config.Load()
 	if err != nil {
 		return err
+	}
+	schedule, err := cron.ParseStandard(cfg.SyncCron)
+	if err != nil {
+		return fmt.Errorf("invalid SYNC_CRON: %w", err)
+	}
+	if schedule.Next(time.Now().UTC()).IsZero() {
+		return fmt.Errorf("SYNC_CRON has no future execution time")
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -69,7 +78,7 @@ func run() error {
 	syncDone := make(chan struct{})
 	go func() {
 		defer close(syncDone)
-		service.RunSync(syncCtx, cfg.SyncInterval)
+		service.RunSync(syncCtx, schedule)
 	}()
 	defer func() {
 		cancelSync()

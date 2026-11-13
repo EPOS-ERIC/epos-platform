@@ -14,6 +14,13 @@ components:
       secret_name: ""
   gateway:
     base_url: "/v1/"
+    metadata_sync:
+      enabled: false
+      base_url: "https://epos-backoffice-tool.nina.elicos.it"
+      username: ""
+      password: ""
+      cron: "*/15 * * * *" # UTC
+      timeout: "5m"
     mailgun:
       enable: false
       domain: "epos-ip.org"

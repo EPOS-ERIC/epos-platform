@@ -20,7 +20,6 @@ func toCreateOrganizationParams(id uuid.UUID, input domain.OrganizationInput) sq
 		LogoUrl:    input.LogoURL,
 		PageUrl:    input.PageURL,
 		Email:      input.Email,
-		LeiCode:    input.LEICode,
 	}
 }
 
@@ -36,7 +35,6 @@ func toReplaceOrganizationParams(id uuid.UUID, input domain.OrganizationInput) s
 		LogoUrl:    input.LogoURL,
 		PageUrl:    input.PageURL,
 		Email:      input.Email,
-		LeiCode:    input.LEICode,
 	}
 }
 
@@ -45,21 +43,18 @@ func toDomainOrganization(
 	row sqlc.Organization,
 	identifiers []domain.OrganizationIdentifier,
 	parents []uuid.UUID,
-	contactPoints []uuid.UUID,
 ) (domain.Organization, error) {
 	organizationInput, err := domain.NewOrganization(row.ID, domain.OrganizationInput{
-		Name:          row.Name,
-		Street:        row.Street,
-		Locality:      row.Locality,
-		PostalCode:    row.PostalCode,
-		Country:       row.Country,
-		LogoURL:       row.LogoUrl,
-		PageURL:       row.PageUrl,
-		Email:         row.Email,
-		LEICode:       row.LeiCode,
-		Identifiers:   organizationIdentifierInputs(identifiers),
-		Parents:       parents,
-		ContactPoints: contactPoints,
+		Name:        row.Name,
+		Street:      row.Street,
+		Locality:    row.Locality,
+		PostalCode:  row.PostalCode,
+		Country:     row.Country,
+		LogoURL:     row.LogoUrl,
+		PageURL:     row.PageUrl,
+		Email:       row.Email,
+		Identifiers: organizationIdentifierInputs(identifiers),
+		Parents:     parents,
 	}, identifiers)
 	if err != nil {
 		return domain.Organization{}, fmt.Errorf("bad organization: %w", err)

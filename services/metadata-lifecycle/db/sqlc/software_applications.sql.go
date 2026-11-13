@@ -928,7 +928,7 @@ func (q *Queries) ListLifecycleSoftwareApplicationContactPoints(ctx context.Cont
 
 const listLifecycleSoftwareApplicationCreators = `-- name: ListLifecycleSoftwareApplicationCreators :many
 SELECT
-    organization.id, organization.name, organization.street, organization.locality, organization.postal_code, organization.country, organization.logo_url, organization.page_url, organization.email, organization.lei_code
+    organization.id, organization.remote_nid, organization.name, organization.street, organization.locality, organization.postal_code, organization.country, organization.logo_url, organization.page_url, organization.email
 FROM
     software_application_version_creators AS link
     JOIN organizations AS organization ON organization.id = link.organization_id
@@ -949,6 +949,7 @@ func (q *Queries) ListLifecycleSoftwareApplicationCreators(ctx context.Context, 
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
+			&i.RemoteNid,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -957,7 +958,6 @@ func (q *Queries) ListLifecycleSoftwareApplicationCreators(ctx context.Context, 
 			&i.LogoUrl,
 			&i.PageUrl,
 			&i.Email,
-			&i.LeiCode,
 		); err != nil {
 			return nil, err
 		}

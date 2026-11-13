@@ -430,36 +430,6 @@ func (s *CanonicalOrganization) Validate() error {
 		})
 	}
 	if err := func() error {
-		if value, ok := s.LeiCode.Get(); ok {
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(value)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "lei_code",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if s.Identifiers == nil {
 			return errors.New("nil is invalid value")
 		}
@@ -498,14 +468,26 @@ func (s *CanonicalOrganization) Validate() error {
 			Error: err,
 		})
 	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *Capabilities) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
 	if err := func() error {
-		if s.ContactPointIds == nil {
-			return errors.New("nil is invalid value")
+		if err := s.Organizations.Validate(); err != nil {
+			return err
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "contact_point_ids",
+			Name:  "organizations",
 			Error: err,
 		})
 	}
@@ -513,6 +495,40 @@ func (s *CanonicalOrganization) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
+}
+
+func (s *CapabilitiesOrganizations) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Management.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "management",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s CapabilitiesOrganizationsManagement) Validate() error {
+	switch s {
+	case "local":
+		return nil
+	case "remote_sync":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
 }
 
 func (s *Category) Validate() error {
@@ -1635,36 +1651,6 @@ func (s *CreateOrganizationRequest) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "email",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.LeiCode.Get(); ok {
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(value)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "lei_code",
 			Error: err,
 		})
 	}
@@ -4340,6 +4326,29 @@ func (s FloatScalarParameterKind) Validate() error {
 	}
 }
 
+func (s *GatewayErrorStatusCode) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Response.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "Response",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *GenericWebServiceConfiguration) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -6832,29 +6841,6 @@ func (s *Problem) Validate() error {
 	return nil
 }
 
-func (s *ProblemStatusCode) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Response.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "Response",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
 func (s *ProblemUpstreamResponse) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -7334,36 +7320,6 @@ func (s *ReplaceOrganizationRequest) Validate() error {
 		})
 	}
 	if err := func() error {
-		if value, ok := s.LeiCode.Get(); ok {
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:     1,
-					MinLengthSet:  true,
-					MaxLength:     0,
-					MaxLengthSet:  false,
-					Email:         false,
-					Hostname:      false,
-					Regex:         nil,
-					MinNumeric:    0,
-					MinNumericSet: false,
-					MaxNumeric:    0,
-					MaxNumericSet: false,
-				}).Validate(string(value)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "lei_code",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if s.Identifiers == nil {
 			return errors.New("nil is invalid value")
 		}
@@ -7399,17 +7355,6 @@ func (s *ReplaceOrganizationRequest) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "parents",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if s.ContactPointIds == nil {
-			return errors.New("nil is invalid value")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "contact_point_ids",
 			Error: err,
 		})
 	}

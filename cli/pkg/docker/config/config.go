@@ -207,6 +207,9 @@ func (e *EnvConfig) EnsurePortsFree() error {
 
 // Validate checks whether the configuration contains all required values.
 func (e *EnvConfig) Validate() error {
+	if err := e.Components.Gateway.MetadataSync.Validate(); err != nil {
+		return err
+	}
 	for i, recipient := range e.Components.Gateway.Mailgun.RecipientOverrides {
 		address, err := mail.ParseAddress(recipient)
 		if err != nil || address.Address != recipient {

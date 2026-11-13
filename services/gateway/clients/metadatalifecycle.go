@@ -17,6 +17,8 @@ import (
 // TODO: clean up this package, create a sub package metadatalifecycle and in there split the grpc functions into logical files
 
 type MetadataLifecycle struct {
+	resolveSyncedOrganizations bool
+
 	log             *slog.Logger
 	authorization   metadatalifecyclev1.AuthorizationServiceClient
 	users           metadatalifecyclev1.UserServiceClient
@@ -40,7 +42,7 @@ type NotificationDispatcher interface {
 
 const actorMetadataKey = "x-epos-user-id"
 
-func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher NotificationDispatcher) (*MetadataLifecycle, error) {
+func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher NotificationDispatcher, resolveSyncedOrganizations bool) (*MetadataLifecycle, error) {
 	conn, err := grpc.NewClient(
 		baseURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -53,6 +55,8 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher Notificat
 	}
 
 	client := &MetadataLifecycle{
+		resolveSyncedOrganizations: resolveSyncedOrganizations,
+
 		log:             log,
 		authorization:   metadatalifecyclev1.NewAuthorizationServiceClient(conn),
 		users:           metadatalifecyclev1.NewUserServiceClient(conn),
@@ -346,9 +350,12 @@ func (c *MetadataLifecycle) UnblockUser(ctx context.Context, actorID, userID str
 	return nil
 }
 
-func (c *MetadataLifecycle) ImportTurtle(ctx context.Context, actorID string, request *metadatalifecyclev1.ImportTurtleRequest) (*metadatalifecyclev1.ImportTurtleResponse, error) {
+func (c *MetadataLifecycle) ImportTurtle(ctx context.Context, actorID string, data []byte) (*metadatalifecyclev1.ImportTurtleResponse, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.import_.ImportTurtle(ctx, request)
+	response, err := c.import_.ImportTurtle(ctx, &metadatalifecyclev1.ImportTurtleRequest{
+		Turtle:                     data,
+		ResolveSyncedOrganizations: c.resolveSyncedOrganizations,
+	})
 	if err != nil {
 		return nil, c.wrapError(ctx, "import metadata-lifecycle Turtle", err)
 	}

@@ -135,7 +135,7 @@ func (UnimplementedHandler) CreateGroupCategory(ctx context.Context, req *Create
 
 // CreateOrganization implements createOrganization operation.
 //
-// Create reusable organization.
+// Returns 403 when organization synchronization is enabled.
 //
 // POST /organizations
 func (UnimplementedHandler) CreateOrganization(ctx context.Context, req *CreateOrganizationRequest) (r *CanonicalOrganization, _ error) {
@@ -249,7 +249,7 @@ func (UnimplementedHandler) DeleteGroupMembership(ctx context.Context, params De
 
 // DeleteOrganization implements deleteOrganization operation.
 //
-// Delete organization.
+// Returns 403 when organization synchronization is enabled.
 //
 // DELETE /organizations/{organizationId}
 func (UnimplementedHandler) DeleteOrganization(ctx context.Context, params DeleteOrganizationParams) error {
@@ -311,6 +311,15 @@ func (UnimplementedHandler) DraftFromArchive(ctx context.Context, params DraftFr
 //
 // POST /resources/{resourceType}/{id}/draft-from-publication
 func (UnimplementedHandler) DraftFromPublication(ctx context.Context, params DraftFromPublicationParams) (r *WriteResult, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetCapabilities implements getCapabilities operation.
+//
+// Returns instance configuration, not service health or caller permissions.
+//
+// GET /capabilities
+func (UnimplementedHandler) GetCapabilities(ctx context.Context) (r *Capabilities, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -719,7 +728,7 @@ func (UnimplementedHandler) ReplaceGroupCategory(ctx context.Context, req *Repla
 
 // ReplaceOrganization implements replaceOrganization operation.
 //
-// Replace organization.
+// Returns 403 when organization synchronization is enabled.
 //
 // PUT /organizations/{organizationId}
 func (UnimplementedHandler) ReplaceOrganization(ctx context.Context, req *ReplaceOrganizationRequest, params ReplaceOrganizationParams) (r *CanonicalOrganization, _ error) {
@@ -854,6 +863,17 @@ func (UnimplementedHandler) SyncConversionPlugin(ctx context.Context, params Syn
 	return r, ht.ErrNotImplemented
 }
 
+// TriggerMetadataSync implements triggerMetadataSync operation.
+//
+// Requires both global.organization.manage and global.contact_point.manage. Schedules a background
+// sync on the responding Gateway instance. Requests coalesce when a sync is already queued. Returns
+// 503 when metadata synchronization is disabled. Acceptance does not indicate success.
+//
+// POST /metadata/sync
+func (UnimplementedHandler) TriggerMetadataSync(ctx context.Context) error {
+	return ht.ErrNotImplemented
+}
+
 // UnblockUser implements unblockUser operation.
 //
 // Restore a blocked user to ACTIVE. Requires active global ADMIN.
@@ -917,10 +937,10 @@ func (UnimplementedHandler) WithdrawResourceVersion(ctx context.Context, params 
 	return r, ht.ErrNotImplemented
 }
 
-// NewError creates *ProblemStatusCode from error returned by handler.
+// NewError creates *GatewayErrorStatusCode from error returned by handler.
 //
 // Used for common default response.
-func (UnimplementedHandler) NewError(ctx context.Context, err error) (r *ProblemStatusCode) {
-	r = new(ProblemStatusCode)
+func (UnimplementedHandler) NewError(ctx context.Context, err error) (r *GatewayErrorStatusCode) {
+	r = new(GatewayErrorStatusCode)
 	return r
 }

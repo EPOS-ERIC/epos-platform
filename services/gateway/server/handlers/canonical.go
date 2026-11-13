@@ -47,7 +47,7 @@ func (h *ogenHandler) GetContactPoint(ctx context.Context, q gatewayapi.GetConta
 }
 
 func (h *ogenHandler) ListOrganizations(ctx context.Context) ([]gatewayapi.CanonicalOrganization, error) {
-	v, err := h.metadataLifecycleClient.ListOrganizations(ctx)
+	v, err := h.organizations.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list organizations: %w", err)
 	}
@@ -63,7 +63,7 @@ func (h *ogenHandler) ListOrganizations(ctx context.Context) ([]gatewayapi.Canon
 }
 
 func (h *ogenHandler) GetOrganization(ctx context.Context, p gatewayapi.GetOrganizationParams) (*gatewayapi.CanonicalOrganization, error) {
-	v, err := h.metadataLifecycleClient.GetOrganization(ctx, p.OrganizationId.String())
+	v, err := h.organizations.Get(ctx, p.OrganizationId.String())
 	if err != nil {
 		return nil, fmt.Errorf("get organization: %w", err)
 	}
@@ -79,11 +79,11 @@ func (h *ogenHandler) CreateOrganization(ctx context.Context, q *gatewayapi.Crea
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	v, err := h.metadataLifecycleClient.CreateOrganization(ctx, a, toProtoCreateOrganizationRequest(q))
+	v, err := h.organizations.Create(ctx, a, toDomainCreateOrganization(q))
 	if err != nil {
 		return nil, fmt.Errorf("create organization: %w", err)
 	}
-	r, err := toAPIProtoOrganization(v.Organization)
+	r, err := toAPIProtoOrganization(v)
 	if err != nil {
 		return nil, fmt.Errorf("create organization: %w", err)
 	}
@@ -95,12 +95,11 @@ func (h *ogenHandler) ReplaceOrganization(ctx context.Context, q *gatewayapi.Rep
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	in := toProtoReplaceOrganizationRequest(q, p.OrganizationId.String())
-	v, err := h.metadataLifecycleClient.ReplaceOrganization(ctx, a, in)
+	v, err := h.organizations.Replace(ctx, a, p.OrganizationId.String(), toDomainReplaceOrganization(q))
 	if err != nil {
 		return nil, fmt.Errorf("replace organization: %w", err)
 	}
-	r, err := toAPIProtoOrganization(v.Organization)
+	r, err := toAPIProtoOrganization(v)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +159,7 @@ func (h *ogenHandler) DeleteOrganization(ctx context.Context, p gatewayapi.Delet
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if _, err := h.metadataLifecycleClient.DeleteOrganization(ctx, a, &metadatalifecyclev1.DeleteOrganizationRequest{OrganizationId: p.OrganizationId.String()}); err != nil {
+	if err := h.organizations.Delete(ctx, a, p.OrganizationId.String()); err != nil {
 		return fmt.Errorf("delete organization: %w", err)
 	}
 	return nil

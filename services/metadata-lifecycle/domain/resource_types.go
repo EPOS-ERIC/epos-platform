@@ -93,18 +93,16 @@ type Identifier struct {
 
 // OrganizationMetadata is embedded organization metadata used by resources.
 type OrganizationMetadata struct {
-	ID            uuid.UUID
-	Name          string
-	Street        *string
-	Locality      *string
-	PostalCode    *string
-	Country       *string
-	LogoURL       *string
-	PageURL       *string
-	Email         *string
-	LEICode       *string
-	ContactPoints []ContactPoint
-	Identifiers   []Identifier
+	ID          uuid.UUID
+	Name        string
+	Street      *string
+	Locality    *string
+	PostalCode  *string
+	Country     *string
+	LogoURL     *string
+	PageURL     *string
+	Email       *string
+	Identifiers []Identifier
 }
 
 // CategoryMetadata is embedded category metadata used by resources.

@@ -82,10 +82,8 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                 "logo_url": None,
                 "page_url": None,
                 "email": None,
-                "lei_code": None,
                 "identifiers": [{"type": "discovery", "value": suffix}],
                 "parents": [],
-                "contact_point_ids": [],
             },
         )
         self.assertEqual(response.status_code, 201)

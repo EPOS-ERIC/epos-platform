@@ -344,6 +344,19 @@ func encodeDraftFromPublicationResponse(response *WriteResult, w http.ResponseWr
 	return nil
 }
 
+func encodeGetCapabilitiesResponse(response *Capabilities, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeGetConceptResponse(response *Concept, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
@@ -1137,6 +1150,12 @@ func encodeSyncConversionPluginResponse(response *ManagedConversionPlugin, w htt
 	return nil
 }
 
+func encodeTriggerMetadataSyncResponse(response *TriggerMetadataSyncAccepted, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(202)
+
+	return nil
+}
+
 func encodeUnblockUserResponse(response *UnblockUserNoContent, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(204)
 
@@ -1193,7 +1212,7 @@ func encodeWithdrawResourceVersionResponse(response *WriteResult, w http.Respons
 	return nil
 }
 
-func encodeErrorResponse(response *ProblemStatusCode, w http.ResponseWriter, span trace.Span) error {
+func encodeErrorResponse(response *GatewayErrorStatusCode, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	code := response.StatusCode
 	if code == 0 {
