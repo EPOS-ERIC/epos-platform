@@ -55,8 +55,7 @@ INSERT INTO
         country,
         logo_url,
         page_url,
-        email,
-        lei_code
+        email
     )
 VALUES
     (
@@ -68,8 +67,7 @@ VALUES
         sqlc.narg(country),
         sqlc.narg(logo_url),
         sqlc.narg(page_url),
-        sqlc.narg(email),
-        sqlc.narg(lei_code)
+        sqlc.narg(email)
     ) ON CONFLICT (id) DO
 UPDATE
 SET
@@ -80,8 +78,7 @@ SET
     country = EXCLUDED.country,
     logo_url = EXCLUDED.logo_url,
     page_url = EXCLUDED.page_url,
-    email = EXCLUDED.email,
-    lei_code = EXCLUDED.lei_code
+    email = EXCLUDED.email
 RETURNING
     id;
 
@@ -106,21 +103,6 @@ DELETE FROM
     organization_memberships
 WHERE
     child_organization_id = sqlc.arg(child_organization_id);
-
--- name: DeleteImportOrganizationContactPoints :exec
-DELETE FROM
-    organization_contact_points
-WHERE
-    organization_id = sqlc.arg(organization_id);
-
--- name: AddImportOrganizationContactPoint :exec
-INSERT INTO
-    organization_contact_points (organization_id, contact_point_id)
-VALUES
-    (
-        sqlc.arg(organization_id),
-        sqlc.arg(contact_point_id)
-    );
 
 -- name: AddImportOrganizationMembership :exec
 INSERT INTO
@@ -322,3 +304,12 @@ FROM
     organizations
 WHERE
     name = sqlc.arg(name);
+
+-- name: ListSyncedOrganizationsByName :many
+SELECT
+    id
+FROM
+    organizations
+WHERE
+    name = sqlc.arg(name)
+    AND remote_nid IS NOT NULL;

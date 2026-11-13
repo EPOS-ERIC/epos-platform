@@ -11,6 +11,9 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/converter/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/converter/plugin"
 	"github.com/google/uuid"
+	"github.com/robfig/cron/v3"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 )
 
 type Repository interface {
@@ -153,31 +156,49 @@ func (s *Service) Executable(ctx context.Context, conversionID, distributionID u
 	return record, nil
 }
 
-func (s *Service) RunSync(ctx context.Context, interval time.Duration) {
+func (s *Service) RunSync(ctx context.Context, schedule cron.Schedule) {
 	s.syncAll(ctx)
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
 	for {
+		next := schedule.Next(time.Now().UTC())
+		if next.IsZero() {
+			s.log.ErrorContext(ctx, "plugin sync cron has no future execution time")
+			return
+		}
+
+		timer := time.NewTimer(time.Until(next))
 		select {
 		case <-ctx.Done():
+			timer.Stop()
 			return
-		case <-ticker.C:
+		case <-timer.C:
 			s.syncAll(ctx)
 		}
 	}
 }
 
 func (s *Service) syncAll(ctx context.Context) {
+	ctx, span := otel.Tracer("converter/catalogue").Start(ctx, "plugin.sync")
+	defer span.End()
+
 	records, err := s.repo.Plugins(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "list plugins for synchronization")
+
 		s.log.ErrorContext(ctx, "list plugins for synchronization", "error", err)
+
 		return
 	}
+
 	for _, record := range records {
 		if err := ctx.Err(); err != nil {
 			return
 		}
+
 		if err := s.manager.Sync(ctx, definition(record), false); err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "synchronize plugin")
+
 			s.log.ErrorContext(ctx, "synchronize plugin", "plugin_id", record.ID, "error", err)
 		}
 	}

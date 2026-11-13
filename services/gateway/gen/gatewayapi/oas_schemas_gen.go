@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *ProblemStatusCode) Error() string {
+func (s *GatewayErrorStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
@@ -876,16 +876,14 @@ func (s *BooleanScalarParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/CanonicalOrganization
 type CanonicalOrganization struct {
-	ID              uuid.UUID           `json:"id"`
-	Name            string              `json:"name"`
-	Address         OrganizationAddress `json:"address"`
-	LogoURL         OptNilURI           `json:"logo_url"`
-	PageURL         OptNilURI           `json:"page_url"`
-	Email           OptNilString        `json:"email"`
-	LeiCode         OptNilString        `json:"lei_code"`
-	Identifiers     []Identifier        `json:"identifiers"`
-	Parents         []uuid.UUID         `json:"parents"`
-	ContactPointIds []uuid.UUID         `json:"contact_point_ids"`
+	ID          uuid.UUID           `json:"id"`
+	Name        string              `json:"name"`
+	Address     OrganizationAddress `json:"address"`
+	LogoURL     OptNilURI           `json:"logo_url"`
+	PageURL     OptNilURI           `json:"page_url"`
+	Email       OptNilString        `json:"email"`
+	Identifiers []Identifier        `json:"identifiers"`
+	Parents     []uuid.UUID         `json:"parents"`
 }
 
 // GetID returns the value of ID.
@@ -918,11 +916,6 @@ func (s *CanonicalOrganization) GetEmail() OptNilString {
 	return s.Email
 }
 
-// GetLeiCode returns the value of LeiCode.
-func (s *CanonicalOrganization) GetLeiCode() OptNilString {
-	return s.LeiCode
-}
-
 // GetIdentifiers returns the value of Identifiers.
 func (s *CanonicalOrganization) GetIdentifiers() []Identifier {
 	return s.Identifiers
@@ -931,11 +924,6 @@ func (s *CanonicalOrganization) GetIdentifiers() []Identifier {
 // GetParents returns the value of Parents.
 func (s *CanonicalOrganization) GetParents() []uuid.UUID {
 	return s.Parents
-}
-
-// GetContactPointIds returns the value of ContactPointIds.
-func (s *CanonicalOrganization) GetContactPointIds() []uuid.UUID {
-	return s.ContactPointIds
 }
 
 // SetID sets the value of ID.
@@ -968,11 +956,6 @@ func (s *CanonicalOrganization) SetEmail(val OptNilString) {
 	s.Email = val
 }
 
-// SetLeiCode sets the value of LeiCode.
-func (s *CanonicalOrganization) SetLeiCode(val OptNilString) {
-	s.LeiCode = val
-}
-
 // SetIdentifiers sets the value of Identifiers.
 func (s *CanonicalOrganization) SetIdentifiers(val []Identifier) {
 	s.Identifiers = val
@@ -983,9 +966,125 @@ func (s *CanonicalOrganization) SetParents(val []uuid.UUID) {
 	s.Parents = val
 }
 
-// SetContactPointIds sets the value of ContactPointIds.
-func (s *CanonicalOrganization) SetContactPointIds(val []uuid.UUID) {
-	s.ContactPointIds = val
+// Ref: #/components/schemas/Capabilities
+type Capabilities struct {
+	Organizations  CapabilitiesOrganizations  `json:"organizations"`
+	Authentication CapabilitiesAuthentication `json:"authentication"`
+	Notifications  CapabilitiesNotifications  `json:"notifications"`
+}
+
+// GetOrganizations returns the value of Organizations.
+func (s *Capabilities) GetOrganizations() CapabilitiesOrganizations {
+	return s.Organizations
+}
+
+// GetAuthentication returns the value of Authentication.
+func (s *Capabilities) GetAuthentication() CapabilitiesAuthentication {
+	return s.Authentication
+}
+
+// GetNotifications returns the value of Notifications.
+func (s *Capabilities) GetNotifications() CapabilitiesNotifications {
+	return s.Notifications
+}
+
+// SetOrganizations sets the value of Organizations.
+func (s *Capabilities) SetOrganizations(val CapabilitiesOrganizations) {
+	s.Organizations = val
+}
+
+// SetAuthentication sets the value of Authentication.
+func (s *Capabilities) SetAuthentication(val CapabilitiesAuthentication) {
+	s.Authentication = val
+}
+
+// SetNotifications sets the value of Notifications.
+func (s *Capabilities) SetNotifications(val CapabilitiesNotifications) {
+	s.Notifications = val
+}
+
+type CapabilitiesAuthentication struct {
+	// Browser-reachable authentication root URL.
+	RootURL string `json:"root_url"`
+}
+
+// GetRootURL returns the value of RootURL.
+func (s *CapabilitiesAuthentication) GetRootURL() string {
+	return s.RootURL
+}
+
+// SetRootURL sets the value of RootURL.
+func (s *CapabilitiesAuthentication) SetRootURL(val string) {
+	s.RootURL = val
+}
+
+type CapabilitiesNotifications struct {
+	EmailEnabled bool `json:"email_enabled"`
+}
+
+// GetEmailEnabled returns the value of EmailEnabled.
+func (s *CapabilitiesNotifications) GetEmailEnabled() bool {
+	return s.EmailEnabled
+}
+
+// SetEmailEnabled sets the value of EmailEnabled.
+func (s *CapabilitiesNotifications) SetEmailEnabled(val bool) {
+	s.EmailEnabled = val
+}
+
+type CapabilitiesOrganizations struct {
+	Management CapabilitiesOrganizationsManagement `json:"management"`
+}
+
+// GetManagement returns the value of Management.
+func (s *CapabilitiesOrganizations) GetManagement() CapabilitiesOrganizationsManagement {
+	return s.Management
+}
+
+// SetManagement sets the value of Management.
+func (s *CapabilitiesOrganizations) SetManagement(val CapabilitiesOrganizationsManagement) {
+	s.Management = val
+}
+
+type CapabilitiesOrganizationsManagement string
+
+const (
+	CapabilitiesOrganizationsManagementLocal      CapabilitiesOrganizationsManagement = "local"
+	CapabilitiesOrganizationsManagementRemoteSync CapabilitiesOrganizationsManagement = "remote_sync"
+)
+
+// AllValues returns all CapabilitiesOrganizationsManagement values.
+func (CapabilitiesOrganizationsManagement) AllValues() []CapabilitiesOrganizationsManagement {
+	return []CapabilitiesOrganizationsManagement{
+		CapabilitiesOrganizationsManagementLocal,
+		CapabilitiesOrganizationsManagementRemoteSync,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CapabilitiesOrganizationsManagement) MarshalText() ([]byte, error) {
+	switch s {
+	case CapabilitiesOrganizationsManagementLocal:
+		return []byte(s), nil
+	case CapabilitiesOrganizationsManagementRemoteSync:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CapabilitiesOrganizationsManagement) UnmarshalText(data []byte) error {
+	switch CapabilitiesOrganizationsManagement(data) {
+	case CapabilitiesOrganizationsManagementLocal:
+		*s = CapabilitiesOrganizationsManagementLocal
+		return nil
+	case CapabilitiesOrganizationsManagementRemoteSync:
+		*s = CapabilitiesOrganizationsManagementRemoteSync
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Ref: #/components/schemas/Category
@@ -2040,15 +2139,13 @@ func (s *CreateMembershipRequestRolesItem) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/CreateOrganizationRequest
 type CreateOrganizationRequest struct {
-	Name            NonBlankString         `json:"name"`
-	Address         OptOrganizationAddress `json:"address"`
-	LogoURL         OptNilURI              `json:"logo_url"`
-	PageURL         OptNilURI              `json:"page_url"`
-	Email           OptNilString           `json:"email"`
-	LeiCode         OptNilString           `json:"lei_code"`
-	Identifiers     []IdentifierInput      `json:"identifiers"`
-	Parents         []uuid.UUID            `json:"parents"`
-	ContactPointIds []uuid.UUID            `json:"contact_point_ids"`
+	Name        NonBlankString         `json:"name"`
+	Address     OptOrganizationAddress `json:"address"`
+	LogoURL     OptNilURI              `json:"logo_url"`
+	PageURL     OptNilURI              `json:"page_url"`
+	Email       OptNilString           `json:"email"`
+	Identifiers []IdentifierInput      `json:"identifiers"`
+	Parents     []uuid.UUID            `json:"parents"`
 }
 
 // GetName returns the value of Name.
@@ -2076,11 +2173,6 @@ func (s *CreateOrganizationRequest) GetEmail() OptNilString {
 	return s.Email
 }
 
-// GetLeiCode returns the value of LeiCode.
-func (s *CreateOrganizationRequest) GetLeiCode() OptNilString {
-	return s.LeiCode
-}
-
 // GetIdentifiers returns the value of Identifiers.
 func (s *CreateOrganizationRequest) GetIdentifiers() []IdentifierInput {
 	return s.Identifiers
@@ -2089,11 +2181,6 @@ func (s *CreateOrganizationRequest) GetIdentifiers() []IdentifierInput {
 // GetParents returns the value of Parents.
 func (s *CreateOrganizationRequest) GetParents() []uuid.UUID {
 	return s.Parents
-}
-
-// GetContactPointIds returns the value of ContactPointIds.
-func (s *CreateOrganizationRequest) GetContactPointIds() []uuid.UUID {
-	return s.ContactPointIds
 }
 
 // SetName sets the value of Name.
@@ -2121,11 +2208,6 @@ func (s *CreateOrganizationRequest) SetEmail(val OptNilString) {
 	s.Email = val
 }
 
-// SetLeiCode sets the value of LeiCode.
-func (s *CreateOrganizationRequest) SetLeiCode(val OptNilString) {
-	s.LeiCode = val
-}
-
 // SetIdentifiers sets the value of Identifiers.
 func (s *CreateOrganizationRequest) SetIdentifiers(val []IdentifierInput) {
 	s.Identifiers = val
@@ -2134,11 +2216,6 @@ func (s *CreateOrganizationRequest) SetIdentifiers(val []IdentifierInput) {
 // SetParents sets the value of Parents.
 func (s *CreateOrganizationRequest) SetParents(val []uuid.UUID) {
 	s.Parents = val
-}
-
-// SetContactPointIds sets the value of ContactPointIds.
-func (s *CreateOrganizationRequest) SetContactPointIds(val []uuid.UUID) {
-	s.ContactPointIds = val
 }
 
 // Ref: #/components/schemas/CreateResourceDraftRequest
@@ -6661,6 +6738,32 @@ func (s *FloatScalarParameterKind) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// GatewayErrorStatusCode wraps Problem with StatusCode.
+type GatewayErrorStatusCode struct {
+	StatusCode int
+	Response   Problem
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GatewayErrorStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *GatewayErrorStatusCode) GetResponse() Problem {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *GatewayErrorStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GatewayErrorStatusCode) SetResponse(val Problem) {
+	s.Response = val
 }
 
 // Ref: #/components/schemas/GenericWebServiceConfiguration
@@ -12363,32 +12466,6 @@ func (s *Problem) SetUpstreamResponse(val OptProblemUpstreamResponse) {
 	s.UpstreamResponse = val
 }
 
-// ProblemStatusCode wraps Problem with StatusCode.
-type ProblemStatusCode struct {
-	StatusCode int
-	Response   Problem
-}
-
-// GetStatusCode returns the value of StatusCode.
-func (s *ProblemStatusCode) GetStatusCode() int {
-	return s.StatusCode
-}
-
-// GetResponse returns the value of Response.
-func (s *ProblemStatusCode) GetResponse() Problem {
-	return s.Response
-}
-
-// SetStatusCode sets the value of StatusCode.
-func (s *ProblemStatusCode) SetStatusCode(val int) {
-	s.StatusCode = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ProblemStatusCode) SetResponse(val Problem) {
-	s.Response = val
-}
-
 // Present only when an upstream HTTP failure response exists.
 type ProblemUpstreamResponse struct {
 	// Original upstream HTTP status.
@@ -12753,15 +12830,13 @@ func (s *ReplaceGroupRequest) SetConceptID(val uuid.UUID) {
 
 // Ref: #/components/schemas/ReplaceOrganizationRequest
 type ReplaceOrganizationRequest struct {
-	Name            NonBlankString      `json:"name"`
-	Address         OrganizationAddress `json:"address"`
-	LogoURL         NilURI              `json:"logo_url"`
-	PageURL         NilURI              `json:"page_url"`
-	Email           NilString           `json:"email"`
-	LeiCode         NilString           `json:"lei_code"`
-	Identifiers     []IdentifierInput   `json:"identifiers"`
-	Parents         []uuid.UUID         `json:"parents"`
-	ContactPointIds []uuid.UUID         `json:"contact_point_ids"`
+	Name        NonBlankString      `json:"name"`
+	Address     OrganizationAddress `json:"address"`
+	LogoURL     NilURI              `json:"logo_url"`
+	PageURL     NilURI              `json:"page_url"`
+	Email       NilString           `json:"email"`
+	Identifiers []IdentifierInput   `json:"identifiers"`
+	Parents     []uuid.UUID         `json:"parents"`
 }
 
 // GetName returns the value of Name.
@@ -12789,11 +12864,6 @@ func (s *ReplaceOrganizationRequest) GetEmail() NilString {
 	return s.Email
 }
 
-// GetLeiCode returns the value of LeiCode.
-func (s *ReplaceOrganizationRequest) GetLeiCode() NilString {
-	return s.LeiCode
-}
-
 // GetIdentifiers returns the value of Identifiers.
 func (s *ReplaceOrganizationRequest) GetIdentifiers() []IdentifierInput {
 	return s.Identifiers
@@ -12802,11 +12872,6 @@ func (s *ReplaceOrganizationRequest) GetIdentifiers() []IdentifierInput {
 // GetParents returns the value of Parents.
 func (s *ReplaceOrganizationRequest) GetParents() []uuid.UUID {
 	return s.Parents
-}
-
-// GetContactPointIds returns the value of ContactPointIds.
-func (s *ReplaceOrganizationRequest) GetContactPointIds() []uuid.UUID {
-	return s.ContactPointIds
 }
 
 // SetName sets the value of Name.
@@ -12834,11 +12899,6 @@ func (s *ReplaceOrganizationRequest) SetEmail(val NilString) {
 	s.Email = val
 }
 
-// SetLeiCode sets the value of LeiCode.
-func (s *ReplaceOrganizationRequest) SetLeiCode(val NilString) {
-	s.LeiCode = val
-}
-
 // SetIdentifiers sets the value of Identifiers.
 func (s *ReplaceOrganizationRequest) SetIdentifiers(val []IdentifierInput) {
 	s.Identifiers = val
@@ -12847,11 +12907,6 @@ func (s *ReplaceOrganizationRequest) SetIdentifiers(val []IdentifierInput) {
 // SetParents sets the value of Parents.
 func (s *ReplaceOrganizationRequest) SetParents(val []uuid.UUID) {
 	s.Parents = val
-}
-
-// SetContactPointIds sets the value of ContactPointIds.
-func (s *ReplaceOrganizationRequest) SetContactPointIds(val []uuid.UUID) {
-	s.ContactPointIds = val
 }
 
 // Ref: #/components/schemas/ReplaceResourceDraftRequest
@@ -16383,6 +16438,9 @@ func (s *TemporalCoverage) SetStart(val OptNilDateTime) {
 func (s *TemporalCoverage) SetEnd(val OptNilDateTime) {
 	s.End = val
 }
+
+// TriggerMetadataSyncAccepted is response for TriggerMetadataSync operation.
+type TriggerMetadataSyncAccepted struct{}
 
 // UnblockUserNoContent is response for UnblockUser operation.
 type UnblockUserNoContent struct{}

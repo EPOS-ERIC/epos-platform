@@ -12,6 +12,7 @@ message ImportTurtleRequest {
     (buf.validate.field).bytes.min_len = 1,
     (buf.validate.field).bytes.max_len = 10485760
   ];
+  bool resolve_synced_organizations = 2;
 }
 
 message ImportTurtleResponse {

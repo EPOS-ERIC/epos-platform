@@ -167,11 +167,7 @@ func sourceCodeMetadata(ctx context.Context, q *sqlc.Queries, row sqlc.GetLifecy
 		result.Identifiers = append(result.Identifiers, resourcedb.ToIdentifier(item.Identifier))
 	}
 	for _, item := range creators {
-		creator, err := organizationWithContactPoints(ctx, q, item)
-		if err != nil {
-			return domain.SoftwareSourceCodeMetadata{}, err
-		}
-		result.Creators = append(result.Creators, creator)
+		result.Creators = append(result.Creators, resourcedb.ToOrganizationMetadata(item))
 	}
 	for _, item := range contacts {
 		result.ContactPoints = append(result.ContactPoints, resourcedb.ToContactPoint(item.ContactPoint))
@@ -203,16 +199,4 @@ func toDomainSoftwareSourceCodeVersionSummary(version sqlc.ListLifecycleSoftware
 		RejectedAt:    version.RejectedAt,
 		RejectionNote: version.RejectionNote,
 	}
-}
-
-func organizationWithContactPoints(ctx context.Context, q *sqlc.Queries, value sqlc.Organization) (domain.OrganizationMetadata, error) {
-	result := resourcedb.ToOrganizationMetadata(value)
-	rows, err := q.ListLifecycleOrganizationContactPoints(ctx, []uuid.UUID{value.ID})
-	if err != nil {
-		return domain.OrganizationMetadata{}, fmt.Errorf("list organization contact points: %w", err)
-	}
-	for _, row := range rows {
-		result.ContactPoints = append(result.ContactPoints, resourcedb.ToContactPoint(row.ContactPoint))
-	}
-	return result, nil
 }

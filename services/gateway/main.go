@@ -53,6 +53,7 @@ func main() {
 		log,
 		cfg.Services.MetadataLifecycle.URL,
 		dispatcher,
+		cfg.MetadataSync.Enabled,
 	)
 	if err != nil {
 		log.Error("invalid metadata-lifecycle service configuration", "error", err)

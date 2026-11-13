@@ -34,6 +34,19 @@ func TestConfigValidate(t *testing.T) {
 		{"missing domain", func() { cfg.Domain = "" }},
 		{"invalid protocol", func() { cfg.Protocol = "ftp" }},
 		{"invalid Mailgun recipient override", func() { cfg.Components.Gateway.Mailgun.RecipientOverrides = []string{"invalid"} }},
+		{"metadata sync missing credentials", func() { cfg.Components.Gateway.MetadataSync.Enabled = true }},
+		{"metadata sync invalid cron", func() {
+			cfg.Components.Gateway.MetadataSync.Enabled = true
+			cfg.Components.Gateway.MetadataSync.Username = "sync"
+			cfg.Components.Gateway.MetadataSync.Password = "test-password"
+			cfg.Components.Gateway.MetadataSync.Cron = "invalid"
+		}},
+		{"metadata sync invalid timeout", func() {
+			cfg.Components.Gateway.MetadataSync.Enabled = true
+			cfg.Components.Gateway.MetadataSync.Username = "sync"
+			cfg.Components.Gateway.MetadataSync.Password = "test-password"
+			cfg.Components.Gateway.MetadataSync.Timeout = "0s"
+		}},
 		{"invalid domain", func() { cfg.Domain = "host/path" }},
 		{"missing database password", func() { cfg.Components.MetadataDatabase.Password = "" }},
 		{"missing retriever password", func() { cfg.Components.DataRetrieverDatabase.Password = "" }},

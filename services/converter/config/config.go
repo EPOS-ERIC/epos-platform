@@ -18,7 +18,7 @@ type Config struct {
 	PluginsPath  string        `envconfig:"PLUGINS_PATH" default:"./plugins"`
 	MaxBytes     int64         `envconfig:"MAX_PAYLOAD_BYTES" default:"1073741824"`
 	Timeout      time.Duration `envconfig:"EXECUTION_TIMEOUT" default:"30s"`
-	SyncInterval time.Duration `envconfig:"SYNC_INTERVAL" default:"5m"`
+	SyncCron     string        `envconfig:"SYNC_CRON" default:"*/5 * * * *"`
 }
 
 func Load() (Config, error) {
@@ -29,8 +29,8 @@ func Load() (Config, error) {
 	if cfg.ServerPort == "" || cfg.DBHost == "" || cfg.DBPort == "" || cfg.DBName == "" || cfg.DBUser == "" || cfg.DBPassword == "" || cfg.PluginsPath == "" {
 		return Config{}, fmt.Errorf("server, database, and plugin path configuration must not be empty")
 	}
-	if cfg.MaxBytes <= 0 || cfg.Timeout <= 0 || cfg.SyncInterval <= 0 {
-		return Config{}, fmt.Errorf("payload limit, execution timeout, and sync interval must be positive")
+	if cfg.MaxBytes <= 0 || cfg.Timeout <= 0 {
+		return Config{}, fmt.Errorf("payload limit and execution timeout must be positive")
 	}
 	return cfg, nil
 }

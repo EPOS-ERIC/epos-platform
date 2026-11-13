@@ -20,6 +20,33 @@ func NewOrganization(organizations *organizations.Service) *OrganizationServer {
 	return &OrganizationServer{organizations: organizations}
 }
 
+func (o *OrganizationServer) SyncOrganizations(ctx context.Context, request *metadatalifecyclev1.SyncOrganizationsRequest) (*metadatalifecyclev1.SyncOrganizationsResponse, error) {
+	values := make([]domain.SyncedOrganization, 0, len(request.Organizations))
+
+	for _, value := range request.Organizations {
+		if value == nil {
+			return nil, apperror.Field("organizations", "Organization is required.", nil)
+		}
+
+		input, err := toOrganizationInput(value.Name, value.Street, value.Locality, value.PostalCode, value.Country, value.LogoUrl, value.PageUrl, value.Email, value.Identifiers, nil)
+		if err != nil {
+			return nil, fmt.Errorf("validate synced organization: %w", err)
+		}
+
+		values = append(values, domain.SyncedOrganization{
+			NID:        value.Nid,
+			ParentNIDs: value.ParentNids,
+			Input:      input,
+		})
+	}
+
+	if err := o.organizations.Sync(ctx, values); err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.SyncOrganizationsResponse{}, nil
+}
+
 func (o *OrganizationServer) ListOrganizations(ctx context.Context, _ *metadatalifecyclev1.ListOrganizationsRequest) (*metadatalifecyclev1.ListOrganizationsResponse, error) {
 	values, err := o.organizations.List(ctx)
 	if err != nil {
@@ -49,7 +76,7 @@ func (o *OrganizationServer) CreateOrganization(ctx context.Context, request *me
 	if err != nil {
 		return nil, err
 	}
-	input, err := toOrganizationInput(request.Name, request.Street, request.Locality, request.PostalCode, request.Country, request.LogoUrl, request.PageUrl, request.Email, request.LeiCode, request.Identifiers, request.Parents, request.ContactPointIds)
+	input, err := toOrganizationInput(request.Name, request.Street, request.Locality, request.PostalCode, request.Country, request.LogoUrl, request.PageUrl, request.Email, request.Identifiers, request.Parents)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +96,7 @@ func (o *OrganizationServer) ReplaceOrganization(ctx context.Context, request *m
 	if err != nil {
 		return nil, err
 	}
-	input, err := toOrganizationInput(request.Name, request.Street, request.Locality, request.PostalCode, request.Country, request.LogoUrl, request.PageUrl, request.Email, request.LeiCode, request.Identifiers, request.Parents, request.ContactPointIds)
+	input, err := toOrganizationInput(request.Name, request.Street, request.Locality, request.PostalCode, request.Country, request.LogoUrl, request.PageUrl, request.Email, request.Identifiers, request.Parents)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +130,7 @@ func parseOrganizationID(value string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func toOrganizationInput(name string, street, locality, postalCode, country, logo, page, email, lei *string, identifiers []*metadatalifecyclev1.IdentifierInput, parents, contactPoints []string) (domain.OrganizationInput, error) {
+func toOrganizationInput(name string, street, locality, postalCode, country, logo, page, email *string, identifiers []*metadatalifecyclev1.IdentifierInput, parents []string) (domain.OrganizationInput, error) {
 	input := domain.OrganizationInput{
 		Name:        name,
 		Street:      street,
@@ -113,21 +140,20 @@ func toOrganizationInput(name string, street, locality, postalCode, country, log
 		LogoURL:     logo,
 		PageURL:     page,
 		Email:       email,
-		LEICode:     lei,
 		Identifiers: make([]domain.OrganizationIdentifierInput, len(identifiers)),
 	}
 	for i, identifier := range identifiers {
 		if identifier == nil {
 			return domain.OrganizationInput{}, apperror.Field(fmt.Sprintf("identifiers[%d]", i), "Identifier is required.", fmt.Errorf("missing identifier at index %d", i))
 		}
-		input.Identifiers[i] = domain.OrganizationIdentifierInput{Type: identifier.Type, Value: identifier.Value}
+
+		input.Identifiers[i] = domain.OrganizationIdentifierInput{
+			Type:  identifier.Type,
+			Value: identifier.Value,
+		}
 	}
 	var err error
 	input.Parents, err = parseUUIDs(parents, "parents")
-	if err != nil {
-		return domain.OrganizationInput{}, err
-	}
-	input.ContactPoints, err = parseUUIDs(contactPoints, "contact_point_ids")
 	if err != nil {
 		return domain.OrganizationInput{}, err
 	}
@@ -154,13 +180,28 @@ func parseUUIDs(values []string, target string) ([]uuid.UUID, error) {
 }
 
 func toProtoOrganization(value domain.Organization) *metadatalifecyclev1.Organization {
-	result := &metadatalifecyclev1.Organization{Id: value.ID.String(), Name: value.Name, Street: value.Street, Locality: value.Locality, PostalCode: value.PostalCode, Country: value.Country, LogoUrl: value.LogoURL, PageUrl: value.PageURL, Email: value.Email, LeiCode: value.LEICode}
+	result := &metadatalifecyclev1.Organization{
+		Id:         value.ID.String(),
+		Name:       value.Name,
+		Street:     value.Street,
+		Locality:   value.Locality,
+		PostalCode: value.PostalCode,
+		Country:    value.Country,
+		LogoUrl:    value.LogoURL,
+		PageUrl:    value.PageURL,
+		Email:      value.Email,
+	}
 	result.Parents = uuidStrings(value.Parents)
-	result.ContactPointIds = uuidStrings(value.ContactPoints)
+
 	result.Identifiers = make([]*metadatalifecyclev1.Identifier, len(value.Identifiers))
 	for i, identifier := range value.Identifiers {
-		result.Identifiers[i] = &metadatalifecyclev1.Identifier{Id: identifier.ID.String(), Type: identifier.Type, Value: identifier.Value}
+		result.Identifiers[i] = &metadatalifecyclev1.Identifier{
+			Id:    identifier.ID.String(),
+			Type:  identifier.Type,
+			Value: identifier.Value,
+		}
 	}
+
 	return result
 }
 

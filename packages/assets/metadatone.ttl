@@ -247,19 +247,9 @@
   schema:logo "https://www.ingv.it/templates/g5_helium/custom/images/INGV_logo_colore3.png"^^xsd:anyURI;
   schema:url "http://www.ingv.it"^^xsd:anyURI;
   schema:email "ufficiostampa@ingv.it";
-  schema:memberOf <MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8> ;
+  schema:memberOf <ROR:https://ror.org/00bas1c41>;
 . 
 
-<MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8> a schema:Organization ;
-    schema:identifier [ a schema:PropertyValue;
-        schema:propertyID "MOID";
-        schema:value "https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8";
-    ];
-    schema:legalName "EPOS-GNSS Data Suppliers"^^xsd:string; 
-    schema:leiCode "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search" ;
-.
-                    
-                    
 <ROR:https://ror.org/00bas1c41> a schema:Organization ;
     schema:identifier [ a schema:PropertyValue;
         schema:propertyID "ROR";
@@ -273,7 +263,6 @@
         schema:postalCode "30-059" ;
         schema:addressCountry "PL" ;
     ];
-    schema:memberOf <MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8> ;
 .
 
 
@@ -854,7 +843,7 @@
 	];
         dcat:contactPoint <http://orcid.org/0000-0001-7947-4281/scientificContact> ;
         dct:publisher <https://doi.org/10.7914/SN/IT>;
-        dct:publisher <MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8>;
+        dct:publisher <ROR:https://ror.org/00bas1c41>;
 		prov:qualifiedAttribution <PIC:999472675/owner> ; #non usato
         dcat:distribution <http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001/Distribution/001> ;
         dct:spatial [ a dct:Location ;
@@ -984,7 +973,7 @@
 	schema:propertyID "PIC";
 	schema:value "999472675";
 	];
-	schema:legalName "National Institute of Geophysics and Volcanology";
+	schema:legalName "INGV - Istituto Nazionale di Geofisica e Vulcanologia";
 	schema:leiCode "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search" ;	
     schema:address [ a schema:PostalAddress;
 	schema:streetAddress "Via di Vigna Murata, 605";

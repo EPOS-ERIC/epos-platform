@@ -40,7 +40,12 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 		if err != nil {
 			return err
 		}
-		organizationIDs, err := importOrganizations(ctx, tx, q, batch.Organizations, &result)
+		var organizationIDs map[uuid.UUID]uuid.UUID
+		if batch.ResolveSyncedOrganizations {
+			organizationIDs, err = resolveSyncedOrganizations(ctx, q, batch.Organizations, &result)
+		} else {
+			organizationIDs, err = importOrganizations(ctx, tx, q, batch.Organizations, &result)
+		}
 		if err != nil {
 			return err
 		}
@@ -48,11 +53,10 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 		if err != nil {
 			return err
 		}
-		if err := importOrganizationMemberships(ctx, tx, q, batch, organizationIDs, &result); err != nil {
-			return err
-		}
-		if err := importOrganizationContactPoints(ctx, tx, q, batch.Organizations, organizationIDs, contactIDs, &result); err != nil {
-			return err
+		if !batch.ResolveSyncedOrganizations {
+			if err := importOrganizationMemberships(ctx, tx, q, batch, organizationIDs, &result); err != nil {
+				return err
+			}
 		}
 		categoryIDs, err := importCategories(ctx, tx, q, batch, groupIDs, &result)
 		if err != nil {
@@ -113,6 +117,26 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 		return domain.ImportResult{}, fmt.Errorf("database invariant: %s: %w", pgErr.ConstraintName, errors.Join(apperror.Default(apperror.CodeConflict), pgErr))
 	}
 	return domain.ImportResult{}, fmt.Errorf("metadata import transaction: %w", err)
+}
+
+func resolveSyncedOrganizations(ctx context.Context, q *sqlc.Queries, organizations []domain.OrganizationMetadata, result *domain.ImportResult) (map[uuid.UUID]uuid.UUID, error) {
+	ids := make(map[uuid.UUID]uuid.UUID, len(organizations))
+	for _, organization := range organizations {
+		matches, err := q.ListSyncedOrganizationsByName(ctx, organization.Name)
+		if err != nil {
+			return nil, fmt.Errorf("find synced organization %q: %w", organization.Name, err)
+		}
+		if len(matches) != 1 {
+			addImportDiagnostic(result, domain.ImportDiagnostic{
+				Severity: domain.ImportSeverityWarning,
+				Subject:  organization.ID.String(),
+				Message:  fmt.Sprintf("organization %q has %d synced matches; relationships omitted", organization.Name, len(matches)),
+			})
+			continue
+		}
+		ids[organization.ID] = matches[0]
+	}
+	return ids, nil
 }
 
 func importEntity(ctx context.Context, tx pgx.Tx, kind, subject string, result *domain.ImportResult, fn func() error) (bool, error) {
@@ -358,7 +382,6 @@ func importOrganizations(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, organi
 				LogoUrl:    organization.LogoURL,
 				PageUrl:    organization.PageURL,
 				Email:      organization.Email,
-				LeiCode:    organization.LEICode,
 			})
 			if err != nil {
 				return fmt.Errorf("upsert organization %q: %w", organization.ID, err)
@@ -432,62 +455,6 @@ func importOrganizationMemberships(ctx context.Context, tx pgx.Tx, q *sqlc.Queri
 				ParentOrganizationID: parentID,
 			}); err != nil {
 				return fmt.Errorf("add organization hierarchy: %w", err)
-			}
-			return nil
-		}); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func importOrganizationContactPoints(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, organizations []domain.OrganizationMetadata, organizationIDs, contactIDs map[uuid.UUID]uuid.UUID, result *domain.ImportResult) error {
-	contactPointsByOrganization := make(map[uuid.UUID][]uuid.UUID, len(organizations))
-	organizationOrder := make([]uuid.UUID, 0, len(organizations))
-	seenOrganizations := make(map[uuid.UUID]struct{}, len(organizations))
-	seenContactPoints := make(map[uuid.UUID]map[uuid.UUID]struct{}, len(organizations))
-
-	for _, organization := range organizations {
-		organizationID, ok := organizationIDs[organization.ID]
-		if !ok {
-			continue
-		}
-		if _, ok := seenOrganizations[organizationID]; !ok {
-			seenOrganizations[organizationID] = struct{}{}
-			organizationOrder = append(organizationOrder, organizationID)
-			seenContactPoints[organizationID] = make(map[uuid.UUID]struct{})
-		}
-		for _, contact := range organization.ContactPoints {
-			contactID, ok := contactIDs[contact.ID]
-			if !ok {
-				addImportDiagnostic(result, domain.ImportDiagnostic{
-					Severity:  domain.ImportSeverityWarning,
-					Subject:   organization.ID.String(),
-					Predicate: "contactPoint",
-					Message:   fmt.Sprintf("contact point %q omitted: contact point is unavailable", contact.ID),
-				})
-				continue
-			}
-			if _, ok := seenContactPoints[organizationID][contactID]; ok {
-				continue
-			}
-			seenContactPoints[organizationID][contactID] = struct{}{}
-			contactPointsByOrganization[organizationID] = append(contactPointsByOrganization[organizationID], contactID)
-		}
-	}
-
-	for _, organizationID := range organizationOrder {
-		if _, err := importEntity(ctx, tx, "organization contact points", organizationID.String(), result, func() error {
-			if err := q.DeleteImportOrganizationContactPoints(ctx, organizationID); err != nil {
-				return fmt.Errorf("replace organization contact points %q: %w", organizationID, err)
-			}
-			for _, contactID := range contactPointsByOrganization[organizationID] {
-				if err := q.AddImportOrganizationContactPoint(ctx, sqlc.AddImportOrganizationContactPointParams{
-					OrganizationID: organizationID,
-					ContactPointID: contactID,
-				}); err != nil {
-					return fmt.Errorf("add organization contact point %q: %w", organizationID, err)
-				}
 			}
 			return nil
 		}); err != nil {

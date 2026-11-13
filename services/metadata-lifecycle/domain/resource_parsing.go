@@ -87,7 +87,7 @@ func validateOrganization(value OrganizationMetadata) error {
 		}
 		seen[identifier.ID] = struct{}{}
 	}
-	return validateContactPoints(value.ContactPoints, "organization contact point")
+	return nil
 }
 
 // Validate validates organization metadata embedded in an import or resource.

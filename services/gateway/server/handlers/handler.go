@@ -13,9 +13,12 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactrequest"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/converter"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/metadatasync"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/sharing"
 	"github.com/ogen-go/ogen/ogenerrors"
@@ -35,6 +38,9 @@ type ogenHandler struct {
 	resource                *resource.Service
 	converter               *converter.Service
 	log                     *slog.Logger
+	organizations           *organizations.Service
+	metadataSync            *metadatasync.Worker
+	capabilities            domain.Capabilities
 }
 
 func NewOgenHandler(
@@ -47,6 +53,9 @@ func NewOgenHandler(
 	resources *resource.Service,
 	converter *converter.Service,
 	log *slog.Logger,
+	organizationService *organizations.Service,
+	metadataSync *metadatasync.Worker,
+	capabilities domain.Capabilities,
 ) *ogenHandler {
 	return &ogenHandler{
 		metadataLifecycleClient: metadataLifecycleClient,
@@ -58,15 +67,18 @@ func NewOgenHandler(
 		resource:                resources,
 		converter:               converter,
 		log:                     log,
+		organizations:           organizationService,
+		metadataSync:            metadataSync,
+		capabilities:            capabilities,
 	}
 }
 
 var _ gatewayapi.Handler = (*ogenHandler)(nil)
 
-func (h *ogenHandler) NewError(ctx context.Context, err error) *gatewayapi.ProblemStatusCode {
+func (h *ogenHandler) NewError(ctx context.Context, err error) *gatewayapi.GatewayErrorStatusCode {
 	status, response := problemResponse(ctx, err)
 	reportHTTPError(h.log, ctx, err, status)
-	return &gatewayapi.ProblemStatusCode{
+	return &gatewayapi.GatewayErrorStatusCode{
 		StatusCode: status,
 		Response:   response,
 	}

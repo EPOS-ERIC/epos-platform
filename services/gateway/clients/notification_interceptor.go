@@ -41,7 +41,7 @@ func notificationInterceptor(log *slog.Logger, dispatcher NotificationDispatcher
 		for _, value := range response.GetNotifications() {
 			notification, err := fromProtoNotification(value)
 			if err != nil {
-				log.Warn("skip invalid notification", "method", method, "error", err)
+				log.WarnContext(ctx, "skip invalid notification", "method", method, "error", err)
 				continue
 			}
 			notifications = append(notifications, notification)

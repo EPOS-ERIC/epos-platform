@@ -32,7 +32,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         suffix: str,
         *,
         parents: list[str],
-        contact_point_ids: list[str],
     ) -> dict[str, Any]:
         return {
             "name": f"Canonical Organization {suffix}",
@@ -45,10 +44,8 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
             "logo_url": None,
             "page_url": None,
             "email": None,
-            "lei_code": None,
             "identifiers": [{"type": "canonical", "value": suffix}],
             "parents": parents,
-            "contact_point_ids": contact_point_ids,
         }
 
     def create_organization(
@@ -56,12 +53,10 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         suffix: str,
         *,
         parents: list[str],
-        contact_point_ids: list[str],
     ) -> str:
         payload = self.organization_payload(
             suffix,
             parents=parents,
-            contact_point_ids=contact_point_ids,
         )
         response = self.gateway.post("/organizations", json=payload)
         self.assertEqual(response.status_code, 201)
@@ -266,10 +261,10 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         group_id = create_group(self.gateway, f"canonical-integrity-{suffix}")
         contact_point_id = self.create_contact_point(suffix)
         parent_id = self.create_organization(
-            f"parent-{suffix}", parents=[], contact_point_ids=[contact_point_id]
+            f"parent-{suffix}", parents=[]
         )
         child_id = self.create_organization(
-            f"child-{suffix}", parents=[parent_id], contact_point_ids=[contact_point_id]
+            f"child-{suffix}", parents=[parent_id]
         )
         root_category_id = self.create_category(group_id, f"root-{suffix}")
         child_category_id = self.create_category(
@@ -278,7 +273,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         metadata_by_type = self.resource_metadata(
             suffix, parent_id, contact_point_id, child_category_id
         )
-
         resources = {
             resource_type: self.create_published_and_archived_versions(
                 group_id, resource_type, metadata
@@ -350,11 +344,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
             ).status_code,
             404,
         )
-        child = self.gateway.get(
-            "/organizations/{organizationId}", organizationId=child_id
-        )
-        self.assertEqual(child.status_code, 200)
-        self.assertEqual(child.json()["contact_point_ids"], [])
         for resource_type, (resource_id, published, archived) in resources.items():
             for version in (published, archived):
                 details = self.details(resource_type, resource_id, version["id"])
@@ -420,10 +409,10 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         self.assertIsNone(root.json()["parent_category_id"])
 
         standalone_id = self.create_organization(
-            f"standalone-{suffix}", parents=[], contact_point_ids=[]
+            f"standalone-{suffix}", parents=[]
         )
         standalone_payload = self.organization_payload(
-            f"standalone-{suffix}", parents=[standalone_id], contact_point_ids=[]
+            f"standalone-{suffix}", parents=[standalone_id]
         )
         organization_self_link = self.gateway.put(
             "/organizations/{organizationId}",
@@ -433,13 +422,13 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
         self.assertEqual(organization_self_link.status_code, 400)
 
         parent_id = self.create_organization(
-            f"parent-{suffix}", parents=[], contact_point_ids=[]
+            f"parent-{suffix}", parents=[]
         )
         child_id = self.create_organization(
-            f"child-{suffix}", parents=[parent_id], contact_point_ids=[]
+            f"child-{suffix}", parents=[parent_id]
         )
         parent_payload = self.organization_payload(
-            f"parent-{suffix}", parents=[child_id], contact_point_ids=[]
+            f"parent-{suffix}", parents=[child_id]
         )
         organization_cycle = self.gateway.put(
             "/organizations/{organizationId}",

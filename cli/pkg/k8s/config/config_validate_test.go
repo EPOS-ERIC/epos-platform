@@ -18,6 +18,17 @@ func TestConfigValidate_Requirements(t *testing.T) {
 		errContains string
 	}{
 		{
+			name: "invalid metadata sync cron",
+			mutate: func(cfg *Config) {
+				cfg.Components.Gateway.MetadataSync.Enabled = true
+				cfg.Components.Gateway.MetadataSync.Username = "sync"
+				cfg.Components.Gateway.MetadataSync.Password = "test-password"
+				cfg.Components.Gateway.MetadataSync.Cron = "invalid"
+			},
+			wantErr:     true,
+			errContains: "metadata_sync.cron",
+		},
+		{
 			name: "platform ui image is required",
 			mutate: func(cfg *Config) {
 				cfg.Images.PlatformUIImage = ""

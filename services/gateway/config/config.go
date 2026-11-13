@@ -8,13 +8,29 @@ import (
 	"os"
 	"time"
 
+	"github.com/robfig/cron/v3"
 	"go.yaml.in/yaml/v3"
 )
 
 type Config struct {
-	Server        Server        `yaml:"server"`
-	Services      Services      `yaml:"services"`
-	Notifications Notifications `yaml:"notifications"`
+	Server         Server         `yaml:"server"`
+	Services       Services       `yaml:"services"`
+	Notifications  Notifications  `yaml:"notifications"`
+	MetadataSync   MetadataSync   `yaml:"metadata_sync"`
+	Authentication Authentication `yaml:"authentication"`
+}
+
+type Authentication struct {
+	RootURL string `yaml:"root_url"`
+}
+
+type MetadataSync struct {
+	Enabled     bool          `yaml:"enabled"`
+	BaseURL     string        `yaml:"base_url"`
+	Username    string        `yaml:"username"`
+	PasswordEnv string        `yaml:"password_env"`
+	Cron        string        `yaml:"cron"`
+	Timeout     time.Duration `yaml:"timeout"`
 }
 
 type Server struct {
@@ -96,6 +112,28 @@ func Load(cfgPath string) (*Config, error) {
 
 // Validate validates the configuration
 func (c *Config) Validate() error {
+	if c.MetadataSync.Enabled {
+		sync := c.MetadataSync
+		u, err := url.Parse(sync.BaseURL)
+		if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+			return fmt.Errorf("metadata_sync.base_url must be an HTTPS URL without credentials, query or fragment")
+		}
+
+		if sync.Username == "" || sync.PasswordEnv == "" {
+			return fmt.Errorf("metadata_sync username and password_env are required")
+		}
+		if sync.Timeout <= 0 {
+			return fmt.Errorf("metadata_sync.timeout must be greater than zero")
+		}
+		schedule, err := cron.ParseStandard(sync.Cron)
+		if err != nil {
+			return fmt.Errorf("metadata_sync.cron: %w", err)
+		}
+		if schedule.Next(time.Now().UTC()).IsZero() {
+			return fmt.Errorf("metadata_sync.cron has no future execution time")
+		}
+	}
+
 	if c.Server.Listen == "" {
 		return fmt.Errorf("server.listen is required")
 	}
@@ -121,6 +159,11 @@ func (c *Config) Validate() error {
 	authURL, err := url.Parse(c.Services.Auth.URL)
 	if err != nil || authURL.Hostname() == "" || (authURL.Scheme != "http" && authURL.Scheme != "https") || authURL.User != nil || authURL.RawQuery != "" || authURL.Fragment != "" {
 		return fmt.Errorf("services.auth.url must be an absolute HTTP(S) userinfo URL without credentials, query or fragment")
+	}
+
+	rootURL, err := url.Parse(c.Authentication.RootURL)
+	if err != nil || rootURL.Hostname() == "" || (rootURL.Scheme != "http" && rootURL.Scheme != "https") || rootURL.User != nil || rootURL.RawQuery != "" || rootURL.Fragment != "" {
+		return fmt.Errorf("authentication.root_url must be an absolute HTTP(S) URL without credentials, query or fragment")
 	}
 
 	mailgun := c.Notifications.Mailgun

@@ -3,6 +3,7 @@ package domain
 import "github.com/google/uuid"
 
 type ImportBatch struct {
+	ResolveSyncedOrganizations bool
 	Groups               []ImportGroup
 	Categories           []CategoryMetadata
 	Organizations        []OrganizationMetadata

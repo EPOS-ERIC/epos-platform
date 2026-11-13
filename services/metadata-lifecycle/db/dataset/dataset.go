@@ -786,16 +786,6 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		return domain.DatasetMetadata{}, fmt.Errorf("list providers: %w", err)
 	}
 
-	providerIDs := make([]uuid.UUID, len(providers))
-	for i, provider := range providers {
-		providerIDs[i] = provider.ID
-	}
-
-	providerContacts, err := q.ListLifecycleOrganizationContactPoints(ctx, providerIDs)
-	if err != nil {
-		return domain.DatasetMetadata{}, fmt.Errorf("list provider contact points: %w", err)
-	}
-
 	contacts, err := q.ListLifecycleDatasetContactPoints(ctx, version.ID)
 	if err != nil {
 		return domain.DatasetMetadata{}, fmt.Errorf("list contact points: %w", err)
@@ -839,14 +829,8 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		result.PersistentIdentifiers = append(result.PersistentIdentifiers, toDomainIdentifier(item.Identifier))
 	}
 
-	contactsByProviderID := make(map[uuid.UUID][]domain.ContactPoint, len(providers))
-	for _, item := range providerContacts {
-		contactsByProviderID[item.OrganizationID] = append(contactsByProviderID[item.OrganizationID], toDomainContactPoint(item.ContactPoint))
-	}
-
 	for _, item := range providers {
 		provider := toDomainOrganizationMetadata(item)
-		provider.ContactPoints = contactsByProviderID[item.ID]
 		result.Providers = append(result.Providers, provider)
 	}
 

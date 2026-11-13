@@ -1016,7 +1016,7 @@ func (m *mapper) organization(source string, active map[string]bool) (domain.Org
 	defer delete(active, source)
 	if err := m.checkSingleValues(source,
 		schemaLegalName, schemaName, schemaAddress, schemaLogo, schemaURL,
-		schemaEmail, schemaLEICode,
+		schemaEmail,
 	); err != nil {
 		return domain.OrganizationMetadata{}, err
 	}
@@ -1025,18 +1025,16 @@ func (m *mapper) organization(source string, active map[string]bool) (domain.Org
 		address = references[0]
 	}
 	result := domain.OrganizationMetadata{
-		ID:            sharedID("organization", source),
-		Name:          m.optionalString(source, schemaLegalName),
-		Street:        stringPtr(m.optionalString(address, schemaStreetAddress)),
-		Locality:      stringPtr(m.optionalString(address, schemaAddressLocality)),
-		PostalCode:    stringPtr(m.optionalString(address, schemaPostalCode)),
-		Country:       stringPtr(m.optionalString(address, schemaAddressCountry)),
-		LogoURL:       stringPtr(m.optionalString(source, schemaLogo)),
-		PageURL:       stringPtr(m.optionalString(source, schemaURL)),
-		Email:         stringPtr(m.optionalString(source, schemaEmail)),
-		LEICode:       stringPtr(m.optionalString(source, schemaLEICode)),
-		ContactPoints: nil,
-		Identifiers:   nil,
+		ID:          sharedID("organization", source),
+		Name:        m.optionalString(source, schemaLegalName),
+		Street:      stringPtr(m.optionalString(address, schemaStreetAddress)),
+		Locality:    stringPtr(m.optionalString(address, schemaAddressLocality)),
+		PostalCode:  stringPtr(m.optionalString(address, schemaPostalCode)),
+		Country:     stringPtr(m.optionalString(address, schemaAddressCountry)),
+		LogoURL:     stringPtr(m.optionalString(source, schemaLogo)),
+		PageURL:     stringPtr(m.optionalString(source, schemaURL)),
+		Email:       stringPtr(m.optionalString(source, schemaEmail)),
+		Identifiers: nil,
 	}
 	if result.Name == "" {
 		result.Name = m.optionalString(source, schemaName)
@@ -1048,13 +1046,6 @@ func (m *mapper) organization(source string, active map[string]bool) (domain.Org
 		if identifier, ok := m.identifier(identifierSource, result.ID, source); ok {
 			result.Identifiers = appendUniqueIdentifier(result.Identifiers, identifier)
 		}
-	}
-	for _, contactSource := range m.graph.refs(source, dcatContactPoint) {
-		contact, ok := m.contactValue(contactSource, source, dcatContactPoint)
-		if !ok {
-			continue
-		}
-		result.ContactPoints = appendUniqueContactPoint(result.ContactPoints, contact)
 	}
 	for _, parentIRI := range m.graph.refs(source, schemaMemberOf) {
 		if active[parentIRI] {

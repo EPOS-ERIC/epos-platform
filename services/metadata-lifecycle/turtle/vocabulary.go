@@ -59,7 +59,6 @@ const (
 	schemaGivenName            = "http://schema.org/givenName"
 	foafLogo                   = "http://xmlns.com/foaf/0.1/logo"
 	foafHomepage               = "http://xmlns.com/foaf/0.1/homepage"
-	schemaLEICode              = "http://schema.org/leiCode"
 	schemaColor                = "http://schema.org/color"
 	schemaOrderItemNumber      = "http://schema.org/orderItemNumber"
 	locnGeometry               = "http://www.w3.org/ns/locn#geometry"

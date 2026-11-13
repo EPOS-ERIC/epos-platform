@@ -996,6 +996,7 @@ type NotificationEventTypePermission struct {
 
 type Organization struct {
 	ID         uuid.UUID
+	RemoteNid  *int64
 	Name       string
 	Street     *string
 	Locality   *string
@@ -1004,12 +1005,6 @@ type Organization struct {
 	LogoUrl    *string
 	PageUrl    *string
 	Email      *string
-	LeiCode    *string
-}
-
-type OrganizationContactPoint struct {
-	OrganizationID uuid.UUID
-	ContactPointID uuid.UUID
 }
 
 type OrganizationIdentifier struct {

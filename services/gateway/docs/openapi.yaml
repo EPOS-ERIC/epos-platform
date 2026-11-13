@@ -29,6 +29,8 @@ servers:
     description: Relative versioned API base path
 
 tags:
+  - name: Capabilities
+    description: Public instance configuration for clients.
   - name: Discovery
     description: Search public catalogue records and authenticated records you may access.
   - name: Resources
@@ -47,6 +49,8 @@ tags:
     description: Manage reusable metadata contact points.
   - name: Organizations
     description: Read and manage reusable metadata organizations.
+  - name: Metadata Sync
+    description: Trigger synchronization of remote metadata.
   - name: Memberships
     description: Request, review, and administer group membership and access.
   - name: Imports
@@ -59,6 +63,35 @@ tags:
     description: Manage conversion plugins and their distribution relations.
 
 paths:
+  /capabilities:
+    get:
+      tags: [Capabilities]
+      summary: Get instance capabilities
+      description: Returns instance configuration, not service health or caller permissions.
+      operationId: getCapabilities
+      security: []
+      responses:
+        "200":
+          description: Instance capabilities
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Capabilities" }
+        default:
+          $ref: "#/components/responses/GatewayError"
+  /metadata/sync:
+    post:
+      tags: [Metadata Sync]
+      summary: Trigger metadata synchronization
+      description: |
+        Requires both global.organization.manage and global.contact_point.manage.
+        Schedules a background sync on the responding Gateway instance. Requests coalesce
+        when a sync is already queued. Returns 503 when metadata synchronization is disabled. Acceptance does not indicate success.
+      operationId: triggerMetadataSync
+      security: [{ bearerAuth: [] }]
+      responses:
+        "202": { description: Metadata synchronization scheduled }
+        default:
+          $ref: "#/components/responses/GatewayError"
   /conversion-plugins:
     get:
       tags: [Conversions]
@@ -907,6 +940,7 @@ paths:
     post:
       tags: [Organizations]
       summary: Create reusable organization
+      description: Returns 403 when organization synchronization is enabled.
       operationId: createOrganization
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -953,6 +987,7 @@ paths:
     put:
       tags: [Organizations]
       summary: Replace organization
+      description: Returns 403 when organization synchronization is enabled.
       operationId: replaceOrganization
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -975,6 +1010,7 @@ paths:
     delete:
       tags: [Organizations]
       summary: Delete organization
+      description: Returns 403 when organization synchronization is enabled.
       operationId: deleteOrganization
       security: [{ bearerAuth: [] }]
       responses:
@@ -2745,6 +2781,30 @@ components:
                 detail: "A required service is unavailable."
 
   schemas:
+    Capabilities:
+      type: object
+      required: [organizations, authentication, notifications]
+      properties:
+        organizations:
+          type: object
+          required: [management]
+          properties:
+            management:
+              type: string
+              enum: [local, remote_sync]
+        authentication:
+          type: object
+          required: [root_url]
+          properties:
+            root_url:
+              type: string
+              description: Browser-reachable authentication root URL.
+        notifications:
+          type: object
+          required: [email_enabled]
+          properties:
+            email_enabled:
+              type: boolean
     ConversionRuntime:
       type: string
       enum: [python, java, binary]
@@ -5266,7 +5326,7 @@ components:
         country: { type: string, nullable: true, minLength: 1 }
     CanonicalOrganization:
       type: object
-      required: [id, name, address, identifiers, parents, contact_point_ids]
+      required: [id, name, address, identifiers, parents]
       properties:
         id: { type: string, format: uuid }
         name: { type: string, minLength: 1 }
@@ -5274,14 +5334,10 @@ components:
         logo_url: { type: string, format: uri, nullable: true, minLength: 1 }
         page_url: { type: string, format: uri, nullable: true, minLength: 1 }
         email: { type: string, format: email, nullable: true, minLength: 1 }
-        lei_code: { type: string, nullable: true, minLength: 1 }
         identifiers:
           type: array
           items: { $ref: "#/components/schemas/Identifier" }
         parents:
-          type: array
-          items: { type: string, format: uuid }
-        contact_point_ids:
           type: array
           items: { type: string, format: uuid }
     CreateOrganizationRequest:
@@ -5294,14 +5350,10 @@ components:
         logo_url: { type: string, format: uri, nullable: true, minLength: 1 }
         page_url: { type: string, format: uri, nullable: true, minLength: 1 }
         email: { type: string, format: email, nullable: true, minLength: 1 }
-        lei_code: { type: string, nullable: true, minLength: 1 }
         identifiers:
           type: array
           items: { $ref: "#/components/schemas/IdentifierInput" }
         parents:
-          type: array
-          items: { type: string, format: uuid }
-        contact_point_ids:
           type: array
           items: { type: string, format: uuid }
     ReplaceOrganizationRequest:
@@ -5313,10 +5365,8 @@ components:
           logo_url,
           page_url,
           email,
-          lei_code,
           identifiers,
           parents,
-          contact_point_ids,
         ]
       additionalProperties: false
       properties:
@@ -5325,14 +5375,10 @@ components:
         logo_url: { type: string, format: uri, nullable: true, minLength: 1 }
         page_url: { type: string, format: uri, nullable: true, minLength: 1 }
         email: { type: string, format: email, nullable: true, minLength: 1 }
-        lei_code: { type: string, nullable: true, minLength: 1 }
         identifiers:
           type: array
           items: { $ref: "#/components/schemas/IdentifierInput" }
         parents:
-          type: array
-          items: { type: string, format: uuid }
-        contact_point_ids:
           type: array
           items: { type: string, format: uuid }
     Group:

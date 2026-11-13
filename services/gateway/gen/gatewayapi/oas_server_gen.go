@@ -94,7 +94,7 @@ type Handler interface {
 	CreateGroupCategory(ctx context.Context, req *CreateCategoryRequest, params CreateGroupCategoryParams) (*Category, error)
 	// CreateOrganization implements createOrganization operation.
 	//
-	// Create reusable organization.
+	// Returns 403 when organization synchronization is enabled.
 	//
 	// POST /organizations
 	CreateOrganization(ctx context.Context, req *CreateOrganizationRequest) (*CanonicalOrganization, error)
@@ -172,7 +172,7 @@ type Handler interface {
 	DeleteGroupMembership(ctx context.Context, params DeleteGroupMembershipParams) error
 	// DeleteOrganization implements deleteOrganization operation.
 	//
-	// Delete organization.
+	// Returns 403 when organization synchronization is enabled.
 	//
 	// DELETE /organizations/{organizationId}
 	DeleteOrganization(ctx context.Context, params DeleteOrganizationParams) error
@@ -219,6 +219,12 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/draft-from-publication
 	DraftFromPublication(ctx context.Context, params DraftFromPublicationParams) (*WriteResult, error)
+	// GetCapabilities implements getCapabilities operation.
+	//
+	// Returns instance configuration, not service health or caller permissions.
+	//
+	// GET /capabilities
+	GetCapabilities(ctx context.Context) (*Capabilities, error)
 	// GetConcept implements getConcept operation.
 	//
 	// Get concept.
@@ -498,7 +504,7 @@ type Handler interface {
 	ReplaceGroupCategory(ctx context.Context, req *ReplaceCategoryRequest, params ReplaceGroupCategoryParams) (*Category, error)
 	// ReplaceOrganization implements replaceOrganization operation.
 	//
-	// Replace organization.
+	// Returns 403 when organization synchronization is enabled.
 	//
 	// PUT /organizations/{organizationId}
 	ReplaceOrganization(ctx context.Context, req *ReplaceOrganizationRequest, params ReplaceOrganizationParams) (*CanonicalOrganization, error)
@@ -591,6 +597,14 @@ type Handler interface {
 	//
 	// POST /conversion-plugins/{pluginId}/sync
 	SyncConversionPlugin(ctx context.Context, params SyncConversionPluginParams) (*ManagedConversionPlugin, error)
+	// TriggerMetadataSync implements triggerMetadataSync operation.
+	//
+	// Requires both global.organization.manage and global.contact_point.manage. Schedules a background
+	// sync on the responding Gateway instance. Requests coalesce when a sync is already queued. Returns
+	// 503 when metadata synchronization is disabled. Acceptance does not indicate success.
+	//
+	// POST /metadata/sync
+	TriggerMetadataSync(ctx context.Context) error
 	// UnblockUser implements unblockUser operation.
 	//
 	// Restore a blocked user to ACTIVE. Requires active global ADMIN.
@@ -633,10 +647,10 @@ type Handler interface {
 	//
 	// POST /resources/{resourceType}/{id}/versions/{versionId}/withdraw
 	WithdrawResourceVersion(ctx context.Context, params WithdrawResourceVersionParams) (*WriteResult, error)
-	// NewError creates *ProblemStatusCode from error returned by handler.
+	// NewError creates *GatewayErrorStatusCode from error returned by handler.
 	//
 	// Used for common default response.
-	NewError(ctx context.Context, err error) *ProblemStatusCode
+	NewError(ctx context.Context, err error) *GatewayErrorStatusCode
 }
 
 // Server implements http server based on OpenAPI v3 specification and

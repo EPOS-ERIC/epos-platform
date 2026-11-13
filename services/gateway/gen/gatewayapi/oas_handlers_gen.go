@@ -238,7 +238,7 @@ func (s *Server) handleAccessDistributionRequest(args [1]string, argsEscaped boo
 		response, err = s.h.AccessDistribution(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -442,7 +442,7 @@ func (s *Server) handleAssignGlobalRoleRequest(args [2]string, argsEscaped bool,
 		err = s.h.AssignGlobalRole(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -651,7 +651,7 @@ func (s *Server) handleAssignGroupRoleRequest(args [3]string, argsEscaped bool, 
 		err = s.h.AssignGroupRole(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -867,7 +867,7 @@ func (s *Server) handleBlockUserRequest(args [1]string, argsEscaped bool, w http
 		err = s.h.BlockUser(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -1076,7 +1076,7 @@ func (s *Server) handleCopyResourceRequest(args [3]string, argsEscaped bool, w h
 		response, err = s.h.CopyResource(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -1276,7 +1276,7 @@ func (s *Server) handleCreateConceptRequest(args [0]string, argsEscaped bool, w 
 		response, err = s.h.CreateConcept(ctx, request)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -1477,7 +1477,7 @@ func (s *Server) handleCreateConfigurationRequest(args [0]string, argsEscaped bo
 		response, err = s.h.CreateConfiguration(ctx, request)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -1677,7 +1677,7 @@ func (s *Server) handleCreateContactPointRequest(args [0]string, argsEscaped boo
 		response, err = s.h.CreateContactPoint(ctx, request)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -1878,7 +1878,7 @@ func (s *Server) handleCreateConversionPluginRequest(args [0]string, argsEscaped
 		response, err = s.h.CreateConversionPlugin(ctx, request)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -2079,7 +2079,7 @@ func (s *Server) handleCreateConversionRelationRequest(args [0]string, argsEscap
 		response, err = s.h.CreateConversionRelation(ctx, request)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -2279,7 +2279,7 @@ func (s *Server) handleCreateGroupRequest(args [0]string, argsEscaped bool, w ht
 		response, err = s.h.CreateGroup(ctx, request)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -2494,7 +2494,7 @@ func (s *Server) handleCreateGroupCategoryRequest(args [1]string, argsEscaped bo
 		response, err = s.h.CreateGroupCategory(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -2521,7 +2521,7 @@ func (s *Server) handleCreateGroupCategoryRequest(args [1]string, argsEscaped bo
 
 // handleCreateOrganizationRequest handles createOrganization operation.
 //
-// Create reusable organization.
+// Returns 403 when organization synchronization is enabled.
 //
 // POST /organizations
 func (s *Server) handleCreateOrganizationRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -2694,7 +2694,7 @@ func (s *Server) handleCreateOrganizationRequest(args [0]string, argsEscaped boo
 		response, err = s.h.CreateOrganization(ctx, request)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -2909,7 +2909,7 @@ func (s *Server) handleCreateResourceRequest(args [1]string, argsEscaped bool, w
 		response, err = s.h.CreateResource(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -3118,7 +3118,7 @@ func (s *Server) handleDecideGroupMembershipRequest(args [3]string, argsEscaped 
 		response, err = s.h.DecideGroupMembership(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -3327,7 +3327,7 @@ func (s *Server) handleDecideGroupRoleRequestRequest(args [3]string, argsEscaped
 		response, err = s.h.DecideGroupRoleRequest(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -3527,7 +3527,7 @@ func (s *Server) handleDeleteConceptRequest(args [1]string, argsEscaped bool, w 
 		err = s.h.DeleteConcept(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -3728,7 +3728,7 @@ func (s *Server) handleDeleteConfigurationRequest(args [1]string, argsEscaped bo
 		err = s.h.DeleteConfiguration(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -3928,7 +3928,7 @@ func (s *Server) handleDeleteContactPointRequest(args [1]string, argsEscaped boo
 		err = s.h.DeleteContactPoint(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -4128,7 +4128,7 @@ func (s *Server) handleDeleteConversionPluginRequest(args [1]string, argsEscaped
 		err = s.h.DeleteConversionPlugin(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -4328,7 +4328,7 @@ func (s *Server) handleDeleteConversionRelationRequest(args [1]string, argsEscap
 		err = s.h.DeleteConversionRelation(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -4528,7 +4528,7 @@ func (s *Server) handleDeleteGroupRequest(args [1]string, argsEscaped bool, w ht
 		err = s.h.DeleteGroup(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -4732,7 +4732,7 @@ func (s *Server) handleDeleteGroupCategoryRequest(args [2]string, argsEscaped bo
 		err = s.h.DeleteGroupCategory(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -4939,7 +4939,7 @@ func (s *Server) handleDeleteGroupMembershipRequest(args [2]string, argsEscaped 
 		err = s.h.DeleteGroupMembership(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -4966,7 +4966,7 @@ func (s *Server) handleDeleteGroupMembershipRequest(args [2]string, argsEscaped 
 
 // handleDeleteOrganizationRequest handles deleteOrganization operation.
 //
-// Delete organization.
+// Returns 403 when organization synchronization is enabled.
 //
 // DELETE /organizations/{organizationId}
 func (s *Server) handleDeleteOrganizationRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -5139,7 +5139,7 @@ func (s *Server) handleDeleteOrganizationRequest(args [1]string, argsEscaped boo
 		err = s.h.DeleteOrganization(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -5348,7 +5348,7 @@ func (s *Server) handleDiscardResourceDraftVersionRequest(args [3]string, argsEs
 		err = s.h.DiscardResourceDraftVersion(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -5592,7 +5592,7 @@ func (s *Server) handleDiscoverResourcesRequest(args [0]string, argsEscaped bool
 		response, err = s.h.DiscoverResources(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -5800,7 +5800,7 @@ func (s *Server) handleDownloadDistributionRequest(args [1]string, argsEscaped b
 		response, err = s.h.DownloadDistribution(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -6005,7 +6005,7 @@ func (s *Server) handleDraftFromArchiveRequest(args [2]string, argsEscaped bool,
 		response, err = s.h.DraftFromArchive(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -6210,7 +6210,7 @@ func (s *Server) handleDraftFromPublicationRequest(args [2]string, argsEscaped b
 		response, err = s.h.DraftFromPublication(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -6227,6 +6227,141 @@ func (s *Server) handleDraftFromPublicationRequest(args [2]string, argsEscaped b
 	}
 
 	if err := encodeDraftFromPublicationResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleGetCapabilitiesRequest handles getCapabilities operation.
+//
+// Returns instance configuration, not service health or caller permissions.
+//
+// GET /capabilities
+func (s *Server) handleGetCapabilitiesRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getCapabilities"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/capabilities"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetCapabilitiesOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(attrs...)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err error
+	)
+
+	var rawBody []byte
+
+	var response *Capabilities
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    GetCapabilitiesOperation,
+			OperationSummary: "Get instance capabilities",
+			OperationID:      "getCapabilities",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params:           middleware.Parameters{},
+			Raw:              r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = struct{}
+			Response = *Capabilities
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.GetCapabilities(ctx)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.GetCapabilities(ctx)
+	}
+	if err != nil {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
+		return
+	}
+
+	if err := encodeGetCapabilitiesResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -6364,7 +6499,7 @@ func (s *Server) handleGetConceptRequest(args [1]string, argsEscaped bool, w htt
 		response, err = s.h.GetConcept(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -6566,7 +6701,7 @@ func (s *Server) handleGetConfigurationRequest(args [1]string, argsEscaped bool,
 		response, err = s.h.GetConfiguration(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -6766,7 +6901,7 @@ func (s *Server) handleGetContactPointRequest(args [1]string, argsEscaped bool, 
 		response, err = s.h.GetContactPoint(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -6967,7 +7102,7 @@ func (s *Server) handleGetConversionPluginRequest(args [1]string, argsEscaped bo
 		response, err = s.h.GetConversionPlugin(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -7167,7 +7302,7 @@ func (s *Server) handleGetConversionRelationRequest(args [1]string, argsEscaped 
 		response, err = s.h.GetConversionRelation(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -7321,7 +7456,7 @@ func (s *Server) handleGetGroupRequest(args [1]string, argsEscaped bool, w http.
 		response, err = s.h.GetGroup(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -7479,7 +7614,7 @@ func (s *Server) handleGetGroupCategoryRequest(args [2]string, argsEscaped bool,
 		response, err = s.h.GetGroupCategory(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -7633,7 +7768,7 @@ func (s *Server) handleGetOrganizationRequest(args [1]string, argsEscaped bool, 
 		response, err = s.h.GetOrganization(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -7842,7 +7977,7 @@ func (s *Server) handleGetResourceVersionRequest(args [3]string, argsEscaped boo
 		response, err = s.h.GetResourceVersion(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -8043,7 +8178,7 @@ func (s *Server) handleGetUserRequest(args [1]string, argsEscaped bool, w http.R
 		response, err = s.h.GetUser(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -8247,7 +8382,7 @@ func (s *Server) handleGrantGlobalPermissionRequest(args [2]string, argsEscaped 
 		err = s.h.GrantGlobalPermission(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -8456,7 +8591,7 @@ func (s *Server) handleGrantGroupPermissionRequest(args [3]string, argsEscaped b
 		err = s.h.GrantGroupPermission(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -8658,7 +8793,7 @@ func (s *Server) handleImportTurtleMetadataRequest(args [0]string, argsEscaped b
 		response, err = s.h.ImportTurtleMetadata(ctx, request)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -8793,7 +8928,7 @@ func (s *Server) handleListConceptsRequest(args [0]string, argsEscaped bool, w h
 		response, err = s.h.ListConcepts(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -8998,7 +9133,7 @@ func (s *Server) handleListConfigurationsRequest(args [0]string, argsEscaped boo
 		response, err = s.h.ListConfigurations(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -9183,7 +9318,7 @@ func (s *Server) handleListContactPointsRequest(args [0]string, argsEscaped bool
 		response, err = s.h.ListContactPoints(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -9369,7 +9504,7 @@ func (s *Server) handleListConversionPluginsRequest(args [0]string, argsEscaped 
 		response, err = s.h.ListConversionPlugins(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -9554,7 +9689,7 @@ func (s *Server) handleListConversionRelationsRequest(args [0]string, argsEscape
 		response, err = s.h.ListConversionRelations(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -9754,7 +9889,7 @@ func (s *Server) handleListDistributionConversionRelationsRequest(args [1]string
 		response, err = s.h.ListDistributionConversionRelations(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -9908,7 +10043,7 @@ func (s *Server) handleListGroupCategoriesRequest(args [1]string, argsEscaped bo
 		response, err = s.h.ListGroupCategories(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -10108,7 +10243,7 @@ func (s *Server) handleListGroupMembershipsRequest(args [1]string, argsEscaped b
 		response, err = s.h.ListGroupMemberships(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -10243,7 +10378,7 @@ func (s *Server) handleListGroupsRequest(args [0]string, argsEscaped bool, w htt
 		response, err = s.h.ListGroups(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -10379,7 +10514,7 @@ func (s *Server) handleListNotificationTopicsRequest(args [0]string, argsEscaped
 		response, err = s.h.ListNotificationTopics(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -10515,7 +10650,7 @@ func (s *Server) handleListOfficialConfigurationsRequest(args [0]string, argsEsc
 		response, err = s.h.ListOfficialConfigurations(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -10650,7 +10785,7 @@ func (s *Server) handleListOrganizationsRequest(args [0]string, argsEscaped bool
 		response, err = s.h.ListOrganizations(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -10785,7 +10920,7 @@ func (s *Server) handleListPermissionsRequest(args [0]string, argsEscaped bool, 
 		response, err = s.h.ListPermissions(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -10990,7 +11125,7 @@ func (s *Server) handleListResourceVersionsRequest(args [2]string, argsEscaped b
 		response, err = s.h.ListResourceVersions(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -11193,7 +11328,7 @@ func (s *Server) handleListUserNotificationSubscriptionsRequest(args [1]string, 
 		response, err = s.h.ListUserNotificationSubscriptions(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -11378,7 +11513,7 @@ func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http
 		response, err = s.h.ListUsers(ctx)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -11608,7 +11743,7 @@ func (s *Server) handlePrepareDistributionRequest(args [1]string, argsEscaped bo
 		response, err = s.h.PrepareDistribution(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -11816,7 +11951,7 @@ func (s *Server) handlePublishResourceVersionRequest(args [3]string, argsEscaped
 		response, err = s.h.PublishResourceVersion(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -12039,7 +12174,7 @@ func (s *Server) handleRejectResourceVersionRequest(args [3]string, argsEscaped 
 		response, err = s.h.RejectResourceVersion(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -12243,7 +12378,7 @@ func (s *Server) handleRemoveGlobalRoleRequest(args [2]string, argsEscaped bool,
 		err = s.h.RemoveGlobalRole(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -12452,7 +12587,7 @@ func (s *Server) handleRemoveGroupRoleRequest(args [3]string, argsEscaped bool, 
 		err = s.h.RemoveGroupRole(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -12660,7 +12795,7 @@ func (s *Server) handleReopenResourceVersionRequest(args [3]string, argsEscaped 
 		response, err = s.h.ReopenResourceVersion(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -12875,7 +13010,7 @@ func (s *Server) handleReplaceConceptRequest(args [1]string, argsEscaped bool, w
 		response, err = s.h.ReplaceConcept(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -13092,7 +13227,7 @@ func (s *Server) handleReplaceConfigurationRequest(args [1]string, argsEscaped b
 		response, err = s.h.ReplaceConfiguration(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -13307,7 +13442,7 @@ func (s *Server) handleReplaceContactPointRequest(args [1]string, argsEscaped bo
 		response, err = s.h.ReplaceContactPoint(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -13523,7 +13658,7 @@ func (s *Server) handleReplaceConversionPluginRequest(args [1]string, argsEscape
 		response, err = s.h.ReplaceConversionPlugin(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -13739,7 +13874,7 @@ func (s *Server) handleReplaceConversionRelationRequest(args [1]string, argsEsca
 		response, err = s.h.ReplaceConversionRelation(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -13954,7 +14089,7 @@ func (s *Server) handleReplaceGroupRequest(args [1]string, argsEscaped bool, w h
 		response, err = s.h.ReplaceGroup(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -14173,7 +14308,7 @@ func (s *Server) handleReplaceGroupCategoryRequest(args [2]string, argsEscaped b
 		response, err = s.h.ReplaceGroupCategory(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -14200,7 +14335,7 @@ func (s *Server) handleReplaceGroupCategoryRequest(args [2]string, argsEscaped b
 
 // handleReplaceOrganizationRequest handles replaceOrganization operation.
 //
-// Replace organization.
+// Returns 403 when organization synchronization is enabled.
 //
 // PUT /organizations/{organizationId}
 func (s *Server) handleReplaceOrganizationRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -14388,7 +14523,7 @@ func (s *Server) handleReplaceOrganizationRequest(args [1]string, argsEscaped bo
 		response, err = s.h.ReplaceOrganization(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -14613,7 +14748,7 @@ func (s *Server) handleReplaceResourceDraftVersionRequest(args [2]string, argsEs
 		response, err = s.h.ReplaceResourceDraftVersion(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -14829,7 +14964,7 @@ func (s *Server) handleRequestDistributionContactRequest(args [1]string, argsEsc
 		response, err = s.h.RequestDistributionContact(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -15045,7 +15180,7 @@ func (s *Server) handleRequestDistributionConversionRequest(args [1]string, args
 		err = s.h.RequestDistributionConversion(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -15260,7 +15395,7 @@ func (s *Server) handleRequestGroupMembershipRequest(args [1]string, argsEscaped
 		response, err = s.h.RequestGroupMembership(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -15475,7 +15610,7 @@ func (s *Server) handleRequestGroupRoleRequest(args [1]string, argsEscaped bool,
 		response, err = s.h.RequestGroupRole(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -15695,7 +15830,7 @@ func (s *Server) handleRequestResourceContactRequest(args [2]string, argsEscaped
 		response, err = s.h.RequestResourceContact(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -15899,7 +16034,7 @@ func (s *Server) handleRevokeGlobalPermissionRequest(args [2]string, argsEscaped
 		err = s.h.RevokeGlobalPermission(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -16108,7 +16243,7 @@ func (s *Server) handleRevokeGroupPermissionRequest(args [3]string, argsEscaped 
 		err = s.h.RevokeGroupPermission(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -16324,7 +16459,7 @@ func (s *Server) handleSetConfigurationOfficialStatusRequest(args [1]string, arg
 		response, err = s.h.SetConfigurationOfficialStatus(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -16532,7 +16667,7 @@ func (s *Server) handleSubmitResourceVersionRequest(args [3]string, argsEscaped 
 		response, err = s.h.SubmitResourceVersion(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -16740,7 +16875,7 @@ func (s *Server) handleSubscribeGroupUserNotificationRequest(args [3]string, arg
 		err = s.h.SubscribeGroupUserNotification(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -16944,7 +17079,7 @@ func (s *Server) handleSubscribeUserNotificationRequest(args [2]string, argsEsca
 		err = s.h.SubscribeUserNotification(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -17144,7 +17279,7 @@ func (s *Server) handleSyncConversionPluginRequest(args [1]string, argsEscaped b
 		response, err = s.h.SyncConversionPlugin(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -17161,6 +17296,193 @@ func (s *Server) handleSyncConversionPluginRequest(args [1]string, argsEscaped b
 	}
 
 	if err := encodeSyncConversionPluginResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleTriggerMetadataSyncRequest handles triggerMetadataSync operation.
+//
+// Requires both global.organization.manage and global.contact_point.manage. Schedules a background
+// sync on the responding Gateway instance. Requests coalesce when a sync is already queued. Returns
+// 503 when metadata synchronization is disabled. Acceptance does not indicate success.
+//
+// POST /metadata/sync
+func (s *Server) handleTriggerMetadataSyncRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("triggerMetadataSync"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/metadata/sync"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), TriggerMetadataSyncOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(attrs...)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: TriggerMetadataSyncOperation,
+			ID:   "triggerMetadataSync",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, TriggerMetadataSyncOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+					defer recordError("Security:BearerAuth", err)
+				}
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
+				defer recordError("Security", err)
+			}
+			return
+		}
+	}
+
+	var rawBody []byte
+
+	var response *TriggerMetadataSyncAccepted
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    TriggerMetadataSyncOperation,
+			OperationSummary: "Trigger metadata synchronization",
+			OperationID:      "triggerMetadataSync",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params:           middleware.Parameters{},
+			Raw:              r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = struct{}
+			Response = *TriggerMetadataSyncAccepted
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				err = s.h.TriggerMetadataSync(ctx)
+				return response, err
+			},
+		)
+	} else {
+		err = s.h.TriggerMetadataSync(ctx)
+	}
+	if err != nil {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
+		return
+	}
+
+	if err := encodeTriggerMetadataSyncResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -17344,7 +17666,7 @@ func (s *Server) handleUnblockUserRequest(args [1]string, argsEscaped bool, w ht
 		err = s.h.UnblockUser(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -17552,7 +17874,7 @@ func (s *Server) handleUnpublishResourceVersionRequest(args [3]string, argsEscap
 		response, err = s.h.UnpublishResourceVersion(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -17760,7 +18082,7 @@ func (s *Server) handleUnsubscribeGroupUserNotificationRequest(args [3]string, a
 		err = s.h.UnsubscribeGroupUserNotification(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -17964,7 +18286,7 @@ func (s *Server) handleUnsubscribeUserNotificationRequest(args [2]string, argsEs
 		err = s.h.UnsubscribeUserNotification(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -18164,7 +18486,7 @@ func (s *Server) handleWithdrawGroupMembershipRequestRequest(args [1]string, arg
 		err = s.h.WithdrawGroupMembershipRequest(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -18368,7 +18690,7 @@ func (s *Server) handleWithdrawGroupRoleRequestRequest(args [2]string, argsEscap
 		err = s.h.WithdrawGroupRoleRequest(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}
@@ -18576,7 +18898,7 @@ func (s *Server) handleWithdrawResourceVersionRequest(args [3]string, argsEscape
 		response, err = s.h.WithdrawResourceVersion(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
+		if errRes, ok := errors.Into[*GatewayErrorStatusCode](err); ok {
 			if err := encodeErrorResponse(errRes, w, span); err != nil {
 				defer recordError("Internal", err)
 			}

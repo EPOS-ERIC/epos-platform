@@ -629,7 +629,6 @@ class AuthorizationContractTest(unittest.TestCase):
                 {"type": "contract-test", "value": f"organization-{suffix}"}
             ],
             "parents": [],
-            "contact_point_ids": [],
         }
         denied_organization_create = denied.post(
             "/organizations",
@@ -649,7 +648,6 @@ class AuthorizationContractTest(unittest.TestCase):
             "logo_url": None,
             "page_url": None,
             "email": None,
-            "lei_code": None,
         }
         denied_organization_replace = denied.put(
             "/organizations/{organizationId}",

@@ -100,13 +100,13 @@ Canonical organizations, contact points, categories, and groups may be deleted d
 
 Canonical deletion is a direct atomic operation returning `204 No Content`. Clients manage any impact preview before requesting deletion. The metadata lifecycle unlinks every reference and deletes the canonical entity in one transaction. Deletion remains an explicit exception to version immutability and may change public and historical representations.
 
-Category deletion removes selected category, complete descendant subtree, all hierarchy links, and all dataset/software links to any category in subtree. Organization deletion removes its resource and hierarchy links, deletes its owned identifiers, then deletes organization; related organizations remain. Contact-point deletion removes all organization, dataset-version, software-version, and web-service links, then deletes contact point.
+Category deletion removes selected category, complete descendant subtree, all hierarchy links, and all dataset/software links to any category in subtree. Organization deletion removes its resource and hierarchy links, deletes its owned identifiers, then deletes organization; related organizations remain. Contact-point deletion removes all dataset-version, software-version, and web-service links, then deletes contact point.
 
 Group deletion fails while any logical dataset, software application, or software source code belongs to group. Otherwise it deletes the group, canonical categories, memberships, group role assignments, grants, requests, and group notification subscriptions.
 
 ### Organizations
 
-Organizations are canonical live entities managed directly in metadata lifecycle. They have no draft, submission, review, publication, archival, or rejection lifecycle.
+Organizations are canonical live entities with no draft, submission, review, publication, archival, or rejection lifecycle. In system-managed mode, they are managed directly in metadata lifecycle.
 
 | Action             | Required access              | Effect                                                         |
 | ------------------ | ---------------------------- | -------------------------------------------------------------- |
@@ -116,9 +116,11 @@ Organizations are canonical live entities managed directly in metadata lifecycle
 | Manage hierarchy   | `global.organization.manage` | Adds or removes parent-child organization links.               |
 | Delete             | `global.organization.manage` | Requires destructive-deletion impact warning and confirmation. |
 
-Dataset-version providers and software-version creators may reference multiple organizations. Organizations may reference multiple contact points. Version-owned web service may reference zero or one provider organization. All relations use local organization UUID foreign keys.
+Dataset-version providers and software-version creators may reference multiple organizations. Version-owned web service may reference zero or one provider organization. All relations use local organization UUID foreign keys.
 
 Organization hierarchy allows multiple parents. Direct self-links and indirect cycles are forbidden.
+
+In synced mode, Gateway periodically mirrors remote organizations by NID, preserving local UUIDs and replacing parent links. Gateway rejects organization create, edit, and delete requests. Applying a snapshot is transactional and deletes missing synced organizations and their links; failed fetches do not apply a snapshot.
 
 ### Contact Points
 
@@ -130,15 +132,13 @@ Contact points are canonical live entities managed directly in metadata lifecycl
 | Create/edit | `global.contact_point.manage` | Change becomes visible in every dataset, software-version, and web-service reference. |
 | Delete      | `global.contact_point.manage` | Requires destructive-deletion impact warning and confirmation.                        |
 
-Dataset version, software version, and version-owned web service may each reference zero or more contact points. Organizations may also reference zero or more canonical contact points. Duplicate contact-point link on same owner is forbidden. Editors may change resource contact-point links inside draft but cannot create or edit canonical contact points. Contact points, including those referenced by otherwise public resources, are returned only to an active, unblocked user with active membership in at least one group. Global `ADMIN` may read them without membership.
+Dataset version, software version, and version-owned web service may each reference zero or more contact points. Duplicate contact-point link on same owner is forbidden. Editors may change resource contact-point links inside draft but cannot create or edit canonical contact points. Contact points, including those referenced by otherwise public resources, are returned only to an active, unblocked user with active membership in at least one group. Global `ADMIN` may read them without membership.
 
 ### Identifiers
 
 Identifier is owned value, not shared canonical entity. Dataset version, organization, software-application version, or software-source-code version may own zero or more identifiers. Each identifier has exactly one owner and owner never changes.
 
 Creating draft clones published/archived version identifiers. Cross-group resource copy also clones identifiers. Every clone receives new internal ID while preserving type and value. Identical identifier content is allowed under different owners. Editing identifier affects only owner. Deleting owner deletes owned identifiers.
-
-Future external organization management and migration are outside this document.
 
 ### Categories
 

@@ -186,18 +186,16 @@ func toDomainCategoryMetadata(value sqlc.ListLifecycleDatasetCategoriesRow) doma
 
 func toDomainOrganizationMetadata(value sqlc.Organization) domain.OrganizationMetadata {
 	return domain.OrganizationMetadata{
-		ID:            value.ID,
-		Name:          value.Name,
-		Street:        value.Street,
-		Locality:      value.Locality,
-		PostalCode:    value.PostalCode,
-		Country:       value.Country,
-		LogoURL:       value.LogoUrl,
-		PageURL:       value.PageUrl,
-		Email:         value.Email,
-		LEICode:       value.LeiCode,
-		ContactPoints: nil,
-		Identifiers:   nil,
+		ID:          value.ID,
+		Name:        value.Name,
+		Street:      value.Street,
+		Locality:    value.Locality,
+		PostalCode:  value.PostalCode,
+		Country:     value.Country,
+		LogoURL:     value.LogoUrl,
+		PageURL:     value.PageUrl,
+		Email:       value.Email,
+		Identifiers: nil,
 	}
 }
 

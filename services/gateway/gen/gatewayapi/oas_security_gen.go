@@ -109,6 +109,7 @@ var operationRolesBearerAuth = map[string][]string{
 	SubscribeGroupUserNotificationOperation:      []string{},
 	SubscribeUserNotificationOperation:           []string{},
 	SyncConversionPluginOperation:                []string{},
+	TriggerMetadataSyncOperation:                 []string{},
 	UnblockUserOperation:                         []string{},
 	UnpublishResourceVersionOperation:            []string{},
 	UnsubscribeGroupUserNotificationOperation:    []string{},

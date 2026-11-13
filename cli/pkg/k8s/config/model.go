@@ -39,10 +39,11 @@ type AAI struct {
 
 // Gateway configures gateway URLs and auth integrations.
 type Gateway struct {
-	AAI     AAI     `yaml:"aai"`
-	BaseURL string  `yaml:"base_url"`
-	TLS     TLS     `yaml:"tls"`
-	Mailgun Mailgun `yaml:"mailgun"`
+	AAI          AAI                 `yaml:"aai"`
+	BaseURL      string              `yaml:"base_url"`
+	TLS          TLS                 `yaml:"tls"`
+	Mailgun      Mailgun             `yaml:"mailgun"`
+	MetadataSync common.MetadataSync `yaml:"metadata_sync"`
 }
 
 type Mailgun struct {
