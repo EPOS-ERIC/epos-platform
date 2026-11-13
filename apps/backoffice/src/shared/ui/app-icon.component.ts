@@ -27,6 +27,7 @@ export type IconName =
   | 'warning'
   | 'sun'
   | 'moon'
+  | 'power'
   | 'join-group';
 
 @Component({

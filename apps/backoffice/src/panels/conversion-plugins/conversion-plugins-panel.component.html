@@ -1,0 +1,209 @@
+<section class="plugins-card app-card">
+  <div class="plugins-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">Administration</p>
+      <h2>Conversion Plugins</h2>
+      <p class="subtitle app-muted">Plugins registered to convert and process distribution formats.</p>
+    </div>
+    <div class="plugins-header-actions">
+      <label class="plugin-search">
+        <span class="app-visually-hidden">Search conversion plugins</span>
+        <input class="app-input" type="search" placeholder="Search plugins" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" />
+      </label>
+      <button type="button" class="app-button app-button--primary add-plugin-button" (click)="openCreateEditor()">
+        <span aria-hidden="true">+</span>
+        Add New Plugin
+      </button>
+    </div>
+  </div>
+
+  @if (loadError()) {
+    <div class="plugins-message plugins-message--error">{{ loadError() }}</div>
+  } @else if (loading()) {
+    <div class="plugins-message">Loading conversion plugins...</div>
+  } @else if (filteredPlugins().length) {
+    @if (syncError()) {
+      <div class="plugins-message plugins-message--error">{{ syncError() }}</div>
+    }
+    @if (relationsError()) {
+      <div class="plugins-message plugins-message--error">{{ relationsError() }}</div>
+    }
+    <ul class="plugin-list">
+      @for (plugin of paginatedPlugins(); track plugin.id) {
+        <li class="plugin-item">
+          <div class="plugin-summary">
+            <span class="plugin-mark" aria-hidden="true">{{ plugin.name.charAt(0).toUpperCase() }}</span>
+            <div>
+              <div class="plugin-title">
+                <h3>{{ plugin.name }}</h3>
+                <span class="status" [class.status--success]="plugin.enabled" [class.status--muted]="!plugin.enabled">{{ plugin.enabled ? 'Enabled' : 'Disabled' }}</span>
+                <span class="status" [class.status--success]="plugin.installed" [class.status--danger]="!plugin.installed">{{ plugin.installed ? 'Installed' : 'Not installed' }}</span>
+              </div>
+              @if (plugin.description) {
+                <p>{{ plugin.description }}</p>
+              }
+              <div class="plugin-meta">
+                <span>{{ plugin.runtime }}</span>
+                <span>Branch: {{ plugin.branch }}</span>
+                @if (plugin.installed_commit) {
+                  <span>Commit: {{ plugin.installed_commit.slice(0, 8) }}</span>
+                }
+                <a [href]="plugin.repository" target="_blank" rel="noopener noreferrer">Repository</a>
+              </div>
+            </div>
+          </div>
+          <div class="plugin-actions">
+            <button
+              type="button"
+              class="app-button app-button--ghost"
+              (click)="openRelationsDialog(plugin)"
+              [disabled]="relationsLoading() || !!relationsError()"
+            >
+              {{ relationsLoading() ? 'Loading distributions...' : 'Distributions (' + distributionCount(plugin.id) + ')' }}
+            </button>
+            <button type="button" class="app-button app-button--ghost" (click)="syncPlugin(plugin)" [disabled]="!!syncingPluginId()">
+              {{ syncingPluginId() === plugin.id ? 'Syncing...' : 'Sync' }}
+            </button>
+            <button type="button" class="app-button app-button--ghost" (click)="openEditEditor(plugin)" [disabled]="!!syncingPluginId()">Edit</button>
+            <button type="button" class="app-button plugin-delete-button" (click)="openDeleteDialog(plugin)" [disabled]="!!syncingPluginId()">Remove</button>
+          </div>
+        </li>
+      }
+    </ul>
+    <app-list-pagination
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      [totalItems]="filteredPlugins().length"
+      itemLabel="plugins"
+      ariaLabel="Conversion plugins pagination"
+      (currentPageChange)="setPage($event)"
+      (pageSizeChange)="changePageSize($event)"
+    />
+  } @else {
+    <div class="plugins-message">{{ plugins().length ? 'No plugins match the search.' : 'No conversion plugins found.' }}</div>
+  }
+</section>
+
+@if (relationsPlugin(); as plugin) {
+  <div class="plugin-backdrop" (click)="closeRelationsDialog()">
+    <section class="plugin-dialog relations-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="relations-dialog-title" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow app-badge app-badge--primary">Plugin distributions</p>
+          <h2 id="relations-dialog-title">{{ plugin.name }}</h2>
+          <p class="subtitle app-muted">
+            {{ distributionCount(plugin.id) }} {{ distributionCount(plugin.id) === 1 ? 'distribution' : 'distributions' }} ·
+            {{ relationCount(plugin.id) }} {{ relationCount(plugin.id) === 1 ? 'relation' : 'relations' }}
+          </p>
+        </div>
+        <button type="button" class="app-button app-button--ghost" (click)="closeRelationsDialog()">Close</button>
+      </div>
+
+      @if (distributionRelationGroups().length) {
+        <div class="distribution-relations">
+          @for (group of distributionRelationGroups(); track group.distributionId) {
+            <section class="distribution-relation-group">
+              <div class="distribution-relation-header">
+                <span>Distribution</span>
+                <code>{{ group.distributionId }}</code>
+              </div>
+              <div class="relation-list">
+                @for (relation of group.relations; track relation.id) {
+                  <div class="relation-row">
+                    <code>{{ relation.input_format }}</code>
+                    <span aria-hidden="true">→</span>
+                    <code>{{ relation.output_format }}</code>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+        </div>
+      } @else {
+        <div class="plugins-message">This plugin is not associated with any distributions.</div>
+      }
+    </section>
+  </div>
+}
+
+@if (editorOpen()) {
+  <div class="plugin-backdrop" (click)="closeEditor()">
+    <section class="plugin-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="plugin-dialog-title" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow app-badge app-badge--primary">{{ editingPlugin() ? 'Edit plugin' : 'New plugin' }}</p>
+          <h2 id="plugin-dialog-title">{{ editingPlugin() ? 'Edit conversion plugin' : 'Register conversion plugin' }}</h2>
+        </div>
+        <button type="button" class="app-button app-button--ghost" (click)="closeEditor()" [disabled]="editorSaving()">Close</button>
+      </div>
+
+      @if (editorError()) {
+        <div class="plugins-message plugins-message--error">{{ editorError() }}</div>
+      }
+
+      <form class="plugin-form" #pluginEditorForm="ngForm" (ngSubmit)="savePlugin()">
+        <label class="form-field">
+          <span>Name *</span>
+          <input class="app-input" name="name" required [(ngModel)]="pluginForm.name" />
+        </label>
+        <label class="form-field">
+          <span>Runtime *</span>
+          <select class="app-input" name="runtime" required [(ngModel)]="pluginForm.runtime">
+            @for (runtime of runtimes; track runtime) {
+              <option [value]="runtime">{{ runtime }}</option>
+            }
+          </select>
+        </label>
+        <label class="form-field form-field--wide">
+          <span>Description</span>
+          <textarea class="app-input" name="description" rows="3" [(ngModel)]="pluginForm.description"></textarea>
+        </label>
+        <label class="form-field form-field--wide">
+          <span>Repository URL *</span>
+          <input class="app-input" name="repository" type="url" required [(ngModel)]="pluginForm.repository" />
+        </label>
+        <label class="form-field">
+          <span>Branch *</span>
+          <input class="app-input" name="branch" required [(ngModel)]="pluginForm.branch" />
+        </label>
+        @if (editingPlugin()) {
+          <label class="plugin-enabled-field">
+            <input name="enabled" type="checkbox" [(ngModel)]="pluginForm.enabled" />
+            <span>Enabled</span>
+          </label>
+        }
+        <label class="form-field form-field--wide">
+          <span>Arguments</span>
+          <textarea class="app-input plugin-arguments" name="arguments" rows="4" placeholder="One argument per line" [(ngModel)]="pluginForm.arguments"></textarea>
+          <small>Enter one command-line argument per line.</small>
+        </label>
+        <div class="dialog-actions form-field--wide">
+          <button type="button" class="app-button app-button--ghost" (click)="closeEditor()" [disabled]="editorSaving()">Cancel</button>
+          <button type="submit" class="app-button app-button--primary" [disabled]="pluginEditorForm.invalid || editorSaving()">
+            {{ editorSaving() ? 'Saving...' : (editingPlugin() ? 'Save changes' : 'Register plugin') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
+
+@if (pendingDelete(); as plugin) {
+  <div class="plugin-backdrop" (click)="closeDeleteDialog()">
+    <section class="plugin-dialog delete-dialog app-card" role="alertdialog" aria-modal="true" aria-labelledby="delete-plugin-title" (click)="$event.stopPropagation()">
+      <p class="eyebrow app-badge app-badge--danger">Remove plugin</p>
+      <h2 id="delete-plugin-title">Remove {{ plugin.name }}?</h2>
+      <p class="subtitle app-muted">This removes the plugin, its conversion relations, and its local installation. This operation cannot be undone.</p>
+      @if (deleteError()) {
+        <div class="plugins-message plugins-message--error">{{ deleteError() }}</div>
+      }
+      <div class="dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="closeDeleteDialog()" [disabled]="!!deletingPluginId()">Cancel</button>
+        <button type="button" class="app-button plugin-delete-button" (click)="deletePlugin()" [disabled]="!!deletingPluginId()">
+          {{ deletingPluginId() ? 'Removing...' : 'Remove plugin' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

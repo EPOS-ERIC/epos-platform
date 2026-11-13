@@ -8,10 +8,11 @@ import { GlobalContactPointsPanelComponent } from '../../panels/global-contact-p
 import { GlobalGroupsPanelComponent } from '../../panels/global-groups/global-groups-panel.component';
 import { GlobalMembersPanelComponent } from '../../panels/global-members/global-members-panel.component';
 import { GlobalOrganizationsComponent } from '../../panels/global-organizations/global-organizations.component';
+import { ConversionPluginsPanelComponent } from '../../panels/conversion-plugins/conversion-plugins-panel.component';
 import { GlobalRequestsPanelComponent } from '../../panels/global-requests/global-requests-panel.component';
 import { AppIconComponent, type IconName } from '../../shared/ui/app-icon.component';
 
-type GlobalManagePanel = 'requests' | 'members' | 'contact-points' | 'categories' | 'organizations';
+type GlobalManagePanel = 'requests' | 'members' | 'contact-points' | 'categories' | 'organizations' | 'conversions';
 
 type GlobalManageDestination = {
   panel: GlobalManagePanel;
@@ -25,12 +26,13 @@ const GLOBAL_MANAGE_DESTINATIONS: readonly GlobalManageDestination[] = [
   { panel: 'members', title: 'Members', description: 'Manage users, group access, permissions, and global notifications.', icon: 'users' },
   { panel: 'contact-points', title: 'Contact Points', description: 'Manage the contact points available across the platform.', icon: 'at-sign' },
   { panel: 'categories', title: 'Groups & Categories', description: 'Manage platform groups and their category hierarchies.', icon: 'tags' },
-  { panel: 'organizations', title: 'Organizations', description: 'Maintain the canonical organizations used by resources.', icon: 'building' }
+  { panel: 'organizations', title: 'Organizations', description: 'Maintain the canonical organizations used by resources.', icon: 'building' },
+  { panel: 'conversions', title: 'Conversions', description: 'Inspect the conversion plugins available to process distributions.', icon: 'power' }
 ];
 
 @Component({
   selector: 'app-global-manage-page',
-  imports: [AppIconComponent, CategoriesPanelComponent, GlobalContactPointsPanelComponent, GlobalGroupsPanelComponent, GlobalMembersPanelComponent, GlobalOrganizationsComponent, GlobalRequestsPanelComponent, RouterLink],
+  imports: [AppIconComponent, CategoriesPanelComponent, ConversionPluginsPanelComponent, GlobalContactPointsPanelComponent, GlobalGroupsPanelComponent, GlobalMembersPanelComponent, GlobalOrganizationsComponent, GlobalRequestsPanelComponent, RouterLink],
   templateUrl: './global-manage-page.component.html',
   styleUrl: './global-manage-page.component.css'
 })
@@ -52,6 +54,7 @@ export class GlobalManagePageComponent {
   protected readonly canManageCategories = computed(() => this.hasPermission('global.category.manage'));
   protected readonly canManageGroups = computed(() => this.hasPermission('global.group.manage'));
   protected readonly canManageOrganizations = computed(() => this.hasPermission('global.organization.manage'));
+  protected readonly canManageConversions = computed(() => this.hasPermission('global.converter.manage'));
   protected readonly destinations = computed(() =>
     GLOBAL_MANAGE_DESTINATIONS.filter(({ panel }) => this.canAccessPanel(panel))
   );
@@ -70,6 +73,7 @@ export class GlobalManagePageComponent {
       case 'contact-points': return this.canManageContactPoints();
       case 'categories': return this.canManageGroups() || this.canManageCategories();
       case 'organizations': return this.canManageOrganizations();
+      case 'conversions': return this.canManageConversions();
     }
   }
 

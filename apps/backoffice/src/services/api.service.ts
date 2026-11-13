@@ -8,8 +8,10 @@ import type {
   Category,
   ContactPoint,
   Concept,
+  ConversionRelation,
   CreateCategoryRequest,
   CreateContactPointRequest,
+  CreateConversionPluginRequest,
   CreateGroupRequest,
   CreateMembershipRequest,
   CreateRoleRequest,
@@ -24,6 +26,7 @@ import type {
   GroupNotificationTopicKey,
   GroupPermission,
   GlobalPermission,
+  ManagedConversionPlugin,
   GlobalNotificationTopicKey,
   NotificationSubscription,
   NotificationTopic,
@@ -34,6 +37,7 @@ import type {
   RejectResourceRequest,
   ReplaceCategoryRequest,
   ReplaceContactPointRequest,
+  ReplaceConversionPluginRequest,
   ReplaceGroupRequest,
   ReplaceOrganizationRequest,
   WriteResult,
@@ -133,6 +137,54 @@ export class ApiService {
         }
       }
     );
+  }
+
+  public listConversionPlugins(): Observable<ManagedConversionPlugin[]> {
+    return this.http.get<ManagedConversionPlugin[]>(`${this.baseUrl}/conversion-plugins`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  public listConversionRelations(): Observable<ConversionRelation[]> {
+    return this.http.get<ConversionRelation[]>(`${this.baseUrl}/conversion-relations`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  public createConversionPlugin(payload: CreateConversionPluginRequest): Observable<ManagedConversionPlugin> {
+    return this.http.post<ManagedConversionPlugin>(`${this.baseUrl}/conversion-plugins`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  public replaceConversionPlugin(id: string, payload: ReplaceConversionPluginRequest): Observable<ManagedConversionPlugin> {
+    return this.http.put<ManagedConversionPlugin>(`${this.baseUrl}/conversion-plugins/${encodeURIComponent(id)}`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  public syncConversionPlugin(id: string): Observable<ManagedConversionPlugin> {
+    return this.http.post<ManagedConversionPlugin>(`${this.baseUrl}/conversion-plugins/${encodeURIComponent(id)}/sync`, null, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  public deleteConversionPlugin(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/conversion-plugins/${encodeURIComponent(id)}`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
   }
 
   public requestDistributionConversion(

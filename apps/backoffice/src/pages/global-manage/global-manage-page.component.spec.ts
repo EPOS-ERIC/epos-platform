@@ -12,7 +12,9 @@ describe('GlobalManagePageComponent', () => {
   const apiService = {
     getContactPoints: vi.fn(() => of([])),
     getGroups: vi.fn(() => of([])),
-    getConcepts: vi.fn(() => of([]))
+    getConcepts: vi.fn(() => of([])),
+    listConversionPlugins: vi.fn(() => of([])),
+    listConversionRelations: vi.fn(() => of([]))
   };
 
   beforeEach(() => {
@@ -94,6 +96,22 @@ describe('GlobalManagePageComponent', () => {
     expect(fixture.nativeElement.querySelector('.management-landing')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Create and manage reusable contact points');
     expect(apiService.getContactPoints).toHaveBeenCalled();
+  });
+
+  it('shows and opens conversions to a converter manager', () => {
+    currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
+      permission === 'global.converter.manage'
+    );
+    const fixture = TestBed.createComponent(GlobalManagePageComponent);
+    fixture.detectChanges();
+
+    expect(destinationTitles(fixture.nativeElement)).toEqual(['Conversions']);
+
+    fixture.componentRef.setInput('panel', 'conversions');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Conversion Plugins');
+    expect(apiService.listConversionPlugins).toHaveBeenCalled();
   });
 
   function destinationTitles(element: HTMLElement): string[] {
