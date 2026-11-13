@@ -25,6 +25,9 @@
               <th scope="col">Conversion</th>
               <th scope="col">Runtime</th>
               <th scope="col">Availability</th>
+              @if (canManageConversions()) {
+                <th scope="col">Actions</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -59,6 +62,11 @@
                     {{ row.plugin.installed ? 'Installed' : 'Not installed' }}
                   </span>
                 </td>
+                @if (canManageConversions()) {
+                  <td>
+                    <button type="button" class="app-button conversion-relation-remove" (click)="openRemovalDialog(row)">Remove</button>
+                  </td>
+                }
               </tr>
             }
           </tbody>
@@ -68,7 +76,40 @@
       <p class="detail-empty">No conversions are associated with this distribution.</p>
     }
 
-    @if (!disabled) {
+    @if (canManageConversions()) {
+      <section class="available-plugins" aria-labelledby="available-plugins-title">
+        <div>
+          <h4 id="available-plugins-title">Available plugins</h4>
+          <p class="app-muted">Associate a plugin by defining the native input format and the output MIME type.</p>
+        </div>
+
+        @if (availablePlugins().length) {
+          <ul class="available-plugin-list">
+            @for (plugin of availablePlugins(); track plugin.id) {
+              <li class="available-plugin-item">
+                <div class="available-plugin-summary">
+                  <div class="available-plugin-title">
+                    <strong>{{ plugin.name }}</strong>
+                    @if (plugin.relations.length) {
+                      <span class="association-status"><span aria-hidden="true">✓</span> Associated</span>
+                    }
+                  </div>
+                  @if (plugin.description) {
+                    <span class="conversion-cell-detail">{{ plugin.description }}</span>
+                  }
+                  <span class="conversion-cell-detail">{{ plugin.runtime }} · {{ plugin.branch }}</span>
+                </div>
+                <button type="button" class="app-button app-button--ghost" (click)="openAssociationDialog(plugin)">
+                  {{ plugin.relations.length ? 'Add relation' : 'Associate' }}
+                </button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="detail-empty">No conversion plugins are available.</p>
+        }
+      </section>
+    } @else if (!disabled) {
       <section class="conversion-request" aria-labelledby="conversion-request-title">
         <div>
           <h4 id="conversion-request-title">Request new conversion</h4>
@@ -122,3 +163,69 @@
     }
   </div>
 </details>
+
+@if (associationPlugin(); as plugin) {
+  <div class="association-backdrop" (click)="closeAssociationDialog()">
+    <section class="association-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="association-dialog-title" (click)="$event.stopPropagation()">
+      <div class="association-dialog-header">
+        <div>
+          <p class="association-eyebrow">{{ plugin.relations.length ? 'Add relation' : 'Associate plugin' }}</p>
+          <h3 id="association-dialog-title">{{ plugin.name }}</h3>
+          <p class="app-muted">Create a conversion relation for this distribution.</p>
+        </div>
+        <button type="button" class="app-button app-button--ghost" (click)="closeAssociationDialog()" [disabled]="associationSubmitting()">Close</button>
+      </div>
+
+      @if (associationError()) {
+        <div class="conversion-error" role="alert">{{ associationError() }}</div>
+      }
+
+      <div class="association-form">
+        <label class="detail-field">
+          <span class="detail-label">Input format *</span>
+          <select class="app-input" [(ngModel)]="associationInputFormat" [ngModelOptions]="{ standalone: true }" required>
+            <option value="" disabled>Select native format</option>
+            @for (format of nativeFormats; track format) {
+              <option [value]="format">{{ format }}</option>
+            }
+          </select>
+        </label>
+        <label class="detail-field">
+          <span class="detail-label">Output MIME type *</span>
+          <input class="app-input" placeholder="application/json" [(ngModel)]="associationOutputFormat" [ngModelOptions]="{ standalone: true }" required />
+        </label>
+      </div>
+
+      <div class="association-dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="closeAssociationDialog()" [disabled]="associationSubmitting()">Cancel</button>
+        <button type="button" class="app-button app-button--primary" (click)="associatePlugin()" [disabled]="!canAssociate()">
+          {{ associationSubmitting() ? 'Associating...' : (plugin.relations.length ? 'Add relation' : 'Associate plugin') }}
+        </button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (pendingRemoval(); as row) {
+  <div class="association-backdrop" (click)="closeRemovalDialog()">
+    <section class="association-dialog relation-delete-dialog app-card" role="alertdialog" aria-modal="true" aria-labelledby="remove-relation-title" (click)="$event.stopPropagation()">
+      <p class="association-eyebrow">Remove conversion relation</p>
+      <h3 id="remove-relation-title">Remove relation from {{ row.plugin.name }}?</h3>
+      <p class="app-muted">
+        This removes only the conversion from {{ row.relation.input_format }} to {{ row.relation.output_format }}.
+        If this is the plugin's last relation, it will no longer be associated with the distribution.
+      </p>
+
+      @if (deletionError()) {
+        <div class="conversion-error" role="alert">{{ deletionError() }}</div>
+      }
+
+      <div class="association-dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="closeRemovalDialog()" [disabled]="deletionSubmitting()">Cancel</button>
+        <button type="button" class="app-button conversion-relation-remove" (click)="removeRelation()" [disabled]="deletionSubmitting()">
+          {{ deletionSubmitting() ? 'Removing...' : 'Remove relation' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

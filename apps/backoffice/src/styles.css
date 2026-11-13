@@ -1454,3 +1454,143 @@ app-navigation-sidebar .sidebar .nav-tree-row--main .tree-toggle-button.main-tre
     transition: none;
   }
 }
+app-distribution-conversions .available-plugins {
+  display: grid;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+app-distribution-conversions .available-plugins h4,
+app-distribution-conversions .available-plugins p,
+app-distribution-conversions .association-dialog h3,
+app-distribution-conversions .association-dialog p {
+  margin: 0;
+}
+
+app-distribution-conversions .available-plugin-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  list-style: none;
+}
+
+app-distribution-conversions .available-plugin-item,
+app-distribution-conversions .available-plugin-title,
+app-distribution-conversions .association-dialog-header,
+app-distribution-conversions .association-dialog-actions {
+  display: flex;
+  align-items: center;
+}
+
+app-distribution-conversions .available-plugin-item {
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 14px;
+}
+
+app-distribution-conversions .available-plugin-item + .available-plugin-item {
+  border-top: 1px solid var(--line);
+}
+
+app-distribution-conversions .available-plugin-summary {
+  min-width: 0;
+}
+
+app-distribution-conversions .available-plugin-title {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+app-distribution-conversions .association-status {
+  color: #15803d;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+app-distribution-conversions .association-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 6, 23, 0.58);
+}
+
+app-distribution-conversions .association-dialog {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 22px;
+}
+
+app-distribution-conversions .association-dialog-header {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+app-distribution-conversions .association-eyebrow {
+  color: var(--olive-700);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+app-distribution-conversions .association-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+app-distribution-conversions .association-dialog-actions {
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+app-distribution-conversions .relation-delete-dialog {
+  width: min(540px, 100%);
+}
+
+app-distribution-conversions .relation-delete-dialog > p {
+  margin: 0 0 10px;
+}
+
+app-distribution-conversions .conversion-relation-remove {
+  border-color: #b91c1c;
+  background: #dc2626;
+  color: #fff;
+}
+
+app-distribution-conversions .conversion-relation-remove:hover {
+  background: #b91c1c;
+}
+
+@media (max-width: 700px) {
+  app-distribution-conversions .available-plugin-item,
+  app-distribution-conversions .association-dialog-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  app-distribution-conversions .available-plugin-item .app-button,
+  app-distribution-conversions .association-dialog-header .app-button {
+    width: 100%;
+  }
+
+  app-distribution-conversions .association-form {
+    grid-template-columns: 1fr;
+  }
+
+  app-distribution-conversions .association-backdrop {
+    padding: 12px;
+  }
+}

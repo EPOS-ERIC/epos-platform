@@ -9,6 +9,7 @@ import type {
   ContactPoint,
   Concept,
   ConversionRelation,
+  ConversionRelationInput,
   CreateCategoryRequest,
   CreateContactPointRequest,
   CreateConversionPluginRequest,
@@ -149,6 +150,22 @@ export class ApiService {
 
   public listConversionRelations(): Observable<ConversionRelation[]> {
     return this.http.get<ConversionRelation[]>(`${this.baseUrl}/conversion-relations`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  public createConversionRelation(payload: ConversionRelationInput): Observable<ConversionRelation> {
+    return this.http.post<ConversionRelation>(`${this.baseUrl}/conversion-relations`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  public deleteConversionRelation(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/conversion-relations/${encodeURIComponent(id)}`, {
       headers: {
         Authorization: `Bearer ${this.bearerToken}`
       }

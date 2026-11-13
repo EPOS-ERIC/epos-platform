@@ -5,6 +5,7 @@ import { Subject, of, throwError } from 'rxjs';
 import type { DistributionConversionPlugin } from '../../../../../generated/backofficeSchemas';
 import { ApiService } from '../../../../services/api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { CurrentUserStore } from '../../../../stores/current-user.store';
 import { DistributionConversionsComponent } from './distribution-conversions.component';
 
 describe('DistributionConversionsComponent', () => {
@@ -25,6 +26,12 @@ describe('DistributionConversionsComponent', () => {
       distribution_id: 'distribution-id'
     }]
   }];
+
+  beforeEach(() => {
+    TestBed.overrideProvider(CurrentUserStore, {
+      useValue: { hasGlobalPermission: () => false }
+    });
+  });
 
   it('loads and renders the conversion plugins for a distribution', () => {
     const listConversions = vi.fn(() => of(plugins));
@@ -163,5 +170,152 @@ describe('DistributionConversionsComponent', () => {
     (fixture.nativeElement.querySelector('.conversion-request-submit') as HTMLButtonElement).click();
 
     expect(toast.error).toHaveBeenCalledWith('Select a native format for this distribution.');
+  });
+
+  it('associates an available plugin and refreshes distribution relations for converter managers', () => {
+    const availablePlugin: DistributionConversionPlugin = { ...plugins[0], relations: [] };
+    const associatedPlugin: DistributionConversionPlugin = { ...plugins[0] };
+    const listConversions = vi.fn()
+      .mockReturnValueOnce(of([]))
+      .mockReturnValueOnce(of([associatedPlugin]));
+    const listPlugins = vi.fn(() => of([{
+      ...availablePlugin,
+      installed_commit: null,
+      created_by: 'user-id',
+      updated_by: 'user-id'
+    }]));
+    const createRelation = vi.fn(() => of({
+      id: 'relation-id',
+      distribution_id: 'distribution-id',
+      plugin_id: availablePlugin.id,
+      input_format: 'application/json',
+      output_format: 'application/geo+json',
+      created_by: 'user-id',
+      updated_by: 'user-id'
+    }));
+    const toast = { success: vi.fn(), error: vi.fn() };
+    TestBed.overrideProvider(CurrentUserStore, {
+      useValue: { hasGlobalPermission: (permission: string) => permission === 'global.converter.manage' }
+    });
+    TestBed.overrideProvider(ApiService, {
+      useValue: {
+        listDistributionConversionRelations: listConversions,
+        listConversionPlugins: listPlugins,
+        createConversionRelation: createRelation
+      }
+    });
+    TestBed.overrideProvider(ToastService, { useValue: toast });
+    const fixture = TestBed.createComponent(DistributionConversionsComponent);
+    fixture.componentRef.setInput('distributionId', 'distribution-id');
+    fixture.componentRef.setInput('nativeFormats', ['application/json']);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Available plugins');
+    expect(fixture.nativeElement.textContent).not.toContain('Request new conversion');
+    const associate = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
+      .find((button) => button.textContent?.trim() === 'Associate')!;
+    associate.click();
+    fixture.detectChanges();
+
+    const outputFormat = fixture.nativeElement.querySelector('.association-form input') as HTMLInputElement;
+    outputFormat.value = 'application/geo+json';
+    outputFormat.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const confirm = Array.from(fixture.nativeElement.querySelectorAll('.association-dialog-actions button') as NodeListOf<HTMLButtonElement>)
+      .find((button) => button.textContent?.trim() === 'Associate plugin')!;
+    confirm.click();
+    fixture.detectChanges();
+
+    expect(createRelation).toHaveBeenCalledWith({
+      distribution_id: 'distribution-id',
+      plugin_id: availablePlugin.id,
+      input_format: 'application/json',
+      output_format: 'application/geo+json'
+    });
+    expect(toast.success).toHaveBeenCalledWith('geo-converter associated with this distribution.');
+    expect(listConversions).toHaveBeenCalledTimes(2);
+    expect(listPlugins).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.textContent).toContain('Associated');
+  });
+
+  it('shows the backend problem when plugin association fails', () => {
+    const availablePlugin: DistributionConversionPlugin = { ...plugins[0], relations: [] };
+    TestBed.overrideProvider(CurrentUserStore, {
+      useValue: { hasGlobalPermission: () => true }
+    });
+    TestBed.overrideProvider(ApiService, {
+      useValue: {
+        listDistributionConversionRelations: () => of([availablePlugin]),
+        listConversionPlugins: () => of([{
+          ...availablePlugin,
+          installed_commit: null,
+          created_by: 'user-id',
+          updated_by: 'user-id'
+        }]),
+        createConversionRelation: () => throwError(() => new HttpErrorResponse({
+          status: 409,
+          error: { detail: 'This conversion relation already exists.' }
+        }))
+      }
+    });
+    TestBed.overrideProvider(ToastService, { useValue: { success: vi.fn(), error: vi.fn() } });
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const fixture = TestBed.createComponent(DistributionConversionsComponent);
+    fixture.componentRef.setInput('distributionId', 'distribution-id');
+    fixture.componentRef.setInput('nativeFormats', ['application/json']);
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance as unknown as {
+      openAssociationDialog(plugin: DistributionConversionPlugin): void;
+      associationOutputFormat: string;
+      associatePlugin(): void;
+    };
+    component.openAssociationDialog(availablePlugin);
+    component.associationOutputFormat = 'application/geo+json';
+    component.associatePlugin();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('This conversion relation already exists.');
+  });
+
+  it('removes a conversion relation and refreshes the distribution plugins', () => {
+    const listConversions = vi.fn()
+      .mockReturnValueOnce(of(plugins))
+      .mockReturnValueOnce(of([]));
+    const listPlugins = vi.fn(() => of([{
+      ...plugins[0],
+      installed_commit: null,
+      created_by: 'user-id',
+      updated_by: 'user-id'
+    }]));
+    const deleteRelation = vi.fn(() => of(undefined));
+    const toast = { success: vi.fn(), error: vi.fn() };
+    TestBed.overrideProvider(CurrentUserStore, {
+      useValue: { hasGlobalPermission: () => true }
+    });
+    TestBed.overrideProvider(ApiService, {
+      useValue: {
+        listDistributionConversionRelations: listConversions,
+        listConversionPlugins: listPlugins,
+        deleteConversionRelation: deleteRelation
+      }
+    });
+    TestBed.overrideProvider(ToastService, { useValue: toast });
+    const fixture = TestBed.createComponent(DistributionConversionsComponent);
+    fixture.componentRef.setInput('distributionId', 'distribution-id');
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.conversion-relation-remove') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const confirm = Array.from(fixture.nativeElement.querySelectorAll('.relation-delete-dialog button') as NodeListOf<HTMLButtonElement>)
+      .find((button) => button.textContent?.trim() === 'Remove relation')!;
+    confirm.click();
+    fixture.detectChanges();
+
+    expect(deleteRelation).toHaveBeenCalledWith('relation-id');
+    expect(toast.success).toHaveBeenCalledWith('Conversion relation removed.');
+    expect(listConversions).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.textContent).not.toContain('application/geo+json');
+    expect(fixture.nativeElement.textContent).toContain('Associate');
   });
 });
