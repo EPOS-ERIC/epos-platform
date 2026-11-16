@@ -8,6 +8,7 @@ import type { CreateRoleRequest, GroupNotificationTopicKey, GroupPermission, Not
 import { groupIconPath } from '../../group-icons';
 import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { DialogService } from '../../services/dialog.service';
 import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
 import { ToastService } from '../../services/toast.service';
@@ -29,11 +30,13 @@ type GroupNotificationTopic = NotificationTopic & {
 export class MembershipsPageComponent {
   private readonly apiService = inject(ApiService);
   private readonly currentUserStore = inject(CurrentUserStore);
+  private readonly capabilitiesService = inject(CapabilitiesService);
   private readonly groupsStore = inject(GroupsStore);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(DialogService);
   private readonly toast = inject(ToastService);
   protected readonly requestDialog = inject(MembershipRequestDialogService);
+  protected readonly emailNotificationsEnabled = this.capabilitiesService.emailNotificationsEnabled;
   protected readonly user = this.currentUserStore.user;
   protected readonly loading = this.currentUserStore.loading;
   protected readonly error = this.currentUserStore.error;
@@ -70,7 +73,7 @@ export class MembershipsPageComponent {
 
     effect(() => {
       const userId = this.user()?.id ?? '';
-      if (userId && userId !== this.loadedNotificationUserId) {
+      if (this.emailNotificationsEnabled() && userId && userId !== this.loadedNotificationUserId) {
         this.loadNotificationSettings(userId);
       }
     });
@@ -122,7 +125,7 @@ export class MembershipsPageComponent {
 
   protected toggleNotification(membership: UserMembershipSummary, topic: GroupNotificationTopic): void {
     const userId = this.user()?.id;
-    if (!userId || membership.status !== 'ACTIVE' || !this.canReceiveNotification(membership, topic) || this.notificationMutation()) return;
+    if (!this.emailNotificationsEnabled() || !userId || membership.status !== 'ACTIVE' || !this.canReceiveNotification(membership, topic) || this.notificationMutation()) return;
 
     const groupId = membership.group.id;
     const enabled = !this.isNotificationSubscribed(groupId, topic.key);

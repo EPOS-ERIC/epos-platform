@@ -3,7 +3,9 @@
     <div>
       <p class="eyebrow app-badge app-badge--primary">Administration</p>
       <h2>Organizations</h2>
-      <p class="subtitle app-muted">Create and manage canonical organizations used across platform resources.</p>
+      <p class="subtitle app-muted">
+        {{ isRemoteSync() ? 'Organizations are managed by the configured remote metadata source.' : 'Create and manage canonical organizations used across platform resources.' }}
+      </p>
     </div>
 
     <div class="organizations-header-actions">
@@ -18,10 +20,22 @@
           [ngModelOptions]="{ standalone: true }"
         />
       </label>
-      <button type="button" class="app-button app-button--primary add-organization-button" (click)="openCreateEditor()">
-        <span aria-hidden="true">+</span>
-        Add New Organization
-      </button>
+      @if (isRemoteSync()) {
+        <button
+          type="button"
+          class="app-button app-button--primary"
+          (click)="triggerSync()"
+          [disabled]="syncing() || !canSync()"
+          [title]="canSync() ? 'Schedule metadata synchronization' : 'Requires organization and contact point management permissions'"
+        >
+          {{ syncing() ? 'Scheduling...' : 'Sync metadata' }}
+        </button>
+      } @else {
+        <button type="button" class="app-button app-button--primary add-organization-button" (click)="openCreateEditor()">
+          <span aria-hidden="true">+</span>
+          Add New Organization
+        </button>
+      }
     </div>
   </div>
 
@@ -50,16 +64,13 @@
                 @if (organization.page_url) {
                   <a [href]="organization.page_url" target="_blank" rel="noopener noreferrer">Website</a>
                 }
-                @if (organization.lei_code) {
-                  <span>LEI {{ organization.lei_code }}</span>
-                }
               </div>
             </div>
           </div>
 
           <div class="organization-actions">
-            <button type="button" class="app-button app-button--ghost" (click)="openEditEditor(organization)">Manage</button>
-            <button type="button" class="app-button organization-delete-button" (click)="openDeleteDialog(organization)">Delete</button>
+            <button type="button" class="app-button app-button--ghost" (click)="openEditEditor(organization)" [disabled]="isRemoteSync()">Manage</button>
+            <button type="button" class="app-button organization-delete-button" (click)="openDeleteDialog(organization)" [disabled]="isRemoteSync()">Delete</button>
           </div>
         </li>
       }
@@ -104,10 +115,6 @@
           <input class="app-input" name="email" type="email" [(ngModel)]="organizationForm.email" />
         </label>
         <label class="form-field">
-          <span>LEI code</span>
-          <input class="app-input" name="leiCode" [(ngModel)]="organizationForm.leiCode" />
-        </label>
-        <label class="form-field">
           <span>Website URL</span>
           <input class="app-input" name="pageUrl" type="url" [(ngModel)]="organizationForm.pageUrl" />
         </label>
@@ -144,7 +151,7 @@
         </label>
 
         @if (editingOrganization()) {
-          <p class="form-note form-field--wide">Existing identifiers, parent relationships and contact points are preserved by this editor.</p>
+          <p class="form-note form-field--wide">Existing identifiers and parent relationships are preserved by this editor.</p>
         }
 
         <div class="dialog-actions form-field--wide">

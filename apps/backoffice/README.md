@@ -35,7 +35,7 @@ Tests are colocated with the code they cover and use the `*.spec.ts` suffix.
 
 ## Container Configuration
 
-`BASE_URL` sets the browser path prefix (default `/`); include leading and trailing slashes. The ingress must strip that prefix before forwarding requests. `API_HOST` sets the gateway upstream. `AUTH_ROOT_URL` overrides the browser-visible AAI root URL; the client uses its `/oauth2` issuer and the `eposICS` client ID.
+`BASE_URL` sets the browser path prefix (default `/`); include leading and trailing slashes. The ingress must strip that prefix before forwarding requests. `API_HOST` sets the gateway upstream. The browser-visible AAI root URL is provided by the Gateway `/capabilities` endpoint; the client uses its `/oauth2` issuer and the `eposICS` client ID.
 
 ## Main Building Blocks
 

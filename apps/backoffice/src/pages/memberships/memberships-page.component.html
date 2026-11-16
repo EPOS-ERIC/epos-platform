@@ -99,7 +99,7 @@
               </div>
             </details>
 
-            @if (membership.status === 'ACTIVE') {
+            @if (membership.status === 'ACTIVE' && emailNotificationsEnabled()) {
               <details class="membership-permissions membership-notifications">
                 <summary>
                   <span>Notifications</span>

@@ -5,6 +5,7 @@ import { vi } from 'vitest';
 
 import type { Group, User, UserListItem } from '../../../generated/backofficeSchemas';
 import { ApiService } from '../../services/api.service';
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { DialogService } from '../../services/dialog.service';
 import { ToastService } from '../../services/toast.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
@@ -55,9 +56,11 @@ describe('GlobalMembersPanelComponent', () => {
   const dialog = { confirm: vi.fn(), prompt: vi.fn() };
   const toast = { success: vi.fn() };
   const currentUserStore = { hasGlobalPermission: vi.fn(), user: currentAdmin };
+  const emailNotificationsEnabled = signal(true);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    emailNotificationsEnabled.set(true);
     currentAdmin.set({
       ...user,
       id: 'admin-id',
@@ -103,6 +106,7 @@ describe('GlobalMembersPanelComponent', () => {
       imports: [GlobalMembersPanelComponent],
       providers: [
         { provide: ApiService, useValue: apiService },
+        { provide: CapabilitiesService, useValue: { emailNotificationsEnabled } },
         { provide: DialogService, useValue: dialog },
         { provide: ToastService, useValue: toast },
         { provide: CurrentUserStore, useValue: currentUserStore }

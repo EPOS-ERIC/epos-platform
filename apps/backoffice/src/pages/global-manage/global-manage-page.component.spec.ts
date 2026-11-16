@@ -1,14 +1,17 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { of } from 'rxjs';
 
 import { ApiService } from '../../services/api.service';
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
 import { GlobalManagePageComponent } from './global-manage-page.component';
 
 describe('GlobalManagePageComponent', () => {
   const currentUserStore = { hasGlobalPermission: vi.fn() };
+  const emailNotificationsEnabled = signal(true);
   const apiService = {
     getContactPoints: vi.fn(() => of([])),
     getGroups: vi.fn(() => of([])),
@@ -19,14 +22,27 @@ describe('GlobalManagePageComponent', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    emailNotificationsEnabled.set(true);
     TestBed.configureTestingModule({
       imports: [GlobalManagePageComponent],
       providers: [
         { provide: CurrentUserStore, useValue: currentUserStore },
+        { provide: CapabilitiesService, useValue: { emailNotificationsEnabled } },
         { provide: ApiService, useValue: apiService },
         provideRouter([])
       ]
     });
+  });
+
+  it('hides notification-only management when email is disabled', () => {
+    emailNotificationsEnabled.set(false);
+    currentUserStore.hasGlobalPermission.mockImplementation((permission: string) =>
+      permission === 'global.notification.manage'
+    );
+    const fixture = TestBed.createComponent(GlobalManagePageComponent);
+    fixture.detectChanges();
+
+    expect(destinationTitles(fixture.nativeElement)).toEqual([]);
   });
 
   it('shows requests and members to a membership manager', () => {

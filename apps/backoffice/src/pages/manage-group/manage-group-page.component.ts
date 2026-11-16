@@ -9,6 +9,7 @@ import type { Group, GroupMembership, GroupNotificationTopicKey, GroupPermission
 import { groupIconPath } from '../../group-icons';
 import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { DialogService } from '../../services/dialog.service';
 import { ToastService } from '../../services/toast.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
@@ -59,6 +60,7 @@ export class ManageGroupPageComponent {
   private readonly dialog = inject(DialogService);
   private readonly toast = inject(ToastService);
   private readonly currentUserStore = inject(CurrentUserStore);
+  private readonly capabilitiesService = inject(CapabilitiesService);
   private currentGroupId = '';
   private membershipsLoadedGroupId = '';
   private readonly groupIdValue = signal('');
@@ -123,7 +125,8 @@ export class ManageGroupPageComponent {
     this.currentUserStore.hasGroupPermission(this.groupIdValue(), 'group.category.manage')
   );
   protected readonly canManageNotifications = computed(() =>
-    this.currentUserStore.hasGroupPermission(this.groupIdValue(), 'group.notification.manage')
+    this.capabilitiesService.emailNotificationsEnabled()
+      && this.currentUserStore.hasGroupPermission(this.groupIdValue(), 'group.notification.manage')
   );
   protected readonly canManageMembers = computed(() =>
     this.canManageMemberships() || this.canManageRoles() || this.canManagePermissions() || this.canManageNotifications()

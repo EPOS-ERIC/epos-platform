@@ -404,6 +404,14 @@ export class ApiService {
     });
   }
 
+  public triggerMetadataSync(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/metadata/sync`, null, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
   public getOrganizations(): Observable<ResourceVersionReference[]> {
     return this.http.get<CanonicalOrganization[]>(`${this.baseUrl}/organizations`).pipe(
       map((organizations) => {

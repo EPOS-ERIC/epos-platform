@@ -5,14 +5,16 @@ import { EMPTY, catchError, finalize, of } from 'rxjs';
 
 import type { CanonicalOrganization, CreateOrganizationRequest, ReplaceOrganizationRequest } from '../../../generated/backofficeSchemas';
 import { ApiService } from '../../services/api.service';
+import { CapabilitiesService } from '../../services/capabilities.service';
+import { ToastService } from '../../services/toast.service';
 import { ListPaginationComponent } from '../../shared/ui/list-pagination.component';
+import { CurrentUserStore } from '../../stores/current-user.store';
 
 type OrganizationForm = {
   name: string;
   email: string;
   pageUrl: string;
   logoUrl: string;
-  leiCode: string;
   street: string;
   locality: string;
   postalCode: string;
@@ -24,7 +26,6 @@ const emptyOrganizationForm = (): OrganizationForm => ({
   email: '',
   pageUrl: '',
   logoUrl: '',
-  leiCode: '',
   street: '',
   locality: '',
   postalCode: '',
@@ -39,7 +40,10 @@ const emptyOrganizationForm = (): OrganizationForm => ({
 })
 export class GlobalOrganizationsComponent {
   private readonly apiService = inject(ApiService);
+  private readonly capabilitiesService = inject(CapabilitiesService);
+  private readonly currentUserStore = inject(CurrentUserStore);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toastService = inject(ToastService);
 
   protected readonly organizations = signal<CanonicalOrganization[]>([]);
   protected readonly organizationsLoading = signal(true);
@@ -55,6 +59,12 @@ export class GlobalOrganizationsComponent {
   protected readonly pendingDelete = signal<CanonicalOrganization | null>(null);
   protected readonly deletingOrganizationId = signal('');
   protected readonly deleteError = signal('');
+  protected readonly syncing = signal(false);
+  protected readonly isRemoteSync = computed(() => this.capabilitiesService.organizationManagement() === 'remote_sync');
+  protected readonly canSync = computed(() =>
+    this.currentUserStore.hasGlobalPermission('global.organization.manage')
+      && this.currentUserStore.hasGlobalPermission('global.contact_point.manage')
+  );
   protected organizationForm = emptyOrganizationForm();
   protected logoPreviewFailed = false;
 
@@ -62,7 +72,7 @@ export class GlobalOrganizationsComponent {
     const query = this.searchQuery().trim().toLowerCase();
     const organizations = query
       ? this.organizations().filter((organization) =>
-          [organization.name, organization.email, organization.lei_code, organization.address.locality, organization.address.country]
+          [organization.name, organization.email, organization.address.locality, organization.address.country]
             .filter(Boolean)
             .some((value) => value!.toLowerCase().includes(query))
         )
@@ -90,6 +100,8 @@ export class GlobalOrganizationsComponent {
   }
 
   protected openCreateEditor(): void {
+    if (this.isRemoteSync()) return;
+
     this.editingOrganization.set(null);
     this.organizationForm = emptyOrganizationForm();
     this.logoPreviewFailed = false;
@@ -112,13 +124,14 @@ export class GlobalOrganizationsComponent {
   }
 
   protected openEditEditor(organization: CanonicalOrganization): void {
+    if (this.isRemoteSync()) return;
+
     this.editingOrganization.set(organization);
     this.organizationForm = {
       name: organization.name,
       email: organization.email ?? '',
       pageUrl: organization.page_url ?? '',
       logoUrl: organization.logo_url ?? '',
-      leiCode: organization.lei_code ?? '',
       street: organization.address.street ?? '',
       locality: organization.address.locality ?? '',
       postalCode: organization.address.postal_code ?? '',
@@ -142,7 +155,7 @@ export class GlobalOrganizationsComponent {
   protected saveOrganization(): void {
     const name = this.organizationForm.name.trim();
 
-    if (!name || this.editorSaving()) {
+    if (!name || this.editorSaving() || this.isRemoteSync()) {
       return;
     }
 
@@ -158,21 +171,18 @@ export class GlobalOrganizationsComponent {
       address,
       logo_url: this.toNullable(this.organizationForm.logoUrl),
       page_url: this.toNullable(this.organizationForm.pageUrl),
-      email: this.toNullable(this.organizationForm.email),
-      lei_code: this.toNullable(this.organizationForm.leiCode)
+      email: this.toNullable(this.organizationForm.email)
     };
     const request = editing
       ? this.apiService.replaceOrganization(editing.id, {
           ...common,
           identifiers: editing.identifiers.map(({ type, value }) => ({ type, value })),
-          parents: editing.parents,
-          contact_point_ids: editing.contact_point_ids
+          parents: editing.parents
         } satisfies ReplaceOrganizationRequest)
       : this.apiService.createOrganization({
           ...common,
           identifiers: [],
-          parents: [],
-          contact_point_ids: []
+          parents: []
         } satisfies CreateOrganizationRequest);
 
     this.editorSaving.set(true);
@@ -207,6 +217,8 @@ export class GlobalOrganizationsComponent {
   }
 
   protected openDeleteDialog(organization: CanonicalOrganization): void {
+    if (this.isRemoteSync()) return;
+
     this.pendingDelete.set(organization);
     this.deleteError.set('');
   }
@@ -223,7 +235,7 @@ export class GlobalOrganizationsComponent {
   protected deleteOrganization(): void {
     const organization = this.pendingDelete();
 
-    if (!organization || this.deletingOrganizationId()) {
+    if (!organization || this.deletingOrganizationId() || this.isRemoteSync()) {
       return;
     }
 
@@ -246,6 +258,23 @@ export class GlobalOrganizationsComponent {
         this.pendingDelete.set(null);
         this.deleteError.set('');
       });
+  }
+
+  protected triggerSync(): void {
+    if (!this.isRemoteSync() || !this.canSync() || this.syncing()) return;
+
+    this.syncing.set(true);
+    this.apiService.triggerMetadataSync()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.syncing.set(false)),
+        catchError((error) => {
+          console.error('Failed to schedule metadata synchronization', error);
+          this.toastService.error('The metadata synchronization request could not be scheduled.');
+          return EMPTY;
+        })
+      )
+      .subscribe(() => this.toastService.info('Metadata synchronization request accepted. Processing continues in the background.'));
   }
 
   protected organizationLocation(organization: CanonicalOrganization): string {

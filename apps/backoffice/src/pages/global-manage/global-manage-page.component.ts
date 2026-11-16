@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import type { Group } from '../../../generated/backofficeSchemas';
 import { CurrentUserStore } from '../../stores/current-user.store';
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { CategoriesPanelComponent } from '../../panels/categories/categories-panel.component';
 import { GlobalContactPointsPanelComponent } from '../../panels/global-contact-points/global-contact-points-panel.component';
 import { GlobalGroupsPanelComponent } from '../../panels/global-groups/global-groups-panel.component';
@@ -38,6 +39,7 @@ const GLOBAL_MANAGE_DESTINATIONS: readonly GlobalManageDestination[] = [
 })
 export class GlobalManagePageComponent {
   private readonly currentUserStore = inject(CurrentUserStore);
+  private readonly capabilitiesService = inject(CapabilitiesService);
 
   @Input() groups: Group[] = [];
   @Input() groupsLoading = false;
@@ -49,7 +51,9 @@ export class GlobalManagePageComponent {
   protected readonly canManageMemberships = computed(() => this.hasPermission('global.membership.manage'));
   protected readonly canManageRoles = computed(() => this.hasPermission('global.role.manage'));
   protected readonly canManagePermissions = computed(() => this.hasPermission('global.permission.manage'));
-  protected readonly canManageNotifications = computed(() => this.hasPermission('global.notification.manage'));
+  protected readonly canManageNotifications = computed(() =>
+    this.capabilitiesService.emailNotificationsEnabled() && this.hasPermission('global.notification.manage')
+  );
   protected readonly canManageContactPoints = computed(() => this.hasPermission('global.contact_point.manage'));
   protected readonly canManageCategories = computed(() => this.hasPermission('global.category.manage'));
   protected readonly canManageGroups = computed(() => this.hasPermission('global.group.manage'));

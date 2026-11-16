@@ -1,14 +1,11 @@
 import { Injectable, signal } from '@angular/core';
 import { AuthConfig, OAuthService } from 'angular-oauth2-oidc';
 
+import { CapabilitiesService } from './capabilities.service';
 import { LocalStorageService } from './local-storage.service';
 
-const LIVE_AUTH_ISSUER = 'https://aaai.epos-eu.org/oauth2';
-const LOCAL_AUTH_ISSUER = 'http://localhost:35000/oauth2';
 const AUTH_ISSUER_KEY = 'epos-backoffice-auth-issuer';
 const RETURN_URL_KEY = 'epos-backoffice-return-url';
-
-const authRootUrl = '__AUTH_ROOT_URL__';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -16,14 +13,12 @@ export class AuthService {
   readonly initializationError = signal<string | null>(null);
 
   private initialization?: Promise<void>;
-  private readonly isLocalDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-  private readonly issuer = authRootUrl && !authRootUrl.startsWith('__AUTH_')
-    ? `${authRootUrl.replace(/\/$/, '')}/oauth2`
-    : (this.isLocalDevelopment ? LOCAL_AUTH_ISSUER : LIVE_AUTH_ISSUER);
+  private issuer = '';
 
   constructor(
     private readonly oauthService: OAuthService,
-    private readonly localStorage: LocalStorageService
+    private readonly localStorage: LocalStorageService,
+    private readonly capabilitiesService: CapabilitiesService
   ) {
     this.oauthService.setStorage(this.localStorage);
     this.oauthService.events.subscribe(() => this.authenticated.set(this.oauthService.hasValidAccessToken()));
@@ -57,20 +52,23 @@ export class AuthService {
   }
 
   private async initializeOAuth(): Promise<void> {
-    const previousIssuer = this.localStorage.get(AUTH_ISSUER_KEY);
-    const tokenIssuer = (this.oauthService.getIdentityClaims() as { iss?: string } | null)?.iss;
-
-    this.oauthService.configure(this.makeAuthConfig());
-    if ((previousIssuer && previousIssuer !== this.issuer) || (tokenIssuer && tokenIssuer !== this.issuer)) {
-      this.oauthService.logOut(true);
-    }
-    this.localStorage.set(AUTH_ISSUER_KEY, this.issuer);
-
-    const { JwksValidationHandler } = await import('angular-oauth2-oidc-jwks');
-    this.oauthService.tokenValidationHandler = new JwksValidationHandler();
-    this.oauthService.setupAutomaticSilentRefresh();
-
     try {
+      const capabilities = await this.capabilitiesService.initialize();
+      this.issuer = `${capabilities.authentication.root_url.replace(/\/$/, '')}/oauth2`;
+
+      const previousIssuer = this.localStorage.get(AUTH_ISSUER_KEY);
+      const tokenIssuer = (this.oauthService.getIdentityClaims() as { iss?: string } | null)?.iss;
+
+      this.oauthService.configure(this.makeAuthConfig());
+      if ((previousIssuer && previousIssuer !== this.issuer) || (tokenIssuer && tokenIssuer !== this.issuer)) {
+        this.oauthService.logOut(true);
+      }
+      this.localStorage.set(AUTH_ISSUER_KEY, this.issuer);
+
+      const { JwksValidationHandler } = await import('angular-oauth2-oidc-jwks');
+      this.oauthService.tokenValidationHandler = new JwksValidationHandler();
+      this.oauthService.setupAutomaticSilentRefresh();
+
       await this.oauthService.loadDiscoveryDocumentAndTryLogin();
       this.authenticated.set(this.oauthService.hasValidAccessToken());
     } catch (error) {

@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -5,6 +6,7 @@ import { vi } from 'vitest';
 
 import type { Group, GroupMembership } from '../../../generated/backofficeSchemas';
 import { ApiService } from '../../services/api.service';
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { DialogService } from '../../services/dialog.service';
 import { ToastService } from '../../services/toast.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
@@ -69,9 +71,11 @@ describe('ManageGroupPageComponent', () => {
   const dialog = { confirm: vi.fn() };
   const toast = { success: vi.fn() };
   const currentUserStore = { hasGroupPermission: vi.fn() };
+  const emailNotificationsEnabled = signal(true);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    emailNotificationsEnabled.set(true);
     currentUserStore.hasGroupPermission.mockImplementation((_groupId: string, permission: string) =>
       permission !== 'group.category.manage'
     );
@@ -101,6 +105,7 @@ describe('ManageGroupPageComponent', () => {
       imports: [ManageGroupPageComponent],
       providers: [
         { provide: ApiService, useValue: apiService },
+        { provide: CapabilitiesService, useValue: { emailNotificationsEnabled } },
         { provide: DialogService, useValue: dialog },
         { provide: ToastService, useValue: toast },
         { provide: CurrentUserStore, useValue: currentUserStore },

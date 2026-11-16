@@ -8,6 +8,7 @@ import type { GlobalNotificationTopicKey, GlobalPermission, GroupNotificationTop
 import { groupIconPath } from '../../group-icons';
 import { isGroupPermissionCatalogItem, type GroupPermissionCatalogItem } from '../../models/resource-actions';
 import { ApiService } from '../../services/api.service';
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { DialogService } from '../../services/dialog.service';
 import { ToastService } from '../../services/toast.service';
 import { CurrentUserStore } from '../../stores/current-user.store';
@@ -38,6 +39,7 @@ export class GlobalMembersPanelComponent implements OnInit {
   private readonly apiService = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly currentUserStore = inject(CurrentUserStore);
+  private readonly capabilitiesService = inject(CapabilitiesService);
   private readonly dialog = inject(DialogService);
   private readonly toast = inject(ToastService);
 
@@ -51,7 +53,8 @@ export class GlobalMembersPanelComponent implements OnInit {
     this.currentUserStore.hasGlobalPermission('global.permission.manage')
   );
   protected readonly canManageNotifications = computed(() =>
-    this.currentUserStore.hasGlobalPermission('global.notification.manage')
+    this.capabilitiesService.emailNotificationsEnabled()
+      && this.currentUserStore.hasGlobalPermission('global.notification.manage')
   );
   protected readonly canChangeUserStatus = computed(() => {
     const currentUser = this.currentUserStore.user();

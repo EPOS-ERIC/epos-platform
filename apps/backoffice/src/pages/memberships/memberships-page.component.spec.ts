@@ -6,6 +6,7 @@ import { vi } from 'vitest';
 
 import type { User } from '../../../generated/backofficeSchemas';
 import { ApiService } from '../../services/api.service';
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { DialogService } from '../../services/dialog.service';
 import { MembershipRequestDialogService } from '../../services/membership-request-dialog.service';
 import { ToastService } from '../../services/toast.service';
@@ -56,9 +57,11 @@ describe('MembershipsPageComponent', () => {
   };
   const dialog = { confirm: vi.fn() };
   const toast = { success: vi.fn() };
+  const emailNotificationsEnabled = signal(true);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    emailNotificationsEnabled.set(true);
     currentUser.set(user);
     currentUserStore.refresh.mockResolvedValue(undefined);
     apiService.listPermissions.mockReturnValue(of([
@@ -88,6 +91,7 @@ describe('MembershipsPageComponent', () => {
       imports: [MembershipsPageComponent],
       providers: [
         { provide: ApiService, useValue: apiService },
+        { provide: CapabilitiesService, useValue: { emailNotificationsEnabled } },
         { provide: CurrentUserStore, useValue: currentUserStore },
         { provide: GroupsStore, useValue: {
           groups: signal([{ id: '1375500a-fc04-5831-a7f5-39ea5fcb0445', name: 'Data Group', position: 0, concept_id: 'data-concept' }]),
@@ -99,6 +103,15 @@ describe('MembershipsPageComponent', () => {
         provideRouter([])
       ]
     });
+  });
+
+  it('does not load email notification settings when email is disabled', () => {
+    emailNotificationsEnabled.set(false);
+    const fixture = TestBed.createComponent(MembershipsPageComponent);
+    fixture.detectChanges();
+
+    expect(apiService.listNotificationTopics).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.membership-notifications')).toBeNull();
   });
 
   it('shows current memberships and opens a new membership request', () => {
