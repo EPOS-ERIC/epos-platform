@@ -18,28 +18,31 @@
     </div>
 
     <div class="toolbar">
-      @switch (belongsToGroup.status) {
-        <!-- No affiliation to the group -->
-        @case ('null') {
-          <button class="app-button" (click)="openJoinGroupDialog()">
-            <app-icon [name]="'join-group'"></app-icon>
-            Join Group
-          </button>
-        }
-        <!-- Rejected group subscription -->
-        @case ('REJECTED') {
-          <button class="user-belong-status" [attr.data-status]="'rejected'" title="Your membership request has been rejected.">
-            {{ belongsToGroup.status.toUpperCase() }}
-          </button>
-        }
-        <!-- Pending Group Subscription -->
-        @case ('PENDING') {
-          <button class="user-belong-status" [attr.data-status]="'pending'" title="Your membership request is awaiting approval.">
-            {{ belongsToGroup.status.toUpperCase() }}
-          </button>
-        }
-        @default {
-
+      <!-- Show the 'Join Group' button if not on 'ALL' View ... -->
+      @if(allGroups === false) {
+        @switch (belongsToGroup.status) {
+          <!-- No affiliation to the group -->
+          @case ('null') {
+            <button class="app-button" (click)="openJoinGroupDialog()">
+              <app-icon [name]="'join-group'"></app-icon>
+              Join Group
+            </button>
+          }
+          <!-- Rejected group subscription -->
+          @case ('REJECTED') {
+            <button class="user-belong-status" [attr.data-status]="'rejected'" title="Your membership request has been rejected.">
+              {{ belongsToGroup.status.toUpperCase() }}
+            </button>
+          }
+          <!-- Pending Group Subscription -->
+          @case ('PENDING') {
+            <button class="user-belong-status" [attr.data-status]="'pending'" title="Your membership request is awaiting approval.">
+              {{ belongsToGroup.status.toUpperCase() }}
+            </button>
+          }
+          @default {
+  
+          } 
         }
       }
 
