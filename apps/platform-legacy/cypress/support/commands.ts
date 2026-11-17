@@ -86,9 +86,19 @@ Cypress.Commands.add('getByDataCy', (args) => {
 });
 
 Cypress.Commands.add('init', () => {
+  const concepts = [
+    { id: '00000000-0000-4000-8000-000000000001', name: 'DATA' },
+    { id: '00000000-0000-4000-8000-000000000002', name: 'FACILITIES' },
+    { id: '00000000-0000-4000-8000-000000000003', name: 'SOFTWARE' },
+  ];
+  cy.intercept('GET', '**/api/v1/concepts', concepts);
   cy.intercept('GET', '**/api/v1/search*', (request) => {
-    request.alias = `initial${String(request.query.concept)}Search`;
-    request.reply(request.query.concept === 'DATA' ? { fixture: 'distributions.json' } : []);
+    const concept = concepts.find(item => item.id === request.query.conceptId);
+    if (concept === undefined) {
+      throw new Error(`Unexpected search conceptId: ${String(request.query.conceptId)}`);
+    }
+    request.alias = `initial${concept.name}Search`;
+    request.reply(concept.name === 'DATA' ? { fixture: 'distributions.json' } : []);
   });
   cy.intercept('GET', '**/api/v1/groups', { fixture: 'groups.json' });
   cy.fixture('categories.json').then((categories: Record<string, unknown[]>) => {

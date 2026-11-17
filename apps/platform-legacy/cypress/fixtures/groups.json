@@ -2,7 +2,7 @@
   {
     "id": "1ffd3b36-8afd-50f3-affc-752d659ea8bd",
     "name": "Anthropogenic Hazards",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 7,
     "logo": "assets/img/logo/ANTHROPO_logo.png",
     "page": "https://www.epos-eu.org/tcs/anthropogenic-hazards",
@@ -11,7 +11,7 @@
   {
     "id": "40d6554c-becc-56a1-a08f-565e414fd5ed",
     "name": "Geomagnetic Observations",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 6,
     "logo": "assets/img/logo/GEOMAG_logo.png",
     "page": "https://www.epos-eu.org/tcs/geomagnetic-observations",
@@ -20,7 +20,7 @@
   {
     "id": "759bb4da-3831-5673-ae0c-8f7b5f038f6f",
     "name": "Geological Information and Modeling",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 8,
     "logo": "assets/img/logo/MODELING_logo.png",
     "page": "https://www.epos-eu.org/tcs/geological-information-and-modeling",
@@ -29,7 +29,7 @@
   {
     "id": "fd0a5d4d-b20f-5830-a7ef-ac99f12dd2e7",
     "name": "GNSS Data and Products",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 3,
     "logo": "assets/img/logo/GNSS_logo.png",
     "page": "https://www.epos-eu.org/tcs/gnss-data-and-products",
@@ -38,7 +38,7 @@
   {
     "id": "23aaaf42-eaa4-5938-a7b1-f7eaec688d95",
     "name": "Multi-scale Laboratories",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 9,
     "logo": "assets/img/logo/LABS_logo.png",
     "page": "https://www.epos-eu.org/tcs/multi-scale-laboratories",
@@ -47,7 +47,7 @@
   {
     "id": "5773eb8e-c3b8-50a4-904c-e0fb12cb25a4",
     "name": "Near Fault Observatories",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 2,
     "logo": "assets/img/logo/NFO_logo.png",
     "page": "https://www.epos-eu.org/tcs/near-fault-observatories",
@@ -56,7 +56,7 @@
   {
     "id": "ef2c0e7c-42ab-58a8-a430-5755a615951e",
     "name": "Satellite Data",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 5,
     "logo": "assets/img/logo/SATELLITE_logo.png",
     "page": "https://www.epos-eu.org/tcs/satellite-data",
@@ -65,7 +65,7 @@
   {
     "id": "85ff89db-b889-5f98-9b96-3f2897d63b70",
     "name": "Seismology",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 1,
     "logo": "assets/img/logo/SEISM_logo.png",
     "page": "https://www.epos-eu.org/tcs/seismology",
@@ -74,7 +74,7 @@
   {
     "id": "f6b2268b-fc1d-5d40-9d1b-6f76c654711a",
     "name": "Tsunami",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 10,
     "logo": "assets/img/logo/TSU_logo.png",
     "page": "https://www.epos-eu.org/tcs/tsunami",
@@ -83,7 +83,7 @@
   {
     "id": "bd6cdd29-0d0d-5856-a0dd-5fa6a4b06751",
     "name": "Volcano Observations",
-    "concept": "DATA",
+    "concept_id": "00000000-0000-4000-8000-000000000001",
     "position": 4,
     "logo": "assets/img/logo/VOLCANO_logo.png",
     "page": "https://www.epos-eu.org/tcs/volcano-observations",
