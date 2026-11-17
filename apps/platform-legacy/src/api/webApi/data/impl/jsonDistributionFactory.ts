@@ -14,6 +14,7 @@ import * as moment from 'moment';
 import { DistributionFormat } from '../distributionFormat.interface';
 import { SimpleDistributionSummary } from './simpleDistributionSummary';
 import { SimpleDistributionFormat } from './simpleDistributionFormat';
+import { DistributionFormatType } from '../distributionFormatType';
 import { DistributionSummary } from '../distributionSummary.interface';
 import { Optional } from 'api/webApi/utility/optional';
 import { Confirm } from 'api/webApi/utility/preconditions';
@@ -139,7 +140,9 @@ export class JSONDistributionFactory {
     ];
     const scalarParameters = rawParameters.flatMap(parameter => parameter.kind === 'TEMPLATE'
       ? ObjectAccessUtility.getObjectArray<Record<string, unknown>>(parameter, 'parameters', false) ?? [] : [parameter]);
-    const serviceParameters = scalarParameters.map(parameter => this.normalizeResourceParameter(parameter));
+    const serviceParameters = scalarParameters
+      .filter(parameter => configuration?.type !== 'DYNAMIC' || !['LATITUDE', 'LONGITUDE'].includes(String(parameter.role)))
+      .map(parameter => this.normalizeResourceParameter(parameter));
     const availableFormats = ObjectAccessUtility.getObjectArray<Record<string, unknown>>(distribution, 'available_formats', false) ?? [];
     const formats = availableFormats.map(availableFormat => {
       const kind = ObjectAccessUtility.getObjectValueString(availableFormat, 'kind', true);
@@ -149,7 +152,8 @@ export class JSONDistributionFactory {
         ? `conversion_id=${encodeURIComponent(ObjectAccessUtility.getObjectValueString(availableFormat, 'conversion_id', true))}`
         : `output_format=${encodeURIComponent(outputFormat)}`;
       const tileService = configuration?.type === 'WMS' || configuration?.type === 'WMTS';
-      const formatType = tileService ? `application/vnd.ogc.${String(configuration!.type).toLowerCase()}_xml` : outputFormat;
+      const formatType = tileService ? `application/vnd.ogc.${String(configuration!.type).toLowerCase()}_xml`
+        : outputFormat.toLowerCase() === 'application/covjson' ? DistributionFormatType.APP_COV_JSON : outputFormat;
       const format = SimpleDistributionFormat.make(
         kind === 'CONVERTED' ? ObjectAccessUtility.getObjectValueString(plugin!, 'name', true)
           : ObjectAccessUtility.getObjectValueString(availableFormat, 'label', true),
@@ -249,7 +253,7 @@ export class JSONDistributionFactory {
     };
 
     summary.isMappable = configuration?.type !== 'DYNAMIC' && visibleOn.includes('MAP');
-    summary.isTabularable = configuration?.type !== 'DYNAMIC' && visibleOn.includes('TABLE');
+    summary.isTabularable = configuration?.type !== 'DYNAMIC' && visibleOn.includes('TABLE') && formats.some(format => format.isTabularable);
     summary.isGraphable = visibleOn.includes('GRAPH');
     summary.isDownloadable = (configuration?.type !== 'WMS' && configuration?.type !== 'WMTS' && formats.length > 0) || downloadableFile != null;
     return this.buildStandardDetails(normalizedDetails, null, summary);

@@ -23,7 +23,7 @@ import { NotificationService } from 'services/notification.service';
 import { JsonHelper } from 'utility/maplayers/jsonHelper';
 import { Environment } from 'api/webApi/data/environments/environment.interface';
 import { Unsubscriber } from 'decorators/unsubscriber.decorator';
-import { Subscription } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { AnalysisConfigurablesService } from 'pages/dataPortal/services/analysisConfigurables.service';
 import { EnvironmentService } from 'services/environment.service';
 import { SimpleEnvironment } from 'api/webApi/data/environments/impl/simpleEnvironment';
@@ -567,7 +567,16 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
    */
   private downloadService(format: string): void {
 
-    const distributionFormat = this.distributionFormat.find(e => { return e.getFormat() === format; });
+    const distributionFormat = this.distributionFormat.find(e => e.getFormat() === format
+      || (e.resourceAccess?.type === 'WMS' && e.getOriginalFormat() === format));
+
+    if (distributionFormat?.resourceAccess?.type === 'WMS') {
+      void this.downloadWms(distributionFormat, format).catch(error => {
+        console.error('WMS download failed:', error);
+        this.notifier.sendErrorNotification('An error occurred whilst downloading the WMS image.');
+      });
+      return;
+    }
 
     // SOFTWARE LOGIC: Forced Download via Blob
     // This avoids opening files like .py or .ipynb in a new tab/browser view.
@@ -615,6 +624,76 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
         }
       });
     }
+  }
+
+  private async downloadWms(distributionFormat: DistributionFormat, format: string): Promise<void> {
+    const access = distributionFormat.resourceAccess!;
+    const capabilitiesUrl = new URL(access.capabilitiesUrl!);
+    const response = await firstValueFrom(this.http.get(capabilitiesUrl.toString(), { responseType: 'text' }));
+    const xml = jQuery(jQuery.parseXML(response));
+    const version = xml.find('WMS_Capabilities, WMT_MS_Capabilities').attr('version');
+    const parameters = new Map((this.parameterValues ?? []).map(param => [param.name.toLowerCase(), param.value]));
+    const layerName = parameters.get('layers') ?? access.defaultLayer;
+    const layer = xml.find('Layer').filter((_, element) => jQuery(element).children('Name').text() === layerName).first();
+    if (!version || layer.length === 0 || xml.find('Capability > Request > GetMap > Format').filter((_, element) => jQuery(element).text() === format).length === 0) {
+      throw new Error('The requested WMS layer or image format is unavailable.');
+    }
+    const onlineResource = xml.find('Capability > Request > GetMap > DCPType > HTTP > Get > OnlineResource').first();
+    const url = new URL(onlineResource.attr('xlink:href') ?? onlineResource.attr('href') ?? capabilitiesUrl.toString(), capabilitiesUrl);
+    capabilitiesUrl.searchParams.forEach((value, key) => {
+      if (!Array.from(url.searchParams.keys()).some(existing => existing.toLowerCase() === key.toLowerCase())) {
+        url.searchParams.append(key, value);
+      }
+    });
+
+    const ancestors = layer.parents('Layer').addBack();
+    const supportedCrs = ancestors.children('CRS, SRS').map((_, element) => jQuery(element).text()).get()
+      .flatMap(value => value.split(/\s+/));
+    if (!supportedCrs.includes('EPSG:4326')) {
+      throw new Error('The WMS layer does not support EPSG:4326 for image download.');
+    }
+    const bounds = this.dataConfigurable.getCurrentSpatialBounds();
+    let west = bounds.getMinLon();
+    let south = bounds.getMinLat();
+    let east = bounds.getMaxLon();
+    let north = bounds.getMaxLat();
+    if (!bounds.isBounded()) {
+      const geographicBounds = ancestors.children('EX_GeographicBoundingBox, LatLonBoundingBox').last();
+      west = Number(geographicBounds.children('westBoundLongitude').text() || geographicBounds.attr('minx'));
+      south = Number(geographicBounds.children('southBoundLatitude').text() || geographicBounds.attr('miny'));
+      east = Number(geographicBounds.children('eastBoundLongitude').text() || geographicBounds.attr('maxx'));
+      north = Number(geographicBounds.children('northBoundLatitude').text() || geographicBounds.attr('maxy'));
+    }
+    if (![west, south, east, north].every(Number.isFinite) || east <= west || north <= south) {
+      throw new Error('The WMS layer has no valid geographic bounds for image download.');
+    }
+
+    const aspectRatio = (east - west) / (north - south);
+    const requestParameters = new Map<string, string>([
+      ...parameters,
+      ['service', 'WMS'], ['request', 'GetMap'], ['version', version],
+      ['layers', layerName!], ['styles', parameters.get('styles') ?? access.defaultStyle ?? ''],
+      ['format', format], ['transparent', parameters.get('transparent') ?? String(access.defaultTransparency ?? true)],
+      ['bbox', (version === '1.3.0' ? [south, west, north, east] : [west, south, east, north]).join(',')],
+      ['width', String(Math.max(1, Math.round(1024 * Math.min(1, aspectRatio))))],
+      ['height', String(Math.max(1, Math.round(1024 * Math.min(1, 1 / aspectRatio))))],
+    ]);
+    requestParameters.delete(version === '1.3.0' ? 'srs' : 'crs');
+    requestParameters.set(version === '1.3.0' ? 'crs' : 'srs', 'EPSG:4326');
+    Array.from(url.searchParams.keys()).forEach(key => {
+      if (requestParameters.has(key.toLowerCase()) || ['crs', 'srs'].includes(key.toLowerCase())) {
+        url.searchParams.delete(key);
+      }
+    });
+    requestParameters.forEach((value, key) => {
+      const name = this.parameterValues?.find(param => param.name.toLowerCase() === key)?.name ?? key;
+      url.searchParams.set(name, value);
+    });
+    const blob = await firstValueFrom(this.http.get(url.toString(), { responseType: 'blob' }));
+    if (blob.type.split(';')[0].toLowerCase() !== format.split(';')[0].toLowerCase()) {
+      throw new Error('The WMS service returned an unexpected response instead of the requested image.');
+    }
+    this.executionService.openDownload(blob, 'raw_service_response_' + this.serviceName, format);
   }
 
 

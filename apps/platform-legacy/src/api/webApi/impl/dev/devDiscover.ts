@@ -23,7 +23,13 @@ interface GroupCategory {
 interface GroupMetadata {
   id: string;
   position: number;
-  concept: 'DATA' | 'FACILITIES' | 'SOFTWARE';
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- API response field name.
+  concept_id: string;
+}
+
+interface ConceptMetadata {
+  id: string;
+  name: string;
 }
 
 /**
@@ -34,6 +40,8 @@ interface GroupMetadata {
  * - Returns the appropriate response to the caller
  */
 export class DevDiscoverApi implements DiscoverApi {
+
+  private conceptsRequest?: Promise<ConceptMetadata[]>;
 
   constructor(
     protected readonly baseUrl: BaseUrl,
@@ -46,8 +54,8 @@ export class DevDiscoverApi implements DiscoverApi {
 
     const url = builder.build();
 
-    return this.rest.get(url)
-      .then((groups: Record<string, unknown>) => {
+    return Promise.all([this.rest.get(url), this.getConceptId(context)])
+      .then(([groups, conceptId]) => {
         if (!Array.isArray(groups)) {
           throw new Error('Invalid groups response');
         }
@@ -55,27 +63,27 @@ export class DevDiscoverApi implements DiscoverApi {
         if (domains === null) {
           return null;
         }
-        return this.orderDomainsByGroupPosition(domains, groups as GroupMetadata[], context);
+        return this.orderDomainsByGroupPosition(domains, groups as GroupMetadata[], conceptId);
       });
   }
 
-  getFilters(context: string): Promise<null | DiscoverResponse> {
+  async getFilters(context: string): Promise<null | DiscoverResponse> {
     const builder: UrlBuilder = this.baseUrl.urlBuilder();
     builder.addPathElements('search');
-    this.addResourceFilters(builder, context);
+    await this.addResourceFilters(builder, context);
 
     const url = builder.build();
 
     return this.fetchAndParse(url);
   }
 
-  discover(request: DiscoverRequest): Promise<null | DiscoverResponse> {
+  async discover(request: DiscoverRequest): Promise<null | DiscoverResponse> {
     const builder: UrlBuilder = this.baseUrl.urlBuilder();
     builder.addPathElements('search');
 
     const context = request.getContext();
     if (context != null) {
-      this.addResourceFilters(builder, context);
+      await this.addResourceFilters(builder, context);
     }
 
     // QUERY
@@ -203,26 +211,60 @@ export class DevDiscoverApi implements DiscoverApi {
       });
   }
 
-  private addResourceFilters(builder: UrlBuilder, context: string): void {
-    if (context === CONTEXT_RESOURCE || context === CONTEXT_FACILITY) {
-      builder.addParameter('type', 'dataset');
-      builder.addParameter('concept', context === CONTEXT_FACILITY ? 'FACILITIES' : 'DATA');
-    } else if (context === CONTEXT_SOFTWARE) {
-      builder.addParameter('type', 'software-application,software-source-code');
-      builder.addParameter('concept', 'SOFTWARE');
+  private getConcepts(): Promise<ConceptMetadata[]> {
+    if (this.conceptsRequest === undefined) {
+      const builder = this.baseUrl.urlBuilder();
+      builder.addPathElements('concepts');
+      this.conceptsRequest = this.rest.get(builder.build()).then(concepts => {
+        if (!Array.isArray(concepts) || concepts.some((concept: Partial<ConceptMetadata> | null) =>
+          concept === null || typeof concept !== 'object'
+          || typeof concept.id !== 'string' || concept.id.trim().length === 0
+          || typeof concept.name !== 'string' || concept.name.trim().length === 0)) {
+          throw new Error('Invalid concepts response');
+        }
+        return concepts as ConceptMetadata[];
+      }).catch(error => {
+        this.conceptsRequest = undefined;
+        throw error;
+      });
     }
+    return this.conceptsRequest;
   }
 
-  private orderDomainsByGroupPosition(domains: Domain[], groups: GroupMetadata[], context: string): Domain[] {
-    const conceptsByContext: Record<string, GroupMetadata['concept']> = {
+  private async getConceptId(context: string): Promise<string | null> {
+    const conceptsByContext: Record<string, string> = {
       [CONTEXT_RESOURCE]: 'DATA',
       [CONTEXT_FACILITY]: 'FACILITIES',
       [CONTEXT_SOFTWARE]: 'SOFTWARE',
     };
-    const concept = conceptsByContext[context] ?? null;
+    const name = conceptsByContext[context];
+    if (name === undefined) {
+      return null;
+    }
+    const concepts = await this.getConcepts();
+    const concept = concepts.find(item => item.name.toUpperCase() === name);
+    if (concept === undefined) {
+      throw new Error(`Missing concept: ${name}`);
+    }
+    return concept.id;
+  }
+
+  private async addResourceFilters(builder: UrlBuilder, context: string): Promise<void> {
+    const conceptId = await this.getConceptId(context);
+    if (context === CONTEXT_RESOURCE || context === CONTEXT_FACILITY) {
+      builder.addParameter('type', 'dataset');
+    } else if (context === CONTEXT_SOFTWARE) {
+      builder.addParameter('type', 'software-application,software-source-code');
+    }
+    if (conceptId !== null) {
+      builder.addParameter('conceptId', conceptId);
+    }
+  }
+
+  private orderDomainsByGroupPosition(domains: Domain[], groups: GroupMetadata[], conceptId: string | null): Domain[] {
     const positionsByGroupId = new Map<string, number>(
       groups
-        .filter(group => concept === null || group.concept === concept)
+        .filter(group => conceptId === null || group.concept_id === conceptId)
         .map(group => [group.id, group.position] as const)
     );
 
@@ -248,7 +290,7 @@ export class DevDiscoverApi implements DiscoverApi {
       .map(({ domain }) => domain);
   }
 
-  private parseJSONDomains(json: Record<string, unknown>): Optional<null | Array<Domain>> {
+  private parseJSONDomains(json: Record<string, unknown> | Record<string, unknown>[]): Optional<null | Array<Domain>> {
 
     const domainsAppendTo: Array<Domain> = [];
 

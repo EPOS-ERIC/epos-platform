@@ -243,10 +243,14 @@ import * as L from 'leaflet';
 
            const coordinates: Array<number> = [Number(northBbox), Number(eastBbox), Number(southBbox), Number(westBbox)];
 
-           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-           void dataSearchConfigurablesServiceResource.updateLayerBbox(this.id, coordinates);
-           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-           void dataSearchConfigurablesServiceRegistry.updateLayerBbox(this.id, coordinates);
+           if (dataSearchConfigurablesServiceResource.get(this.id) != null) {
+             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+             void dataSearchConfigurablesServiceResource.updateLayerBbox(this.id, coordinates);
+           }
+           if (dataSearchConfigurablesServiceRegistry.get(this.id) != null) {
+             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+             void dataSearchConfigurablesServiceRegistry.updateLayerBbox(this.id, coordinates);
+           }
 
            return $layerElement;
          });
