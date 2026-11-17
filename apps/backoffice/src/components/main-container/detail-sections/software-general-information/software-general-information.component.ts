@@ -2,18 +2,19 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import type {
+  ResourceVersionReference,
   SoftwareApplicationResourceMetadata,
-  SoftwareSourceCodeResourceMetadata,
-  ResourceVersionReference
+  SoftwareSourceCodeResourceMetadata
 } from '../../../../../generated/backofficeSchemas';
 import { KeywordChipsComponent } from '../../../../shared/ui/keyword-chips.component';
+import { ProvidersComponent } from '../providers/providers.component';
 
 type SoftwareResourceType = 'software-application' | 'software-source-code';
 type SoftwareMetadata = SoftwareApplicationResourceMetadata | SoftwareSourceCodeResourceMetadata;
 
 @Component({
   selector: 'app-software-general-information',
-  imports: [FormsModule, KeywordChipsComponent],
+  imports: [FormsModule, KeywordChipsComponent, ProvidersComponent],
   templateUrl: './software-general-information.component.html',
   styleUrl: './software-general-information.component.css'
 })
@@ -43,26 +44,9 @@ export class SoftwareGeneralInformationComponent {
     this.emitModelChange();
   }
 
-  protected addCreator(): void {
-    if (!this.model) {
-      return;
-    }
-
-    this.model.creators.push({ id: '', name: '' } as ResourceVersionReference);
-    this.emitModelChange();
-  }
-
-  protected removeCreator(index: number): void {
-    if (!this.model) {
-      return;
-    }
-
-    if (this.model.creators.length === 1) {
-      this.model.creators[0] = { id: '', name: '' } as ResourceVersionReference;
-    } else {
-      this.model.creators.splice(index, 1);
-    }
-
+  protected updateCreators(creators: ResourceVersionReference[] | ResourceVersionReference): void {
+    if (!this.model) return;
+    this.model.creators = Array.isArray(creators) ? creators : [creators];
     this.emitModelChange();
   }
 }

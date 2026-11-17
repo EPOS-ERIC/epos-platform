@@ -42,6 +42,8 @@ export class ProvidersComponent implements OnInit {
   @Input() embedded = false;
   @Input() readonlyView = false;
   @Input() neutralAppearance = false;
+  @Input() singularLabel = 'Provider';
+  @Input() pluralLabel = 'Providers';
   @Output() modelChange = new EventEmitter<DatasetProviderForm[] | DatasetProviderForm>();
 
   ngOnInit(): void {

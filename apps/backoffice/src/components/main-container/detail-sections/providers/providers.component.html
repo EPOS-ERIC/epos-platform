@@ -1,6 +1,6 @@
 <section
   [attr.id]="embedded || single ? null : 'providers'"
-  [attr.aria-label]="embedded ? (single ? 'Provider' : 'Providers') : null"
+  [attr.aria-label]="embedded ? (single ? singularLabel : pluralLabel) : null"
   class="detail-section-card"
   [class.app-card]="!embedded"
   [class.detail-section-card--embedded]="embedded"
@@ -9,9 +9,9 @@
   @if (!embedded) {
     <div class="detail-section-header">
       <div>
-        <h2>{{ single ? 'Provider' : 'Providers' }}</h2>
+        <h2>{{ single ? singularLabel : pluralLabel }}</h2>
         @if (!selectedOnlyView()) {
-          <p class="subtitle app-muted">Choose {{ single ? 'one provider' : 'the providers' }} from the available catalog.</p>
+          <p class="subtitle app-muted">Choose {{ single ? 'one ' + singularLabel.toLowerCase() : 'the ' + pluralLabel.toLowerCase() }} from the available catalog.</p>
         }
       </div>
     </div>
@@ -25,18 +25,18 @@
         }
       </ul>
     } @else {
-      <div class="detail-empty">No provider selected.</div>
+      <div class="detail-empty">No {{ singularLabel.toLowerCase() }} selected.</div>
     }
   } @else {
     <div class="providers-grid">
     <section class="providers-box">
       <div class="providers-box-header">
-        <h3><span class="app-badge provider-badge--available">Available Providers</span></h3>
+        <h3><span class="app-badge provider-badge--available">Available {{ pluralLabel }}</span></h3>
         <span class="webservice-summary-hint">{{ availableOrganizations().length }}</span>
       </div>
 
       <label class="detail-field">
-        <span class="detail-label">Search providers</span>
+        <span class="detail-label">Search {{ pluralLabel.toLowerCase() }}</span>
         <input class="app-input" type="text" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{ standalone: true }" placeholder="Search by name" />
       </label>
 
@@ -57,8 +57,8 @@
                   class="app-button app-button--ghost provider-action"
                   (click)="addProvider(organization)"
                   [disabled]="disabled || selectionLimitReached()"
-                  [attr.aria-label]="'Add provider ' + organization.name"
-                >Add Provider</button>
+                  [attr.aria-label]="'Add ' + singularLabel.toLowerCase() + ' ' + organization.name"
+                >Add {{ singularLabel }}</button>
               }
             </li>
           }
@@ -70,7 +70,7 @@
 
     <section class="providers-box providers-box--selected">
       <div class="providers-box-header">
-        <h3><span class="app-badge provider-badge--selected">Selected {{ single ? 'Provider' : 'Providers' }}</span></h3>
+        <h3><span class="app-badge provider-badge--selected">Selected {{ single ? singularLabel : pluralLabel }}</span></h3>
         <span class="webservice-summary-hint">{{ selectedProviders().length }}</span>
       </div>
 
@@ -84,13 +84,13 @@
                 class="app-button app-button--ghost provider-action provider-remove"
                 (click)="removeProvider(provider.id)"
                 [disabled]="disabled"
-                [attr.aria-label]="'Remove provider ' + provider.name"
+                [attr.aria-label]="'Remove ' + singularLabel.toLowerCase() + ' ' + provider.name"
               >Remove</button>
             </li>
           }
         </ul>
       } @else {
-        <div class="detail-empty">No provider selected.</div>
+        <div class="detail-empty">No {{ singularLabel.toLowerCase() }} selected.</div>
       }
     </section>
     </div>
