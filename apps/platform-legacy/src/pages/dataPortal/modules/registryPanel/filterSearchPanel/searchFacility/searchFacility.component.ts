@@ -22,7 +22,7 @@ import { BoundingBox as BBEpos } from 'utility/eposLeaflet/eposLeaflet';
 import { BoundingBox } from 'api/webApi/data/boundingBox.interface';
 import { SimpleBoundingBox } from 'api/webApi/data/impl/simpleBoundingBox';
 import { SimpleDiscoverRequest } from '../../api/webapi/data/impl/simpleDiscoverRequest';
-import { DiscoverRequest, DiscoverResponse } from 'api/webApi/classes/discoverApi.interface';
+import { DiscoverRequest } from 'api/webApi/classes/discoverApi.interface';
 import { Organization } from 'api/webApi/data/organization.interface';
 import { Facet } from 'api/webApi/data/facet.interface';
 import { FacetParentItem } from 'api/webApi/data/impl/facetParentItem';
@@ -142,22 +142,6 @@ export class SearchFacilityComponent implements OnInit {
 
 
   public ngOnInit(): void {
-
-    // get filters from API service
-    void this.landingService.getFilters().then((r: DiscoverResponse) => {
-
-      const facets = r.filters();
-
-      const currentProgressArray = new Array<FacetDisplayItem>();
-      if (facets != null) {
-        facets.roots().forEach((root: Facet<void>) => {
-          this.recursiveDisplayItemCreator(root, currentProgressArray!);
-        });
-      }
-
-      this.allDisplayItems = currentProgressArray;
-      this.filterHiddenItems();
-    });
 
     this.subscriptions.push(
 

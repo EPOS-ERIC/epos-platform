@@ -157,7 +157,9 @@ export class FacetDropdownComponent {
     levelNum++;
 
     let count = 0;
-    facet.getChildren().forEach((levelItem: Facet<DistributionSummary>) => {
+    facet.getChildren()
+      .filter((levelItem: Facet<DistributionSummary>) => !levelItem.getIdentifier().includes(':'))
+      .forEach((levelItem: Facet<DistributionSummary>) => {
 
       count += levelItem.getFlatData().length;
       const child = this.recursiveNestedTreeObjectArray(levelItem, levelNum);
@@ -167,7 +169,7 @@ export class FacetDropdownComponent {
 
     });
 
-    if (count < facet.getFlatData().length && newlevel.children!.length > 0) {
+    if (count < facet.getFlatData().length && newlevel.children!.length > 0 && !facet.getIdentifier().includes(':')) {
       const levelNo: DistributionLevel = {
         id: levelNum,
         value: '',
