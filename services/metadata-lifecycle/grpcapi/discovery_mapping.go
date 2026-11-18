@@ -54,7 +54,7 @@ func toDomainDiscoveryFilter(value *metadatalifecyclev1.SearchResourcesRequest) 
 		return domain.DiscoveryFilter{}, err
 	}
 
-	filter, err := domain.NewDiscoveryFilter(domain.DiscoveryFilter{
+	filter := domain.DiscoveryFilter{
 		Query:              query,
 		Types:              resourceTypes,
 		Concepts:           concepts,
@@ -66,8 +66,8 @@ func toDomainDiscoveryFilter(value *metadatalifecyclev1.SearchResourcesRequest) 
 		Keywords:           value.Keywords,
 		EditorID:           editorID,
 		VersioningStatuses: statuses,
-	})
-	if err != nil {
+	}
+	if err := filter.Normalize(); err != nil {
 		return domain.DiscoveryFilter{}, err
 	}
 	return filter, nil
@@ -98,7 +98,7 @@ func optionalDiscoverySpatialFilter(value *string) (geom.T, error) {
 	if value == nil {
 		return nil, nil
 	}
-	filter, err := domain.NewSpatialFilter(*value)
+	filter, err := domain.ParseSpatialFilter(*value)
 	if err != nil {
 		return nil, err
 	}

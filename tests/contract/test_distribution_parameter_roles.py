@@ -89,7 +89,7 @@ class DistributionParameterRolesContractTest(DistributionContractTestCase):
 
         detail = self.create_draft(distributions)
         roles = {
-            item["title"]: item["web_service"]["configuration"]["parameters"][0]["role"]
+            item["title"]: item["web_service"]["parameters"][0]["role"]
             for item in detail["metadata"]["distributions"]
         }
         self.assertEqual(roles, {
@@ -149,5 +149,5 @@ class DistributionParameterRolesContractTest(DistributionContractTestCase):
     def parameters(self, detail: dict[str, Any]) -> dict[str, dict[str, Any]]:
         return {
             item["name"]: item
-            for item in detail["metadata"]["distributions"][0]["web_service"]["configuration"]["parameters"]
+            for item in detail["metadata"]["distributions"][0]["web_service"]["parameters"]
         }

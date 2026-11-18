@@ -32,8 +32,13 @@ func (r *Repo) ListPermissions(ctx context.Context) ([]domain.Permission, error)
 
 	permissions := make([]domain.Permission, len(rows))
 	for i, row := range rows {
-		permission, err := domain.NewPersistedPermission(row.Key, row.Label, row.Description, string(row.Scope))
-		if err != nil {
+		permission := domain.Permission{
+			Key:         row.Key,
+			Label:       row.Label,
+			Description: row.Description,
+			Scope:       domain.PermissionScope(row.Scope),
+		}
+		if err := permission.Normalize(); err != nil {
 			return nil, fmt.Errorf("construct permission %q: %w", row.Key, err)
 		}
 		permissions[i] = permission

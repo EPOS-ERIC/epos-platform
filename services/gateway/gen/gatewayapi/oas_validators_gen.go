@@ -2372,6 +2372,38 @@ func (s DatasetResourceMetadataResourceType) Validate() error {
 	}
 }
 
+func (s DatasetWebService) Validate() error {
+	switch s.Type {
+	case WmsWebServiceDatasetWebService:
+		if err := s.WmsWebService.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case WmtsWebServiceDatasetWebService:
+		if err := s.WmtsWebService.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case WfsWebServiceDatasetWebService:
+		if err := s.WfsWebService.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case HttpWebServiceDatasetWebService:
+		if err := s.HttpWebService.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case DynamicWebServiceDatasetWebService:
+		if err := s.DynamicWebService.Validate(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.Errorf("invalid type %q", s.Type)
+	}
+}
+
 func (s *DateTimeParameter) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -3303,12 +3335,55 @@ func (s DynamicDistributionAccessRequestType) Validate() error {
 	}
 }
 
-func (s *DynamicWebServiceConfiguration) Validate() error {
+func (s *DynamicWebService) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
 	if err := func() error {
 		if err := s.Type.Validate(); err != nil {
 			return err
@@ -3381,18 +3456,97 @@ func (s *DynamicWebServiceConfiguration) Validate() error {
 			Error: err,
 		})
 	}
+	if err := func() error {
+		if s.AvailableFormats == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    1,
+			MinLengthSet: true,
+			MaxLength:    0,
+			MaxLengthSet: false,
+		}).ValidateLength(len(s.AvailableFormats)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.AvailableFormats {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "available_formats",
+			Error: err,
+		})
+	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
 }
 
-func (s *DynamicWebServiceConfigurationDraft) Validate() error {
+func (s *DynamicWebServiceDraft) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
 	if err := func() error {
 		if err := s.Type.Validate(); err != nil {
 			return err
@@ -3529,7 +3683,7 @@ func (s *DynamicWebServiceConfigurationDraft) Validate() error {
 	return nil
 }
 
-func (s DynamicWebServiceConfigurationDraftType) Validate() error {
+func (s DynamicWebServiceDraftType) Validate() error {
 	switch s {
 	case "DYNAMIC":
 		return nil
@@ -3538,7 +3692,7 @@ func (s DynamicWebServiceConfigurationDraftType) Validate() error {
 	}
 }
 
-func (s DynamicWebServiceConfigurationType) Validate() error {
+func (s DynamicWebServiceType) Validate() error {
 	switch s {
 	case "DYNAMIC":
 		return nil
@@ -4349,250 +4503,6 @@ func (s *GatewayErrorStatusCode) Validate() error {
 	return nil
 }
 
-func (s *GenericWebServiceConfiguration) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Type.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Method.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "method",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		var failures []validate.FieldError
-		for i, elem := range s.Parameters {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "parameters",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		var failures []validate.FieldError
-		for i, elem := range s.BodyParameters {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "body_parameters",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s *GenericWebServiceConfigurationDraft) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Type.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.TemplateURL.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "template_url",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Method.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "method",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		var failures []validate.FieldError
-		for i, elem := range s.Parameters {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "parameters",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.BodyContentType.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "body_content_type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.BodyTemplate.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "body_template",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		var failures []validate.FieldError
-		for i, elem := range s.BodyParameters {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "body_parameters",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Format.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "format",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s GenericWebServiceConfigurationDraftType) Validate() error {
-	switch s {
-	case "HTTP":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s GenericWebServiceConfigurationType) Validate() error {
-	switch s {
-	case "HTTP":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
 func (s *GeologicalTemporalCoverage) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -5180,6 +5090,372 @@ func (s *HTTPDistributionAccessRequest) Validate() error {
 }
 
 func (s HTTPDistributionAccessRequestType) Validate() error {
+	switch s {
+	case "HTTP":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *HttpWebService) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Method.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "method",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.Parameters {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "parameters",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.BodyParameters {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "body_parameters",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.AvailableFormats == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    1,
+			MinLengthSet: true,
+			MaxLength:    0,
+			MaxLengthSet: false,
+		}).ValidateLength(len(s.AvailableFormats)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.AvailableFormats {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "available_formats",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *HttpWebServiceDraft) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.TemplateURL.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "template_url",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Method.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "method",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.Parameters {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "parameters",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.BodyContentType.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "body_content_type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.BodyTemplate.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "body_template",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.BodyParameters {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "body_parameters",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Format.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "format",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s HttpWebServiceDraftType) Validate() error {
+	switch s {
+	case "HTTP":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s HttpWebServiceType) Validate() error {
 	switch s {
 	case "HTTP":
 		return nil
@@ -10054,136 +10330,6 @@ func (s WFSDistributionAccessRequestType) Validate() error {
 	}
 }
 
-func (s *WebService) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if value, ok := s.VisibleOn.Get(); ok {
-			if err := func() error {
-				if value == nil {
-					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
-				var failures []validate.FieldError
-				for i, elem := range value {
-					if err := func() error {
-						if err := elem.Validate(); err != nil {
-							return err
-						}
-						return nil
-					}(); err != nil {
-						failures = append(failures, validate.FieldError{
-							Name:  fmt.Sprintf("[%d]", i),
-							Error: err,
-						})
-					}
-				}
-				if len(failures) > 0 {
-					return &validate.Error{Fields: failures}
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "visible_on",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Configuration.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "configuration",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s WebServiceConfiguration) Validate() error {
-	switch s.Type {
-	case WmsWebServiceConfigurationWebServiceConfiguration:
-		if err := s.WmsWebServiceConfiguration.Validate(); err != nil {
-			return err
-		}
-		return nil
-	case WmtsWebServiceConfigurationWebServiceConfiguration:
-		if err := s.WmtsWebServiceConfiguration.Validate(); err != nil {
-			return err
-		}
-		return nil
-	case WfsWebServiceConfigurationWebServiceConfiguration:
-		if err := s.WfsWebServiceConfiguration.Validate(); err != nil {
-			return err
-		}
-		return nil
-	case GenericWebServiceConfigurationWebServiceConfiguration:
-		if err := s.GenericWebServiceConfiguration.Validate(); err != nil {
-			return err
-		}
-		return nil
-	case DynamicWebServiceConfigurationWebServiceConfiguration:
-		if err := s.DynamicWebServiceConfiguration.Validate(); err != nil {
-			return err
-		}
-		return nil
-	default:
-		return errors.Errorf("invalid type %q", s.Type)
-	}
-}
-
-func (s WebServiceConfigurationDraft) Validate() error {
-	switch s.Type {
-	case WmsWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		if err := s.WmsWebServiceConfigurationDraft.Validate(); err != nil {
-			return err
-		}
-		return nil
-	case WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		if err := s.WmtsWebServiceConfigurationDraft.Validate(); err != nil {
-			return err
-		}
-		return nil
-	case WfsWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		if err := s.WfsWebServiceConfigurationDraft.Validate(); err != nil {
-			return err
-		}
-		return nil
-	case GenericWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		if err := s.GenericWebServiceConfigurationDraft.Validate(); err != nil {
-			return err
-		}
-		return nil
-	case DynamicWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		if err := s.DynamicWebServiceConfigurationDraft.Validate(); err != nil {
-			return err
-		}
-		return nil
-	default:
-		return errors.Errorf("invalid type %q", s.Type)
-	}
-}
-
 func (s *WebServiceDistribution) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -10237,34 +10383,6 @@ func (s *WebServiceDistribution) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "web_service",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if s.AvailableFormats == nil {
-			return errors.New("nil is invalid value")
-		}
-		var failures []validate.FieldError
-		for i, elem := range s.AvailableFormats {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "available_formats",
 			Error: err,
 		})
 	}
@@ -10354,7 +10472,84 @@ func (s WebServiceDistributionType) Validate() error {
 	}
 }
 
-func (s *WebServiceDraft) Validate() error {
+func (s WebServiceDraft) Validate() error {
+	switch s.Type {
+	case WmsWebServiceDraftWebServiceDraft:
+		if err := s.WmsWebServiceDraft.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case WmtsWebServiceDraftWebServiceDraft:
+		if err := s.WmtsWebServiceDraft.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case WfsWebServiceDraftWebServiceDraft:
+		if err := s.WfsWebServiceDraft.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case HttpWebServiceDraftWebServiceDraft:
+		if err := s.HttpWebServiceDraft.Validate(); err != nil {
+			return err
+		}
+		return nil
+	case DynamicWebServiceDraftWebServiceDraft:
+		if err := s.DynamicWebServiceDraft.Validate(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.Errorf("invalid type %q", s.Type)
+	}
+}
+
+func (s WebServiceMethod) Validate() error {
+	switch s {
+	case "GET":
+		return nil
+	case "POST":
+		return nil
+	case "PUT":
+		return nil
+	case "DELETE":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s WebServiceType) Validate() error {
+	switch s {
+	case "WMS":
+		return nil
+	case "HTTP":
+		return nil
+	case "WMTS":
+		return nil
+	case "WFS":
+		return nil
+	case "DYNAMIC":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s WebServiceVisibleOn) Validate() error {
+	switch s {
+	case "GRAPH":
+		return nil
+	case "TABLE":
+		return nil
+	case "MAP":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *WfsWebService) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -10404,13 +10599,239 @@ func (s *WebServiceDraft) Validate() error {
 		})
 	}
 	if err := func() error {
-		if err := s.Configuration.Validate(); err != nil {
+		if err := s.Type.Validate(); err != nil {
 			return err
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "configuration",
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     1,
+			MinLengthSet:  true,
+			MaxLength:     0,
+			MaxLengthSet:  false,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.GetFeatureTemplateURL)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "get_feature_template_url",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Version.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "version",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.FeatureTypes == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    1,
+			MinLengthSet: true,
+			MaxLength:    0,
+			MaxLengthSet: false,
+		}).ValidateLength(len(s.FeatureTypes)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		if err := validate.UniqueItems(s.FeatureTypes); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.FeatureTypes {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "feature_types",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.DefaultFeatureType.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "default_feature_type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.OutputFormats == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    1,
+			MinLengthSet: true,
+			MaxLength:    0,
+			MaxLengthSet: false,
+		}).ValidateLength(len(s.OutputFormats)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		if err := validate.UniqueItems(s.OutputFormats); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.OutputFormats {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "output_formats",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.DefaultOutputFormat.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "default_output_format",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.ResultLimit.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           1,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "result_limit",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.Parameters == nil {
+			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.Parameters {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "parameters",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.AvailableFormats == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    1,
+			MinLengthSet: true,
+			MaxLength:    0,
+			MaxLengthSet: false,
+		}).ValidateLength(len(s.AvailableFormats)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.AvailableFormats {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "available_formats",
 			Error: err,
 		})
 	}
@@ -10420,57 +10841,55 @@ func (s *WebServiceDraft) Validate() error {
 	return nil
 }
 
-func (s WebServiceMethod) Validate() error {
-	switch s {
-	case "GET":
-		return nil
-	case "POST":
-		return nil
-	case "PUT":
-		return nil
-	case "DELETE":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s WebServiceType) Validate() error {
-	switch s {
-	case "WMS":
-		return nil
-	case "HTTP":
-		return nil
-	case "WMTS":
-		return nil
-	case "WFS":
-		return nil
-	case "DYNAMIC":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s WebServiceVisibleOn) Validate() error {
-	switch s {
-	case "GRAPH":
-		return nil
-	case "TABLE":
-		return nil
-	case "MAP":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *WfsWebServiceConfiguration) Validate() error {
+func (s *WfsWebServiceDraft) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
 	if err := func() error {
 		if err := s.Type.Validate(); err != nil {
 			return err
@@ -10678,220 +11097,7 @@ func (s *WfsWebServiceConfiguration) Validate() error {
 	return nil
 }
 
-func (s *WfsWebServiceConfigurationDraft) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Type.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := (validate.String{
-			MinLength:     1,
-			MinLengthSet:  true,
-			MaxLength:     0,
-			MaxLengthSet:  false,
-			Email:         false,
-			Hostname:      false,
-			Regex:         nil,
-			MinNumeric:    0,
-			MinNumericSet: false,
-			MaxNumeric:    0,
-			MaxNumericSet: false,
-		}).Validate(string(s.GetFeatureTemplateURL)); err != nil {
-			return errors.Wrap(err, "string")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "get_feature_template_url",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Version.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "version",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if s.FeatureTypes == nil {
-			return errors.New("nil is invalid value")
-		}
-		if err := (validate.Array{
-			MinLength:    1,
-			MinLengthSet: true,
-			MaxLength:    0,
-			MaxLengthSet: false,
-		}).ValidateLength(len(s.FeatureTypes)); err != nil {
-			return errors.Wrap(err, "array")
-		}
-		if err := validate.UniqueItems(s.FeatureTypes); err != nil {
-			return errors.Wrap(err, "array")
-		}
-		var failures []validate.FieldError
-		for i, elem := range s.FeatureTypes {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "feature_types",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.DefaultFeatureType.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "default_feature_type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if s.OutputFormats == nil {
-			return errors.New("nil is invalid value")
-		}
-		if err := (validate.Array{
-			MinLength:    1,
-			MinLengthSet: true,
-			MaxLength:    0,
-			MaxLengthSet: false,
-		}).ValidateLength(len(s.OutputFormats)); err != nil {
-			return errors.Wrap(err, "array")
-		}
-		if err := validate.UniqueItems(s.OutputFormats); err != nil {
-			return errors.Wrap(err, "array")
-		}
-		var failures []validate.FieldError
-		for i, elem := range s.OutputFormats {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "output_formats",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.DefaultOutputFormat.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "default_output_format",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.ResultLimit.Get(); ok {
-			if err := func() error {
-				if err := (validate.Int{
-					MinSet:        true,
-					Min:           1,
-					MaxSet:        false,
-					Max:           0,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    0,
-					Pattern:       nil,
-				}).Validate(int64(value)); err != nil {
-					return errors.Wrap(err, "int")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "result_limit",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if s.Parameters == nil {
-			return errors.New("nil is invalid value")
-		}
-		var failures []validate.FieldError
-		for i, elem := range s.Parameters {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "parameters",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s WfsWebServiceConfigurationDraftType) Validate() error {
+func (s WfsWebServiceDraftType) Validate() error {
 	switch s {
 	case "WFS":
 		return nil
@@ -10900,7 +11106,7 @@ func (s WfsWebServiceConfigurationDraftType) Validate() error {
 	}
 }
 
-func (s WfsWebServiceConfigurationDraftVersion) Validate() error {
+func (s WfsWebServiceDraftVersion) Validate() error {
 	switch s {
 	case "1.1.0":
 		return nil
@@ -10911,7 +11117,7 @@ func (s WfsWebServiceConfigurationDraftVersion) Validate() error {
 	}
 }
 
-func (s WfsWebServiceConfigurationType) Validate() error {
+func (s WfsWebServiceType) Validate() error {
 	switch s {
 	case "WFS":
 		return nil
@@ -10920,7 +11126,7 @@ func (s WfsWebServiceConfigurationType) Validate() error {
 	}
 }
 
-func (s WfsWebServiceConfigurationVersion) Validate() error {
+func (s WfsWebServiceVersion) Validate() error {
 	switch s {
 	case "1.1.0":
 		return nil
@@ -11021,12 +11227,55 @@ func (s *WmsLayerDraft) Validate() error {
 	return nil
 }
 
-func (s *WmsWebServiceConfiguration) Validate() error {
+func (s *WmsWebService) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
 	if err := func() error {
 		if err := s.Type.Validate(); err != nil {
 			return err
@@ -11170,12 +11419,55 @@ func (s *WmsWebServiceConfiguration) Validate() error {
 	return nil
 }
 
-func (s *WmsWebServiceConfigurationDraft) Validate() error {
+func (s *WmsWebServiceDraft) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
 	if err := func() error {
 		if err := s.Type.Validate(); err != nil {
 			return err
@@ -11319,7 +11611,7 @@ func (s *WmsWebServiceConfigurationDraft) Validate() error {
 	return nil
 }
 
-func (s WmsWebServiceConfigurationDraftType) Validate() error {
+func (s WmsWebServiceDraftType) Validate() error {
 	switch s {
 	case "WMS":
 		return nil
@@ -11328,7 +11620,7 @@ func (s WmsWebServiceConfigurationDraftType) Validate() error {
 	}
 }
 
-func (s WmsWebServiceConfigurationType) Validate() error {
+func (s WmsWebServiceType) Validate() error {
 	switch s {
 	case "WMS":
 		return nil
@@ -11497,12 +11789,55 @@ func (s *WmtsLayerDraft) Validate() error {
 	return nil
 }
 
-func (s *WmtsWebServiceConfiguration) Validate() error {
+func (s *WmtsWebService) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
 	if err := func() error {
 		if err := s.Type.Validate(); err != nil {
 			return err
@@ -11646,12 +11981,55 @@ func (s *WmtsWebServiceConfiguration) Validate() error {
 	return nil
 }
 
-func (s *WmtsWebServiceConfigurationDraft) Validate() error {
+func (s *WmtsWebServiceDraft) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.VisibleOn.Get(); ok {
+			if err := func() error {
+				if value == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    1,
+					MinLengthSet: true,
+					MaxLength:    0,
+					MaxLengthSet: false,
+				}).ValidateLength(len(value)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				var failures []validate.FieldError
+				for i, elem := range value {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "visible_on",
+			Error: err,
+		})
+	}
 	if err := func() error {
 		if err := s.Type.Validate(); err != nil {
 			return err
@@ -11795,7 +12173,7 @@ func (s *WmtsWebServiceConfigurationDraft) Validate() error {
 	return nil
 }
 
-func (s WmtsWebServiceConfigurationDraftType) Validate() error {
+func (s WmtsWebServiceDraftType) Validate() error {
 	switch s {
 	case "WMTS":
 		return nil
@@ -11804,7 +12182,7 @@ func (s WmtsWebServiceConfigurationDraftType) Validate() error {
 	}
 }
 
-func (s WmtsWebServiceConfigurationType) Validate() error {
+func (s WmtsWebServiceType) Validate() error {
 	switch s {
 	case "WMTS":
 		return nil

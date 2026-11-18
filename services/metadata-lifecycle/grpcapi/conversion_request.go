@@ -27,6 +27,10 @@ func (s *ResourceServer) RequestDistributionConversion(ctx context.Context, requ
 		return nil, err
 	}
 
+	if err := input.Normalize(); err != nil {
+		return nil, err
+	}
+
 	notifications, err := s.datasets.RequestConversion(ctx, actor, id, input)
 	if err != nil {
 		return nil, err

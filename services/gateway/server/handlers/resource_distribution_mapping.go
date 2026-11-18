@@ -50,20 +50,15 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 		if err != nil {
 			return gatewayapi.Distribution{}, err
 		}
-		formats, err := toAPIAvailableFormats(value.NativeFormats)
-		if err != nil {
-			return gatewayapi.Distribution{}, err
-		}
 		return gatewayapi.NewWebServiceDistributionDistribution(gatewayapi.WebServiceDistribution{
-			ID:               id,
-			ResourceID:       resourceID,
-			Title:            value.Title,
-			Description:      value.Description,
-			License:          toAPINilString(value.License),
-			Type:             gatewayapi.WebServiceDistributionTypeWEBSERVICE,
-			ByteSize:         toAPINilInt64(value.ByteSize),
-			WebService:       webService,
-			AvailableFormats: formats,
+			ID:          id,
+			ResourceID:  resourceID,
+			Title:       value.Title,
+			Description: value.Description,
+			License:     toAPINilString(value.License),
+			Type:        gatewayapi.WebServiceDistributionTypeWEBSERVICE,
+			ByteSize:    toAPINilInt64(value.ByteSize),
+			WebService:  webService,
 		}), nil
 	default:
 		return gatewayapi.Distribution{}, fmt.Errorf("unsupported upstream distribution type")
@@ -91,34 +86,32 @@ func toAPIAvailableFormats(values []*metadatalifecyclev1.NativeFormat) ([]gatewa
 	return result, nil
 }
 
-func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.WebService, error) {
+func toAPIWebServiceCommon(value *metadatalifecyclev1.WebServiceCommon) (gatewayapi.HttpWebService, error) {
+	if value == nil {
+		return gatewayapi.HttpWebService{}, fmt.Errorf("upstream web-service common fields are missing")
+	}
 	id, err := parseUUID("web_service.id", value.Id)
 	if err != nil {
-		return gatewayapi.WebService{}, err
+		return gatewayapi.HttpWebService{}, err
 	}
 	resourceID, err := parseUUID("web_service.resource_id", value.GetResourceId())
 	if err != nil {
-		return gatewayapi.WebService{}, err
+		return gatewayapi.HttpWebService{}, err
 	}
 	visibleOn, err := toAPIWebServiceVisibleOn(value.VisibleOn)
 	if err != nil {
-		return gatewayapi.WebService{}, err
+		return gatewayapi.HttpWebService{}, err
 	}
-	configuration, err := toAPIWebServiceConfiguration(value)
-	if err != nil {
-		return gatewayapi.WebService{}, err
-	}
-	result := gatewayapi.WebService{
+	result := gatewayapi.HttpWebService{
 		ID:            id,
 		ResourceID:    resourceID,
 		VisibleOn:     visibleOn,
-		Configuration: configuration,
 		ContactPoints: make([]uuid.UUID, 0, len(value.ContactPoints)),
 	}
 	if value.ProviderReference != nil {
 		providerID, err := parseUUID("web_service.provider_id", value.ProviderReference.GetId())
 		if err != nil {
-			return gatewayapi.WebService{}, err
+			return gatewayapi.HttpWebService{}, err
 		}
 		result.Provider.SetTo(gatewayapi.ResourceVersionReference{
 			ID:   providerID,
@@ -127,150 +120,141 @@ func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.WebServi
 	}
 	documentationURI, err := toAPIOptURI("web_service.documentation_uri", value.DocumentationUri)
 	if err != nil {
-		return gatewayapi.WebService{}, err
+		return gatewayapi.HttpWebService{}, err
 	}
 	result.DocumentationURI = documentationURI
 	for _, contactPoint := range value.ContactPoints {
 		id, err := parseUUID("web_service.contact_point_id", contactPoint)
 		if err != nil {
-			return gatewayapi.WebService{}, err
+			return gatewayapi.HttpWebService{}, err
 		}
 		result.ContactPoints = append(result.ContactPoints, id)
 	}
 	return result, nil
 }
 
-func toAPIWebServiceConfiguration(value *metadatalifecyclev1.WebService) (gatewayapi.WebServiceConfiguration, error) {
-	switch configuration := value.GetConfiguration().(type) {
-	case *metadatalifecyclev1.WebService_Generic:
-		if configuration.Generic == nil {
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream generic web-service configuration is nil")
+func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.DatasetWebService, error) {
+	switch service := value.GetService().(type) {
+	case *metadatalifecyclev1.WebService_Http:
+		if service.Http == nil {
+			break
 		}
-		generic, err := toAPIGenericWebServiceConfiguration(configuration.Generic)
+		result, err := toAPIGenericWebService(service.Http.Common, service.Http.TemplateUrl, service.Http.Method, service.Http.Format, service.Http.Parameters, service.Http.Body, service.Http.NativeFormats)
 		if err != nil {
-			return gatewayapi.WebServiceConfiguration{}, err
+			return gatewayapi.DatasetWebService{}, err
 		}
-		serviceType, err := toAPIWebServiceType(value.GetType())
-		if err != nil {
-			return gatewayapi.WebServiceConfiguration{}, err
-		}
-		switch serviceType {
-		case gatewayapi.WebServiceTypeWMS, gatewayapi.WebServiceTypeWFS, gatewayapi.WebServiceTypeWMTS, gatewayapi.WebServiceTypeDYNAMIC:
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream generic configuration has incompatible web-service type %q", serviceType)
-		case gatewayapi.WebServiceTypeHTTP:
-			return gatewayapi.NewGenericWebServiceConfigurationWebServiceConfiguration(generic), nil
-		default:
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("unsupported generic upstream web-service type %q", value.GetType())
-		}
-	case *metadatalifecyclev1.WebService_Wfs:
-		if configuration.Wfs == nil {
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WFS configuration is nil")
-		}
-		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS {
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WFS configuration has incompatible web-service type %q", value.GetType())
-		}
-		wfs, err := toAPIWFSWebServiceConfiguration(configuration.Wfs)
-		if err != nil {
-			return gatewayapi.WebServiceConfiguration{}, err
-		}
-		return gatewayapi.NewWfsWebServiceConfigurationWebServiceConfiguration(wfs), nil
-	case *metadatalifecyclev1.WebService_Wmts:
-		if configuration.Wmts == nil {
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WMTS configuration is nil")
-		}
-		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS {
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WMTS configuration has incompatible web-service type %q", value.GetType())
-		}
-		wmts, err := toAPIWMTSWebServiceConfiguration(configuration.Wmts)
-		if err != nil {
-			return gatewayapi.WebServiceConfiguration{}, err
-		}
-		return gatewayapi.NewWmtsWebServiceConfigurationWebServiceConfiguration(wmts), nil
-	case *metadatalifecyclev1.WebService_Wms:
-		if configuration.Wms == nil {
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WMS configuration is nil")
-		}
-		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS {
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream WMS configuration has incompatible web-service type %q", value.GetType())
-		}
-		wms, err := toAPIWMSWebServiceConfiguration(configuration.Wms)
-		if err != nil {
-			return gatewayapi.WebServiceConfiguration{}, err
-		}
-		return gatewayapi.NewWmsWebServiceConfigurationWebServiceConfiguration(wms), nil
+		result.Type = gatewayapi.HttpWebServiceTypeHTTP
+		return gatewayapi.NewHttpWebServiceDatasetWebService(result), nil
 	case *metadatalifecyclev1.WebService_Dynamic:
-		if configuration.Dynamic == nil {
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream DYNAMIC configuration is nil")
+		if service.Dynamic == nil {
+			break
 		}
-		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC {
-			return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream DYNAMIC configuration has incompatible web-service type %q", value.GetType())
-		}
-		generic, err := toAPIGenericWebServiceConfiguration(configuration.Dynamic)
+		v := service.Dynamic
+		generic, err := toAPIGenericWebService(v.Common, v.TemplateUrl, v.Method, v.Format, v.Parameters, v.Body, v.NativeFormats)
 		if err != nil {
-			return gatewayapi.WebServiceConfiguration{}, err
+			return gatewayapi.DatasetWebService{}, err
 		}
-		dynamic := gatewayapi.DynamicWebServiceConfiguration{
-			Type:            gatewayapi.DynamicWebServiceConfigurationTypeDYNAMIC,
-			TemplateURL:     generic.TemplateURL,
-			Method:          generic.Method,
-			Parameters:      generic.Parameters,
-			BodyContentType: generic.BodyContentType,
-			BodyTemplate:    generic.BodyTemplate,
-			BodyRequired:    generic.BodyRequired,
-			BodyParameters:  generic.BodyParameters,
-			Format:          generic.Format,
+		result := gatewayapi.DynamicWebService{
+			ID: generic.ID, ResourceID: generic.ResourceID, VisibleOn: generic.VisibleOn,
+			Provider: generic.Provider, DocumentationURI: generic.DocumentationURI, ContactPoints: generic.ContactPoints,
+			Type: gatewayapi.DynamicWebServiceTypeDYNAMIC, TemplateURL: generic.TemplateURL, Method: generic.Method,
+			Parameters: generic.Parameters, BodyContentType: generic.BodyContentType, BodyTemplate: generic.BodyTemplate,
+			BodyRequired: generic.BodyRequired, BodyParameters: generic.BodyParameters, Format: generic.Format, AvailableFormats: generic.AvailableFormats,
 		}
-		return gatewayapi.NewDynamicWebServiceConfigurationWebServiceConfiguration(dynamic), nil
-	default:
-		return gatewayapi.WebServiceConfiguration{}, fmt.Errorf("upstream web-service configuration is missing")
+		return gatewayapi.NewDynamicWebServiceDatasetWebService(result), nil
+	case *metadatalifecyclev1.WebService_Wfs:
+		if service.Wfs == nil {
+			break
+		}
+		result, err := toAPIWFSWebServiceConfiguration(service.Wfs)
+		if err != nil {
+			return gatewayapi.DatasetWebService{}, err
+		}
+		return gatewayapi.NewWfsWebServiceDatasetWebService(result), nil
+	case *metadatalifecyclev1.WebService_Wms:
+		if service.Wms == nil {
+			break
+		}
+		result, err := toAPIWMSWebServiceConfiguration(service.Wms)
+		if err != nil {
+			return gatewayapi.DatasetWebService{}, err
+		}
+		return gatewayapi.NewWmsWebServiceDatasetWebService(result), nil
+	case *metadatalifecyclev1.WebService_Wmts:
+		if service.Wmts == nil {
+			break
+		}
+		result, err := toAPIWMTSWebServiceConfiguration(service.Wmts)
+		if err != nil {
+			return gatewayapi.DatasetWebService{}, err
+		}
+		return gatewayapi.NewWmtsWebServiceDatasetWebService(result), nil
 	}
+	return gatewayapi.DatasetWebService{}, fmt.Errorf("upstream web-service variant is missing")
 }
 
-func toAPIGenericWebServiceConfiguration(value *metadatalifecyclev1.GenericWebServiceConfiguration) (gatewayapi.GenericWebServiceConfiguration, error) {
-	method, err := toAPIWebServiceMethod(value.GetMethod())
+func toAPIGenericWebService(common *metadatalifecyclev1.WebServiceCommon, template string, methodValue metadatalifecyclev1.WebServiceMethod, format string, parameters []*metadatalifecyclev1.Parameter, body *metadatalifecyclev1.RequestBody, nativeFormats []*metadatalifecyclev1.NativeFormat) (gatewayapi.HttpWebService, error) {
+	result, err := toAPIWebServiceCommon(common)
 	if err != nil {
-		return gatewayapi.GenericWebServiceConfiguration{}, err
+		return gatewayapi.HttpWebService{}, err
 	}
-	result := gatewayapi.GenericWebServiceConfiguration{
-		TemplateURL: value.GetTemplateUrl(),
-		Method:      method,
-		Format:      value.GetFormat(),
+	result.Method, err = toAPIWebServiceMethod(methodValue)
+	if err != nil {
+		return gatewayapi.HttpWebService{}, err
 	}
-	for _, parameter := range value.GetParameters() {
+	result.AvailableFormats, err = toAPIAvailableFormats(nativeFormats)
+	if err != nil {
+		return gatewayapi.HttpWebService{}, err
+	}
+	result.TemplateURL = template
+	result.Format = format
+	for _, parameter := range parameters {
 		if parameter == nil {
 			continue
 		}
 		mapped, err := toAPIParameter(parameter)
 		if err != nil {
-			return gatewayapi.GenericWebServiceConfiguration{}, err
+			return gatewayapi.HttpWebService{}, err
 		}
 		result.Parameters = append(result.Parameters, mapped)
 	}
-	result.BodyContentType = toAPINilString(value.BodyContentType)
-	result.BodyTemplate = toAPINilString(value.BodyTemplate)
-	if value.BodyRequired != nil {
-		result.BodyRequired.SetTo(*value.BodyRequired)
+	if body == nil {
+		return result, nil
 	}
-	for _, parameter := range value.GetBodyParameters() {
+	result.BodyContentType.SetTo(body.ContentType)
+	result.BodyTemplate.SetTo(body.Template)
+	result.BodyRequired.SetTo(body.Required)
+	for _, parameter := range body.Parameters {
 		if parameter == nil {
 			continue
 		}
 		mapped, err := toAPIScalarParameter(parameter)
 		if err != nil {
-			return gatewayapi.GenericWebServiceConfiguration{}, err
+			return gatewayapi.HttpWebService{}, err
 		}
 		result.BodyParameters = append(result.BodyParameters, mapped)
 	}
 	return result, nil
 }
 
-func toAPIWFSWebServiceConfiguration(value *metadatalifecyclev1.WFSWebServiceConfiguration) (gatewayapi.WfsWebServiceConfiguration, error) {
-	version := gatewayapi.WfsWebServiceConfigurationVersion(value.GetVersion())
-	if err := version.Validate(); err != nil {
-		return gatewayapi.WfsWebServiceConfiguration{}, fmt.Errorf("upstream WFS version is invalid: %w", err)
+func toAPIWFSWebServiceConfiguration(value *metadatalifecyclev1.WFSWebService) (gatewayapi.WfsWebService, error) {
+	common, err := toAPIWebServiceCommon(value.Common)
+	if err != nil {
+		return gatewayapi.WfsWebService{}, err
 	}
-	result := gatewayapi.WfsWebServiceConfiguration{
-		Type:                  gatewayapi.WfsWebServiceConfigurationTypeWFS,
+	formats, err := toAPIAvailableFormats(value.NativeFormats)
+	if err != nil {
+		return gatewayapi.WfsWebService{}, err
+	}
+	version := gatewayapi.WfsWebServiceVersion(value.GetVersion())
+	if err := version.Validate(); err != nil {
+		return gatewayapi.WfsWebService{}, fmt.Errorf("upstream WFS version is invalid: %w", err)
+	}
+	result := gatewayapi.WfsWebService{
+		ID: common.ID, ResourceID: common.ResourceID, VisibleOn: common.VisibleOn,
+		Provider: common.Provider, DocumentationURI: common.DocumentationURI, ContactPoints: common.ContactPoints,
+		AvailableFormats:      formats,
+		Type:                  gatewayapi.WfsWebServiceTypeWFS,
 		GetFeatureTemplateURL: value.GetGetFeatureTemplateUrl(),
 		Version:               version,
 		DefaultFeatureType:    gatewayapi.NonBlankString(value.GetDefaultFeatureType()),
@@ -284,27 +268,30 @@ func toAPIWFSWebServiceConfiguration(value *metadatalifecyclev1.WFSWebServiceCon
 	for _, format := range value.GetOutputFormats() {
 		result.OutputFormats = append(result.OutputFormats, gatewayapi.NonBlankString(format))
 	}
-	var err error
 	result.Parameters, err = toAPIParameters(value.GetParameters())
 	if err != nil {
-		return gatewayapi.WfsWebServiceConfiguration{}, err
+		return gatewayapi.WfsWebService{}, err
 	}
 	return result, nil
 }
 
-func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebServiceConfiguration) (gatewayapi.WmtsWebServiceConfiguration, error) {
-	result := gatewayapi.WmtsWebServiceConfiguration{Type: gatewayapi.WmtsWebServiceConfigurationTypeWMTS, CapabilitiesURL: value.GetCapabilitiesUrl(), DefaultLayer: gatewayapi.NonBlankString(value.GetDefaultLayer())}
+func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebService) (gatewayapi.WmtsWebService, error) {
+	common, err := toAPIWebServiceCommon(value.Common)
+	if err != nil {
+		return gatewayapi.WmtsWebService{}, err
+	}
+	result := gatewayapi.WmtsWebService{ID: common.ID, ResourceID: common.ResourceID, VisibleOn: common.VisibleOn, Provider: common.Provider, DocumentationURI: common.DocumentationURI, ContactPoints: common.ContactPoints, Type: gatewayapi.WmtsWebServiceTypeWMTS, CapabilitiesURL: value.GetCapabilitiesUrl(), DefaultLayer: gatewayapi.NonBlankString(value.GetDefaultLayer())}
 	for _, layer := range value.GetLayers() {
 		if layer == nil {
-			return gatewayapi.WmtsWebServiceConfiguration{}, fmt.Errorf("upstream WMTS layer is nil")
+			return gatewayapi.WmtsWebService{}, fmt.Errorf("upstream WMTS layer is nil")
 		}
 		id, err := parseUUID("wmts.layer.id", layer.GetId())
 		if err != nil {
-			return gatewayapi.WmtsWebServiceConfiguration{}, err
+			return gatewayapi.WmtsWebService{}, err
 		}
 		resourceID, err := parseUUID("wmts.layer.resource_id", layer.GetResourceId())
 		if err != nil {
-			return gatewayapi.WmtsWebServiceConfiguration{}, err
+			return gatewayapi.WmtsWebService{}, err
 		}
 
 		mapped := gatewayapi.WmtsLayer{
@@ -321,21 +308,26 @@ func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebServiceC
 		}
 		result.Layers = append(result.Layers, mapped)
 	}
-	var err error
 	result.GetTileParameters, err = toAPIParameters(value.GetGetTileParameters())
 	if err != nil {
-		return gatewayapi.WmtsWebServiceConfiguration{}, err
+		return gatewayapi.WmtsWebService{}, err
 	}
 	result.GetFeatureInfoParameters, err = toAPIParameters(value.GetGetFeatureInfoParameters())
 	if err != nil {
-		return gatewayapi.WmtsWebServiceConfiguration{}, err
+		return gatewayapi.WmtsWebService{}, err
 	}
 	return result, nil
 }
 
-func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebServiceConfiguration) (gatewayapi.WmsWebServiceConfiguration, error) {
-	result := gatewayapi.WmsWebServiceConfiguration{
-		Type:                 gatewayapi.WmsWebServiceConfigurationTypeWMS,
+func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebService) (gatewayapi.WmsWebService, error) {
+	common, err := toAPIWebServiceCommon(value.Common)
+	if err != nil {
+		return gatewayapi.WmsWebService{}, err
+	}
+	result := gatewayapi.WmsWebService{
+		ID: common.ID, ResourceID: common.ResourceID, VisibleOn: common.VisibleOn,
+		Provider: common.Provider, DocumentationURI: common.DocumentationURI, ContactPoints: common.ContactPoints,
+		Type:                 gatewayapi.WmsWebServiceTypeWMS,
 		CapabilitiesURL:      value.GetCapabilitiesUrl(),
 		DefaultLayer:         gatewayapi.NonBlankString(value.GetDefaultLayer()),
 		TransparencyEditable: value.GetTransparencyEditable(),
@@ -343,15 +335,15 @@ func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebServiceCon
 	}
 	for _, layer := range value.GetLayers() {
 		if layer == nil {
-			return gatewayapi.WmsWebServiceConfiguration{}, fmt.Errorf("upstream WMS layer is nil")
+			return gatewayapi.WmsWebService{}, fmt.Errorf("upstream WMS layer is nil")
 		}
 		id, err := parseUUID("wms.layer.id", layer.GetId())
 		if err != nil {
-			return gatewayapi.WmsWebServiceConfiguration{}, err
+			return gatewayapi.WmsWebService{}, err
 		}
 		resourceID, err := parseUUID("wms.layer.resource_id", layer.GetResourceId())
 		if err != nil {
-			return gatewayapi.WmsWebServiceConfiguration{}, err
+			return gatewayapi.WmsWebService{}, err
 		}
 		mapped := gatewayapi.WmsLayer{
 			ID:           id,
@@ -362,14 +354,13 @@ func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebServiceCon
 		}
 		result.Layers = append(result.Layers, mapped)
 	}
-	var err error
 	result.GetMapParameters, err = toAPIParameters(value.GetGetMapParameters())
 	if err != nil {
-		return gatewayapi.WmsWebServiceConfiguration{}, err
+		return gatewayapi.WmsWebService{}, err
 	}
 	result.GetFeatureInfoParameters, err = toAPIParameters(value.GetGetFeatureInfoParameters())
 	if err != nil {
-		return gatewayapi.WmsWebServiceConfiguration{}, err
+		return gatewayapi.WmsWebService{}, err
 	}
 	return result, nil
 }

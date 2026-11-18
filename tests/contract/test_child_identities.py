@@ -72,7 +72,7 @@ class ChildIdentityContractTest(DistributionContractTestCase):
                 detail = self.create_draft([distribution])
                 original = detail["metadata"]["distributions"][0]
                 service = original["web_service"]
-                config = service["configuration"]
+                config = service
                 saved = {
                     "distribution": original, "service": service,
                     "parameter": config["parameters"][0],
@@ -80,7 +80,7 @@ class ChildIdentityContractTest(DistributionContractTestCase):
                     "body": config["body_parameters"][0],
                 }
                 request_service = distribution["web_service"]
-                request_config = request_service["configuration"]
+                request_config = request_service
                 inputs = {
                     "distribution": distribution, "service": request_service,
                     "parameter": request_config["parameters"][0],
@@ -104,7 +104,7 @@ class ChildIdentityContractTest(DistributionContractTestCase):
                 self.assertEqual(self.replace_response(detail, metadata).status_code, 200)
                 updated = self.details(detail["resource_id"], detail["id"])["metadata"]["distributions"][0]
                 updated_service = updated["web_service"]
-                updated_config = updated_service["configuration"]
+                updated_config = updated_service
                 result = {
                     "distribution": updated, "service": updated_service,
                     "parameter": updated_config["parameters"][0],
@@ -126,10 +126,10 @@ class ChildIdentityContractTest(DistributionContractTestCase):
         detail = self.create_draft([distribution])
         original = detail["metadata"]["distributions"][0]
         service = original["web_service"]
-        before = {item["name"]: item for item in service["configuration"]["parameters"]}
+        before = {item["name"]: item for item in service["parameters"]}
         distribution["resource_id"] = original["resource_id"]
         distribution["web_service"]["resource_id"] = service["resource_id"]
-        distribution["web_service"]["configuration"]["parameters"] = [
+        distribution["web_service"]["parameters"] = [
             parameter("retained-edited", resource_id=before["retained"]["resource_id"]),
             parameter("replaced", position=1),
         ]
@@ -139,7 +139,7 @@ class ChildIdentityContractTest(DistributionContractTestCase):
         }
         self.assertEqual(self.replace_response(detail, metadata).status_code, 200)
         updated = self.details(detail["resource_id"], detail["id"])
-        parameters = updated["metadata"]["distributions"][0]["web_service"]["configuration"]["parameters"]
+        parameters = updated["metadata"]["distributions"][0]["web_service"]["parameters"]
         result = {item["name"]: item for item in parameters}
         self.assertEqual(set(result), {"retained-edited", "replaced"})
         self.assertEqual(result["retained-edited"]["resource_id"], before["retained"]["resource_id"])
@@ -161,14 +161,15 @@ class ChildIdentityContractTest(DistributionContractTestCase):
                     configuration.update({"transparency_editable": False, "default_transparency": False, "get_map_parameters": []})
                 else:
                     configuration["get_tile_parameters"] = []
+                configuration["visible_on"] = ["MAP"]
                 distribution = {
                     "title": kind, "description": "Map service", "type": "WEB_SERVICE",
-                    "web_service": {"visible_on": ["MAP"], "configuration": configuration},
+                    "web_service": configuration,
                 }
                 detail = self.create_draft([distribution])
                 original = detail["metadata"]["distributions"][0]
                 service = original["web_service"]
-                before = {item["name"]: item for item in service["configuration"]["layers"]}
+                before = {item["name"]: item for item in service["layers"]}
                 distribution["resource_id"] = original["resource_id"]
                 distribution["web_service"]["resource_id"] = service["resource_id"]
                 retained = deepcopy(layers[0])
@@ -181,7 +182,7 @@ class ChildIdentityContractTest(DistributionContractTestCase):
                 }
                 self.assertEqual(self.replace_response(detail, metadata).status_code, 200)
                 updated = self.details(detail["resource_id"], detail["id"])
-                layers_after = updated["metadata"]["distributions"][0]["web_service"]["configuration"]["layers"]
+                layers_after = updated["metadata"]["distributions"][0]["web_service"]["layers"]
                 result = {item["name"]: item for item in layers_after}
                 self.assertEqual(set(result), {"retained-edited", "replaced"})
                 self.assertEqual(result["retained-edited"]["resource_id"], before["retained"]["resource_id"])

@@ -89,11 +89,12 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 			m.recordInvalid("dataset", source, err)
 			continue
 		}
-		if err := dataset.Validate(); err != nil {
+		if err := dataset.Normalize(); err != nil {
 			m.recordInvalid("dataset", source, fmt.Errorf("validate dataset: %w", err))
 			continue
 		}
-		if _, err := domain.NewImportBatch(domain.ImportBatch{Datasets: []domain.DatasetMetadata{dataset}}); err != nil {
+		batch := domain.ImportBatch{Datasets: []domain.DatasetMetadata{dataset}}
+		if err := batch.Normalize(); err != nil {
 			m.recordInvalid("dataset", source, err)
 			continue
 		}
@@ -106,11 +107,12 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 			m.recordInvalid("software application", source, err)
 			continue
 		}
-		if err := software.Validate(); err != nil {
+		if err := software.Normalize(); err != nil {
 			m.recordInvalid("software application", source, fmt.Errorf("validate software application: %w", err))
 			continue
 		}
-		if _, err := domain.NewImportBatch(domain.ImportBatch{SoftwareApplications: []domain.SoftwareApplicationMetadata{software}}); err != nil {
+		batch := domain.ImportBatch{SoftwareApplications: []domain.SoftwareApplicationMetadata{software}}
+		if err := batch.Normalize(); err != nil {
 			m.recordInvalid("software application", source, err)
 			continue
 		}
@@ -123,11 +125,12 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 			m.recordInvalid("software source code", source, err)
 			continue
 		}
-		if err := software.Validate(); err != nil {
+		if err := software.Normalize(); err != nil {
 			m.recordInvalid("software source code", source, fmt.Errorf("validate software source code: %w", err))
 			continue
 		}
-		if _, err := domain.NewImportBatch(domain.ImportBatch{SoftwareSourceCodes: []domain.SoftwareSourceCodeMetadata{software}}); err != nil {
+		batch := domain.ImportBatch{SoftwareSourceCodes: []domain.SoftwareSourceCodeMetadata{software}}
+		if err := batch.Normalize(); err != nil {
 			m.recordInvalid("software source code", source, err)
 			continue
 		}
@@ -167,7 +170,7 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 
 	m.addUnsupportedWarnings()
 
-	batch, err := domain.NewImportBatch(domain.ImportBatch{
+	batch := domain.ImportBatch{
 		Groups:               mapValues(m.schemes),
 		Categories:           mapValues(m.categories),
 		Organizations:        mapValues(m.organizations),
@@ -178,8 +181,8 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 		CategoryEdges:        mapEdges(m.categoryEdges),
 		OrganizationEdges:    mapOrganizationEdges(m.organizationEdges),
 		Warnings:             m.warnings,
-	})
-	if err != nil {
+	}
+	if err := batch.Normalize(); err != nil {
 		return domain.ImportBatch{}, fmt.Errorf("validate import batch: %w", err)
 	}
 	return batch, nil
@@ -601,7 +604,7 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 			m.recordInvalid("web service", serviceSource, err)
 			return domain.Distribution{}, fmt.Errorf("web service %q: %w", serviceSource, err)
 		}
-		distribution.WebService = &webService
+		distribution.WebService = webService
 	case domain.DistributionTypeDownloadableFile:
 		distribution.DownloadableFile = downloadableFile(m, source)
 	case "":
@@ -611,7 +614,7 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 				m.recordInvalid("web service", serviceSource, err)
 				return domain.Distribution{}, fmt.Errorf("web service %q: %w", serviceSource, err)
 			}
-			distribution.WebService = &webService
+			distribution.WebService = webService
 		} else {
 			distribution.DownloadableFile = downloadableFile(m, source)
 		}
@@ -626,24 +629,12 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 
 	distribution.Type = typeValue
 	if distribution.WebService != nil {
-		if _, err := domain.NewWebServiceInput(distribution.WebService.Input()); err != nil {
+		if err := distribution.WebService.Normalize(); err != nil {
 			m.recordInvalid("web service", serviceSource, err)
 			return domain.Distribution{}, fmt.Errorf("web service %q is invalid: %w", serviceSource, err)
 		}
 	}
-	input := domain.DistributionInput{
-		Title:            distribution.Title,
-		Description:      distribution.Description,
-		License:          distribution.License,
-		Type:             distribution.Type,
-		ByteSize:         distribution.ByteSize,
-		DownloadableFile: distribution.DownloadableFile,
-	}
-	if distribution.WebService != nil {
-		webServiceInput := distribution.WebService.Input()
-		input.WebService = &webServiceInput
-	}
-	if _, err := domain.NewDistributionInput(input); err != nil {
+	if err := distribution.Normalize(); err != nil {
 		return domain.Distribution{}, fmt.Errorf("distribution %q is invalid: %w", source, err)
 	}
 
@@ -661,44 +652,36 @@ func downloadableFile(m *mapper, source string) *domain.DownloadableFile {
 	return &domain.DownloadableFile{URL: url, Format: m.optionalString(source, dctFormat)}
 }
 
-func (m *mapper) webServiceForDistribution(distribution, source string, owner uuid.UUID) (domain.WebService, error) {
+func (m *mapper) webServiceForDistribution(distribution, source string, owner uuid.UUID) (*domain.HTTPWebService, error) {
 	operation, ok := m.firstString(distribution, dcatAccessURL)
 	if !ok || strings.TrimSpace(operation) == "" {
-		return domain.WebService{}, fmt.Errorf("web service distribution requires %s", dcatAccessURL)
+		return nil, fmt.Errorf("web service distribution requires %s", dcatAccessURL)
 	}
 	return m.webService(source, owner, operation)
 }
 
-func (m *mapper) webService(source string, owner uuid.UUID, operationSource string) (domain.WebService, error) {
+func (m *mapper) webService(source string, owner uuid.UUID, operationSource string) (*domain.HTTPWebService, error) {
 	if err := m.checkSingleValues(operationSource, hydraReturns); err != nil {
-		return domain.WebService{}, err
+		return nil, err
 	}
-	configuration := domain.GenericWebServiceConfiguration{
-		Method: domain.HTTPMethodGet,
-		Format: m.optionalString(operationSource, hydraReturns),
+	service := &domain.HTTPWebService{
+		ID:        ownedID(owner.String(), "web-service", source),
+		VisibleOn: nil,
+		Format:    m.optionalString(operationSource, hydraReturns),
 	}
-	service := domain.WebService{
-		ID:   ownedID(owner.String(), "web-service", source),
-		Type: domain.WebServiceTypeHTTP,
-		// TODO: Import visible-on targets from source metadata.
-		VisibleOn:        nil,
-		Configuration:    configuration,
-		Provider:         nil,
-		DocumentationURI: nil,
-		ContactPoints:    nil,
-	}
+	configuration := &service.GenericWebService
 	method := strings.ToUpper(m.optionalString(operationSource, hydraMethod))
 	if method == "" {
 		method = string(domain.HTTPMethodGet)
 	}
 	configuration.Method = domain.HTTPMethod(method)
 	if !configuration.Method.Valid() {
-		return domain.WebService{}, fmt.Errorf("unsupported web service method %q", method)
+		return nil, fmt.Errorf("unsupported web service method %q", method)
 	}
 
 	providers := m.graph.refs(source, schemaProvider)
 	if len(providers) > 1 {
-		return domain.WebService{}, fmt.Errorf("web service must have at most one provider")
+		return nil, fmt.Errorf("web service must have at most one provider")
 	}
 	if len(providers) == 1 {
 		item, ok := m.organizationValue(providers[0], source, schemaProvider)
@@ -761,8 +744,6 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 			configuration.Parameters = parameters
 		}
 	}
-	service.Configuration = configuration
-
 	return service, nil
 }
 
@@ -936,8 +917,7 @@ func (m *mapper) scheme(source string) (domain.ImportGroup, error) {
 		m.recordInvalid("group", source, err)
 		return domain.ImportGroup{}, err
 	}
-	result, err := domain.NewImportGroup(result)
-	if err != nil {
+	if err := result.Normalize(); err != nil {
 		err = fmt.Errorf("group %q is invalid: %w", source, err)
 		m.recordInvalid("group", source, err)
 		return domain.ImportGroup{}, err
@@ -1108,10 +1088,11 @@ func (m *mapper) contact(source string) (domain.ContactPoint, error) {
 	if email == "" {
 		return domain.ContactPoint{}, fmt.Errorf("contact point %q requires email", source)
 	}
-	result, err := domain.NewContactPoint(sharedID("contact-point", source), domain.ContactPointInput{
+	result := domain.ContactPoint{
+		ID:    sharedID("contact-point", source),
 		Email: email,
-	})
-	if err != nil {
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.ContactPoint{}, fmt.Errorf("contact point %q is invalid: %w", source, err)
 	}
 	key := result.Email

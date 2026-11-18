@@ -59,7 +59,7 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 
 	rolesByUser := make(map[string][]domain.GroupRole)
 	for _, role := range roles {
-		value, err := domain.NewGroupRole(role.RoleKey)
+		value, err := domain.ParseGroupRole(role.RoleKey)
 		if err != nil {
 			return nil, fmt.Errorf("construct group role: %w", err)
 		}
@@ -68,7 +68,7 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 
 	grantedPermissionsByUser := make(map[string][]domain.GroupPermission)
 	for _, permission := range grantedPermissions {
-		value, err := domain.NewGroupPermission(permission.PermissionKey)
+		value, err := domain.ParseGroupPermission(permission.PermissionKey)
 		if err != nil {
 			return nil, fmt.Errorf("construct granted permission: %w", err)
 		}
@@ -77,7 +77,7 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 
 	rolePermissionsByUser := make(map[string][]domain.GroupPermission)
 	for _, permission := range rolePermissions {
-		value, err := domain.NewGroupPermission(permission.PermissionKey)
+		value, err := domain.ParseGroupPermission(permission.PermissionKey)
 		if err != nil {
 			return nil, fmt.Errorf("construct role permission: %w", err)
 		}
@@ -131,8 +131,11 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 		return domain.GroupMembership{}, domain.Concept{}, fmt.Errorf("get group concept: %w", err)
 	}
 
-	validatedConcept, err := domain.NewConcept(concept.ID, concept.Name)
-	if err != nil {
+	validatedConcept := domain.Concept{
+		ID:   concept.ID,
+		Name: concept.Name,
+	}
+	if err := validatedConcept.Normalize(); err != nil {
 		return domain.GroupMembership{}, domain.Concept{}, fmt.Errorf("construct group concept: %w", err)
 	}
 
@@ -258,8 +261,11 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string
 		return domain.RoleRequest{}, domain.Concept{}, fmt.Errorf("get group concept: %w", err)
 	}
 
-	validatedConcept, err := domain.NewConcept(concept.ID, concept.Name)
-	if err != nil {
+	validatedConcept := domain.Concept{
+		ID:   concept.ID,
+		Name: concept.Name,
+	}
+	if err := validatedConcept.Normalize(); err != nil {
 		return domain.RoleRequest{}, domain.Concept{}, fmt.Errorf("construct group concept: %w", err)
 	}
 
@@ -640,7 +646,7 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 		if role.UserID != userID {
 			continue
 		}
-		value, err := domain.NewGroupRole(role.RoleKey)
+		value, err := domain.ParseGroupRole(role.RoleKey)
 		if err != nil {
 			return domain.GroupMembership{}, fmt.Errorf("construct group role: %w", err)
 		}
@@ -650,7 +656,7 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 	memberGrantedPermissions := make([]domain.GroupPermission, 0)
 	for _, permission := range grantedPermissions {
 		if permission.UserID == userID {
-			value, err := domain.NewGroupPermission(permission.PermissionKey)
+			value, err := domain.ParseGroupPermission(permission.PermissionKey)
 			if err != nil {
 				return domain.GroupMembership{}, fmt.Errorf("construct granted permission: %w", err)
 			}
@@ -661,7 +667,7 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 	memberRolePermissions := make([]domain.GroupPermission, 0)
 	for _, permission := range rolePermissions {
 		if permission.UserID == userID {
-			value, err := domain.NewGroupPermission(permission.PermissionKey)
+			value, err := domain.ParseGroupPermission(permission.PermissionKey)
 			if err != nil {
 				return domain.GroupMembership{}, fmt.Errorf("construct role permission: %w", err)
 			}

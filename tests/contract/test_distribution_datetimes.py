@@ -14,7 +14,7 @@ class DistributionDatetimesContractTest(DistributionContractTestCase):
                       default="2026-10-21T05:30:00-05:00", layout="YYYY-MM-DD hh:mm:ss"),
         ])])
         distribution = detail["metadata"]["distributions"][0]
-        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["configuration"]["parameters"]}
+        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["parameters"]}
         for instant in ("2026-10-21T12:30:00+02:00", "2026-10-21T05:30:00-05:00", "2026-10-21T10:30:00Z"):
             with self.subTest(instant=instant):
                 prepared = self.prepare(distribution, values={
@@ -42,7 +42,7 @@ class DistributionDatetimesContractTest(DistributionContractTestCase):
             parameter("both", "DATETIME", position=2, minimum=minimum, maximum=maximum),
         ])])
         distribution = detail["metadata"]["distributions"][0]
-        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["configuration"]["parameters"]}
+        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["parameters"]}
         for name, accepted, rejected in (
             ("minimum", [minimum, maximum], ["2026-10-19T23:59:59Z"]),
             ("maximum", [minimum, maximum], ["2026-10-22T00:00:01Z"]),

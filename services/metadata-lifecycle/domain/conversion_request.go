@@ -13,27 +13,27 @@ type ConversionRequestInput struct {
 	Message        string
 }
 
-// NewConversionRequestInput validates and normalizes conversion request details.
-func NewConversionRequestInput(input ConversionRequestInput) (ConversionRequestInput, error) {
+// Normalize validates and normalizes conversion request details.
+func (input *ConversionRequestInput) Normalize() error {
 	input.InputFormat = strings.TrimSpace(input.InputFormat)
 	if input.InputFormat == "" {
-		return ConversionRequestInput{}, apperror.Field("input_format", "Input format is required.", nil)
+		return apperror.Field("input_format", "Input format is required.", nil)
 	}
 
 	if len(input.Visualizations) == 0 {
-		return ConversionRequestInput{}, apperror.Field("visualizations", "Select at least one visualization.", nil)
+		return apperror.Field("visualizations", "Select at least one visualization.", nil)
 	}
 
 	for _, visualization := range input.Visualizations {
 		if !visualization.Valid() {
-			return ConversionRequestInput{}, apperror.Field("visualizations", "Unknown visualization.", nil)
+			return apperror.Field("visualizations", "Unknown visualization.", nil)
 		}
 	}
 
 	input.Message = strings.TrimSpace(input.Message)
 	if input.Message == "" {
-		return ConversionRequestInput{}, apperror.Field("message", "Message is required.", nil)
+		return apperror.Field("message", "Message is required.", nil)
 	}
 
-	return input, nil
+	return nil
 }

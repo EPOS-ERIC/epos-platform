@@ -20,13 +20,13 @@ func NewIdentity(users *users.Service) *IdentityServer {
 }
 
 func (i *IdentityServer) ProvisionUser(ctx context.Context, req *metadatalifecyclev1.ProvisionUserRequest) (*metadatalifecyclev1.ProvisionUserResponse, error) {
-	claims, err := domain.NewUserClaims(domain.UserClaims{
+	claims := domain.UserClaims{
 		ID:         req.GetId(),
 		Email:      req.GetEmail(),
 		GivenName:  req.GetGivenName(),
 		FamilyName: req.GetFamilyName(),
-	})
-	if err != nil {
+	}
+	if err := claims.Normalize(); err != nil {
 		return nil, err
 	}
 

@@ -35,7 +35,7 @@ class DistributionFormatSelectionContractTest(DistributionContractTestCase):
                     else:
                         self.assertEqual(prepared["url"], "https://provider.invalid/query")
                         self.assertEqual(prepared["headers"], {"Format": value})
-            identifier = distribution["web_service"]["configuration"]["parameters"][0]["id"]
+            identifier = distribution["web_service"]["parameters"][0]["id"]
             for selectors in ({}, {"output_format": "json"}):
                 with self.subTest(location=location, bypass=selectors):
                     self.assert_prepare_problem(

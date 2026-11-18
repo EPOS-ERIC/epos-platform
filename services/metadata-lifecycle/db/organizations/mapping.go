@@ -44,7 +44,8 @@ func toDomainOrganization(
 	identifiers []domain.OrganizationIdentifier,
 	parents []uuid.UUID,
 ) (domain.Organization, error) {
-	organizationInput, err := domain.NewOrganization(row.ID, domain.OrganizationInput{
+	organization := domain.Organization{
+		ID:          row.ID,
 		Name:        row.Name,
 		Street:      row.Street,
 		Locality:    row.Locality,
@@ -53,26 +54,14 @@ func toDomainOrganization(
 		LogoURL:     row.LogoUrl,
 		PageURL:     row.PageUrl,
 		Email:       row.Email,
-		Identifiers: organizationIdentifierInputs(identifiers),
+		Identifiers: identifiers,
 		Parents:     parents,
-	}, identifiers)
-	if err != nil {
+	}
+	if err := organization.Normalize(); err != nil {
 		return domain.Organization{}, fmt.Errorf("bad organization: %w", err)
 	}
 
-	return organizationInput, nil
-}
-
-// organizationIdentifierInputs strips persisted IDs to satisfy OrganizationInput's shape.
-func organizationIdentifierInputs(values []domain.OrganizationIdentifier) []domain.OrganizationIdentifierInput {
-	result := make([]domain.OrganizationIdentifierInput, 0, len(values))
-	for _, value := range values {
-		result = append(result, domain.OrganizationIdentifierInput{
-			Type:  value.Type,
-			Value: value.Value,
-		})
-	}
-	return result
+	return organization, nil
 }
 
 // toDomainOrganizationIdentifier converts a joined identifier row into its domain type.

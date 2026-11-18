@@ -19,7 +19,7 @@ class DistributionRequestValidationContractTest(DistributionContractTestCase):
         ])
         by_title = {item["title"]: item for item in detail["metadata"]["distributions"]}
         distribution, other = by_title["prepared-service"], by_title["foreign"]
-        parameters = {item["name"]: item for item in distribution["web_service"]["configuration"]["parameters"]}
+        parameters = {item["name"]: item for item in distribution["web_service"]["parameters"]}
         identifier = parameters["value"]["id"]
         self.assertIn("value=default", self.prepare(distribution)["url"])
         malformed = [
@@ -56,7 +56,7 @@ class DistributionRequestValidationContractTest(DistributionContractTestCase):
                 )
                 self.assert_prepare_problem(response)
 
-        foreign = other["web_service"]["configuration"]["parameters"][0]["id"]
+        foreign = other["web_service"]["parameters"][0]["id"]
         for name, assignments, target in (
             ("unknown ID", [{"id": str(uuid4()), "value": "value"}], "parameters[0].id"),
             ("foreign ID", [{"id": foreign, "value": "value"}], "parameters[0].id"),

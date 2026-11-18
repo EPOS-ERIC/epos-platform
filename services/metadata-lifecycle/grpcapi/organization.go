@@ -157,11 +157,11 @@ func toOrganizationInput(name string, street, locality, postalCode, country, log
 	if err != nil {
 		return domain.OrganizationInput{}, err
 	}
-	result, err := domain.NewOrganizationInput(input)
-	if err != nil {
+	if err := input.Normalize(); err != nil {
 		return domain.OrganizationInput{}, fmt.Errorf("validate organization input: %w", err)
 	}
-	return result, nil
+
+	return input, nil
 }
 
 func parseUUIDs(values []string, target string) ([]uuid.UUID, error) {

@@ -202,6 +202,8 @@ func logRPCError(ctx context.Context, log *slog.Logger, method string, cause, er
 	code := status.Code(err)
 	level := slog.LevelDebug
 	switch code {
+	case grpcCodes.InvalidArgument:
+		level = slog.LevelWarn
 	case grpcCodes.Unknown,
 		grpcCodes.ResourceExhausted,
 		grpcCodes.Unimplemented,
@@ -212,7 +214,6 @@ func logRPCError(ctx context.Context, log *slog.Logger, method string, cause, er
 		level = slog.LevelError
 	case grpcCodes.OK,
 		grpcCodes.Canceled,
-		grpcCodes.InvalidArgument,
 		grpcCodes.NotFound,
 		grpcCodes.AlreadyExists,
 		grpcCodes.PermissionDenied,

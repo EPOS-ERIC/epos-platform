@@ -12,24 +12,30 @@ type Concept struct {
 	Name string
 }
 
-func NewConcept(id uuid.UUID, name string) (Concept, error) {
-	if id == uuid.Nil {
-		return Concept{}, apperror.Default(apperror.CodeInternal)
-	}
-
-	name, err := NewConceptName(name)
-	if err != nil {
-		return Concept{}, internalValidationError(err)
-	}
-
-	return Concept{ID: id, Name: name}, nil
+type ConceptInput struct {
+	Name string
 }
 
-func NewConceptName(name string) (string, error) {
-	name = strings.TrimSpace(name)
-	if name == "" {
-		return "", invalidField("name", "Name must not be blank.", nil)
+func (value *ConceptInput) Normalize() error {
+	value.Name = strings.TrimSpace(value.Name)
+	if value.Name == "" {
+		return invalidField("name", "Name must not be blank.", nil)
 	}
 
-	return name, nil
+	return nil
+}
+
+func (value *Concept) Normalize() error {
+	if value.ID == uuid.Nil {
+		return apperror.Default(apperror.CodeInternal)
+	}
+
+	input := ConceptInput{Name: value.Name}
+	if err := input.Normalize(); err != nil {
+		return internalValidationError(err)
+	}
+
+	value.Name = input.Name
+
+	return nil
 }

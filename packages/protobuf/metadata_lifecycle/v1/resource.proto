@@ -362,7 +362,6 @@ message Distribution {
     DownloadableFile downloadable_file = 9;
   }
   string id = 10 [(buf.validate.field).string.uuid = true];
-  repeated NativeFormat native_formats = 11;
   string resource_id = 12 [(buf.validate.field).string.uuid = true];
 }
 
@@ -416,63 +415,98 @@ enum WebServiceParameterRole {
 }
 
 message WebServiceInput {
+  oneof service {
+    option (buf.validate.oneof).required = true;
+    HTTPWebServiceInput http = 1;
+    DynamicWebServiceInput dynamic = 2;
+    WFSWebServiceInput wfs = 3;
+    WMSWebServiceInput wms = 4;
+    WMTSWebServiceInput wmts = 5;
+  }
+}
+
+message WebServiceCommonInput {
   optional string provider_id = 3 [(buf.validate.field).string.uuid = true];
   optional string documentation_uri = 4 [(buf.validate.field).string.uri = true];
   repeated string contact_points = 7 [(buf.validate.field).repeated.items.string.uuid = true];
-  WebServiceType type = 8 [(buf.validate.field).enum.defined_only = true];
   repeated WebServiceVisibleOn visible_on = 9 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  oneof configuration {
-    option (buf.validate.oneof).required = true;
-    GenericWebServiceConfigurationInput generic = 10;
-    WMSWebServiceConfigurationInput wms = 11;
-    WFSWebServiceConfigurationInput wfs = 12;
-    WMTSWebServiceConfigurationInput wmts = 13;
-    GenericWebServiceConfigurationInput dynamic = 14;
-  }
   optional string resource_id = 15 [(buf.validate.field).string.uuid = true];
 }
 
 message WebService {
+  oneof service {
+    option (buf.validate.oneof).required = true;
+    HTTPWebService http = 1;
+    DynamicWebService dynamic = 2;
+    WFSWebService wfs = 3;
+    WMSWebService wms = 4;
+    WMTSWebService wmts = 5;
+  }
+}
+
+message WebServiceCommon {
   optional string documentation_uri = 3 [(buf.validate.field).string.uri = true];
   repeated string contact_points = 6 [(buf.validate.field).repeated.items.string.uuid = true];
   string id = 7 [(buf.validate.field).string.uuid = true];
   EntityReference provider_reference = 8;
-  WebServiceType type = 9 [(buf.validate.field).enum.defined_only = true];
   repeated WebServiceVisibleOn visible_on = 10 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  oneof configuration {
-    option (buf.validate.oneof).required = true;
-    GenericWebServiceConfiguration generic = 11;
-    WMSWebServiceConfiguration wms = 12;
-    WFSWebServiceConfiguration wfs = 13;
-    WMTSWebServiceConfiguration wmts = 14;
-    GenericWebServiceConfiguration dynamic = 15;
-  }
   string resource_id = 16 [(buf.validate.field).string.uuid = true];
 }
 
-message GenericWebServiceConfigurationInput {
+message RequestBodyInput {
+  optional bool required = 1;
+  string content_type = 2 [(buf.validate.field).string.min_len = 1];
+  string template = 3 [(buf.validate.field).string.min_len = 1];
+  repeated ScalarParameterInput parameters = 4;
+}
+
+message RequestBody {
+  bool required = 1;
+  string content_type = 2 [(buf.validate.field).string.min_len = 1];
+  string template = 3 [(buf.validate.field).string.min_len = 1];
+  repeated ScalarParameter parameters = 4;
+}
+
+message HTTPWebServiceInput {
+  WebServiceCommonInput common = 9;
   string template_url = 1 [(buf.validate.field).string.min_len = 1];
   repeated ParameterInput parameters = 2;
   string format = 3 [(buf.validate.field).string.min_len = 1];
   WebServiceMethod method = 4 [(buf.validate.field).enum.defined_only = true];
-  optional string body_content_type = 5 [(buf.validate.field).string.min_len = 1];
-  optional string body_template = 6 [(buf.validate.field).string.min_len = 1];
-  repeated ScalarParameterInput body_parameters = 7;
-  optional bool body_required = 8;
+  RequestBodyInput body = 5;
 }
 
-message GenericWebServiceConfiguration {
+message DynamicWebServiceInput {
+  WebServiceCommonInput common = 9;
+  string template_url = 1 [(buf.validate.field).string.min_len = 1];
+  repeated ParameterInput parameters = 2;
+  string format = 3 [(buf.validate.field).string.min_len = 1];
+  WebServiceMethod method = 4 [(buf.validate.field).enum.defined_only = true];
+  RequestBodyInput body = 5;
+}
+
+message HTTPWebService {
+  WebServiceCommon common = 9 [(buf.validate.field).required = true];
   string template_url = 1 [(buf.validate.field).string.min_len = 1];
   repeated Parameter parameters = 2;
   string format = 3 [(buf.validate.field).string.min_len = 1];
   WebServiceMethod method = 4 [(buf.validate.field).enum.defined_only = true];
-  optional string body_content_type = 5 [(buf.validate.field).string.min_len = 1];
-  optional string body_template = 6 [(buf.validate.field).string.min_len = 1];
-  repeated ScalarParameter body_parameters = 7;
-  optional bool body_required = 8;
+  RequestBody body = 5;
+  repeated NativeFormat native_formats = 10;
 }
 
-message WFSWebServiceConfigurationInput {
+message DynamicWebService {
+  WebServiceCommon common = 9 [(buf.validate.field).required = true];
+  string template_url = 1 [(buf.validate.field).string.min_len = 1];
+  repeated Parameter parameters = 2;
+  string format = 3 [(buf.validate.field).string.min_len = 1];
+  WebServiceMethod method = 4 [(buf.validate.field).enum.defined_only = true];
+  RequestBody body = 5;
+  repeated NativeFormat native_formats = 10;
+}
+
+message WFSWebServiceInput {
+  WebServiceCommonInput common = 10;
   string get_feature_template_url = 1 [(buf.validate.field).string.min_len = 1];
   string version = 2 [
     (buf.validate.field).string.in = "1.1.0",
@@ -487,7 +521,9 @@ message WFSWebServiceConfigurationInput {
   repeated ParameterInput parameters = 9;
 }
 
-message WFSWebServiceConfiguration {
+message WFSWebService {
+  WebServiceCommon common = 10 [(buf.validate.field).required = true];
+  repeated NativeFormat native_formats = 11;
   string get_feature_template_url = 1 [(buf.validate.field).string.min_len = 1];
   string version = 2 [
     (buf.validate.field).string.in = "1.1.0",
@@ -502,7 +538,8 @@ message WFSWebServiceConfiguration {
   repeated Parameter parameters = 9;
 }
 
-message WMSWebServiceConfigurationInput {
+message WMSWebServiceInput {
+  WebServiceCommonInput common = 8;
   string capabilities_url = 1 [(buf.validate.field).string.uri = true];
   string default_layer = 2 [(buf.validate.field).string.min_len = 1];
   repeated WMSLayerInput layers = 3 [(buf.validate.field).repeated.min_items = 1];
@@ -512,7 +549,8 @@ message WMSWebServiceConfigurationInput {
   repeated ParameterInput get_feature_info_parameters = 7;
 }
 
-message WMSWebServiceConfiguration {
+message WMSWebService {
+  WebServiceCommon common = 8 [(buf.validate.field).required = true];
   string capabilities_url = 1 [(buf.validate.field).string.uri = true];
   string default_layer = 2 [(buf.validate.field).string.min_len = 1];
   repeated WMSLayer layers = 3 [(buf.validate.field).repeated.min_items = 1];
@@ -537,7 +575,8 @@ message WMSLayerInput {
   optional string resource_id = 4 [(buf.validate.field).string.uuid = true];
 }
 
-message WMTSWebServiceConfigurationInput {
+message WMTSWebServiceInput {
+  WebServiceCommonInput common = 6;
   string capabilities_url = 1 [(buf.validate.field).string.uri = true];
   string default_layer = 2 [(buf.validate.field).string.min_len = 1];
   repeated WMTSLayerInput layers = 3 [(buf.validate.field).repeated.min_items = 1];
@@ -545,7 +584,8 @@ message WMTSWebServiceConfigurationInput {
   repeated ParameterInput get_feature_info_parameters = 5;
 }
 
-message WMTSWebServiceConfiguration {
+message WMTSWebService {
+  WebServiceCommon common = 6 [(buf.validate.field).required = true];
   string capabilities_url = 1 [(buf.validate.field).string.uri = true];
   string default_layer = 2 [(buf.validate.field).string.min_len = 1];
   repeated WMTSLayer layers = 3 [(buf.validate.field).repeated.min_items = 1];

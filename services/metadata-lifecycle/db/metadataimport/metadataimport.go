@@ -208,11 +208,12 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID str
 		if err != nil {
 			return fmt.Errorf("create imported application: %w", err)
 		}
-		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwareapplicationsdb.ToCreateVersionParams(logical.ID, actorID, value.Input()))
+		input := toApplicationInput(value)
+		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwareapplicationsdb.ToCreateVersionParams(logical.ID, actorID, input))
 		if err != nil {
 			return fmt.Errorf("create imported application version: %w", err)
 		}
-		if err := softwareapplicationsdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
+		if err := softwareapplicationsdb.PersistChildren(ctx, q, version.ID, input); err != nil {
 			return fmt.Errorf("persist imported application metadata: %w", err)
 		}
 		if _, err := q.SubmitLifecycleSoftwareApplicationVersion(ctx, sqlc.SubmitLifecycleSoftwareApplicationVersionParams{ID: version.ID, ActorID: &actorID}); err != nil {
@@ -246,11 +247,12 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 		if err != nil {
 			return fmt.Errorf("create imported source code: %w", err)
 		}
-		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaresourcecodesdb.ToCreateVersionParams(logical.ID, actorID, value.Input()))
+		input := toSourceCodeInput(value)
+		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaresourcecodesdb.ToCreateVersionParams(logical.ID, actorID, input))
 		if err != nil {
 			return fmt.Errorf("create imported source code version: %w", err)
 		}
-		if err := softwaresourcecodesdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
+		if err := softwaresourcecodesdb.PersistChildren(ctx, q, version.ID, input); err != nil {
 			return fmt.Errorf("persist imported source code metadata: %w", err)
 		}
 		if _, err := q.SubmitLifecycleSoftwareSourceCodeVersion(ctx, sqlc.SubmitLifecycleSoftwareSourceCodeVersionParams{ID: version.ID, ActorID: &actorID}); err != nil {
@@ -594,24 +596,35 @@ func prepareDataset(value domain.DatasetMetadata, organizationIDs, contactIDs, c
 		if service == nil {
 			continue
 		}
-		if service.Provider != nil {
-			if _, ok := organizationIDs[service.Provider.ID]; !ok {
-				addMissingReferenceWarning(result, value.ID, "provider", "organization", service.Provider.ID)
-				service.Provider = nil
+
+		common := webServiceCommon(service)
+		if common == nil {
+			addImportDiagnostic(result, domain.ImportDiagnostic{
+				Severity: domain.ImportSeverityError,
+				Subject:  value.ID.String(),
+				Message:  fmt.Sprintf("dataset skipped: %s", apperror.Default(apperror.CodeInternal)),
+			})
+			return domain.DatasetMetadata{}, false
+		}
+
+		if common.Provider != nil {
+			if _, ok := organizationIDs[common.Provider.ID]; !ok {
+				addMissingReferenceWarning(result, value.ID, "provider", "organization", common.Provider.ID)
+				common.Provider = nil
 			}
 		}
-		serviceContacts := make([]domain.ContactPoint, 0, len(service.ContactPoints))
-		for _, contact := range service.ContactPoints {
+		serviceContacts := make([]domain.ContactPoint, 0, len(common.ContactPoints))
+		for _, contact := range common.ContactPoints {
 			if _, ok := contactIDs[contact.ID]; !ok {
 				addMissingReferenceWarning(result, value.ID, "contactPoint", "contact point", contact.ID)
 				continue
 			}
 			serviceContacts = append(serviceContacts, contact)
 		}
-		service.ContactPoints = serviceContacts
+		common.ContactPoints = serviceContacts
 	}
 
-	if err := value.Validate(); err != nil {
+	if err := value.Normalize(); err != nil {
 		addImportDiagnostic(result, domain.ImportDiagnostic{
 			Severity: domain.ImportSeverityError,
 			Subject:  value.ID.String(),
@@ -619,7 +632,10 @@ func prepareDataset(value domain.DatasetMetadata, organizationIDs, contactIDs, c
 		})
 		return domain.DatasetMetadata{}, false
 	}
-	if _, err := domain.NewImportBatch(domain.ImportBatch{Datasets: []domain.DatasetMetadata{value}}); err != nil {
+	batch := domain.ImportBatch{
+		Datasets: []domain.DatasetMetadata{value},
+	}
+	if err := batch.Normalize(); err != nil {
 		addImportDiagnostic(result, domain.ImportDiagnostic{
 			Severity: domain.ImportSeverityError,
 			Subject:  value.ID.String(),
@@ -644,7 +660,7 @@ func prepareSoftwareApplication(value domain.SoftwareApplicationMetadata, organi
 	value.ContactPoints = filterContactPoints(value.ID, "contactPoint", value.ContactPoints, contactIDs, result)
 	value.Categories = filterCategories(value.ID, value.Categories, categoryIDs, result)
 
-	if err := value.Validate(); err != nil {
+	if err := value.Normalize(); err != nil {
 		addImportDiagnostic(result, domain.ImportDiagnostic{
 			Severity: domain.ImportSeverityError,
 			Subject:  value.ID.String(),
@@ -652,7 +668,8 @@ func prepareSoftwareApplication(value domain.SoftwareApplicationMetadata, organi
 		})
 		return domain.SoftwareApplicationMetadata{}, false
 	}
-	if _, err := domain.NewImportBatch(domain.ImportBatch{SoftwareApplications: []domain.SoftwareApplicationMetadata{value}}); err != nil {
+	batch := domain.ImportBatch{SoftwareApplications: []domain.SoftwareApplicationMetadata{value}}
+	if err := batch.Normalize(); err != nil {
 		addImportDiagnostic(result, domain.ImportDiagnostic{
 			Severity: domain.ImportSeverityError,
 			Subject:  value.ID.String(),
@@ -677,7 +694,7 @@ func prepareSoftwareSourceCode(value domain.SoftwareSourceCodeMetadata, organiza
 	value.ContactPoints = filterContactPoints(value.ID, "contactPoint", value.ContactPoints, contactIDs, result)
 	value.Categories = filterCategories(value.ID, value.Categories, categoryIDs, result)
 
-	if err := value.Validate(); err != nil {
+	if err := value.Normalize(); err != nil {
 		addImportDiagnostic(result, domain.ImportDiagnostic{
 			Severity: domain.ImportSeverityError,
 			Subject:  value.ID.String(),
@@ -685,7 +702,8 @@ func prepareSoftwareSourceCode(value domain.SoftwareSourceCodeMetadata, organiza
 		})
 		return domain.SoftwareSourceCodeMetadata{}, false
 	}
-	if _, err := domain.NewImportBatch(domain.ImportBatch{SoftwareSourceCodes: []domain.SoftwareSourceCodeMetadata{value}}); err != nil {
+	batch := domain.ImportBatch{SoftwareSourceCodes: []domain.SoftwareSourceCodeMetadata{value}}
+	if err := batch.Normalize(); err != nil {
 		addImportDiagnostic(result, domain.ImportDiagnostic{
 			Severity: domain.ImportSeverityError,
 			Subject:  value.ID.String(),
@@ -745,10 +763,12 @@ func importDataset(
 	if !ok {
 		return fmt.Errorf("dataset %q references unknown group: %w", value.ID, apperror.Default(apperror.CodeValidationFailed))
 	}
-	valueInput := value.Input()
-	remapDatasetReferences(&valueInput, organizationIDs, contactIDs, categoryIDs)
-	valueInput, err := domain.NewDatasetInput(valueInput)
+	valueInput, err := toDatasetInput(value)
 	if err != nil {
+		return fmt.Errorf("map imported dataset %q: %w", value.ID, err)
+	}
+	remapDatasetReferences(&valueInput, organizationIDs, contactIDs, categoryIDs)
+	if err := valueInput.Normalize(); err != nil {
 		return fmt.Errorf("validate imported dataset %q: %w", value.ID, err)
 	}
 
@@ -811,11 +831,12 @@ func remapDatasetReferences(value *domain.DatasetInput, organizationIDs, contact
 		if service == nil {
 			continue
 		}
-		if service.ProviderID != nil {
-			*service.ProviderID = organizationIDs[*service.ProviderID]
+		common := service.CommonInput()
+		if common.ProviderID != nil {
+			*common.ProviderID = organizationIDs[*common.ProviderID]
 		}
-		for j := range service.ContactPointIDs {
-			service.ContactPointIDs[j] = contactIDs[service.ContactPointIDs[j]]
+		for j := range common.ContactPointIDs {
+			common.ContactPointIDs[j] = contactIDs[common.ContactPointIDs[j]]
 		}
 	}
 }

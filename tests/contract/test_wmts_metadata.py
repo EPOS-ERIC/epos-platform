@@ -25,14 +25,15 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
             ],
             "get_feature_info_parameters": [parameter("Time", default="info-time", required=True)],
         }
+        configuration["visible_on"] = ["MAP"]
         distribution = {
             "title": "Manual WMTS", "description": "Author-supplied WMTS configuration",
             "type": "WEB_SERVICE",
-            "web_service": {"visible_on": ["MAP"], "configuration": configuration},
+            "web_service": configuration,
         }
         detail = self.create_draft([distribution])
         saved_distribution = detail["metadata"]["distributions"][0]
-        actual = saved_distribution["web_service"]["configuration"]
+        actual = saved_distribution["web_service"]
         fields = ("get_tile_parameters", "get_feature_info_parameters")
         for field in configuration.keys() - set(fields) - {"layers"}:
             self.assertEqual(actual[field], configuration[field], field)
@@ -45,11 +46,12 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
         self.assertFalse(actual["layers"][2].get("styles"))
         self.assertNotIn("default_style", actual["layers"][3])
         self.assertEqual(actual["layers"][3]["styles"], ["default", "alternate"])
-        self.assertEqual(set(actual), set(configuration))
+        common_fields = {"id", "resource_id", "visible_on", "provider", "documentation_uri", "contact_points"}
+        self.assertEqual(set(actual) - common_fields, set(configuration) - common_fields)
         self.assertEqual(actual[fields[0]][0]["default"], ["tile-time"])
         self.assertEqual(actual[fields[1]][0]["default"], ["info-time"])
         self.assertNotEqual(actual[fields[0]][0]["id"], actual[fields[1]][0]["id"])
-        self.assertIn("image/png", [item["output_format"] for item in saved_distribution["available_formats"]])
+        self.assertNotIn("available_formats", actual)
 
         for endpoint in ("prepare", "access"):
             response = self.gateway.post(
@@ -86,7 +88,7 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
             invalid.append({**configuration, fields[1]: [parameter(name, default="invalid")]})
         for candidate_configuration in invalid:
             candidate = deepcopy(distribution)
-            candidate["web_service"]["configuration"] = candidate_configuration
+            candidate["web_service"] = candidate_configuration
             metadata = {"title": detail["metadata"]["title"], "description": "Invalid WMTS", "distributions": [candidate]}
             for method in ("POST", "PUT"):
                 with self.subTest(configuration=candidate_configuration, method=method):
@@ -97,7 +99,7 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
                     self.assert_prepare_problem(response)
         unchanged = self.details(detail["resource_id"], detail["id"])
         self.assertEqual(unchanged["revision"], detail["revision"])
-        self.assertEqual(unchanged["metadata"]["distributions"][0]["web_service"]["configuration"], actual)
+        self.assertEqual(unchanged["metadata"]["distributions"][0]["web_service"], actual)
 
         for action in ("submit", "publish"):
             self.transition(detail, action)
@@ -114,7 +116,7 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
         self.assertEqual(drafted.status_code, 201)
         for resource_id in (copied.json()["id"], detail["resource_id"]):
             clone = self.details(resource_id, self.version(resource_id, "DRAFT")["id"])
-            cloned = clone["metadata"]["distributions"][0]["web_service"]["configuration"]
+            cloned = clone["metadata"]["distributions"][0]["web_service"]
             for field in configuration.keys() - set(fields) - {"layers"}:
                 self.assertEqual(cloned[field], actual[field], field)
             for source, target in zip(actual["layers"], cloned["layers"], strict=True):
@@ -137,7 +139,7 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
 
         previous_distribution = detail["metadata"]["distributions"][0]
         previous_service = previous_distribution["web_service"]
-        previous_layer = previous_service["configuration"]["layers"][1]
+        previous_layer = previous_service["layers"][1]
         distribution["resource_id"] = previous_distribution["resource_id"]
         distribution["web_service"]["resource_id"] = previous_service["resource_id"]
         configuration.update({
@@ -152,7 +154,7 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
         self.assertEqual(response.status_code, 200)
         updated = self.details(detail["resource_id"], detail["id"])
         self.assertEqual(updated["revision"], detail["revision"] + 1)
-        updated_configuration = updated["metadata"]["distributions"][0]["web_service"]["configuration"]
+        updated_configuration = updated["metadata"]["distributions"][0]["web_service"]
         for field in configuration.keys() - {"layers"}:
             self.assertEqual(updated_configuration[field], configuration[field], field)
         self.assertEqual(updated_configuration["layers"][0]["id"], previous_layer["id"])

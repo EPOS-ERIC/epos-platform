@@ -69,10 +69,10 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
         ])
         detail = self.create_draft([source, web_distribution()])
         dynamic = next(item for item in detail["metadata"]["distributions"]
-                       if item["web_service"]["configuration"]["type"] == "DYNAMIC")
+                       if item["web_service"]["type"] == "DYNAMIC")
         http = next(item for item in detail["metadata"]["distributions"]
-                    if item["web_service"]["configuration"]["type"] == "HTTP")
-        config = dynamic["web_service"]["configuration"]
+                    if item["web_service"]["type"] == "HTTP")
+        config = dynamic["web_service"]
         params = {item["name"]: item for item in config["parameters"]}
         self.assertEqual(params["lon"]["role"], "LONGITUDE")
         self.assertEqual(params["lat"]["role"], "LATITUDE")
@@ -111,7 +111,7 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
         self.assertEqual(self.replace_response(detail, replacement).status_code, 200)
         updated = self.details(detail["resource_id"], detail["id"])
         replaced = updated["metadata"]["distributions"][0]
-        self.assertEqual(replaced["web_service"]["configuration"]["type"], "DYNAMIC")
+        self.assertEqual(replaced["web_service"]["type"], "DYNAMIC")
         self.assertEqual(self.request(replaced, "prepare", body).status_code, 200)
 
     def test_clone_nested_coordinate_roles(self) -> None:
@@ -141,7 +141,7 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
                 version = self.version(resource_id, "DRAFT")
                 clone = self.details(resource_id, version["id"])
                 distribution = clone["metadata"]["distributions"][0]
-                parameters = distribution["web_service"]["configuration"]["parameters"][0]["parameters"]
+                parameters = distribution["web_service"]["parameters"][0]["parameters"]
                 self.assertEqual(
                     {item["name"]: (item["role"], item["property"]) for item in parameters},
                     {"lon": ("LONGITUDE", "geo:longitude"), "lat": ("LATITUDE", "geo:latitude")},
@@ -185,7 +185,7 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
             with self.subTest(location=title):
                 distribution = distributions[title]
                 self.assert_prepare_problem(self.request(distribution, "prepare", request))
-                config = distribution["web_service"]["configuration"]
+                config = distribution["web_service"]
                 children = config["parameters"][0]["parameters"] if title == "template" else config["body_parameters"]
                 extra = next(item for item in children if item["name"] == "extra")
                 response = self.request(distribution, "prepare", {

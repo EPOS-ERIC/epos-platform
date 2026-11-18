@@ -138,13 +138,37 @@ func (s *Service) loadRelations(ctx context.Context, candidates []domain.Discove
 
 // item combines a candidate and its already-loaded relationships into an API item.
 func (s *Service) item(candidate domain.DiscoveryCandidate, relations domain.DiscoveryRelations, includeCreatedBy bool) (domain.DiscoveryItem, error) {
-	groupReference, err := domain.NewDiscoveryReference(candidate.GroupID, candidate.GroupName)
-	if err != nil {
+	groupReference := domain.DiscoveryReference{
+		ID:   candidate.GroupID,
+		Name: candidate.GroupName,
+	}
+	if err := groupReference.Normalize(); err != nil {
 		return domain.DiscoveryItem{}, fmt.Errorf("construct discovery group: %w", err)
 	}
-	item, err := domain.NewDiscoveryItem(candidate, groupReference, relations.Providers, relations.Creators, relations.Categories, relations.Distributions, includeCreatedBy)
-	if err != nil {
+	if err := candidate.Normalize(); err != nil {
 		return domain.DiscoveryItem{}, fmt.Errorf("construct discovery item: %w", err)
 	}
+
+	item := domain.DiscoveryItem{
+		Type:          candidate.Type,
+		ResourceID:    candidate.ResourceID,
+		VersionID:     candidate.VersionID,
+		Name:          candidate.Name,
+		Status:        candidate.Status,
+		UpdatedAt:     candidate.UpdatedAt,
+		Concept:       candidate.Concept,
+		Group:         groupReference,
+		Providers:     relations.Providers,
+		Creators:      relations.Creators,
+		Categories:    relations.Categories,
+		Distributions: relations.Distributions,
+	}
+	if includeCreatedBy {
+		item.CreatedBy = candidate.CreatedBy
+	}
+	if err := item.Normalize(); err != nil {
+		return domain.DiscoveryItem{}, fmt.Errorf("construct discovery item: %w", err)
+	}
+
 	return item, nil
 }

@@ -62,30 +62,31 @@ func TestParameterMappingsUseScalarTemplateAndBodyChildren(t *testing.T) {
 	bodyTemplate := "{{.value}}"
 	documentationURI := "https://example.test/docs"
 	service, err := toDomainWebServiceInput(&metadatalifecyclev1.WebServiceInput{
-		Type:             metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
-		DocumentationUri: &documentationURI,
-		Configuration: &metadatalifecyclev1.WebServiceInput_Generic{Generic: &metadatalifecyclev1.GenericWebServiceConfigurationInput{
-			TemplateUrl:     "https://example.test",
-			Method:          metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_POST,
-			Format:          "application/json",
-			BodyContentType: &contentType,
-			BodyTemplate:    &bodyTemplate,
-			BodyParameters: []*metadatalifecyclev1.ScalarParameterInput{{
-				Name:  "value",
-				Label: "Value",
-				Value: &metadatalifecyclev1.ScalarParameterInput_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
-					Enum: []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
+		Service: &metadatalifecyclev1.WebServiceInput_Http{Http: &metadatalifecyclev1.HTTPWebServiceInput{
+			Common:      &metadatalifecyclev1.WebServiceCommonInput{DocumentationUri: &documentationURI},
+			TemplateUrl: "https://example.test",
+			Method:      metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_POST,
+			Format:      "application/json",
+			Body: &metadatalifecyclev1.RequestBodyInput{
+				ContentType: contentType,
+				Template:    bodyTemplate,
+				Parameters: []*metadatalifecyclev1.ScalarParameterInput{{
+					Name:  "value",
+					Label: "Value",
+					Value: &metadatalifecyclev1.ScalarParameterInput_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
+						Enum: []*metadatalifecyclev1.StringEnumOption{{Value: "one"}, {Value: "two"}},
+					}},
 				}},
-			}},
+			},
 		}},
 	})
 	if err != nil {
 		t.Fatalf("toDomainWebServiceInput() error = %v", err)
 	}
-	if service.DocumentationURI == nil || *service.DocumentationURI != documentationURI {
-		t.Fatalf("documentation URI = %v, want %q", service.DocumentationURI, documentationURI)
+	if service.CommonInput().DocumentationURI == nil || *service.CommonInput().DocumentationURI != documentationURI {
+		t.Fatalf("documentation URI = %v, want %q", service.CommonInput().DocumentationURI, documentationURI)
 	}
-	configuration := service.Configuration.(domain.GenericWebServiceConfigurationInput)
+	configuration := service.(*domain.HTTPWebServiceInput)
 	if configuration.Body == nil || len(configuration.Body.Parameters) != 1 {
 		t.Fatalf("mapped body = %+v, want one scalar child", configuration.Body)
 	}
@@ -104,12 +105,11 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		Explode:  true,
 	}
 	input, err := toDomainWebServiceInput(&metadatalifecyclev1.WebServiceInput{
-		Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
-		VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
-			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
-			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP,
-		},
-		Configuration: &metadatalifecyclev1.WebServiceInput_Generic{Generic: &metadatalifecyclev1.GenericWebServiceConfigurationInput{
+		Service: &metadatalifecyclev1.WebServiceInput_Http{Http: &metadatalifecyclev1.HTTPWebServiceInput{
+			Common: &metadatalifecyclev1.WebServiceCommonInput{VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
+				metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
+				metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP,
+			}},
 			TemplateUrl: "https://example.test/{?value}",
 			Method:      metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET,
 			Format:      "application/json",
@@ -119,62 +119,59 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("toDomainWebServiceInput() error = %v", err)
 	}
-	configuration := input.Configuration.(domain.GenericWebServiceConfigurationInput)
+	configuration := input.(*domain.HTTPWebServiceInput)
 	if len(configuration.Parameters) != 1 || !configuration.Parameters[0].Explode {
 		t.Fatalf("input parameters = %+v, want explode parameter", configuration.Parameters)
 	}
 	if got := configuration.Parameters[0].Schema.(domain.StringSchema).Default; !slices.Equal(got, []string{"one", "two"}) {
 		t.Fatalf("input default = %v, want [one two]", got)
 	}
-	if input.Type != domain.WebServiceTypeHTTP || !slices.Equal(input.VisibleOn, []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnGraph, domain.WebServiceVisibleOnMap}) {
-		t.Fatalf("input web-service fields = type %q, visible on %v", input.Type, input.VisibleOn)
+	if input.ServiceType() != domain.WebServiceTypeHTTP || !slices.Equal(input.CommonInput().VisibleOn, []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnGraph, domain.WebServiceVisibleOnMap}) {
+		t.Fatalf("input web-service fields = type %q, visible on %v", input.ServiceType(), input.CommonInput().VisibleOn)
 	}
 
 	id := uuid.New()
 	property := "https://example.test/value"
 	documentationURI := "https://example.test/docs"
-	output := toProtoWebService(domain.WebService{
+	output := toProtoWebService(&domain.HTTPWebService{
 		ID:               id,
-		Type:             domain.WebServiceTypeHTTP,
 		DocumentationURI: &documentationURI,
 		VisibleOn: []domain.WebServiceVisibleOn{
 			domain.WebServiceVisibleOnGraph,
 			domain.WebServiceVisibleOnMap,
 		},
-		Configuration: domain.GenericWebServiceConfiguration{
-			TemplateURL: "https://example.test/{?value}",
-			Method:      domain.HTTPMethodGet,
-			Format:      "application/json",
-			Parameters: []domain.WebServiceParameter{{
-				Name:     "value",
-				Label:    "Value",
-				Schema:   domain.StringSchema{Default: []string{"one", "two"}, Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: true},
-				ID:       id,
-				Property: &property,
-				Location: domain.ParameterLocationQuery,
-				Explode:  true,
-			}},
-		},
+		TemplateURL: "https://example.test/{?value}",
+		Method:      domain.HTTPMethodGet,
+		Format:      "application/json",
+		Parameters: []domain.WebServiceParameter{{
+			Name:     "value",
+			Label:    "Value",
+			Schema:   domain.StringSchema{Default: []string{"one", "two"}, Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: true},
+			ID:       id,
+			Property: &property,
+			Location: domain.ParameterLocationQuery,
+			Explode:  true,
+		}},
 	})
-	if len(output.GetGeneric().GetParameters()) != 1 || !output.GetGeneric().GetParameters()[0].GetExplode() {
-		t.Fatalf("output parameters = %+v, want explode parameter", output.GetGeneric().GetParameters())
+	if len(output.GetHttp().GetParameters()) != 1 || !output.GetHttp().GetParameters()[0].GetExplode() {
+		t.Fatalf("output parameters = %+v, want explode parameter", output.GetHttp().GetParameters())
 	}
-	if got := output.GetGeneric().GetParameters()[0].GetString_().Default; !slices.Equal(got, []string{"one", "two"}) {
+	if got := output.GetHttp().GetParameters()[0].GetString_().Default; !slices.Equal(got, []string{"one", "two"}) {
 		t.Fatalf("output default = %v, want [one two]", got)
 	}
-	if output.Type != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP || len(output.VisibleOn) != 2 || output.VisibleOn[0] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH || output.VisibleOn[1] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP {
-		t.Fatalf("output web-service fields = type %q, visible on %v", output.Type, output.VisibleOn)
+	common := output.GetHttp().GetCommon()
+	if len(common.VisibleOn) != 2 || common.VisibleOn[0] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH || common.VisibleOn[1] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP {
+		t.Fatalf("output web-service visible on = %v", common.VisibleOn)
 	}
-	if output.GetDocumentationUri() != documentationURI {
-		t.Fatalf("documentation URI = %q, want %q", output.GetDocumentationUri(), documentationURI)
+	if common.GetDocumentationUri() != documentationURI {
+		t.Fatalf("documentation URI = %q, want %q", common.GetDocumentationUri(), documentationURI)
 	}
 }
 
 func TestWebServiceInputRejectsUnspecifiedEnums(t *testing.T) {
 	base := func() *metadatalifecyclev1.WebServiceInput {
 		return &metadatalifecyclev1.WebServiceInput{
-			Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
-			Configuration: &metadatalifecyclev1.WebServiceInput_Generic{Generic: &metadatalifecyclev1.GenericWebServiceConfigurationInput{
+			Service: &metadatalifecyclev1.WebServiceInput_Http{Http: &metadatalifecyclev1.HTTPWebServiceInput{
 				TemplateUrl: "https://example.test",
 				Format:      "application/json",
 				Method:      metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET,
@@ -183,27 +180,27 @@ func TestWebServiceInputRejectsUnspecifiedEnums(t *testing.T) {
 	}
 
 	method := base()
-	method.GetGeneric().Method = metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_UNSPECIFIED
+	method.GetHttp().Method = metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_UNSPECIFIED
 	if _, err := toDomainWebServiceInput(method); !apperror.IsCode(err, apperror.CodeValidationFailed) {
 		t.Fatalf("unspecified method error = %v, want validation_failed", err)
 	}
 
 	typeValue := base()
-	typeValue.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
+	typeValue.Service = nil
 	if _, err := toDomainWebServiceInput(typeValue); !apperror.IsCode(err, apperror.CodeValidationFailed) {
 		t.Fatalf("unspecified type error = %v, want validation_failed", err)
 	}
 
 	visibleOn := base()
-	visibleOn.VisibleOn = []metadatalifecyclev1.WebServiceVisibleOn{
+	visibleOn.GetHttp().Common = &metadatalifecyclev1.WebServiceCommonInput{VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
 		metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_UNSPECIFIED,
-	}
+	}}
 	if _, err := toDomainWebServiceInput(visibleOn); !apperror.IsCode(err, apperror.CodeValidationFailed) {
 		t.Fatalf("unspecified visible-on error = %v, want validation_failed", err)
 	}
 
 	parameter := base()
-	parameter.GetGeneric().Parameters = []*metadatalifecyclev1.ParameterInput{{
+	parameter.GetHttp().Parameters = []*metadatalifecyclev1.ParameterInput{{
 		Name:  "value",
 		Label: "Value",
 		Value: &metadatalifecyclev1.ParameterInput_String_{String_: &metadatalifecyclev1.StringParameter{}},

@@ -131,13 +131,14 @@ func categoryInput(name string, parent *string) (domain.CategoryInput, error) {
 		if err != nil || id == uuid.Nil {
 			return domain.CategoryInput{}, apperror.Default(apperror.CodeValidationFailed)
 		}
+
 		input.ParentCategoryID = &id
 	}
-	result, err := domain.NewCategoryInput(input)
-	if err != nil {
+	if err := input.Normalize(); err != nil {
 		return domain.CategoryInput{}, fmt.Errorf("validate category input: %w", err)
 	}
-	return result, nil
+
+	return input, nil
 }
 
 func toProtoCategory(value domain.Category) *metadatalifecyclev1.CanonicalCategory {

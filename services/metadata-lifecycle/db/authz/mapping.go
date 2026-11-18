@@ -9,7 +9,7 @@ import (
 )
 
 func toDomainUser(row sqlc.GetAuthorizationUserRow) (domain.AuthorizationUser, error) {
-	status, err := domain.NewPersistedUserStatus(string(row.Status))
+	status, err := domain.ParsePersistedUserStatus(string(row.Status))
 	if err != nil {
 		return domain.AuthorizationUser{}, fmt.Errorf("invalid user status: %w", err)
 	}
@@ -22,7 +22,7 @@ func toDomainUser(row sqlc.GetAuthorizationUserRow) (domain.AuthorizationUser, e
 }
 
 func toDomainPermissionScope(scope sqlc.PermissionScope) (domain.PermissionScope, error) {
-	result, err := domain.NewPersistedPermissionScope(string(scope))
+	result, err := domain.ParsePersistedPermissionScope(string(scope))
 	if err != nil {
 		return "", fmt.Errorf("invalid permission scope: %w", err)
 	}
@@ -31,8 +31,12 @@ func toDomainPermissionScope(scope sqlc.PermissionScope) (domain.PermissionScope
 }
 
 func toDomainVersionAuthz(resourceID, groupID uuid.UUID, status sqlc.ResourceStatus) (domain.VersionAuthz, error) {
-	result, err := domain.NewVersionAuthz(resourceID, groupID, domain.Status(status))
-	if err != nil {
+	result := domain.VersionAuthz{
+		ResourceID: resourceID,
+		GroupID:    groupID,
+		Status:     domain.Status(status),
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.VersionAuthz{}, fmt.Errorf("construct version authorization: %w", err)
 	}
 

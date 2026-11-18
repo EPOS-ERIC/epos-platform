@@ -35,7 +35,7 @@ class DistributionNestedParameterRolesContractTest(DistributionContractTestCase)
             parameter("filter", "TEMPLATE", position=2, required=True, template=template, parameters=children),
         ])])
         distribution = detail["metadata"]["distributions"][0]
-        params = {item["name"]: item for item in distribution["web_service"]["configuration"]["parameters"]}
+        params = {item["name"]: item for item in distribution["web_service"]["parameters"]}
         stored = {item["name"]: item for item in params["filter"]["parameters"]}
         for source in children:
             with self.subTest(parameter=source["name"]):
@@ -69,7 +69,7 @@ class DistributionNestedParameterRolesContractTest(DistributionContractTestCase)
         body["title"] = "body"
         detail = self.create_draft([query, body])
         for distribution in detail["metadata"]["distributions"]:
-            config = distribution["web_service"]["configuration"]
+            config = distribution["web_service"]
             stored = (config["parameters"][0]["parameters"][0] if distribution["title"] == "query"
                       else config["body_parameters"][0])
             self.assertEqual(stored["role"], "FORMAT")

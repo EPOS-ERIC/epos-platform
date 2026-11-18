@@ -37,7 +37,8 @@ func toReplaceGroupParams(id uuid.UUID, input domain.GroupInput) sqlc.ReplaceGro
 }
 
 func toDomainGroup(row sqlc.Group) (domain.Group, error) {
-	group, err := domain.NewGroup(row.ID, domain.GroupInput{
+	group := domain.Group{
+		ID:          row.ID,
 		Name:        row.Name,
 		Description: row.Description,
 		Label:       row.Label,
@@ -46,8 +47,8 @@ func toDomainGroup(row sqlc.Group) (domain.Group, error) {
 		Color:       row.Color,
 		Position:    row.Position,
 		ConceptID:   row.ConceptID,
-	})
-	if err != nil {
+	}
+	if err := group.Normalize(); err != nil {
 		return domain.Group{}, fmt.Errorf("bad group: %w", err)
 	}
 

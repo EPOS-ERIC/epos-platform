@@ -183,7 +183,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
                         "description": "Canonical reference integrity service",
                         "type": "WEB_SERVICE",
                         "web_service": {
-                            "configuration": {
                                 "type": "WMS",
                                 "capabilities_url": "https://example.org/canonical",
                                 "default_layer": "canonical",
@@ -192,7 +191,6 @@ class CanonicalReferenceIntegrityContractTest(unittest.TestCase):
                                 "default_transparency": False,
                                 "get_map_parameters": [],
                                 "get_feature_info_parameters": [],
-                            },
                             "provider": organization_id,
                             "contact_points": [contact_point_id],
                         },

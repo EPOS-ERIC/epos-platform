@@ -16,7 +16,7 @@
 - Keep mappings for one resource family together in a dedicated `*_mapping.go` file or focused mapper type. Do not accumulate unrelated resource, lifecycle, validation, and mapping logic in one RPC implementation file.
 - Name conversions by direction: `toDomainX` for protobuf-to-domain and `toProtoX` for domain-to-protobuf. Do not use ambiguous `mapX` or `convertX` names.
 - Share representation helpers for UUIDs, timestamps, optional scalars, enums, and actor metadata. Do not duplicate their validation or nullability behavior across RPC services.
-- Mapping validates only transport representation: missing nested messages, malformed UUIDs or timestamps, unknown enums, and protobuf presence. Domain constructors own business validation and normalization.
+- Mapping validates only transport representation: missing nested messages, malformed UUIDs or timestamps, unknown enums, and protobuf presence. Domain normalization owns business validation and normalization.
 - Parse required actor metadata once at the gRPC transport boundary. Pass the typed `domain.Actor` to services; do not reparse it in services or encode it into protobuf business messages.
 - Convert domain errors to gRPC status errors at the gRPC boundary. Do not return raw domain errors or database errors from RPC methods.
 - Use `packages/go/apperror` for client-safe application errors shared with Gateway. Create field-specific validation errors at the first layer that can identify the failed field; retain causes only for internal logging.
@@ -32,7 +32,10 @@
 ## Domain And Mapping
 
 - PUT only, no PATCH. Required field is `T`, nullable scalar is `*T`, collection is `[]T`; absent and `null` both decode to `nil` and mean clear. Do not use `optionalString`, `Field[T]`, or `*[]T`.
-- `XInput` holds caller-supplied fields, `X` is `XInput` plus system IDs. `NewXInput` owns input validation and normalization; `NewX` revalidates and canonicalizes persisted values, including reads. Pass input as a struct. Services and DB trust validated input.
+- `XInput` holds caller-supplied fields; `X` holds persisted fields including system IDs. Construct values with ordinary Go struct literals.
+- Domain types expose `Normalize() error` where validation or normalization is needed. Use pointer receivers: normalize in place, validate nested values, and return an error for invalid data. On error, the value may be partially normalized; callers must discard it.
+- Normalize complete caller input at the entry point before calling a service. Services and database writes trust normalized input. Normalize persisted values on repository reads; invalid stored data is a server error, not a client validation failure.
+- Keep validation and normalization close to their owning domain types. Use shared helpers where appropriate.
 - Keep transport, domain, and persistence types separate and map explicitly at boundaries. Use one request type for create and replace when shapes match. Generate system IDs in storage.
 - Split child input and persisted child types only when another caller needs the distinction.
 

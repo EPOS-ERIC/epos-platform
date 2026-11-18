@@ -104,22 +104,22 @@ func applicationResult(ctx context.Context, q *sqlc.Queries, applicationID, vers
 	}
 
 	version := row.SoftwareApplicationVersion
-	result, err := domain.NewSoftwareApplicationVersion(
-		version.SoftwareApplicationID,
-		version.ID,
-		version.Revision,
-		domain.Status(version.Status),
-		domain.Actor(version.CreatedBy),
-		version.SubmittedBy,
-		resourcedb.ToGroup(row.Group),
-		version.CreatedAt,
-		version.UpdatedAt,
-		version.RejectedBy,
-		version.RejectedAt,
-		version.RejectionNote,
-		metadata,
-	)
-	if err != nil {
+	result := domain.SoftwareApplicationVersion{
+		SoftwareApplicationID: version.SoftwareApplicationID,
+		VersionID:             version.ID,
+		Revision:              version.Revision,
+		Status:                domain.Status(version.Status),
+		CreatedBy:             domain.Actor(version.CreatedBy),
+		SubmittedBy:           (*domain.Actor)(version.SubmittedBy),
+		Group:                 resourcedb.ToGroup(row.Group),
+		CreatedAt:             version.CreatedAt,
+		UpdatedAt:             version.UpdatedAt,
+		RejectedBy:            version.RejectedBy,
+		RejectedAt:            version.RejectedAt,
+		RejectionNote:         version.RejectionNote,
+		Metadata:              metadata,
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.SoftwareApplicationVersion{}, fmt.Errorf("validate application result: %w", err)
 	}
 	return result, nil

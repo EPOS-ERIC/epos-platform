@@ -31,8 +31,11 @@ func (r *Repo) ListConcepts(ctx context.Context) ([]domain.Concept, error) {
 
 	result := make([]domain.Concept, 0, len(rows))
 	for _, row := range rows {
-		value, err := domain.NewConcept(row.ID, row.Name)
-		if err != nil {
+		value := domain.Concept{
+			ID:   row.ID,
+			Name: row.Name,
+		}
+		if err := value.Normalize(); err != nil {
 			return nil, fmt.Errorf("construct concept: %w", err)
 		}
 
@@ -52,22 +55,36 @@ func (r *Repo) GetConcept(ctx context.Context, id uuid.UUID) (domain.Concept, er
 		return domain.Concept{}, fmt.Errorf("get concept: %w", err)
 	}
 
-	return domain.NewConcept(row.ID, row.Name)
+	value := domain.Concept{
+		ID:   row.ID,
+		Name: row.Name,
+	}
+	if err := value.Normalize(); err != nil {
+		return domain.Concept{}, err
+	}
+	return value, nil
 }
 
-func (r *Repo) CreateConcept(ctx context.Context, name string) (domain.Concept, error) {
-	row, err := r.CreateConceptRecord(ctx, name)
+func (r *Repo) CreateConcept(ctx context.Context, input domain.ConceptInput) (domain.Concept, error) {
+	row, err := r.CreateConceptRecord(ctx, input.Name)
 	if err != nil {
 		return domain.Concept{}, conceptError("create", err)
 	}
 
-	return domain.NewConcept(row.ID, row.Name)
+	value := domain.Concept{
+		ID:   row.ID,
+		Name: row.Name,
+	}
+	if err := value.Normalize(); err != nil {
+		return domain.Concept{}, err
+	}
+	return value, nil
 }
 
-func (r *Repo) ReplaceConcept(ctx context.Context, id uuid.UUID, name string) (domain.Concept, error) {
+func (r *Repo) ReplaceConcept(ctx context.Context, id uuid.UUID, input domain.ConceptInput) (domain.Concept, error) {
 	row, err := r.ReplaceConceptRecord(ctx, sqlc.ReplaceConceptRecordParams{
 		ID:   id,
-		Name: name,
+		Name: input.Name,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.Concept{}, apperror.Default(apperror.CodeNotFound)
@@ -77,7 +94,14 @@ func (r *Repo) ReplaceConcept(ctx context.Context, id uuid.UUID, name string) (d
 		return domain.Concept{}, conceptError("replace", err)
 	}
 
-	return domain.NewConcept(row.ID, row.Name)
+	value := domain.Concept{
+		ID:   row.ID,
+		Name: row.Name,
+	}
+	if err := value.Normalize(); err != nil {
+		return domain.Concept{}, err
+	}
+	return value, nil
 }
 
 func (r *Repo) DeleteConcept(ctx context.Context, id uuid.UUID) error {
