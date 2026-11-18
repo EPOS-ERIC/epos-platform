@@ -118,44 +118,43 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 		t.Fatal(err)
 	}
 	draft := gatewayapi.WebServiceDraft{
-		DocumentationURI: gatewayapi.NewOptURI(*documentationURI),
-		VisibleOn: gatewayapi.NewOptNilWebServiceVisibleOnArray([]gatewayapi.WebServiceVisibleOn{
-			gatewayapi.WebServiceVisibleOnMAP,
-			gatewayapi.WebServiceVisibleOnGRAPH,
-		}),
-		Configuration: gatewayapi.WebServiceConfigurationDraft{
-			Type: gatewayapi.GenericWebServiceConfigurationDraftWebServiceConfigurationDraft,
-			GenericWebServiceConfigurationDraft: gatewayapi.GenericWebServiceConfigurationDraft{
-				Type:        gatewayapi.GenericWebServiceConfigurationDraftTypeHTTP,
-				TemplateURL: gatewayapi.NonBlankString("https://example.test/{?value}"),
-				Method:      gatewayapi.WebServiceMethodGET,
-				Format:      gatewayapi.NonBlankString("json"),
-				Parameters: []gatewayapi.ParameterDraft{gatewayapi.NewStringParameterDraftParameterDraft(gatewayapi.StringParameterDraft{
-					Position:       0,
-					Name:           gatewayapi.NonBlankString("value"),
-					Label:          gatewayapi.NonBlankString("Value"),
-					Location:       gatewayapi.ParameterLocationQUERY,
-					Explode:        true,
-					MultipleValues: true,
-					Default:        gatewayapi.NewOptNilStringArray([]string{"one", "two"}),
-					Enum:           []gatewayapi.StringEnumOption{{Value: "one"}, {Value: "two"}},
-				})},
-			},
+		Type: gatewayapi.HttpWebServiceDraftWebServiceDraft,
+		HttpWebServiceDraft: gatewayapi.HttpWebServiceDraft{
+			DocumentationURI: gatewayapi.NewOptURI(*documentationURI),
+			VisibleOn: gatewayapi.NewOptNilWebServiceVisibleOnArray([]gatewayapi.WebServiceVisibleOn{
+				gatewayapi.WebServiceVisibleOnMAP,
+				gatewayapi.WebServiceVisibleOnGRAPH,
+			}),
+			Type:        gatewayapi.HttpWebServiceDraftTypeHTTP,
+			TemplateURL: gatewayapi.NonBlankString("https://example.test/{?value}"),
+			Method:      gatewayapi.WebServiceMethodGET,
+			Format:      gatewayapi.NonBlankString("json"),
+			Parameters: []gatewayapi.ParameterDraft{gatewayapi.NewStringParameterDraftParameterDraft(gatewayapi.StringParameterDraft{
+				Position:       0,
+				Name:           gatewayapi.NonBlankString("value"),
+				Label:          gatewayapi.NonBlankString("Value"),
+				Location:       gatewayapi.ParameterLocationQUERY,
+				Explode:        true,
+				MultipleValues: true,
+				Default:        gatewayapi.NewOptNilStringArray([]string{"one", "two"}),
+				Enum:           []gatewayapi.StringEnumOption{{Value: "one"}, {Value: "two"}},
+			})},
 		},
 	}
 	proto := toProtoWebServiceDraft(draft)
-	if proto.GetDocumentationUri() != documentationURI.String() {
-		t.Fatalf("protobuf documentation URI = %q, want %q", proto.GetDocumentationUri(), documentationURI)
+	if proto.GetHttp().GetCommon().GetDocumentationUri() != documentationURI.String() {
+		t.Fatalf("protobuf documentation URI = %q, want %q", proto.GetHttp().GetCommon().GetDocumentationUri(), documentationURI)
 	}
-	parameters := proto.GetGeneric().GetParameters()
+	parameters := proto.GetHttp().GetParameters()
 	if len(parameters) != 1 || !parameters[0].GetExplode() {
 		t.Fatalf("protobuf parameters = %+v, want explode parameter", parameters)
 	}
 	if got := parameters[0].GetString_().Default; !slices.Equal(got, []string{"one", "two"}) {
 		t.Fatalf("protobuf default = %v, want [one two]", got)
 	}
-	if proto.Type != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP || len(proto.VisibleOn) != 2 || proto.VisibleOn[0] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP || proto.VisibleOn[1] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH {
-		t.Fatalf("protobuf web-service fields = type %q, visible on %v", proto.Type, proto.VisibleOn)
+	visibleValues := proto.GetHttp().GetCommon().VisibleOn
+	if len(visibleValues) != 2 || visibleValues[0] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP || visibleValues[1] != metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH {
+		t.Fatalf("protobuf web-service visible on = %v", visibleValues)
 	}
 
 	id := uuid.New()
@@ -184,28 +183,32 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	}
 
 	service, err := toAPIWebService(&metadatalifecyclev1.WebService{
-		Id:               id.String(),
-		ResourceId:       id.String(),
-		DocumentationUri: new(documentationURI.String()),
-		Type:             metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
-		VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
-			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP,
-			metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
-		},
-		Configuration: &metadatalifecyclev1.WebService_Generic{Generic: &metadatalifecyclev1.GenericWebServiceConfiguration{
-			TemplateUrl: "https://example.test",
-			Method:      metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET,
-			Format:      "json",
+		Service: &metadatalifecyclev1.WebService_Http{Http: &metadatalifecyclev1.HTTPWebService{
+			Common: &metadatalifecyclev1.WebServiceCommon{
+				Id: id.String(), ResourceId: id.String(), DocumentationUri: new(documentationURI.String()),
+				VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
+					metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP,
+					metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
+				},
+			},
+			TemplateUrl:   "https://example.test",
+			Method:        metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET,
+			Format:        "json",
+			NativeFormats: []*metadatalifecyclev1.NativeFormat{{OutputFormat: "json", Label: "json"}},
 		}},
 	})
 	if err != nil {
 		t.Fatalf("toAPIWebService() error = %v", err)
 	}
-	visibleOn, ok := service.VisibleOn.Get()
-	if !ok || service.Configuration.Type != gatewayapi.GenericWebServiceConfigurationWebServiceConfiguration || len(visibleOn) != 2 || visibleOn[0] != gatewayapi.WebServiceVisibleOnMAP || visibleOn[1] != gatewayapi.WebServiceVisibleOnGRAPH {
-		t.Fatalf("API web-service fields = configuration type %q, visible on %v", service.Configuration.Type, visibleOn)
+	httpService, ok := service.GetHttpWebService()
+	if !ok {
+		t.Fatal("expected HTTP service")
 	}
-	if uri, ok := service.DocumentationURI.Get(); !ok || uri.String() != documentationURI.String() {
+	visibleOn, ok := httpService.VisibleOn.Get()
+	if !ok || len(visibleOn) != 2 || visibleOn[0] != gatewayapi.WebServiceVisibleOnMAP || visibleOn[1] != gatewayapi.WebServiceVisibleOnGRAPH {
+		t.Fatalf("API web-service visible on = %v", visibleOn)
+	}
+	if uri, ok := httpService.DocumentationURI.Get(); !ok || uri.String() != documentationURI.String() {
 		t.Fatalf("API documentation URI = %q, %t; want %q", uri.String(), ok, documentationURI.String())
 	}
 }
@@ -214,15 +217,17 @@ func TestWebServiceMappingRejectsUnspecifiedUpstreamEnums(t *testing.T) {
 	id := uuid.New().String()
 	base := func() *metadatalifecyclev1.WebService {
 		return &metadatalifecyclev1.WebService{
-			Id:   id,
-			Type: metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP,
-			VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
-				metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
-			},
-			Configuration: &metadatalifecyclev1.WebService_Generic{Generic: &metadatalifecyclev1.GenericWebServiceConfiguration{
-				TemplateUrl: "https://example.test",
-				Method:      metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET,
-				Format:      "json",
+			Service: &metadatalifecyclev1.WebService_Http{Http: &metadatalifecyclev1.HTTPWebService{
+				Common: &metadatalifecyclev1.WebServiceCommon{
+					Id: id, ResourceId: id,
+					VisibleOn: []metadatalifecyclev1.WebServiceVisibleOn{
+						metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH,
+					},
+				},
+				TemplateUrl:   "https://example.test",
+				Method:        metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET,
+				Format:        "json",
+				NativeFormats: []*metadatalifecyclev1.NativeFormat{{OutputFormat: "json", Label: "json"}},
 			}},
 		}
 	}
@@ -234,19 +239,19 @@ func TestWebServiceMappingRejectsUnspecifiedUpstreamEnums(t *testing.T) {
 		{
 			name: "method",
 			mutate: func(value *metadatalifecyclev1.WebService) {
-				value.GetGeneric().Method = metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_UNSPECIFIED
+				value.GetHttp().Method = metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_UNSPECIFIED
 			},
 		},
 		{
 			name: "type",
 			mutate: func(value *metadatalifecyclev1.WebService) {
-				value.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
+				value.Service = nil
 			},
 		},
 		{
 			name: "visible on",
 			mutate: func(value *metadatalifecyclev1.WebService) {
-				value.VisibleOn = []metadatalifecyclev1.WebServiceVisibleOn{
+				value.GetHttp().Common.VisibleOn = []metadatalifecyclev1.WebServiceVisibleOn{
 					metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_UNSPECIFIED,
 				}
 			},

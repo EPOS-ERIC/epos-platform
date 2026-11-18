@@ -14,7 +14,7 @@ class DistributionValuesContractTest(DistributionContractTestCase):
             parameter("ratio", "FLOAT", position=3, default=1.5),
         ])])
         distribution = detail["metadata"]["distributions"][0]
-        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["configuration"]["parameters"]}
+        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["parameters"]}
         for values, expected in (
             ({"text": "hello", "flag": True, "count": 42, "ratio": 2.5},
              {"text": ["hello"], "flag": ["true"], "count": ["42"], "ratio": ["2.5"]}),
@@ -53,7 +53,7 @@ class DistributionValuesContractTest(DistributionContractTestCase):
                       enum=[{"value": 1.5}, {"value": 2.5}]),
         ])])
         distribution = detail["metadata"]["distributions"][0]
-        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["configuration"]["parameters"]}
+        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["parameters"]}
         values = {
             "strings": ["red", "blue"], "integers": [0, 3], "floats": [0.5, 1, 2.5],
             "patterns": ["AB", "CD"], "integer_enum": [1, 3], "float_enum": [1.5, 2.5],
@@ -92,7 +92,7 @@ class DistributionValuesContractTest(DistributionContractTestCase):
             parameter("float_enum", "FLOAT", position=5, enum=[{"value": 1.5}, {"value": 2.5}]),
         ])])
         distribution = detail["metadata"]["distributions"][0]
-        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["configuration"]["parameters"]}
+        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["parameters"]}
         for name, valid, invalid in (
             ("enum", ["red", "blue"], ["green", "RED"]),
             ("pattern", ["AB"], ["bad"]),
@@ -128,7 +128,7 @@ class DistributionValuesContractTest(DistributionContractTestCase):
                       default=[0.5, 2.5], enum=[{"value": value} for value in (0.5, 1.5, 2.5)]),
         ])])
         distribution = detail["metadata"]["distributions"][0]
-        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["configuration"]["parameters"]}
+        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["parameters"]}
         self.assert_prepare_problem(self.prepare_response(distribution), target="parameters")
         prepared = self.prepare(distribution, values={identifiers["required"]: "supplied"})
         query = parse_qs(urlsplit(prepared["url"]).query)
@@ -154,7 +154,7 @@ class DistributionValuesContractTest(DistributionContractTestCase):
         problem = assert_problem(self, invalid, 400, "validation_failed")
         self.assertTrue(
             problem.get("target", "").startswith(
-                "metadata.distributions[0].web_service.configuration.parameters[0]"
+                "metadata.distributions[0].web_service.parameters[0]"
             ),
             problem,
         )

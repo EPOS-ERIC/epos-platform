@@ -29,7 +29,7 @@ class DistributionRequestRenderingContractTest(DistributionContractTestCase):
             parameter("joined", position=4, multiple_values=True, enum=choices),
         ], template_url="https://provider.invalid/base%2Fkept/{path}/{path}/{another}?existing=a%2Fb&existing=two")])
         distribution = detail["metadata"]["distributions"][0]
-        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["configuration"]["parameters"]}
+        identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["parameters"]}
         values = {
             "path": "one/ space%é,{another}", "another": "done", "q name/&": "one/two &%",
             "repeat": ["a,b", "c/d"], "joined": ["a,b", "c/d"],
@@ -55,7 +55,7 @@ class DistributionRequestRenderingContractTest(DistributionContractTestCase):
         ], method="POST", body_content_type="application/json", body_template='{"message":"{{.text}}"}',
             body_parameters=[child("text")])])
         distribution = detail["metadata"]["distributions"][0]
-        service = distribution["web_service"]["configuration"]
+        service = distribution["web_service"]
         identifiers = {item["name"]: item["id"] for item in service["parameters"]}
         body_identifier = service["body_parameters"][0]["id"]
         text = 'raw"\\text\nline é\x00'
@@ -88,7 +88,7 @@ class DistributionRequestRenderingContractTest(DistributionContractTestCase):
                       template="{{.value}}", parameters=[child()]),
         ])])
         distribution = detail["metadata"]["distributions"][0]
-        by_name = {item["name"]: item for item in distribution["web_service"]["configuration"]["parameters"]}
+        by_name = {item["name"]: item for item in distribution["web_service"]["parameters"]}
         identifiers = (
             by_name["X-Direct"]["id"], by_name["X-Rendered"]["parameters"][0]["id"],
         )
@@ -98,5 +98,5 @@ class DistributionRequestRenderingContractTest(DistributionContractTestCase):
                     secret = "provider-credential-canary"
                     self.assert_prepare_problem(
                         self.prepare_response(distribution, {identifier: secret + control + "injected"}),
-                        target="headers", secrets=(secret,),
+                        target="parameters", secrets=(secret,),
                     )

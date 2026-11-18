@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -65,22 +66,22 @@ func ToReplaceDraftParams(datasetID, id uuid.UUID, revision int32, value domain.
 }
 
 func toDomainDatasetVersion(version sqlc.GetLifecycleDatasetVersionRow, metadata domain.DatasetMetadata) (domain.DatasetVersion, error) {
-	result, err := domain.NewDatasetVersion(
-		version.DatasetID,
-		version.ID,
-		version.Revision,
-		domain.Status(version.Status),
-		domain.Actor(version.CreatedBy),
-		version.SubmittedBy,
-		toDomainGroup(version.Group),
-		version.CreatedAt,
-		version.UpdatedAt,
-		version.RejectedBy,
-		version.RejectedAt,
-		version.RejectionNote,
-		metadata,
-	)
-	if err != nil {
+	result := domain.DatasetVersion{
+		DatasetID:     version.DatasetID,
+		VersionID:     version.ID,
+		Revision:      version.Revision,
+		Status:        domain.Status(version.Status),
+		CreatedBy:     domain.Actor(version.CreatedBy),
+		SubmittedBy:   (*domain.Actor)(version.SubmittedBy),
+		Group:         toDomainGroup(version.Group),
+		CreatedAt:     version.CreatedAt,
+		UpdatedAt:     version.UpdatedAt,
+		RejectedBy:    version.RejectedBy,
+		RejectedAt:    version.RejectedAt,
+		RejectionNote: version.RejectionNote,
+		Metadata:      metadata,
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.DatasetVersion{}, fmt.Errorf("validate dataset result: %w", err)
 	}
 	return result, nil
@@ -123,16 +124,48 @@ func geologicalTemporal(start, end *float64) *domain.GeologicalTemporal {
 	return &domain.GeologicalTemporal{StartMYA: start, EndMYA: end}
 }
 
-func toDomainWebService(value sqlc.WebService) domain.WebService {
-	return domain.WebService{
+func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {
+	common := domain.WebServiceCommon{
 		ID:               value.ID,
 		ResourceID:       value.ResourceID,
-		Type:             domain.WebServiceType(value.Type),
-		Configuration:    nil,
 		VisibleOn:        domainVisibleOnValues(value.VisibleOn),
-		Provider:         nil,
 		DocumentationURI: value.DocumentationUri,
-		ContactPoints:    nil,
+	}
+	switch domain.WebServiceType(value.Type) {
+	case domain.WebServiceTypeHTTP:
+		return &domain.HTTPWebService{WebServiceCommon: common}, nil
+	case domain.WebServiceTypeDynamic:
+		return &domain.DynamicWebService{WebServiceCommon: common}, nil
+	case domain.WebServiceTypeWFS:
+		return &domain.WFSWebService{WebServiceCommon: common}, nil
+	case domain.WebServiceTypeWMS:
+		return &domain.WMSWebService{WebServiceCommon: common}, nil
+	case domain.WebServiceTypeWMTS:
+		return &domain.WMTSWebService{WebServiceCommon: common}, nil
+	default:
+		return nil, apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("unsupported web service type %q", value.Type))
+	}
+}
+
+func genericWebService(value domain.WebService) *domain.GenericWebService {
+	switch service := value.(type) {
+	case *domain.HTTPWebService:
+		return &service.GenericWebService
+	case *domain.DynamicWebService:
+		return &service.GenericWebService
+	default:
+		return nil
+	}
+}
+
+func genericWebServiceInput(value domain.WebServiceInput) *domain.GenericWebServiceInput {
+	switch service := value.(type) {
+	case *domain.HTTPWebServiceInput:
+		return &service.GenericWebServiceInput
+	case *domain.DynamicWebServiceInput:
+		return &service.GenericWebServiceInput
+	default:
+		return nil
 	}
 }
 
@@ -164,8 +197,7 @@ func toDomainDistribution(value sqlc.Distribution, services map[uuid.UUID]domain
 		result.ByteSize = &byteSize
 	}
 	if value.WebServiceID != nil {
-		service := services[*value.WebServiceID]
-		result.WebService = &service
+		result.WebService = services[*value.WebServiceID]
 		return result
 	}
 	result.DownloadableFile = &domain.DownloadableFile{

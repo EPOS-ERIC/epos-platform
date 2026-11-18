@@ -10,22 +10,22 @@ import (
 )
 
 func toDomainRoleRequest(id uuid.UUID, role, status string, requestedAt time.Time) (domain.RoleRequest, error) {
-	groupRole, err := domain.NewGroupRole(role)
+	groupRole, err := domain.ParseGroupRole(role)
 	if err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("invalid role: %w", err)
 	}
-	roleRequestStatus, err := domain.NewPersistedRoleRequestStatus(status)
+	roleRequestStatus, err := domain.ParsePersistedRoleRequestStatus(status)
 	if err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("invalid status: %w", err)
 	}
 
-	result, err := domain.NewRoleRequest(domain.RoleRequest{
+	result := domain.RoleRequest{
 		ID:          id,
 		Role:        groupRole,
 		Status:      roleRequestStatus,
 		RequestedAt: requestedAt,
-	})
-	if err != nil {
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("construct role request: %w", err)
 	}
 
@@ -40,7 +40,7 @@ func toDomainGroupMembership(
 	rolePermissions []domain.GroupPermission,
 	roleRequests []domain.RoleRequest,
 ) (domain.GroupMembership, error) {
-	result, err := domain.NewGroupMembership(domain.GroupMembership{
+	result := domain.GroupMembership{
 		User:               user,
 		Status:             domain.MembershipStatus(membership.Status),
 		Roles:              roles,
@@ -49,8 +49,8 @@ func toDomainGroupMembership(
 		RoleRequests:       roleRequests,
 		CreatedAt:          membership.CreatedAt,
 		UpdatedAt:          membership.UpdatedAt,
-	})
-	if err != nil {
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.GroupMembership{}, fmt.Errorf("construct membership: %w", err)
 	}
 

@@ -69,7 +69,7 @@ func withAvailableConversions(dataset gatewayapi.DatasetResourceMetadata, byDist
 
 		web := &distribution.WebServiceDistribution
 		for _, conversion := range byDistribution[web.ID] {
-			web.AvailableFormats = append(web.AvailableFormats, gatewayapi.NewConvertedFormatAvailableFormat(gatewayapi.ConvertedFormat{
+			format := gatewayapi.NewConvertedFormatAvailableFormat(gatewayapi.ConvertedFormat{
 				Kind:         gatewayapi.ConvertedFormatKindCONVERTED,
 				ConversionID: conversion.ID,
 				InputFormat:  conversion.InputFormat,
@@ -79,7 +79,19 @@ func withAvailableConversions(dataset gatewayapi.DatasetResourceMetadata, byDist
 					Name:        conversion.PluginName,
 					Description: conversion.PluginDescription,
 				},
-			}))
+			})
+			switch web.WebService.Type {
+			case gatewayapi.HttpWebServiceDatasetWebService:
+				web.WebService.HttpWebService.AvailableFormats = append(web.WebService.HttpWebService.AvailableFormats, format)
+			case gatewayapi.DynamicWebServiceDatasetWebService:
+				web.WebService.DynamicWebService.AvailableFormats = append(web.WebService.DynamicWebService.AvailableFormats, format)
+			case gatewayapi.WfsWebServiceDatasetWebService:
+				web.WebService.WfsWebService.AvailableFormats = append(web.WebService.WfsWebService.AvailableFormats, format)
+			case gatewayapi.WmsWebServiceDatasetWebService, gatewayapi.WmtsWebServiceDatasetWebService:
+				continue
+			default:
+				continue
+			}
 		}
 
 	}

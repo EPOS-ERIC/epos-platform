@@ -36,11 +36,9 @@ def web_distribution(
         "title": "prepared-service", "description": "Synthetic preparation contract",
         "type": "WEB_SERVICE",
         "web_service": {
-            "configuration": {
-                "template_url": "https://provider.invalid/query",
-                "method": "GET", "type": "HTTP", "format": "application/json",
-                "parameters": parameters or [], **service,
-            },
+            "template_url": "https://provider.invalid/query",
+            "method": "GET", "type": "HTTP", "format": "application/json",
+            "parameters": parameters or [], **service,
         },
     }
 

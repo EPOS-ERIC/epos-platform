@@ -127,7 +127,7 @@ func (r *Repo) loadUser(
 
 	rolesByGroup := make(map[uuid.UUID][]domain.GroupRole)
 	for _, role := range roles {
-		value, err := domain.NewGroupRole(role.RoleKey)
+		value, err := domain.ParseGroupRole(role.RoleKey)
 		if err != nil {
 			return domain.User{}, fmt.Errorf("construct group role: %w", err)
 		}
@@ -136,7 +136,7 @@ func (r *Repo) loadUser(
 
 	grantedPermissionsByGroup := make(map[uuid.UUID][]domain.GroupPermission)
 	for _, permission := range grantedPermissions {
-		value, err := domain.NewGroupPermission(permission.PermissionKey)
+		value, err := domain.ParseGroupPermission(permission.PermissionKey)
 		if err != nil {
 			return domain.User{}, fmt.Errorf("construct granted permission: %w", err)
 		}
@@ -145,7 +145,7 @@ func (r *Repo) loadUser(
 
 	rolePermissionsByGroup := make(map[uuid.UUID][]domain.GroupPermission)
 	for _, permission := range rolePermissions {
-		value, err := domain.NewGroupPermission(permission.PermissionKey)
+		value, err := domain.ParseGroupPermission(permission.PermissionKey)
 		if err != nil {
 			return domain.User{}, fmt.Errorf("construct role permission: %w", err)
 		}
@@ -163,7 +163,7 @@ func (r *Repo) loadUser(
 
 	userMemberships := make([]domain.Membership, 0, len(memberships))
 	for _, membership := range memberships {
-		value, err := domain.NewUserMembership(domain.Membership{
+		value := domain.Membership{
 			Group: domain.GroupSummary{
 				ID:   membership.GroupID,
 				Name: membership.GroupName,
@@ -175,8 +175,8 @@ func (r *Repo) loadUser(
 			RoleRequests:       roleRequestsByGroup[membership.GroupID],
 			CreatedAt:          membership.CreatedAt,
 			UpdatedAt:          membership.UpdatedAt,
-		})
-		if err != nil {
+		}
+		if err := value.Normalize(); err != nil {
 			return domain.User{}, fmt.Errorf("construct membership for %s: %w", membership.GroupID, err)
 		}
 		userMemberships = append(userMemberships, value)

@@ -119,15 +119,17 @@ func (r *Repo) DatasetRelations(ctx context.Context, versionIDs []uuid.UUID) (ma
 		}
 
 		if row.ProviderID != nil {
-			provider, err := domain.NewDiscoveryReference(*row.ProviderID, row.ProviderName)
-			if err != nil {
+			provider := domain.DiscoveryReference{
+				ID:   *row.ProviderID,
+				Name: row.ProviderName,
+			}
+			if err := provider.Normalize(); err != nil {
 				return nil, fmt.Errorf("construct web service provider: %w", err)
 			}
 			distribution.Provider = &provider
 		}
 
-		distribution, err := domain.NewDiscoveryDistribution(distribution)
-		if err != nil {
+		if err := distribution.Normalize(); err != nil {
 			return nil, fmt.Errorf("construct dataset distribution: %w", err)
 		}
 
@@ -267,8 +269,11 @@ func addDiscoveryReferences(
 	kind string,
 ) error {
 	for _, row := range rows {
-		reference, err := domain.NewDiscoveryReference(row.id, row.name)
-		if err != nil {
+		reference := domain.DiscoveryReference{
+			ID:   row.id,
+			Name: row.name,
+		}
+		if err := reference.Normalize(); err != nil {
 			return fmt.Errorf("construct %s reference: %w", kind, err)
 		}
 		relations := result[row.versionID]

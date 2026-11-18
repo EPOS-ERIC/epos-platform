@@ -98,8 +98,8 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
         draft = self.details(detail["resource_id"], version["id"])
         duplicate = draft["metadata"]["distributions"][0]
         self.assertNotEqual(duplicate["id"], original["id"])
-        original_parameter = original["web_service"]["configuration"]["parameters"][0]["id"]
-        copied_parameter = duplicate["web_service"]["configuration"]["parameters"][0]["id"]
+        original_parameter = original["web_service"]["parameters"][0]["id"]
+        copied_parameter = duplicate["web_service"]["parameters"][0]["id"]
         self.assertNotEqual(original_parameter, copied_parameter)
         for distribution, foreign_id in ((original, copied_parameter), (duplicate, original_parameter)):
             with self.subTest(distribution=distribution["id"]):

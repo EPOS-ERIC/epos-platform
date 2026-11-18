@@ -63,7 +63,7 @@ func (s *AccessServer) RequestMembership(ctx context.Context, request *metadatal
 			return nil, err
 		}
 
-		parsedRole, err = domain.NewRequestedGroupRole(string(parsedRole))
+		parsedRole, err = domain.ParseRequestedGroupRole(string(parsedRole))
 		if err != nil {
 			return nil, err
 		}
@@ -168,7 +168,7 @@ func (s *AccessServer) RequestRole(ctx context.Context, request *metadatalifecyc
 	}
 	role, err := toDomainGroupRole(request.Role)
 	if err == nil {
-		role, err = domain.NewRequestedGroupRole(string(role))
+		role, err = domain.ParseRequestedGroupRole(string(role))
 	}
 	if err != nil {
 		return nil, err

@@ -256,11 +256,11 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, apperror.PrefixTarget(err, "metadata")
 		}
-		input, err := domain.NewDatasetDraftInput(domain.DatasetDraftInput{
+		input := domain.DatasetDraftInput{
 			Revision: request.GetRevision(),
 			Metadata: metadata,
-		})
-		if err != nil {
+		}
+		if err := input.Normalize(); err != nil {
 			return nil, err
 		}
 		result, removed, err := s.datasets.ReplaceDraft(ctx, actor, resourceID, versionID, input)
@@ -284,11 +284,11 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, apperror.PrefixTarget(err, "metadata")
 		}
-		input, err := domain.NewSoftwareApplicationDraftInput(domain.SoftwareApplicationDraftInput{
+		input := domain.SoftwareApplicationDraftInput{
 			Revision: request.GetRevision(),
 			Metadata: metadata,
-		})
-		if err != nil {
+		}
+		if err := input.Normalize(); err != nil {
 			return nil, err
 		}
 		result, err := s.applications.ReplaceDraft(ctx, actor, resourceID, versionID, input)
@@ -311,11 +311,11 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, apperror.PrefixTarget(err, "metadata")
 		}
-		input, err := domain.NewSoftwareSourceCodeDraftInput(domain.SoftwareSourceCodeDraftInput{
+		input := domain.SoftwareSourceCodeDraftInput{
 			Revision: request.GetRevision(),
 			Metadata: metadata,
-		})
-		if err != nil {
+		}
+		if err := input.Normalize(); err != nil {
 			return nil, err
 		}
 		result, err := s.sourceCodes.ReplaceDraft(ctx, actor, resourceID, versionID, input)
@@ -417,8 +417,10 @@ func (s *ResourceServer) RejectResource(ctx context.Context, request *metadatali
 	}
 	switch request.GetResourceType() {
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
-		value, e := domain.NewDatasetRejectionInput(domain.DatasetRejectionInput{Note: request.GetNote()})
-		if e != nil {
+		value := domain.DatasetRejectionInput{
+			Note: request.GetNote(),
+		}
+		if e := value.Normalize(); e != nil {
 			return nil, e
 		}
 		result, notifications, e := s.datasets.Reject(ctx, actor, resourceID, versionID, value)
@@ -437,8 +439,10 @@ func (s *ResourceServer) RejectResource(ctx context.Context, request *metadatali
 
 		return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
-		value, e := domain.NewSoftwareApplicationRejectionInput(domain.SoftwareApplicationRejectionInput{Note: request.GetNote()})
-		if e != nil {
+		value := domain.SoftwareApplicationRejectionInput{
+			Note: request.GetNote(),
+		}
+		if e := value.Normalize(); e != nil {
 			return nil, e
 		}
 
@@ -459,8 +463,10 @@ func (s *ResourceServer) RejectResource(ctx context.Context, request *metadatali
 
 		return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
-		value, e := domain.NewSoftwareSourceCodeRejectionInput(domain.SoftwareSourceCodeRejectionInput{Note: request.GetNote()})
-		if e != nil {
+		value := domain.SoftwareSourceCodeRejectionInput{
+			Note: request.GetNote(),
+		}
+		if e := value.Normalize(); e != nil {
 			return nil, e
 		}
 
@@ -909,8 +915,9 @@ func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribu
 		result.Delivery = &metadatalifecyclev1.Distribution_DownloadableFile{DownloadableFile: &metadatalifecyclev1.DownloadableFile{Url: value.DownloadableFile.URL, Format: value.DownloadableFile.Format}}
 	}
 	if value.WebService != nil {
-		result.Delivery = &metadatalifecyclev1.Distribution_WebService{WebService: toProtoWebService(*value.WebService)}
-		result.NativeFormats = toProtoNativeFormats(value.NativeFormats)
+		result.Delivery = &metadatalifecyclev1.Distribution_WebService{
+			WebService: toProtoWebService(value.WebService),
+		}
 	}
 	return result
 }
@@ -1169,7 +1176,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 	if err != nil {
 		return domain.DatasetInput{}, fmt.Errorf("map updated timestamp: %w", apperror.PrefixTarget(err, "updated"))
 	}
-	result, err := domain.NewDatasetInput(domain.DatasetInput{
+	result := domain.DatasetInput{
 		Title:                      value.GetTitle(),
 		Description:                value.GetDescription(),
 		Keywords:                   value.GetKeywords(),
@@ -1186,8 +1193,8 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 		CategoryIDs:                categories,
 		SourceCreated:              created,
 		SourceUpdated:              updated,
-	})
-	if err != nil {
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.DatasetInput{}, fmt.Errorf("validate dataset input: %w", err)
 	}
 	return result, nil
@@ -1222,7 +1229,7 @@ func distributionInput(value *metadatalifecyclev1.DistributionInput) (domain.Dis
 		if err != nil {
 			return domain.DistributionInput{}, fmt.Errorf("map web service: %w", apperror.PrefixTarget(err, "web_service"))
 		}
-		result.WebService = &mapped
+		result.WebService = mapped
 	case *metadatalifecyclev1.DistributionInput_DownloadableFile:
 		if delivery.DownloadableFile == nil {
 			return domain.DistributionInput{}, apperror.New(apperror.CodeValidationFailed, "downloadable file is required")
@@ -1261,23 +1268,6 @@ func webServiceMethodOutput(value domain.HTTPMethod) metadatalifecyclev1.WebServ
 		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_DELETE
 	default:
 		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_UNSPECIFIED
-	}
-}
-
-func webServiceTypeInput(value metadatalifecyclev1.WebServiceType) (domain.WebServiceType, error) {
-	switch value {
-	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS:
-		return domain.WebServiceTypeWMS, nil
-	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP:
-		return domain.WebServiceTypeHTTP, nil
-	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS:
-		return domain.WebServiceTypeWMTS, nil
-	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS:
-		return domain.WebServiceTypeWFS, nil
-	case metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC:
-		return domain.WebServiceTypeDynamic, nil
-	default:
-		return "", apperror.New(apperror.CodeValidationFailed, "web service type is invalid")
 	}
 }
 
@@ -1683,7 +1673,7 @@ func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationInpu
 	if err != nil {
 		return domain.SoftwareApplicationInput{}, err
 	}
-	result, err := domain.NewSoftwareApplicationInput(domain.SoftwareApplicationInput{
+	result := domain.SoftwareApplicationInput{
 		Name:             value.GetName(),
 		Description:      value.GetDescription(),
 		MainEntityOfPage: value.MainEntityOfPage,
@@ -1697,8 +1687,8 @@ func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationInpu
 		ContactPointIDs:  contacts,
 		CategoryIDs:      categories,
 		Identifiers:      identifiers,
-	})
-	if err != nil {
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.SoftwareApplicationInput{}, fmt.Errorf("validate software application input: %w", err)
 	}
 	return result, nil
@@ -1722,7 +1712,7 @@ func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeInput)
 	if err != nil {
 		return domain.SoftwareSourceCodeInput{}, err
 	}
-	result, err := domain.NewSoftwareSourceCodeInput(domain.SoftwareSourceCodeInput{
+	result := domain.SoftwareSourceCodeInput{
 		Name:                 value.GetName(),
 		Description:          value.GetDescription(),
 		ProgrammingLanguage:  value.ProgrammingLanguage,
@@ -1737,8 +1727,8 @@ func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeInput)
 		ContactPointIDs:      contacts,
 		CategoryIDs:          categories,
 		Identifiers:          identifiers,
-	})
-	if err != nil {
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.SoftwareSourceCodeInput{}, fmt.Errorf("validate software source code input: %w", err)
 	}
 	return result, nil

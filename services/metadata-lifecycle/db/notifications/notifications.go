@@ -54,10 +54,11 @@ func (r *Repo) ListSubscriptions(ctx context.Context, userID string) ([]domain.N
 
 	result := make([]domain.NotificationSubscription, 0, len(globalRows)+len(groupRows))
 	for _, row := range globalRows {
-		topicKey, err := domain.NewNotificationTopicKey(row.EventType)
+		topicKey, err := domain.ParseNotificationTopicKey(row.EventType)
 		if err != nil {
-			return nil, fmt.Errorf("parse notification subscription topic %s: %w", row.EventType, err)
+			return nil, apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("parse notification subscription topic %s: %w", row.EventType, err))
 		}
+
 		result = append(result, domain.NotificationSubscription{
 			UserID:   row.UserID,
 			TopicKey: topicKey,
@@ -65,10 +66,11 @@ func (r *Repo) ListSubscriptions(ctx context.Context, userID string) ([]domain.N
 		})
 	}
 	for _, row := range groupRows {
-		topicKey, err := domain.NewNotificationTopicKey(row.EventType)
+		topicKey, err := domain.ParseNotificationTopicKey(row.EventType)
 		if err != nil {
-			return nil, fmt.Errorf("parse notification subscription topic %s: %w", row.EventType, err)
+			return nil, apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("parse notification subscription topic %s: %w", row.EventType, err))
 		}
+
 		groupID := row.GroupID
 		result = append(result, domain.NotificationSubscription{
 			UserID:   row.UserID,
@@ -219,10 +221,11 @@ func (r *Repo) DeleteGroupSubscription(ctx context.Context, userID string, group
 }
 
 func toDomainTopic(key, label, description string, scope sqlc.NotificationScope, permissions []string) (domain.NotificationTopic, error) {
-	parsedKey, err := domain.NewNotificationTopicKey(key)
+	parsedKey, err := domain.ParseNotificationTopicKey(key)
 	if err != nil {
-		return domain.NotificationTopic{}, fmt.Errorf("validate notification topic key: %w", err)
+		return domain.NotificationTopic{}, apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("validate notification topic key: %w", err))
 	}
+
 	return domain.NotificationTopic{
 		Key:                 parsedKey,
 		Label:               label,

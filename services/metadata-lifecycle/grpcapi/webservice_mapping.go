@@ -10,38 +10,56 @@ import (
 )
 
 func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService {
-	result := &metadatalifecyclev1.WebService{
-		Id:               value.ID.String(),
-		ResourceId:       value.ResourceID.String(),
-		Type:             webServiceTypeOutput(value.Type),
-		VisibleOn:        webServiceVisibleOnOutput(value.VisibleOn),
-		DocumentationUri: value.DocumentationURI,
+	common := value.Common()
+	commonOutput := &metadatalifecyclev1.WebServiceCommon{
+		Id:               common.ID.String(),
+		ResourceId:       common.ResourceID.String(),
+		VisibleOn:        webServiceVisibleOnOutput(common.VisibleOn),
+		DocumentationUri: common.DocumentationURI,
 	}
-	switch configuration := value.Configuration.(type) {
-	case domain.GenericWebServiceConfiguration:
-		if value.Type == domain.WebServiceTypeDynamic {
-			result.Configuration = &metadatalifecyclev1.WebService_Dynamic{Dynamic: toProtoGenericWebServiceConfiguration(configuration)}
-		} else {
-			result.Configuration = &metadatalifecyclev1.WebService_Generic{Generic: toProtoGenericWebServiceConfiguration(configuration)}
-		}
-	case domain.WFSConfiguration:
-		result.Configuration = &metadatalifecyclev1.WebService_Wfs{Wfs: toProtoWFSWebServiceConfiguration(configuration)}
-	case domain.WMSConfiguration:
-		result.Configuration = &metadatalifecyclev1.WebService_Wms{Wms: toProtoWMSWebServiceConfiguration(configuration)}
-	case domain.WMTSConfiguration:
-		result.Configuration = &metadatalifecyclev1.WebService_Wmts{Wmts: toProtoWMTSWebServiceConfiguration(configuration)}
+	if common.Provider != nil {
+		commonOutput.ProviderReference = referenceOutput(common.Provider.ID, common.Provider.Name)
 	}
-	if value.Provider != nil {
-		result.ProviderReference = referenceOutput(value.Provider.ID, value.Provider.Name)
+	for _, contact := range common.ContactPoints {
+		commonOutput.ContactPoints = append(commonOutput.ContactPoints, contact.ID.String())
 	}
-	for _, contact := range value.ContactPoints {
-		result.ContactPoints = append(result.ContactPoints, contact.ID.String())
+	result := &metadatalifecyclev1.WebService{}
+	switch service := value.(type) {
+	case *domain.HTTPWebService:
+		mapped := toProtoHTTPWebService(service.GenericWebService)
+		mapped.Common = commonOutput
+		mapped.NativeFormats = toProtoNativeFormats(service.NativeFormats())
+		result.Service = &metadatalifecyclev1.WebService_Http{Http: mapped}
+	case *domain.DynamicWebService:
+		generic := toProtoHTTPWebService(service.GenericWebService)
+		result.Service = &metadatalifecyclev1.WebService_Dynamic{Dynamic: &metadatalifecyclev1.DynamicWebService{
+			Common:        commonOutput,
+			TemplateUrl:   generic.TemplateUrl,
+			Format:        generic.Format,
+			Method:        generic.Method,
+			Parameters:    generic.Parameters,
+			Body:          generic.Body,
+			NativeFormats: toProtoNativeFormats(service.NativeFormats()),
+		}}
+	case *domain.WFSWebService:
+		mapped := toProtoWFSWebServiceConfiguration(service)
+		mapped.Common = commonOutput
+		mapped.NativeFormats = toProtoNativeFormats(service.NativeFormats())
+		result.Service = &metadatalifecyclev1.WebService_Wfs{Wfs: mapped}
+	case *domain.WMSWebService:
+		mapped := toProtoWMSWebServiceConfiguration(service)
+		mapped.Common = commonOutput
+		result.Service = &metadatalifecyclev1.WebService_Wms{Wms: mapped}
+	case *domain.WMTSWebService:
+		mapped := toProtoWMTSWebServiceConfiguration(service)
+		mapped.Common = commonOutput
+		result.Service = &metadatalifecyclev1.WebService_Wmts{Wmts: mapped}
 	}
 	return result
 }
 
-func toProtoGenericWebServiceConfiguration(value domain.GenericWebServiceConfiguration) *metadatalifecyclev1.GenericWebServiceConfiguration {
-	result := &metadatalifecyclev1.GenericWebServiceConfiguration{
+func toProtoHTTPWebService(value domain.GenericWebService) *metadatalifecyclev1.HTTPWebService {
+	result := &metadatalifecyclev1.HTTPWebService{
 		TemplateUrl: value.TemplateURL,
 		Format:      value.Format,
 		Method:      webServiceMethodOutput(value.Method),
@@ -50,18 +68,20 @@ func toProtoGenericWebServiceConfiguration(value domain.GenericWebServiceConfigu
 		result.Parameters = append(result.Parameters, parameterOutput(parameter))
 	}
 	if value.Body != nil {
-		result.BodyContentType = &value.Body.ContentType
-		result.BodyTemplate = &value.Body.Template
-		result.BodyRequired = new(value.Body.Required)
+		result.Body = &metadatalifecyclev1.RequestBody{
+			ContentType: value.Body.ContentType,
+			Template:    value.Body.Template,
+			Required:    value.Body.Required,
+		}
 		for _, parameter := range value.Body.Parameters {
-			result.BodyParameters = append(result.BodyParameters, scalarParameterOutput(parameter))
+			result.Body.Parameters = append(result.Body.Parameters, scalarParameterOutput(parameter))
 		}
 	}
 	return result
 }
 
-func toProtoWFSWebServiceConfiguration(value domain.WFSConfiguration) *metadatalifecyclev1.WFSWebServiceConfiguration {
-	result := &metadatalifecyclev1.WFSWebServiceConfiguration{
+func toProtoWFSWebServiceConfiguration(value *domain.WFSWebService) *metadatalifecyclev1.WFSWebService {
+	result := &metadatalifecyclev1.WFSWebService{
 		GetFeatureTemplateUrl: value.GetFeatureTemplateURL,
 		Version:               value.Version,
 		FeatureTypes:          value.FeatureTypes,
@@ -77,8 +97,8 @@ func toProtoWFSWebServiceConfiguration(value domain.WFSConfiguration) *metadatal
 	return result
 }
 
-func toProtoWMTSWebServiceConfiguration(value domain.WMTSConfiguration) *metadatalifecyclev1.WMTSWebServiceConfiguration {
-	result := &metadatalifecyclev1.WMTSWebServiceConfiguration{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: value.DefaultLayer}
+func toProtoWMTSWebServiceConfiguration(value *domain.WMTSWebService) *metadatalifecyclev1.WMTSWebService {
+	result := &metadatalifecyclev1.WMTSWebService{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: value.DefaultLayer}
 	for _, layer := range value.Layers {
 		result.Layers = append(result.Layers, &metadatalifecyclev1.WMTSLayer{
 			Id:           layer.ID.String(),
@@ -97,8 +117,8 @@ func toProtoWMTSWebServiceConfiguration(value domain.WMTSConfiguration) *metadat
 	return result
 }
 
-func toProtoWMSWebServiceConfiguration(value domain.WMSConfiguration) *metadatalifecyclev1.WMSWebServiceConfiguration {
-	result := &metadatalifecyclev1.WMSWebServiceConfiguration{
+func toProtoWMSWebServiceConfiguration(value *domain.WMSWebService) *metadatalifecyclev1.WMSWebService {
+	result := &metadatalifecyclev1.WMSWebService{
 		CapabilitiesUrl:      value.CapabilitiesURL,
 		DefaultLayer:         value.DefaultLayer,
 		TransparencyEditable: value.TransparencyEditable,
@@ -125,136 +145,131 @@ func toProtoWMSWebServiceConfiguration(value domain.WMSConfiguration) *metadatal
 
 func toDomainWebServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServiceInput, error) {
 	if value == nil {
-		return domain.WebServiceInput{}, apperror.New(apperror.CodeValidationFailed, "web service is required") //nolint:wrapcheck
+		return nil, apperror.New(apperror.CodeValidationFailed, "web service is required") //nolint:wrapcheck
+	}
+	var commonValue *metadatalifecyclev1.WebServiceCommonInput
+	var service domain.WebServiceInput
+	var err error
+	switch v := value.GetService().(type) {
+	case *metadatalifecyclev1.WebServiceInput_Http:
+		if v.Http == nil {
+			return nil, apperror.Field("", "HTTP web service is required.", nil)
+		}
+		commonValue = v.Http.Common
+		var generic domain.GenericWebServiceInput
+		generic, err = toDomainGenericWebServiceInput(v.Http.GetTemplateUrl(), v.Http.GetMethod(), v.Http.GetFormat(), v.Http.GetParameters(), v.Http.GetBody())
+		service = &domain.HTTPWebServiceInput{GenericWebServiceInput: generic}
+	case *metadatalifecyclev1.WebServiceInput_Dynamic:
+		if v.Dynamic == nil {
+			return nil, apperror.Field("", "DYNAMIC web service is required.", nil)
+		}
+		commonValue = v.Dynamic.Common
+		var generic domain.GenericWebServiceInput
+		generic, err = toDomainGenericWebServiceInput(v.Dynamic.GetTemplateUrl(), v.Dynamic.GetMethod(), v.Dynamic.GetFormat(), v.Dynamic.GetParameters(), v.Dynamic.GetBody())
+		service = &domain.DynamicWebServiceInput{GenericWebServiceInput: generic}
+	case *metadatalifecyclev1.WebServiceInput_Wfs:
+		if v.Wfs == nil {
+			return nil, apperror.Field("", "WFS web service is required.", nil)
+		}
+		commonValue = v.Wfs.Common
+		service, err = toDomainWFSWebServiceInput(v.Wfs)
+	case *metadatalifecyclev1.WebServiceInput_Wms:
+		if v.Wms == nil {
+			return nil, apperror.Field("", "WMS web service is required.", nil)
+		}
+		commonValue = v.Wms.Common
+		service, err = toDomainWMSWebServiceInput(v.Wms)
+	case *metadatalifecyclev1.WebServiceInput_Wmts:
+		if v.Wmts == nil {
+			return nil, apperror.Field("", "WMTS web service is required.", nil)
+		}
+		commonValue = v.Wmts.Common
+		service, err = toDomainWMTSWebServiceInput(v.Wmts)
+	default:
+		return nil, apperror.Field("", "Web service is required.", nil)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("map web service: %w", err)
+	}
+	if commonValue == nil {
+		return service, nil
 	}
 	var resourceID *uuid.UUID
-	if value.ResourceId != nil {
-		id, err := parseUUIDAt(*value.ResourceId, "web service resource ID", "resource_id")
+	if commonValue.ResourceId != nil {
+		id, err := parseUUIDAt(*commonValue.ResourceId, "web service resource ID", "resource_id")
 		if err != nil {
-			return domain.WebServiceInput{}, err
+			return nil, err
 		}
 		resourceID = &id
 	}
-	contactPoints, err := resourceParseUUIDs(value.GetContactPoints(), "web service contact point", "contact_points")
+	contactPoints, err := resourceParseUUIDs(commonValue.GetContactPoints(), "web service contact point", "contact_points")
 	if err != nil {
-		return domain.WebServiceInput{}, err
+		return nil, err
 	}
 	var providerID *uuid.UUID
-	if value.ProviderId != nil {
-		id, err := parseUUIDAt(value.GetProviderId(), "web service provider", "provider")
+	if commonValue.ProviderId != nil {
+		id, err := parseUUIDAt(commonValue.GetProviderId(), "web service provider", "provider")
 		if err != nil {
-			return domain.WebServiceInput{}, err
+			return nil, err
 		}
 		providerID = &id
 	}
-	serviceType, err := webServiceTypeInput(value.GetType())
+	visibleOn, err := webServiceVisibleOnInput(commonValue.GetVisibleOn())
 	if err != nil {
-		return domain.WebServiceInput{}, err
+		return nil, err
 	}
-	visibleOn, err := webServiceVisibleOnInput(value.GetVisibleOn())
-	if err != nil {
-		return domain.WebServiceInput{}, err
-	}
-	configuration, err := toDomainWebServiceConfigurationInput(value)
-	if err != nil {
-		return domain.WebServiceInput{}, fmt.Errorf("map web service configuration: %w", apperror.PrefixTarget(err, "configuration"))
-	}
-	return domain.WebServiceInput{
+	common := domain.WebServiceCommonInput{
 		ResourceID:       resourceID,
-		Type:             serviceType,
-		Configuration:    configuration,
 		VisibleOn:        visibleOn,
 		ProviderID:       providerID,
-		DocumentationURI: value.DocumentationUri,
+		DocumentationURI: commonValue.DocumentationUri,
 		ContactPointIDs:  contactPoints,
-	}, nil
+	}
+	*service.CommonInput() = common
+	return service, nil
 }
 
-func toDomainWebServiceConfigurationInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServiceConfigurationInput, error) {
-	switch configuration := value.GetConfiguration().(type) {
-	case *metadatalifecyclev1.WebServiceInput_Generic:
-		if configuration.Generic == nil {
-			return nil, apperror.Field("", "Generic web service configuration is required.", nil)
-		}
-		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP {
-			return nil, apperror.Field("type", "Generic configuration requires HTTP service type.", nil)
-		}
-		return toDomainGenericWebServiceConfigurationInput(configuration.Generic)
-	case *metadatalifecyclev1.WebServiceInput_Dynamic:
-		if configuration.Dynamic == nil {
-			return nil, apperror.Field("", "DYNAMIC web service configuration is required.", nil)
-		}
-		if value.GetType() != metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC {
-			return nil, apperror.Field("type", "DYNAMIC configuration requires DYNAMIC service type.", nil)
-		}
-		return toDomainGenericWebServiceConfigurationInput(configuration.Dynamic)
-	case *metadatalifecyclev1.WebServiceInput_Wfs:
-		if configuration.Wfs == nil {
-			return nil, apperror.Field("", "WFS configuration is required.", nil)
-		}
-		return toDomainWFSWebServiceConfigurationInput(configuration.Wfs)
-	case *metadatalifecyclev1.WebServiceInput_Wms:
-		if configuration.Wms == nil {
-			return nil, apperror.Field("", "WMS configuration is required.", nil)
-		}
-		return toDomainWMSWebServiceConfigurationInput(configuration.Wms)
-	case *metadatalifecyclev1.WebServiceInput_Wmts:
-		if configuration.Wmts == nil {
-			return nil, apperror.Field("", "WMTS configuration is required.", nil)
-		}
-		return toDomainWMTSWebServiceConfigurationInput(configuration.Wmts)
-	default:
-		return nil, apperror.Field("", "Web service configuration is required.", nil)
-	}
-}
-
-func toDomainGenericWebServiceConfigurationInput(value *metadatalifecyclev1.GenericWebServiceConfigurationInput) (domain.GenericWebServiceConfigurationInput, error) {
-	method, err := webServiceMethodInput(value.GetMethod())
+func toDomainGenericWebServiceInput(template string, methodValue metadatalifecyclev1.WebServiceMethod, format string, parameterValues []*metadatalifecyclev1.ParameterInput, bodyValue *metadatalifecyclev1.RequestBodyInput) (domain.GenericWebServiceInput, error) {
+	method, err := webServiceMethodInput(methodValue)
 	if err != nil {
-		return domain.GenericWebServiceConfigurationInput{}, err
+		return domain.GenericWebServiceInput{}, err
 	}
-	parameters, err := toDomainWebServiceParameters(value.GetParameters(), "parameters")
+	parameters, err := toDomainWebServiceParameters(parameterValues, "parameters")
 	if err != nil {
-		return domain.GenericWebServiceConfigurationInput{}, err
+		return domain.GenericWebServiceInput{}, err
 	}
 	var body *domain.RequestBodyInput
-	if value.BodyRequired != nil && value.BodyContentType == nil && value.BodyTemplate == nil && len(value.GetBodyParameters()) == 0 {
-		return domain.GenericWebServiceConfigurationInput{}, apperror.Field("body_required", "Body required is only allowed with a configured request body.", nil)
-	}
-	if value.BodyContentType != nil || value.BodyTemplate != nil || len(value.GetBodyParameters()) > 0 {
-		if value.BodyContentType == nil || value.BodyTemplate == nil {
-			return domain.GenericWebServiceConfigurationInput{}, apperror.Field("body_template", "Body content type and template are required together.", nil)
-		}
-		bodyParameters := make([]domain.ParameterInput, 0, len(value.GetBodyParameters()))
-		for i, parameter := range value.GetBodyParameters() {
+	if bodyValue != nil {
+		bodyParameters := make([]domain.ParameterInput, 0, len(bodyValue.GetParameters()))
+		for i, parameter := range bodyValue.GetParameters() {
 			mapped, err := scalarParameterInput(parameter)
 			if err != nil {
-				return domain.GenericWebServiceConfigurationInput{}, fmt.Errorf("map body parameter: %w", apperror.PrefixTarget(err, fmt.Sprintf("body_parameters[%d]", i)))
+				return domain.GenericWebServiceInput{}, fmt.Errorf("map body parameter: %w", apperror.PrefixTarget(err, fmt.Sprintf("body_parameters[%d]", i)))
 			}
 			bodyParameters = append(bodyParameters, mapped)
 		}
 		body = &domain.RequestBodyInput{
-			Required:    value.BodyRequired,
-			ContentType: value.GetBodyContentType(),
-			Template:    value.GetBodyTemplate(),
+			Required:    bodyValue.Required,
+			ContentType: bodyValue.GetContentType(),
+			Template:    bodyValue.GetTemplate(),
 			Parameters:  bodyParameters,
 		}
 	}
-	return domain.GenericWebServiceConfigurationInput{
-		TemplateURL: value.GetTemplateUrl(),
+	return domain.GenericWebServiceInput{
+		TemplateURL: template,
 		Method:      method,
 		Body:        body,
 		Parameters:  parameters,
-		Format:      value.GetFormat(),
+		Format:      format,
 	}, nil
 }
 
-func toDomainWFSWebServiceConfigurationInput(value *metadatalifecyclev1.WFSWebServiceConfigurationInput) (domain.WFSConfigurationInput, error) {
+func toDomainWFSWebServiceInput(value *metadatalifecyclev1.WFSWebServiceInput) (*domain.WFSWebServiceInput, error) {
 	parameters, err := toDomainWebServiceParameters(value.GetParameters(), "parameters")
 	if err != nil {
-		return domain.WFSConfigurationInput{}, err
+		return nil, err
 	}
-	return domain.WFSConfigurationInput{
+	return &domain.WFSWebServiceInput{
 		GetFeatureTemplateURL: value.GetGetFeatureTemplateUrl(),
 		Version:               value.GetVersion(),
 		FeatureTypes:          value.GetFeatureTypes(),
@@ -267,15 +282,15 @@ func toDomainWFSWebServiceConfigurationInput(value *metadatalifecyclev1.WFSWebSe
 	}, nil
 }
 
-func toDomainWMTSWebServiceConfigurationInput(value *metadatalifecyclev1.WMTSWebServiceConfigurationInput) (domain.WMTSConfigurationInput, error) {
+func toDomainWMTSWebServiceInput(value *metadatalifecyclev1.WMTSWebServiceInput) (*domain.WMTSWebServiceInput, error) {
 	layers := make([]domain.WMTSLayerInput, 0, len(value.GetLayers()))
 	for i, layer := range value.GetLayers() {
 		if layer == nil {
-			return domain.WMTSConfigurationInput{}, apperror.Field(fmt.Sprintf("layers[%d]", i), "WMTS layer is required.", nil)
+			return nil, apperror.Field(fmt.Sprintf("layers[%d]", i), "WMTS layer is required.", nil)
 		}
 		resourceID, err := layerResourceID(layer.ResourceId, i)
 		if err != nil {
-			return domain.WMTSConfigurationInput{}, err
+			return nil, err
 		}
 		layers = append(layers, domain.WMTSLayerInput{
 			ResourceID:   resourceID,
@@ -286,24 +301,24 @@ func toDomainWMTSWebServiceConfigurationInput(value *metadatalifecyclev1.WMTSWeb
 	}
 	tile, err := toDomainWebServiceParameters(value.GetGetTileParameters(), "get_tile_parameters")
 	if err != nil {
-		return domain.WMTSConfigurationInput{}, err
+		return nil, err
 	}
 	info, err := toDomainWebServiceParameters(value.GetGetFeatureInfoParameters(), "get_feature_info_parameters")
 	if err != nil {
-		return domain.WMTSConfigurationInput{}, err
+		return nil, err
 	}
-	return domain.WMTSConfigurationInput{CapabilitiesURL: value.GetCapabilitiesUrl(), DefaultLayer: value.GetDefaultLayer(), Layers: layers, GetTileParameters: tile, GetFeatureInfoParameters: info}, nil
+	return &domain.WMTSWebServiceInput{CapabilitiesURL: value.GetCapabilitiesUrl(), DefaultLayer: value.GetDefaultLayer(), Layers: layers, GetTileParameters: tile, GetFeatureInfoParameters: info}, nil
 }
 
-func toDomainWMSWebServiceConfigurationInput(value *metadatalifecyclev1.WMSWebServiceConfigurationInput) (domain.WMSConfigurationInput, error) {
+func toDomainWMSWebServiceInput(value *metadatalifecyclev1.WMSWebServiceInput) (*domain.WMSWebServiceInput, error) {
 	layers := make([]domain.WMSLayerInput, 0, len(value.GetLayers()))
 	for i, layer := range value.GetLayers() {
 		if layer == nil {
-			return domain.WMSConfigurationInput{}, apperror.Field(fmt.Sprintf("layers[%d]", i), "WMS layer is required.", nil)
+			return nil, apperror.Field(fmt.Sprintf("layers[%d]", i), "WMS layer is required.", nil)
 		}
 		resourceID, err := layerResourceID(layer.ResourceId, i)
 		if err != nil {
-			return domain.WMSConfigurationInput{}, err
+			return nil, err
 		}
 		layers = append(layers, domain.WMSLayerInput{
 			ResourceID:   resourceID,
@@ -314,13 +329,13 @@ func toDomainWMSWebServiceConfigurationInput(value *metadatalifecyclev1.WMSWebSe
 	}
 	getMapParameters, err := toDomainWebServiceParameters(value.GetGetMapParameters(), "get_map_parameters")
 	if err != nil {
-		return domain.WMSConfigurationInput{}, err
+		return nil, err
 	}
 	getFeatureInfoParameters, err := toDomainWebServiceParameters(value.GetGetFeatureInfoParameters(), "get_feature_info_parameters")
 	if err != nil {
-		return domain.WMSConfigurationInput{}, err
+		return nil, err
 	}
-	return domain.WMSConfigurationInput{
+	return &domain.WMSWebServiceInput{
 		CapabilitiesURL:          value.GetCapabilitiesUrl(),
 		DefaultLayer:             value.GetDefaultLayer(),
 		Layers:                   layers,

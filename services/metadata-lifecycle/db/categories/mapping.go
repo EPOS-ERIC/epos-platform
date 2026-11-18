@@ -27,11 +27,13 @@ func toReplaceCategoryParams(groupID, categoryID uuid.UUID, input domain.Categor
 }
 
 func toDomainCategory(row sqlc.Category) (domain.Category, error) {
-	category, err := domain.NewCategory(row.ID, row.GroupID, domain.CategoryInput{
+	category := domain.Category{
+		ID:               row.ID,
+		GroupID:          row.GroupID,
 		Name:             row.Name,
 		ParentCategoryID: row.ParentCategoryID,
-	})
-	if err != nil {
+	}
+	if err := category.Normalize(); err != nil {
 		return domain.Category{}, fmt.Errorf("bad category: %w", err)
 	}
 

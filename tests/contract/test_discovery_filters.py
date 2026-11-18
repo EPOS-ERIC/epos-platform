@@ -209,12 +209,10 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                     "description": "Discovery web service with display metadata",
                     "type": "WEB_SERVICE",
                     "web_service": {
-                        "configuration": {
                             "template_url": "https://example.org/discovery",
                             "method": "GET",
                             "type": "HTTP",
                             "format": "application/json",
-                        },
                         "visible_on": ["MAP", "TABLE"],
                         "provider": provider_id,
                     },
@@ -224,12 +222,10 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
                     "description": "Discovery web service without optional metadata",
                     "type": "WEB_SERVICE",
                     "web_service": {
-                        "configuration": {
                             "template_url": "https://example.org/discovery/optional",
                             "method": "GET",
                             "type": "HTTP",
                             "format": "application/geo+json",
-                        },
                     },
                 },
                 {
@@ -274,10 +270,10 @@ class DiscoveryFiltersContractTest(unittest.TestCase):
         ):
             distribution = distributions_by_title[title]
             self.assertEqual(
-                distribution["available_formats"],
+                distribution["web_service"]["available_formats"],
                 [{"kind": "ORIGINAL", "output_format": format_value, "label": format_value}],
             )
-            self.assertNotIn("available_formats", distribution["web_service"])
+            self.assertNotIn("available_formats", distribution)
         self.assertNotIn(
             "available_formats", distributions_by_title[f"discovery-file-{suffix}"]
         )

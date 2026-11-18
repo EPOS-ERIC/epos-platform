@@ -25,11 +25,12 @@ func layerIdentities(inputs []domain.DistributionInput, existing []domain.Distri
 		if distribution.WebService == nil {
 			continue
 		}
-		var previous domain.WebServiceConfiguration
-		if distribution.ResourceID != nil && distribution.WebService.ResourceID != nil {
+		var previous domain.WebService
+		common := distribution.WebService.CommonInput()
+		if distribution.ResourceID != nil && common.ResourceID != nil {
 			old := byID[*distribution.ResourceID]
-			if old.WebService != nil && old.WebService.ResourceID == *distribution.WebService.ResourceID {
-				previous = old.WebService.Configuration
+			if old.WebService != nil && old.WebService.Common().ResourceID == *common.ResourceID {
+				previous = old.WebService
 			}
 		}
 		check := func(id *uuid.UUID, old map[uuid.UUID]uuid.UUID, position int) error {
@@ -39,28 +40,32 @@ func layerIdentities(inputs []domain.DistributionInput, existing []domain.Distri
 			identity, ok := old[*id]
 			_, duplicate := result[*id]
 			if !ok || duplicate || *id == uuid.Nil {
-				return apperror.Field(fmt.Sprintf("metadata.distributions[%d].web_service.configuration.layers[%d].resource_id", i, position), "Layer must belong to this web service and appear only once.", nil)
+				return apperror.Field(fmt.Sprintf("metadata.distributions[%d].web_service.layers[%d].resource_id", i, position), "Layer must belong to this web service and appear only once.", nil)
 			}
 			result[*id] = identity
 			return nil
 		}
-		switch configuration := distribution.WebService.Configuration.(type) {
-		case domain.WMSConfigurationInput:
-			old, _ := previous.(domain.WMSConfiguration)
-			byLayerID := make(map[uuid.UUID]uuid.UUID, len(old.Layers))
-			for _, layer := range old.Layers {
-				byLayerID[layer.ResourceID] = layer.ID
+		switch configuration := distribution.WebService.(type) {
+		case *domain.WMSWebServiceInput:
+			old, _ := previous.(*domain.WMSWebService)
+			byLayerID := make(map[uuid.UUID]uuid.UUID)
+			if old != nil {
+				for _, layer := range old.Layers {
+					byLayerID[layer.ResourceID] = layer.ID
+				}
 			}
 			for j, layer := range configuration.Layers {
 				if err := check(layer.ResourceID, byLayerID, j); err != nil {
 					return nil, err
 				}
 			}
-		case domain.WMTSConfigurationInput:
-			old, _ := previous.(domain.WMTSConfiguration)
-			byLayerID := make(map[uuid.UUID]uuid.UUID, len(old.Layers))
-			for _, layer := range old.Layers {
-				byLayerID[layer.ResourceID] = layer.ID
+		case *domain.WMTSWebServiceInput:
+			old, _ := previous.(*domain.WMTSWebService)
+			byLayerID := make(map[uuid.UUID]uuid.UUID)
+			if old != nil {
+				for _, layer := range old.Layers {
+					byLayerID[layer.ResourceID] = layer.ID
+				}
 			}
 			for j, layer := range configuration.Layers {
 				if err := check(layer.ResourceID, byLayerID, j); err != nil {
@@ -107,13 +112,15 @@ func distributionIdentities(inputs []domain.DistributionInput, existing []domain
 
 		if input.WebService != nil {
 			identity.serviceID, identity.serviceResourceID = uuid.New(), uuid.New()
-			if input.WebService.ResourceID != nil {
-				id := *input.WebService.ResourceID
-				if previous.WebService == nil || id == uuid.Nil || previous.WebService.ResourceID != id {
+			common := input.WebService.CommonInput()
+			if common.ResourceID != nil {
+				id := *common.ResourceID
+				if previous.WebService == nil || id == uuid.Nil || previous.WebService.Common().ResourceID != id {
 					return nil, apperror.Field(fmt.Sprintf("metadata.distributions[%d].web_service.resource_id", i), "Web service must belong to this distribution.", nil)
 				}
 
-				identity.serviceID, identity.serviceResourceID = previous.WebService.ID, previous.WebService.ResourceID
+				previousCommon := previous.WebService.Common()
+				identity.serviceID, identity.serviceResourceID = previousCommon.ID, previousCommon.ResourceID
 			}
 		}
 		result[i] = identity
@@ -133,14 +140,15 @@ func parameterIdentities(inputs []domain.DistributionInput, existing []domain.Di
 		if distribution.WebService == nil {
 			continue
 		}
-		var previous domain.WebServiceConfiguration
-		if distribution.ResourceID != nil && distribution.WebService.ResourceID != nil {
+		var previous domain.WebService
+		common := distribution.WebService.CommonInput()
+		if distribution.ResourceID != nil && common.ResourceID != nil {
 			old := byID[*distribution.ResourceID]
-			if old.WebService != nil && old.WebService.ResourceID == *distribution.WebService.ResourceID {
-				previous = old.WebService.Configuration
+			if old.WebService != nil && old.WebService.Common().ResourceID == *common.ResourceID {
+				previous = old.WebService
 			}
 		}
-		target := fmt.Sprintf("metadata.distributions[%d].web_service.configuration", i)
+		target := fmt.Sprintf("metadata.distributions[%d].web_service", i)
 		match := func(values []domain.WebServiceParameterInput, old []domain.WebServiceParameter, path string) error {
 			inputs := make([]domain.ParameterInput, len(values))
 			existing := make([]domain.Parameter, len(old))
@@ -152,36 +160,53 @@ func parameterIdentities(inputs []domain.DistributionInput, existing []domain.Di
 			}
 			return matchParameters(inputs, existing, target+path, result)
 		}
-		switch configuration := distribution.WebService.Configuration.(type) {
-		case domain.GenericWebServiceConfigurationInput:
-			old, _ := previous.(domain.GenericWebServiceConfiguration)
-			if err := match(configuration.Parameters, old.Parameters, ".parameters"); err != nil {
+		generic := genericWebServiceInput(distribution.WebService)
+		if generic != nil {
+			var old domain.GenericWebService
+			switch service := previous.(type) {
+			case *domain.HTTPWebService:
+				old = service.GenericWebService
+			case *domain.DynamicWebService:
+				old = service.GenericWebService
+			}
+			if err := match(generic.Parameters, old.Parameters, ".parameters"); err != nil {
 				return nil, err
 			}
-			if configuration.Body != nil {
+			if generic.Body != nil {
 				var oldBody []domain.Parameter
 				if old.Body != nil {
 					oldBody = old.Body.Parameters
 				}
-				if err := matchParameters(configuration.Body.Parameters, oldBody, target+".body_parameters", result); err != nil {
+				if err := matchParameters(generic.Body.Parameters, oldBody, target+".body_parameters", result); err != nil {
 					return nil, err
 				}
 			}
-		case domain.WFSConfigurationInput:
-			old, _ := previous.(domain.WFSConfiguration)
-			if err := match(configuration.Parameters, old.Parameters, ".parameters"); err != nil {
+		}
+		switch configuration := distribution.WebService.(type) {
+		case *domain.WFSWebServiceInput:
+			var oldParameters []domain.WebServiceParameter
+			if old, ok := previous.(*domain.WFSWebService); ok {
+				oldParameters = old.Parameters
+			}
+			if err := match(configuration.Parameters, oldParameters, ".parameters"); err != nil {
 				return nil, err
 			}
-		case domain.WMSConfigurationInput:
-			old, _ := previous.(domain.WMSConfiguration)
+		case *domain.WMSWebServiceInput:
+			var old domain.WMSWebService
+			if service, ok := previous.(*domain.WMSWebService); ok {
+				old = *service
+			}
 			if err := match(configuration.GetMapParameters, old.GetMapParameters, ".get_map_parameters"); err != nil {
 				return nil, err
 			}
 			if err := match(configuration.GetFeatureInfoParameters, old.GetFeatureInfoParameters, ".get_feature_info_parameters"); err != nil {
 				return nil, err
 			}
-		case domain.WMTSConfigurationInput:
-			old, _ := previous.(domain.WMTSConfiguration)
+		case *domain.WMTSWebServiceInput:
+			var old domain.WMTSWebService
+			if service, ok := previous.(*domain.WMTSWebService); ok {
+				old = *service
+			}
 			if err := match(configuration.GetTileParameters, old.GetTileParameters, ".get_tile_parameters"); err != nil {
 				return nil, err
 			}
@@ -212,7 +237,7 @@ func matchParameters(inputs []domain.ParameterInput, existing []domain.Parameter
 		}
 		if schema, ok := input.Schema.(domain.TemplateSchemaInput); ok {
 			old, _ := previous.Schema.(domain.TemplateSchema)
-			if err := matchParameters(schema.Parameters, old.Parameters, fmt.Sprintf("%s[%d].template.parameters", target, i), result); err != nil {
+			if err := matchParameters(schema.Parameters, old.Parameters, fmt.Sprintf("%s[%d].parameters", target, i), result); err != nil {
 				return err
 			}
 		}

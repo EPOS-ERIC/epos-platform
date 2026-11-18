@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewNotificationTopicKey(t *testing.T) {
-	key, err := NewNotificationTopicKey(" direct.resource.published ")
+	key, err := ParseNotificationTopicKey(" direct.resource.published ")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -15,7 +15,7 @@ func TestNewNotificationTopicKey(t *testing.T) {
 		t.Fatalf("key = %q, want %q", key, NotificationTopicDirectResourcePublished)
 	}
 
-	if _, err := NewNotificationTopicKey("resource.published"); !apperror.IsCode(err, apperror.CodeValidationFailed) {
+	if _, err := ParseNotificationTopicKey("resource.published"); !apperror.IsCode(err, apperror.CodeValidationFailed) {
 		t.Fatalf("error = %v, want validation_failed", err)
 	}
 }

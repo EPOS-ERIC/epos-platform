@@ -5,6 +5,7 @@ import (
 
 	pb "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/concepts"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 )
 
 type ConceptServer struct {
@@ -50,7 +51,12 @@ func (g *ConceptServer) CreateConcept(ctx context.Context, request *pb.CreateCon
 		return nil, err
 	}
 
-	value, err := g.concepts.CreateConcept(ctx, actor, request.GetName())
+	input := domain.ConceptInput{Name: request.GetName()}
+	if err := input.Normalize(); err != nil {
+		return nil, err
+	}
+
+	value, err := g.concepts.CreateConcept(ctx, actor, input)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +75,12 @@ func (g *ConceptServer) ReplaceConcept(ctx context.Context, request *pb.ReplaceC
 		return nil, err
 	}
 
-	value, err := g.concepts.ReplaceConcept(ctx, actor, id, request.GetName())
+	input := domain.ConceptInput{Name: request.GetName()}
+	if err := input.Normalize(); err != nil {
+		return nil, err
+	}
+
+	value, err := g.concepts.ReplaceConcept(ctx, actor, id, input)
 	if err != nil {
 		return nil, err
 	}

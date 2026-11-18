@@ -5,6 +5,7 @@ import (
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -55,53 +56,64 @@ func toProtoGeologicalTemporal(v gatewayapi.GeologicalTemporalCoverage) *metadat
 }
 
 func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.WebServiceInput {
-	r := &metadatalifecyclev1.WebServiceInput{
-		ResourceId:    protoOptionalUUID(v.ResourceID),
-		VisibleOn:     toProtoWebServiceVisibleOn(v.VisibleOn),
-		ContactPoints: uuidStrings(v.ContactPoints),
-	}
-	if v.DocumentationURI.Set {
-		r.DocumentationUri = new(v.DocumentationURI.Value.String())
-	}
-	if v.Provider.Set {
-		r.ProviderId = new(v.Provider.Value.String())
-	}
-	switch v.Configuration.Type {
-	case gatewayapi.WmsWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		configuration := v.Configuration.WmsWebServiceConfigurationDraft
-		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS
-		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wms{Wms: toProtoWMSWebServiceConfigurationDraft(configuration)}
-	case gatewayapi.WmtsWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
-		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wmts{Wmts: toProtoWMTSWebServiceConfigurationDraft(v.Configuration.WmtsWebServiceConfigurationDraft)}
-	case gatewayapi.GenericWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		configuration := v.Configuration.GenericWebServiceConfigurationDraft
-		r.Type = toProtoWebServiceType(gatewayapi.WebServiceType(v.Configuration.Type))
-		r.Configuration = &metadatalifecyclev1.WebServiceInput_Generic{Generic: toProtoGenericWebServiceConfigurationDraft(configuration)}
-	case gatewayapi.DynamicWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		configuration := v.Configuration.DynamicWebServiceConfigurationDraft
-		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
-		r.Configuration = &metadatalifecyclev1.WebServiceInput_Dynamic{Dynamic: toProtoGenericWebServiceConfigurationDraft(gatewayapi.GenericWebServiceConfigurationDraft{
-			TemplateURL:     configuration.TemplateURL,
-			Method:          configuration.Method,
-			Parameters:      configuration.Parameters,
-			BodyContentType: configuration.BodyContentType,
-			BodyTemplate:    configuration.BodyTemplate,
-			BodyRequired:    configuration.BodyRequired,
-			BodyParameters:  configuration.BodyParameters,
-			Format:          configuration.Format,
-		})}
-	case gatewayapi.WfsWebServiceConfigurationDraftWebServiceConfigurationDraft:
-		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
-		r.Configuration = &metadatalifecyclev1.WebServiceInput_Wfs{Wfs: toProtoWFSWebServiceConfigurationDraft(v.Configuration.WfsWebServiceConfigurationDraft)}
+	r := &metadatalifecyclev1.WebServiceInput{}
+	switch v.Type {
+	case gatewayapi.HttpWebServiceDraftWebServiceDraft:
+		service := v.HttpWebServiceDraft
+		mapped := toProtoHTTPWebServiceDraft(service)
+		r.Service = &metadatalifecyclev1.WebServiceInput_Http{Http: mapped}
+	case gatewayapi.DynamicWebServiceDraftWebServiceDraft:
+		service := v.DynamicWebServiceDraft
+		generic := toProtoHTTPWebServiceDraft(gatewayapi.HttpWebServiceDraft{
+			ResourceID: service.ResourceID, VisibleOn: service.VisibleOn, Provider: service.Provider,
+			DocumentationURI: service.DocumentationURI, ContactPoints: service.ContactPoints,
+			TemplateURL: service.TemplateURL, Method: service.Method, Format: service.Format,
+			Parameters: service.Parameters, BodyContentType: service.BodyContentType,
+			BodyTemplate: service.BodyTemplate, BodyRequired: service.BodyRequired, BodyParameters: service.BodyParameters,
+		})
+		r.Service = &metadatalifecyclev1.WebServiceInput_Dynamic{Dynamic: &metadatalifecyclev1.DynamicWebServiceInput{
+			Common: generic.Common, TemplateUrl: generic.TemplateUrl, Method: generic.Method,
+			Format: generic.Format, Parameters: generic.Parameters, Body: generic.Body,
+		}}
+	case gatewayapi.WfsWebServiceDraftWebServiceDraft:
+		service := v.WfsWebServiceDraft
+		mapped := toProtoWFSWebServiceConfigurationDraft(service)
+		mapped.Common = toProtoWebServiceCommonInput(service.ResourceID, service.VisibleOn, service.Provider, service.DocumentationURI, service.ContactPoints)
+		r.Service = &metadatalifecyclev1.WebServiceInput_Wfs{Wfs: mapped}
+	case gatewayapi.WmsWebServiceDraftWebServiceDraft:
+		service := v.WmsWebServiceDraft
+		mapped := toProtoWMSWebServiceConfigurationDraft(service)
+		mapped.Common = toProtoWebServiceCommonInput(service.ResourceID, service.VisibleOn, service.Provider, service.DocumentationURI, service.ContactPoints)
+		r.Service = &metadatalifecyclev1.WebServiceInput_Wms{Wms: mapped}
+	case gatewayapi.WmtsWebServiceDraftWebServiceDraft:
+		service := v.WmtsWebServiceDraft
+		mapped := toProtoWMTSWebServiceConfigurationDraft(service)
+		mapped.Common = toProtoWebServiceCommonInput(service.ResourceID, service.VisibleOn, service.Provider, service.DocumentationURI, service.ContactPoints)
+		r.Service = &metadatalifecyclev1.WebServiceInput_Wmts{Wmts: mapped}
 	default:
-		r.Type = metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
+		return r
 	}
 	return r
 }
 
-func toProtoGenericWebServiceConfigurationDraft(value gatewayapi.GenericWebServiceConfigurationDraft) *metadatalifecyclev1.GenericWebServiceConfigurationInput {
-	result := &metadatalifecyclev1.GenericWebServiceConfigurationInput{
+func toProtoWebServiceCommonInput(resourceID gatewayapi.OptUUID, visibleOn gatewayapi.OptNilWebServiceVisibleOnArray, provider gatewayapi.OptUUID, documentation gatewayapi.OptURI, contacts []uuid.UUID) *metadatalifecyclev1.WebServiceCommonInput {
+	result := &metadatalifecyclev1.WebServiceCommonInput{
+		ResourceId:    protoOptionalUUID(resourceID),
+		VisibleOn:     toProtoWebServiceVisibleOn(visibleOn),
+		ContactPoints: uuidStrings(contacts),
+	}
+	if documentation.Set {
+		result.DocumentationUri = new(documentation.Value.String())
+	}
+	if provider.Set {
+		result.ProviderId = new(provider.Value.String())
+	}
+	return result
+}
+
+func toProtoHTTPWebServiceDraft(value gatewayapi.HttpWebServiceDraft) *metadatalifecyclev1.HTTPWebServiceInput {
+	result := &metadatalifecyclev1.HTTPWebServiceInput{
+		Common:      toProtoWebServiceCommonInput(value.ResourceID, value.VisibleOn, value.Provider, value.DocumentationURI, value.ContactPoints),
 		TemplateUrl: string(value.TemplateURL),
 		Method:      toProtoWebServiceMethod(value.Method),
 		Format:      string(value.Format),
@@ -109,23 +121,23 @@ func toProtoGenericWebServiceConfigurationDraft(value gatewayapi.GenericWebServi
 	for _, parameter := range value.Parameters {
 		result.Parameters = append(result.Parameters, toProtoParameterDraft(parameter))
 	}
-	if value.BodyRequired.Set {
-		result.BodyRequired = new(value.BodyRequired.Value)
-	}
-	if value.BodyContentType.Set {
-		result.BodyContentType = new(string(value.BodyContentType.Value))
-	}
-	if value.BodyTemplate.Set {
-		result.BodyTemplate = new(string(value.BodyTemplate.Value))
-	}
-	for _, parameter := range value.BodyParameters {
-		result.BodyParameters = append(result.BodyParameters, toProtoScalarParameterDraft(parameter))
+	if value.BodyRequired.Set || value.BodyContentType.Set || value.BodyTemplate.Set || len(value.BodyParameters) > 0 {
+		result.Body = &metadatalifecyclev1.RequestBodyInput{
+			ContentType: string(value.BodyContentType.Value),
+			Template:    string(value.BodyTemplate.Value),
+		}
+		if value.BodyRequired.Set {
+			result.Body.Required = new(value.BodyRequired.Value)
+		}
+		for _, parameter := range value.BodyParameters {
+			result.Body.Parameters = append(result.Body.Parameters, toProtoScalarParameterDraft(parameter))
+		}
 	}
 	return result
 }
 
-func toProtoWFSWebServiceConfigurationDraft(value gatewayapi.WfsWebServiceConfigurationDraft) *metadatalifecyclev1.WFSWebServiceConfigurationInput {
-	result := &metadatalifecyclev1.WFSWebServiceConfigurationInput{
+func toProtoWFSWebServiceConfigurationDraft(value gatewayapi.WfsWebServiceDraft) *metadatalifecyclev1.WFSWebServiceInput {
+	result := &metadatalifecyclev1.WFSWebServiceInput{
 		GetFeatureTemplateUrl: value.GetFeatureTemplateURL,
 		Version:               string(value.Version),
 		DefaultFeatureType:    string(value.DefaultFeatureType),
@@ -145,8 +157,8 @@ func toProtoWFSWebServiceConfigurationDraft(value gatewayapi.WfsWebServiceConfig
 	return result
 }
 
-func toProtoWMTSWebServiceConfigurationDraft(value gatewayapi.WmtsWebServiceConfigurationDraft) *metadatalifecyclev1.WMTSWebServiceConfigurationInput {
-	result := &metadatalifecyclev1.WMTSWebServiceConfigurationInput{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: string(value.DefaultLayer)}
+func toProtoWMTSWebServiceConfigurationDraft(value gatewayapi.WmtsWebServiceDraft) *metadatalifecyclev1.WMTSWebServiceInput {
+	result := &metadatalifecyclev1.WMTSWebServiceInput{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: string(value.DefaultLayer)}
 	for _, layer := range value.Layers {
 		mapped := &metadatalifecyclev1.WMTSLayerInput{
 			Name:       string(layer.Name),
@@ -170,8 +182,8 @@ func toProtoWMTSWebServiceConfigurationDraft(value gatewayapi.WmtsWebServiceConf
 	return result
 }
 
-func toProtoWMSWebServiceConfigurationDraft(value gatewayapi.WmsWebServiceConfigurationDraft) *metadatalifecyclev1.WMSWebServiceConfigurationInput {
-	result := &metadatalifecyclev1.WMSWebServiceConfigurationInput{
+func toProtoWMSWebServiceConfigurationDraft(value gatewayapi.WmsWebServiceDraft) *metadatalifecyclev1.WMSWebServiceInput {
+	result := &metadatalifecyclev1.WMSWebServiceInput{
 		CapabilitiesUrl:      value.CapabilitiesURL,
 		DefaultLayer:         string(value.DefaultLayer),
 		TransparencyEditable: value.TransparencyEditable,
@@ -264,23 +276,6 @@ func toProtoWebServiceMethod(value gatewayapi.WebServiceMethod) metadatalifecycl
 		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_DELETE
 	default:
 		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_UNSPECIFIED
-	}
-}
-
-func toProtoWebServiceType(value gatewayapi.WebServiceType) metadatalifecyclev1.WebServiceType {
-	switch value {
-	case gatewayapi.WebServiceTypeWMS:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS
-	case gatewayapi.WebServiceTypeHTTP:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_HTTP
-	case gatewayapi.WebServiceTypeWMTS:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
-	case gatewayapi.WebServiceTypeWFS:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
-	case gatewayapi.WebServiceTypeDYNAMIC:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
-	default:
-		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
 	}
 }
 

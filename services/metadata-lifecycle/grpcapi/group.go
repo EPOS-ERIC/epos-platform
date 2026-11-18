@@ -94,7 +94,7 @@ func groupInput(name string, description, label, logo, page, color *string, posi
 		return domain.GroupInput{}, apperror.Field("concept_id", "Concept ID must be a valid UUID.", err)
 	}
 
-	result, err := domain.NewGroupInput(domain.GroupInput{
+	result := domain.GroupInput{
 		Name:        name,
 		Description: description,
 		Label:       label,
@@ -103,8 +103,8 @@ func groupInput(name string, description, label, logo, page, color *string, posi
 		Color:       color,
 		Position:    position,
 		ConceptID:   conceptID,
-	})
-	if err != nil {
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.GroupInput{}, fmt.Errorf("validate group input: %w", err)
 	}
 

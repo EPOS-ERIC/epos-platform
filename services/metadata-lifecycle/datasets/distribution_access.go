@@ -44,7 +44,11 @@ func (s *Service) DistributionFormats(ctx context.Context, actor domain.Actor, d
 			return nil, apperror.Field("distribution_id", "Distribution is not a web service.", nil)
 		}
 
-		formats := distribution.WebService.NativeFormats()
+		executable, ok := distribution.WebService.(domain.ExecutableWebService)
+		if !ok {
+			return []string{}, nil
+		}
+		formats := executable.NativeFormats()
 
 		result := make([]string, len(formats))
 		for i, format := range formats {
@@ -71,7 +75,12 @@ func (s *Service) PrepareAccess(ctx context.Context, actor *domain.Actor, distri
 		return domain.DistributionAccess{}, apperror.Field("distribution_id", "Distribution is not a web service.", nil)
 	}
 
-	prepared, err := distribution.WebService.PrepareAccess(input)
+	executable, ok := distribution.WebService.(domain.ExecutableWebService)
+	if !ok {
+		return domain.DistributionAccess{}, apperror.Field("type", "Prepared HTTP access is not supported for this service configuration.", nil)
+	}
+
+	prepared, err := executable.PrepareAccess(input)
 	if err != nil {
 		return domain.DistributionAccess{}, err
 	}

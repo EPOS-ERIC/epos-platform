@@ -9,16 +9,16 @@ import (
 )
 
 type Config struct {
-	ServerPort   string        `envconfig:"SERVER_PORT" default:"8200"`
-	DBHost       string        `envconfig:"DB_HOST" default:"localhost"`
-	DBPort       string        `envconfig:"DB_PORT" default:"5432"`
-	DBName       string        `envconfig:"DB_NAME" default:"converter"`
-	DBUser       string        `envconfig:"DB_USER" default:"converter"`
-	DBPassword   string        `envconfig:"DB_PASSWORD" default:"converter"`
-	PluginsPath  string        `envconfig:"PLUGINS_PATH" default:"./plugins"`
-	MaxBytes     int64         `envconfig:"MAX_PAYLOAD_BYTES" default:"1073741824"`
-	Timeout      time.Duration `envconfig:"EXECUTION_TIMEOUT" default:"30s"`
-	SyncCron     string        `envconfig:"SYNC_CRON" default:"*/5 * * * *"`
+	ServerPort  string        `envconfig:"SERVER_PORT" default:"8200"`
+	DBHost      string        `envconfig:"DB_HOST" default:"localhost"`
+	DBPort      string        `envconfig:"DB_PORT" default:"5432"`
+	DBName      string        `envconfig:"DB_NAME" default:"converter"`
+	DBUser      string        `envconfig:"DB_USER" default:"converter"`
+	DBPassword  string        `envconfig:"DB_PASSWORD" default:"converter"`
+	PluginsPath string        `envconfig:"PLUGINS_PATH" default:"./plugins"`
+	MaxBytes    int64         `envconfig:"MAX_PAYLOAD_BYTES" default:"1073741824"`
+	Timeout     time.Duration `envconfig:"EXECUTION_TIMEOUT" default:"30s"`
+	SyncCron    string        `envconfig:"SYNC_CRON" default:"*/5 * * * *"`
 }
 
 func Load() (Config, error) {

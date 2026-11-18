@@ -3386,9 +3386,23 @@ components:
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
 
     WebServiceDraft:
+      oneOf:
+        - $ref: "#/components/schemas/WmsWebServiceDraft"
+        - $ref: "#/components/schemas/WmtsWebServiceDraft"
+        - $ref: "#/components/schemas/WfsWebServiceDraft"
+        - $ref: "#/components/schemas/HttpWebServiceDraft"
+        - $ref: "#/components/schemas/DynamicWebServiceDraft"
+      discriminator:
+        propertyName: type
+        mapping:
+          WMS: "#/components/schemas/WmsWebServiceDraft"
+          WMTS: "#/components/schemas/WmtsWebServiceDraft"
+          WFS: "#/components/schemas/WfsWebServiceDraft"
+          HTTP: "#/components/schemas/HttpWebServiceDraft"
+          DYNAMIC: "#/components/schemas/DynamicWebServiceDraft"
+
+    WebServiceDraftCommon:
       type: object
-      additionalProperties: false
-      required: [configuration]
       properties:
         resource_id: { type: string, format: uuid }
         visible_on:
@@ -3399,27 +3413,34 @@ components:
         provider: { type: string, format: uuid }
         documentation_uri: { type: string, format: uri, minLength: 1 }
         contact_points: { type: array, items: { type: string, format: uuid } }
-        configuration: { $ref: "#/components/schemas/WebServiceConfigurationDraft" }
 
-    WebServiceConfigurationDraft:
-      oneOf:
-        - $ref: "#/components/schemas/WmsWebServiceConfigurationDraft"
-        - $ref: "#/components/schemas/WmtsWebServiceConfigurationDraft"
-        - $ref: "#/components/schemas/WfsWebServiceConfigurationDraft"
+    HttpWebServiceDraft:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceDraftCommon"
         - $ref: "#/components/schemas/GenericWebServiceConfigurationDraft"
+
+    DynamicWebServiceDraft:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceDraftCommon"
         - $ref: "#/components/schemas/DynamicWebServiceConfigurationDraft"
-      discriminator:
-        propertyName: type
-        mapping:
-          WMS: "#/components/schemas/WmsWebServiceConfigurationDraft"
-          HTTP: "#/components/schemas/GenericWebServiceConfigurationDraft"
-          WMTS: "#/components/schemas/WmtsWebServiceConfigurationDraft"
-          WFS: "#/components/schemas/WfsWebServiceConfigurationDraft"
-          DYNAMIC: "#/components/schemas/DynamicWebServiceConfigurationDraft"
+
+    WfsWebServiceDraft:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceDraftCommon"
+        - $ref: "#/components/schemas/WfsWebServiceConfigurationDraft"
+
+    WmsWebServiceDraft:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceDraftCommon"
+        - $ref: "#/components/schemas/WmsWebServiceConfigurationDraft"
+
+    WmtsWebServiceDraft:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceDraftCommon"
+        - $ref: "#/components/schemas/WmtsWebServiceConfigurationDraft"
 
     GenericWebServiceConfigurationDraft:
       type: object
-      additionalProperties: false
       required: [type, template_url, method, format]
       properties:
         type:
@@ -3442,7 +3463,6 @@ components:
 
     DynamicWebServiceConfigurationDraft:
       type: object
-      additionalProperties: false
       description: HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
       required: [type, template_url, method, format]
       properties:
@@ -3464,7 +3484,6 @@ components:
 
     WfsWebServiceConfigurationDraft:
       type: object
-      additionalProperties: false
       required:
         [type, get_feature_template_url, version, feature_types, default_feature_type, output_formats, default_output_format, result_limit_editable, parameters]
       properties:
@@ -3502,7 +3521,6 @@ components:
 
     WmsWebServiceConfigurationDraft:
       type: object
-      additionalProperties: false
       description: WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
       required:
         [type, capabilities_url, default_layer, layers, transparency_editable, default_transparency, get_map_parameters, get_feature_info_parameters]
@@ -3536,7 +3554,6 @@ components:
 
     WmtsWebServiceConfigurationDraft:
       type: object
-      additionalProperties: false
       description: WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
       required: [type, capabilities_url, default_layer, layers, get_tile_parameters, get_feature_info_parameters]
       properties:
@@ -4616,7 +4633,7 @@ components:
     WebServiceDistribution:
       type: object
       additionalProperties: false
-      required: [id, resource_id, title, description, type, web_service, available_formats]
+      required: [id, resource_id, title, description, type, web_service]
       properties:
         id: { type: string, format: uuid }
         resource_id: { type: string, format: uuid }
@@ -4628,11 +4645,7 @@ components:
           enum:
             - "WEB_SERVICE"
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
-        web_service: { $ref: "#/components/schemas/WebService" }
-        available_formats:
-          type: array
-          description: Native formats and conversions whose plugins are enabled and locally installed. If converter is unavailable, only native formats are returned. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
-          items: { $ref: "#/components/schemas/AvailableFormat" }
+        web_service: { $ref: "#/components/schemas/DatasetWebService" }
 
     AvailableFormat:
       oneOf:
@@ -4690,9 +4703,25 @@ components:
         byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
 
-    WebService:
+    DatasetWebService:
+      oneOf:
+        - $ref: "#/components/schemas/WmsWebService"
+        - $ref: "#/components/schemas/WmtsWebService"
+        - $ref: "#/components/schemas/WfsWebService"
+        - $ref: "#/components/schemas/HttpWebService"
+        - $ref: "#/components/schemas/DynamicWebService"
+      discriminator:
+        propertyName: type
+        mapping:
+          WMS: "#/components/schemas/WmsWebService"
+          WMTS: "#/components/schemas/WmtsWebService"
+          WFS: "#/components/schemas/WfsWebService"
+          HTTP: "#/components/schemas/HttpWebService"
+          DYNAMIC: "#/components/schemas/DynamicWebService"
+
+    WebServiceCommon:
       type: object
-      required: [id, resource_id, configuration]
+      required: [id, resource_id]
       properties:
         id: { type: string, format: uuid }
         resource_id: { type: string, format: uuid }
@@ -4706,27 +4735,47 @@ components:
         contact_points:
           type: array
           items: { type: string, format: uuid }
-        configuration: { $ref: "#/components/schemas/WebServiceConfiguration" }
 
-    WebServiceConfiguration:
-      oneOf:
-        - $ref: "#/components/schemas/WmsWebServiceConfiguration"
-        - $ref: "#/components/schemas/WmtsWebServiceConfiguration"
-        - $ref: "#/components/schemas/WfsWebServiceConfiguration"
+    WebServiceAvailableFormats:
+      type: object
+      required: [available_formats]
+      properties:
+        available_formats:
+          type: array
+          minItems: 1
+          description: Derived native formats and conversions whose plugins are enabled and locally installed. If converter is unavailable, only native formats are returned. Converted formats identify the provider input format separately from the converted output format.
+          items: { $ref: "#/components/schemas/AvailableFormat" }
+
+    HttpWebService:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceCommon"
         - $ref: "#/components/schemas/GenericWebServiceConfiguration"
+        - $ref: "#/components/schemas/WebServiceAvailableFormats"
+
+    DynamicWebService:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceCommon"
         - $ref: "#/components/schemas/DynamicWebServiceConfiguration"
-      discriminator:
-        propertyName: type
-        mapping:
-          WMS: "#/components/schemas/WmsWebServiceConfiguration"
-          HTTP: "#/components/schemas/GenericWebServiceConfiguration"
-          WMTS: "#/components/schemas/WmtsWebServiceConfiguration"
-          WFS: "#/components/schemas/WfsWebServiceConfiguration"
-          DYNAMIC: "#/components/schemas/DynamicWebServiceConfiguration"
+        - $ref: "#/components/schemas/WebServiceAvailableFormats"
+
+    WfsWebService:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceCommon"
+        - $ref: "#/components/schemas/WfsWebServiceConfiguration"
+        - $ref: "#/components/schemas/WebServiceAvailableFormats"
+
+    WmsWebService:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceCommon"
+        - $ref: "#/components/schemas/WmsWebServiceConfiguration"
+
+    WmtsWebService:
+      allOf:
+        - $ref: "#/components/schemas/WebServiceCommon"
+        - $ref: "#/components/schemas/WmtsWebServiceConfiguration"
 
     GenericWebServiceConfiguration:
       type: object
-      additionalProperties: false
       required: [type, template_url, method, format]
       properties:
         type:
@@ -4749,7 +4798,6 @@ components:
 
     DynamicWebServiceConfiguration:
       type: object
-      additionalProperties: false
       description: HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters.
       required: [type, template_url, method, format]
       properties:
@@ -4771,7 +4819,6 @@ components:
 
     WfsWebServiceConfiguration:
       type: object
-      additionalProperties: false
       required:
         [type, get_feature_template_url, version, feature_types, default_feature_type, output_formats, default_output_format, result_limit_editable, parameters]
       properties:
@@ -4806,7 +4853,6 @@ components:
 
     WmsWebServiceConfiguration:
       type: object
-      additionalProperties: false
       description: WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
       required:
         [type, capabilities_url, default_layer, layers, transparency_editable, default_transparency, get_map_parameters, get_feature_info_parameters]
@@ -4840,7 +4886,6 @@ components:
 
     WmtsWebServiceConfiguration:
       type: object
-      additionalProperties: false
       description: WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
       required: [type, capabilities_url, default_layer, layers, get_tile_parameters, get_feature_info_parameters]
       properties:

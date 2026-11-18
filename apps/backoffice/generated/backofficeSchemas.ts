@@ -609,7 +609,24 @@ export type DownloadableFileDistributionDraft = {
   downloadable_file: DownloadableFile;
 };
 
-export type WebServiceDraft = {
+export type WebServiceDraft =
+  | (Omit<WmsWebServiceDraft, "type"> & {
+      type: "WMS";
+    })
+  | (Omit<WmtsWebServiceDraft, "type"> & {
+      type: "WMTS";
+    })
+  | (Omit<WfsWebServiceDraft, "type"> & {
+      type: "WFS";
+    })
+  | (Omit<HttpWebServiceDraft, "type"> & {
+      type: "HTTP";
+    })
+  | (Omit<DynamicWebServiceDraft, "type"> & {
+      type: "DYNAMIC";
+    });
+
+export type WebServiceDraftCommon = {
   /**
    * @format uuid
    */
@@ -628,15 +645,31 @@ export type WebServiceDraft = {
    */
   documentation_uri?: string;
   contact_points?: string[];
-  configuration: WebServiceConfigurationDraft;
 };
 
-export type WebServiceConfigurationDraft =
-  | WmsWebServiceConfigurationDraft
-  | WmtsWebServiceConfigurationDraft
-  | WfsWebServiceConfigurationDraft
-  | GenericWebServiceConfigurationDraft
-  | DynamicWebServiceConfigurationDraft;
+export type HttpWebServiceDraft = WebServiceDraftCommon &
+  GenericWebServiceConfigurationDraft;
+
+/**
+ * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
+ */
+export type DynamicWebServiceDraft = WebServiceDraftCommon &
+  DynamicWebServiceConfigurationDraft;
+
+export type WfsWebServiceDraft = WebServiceDraftCommon &
+  WfsWebServiceConfigurationDraft;
+
+/**
+ * WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+ */
+export type WmsWebServiceDraft = WebServiceDraftCommon &
+  WmsWebServiceConfigurationDraft;
+
+/**
+ * WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+ */
+export type WmtsWebServiceDraft = WebServiceDraftCommon &
+  WmtsWebServiceConfigurationDraft;
 
 export type GenericWebServiceConfigurationDraft = {
   type: "HTTP";
@@ -1845,11 +1878,7 @@ export type WebServiceDistribution = {
    * @minimum 1
    */
   byte_size?: number | null;
-  web_service: WebService;
-  /**
-   * Native formats and conversions whose plugins are enabled and locally installed. If converter is unavailable, only native formats are returned. WMS and WMTS return image/png as a platform requirement; client must verify provider support.
-   */
-  available_formats: AvailableFormat[];
+  web_service: DatasetWebService;
 };
 
 export type AvailableFormat = OriginalFormat | ConvertedFormat;
@@ -1901,7 +1930,24 @@ export type DownloadableFileDistribution = {
   downloadable_file: DownloadableFile;
 };
 
-export type WebService = {
+export type DatasetWebService =
+  | (Omit<WmsWebService, "type"> & {
+      type: "WMS";
+    })
+  | (Omit<WmtsWebService, "type"> & {
+      type: "WMTS";
+    })
+  | (Omit<WfsWebService, "type"> & {
+      type: "WFS";
+    })
+  | (Omit<HttpWebService, "type"> & {
+      type: "HTTP";
+    })
+  | (Omit<DynamicWebService, "type"> & {
+      type: "DYNAMIC";
+    });
+
+export type WebServiceCommon = {
   /**
    * @format uuid
    */
@@ -1921,15 +1967,41 @@ export type WebService = {
    */
   documentation_uri?: string;
   contact_points?: string[];
-  configuration: WebServiceConfiguration;
 };
 
-export type WebServiceConfiguration =
-  | WmsWebServiceConfiguration
-  | WmtsWebServiceConfiguration
-  | WfsWebServiceConfiguration
-  | GenericWebServiceConfiguration
-  | DynamicWebServiceConfiguration;
+export type WebServiceAvailableFormats = {
+  /**
+   * Derived native formats and conversions whose plugins are enabled and locally installed. If converter is unavailable, only native formats are returned. Converted formats identify the provider input format separately from the converted output format.
+   *
+   * @minItems 1
+   */
+  available_formats: AvailableFormat[];
+};
+
+export type HttpWebService = WebServiceCommon &
+  GenericWebServiceConfiguration &
+  WebServiceAvailableFormats;
+
+/**
+ * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters.
+ */
+export type DynamicWebService = WebServiceCommon &
+  DynamicWebServiceConfiguration &
+  WebServiceAvailableFormats;
+
+export type WfsWebService = WebServiceCommon &
+  WfsWebServiceConfiguration &
+  WebServiceAvailableFormats;
+
+/**
+ * WMS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+ */
+export type WmsWebService = WebServiceCommon & WmsWebServiceConfiguration;
+
+/**
+ * WMTS layers, styles and request defaults. Provider capabilities are checked by the client, not on write.
+ */
+export type WmtsWebService = WebServiceCommon & WmtsWebServiceConfiguration;
 
 export type GenericWebServiceConfiguration = {
   type: "HTTP";

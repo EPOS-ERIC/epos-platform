@@ -13,8 +13,8 @@ import (
 type Store interface {
 	ListConcepts(context.Context) ([]domain.Concept, error)
 	GetConcept(context.Context, uuid.UUID) (domain.Concept, error)
-	CreateConcept(context.Context, string) (domain.Concept, error)
-	ReplaceConcept(context.Context, uuid.UUID, string) (domain.Concept, error)
+	CreateConcept(context.Context, domain.ConceptInput) (domain.Concept, error)
+	ReplaceConcept(context.Context, uuid.UUID, domain.ConceptInput) (domain.Concept, error)
 	DeleteConcept(context.Context, uuid.UUID) error
 }
 
@@ -56,20 +56,15 @@ func (s *Service) authorizeConcept(ctx context.Context, actor domain.Actor) erro
 	return nil
 }
 
-func (s *Service) CreateConcept(ctx context.Context, actor domain.Actor, name string) (domain.Concept, error) {
+func (s *Service) CreateConcept(ctx context.Context, actor domain.Actor, input domain.ConceptInput) (domain.Concept, error) {
 	if err := s.authorizeConcept(ctx, actor); err != nil {
 		return domain.Concept{}, err
 	}
 
-	name, err := domain.NewConceptName(name)
-	if err != nil {
-		return domain.Concept{}, err
-	}
-
-	return s.store.CreateConcept(ctx, name)
+	return s.store.CreateConcept(ctx, input)
 }
 
-func (s *Service) ReplaceConcept(ctx context.Context, actor domain.Actor, id uuid.UUID, name string) (domain.Concept, error) {
+func (s *Service) ReplaceConcept(ctx context.Context, actor domain.Actor, id uuid.UUID, input domain.ConceptInput) (domain.Concept, error) {
 	if id == uuid.Nil {
 		return domain.Concept{}, apperror.Default(apperror.CodeValidationFailed)
 	}
@@ -78,12 +73,7 @@ func (s *Service) ReplaceConcept(ctx context.Context, actor domain.Actor, id uui
 		return domain.Concept{}, err
 	}
 
-	name, err := domain.NewConceptName(name)
-	if err != nil {
-		return domain.Concept{}, err
-	}
-
-	return s.store.ReplaceConcept(ctx, id, name)
+	return s.store.ReplaceConcept(ctx, id, input)
 }
 
 func (s *Service) DeleteConcept(ctx context.Context, actor domain.Actor, id uuid.UUID) error {

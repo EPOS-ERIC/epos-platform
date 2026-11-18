@@ -106,22 +106,22 @@ func sourceCodeResult(ctx context.Context, q *sqlc.Queries, sourceCodeID, versio
 	}
 
 	version := row.SoftwareSourceCodeVersion
-	result, err := domain.NewSoftwareSourceCodeVersion(
-		version.SoftwareSourceCodeID,
-		version.ID,
-		version.Revision,
-		domain.Status(version.Status),
-		domain.Actor(version.CreatedBy),
-		version.SubmittedBy,
-		resourcedb.ToGroup(row.Group),
-		version.CreatedAt,
-		version.UpdatedAt,
-		version.RejectedBy,
-		version.RejectedAt,
-		version.RejectionNote,
-		metadata,
-	)
-	if err != nil {
+	result := domain.SoftwareSourceCodeVersion{
+		SoftwareSourceCodeID: version.SoftwareSourceCodeID,
+		VersionID:            version.ID,
+		Revision:             version.Revision,
+		Status:               domain.Status(version.Status),
+		CreatedBy:            domain.Actor(version.CreatedBy),
+		SubmittedBy:          (*domain.Actor)(version.SubmittedBy),
+		Group:                resourcedb.ToGroup(row.Group),
+		CreatedAt:            version.CreatedAt,
+		UpdatedAt:            version.UpdatedAt,
+		RejectedBy:           version.RejectedBy,
+		RejectedAt:           version.RejectedAt,
+		RejectionNote:        version.RejectionNote,
+		Metadata:             metadata,
+	}
+	if err := result.Normalize(); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, fmt.Errorf("validate source code result: %w", err)
 	}
 	return result, nil

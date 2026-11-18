@@ -14,16 +14,16 @@ func toDomainUserSummary(row sqlc.ListUsersRow, globalRoles, globalGrantedPermis
 	if err != nil {
 		return domain.UserSummary{}, fmt.Errorf("map global roles: %w", err)
 	}
-	globalGrantedPermissionValues, err := domain.NewGlobalPermissions(globalGrantedPermissions)
+	globalGrantedPermissionValues, err := domain.ParseGlobalPermissions(globalGrantedPermissions)
 	if err != nil {
 		return domain.UserSummary{}, fmt.Errorf("map global granted permissions: %w", err)
 	}
-	globalRolePermissionValues, err := domain.NewGlobalPermissions(globalRolePermissions)
+	globalRolePermissionValues, err := domain.ParseGlobalPermissions(globalRolePermissions)
 	if err != nil {
 		return domain.UserSummary{}, fmt.Errorf("map global role permissions: %w", err)
 	}
 
-	user, err := domain.NewUserSummary(domain.UserSummary{
+	user := domain.UserSummary{
 		ID:                       row.ID,
 		Email:                    row.Email,
 		GivenName:                row.GivenName,
@@ -34,8 +34,8 @@ func toDomainUserSummary(row sqlc.ListUsersRow, globalRoles, globalGrantedPermis
 		GlobalRolePermissions:    globalRolePermissionValues,
 		CreatedAt:                row.CreatedAt,
 		UpdatedAt:                row.UpdatedAt,
-	})
-	if err != nil {
+	}
+	if err := user.Normalize(); err != nil {
 		return domain.UserSummary{}, fmt.Errorf("construct user summary: %w", err)
 	}
 
@@ -60,16 +60,16 @@ func toDomainUser(
 	if err != nil {
 		return domain.User{}, fmt.Errorf("map global roles: %w", err)
 	}
-	globalGrantedPermissionValues, err := domain.NewGlobalPermissions(globalGrantedPermissions)
+	globalGrantedPermissionValues, err := domain.ParseGlobalPermissions(globalGrantedPermissions)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("map global granted permissions: %w", err)
 	}
-	globalRolePermissionValues, err := domain.NewGlobalPermissions(globalRolePermissions)
+	globalRolePermissionValues, err := domain.ParseGlobalPermissions(globalRolePermissions)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("map global role permissions: %w", err)
 	}
 
-	user, err := domain.NewUser(domain.User{
+	user := domain.User{
 		ID:                       id,
 		Email:                    email,
 		GivenName:                givenName,
@@ -82,8 +82,8 @@ func toDomainUser(
 		CreatedAt:                createdAt,
 		UpdatedAt:                updatedAt,
 		Memberships:              memberships,
-	})
-	if err != nil {
+	}
+	if err := user.Normalize(); err != nil {
 		return domain.User{}, fmt.Errorf("construct user: %w", err)
 	}
 
@@ -108,22 +108,22 @@ func toDomainGlobalRoles(values []string) ([]domain.GlobalRole, error) {
 }
 
 func toDomainRoleRequest(id uuid.UUID, role string, status sqlc.RoleRequestStatus, requestedAt time.Time) (domain.RoleRequest, error) {
-	groupRole, err := domain.NewGroupRole(role)
+	groupRole, err := domain.ParseGroupRole(role)
 	if err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("invalid role: %w", err)
 	}
-	requestStatus, err := domain.NewPersistedRoleRequestStatus(string(status))
+	requestStatus, err := domain.ParsePersistedRoleRequestStatus(string(status))
 	if err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("invalid status: %w", err)
 	}
 
-	request, err := domain.NewRoleRequest(domain.RoleRequest{
+	request := domain.RoleRequest{
 		ID:          id,
 		Role:        groupRole,
 		Status:      requestStatus,
 		RequestedAt: requestedAt,
-	})
-	if err != nil {
+	}
+	if err := request.Normalize(); err != nil {
 		return domain.RoleRequest{}, fmt.Errorf("construct role request: %w", err)
 	}
 

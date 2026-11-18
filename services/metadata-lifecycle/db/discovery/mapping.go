@@ -58,7 +58,7 @@ func toSearchDiscoverySourceCodesParams(filter domain.DiscoveryFilter) sqlc.Sear
 func toDatasetCandidates(rows []sqlc.SearchDiscoveryDatasetsRow) ([]domain.DiscoveryCandidate, error) {
 	result := make([]domain.DiscoveryCandidate, 0, len(rows))
 	for _, row := range rows {
-		candidate, err := toDiscoveryCandidate(domain.DiscoveryCandidate{
+		candidate, err := normalizeDiscoveryCandidate(domain.DiscoveryCandidate{
 			Type:       domain.Dataset,
 			ResourceID: row.ResourceID,
 			VersionID:  row.VersionID,
@@ -81,7 +81,7 @@ func toDatasetCandidates(rows []sqlc.SearchDiscoveryDatasetsRow) ([]domain.Disco
 func toApplicationCandidates(rows []sqlc.SearchDiscoveryApplicationsRow) ([]domain.DiscoveryCandidate, error) {
 	result := make([]domain.DiscoveryCandidate, 0, len(rows))
 	for _, row := range rows {
-		candidate, err := toDiscoveryCandidate(domain.DiscoveryCandidate{
+		candidate, err := normalizeDiscoveryCandidate(domain.DiscoveryCandidate{
 			Type:       domain.SoftwareApplication,
 			ResourceID: row.ResourceID,
 			VersionID:  row.VersionID,
@@ -104,7 +104,7 @@ func toApplicationCandidates(rows []sqlc.SearchDiscoveryApplicationsRow) ([]doma
 func toSourceCodeCandidates(rows []sqlc.SearchDiscoverySourceCodesRow) ([]domain.DiscoveryCandidate, error) {
 	result := make([]domain.DiscoveryCandidate, 0, len(rows))
 	for _, row := range rows {
-		candidate, err := toDiscoveryCandidate(domain.DiscoveryCandidate{
+		candidate, err := normalizeDiscoveryCandidate(domain.DiscoveryCandidate{
 			Type:       domain.SoftwareSourceCode,
 			ResourceID: row.ResourceID,
 			VersionID:  row.VersionID,
@@ -124,12 +124,12 @@ func toSourceCodeCandidates(rows []sqlc.SearchDiscoverySourceCodesRow) ([]domain
 	return result, nil
 }
 
-func toDiscoveryCandidate(value domain.DiscoveryCandidate) (domain.DiscoveryCandidate, error) {
-	candidate, err := domain.NewDiscoveryCandidate(value)
-	if err != nil {
+func normalizeDiscoveryCandidate(value domain.DiscoveryCandidate) (domain.DiscoveryCandidate, error) {
+	if err := value.Normalize(); err != nil {
 		return domain.DiscoveryCandidate{}, fmt.Errorf("bad discovery candidate: %w", err)
 	}
-	return candidate, nil
+
+	return value, nil
 }
 
 func statusStrings(values []domain.Status) []string {

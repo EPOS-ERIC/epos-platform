@@ -324,7 +324,7 @@ class ConversionsContractTest(DistributionContractTestCase):
                 )
                 self.assertEqual(fetched.status_code, 200)
                 refreshed = self.details(detail["resource_id"], detail["id"])
-                formats = refreshed["metadata"]["distributions"][0]["available_formats"]
+                formats = refreshed["metadata"]["distributions"][0]["web_service"]["available_formats"]
                 self.assertTrue(any(
                     item["kind"] == "ORIGINAL" and item["output_format"] == "application/json"
                     for item in formats

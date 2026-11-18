@@ -8,13 +8,11 @@ def wfs_distribution(**configuration: Any) -> dict[str, Any]:
     return {
         "type": "WEB_SERVICE", "title": "WFS", "description": "Synthetic WFS contract",
         "web_service": {
-            "configuration": {
                 "type": "WFS", "get_feature_template_url": "https://provider.invalid/ows",
                 "version": "2.0.0", "feature_types": ["example:faults", "example:quakes"],
                 "default_feature_type": "example:faults", "output_formats": ["GEOJSON", "csv"],
                 "default_output_format": "GEOJSON", "result_limit_editable": False,
                 "parameters": [], **configuration,
-            },
         },
     }
 
@@ -41,13 +39,13 @@ class WFSContractTest(DistributionContractTestCase):
         source = wfs_distribution(result_limit=50, result_limit_editable=True)
         detail = self.create_draft([source])
         distribution = detail["metadata"]["distributions"][0]
-        stored = distribution["web_service"]["configuration"]
-        for field, expected in source["web_service"]["configuration"].items():
+        stored = distribution["web_service"]
+        for field, expected in source["web_service"].items():
             with self.subTest(field=field):
                 self.assertEqual(stored[field], expected)
         self.assertCountEqual(
             [(item["kind"], item["output_format"], item["label"])
-             for item in distribution["available_formats"]],
+             for item in distribution["web_service"]["available_formats"]],
             [("ORIGINAL", "GEOJSON", "GEOJSON"), ("ORIGINAL", "csv", "csv")],
         )
         replacement = wfs_distribution(default_feature_type="example:quakes", default_output_format="csv")
@@ -59,7 +57,7 @@ class WFSContractTest(DistributionContractTestCase):
         updated = self.details(detail["resource_id"], detail["id"])
         self.assertEqual(updated["revision"], detail["revision"] + 1)
         distribution = updated["metadata"]["distributions"][0]
-        stored = distribution["web_service"]["configuration"]
+        stored = distribution["web_service"]
         self.assertIsNone(stored.get("result_limit"))
         self.assertFalse(stored["result_limit_editable"])
         self.assertEqual(stored["default_feature_type"], "example:quakes")
@@ -129,7 +127,7 @@ class WFSContractTest(DistributionContractTestCase):
                     distributions.append(distribution)
         detail = self.create_draft(distributions)
         for distribution in detail["metadata"]["distributions"]:
-            config = distribution["web_service"]["configuration"]
+            config = distribution["web_service"]
             limit, editable = config.get("result_limit"), config["result_limit_editable"]
             key = "maxFeatures" if config["version"] == "1.1.0" else "count"
             for supplied in (None, 50, 75, 0):

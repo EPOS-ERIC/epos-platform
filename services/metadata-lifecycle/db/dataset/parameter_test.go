@@ -2,6 +2,7 @@ package dataset
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -209,13 +210,21 @@ func TestParameterParamsPreservesWebServiceOwner(t *testing.T) {
 
 func TestWebServicePersistenceMappingPreservesTypeAndVisibleOn(t *testing.T) {
 	id := uuid.New()
-	service := toDomainWebService(sqlc.WebService{
+	service, err := toDomainWebService(sqlc.WebService{
 		ID:        id,
 		Type:      sqlc.WebServiceTypeHTTP,
 		VisibleOn: []sqlc.WebServiceVisibleOn{sqlc.WebServiceVisibleOnMAP, sqlc.WebServiceVisibleOnGRAPH},
 	})
-	if service.Type != domain.WebServiceTypeHTTP || !reflect.DeepEqual(service.VisibleOn, []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnMap, domain.WebServiceVisibleOnGraph}) {
-		t.Fatalf("web service fields = type %q, visible on %v", service.Type, service.VisibleOn)
+	if err != nil {
+		t.Fatalf("toDomainWebService() error = %v", err)
+	}
+	if service.ServiceType() != domain.WebServiceTypeHTTP || !slices.Equal(service.Common().VisibleOn, []domain.WebServiceVisibleOn{domain.WebServiceVisibleOnMap, domain.WebServiceVisibleOnGraph}) {
+		t.Fatalf("web service fields = type %q, visible on %v", service.ServiceType(), service.Common().VisibleOn)
+	}
+	provider := &domain.OrganizationMetadata{ID: uuid.New()}
+	service.Common().Provider = provider
+	if service.(*domain.HTTPWebService).Provider != provider {
+		t.Fatal("common provider update did not update web service")
 	}
 	if visibleOnValues(nil) != nil {
 		t.Fatal("visibleOnValues(nil) is non-nil")

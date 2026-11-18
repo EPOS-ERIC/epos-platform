@@ -104,10 +104,11 @@ func (c *ContactPointServer) DeleteContactPoint(ctx context.Context, request *me
 }
 
 func contactPointInput(email string) (domain.ContactPointInput, error) {
-	result, err := domain.NewContactPointInput(domain.ContactPointInput{Email: email})
-	if err != nil {
+	result := domain.ContactPointInput{Email: email}
+	if err := result.Normalize(); err != nil {
 		return domain.ContactPointInput{}, fmt.Errorf("validate contact point input: %w", err)
 	}
+
 	return result, nil
 }
 
