@@ -23,6 +23,14 @@ func normalizeKeywords(values []string) ([]string, error) {
 	return result, nil
 }
 
+func normalizeKeywordInput(values []string) ([]string, error) {
+	result, err := normalizeKeywords(values)
+	if err != nil {
+		return nil, invalidField("keywords", "Keywords must not be blank and may contain only letters, numbers, spaces, colon, hyphen, and underscore.", err)
+	}
+	return result, nil
+}
+
 func (value *IdentifierInput) Normalize() error {
 	value.Type = IdentifierType(strings.TrimSpace(string(value.Type)))
 	value.Value = strings.TrimSpace(value.Value)

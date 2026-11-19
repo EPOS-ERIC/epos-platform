@@ -92,6 +92,12 @@ type DatasetInput struct {
 	Keywords                   []string
 	AccrualPeriodicity         *AccrualPeriodicity
 	QualityAnnotation          *string
+	ConformsTo                 *string
+	Provenance                 *string
+	Type                       *string
+	Version                    *string
+	SpatialResolutionInMeters  *float64
+	TemporalResolution         *float64
 	AccessRight                *AccessRight
 	Distributions              []DistributionInput
 	SpatialCoverage            geom.T
@@ -124,6 +130,12 @@ type DatasetMetadata struct {
 	Keywords                   []string
 	AccrualPeriodicity         *AccrualPeriodicity
 	QualityAnnotation          *string
+	ConformsTo                 *string
+	Provenance                 *string
+	Type                       *string
+	Version                    *string
+	SpatialResolutionInMeters  *float64
+	TemporalResolution         *float64
 	AccessRight                *AccessRight
 	Distributions              []Distribution
 	SpatialCoverage            geom.T
@@ -180,14 +192,21 @@ func (value *DatasetInput) Normalize() error {
 	}
 	value.AccrualPeriodicity = accrualPeriodicity
 	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
+	value.ConformsTo = optionalTrimmedString(value.ConformsTo)
+	value.Provenance = optionalTrimmedString(value.Provenance)
+	value.Type = optionalTrimmedString(value.Type)
+	value.Version = optionalTrimmedString(value.Version)
+	if err := validateResolutions(value.SpatialResolutionInMeters, value.TemporalResolution); err != nil {
+		return err
+	}
 	accessRight, err := optionalAccessRight(value.AccessRight)
 	if err != nil {
 		return err
 	}
 	value.AccessRight = accessRight
-	keywords, err := normalizeKeywords(value.Keywords)
+	keywords, err := normalizeKeywordInput(value.Keywords)
 	if err != nil {
-		return invalidField("keywords", "Keywords must not be blank and may contain only letters, numbers, spaces, colon, hyphen, and underscore.", err)
+		return err
 	}
 	value.Keywords = keywords
 	if err := validateDatasetTemporal(value.TemporalCoverage, value.GeologicalTemporalCoverage); err != nil {
@@ -268,6 +287,13 @@ func (value *DatasetMetadata) Normalize() (err error) {
 		return fmt.Errorf("dataset accrual periodicity: %w", err)
 	}
 	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
+	value.ConformsTo = optionalTrimmedString(value.ConformsTo)
+	value.Provenance = optionalTrimmedString(value.Provenance)
+	value.Type = optionalTrimmedString(value.Type)
+	value.Version = optionalTrimmedString(value.Version)
+	if err := validateResolutions(value.SpatialResolutionInMeters, value.TemporalResolution); err != nil {
+		return err
+	}
 	value.AccessRight, err = optionalAccessRight(value.AccessRight)
 	if err != nil {
 		return fmt.Errorf("dataset access right: %w", err)
@@ -314,6 +340,16 @@ func (value *DatasetMetadata) Normalize() (err error) {
 	}
 	value.Distributions = distributions
 
+	return nil
+}
+
+func validateResolutions(spatial, temporal *float64) error {
+	if spatial != nil && *spatial < 0 {
+		return invalidField("spatial_resolution_in_meters", "Resolution must be a non-negative number.", nil)
+	}
+	if temporal != nil && *temporal < 0 {
+		return invalidField("temporal_resolution", "Resolution must be a non-negative number.", nil)
+	}
 	return nil
 }
 

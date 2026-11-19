@@ -107,6 +107,17 @@ func toAPIWebServiceCommon(value *metadatalifecyclev1.WebServiceCommon) (gateway
 		ResourceID:    resourceID,
 		VisibleOn:     visibleOn,
 		ContactPoints: make([]uuid.UUID, 0, len(value.ContactPoints)),
+		AccessRights:  toAPINilString(value.AccessRights),
+		License:       toAPINilString(value.License),
+	}
+	if len(value.Keywords) > 0 {
+		result.Keywords = toAPIKeywords(value.Keywords)
+	}
+	if len(value.Categories) > 0 {
+		result.Categories, err = toAPIReferences(value.Categories, "web_service.category_id")
+		if err != nil {
+			return gatewayapi.HttpWebService{}, err
+		}
 	}
 	if value.ProviderReference != nil {
 		providerID, err := parseUUID("web_service.provider_id", value.ProviderReference.GetId())
@@ -155,11 +166,26 @@ func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.DatasetW
 			return gatewayapi.DatasetWebService{}, err
 		}
 		result := gatewayapi.DynamicWebService{
-			ID: generic.ID, ResourceID: generic.ResourceID, VisibleOn: generic.VisibleOn,
-			Provider: generic.Provider, DocumentationURI: generic.DocumentationURI, ContactPoints: generic.ContactPoints,
-			Type: gatewayapi.DynamicWebServiceTypeDYNAMIC, TemplateURL: generic.TemplateURL, Method: generic.Method,
-			Parameters: generic.Parameters, BodyContentType: generic.BodyContentType, BodyTemplate: generic.BodyTemplate,
-			BodyRequired: generic.BodyRequired, BodyParameters: generic.BodyParameters, Format: generic.Format, AvailableFormats: generic.AvailableFormats,
+			ID:               generic.ID,
+			ResourceID:       generic.ResourceID,
+			VisibleOn:        generic.VisibleOn,
+			Provider:         generic.Provider,
+			DocumentationURI: generic.DocumentationURI,
+			ContactPoints:    generic.ContactPoints,
+			Keywords:         generic.Keywords,
+			AccessRights:     generic.AccessRights,
+			License:          generic.License,
+			Categories:       generic.Categories,
+			Type:             gatewayapi.DynamicWebServiceTypeDYNAMIC,
+			TemplateURL:      generic.TemplateURL,
+			Method:           generic.Method,
+			Parameters:       generic.Parameters,
+			BodyContentType:  generic.BodyContentType,
+			BodyTemplate:     generic.BodyTemplate,
+			BodyRequired:     generic.BodyRequired,
+			BodyParameters:   generic.BodyParameters,
+			Format:           generic.Format,
+			AvailableFormats: generic.AvailableFormats,
 		}
 		return gatewayapi.NewDynamicWebServiceDatasetWebService(result), nil
 	case *metadatalifecyclev1.WebService_Wfs:
@@ -251,8 +277,16 @@ func toAPIWFSWebServiceConfiguration(value *metadatalifecyclev1.WFSWebService) (
 		return gatewayapi.WfsWebService{}, fmt.Errorf("upstream WFS version is invalid: %w", err)
 	}
 	result := gatewayapi.WfsWebService{
-		ID: common.ID, ResourceID: common.ResourceID, VisibleOn: common.VisibleOn,
-		Provider: common.Provider, DocumentationURI: common.DocumentationURI, ContactPoints: common.ContactPoints,
+		ID:                    common.ID,
+		ResourceID:            common.ResourceID,
+		VisibleOn:             common.VisibleOn,
+		Provider:              common.Provider,
+		DocumentationURI:      common.DocumentationURI,
+		ContactPoints:         common.ContactPoints,
+		Keywords:              common.Keywords,
+		AccessRights:          common.AccessRights,
+		License:               common.License,
+		Categories:            common.Categories,
 		AvailableFormats:      formats,
 		Type:                  gatewayapi.WfsWebServiceTypeWFS,
 		GetFeatureTemplateURL: value.GetGetFeatureTemplateUrl(),
@@ -280,7 +314,21 @@ func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebService)
 	if err != nil {
 		return gatewayapi.WmtsWebService{}, err
 	}
-	result := gatewayapi.WmtsWebService{ID: common.ID, ResourceID: common.ResourceID, VisibleOn: common.VisibleOn, Provider: common.Provider, DocumentationURI: common.DocumentationURI, ContactPoints: common.ContactPoints, Type: gatewayapi.WmtsWebServiceTypeWMTS, CapabilitiesURL: value.GetCapabilitiesUrl(), DefaultLayer: gatewayapi.NonBlankString(value.GetDefaultLayer())}
+	result := gatewayapi.WmtsWebService{
+		ID:               common.ID,
+		ResourceID:       common.ResourceID,
+		VisibleOn:        common.VisibleOn,
+		Provider:         common.Provider,
+		DocumentationURI: common.DocumentationURI,
+		ContactPoints:    common.ContactPoints,
+		Keywords:         common.Keywords,
+		AccessRights:     common.AccessRights,
+		License:          common.License,
+		Categories:       common.Categories,
+		Type:             gatewayapi.WmtsWebServiceTypeWMTS,
+		CapabilitiesURL:  value.GetCapabilitiesUrl(),
+		DefaultLayer:     gatewayapi.NonBlankString(value.GetDefaultLayer()),
+	}
 	for _, layer := range value.GetLayers() {
 		if layer == nil {
 			return gatewayapi.WmtsWebService{}, fmt.Errorf("upstream WMTS layer is nil")
@@ -325,8 +373,16 @@ func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebService) (
 		return gatewayapi.WmsWebService{}, err
 	}
 	result := gatewayapi.WmsWebService{
-		ID: common.ID, ResourceID: common.ResourceID, VisibleOn: common.VisibleOn,
-		Provider: common.Provider, DocumentationURI: common.DocumentationURI, ContactPoints: common.ContactPoints,
+		ID:                   common.ID,
+		ResourceID:           common.ResourceID,
+		VisibleOn:            common.VisibleOn,
+		Provider:             common.Provider,
+		DocumentationURI:     common.DocumentationURI,
+		ContactPoints:        common.ContactPoints,
+		Keywords:             common.Keywords,
+		AccessRights:         common.AccessRights,
+		License:              common.License,
+		Categories:           common.Categories,
 		Type:                 gatewayapi.WmsWebServiceTypeWMS,
 		CapabilitiesURL:      value.GetCapabilitiesUrl(),
 		DefaultLayer:         gatewayapi.NonBlankString(value.GetDefaultLayer()),

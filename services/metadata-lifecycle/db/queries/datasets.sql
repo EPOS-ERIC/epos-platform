@@ -21,6 +21,12 @@ INSERT INTO
         keywords,
         accrual_periodicity,
         quality_annotation,
+        conforms_to,
+        provenance,
+        TYPE,
+        version,
+        spatial_resolution_in_meters,
+        temporal_resolution,
         access_right,
         source_created_at,
         source_updated_at,
@@ -39,6 +45,12 @@ VALUES
         sqlc.arg(keywords),
         sqlc.narg(accrual_periodicity),
         sqlc.narg(quality_annotation),
+        sqlc.narg(conforms_to),
+        sqlc.narg(provenance),
+        sqlc.narg(TYPE),
+        sqlc.narg(version),
+        sqlc.narg(spatial_resolution_in_meters),
+        sqlc.narg(temporal_resolution),
         sqlc.narg(access_right),
         sqlc.narg(source_created_at),
         sqlc.narg(source_updated_at),
@@ -61,6 +73,12 @@ SET
     keywords = sqlc.arg(keywords),
     accrual_periodicity = sqlc.narg(accrual_periodicity),
     quality_annotation = sqlc.narg(quality_annotation),
+    conforms_to = sqlc.narg(conforms_to),
+    provenance = sqlc.narg(provenance),
+    TYPE = sqlc.narg(TYPE),
+    version = sqlc.narg(version),
+    spatial_resolution_in_meters = sqlc.narg(spatial_resolution_in_meters),
+    temporal_resolution = sqlc.narg(temporal_resolution),
     access_right = sqlc.narg(access_right),
     source_created_at = sqlc.narg(source_created_at),
     source_updated_at = sqlc.narg(source_updated_at),
@@ -271,7 +289,8 @@ LIMIT
 -- name: CloneLifecycleDatasetVersion :one
 WITH source AS (
     SELECT
-        *
+        dataset_versions.*,
+        dataset_versions.dataset_id = sqlc.arg(target_dataset_id) AS same_dataset
     FROM
         dataset_versions
     WHERE
@@ -287,6 +306,12 @@ inserted AS (
             keywords,
             accrual_periodicity,
             quality_annotation,
+            conforms_to,
+            provenance,
+            TYPE,
+            version,
+            spatial_resolution_in_meters,
+            temporal_resolution,
             access_right,
             source_created_at,
             source_updated_at,
@@ -304,6 +329,12 @@ inserted AS (
         keywords,
         accrual_periodicity,
         quality_annotation,
+        conforms_to,
+        provenance,
+        TYPE,
+        version,
+        spatial_resolution_in_meters,
+        temporal_resolution,
         access_right,
         source_created_at,
         source_updated_at,
@@ -325,10 +356,10 @@ identifiers AS (
         CASE
             WHEN (
                 SELECT
-                    dataset_id
+                    same_dataset
                 FROM
                     source
-            ) = sqlc.arg(target_dataset_id) THEN resource_id
+            ) THEN resource_id
             ELSE uuid_generate_v4()
         END,
         TYPE,
@@ -386,13 +417,18 @@ categories AS (
             FROM
                 inserted
         ),
-        sqlc.arg(target_group_id),
+        group_id,
         category_id
     FROM
         dataset_version_categories
     WHERE
         dataset_version_id = sqlc.arg(source_version_id)
-        AND sqlc.arg(copy_categories)::boolean
+        AND (
+            SELECT
+                same_dataset
+            FROM
+                source
+        )
 ),
 inserted_web_services AS (
     INSERT INTO
@@ -403,7 +439,10 @@ inserted_web_services AS (
             TYPE,
             visible_on,
             provider_organization_id,
-            documentation_uri
+            documentation_uri,
+            keywords,
+            access_rights,
+            license
         )
     SELECT
         uuid_generate_v5(
@@ -418,10 +457,10 @@ inserted_web_services AS (
         CASE
             WHEN (
                 SELECT
-                    dataset_id
+                    same_dataset
                 FROM
                     source
-            ) = sqlc.arg(target_dataset_id) THEN source.resource_id
+            ) THEN source.resource_id
             ELSE uuid_generate_v4()
         END,
         (
@@ -433,14 +472,42 @@ inserted_web_services AS (
         TYPE,
         visible_on,
         provider_organization_id,
-        documentation_uri
+        documentation_uri,
+        keywords,
+        access_rights,
+        license
     FROM
         web_services AS source
     WHERE
         dataset_version_id = sqlc.arg(source_version_id)
     RETURNING
-        id,
-        dataset_version_id
+        id
+),
+web_service_categories_copy AS (
+    INSERT INTO
+        web_service_categories (web_service_id, group_id, category_id)
+    SELECT
+        target.id,
+        link.group_id,
+        link.category_id
+    FROM
+        web_service_categories AS link
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            link.web_service_id::text
+        )
+    WHERE
+        (
+            SELECT
+                same_dataset
+            FROM
+                source
+        )
 ),
 inserted_generic_web_services AS (
     INSERT INTO
@@ -544,10 +611,10 @@ inserted_wms_layers AS (
         CASE
             WHEN (
                 SELECT
-                    dataset_id
+                    same_dataset
                 FROM
                     source
-            ) = sqlc.arg(target_dataset_id) THEN source.resource_id
+            ) THEN source.resource_id
             ELSE uuid_generate_v4()
         END,
         target.web_service_id,
@@ -605,10 +672,10 @@ inserted_wmts_layers AS (
         CASE
             WHEN (
                 SELECT
-                    dataset_id
+                    same_dataset
                 FROM
                     source
-            ) = sqlc.arg(target_dataset_id) THEN source.resource_id
+            ) THEN source.resource_id
             ELSE uuid_generate_v4()
         END,
         target.web_service_id,
@@ -673,7 +740,6 @@ web_service_contacts AS (
         link.contact_point_id
     FROM
         web_service_contact_points AS link
-        JOIN web_services AS source ON source.id = link.web_service_id
         JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
             (
                 SELECT
@@ -681,16 +747,8 @@ web_service_contacts AS (
                 FROM
                     inserted
             ),
-            source.id::text
+            link.web_service_id::text
         )
-        AND target.dataset_version_id = (
-            SELECT
-                id
-            FROM
-                inserted
-        )
-    WHERE
-        source.dataset_version_id = sqlc.arg(source_version_id)
 ),
 inserted_parameters AS (
     INSERT INTO
@@ -730,10 +788,10 @@ inserted_parameters AS (
         CASE
             WHEN (
                 SELECT
-                    dataset_id
+                    same_dataset
                 FROM
                     source
-            ) = sqlc.arg(target_dataset_id) THEN parameter.resource_id
+            ) THEN parameter.resource_id
             ELSE uuid_generate_v4()
         END,
         CASE
@@ -870,10 +928,10 @@ template_parameters AS (
         CASE
             WHEN (
                 SELECT
-                    dataset_id
+                    same_dataset
                 FROM
                     source
-            ) = sqlc.arg(target_dataset_id) THEN source_parameter.resource_id
+            ) THEN source_parameter.resource_id
             ELSE uuid_generate_v4()
         END,
         uuid_generate_v5(
@@ -1058,10 +1116,10 @@ distributions AS (
         CASE
             WHEN (
                 SELECT
-                    dataset_id
+                    same_dataset
                 FROM
                     source
-            ) = sqlc.arg(target_dataset_id) THEN distribution.resource_id
+            ) THEN distribution.resource_id
             ELSE uuid_generate_v4()
         END,
         (
@@ -1080,7 +1138,6 @@ distributions AS (
         target.id
     FROM
         distributions AS distribution
-        LEFT JOIN web_services AS source ON source.id = distribution.web_service_id
         LEFT JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
             (
                 SELECT
@@ -1088,13 +1145,7 @@ distributions AS (
                 FROM
                     inserted
             ),
-            source.id::text
-        )
-        AND target.dataset_version_id = (
-            SELECT
-                id
-            FROM
-                inserted
+            distribution.web_service_id::text
         )
     WHERE
         distribution.dataset_version_id = sqlc.arg(source_version_id)
@@ -1160,7 +1211,7 @@ FROM
 WHERE
     version.id = sqlc.arg(dataset_version_id);
 
--- name: AddLifecycleWebService :one
+-- name: AddLifecycleWebService :exec
 INSERT INTO
     web_services (
         id,
@@ -1169,7 +1220,10 @@ INSERT INTO
         TYPE,
         visible_on,
         provider_organization_id,
-        documentation_uri
+        documentation_uri,
+        keywords,
+        access_rights,
+        license
     )
 VALUES
     (
@@ -1179,10 +1233,26 @@ VALUES
         sqlc.arg(TYPE),
         sqlc.arg(visible_on),
         sqlc.narg(provider_organization_id),
-        sqlc.narg(documentation_uri)
-    )
-RETURNING
-    *;
+        sqlc.narg(documentation_uri),
+        sqlc.arg(keywords),
+        sqlc.narg(access_rights),
+        sqlc.narg(license)
+    );
+
+-- name: AddLifecycleWebServiceCategories :exec
+INSERT INTO
+    web_service_categories (web_service_id, group_id, category_id)
+SELECT
+    service.id,
+    dataset.group_id,
+    category.id
+FROM
+    web_services AS service
+    JOIN dataset_versions AS version ON version.id = service.dataset_version_id
+    JOIN datasets AS dataset ON dataset.id = version.dataset_id
+    CROSS JOIN unnest(sqlc.arg(category_ids)::uuid []) AS category(id)
+WHERE
+    service.id = sqlc.arg(web_service_id);
 
 -- name: AddLifecycleGenericWebService :exec
 INSERT INTO
@@ -1540,6 +1610,12 @@ SELECT
     version.keywords,
     version.accrual_periodicity,
     version.quality_annotation,
+    version.conforms_to,
+    version.provenance,
+    version.type,
+    version.version,
+    version.spatial_resolution_in_meters,
+    version.temporal_resolution,
     version.access_right,
     version.source_created_at,
     version.source_updated_at,
@@ -1669,8 +1745,7 @@ ORDER BY
 -- name: ListLifecycleDatasetCategories :many
 SELECT
     category.id,
-    category.name,
-    category.group_id
+    category.name
 FROM
     dataset_version_categories AS link
     JOIN categories AS category ON category.id = link.category_id
@@ -1688,6 +1763,20 @@ WHERE
     service.dataset_version_id = sqlc.arg(dataset_version_id)
 ORDER BY
     service.id;
+
+-- name: ListLifecycleWebServiceCategories :many
+SELECT
+    link.web_service_id,
+    category.id,
+    category.name
+FROM
+    web_service_categories AS link
+    JOIN categories AS category ON category.id = link.category_id
+WHERE
+    link.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+ORDER BY
+    link.web_service_id,
+    category.id;
 
 -- name: ListLifecycleGenericWebServices :many
 SELECT

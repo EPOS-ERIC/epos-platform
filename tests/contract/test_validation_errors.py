@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
+from distribution_fixtures import web_distribution
 from fixtures import assert_problem, create_group, concept_id
 
 
@@ -123,6 +124,28 @@ class ValidationErrorsContractTest(unittest.TestCase):
             group_id,
             suffix,
         )
+        for field in ("spatial_resolution_in_meters", "temporal_resolution"):
+            with self.subTest(operation="createResource", case=f"negative {field}"):
+                self.assert_bad_request(self.gateway.post(
+                    "/groups/{groupId}/resources",
+                    groupId=group_id,
+                    json={"resource_type": "dataset", "metadata": {
+                        "title": "Invalid resolution",
+                        "description": "Negative resolution must be rejected",
+                        field: -1,
+                    }},
+                ))
+        foreign_category_id = self.create_category(membership_group_id, f"foreign-{suffix}")
+        with self.subTest(operation="createResource", case="foreign web service category"):
+            self.assert_bad_request(self.gateway.post(
+                "/groups/{groupId}/resources",
+                groupId=group_id,
+                json={"resource_type": "dataset", "metadata": {
+                    "title": "Invalid category",
+                    "description": "Web service category must belong to dataset group",
+                    "distributions": [web_distribution(categories=[foreign_category_id])],
+                }},
+            ))
 
         with self.subTest(operation="createGroup", case="wrong media type"):
             self.assert_unsupported_media_type(

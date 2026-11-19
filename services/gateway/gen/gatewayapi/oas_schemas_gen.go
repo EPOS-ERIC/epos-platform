@@ -2889,13 +2889,20 @@ func (s *DatasetDiscoveryItemType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/DatasetDraftMetadata
 type DatasetDraftMetadata struct {
-	Title              NonBlankString                  `json:"title"`
-	Description        NonBlankString                  `json:"description"`
-	Keywords           []Keyword                       `json:"keywords"`
-	AccrualPeriodicity OptNilDatasetAccrualPeriodicity `json:"accrual_periodicity"`
-	QualityAnnotation  OptNilString                    `json:"quality_annotation"`
-	AccessRight        OptNilDatasetAccessRight        `json:"access_right"`
-	Distributions      []DistributionDraft             `json:"distributions"`
+	Title                     NonBlankString                  `json:"title"`
+	Description               NonBlankString                  `json:"description"`
+	Keywords                  []Keyword                       `json:"keywords"`
+	AccrualPeriodicity        OptNilDatasetAccrualPeriodicity `json:"accrual_periodicity"`
+	QualityAnnotation         OptNilString                    `json:"quality_annotation"`
+	ConformsTo                OptNilString                    `json:"conforms_to"`
+	Provenance                OptNilString                    `json:"provenance"`
+	Type                      OptNilString                    `json:"type"`
+	Version                   OptNilString                    `json:"version"`
+	SpatialResolutionInMeters OptNilFloat64                   `json:"spatial_resolution_in_meters"`
+	// Resolution in seconds.
+	TemporalResolution OptNilFloat64            `json:"temporal_resolution"`
+	AccessRight        OptNilDatasetAccessRight `json:"access_right"`
+	Distributions      []DistributionDraft      `json:"distributions"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
@@ -2932,6 +2939,36 @@ func (s *DatasetDraftMetadata) GetAccrualPeriodicity() OptNilDatasetAccrualPerio
 // GetQualityAnnotation returns the value of QualityAnnotation.
 func (s *DatasetDraftMetadata) GetQualityAnnotation() OptNilString {
 	return s.QualityAnnotation
+}
+
+// GetConformsTo returns the value of ConformsTo.
+func (s *DatasetDraftMetadata) GetConformsTo() OptNilString {
+	return s.ConformsTo
+}
+
+// GetProvenance returns the value of Provenance.
+func (s *DatasetDraftMetadata) GetProvenance() OptNilString {
+	return s.Provenance
+}
+
+// GetType returns the value of Type.
+func (s *DatasetDraftMetadata) GetType() OptNilString {
+	return s.Type
+}
+
+// GetVersion returns the value of Version.
+func (s *DatasetDraftMetadata) GetVersion() OptNilString {
+	return s.Version
+}
+
+// GetSpatialResolutionInMeters returns the value of SpatialResolutionInMeters.
+func (s *DatasetDraftMetadata) GetSpatialResolutionInMeters() OptNilFloat64 {
+	return s.SpatialResolutionInMeters
+}
+
+// GetTemporalResolution returns the value of TemporalResolution.
+func (s *DatasetDraftMetadata) GetTemporalResolution() OptNilFloat64 {
+	return s.TemporalResolution
 }
 
 // GetAccessRight returns the value of AccessRight.
@@ -3014,6 +3051,36 @@ func (s *DatasetDraftMetadata) SetQualityAnnotation(val OptNilString) {
 	s.QualityAnnotation = val
 }
 
+// SetConformsTo sets the value of ConformsTo.
+func (s *DatasetDraftMetadata) SetConformsTo(val OptNilString) {
+	s.ConformsTo = val
+}
+
+// SetProvenance sets the value of Provenance.
+func (s *DatasetDraftMetadata) SetProvenance(val OptNilString) {
+	s.Provenance = val
+}
+
+// SetType sets the value of Type.
+func (s *DatasetDraftMetadata) SetType(val OptNilString) {
+	s.Type = val
+}
+
+// SetVersion sets the value of Version.
+func (s *DatasetDraftMetadata) SetVersion(val OptNilString) {
+	s.Version = val
+}
+
+// SetSpatialResolutionInMeters sets the value of SpatialResolutionInMeters.
+func (s *DatasetDraftMetadata) SetSpatialResolutionInMeters(val OptNilFloat64) {
+	s.SpatialResolutionInMeters = val
+}
+
+// SetTemporalResolution sets the value of TemporalResolution.
+func (s *DatasetDraftMetadata) SetTemporalResolution(val OptNilFloat64) {
+	s.TemporalResolution = val
+}
+
 // SetAccessRight sets the value of AccessRight.
 func (s *DatasetDraftMetadata) SetAccessRight(val OptNilDatasetAccessRight) {
 	s.AccessRight = val
@@ -3071,14 +3138,21 @@ func (s *DatasetDraftMetadata) SetUpdated(val OptNilDateTime) {
 
 // Ref: #/components/schemas/DatasetResourceMetadata
 type DatasetResourceMetadata struct {
-	ResourceType       DatasetResourceMetadataResourceType `json:"resource_type"`
-	Title              string                              `json:"title"`
-	Description        string                              `json:"description"`
-	Keywords           []Keyword                           `json:"keywords"`
-	AccrualPeriodicity OptNilDatasetAccrualPeriodicity     `json:"accrual_periodicity"`
-	QualityAnnotation  OptNilString                        `json:"quality_annotation"`
-	AccessRight        OptNilDatasetAccessRight            `json:"access_right"`
-	Distributions      []Distribution                      `json:"distributions"`
+	ResourceType              DatasetResourceMetadataResourceType `json:"resource_type"`
+	Title                     string                              `json:"title"`
+	Description               string                              `json:"description"`
+	Keywords                  []Keyword                           `json:"keywords"`
+	AccrualPeriodicity        OptNilDatasetAccrualPeriodicity     `json:"accrual_periodicity"`
+	QualityAnnotation         OptNilString                        `json:"quality_annotation"`
+	ConformsTo                OptNilString                        `json:"conforms_to"`
+	Provenance                OptNilString                        `json:"provenance"`
+	Type                      OptNilString                        `json:"type"`
+	Version                   OptNilString                        `json:"version"`
+	SpatialResolutionInMeters OptNilFloat64                       `json:"spatial_resolution_in_meters"`
+	// Resolution in seconds.
+	TemporalResolution OptNilFloat64            `json:"temporal_resolution"`
+	AccessRight        OptNilDatasetAccessRight `json:"access_right"`
+	Distributions      []Distribution           `json:"distributions"`
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage  OptNilString        `json:"spatial_coverage"`
 	TemporalCoverage OptTemporalCoverage `json:"temporal_coverage"`
@@ -3120,6 +3194,36 @@ func (s *DatasetResourceMetadata) GetAccrualPeriodicity() OptNilDatasetAccrualPe
 // GetQualityAnnotation returns the value of QualityAnnotation.
 func (s *DatasetResourceMetadata) GetQualityAnnotation() OptNilString {
 	return s.QualityAnnotation
+}
+
+// GetConformsTo returns the value of ConformsTo.
+func (s *DatasetResourceMetadata) GetConformsTo() OptNilString {
+	return s.ConformsTo
+}
+
+// GetProvenance returns the value of Provenance.
+func (s *DatasetResourceMetadata) GetProvenance() OptNilString {
+	return s.Provenance
+}
+
+// GetType returns the value of Type.
+func (s *DatasetResourceMetadata) GetType() OptNilString {
+	return s.Type
+}
+
+// GetVersion returns the value of Version.
+func (s *DatasetResourceMetadata) GetVersion() OptNilString {
+	return s.Version
+}
+
+// GetSpatialResolutionInMeters returns the value of SpatialResolutionInMeters.
+func (s *DatasetResourceMetadata) GetSpatialResolutionInMeters() OptNilFloat64 {
+	return s.SpatialResolutionInMeters
+}
+
+// GetTemporalResolution returns the value of TemporalResolution.
+func (s *DatasetResourceMetadata) GetTemporalResolution() OptNilFloat64 {
+	return s.TemporalResolution
 }
 
 // GetAccessRight returns the value of AccessRight.
@@ -3205,6 +3309,36 @@ func (s *DatasetResourceMetadata) SetAccrualPeriodicity(val OptNilDatasetAccrual
 // SetQualityAnnotation sets the value of QualityAnnotation.
 func (s *DatasetResourceMetadata) SetQualityAnnotation(val OptNilString) {
 	s.QualityAnnotation = val
+}
+
+// SetConformsTo sets the value of ConformsTo.
+func (s *DatasetResourceMetadata) SetConformsTo(val OptNilString) {
+	s.ConformsTo = val
+}
+
+// SetProvenance sets the value of Provenance.
+func (s *DatasetResourceMetadata) SetProvenance(val OptNilString) {
+	s.Provenance = val
+}
+
+// SetType sets the value of Type.
+func (s *DatasetResourceMetadata) SetType(val OptNilString) {
+	s.Type = val
+}
+
+// SetVersion sets the value of Version.
+func (s *DatasetResourceMetadata) SetVersion(val OptNilString) {
+	s.Version = val
+}
+
+// SetSpatialResolutionInMeters sets the value of SpatialResolutionInMeters.
+func (s *DatasetResourceMetadata) SetSpatialResolutionInMeters(val OptNilFloat64) {
+	s.SpatialResolutionInMeters = val
+}
+
+// SetTemporalResolution sets the value of TemporalResolution.
+func (s *DatasetResourceMetadata) SetTemporalResolution(val OptNilFloat64) {
+	s.TemporalResolution = val
 }
 
 // SetAccessRight sets the value of AccessRight.
@@ -5730,16 +5864,20 @@ type DynamicWebService struct {
 	Provider         OptResourceVersionReference    `json:"provider"`
 	DocumentationURI OptURI                         `json:"documentation_uri"`
 	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Type             DynamicWebServiceType          `json:"type"`
+	Keywords         []Keyword                      `json:"keywords"`
+	AccessRights     OptNilString                   `json:"access_rights"`
+	License          OptNilString                   `json:"license"`
+	Categories       []ResourceVersionReference     `json:"categories"`
 	TemplateURL      string                         `json:"template_url"`
 	Method           WebServiceMethod               `json:"method"`
 	Parameters       []Parameter                    `json:"parameters"`
 	BodyContentType  OptNilString                   `json:"body_content_type"`
 	BodyTemplate     OptNilString                   `json:"body_template"`
 	// Whether the configured request body must be rendered. Omitted when no request body is configured.
-	BodyRequired   OptBool           `json:"body_required"`
-	BodyParameters []ScalarParameter `json:"body_parameters"`
-	Format         string            `json:"format"`
+	BodyRequired   OptBool               `json:"body_required"`
+	BodyParameters []ScalarParameter     `json:"body_parameters"`
+	Format         string                `json:"format"`
+	Type           DynamicWebServiceType `json:"type"`
 	// Derived native formats and conversions whose plugins are enabled and locally installed. If converter
 	// is unavailable, only native formats are returned. Converted formats identify the provider input
 	// format separately from the converted output format.
@@ -5776,9 +5914,24 @@ func (s *DynamicWebService) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
 }
 
-// GetType returns the value of Type.
-func (s *DynamicWebService) GetType() DynamicWebServiceType {
-	return s.Type
+// GetKeywords returns the value of Keywords.
+func (s *DynamicWebService) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *DynamicWebService) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *DynamicWebService) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *DynamicWebService) GetCategories() []ResourceVersionReference {
+	return s.Categories
 }
 
 // GetTemplateURL returns the value of TemplateURL.
@@ -5821,6 +5974,11 @@ func (s *DynamicWebService) GetFormat() string {
 	return s.Format
 }
 
+// GetType returns the value of Type.
+func (s *DynamicWebService) GetType() DynamicWebServiceType {
+	return s.Type
+}
+
 // GetAvailableFormats returns the value of AvailableFormats.
 func (s *DynamicWebService) GetAvailableFormats() []AvailableFormat {
 	return s.AvailableFormats
@@ -5856,9 +6014,24 @@ func (s *DynamicWebService) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
 }
 
-// SetType sets the value of Type.
-func (s *DynamicWebService) SetType(val DynamicWebServiceType) {
-	s.Type = val
+// SetKeywords sets the value of Keywords.
+func (s *DynamicWebService) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *DynamicWebService) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *DynamicWebService) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *DynamicWebService) SetCategories(val []ResourceVersionReference) {
+	s.Categories = val
 }
 
 // SetTemplateURL sets the value of TemplateURL.
@@ -5901,6 +6074,11 @@ func (s *DynamicWebService) SetFormat(val string) {
 	s.Format = val
 }
 
+// SetType sets the value of Type.
+func (s *DynamicWebService) SetType(val DynamicWebServiceType) {
+	s.Type = val
+}
+
 // SetAvailableFormats sets the value of AvailableFormats.
 func (s *DynamicWebService) SetAvailableFormats(val []AvailableFormat) {
 	s.AvailableFormats = val
@@ -5914,7 +6092,10 @@ type DynamicWebServiceDraft struct {
 	Provider         OptUUID                        `json:"provider"`
 	DocumentationURI OptURI                         `json:"documentation_uri"`
 	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Type             DynamicWebServiceDraftType     `json:"type"`
+	Keywords         []Keyword                      `json:"keywords"`
+	AccessRights     OptNilString                   `json:"access_rights"`
+	License          OptNilString                   `json:"license"`
+	Categories       []uuid.UUID                    `json:"categories"`
 	TemplateURL      NonBlankString                 `json:"template_url"`
 	Method           WebServiceMethod               `json:"method"`
 	Parameters       []ParameterDraft               `json:"parameters"`
@@ -5922,9 +6103,10 @@ type DynamicWebServiceDraft struct {
 	BodyTemplate     OptNonBlankString              `json:"body_template"`
 	// Defaults to true when a request body is configured. Must be omitted when no body is configured.
 	// Optional bodies are omitted only when unresolved and no child values were supplied.
-	BodyRequired   OptBool                `json:"body_required"`
-	BodyParameters []ScalarParameterDraft `json:"body_parameters"`
-	Format         NonBlankString         `json:"format"`
+	BodyRequired   OptBool                    `json:"body_required"`
+	BodyParameters []ScalarParameterDraft     `json:"body_parameters"`
+	Format         NonBlankString             `json:"format"`
+	Type           DynamicWebServiceDraftType `json:"type"`
 }
 
 // GetResourceID returns the value of ResourceID.
@@ -5952,9 +6134,24 @@ func (s *DynamicWebServiceDraft) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
 }
 
-// GetType returns the value of Type.
-func (s *DynamicWebServiceDraft) GetType() DynamicWebServiceDraftType {
-	return s.Type
+// GetKeywords returns the value of Keywords.
+func (s *DynamicWebServiceDraft) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *DynamicWebServiceDraft) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *DynamicWebServiceDraft) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *DynamicWebServiceDraft) GetCategories() []uuid.UUID {
+	return s.Categories
 }
 
 // GetTemplateURL returns the value of TemplateURL.
@@ -5997,6 +6194,11 @@ func (s *DynamicWebServiceDraft) GetFormat() NonBlankString {
 	return s.Format
 }
 
+// GetType returns the value of Type.
+func (s *DynamicWebServiceDraft) GetType() DynamicWebServiceDraftType {
+	return s.Type
+}
+
 // SetResourceID sets the value of ResourceID.
 func (s *DynamicWebServiceDraft) SetResourceID(val OptUUID) {
 	s.ResourceID = val
@@ -6022,9 +6224,24 @@ func (s *DynamicWebServiceDraft) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
 }
 
-// SetType sets the value of Type.
-func (s *DynamicWebServiceDraft) SetType(val DynamicWebServiceDraftType) {
-	s.Type = val
+// SetKeywords sets the value of Keywords.
+func (s *DynamicWebServiceDraft) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *DynamicWebServiceDraft) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *DynamicWebServiceDraft) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *DynamicWebServiceDraft) SetCategories(val []uuid.UUID) {
+	s.Categories = val
 }
 
 // SetTemplateURL sets the value of TemplateURL.
@@ -6065,6 +6282,11 @@ func (s *DynamicWebServiceDraft) SetBodyParameters(val []ScalarParameterDraft) {
 // SetFormat sets the value of Format.
 func (s *DynamicWebServiceDraft) SetFormat(val NonBlankString) {
 	s.Format = val
+}
+
+// SetType sets the value of Type.
+func (s *DynamicWebServiceDraft) SetType(val DynamicWebServiceDraftType) {
+	s.Type = val
 }
 
 type DynamicWebServiceDraftType string
@@ -7840,16 +8062,20 @@ type HttpWebService struct {
 	Provider         OptResourceVersionReference    `json:"provider"`
 	DocumentationURI OptURI                         `json:"documentation_uri"`
 	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Type             HttpWebServiceType             `json:"type"`
+	Keywords         []Keyword                      `json:"keywords"`
+	AccessRights     OptNilString                   `json:"access_rights"`
+	License          OptNilString                   `json:"license"`
+	Categories       []ResourceVersionReference     `json:"categories"`
 	TemplateURL      string                         `json:"template_url"`
 	Method           WebServiceMethod               `json:"method"`
 	Parameters       []Parameter                    `json:"parameters"`
 	BodyContentType  OptNilString                   `json:"body_content_type"`
 	BodyTemplate     OptNilString                   `json:"body_template"`
 	// Whether the configured request body must be rendered. Omitted when no request body is configured.
-	BodyRequired   OptBool           `json:"body_required"`
-	BodyParameters []ScalarParameter `json:"body_parameters"`
-	Format         string            `json:"format"`
+	BodyRequired   OptBool            `json:"body_required"`
+	BodyParameters []ScalarParameter  `json:"body_parameters"`
+	Format         string             `json:"format"`
+	Type           HttpWebServiceType `json:"type"`
 	// Derived native formats and conversions whose plugins are enabled and locally installed. If converter
 	// is unavailable, only native formats are returned. Converted formats identify the provider input
 	// format separately from the converted output format.
@@ -7886,9 +8112,24 @@ func (s *HttpWebService) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
 }
 
-// GetType returns the value of Type.
-func (s *HttpWebService) GetType() HttpWebServiceType {
-	return s.Type
+// GetKeywords returns the value of Keywords.
+func (s *HttpWebService) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *HttpWebService) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *HttpWebService) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *HttpWebService) GetCategories() []ResourceVersionReference {
+	return s.Categories
 }
 
 // GetTemplateURL returns the value of TemplateURL.
@@ -7931,6 +8172,11 @@ func (s *HttpWebService) GetFormat() string {
 	return s.Format
 }
 
+// GetType returns the value of Type.
+func (s *HttpWebService) GetType() HttpWebServiceType {
+	return s.Type
+}
+
 // GetAvailableFormats returns the value of AvailableFormats.
 func (s *HttpWebService) GetAvailableFormats() []AvailableFormat {
 	return s.AvailableFormats
@@ -7966,9 +8212,24 @@ func (s *HttpWebService) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
 }
 
-// SetType sets the value of Type.
-func (s *HttpWebService) SetType(val HttpWebServiceType) {
-	s.Type = val
+// SetKeywords sets the value of Keywords.
+func (s *HttpWebService) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *HttpWebService) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *HttpWebService) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *HttpWebService) SetCategories(val []ResourceVersionReference) {
+	s.Categories = val
 }
 
 // SetTemplateURL sets the value of TemplateURL.
@@ -8011,6 +8272,11 @@ func (s *HttpWebService) SetFormat(val string) {
 	s.Format = val
 }
 
+// SetType sets the value of Type.
+func (s *HttpWebService) SetType(val HttpWebServiceType) {
+	s.Type = val
+}
+
 // SetAvailableFormats sets the value of AvailableFormats.
 func (s *HttpWebService) SetAvailableFormats(val []AvailableFormat) {
 	s.AvailableFormats = val
@@ -8024,7 +8290,10 @@ type HttpWebServiceDraft struct {
 	Provider         OptUUID                        `json:"provider"`
 	DocumentationURI OptURI                         `json:"documentation_uri"`
 	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Type             HttpWebServiceDraftType        `json:"type"`
+	Keywords         []Keyword                      `json:"keywords"`
+	AccessRights     OptNilString                   `json:"access_rights"`
+	License          OptNilString                   `json:"license"`
+	Categories       []uuid.UUID                    `json:"categories"`
 	TemplateURL      NonBlankString                 `json:"template_url"`
 	Method           WebServiceMethod               `json:"method"`
 	Parameters       []ParameterDraft               `json:"parameters"`
@@ -8032,9 +8301,10 @@ type HttpWebServiceDraft struct {
 	BodyTemplate     OptNonBlankString              `json:"body_template"`
 	// Defaults to true when a request body is configured. Must be omitted when no body is configured.
 	// Optional bodies are omitted only when unresolved and no child values were supplied.
-	BodyRequired   OptBool                `json:"body_required"`
-	BodyParameters []ScalarParameterDraft `json:"body_parameters"`
-	Format         NonBlankString         `json:"format"`
+	BodyRequired   OptBool                 `json:"body_required"`
+	BodyParameters []ScalarParameterDraft  `json:"body_parameters"`
+	Format         NonBlankString          `json:"format"`
+	Type           HttpWebServiceDraftType `json:"type"`
 }
 
 // GetResourceID returns the value of ResourceID.
@@ -8062,9 +8332,24 @@ func (s *HttpWebServiceDraft) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
 }
 
-// GetType returns the value of Type.
-func (s *HttpWebServiceDraft) GetType() HttpWebServiceDraftType {
-	return s.Type
+// GetKeywords returns the value of Keywords.
+func (s *HttpWebServiceDraft) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *HttpWebServiceDraft) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *HttpWebServiceDraft) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *HttpWebServiceDraft) GetCategories() []uuid.UUID {
+	return s.Categories
 }
 
 // GetTemplateURL returns the value of TemplateURL.
@@ -8107,6 +8392,11 @@ func (s *HttpWebServiceDraft) GetFormat() NonBlankString {
 	return s.Format
 }
 
+// GetType returns the value of Type.
+func (s *HttpWebServiceDraft) GetType() HttpWebServiceDraftType {
+	return s.Type
+}
+
 // SetResourceID sets the value of ResourceID.
 func (s *HttpWebServiceDraft) SetResourceID(val OptUUID) {
 	s.ResourceID = val
@@ -8132,9 +8422,24 @@ func (s *HttpWebServiceDraft) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
 }
 
-// SetType sets the value of Type.
-func (s *HttpWebServiceDraft) SetType(val HttpWebServiceDraftType) {
-	s.Type = val
+// SetKeywords sets the value of Keywords.
+func (s *HttpWebServiceDraft) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *HttpWebServiceDraft) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *HttpWebServiceDraft) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *HttpWebServiceDraft) SetCategories(val []uuid.UUID) {
+	s.Categories = val
 }
 
 // SetTemplateURL sets the value of TemplateURL.
@@ -8175,6 +8480,11 @@ func (s *HttpWebServiceDraft) SetBodyParameters(val []ScalarParameterDraft) {
 // SetFormat sets the value of Format.
 func (s *HttpWebServiceDraft) SetFormat(val NonBlankString) {
 	s.Format = val
+}
+
+// SetType sets the value of Type.
+func (s *HttpWebServiceDraft) SetType(val HttpWebServiceDraftType) {
+	s.Type = val
 }
 
 type HttpWebServiceDraftType string
@@ -18071,6 +18381,10 @@ type WfsWebService struct {
 	Provider              OptResourceVersionReference    `json:"provider"`
 	DocumentationURI      OptURI                         `json:"documentation_uri"`
 	ContactPoints         []uuid.UUID                    `json:"contact_points"`
+	Keywords              []Keyword                      `json:"keywords"`
+	AccessRights          OptNilString                   `json:"access_rights"`
+	License               OptNilString                   `json:"license"`
+	Categories            []ResourceVersionReference     `json:"categories"`
 	Type                  WfsWebServiceType              `json:"type"`
 	GetFeatureTemplateURL string                         `json:"get_feature_template_url"`
 	Version               WfsWebServiceVersion           `json:"version"`
@@ -18119,6 +18433,26 @@ func (s *WfsWebService) GetDocumentationURI() OptURI {
 // GetContactPoints returns the value of ContactPoints.
 func (s *WfsWebService) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
+}
+
+// GetKeywords returns the value of Keywords.
+func (s *WfsWebService) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *WfsWebService) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *WfsWebService) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *WfsWebService) GetCategories() []ResourceVersionReference {
+	return s.Categories
 }
 
 // GetType returns the value of Type.
@@ -18206,6 +18540,26 @@ func (s *WfsWebService) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
 }
 
+// SetKeywords sets the value of Keywords.
+func (s *WfsWebService) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *WfsWebService) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *WfsWebService) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *WfsWebService) SetCategories(val []ResourceVersionReference) {
+	s.Categories = val
+}
+
 // SetType sets the value of Type.
 func (s *WfsWebService) SetType(val WfsWebServiceType) {
 	s.Type = val
@@ -18269,6 +18623,10 @@ type WfsWebServiceDraft struct {
 	Provider         OptUUID                        `json:"provider"`
 	DocumentationURI OptURI                         `json:"documentation_uri"`
 	ContactPoints    []uuid.UUID                    `json:"contact_points"`
+	Keywords         []Keyword                      `json:"keywords"`
+	AccessRights     OptNilString                   `json:"access_rights"`
+	License          OptNilString                   `json:"license"`
+	Categories       []uuid.UUID                    `json:"categories"`
 	Type             WfsWebServiceDraftType         `json:"type"`
 	// Absolute HTTP(S) GetFeature URL. Placeholders are allowed only in the path; nonstandard provider
 	// query parameters are retained.
@@ -18312,6 +18670,26 @@ func (s *WfsWebServiceDraft) GetDocumentationURI() OptURI {
 // GetContactPoints returns the value of ContactPoints.
 func (s *WfsWebServiceDraft) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
+}
+
+// GetKeywords returns the value of Keywords.
+func (s *WfsWebServiceDraft) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *WfsWebServiceDraft) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *WfsWebServiceDraft) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *WfsWebServiceDraft) GetCategories() []uuid.UUID {
+	return s.Categories
 }
 
 // GetType returns the value of Type.
@@ -18387,6 +18765,26 @@ func (s *WfsWebServiceDraft) SetDocumentationURI(val OptURI) {
 // SetContactPoints sets the value of ContactPoints.
 func (s *WfsWebServiceDraft) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
+}
+
+// SetKeywords sets the value of Keywords.
+func (s *WfsWebServiceDraft) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *WfsWebServiceDraft) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *WfsWebServiceDraft) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *WfsWebServiceDraft) SetCategories(val []uuid.UUID) {
+	s.Categories = val
 }
 
 // SetType sets the value of Type.
@@ -18717,6 +19115,10 @@ type WmsWebService struct {
 	Provider         OptResourceVersionReference    `json:"provider"`
 	DocumentationURI OptURI                         `json:"documentation_uri"`
 	ContactPoints    []uuid.UUID                    `json:"contact_points"`
+	Keywords         []Keyword                      `json:"keywords"`
+	AccessRights     OptNilString                   `json:"access_rights"`
+	License          OptNilString                   `json:"license"`
+	Categories       []ResourceVersionReference     `json:"categories"`
 	Type             WmsWebServiceType              `json:"type"`
 	// Absolute HTTP(S) capabilities URL, including provider query parameters.
 	CapabilitiesURL string `json:"capabilities_url"`
@@ -18762,6 +19164,26 @@ func (s *WmsWebService) GetDocumentationURI() OptURI {
 // GetContactPoints returns the value of ContactPoints.
 func (s *WmsWebService) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
+}
+
+// GetKeywords returns the value of Keywords.
+func (s *WmsWebService) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *WmsWebService) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *WmsWebService) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *WmsWebService) GetCategories() []ResourceVersionReference {
+	return s.Categories
 }
 
 // GetType returns the value of Type.
@@ -18834,6 +19256,26 @@ func (s *WmsWebService) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
 }
 
+// SetKeywords sets the value of Keywords.
+func (s *WmsWebService) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *WmsWebService) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *WmsWebService) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *WmsWebService) SetCategories(val []ResourceVersionReference) {
+	s.Categories = val
+}
+
 // SetType sets the value of Type.
 func (s *WmsWebService) SetType(val WmsWebServiceType) {
 	s.Type = val
@@ -18882,6 +19324,10 @@ type WmsWebServiceDraft struct {
 	Provider         OptUUID                        `json:"provider"`
 	DocumentationURI OptURI                         `json:"documentation_uri"`
 	ContactPoints    []uuid.UUID                    `json:"contact_points"`
+	Keywords         []Keyword                      `json:"keywords"`
+	AccessRights     OptNilString                   `json:"access_rights"`
+	License          OptNilString                   `json:"license"`
+	Categories       []uuid.UUID                    `json:"categories"`
 	Type             WmsWebServiceDraftType         `json:"type"`
 	// Absolute HTTP(S) capabilities URL, including provider query parameters.
 	CapabilitiesURL string `json:"capabilities_url"`
@@ -18922,6 +19368,26 @@ func (s *WmsWebServiceDraft) GetDocumentationURI() OptURI {
 // GetContactPoints returns the value of ContactPoints.
 func (s *WmsWebServiceDraft) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
+}
+
+// GetKeywords returns the value of Keywords.
+func (s *WmsWebServiceDraft) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *WmsWebServiceDraft) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *WmsWebServiceDraft) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *WmsWebServiceDraft) GetCategories() []uuid.UUID {
+	return s.Categories
 }
 
 // GetType returns the value of Type.
@@ -18987,6 +19453,26 @@ func (s *WmsWebServiceDraft) SetDocumentationURI(val OptURI) {
 // SetContactPoints sets the value of ContactPoints.
 func (s *WmsWebServiceDraft) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
+}
+
+// SetKeywords sets the value of Keywords.
+func (s *WmsWebServiceDraft) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *WmsWebServiceDraft) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *WmsWebServiceDraft) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *WmsWebServiceDraft) SetCategories(val []uuid.UUID) {
+	s.Categories = val
 }
 
 // SetType sets the value of Type.
@@ -19217,6 +19703,10 @@ type WmtsWebService struct {
 	Provider                 OptResourceVersionReference    `json:"provider"`
 	DocumentationURI         OptURI                         `json:"documentation_uri"`
 	ContactPoints            []uuid.UUID                    `json:"contact_points"`
+	Keywords                 []Keyword                      `json:"keywords"`
+	AccessRights             OptNilString                   `json:"access_rights"`
+	License                  OptNilString                   `json:"license"`
+	Categories               []ResourceVersionReference     `json:"categories"`
 	Type                     WmtsWebServiceType             `json:"type"`
 	CapabilitiesURL          string                         `json:"capabilities_url"`
 	DefaultLayer             NonBlankString                 `json:"default_layer"`
@@ -19253,6 +19743,26 @@ func (s *WmtsWebService) GetDocumentationURI() OptURI {
 // GetContactPoints returns the value of ContactPoints.
 func (s *WmtsWebService) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
+}
+
+// GetKeywords returns the value of Keywords.
+func (s *WmtsWebService) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *WmtsWebService) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *WmtsWebService) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *WmtsWebService) GetCategories() []ResourceVersionReference {
+	return s.Categories
 }
 
 // GetType returns the value of Type.
@@ -19315,6 +19825,26 @@ func (s *WmtsWebService) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
 }
 
+// SetKeywords sets the value of Keywords.
+func (s *WmtsWebService) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *WmtsWebService) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *WmtsWebService) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *WmtsWebService) SetCategories(val []ResourceVersionReference) {
+	s.Categories = val
+}
+
 // SetType sets the value of Type.
 func (s *WmtsWebService) SetType(val WmtsWebServiceType) {
 	s.Type = val
@@ -19353,6 +19883,10 @@ type WmtsWebServiceDraft struct {
 	Provider         OptUUID                        `json:"provider"`
 	DocumentationURI OptURI                         `json:"documentation_uri"`
 	ContactPoints    []uuid.UUID                    `json:"contact_points"`
+	Keywords         []Keyword                      `json:"keywords"`
+	AccessRights     OptNilString                   `json:"access_rights"`
+	License          OptNilString                   `json:"license"`
+	Categories       []uuid.UUID                    `json:"categories"`
 	Type             WmtsWebServiceDraftType        `json:"type"`
 	// Absolute HTTP(S) capabilities URL including provider query parameters.
 	CapabilitiesURL          string           `json:"capabilities_url"`
@@ -19385,6 +19919,26 @@ func (s *WmtsWebServiceDraft) GetDocumentationURI() OptURI {
 // GetContactPoints returns the value of ContactPoints.
 func (s *WmtsWebServiceDraft) GetContactPoints() []uuid.UUID {
 	return s.ContactPoints
+}
+
+// GetKeywords returns the value of Keywords.
+func (s *WmtsWebServiceDraft) GetKeywords() []Keyword {
+	return s.Keywords
+}
+
+// GetAccessRights returns the value of AccessRights.
+func (s *WmtsWebServiceDraft) GetAccessRights() OptNilString {
+	return s.AccessRights
+}
+
+// GetLicense returns the value of License.
+func (s *WmtsWebServiceDraft) GetLicense() OptNilString {
+	return s.License
+}
+
+// GetCategories returns the value of Categories.
+func (s *WmtsWebServiceDraft) GetCategories() []uuid.UUID {
+	return s.Categories
 }
 
 // GetType returns the value of Type.
@@ -19440,6 +19994,26 @@ func (s *WmtsWebServiceDraft) SetDocumentationURI(val OptURI) {
 // SetContactPoints sets the value of ContactPoints.
 func (s *WmtsWebServiceDraft) SetContactPoints(val []uuid.UUID) {
 	s.ContactPoints = val
+}
+
+// SetKeywords sets the value of Keywords.
+func (s *WmtsWebServiceDraft) SetKeywords(val []Keyword) {
+	s.Keywords = val
+}
+
+// SetAccessRights sets the value of AccessRights.
+func (s *WmtsWebServiceDraft) SetAccessRights(val OptNilString) {
+	s.AccessRights = val
+}
+
+// SetLicense sets the value of License.
+func (s *WmtsWebServiceDraft) SetLicense(val OptNilString) {
+	s.License = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *WmtsWebServiceDraft) SetCategories(val []uuid.UUID) {
+	s.Categories = val
 }
 
 // SetType sets the value of Type.

@@ -11,7 +11,7 @@ import (
 )
 
 // ToCreateVersionParams builds SQLC parameters for a new dataset version.
-func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.DatasetInput) (sqlc.CreateLifecycleDatasetVersionParams, error) {
+func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.DatasetInput) sqlc.CreateLifecycleDatasetVersionParams {
 	var start, end *time.Time
 	if value.TemporalCoverage != nil {
 		start, end = value.TemporalCoverage.Start, value.TemporalCoverage.End
@@ -27,6 +27,12 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 		Keywords:                   value.Keywords,
 		AccrualPeriodicity:         (*sqlc.DatasetAccrualPeriodicity)(value.AccrualPeriodicity),
 		QualityAnnotation:          value.QualityAnnotation,
+		ConformsTo:                 value.ConformsTo,
+		Provenance:                 value.Provenance,
+		Type:                       value.Type,
+		Version:                    value.Version,
+		SpatialResolutionInMeters:  value.SpatialResolutionInMeters,
+		TemporalResolution:         value.TemporalResolution,
 		AccessRight:                (*sqlc.DatasetAccessRight)(value.AccessRight),
 		SourceCreatedAt:            value.SourceCreated,
 		SourceUpdatedAt:            value.SourceUpdated,
@@ -36,21 +42,24 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 		GeologicalTemporalStartMya: geologicalStart,
 		GeologicalTemporalEndMya:   geologicalEnd,
 		CreatedBy:                  actorID,
-	}, nil
+	}
 }
 
 // ToReplaceDraftParams builds SQLC parameters for replacing a dataset draft.
-func ToReplaceDraftParams(datasetID, id uuid.UUID, revision int32, value domain.DatasetInput) (sqlc.ReplaceLifecycleDatasetDraftParams, error) {
-	p, err := ToCreateVersionParams(uuid.Nil, "", value)
-	if err != nil {
-		return sqlc.ReplaceLifecycleDatasetDraftParams{}, err
-	}
+func ToReplaceDraftParams(datasetID, id uuid.UUID, revision int32, value domain.DatasetInput) sqlc.ReplaceLifecycleDatasetDraftParams {
+	p := ToCreateVersionParams(uuid.Nil, "", value)
 	return sqlc.ReplaceLifecycleDatasetDraftParams{
 		Title:                      p.Title,
 		Description:                p.Description,
 		Keywords:                   p.Keywords,
 		AccrualPeriodicity:         p.AccrualPeriodicity,
 		QualityAnnotation:          p.QualityAnnotation,
+		ConformsTo:                 p.ConformsTo,
+		Provenance:                 p.Provenance,
+		Type:                       p.Type,
+		Version:                    p.Version,
+		SpatialResolutionInMeters:  p.SpatialResolutionInMeters,
+		TemporalResolution:         p.TemporalResolution,
 		AccessRight:                p.AccessRight,
 		SourceCreatedAt:            p.SourceCreatedAt,
 		SourceUpdatedAt:            p.SourceUpdatedAt,
@@ -62,7 +71,7 @@ func ToReplaceDraftParams(datasetID, id uuid.UUID, revision int32, value domain.
 		DatasetID:                  datasetID,
 		ID:                         id,
 		Revision:                   revision,
-	}, nil
+	}
 }
 
 func toDomainDatasetVersion(version sqlc.GetLifecycleDatasetVersionRow, metadata domain.DatasetMetadata) (domain.DatasetVersion, error) {
@@ -130,6 +139,9 @@ func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {
 		ResourceID:       value.ResourceID,
 		VisibleOn:        domainVisibleOnValues(value.VisibleOn),
 		DocumentationURI: value.DocumentationUri,
+		Keywords:         value.Keywords,
+		AccessRights:     value.AccessRights,
+		License:          value.License,
 	}
 	switch domain.WebServiceType(value.Type) {
 	case domain.WebServiceTypeHTTP:
@@ -188,13 +200,9 @@ func toDomainDistribution(value sqlc.Distribution, services map[uuid.UUID]domain
 		Description:      value.Description,
 		License:          value.License,
 		Type:             domain.DistributionType(value.Type),
-		ByteSize:         nil,
+		ByteSize:         value.ByteSize,
 		WebService:       nil,
 		DownloadableFile: nil,
-	}
-	if value.ByteSize != nil {
-		byteSize := int64(*value.ByteSize)
-		result.ByteSize = &byteSize
 	}
 	if value.WebServiceID != nil {
 		result.WebService = services[*value.WebServiceID]
@@ -205,15 +213,6 @@ func toDomainDistribution(value sqlc.Distribution, services map[uuid.UUID]domain
 		Format: *value.DownloadableFileFormat,
 	}
 	return result
-}
-
-func toDomainCategoryMetadata(value sqlc.ListLifecycleDatasetCategoriesRow) domain.CategoryMetadata {
-	return domain.CategoryMetadata{
-		ID:       value.ID,
-		Name:     value.Name,
-		GroupID:  uuid.Nil,
-		Children: nil,
-	}
 }
 
 func toDomainOrganizationMetadata(value sqlc.Organization) domain.OrganizationMetadata {

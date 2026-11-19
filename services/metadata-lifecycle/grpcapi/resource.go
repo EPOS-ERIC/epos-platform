@@ -767,15 +767,21 @@ func optionalActorFromContext(ctx context.Context) (*domain.Actor, error) {
 
 func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.DatasetResourceMetadata {
 	result := &metadatalifecyclev1.DatasetResourceMetadata{
-		Title:              value.Title,
-		Description:        value.Description,
-		Keywords:           value.Keywords,
-		AccrualPeriodicity: toProtoAccrualPeriodicity(value.AccrualPeriodicity),
-		QualityAnnotation:  value.QualityAnnotation,
-		AccessRight:        datasetAccessRightOutput(value.AccessRight),
-		SpatialCoverage:    geometryString(value.SpatialCoverage),
-		Created:            timestampOutput(value.SourceCreated),
-		Updated:            timestampOutput(value.SourceUpdated),
+		Title:                     value.Title,
+		Description:               value.Description,
+		Keywords:                  value.Keywords,
+		AccrualPeriodicity:        toProtoAccrualPeriodicity(value.AccrualPeriodicity),
+		QualityAnnotation:         value.QualityAnnotation,
+		ConformsTo:                value.ConformsTo,
+		Provenance:                value.Provenance,
+		Type:                      value.Type,
+		Version:                   value.Version,
+		SpatialResolutionInMeters: value.SpatialResolutionInMeters,
+		TemporalResolution:        value.TemporalResolution,
+		AccessRight:               datasetAccessRightOutput(value.AccessRight),
+		SpatialCoverage:           geometryString(value.SpatialCoverage),
+		Created:                   timestampOutput(value.SourceCreated),
+		Updated:                   timestampOutput(value.SourceUpdated),
 	}
 	if value.TemporalCoverage != nil {
 		result.TemporalRange = &metadatalifecyclev1.DatasetResourceMetadata_TemporalCoverage{TemporalCoverage: temporalOutput(value.TemporalCoverage)}
@@ -789,9 +795,7 @@ func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.
 	for _, item := range value.Providers {
 		result.Providers = append(result.Providers, referenceOutput(item.ID, item.Name))
 	}
-	for _, item := range value.Categories {
-		result.Categories = append(result.Categories, referenceOutput(item.ID, item.Name))
-	}
+	result.Categories = categoryReferences(value.Categories)
 	for _, item := range value.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, item.ID.String())
 	}
@@ -819,9 +823,7 @@ func applicationResourceMetadata(value domain.SoftwareApplicationMetadata) *meta
 	for _, item := range value.Identifiers {
 		result.Identifiers = append(result.Identifiers, identifierOutput(item))
 	}
-	for _, item := range value.Categories {
-		result.Categories = append(result.Categories, referenceOutput(item.ID, item.Name))
-	}
+	result.Categories = categoryReferences(value.Categories)
 	for _, item := range value.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, item.ID.String())
 	}
@@ -847,9 +849,7 @@ func sourceCodeResourceMetadata(value domain.SoftwareSourceCodeMetadata) *metada
 	for _, item := range value.Identifiers {
 		result.Identifiers = append(result.Identifiers, identifierOutput(item))
 	}
-	for _, item := range value.Categories {
-		result.Categories = append(result.Categories, referenceOutput(item.ID, item.Name))
-	}
+	result.Categories = categoryReferences(value.Categories)
 	for _, item := range value.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, item.ID.String())
 	}
@@ -858,6 +858,14 @@ func sourceCodeResourceMetadata(value domain.SoftwareSourceCodeMetadata) *metada
 
 func referenceOutput(id uuid.UUID, name string) *metadatalifecyclev1.EntityReference {
 	return &metadatalifecyclev1.EntityReference{Id: id.String(), Name: name}
+}
+
+func categoryReferences(values []domain.CategoryMetadata) []*metadatalifecyclev1.EntityReference {
+	var result []*metadatalifecyclev1.EntityReference
+	for _, value := range values {
+		result = append(result, referenceOutput(value.ID, value.Name))
+	}
+	return result
 }
 
 func identifierOutput(value domain.Identifier) *metadatalifecyclev1.VersionedIdentifier {
@@ -1182,6 +1190,12 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 		Keywords:                   value.GetKeywords(),
 		AccrualPeriodicity:         accrualPeriodicity,
 		QualityAnnotation:          value.QualityAnnotation,
+		ConformsTo:                 value.ConformsTo,
+		Provenance:                 value.Provenance,
+		Type:                       value.Type,
+		Version:                    value.Version,
+		SpatialResolutionInMeters:  value.SpatialResolutionInMeters,
+		TemporalResolution:         value.TemporalResolution,
 		AccessRight:                accessRight,
 		Distributions:              distributions,
 		SpatialCoverage:            spatial,

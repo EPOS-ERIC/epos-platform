@@ -12,7 +12,7 @@ CREATE TABLE distributions (
     title                    nonblank_text NOT NULL,
     description              nonblank_text NOT NULL,
     license                  nonblank_text_opt,
-    byte_size                integer,
+    byte_size                bigint CHECK (byte_size >= 1),
 
     -- Delivery method. Constraint below requires one complete representation.
     type                     distribution_type NOT NULL,

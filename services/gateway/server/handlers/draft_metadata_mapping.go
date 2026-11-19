@@ -3,16 +3,25 @@ package handlers
 import (
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatalifecyclev1.DatasetInput, error) {
 	r := &metadatalifecyclev1.DatasetInput{
-		Title:         string(v.Title),
-		ContactPoints: uuidStrings(v.ContactPoints),
-		Providers:     uuidStrings(v.Providers),
-		Categories:    uuidStrings(v.Categories),
-		Keywords:      toProtoKeywords(v.Keywords),
+		Title:                     string(v.Title),
+		ContactPoints:             uuidStrings(v.ContactPoints),
+		Providers:                 uuidStrings(v.Providers),
+		Categories:                uuidStrings(v.Categories),
+		Keywords:                  toProtoKeywords(v.Keywords),
+		ConformsTo:                protoOptionalString(v.ConformsTo),
+		Provenance:                protoOptionalString(v.Provenance),
+		Type:                      protoOptionalString(v.Type),
+		Version:                   protoOptionalString(v.Version),
+		QualityAnnotation:         protoOptionalString(v.QualityAnnotation),
+		SpatialCoverage:           protoOptionalString(v.SpatialCoverage),
+		SpatialResolutionInMeters: protoOptionalFloat(v.SpatialResolutionInMeters),
+		TemporalResolution:        protoOptionalFloat(v.TemporalResolution),
+		Created:                   protoOptionalTime(v.Created),
+		Updated:                   protoOptionalTime(v.Updated),
 	}
 	temporalRange, err := toProtoDatasetTemporalRange(v.TemporalCoverage, v.GeologicalTemporalCoverage)
 	if err != nil {
@@ -30,23 +39,11 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 		return nil, err
 	}
 	r.AccrualPeriodicity = accrualPeriodicity
-	if v.QualityAnnotation.Set && !v.QualityAnnotation.Null {
-		r.QualityAnnotation = new(v.QualityAnnotation.Value)
-	}
 	accessRight, err := toProtoDatasetAccessRight(v.AccessRight)
 	if err != nil {
 		return nil, err
 	}
 	r.AccessRight = accessRight
-	if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
-		r.SpatialCoverage = new(v.SpatialCoverage.Value)
-	}
-	if v.Created.Set && !v.Created.Null {
-		r.Created = timestamppb.New(v.Created.Value)
-	}
-	if v.Updated.Set && !v.Updated.Null {
-		r.Updated = timestamppb.New(v.Updated.Value)
-	}
 	for _, id := range v.PersistentIdentifiers {
 		r.PersistentIdentifiers = append(r.PersistentIdentifiers, toProtoVersionedIdentifierInput(id))
 	}
