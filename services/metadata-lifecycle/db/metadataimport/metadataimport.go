@@ -783,11 +783,7 @@ func importDataset(
 		if createErr != nil {
 			return fmt.Errorf("create imported dataset %q: %w", value.ID, createErr)
 		}
-		params, buildErr := datasetdb.ToCreateVersionParams(logical.ID, actorID, valueInput)
-		if buildErr != nil {
-			return fmt.Errorf("build imported dataset version: %w", buildErr)
-		}
-		version, createErr := q.CreateLifecycleDatasetVersion(ctx, params)
+		version, createErr := q.CreateLifecycleDatasetVersion(ctx, datasetdb.ToCreateVersionParams(logical.ID, actorID, valueInput))
 		if createErr != nil {
 			return fmt.Errorf("create imported dataset version %q: %w", value.ID, createErr)
 		}

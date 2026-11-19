@@ -3246,6 +3246,12 @@ components:
           items: { $ref: "#/components/schemas/Keyword" }
         accrual_periodicity: { $ref: "#/components/schemas/DatasetAccrualPeriodicity" }
         quality_annotation: { type: string, nullable: true }
+        conforms_to: { type: string, nullable: true }
+        provenance: { type: string, nullable: true }
+        type: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        spatial_resolution_in_meters: { type: number, format: double, minimum: 0, nullable: true }
+        temporal_resolution: { type: number, format: double, minimum: 0, nullable: true, description: Resolution in seconds. }
         access_right: { $ref: "#/components/schemas/DatasetAccessRight" }
         distributions:
           {
@@ -3413,6 +3419,10 @@ components:
         provider: { type: string, format: uuid }
         documentation_uri: { type: string, format: uri, minLength: 1 }
         contact_points: { type: array, items: { type: string, format: uuid } }
+        keywords: { type: array, items: { $ref: "#/components/schemas/Keyword" } }
+        access_rights: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        categories: { type: array, items: { type: string, format: uuid } }
 
     HttpWebServiceDraft:
       allOf:
@@ -3440,33 +3450,26 @@ components:
         - $ref: "#/components/schemas/WmtsWebServiceConfigurationDraft"
 
     GenericWebServiceConfigurationDraft:
-      type: object
-      required: [type, template_url, method, format]
-      properties:
-        type:
-          type: string
-          enum: [HTTP]
-        template_url: { $ref: "#/components/schemas/NonBlankString" }
-        method: { $ref: "#/components/schemas/WebServiceMethod" }
-        parameters:
-          type: array
-          items: { $ref: "#/components/schemas/ParameterDraft" }
-        body_content_type: { $ref: "#/components/schemas/NonBlankString" }
-        body_template: { $ref: "#/components/schemas/NonBlankString" }
-        body_required:
-          type: boolean
-          description: Defaults to true when a request body is configured. Must be omitted when no body is configured. Optional bodies are omitted only when unresolved and no child values were supplied.
-        body_parameters:
-          type: array
-          items: { $ref: "#/components/schemas/ScalarParameterDraft" }
-        format: { $ref: "#/components/schemas/NonBlankString" }
+      allOf:
+        - $ref: "#/components/schemas/SharedWebServiceConfigurationDraft"
+        - type: object
+          required: [type]
+          properties:
+            type: { type: string, enum: [HTTP] }
 
     DynamicWebServiceConfigurationDraft:
-      type: object
       description: HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
-      required: [type, template_url, method, format]
+      allOf:
+        - $ref: "#/components/schemas/SharedWebServiceConfigurationDraft"
+        - type: object
+          required: [type]
+          properties:
+            type: { type: string, enum: [DYNAMIC] }
+
+    SharedWebServiceConfigurationDraft:
+      type: object
+      required: [template_url, method, format]
       properties:
-        type: { type: string, enum: [DYNAMIC] }
         template_url: { $ref: "#/components/schemas/NonBlankString" }
         method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:
@@ -4505,6 +4508,12 @@ components:
           items: { $ref: "#/components/schemas/Keyword" }
         accrual_periodicity: { $ref: "#/components/schemas/DatasetAccrualPeriodicity" }
         quality_annotation: { type: string, nullable: true }
+        conforms_to: { type: string, nullable: true }
+        provenance: { type: string, nullable: true }
+        type: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        spatial_resolution_in_meters: { type: number, format: double, minimum: 0, nullable: true }
+        temporal_resolution: { type: number, format: double, minimum: 0, nullable: true, description: Resolution in seconds. }
         access_right: { $ref: "#/components/schemas/DatasetAccessRight" }
         distributions:
           type: array
@@ -4735,6 +4744,10 @@ components:
         contact_points:
           type: array
           items: { type: string, format: uuid }
+        keywords: { type: array, items: { $ref: "#/components/schemas/Keyword" } }
+        access_rights: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        categories: { type: array, items: { $ref: "#/components/schemas/ResourceVersionReference" } }
 
     WebServiceAvailableFormats:
       type: object
@@ -4775,33 +4788,26 @@ components:
         - $ref: "#/components/schemas/WmtsWebServiceConfiguration"
 
     GenericWebServiceConfiguration:
-      type: object
-      required: [type, template_url, method, format]
-      properties:
-        type:
-          type: string
-          enum: [HTTP]
-        template_url: { type: string }
-        method: { $ref: "#/components/schemas/WebServiceMethod" }
-        parameters:
-          type: array
-          items: { $ref: "#/components/schemas/Parameter" }
-        body_content_type: { type: string, nullable: true }
-        body_template: { type: string, nullable: true }
-        body_required:
-          type: boolean
-          description: Whether the configured request body must be rendered. Omitted when no request body is configured.
-        body_parameters:
-          type: array
-          items: { $ref: "#/components/schemas/ScalarParameter" }
-        format: { type: string }
+      allOf:
+        - $ref: "#/components/schemas/SharedWebServiceConfiguration"
+        - type: object
+          required: [type]
+          properties:
+            type: { type: string, enum: [HTTP] }
 
     DynamicWebServiceConfiguration:
-      type: object
       description: HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters.
-      required: [type, template_url, method, format]
+      allOf:
+        - $ref: "#/components/schemas/SharedWebServiceConfiguration"
+        - type: object
+          required: [type]
+          properties:
+            type: { type: string, enum: [DYNAMIC] }
+
+    SharedWebServiceConfiguration:
+      type: object
+      required: [template_url, method, format]
       properties:
-        type: { type: string, enum: [DYNAMIC] }
         template_url: { type: string }
         method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:

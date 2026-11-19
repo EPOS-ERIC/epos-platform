@@ -209,18 +209,31 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
 
         suffix = uuid4().hex
         group_id = create_group(self.gateway, f"body-parameter-{suffix}")
+        category_id = self.create_category(group_id, f"service-{suffix}")
         metadata = {
             "title": f"Dataset {suffix}",
             "description": "Dataset with web-service body parameter",
+            "conforms_to": "standard",
+            "provenance": "source",
+            "type": "observation",
+            "version": "1.0",
+            "spatial_resolution_in_meters": 0.25,
+            "temporal_resolution": 0,
+            "categories": [category_id],
             "distributions": [
                 web_distribution(
                     method="POST",
                     body_content_type="text/plain",
                     body_template="{{.payload}}",
                     body_parameters=[child("payload")],
+                    keywords=["service"],
+                    access_rights="public",
+                    license="license",
+                    categories=[category_id],
                 )
             ],
         }
+        metadata["distributions"][0]["byte_size"] = 3_000_000_000
         resource_id = self.create_and_publish(group_id, "dataset", metadata)
         published_version = self.version("dataset", resource_id, "PUBLISHED")
         published_details = self.details(
@@ -241,11 +254,33 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
 
         draft_version = self.version("dataset", resource_id, "DRAFT")
         draft_details = self.details("dataset", resource_id, draft_version["id"])
-        draft_service = draft_details["metadata"]["distributions"][0]["web_service"]
+        draft_distribution = draft_details["metadata"]["distributions"][0]
+        draft_service = draft_distribution["web_service"]
         draft_parameter = draft_service["body_parameters"][0]
+        for field in ("conforms_to", "provenance", "type", "version", "spatial_resolution_in_meters", "temporal_resolution"):
+            self.assertEqual(draft_details["metadata"][field], metadata[field])
+        for distribution in (source_distribution, draft_distribution):
+            service = distribution["web_service"]
+            self.assertEqual(distribution["byte_size"], 3_000_000_000)
+            self.assertEqual(service["keywords"], ["service"])
+            self.assertEqual([category["id"] for category in service["categories"]], [category_id])
+            self.assertEqual(service["access_rights"], "public")
+            self.assertEqual(service["license"], "license")
         self.assertEqual(draft_parameter["name"], source_parameter["name"])
         self.assertNotEqual(draft_parameter["id"], source_parameter["id"])
         self.assertEqual(draft_service["body_template"], source_service["body_template"])
+        self.assertEqual([category["id"] for category in draft_details["metadata"]["categories"]], [category_id])
+
+        copied = self.gateway.post(
+            "/groups/{groupId}/resources/{resourceType}/{id}/copy",
+            groupId=group_id, resourceType="dataset", id=resource_id,
+        )
+        self.assertEqual(copied.status_code, 201)
+        copied_id = copied.json()["id"]
+        copied_version = self.version("dataset", copied_id, "DRAFT")
+        copied_metadata = self.details("dataset", copied_id, copied_version["id"])["metadata"]
+        self.assertEqual(copied_metadata["categories"], [])
+        self.assertFalse(copied_metadata["distributions"][0]["web_service"].get("categories"))
 
     def test_resource_variants_and_copy(self) -> None:
         """Verify resource variants, copied ownership, and publication drafts."""

@@ -96,6 +96,10 @@ type WebServiceCommon struct {
 	Provider         *OrganizationMetadata
 	DocumentationURI *string
 	ContactPoints    []ContactPoint
+	Keywords         []string
+	AccessRights     *string
+	License          *string
+	Categories       []CategoryMetadata
 }
 
 func (w *WebServiceCommon) Common() *WebServiceCommon {
@@ -112,6 +116,15 @@ func (w *WebServiceCommon) Normalize() error {
 		return fmt.Errorf("visible on: %w", err)
 	}
 	w.VisibleOn = visibleOn
+	w.Keywords, err = normalizeKeywords(w.Keywords)
+	if err != nil {
+		return fmt.Errorf("keywords: %w", err)
+	}
+	w.AccessRights = optionalTrimmedString(w.AccessRights)
+	w.License = optionalTrimmedString(w.License)
+	if err := validateCategories(w.Categories, "category"); err != nil {
+		return fmt.Errorf("categories: %w", err)
+	}
 
 	if w.DocumentationURI != nil {
 		uri := strings.TrimSpace(*w.DocumentationURI)
@@ -155,6 +168,10 @@ type WebServiceCommonInput struct {
 	ProviderID       *uuid.UUID
 	DocumentationURI *string
 	ContactPointIDs  []uuid.UUID
+	Keywords         []string
+	AccessRights     *string
+	License          *string
+	CategoryIDs      []uuid.UUID
 }
 
 func (w *WebServiceCommonInput) CommonInput() *WebServiceCommonInput {
@@ -167,6 +184,15 @@ func (w *WebServiceCommonInput) Normalize() error {
 		return invalidField("visible_on", "Audience selection must contain supported values.", err)
 	}
 	w.VisibleOn = visibleOn
+	w.Keywords, err = normalizeKeywordInput(w.Keywords)
+	if err != nil {
+		return err
+	}
+	w.AccessRights = optionalTrimmedString(w.AccessRights)
+	w.License = optionalTrimmedString(w.License)
+	if err := validateUUIDListField(w.CategoryIDs, "categories", "Category"); err != nil {
+		return err
+	}
 
 	if w.ProviderID != nil && *w.ProviderID == uuid.Nil {
 		return invalidField("provider", "Provider must be a valid UUID.", nil)

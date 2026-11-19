@@ -814,7 +814,13 @@ type DatasetVersion struct {
 	Keywords                   []string
 	AccrualPeriodicity         *DatasetAccrualPeriodicity
 	QualityAnnotation          *string
+	ConformsTo                 *string
+	Provenance                 *string
+	Type                       *string
+	Version                    *string
 	AccessRight                *DatasetAccessRight
+	SpatialResolutionInMeters  *float64
+	TemporalResolution         *float64
 	SourceCreatedAt            *time.Time
 	SourceUpdatedAt            *time.Time
 	SpatialCoverage            go_geom.T
@@ -868,7 +874,7 @@ type Distribution struct {
 	Title                  string
 	Description            string
 	License                *string
-	ByteSize               *int32
+	ByteSize               *int64
 	Type                   DistributionType
 	DownloadableFileUrl    *string
 	DownloadableFileFormat *string
@@ -1206,6 +1212,9 @@ type WebService struct {
 	VisibleOn              []WebServiceVisibleOn
 	ProviderOrganizationID *uuid.UUID
 	DocumentationUri       *string
+	Keywords               []string
+	AccessRights           *string
+	License                *string
 }
 
 type WebServiceBody struct {
@@ -1214,6 +1223,12 @@ type WebServiceBody struct {
 	ContentType  string
 	Template     string
 	BodyRequired bool
+}
+
+type WebServiceCategory struct {
+	WebServiceID uuid.UUID
+	GroupID      uuid.UUID
+	CategoryID   uuid.UUID
 }
 
 type WebServiceContactPoint struct {

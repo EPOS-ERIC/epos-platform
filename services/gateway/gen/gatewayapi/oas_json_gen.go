@@ -6344,6 +6344,42 @@ func (s *DatasetDraftMetadata) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.ConformsTo.Set {
+			e.FieldStart("conforms_to")
+			s.ConformsTo.Encode(e)
+		}
+	}
+	{
+		if s.Provenance.Set {
+			e.FieldStart("provenance")
+			s.Provenance.Encode(e)
+		}
+	}
+	{
+		if s.Type.Set {
+			e.FieldStart("type")
+			s.Type.Encode(e)
+		}
+	}
+	{
+		if s.Version.Set {
+			e.FieldStart("version")
+			s.Version.Encode(e)
+		}
+	}
+	{
+		if s.SpatialResolutionInMeters.Set {
+			e.FieldStart("spatial_resolution_in_meters")
+			s.SpatialResolutionInMeters.Encode(e)
+		}
+	}
+	{
+		if s.TemporalResolution.Set {
+			e.FieldStart("temporal_resolution")
+			s.TemporalResolution.Encode(e)
+		}
+	}
+	{
 		if s.AccessRight.Set {
 			e.FieldStart("access_right")
 			s.AccessRight.Encode(e)
@@ -6431,23 +6467,29 @@ func (s *DatasetDraftMetadata) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfDatasetDraftMetadata = [16]string{
+var jsonFieldsNameOfDatasetDraftMetadata = [22]string{
 	0:  "title",
 	1:  "description",
 	2:  "keywords",
 	3:  "accrual_periodicity",
 	4:  "quality_annotation",
-	5:  "access_right",
-	6:  "distributions",
-	7:  "spatial_coverage",
-	8:  "temporal_coverage",
-	9:  "geological_temporal_coverage",
-	10: "persistent_identifiers",
-	11: "contact_points",
-	12: "providers",
-	13: "categories",
-	14: "created",
-	15: "updated",
+	5:  "conforms_to",
+	6:  "provenance",
+	7:  "type",
+	8:  "version",
+	9:  "spatial_resolution_in_meters",
+	10: "temporal_resolution",
+	11: "access_right",
+	12: "distributions",
+	13: "spatial_coverage",
+	14: "temporal_coverage",
+	15: "geological_temporal_coverage",
+	16: "persistent_identifiers",
+	17: "contact_points",
+	18: "providers",
+	19: "categories",
+	20: "created",
+	21: "updated",
 }
 
 // Decode decodes DatasetDraftMetadata from json.
@@ -6455,7 +6497,7 @@ func (s *DatasetDraftMetadata) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode DatasetDraftMetadata to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -6515,6 +6557,66 @@ func (s *DatasetDraftMetadata) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"quality_annotation\"")
+			}
+		case "conforms_to":
+			if err := func() error {
+				s.ConformsTo.Reset()
+				if err := s.ConformsTo.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"conforms_to\"")
+			}
+		case "provenance":
+			if err := func() error {
+				s.Provenance.Reset()
+				if err := s.Provenance.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"provenance\"")
+			}
+		case "type":
+			if err := func() error {
+				s.Type.Reset()
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "version":
+			if err := func() error {
+				s.Version.Reset()
+				if err := s.Version.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"version\"")
+			}
+		case "spatial_resolution_in_meters":
+			if err := func() error {
+				s.SpatialResolutionInMeters.Reset()
+				if err := s.SpatialResolutionInMeters.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"spatial_resolution_in_meters\"")
+			}
+		case "temporal_resolution":
+			if err := func() error {
+				s.TemporalResolution.Reset()
+				if err := s.TemporalResolution.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"temporal_resolution\"")
 			}
 		case "access_right":
 			if err := func() error {
@@ -6676,8 +6778,9 @@ func (s *DatasetDraftMetadata) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
+	for i, mask := range [3]uint8{
 		0b00000011,
+		0b00000000,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
@@ -6766,6 +6869,42 @@ func (s *DatasetResourceMetadata) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.ConformsTo.Set {
+			e.FieldStart("conforms_to")
+			s.ConformsTo.Encode(e)
+		}
+	}
+	{
+		if s.Provenance.Set {
+			e.FieldStart("provenance")
+			s.Provenance.Encode(e)
+		}
+	}
+	{
+		if s.Type.Set {
+			e.FieldStart("type")
+			s.Type.Encode(e)
+		}
+	}
+	{
+		if s.Version.Set {
+			e.FieldStart("version")
+			s.Version.Encode(e)
+		}
+	}
+	{
+		if s.SpatialResolutionInMeters.Set {
+			e.FieldStart("spatial_resolution_in_meters")
+			s.SpatialResolutionInMeters.Encode(e)
+		}
+	}
+	{
+		if s.TemporalResolution.Set {
+			e.FieldStart("temporal_resolution")
+			s.TemporalResolution.Encode(e)
+		}
+	}
+	{
 		if s.AccessRight.Set {
 			e.FieldStart("access_right")
 			s.AccessRight.Encode(e)
@@ -6847,24 +6986,30 @@ func (s *DatasetResourceMetadata) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfDatasetResourceMetadata = [17]string{
+var jsonFieldsNameOfDatasetResourceMetadata = [23]string{
 	0:  "resource_type",
 	1:  "title",
 	2:  "description",
 	3:  "keywords",
 	4:  "accrual_periodicity",
 	5:  "quality_annotation",
-	6:  "access_right",
-	7:  "distributions",
-	8:  "spatial_coverage",
-	9:  "temporal_coverage",
-	10: "geological_temporal_coverage",
-	11: "persistent_identifiers",
-	12: "contact_points",
-	13: "providers",
-	14: "categories",
-	15: "created",
-	16: "updated",
+	6:  "conforms_to",
+	7:  "provenance",
+	8:  "type",
+	9:  "version",
+	10: "spatial_resolution_in_meters",
+	11: "temporal_resolution",
+	12: "access_right",
+	13: "distributions",
+	14: "spatial_coverage",
+	15: "temporal_coverage",
+	16: "geological_temporal_coverage",
+	17: "persistent_identifiers",
+	18: "contact_points",
+	19: "providers",
+	20: "categories",
+	21: "created",
+	22: "updated",
 }
 
 // Decode decodes DatasetResourceMetadata from json.
@@ -6948,6 +7093,66 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"quality_annotation\"")
 			}
+		case "conforms_to":
+			if err := func() error {
+				s.ConformsTo.Reset()
+				if err := s.ConformsTo.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"conforms_to\"")
+			}
+		case "provenance":
+			if err := func() error {
+				s.Provenance.Reset()
+				if err := s.Provenance.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"provenance\"")
+			}
+		case "type":
+			if err := func() error {
+				s.Type.Reset()
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "version":
+			if err := func() error {
+				s.Version.Reset()
+				if err := s.Version.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"version\"")
+			}
+		case "spatial_resolution_in_meters":
+			if err := func() error {
+				s.SpatialResolutionInMeters.Reset()
+				if err := s.SpatialResolutionInMeters.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"spatial_resolution_in_meters\"")
+			}
+		case "temporal_resolution":
+			if err := func() error {
+				s.TemporalResolution.Reset()
+				if err := s.TemporalResolution.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"temporal_resolution\"")
+			}
 		case "access_right":
 			if err := func() error {
 				s.AccessRight.Reset()
@@ -6959,7 +7164,7 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"access_right\"")
 			}
 		case "distributions":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				s.Distributions = make([]Distribution, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -7007,7 +7212,7 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"geological_temporal_coverage\"")
 			}
 		case "persistent_identifiers":
-			requiredBitSet[1] |= 1 << 3
+			requiredBitSet[2] |= 1 << 1
 			if err := func() error {
 				s.PersistentIdentifiers = make([]VersionedIdentifier, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -7025,10 +7230,11 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"persistent_identifiers\"")
 			}
 		case "contact_points":
-			requiredBitSet[1] |= 1 << 4
+			requiredBitSet[2] |= 1 << 2
 			if err := func() error {
 				switch tt := d.Next(); tt {
 				case jx.Null:
+					s.ContactPoints = nil
 					if err := d.Skip(); err != nil {
 						return err
 					}
@@ -7052,7 +7258,7 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
 		case "providers":
-			requiredBitSet[1] |= 1 << 5
+			requiredBitSet[2] |= 1 << 3
 			if err := func() error {
 				s.Providers = make([]ResourceVersionReference, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -7070,7 +7276,7 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"providers\"")
 			}
 		case "categories":
-			requiredBitSet[1] |= 1 << 6
+			requiredBitSet[2] |= 1 << 4
 			if err := func() error {
 				s.Categories = make([]ResourceVersionReference, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -7117,9 +7323,9 @@ func (s *DatasetResourceMetadata) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [3]uint8{
-		0b10001111,
-		0b01111000,
-		0b00000000,
+		0b00001111,
+		0b00100000,
+		0b00011110,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -7254,6 +7460,38 @@ func (s DatasetWebService) encodeFields(e *jx.Encoder) {
 				}
 			}
 			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
 				e.FieldStart("capabilities_url")
 				e.Str(s.CapabilitiesURL)
 			}
@@ -7336,6 +7574,38 @@ func (s DatasetWebService) encodeFields(e *jx.Encoder) {
 				}
 			}
 			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
 				e.FieldStart("capabilities_url")
 				e.Str(s.CapabilitiesURL)
 			}
@@ -7405,6 +7675,38 @@ func (s DatasetWebService) encodeFields(e *jx.Encoder) {
 					e.ArrStart()
 					for _, elem := range s.ContactPoints {
 						json.EncodeUUID(e, elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -7510,6 +7812,38 @@ func (s DatasetWebService) encodeFields(e *jx.Encoder) {
 				}
 			}
 			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
 				e.FieldStart("template_url")
 				e.Str(s.TemplateURL)
 			}
@@ -7605,6 +7939,38 @@ func (s DatasetWebService) encodeFields(e *jx.Encoder) {
 					e.ArrStart()
 					for _, elem := range s.ContactPoints {
 						json.EncodeUUID(e, elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
+						elem.Encode(e)
 					}
 					e.ArrEnd()
 				}
@@ -12040,8 +12406,36 @@ func (s *DynamicWebService) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("type")
-		s.Type.Encode(e)
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
 	}
 	{
 		e.FieldStart("template_url")
@@ -12094,6 +12488,10 @@ func (s *DynamicWebService) encodeFields(e *jx.Encoder) {
 		e.Str(s.Format)
 	}
 	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
 		e.FieldStart("available_formats")
 		e.ArrStart()
 		for _, elem := range s.AvailableFormats {
@@ -12103,23 +12501,27 @@ func (s *DynamicWebService) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfDynamicWebService = [16]string{
+var jsonFieldsNameOfDynamicWebService = [20]string{
 	0:  "id",
 	1:  "resource_id",
 	2:  "visible_on",
 	3:  "provider",
 	4:  "documentation_uri",
 	5:  "contact_points",
-	6:  "type",
-	7:  "template_url",
-	8:  "method",
-	9:  "parameters",
-	10: "body_content_type",
-	11: "body_template",
-	12: "body_required",
-	13: "body_parameters",
-	14: "format",
-	15: "available_formats",
+	6:  "keywords",
+	7:  "access_rights",
+	8:  "license",
+	9:  "categories",
+	10: "template_url",
+	11: "method",
+	12: "parameters",
+	13: "body_content_type",
+	14: "body_template",
+	15: "body_required",
+	16: "body_parameters",
+	17: "format",
+	18: "type",
+	19: "available_formats",
 }
 
 // Decode decodes DynamicWebService from json.
@@ -12127,7 +12529,7 @@ func (s *DynamicWebService) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode DynamicWebService to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -12204,18 +12606,62 @@ func (s *DynamicWebService) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
-		case "type":
-			requiredBitSet[0] |= 1 << 6
+		case "keywords":
 			if err := func() error {
-				if err := s.Type.Decode(d); err != nil {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]ResourceVersionReference, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ResourceVersionReference
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
 			}
 		case "template_url":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
 				s.TemplateURL = string(v)
@@ -12227,7 +12673,7 @@ func (s *DynamicWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"template_url\"")
 			}
 		case "method":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				if err := s.Method.Decode(d); err != nil {
 					return err
@@ -12301,7 +12747,7 @@ func (s *DynamicWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"body_parameters\"")
 			}
 		case "format":
-			requiredBitSet[1] |= 1 << 6
+			requiredBitSet[2] |= 1 << 1
 			if err := func() error {
 				v, err := d.Str()
 				s.Format = string(v)
@@ -12312,8 +12758,18 @@ func (s *DynamicWebService) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"format\"")
 			}
+		case "type":
+			requiredBitSet[2] |= 1 << 2
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
 		case "available_formats":
-			requiredBitSet[1] |= 1 << 7
+			requiredBitSet[2] |= 1 << 3
 			if err := func() error {
 				s.AvailableFormats = make([]AvailableFormat, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -12339,9 +12795,10 @@ func (s *DynamicWebService) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
-		0b11000011,
-		0b11000001,
+	for i, mask := range [3]uint8{
+		0b00000011,
+		0b00001100,
+		0b00001110,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -12431,8 +12888,36 @@ func (s *DynamicWebServiceDraft) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("type")
-		s.Type.Encode(e)
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				json.EncodeUUID(e, elem)
+			}
+			e.ArrEnd()
+		}
 	}
 	{
 		e.FieldStart("template_url")
@@ -12484,23 +12969,31 @@ func (s *DynamicWebServiceDraft) encodeFields(e *jx.Encoder) {
 		e.FieldStart("format")
 		s.Format.Encode(e)
 	}
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
 }
 
-var jsonFieldsNameOfDynamicWebServiceDraft = [14]string{
+var jsonFieldsNameOfDynamicWebServiceDraft = [18]string{
 	0:  "resource_id",
 	1:  "visible_on",
 	2:  "provider",
 	3:  "documentation_uri",
 	4:  "contact_points",
-	5:  "type",
-	6:  "template_url",
-	7:  "method",
-	8:  "parameters",
-	9:  "body_content_type",
-	10: "body_template",
-	11: "body_required",
-	12: "body_parameters",
-	13: "format",
+	5:  "keywords",
+	6:  "access_rights",
+	7:  "license",
+	8:  "categories",
+	9:  "template_url",
+	10: "method",
+	11: "parameters",
+	12: "body_content_type",
+	13: "body_template",
+	14: "body_required",
+	15: "body_parameters",
+	16: "format",
+	17: "type",
 }
 
 // Decode decodes DynamicWebServiceDraft from json.
@@ -12508,7 +13001,7 @@ func (s *DynamicWebServiceDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode DynamicWebServiceDraft to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -12571,18 +13064,64 @@ func (s *DynamicWebServiceDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
-		case "type":
-			requiredBitSet[0] |= 1 << 5
+		case "keywords":
 			if err := func() error {
-				if err := s.Type.Decode(d); err != nil {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]uuid.UUID, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem uuid.UUID
+					v, err := json.DecodeUUID(d)
+					elem = v
+					if err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
 			}
 		case "template_url":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.TemplateURL.Decode(d); err != nil {
 					return err
@@ -12592,7 +13131,7 @@ func (s *DynamicWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"template_url\"")
 			}
 		case "method":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.Method.Decode(d); err != nil {
 					return err
@@ -12666,7 +13205,7 @@ func (s *DynamicWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"body_parameters\"")
 			}
 		case "format":
-			requiredBitSet[1] |= 1 << 5
+			requiredBitSet[2] |= 1 << 0
 			if err := func() error {
 				if err := s.Format.Decode(d); err != nil {
 					return err
@@ -12674,6 +13213,16 @@ func (s *DynamicWebServiceDraft) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"format\"")
+			}
+		case "type":
+			requiredBitSet[2] |= 1 << 1
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
 			}
 		default:
 			return d.Skip()
@@ -12684,9 +13233,10 @@ func (s *DynamicWebServiceDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
-		0b11100000,
-		0b00100000,
+	for i, mask := range [3]uint8{
+		0b00000000,
+		0b00000110,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -15408,8 +15958,36 @@ func (s *HttpWebService) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("type")
-		s.Type.Encode(e)
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
 	}
 	{
 		e.FieldStart("template_url")
@@ -15462,6 +16040,10 @@ func (s *HttpWebService) encodeFields(e *jx.Encoder) {
 		e.Str(s.Format)
 	}
 	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
 		e.FieldStart("available_formats")
 		e.ArrStart()
 		for _, elem := range s.AvailableFormats {
@@ -15471,23 +16053,27 @@ func (s *HttpWebService) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfHttpWebService = [16]string{
+var jsonFieldsNameOfHttpWebService = [20]string{
 	0:  "id",
 	1:  "resource_id",
 	2:  "visible_on",
 	3:  "provider",
 	4:  "documentation_uri",
 	5:  "contact_points",
-	6:  "type",
-	7:  "template_url",
-	8:  "method",
-	9:  "parameters",
-	10: "body_content_type",
-	11: "body_template",
-	12: "body_required",
-	13: "body_parameters",
-	14: "format",
-	15: "available_formats",
+	6:  "keywords",
+	7:  "access_rights",
+	8:  "license",
+	9:  "categories",
+	10: "template_url",
+	11: "method",
+	12: "parameters",
+	13: "body_content_type",
+	14: "body_template",
+	15: "body_required",
+	16: "body_parameters",
+	17: "format",
+	18: "type",
+	19: "available_formats",
 }
 
 // Decode decodes HttpWebService from json.
@@ -15495,7 +16081,7 @@ func (s *HttpWebService) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode HttpWebService to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -15572,18 +16158,62 @@ func (s *HttpWebService) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
-		case "type":
-			requiredBitSet[0] |= 1 << 6
+		case "keywords":
 			if err := func() error {
-				if err := s.Type.Decode(d); err != nil {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]ResourceVersionReference, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ResourceVersionReference
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
 			}
 		case "template_url":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
 				s.TemplateURL = string(v)
@@ -15595,7 +16225,7 @@ func (s *HttpWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"template_url\"")
 			}
 		case "method":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				if err := s.Method.Decode(d); err != nil {
 					return err
@@ -15669,7 +16299,7 @@ func (s *HttpWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"body_parameters\"")
 			}
 		case "format":
-			requiredBitSet[1] |= 1 << 6
+			requiredBitSet[2] |= 1 << 1
 			if err := func() error {
 				v, err := d.Str()
 				s.Format = string(v)
@@ -15680,8 +16310,18 @@ func (s *HttpWebService) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"format\"")
 			}
+		case "type":
+			requiredBitSet[2] |= 1 << 2
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
 		case "available_formats":
-			requiredBitSet[1] |= 1 << 7
+			requiredBitSet[2] |= 1 << 3
 			if err := func() error {
 				s.AvailableFormats = make([]AvailableFormat, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -15707,9 +16347,10 @@ func (s *HttpWebService) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
-		0b11000011,
-		0b11000001,
+	for i, mask := range [3]uint8{
+		0b00000011,
+		0b00001100,
+		0b00001110,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -15799,8 +16440,36 @@ func (s *HttpWebServiceDraft) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("type")
-		s.Type.Encode(e)
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				json.EncodeUUID(e, elem)
+			}
+			e.ArrEnd()
+		}
 	}
 	{
 		e.FieldStart("template_url")
@@ -15852,23 +16521,31 @@ func (s *HttpWebServiceDraft) encodeFields(e *jx.Encoder) {
 		e.FieldStart("format")
 		s.Format.Encode(e)
 	}
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
 }
 
-var jsonFieldsNameOfHttpWebServiceDraft = [14]string{
+var jsonFieldsNameOfHttpWebServiceDraft = [18]string{
 	0:  "resource_id",
 	1:  "visible_on",
 	2:  "provider",
 	3:  "documentation_uri",
 	4:  "contact_points",
-	5:  "type",
-	6:  "template_url",
-	7:  "method",
-	8:  "parameters",
-	9:  "body_content_type",
-	10: "body_template",
-	11: "body_required",
-	12: "body_parameters",
-	13: "format",
+	5:  "keywords",
+	6:  "access_rights",
+	7:  "license",
+	8:  "categories",
+	9:  "template_url",
+	10: "method",
+	11: "parameters",
+	12: "body_content_type",
+	13: "body_template",
+	14: "body_required",
+	15: "body_parameters",
+	16: "format",
+	17: "type",
 }
 
 // Decode decodes HttpWebServiceDraft from json.
@@ -15876,7 +16553,7 @@ func (s *HttpWebServiceDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode HttpWebServiceDraft to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -15939,18 +16616,64 @@ func (s *HttpWebServiceDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
-		case "type":
-			requiredBitSet[0] |= 1 << 5
+		case "keywords":
 			if err := func() error {
-				if err := s.Type.Decode(d); err != nil {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]uuid.UUID, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem uuid.UUID
+					v, err := json.DecodeUUID(d)
+					elem = v
+					if err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
 			}
 		case "template_url":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.TemplateURL.Decode(d); err != nil {
 					return err
@@ -15960,7 +16683,7 @@ func (s *HttpWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"template_url\"")
 			}
 		case "method":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.Method.Decode(d); err != nil {
 					return err
@@ -16034,7 +16757,7 @@ func (s *HttpWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"body_parameters\"")
 			}
 		case "format":
-			requiredBitSet[1] |= 1 << 5
+			requiredBitSet[2] |= 1 << 0
 			if err := func() error {
 				if err := s.Format.Decode(d); err != nil {
 					return err
@@ -16042,6 +16765,16 @@ func (s *HttpWebServiceDraft) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"format\"")
+			}
+		case "type":
+			requiredBitSet[2] |= 1 << 1
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
 			}
 		default:
 			return d.Skip()
@@ -16052,9 +16785,10 @@ func (s *HttpWebServiceDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
-		0b11100000,
-		0b00100000,
+	for i, mask := range [3]uint8{
+		0b00000000,
+		0b00000110,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -25797,6 +26531,42 @@ func (s ResourceVersionMetadata) encodeFields(e *jx.Encoder) {
 				}
 			}
 			{
+				if s.ConformsTo.Set {
+					e.FieldStart("conforms_to")
+					s.ConformsTo.Encode(e)
+				}
+			}
+			{
+				if s.Provenance.Set {
+					e.FieldStart("provenance")
+					s.Provenance.Encode(e)
+				}
+			}
+			{
+				if s.Type.Set {
+					e.FieldStart("type")
+					s.Type.Encode(e)
+				}
+			}
+			{
+				if s.Version.Set {
+					e.FieldStart("version")
+					s.Version.Encode(e)
+				}
+			}
+			{
+				if s.SpatialResolutionInMeters.Set {
+					e.FieldStart("spatial_resolution_in_meters")
+					s.SpatialResolutionInMeters.Encode(e)
+				}
+			}
+			{
+				if s.TemporalResolution.Set {
+					e.FieldStart("temporal_resolution")
+					s.TemporalResolution.Encode(e)
+				}
+			}
+			{
 				if s.AccessRight.Set {
 					e.FieldStart("access_right")
 					s.AccessRight.Encode(e)
@@ -28841,6 +29611,7 @@ func (s *SoftwareApplicationResourceMetadata) Decode(d *jx.Decoder) error {
 			if err := func() error {
 				switch tt := d.Next(); tt {
 				case jx.Null:
+					s.ContactPoints = nil
 					if err := d.Skip(); err != nil {
 						return err
 					}
@@ -29969,6 +30740,7 @@ func (s *SoftwareSourceCodeResourceMetadata) Decode(d *jx.Decoder) error {
 			if err := func() error {
 				switch tt := d.Next(); tt {
 				case jx.Null:
+					s.ContactPoints = nil
 					if err := d.Skip(); err != nil {
 						return err
 					}
@@ -34506,6 +35278,38 @@ func (s WebServiceDraft) encodeFields(e *jx.Encoder) {
 				}
 			}
 			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
+						json.EncodeUUID(e, elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
 				e.FieldStart("capabilities_url")
 				e.Str(s.CapabilitiesURL)
 			}
@@ -34586,6 +35390,38 @@ func (s WebServiceDraft) encodeFields(e *jx.Encoder) {
 				}
 			}
 			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
+						json.EncodeUUID(e, elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
 				e.FieldStart("capabilities_url")
 				e.Str(s.CapabilitiesURL)
 			}
@@ -34652,6 +35488,38 @@ func (s WebServiceDraft) encodeFields(e *jx.Encoder) {
 					e.FieldStart("contact_points")
 					e.ArrStart()
 					for _, elem := range s.ContactPoints {
+						json.EncodeUUID(e, elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
 						json.EncodeUUID(e, elem)
 					}
 					e.ArrEnd()
@@ -34748,6 +35616,38 @@ func (s WebServiceDraft) encodeFields(e *jx.Encoder) {
 				}
 			}
 			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
+						json.EncodeUUID(e, elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
 				e.FieldStart("template_url")
 				s.TemplateURL.Encode(e)
 			}
@@ -34832,6 +35732,38 @@ func (s WebServiceDraft) encodeFields(e *jx.Encoder) {
 					e.FieldStart("contact_points")
 					e.ArrStart()
 					for _, elem := range s.ContactPoints {
+						json.EncodeUUID(e, elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.Keywords != nil {
+					e.FieldStart("keywords")
+					e.ArrStart()
+					for _, elem := range s.Keywords {
+						elem.Encode(e)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.AccessRights.Set {
+					e.FieldStart("access_rights")
+					s.AccessRights.Encode(e)
+				}
+			}
+			{
+				if s.License.Set {
+					e.FieldStart("license")
+					s.License.Encode(e)
+				}
+			}
+			{
+				if s.Categories != nil {
+					e.FieldStart("categories")
+					e.ArrStart()
+					for _, elem := range s.Categories {
 						json.EncodeUUID(e, elem)
 					}
 					e.ArrEnd()
@@ -35160,6 +36092,38 @@ func (s *WfsWebService) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
 		e.FieldStart("type")
 		s.Type.Encode(e)
 	}
@@ -35223,24 +36187,28 @@ func (s *WfsWebService) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWfsWebService = [17]string{
+var jsonFieldsNameOfWfsWebService = [21]string{
 	0:  "id",
 	1:  "resource_id",
 	2:  "visible_on",
 	3:  "provider",
 	4:  "documentation_uri",
 	5:  "contact_points",
-	6:  "type",
-	7:  "get_feature_template_url",
-	8:  "version",
-	9:  "feature_types",
-	10: "default_feature_type",
-	11: "output_formats",
-	12: "default_output_format",
-	13: "result_limit",
-	14: "result_limit_editable",
-	15: "parameters",
-	16: "available_formats",
+	6:  "keywords",
+	7:  "access_rights",
+	8:  "license",
+	9:  "categories",
+	10: "type",
+	11: "get_feature_template_url",
+	12: "version",
+	13: "feature_types",
+	14: "default_feature_type",
+	15: "output_formats",
+	16: "default_output_format",
+	17: "result_limit",
+	18: "result_limit_editable",
+	19: "parameters",
+	20: "available_formats",
 }
 
 // Decode decodes WfsWebService from json.
@@ -35325,8 +36293,62 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
+		case "keywords":
+			if err := func() error {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]ResourceVersionReference, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ResourceVersionReference
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
+			}
 		case "type":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.Type.Decode(d); err != nil {
 					return err
@@ -35336,7 +36358,7 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"type\"")
 			}
 		case "get_feature_template_url":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				v, err := d.Str()
 				s.GetFeatureTemplateURL = string(v)
@@ -35348,7 +36370,7 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"get_feature_template_url\"")
 			}
 		case "version":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 4
 			if err := func() error {
 				if err := s.Version.Decode(d); err != nil {
 					return err
@@ -35358,7 +36380,7 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"version\"")
 			}
 		case "feature_types":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				s.FeatureTypes = make([]NonBlankString, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -35376,7 +36398,7 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"feature_types\"")
 			}
 		case "default_feature_type":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 6
 			if err := func() error {
 				if err := s.DefaultFeatureType.Decode(d); err != nil {
 					return err
@@ -35386,7 +36408,7 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"default_feature_type\"")
 			}
 		case "output_formats":
-			requiredBitSet[1] |= 1 << 3
+			requiredBitSet[1] |= 1 << 7
 			if err := func() error {
 				s.OutputFormats = make([]NonBlankString, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -35404,7 +36426,7 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"output_formats\"")
 			}
 		case "default_output_format":
-			requiredBitSet[1] |= 1 << 4
+			requiredBitSet[2] |= 1 << 0
 			if err := func() error {
 				if err := s.DefaultOutputFormat.Decode(d); err != nil {
 					return err
@@ -35424,7 +36446,7 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"result_limit\"")
 			}
 		case "result_limit_editable":
-			requiredBitSet[1] |= 1 << 6
+			requiredBitSet[2] |= 1 << 2
 			if err := func() error {
 				v, err := d.Bool()
 				s.ResultLimitEditable = bool(v)
@@ -35436,7 +36458,7 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"result_limit_editable\"")
 			}
 		case "parameters":
-			requiredBitSet[1] |= 1 << 7
+			requiredBitSet[2] |= 1 << 3
 			if err := func() error {
 				s.Parameters = make([]Parameter, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -35454,7 +36476,7 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"parameters\"")
 			}
 		case "available_formats":
-			requiredBitSet[2] |= 1 << 0
+			requiredBitSet[2] |= 1 << 4
 			if err := func() error {
 				s.AvailableFormats = make([]AvailableFormat, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -35481,9 +36503,9 @@ func (s *WfsWebService) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [3]uint8{
-		0b11000011,
-		0b11011111,
-		0b00000001,
+		0b00000011,
+		0b11111100,
+		0b00011101,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -35573,6 +36595,38 @@ func (s *WfsWebServiceDraft) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				json.EncodeUUID(e, elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
 		e.FieldStart("type")
 		s.Type.Encode(e)
 	}
@@ -35628,22 +36682,26 @@ func (s *WfsWebServiceDraft) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWfsWebServiceDraft = [15]string{
+var jsonFieldsNameOfWfsWebServiceDraft = [19]string{
 	0:  "resource_id",
 	1:  "visible_on",
 	2:  "provider",
 	3:  "documentation_uri",
 	4:  "contact_points",
-	5:  "type",
-	6:  "get_feature_template_url",
-	7:  "version",
-	8:  "feature_types",
-	9:  "default_feature_type",
-	10: "output_formats",
-	11: "default_output_format",
-	12: "result_limit",
-	13: "result_limit_editable",
-	14: "parameters",
+	5:  "keywords",
+	6:  "access_rights",
+	7:  "license",
+	8:  "categories",
+	9:  "type",
+	10: "get_feature_template_url",
+	11: "version",
+	12: "feature_types",
+	13: "default_feature_type",
+	14: "output_formats",
+	15: "default_output_format",
+	16: "result_limit",
+	17: "result_limit_editable",
+	18: "parameters",
 }
 
 // Decode decodes WfsWebServiceDraft from json.
@@ -35651,7 +36709,7 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode WfsWebServiceDraft to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -35714,8 +36772,64 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
+		case "keywords":
+			if err := func() error {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]uuid.UUID, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem uuid.UUID
+					v, err := json.DecodeUUID(d)
+					elem = v
+					if err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
+			}
 		case "type":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.Type.Decode(d); err != nil {
 					return err
@@ -35725,7 +36839,7 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"type\"")
 			}
 		case "get_feature_template_url":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
 				s.GetFeatureTemplateURL = string(v)
@@ -35737,7 +36851,7 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"get_feature_template_url\"")
 			}
 		case "version":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				if err := s.Version.Decode(d); err != nil {
 					return err
@@ -35747,7 +36861,7 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"version\"")
 			}
 		case "feature_types":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 4
 			if err := func() error {
 				s.FeatureTypes = make([]NonBlankString, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -35765,7 +36879,7 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"feature_types\"")
 			}
 		case "default_feature_type":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				if err := s.DefaultFeatureType.Decode(d); err != nil {
 					return err
@@ -35775,7 +36889,7 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"default_feature_type\"")
 			}
 		case "output_formats":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 6
 			if err := func() error {
 				s.OutputFormats = make([]NonBlankString, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -35793,7 +36907,7 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"output_formats\"")
 			}
 		case "default_output_format":
-			requiredBitSet[1] |= 1 << 3
+			requiredBitSet[1] |= 1 << 7
 			if err := func() error {
 				if err := s.DefaultOutputFormat.Decode(d); err != nil {
 					return err
@@ -35813,7 +36927,7 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"result_limit\"")
 			}
 		case "result_limit_editable":
-			requiredBitSet[1] |= 1 << 5
+			requiredBitSet[2] |= 1 << 1
 			if err := func() error {
 				v, err := d.Bool()
 				s.ResultLimitEditable = bool(v)
@@ -35825,7 +36939,7 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"result_limit_editable\"")
 			}
 		case "parameters":
-			requiredBitSet[1] |= 1 << 6
+			requiredBitSet[2] |= 1 << 2
 			if err := func() error {
 				s.Parameters = make([]ParameterDraft, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -35851,9 +36965,10 @@ func (s *WfsWebServiceDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
-		0b11100000,
-		0b01101111,
+	for i, mask := range [3]uint8{
+		0b00000000,
+		0b11111110,
+		0b00000110,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -36432,6 +37547,38 @@ func (s *WmsWebService) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
 		e.FieldStart("type")
 		s.Type.Encode(e)
 	}
@@ -36477,21 +37624,25 @@ func (s *WmsWebService) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWmsWebService = [14]string{
+var jsonFieldsNameOfWmsWebService = [18]string{
 	0:  "id",
 	1:  "resource_id",
 	2:  "visible_on",
 	3:  "provider",
 	4:  "documentation_uri",
 	5:  "contact_points",
-	6:  "type",
-	7:  "capabilities_url",
-	8:  "default_layer",
-	9:  "layers",
-	10: "transparency_editable",
-	11: "default_transparency",
-	12: "get_map_parameters",
-	13: "get_feature_info_parameters",
+	6:  "keywords",
+	7:  "access_rights",
+	8:  "license",
+	9:  "categories",
+	10: "type",
+	11: "capabilities_url",
+	12: "default_layer",
+	13: "layers",
+	14: "transparency_editable",
+	15: "default_transparency",
+	16: "get_map_parameters",
+	17: "get_feature_info_parameters",
 }
 
 // Decode decodes WmsWebService from json.
@@ -36499,7 +37650,7 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode WmsWebService to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -36576,8 +37727,62 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
+		case "keywords":
+			if err := func() error {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]ResourceVersionReference, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ResourceVersionReference
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
+			}
 		case "type":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.Type.Decode(d); err != nil {
 					return err
@@ -36587,7 +37792,7 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"type\"")
 			}
 		case "capabilities_url":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				v, err := d.Str()
 				s.CapabilitiesURL = string(v)
@@ -36599,7 +37804,7 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"capabilities_url\"")
 			}
 		case "default_layer":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 4
 			if err := func() error {
 				if err := s.DefaultLayer.Decode(d); err != nil {
 					return err
@@ -36609,7 +37814,7 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"default_layer\"")
 			}
 		case "layers":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				s.Layers = make([]WmsLayer, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -36627,7 +37832,7 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"layers\"")
 			}
 		case "transparency_editable":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 6
 			if err := func() error {
 				v, err := d.Bool()
 				s.TransparencyEditable = bool(v)
@@ -36639,7 +37844,7 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"transparency_editable\"")
 			}
 		case "default_transparency":
-			requiredBitSet[1] |= 1 << 3
+			requiredBitSet[1] |= 1 << 7
 			if err := func() error {
 				v, err := d.Bool()
 				s.DefaultTransparency = bool(v)
@@ -36651,7 +37856,7 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"default_transparency\"")
 			}
 		case "get_map_parameters":
-			requiredBitSet[1] |= 1 << 4
+			requiredBitSet[2] |= 1 << 0
 			if err := func() error {
 				s.GetMapParameters = make([]Parameter, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -36669,7 +37874,7 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"get_map_parameters\"")
 			}
 		case "get_feature_info_parameters":
-			requiredBitSet[1] |= 1 << 5
+			requiredBitSet[2] |= 1 << 1
 			if err := func() error {
 				s.GetFeatureInfoParameters = make([]Parameter, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -36695,9 +37900,10 @@ func (s *WmsWebService) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
-		0b11000011,
-		0b00111111,
+	for i, mask := range [3]uint8{
+		0b00000011,
+		0b11111100,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -36787,6 +37993,38 @@ func (s *WmsWebServiceDraft) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				json.EncodeUUID(e, elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
 		e.FieldStart("type")
 		s.Type.Encode(e)
 	}
@@ -36832,20 +38070,24 @@ func (s *WmsWebServiceDraft) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWmsWebServiceDraft = [13]string{
+var jsonFieldsNameOfWmsWebServiceDraft = [17]string{
 	0:  "resource_id",
 	1:  "visible_on",
 	2:  "provider",
 	3:  "documentation_uri",
 	4:  "contact_points",
-	5:  "type",
-	6:  "capabilities_url",
-	7:  "default_layer",
-	8:  "layers",
-	9:  "transparency_editable",
-	10: "default_transparency",
-	11: "get_map_parameters",
-	12: "get_feature_info_parameters",
+	5:  "keywords",
+	6:  "access_rights",
+	7:  "license",
+	8:  "categories",
+	9:  "type",
+	10: "capabilities_url",
+	11: "default_layer",
+	12: "layers",
+	13: "transparency_editable",
+	14: "default_transparency",
+	15: "get_map_parameters",
+	16: "get_feature_info_parameters",
 }
 
 // Decode decodes WmsWebServiceDraft from json.
@@ -36853,7 +38095,7 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode WmsWebServiceDraft to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -36916,8 +38158,64 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
+		case "keywords":
+			if err := func() error {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]uuid.UUID, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem uuid.UUID
+					v, err := json.DecodeUUID(d)
+					elem = v
+					if err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
+			}
 		case "type":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.Type.Decode(d); err != nil {
 					return err
@@ -36927,7 +38225,7 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"type\"")
 			}
 		case "capabilities_url":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
 				s.CapabilitiesURL = string(v)
@@ -36939,7 +38237,7 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"capabilities_url\"")
 			}
 		case "default_layer":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				if err := s.DefaultLayer.Decode(d); err != nil {
 					return err
@@ -36949,7 +38247,7 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"default_layer\"")
 			}
 		case "layers":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 4
 			if err := func() error {
 				s.Layers = make([]WmsLayerDraft, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -36967,7 +38265,7 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"layers\"")
 			}
 		case "transparency_editable":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				v, err := d.Bool()
 				s.TransparencyEditable = bool(v)
@@ -36979,7 +38277,7 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"transparency_editable\"")
 			}
 		case "default_transparency":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 6
 			if err := func() error {
 				v, err := d.Bool()
 				s.DefaultTransparency = bool(v)
@@ -36991,7 +38289,7 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"default_transparency\"")
 			}
 		case "get_map_parameters":
-			requiredBitSet[1] |= 1 << 3
+			requiredBitSet[1] |= 1 << 7
 			if err := func() error {
 				s.GetMapParameters = make([]ParameterDraft, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -37009,7 +38307,7 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"get_map_parameters\"")
 			}
 		case "get_feature_info_parameters":
-			requiredBitSet[1] |= 1 << 4
+			requiredBitSet[2] |= 1 << 0
 			if err := func() error {
 				s.GetFeatureInfoParameters = make([]ParameterDraft, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -37035,9 +38333,10 @@ func (s *WmsWebServiceDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
-		0b11100000,
-		0b00011111,
+	for i, mask := range [3]uint8{
+		0b00000000,
+		0b11111110,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -37534,6 +38833,38 @@ func (s *WmtsWebService) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
 		e.FieldStart("type")
 		s.Type.Encode(e)
 	}
@@ -37571,19 +38902,23 @@ func (s *WmtsWebService) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWmtsWebService = [12]string{
+var jsonFieldsNameOfWmtsWebService = [16]string{
 	0:  "id",
 	1:  "resource_id",
 	2:  "visible_on",
 	3:  "provider",
 	4:  "documentation_uri",
 	5:  "contact_points",
-	6:  "type",
-	7:  "capabilities_url",
-	8:  "default_layer",
-	9:  "layers",
-	10: "get_tile_parameters",
-	11: "get_feature_info_parameters",
+	6:  "keywords",
+	7:  "access_rights",
+	8:  "license",
+	9:  "categories",
+	10: "type",
+	11: "capabilities_url",
+	12: "default_layer",
+	13: "layers",
+	14: "get_tile_parameters",
+	15: "get_feature_info_parameters",
 }
 
 // Decode decodes WmtsWebService from json.
@@ -37668,8 +39003,62 @@ func (s *WmtsWebService) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
+		case "keywords":
+			if err := func() error {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]ResourceVersionReference, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ResourceVersionReference
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
+			}
 		case "type":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.Type.Decode(d); err != nil {
 					return err
@@ -37679,7 +39068,7 @@ func (s *WmtsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"type\"")
 			}
 		case "capabilities_url":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				v, err := d.Str()
 				s.CapabilitiesURL = string(v)
@@ -37691,7 +39080,7 @@ func (s *WmtsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"capabilities_url\"")
 			}
 		case "default_layer":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 4
 			if err := func() error {
 				if err := s.DefaultLayer.Decode(d); err != nil {
 					return err
@@ -37701,7 +39090,7 @@ func (s *WmtsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"default_layer\"")
 			}
 		case "layers":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				s.Layers = make([]WmtsLayer, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -37719,7 +39108,7 @@ func (s *WmtsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"layers\"")
 			}
 		case "get_tile_parameters":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 6
 			if err := func() error {
 				s.GetTileParameters = make([]Parameter, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -37737,7 +39126,7 @@ func (s *WmtsWebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"get_tile_parameters\"")
 			}
 		case "get_feature_info_parameters":
-			requiredBitSet[1] |= 1 << 3
+			requiredBitSet[1] |= 1 << 7
 			if err := func() error {
 				s.GetFeatureInfoParameters = make([]Parameter, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -37764,8 +39153,8 @@ func (s *WmtsWebService) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b11000011,
-		0b00001111,
+		0b00000011,
+		0b11111100,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -37855,6 +39244,38 @@ func (s *WmtsWebServiceDraft) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Keywords != nil {
+			e.FieldStart("keywords")
+			e.ArrStart()
+			for _, elem := range s.Keywords {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.AccessRights.Set {
+			e.FieldStart("access_rights")
+			s.AccessRights.Encode(e)
+		}
+	}
+	{
+		if s.License.Set {
+			e.FieldStart("license")
+			s.License.Encode(e)
+		}
+	}
+	{
+		if s.Categories != nil {
+			e.FieldStart("categories")
+			e.ArrStart()
+			for _, elem := range s.Categories {
+				json.EncodeUUID(e, elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
 		e.FieldStart("type")
 		s.Type.Encode(e)
 	}
@@ -37892,18 +39313,22 @@ func (s *WmtsWebServiceDraft) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWmtsWebServiceDraft = [11]string{
+var jsonFieldsNameOfWmtsWebServiceDraft = [15]string{
 	0:  "resource_id",
 	1:  "visible_on",
 	2:  "provider",
 	3:  "documentation_uri",
 	4:  "contact_points",
-	5:  "type",
-	6:  "capabilities_url",
-	7:  "default_layer",
-	8:  "layers",
-	9:  "get_tile_parameters",
-	10: "get_feature_info_parameters",
+	5:  "keywords",
+	6:  "access_rights",
+	7:  "license",
+	8:  "categories",
+	9:  "type",
+	10: "capabilities_url",
+	11: "default_layer",
+	12: "layers",
+	13: "get_tile_parameters",
+	14: "get_feature_info_parameters",
 }
 
 // Decode decodes WmtsWebServiceDraft from json.
@@ -37974,8 +39399,64 @@ func (s *WmtsWebServiceDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"contact_points\"")
 			}
+		case "keywords":
+			if err := func() error {
+				s.Keywords = make([]Keyword, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Keyword
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Keywords = append(s.Keywords, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"keywords\"")
+			}
+		case "access_rights":
+			if err := func() error {
+				s.AccessRights.Reset()
+				if err := s.AccessRights.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"access_rights\"")
+			}
+		case "license":
+			if err := func() error {
+				s.License.Reset()
+				if err := s.License.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"license\"")
+			}
+		case "categories":
+			if err := func() error {
+				s.Categories = make([]uuid.UUID, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem uuid.UUID
+					v, err := json.DecodeUUID(d)
+					elem = v
+					if err != nil {
+						return err
+					}
+					s.Categories = append(s.Categories, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"categories\"")
+			}
 		case "type":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.Type.Decode(d); err != nil {
 					return err
@@ -37985,7 +39466,7 @@ func (s *WmtsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"type\"")
 			}
 		case "capabilities_url":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
 				s.CapabilitiesURL = string(v)
@@ -37997,7 +39478,7 @@ func (s *WmtsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"capabilities_url\"")
 			}
 		case "default_layer":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				if err := s.DefaultLayer.Decode(d); err != nil {
 					return err
@@ -38007,7 +39488,7 @@ func (s *WmtsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"default_layer\"")
 			}
 		case "layers":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 4
 			if err := func() error {
 				s.Layers = make([]WmtsLayerDraft, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -38025,7 +39506,7 @@ func (s *WmtsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"layers\"")
 			}
 		case "get_tile_parameters":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				s.GetTileParameters = make([]ParameterDraft, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -38043,7 +39524,7 @@ func (s *WmtsWebServiceDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"get_tile_parameters\"")
 			}
 		case "get_feature_info_parameters":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 6
 			if err := func() error {
 				s.GetFeatureInfoParameters = make([]ParameterDraft, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -38070,8 +39551,8 @@ func (s *WmtsWebServiceDraft) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b11100000,
-		0b00000111,
+		0b00000000,
+		0b01111110,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

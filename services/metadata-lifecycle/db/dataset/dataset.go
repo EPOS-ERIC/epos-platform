@@ -45,12 +45,8 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 		if err != nil {
 			return err
 		}
-		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
-		if err != nil {
-			return fmt.Errorf("validate dataset categories: %w", err)
-		}
-		if invalidIndex >= 0 {
-			return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
+		if err := validateDatasetCategories(ctx, q, groupID, value); err != nil {
+			return err
 		}
 
 		dataset, err := q.CreateLifecycleDataset(ctx, sqlc.CreateLifecycleDatasetParams{
@@ -61,12 +57,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 			return fmt.Errorf("create dataset: %w", err)
 		}
 
-		params, err := ToCreateVersionParams(dataset.ID, actorID, value)
-		if err != nil {
-			return fmt.Errorf("build dataset version: %w", err)
-		}
-
-		version, err := q.CreateLifecycleDatasetVersion(ctx, params)
+		version, err := q.CreateLifecycleDatasetVersion(ctx, ToCreateVersionParams(dataset.ID, actorID, value))
 		if err != nil {
 			return fmt.Errorf("create dataset version: %w", err)
 		}
@@ -92,26 +83,17 @@ func (r *Repo) ReplaceDraft(
 	var result domain.DatasetVersion
 	var removed []uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
-		if len(value.Metadata.CategoryIDs) > 0 {
+		if len(value.Metadata.CategoryIDs) > 0 || len(value.Metadata.Distributions) > 0 {
 			dataset, err := q.GetLifecycleDataset(ctx, datasetID)
 			if err != nil {
 				return fmt.Errorf("get dataset for category validation: %w", err)
 			}
-			invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, dataset.GroupID, value.Metadata.CategoryIDs)
-			if err != nil {
-				return fmt.Errorf("validate dataset categories: %w", err)
-			}
-			if invalidIndex >= 0 {
-				return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
+			if err := validateDatasetCategories(ctx, q, dataset.GroupID, value.Metadata); err != nil {
+				return err
 			}
 		}
 
-		params, err := ToReplaceDraftParams(datasetID, versionID, value.Revision, value.Metadata)
-		if err != nil {
-			return fmt.Errorf("build draft replacement: %w", err)
-		}
-
-		version, err := q.ReplaceLifecycleDatasetDraft(ctx, params)
+		version, err := q.ReplaceLifecycleDatasetDraft(ctx, ToReplaceDraftParams(datasetID, versionID, value.Revision, value.Metadata))
 		if err != nil {
 			return fmt.Errorf("replace draft: %w", err)
 		}
@@ -158,6 +140,29 @@ func (r *Repo) ReplaceDraft(
 		return nil
 	})
 	return result, removed, resourcedb.LifecycleError(err)
+}
+
+func validateDatasetCategories(ctx context.Context, q *sqlc.Queries, groupID uuid.UUID, value domain.DatasetInput) error {
+	invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, value.CategoryIDs)
+	if err != nil {
+		return fmt.Errorf("validate dataset categories: %w", err)
+	}
+	if invalidIndex >= 0 {
+		return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
+	}
+	for i, distribution := range value.Distributions {
+		if distribution.WebService == nil {
+			continue
+		}
+		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, distribution.WebService.CommonInput().CategoryIDs)
+		if err != nil {
+			return fmt.Errorf("validate web service categories: %w", err)
+		}
+		if invalidIndex >= 0 {
+			return apperror.Field(fmt.Sprintf("metadata.distributions[%d].web_service.categories[%d]", i, invalidIndex), "Category must belong to this group and appear only once.", nil)
+		}
+	}
+	return nil
 }
 
 // Get returns one selected version with all version-owned metadata and canonical references.
@@ -377,11 +382,11 @@ func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) ([]u
 }
 
 func (r *Repo) DraftFromPublication(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
-	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusPUBLISHED, uuid.Nil, true)
+	return r.clone(ctx, actorID, datasetID, sqlc.ResourceStatusPUBLISHED)
 }
 
 func (r *Repo) DraftFromLatestArchive(ctx context.Context, actorID string, datasetID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
-	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
+	return r.clone(ctx, actorID, datasetID, sqlc.ResourceStatusARCHIVED)
 }
 
 func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
@@ -404,8 +409,6 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetI
 			SourceStatus:    sqlc.ResourceStatusPUBLISHED,
 			TargetDatasetID: logical.ID,
 			ActorID:         actorID,
-			TargetGroupID:   logical.GroupID,
-			CopyCategories:  false,
 		})
 		if err != nil {
 			return fmt.Errorf("clone published dataset version: %w", err)
@@ -426,11 +429,8 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetI
 func (r *Repo) clone(
 	ctx context.Context,
 	actorID string,
-	sourceDatasetID,
-	targetDatasetID uuid.UUID,
+	datasetID uuid.UUID,
 	status sqlc.ResourceStatus,
-	targetGroupID uuid.UUID,
-	categories bool,
 ) (domain.DatasetVersion, map[uuid.UUID]uuid.UUID, error) {
 	var result domain.DatasetVersion
 	var pairs map[uuid.UUID]uuid.UUID
@@ -438,27 +438,18 @@ func (r *Repo) clone(
 		var source sqlc.DatasetVersion
 		var err error
 		if status == sqlc.ResourceStatusPUBLISHED {
-			source, err = q.GetPublishedLifecycleDatasetVersion(ctx, sourceDatasetID)
+			source, err = q.GetPublishedLifecycleDatasetVersion(ctx, datasetID)
 		} else {
-			source, err = q.GetLatestArchivedLifecycleDatasetVersion(ctx, sourceDatasetID)
+			source, err = q.GetLatestArchivedLifecycleDatasetVersion(ctx, datasetID)
 		}
 		if err != nil {
 			return fmt.Errorf("get source dataset version: %w", err)
 		}
-		if targetGroupID == uuid.Nil {
-			logical, err := q.GetLifecycleDataset(ctx, targetDatasetID)
-			if err != nil {
-				return fmt.Errorf("get target dataset: %w", err)
-			}
-			targetGroupID = logical.GroupID
-		}
 		v, err := q.CloneLifecycleDatasetVersion(ctx, sqlc.CloneLifecycleDatasetVersionParams{
 			SourceVersionID: source.ID,
 			SourceStatus:    status,
-			TargetDatasetID: targetDatasetID,
+			TargetDatasetID: datasetID,
 			ActorID:         actorID,
-			TargetGroupID:   targetGroupID,
-			CopyCategories:  categories,
 		})
 		if err != nil {
 			return fmt.Errorf("clone dataset version: %w", err)
@@ -571,29 +562,39 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 		}
 	}
 
-	services := make([]*uuid.UUID, len(value.Distributions))
 	for i, distribution := range value.Distributions {
 		if distribution.WebService == nil {
 			continue
 		}
 		service := distribution.WebService
 		common := service.CommonInput()
-		created, err := q.AddLifecycleWebService(ctx, sqlc.AddLifecycleWebServiceParams{
-			ID:                     distributions[i].serviceID,
+		serviceID := distributions[i].serviceID
+		err := q.AddLifecycleWebService(ctx, sqlc.AddLifecycleWebServiceParams{
+			ID:                     serviceID,
 			ResourceID:             distributions[i].serviceResourceID,
 			DatasetVersionID:       versionID,
 			Type:                   sqlc.WebServiceType(service.ServiceType()),
 			VisibleOn:              visibleOnValues(common.VisibleOn),
 			ProviderOrganizationID: common.ProviderID,
 			DocumentationUri:       common.DocumentationURI,
+			Keywords:               common.Keywords,
+			AccessRights:           common.AccessRights,
+			License:                common.License,
 		})
 		if err != nil {
 			return fmt.Errorf("add web service: %w", err)
 		}
-		services[i] = &created.ID
+		if len(common.CategoryIDs) > 0 {
+			if err := q.AddLifecycleWebServiceCategories(ctx, sqlc.AddLifecycleWebServiceCategoriesParams{
+				WebServiceID: serviceID,
+				CategoryIds:  common.CategoryIDs,
+			}); err != nil {
+				return fmt.Errorf("add web service categories: %w", err)
+			}
+		}
 		for _, contactID := range common.ContactPointIDs {
 			if err := q.AddLifecycleWebServiceContactPoint(ctx, sqlc.AddLifecycleWebServiceContactPointParams{
-				WebServiceID:   created.ID,
+				WebServiceID:   serviceID,
 				ContactPointID: contactID,
 			}); err != nil {
 				return fmt.Errorf("add web service contact point: %w", err)
@@ -603,7 +604,7 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 		case *domain.HTTPWebServiceInput, *domain.DynamicWebServiceInput:
 			generic := genericWebServiceInput(service)
 			if err := q.AddLifecycleGenericWebService(ctx, sqlc.AddLifecycleGenericWebServiceParams{
-				WebServiceID: created.ID,
+				WebServiceID: serviceID,
 				TemplateUrl:  generic.TemplateURL,
 				Method:       sqlc.WebServiceHttpMethod(generic.Method),
 				Format:       generic.Format,
@@ -613,7 +614,7 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			var bodyID *uuid.UUID
 			if generic.Body != nil {
 				body, err := q.AddLifecycleWebServiceBody(ctx, sqlc.AddLifecycleWebServiceBodyParams{
-					WebServiceID: created.ID,
+					WebServiceID: serviceID,
 					ContentType:  generic.Body.ContentType,
 					Template:     generic.Body.Template,
 					BodyRequired: *generic.Body.Required,
@@ -630,13 +631,13 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range generic.Parameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{webServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{webServiceID: &serviceID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add web service parameter: %w", err)
 				}
 			}
 		case *domain.WFSWebServiceInput:
 			if err := q.AddLifecycleWFSService(ctx, sqlc.AddLifecycleWFSServiceParams{
-				WebServiceID:          created.ID,
+				WebServiceID:          serviceID,
 				GetFeatureTemplateUrl: configuration.GetFeatureTemplateURL,
 				Version:               configuration.Version,
 				FeatureTypes:          configuration.FeatureTypes,
@@ -650,13 +651,13 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.Parameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wfsServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wfsServiceID: &serviceID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WFS parameter: %w", err)
 				}
 			}
 		case *domain.WMTSWebServiceInput:
 			if err := q.AddLifecycleWMTSService(ctx, sqlc.AddLifecycleWMTSServiceParams{
-				WebServiceID: created.ID, CapabilitiesUrl: configuration.CapabilitiesURL, DefaultLayer: configuration.DefaultLayer,
+				WebServiceID: serviceID, CapabilitiesUrl: configuration.CapabilitiesURL, DefaultLayer: configuration.DefaultLayer,
 			}); err != nil {
 				return fmt.Errorf("add WMTS configuration: %w", err)
 			}
@@ -669,7 +670,7 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				if err := q.AddLifecycleWMTSLayer(ctx, sqlc.AddLifecycleWMTSLayerParams{
 					ID:           id,
 					ResourceID:   resourceID,
-					WebServiceID: created.ID,
+					WebServiceID: serviceID,
 					Name:         layer.Name,
 					Position:     int32(position),
 					DefaultStyle: layer.DefaultStyle,
@@ -680,19 +681,19 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.GetTileParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetTileServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetTileServiceID: &serviceID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMTS GetTile parameter: %w", err)
 				}
 			}
 			for _, parameter := range configuration.GetFeatureInfoParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmtsGetFeatureInfoServiceID: &serviceID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMTS GetFeatureInfo parameter: %w", err)
 				}
 			}
 		case *domain.WMSWebServiceInput:
 			if err := q.AddLifecycleWMSService(ctx, sqlc.AddLifecycleWMSServiceParams{
-				WebServiceID:         created.ID,
+				WebServiceID:         serviceID,
 				CapabilitiesUrl:      configuration.CapabilitiesURL,
 				DefaultLayer:         configuration.DefaultLayer,
 				TransparencyEditable: configuration.TransparencyEditable,
@@ -705,7 +706,7 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				if err := q.AddLifecycleWMSLayer(ctx, sqlc.AddLifecycleWMSLayerParams{
 					ID:           id,
 					ResourceID:   resourceID,
-					WebServiceID: created.ID,
+					WebServiceID: serviceID,
 					Name:         layer.Name,
 					Position:     int32(layerPosition),
 					DefaultStyle: layer.DefaultStyle,
@@ -716,13 +717,13 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			}
 			for _, parameter := range configuration.GetMapParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetMapServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetMapServiceID: &serviceID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMS GetMap parameter: %w", err)
 				}
 			}
 			for _, parameter := range configuration.GetFeatureInfoParameters {
 				location := parameter.Location
-				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetFeatureInfoServiceID: &created.ID}, &location, parameter.Explode, parameters); err != nil {
+				if _, err := persistParameter(ctx, q, parameter.ParameterInput, parameterOwner{wmsGetFeatureInfoServiceID: &serviceID}, &location, parameter.Explode, parameters); err != nil {
 					return fmt.Errorf("add WMS GetFeatureInfo parameter: %w", err)
 				}
 			}
@@ -738,25 +739,18 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			Title:                  distribution.Title,
 			Description:            distribution.Description,
 			License:                distribution.License,
-			ByteSize:               nil,
+			ByteSize:               distribution.ByteSize,
 			Type:                   sqlc.DistributionType(distribution.Type),
 			DownloadableFileUrl:    nil,
 			DownloadableFileFormat: nil,
 			WebServiceID:           nil,
-		}
-		if distribution.ByteSize != nil {
-			byteSize := int32(*distribution.ByteSize)
-			params.ByteSize = &byteSize
 		}
 		if distribution.DownloadableFile != nil {
 			params.DownloadableFileUrl = &distribution.DownloadableFile.URL
 			params.DownloadableFileFormat = &distribution.DownloadableFile.Format
 		}
 		if distribution.WebService != nil {
-			if services[i] == nil {
-				return fmt.Errorf("distribution web service is missing")
-			}
-			params.WebServiceID = services[i]
+			params.WebServiceID = &distributions[i].serviceID
 		}
 		if err := q.AddLifecycleDistribution(ctx, params); err != nil {
 			return fmt.Errorf("add distribution: %w", err)
@@ -813,6 +807,12 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		Keywords:                   version.Keywords,
 		AccrualPeriodicity:         (*domain.AccrualPeriodicity)(version.AccrualPeriodicity),
 		QualityAnnotation:          version.QualityAnnotation,
+		ConformsTo:                 version.ConformsTo,
+		Provenance:                 version.Provenance,
+		Type:                       version.Type,
+		Version:                    version.Version,
+		SpatialResolutionInMeters:  version.SpatialResolutionInMeters,
+		TemporalResolution:         version.TemporalResolution,
 		AccessRight:                (*domain.AccessRight)(version.AccessRight),
 		Distributions:              nil,
 		SpatialCoverage:            version.SpatialCoverage,
@@ -825,7 +825,6 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		SourceCreated:              version.SourceCreatedAt,
 		SourceUpdated:              version.SourceUpdatedAt,
 	}
-
 	for _, item := range identifiers {
 		result.PersistentIdentifiers = append(result.PersistentIdentifiers, toDomainIdentifier(item.Identifier))
 	}
@@ -840,7 +839,10 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 	}
 
 	for _, item := range categories {
-		result.Categories = append(result.Categories, toDomainCategoryMetadata(item))
+		result.Categories = append(result.Categories, domain.CategoryMetadata{
+			ID:   item.ID,
+			Name: item.Name,
+		})
 	}
 
 	for _, item := range distributions {
@@ -872,6 +874,17 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 	}
 	if len(rows) == 0 {
 		return result, nil
+	}
+	categories, err := q.ListLifecycleWebServiceCategories(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("list web service categories: %w", err)
+	}
+	for _, category := range categories {
+		service, exists := result[category.WebServiceID]
+		if !exists {
+			return nil, fmt.Errorf("category references missing web service %s", category.WebServiceID)
+		}
+		service.Common().Categories = append(service.Common().Categories, domain.CategoryMetadata{ID: category.ID, Name: category.Name})
 	}
 	genericConfigurations, err := q.ListLifecycleGenericWebServices(ctx, ids)
 	if err != nil {

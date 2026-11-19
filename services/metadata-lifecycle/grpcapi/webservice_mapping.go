@@ -16,6 +16,9 @@ func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService 
 		ResourceId:       common.ResourceID.String(),
 		VisibleOn:        webServiceVisibleOnOutput(common.VisibleOn),
 		DocumentationUri: common.DocumentationURI,
+		Keywords:         common.Keywords,
+		AccessRights:     common.AccessRights,
+		License:          common.License,
 	}
 	if common.Provider != nil {
 		commonOutput.ProviderReference = referenceOutput(common.Provider.ID, common.Provider.Name)
@@ -23,6 +26,7 @@ func toProtoWebService(value domain.WebService) *metadatalifecyclev1.WebService 
 	for _, contact := range common.ContactPoints {
 		commonOutput.ContactPoints = append(commonOutput.ContactPoints, contact.ID.String())
 	}
+	commonOutput.Categories = categoryReferences(common.Categories)
 	result := &metadatalifecyclev1.WebService{}
 	switch service := value.(type) {
 	case *domain.HTTPWebService:
@@ -206,6 +210,10 @@ func toDomainWebServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain
 	if err != nil {
 		return nil, err
 	}
+	categories, err := resourceParseUUIDs(commonValue.GetCategories(), "web service category", "categories")
+	if err != nil {
+		return nil, err
+	}
 	var providerID *uuid.UUID
 	if commonValue.ProviderId != nil {
 		id, err := parseUUIDAt(commonValue.GetProviderId(), "web service provider", "provider")
@@ -224,6 +232,10 @@ func toDomainWebServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain
 		ProviderID:       providerID,
 		DocumentationURI: commonValue.DocumentationUri,
 		ContactPointIDs:  contactPoints,
+		Keywords:         commonValue.Keywords,
+		AccessRights:     commonValue.AccessRights,
+		License:          commonValue.License,
+		CategoryIDs:      categories,
 	}
 	*service.CommonInput() = common
 	return service, nil

@@ -62,7 +62,13 @@ CREATE TABLE dataset_versions (
     keywords            nonblank_text[] NOT NULL DEFAULT '{}',
     accrual_periodicity dataset_accrual_periodicity,
     quality_annotation  nonblank_text_opt,
+    conforms_to         nonblank_text_opt,
+    provenance          nonblank_text_opt,
+    type                nonblank_text_opt,
+    version             nonblank_text_opt,
     access_right        dataset_access_right,
+    spatial_resolution_in_meters double precision CHECK (spatial_resolution_in_meters >= 0),
+    temporal_resolution double precision CHECK (temporal_resolution >= 0),
     -- Source timestamps describe upstream dataset metadata. They are distinct
     -- from metadata-lifecycle record and lifecycle timestamps below.
     source_created_at   timestamptz,

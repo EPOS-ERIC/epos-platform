@@ -485,6 +485,22 @@ export type DatasetDraftMetadata = {
   keywords?: Keyword[];
   accrual_periodicity?: DatasetAccrualPeriodicity;
   quality_annotation?: string | null;
+  conforms_to?: string | null;
+  provenance?: string | null;
+  type?: string | null;
+  version?: string | null;
+  /**
+   * @format double
+   * @minimum 0
+   */
+  spatial_resolution_in_meters?: number | null;
+  /**
+   * Resolution in seconds.
+   *
+   * @format double
+   * @minimum 0
+   */
+  temporal_resolution?: number | null;
   access_right?: DatasetAccessRight;
   distributions?: DistributionDraft[];
   /**
@@ -645,6 +661,10 @@ export type WebServiceDraftCommon = {
    */
   documentation_uri?: string;
   contact_points?: string[];
+  keywords?: Keyword[];
+  access_rights?: string | null;
+  license?: string | null;
+  categories?: string[];
 };
 
 export type HttpWebServiceDraft = WebServiceDraftCommon &
@@ -671,26 +691,20 @@ export type WmsWebServiceDraft = WebServiceDraftCommon &
 export type WmtsWebServiceDraft = WebServiceDraftCommon &
   WmtsWebServiceConfigurationDraft;
 
-export type GenericWebServiceConfigurationDraft = {
-  type: "HTTP";
-  template_url: NonBlankString;
-  method: WebServiceMethod;
-  parameters?: ParameterDraft[];
-  body_content_type?: NonBlankString;
-  body_template?: NonBlankString;
-  /**
-   * Defaults to true when a request body is configured. Must be omitted when no body is configured. Optional bodies are omitted only when unresolved and no child values were supplied.
-   */
-  body_required?: boolean;
-  body_parameters?: ScalarParameterDraft[];
-  format: NonBlankString;
-};
+export type GenericWebServiceConfigurationDraft =
+  SharedWebServiceConfigurationDraft & {
+    type: "HTTP";
+  };
 
 /**
  * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
  */
-export type DynamicWebServiceConfigurationDraft = {
-  type: "DYNAMIC";
+export type DynamicWebServiceConfigurationDraft =
+  SharedWebServiceConfigurationDraft & {
+    type: "DYNAMIC";
+  };
+
+export type SharedWebServiceConfigurationDraft = {
   template_url: NonBlankString;
   method: WebServiceMethod;
   parameters?: ParameterDraft[];
@@ -1794,6 +1808,22 @@ export type DatasetResourceMetadata = {
   keywords: Keyword[];
   accrual_periodicity?: DatasetAccrualPeriodicity;
   quality_annotation?: string | null;
+  conforms_to?: string | null;
+  provenance?: string | null;
+  type?: string | null;
+  version?: string | null;
+  /**
+   * @format double
+   * @minimum 0
+   */
+  spatial_resolution_in_meters?: number | null;
+  /**
+   * Resolution in seconds.
+   *
+   * @format double
+   * @minimum 0
+   */
+  temporal_resolution?: number | null;
   access_right?: DatasetAccessRight;
   distributions: Distribution[];
   /**
@@ -1967,6 +1997,10 @@ export type WebServiceCommon = {
    */
   documentation_uri?: string;
   contact_points?: string[];
+  keywords?: Keyword[];
+  access_rights?: string | null;
+  license?: string | null;
+  categories?: ResourceVersionReference[];
 };
 
 export type WebServiceAvailableFormats = {
@@ -2003,26 +2037,18 @@ export type WmsWebService = WebServiceCommon & WmsWebServiceConfiguration;
  */
 export type WmtsWebService = WebServiceCommon & WmtsWebServiceConfiguration;
 
-export type GenericWebServiceConfiguration = {
+export type GenericWebServiceConfiguration = SharedWebServiceConfiguration & {
   type: "HTTP";
-  template_url: string;
-  method: WebServiceMethod;
-  parameters?: Parameter[];
-  body_content_type?: string | null;
-  body_template?: string | null;
-  /**
-   * Whether the configured request body must be rendered. Omitted when no request body is configured.
-   */
-  body_required?: boolean;
-  body_parameters?: ScalarParameter[];
-  format: string;
 };
 
 /**
  * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters.
  */
-export type DynamicWebServiceConfiguration = {
+export type DynamicWebServiceConfiguration = SharedWebServiceConfiguration & {
   type: "DYNAMIC";
+};
+
+export type SharedWebServiceConfiguration = {
   template_url: string;
   method: WebServiceMethod;
   parameters?: Parameter[];

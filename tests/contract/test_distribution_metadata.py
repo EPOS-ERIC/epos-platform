@@ -29,6 +29,8 @@ class DistributionMetadataContractTest(DistributionContractTestCase):
 
         metadata = {
             "title": detail["metadata"]["title"], "description": "Valid body replacement",
+            "spatial_resolution_in_meters": 0,
+            "temporal_resolution": 0.5,
             "distributions": [web_distribution(
                 method="PUT", template_url="https://provider.invalid/replaced",
                 body_content_type="text/plain", body_template="replacement", body_required=False,
@@ -37,12 +39,20 @@ class DistributionMetadataContractTest(DistributionContractTestCase):
         self.assertEqual(self.replace_response(detail, metadata).status_code, 200)
         updated = self.details(detail["resource_id"], detail["id"])
         self.assertEqual(updated["revision"], detail["revision"] + 1)
+        self.assertEqual(updated["metadata"]["spatial_resolution_in_meters"], 0)
+        self.assertEqual(updated["metadata"]["temporal_resolution"], 0.5)
         distribution = updated["metadata"]["distributions"][0]
         self.assertIs(distribution["web_service"]["body_required"], False)
         prepared = self.prepare(distribution)
         self.assertEqual(prepared["method"], "PUT")
         self.assertEqual(prepared["url"], "https://provider.invalid/replaced")
         self.assertEqual(prepared["body"], "replacement")
+        metadata["spatial_resolution_in_meters"] = None
+        metadata["temporal_resolution"] = None
+        self.assertEqual(self.replace_response(updated, metadata).status_code, 200)
+        cleared = self.details(detail["resource_id"], detail["id"])
+        self.assertIsNone(cleared["metadata"].get("spatial_resolution_in_meters"))
+        self.assertIsNone(cleared["metadata"].get("temporal_resolution"))
 
     def test_invalid_body_and_header_metadata_does_not_mutate_draft(self) -> None:
         """Verify POST/PUT reject unsafe metadata and failed edits preserve revision and request."""

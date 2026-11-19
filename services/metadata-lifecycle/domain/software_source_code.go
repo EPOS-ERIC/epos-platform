@@ -92,9 +92,9 @@ func (value *SoftwareSourceCodeInput) Normalize() error {
 	value.RuntimePlatform = optionalTrimmedString(value.RuntimePlatform)
 	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
 	value.Version = optionalTrimmedString(value.Version)
-	keywords, err := normalizeKeywords(value.Keywords)
+	keywords, err := normalizeKeywordInput(value.Keywords)
 	if err != nil {
-		return invalidField("keywords", "Keywords must not be blank and may contain only letters, numbers, spaces, colon, hyphen, and underscore.", err)
+		return err
 	}
 	value.Keywords = keywords
 	if err := validateUUIDListField(value.CreatorIDs, "creators", "Creator"); err != nil {

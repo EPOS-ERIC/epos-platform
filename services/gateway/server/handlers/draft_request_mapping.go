@@ -6,63 +6,15 @@ import (
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftRequest) (*metadatalifecyclev1.CreateResourceRequest, gatewayapi.WriteResourceType, error) {
 	request := &metadatalifecyclev1.CreateResourceRequest{GroupId: groupID}
 	switch {
 	case q.IsCreateDatasetResourceRequest():
-		v := q.CreateDatasetResourceRequest.Metadata
-		metadata := &metadatalifecyclev1.DatasetInput{
-			Title:         string(v.Title),
-			Description:   string(v.Description),
-			Keywords:      toProtoKeywords(v.Keywords),
-			ContactPoints: uuidStrings(v.ContactPoints),
-			Providers:     uuidStrings(v.Providers),
-			Categories:    uuidStrings(v.Categories),
-		}
-		accrualPeriodicity, err := toProtoDatasetAccrualPeriodicity(v.AccrualPeriodicity)
+		metadata, err := toProtoDatasetDraftMetadata(q.CreateDatasetResourceRequest.Metadata)
 		if err != nil {
 			return nil, "", err
-		}
-		metadata.AccrualPeriodicity = accrualPeriodicity
-		temporalRange, err := toProtoDatasetTemporalRange(v.TemporalCoverage, v.GeologicalTemporalCoverage)
-		if err != nil {
-			return nil, "", err
-		}
-		switch {
-		case temporalRange.temporal != nil:
-			metadata.TemporalRange = &metadatalifecyclev1.DatasetInput_TemporalCoverage{TemporalCoverage: temporalRange.temporal}
-		case temporalRange.geological != nil:
-			metadata.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: temporalRange.geological}
-		}
-		if v.QualityAnnotation.Set && !v.QualityAnnotation.Null {
-			metadata.QualityAnnotation = new(v.QualityAnnotation.Value)
-		}
-		accessRight, err := toProtoDatasetAccessRight(v.AccessRight)
-		if err != nil {
-			return nil, "", err
-		}
-		metadata.AccessRight = accessRight
-		if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
-			metadata.SpatialCoverage = new(v.SpatialCoverage.Value)
-		}
-		if v.Created.Set && !v.Created.Null {
-			metadata.Created = timestamppb.New(v.Created.Value)
-		}
-		if v.Updated.Set && !v.Updated.Null {
-			metadata.Updated = timestamppb.New(v.Updated.Value)
-		}
-		for _, id := range v.PersistentIdentifiers {
-			metadata.PersistentIdentifiers = append(metadata.PersistentIdentifiers, toProtoVersionedIdentifierInput(id))
-		}
-		for _, distribution := range v.Distributions {
-			mapped, err := toProtoDistribution(distribution)
-			if err != nil {
-				return nil, "", err
-			}
-			metadata.Distributions = append(metadata.Distributions, mapped)
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_Dataset{Dataset: metadata}
 		return request, gatewayapi.WriteResourceTypeDataset, nil

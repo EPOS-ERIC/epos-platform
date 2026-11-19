@@ -251,6 +251,12 @@ message DatasetResourceMetadata {
   repeated EntityReference categories = 14;
   google.protobuf.Timestamp created = 15;
   google.protobuf.Timestamp updated = 16;
+  optional string conforms_to = 18;
+  optional string provenance = 19;
+  optional string type = 20;
+  optional string version = 21;
+  optional double spatial_resolution_in_meters = 22;
+  optional double temporal_resolution = 23;
 }
 
 message SoftwareApplicationResourceMetadata {
@@ -335,6 +341,12 @@ message DatasetInput {
   repeated string categories = 13 [(buf.validate.field).repeated.items.string.uuid = true];
   google.protobuf.Timestamp created = 14;
   google.protobuf.Timestamp updated = 15;
+  optional string conforms_to = 17;
+  optional string provenance = 18;
+  optional string type = 19;
+  optional string version = 20;
+  optional double spatial_resolution_in_meters = 21;
+  optional double temporal_resolution = 22;
 }
 
 message DistributionInput {
@@ -431,6 +443,10 @@ message WebServiceCommonInput {
   repeated string contact_points = 7 [(buf.validate.field).repeated.items.string.uuid = true];
   repeated WebServiceVisibleOn visible_on = 9 [(buf.validate.field).repeated.items.enum.defined_only = true];
   optional string resource_id = 15 [(buf.validate.field).string.uuid = true];
+  repeated string keywords = 16 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
+  optional string access_rights = 17 [(buf.validate.field).string.min_len = 1];
+  optional string license = 18 [(buf.validate.field).string.min_len = 1];
+  repeated string categories = 19 [(buf.validate.field).repeated.items.string.uuid = true];
 }
 
 message WebService {
@@ -451,6 +467,10 @@ message WebServiceCommon {
   EntityReference provider_reference = 8;
   repeated WebServiceVisibleOn visible_on = 10 [(buf.validate.field).repeated.items.enum.defined_only = true];
   string resource_id = 16 [(buf.validate.field).string.uuid = true];
+  repeated string keywords = 17 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
+  optional string access_rights = 18 [(buf.validate.field).string.min_len = 1];
+  optional string license = 19 [(buf.validate.field).string.min_len = 1];
+  repeated EntityReference categories = 20;
 }
 
 message RequestBodyInput {
