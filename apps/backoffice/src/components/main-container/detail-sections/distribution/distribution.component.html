@@ -82,6 +82,7 @@
           @if (distribution.kind === 'web-service') {
             <app-web-service
               [model]="distribution.webService"
+              [groupId]="groupId"
               [distributionId]="comparisonMode ? '' : (distribution.id ?? '')"
               [nativeFormats]="distribution.nativeFormats ?? []"
               [comparisonModel]="selectedComparisonWebService()"

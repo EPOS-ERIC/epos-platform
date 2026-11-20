@@ -20,7 +20,13 @@ describe('DistributionComponent', () => {
     expect(emissions[0][0]).toMatchObject({
       kind: 'web-service',
       type: 'WEB_SERVICE',
-      webService: { configuration: { method: 'GET', type: 'HTTP' } }
+      webService: {
+        keywords: [],
+        accessRights: '',
+        license: '',
+        categories: [],
+        configuration: { method: 'GET', type: 'HTTP' }
+      }
     });
   });
 

@@ -905,7 +905,8 @@ func (q *Queries) ArchivePublishedLifecycleDatasetVersion(ctx context.Context, a
 const cloneLifecycleDatasetVersion = `-- name: CloneLifecycleDatasetVersion :one
 WITH source AS (
     SELECT
-        dataset_versions.id, dataset_versions.dataset_id, dataset_versions.status, dataset_versions.revision, dataset_versions.title, dataset_versions.description, dataset_versions.keywords, dataset_versions.accrual_periodicity, dataset_versions.quality_annotation, dataset_versions.conforms_to, dataset_versions.provenance, dataset_versions.type, dataset_versions.version, dataset_versions.access_right, dataset_versions.spatial_resolution_in_meters, dataset_versions.temporal_resolution, dataset_versions.source_created_at, dataset_versions.source_updated_at, dataset_versions.spatial_coverage, dataset_versions.temporal_start, dataset_versions.temporal_end, dataset_versions.geological_temporal_start_mya, dataset_versions.geological_temporal_end_mya, dataset_versions.created_by, dataset_versions.created_at, dataset_versions.updated_at, dataset_versions.submitted_by, dataset_versions.submitted_at, dataset_versions.published_by, dataset_versions.published_at, dataset_versions.archived_by, dataset_versions.archived_at, dataset_versions.rejected_by, dataset_versions.rejected_at, dataset_versions.rejection_note, dataset_versions.dataset_id = $1 AS same_dataset
+        dataset_versions.id, dataset_versions.dataset_id, dataset_versions.status, dataset_versions.revision, dataset_versions.title, dataset_versions.description, dataset_versions.keywords, dataset_versions.accrual_periodicity, dataset_versions.quality_annotation, dataset_versions.conforms_to, dataset_versions.provenance, dataset_versions.type, dataset_versions.version, dataset_versions.access_right, dataset_versions.spatial_resolution_in_meters, dataset_versions.temporal_resolution, dataset_versions.source_created_at, dataset_versions.source_updated_at, dataset_versions.spatial_coverage, dataset_versions.temporal_start, dataset_versions.temporal_end, dataset_versions.geological_temporal_start_mya, dataset_versions.geological_temporal_end_mya, dataset_versions.created_by, dataset_versions.created_at, dataset_versions.updated_at, dataset_versions.submitted_by, dataset_versions.submitted_at, dataset_versions.published_by, dataset_versions.published_at, dataset_versions.archived_by, dataset_versions.archived_at, dataset_versions.rejected_by, dataset_versions.rejected_at, dataset_versions.rejection_note,
+        dataset_versions.dataset_id = $1 AS same_dataset
     FROM
         dataset_versions
     WHERE
@@ -969,7 +970,12 @@ identifiers AS (
         identifiers (resource_id, TYPE, value, dataset_version_id)
     SELECT
         CASE
-            WHEN (SELECT same_dataset FROM source) THEN resource_id
+            WHEN (
+                SELECT
+                    same_dataset
+                FROM
+                    source
+            ) THEN resource_id
             ELSE uuid_generate_v4()
         END,
         TYPE,
@@ -1033,7 +1039,12 @@ categories AS (
         dataset_version_categories
     WHERE
         dataset_version_id = $2
-        AND (SELECT same_dataset FROM source)
+        AND (
+            SELECT
+                same_dataset
+            FROM
+                source
+        )
 ),
 inserted_web_services AS (
     INSERT INTO
@@ -1060,7 +1071,12 @@ inserted_web_services AS (
             source.id::text
         ),
         CASE
-            WHEN (SELECT same_dataset FROM source) THEN source.resource_id
+            WHEN (
+                SELECT
+                    same_dataset
+                FROM
+                    source
+            ) THEN source.resource_id
             ELSE uuid_generate_v4()
         END,
         (
@@ -1102,7 +1118,12 @@ web_service_categories_copy AS (
             link.web_service_id::text
         )
     WHERE
-        (SELECT same_dataset FROM source)
+        (
+            SELECT
+                same_dataset
+            FROM
+                source
+        )
 ),
 inserted_generic_web_services AS (
     INSERT INTO
@@ -1204,7 +1225,12 @@ inserted_wms_layers AS (
         )
     SELECT
         CASE
-            WHEN (SELECT same_dataset FROM source) THEN source.resource_id
+            WHEN (
+                SELECT
+                    same_dataset
+                FROM
+                    source
+            ) THEN source.resource_id
             ELSE uuid_generate_v4()
         END,
         target.web_service_id,
@@ -1260,7 +1286,12 @@ inserted_wmts_layers AS (
         )
     SELECT
         CASE
-            WHEN (SELECT same_dataset FROM source) THEN source.resource_id
+            WHEN (
+                SELECT
+                    same_dataset
+                FROM
+                    source
+            ) THEN source.resource_id
             ELSE uuid_generate_v4()
         END,
         target.web_service_id,
@@ -1371,7 +1402,12 @@ inserted_parameters AS (
             parameter.id::text
         ),
         CASE
-            WHEN (SELECT same_dataset FROM source) THEN parameter.resource_id
+            WHEN (
+                SELECT
+                    same_dataset
+                FROM
+                    source
+            ) THEN parameter.resource_id
             ELSE uuid_generate_v4()
         END,
         CASE
@@ -1506,7 +1542,12 @@ template_parameters AS (
             source_parameter.id::text
         ),
         CASE
-            WHEN (SELECT same_dataset FROM source) THEN source_parameter.resource_id
+            WHEN (
+                SELECT
+                    same_dataset
+                FROM
+                    source
+            ) THEN source_parameter.resource_id
             ELSE uuid_generate_v4()
         END,
         uuid_generate_v5(
@@ -1689,7 +1730,12 @@ distributions AS (
             distribution.id::text
         ),
         CASE
-            WHEN (SELECT same_dataset FROM source) THEN distribution.resource_id
+            WHEN (
+                SELECT
+                    same_dataset
+                FROM
+                    source
+            ) THEN distribution.resource_id
             ELSE uuid_generate_v4()
         END,
         (

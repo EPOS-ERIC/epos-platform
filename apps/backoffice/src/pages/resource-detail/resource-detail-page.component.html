@@ -103,6 +103,7 @@
       />
       <app-distribution
         [model]="form.distributions"
+        [groupId]="version.group_id"
         [disabled]="!store.canEdit()"
         (modelChange)="store.updateDatasetDistributions($event)"
       />

@@ -82,6 +82,7 @@
       @if (datasetForm; as form) {
         <app-distribution
           [model]="form.distributions"
+          [groupId]="currentVersion.group_id"
           [comparisonModel]="comparisonDatasetForm?.distributions ?? []"
           [disabled]="true"
           [comparisonMode]="true"

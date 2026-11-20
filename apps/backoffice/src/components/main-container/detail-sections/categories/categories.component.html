@@ -1,12 +1,20 @@
-<section id="categories" class="detail-section-card app-card" [class.detail-section-card--neutral]="neutralAppearance">
-  <div class="detail-section-header">
-    <div>
-      <h2>Categories</h2>
-      @if (!selectedOnlyView()) {
-        <p class="subtitle app-muted">Choose categories from the resource group.</p>
-      }
+<section
+  [attr.id]="embedded ? null : 'categories'"
+  class="detail-section-card"
+  [class.app-card]="!embedded"
+  [class.detail-section-card--embedded]="embedded"
+  [class.detail-section-card--neutral]="neutralAppearance"
+>
+  @if (!embedded) {
+    <div class="detail-section-header">
+      <div>
+        <h2>Categories</h2>
+        @if (!selectedOnlyView()) {
+          <p class="subtitle app-muted">Choose categories from the resource group.</p>
+        }
+      </div>
     </div>
-  </div>
+  }
 
   @if (selectedOnlyView()) {
     @if (selectedCategories().length) {
