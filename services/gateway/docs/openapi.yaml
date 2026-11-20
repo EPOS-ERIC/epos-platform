@@ -2805,6 +2805,19 @@ components:
           properties:
             email_enabled:
               type: boolean
+        issue_tracker:
+          type: object
+          description: Issue tracker for feedback and issues, when configured.
+          required: [url, open_new]
+          properties:
+            url:
+              type: string
+              description: Absolute URI for the issue tracker.
+              format: uri
+            open_new:
+              type: string
+              format: uri
+              description: Absolute URI for creating an issue.
     ConversionRuntime:
       type: string
       enum: [python, java, binary]

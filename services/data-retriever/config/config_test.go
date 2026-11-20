@@ -14,7 +14,7 @@ func TestLoadDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
-	if cfg.GRPCListenAddr != ":8100" || cfg.DBHost != "localhost" || cfg.DBPort != "5432" || cfg.DBName != "data_retriever" || cfg.DBUser != "data_retriever" || cfg.DBPassword != "data_retriever" {
+	if cfg.ServerPort != "8100" || cfg.DBHost != "localhost" || cfg.DBPort != "5432" || cfg.DBName != "data_retriever" || cfg.DBUser != "data_retriever" || cfg.DBPassword != "data_retriever" {
 		t.Fatalf("string defaults = %+v", cfg)
 	}
 	if cfg.HTTPTimeout != 30*time.Second || cfg.SchemaMaxBytes != 2<<20 {
@@ -27,12 +27,16 @@ func TestLoadDefaults(t *testing.T) {
 
 func TestLoadOverridesAndClampsSchemaBudget(t *testing.T) {
 	clearEnvironment(t)
+	t.Setenv("SERVER_PORT", "8101")
 	t.Setenv("HTTP_TIMEOUT", "5s")
 	t.Setenv("SCHEMA_MAX_BYTES", "-1")
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.ServerPort != "8101" {
+		t.Fatalf("server port = %q, want 8101", cfg.ServerPort)
 	}
 	if cfg.HTTPTimeout != 5*time.Second || cfg.SchemaMaxBytes != 0 {
 		t.Fatalf("overrides = timeout %s, schema budget %d", cfg.HTTPTimeout, cfg.SchemaMaxBytes)
@@ -66,7 +70,7 @@ func TestLoadRejectsInvalidConfiguration(t *testing.T) {
 func clearEnvironment(t *testing.T) {
 	t.Helper()
 	for _, key := range []string{
-		"GRPC_LISTEN_ADDR", "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "HTTP_TIMEOUT", "SCHEMA_MAX_BYTES", "MAX_RESPONSE_BYTES",
+		"SERVER_PORT", "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "HTTP_TIMEOUT", "SCHEMA_MAX_BYTES", "MAX_RESPONSE_BYTES",
 	} {
 		value, exists := os.LookupEnv(key)
 		if err := os.Unsetenv(key); err != nil {

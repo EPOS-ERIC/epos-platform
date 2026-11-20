@@ -18,6 +18,14 @@ type Config struct {
 	Notifications  Notifications  `yaml:"notifications"`
 	MetadataSync   MetadataSync   `yaml:"metadata_sync"`
 	Authentication Authentication `yaml:"authentication"`
+	IssueTracker   IssueTracker   `yaml:"issue_tracker"`
+}
+
+type IssueTracker struct {
+	URL           string   `yaml:"url"`
+	OpenNew       string   `yaml:"open_new"`
+	ParsedURL     *url.URL `yaml:"-"`
+	ParsedOpenNew *url.URL `yaml:"-"`
 }
 
 type Authentication struct {
@@ -112,6 +120,21 @@ func Load(cfgPath string) (*Config, error) {
 
 // Validate validates the configuration
 func (c *Config) Validate() error {
+	c.IssueTracker.ParsedURL = nil
+	c.IssueTracker.ParsedOpenNew = nil
+	if c.IssueTracker.URL != "" || c.IssueTracker.OpenNew != "" {
+		uri, err := url.Parse(c.IssueTracker.URL)
+		if err != nil || !uri.IsAbs() {
+			return fmt.Errorf("issue_tracker.url must be an absolute URI")
+		}
+		c.IssueTracker.ParsedURL = uri
+		uri, err = url.Parse(c.IssueTracker.OpenNew)
+		if err != nil || !uri.IsAbs() {
+			return fmt.Errorf("issue_tracker.open_new must be an absolute URI")
+		}
+		c.IssueTracker.ParsedOpenNew = uri
+	}
+
 	if c.MetadataSync.Enabled {
 		sync := c.MetadataSync
 		u, err := url.Parse(sync.BaseURL)

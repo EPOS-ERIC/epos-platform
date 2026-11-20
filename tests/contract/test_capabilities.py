@@ -25,6 +25,9 @@ class CapabilitiesContractTest(unittest.TestCase):
         self.assertIn(auth_root.scheme, ("http", "https"))
         self.assertTrue(auth_root.hostname)
         self.assertIsInstance(capabilities["notifications"]["email_enabled"], bool)
+        tracker_url = "https://epos-ci.brgm.fr/epos-public/issuetracker/-/work_items"
+        self.assertEqual(capabilities["issue_tracker"]["url"], tracker_url)
+        self.assertEqual(capabilities["issue_tracker"]["open_new"], f"{tracker_url}/new?type=Issue")
 
     def test_sync_unavailable_in_managed_mode(self) -> None:
         """Verify manual metadata sync fails when organizations are locally managed."""

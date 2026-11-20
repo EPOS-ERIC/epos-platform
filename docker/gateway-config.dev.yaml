@@ -2,12 +2,13 @@ server:
   listen: ":5000"
   cors_allow_origin: "*"
   request_timeout: "60s"
-  read_timeout: "15s"
-  write_timeout: "30s"
-  idle_timeout: "60s"
 
 authentication:
   root_url: "http://localhost:35000"
+
+issue_tracker:
+  url: "https://epos-ci.brgm.fr/epos-public/issuetracker/-/work_items"
+  open_new: "https://epos-ci.brgm.fr/epos-public/issuetracker/-/work_items/new?type=Issue"
 
 # EPOS's own external organizations back office tool
 metadata_sync:

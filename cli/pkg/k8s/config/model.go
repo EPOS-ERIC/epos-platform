@@ -44,6 +44,7 @@ type Gateway struct {
 	TLS          TLS                 `yaml:"tls"`
 	Mailgun      Mailgun             `yaml:"mailgun"`
 	MetadataSync common.MetadataSync `yaml:"metadata_sync"`
+	IssueTracker common.IssueTracker `yaml:"issue_tracker"`
 }
 
 type Mailgun struct {

@@ -14,6 +14,9 @@ components:
       secret_name: ""
   gateway:
     base_url: "/v1/"
+    issue_tracker:
+      url: "https://epos-ci.brgm.fr/epos-public/issuetracker/-/work_items"
+      open_new: "https://epos-ci.brgm.fr/epos-public/issuetracker/-/work_items/new?type=Issue"
     metadata_sync:
       enabled: false
       base_url: "https://epos-backoffice-tool.nina.elicos.it"

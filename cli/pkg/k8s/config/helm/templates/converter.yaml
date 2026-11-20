@@ -7,7 +7,6 @@ metadata:
     {{- include "epos.labels" . | nindent 4 }}
     app.kubernetes.io/component: converter
 spec:
-  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -19,6 +18,8 @@ spec:
       labels:
         {{- include "epos.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: converter
+      annotations:
+        checksum/secret-converter-db: {{ .Values.components.converter_database.password | toString | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
       securityContext:
@@ -27,8 +28,6 @@ spec:
         - name: converter
           image: {{ .Values.images.converter | quote }}
           imagePullPolicy: {{ .Values.image_pull_policy }}
-          ports:
-            - containerPort: 8200
           env:
             - name: SERVER_PORT
               value: "8200"
@@ -66,7 +65,6 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 8200
-            periodSeconds: 10
       volumes:
         - name: plugins
           persistentVolumeClaim:
@@ -82,75 +80,21 @@ metadata:
 spec:
   ports:
     - port: 8200
-      targetPort: 8200
   selector:
     {{- include "epos.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: converter
-
-{{- if .Values.components.converter_database.enabled }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: converter-db
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: converter-db
-spec:
-  replicas: 1
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      {{- include "epos.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: converter-db
-  template:
-    metadata:
-      labels:
-        {{- include "epos.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: converter-db
-    spec:
-      {{- include "epos.image_pull_secrets" . | nindent 6 }}
-      containers:
-        - name: converter-db
-          image: {{ .Values.images.converter_database | quote }}
-          imagePullPolicy: {{ .Values.image_pull_policy }}
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: {{ .Values.components.converter_database.user | quote }}
-            - name: POSTGRES_DB
-              value: {{ .Values.components.converter_database.db_name | quote }}
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: converter-db
-                  key: password
-          readinessProbe:
-            exec:
-              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
-            periodSeconds: 10
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/postgresql
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: converter-db
 ---
 apiVersion: v1
-kind: Service
+kind: PersistentVolumeClaim
 metadata:
-  name: converter-db
+  name: converter-plugins
   labels:
     {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: converter-db
+    app.kubernetes.io/component: converter
 spec:
-  ports:
-    - port: 5432
-      targetPort: 5432
-  selector:
-    {{- include "epos.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: converter-db
-{{- end }}
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+
+{{ include "epos.postgres" (dict "root" . "name" "converter-db" "database" .Values.components.converter_database "image" .Values.images.converter_database) }}

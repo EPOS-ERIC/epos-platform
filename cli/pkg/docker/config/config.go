@@ -207,6 +207,9 @@ func (e *EnvConfig) EnsurePortsFree() error {
 
 // Validate checks whether the configuration contains all required values.
 func (e *EnvConfig) Validate() error {
+	if err := e.Components.Gateway.IssueTracker.Validate(); err != nil {
+		return err
+	}
 	if err := e.Components.Gateway.MetadataSync.Validate(); err != nil {
 		return err
 	}

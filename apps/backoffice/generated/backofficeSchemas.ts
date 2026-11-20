@@ -16,6 +16,23 @@ export type Capabilities = {
   notifications: {
     email_enabled: boolean;
   };
+  /**
+   * Issue tracker for feedback and issues, when configured.
+   */
+  issue_tracker?: {
+    /**
+     * Absolute URI for the issue tracker.
+     *
+     * @format uri
+     */
+    url: string;
+    /**
+     * Absolute URI for creating an issue.
+     *
+     * @format uri
+     */
+    open_new: string;
+  };
 };
 
 export type ConversionRuntime = "python" | "java" | "binary";

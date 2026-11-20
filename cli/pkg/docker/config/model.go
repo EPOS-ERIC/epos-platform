@@ -74,6 +74,7 @@ type Gateway struct {
 	Port         int                 `yaml:"port"`
 	Mailgun      Mailgun             `yaml:"mailgun"`
 	MetadataSync common.MetadataSync `yaml:"metadata_sync"`
+	IssueTracker common.IssueTracker `yaml:"issue_tracker"`
 }
 
 type Mailgun struct {

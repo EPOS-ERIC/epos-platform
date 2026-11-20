@@ -56,11 +56,10 @@ func TestConfigRender(t *testing.T) {
 			wantContains: map[string][]string{
 				"templates/dataportal.yaml":         {"name: dataportal", `value: "http://localhost/test-default/aai"`},
 				"templates/gateway.yaml":            {"name: gateway", `url: "http://aai-service:8080/oauth2/userinfo"`, `url: "converter:8200"`, "imagePullPolicy: IfNotPresent", `nginx.ingress.kubernetes.io/proxy-body-size: "10m"`},
-				"templates/metadata-lifecycle.yaml": {"name: metadata-lifecycle", "name: metadata-database", "claimName: psqldata"},
-				"templates/data-retriever.yaml":     {"name: data-retriever", "name: retriever-db"},
-				"templates/converter.yaml":          {"name: converter", "name: converter-db", "claimName: converter-plugins", "type: Recreate", "fsGroup: 1000"},
-				"templates/sharing.yaml":            {"name: sharing", "name: sharing-db"},
-				"templates/pvc.yaml":                {"name: psqldata", "name: retriever-db", "name: converter-db", "name: converter-plugins", "name: sharing-db", "ReadWriteOnce"},
+				"templates/metadata-lifecycle.yaml": {"name: metadata-lifecycle", "claimName: metadata-database", "kind: PersistentVolumeClaim\nmetadata:\n  name: metadata-database"},
+				"templates/data-retriever.yaml":     {"name: data-retriever", "claimName: retriever-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: retriever-db"},
+				"templates/converter.yaml":          {"name: converter", "claimName: converter-plugins", "type: Recreate", "fsGroup: 1000", "kind: PersistentVolumeClaim\nmetadata:\n  name: converter-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: converter-plugins"},
+				"templates/sharing.yaml":            {"name: sharing", "claimName: sharing-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: sharing-db"},
 			},
 		},
 		{
@@ -74,8 +73,7 @@ func TestConfigRender(t *testing.T) {
 				"templates/converter.yaml": {`value: "external-db"`, "name: converter"},
 			},
 			notContains: map[string][]string{
-				"templates/converter.yaml": {"claimName: converter-db"},
-				"templates/pvc.yaml":       {"name: converter-db"},
+				"templates/converter.yaml": {"claimName: converter-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: converter-db"},
 			},
 		},
 		{
@@ -129,14 +127,14 @@ func TestConfigRender(t *testing.T) {
 					"securityContext:\n        fsGroup: 1000",
 					"kind: Ingress",
 					"path: /test-aai/aai(/|$)(.*)",
-					`INITIAL_ADMIN_NAME: "EPOS"`,
-					`INITIAL_ADMIN_SURNAME: "User"`,
-					`INITIAL_ADMIN_EMAIL: "epos@epos.eu"`,
+					"name: INITIAL_ADMIN_NAME\n          value: \"EPOS\"",
+					"name: INITIAL_ADMIN_SURNAME\n          value: \"User\"",
+					"name: INITIAL_ADMIN_EMAIL\n          value: \"epos@epos.eu\"",
 					"name: INITIAL_ADMIN_PASSWORD",
-					`APP_CORS_ALLOW_ORIGIN: "*"`,
-					`OAUTH_GUI_URLS: "http://localhost/test-aai/,http://localhost/test-aai/backoffice/"`,
+					"name: APP_CORS_ALLOW_ORIGIN\n          value: \"*\"",
+					"name: OAUTH_GUI_URLS\n          value: \"http://localhost/test-aai/,http://localhost/test-aai/backoffice/\"",
+					"kind: PersistentVolumeClaim\nmetadata:\n  name: aai\n",
 				},
-				"templates/pvc.yaml": {"name: aai"},
 			},
 		},
 		{
@@ -149,7 +147,7 @@ func TestConfigRender(t *testing.T) {
 			},
 			wantContains: map[string][]string{
 				"templates/aai-service.yaml": {
-					`OAUTH_GUI_URLS: "http://localhost/,http://localhost/backoffice/"`,
+					"name: OAUTH_GUI_URLS\n          value: \"http://localhost/,http://localhost/backoffice/\"",
 				},
 			},
 		},
@@ -173,8 +171,7 @@ func TestConfigRender(t *testing.T) {
 			},
 			notContains: map[string][]string{
 				"templates/gateway.yaml":     {"wait-for-aai-service"},
-				"templates/aai-service.yaml": {"name: aai-service"},
-				"templates/pvc.yaml":         {"name: aai"},
+				"templates/aai-service.yaml": {"name: aai-service", "kind: PersistentVolumeClaim"},
 			},
 		},
 		{
