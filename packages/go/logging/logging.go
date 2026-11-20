@@ -3,6 +3,7 @@ package logging
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 	"strings"
@@ -61,6 +62,16 @@ func (m *multiHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (m *multiHandler) Handle(ctx context.Context, record slog.Record) error {
+	var extra []slog.Attr
+	record.Attrs(func(attr slog.Attr) bool {
+		extra = appendErrorAttrs(extra, attr)
+		return true
+	})
+	if len(extra) > 0 {
+		record = record.Clone()
+		record.AddAttrs(extra...)
+	}
+
 	for _, handler := range m.handlers {
 		if handler.Enabled(ctx, record.Level) {
 			if err := handler.Handle(ctx, record); err != nil {
@@ -72,11 +83,32 @@ func (m *multiHandler) Handle(ctx context.Context, record slog.Record) error {
 }
 
 func (m *multiHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	var extra []slog.Attr
+	for _, attr := range attrs {
+		extra = appendErrorAttrs(extra, attr)
+	}
+	if len(extra) > 0 {
+		attrs = append(extra, attrs...)
+	}
+
 	handlers := make([]slog.Handler, len(m.handlers))
 	for i, handler := range m.handlers {
 		handlers[i] = handler.WithAttrs(attrs)
 	}
 	return &multiHandler{handlers: handlers}
+}
+
+// appendErrorAttrs keeps the original error for each sink and adds its structured diagnostics.
+func appendErrorAttrs(attrs []slog.Attr, attr slog.Attr) []slog.Attr {
+	if err, ok := attr.Value.Any().(error); ok {
+		if structured, ok := errors.AsType[interface {
+			error
+			LogAttrs() []slog.Attr
+		}](err); ok {
+			return append(attrs, structured.LogAttrs()...)
+		}
+	}
+	return attrs
 }
 
 func (m *multiHandler) WithGroup(name string) slog.Handler {

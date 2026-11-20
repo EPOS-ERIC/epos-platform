@@ -30,67 +30,60 @@ func New(db *pgxpool.Pool) *Repo {
 	}
 }
 
-// Sync atomically replaces the remote-owned fields and hierarchy.
-func (r *Repo) Sync(ctx context.Context, values []domain.SyncedOrganization) error {
-	return dbtx.RunWithTx(ctx, r.db, r.Queries, func(q *sqlc.Queries, tx pgx.Tx) error {
-		// Lock to serialize snapshot writes across gateway replicas.
-		if _, err := tx.Exec(ctx, "SELECT pg_advisory_xact_lock(hashtext('organization-sync'))"); err != nil {
-			return fmt.Errorf("lock organization sync: %w", err)
+// Sync replaces remote-owned fields and hierarchy using the caller's transaction.
+func Sync(ctx context.Context, q *sqlc.Queries, values []domain.SyncedOrganization) error {
+	ids := make(map[int64]uuid.UUID, len(values))
+	nids := make([]int64, 0, len(values))
+	for _, value := range values {
+		input := value.Input
+		id, err := q.UpsertSyncedOrganization(ctx, sqlc.UpsertSyncedOrganizationParams{
+			RemoteNid:  &value.NID,
+			Name:       input.Name,
+			Street:     input.Street,
+			Locality:   input.Locality,
+			PostalCode: input.PostalCode,
+			Country:    input.Country,
+			LogoUrl:    input.LogoURL,
+			PageUrl:    input.PageURL,
+			Email:      input.Email,
+		})
+		if err != nil {
+			return fmt.Errorf("upsert organization %d: %w", value.NID, err)
 		}
 
-		ids := make(map[int64]uuid.UUID, len(values))
-		nids := make([]int64, 0, len(values))
-		for _, value := range values {
-			input := value.Input
-			id, err := q.UpsertSyncedOrganization(ctx, sqlc.UpsertSyncedOrganizationParams{
-				RemoteNid:  &value.NID,
-				Name:       input.Name,
-				Street:     input.Street,
-				Locality:   input.Locality,
-				PostalCode: input.PostalCode,
-				Country:    input.Country,
-				LogoUrl:    input.LogoURL,
-				PageUrl:    input.PageURL,
-				Email:      input.Email,
-			})
-			if err != nil {
-				return fmt.Errorf("upsert organization %d: %w", value.NID, err)
-			}
+		ids[value.NID] = id
+		nids = append(nids, value.NID)
+	}
 
-			ids[value.NID] = id
-			nids = append(nids, value.NID)
+	if err := q.DeleteAbsentSyncedOrganizations(ctx, nids); err != nil {
+		return fmt.Errorf("delete absent organizations: %w", err)
+	}
+
+	// one identifier lookup per organization; batch if snapshot size makes this slow.
+	for _, organization := range values {
+		if err := syncIdentifiers(ctx, q, ids[organization.NID], organization.Input.Identifiers); err != nil {
+			return fmt.Errorf("sync organization %d identifiers: %w", organization.NID, err)
 		}
+	}
 
-		if err := q.DeleteAbsentSyncedOrganizations(ctx, nids); err != nil {
-			return fmt.Errorf("delete absent organizations: %w", err)
+	for _, value := range values {
+		if err := q.DeleteOrganizationParents(ctx, ids[value.NID]); err != nil {
+			return fmt.Errorf("clear organization parents: %w", err)
 		}
+	}
 
-		// one identifier lookup per organization; batch if snapshot size makes this slow.
-		for _, organization := range values {
-			if err := syncIdentifiers(ctx, q, ids[organization.NID], organization.Input.Identifiers); err != nil {
-				return fmt.Errorf("sync organization %d identifiers: %w", organization.NID, err)
-			}
-		}
-
-		for _, value := range values {
-			if err := q.DeleteOrganizationParents(ctx, ids[value.NID]); err != nil {
-				return fmt.Errorf("clear organization parents: %w", err)
-			}
-		}
-
-		for _, value := range values {
-			for _, parent := range value.ParentNIDs {
-				if err := q.CreateOrganizationParent(ctx, sqlc.CreateOrganizationParentParams{
-					ChildOrganizationID:  ids[value.NID],
-					ParentOrganizationID: ids[parent],
-				}); err != nil {
-					return fmt.Errorf("link organization %d parent %d: %w", value.NID, parent, err)
-				}
+	for _, value := range values {
+		for _, parent := range value.ParentNIDs {
+			if err := q.CreateOrganizationParent(ctx, sqlc.CreateOrganizationParentParams{
+				ChildOrganizationID:  ids[value.NID],
+				ParentOrganizationID: ids[parent],
+			}); err != nil {
+				return fmt.Errorf("link organization %d parent %d: %w", value.NID, parent, err)
 			}
 		}
+	}
 
-		return nil
-	})
+	return nil
 }
 
 // syncIdentifiers preserves IDs of unchanged identifiers and removes absent ones.

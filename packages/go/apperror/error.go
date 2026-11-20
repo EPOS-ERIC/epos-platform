@@ -3,6 +3,7 @@ package apperror
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -118,6 +119,21 @@ func (e *AppError) Error() string {
 		return e.cause.Error()
 	}
 	return e.Detail
+}
+
+// LogAttrs returns structured diagnostics without exposing the underlying cause.
+func (e *AppError) LogAttrs() []slog.Attr {
+	if e == nil {
+		return nil
+	}
+	attrs := []slog.Attr{
+		slog.String("error_code", string(e.Code)),
+		slog.String("error_detail", e.Detail),
+	}
+	if e.Target != "" {
+		attrs = append(attrs, slog.String("error_target", e.Target))
+	}
+	return attrs
 }
 
 // HTTPStatus returns the public HTTP status assigned to code.

@@ -62,7 +62,7 @@ type Handler interface {
 	CreateConfiguration(ctx context.Context, req *ConfigurationWriteRequest) (*ConfigurationDetail, error)
 	// CreateContactPoint implements createContactPoint operation.
 	//
-	// Create reusable contact point.
+	// Returns 403 when contact-point management is in remote sync mode.
 	//
 	// POST /contact-points
 	CreateContactPoint(ctx context.Context, req *CreateContactPointRequest) (*ContactPoint, error)
@@ -133,7 +133,7 @@ type Handler interface {
 	DeleteConfiguration(ctx context.Context, params DeleteConfigurationParams) error
 	// DeleteContactPoint implements deleteContactPoint operation.
 	//
-	// Delete contact point.
+	// Returns 403 when contact-point management is in remote sync mode.
 	//
 	// DELETE /contact-points/{contactPointId}
 	DeleteContactPoint(ctx context.Context, params DeleteContactPointParams) error
@@ -472,7 +472,7 @@ type Handler interface {
 	ReplaceConfiguration(ctx context.Context, req *ConfigurationWriteRequest, params ReplaceConfigurationParams) (*ConfigurationDetail, error)
 	// ReplaceContactPoint implements replaceContactPoint operation.
 	//
-	// Replace contact point.
+	// Returns 403 when contact-point management is in remote sync mode.
 	//
 	// PUT /contact-points/{contactPointId}
 	ReplaceContactPoint(ctx context.Context, req *ReplaceContactPointRequest, params ReplaceContactPointParams) (*ContactPoint, error)
@@ -600,8 +600,9 @@ type Handler interface {
 	// TriggerMetadataSync implements triggerMetadataSync operation.
 	//
 	// Requires both global.organization.manage and global.contact_point.manage. Schedules a background
-	// sync on the responding Gateway instance. Requests coalesce when a sync is already queued. Returns
-	// 503 when metadata synchronization is disabled. Acceptance does not indicate success.
+	// sync of organizations and contact points on the responding Gateway instance. Requests coalesce when
+	// a sync is already queued. Returns 503 when metadata synchronization is disabled. Acceptance does not
+	// indicate success.
 	//
 	// POST /metadata/sync
 	TriggerMetadataSync(ctx context.Context) error

@@ -18,6 +18,11 @@ type ContactPointInput struct {
 	Email string
 }
 
+type SyncedContactPoint struct {
+	NID   int64
+	Input ContactPointInput
+}
+
 // Normalize validates and normalizes editable contact-point fields.
 func (value *ContactPointInput) Normalize() error {
 	value.Email = strings.TrimSpace(value.Email)

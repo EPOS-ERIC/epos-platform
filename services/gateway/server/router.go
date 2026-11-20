@@ -9,6 +9,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/contactrequest"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/converter"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/distributionaccess"
@@ -85,6 +86,7 @@ func NewRouter(
 		converterService,
 		log,
 		organizationService,
+		contactpoints.New(metadataLifecycleClient, capabilities.MetadataSyncBaseURL != ""),
 		metadataSync,
 		capabilities,
 	)

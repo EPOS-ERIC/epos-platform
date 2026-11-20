@@ -23,6 +23,31 @@ func New(db *pgxpool.Pool) *Repo {
 	return &Repo{Queries: sqlc.New(db)}
 }
 
+// Sync replaces the remote contact points using the caller's transaction.
+func Sync(ctx context.Context, q *sqlc.Queries, values []domain.SyncedContactPoint) error {
+	nids := make([]int64, 0, len(values))
+	// immediate email uniqueness rejects reassignments within a snapshot; defer the check if Drupal starts moving emails between NIDs.
+	for _, value := range values {
+		if err := q.UpsertSyncedContactPoint(ctx, sqlc.UpsertSyncedContactPointParams{
+			RemoteNid: &value.NID,
+			Email:     value.Input.Email,
+		}); err != nil {
+			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+				return apperror.New(apperror.CodeConflict, fmt.Sprintf("Email conflicts with another contact point for Drupal person %d.", value.NID))
+			}
+
+			return fmt.Errorf("upsert contact point %d: %w", value.NID, err)
+		}
+
+		nids = append(nids, value.NID)
+	}
+	if err := q.DeleteAbsentSyncedContactPoints(ctx, nids); err != nil {
+		return fmt.Errorf("delete absent contact points: %w", err)
+	}
+
+	return nil
+}
+
 func (r *Repo) List(ctx context.Context) ([]domain.ContactPoint, error) {
 	rows, err := r.ListContactPoints(ctx)
 	if err != nil {

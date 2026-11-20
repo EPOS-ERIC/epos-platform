@@ -481,13 +481,13 @@ func (s *Capabilities) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := s.Organizations.Validate(); err != nil {
+		if err := s.MetadataSync.Validate(); err != nil {
 			return err
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "organizations",
+			Name:  "metadata_sync",
 			Error: err,
 		})
 	}
@@ -497,7 +497,7 @@ func (s *Capabilities) Validate() error {
 	return nil
 }
 
-func (s *CapabilitiesOrganizations) Validate() error {
+func (s *CapabilitiesMetadataSync) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -520,7 +520,7 @@ func (s *CapabilitiesOrganizations) Validate() error {
 	return nil
 }
 
-func (s CapabilitiesOrganizationsManagement) Validate() error {
+func (s CapabilitiesMetadataSyncManagement) Validate() error {
 	switch s {
 	case "local":
 		return nil

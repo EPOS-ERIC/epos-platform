@@ -7,13 +7,14 @@ import (
 )
 
 func (h *ogenHandler) GetCapabilities(context.Context) (*gatewayapi.Capabilities, error) {
-	management := gatewayapi.CapabilitiesOrganizationsManagementLocal
-	if h.capabilities.OrganizationsSynced {
-		management = gatewayapi.CapabilitiesOrganizationsManagementRemoteSync
+	metadataSync := gatewayapi.CapabilitiesMetadataSync{Management: gatewayapi.CapabilitiesMetadataSyncManagementLocal}
+	if h.capabilities.MetadataSyncBaseURL != "" {
+		metadataSync.Management = gatewayapi.CapabilitiesMetadataSyncManagementRemoteSync
+		metadataSync.BaseURL = gatewayapi.NewOptString(h.capabilities.MetadataSyncBaseURL)
 	}
 
 	capabilities := &gatewayapi.Capabilities{
-		Organizations:  gatewayapi.CapabilitiesOrganizations{Management: management},
+		MetadataSync:   metadataSync,
 		Authentication: gatewayapi.CapabilitiesAuthentication{RootURL: h.capabilities.AuthRootURL},
 		Notifications:  gatewayapi.CapabilitiesNotifications{EmailEnabled: h.capabilities.EmailEnabled},
 	}

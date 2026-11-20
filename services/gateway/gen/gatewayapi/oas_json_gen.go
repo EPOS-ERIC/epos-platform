@@ -1766,8 +1766,8 @@ func (s *Capabilities) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Capabilities) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("organizations")
-		s.Organizations.Encode(e)
+		e.FieldStart("metadata_sync")
+		s.MetadataSync.Encode(e)
 	}
 	{
 		e.FieldStart("authentication")
@@ -1786,7 +1786,7 @@ func (s *Capabilities) encodeFields(e *jx.Encoder) {
 }
 
 var jsonFieldsNameOfCapabilities = [4]string{
-	0: "organizations",
+	0: "metadata_sync",
 	1: "authentication",
 	2: "notifications",
 	3: "issue_tracker",
@@ -1801,15 +1801,15 @@ func (s *Capabilities) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "organizations":
+		case "metadata_sync":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				if err := s.Organizations.Decode(d); err != nil {
+				if err := s.MetadataSync.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"organizations\"")
+				return errors.Wrap(err, "decode field \"metadata_sync\"")
 			}
 		case "authentication":
 			requiredBitSet[0] |= 1 << 1
@@ -2107,6 +2107,157 @@ func (s *CapabilitiesIssueTracker) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *CapabilitiesMetadataSync) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *CapabilitiesMetadataSync) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("management")
+		s.Management.Encode(e)
+	}
+	{
+		if s.BaseURL.Set {
+			e.FieldStart("base_url")
+			s.BaseURL.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfCapabilitiesMetadataSync = [2]string{
+	0: "management",
+	1: "base_url",
+}
+
+// Decode decodes CapabilitiesMetadataSync from json.
+func (s *CapabilitiesMetadataSync) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CapabilitiesMetadataSync to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "management":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Management.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"management\"")
+			}
+		case "base_url":
+			if err := func() error {
+				s.BaseURL.Reset()
+				if err := s.BaseURL.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"base_url\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode CapabilitiesMetadataSync")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfCapabilitiesMetadataSync) {
+					name = jsonFieldsNameOfCapabilitiesMetadataSync[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CapabilitiesMetadataSync) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CapabilitiesMetadataSync) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CapabilitiesMetadataSyncManagement as json.
+func (s CapabilitiesMetadataSyncManagement) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes CapabilitiesMetadataSyncManagement from json.
+func (s *CapabilitiesMetadataSyncManagement) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CapabilitiesMetadataSyncManagement to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch CapabilitiesMetadataSyncManagement(v) {
+	case CapabilitiesMetadataSyncManagementLocal:
+		*s = CapabilitiesMetadataSyncManagementLocal
+	case CapabilitiesMetadataSyncManagementRemoteSync:
+		*s = CapabilitiesMetadataSyncManagementRemoteSync
+	default:
+		*s = CapabilitiesMetadataSyncManagement(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s CapabilitiesMetadataSyncManagement) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CapabilitiesMetadataSyncManagement) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *CapabilitiesNotifications) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -2198,140 +2349,6 @@ func (s *CapabilitiesNotifications) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *CapabilitiesNotifications) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *CapabilitiesOrganizations) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *CapabilitiesOrganizations) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("management")
-		s.Management.Encode(e)
-	}
-}
-
-var jsonFieldsNameOfCapabilitiesOrganizations = [1]string{
-	0: "management",
-}
-
-// Decode decodes CapabilitiesOrganizations from json.
-func (s *CapabilitiesOrganizations) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode CapabilitiesOrganizations to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "management":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.Management.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"management\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode CapabilitiesOrganizations")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000001,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfCapabilitiesOrganizations) {
-					name = jsonFieldsNameOfCapabilitiesOrganizations[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *CapabilitiesOrganizations) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CapabilitiesOrganizations) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes CapabilitiesOrganizationsManagement as json.
-func (s CapabilitiesOrganizationsManagement) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes CapabilitiesOrganizationsManagement from json.
-func (s *CapabilitiesOrganizationsManagement) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode CapabilitiesOrganizationsManagement to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch CapabilitiesOrganizationsManagement(v) {
-	case CapabilitiesOrganizationsManagementLocal:
-		*s = CapabilitiesOrganizationsManagementLocal
-	case CapabilitiesOrganizationsManagementRemoteSync:
-		*s = CapabilitiesOrganizationsManagementRemoteSync
-	default:
-		*s = CapabilitiesOrganizationsManagement(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s CapabilitiesOrganizationsManagement) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CapabilitiesOrganizationsManagement) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

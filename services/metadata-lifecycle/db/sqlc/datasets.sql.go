@@ -2593,6 +2593,7 @@ func (q *Queries) ListLifecycleDatasetCategories(ctx context.Context, datasetVer
 const listLifecycleDatasetContactPoints = `-- name: ListLifecycleDatasetContactPoints :many
 SELECT
     contact.id,
+    contact.remote_nid,
     contact.email
 FROM
     dataset_version_contact_points AS link
@@ -2612,7 +2613,7 @@ func (q *Queries) ListLifecycleDatasetContactPoints(ctx context.Context, dataset
 	var items []ContactPoint
 	for rows.Next() {
 		var i ContactPoint
-		if err := rows.Scan(&i.ID, &i.Email); err != nil {
+		if err := rows.Scan(&i.ID, &i.RemoteNid, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -3467,7 +3468,7 @@ func (q *Queries) ListLifecycleWebServiceCategories(ctx context.Context, webServ
 const listLifecycleWebServiceContactPoints = `-- name: ListLifecycleWebServiceContactPoints :many
 SELECT
     link.web_service_id,
-    contact.id, contact.email
+    contact.id, contact.remote_nid, contact.email
 FROM
     web_service_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id
@@ -3492,7 +3493,12 @@ func (q *Queries) ListLifecycleWebServiceContactPoints(ctx context.Context, webS
 	var items []ListLifecycleWebServiceContactPointsRow
 	for rows.Next() {
 		var i ListLifecycleWebServiceContactPointsRow
-		if err := rows.Scan(&i.WebServiceID, &i.ContactPoint.ID, &i.ContactPoint.Email); err != nil {
+		if err := rows.Scan(
+			&i.WebServiceID,
+			&i.ContactPoint.ID,
+			&i.ContactPoint.RemoteNid,
+			&i.ContactPoint.Email,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

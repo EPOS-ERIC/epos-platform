@@ -793,8 +793,9 @@ type Concept struct {
 }
 
 type ContactPoint struct {
-	ID    uuid.UUID
-	Email string
+	ID        uuid.UUID
+	RemoteNid *int64
+	Email     string
 }
 
 type Dataset struct {
