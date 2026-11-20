@@ -1427,13 +1427,13 @@ app-navigation-sidebar .sidebar .nav-tree-row--main .tree-toggle-button.main-tre
   overflow-y: auto;
 }
 
-:where(app-general-information, app-software-general-information) .keyword-hint {
+:where(app-general-information, app-software-general-information, app-web-service) .keyword-hint {
   display: block;
   margin-top: 6px;
   font-size: 0.78rem;
 }
 
-:where(app-general-information, app-software-general-information) .keyword-hint kbd {
+:where(app-general-information, app-software-general-information, app-web-service) .keyword-hint kbd {
   display: inline-block;
   padding: 2px 5px;
   border: 1px solid var(--line);

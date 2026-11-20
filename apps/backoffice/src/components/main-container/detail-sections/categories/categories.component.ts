@@ -33,6 +33,7 @@ export class CategoriesComponent {
   @Input() disabled = false;
   @Input() readonlyView = false;
   @Input() neutralAppearance = false;
+  @Input() embedded = false;
   @Output() modelChange = new EventEmitter<ResourceVersionReference[]>();
 
   @Input()

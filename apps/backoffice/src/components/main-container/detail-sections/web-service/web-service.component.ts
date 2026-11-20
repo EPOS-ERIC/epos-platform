@@ -2,16 +2,19 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ContactPointsComponent } from '../contact-points/contact-points.component';
+import { CategoriesComponent } from '../categories/categories.component';
 import { ProvidersComponent } from '../providers/providers.component';
 import { WebServiceParametersComponent } from './web-service-parameters.component';
 import { ScalarParametersEditorComponent } from './scalar-parameters-editor.component';
 import { DistributionConversionsComponent } from '../distribution/distribution-conversions.component';
+import { KeywordChipsComponent } from '../../../../shared/ui/keyword-chips.component';
 import type {
   DatasetWebServiceConfigurationForm,
   DatasetWebServiceForm,
   DatasetWebServiceParameterForm,
   DatasetWebServiceScalarParameterForm,
-  DatasetProviderForm
+  DatasetProviderForm,
+  DatasetCategoryForm
 } from '../../../../models/dataset-detail-form';
 
 type ParameterCollection =
@@ -22,13 +25,14 @@ type ParameterCollection =
 
 @Component({
   selector: 'app-web-service',
-  imports: [FormsModule, NgTemplateOutlet, ContactPointsComponent, DistributionConversionsComponent, ProvidersComponent, ScalarParametersEditorComponent, WebServiceParametersComponent],
+  imports: [FormsModule, NgTemplateOutlet, CategoriesComponent, ContactPointsComponent, DistributionConversionsComponent, KeywordChipsComponent, ProvidersComponent, ScalarParametersEditorComponent, WebServiceParametersComponent],
   templateUrl: './web-service.component.html',
   styleUrl: './web-service.component.css'
 })
 export class WebServiceComponent {
   @Input() model: DatasetWebServiceForm | null = null;
   @Input() distributionId = '';
+  @Input() groupId = '';
   @Input() nativeFormats: string[] = [];
   @Input() comparisonModel: DatasetWebServiceForm | null = null;
   @Input() disabled = false;
@@ -61,6 +65,18 @@ export class WebServiceComponent {
     }
 
     this.model.contactPoints = contactPoints;
+    this.emitModelChange();
+  }
+
+  protected onKeywordsChange(keywords: string[]): void {
+    if (!this.model) return;
+    this.model.keywords = keywords;
+    this.emitModelChange();
+  }
+
+  protected onCategoriesChange(categories: DatasetCategoryForm[]): void {
+    if (!this.model) return;
+    this.model.categories = categories;
     this.emitModelChange();
   }
 

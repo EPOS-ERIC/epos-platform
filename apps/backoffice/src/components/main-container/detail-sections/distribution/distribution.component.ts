@@ -15,6 +15,7 @@ type DistributionComparisonStatus = 'unchanged' | 'changed' | 'added' | 'removed
 export class DistributionComponent implements OnChanges {
   @Input() model: DatasetDistributionForm[] = [];
   @Input() comparisonModel: DatasetDistributionForm[] = [];
+  @Input() groupId = '';
   @Input() disabled = false;
   @Input() comparisonMode = false;
   @Input() comparisonSide: 'left' | 'right' = 'left';
@@ -219,6 +220,10 @@ export class DistributionComponent implements OnChanges {
         documentationUri: '',
         provider: { id: '', name: '' },
         contactPoints: [],
+        keywords: [],
+        accessRights: '',
+        license: '',
+        categories: [],
         configuration: {
           type: 'HTTP',
           templateUrl: '',

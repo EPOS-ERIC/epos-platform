@@ -1,4 +1,4 @@
-import type { DatasetResourceMetadata, WebServiceConfiguration } from '../../generated/backofficeSchemas';
+import type { DatasetResourceMetadata, DatasetWebService } from '../../generated/backofficeSchemas';
 import { describe, expect, it } from 'vitest';
 import type {
   DatasetDetailForm,
@@ -29,6 +29,12 @@ function datasetMetadata(): DatasetResourceMetadata {
     keywords: ['seismic', 'catalogue'],
     accrual_periodicity: null,
     quality_annotation: 'reviewed',
+    conforms_to: 'EPOS-DCAT-AP',
+    provenance: 'Imported and reviewed',
+    type: 'Seismic catalogue',
+    version: '2.1',
+    spatial_resolution_in_meters: 250,
+    temporal_resolution: 60,
     access_right: 'RESTRICTED',
     distributions: [
       {
@@ -37,7 +43,6 @@ function datasetMetadata(): DatasetResourceMetadata {
         title: 'Service distribution',
         description: 'Distribution description',
         type: WEB_SERVICE_TYPE,
-        available_formats: [{ kind: 'ORIGINAL', output_format: 'application/json', label: 'JSON' }],
         web_service: {
           id: 'service-id',
           resource_id: 'service-resource-id',
@@ -45,15 +50,19 @@ function datasetMetadata(): DatasetResourceMetadata {
           provider: { id: 'provider-id', name: 'Provider' },
           documentation_uri: 'https://example.test/docs',
           contact_points: ['contact-id'],
-          configuration: {
-            type: 'HTTP',
-            template_url: 'https://example.test/{value}',
-            method: 'POST',
-            format: 'application/json',
-            body_required: false,
-            body_content_type: 'application/json',
-            body_template: '{"when":"{when}"}',
-            body_parameters: [
+          keywords: ['web service'],
+          access_rights: 'RESTRICTED',
+          license: 'CC-BY-4.0',
+          categories: [{ id: 'service-category-id', name: 'Service category' }],
+          type: 'HTTP',
+          template_url: 'https://example.test/{value}',
+          method: 'POST',
+          format: 'application/json',
+          available_formats: [{ kind: 'ORIGINAL', output_format: 'application/json', label: 'JSON' }],
+          body_required: false,
+          body_content_type: 'application/json',
+          body_template: '{"when":"{when}"}',
+          body_parameters: [
               {
                 id: 'body-parameter-id',
                 resource_id: 'body-parameter-resource-id',
@@ -133,7 +142,6 @@ function datasetMetadata(): DatasetResourceMetadata {
               ],
             },
             ],
-          },
         },
       },
     ],
@@ -160,6 +168,12 @@ function emptyDatasetForm(): DatasetDetailForm {
     keywords: [],
     accrualPeriodicity: '',
     qualityAnnotation: '',
+    conformsTo: '',
+    provenance: '',
+    type: '',
+    version: '',
+    spatialResolutionInMeters: '',
+    temporalResolution: '',
     created: '',
     updated: '',
     spatial: null,
@@ -258,6 +272,10 @@ function formWithParameters(
           documentationUri: 'https://example.test/docs',
           provider: { id: '', name: '' },
           contactPoints: [],
+          keywords: [],
+          accessRights: '',
+          license: '',
+          categories: [],
           configuration: {
             type: 'HTTP',
             templateUrl: 'https://example.test/{value}',
@@ -285,6 +303,12 @@ describe('toDatasetDetailForm', () => {
       keywords: ['seismic', 'catalogue'],
       accrualPeriodicity: '',
       qualityAnnotation: 'reviewed',
+      conformsTo: 'EPOS-DCAT-AP',
+      provenance: 'Imported and reviewed',
+      type: 'Seismic catalogue',
+      version: '2.1',
+      spatialResolutionInMeters: '250',
+      temporalResolution: '60',
       created: 'invalid-created',
       updated: '',
       temporal: { start: 'invalid-start', end: '' },
@@ -299,6 +323,10 @@ describe('toDatasetDetailForm', () => {
         resourceId: 'service-resource-id',
         visibleOn: ['GRAPH', 'MAP'],
         documentationUri: 'https://example.test/docs',
+        keywords: ['web service'],
+        accessRights: 'RESTRICTED',
+        license: 'CC-BY-4.0',
+        categories: [{ id: 'service-category-id', name: 'Service category' }],
         configuration: {
           type: 'HTTP',
           method: 'POST',
@@ -361,6 +389,26 @@ describe('toDatasetDetailForm', () => {
     expect(request.metadata.temporal_coverage).toBeUndefined();
   });
 
+  it('preserves zero resolutions and clears blank resolution fields', () => {
+    const metadata = datasetMetadata();
+    metadata.spatial_resolution_in_meters = 0;
+    metadata.temporal_resolution = 0;
+
+    const form = toDatasetDetailForm(metadata);
+    expect(form.spatialResolutionInMeters).toBe('0');
+    expect(form.temporalResolution).toBe('0');
+
+    let request = toDatasetSaveRequest(form, 1, metadata);
+    expect(request.metadata.spatial_resolution_in_meters).toBe(0);
+    expect(request.metadata.temporal_resolution).toBe(0);
+
+    form.spatialResolutionInMeters = '';
+    form.temporalResolution = '';
+    request = toDatasetSaveRequest(form, 1, metadata);
+    expect(request.metadata.spatial_resolution_in_meters).toBeNull();
+    expect(request.metadata.temporal_resolution).toBeNull();
+  });
+
   it('supplies current placeholder rows and empty optional arrays', () => {
     const metadata = datasetMetadata();
     metadata.persistent_identifiers = [];
@@ -368,9 +416,9 @@ describe('toDatasetDetailForm', () => {
     const distribution = metadata.distributions[0];
     if (distribution.type === WEB_SERVICE_TYPE) {
       distribution.web_service.visible_on = null;
-      if (distribution.web_service.configuration.type === 'HTTP') {
-        distribution.web_service.configuration.parameters = [];
-        distribution.web_service.configuration.body_parameters = undefined;
+      if (distribution.web_service.type === 'HTTP') {
+        distribution.web_service.parameters = [];
+        distribution.web_service.body_parameters = undefined;
       }
     }
 
@@ -404,19 +452,25 @@ describe('toDatasetSaveRequest', () => {
     const form = toDatasetDetailForm(datasetMetadata());
     const request = toDatasetSaveRequest(form, 7, datasetMetadata());
     const distribution = request.metadata.distributions?.[0];
+    if (!distribution || distribution.type !== WEB_SERVICE_TYPE) {
+      throw new Error('Expected web service draft');
+    }
 
     expect(distribution).toMatchObject({
       resource_id: 'distribution-resource-id',
       web_service: {
         resource_id: 'service-resource-id',
         visible_on: ['GRAPH', 'MAP'],
-        configuration: {
-          method: 'POST',
-          type: 'HTTP',
-          body_required: false,
-          body_content_type: 'application/json',
-          body_template: '{"when":"{when}"}',
-          body_parameters: [
+        keywords: ['web service'],
+        access_rights: 'RESTRICTED',
+        license: 'CC-BY-4.0',
+        categories: ['service-category-id'],
+        method: 'POST',
+        type: 'HTTP',
+        body_required: false,
+        body_content_type: 'application/json',
+        body_template: '{"when":"{when}"}',
+        body_parameters: [
           {
             kind: 'DATETIME',
             resource_id: 'body-parameter-resource-id',
@@ -452,7 +506,6 @@ describe('toDatasetSaveRequest', () => {
             ],
           },
           ],
-        },
       },
     });
     expect(request.metadata.persistent_identifiers).toEqual([{
@@ -460,13 +513,31 @@ describe('toDatasetSaveRequest', () => {
       type: 'DOI',
       value: '10.123/example',
     }]);
+    expect(request.metadata).toMatchObject({
+      conforms_to: 'EPOS-DCAT-AP',
+      provenance: 'Imported and reviewed',
+      type: 'Seismic catalogue',
+      version: '2.1',
+      spatial_resolution_in_meters: 250,
+      temporal_resolution: 60,
+    });
     expect(distribution).not.toHaveProperty('id');
+    expect(distribution.web_service).not.toHaveProperty('configuration');
+    expect(distribution.web_service).not.toHaveProperty('available_formats');
   });
 
   it('roundtrips WFS, WMS, and WMTS configurations', () => {
-    const configurations: WebServiceConfiguration[] = [
+    const common = {
+      id: 'service-id',
+      resource_id: 'service-resource-id',
+      keywords: [],
+      categories: [],
+    };
+    const webServices: DatasetWebService[] = [
       {
+        ...common,
         type: 'WFS',
+        available_formats: [{ kind: 'ORIGINAL', output_format: 'application/geo+json', label: 'GeoJSON' }],
         get_feature_template_url: 'https://example.test/wfs/{featureType}',
         version: '2.0.0',
         feature_types: ['stations'],
@@ -478,6 +549,7 @@ describe('toDatasetSaveRequest', () => {
         parameters: [],
       },
       {
+        ...common,
         type: 'WMS',
         capabilities_url: 'https://example.test/wms?service=WMS&request=GetCapabilities',
         default_layer: 'stations',
@@ -494,6 +566,7 @@ describe('toDatasetSaveRequest', () => {
         get_feature_info_parameters: [],
       },
       {
+        ...common,
         type: 'WMTS',
         capabilities_url: 'https://example.test/wmts/capabilities.xml',
         default_layer: 'stations',
@@ -509,25 +582,32 @@ describe('toDatasetSaveRequest', () => {
       },
     ];
 
-    for (const configuration of configurations) {
+    for (const webService of webServices) {
       const metadata = datasetMetadata();
       const distribution = metadata.distributions[0];
       if (distribution.type !== WEB_SERVICE_TYPE) throw new Error('Expected web service');
-      distribution.web_service.configuration = configuration;
+      distribution.web_service = webService;
 
       const form = toDatasetDetailForm(metadata);
+      expect(form.distributions[0].nativeFormats).toEqual(
+        'available_formats' in webService ? webService.available_formats.map(({ output_format }) => output_format) : [],
+      );
       const requestDistribution = toDatasetSaveRequest(form, 1, metadata).metadata.distributions?.[0];
       if (!requestDistribution || requestDistribution.type !== WEB_SERVICE_TYPE) {
         throw new Error('Expected web service draft');
       }
 
-      const expectedConfiguration = configuration.type === 'WMS' || configuration.type === 'WMTS'
-        ? {
-            ...configuration,
-            layers: configuration.layers.map(({ id: _id, ...layer }) => layer)
-          }
-        : configuration;
-      expect(requestDistribution.web_service.configuration).toEqual(expectedConfiguration);
+      expect(requestDistribution.web_service.type).toBe(webService.type);
+      expect(requestDistribution.web_service).not.toHaveProperty('configuration');
+      expect(requestDistribution.web_service).not.toHaveProperty('available_formats');
+      if (requestDistribution.web_service.type === 'WFS') {
+        expect(requestDistribution.web_service.default_feature_type).toBe('stations');
+      } else if (requestDistribution.web_service.type === 'WMS' || requestDistribution.web_service.type === 'WMTS') {
+        expect(requestDistribution.web_service.layers[0]).toMatchObject({
+          resource_id: `${requestDistribution.web_service.type.toLowerCase()}-layer-resource-id`,
+          name: 'stations',
+        });
+      }
     }
   });
 
@@ -550,11 +630,11 @@ describe('toDatasetSaveRequest', () => {
     if (!distribution || distribution.type !== WEB_SERVICE_TYPE)
       throw new Error('Expected web service draft');
     expect(distribution.web_service.visible_on).toBeUndefined();
-    if (distribution.web_service.configuration.type !== 'HTTP')
+    if (distribution.web_service.type !== 'HTTP')
       throw new Error('Expected HTTP configuration');
-    expect(distribution.web_service.configuration.body_content_type).toBeUndefined();
-    expect(distribution.web_service.configuration.body_template).toBeUndefined();
-    const stringDraft = distribution.web_service.configuration.parameters?.[0];
+    expect(distribution.web_service.body_content_type).toBeUndefined();
+    expect(distribution.web_service.body_template).toBeUndefined();
+    const stringDraft = distribution.web_service.parameters?.[0];
     if (!stringDraft || stringDraft.kind !== 'STRING') throw new Error('Expected string parameter');
     expect(stringDraft.enum).toBeUndefined();
   });
@@ -605,18 +685,16 @@ describe('toDatasetSaveRequest', () => {
 
     expect(request.metadata.distributions?.[0]).toMatchObject({
       web_service: {
-        configuration: {
-          parameters: [
-            {
-              kind: 'FLOAT',
-              position: 0,
-              minimum: 1.5,
-              maximum: null,
-              default: [2.75],
-              enum: [{ value: 3.5, label: 'Three and a half' }, { value: 4.5, label: undefined }],
-            },
-          ],
-        },
+        parameters: [
+          {
+            kind: 'FLOAT',
+            position: 0,
+            minimum: 1.5,
+            maximum: null,
+            default: [2.75],
+            enum: [{ value: 3.5, label: 'Three and a half' }, { value: 4.5, label: undefined }],
+          },
+        ],
       },
     });
   });
@@ -693,7 +771,7 @@ describe('distributionValidationError', () => {
     if (!requestDistribution || requestDistribution.type !== WEB_SERVICE_TYPE) {
       throw new Error('Expected web service draft');
     }
-    expect(requestDistribution.web_service.configuration).toMatchObject({
+    expect(requestDistribution.web_service).toMatchObject({
       type: 'DYNAMIC',
       parameters: [{ role: 'LONGITUDE' }, { role: 'LATITUDE' }],
     });

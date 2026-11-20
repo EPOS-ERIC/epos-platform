@@ -209,6 +209,10 @@ export type DatasetWebServiceForm = {
   documentationUri: string;
   provider: DatasetWebServiceProviderForm;
   contactPoints: DatasetWebServiceContactPointForm[];
+  keywords: string[];
+  accessRights: string;
+  license: string;
+  categories: DatasetCategoryForm[];
   configuration: DatasetWebServiceConfigurationForm;
 };
 
@@ -246,6 +250,12 @@ export type DatasetDetailForm = {
   keywords: string[];
   accrualPeriodicity: Exclude<DatasetAccrualPeriodicity, null> | '';
   qualityAnnotation: string;
+  conformsTo: string;
+  provenance: string;
+  type: string;
+  version: string;
+  spatialResolutionInMeters: string;
+  temporalResolution: string;
   created: string;
   updated: string;
   spatial: DatasetSpatialForm;

@@ -1,20 +1,25 @@
 import type {
   DatasetDraftMetadata,
   DatasetResourceMetadata,
+  DatasetWebService,
+  DynamicWebServiceConfigurationDraft,
   Distribution,
   DistributionDraft,
   DownloadableFileDistribution,
   DownloadableFileDistributionDraft,
+  GenericWebServiceConfigurationDraft,
   Parameter,
   ParameterDraft,
   ReplaceDatasetDraftRequest,
   ResourceVersionReference,
   ScalarParameter,
   ScalarParameterDraft,
+  WebServiceDraft,
   WebServiceDistribution,
   WebServiceDistributionDraft,
-  WebServiceConfiguration,
-  WebServiceConfigurationDraft,
+  WfsWebServiceConfigurationDraft,
+  WmsWebServiceConfigurationDraft,
+  WmtsWebServiceConfigurationDraft,
 } from '../../generated/backofficeSchemas';
 import type {
   DatasetDetailForm,
@@ -40,6 +45,12 @@ export function toDatasetDetailForm(metadata: DatasetResourceMetadata): DatasetD
     keywords: [...metadata.keywords],
     accrualPeriodicity: metadata.accrual_periodicity ?? '',
     qualityAnnotation: metadata.quality_annotation ?? '',
+    conformsTo: metadata.conforms_to ?? '',
+    provenance: metadata.provenance ?? '',
+    type: metadata.type ?? '',
+    version: metadata.version ?? '',
+    spatialResolutionInMeters: metadata.spatial_resolution_in_meters == null ? '' : String(metadata.spatial_resolution_in_meters),
+    temporalResolution: metadata.temporal_resolution == null ? '' : String(metadata.temporal_resolution),
     created: metadata.created ? toDateTimeLocalValue(metadata.created) : '',
     updated: metadata.updated ? toDateTimeLocalValue(metadata.updated) : '',
     spatial: metadata.spatial_coverage ?? null,
@@ -89,6 +100,12 @@ export function toDatasetSaveRequest(
       keywords: [...form.keywords],
       accrual_periodicity: form.accrualPeriodicity || undefined,
       quality_annotation: undefinedIfBlank(form.qualityAnnotation),
+      conforms_to: undefinedIfBlank(form.conformsTo),
+      provenance: undefinedIfBlank(form.provenance),
+      type: undefinedIfBlank(form.type),
+      version: undefinedIfBlank(form.version),
+      spatial_resolution_in_meters: toNumberOrNull(form.spatialResolutionInMeters),
+      temporal_resolution: toNumberOrNull(form.temporalResolution),
       access_right: preservedMetadata.access_right ?? undefined,
       distributions: form.distributions.map(buildDistributionDraft),
       spatial_coverage: buildSpatialCoverageDraft(form.spatial),
@@ -360,8 +377,8 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
   const base = {
     id: distribution.id,
     resourceId: distribution.resource_id,
-    nativeFormats: distribution.type === 'WEB_SERVICE'
-      ? distribution.available_formats
+    nativeFormats: distribution.type === 'WEB_SERVICE' && 'available_formats' in distribution.web_service
+      ? distribution.web_service.available_formats
           .filter((format) => format.kind === 'ORIGINAL')
           .map((format) => format.output_format)
       : [],
@@ -388,7 +405,11 @@ function buildDistributionForm(distribution: Distribution): DatasetDistributionF
         contactPoints: webService.contact_points?.length
           ? webService.contact_points.map((contactPoint) => contactPoint)
           : [],
-        configuration: buildWebServiceConfigurationForm(webService.configuration),
+        keywords: [...(webService.keywords ?? [])],
+        accessRights: webService.access_rights ?? '',
+        license: webService.license ?? '',
+        categories: (webService.categories ?? []).map(({ id, name }) => ({ id, name })),
+        configuration: buildWebServiceConfigurationForm(webService),
       },
     };
   }
@@ -412,7 +433,7 @@ function buildWebServiceProviderForm(
 }
 
 function buildWebServiceConfigurationForm(
-  configuration: WebServiceConfiguration,
+  configuration: DatasetWebService,
 ): DatasetWebServiceConfigurationForm {
   switch (configuration.type) {
     case 'HTTP':
@@ -643,15 +664,32 @@ function buildDistributionDraft(distribution: DatasetDistributionForm): Distribu
 function buildWebServiceDraft(
   webService: DatasetWebServiceForm,
 ): WebServiceDistributionDraft['web_service'] {
-  return {
+  const common = {
     resource_id: webService.resourceId,
     visible_on: webService.visibleOn.length ? webService.visibleOn : undefined,
     provider: hasIdentifierValue(webService.provider.id) ? webService.provider.id : undefined,
     documentation_uri: undefinedIfBlank(webService.documentationUri),
     contact_points: webService.contactPoints.filter(hasIdentifierValue),
-    configuration: buildWebServiceConfigurationDraft(webService.configuration),
+    keywords: webService.keywords.filter(hasIdentifierValue),
+    access_rights: undefinedIfBlank(webService.accessRights),
+    license: undefinedIfBlank(webService.license),
+    categories: webService.categories
+      .filter((category) => hasIdentifierValue(category.id))
+      .map((category) => category.id),
   };
+
+  return {
+    ...common,
+    ...buildWebServiceConfigurationDraft(webService.configuration),
+  } satisfies WebServiceDraft;
 }
+
+type WebServiceConfigurationDraft =
+  | GenericWebServiceConfigurationDraft
+  | DynamicWebServiceConfigurationDraft
+  | WfsWebServiceConfigurationDraft
+  | WmsWebServiceConfigurationDraft
+  | WmtsWebServiceConfigurationDraft;
 
 function buildWebServiceConfigurationDraft(
   configuration: DatasetWebServiceConfigurationForm,
