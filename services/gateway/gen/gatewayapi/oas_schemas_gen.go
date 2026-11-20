@@ -968,16 +968,17 @@ func (s *CanonicalOrganization) SetParents(val []uuid.UUID) {
 
 // Ref: #/components/schemas/Capabilities
 type Capabilities struct {
-	Organizations  CapabilitiesOrganizations  `json:"organizations"`
+	// Shared management mode for organizations and contact points.
+	MetadataSync   CapabilitiesMetadataSync   `json:"metadata_sync"`
 	Authentication CapabilitiesAuthentication `json:"authentication"`
 	Notifications  CapabilitiesNotifications  `json:"notifications"`
 	// Issue tracker for feedback and issues, when configured.
 	IssueTracker OptCapabilitiesIssueTracker `json:"issue_tracker"`
 }
 
-// GetOrganizations returns the value of Organizations.
-func (s *Capabilities) GetOrganizations() CapabilitiesOrganizations {
-	return s.Organizations
+// GetMetadataSync returns the value of MetadataSync.
+func (s *Capabilities) GetMetadataSync() CapabilitiesMetadataSync {
+	return s.MetadataSync
 }
 
 // GetAuthentication returns the value of Authentication.
@@ -995,9 +996,9 @@ func (s *Capabilities) GetIssueTracker() OptCapabilitiesIssueTracker {
 	return s.IssueTracker
 }
 
-// SetOrganizations sets the value of Organizations.
-func (s *Capabilities) SetOrganizations(val CapabilitiesOrganizations) {
-	s.Organizations = val
+// SetMetadataSync sets the value of MetadataSync.
+func (s *Capabilities) SetMetadataSync(val CapabilitiesMetadataSync) {
+	s.MetadataSync = val
 }
 
 // SetAuthentication sets the value of Authentication.
@@ -1058,6 +1059,74 @@ func (s *CapabilitiesIssueTracker) SetOpenNew(val url.URL) {
 	s.OpenNew = val
 }
 
+// Shared management mode for organizations and contact points.
+type CapabilitiesMetadataSync struct {
+	Management CapabilitiesMetadataSyncManagement `json:"management"`
+	// Configured remote metadata source URL, present only in remote sync mode.
+	BaseURL OptString `json:"base_url"`
+}
+
+// GetManagement returns the value of Management.
+func (s *CapabilitiesMetadataSync) GetManagement() CapabilitiesMetadataSyncManagement {
+	return s.Management
+}
+
+// GetBaseURL returns the value of BaseURL.
+func (s *CapabilitiesMetadataSync) GetBaseURL() OptString {
+	return s.BaseURL
+}
+
+// SetManagement sets the value of Management.
+func (s *CapabilitiesMetadataSync) SetManagement(val CapabilitiesMetadataSyncManagement) {
+	s.Management = val
+}
+
+// SetBaseURL sets the value of BaseURL.
+func (s *CapabilitiesMetadataSync) SetBaseURL(val OptString) {
+	s.BaseURL = val
+}
+
+type CapabilitiesMetadataSyncManagement string
+
+const (
+	CapabilitiesMetadataSyncManagementLocal      CapabilitiesMetadataSyncManagement = "local"
+	CapabilitiesMetadataSyncManagementRemoteSync CapabilitiesMetadataSyncManagement = "remote_sync"
+)
+
+// AllValues returns all CapabilitiesMetadataSyncManagement values.
+func (CapabilitiesMetadataSyncManagement) AllValues() []CapabilitiesMetadataSyncManagement {
+	return []CapabilitiesMetadataSyncManagement{
+		CapabilitiesMetadataSyncManagementLocal,
+		CapabilitiesMetadataSyncManagementRemoteSync,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CapabilitiesMetadataSyncManagement) MarshalText() ([]byte, error) {
+	switch s {
+	case CapabilitiesMetadataSyncManagementLocal:
+		return []byte(s), nil
+	case CapabilitiesMetadataSyncManagementRemoteSync:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CapabilitiesMetadataSyncManagement) UnmarshalText(data []byte) error {
+	switch CapabilitiesMetadataSyncManagement(data) {
+	case CapabilitiesMetadataSyncManagementLocal:
+		*s = CapabilitiesMetadataSyncManagementLocal
+		return nil
+	case CapabilitiesMetadataSyncManagementRemoteSync:
+		*s = CapabilitiesMetadataSyncManagementRemoteSync
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type CapabilitiesNotifications struct {
 	EmailEnabled bool `json:"email_enabled"`
 }
@@ -1070,61 +1139,6 @@ func (s *CapabilitiesNotifications) GetEmailEnabled() bool {
 // SetEmailEnabled sets the value of EmailEnabled.
 func (s *CapabilitiesNotifications) SetEmailEnabled(val bool) {
 	s.EmailEnabled = val
-}
-
-type CapabilitiesOrganizations struct {
-	Management CapabilitiesOrganizationsManagement `json:"management"`
-}
-
-// GetManagement returns the value of Management.
-func (s *CapabilitiesOrganizations) GetManagement() CapabilitiesOrganizationsManagement {
-	return s.Management
-}
-
-// SetManagement sets the value of Management.
-func (s *CapabilitiesOrganizations) SetManagement(val CapabilitiesOrganizationsManagement) {
-	s.Management = val
-}
-
-type CapabilitiesOrganizationsManagement string
-
-const (
-	CapabilitiesOrganizationsManagementLocal      CapabilitiesOrganizationsManagement = "local"
-	CapabilitiesOrganizationsManagementRemoteSync CapabilitiesOrganizationsManagement = "remote_sync"
-)
-
-// AllValues returns all CapabilitiesOrganizationsManagement values.
-func (CapabilitiesOrganizationsManagement) AllValues() []CapabilitiesOrganizationsManagement {
-	return []CapabilitiesOrganizationsManagement{
-		CapabilitiesOrganizationsManagementLocal,
-		CapabilitiesOrganizationsManagementRemoteSync,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s CapabilitiesOrganizationsManagement) MarshalText() ([]byte, error) {
-	switch s {
-	case CapabilitiesOrganizationsManagementLocal:
-		return []byte(s), nil
-	case CapabilitiesOrganizationsManagementRemoteSync:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *CapabilitiesOrganizationsManagement) UnmarshalText(data []byte) error {
-	switch CapabilitiesOrganizationsManagement(data) {
-	case CapabilitiesOrganizationsManagementLocal:
-		*s = CapabilitiesOrganizationsManagementLocal
-		return nil
-	case CapabilitiesOrganizationsManagementRemoteSync:
-		*s = CapabilitiesOrganizationsManagementRemoteSync
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 // Ref: #/components/schemas/Category

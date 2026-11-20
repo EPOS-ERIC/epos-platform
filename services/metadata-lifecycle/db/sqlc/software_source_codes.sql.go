@@ -906,7 +906,7 @@ func (q *Queries) ListLifecycleSoftwareSourceCodeCategories(ctx context.Context,
 
 const listLifecycleSoftwareSourceCodeContactPoints = `-- name: ListLifecycleSoftwareSourceCodeContactPoints :many
 SELECT
-    contact.id, contact.email
+    contact.id, contact.remote_nid, contact.email
 FROM
     software_source_code_version_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id
@@ -929,7 +929,7 @@ func (q *Queries) ListLifecycleSoftwareSourceCodeContactPoints(ctx context.Conte
 	var items []ListLifecycleSoftwareSourceCodeContactPointsRow
 	for rows.Next() {
 		var i ListLifecycleSoftwareSourceCodeContactPointsRow
-		if err := rows.Scan(&i.ContactPoint.ID, &i.ContactPoint.Email); err != nil {
+		if err := rows.Scan(&i.ContactPoint.ID, &i.ContactPoint.RemoteNid, &i.ContactPoint.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

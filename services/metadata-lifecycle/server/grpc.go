@@ -20,6 +20,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/grpcapi"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadatasync"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/notifications"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwareapplications"
@@ -72,6 +73,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 			metadatalifecyclev1.RegisterContactRequestServiceServer(server, grpcapi.NewContactRequest(contactRequestsSvc))
 			metadatalifecyclev1.RegisterGroupAccessServiceServer(server, grpcapi.NewAccess(accessSvc))
 			metadatalifecyclev1.RegisterOrganizationServiceServer(server, grpcapi.NewOrganization(organizationsSvc))
+			metadatalifecyclev1.RegisterMetadataSyncServiceServer(server, grpcapi.NewMetadataSync(metadatasync.New(db)))
 			metadatalifecyclev1.RegisterResourceServiceServer(server, grpcapi.NewResource(datasetSvc, applicationSvc, sourceCodeSvc))
 			metadatalifecyclev1.RegisterDiscoveryServiceServer(server, grpcapi.NewDiscovery(discoverySvc))
 			metadatalifecyclev1.RegisterNotificationServiceServer(server, grpcapi.NewNotification(notificationsSvc))

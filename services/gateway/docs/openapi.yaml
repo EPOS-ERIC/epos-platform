@@ -84,7 +84,7 @@ paths:
       summary: Trigger metadata synchronization
       description: |
         Requires both global.organization.manage and global.contact_point.manage.
-        Schedules a background sync on the responding Gateway instance. Requests coalesce
+        Schedules a background sync of organizations and contact points on the responding Gateway instance. Requests coalesce
         when a sync is already queued. Returns 503 when metadata synchronization is disabled. Acceptance does not indicate success.
       operationId: triggerMetadataSync
       security: [{ bearerAuth: [] }]
@@ -839,6 +839,7 @@ paths:
     post:
       tags: [Contact Points]
       summary: Create reusable contact point
+      description: Returns 403 when contact-point management is in remote sync mode.
       operationId: createContactPoint
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -886,6 +887,7 @@ paths:
     put:
       tags: [Contact Points]
       summary: Replace contact point
+      description: Returns 403 when contact-point management is in remote sync mode.
       operationId: replaceContactPoint
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -908,6 +910,7 @@ paths:
     delete:
       tags: [Contact Points]
       summary: Delete contact point
+      description: Returns 403 when contact-point management is in remote sync mode.
       operationId: deleteContactPoint
       security: [{ bearerAuth: [] }]
       responses:
@@ -2783,15 +2786,19 @@ components:
   schemas:
     Capabilities:
       type: object
-      required: [organizations, authentication, notifications]
+      required: [metadata_sync, authentication, notifications]
       properties:
-        organizations:
+        metadata_sync:
           type: object
+          description: Shared management mode for organizations and contact points.
           required: [management]
           properties:
             management:
               type: string
               enum: [local, remote_sync]
+            base_url:
+              type: string
+              description: Configured remote metadata source URL, present only in remote sync mode.
         authentication:
           type: object
           required: [root_url]

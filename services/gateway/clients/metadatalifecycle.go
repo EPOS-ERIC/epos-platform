@@ -27,6 +27,7 @@ type MetadataLifecycle struct {
 	categories      metadatalifecyclev1.CategoryServiceClient
 	contactPoints   metadatalifecyclev1.ContactPointServiceClient
 	organizations   metadatalifecyclev1.OrganizationServiceClient
+	metadataSync    metadatalifecyclev1.MetadataSyncServiceClient
 	access          metadatalifecyclev1.GroupAccessServiceClient
 	resources       metadatalifecyclev1.ResourceServiceClient
 	discovery       metadatalifecyclev1.DiscoveryServiceClient
@@ -65,6 +66,7 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, dispatcher Notificat
 		categories:      metadatalifecyclev1.NewCategoryServiceClient(conn),
 		contactPoints:   metadatalifecyclev1.NewContactPointServiceClient(conn),
 		organizations:   metadatalifecyclev1.NewOrganizationServiceClient(conn),
+		metadataSync:    metadatalifecyclev1.NewMetadataSyncServiceClient(conn),
 		access:          metadatalifecyclev1.NewGroupAccessServiceClient(conn),
 		resources:       metadatalifecyclev1.NewResourceServiceClient(conn),
 		discovery:       metadatalifecyclev1.NewDiscoveryServiceClient(conn),

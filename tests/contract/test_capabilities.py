@@ -20,7 +20,8 @@ class CapabilitiesContractTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         capabilities = response.json()
 
-        self.assertEqual(capabilities["organizations"]["management"], "local")
+        self.assertEqual(capabilities["metadata_sync"]["management"], "local")
+        self.assertNotIn("base_url", capabilities["metadata_sync"])
         auth_root = urlparse(capabilities["authentication"]["root_url"])
         self.assertIn(auth_root.scheme, ("http", "https"))
         self.assertTrue(auth_root.hostname)
@@ -30,7 +31,7 @@ class CapabilitiesContractTest(unittest.TestCase):
         self.assertEqual(capabilities["issue_tracker"]["open_new"], f"{tracker_url}/new?type=Issue")
 
     def test_sync_unavailable_in_managed_mode(self) -> None:
-        """Verify manual metadata sync fails when organizations are locally managed."""
+        """Verify manual metadata sync fails when canonical metadata is locally managed."""
 
         gateway = GatewayClient(
             SCHEMA,
@@ -39,7 +40,7 @@ class CapabilitiesContractTest(unittest.TestCase):
         )
         capabilities = gateway.get("/capabilities", headers={"Authorization": ""})
         self.assertEqual(capabilities.status_code, 200)
-        self.assertEqual(capabilities.json()["organizations"]["management"], "local")
+        self.assertEqual(capabilities.json()["metadata_sync"]["management"], "local")
 
         response = gateway.post("/metadata/sync")
         problem = assert_problem(self, response, 503, "upstream_unavailable")

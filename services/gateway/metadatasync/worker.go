@@ -17,10 +17,11 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
+	"golang.org/x/sync/errgroup"
 )
 
 type Client interface {
-	SyncOrganizations(context.Context, []domain.SyncedOrganization) error
+	SyncMetadata(context.Context, []domain.SyncedOrganization, []domain.SyncedContactPoint) error
 }
 
 type Worker struct {
@@ -41,14 +42,14 @@ func NewWorker(metadata Client, cfg config.MetadataSync, log *slog.Logger) (*Wor
 
 	password := os.Getenv(cfg.PasswordEnv)
 	if password == "" {
-		return nil, fmt.Errorf("organization sync password environment variable %q is empty", cfg.PasswordEnv)
+		return nil, fmt.Errorf("metadata sync password environment variable %q is empty", cfg.PasswordEnv)
 	}
 
 	return &Worker{
 		metadata: metadata,
 		config:   cfg,
 		password: password,
-		log:      log.With("component", "organization-sync"),
+		log:      log.With("component", "metadata-sync"),
 		trigger:  make(chan struct{}, 1),
 		schedule: schedule,
 		httpClient: &http.Client{
@@ -117,19 +118,44 @@ func (w *Worker) runOnce(parent context.Context) {
 	defer span.End()
 
 	start := time.Now()
+	w.log.InfoContext(ctx, "metadata sync started")
 
-	w.log.InfoContext(ctx, "organization sync started")
+	var (
+		orgs         []domain.SyncedOrganization
+		orgPages     int
+		contacts     []domain.SyncedContactPoint
+		contactPages int
+	)
 
-	// TODO: add contact point sync too when we have the remote api
-	count, pages, err := w.syncOrganizations(ctx)
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() (err error) {
+		orgs, orgPages, err = w.fetchOrganizations(gctx)
+		return err
+	})
+	g.Go(func() (err error) {
+		contacts, contactPages, err = w.fetchContactPoints(gctx)
+		return err
+	})
+
+	err := g.Wait()
+	if err == nil {
+		err = w.metadata.SyncMetadata(ctx, orgs, contacts)
+	}
+
+	log := w.log.With(
+		"organization_pages", orgPages,
+		"organizations", len(orgs),
+		"person_pages", contactPages,
+		"contact_points", len(contacts),
+		"duration", time.Since(start).Milliseconds(),
+	)
+
 	if err != nil {
 		span.RecordError(err)
-		span.SetStatus(codes.Error, "organization sync failed")
-
-		w.log.ErrorContext(ctx, "organization sync failed", "error", err, "pages", pages, "organizations", count, "duration", time.Since(start).Milliseconds())
-
+		span.SetStatus(codes.Error, "metadata sync failed")
+		log.ErrorContext(ctx, "metadata sync failed", "error", err)
 		return
 	}
 
-	w.log.InfoContext(ctx, "organization sync completed", "pages", pages, "organizations", count, "duration", time.Since(start).Milliseconds())
+	log.InfoContext(ctx, "metadata sync completed")
 }

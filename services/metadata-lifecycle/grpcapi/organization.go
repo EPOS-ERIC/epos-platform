@@ -20,33 +20,6 @@ func NewOrganization(organizations *organizations.Service) *OrganizationServer {
 	return &OrganizationServer{organizations: organizations}
 }
 
-func (o *OrganizationServer) SyncOrganizations(ctx context.Context, request *metadatalifecyclev1.SyncOrganizationsRequest) (*metadatalifecyclev1.SyncOrganizationsResponse, error) {
-	values := make([]domain.SyncedOrganization, 0, len(request.Organizations))
-
-	for _, value := range request.Organizations {
-		if value == nil {
-			return nil, apperror.Field("organizations", "Organization is required.", nil)
-		}
-
-		input, err := toOrganizationInput(value.Name, value.Street, value.Locality, value.PostalCode, value.Country, value.LogoUrl, value.PageUrl, value.Email, value.Identifiers, nil)
-		if err != nil {
-			return nil, fmt.Errorf("validate synced organization: %w", err)
-		}
-
-		values = append(values, domain.SyncedOrganization{
-			NID:        value.Nid,
-			ParentNIDs: value.ParentNids,
-			Input:      input,
-		})
-	}
-
-	if err := o.organizations.Sync(ctx, values); err != nil {
-		return nil, err
-	}
-
-	return &metadatalifecyclev1.SyncOrganizationsResponse{}, nil
-}
-
 func (o *OrganizationServer) ListOrganizations(ctx context.Context, _ *metadatalifecyclev1.ListOrganizationsRequest) (*metadatalifecyclev1.ListOrganizationsResponse, error) {
 	values, err := o.organizations.List(ctx)
 	if err != nil {

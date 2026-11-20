@@ -82,29 +82,7 @@ message DeleteOrganizationRequest {
 }
 message DeleteOrganizationResponse {}
 
-message SyncOrganization {
-  int64 nid = 1 [(buf.validate.field).int64.gt = 0];
-  string name = 2 [(buf.validate.field).string.min_len = 1];
-  optional string street = 3 [(buf.validate.field).string.min_len = 1];
-  optional string locality = 4 [(buf.validate.field).string.min_len = 1];
-  optional string postal_code = 5 [(buf.validate.field).string.min_len = 1];
-  optional string country = 6 [(buf.validate.field).string.min_len = 1];
-  optional string logo_url = 7 [(buf.validate.field).string.uri = true];
-  optional string page_url = 8 [(buf.validate.field).string.uri = true];
-  optional string email = 9 [(buf.validate.field).string.email = true];
-  repeated int64 parent_nids = 10 [(buf.validate.field).repeated = {unique: true, items: {int64: {gt: 0}}}];
-  repeated IdentifierInput identifiers = 11;
-}
-
-message SyncOrganizationsRequest {
-  repeated SyncOrganization organizations = 1;
-}
-message SyncOrganizationsResponse {}
-
 service OrganizationService {
-  rpc SyncOrganizations(SyncOrganizationsRequest) returns (SyncOrganizationsResponse) {
-    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
-  }
   rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
   }

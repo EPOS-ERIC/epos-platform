@@ -1504,7 +1504,7 @@ func (s *Server) handleCreateConfigurationRequest(args [0]string, argsEscaped bo
 
 // handleCreateContactPointRequest handles createContactPoint operation.
 //
-// Create reusable contact point.
+// Returns 403 when contact-point management is in remote sync mode.
 //
 // POST /contact-points
 func (s *Server) handleCreateContactPointRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -3755,7 +3755,7 @@ func (s *Server) handleDeleteConfigurationRequest(args [1]string, argsEscaped bo
 
 // handleDeleteContactPointRequest handles deleteContactPoint operation.
 //
-// Delete contact point.
+// Returns 403 when contact-point management is in remote sync mode.
 //
 // DELETE /contact-points/{contactPointId}
 func (s *Server) handleDeleteContactPointRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -13254,7 +13254,7 @@ func (s *Server) handleReplaceConfigurationRequest(args [1]string, argsEscaped b
 
 // handleReplaceContactPointRequest handles replaceContactPoint operation.
 //
-// Replace contact point.
+// Returns 403 when contact-point management is in remote sync mode.
 //
 // PUT /contact-points/{contactPointId}
 func (s *Server) handleReplaceContactPointRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -17307,8 +17307,9 @@ func (s *Server) handleSyncConversionPluginRequest(args [1]string, argsEscaped b
 // handleTriggerMetadataSyncRequest handles triggerMetadataSync operation.
 //
 // Requires both global.organization.manage and global.contact_point.manage. Schedules a background
-// sync on the responding Gateway instance. Requests coalesce when a sync is already queued. Returns
-// 503 when metadata synchronization is disabled. Acceptance does not indicate success.
+// sync of organizations and contact points on the responding Gateway instance. Requests coalesce when
+// a sync is already queued. Returns 503 when metadata synchronization is disabled. Acceptance does not
+// indicate success.
 //
 // POST /metadata/sync
 func (s *Server) handleTriggerMetadataSyncRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

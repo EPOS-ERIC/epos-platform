@@ -4,7 +4,7 @@ import "net/url"
 
 // Capabilities describes instance-wide client configuration.
 type Capabilities struct {
-	OrganizationsSynced bool
+	MetadataSyncBaseURL string
 	AuthRootURL         string
 	EmailEnabled        bool
 	IssueTrackerURL     *url.URL

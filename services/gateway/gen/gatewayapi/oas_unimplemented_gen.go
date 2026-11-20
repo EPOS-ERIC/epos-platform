@@ -88,7 +88,7 @@ func (UnimplementedHandler) CreateConfiguration(ctx context.Context, req *Config
 
 // CreateContactPoint implements createContactPoint operation.
 //
-// Create reusable contact point.
+// Returns 403 when contact-point management is in remote sync mode.
 //
 // POST /contact-points
 func (UnimplementedHandler) CreateContactPoint(ctx context.Context, req *CreateContactPointRequest) (r *ContactPoint, _ error) {
@@ -192,7 +192,7 @@ func (UnimplementedHandler) DeleteConfiguration(ctx context.Context, params Dele
 
 // DeleteContactPoint implements deleteContactPoint operation.
 //
-// Delete contact point.
+// Returns 403 when contact-point management is in remote sync mode.
 //
 // DELETE /contact-points/{contactPointId}
 func (UnimplementedHandler) DeleteContactPoint(ctx context.Context, params DeleteContactPointParams) error {
@@ -681,7 +681,7 @@ func (UnimplementedHandler) ReplaceConfiguration(ctx context.Context, req *Confi
 
 // ReplaceContactPoint implements replaceContactPoint operation.
 //
-// Replace contact point.
+// Returns 403 when contact-point management is in remote sync mode.
 //
 // PUT /contact-points/{contactPointId}
 func (UnimplementedHandler) ReplaceContactPoint(ctx context.Context, req *ReplaceContactPointRequest, params ReplaceContactPointParams) (r *ContactPoint, _ error) {
@@ -866,8 +866,9 @@ func (UnimplementedHandler) SyncConversionPlugin(ctx context.Context, params Syn
 // TriggerMetadataSync implements triggerMetadataSync operation.
 //
 // Requires both global.organization.manage and global.contact_point.manage. Schedules a background
-// sync on the responding Gateway instance. Requests coalesce when a sync is already queued. Returns
-// 503 when metadata synchronization is disabled. Acceptance does not indicate success.
+// sync of organizations and contact points on the responding Gateway instance. Requests coalesce when
+// a sync is already queued. Returns 503 when metadata synchronization is disabled. Acceptance does not
+// indicate success.
 //
 // POST /metadata/sync
 func (UnimplementedHandler) TriggerMetadataSync(ctx context.Context) error {

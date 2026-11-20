@@ -49,7 +49,6 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 	sharingSvc := sharingservice.NewService(sharingClient)
 	organizationSvc := organizations.New(metadataLifecycleClient, cfg.MetadataSync.Enabled)
 	capabilities := domain.Capabilities{
-		OrganizationsSynced: cfg.MetadataSync.Enabled,
 		AuthRootURL:         cfg.Authentication.RootURL,
 		EmailEnabled:        cfg.Notifications.Mailgun.Enable,
 		IssueTrackerURL:     cfg.IssueTracker.ParsedURL,
@@ -58,9 +57,10 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 
 	var worker *metadatasync.Worker
 	if cfg.MetadataSync.Enabled {
+		capabilities.MetadataSyncBaseURL = cfg.MetadataSync.BaseURL
 		worker, err = metadatasync.NewWorker(metadataLifecycleClient, cfg.MetadataSync, baseLog)
 		if err != nil {
-			return fmt.Errorf("configure organization sync: %w", err)
+			return fmt.Errorf("configure metadata sync: %w", err)
 		}
 
 		go worker.Run(ctx)
