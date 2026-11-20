@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	GRPCListenAddr   string        `envconfig:"GRPC_LISTEN_ADDR" default:":8100"`
+	ServerPort       string        `envconfig:"SERVER_PORT" default:"8100"`
 	DBHost           string        `envconfig:"DB_HOST" default:"localhost"`
 	DBPort           string        `envconfig:"DB_PORT" default:"5432"`
 	DBName           string        `envconfig:"DB_NAME" default:"data_retriever"`
@@ -43,7 +43,7 @@ func (c *Config) Validate() error {
 		name  string
 		value string
 	}{
-		{"GRPC_LISTEN_ADDR", c.GRPCListenAddr},
+		{"SERVER_PORT", c.ServerPort},
 		{"DB_HOST", c.DBHost},
 		{"DB_PORT", c.DBPort},
 		{"DB_NAME", c.DBName},

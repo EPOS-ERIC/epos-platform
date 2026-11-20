@@ -7,7 +7,6 @@ metadata:
     {{- include "epos.labels" . | nindent 4 }}
     app.kubernetes.io/component: data-retriever
 spec:
-  replicas: 1
   selector:
     matchLabels:
       {{- include "epos.selectorLabels" . | nindent 6 }}
@@ -17,17 +16,17 @@ spec:
       labels:
         {{- include "epos.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: data-retriever
+      annotations:
+        checksum/secret-retriever-db: {{ .Values.components.data_retriever_database.password | toString | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
       containers:
         - name: data-retriever
           image: {{ .Values.images.data_retriever | quote }}
           imagePullPolicy: {{ .Values.image_pull_policy }}
-          ports:
-            - containerPort: 8100
           env:
-            - name: GRPC_LISTEN_ADDR
-              value: ":8100"
+            - name: SERVER_PORT
+              value: "8100"
             - name: DB_HOST
               value: {{ if .Values.components.data_retriever_database.enabled }}"retriever-db"{{ else }}{{ .Values.components.data_retriever_database.host | quote }}{{ end }}
             - name: DB_PORT
@@ -57,7 +56,6 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 8100
-            periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -69,75 +67,8 @@ metadata:
 spec:
   ports:
     - port: 8100
-      targetPort: 8100
   selector:
     {{- include "epos.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: data-retriever
 
-{{- if .Values.components.data_retriever_database.enabled }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: retriever-db
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: retriever-db
-spec:
-  replicas: 1
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      {{- include "epos.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: retriever-db
-  template:
-    metadata:
-      labels:
-        {{- include "epos.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: retriever-db
-    spec:
-      {{- include "epos.image_pull_secrets" . | nindent 6 }}
-      containers:
-        - name: retriever-db
-          image: {{ .Values.images.data_retriever_database | quote }}
-          imagePullPolicy: {{ .Values.image_pull_policy }}
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: {{ .Values.components.data_retriever_database.user | quote }}
-            - name: POSTGRES_DB
-              value: {{ .Values.components.data_retriever_database.db_name | quote }}
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: retriever-db
-                  key: password
-          readinessProbe:
-            exec:
-              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
-            periodSeconds: 10
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/postgresql
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: retriever-db
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: retriever-db
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: retriever-db
-spec:
-  ports:
-    - port: 5432
-      targetPort: 5432
-  selector:
-    {{- include "epos.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: retriever-db
-{{- end }}
+{{ include "epos.postgres" (dict "root" . "name" "retriever-db" "database" .Values.components.data_retriever_database "image" .Values.images.data_retriever_database) }}

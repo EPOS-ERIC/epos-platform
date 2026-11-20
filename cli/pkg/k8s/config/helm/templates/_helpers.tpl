@@ -34,38 +34,6 @@ imagePullSecrets:
 {{- end }}
 {{- end -}}
 
-{{- define "epos.image_pull_policy" -}}
-imagePullPolicy: {{ .Values.image_pull_policy | default "IfNotPresent" }}
-{{- end -}}
-
-{{- define "epos.nodeSelector" -}}
-{{- if .Values.nodeSelector }}
-nodeSelector:
-  {{- .Values.nodeSelector | toYaml | nindent 2 }}
-{{- end }}
-{{- end -}}
-
-{{- define "epos.tolerations" -}}
-{{- if .Values.tolerations }}
-tolerations:
-  {{- .Values.tolerations | toYaml | nindent 2 }}
-{{- end }}
-{{- end -}}
-
-{{- define "epos.affinity" -}}
-{{- if .Values.affinity }}
-affinity:
-  {{- .Values.affinity | toYaml | nindent 2 }}
-{{- end }}
-{{- end -}}
-
-{{- define "epos.securityContext" -}}
-{{- if .Values.securityContext }}
-securityContext:
-  {{- .Values.securityContext | toYaml | nindent 2 }}
-{{- end }}
-{{- end -}}
-
 {{- define "epos.defaultAAIAuthRootURL" -}}
 {{- if .Values.url_prefix_namespace -}}
 {{- printf "%s://%s/%s/aai" .Values.protocol .Values.domain .Release.Namespace -}}

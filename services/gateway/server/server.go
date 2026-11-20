@@ -52,6 +52,8 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 		OrganizationsSynced: cfg.MetadataSync.Enabled,
 		AuthRootURL:         cfg.Authentication.RootURL,
 		EmailEnabled:        cfg.Notifications.Mailgun.Enable,
+		IssueTrackerURL:     cfg.IssueTracker.ParsedURL,
+		IssueTrackerOpenNew: cfg.IssueTracker.ParsedOpenNew,
 	}
 
 	var worker *metadatasync.Worker

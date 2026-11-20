@@ -205,7 +205,7 @@ services:
       data-retriever-db:
         condition: service_healthy
     environment:
-      - GRPC_LISTEN_ADDR=:8100
+      - SERVER_PORT=8100
       - DB_HOST=data-retriever-db
       - DB_PORT=5432
       - DB_NAME=data_retriever

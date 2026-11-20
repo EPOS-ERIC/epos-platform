@@ -154,6 +154,9 @@ func validateIngressTLSSecret(serviceName string, tls TLS) error {
 
 // Validate checks whether the configuration contains all required values.
 func (c *Config) Validate() error {
+	if err := c.Components.Gateway.IssueTracker.Validate(); err != nil {
+		return err
+	}
 	if err := c.Components.Gateway.MetadataSync.Validate(); err != nil {
 		return err
 	}

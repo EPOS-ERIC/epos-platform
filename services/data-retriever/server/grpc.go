@@ -17,7 +17,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, repo retrieva
 	service := retrieval.New(repo, client, log, uint64(cfg.SchemaMaxBytes), uint64(cfg.MaxResponseBytes))
 	api := grpcapi.New(service)
 	return sharedgrpc.Run(ctx, sharedgrpc.Config{
-		Address: cfg.GRPCListenAddr,
+		Address: ":" + cfg.ServerPort,
 		Logger:  log,
 		ValidationError: func(_ *grpc.UnaryServerInfo, err error) error {
 			return grpcapi.ValidationAppError(err)

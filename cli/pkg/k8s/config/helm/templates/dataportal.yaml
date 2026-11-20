@@ -6,7 +6,6 @@ metadata:
     {{- include "epos.labels" . | nindent 4 }}
     app.kubernetes.io/component: dataportal
 spec:
-  replicas: 1
   selector:
     matchLabels:
       {{- include "epos.selectorLabels" . | nindent 6 }}
@@ -22,8 +21,6 @@ spec:
         - name: dataportal
           image: {{ .Values.images.platform_ui | quote }}
           imagePullPolicy: {{ .Values.image_pull_policy }}
-          ports:
-            - containerPort: 8080
           env:
             - name: BASE_URL
               value: {{ include "epos.platformBasePath" . | quote }}
@@ -46,7 +43,6 @@ metadata:
 spec:
   ports:
     - port: 8080
-      targetPort: 8080
   selector:
     {{- include "epos.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: dataportal

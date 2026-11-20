@@ -1,17 +1,3 @@
-{{- define "epos.aaiServiceConfigData" -}}
-{{- if eq .Values.protocol "https" }}
-APP_SECURE_COOKIES: "true"
-{{- else }}
-APP_SECURE_COOKIES: "false"
-{{- end }}
-INITIAL_ADMIN_NAME: {{ .Values.components.aai_service.name | quote }}
-INITIAL_ADMIN_SURNAME: {{ .Values.components.aai_service.surname | quote }}
-INITIAL_ADMIN_EMAIL: {{ .Values.components.aai_service.email | quote }}
-APP_CORS_ALLOW_ORIGIN: "*"
-OIDC_ISSUER: {{ printf "%s/oauth2" (include "epos.defaultAAIAuthRootURL" .) | quote }}
-OAUTH_GUI_URLS: {{ printf "%s,%s" (include "epos.platformURL" .) (include "epos.backofficeURL" .) | quote }}
-{{- end -}}
-
 {{- if .Values.components.aai_service.enabled }}
 ---
 apiVersion: apps/v1
@@ -22,7 +8,6 @@ metadata:
     {{- include "epos.labels" . | nindent 4 }}
     app.kubernetes.io/component: aai-service
 spec:
-  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -35,8 +20,7 @@ spec:
         {{- include "epos.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: aai-service
       annotations:
-        checksum/aai-service-config: {{ include "epos.aaiServiceConfigData" . | sha256sum }}
-        checksum/aai-password: {{ .Values.components.aai_service.password | sha256sum }}
+        checksum/secret-aai-service: {{ .Values.components.aai_service.password | toString | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
       securityContext:
@@ -44,18 +28,26 @@ spec:
       containers:
       - name: aai-service
         image: {{ .Values.images.aai_service }}
-        {{- include "epos.image_pull_policy" . | nindent 8 }}
-        ports:
-        - containerPort: 8080
-          name: http
+        imagePullPolicy: {{ .Values.image_pull_policy }}
         readinessProbe:
           httpGet:
             path: /health
             port: 8080
-        envFrom:
-        - configMapRef:
-            name: aai-service
         env:
+        - name: APP_SECURE_COOKIES
+          value: {{ eq .Values.protocol "https" | quote }}
+        - name: INITIAL_ADMIN_NAME
+          value: {{ .Values.components.aai_service.name | quote }}
+        - name: INITIAL_ADMIN_SURNAME
+          value: {{ .Values.components.aai_service.surname | quote }}
+        - name: INITIAL_ADMIN_EMAIL
+          value: {{ .Values.components.aai_service.email | quote }}
+        - name: APP_CORS_ALLOW_ORIGIN
+          value: "*"
+        - name: OIDC_ISSUER
+          value: {{ printf "%s/oauth2" (include "epos.defaultAAIAuthRootURL" .) | quote }}
+        - name: OAUTH_GUI_URLS
+          value: {{ printf "%s,%s" (include "epos.platformURL" .) (include "epos.backofficeURL" .) | quote }}
         - name: LOG_LEVEL
           value: {{ ternary "DEBUG" "INFO" .Values.debug | quote }}
         - name: OTEL_SDK_DISABLED
@@ -80,9 +72,6 @@ spec:
       - name: aai
         persistentVolumeClaim:
           claimName: aai
-      {{- include "epos.nodeSelector" . | nindent 6 }}
-      {{- include "epos.tolerations" . | nindent 6 }}
-      {{- include "epos.affinity" . | nindent 6 }}
 ---
 apiVersion: v1
 kind: Service
@@ -94,7 +83,6 @@ metadata:
 spec:
   ports:
   - port: 8080
-    targetPort: 8080
     name: http
   selector:
     {{- include "epos.selectorLabels" . | nindent 4 }}
@@ -141,12 +129,15 @@ spec:
   {{- end }}
 ---
 apiVersion: v1
-kind: ConfigMap
+kind: PersistentVolumeClaim
 metadata:
-  name: aai-service
+  name: aai
   labels:
     {{- include "epos.labels" . | nindent 4 }}
     app.kubernetes.io/component: aai-service
-data:
-  {{- include "epos.aaiServiceConfigData" . | nindent 2 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
 {{- end }}

@@ -971,6 +971,8 @@ type Capabilities struct {
 	Organizations  CapabilitiesOrganizations  `json:"organizations"`
 	Authentication CapabilitiesAuthentication `json:"authentication"`
 	Notifications  CapabilitiesNotifications  `json:"notifications"`
+	// Issue tracker for feedback and issues, when configured.
+	IssueTracker OptCapabilitiesIssueTracker `json:"issue_tracker"`
 }
 
 // GetOrganizations returns the value of Organizations.
@@ -988,6 +990,11 @@ func (s *Capabilities) GetNotifications() CapabilitiesNotifications {
 	return s.Notifications
 }
 
+// GetIssueTracker returns the value of IssueTracker.
+func (s *Capabilities) GetIssueTracker() OptCapabilitiesIssueTracker {
+	return s.IssueTracker
+}
+
 // SetOrganizations sets the value of Organizations.
 func (s *Capabilities) SetOrganizations(val CapabilitiesOrganizations) {
 	s.Organizations = val
@@ -1003,6 +1010,11 @@ func (s *Capabilities) SetNotifications(val CapabilitiesNotifications) {
 	s.Notifications = val
 }
 
+// SetIssueTracker sets the value of IssueTracker.
+func (s *Capabilities) SetIssueTracker(val OptCapabilitiesIssueTracker) {
+	s.IssueTracker = val
+}
+
 type CapabilitiesAuthentication struct {
 	// Browser-reachable authentication root URL.
 	RootURL string `json:"root_url"`
@@ -1016,6 +1028,34 @@ func (s *CapabilitiesAuthentication) GetRootURL() string {
 // SetRootURL sets the value of RootURL.
 func (s *CapabilitiesAuthentication) SetRootURL(val string) {
 	s.RootURL = val
+}
+
+// Issue tracker for feedback and issues, when configured.
+type CapabilitiesIssueTracker struct {
+	// Absolute URI for the issue tracker.
+	URL url.URL `json:"url"`
+	// Absolute URI for creating an issue.
+	OpenNew url.URL `json:"open_new"`
+}
+
+// GetURL returns the value of URL.
+func (s *CapabilitiesIssueTracker) GetURL() url.URL {
+	return s.URL
+}
+
+// GetOpenNew returns the value of OpenNew.
+func (s *CapabilitiesIssueTracker) GetOpenNew() url.URL {
+	return s.OpenNew
+}
+
+// SetURL sets the value of URL.
+func (s *CapabilitiesIssueTracker) SetURL(val url.URL) {
+	s.URL = val
+}
+
+// SetOpenNew sets the value of OpenNew.
+func (s *CapabilitiesIssueTracker) SetOpenNew(val url.URL) {
+	s.OpenNew = val
 }
 
 type CapabilitiesNotifications struct {
@@ -10617,6 +10657,52 @@ func (o OptBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCapabilitiesIssueTracker returns new OptCapabilitiesIssueTracker with value set to v.
+func NewOptCapabilitiesIssueTracker(v CapabilitiesIssueTracker) OptCapabilitiesIssueTracker {
+	return OptCapabilitiesIssueTracker{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCapabilitiesIssueTracker is optional CapabilitiesIssueTracker.
+type OptCapabilitiesIssueTracker struct {
+	Value CapabilitiesIssueTracker
+	Set   bool
+}
+
+// IsSet returns true if OptCapabilitiesIssueTracker was set.
+func (o OptCapabilitiesIssueTracker) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCapabilitiesIssueTracker) Reset() {
+	var v CapabilitiesIssueTracker
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCapabilitiesIssueTracker) SetTo(v CapabilitiesIssueTracker) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCapabilitiesIssueTracker) Get() (v CapabilitiesIssueTracker, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCapabilitiesIssueTracker) Or(d CapabilitiesIssueTracker) CapabilitiesIssueTracker {
 	if v, ok := o.Get(); ok {
 		return v
 	}

@@ -5,7 +5,6 @@ kind: Deployment
 metadata:
   name: otel-lgtm
 spec:
-  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -17,17 +16,14 @@ spec:
       labels:
         {{- include "epos.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: otel-lgtm
+      annotations:
+        checksum/secret-otel-lgtm: {{ .Values.components.otel.admin_password | toString | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
       containers:
         - name: otel-lgtm
           image: {{ .Values.images.otel_lgtm | quote }}
           imagePullPolicy: {{ .Values.image_pull_policy }}
-          ports:
-            - name: grafana
-              containerPort: 3000
-            - name: otlp-http
-              containerPort: 4318
           env:
             - name: POD_IP
               valueFrom:
@@ -67,10 +63,8 @@ spec:
   ports:
     - name: grafana
       port: 3000
-      targetPort: 3000
     - name: otlp-http
       port: 4318
-      targetPort: 4318
   selector:
     {{- include "epos.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: otel-lgtm
@@ -104,4 +98,14 @@ spec:
     - hosts: [{{ .Values.domain | quote }}]
       secretName: {{ .Values.components.otel.tls.secret_name | quote }}
   {{- end }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: otel-lgtm
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
 {{- end }}

@@ -7,7 +7,6 @@ metadata:
     {{- include "epos.labels" . | nindent 4 }}
     app.kubernetes.io/component: sharing
 spec:
-  replicas: 1
   selector:
     matchLabels:
       {{- include "epos.selectorLabels" . | nindent 6 }}
@@ -17,14 +16,14 @@ spec:
       labels:
         {{- include "epos.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: sharing
+      annotations:
+        checksum/secret-sharing-db: {{ .Values.components.sharing_database.password | toString | sha256sum }}
     spec:
       {{- include "epos.image_pull_secrets" . | nindent 6 }}
       containers:
         - name: sharing
           image: {{ .Values.images.sharing_service | quote }}
           imagePullPolicy: {{ .Values.image_pull_policy }}
-          ports:
-            - containerPort: 8200
           env:
             - name: SERVER_PORT
               value: "8200"
@@ -57,7 +56,6 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 8200
-            periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -69,75 +67,8 @@ metadata:
 spec:
   ports:
     - port: 8200
-      targetPort: 8200
   selector:
     {{- include "epos.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: sharing
 
-{{- if .Values.components.sharing_database.enabled }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sharing-db
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: sharing-db
-spec:
-  replicas: 1
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      {{- include "epos.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: sharing-db
-  template:
-    metadata:
-      labels:
-        {{- include "epos.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: sharing-db
-    spec:
-      {{- include "epos.image_pull_secrets" . | nindent 6 }}
-      containers:
-        - name: sharing-db
-          image: {{ .Values.images.sharing_database | quote }}
-          imagePullPolicy: {{ .Values.image_pull_policy }}
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: {{ .Values.components.sharing_database.user | quote }}
-            - name: POSTGRES_DB
-              value: {{ .Values.components.sharing_database.db_name | quote }}
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: sharing-db
-                  key: password
-          readinessProbe:
-            exec:
-              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
-            periodSeconds: 10
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/postgresql
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: sharing-db
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: sharing-db
-  labels:
-    {{- include "epos.labels" . | nindent 4 }}
-    app.kubernetes.io/component: sharing-db
-spec:
-  ports:
-    - port: 5432
-      targetPort: 5432
-  selector:
-    {{- include "epos.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: sharing-db
-{{- end }}
+{{ include "epos.postgres" (dict "root" . "name" "sharing-db" "database" .Values.components.sharing_database "image" .Values.images.sharing_database) }}
