@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { ToastService } from '../../services/toast.service';
 import { AppIconComponent } from '../../shared/ui/app-icon.component';
 
@@ -48,6 +49,7 @@ export class ToastOutletComponent {
   private copyFeedbackTimeout?: ReturnType<typeof setTimeout>;
 
   protected readonly toastService = inject(ToastService);
+  protected readonly issueTracker = inject(CapabilitiesService).issueTracker;
   protected readonly copiedReference = signal<string | null>(null);
   protected readonly failedReference = signal<string | null>(null);
 

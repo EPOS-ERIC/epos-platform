@@ -64,7 +64,11 @@
                       </button>
                     </div>
                     <span class="toast-reference-help">
-                      Opening an <a href="https://epos-ci.brgm.fr/epos-public/issuetracker/-/issues" target="_blank" rel="noopener noreferrer">issue</a>? Include this error ID in your report.
+                      @if (issueTracker()?.open_new; as openNewIssueUrl) {
+                        Opening an <a [href]="openNewIssueUrl" target="_blank" rel="noopener noreferrer">issue</a>? Include this error ID in your report.
+                      } @else {
+                        Include this error ID in your report.
+                      }
                     </span>
                   </div>
                 }
