@@ -1045,7 +1045,6 @@ type Parameter struct {
 	TemplateParameterID         *uuid.UUID
 	SchemaKind                  ParameterSchemaKind
 	Role                        *WebServiceParameterRole
-	Property                    *string
 	Location                    *WebServiceParameterLocation
 	Explode                     bool
 }
@@ -1214,8 +1213,6 @@ type WebService struct {
 	ProviderOrganizationID *uuid.UUID
 	DocumentationUri       *string
 	Keywords               []string
-	AccessRights           *string
-	License                *string
 }
 
 type WebServiceBody struct {
@@ -1224,12 +1221,6 @@ type WebServiceBody struct {
 	ContentType  string
 	Template     string
 	BodyRequired bool
-}
-
-type WebServiceCategory struct {
-	WebServiceID uuid.UUID
-	GroupID      uuid.UUID
-	CategoryID   uuid.UUID
 }
 
 type WebServiceContactPoint struct {

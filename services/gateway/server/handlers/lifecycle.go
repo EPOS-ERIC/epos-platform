@@ -226,7 +226,7 @@ func (h *ogenHandler) RejectResourceVersion(ctx context.Context, q *gatewayapi.R
 	if err != nil {
 		return nil, err
 	}
-	v, err := h.metadataLifecycleClient.RejectResource(ctx, a, resourceType, p.ID.String(), p.VersionId.String(), string(q.Note))
+	v, err := h.metadataLifecycleClient.RejectResource(ctx, a, resourceType, p.ID.String(), p.VersionId.String(), q.Note)
 	if err != nil {
 		return nil, fmt.Errorf("reject resource: %w", err)
 	}

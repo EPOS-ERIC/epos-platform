@@ -58,10 +58,10 @@ func (value *GroupInput) Normalize() error {
 	value.Page = optionalTrimmedString(value.Page)
 	value.Color = optionalTrimmedString(value.Color)
 	if value.Name == "" {
-		return invalidField("name", "Name must not be blank.", nil)
+		return apperror.Field("name", "Name must not be blank.", nil)
 	}
 	if value.ConceptID == uuid.Nil {
-		return invalidField("concept_id", "Concept ID is required.", nil)
+		return apperror.Field("concept_id", "Concept ID is required.", nil)
 	}
 	return nil
 }

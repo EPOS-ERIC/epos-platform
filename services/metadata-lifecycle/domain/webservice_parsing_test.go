@@ -56,26 +56,17 @@ func TestNewWebServiceInputNormalizesDocumentationURI(t *testing.T) {
 	if input.DocumentationURI == nil || *input.DocumentationURI != "https://example.test/docs" {
 		t.Fatalf("documentation URI = %v, want normalized URI", input.DocumentationURI)
 	}
-
-	emptyURI := "  "
-	input = HTTPWebServiceInput{
-		DocumentationURI: &emptyURI,
-		TemplateURL:      "https://example.test",
-		Method:           HTTPMethodGet,
-		Format:           "application/json",
-	}
-	err = input.Normalize()
-	appErr, ok := errors.AsType[*apperror.AppError](err)
-	if !ok || appErr.Target != "documentation_uri" {
-		t.Fatalf("empty documentation URI error = %v, want documentation_uri validation error", err)
+	if input.DocumentationURI != &documentationURI {
+		t.Fatal("documentation URI normalization must update the original string")
 	}
 
-	invalidURI := "relative/path"
-	input.DocumentationURI = &invalidURI
-	err = input.Normalize()
-	appErr, ok = errors.AsType[*apperror.AppError](err)
-	if !ok || appErr.Target != "documentation_uri" {
-		t.Fatalf("relative documentation URI error = %v, want documentation_uri validation error", err)
+	for _, invalidURI := range []string{"  ", "relative/path", "urn:example:docs", "https://:443/docs", "https://example.test/%zz"} {
+		input.DocumentationURI = &invalidURI
+		err := input.Normalize()
+		appErr, ok := errors.AsType[*apperror.AppError](err)
+		if !ok || appErr.Target != "documentation_uri" {
+			t.Errorf("documentation URI %q error = %v, want documentation_uri validation error", invalidURI, err)
+		}
 	}
 }
 

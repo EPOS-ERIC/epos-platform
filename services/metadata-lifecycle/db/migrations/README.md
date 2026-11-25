@@ -12,10 +12,7 @@
 | there is no direct mapping but it's a separate object | `dcat:endpointDescription` | the reference to the operation |
 | `keywords`                                            | `dcat:keyword`             |                                |
 | `provider`                                            | `dct:publisher`            |                                |
-| `web_service_categories`                              | `dcat:theme`               |                                |
-| `access_rights`                                       | `dct:accessRights`         |                                |
 | `format` for generic web services                     | `dct:format`               |                                |
-| `license`                                             | `dct:license`              |                                |
 
 ## Distribution -> Distribution
 
@@ -48,7 +45,7 @@
 | `accrual_periodicity`                                 | `dct:accrualPeriodicity`         |                                      |
 | `conforms_to`                                         | `dct:conformsTo`                 |                                      |
 | ignore for now                                        | `dct:creator`                    |                                      |
-| `quality_annotation`                                  | `dqv:hasQualityAnnotation`       |                                      |
+| `quality_annotation`                                  | `dqv:hasQualityAnnotation`       | Absolute HTTP(S) URL                 |
 | the connected identifiers to a dataset                | `adms:identifier`                |                                      |
 | `created_at`                                          | `dct:issued`                     |                                      |
 | `updated_at`                                          | `dct:modified`                   |                                      |

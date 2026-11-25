@@ -161,20 +161,10 @@ CREATE TABLE web_services (
     provider_organization_id  uuid REFERENCES organizations(id) ON DELETE SET NULL,
     documentation_uri         nonblank_text_opt,
     keywords                  nonblank_text[] NOT NULL DEFAULT '{}',
-    access_rights             nonblank_text_opt,
-    license                   nonblank_text_opt,
 
     UNIQUE (dataset_version_id, resource_id),
     CHECK (visible_on IS NULL OR cardinality(visible_on) > 0),
     CHECK (array_position(keywords, NULL) IS NULL)
-);
-
-CREATE TABLE web_service_categories (
-    web_service_id uuid NOT NULL REFERENCES web_services(id) ON DELETE CASCADE,
-    group_id       uuid NOT NULL,
-    category_id    uuid NOT NULL,
-    PRIMARY KEY (web_service_id, category_id),
-    FOREIGN KEY (category_id, group_id) REFERENCES categories(id, group_id) ON DELETE CASCADE
 );
 
 CREATE TABLE generic_web_services (
@@ -322,7 +312,6 @@ CREATE TABLE parameters (
     schema_kind           parameter_schema_kind NOT NULL,
 
     role                  web_service_parameter_role,
-    property              nonblank_text_opt,
     location              web_service_parameter_location,
     explode               boolean NOT NULL DEFAULT false,
 
@@ -607,7 +596,7 @@ FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
 
 -- +goose Down
 
-DROP TABLE IF EXISTS parameter_templates, datetime_parameter_schemas, float_parameter_schemas, integer_parameter_schemas, boolean_parameter_schemas, string_parameter_schemas, parameters, web_service_bodies, web_service_contact_points, web_service_categories, generic_web_services, wms_layers, wms_services, wmts_layers, wmts_services, wfs_services, web_services;
+DROP TABLE IF EXISTS parameter_templates, datetime_parameter_schemas, float_parameter_schemas, integer_parameter_schemas, boolean_parameter_schemas, string_parameter_schemas, parameters, web_service_bodies, web_service_contact_points, generic_web_services, wms_layers, wms_services, wmts_layers, wmts_services, wfs_services, web_services;
 DROP FUNCTION IF EXISTS is_valid_wfs_choices(text[]);
 DROP FUNCTION IF EXISTS is_valid_wms_styles(text[]);
 DROP FUNCTION IF EXISTS is_valid_wmts_styles(text[]);

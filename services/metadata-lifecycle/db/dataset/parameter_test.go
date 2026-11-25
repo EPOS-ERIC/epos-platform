@@ -155,7 +155,6 @@ func parameterRow(value sqlc.AddLifecycleParameterParams) sqlc.Parameter {
 		WebServiceBodyID:           value.WebServiceBodyID,
 		TemplateParameterID:        value.TemplateParameterID,
 		Role:                       value.Role,
-		Property:                   value.Property,
 		Location:                   value.Location,
 		Explode:                    value.Explode,
 		SchemaKind:                 value.SchemaKind,

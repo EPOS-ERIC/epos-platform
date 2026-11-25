@@ -141,6 +141,9 @@ func applicationError(err error) *apperror.AppError {
 	_, decodeRequest := errors.AsType[*ogenerrors.DecodeRequestError](err)
 	_, decodeParams := errors.AsType[*ogenerrors.DecodeParamsError](err)
 	if decodeRequest || decodeParams {
+		if target := decodedURITarget(err); target != "" {
+			return apperror.Field(target, "Value must be a valid URI.", err)
+		}
 		return apperror.New(apperror.CodeValidationFailed, "The request is invalid.")
 	}
 

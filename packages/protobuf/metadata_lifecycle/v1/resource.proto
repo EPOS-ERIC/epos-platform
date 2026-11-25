@@ -237,7 +237,7 @@ message DatasetResourceMetadata {
   string description = 3 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional DatasetAccrualPeriodicity accrual_periodicity = 5 [(buf.validate.field).enum.defined_only = true];
-  optional string quality_annotation = 6 [(buf.validate.field).string.min_len = 1];
+  optional string quality_annotation = 6 [(buf.validate.field).string.uri = true];
   optional DatasetAccessRight access_right = 7 [(buf.validate.field).enum.defined_only = true];
   repeated Distribution distributions = 8;
   optional string spatial_coverage = 9 [(buf.validate.field).string.min_len = 1];
@@ -262,7 +262,7 @@ message DatasetResourceMetadata {
 message SoftwareApplicationResourceMetadata {
   string name = 2 [(buf.validate.field).string.min_len = 1];
   string description = 3 [(buf.validate.field).string.min_len = 1];
-  optional string main_entity_of_page = 4 [(buf.validate.field).string.min_len = 1];
+  optional string main_entity_of_page = 4 [(buf.validate.field).string.uri = true];
   optional string license = 5 [(buf.validate.field).string.min_len = 1];
   optional string version = 6 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 7 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
@@ -280,11 +280,11 @@ message SoftwareSourceCodeResourceMetadata {
   string description = 3 [(buf.validate.field).string.min_len = 1];
   optional string programming_language = 4 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 5 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
-  optional string repository = 6 [(buf.validate.field).string.min_len = 1];
+  optional string repository = 6 [(buf.validate.field).string.uri = true];
   optional string license = 7 [(buf.validate.field).string.min_len = 1];
   optional string software_requirements = 8 [(buf.validate.field).string.min_len = 1];
   optional string runtime_platform = 9 [(buf.validate.field).string.min_len = 1];
-  optional string main_entity_of_page = 10 [(buf.validate.field).string.min_len = 1];
+  optional string main_entity_of_page = 10 [(buf.validate.field).string.uri = true];
   optional string version = 11 [(buf.validate.field).string.min_len = 1];
   repeated EntityReference creators = 12;
   repeated VersionedIdentifier identifiers = 13;
@@ -327,7 +327,7 @@ message DatasetInput {
   string description = 2 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 3 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional DatasetAccrualPeriodicity accrual_periodicity = 4 [(buf.validate.field).enum.defined_only = true];
-  optional string quality_annotation = 5 [(buf.validate.field).string.min_len = 1];
+  optional string quality_annotation = 5 [(buf.validate.field).string.uri = true];
   optional DatasetAccessRight access_right = 6 [(buf.validate.field).enum.defined_only = true];
   repeated DistributionInput distributions = 7;
   optional string spatial_coverage = 8 [(buf.validate.field).string.min_len = 1];
@@ -438,15 +438,12 @@ message WebServiceInput {
 }
 
 message WebServiceCommonInput {
-  optional string provider_id = 3 [(buf.validate.field).string.uuid = true];
-  optional string documentation_uri = 4 [(buf.validate.field).string.uri = true];
-  repeated string contact_points = 7 [(buf.validate.field).repeated.items.string.uuid = true];
-  repeated WebServiceVisibleOn visible_on = 9 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  optional string resource_id = 15 [(buf.validate.field).string.uuid = true];
-  repeated string keywords = 16 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
-  optional string access_rights = 17 [(buf.validate.field).string.min_len = 1];
-  optional string license = 18 [(buf.validate.field).string.min_len = 1];
-  repeated string categories = 19 [(buf.validate.field).repeated.items.string.uuid = true];
+  optional string provider_id = 1 [(buf.validate.field).string.uuid = true];
+  optional string documentation_uri = 2 [(buf.validate.field).string.uri = true];
+  repeated string contact_points = 3 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated WebServiceVisibleOn visible_on = 4 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  optional string resource_id = 5 [(buf.validate.field).string.uuid = true];
+  repeated string keywords = 6 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
 }
 
 message WebService {
@@ -461,16 +458,13 @@ message WebService {
 }
 
 message WebServiceCommon {
-  optional string documentation_uri = 3 [(buf.validate.field).string.uri = true];
-  repeated string contact_points = 6 [(buf.validate.field).repeated.items.string.uuid = true];
-  string id = 7 [(buf.validate.field).string.uuid = true];
-  EntityReference provider_reference = 8;
-  repeated WebServiceVisibleOn visible_on = 10 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  string resource_id = 16 [(buf.validate.field).string.uuid = true];
-  repeated string keywords = 17 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
-  optional string access_rights = 18 [(buf.validate.field).string.min_len = 1];
-  optional string license = 19 [(buf.validate.field).string.min_len = 1];
-  repeated EntityReference categories = 20;
+  optional string documentation_uri = 1 [(buf.validate.field).string.uri = true];
+  repeated string contact_points = 2 [(buf.validate.field).repeated.items.string.uuid = true];
+  string id = 3 [(buf.validate.field).string.uuid = true];
+  EntityReference provider_reference = 4;
+  repeated WebServiceVisibleOn visible_on = 5 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  string resource_id = 6 [(buf.validate.field).string.uuid = true];
+  repeated string keywords = 7 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
 }
 
 message RequestBodyInput {
@@ -649,11 +643,10 @@ message ParameterInput {
     DateTimeParameter date_time = 11;
     TemplateParameterInput template = 12;
   }
-  optional string property = 13;
-  WebServiceParameterLocation location = 14 [(buf.validate.field).enum.defined_only = true];
-  bool explode = 15;
-  WebServiceParameterRole role = 16 [(buf.validate.field).enum.defined_only = true];
-  optional string resource_id = 17 [(buf.validate.field).string.uuid = true];
+  WebServiceParameterLocation location = 13 [(buf.validate.field).enum.defined_only = true];
+  bool explode = 14;
+  WebServiceParameterRole role = 15 [(buf.validate.field).enum.defined_only = true];
+  optional string resource_id = 16 [(buf.validate.field).string.uuid = true];
 }
 
 message Parameter {
@@ -672,12 +665,11 @@ message Parameter {
     DateTimeParameter date_time = 11;
     TemplateParameter template = 12;
   }
-  optional string property = 13;
-  WebServiceParameterLocation location = 14 [(buf.validate.field).enum.defined_only = true];
-  bool explode = 15;
-  WebServiceParameterRole role = 16 [(buf.validate.field).enum.defined_only = true];
-  string id = 17 [(buf.validate.field).string.uuid = true];
-  string resource_id = 18 [(buf.validate.field).string.uuid = true];
+  WebServiceParameterLocation location = 13 [(buf.validate.field).enum.defined_only = true];
+  bool explode = 14;
+  WebServiceParameterRole role = 15 [(buf.validate.field).enum.defined_only = true];
+  string id = 16 [(buf.validate.field).string.uuid = true];
+  string resource_id = 17 [(buf.validate.field).string.uuid = true];
 }
 
 message ScalarParameterInput {
@@ -695,9 +687,8 @@ message ScalarParameterInput {
     ScalarFloatParameter float = 10;
     ScalarDateTimeParameter date_time = 11;
   }
-  optional string property = 12;
-  WebServiceParameterRole role = 13 [(buf.validate.field).enum.defined_only = true];
-  optional string resource_id = 14 [(buf.validate.field).string.uuid = true];
+  WebServiceParameterRole role = 12 [(buf.validate.field).enum.defined_only = true];
+  optional string resource_id = 13 [(buf.validate.field).string.uuid = true];
 }
 
 message ScalarParameter {
@@ -716,9 +707,8 @@ message ScalarParameter {
     ScalarDateTimeParameter date_time = 11;
   }
   string id = 12 [(buf.validate.field).string.uuid = true];
-  optional string property = 13;
-  WebServiceParameterRole role = 14 [(buf.validate.field).enum.defined_only = true];
-  string resource_id = 15 [(buf.validate.field).string.uuid = true];
+  WebServiceParameterRole role = 13 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 14 [(buf.validate.field).string.uuid = true];
 }
 
 message StringEnumOption {
@@ -814,7 +804,7 @@ message ScalarDateTimeParameter {
 message SoftwareApplicationInput {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   string description = 2 [(buf.validate.field).string.min_len = 1];
-  optional string main_entity_of_page = 3 [(buf.validate.field).string.min_len = 1];
+  optional string main_entity_of_page = 3 [(buf.validate.field).string.uri = true];
   optional string license = 4 [(buf.validate.field).string.min_len = 1];
   optional string version = 5 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 6 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
@@ -832,11 +822,11 @@ message SoftwareSourceCodeInput {
   string description = 2 [(buf.validate.field).string.min_len = 1];
   optional string programming_language = 3 [(buf.validate.field).string.min_len = 1];
   repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
-  optional string repository = 5 [(buf.validate.field).string.min_len = 1];
+  optional string repository = 5 [(buf.validate.field).string.uri = true];
   optional string license = 6 [(buf.validate.field).string.min_len = 1];
   optional string software_requirements = 7 [(buf.validate.field).string.min_len = 1];
   optional string runtime_platform = 8 [(buf.validate.field).string.min_len = 1];
-  optional string main_entity_of_page = 9 [(buf.validate.field).string.min_len = 1];
+  optional string main_entity_of_page = 9 [(buf.validate.field).string.uri = true];
   optional string version = 10 [(buf.validate.field).string.min_len = 1];
   repeated string creators = 11 [(buf.validate.field).repeated.items.string.uuid = true];
   repeated VersionedIdentifierInput identifiers = 12;

@@ -17,7 +17,6 @@ import (
 )
 
 var regexMap = map[string]ogenregex.Regexp{
-	"[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]": ogenregex.MustCompile("[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]"),
 	"^[A-Za-z0-9 _:-]+$": ogenregex.MustCompile("^[A-Za-z0-9 _:-]+$"),
 }
 var (

@@ -59,7 +59,7 @@ func fromAPIDistributionAccess(
 		value := request.WFSDistributionAccessRequest
 		wfs := domain.WFSAccessInput{Parameters: mapped}
 		if selected, ok := value.FeatureType.Get(); ok {
-			wfs.FeatureType = new(string(selected))
+			wfs.FeatureType = new(selected)
 		}
 		if limit, ok := value.ResultLimit.Get(); ok {
 			wfs.ResultLimit = new(limit)

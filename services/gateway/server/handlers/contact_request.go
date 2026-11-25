@@ -10,7 +10,7 @@ import (
 
 func (h *ogenHandler) RequestResourceContact(ctx context.Context, request *gatewayapi.ContactRequestMessage, params gatewayapi.RequestResourceContactParams) (gatewayapi.RequestResourceContactRes, error) {
 	actorID, _ := authcontext.ActorID(ctx)
-	if err := h.contactRequest.RequestResource(ctx, actorID, domain.ResourceType(params.ResourceType), params.ID, string(request.Message)); err != nil {
+	if err := h.contactRequest.RequestResource(ctx, actorID, domain.ResourceType(params.ResourceType), params.ID, request.Message); err != nil {
 		return nil, err
 	}
 
@@ -19,7 +19,7 @@ func (h *ogenHandler) RequestResourceContact(ctx context.Context, request *gatew
 
 func (h *ogenHandler) RequestDistributionContact(ctx context.Context, request *gatewayapi.ContactRequestMessage, params gatewayapi.RequestDistributionContactParams) (gatewayapi.RequestDistributionContactRes, error) {
 	actorID, _ := authcontext.ActorID(ctx)
-	if err := h.contactRequest.RequestDistribution(ctx, actorID, params.DistributionId, string(request.Message)); err != nil {
+	if err := h.contactRequest.RequestDistribution(ctx, actorID, params.DistributionId, request.Message); err != nil {
 		return nil, err
 	}
 

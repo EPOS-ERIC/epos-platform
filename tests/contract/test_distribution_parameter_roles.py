@@ -6,27 +6,27 @@ from fixtures import assert_problem, create_group
 
 
 class DistributionParameterRolesContractTest(DistributionContractTestCase):
-    def test_all_roles_round_trip_independently_of_property(self) -> None:
-        """Verify each explicit role and generic property survive create, read, and replace."""
+    def test_all_roles_round_trip(self) -> None:
+        """Verify each explicit role survives create, read, and replace."""
         parameters = [
             parameter("format", role="FORMAT", read_only=True, default="json"),
-            parameter("start", "DATETIME", position=1, role="START_DATE", property="custom:start"),
-            parameter("end", "DATETIME", position=2, role="END_DATE", property="custom:end"),
-            parameter("west", "FLOAT", position=3, role="MIN_LON", property="custom:west"),
-            parameter("east", "INTEGER", position=4, role="MAX_LON", property="custom:east"),
-            parameter("south", "FLOAT", position=5, role="MIN_LAT", property="custom:south"),
-            parameter("north", "INTEGER", position=6, role="MAX_LAT", property="custom:north"),
+            parameter("start", "DATETIME", position=1, role="START_DATE"),
+            parameter("end", "DATETIME", position=2, role="END_DATE"),
+            parameter("west", "FLOAT", position=3, role="MIN_LON"),
+            parameter("east", "INTEGER", position=4, role="MAX_LON"),
+            parameter("south", "FLOAT", position=5, role="MIN_LAT"),
+            parameter("north", "INTEGER", position=6, role="MAX_LAT"),
         ]
         distribution = web_distribution(parameters)
         detail = self.create_draft([distribution])
         expected = {
-            "format": ("FORMAT", None),
-            "start": ("START_DATE", "custom:start"),
-            "end": ("END_DATE", "custom:end"),
-            "west": ("MIN_LON", "custom:west"),
-            "east": ("MAX_LON", "custom:east"),
-            "south": ("MIN_LAT", "custom:south"),
-            "north": ("MAX_LAT", "custom:north"),
+            "format": "FORMAT",
+            "start": "START_DATE",
+            "end": "END_DATE",
+            "west": "MIN_LON",
+            "east": "MAX_LON",
+            "south": "MIN_LAT",
+            "north": "MAX_LAT",
         }
         self.assert_role_metadata(detail, expected)
 
@@ -44,13 +44,11 @@ class DistributionParameterRolesContractTest(DistributionContractTestCase):
 
     def test_role_can_be_omitted_or_cleared(self) -> None:
         """Verify omitted and null roles remain unset, including after replacement."""
-        role_parameter = parameter(
-            "date", "DATETIME", role="START_DATE", property="schema:startDate",
-        )
+        role_parameter = parameter("date", "DATETIME", role="START_DATE")
         distribution = web_distribution([
             role_parameter,
-            parameter("omitted", property="schema:encodingFormat"),
-            parameter("null", "FLOAT", position=2, role=None, property="epos:westernmostLongitude"),
+            parameter("omitted"),
+            parameter("null", "FLOAT", position=2, role=None),
         ])
         detail = self.create_draft([distribution])
         params = self.parameters(detail)
@@ -71,7 +69,6 @@ class DistributionParameterRolesContractTest(DistributionContractTestCase):
         updated = self.details(detail["resource_id"], detail["id"])
         params = self.parameters(updated)
         self.assertIsNone(params["date"].get("role"))
-        self.assertEqual(params["date"]["property"], "schema:startDate")
 
     def test_partial_roles_and_same_role_on_separate_services_are_valid(self) -> None:
         """Verify incomplete role sets and repeated roles across services are accepted."""
@@ -136,11 +133,11 @@ class DistributionParameterRolesContractTest(DistributionContractTestCase):
                 assert_problem(self, response, 400, "validation_failed")
 
     def assert_role_metadata(
-        self, detail: dict[str, Any], expected: dict[str, tuple[str, str | None]],
+        self, detail: dict[str, Any], expected: dict[str, str],
     ) -> None:
         self.assertEqual(
             {
-                item["name"]: (item.get("role"), item.get("property"))
+                item["name"]: item.get("role")
                 for item in self.parameters(detail).values()
             },
             expected,

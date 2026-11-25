@@ -29,7 +29,6 @@ class DistributionFormatsContractTest(unittest.TestCase):
             "location": "QUERY",
             "explode": False,
             "multiple_values": False,
-            "property": "schema:encodingFormat",
             "role": "FORMAT",
             "default": ["xml_dc"],
             **overrides,
@@ -120,7 +119,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         return self.details(detail["resource_id"], detail["id"])
 
     def test_native_format_discovery(self) -> None:
-        """Verify explicit format roles, labels, generic properties, and file exclusion."""
+        """Verify explicit format roles, labels, fallback, and file exclusion."""
         group_id = create_group(self.gateway, f"formats-{uuid4().hex}")
         fixed = self.distribution(
             "fixed", "unused-format", [self.format_parameter(location="PATH", required=True)]
@@ -142,8 +141,8 @@ class DistributionFormatsContractTest(unittest.TestCase):
                 [self.format_parameter(location="HEADER", default=["header-format"])],
             ),
             self.distribution(
-                "other-property", "fallback-format",
-                [self.format_parameter(property="schema:encodingFormat", role=None)],
+                "no-format-role", "fallback-format",
+                [self.format_parameter(role=None)],
             ),
             {
                 "title": "file", "description": "Contract downloadable file",
@@ -161,7 +160,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
             "fixed": [("xml_dc", "xml_dc")],
             "enum": [("GeoJSON", "GeoJSON document"), ("xml_dc", "xml_dc")],
             "header": [("header-format", "header-format")],
-            "other-property": [("fallback-format", "fallback-format")],
+            "no-format-role": [("fallback-format", "fallback-format")],
         }
         for title, formats in expected.items():
             with self.subTest(distribution=title):
@@ -199,7 +198,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
         draft = self.details(resource_id, version["id"])
         copied_parameter = draft["metadata"]["distributions"][0]["web_service"]["parameters"][0]
         self.assertEqual(copied_parameter["role"], "FORMAT")
-        self.assertEqual(copied_parameter["property"], "schema:encodingFormat")
+        self.assertNotIn("property", copied_parameter)
         metadata["distributions"][0]["web_service"]["parameters"] = [
             self.format_parameter(
                 default=["format-C"],

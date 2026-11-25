@@ -48,6 +48,22 @@ func TestNewDatasetDraftInputPrefixesMetadataTarget(t *testing.T) {
 	if appErr.Target != "metadata.title" {
 		t.Fatalf("Target = %q, want metadata.title", appErr.Target)
 	}
+
+	input.Metadata.Title = "Dataset"
+	for _, tc := range []struct {
+		value  string
+		detail string
+	}{
+		{value: " ", detail: "URL must not be blank."},
+		{value: "https://example.org/%zz", detail: "Enter an absolute HTTP or HTTPS URL with a host."},
+	} {
+		input.Metadata.QualityAnnotation = &tc.value
+		err := input.Normalize()
+		appErr, ok := errors.AsType[*apperror.AppError](err)
+		if !ok || appErr.Code != apperror.CodeValidationFailed || appErr.Target != "metadata.quality_annotation" || appErr.Detail != tc.detail {
+			t.Errorf("quality annotation %q: error = %+v, want validation_failed for metadata.quality_annotation with detail %q", tc.value, appErr, tc.detail)
+		}
+	}
 }
 
 func TestValidateUUIDListFieldTargetsFirstRepeatedValue(t *testing.T) {

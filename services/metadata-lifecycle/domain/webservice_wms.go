@@ -45,23 +45,25 @@ func parseWMSParameters(values []WebServiceParameterInput, field string, reserve
 	for i, parameter := range parameters {
 		path := fmt.Sprintf("%s[%d]", field, i)
 		if parameter.Location != ParameterLocationQuery {
-			return nil, invalidField(path+".location", "WMS operation parameters must use QUERY location.", nil)
+			return nil, apperror.Field(path+".location", "WMS operation parameters must use QUERY location.", nil)
 		}
 		if _, exists := reserved[strings.ToUpper(parameter.Name)]; exists {
-			return nil, invalidField(path+".name", "Standard WMS parameters cannot be redefined.", nil)
+			return nil, apperror.Field(path+".name", "Standard WMS parameters cannot be redefined.", nil)
 		}
 	}
 	return parameters, nil
 }
 
-func validateWMSURL(field, value string) error {
-	if strings.TrimSpace(value) == "" {
-		return invalidField(field, "URL must not be blank.", nil)
+func normalizeWMSURL(value *string) error {
+	normalized, _, _ := strings.Cut(strings.TrimSpace(*value), "#")
+	if normalized == "" {
+		return apperror.Field("capabilities_url", "URL must not be blank.", nil)
 	}
-	parsed, err := url.Parse(value)
-	if err != nil || parsed.Host == "" || (strings.ToLower(parsed.Scheme) != "http" && strings.ToLower(parsed.Scheme) != "https") || parsed.Fragment != "" {
-		return invalidField(field, "URL must be an absolute HTTP(S) URL without a fragment.", err)
+	parsed, err := url.Parse(normalized)
+	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+		return apperror.Field("capabilities_url", "URL must be an absolute HTTP(S) URL.", err)
 	}
+	*value = normalized
 	return nil
 }
 
@@ -74,13 +76,13 @@ func validateWMSRequiredDefaults(field string, values []WebServiceParameterInput
 		if schema, ok := parameter.Schema.(TemplateSchemaInput); ok {
 			for j, input := range schema.Parameters {
 				if input.Required && input.Schema.DefaultValue() == nil {
-					return invalidField(fmt.Sprintf("%s.parameters[%d].default", path, j), "Required template inputs need a default for immediate execution.", nil)
+					return apperror.Field(fmt.Sprintf("%s.parameters[%d].default", path, j), "Required template inputs need a default for immediate execution.", nil)
 				}
 			}
 			continue
 		}
 		if parameter.Schema.DefaultValue() == nil {
-			return invalidField(path+".default", "Required parameters need a default for immediate execution.", nil)
+			return apperror.Field(path+".default", "Required parameters need a default for immediate execution.", nil)
 		}
 	}
 	return nil
@@ -110,8 +112,7 @@ func (value *WMSWebServiceInput) Normalize() error {
 	if err := value.WebServiceCommonInput.Normalize(); err != nil {
 		return err
 	}
-	value.CapabilitiesURL = strings.TrimSpace(value.CapabilitiesURL)
-	if err := validateWMSURL("capabilities_url", value.CapabilitiesURL); err != nil {
+	if err := normalizeWMSURL(&value.CapabilitiesURL); err != nil {
 		return err
 	}
 	if err := validateWMSLayers(value.DefaultLayer, value.Layers); err != nil {
@@ -135,47 +136,47 @@ func (value *WMSWebServiceInput) Normalize() error {
 
 func validateWMSLayers(defaultLayer string, layers []WMSLayerInput) error {
 	if strings.TrimSpace(defaultLayer) == "" {
-		return invalidField("default_layer", "Default layer must not be blank.", nil)
+		return apperror.Field("default_layer", "Default layer must not be blank.", nil)
 	}
 	if strings.TrimSpace(defaultLayer) != defaultLayer {
-		return invalidField("default_layer", "Default layer must not contain surrounding whitespace.", nil)
+		return apperror.Field("default_layer", "Default layer must not contain surrounding whitespace.", nil)
 	}
 	if len(layers) == 0 {
-		return invalidField("layers", "At least one layer is required.", nil)
+		return apperror.Field("layers", "At least one layer is required.", nil)
 	}
 	names := make(map[string]struct{}, len(layers))
 	for i, layer := range layers {
 		path := fmt.Sprintf("layers[%d]", i)
 		if strings.TrimSpace(layer.Name) == "" {
-			return invalidField(path+".name", "Layer name must not be blank.", nil)
+			return apperror.Field(path+".name", "Layer name must not be blank.", nil)
 		}
 		if _, exists := names[layer.Name]; exists {
-			return invalidField(path+".name", "Layer names must be unique.", nil)
+			return apperror.Field(path+".name", "Layer names must be unique.", nil)
 		}
 		names[layer.Name] = struct{}{}
 		if strings.TrimSpace(layer.DefaultStyle) != layer.DefaultStyle {
-			return invalidField(path+".default_style", "Default style must not contain surrounding whitespace.", nil)
+			return apperror.Field(path+".default_style", "Default style must not contain surrounding whitespace.", nil)
 		}
 		if len(layer.Styles) == 0 {
-			return invalidField(path+".styles", "At least one style is required.", nil)
+			return apperror.Field(path+".styles", "At least one style is required.", nil)
 		}
 		styles := make(map[string]struct{}, len(layer.Styles))
 		for j, style := range layer.Styles {
 			target := fmt.Sprintf("%s.styles[%d]", path, j)
 			if style != "" && strings.TrimSpace(style) == "" {
-				return invalidField(target, "Style name must not be blank unless it is the empty default style.", nil)
+				return apperror.Field(target, "Style name must not be blank unless it is the empty default style.", nil)
 			}
 			if _, exists := styles[style]; exists {
-				return invalidField(target, "Style names must be unique within a layer.", nil)
+				return apperror.Field(target, "Style names must be unique within a layer.", nil)
 			}
 			styles[style] = struct{}{}
 		}
 		if _, exists := styles[layer.DefaultStyle]; !exists {
-			return invalidField(path+".default_style", "Default style must be one of the configured styles.", nil)
+			return apperror.Field(path+".default_style", "Default style must be one of the configured styles.", nil)
 		}
 	}
 	if _, exists := names[defaultLayer]; !exists {
-		return invalidField("default_layer", "Default layer must be one of the configured layers.", nil)
+		return apperror.Field("default_layer", "Default layer must be one of the configured layers.", nil)
 	}
 	return nil
 }
@@ -210,8 +211,7 @@ func (w *WMSWebService) Normalize() (err error) {
 	if err := w.WebServiceCommon.Normalize(); err != nil {
 		return err
 	}
-	w.CapabilitiesURL = strings.TrimSpace(w.CapabilitiesURL)
-	if err := validateWMSURL("capabilities_url", w.CapabilitiesURL); err != nil {
+	if err := normalizeWMSURL(&w.CapabilitiesURL); err != nil {
 		return err
 	}
 	layers := make([]WMSLayerInput, len(w.Layers))

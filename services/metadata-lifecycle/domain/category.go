@@ -25,10 +25,10 @@ type CategoryInput struct {
 func (value *CategoryInput) Normalize() error {
 	value.Name = strings.TrimSpace(value.Name)
 	if value.Name == "" {
-		return invalidField("name", "Name must not be blank.", nil)
+		return apperror.Field("name", "Name must not be blank.", nil)
 	}
 	if value.ParentCategoryID != nil && *value.ParentCategoryID == uuid.Nil {
-		return invalidField("parent_category_id", "Parent category ID must be a valid UUID.", nil)
+		return apperror.Field("parent_category_id", "Parent category ID must be a valid UUID.", nil)
 	}
 	return nil
 }

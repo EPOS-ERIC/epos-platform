@@ -62,15 +62,15 @@ func (value *DistributionInput) Normalize() error {
 	}
 	value.Title = strings.TrimSpace(value.Title)
 	if value.Title == "" {
-		return invalidField("title", "Title must not be blank.", nil)
+		return apperror.Field("title", "Title must not be blank.", nil)
 	}
 	value.Description = strings.TrimSpace(value.Description)
 	if value.Description == "" {
-		return invalidField("description", "Description must not be blank.", nil)
+		return apperror.Field("description", "Description must not be blank.", nil)
 	}
 	value.License = optionalTrimmedString(value.License)
 	if value.WebService != nil && value.DownloadableFile != nil {
-		return invalidField("type", "Choose either a downloadable file or a web service.", nil)
+		return apperror.Field("type", "Choose either a downloadable file or a web service.", nil)
 	}
 	var expected DistributionType
 	switch {
@@ -79,18 +79,18 @@ func (value *DistributionInput) Normalize() error {
 	case value.DownloadableFile != nil:
 		expected = DistributionTypeDownloadableFile
 	default:
-		return invalidField("type", "A delivery method is required.", nil)
+		return apperror.Field("type", "A delivery method is required.", nil)
 	}
 	if value.Type != "" && value.Type != expected {
-		return invalidField("type", "Distribution type must match the selected delivery method.", nil)
+		return apperror.Field("type", "Distribution type must match the selected delivery method.", nil)
 	}
 	value.Type = expected
 	if value.DownloadableFile != nil {
-		if strings.TrimSpace(value.DownloadableFile.URL) == "" {
-			return invalidField("downloadable_file.url", "URL must not be blank.", nil)
+		if err := normalizeHTTPURL(&value.DownloadableFile.URL, "downloadable_file.url"); err != nil {
+			return err
 		}
 		if strings.TrimSpace(value.DownloadableFile.Format) == "" {
-			return invalidField("downloadable_file.format", "Format must not be blank.", nil)
+			return apperror.Field("downloadable_file.format", "Format must not be blank.", nil)
 		}
 	}
 	if value.WebService != nil {
@@ -127,8 +127,14 @@ func (value *Distribution) Normalize() (err error) {
 	if value.Type != expected {
 		return fmt.Errorf("distribution type does not match delivery method: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	if value.DownloadableFile != nil && (strings.TrimSpace(value.DownloadableFile.URL) == "" || strings.TrimSpace(value.DownloadableFile.Format) == "") {
-		return fmt.Errorf("downloadable file URL and format are required: %w", apperror.Default(apperror.CodeValidationFailed))
+	if value.DownloadableFile != nil {
+		if err := normalizeHTTPURL(&value.DownloadableFile.URL, "downloadable_file.url"); err != nil {
+			return err
+		}
+		// TODO this should become a mime type validation when the metadata is aligned
+		if strings.TrimSpace(value.DownloadableFile.Format) == "" {
+			return fmt.Errorf("downloadable file format is required: %w", apperror.Default(apperror.CodeValidationFailed))
+		}
 	}
 	if value.WebService != nil {
 		if err := value.WebService.Normalize(); err != nil {

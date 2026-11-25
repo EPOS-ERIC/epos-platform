@@ -7,7 +7,7 @@ import (
 
 func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatalifecyclev1.DatasetInput, error) {
 	r := &metadatalifecyclev1.DatasetInput{
-		Title:                     string(v.Title),
+		Title:                     v.Title,
 		ContactPoints:             uuidStrings(v.ContactPoints),
 		Providers:                 uuidStrings(v.Providers),
 		Categories:                uuidStrings(v.Categories),
@@ -16,7 +16,7 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 		Provenance:                protoOptionalString(v.Provenance),
 		Type:                      protoOptionalString(v.Type),
 		Version:                   protoOptionalString(v.Version),
-		QualityAnnotation:         protoOptionalString(v.QualityAnnotation),
+		QualityAnnotation:         toProtoOptURIString(v.QualityAnnotation),
 		SpatialCoverage:           protoOptionalString(v.SpatialCoverage),
 		SpatialResolutionInMeters: protoOptionalFloat(v.SpatialResolutionInMeters),
 		TemporalResolution:        protoOptionalFloat(v.TemporalResolution),
@@ -33,7 +33,7 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 	case temporalRange.geological != nil:
 		r.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: temporalRange.geological}
 	}
-	r.Description = string(v.Description)
+	r.Description = v.Description
 	accrualPeriodicity, err := toProtoDatasetAccrualPeriodicity(v.AccrualPeriodicity)
 	if err != nil {
 		return nil, err
@@ -59,11 +59,11 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 
 func toProtoSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDraftMetadata) *metadatalifecyclev1.SoftwareApplicationInput {
 	r := &metadatalifecyclev1.SoftwareApplicationInput{
-		Name:          string(v.Name),
+		Name:          v.Name,
 		Creators:      uuidStrings(v.Creators),
 		Categories:    uuidStrings(v.Categories),
 		ContactPoints: uuidStrings(v.ContactPoints),
-		Description:   string(v.Description),
+		Description:   v.Description,
 		Keywords:      toProtoKeywords(v.Keywords),
 	}
 
@@ -93,11 +93,11 @@ func toProtoSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDra
 
 func toProtoSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraftMetadata) *metadatalifecyclev1.SoftwareSourceCodeInput {
 	r := &metadatalifecyclev1.SoftwareSourceCodeInput{
-		Name:          string(v.Name),
+		Name:          v.Name,
 		Creators:      uuidStrings(v.Creators),
 		Categories:    uuidStrings(v.Categories),
 		ContactPoints: uuidStrings(v.ContactPoints),
-		Description:   string(v.Description),
+		Description:   v.Description,
 		Keywords:      toProtoKeywords(v.Keywords),
 	}
 	if v.ProgrammingLanguage.Set {
@@ -130,8 +130,8 @@ func toProtoSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraft
 func toProtoVersionedIdentifierInput(value gatewayapi.VersionedIdentifierInput) *metadatalifecyclev1.VersionedIdentifierInput {
 	result := &metadatalifecyclev1.VersionedIdentifierInput{
 		ResourceId: protoOptionalUUID(value.ResourceID),
-		Type:       string(value.Type),
-		Value:      string(value.Value),
+		Type:       value.Type,
+		Value:      value.Value,
 	}
 	return result
 }

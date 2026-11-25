@@ -10,7 +10,7 @@ class DistributionFormatSelectionContractTest(DistributionContractTestCase):
         for location in ("PATH", "QUERY", "HEADER"):
             distribution = web_distribution([parameter(
                 "format", location=location, required=location == "PATH", read_only=True,
-                property="custom:format-metadata", role="FORMAT", default="xml",
+                role="FORMAT", default="xml",
                 enum=[{"value": "xml"}, {"value": "json"}],
             )], template_url=(
                 "https://provider.invalid/{format}" if location == "PATH"
@@ -50,7 +50,6 @@ class DistributionFormatSelectionContractTest(DistributionContractTestCase):
                 parameter(
                     "format",
                     read_only=True,
-                    property="custom:format-metadata",
                     role="FORMAT",
                     default="xml",
                 )

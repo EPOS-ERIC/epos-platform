@@ -727,7 +727,6 @@ func (m *mapper) webService(source string, owner uuid.UUID, operationSource stri
 			}
 			parameterValue.Position = len(configuration.Parameters)
 			propertyValue := m.optionalString(mapping, hydraProperty)
-			parameterValue.Property = stringPtr(propertyValue)
 			parameterValue.Role = webServiceParameterRole(propertyValue)
 			parameter := domain.WebServiceParameter{
 				ParameterInput: parameterValue,

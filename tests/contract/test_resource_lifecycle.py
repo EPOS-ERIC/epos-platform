@@ -39,6 +39,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         group_id = group["id"]
 
         title = f"contract-test-{uuid4()}"
+        quality_url = "https://example.org/quality"
         created = self.gateway.post(
             "/groups/{groupId}/resources",
             groupId=group_id,
@@ -47,6 +48,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
                 "metadata": {
                     "title": title,
                     "description": "Contract lifecycle description",
+                    "quality_annotation": quality_url,
                     "geological_temporal_coverage": {
                         "start_mya": 251.902,
                         "end_mya": 201.4,
@@ -101,6 +103,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         self.assertEqual(draft_details["group_id"], group_id)
         self.assertEqual(draft_details["metadata"]["resource_type"], "dataset")
         self.assertEqual(draft_details["metadata"]["title"], title)
+        self.assertEqual(draft_details["metadata"]["quality_annotation"], quality_url)
         self.assertEqual(
             draft_details["metadata"]["geological_temporal_coverage"],
             {"start_mya": 251.902, "end_mya": 201.4},
@@ -108,6 +111,32 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         self.assertNotIn("temporal_coverage", draft_details["metadata"])
 
         updated_title = f"{title}-updated"
+        updated_annotation = "http://example.org/quality"
+        for invalid_annotation, valid_uri in (
+            ("https://example.org/%zz", False),
+            (" ", False),
+            ("../quality", False),
+            ("ftp://example.org/quality", True),
+            ("https:quality", True),
+        ):
+            with self.subTest(quality_annotation=invalid_annotation):
+                invalid = self.gateway.put(
+                    "/resources/{id}/versions/{versionId}/draft",
+                    id=resource_id,
+                    versionId=version_id,
+                    json={
+                        "resource_type": "dataset",
+                        "revision": initial_revision,
+                        "metadata": {
+                            "title": updated_title,
+                            "description": "Invalid quality annotation",
+                            "quality_annotation": invalid_annotation,
+                        },
+                    },
+                )
+                problem = assert_problem(self, invalid, 400, "validation_failed")
+                if valid_uri:
+                    self.assertEqual(problem["target"], "metadata.quality_annotation")
         replaced = self.gateway.put(
             "/resources/{id}/versions/{versionId}/draft",
             id=resource_id,
@@ -118,6 +147,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
                 "metadata": {
                     "title": updated_title,
                     "description": "Updated contract lifecycle description",
+                    "quality_annotation": updated_annotation,
                     "geological_temporal_coverage": {
                         "start_mya": 251.902,
                         "end_mya": 201.4,
@@ -213,6 +243,7 @@ class ResourceLifecycleContractTest(unittest.TestCase):
         self.assertEqual(published_details["group_id"], group_id)
         self.assertEqual(published_details["metadata"]["resource_type"], "dataset")
         self.assertEqual(published_details["metadata"]["title"], updated_title)
+        self.assertEqual(published_details["metadata"]["quality_annotation"], updated_annotation)
         self.assertEqual(
             published_details["metadata"]["geological_temporal_coverage"],
             {"start_mya": 251.902, "end_mya": 201.4},

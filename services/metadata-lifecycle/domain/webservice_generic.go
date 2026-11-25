@@ -33,22 +33,22 @@ func (w *GenericWebServiceInput) normalize(serviceType WebServiceType) error {
 	w.Format = strings.TrimSpace(w.Format)
 	w.Method = HTTPMethod(strings.ToUpper(strings.TrimSpace(string(w.Method))))
 	if w.TemplateURL == "" {
-		return invalidField("template_url", "Template URL must not be blank.", nil)
+		return apperror.Field("template_url", "Template URL must not be blank.", nil)
 	}
 	endpoint, err := url.Parse(w.TemplateURL)
 	if err != nil || endpoint.Host == "" || (endpoint.Scheme != "http" && endpoint.Scheme != "https") || endpoint.Fragment != "" {
-		return invalidField("template_url", "URL must be an absolute HTTP(S) URL without a fragment.", err)
+		return apperror.Field("template_url", "URL must be an absolute HTTP(S) URL without a fragment.", err)
 	}
 
 	if pathPlaceholderPattern.MatchString(endpoint.Host) || pathPlaceholderPattern.MatchString(endpoint.RawQuery) {
-		return invalidField("template_url", "Placeholders are only supported in the URL path.", nil)
+		return apperror.Field("template_url", "Placeholders are only supported in the URL path.", nil)
 	}
 
 	if w.Format == "" {
-		return invalidField("format", "Format must not be blank.", nil)
+		return apperror.Field("format", "Format must not be blank.", nil)
 	}
 	if !w.Method.Valid() {
-		return invalidField("method", "Method is not supported.", nil)
+		return apperror.Field("method", "Method is not supported.", nil)
 	}
 	parameters, err := parseWebServiceParameterInputs(w.Parameters, "parameters")
 	if err != nil {
@@ -68,10 +68,10 @@ func (w *GenericWebServiceInput) normalize(serviceType WebServiceType) error {
 		return err
 	}
 	if err := validateMethodBody(w.Method, w.Body); err != nil {
-		return invalidField("body_template", "This method does not support a request body.", err)
+		return apperror.Field("body_template", "This method does not support a request body.", err)
 	}
 	if err := validatePathParameters(w.TemplateURL, pathParameterNames(parameters)); err != nil {
-		return invalidField("template_url", "Template URL placeholders must match declared path parameters.", err)
+		return apperror.Field("template_url", "Template URL placeholders must match declared path parameters.", err)
 	}
 	return nil
 }
@@ -95,13 +95,13 @@ func (w *GenericWebService) normalize(serviceType WebServiceType) error {
 	w.Format = strings.TrimSpace(w.Format)
 	w.Method = HTTPMethod(strings.ToUpper(strings.TrimSpace(string(w.Method))))
 	if w.TemplateURL == "" {
-		return invalidField("template_url", "Template URL must not be blank.", nil)
+		return apperror.Field("template_url", "Template URL must not be blank.", nil)
 	}
 	if w.Format == "" {
-		return invalidField("format", "Format must not be blank.", nil)
+		return apperror.Field("format", "Format must not be blank.", nil)
 	}
 	if !w.Method.Valid() {
-		return invalidField("method", "Method is not supported.", nil)
+		return apperror.Field("method", "Method is not supported.", nil)
 	}
 	if err := validatePersistedWebServiceParameters(w.Parameters); err != nil {
 		return err
@@ -128,10 +128,10 @@ func (w *GenericWebService) normalize(serviceType WebServiceType) error {
 		return err
 	}
 	if err := validateMethodBody(w.Method, bodyInput); err != nil {
-		return invalidField("body_template", "This method does not support a request body.", err)
+		return apperror.Field("body_template", "This method does not support a request body.", err)
 	}
 	if err := validatePathParameters(w.TemplateURL, pathParameterNames(parameters)); err != nil {
-		return invalidField("template_url", "Template URL placeholders must match declared path parameters.", err)
+		return apperror.Field("template_url", "Template URL placeholders must match declared path parameters.", err)
 	}
 	normalized, err := applyNormalizedWebServiceParameters(w.Parameters, parameters)
 	if err != nil {
@@ -249,7 +249,7 @@ func (w GenericWebService) prepareHTTPRequest(parameters []DistributionAccessPar
 
 		if items == nil {
 			if parameter.Required {
-				return PreparedHTTPRequest{}, invalidField("parameters", fmt.Sprintf("Required parameter %q (%s) is missing.", parameter.Name, parameter.ID), nil)
+				return PreparedHTTPRequest{}, apperror.Field("parameters", fmt.Sprintf("Required parameter %q (%s) is missing.", parameter.Name, parameter.ID), nil)
 			}
 
 			continue
@@ -348,7 +348,7 @@ func (w GenericWebService) prepareHTTPRequest(parameters []DistributionAccessPar
 
 		value := strings.Join(text, ",")
 		if !httpguts.ValidHeaderFieldValue(value) {
-			return PreparedHTTPRequest{}, invalidField("parameters", "Header value must be a valid HTTP field value.", nil)
+			return PreparedHTTPRequest{}, apperror.Field("parameters", "Header value must be a valid HTTP field value.", nil)
 		}
 
 		request.Headers[textproto.CanonicalMIMEHeaderKey(parameter.Name)] = value
@@ -384,7 +384,7 @@ func (w GenericWebService) selectAccessFormat(selected *string) (uuid.UUID, Acce
 
 	formats := w.nativeFormats()
 	if !slices.ContainsFunc(formats, func(format NativeFormat) bool { return format.OutputFormat == *selected }) {
-		return uuid.Nil, nil, invalidField("output_format", "Select a native output format for this distribution.", nil)
+		return uuid.Nil, nil, apperror.Field("output_format", "Select a native output format for this distribution.", nil)
 	}
 
 	if parameter := w.parameterWithRole(WebServiceParameterRoleFormat); parameter != nil {
@@ -438,19 +438,19 @@ func (w GenericWebService) resolveAccessValues(assignments []DistributionAccessP
 		target := fmt.Sprintf("parameters[%d]", i)
 		parameter, exists := parameters[assignment.ID]
 		if !exists {
-			return accessValues{}, invalidField(target+".id", "Parameter does not exist in this distribution.", nil)
+			return accessValues{}, apperror.Field(target+".id", "Parameter does not exist in this distribution.", nil)
 		}
 
 		if values.supplied[assignment.ID] {
-			return accessValues{}, invalidField(target+".id", "Parameter must not be assigned more than once.", nil)
+			return accessValues{}, apperror.Field(target+".id", "Parameter must not be assigned more than once.", nil)
 		}
 
 		if parameter.ReadOnly {
-			return accessValues{}, invalidField(target+".id", "Read-only parameters cannot be assigned.", nil)
+			return accessValues{}, apperror.Field(target+".id", "Read-only parameters cannot be assigned.", nil)
 		}
 
 		if _, template := parameter.Schema.(TemplateSchema); template {
-			return accessValues{}, invalidField(target+".id", "Supply template child values instead of the template parameter itself.", nil)
+			return accessValues{}, apperror.Field(target+".id", "Supply template child values instead of the template parameter itself.", nil)
 		}
 
 		resolved, err := resolveAccessValue(parameter.Schema, assignment.Value)
@@ -518,7 +518,7 @@ func resolveAccessValue(schema ParameterSchema, value AccessValue) (AccessArray,
 		resolved, err := validateAccessScalar(schema, item)
 		if err != nil {
 			if appErr, ok := errors.AsType[*apperror.AppError](err); array && ok && appErr.Code == apperror.CodeValidationFailed {
-				return nil, invalidField(fmt.Sprintf("value[%d]", i), appErr.Detail, err)
+				return nil, apperror.Field(fmt.Sprintf("value[%d]", i), appErr.Detail, err)
 			}
 			return nil, err
 		}
@@ -553,7 +553,7 @@ func (values accessValues) renderTemplate(source string, parameters []Parameter,
 
 	if !required && missing {
 		if supplied {
-			return nil, invalidField("parameters", "Supply all children of an optional template when supplying any child.", nil)
+			return nil, apperror.Field("parameters", "Supply all children of an optional template when supplying any child.", nil)
 		}
 
 		return nil, nil
@@ -562,7 +562,7 @@ func (values accessValues) renderTemplate(source string, parameters []Parameter,
 	if required {
 		for _, parameter := range parameters {
 			if parameter.Required && values.resolved[parameter.ID] == nil {
-				return nil, invalidField("parameters", fmt.Sprintf("Required parameter %q (%s) is missing.", parameter.Name, parameter.ID), nil)
+				return nil, apperror.Field("parameters", fmt.Sprintf("Required parameter %q (%s) is missing.", parameter.Name, parameter.ID), nil)
 			}
 		}
 	}
@@ -574,7 +574,7 @@ func (values accessValues) renderTemplate(source string, parameters []Parameter,
 
 	var rendered strings.Builder
 	if err := parsed.Execute(&rendered, data); err != nil {
-		return nil, invalidField("parameters", "Template could not be rendered with supplied values.", err)
+		return nil, apperror.Field("parameters", "Template could not be rendered with supplied values.", err)
 	}
 
 	return new(rendered.String()), nil

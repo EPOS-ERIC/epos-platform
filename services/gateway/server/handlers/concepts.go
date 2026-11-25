@@ -42,7 +42,7 @@ func (h *ogenHandler) CreateConcept(ctx context.Context, req *api.ConceptInput) 
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 
-	response, err := h.metadataLifecycleClient.CreateConcept(ctx, actor, string(req.Name))
+	response, err := h.metadataLifecycleClient.CreateConcept(ctx, actor, req.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (h *ogenHandler) ReplaceConcept(ctx context.Context, req *api.ConceptInput,
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 
-	response, err := h.metadataLifecycleClient.ReplaceConcept(ctx, actor, params.ConceptId.String(), string(req.Name))
+	response, err := h.metadataLifecycleClient.ReplaceConcept(ctx, actor, params.ConceptId.String(), req.Name)
 	if err != nil {
 		return nil, err
 	}

@@ -359,7 +359,6 @@ INSERT INTO
         description,
         required,
         READ_ONLY,
-        property,
         role,
         location,
         explode,
@@ -386,11 +385,10 @@ VALUES
         $17,
         $18,
         $19,
-        $20,
-        $21
+        $20
     )
 RETURNING
-    id, resource_id, position, name, label, description, required, read_only, web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id, web_service_body_id, template_parameter_id, schema_kind, role, property, location, explode
+    id, resource_id, position, name, label, description, required, read_only, web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id, web_service_body_id, template_parameter_id, schema_kind, role, location, explode
 `
 
 type AddLifecycleParameterParams struct {
@@ -410,7 +408,6 @@ type AddLifecycleParameterParams struct {
 	Description                 *string
 	Required                    bool
 	ReadOnly                    bool
-	Property                    *string
 	Role                        *WebServiceParameterRole
 	Location                    *WebServiceParameterLocation
 	Explode                     bool
@@ -435,7 +432,6 @@ func (q *Queries) AddLifecycleParameter(ctx context.Context, arg AddLifecyclePar
 		arg.Description,
 		arg.Required,
 		arg.ReadOnly,
-		arg.Property,
 		arg.Role,
 		arg.Location,
 		arg.Explode,
@@ -461,7 +457,6 @@ func (q *Queries) AddLifecycleParameter(ctx context.Context, arg AddLifecyclePar
 		&i.TemplateParameterID,
 		&i.SchemaKind,
 		&i.Role,
-		&i.Property,
 		&i.Location,
 		&i.Explode,
 	)
@@ -742,9 +737,7 @@ INSERT INTO
         visible_on,
         provider_organization_id,
         documentation_uri,
-        keywords,
-        access_rights,
-        license
+        keywords
     )
 VALUES
     (
@@ -755,9 +748,7 @@ VALUES
         $5,
         $6,
         $7,
-        $8,
-        $9,
-        $10
+        $8
     )
 `
 
@@ -770,8 +761,6 @@ type AddLifecycleWebServiceParams struct {
 	ProviderOrganizationID *uuid.UUID
 	DocumentationUri       *string
 	Keywords               []string
-	AccessRights           *string
-	License                *string
 }
 
 func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWebServiceParams) error {
@@ -784,8 +773,6 @@ func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWe
 		arg.ProviderOrganizationID,
 		arg.DocumentationUri,
 		arg.Keywords,
-		arg.AccessRights,
-		arg.License,
 	)
 	return err
 }
@@ -832,32 +819,6 @@ func (q *Queries) AddLifecycleWebServiceBody(ctx context.Context, arg AddLifecyc
 		&i.BodyRequired,
 	)
 	return i, err
-}
-
-const addLifecycleWebServiceCategories = `-- name: AddLifecycleWebServiceCategories :exec
-INSERT INTO
-    web_service_categories (web_service_id, group_id, category_id)
-SELECT
-    service.id,
-    dataset.group_id,
-    category.id
-FROM
-    web_services AS service
-    JOIN dataset_versions AS version ON version.id = service.dataset_version_id
-    JOIN datasets AS dataset ON dataset.id = version.dataset_id
-    CROSS JOIN unnest($1::uuid []) AS category(id)
-WHERE
-    service.id = $2
-`
-
-type AddLifecycleWebServiceCategoriesParams struct {
-	CategoryIds  []uuid.UUID
-	WebServiceID uuid.UUID
-}
-
-func (q *Queries) AddLifecycleWebServiceCategories(ctx context.Context, arg AddLifecycleWebServiceCategoriesParams) error {
-	_, err := q.db.Exec(ctx, addLifecycleWebServiceCategories, arg.CategoryIds, arg.WebServiceID)
-	return err
 }
 
 const addLifecycleWebServiceContactPoint = `-- name: AddLifecycleWebServiceContactPoint :exec
@@ -1056,9 +1017,7 @@ inserted_web_services AS (
             visible_on,
             provider_organization_id,
             documentation_uri,
-            keywords,
-            access_rights,
-            license
+            keywords
         )
     SELECT
         uuid_generate_v5(
@@ -1089,41 +1048,13 @@ inserted_web_services AS (
         visible_on,
         provider_organization_id,
         documentation_uri,
-        keywords,
-        access_rights,
-        license
+        keywords
     FROM
         web_services AS source
     WHERE
         dataset_version_id = $2
     RETURNING
         id
-),
-web_service_categories_copy AS (
-    INSERT INTO
-        web_service_categories (web_service_id, group_id, category_id)
-    SELECT
-        target.id,
-        link.group_id,
-        link.category_id
-    FROM
-        web_service_categories AS link
-        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
-            (
-                SELECT
-                    id
-                FROM
-                    inserted
-            ),
-            link.web_service_id::text
-        )
-    WHERE
-        (
-            SELECT
-                same_dataset
-            FROM
-                source
-        )
 ),
 inserted_generic_web_services AS (
     INSERT INTO
@@ -1384,7 +1315,6 @@ inserted_parameters AS (
             description,
             required,
             READ_ONLY,
-            property,
             role,
             location,
             explode,
@@ -1441,7 +1371,6 @@ inserted_parameters AS (
         parameter.description,
         parameter.required,
         parameter.read_only,
-        parameter.property,
         parameter.role,
         parameter.location,
         parameter.explode,
@@ -1527,7 +1456,6 @@ template_parameters AS (
             description,
             required,
             READ_ONLY,
-            property,
             role,
             schema_kind
         )
@@ -1565,7 +1493,6 @@ template_parameters AS (
         source_parameter.description,
         source_parameter.required,
         source_parameter.read_only,
-        source_parameter.property,
         source_parameter.role,
         source_parameter.schema_kind
     FROM
@@ -3133,7 +3060,7 @@ func (q *Queries) ListLifecycleStringParameterSchemas(ctx context.Context, param
 
 const listLifecycleTemplateParameters = `-- name: ListLifecycleTemplateParameters :many
 SELECT
-    id, resource_id, position, name, label, description, required, read_only, web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id, web_service_body_id, template_parameter_id, schema_kind, role, property, location, explode
+    id, resource_id, position, name, label, description, required, read_only, web_service_id, wfs_service_id, wms_get_map_service_id, wms_get_feature_info_service_id, wmts_get_tile_service_id, wmts_get_feature_info_service_id, web_service_body_id, template_parameter_id, schema_kind, role, location, explode
 FROM
     parameters
 WHERE
@@ -3172,7 +3099,6 @@ func (q *Queries) ListLifecycleTemplateParameters(ctx context.Context, parameter
 			&i.TemplateParameterID,
 			&i.SchemaKind,
 			&i.Role,
-			&i.Property,
 			&i.Location,
 			&i.Explode,
 		); err != nil {
@@ -3424,47 +3350,6 @@ func (q *Queries) ListLifecycleWebServiceBodies(ctx context.Context, webServiceI
 	return items, nil
 }
 
-const listLifecycleWebServiceCategories = `-- name: ListLifecycleWebServiceCategories :many
-SELECT
-    link.web_service_id,
-    category.id,
-    category.name
-FROM
-    web_service_categories AS link
-    JOIN categories AS category ON category.id = link.category_id
-WHERE
-    link.web_service_id = ANY($1::uuid [])
-ORDER BY
-    link.web_service_id,
-    category.id
-`
-
-type ListLifecycleWebServiceCategoriesRow struct {
-	WebServiceID uuid.UUID
-	ID           uuid.UUID
-	Name         string
-}
-
-func (q *Queries) ListLifecycleWebServiceCategories(ctx context.Context, webServiceIds []uuid.UUID) ([]ListLifecycleWebServiceCategoriesRow, error) {
-	rows, err := q.db.Query(ctx, listLifecycleWebServiceCategories, webServiceIds)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListLifecycleWebServiceCategoriesRow
-	for rows.Next() {
-		var i ListLifecycleWebServiceCategoriesRow
-		if err := rows.Scan(&i.WebServiceID, &i.ID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listLifecycleWebServiceContactPoints = `-- name: ListLifecycleWebServiceContactPoints :many
 SELECT
     link.web_service_id,
@@ -3511,7 +3396,7 @@ func (q *Queries) ListLifecycleWebServiceContactPoints(ctx context.Context, webS
 
 const listLifecycleWebServiceParameters = `-- name: ListLifecycleWebServiceParameters :many
 SELECT
-    parameter.id, parameter.resource_id, parameter.position, parameter.name, parameter.label, parameter.description, parameter.required, parameter.read_only, parameter.web_service_id, parameter.wfs_service_id, parameter.wms_get_map_service_id, parameter.wms_get_feature_info_service_id, parameter.wmts_get_tile_service_id, parameter.wmts_get_feature_info_service_id, parameter.web_service_body_id, parameter.template_parameter_id, parameter.schema_kind, parameter.role, parameter.property, parameter.location, parameter.explode
+    parameter.id, parameter.resource_id, parameter.position, parameter.name, parameter.label, parameter.description, parameter.required, parameter.read_only, parameter.web_service_id, parameter.wfs_service_id, parameter.wms_get_map_service_id, parameter.wms_get_feature_info_service_id, parameter.wmts_get_tile_service_id, parameter.wmts_get_feature_info_service_id, parameter.web_service_body_id, parameter.template_parameter_id, parameter.schema_kind, parameter.role, parameter.location, parameter.explode
 FROM
     parameters AS parameter
     LEFT JOIN web_service_bodies AS body ON body.id = parameter.web_service_body_id
@@ -3565,7 +3450,6 @@ func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServ
 			&i.TemplateParameterID,
 			&i.SchemaKind,
 			&i.Role,
-			&i.Property,
 			&i.Location,
 			&i.Explode,
 		); err != nil {
@@ -3581,7 +3465,7 @@ func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServ
 
 const listLifecycleWebServices = `-- name: ListLifecycleWebServices :many
 SELECT
-    service.id, service.resource_id, service.dataset_version_id, service.type, service.visible_on, service.provider_organization_id, service.documentation_uri, service.keywords, service.access_rights, service.license
+    service.id, service.resource_id, service.dataset_version_id, service.type, service.visible_on, service.provider_organization_id, service.documentation_uri, service.keywords
 FROM
     web_services AS service
 WHERE
@@ -3612,8 +3496,6 @@ func (q *Queries) ListLifecycleWebServices(ctx context.Context, datasetVersionID
 			&i.WebService.ProviderOrganizationID,
 			&i.WebService.DocumentationUri,
 			&i.WebService.Keywords,
-			&i.WebService.AccessRights,
-			&i.WebService.License,
 		); err != nil {
 			return nil, err
 		}

@@ -19,7 +19,7 @@ type ConceptInput struct {
 func (value *ConceptInput) Normalize() error {
 	value.Name = strings.TrimSpace(value.Name)
 	if value.Name == "" {
-		return invalidField("name", "Name must not be blank.", nil)
+		return apperror.Field("name", "Name must not be blank.", nil)
 	}
 
 	return nil

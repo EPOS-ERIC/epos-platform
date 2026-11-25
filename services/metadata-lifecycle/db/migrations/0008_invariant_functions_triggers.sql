@@ -162,18 +162,6 @@ BEGIN
                 ERRCODE = '23514',
                 MESSAGE = 'category group must match dataset group';
         END IF;
-    ELSIF TG_TABLE_NAME = 'web_service_categories' THEN
-        IF NOT EXISTS (
-            SELECT 1
-            FROM web_services AS service
-            JOIN dataset_versions AS version ON version.id = service.dataset_version_id
-            JOIN datasets AS dataset ON dataset.id = version.dataset_id
-            WHERE service.id = NEW.web_service_id AND dataset.group_id = NEW.group_id
-        ) THEN
-            RAISE EXCEPTION USING
-                ERRCODE = '23514',
-                MESSAGE = 'category group must match dataset group';
-        END IF;
     ELSIF TG_TABLE_NAME = 'software_application_version_categories' THEN
         IF NOT EXISTS (
             SELECT 1
@@ -322,9 +310,6 @@ FOR EACH ROW EXECUTE FUNCTION enforce_category_acyclic();
 CREATE TRIGGER dataset_version_categories_group
 BEFORE INSERT OR UPDATE ON dataset_version_categories
 FOR EACH ROW EXECUTE FUNCTION enforce_category_resource_group();
-CREATE TRIGGER web_service_categories_group
-BEFORE INSERT OR UPDATE ON web_service_categories
-FOR EACH ROW EXECUTE FUNCTION enforce_category_resource_group();
 CREATE TRIGGER software_application_version_categories_group
 BEFORE INSERT OR UPDATE ON software_application_version_categories
 FOR EACH ROW EXECUTE FUNCTION enforce_category_resource_group();
@@ -411,7 +396,6 @@ DROP TRIGGER IF EXISTS group_memberships_active_assignments ON group_memberships
 DROP TRIGGER IF EXISTS user_global_roles_scope ON user_global_roles;
 DROP TRIGGER IF EXISTS software_source_code_version_categories_group ON software_source_code_version_categories;
 DROP TRIGGER IF EXISTS software_application_version_categories_group ON software_application_version_categories;
-DROP TRIGGER IF EXISTS web_service_categories_group ON web_service_categories;
 DROP TRIGGER IF EXISTS dataset_version_categories_group ON dataset_version_categories;
 DROP TRIGGER IF EXISTS categories_acyclic ON categories;
 DROP FUNCTION IF EXISTS enforce_organization_acyclic(), enforce_version_lifecycle_mutability(), enforce_immutable_identifier_owner(), enforce_immutable_category(), enforce_immutable_logical_resource(), assign_first_user_admin(), set_updated_at(), enforce_category_resource_group(), enforce_category_acyclic(), enforce_fixed_authorization_scopes();

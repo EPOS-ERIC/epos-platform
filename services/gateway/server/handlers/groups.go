@@ -77,7 +77,7 @@ func (h *ogenHandler) CreateGroup(ctx context.Context, q *gatewayapi.CreateGroup
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 	in := &metadatalifecyclev1.CreateGroupRequest{
-		Name:        string(q.Name),
+		Name:        q.Name,
 		Description: toClientStringPtr(q.Description),
 		Label:       toClientStringPtr(q.Label),
 		Logo:        toClientStringPtr(q.Logo),
@@ -106,7 +106,7 @@ func (h *ogenHandler) ReplaceGroup(ctx context.Context, q *gatewayapi.ReplaceGro
 	}
 	in := &metadatalifecyclev1.ReplaceGroupRequest{
 		GroupId:     params.GroupId.String(),
-		Name:        string(q.Name),
+		Name:        q.Name,
 		Description: toClientStringPtr(q.Description),
 		Label:       toClientStringPtr(q.Label),
 		Logo:        toClientStringPtr(q.Logo),
@@ -164,7 +164,10 @@ func (h *ogenHandler) CreateGroupCategory(ctx context.Context, q *gatewayapi.Cre
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	in := &metadatalifecyclev1.CreateCategoryRequest{GroupId: params.GroupId.String(), Name: string(q.Name)}
+	in := &metadatalifecyclev1.CreateCategoryRequest{
+		GroupId: params.GroupId.String(),
+		Name:    q.Name,
+	}
 	if q.ParentCategoryID.Set && !q.ParentCategoryID.Null {
 		in.ParentCategoryId = new(q.ParentCategoryID.Value.String())
 	}
@@ -184,7 +187,11 @@ func (h *ogenHandler) ReplaceGroupCategory(ctx context.Context, q *gatewayapi.Re
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	in := &metadatalifecyclev1.ReplaceCategoryRequest{GroupId: params.GroupId.String(), CategoryId: params.CategoryId.String(), Name: string(q.Name)}
+	in := &metadatalifecyclev1.ReplaceCategoryRequest{
+		GroupId:    params.GroupId.String(),
+		CategoryId: params.CategoryId.String(),
+		Name:       q.Name,
+	}
 	if !q.ParentCategoryID.Null {
 		in.ParentCategoryId = new(q.ParentCategoryID.Value.String())
 	}

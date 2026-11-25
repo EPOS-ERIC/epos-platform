@@ -2992,7 +2992,7 @@ components:
       required: [type, parameters]
       properties:
         type: { type: string, enum: [WFS] }
-        feature_type: { $ref: "#/components/schemas/NonBlankString" }
+        feature_type: { type: string }
         result_limit: { type: integer, format: int64, minimum: 1 }
         bbox:
           type: array
@@ -3031,11 +3031,6 @@ components:
     # -------------------------------------------------------------------------
     # Shared enums
     # -------------------------------------------------------------------------
-
-    NonBlankString:
-      type: string
-      minLength: 1
-      pattern: '[^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]'
 
     StringEnumOption:
       type: object
@@ -3259,13 +3254,18 @@ components:
       additionalProperties: false
       required: [title, description]
       properties:
-        title: { $ref: "#/components/schemas/NonBlankString" }
-        description: { $ref: "#/components/schemas/NonBlankString" }
+        title: { type: string }
+        description: { type: string }
         keywords:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
         accrual_periodicity: { $ref: "#/components/schemas/DatasetAccrualPeriodicity" }
-        quality_annotation: { type: string, nullable: true }
+        quality_annotation:
+          type: string
+          format: uri
+          nullable: true
+          minLength: 1
+          description: Absolute HTTP(S) URL with a host.
         conforms_to: { type: string, nullable: true }
         provenance: { type: string, nullable: true }
         type: { type: string, nullable: true }
@@ -3306,17 +3306,17 @@ components:
       additionalProperties: false
       required: [name, description]
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        description: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        description: { type: string }
         keywords:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
         license: { type: string, nullable: true }
         version: { type: string, nullable: true }
-        download_url: { type: string, format: uri }
+        download_url: { type: string, format: uri, description: Absolute HTTP(S) URL with a host. }
         requirements: { type: string, nullable: true }
         operating_system: { type: string, nullable: true }
-        main_entity_of_page: { type: string, format: uri }
+        main_entity_of_page: { type: string, format: uri, description: Absolute HTTP(S) URL with a host. }
         creators: { type: array, items: { type: string, format: uuid } }
         identifiers:
           {
@@ -3331,17 +3331,17 @@ components:
       additionalProperties: false
       required: [name, description]
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        description: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        description: { type: string }
         keywords:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
-        repository: { type: string, format: uri }
+        repository: { type: string, format: uri, description: Absolute HTTP(S) URL with a host. }
         programming_language: { type: string }
         license: { type: string, nullable: true }
         software_requirements: { type: string, nullable: true }
         runtime_platform: { type: string, nullable: true }
-        main_entity_of_page: { type: string, format: uri }
+        main_entity_of_page: { type: string, format: uri, description: Absolute HTTP(S) URL with a host. }
         version: { type: string, nullable: true }
         creators: { type: array, items: { type: string, format: uuid } }
         identifiers:
@@ -3358,16 +3358,16 @@ components:
       required: [type, value]
       properties:
         resource_id: { type: string, format: uuid }
-        type: { $ref: "#/components/schemas/NonBlankString" }
-        value: { $ref: "#/components/schemas/NonBlankString" }
+        type: { type: string }
+        value: { type: string }
 
     IdentifierInput:
       type: object
       additionalProperties: false
       required: [type, value]
       properties:
-        type: { $ref: "#/components/schemas/NonBlankString" }
-        value: { $ref: "#/components/schemas/NonBlankString" }
+        type: { type: string }
+        value: { type: string }
 
     DistributionDraft:
       oneOf:
@@ -3437,12 +3437,9 @@ components:
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         provider: { type: string, format: uuid }
-        documentation_uri: { type: string, format: uri, minLength: 1 }
+        documentation_uri: { type: string, format: uri, minLength: 1, description: Absolute HTTP(S) URL with a host. }
         contact_points: { type: array, items: { type: string, format: uuid } }
         keywords: { type: array, items: { $ref: "#/components/schemas/Keyword" } }
-        access_rights: { type: string, nullable: true }
-        license: { type: string, nullable: true }
-        categories: { type: array, items: { type: string, format: uuid } }
 
     HttpWebServiceDraft:
       allOf:
@@ -3490,20 +3487,20 @@ components:
       type: object
       required: [template_url, method, format]
       properties:
-        template_url: { $ref: "#/components/schemas/NonBlankString" }
+        template_url: { type: string }
         method: { $ref: "#/components/schemas/WebServiceMethod" }
         parameters:
           type: array
           items: { $ref: "#/components/schemas/ParameterDraft" }
-        body_content_type: { $ref: "#/components/schemas/NonBlankString" }
-        body_template: { $ref: "#/components/schemas/NonBlankString" }
+        body_content_type: { type: string }
+        body_template: { type: string }
         body_required:
           type: boolean
           description: Defaults to true when a request body is configured. Must be omitted when no body is configured. Optional bodies are omitted only when unresolved and no child values were supplied.
         body_parameters:
           type: array
           items: { $ref: "#/components/schemas/ScalarParameterDraft" }
-        format: { $ref: "#/components/schemas/NonBlankString" }
+        format: { type: string }
 
     WfsWebServiceConfigurationDraft:
       type: object
@@ -3520,15 +3517,15 @@ components:
           type: array
           minItems: 1
           uniqueItems: true
-          items: { $ref: "#/components/schemas/NonBlankString" }
-        default_feature_type: { $ref: "#/components/schemas/NonBlankString" }
+          items: { type: string }
+        default_feature_type: { type: string }
         output_formats:
           type: array
           minItems: 1
           uniqueItems: true
           description: Exact provider outputFormat values, advertised as native formats.
-          items: { $ref: "#/components/schemas/NonBlankString" }
-        default_output_format: { $ref: "#/components/schemas/NonBlankString" }
+          items: { type: string }
+        default_output_format: { type: string }
         result_limit:
           type: integer
           format: int64
@@ -3551,11 +3548,11 @@ components:
         type: { type: string, enum: [WMS] }
         capabilities_url:
           type: string
+          format: uri
           minLength: 1
           description: Absolute HTTP(S) capabilities URL, including provider query parameters.
         default_layer:
-          allOf:
-            - $ref: "#/components/schemas/NonBlankString"
+          type: string
           description: Must name one configured layer.
         layers:
           type: array
@@ -3581,8 +3578,8 @@ components:
       required: [type, capabilities_url, default_layer, layers, get_tile_parameters, get_feature_info_parameters]
       properties:
         type: { type: string, enum: [WMTS] }
-        capabilities_url: { type: string, minLength: 1, description: Absolute HTTP(S) capabilities URL including provider query parameters. }
-        default_layer: { $ref: "#/components/schemas/NonBlankString" }
+        capabilities_url: { type: string, format: uri, minLength: 1, description: Absolute HTTP(S) capabilities URL including provider query parameters. }
+        default_layer: { type: string }
         layers:
           type: array
           minItems: 1
@@ -3600,15 +3597,15 @@ components:
       required: [name]
       properties:
         resource_id: { type: string, format: uuid }
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         default_style:
-          allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
+          type: string
           description: Configured default style. When omitted, use the provider default if allowed by styles.
         styles:
           type: array
           uniqueItems: true
           description: Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
-          items: { $ref: "#/components/schemas/NonBlankString" }
+          items: { type: string }
 
     WmsLayerDraft:
       type: object
@@ -3616,7 +3613,7 @@ components:
       required: [name, default_style, styles]
       properties:
         resource_id: { type: string, format: uuid }
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         default_style:
           type: string
           description: Default configured style. Empty string uses the provider default.
@@ -3714,11 +3711,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -3737,11 +3733,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -3767,11 +3762,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -3801,11 +3795,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -3825,11 +3818,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -3861,11 +3853,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -3896,11 +3887,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -3929,11 +3919,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -3966,11 +3955,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -4002,11 +3990,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -4036,11 +4023,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [TEMPLATE] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -4075,11 +4061,10 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [TEMPLATE] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
         required: { type: boolean }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         location: { $ref: "#/components/schemas/ParameterLocation" }
         explode: { type: boolean }
@@ -4099,10 +4084,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4118,10 +4102,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4135,10 +4118,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4155,10 +4137,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4175,10 +4156,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4196,10 +4176,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4216,10 +4195,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4234,10 +4212,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4255,10 +4232,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4276,10 +4252,9 @@ components:
         resource_id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
         position: { type: integer, format: int32 }
-        name: { $ref: "#/components/schemas/NonBlankString" }
-        label: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
+        label: { type: string }
         description: { type: string, nullable: true }
-        property: { type: string, nullable: true }
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
@@ -4314,8 +4289,12 @@ components:
       additionalProperties: false
       required: [url, format]
       properties:
-        url: { $ref: "#/components/schemas/NonBlankString" }
-        format: { $ref: "#/components/schemas/NonBlankString" }
+        url:
+          type: string
+          format: uri
+          minLength: 1
+          description: Absolute HTTP(S) URL with a host.
+        format: { type: string }
 
     TemporalCoverage:
       type: object
@@ -4416,7 +4395,7 @@ components:
       required: [note]
       additionalProperties: false
       properties:
-        note: { $ref: "#/components/schemas/NonBlankString" }
+        note: { type: string }
 
     ResourceVersion:
       type: object
@@ -4447,7 +4426,7 @@ components:
         updated_at: { type: string, format: date-time }
         rejected_by: { type: string, minLength: 1 }
         rejected_at: { type: string, format: date-time }
-        rejection_note: { $ref: "#/components/schemas/NonBlankString" }
+        rejection_note: { type: string }
         metadata:
           oneOf:
             - $ref: "#/components/schemas/DatasetResourceMetadata"
@@ -4527,7 +4506,12 @@ components:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
         accrual_periodicity: { $ref: "#/components/schemas/DatasetAccrualPeriodicity" }
-        quality_annotation: { type: string, nullable: true }
+        quality_annotation:
+          type: string
+          format: uri
+          nullable: true
+          minLength: 1
+          description: Absolute HTTP(S) URL with a host.
         conforms_to: { type: string, nullable: true }
         provenance: { type: string, nullable: true }
         type: { type: string, nullable: true }
@@ -4584,13 +4568,13 @@ components:
         resource_type: { type: string, enum: [software-application] }
         name: { type: string }
         description: { type: string }
-        main_entity_of_page: { type: string, nullable: true }
+        main_entity_of_page: { type: string, format: uri, nullable: true, description: Absolute HTTP(S) URL with a host. }
         license: { type: string, nullable: true }
         version: { type: string, nullable: true }
         keywords:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
-        download_url: { type: string, nullable: true }
+        download_url: { type: string, format: uri, nullable: true, description: Absolute HTTP(S) URL with a host. }
         requirements: { type: string, nullable: true }
         operating_system: { type: string, nullable: true }
         creators:
@@ -4629,11 +4613,11 @@ components:
         keywords:
           type: array
           items: { $ref: "#/components/schemas/Keyword" }
-        repository: { type: string, nullable: true }
+        repository: { type: string, format: uri, nullable: true, description: Absolute HTTP(S) URL with a host. }
         license: { type: string, nullable: true }
         software_requirements: { type: string, nullable: true }
         runtime_platform: { type: string, nullable: true }
-        main_entity_of_page: { type: string, nullable: true }
+        main_entity_of_page: { type: string, format: uri, nullable: true, description: Absolute HTTP(S) URL with a host. }
         version: { type: string, nullable: true }
         creators:
           type: array
@@ -4760,14 +4744,11 @@ components:
           minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         provider: { $ref: "#/components/schemas/ResourceVersionReference" }
-        documentation_uri: { type: string, format: uri, minLength: 1 }
+        documentation_uri: { type: string, format: uri, minLength: 1, description: Absolute HTTP(S) URL with a host. }
         contact_points:
           type: array
           items: { type: string, format: uuid }
         keywords: { type: array, items: { $ref: "#/components/schemas/Keyword" } }
-        access_rights: { type: string, nullable: true }
-        license: { type: string, nullable: true }
-        categories: { type: array, items: { $ref: "#/components/schemas/ResourceVersionReference" } }
 
     WebServiceAvailableFormats:
       type: object
@@ -4855,15 +4836,15 @@ components:
           type: array
           minItems: 1
           uniqueItems: true
-          items: { $ref: "#/components/schemas/NonBlankString" }
-        default_feature_type: { $ref: "#/components/schemas/NonBlankString" }
+          items: { type: string }
+        default_feature_type: { type: string }
         output_formats:
           type: array
           minItems: 1
           uniqueItems: true
           description: Exact provider outputFormat values, advertised as native formats.
-          items: { $ref: "#/components/schemas/NonBlankString" }
-        default_output_format: { $ref: "#/components/schemas/NonBlankString" }
+          items: { type: string }
+        default_output_format: { type: string }
         result_limit:
           type: integer
           format: int64
@@ -4886,11 +4867,11 @@ components:
         type: { type: string, enum: [WMS] }
         capabilities_url:
           type: string
+          format: uri
           minLength: 1
           description: Absolute HTTP(S) capabilities URL, including provider query parameters.
         default_layer:
-          allOf:
-            - $ref: "#/components/schemas/NonBlankString"
+          type: string
           description: Must name one configured layer.
         layers:
           type: array
@@ -4916,8 +4897,8 @@ components:
       required: [type, capabilities_url, default_layer, layers, get_tile_parameters, get_feature_info_parameters]
       properties:
         type: { type: string, enum: [WMTS] }
-        capabilities_url: { type: string, minLength: 1 }
-        default_layer: { $ref: "#/components/schemas/NonBlankString" }
+        capabilities_url: { type: string, format: uri, minLength: 1 }
+        default_layer: { type: string }
         layers:
           type: array
           minItems: 1
@@ -4935,15 +4916,15 @@ components:
       properties:
         id: { type: string, format: uuid }
         resource_id: { type: string, format: uuid }
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         default_style:
-          allOf: [{ $ref: "#/components/schemas/NonBlankString" }]
+          type: string
           description: Configured default style. When omitted, use the provider default if allowed by styles.
         styles:
           type: array
           uniqueItems: true
           description: Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
-          items: { $ref: "#/components/schemas/NonBlankString" }
+          items: { type: string }
 
     WmsLayer:
       type: object
@@ -4951,7 +4932,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         resource_id: { type: string, format: uuid }
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         default_style:
           type: string
           description: Default configured style. Empty string uses the provider default.
@@ -5223,7 +5204,7 @@ components:
       additionalProperties: false
       properties:
         reason:
-          $ref: "#/components/schemas/NonBlankString"
+          type: string
 
     MembershipRole:
       type: string
@@ -5315,14 +5296,14 @@ components:
       required: [name]
       additionalProperties: false
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         parent_category_id: { type: string, format: uuid, nullable: true }
     ReplaceCategoryRequest:
       type: object
       required: [name, parent_category_id]
       additionalProperties: false
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         parent_category_id: { type: string, format: uuid, nullable: true }
     Concept:
       type: object
@@ -5335,13 +5316,13 @@ components:
       required: [name]
       additionalProperties: false
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
     CreateGroupRequest:
       type: object
       required: [name, concept_id]
       additionalProperties: false
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         description: { type: string, nullable: true, minLength: 1 }
         label: { type: string, nullable: true, minLength: 1 }
         logo: { type: string, nullable: true, minLength: 1 }
@@ -5354,7 +5335,7 @@ components:
       required: [name, concept_id]
       additionalProperties: false
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         description: { type: string, nullable: true, minLength: 1 }
         label: { type: string, nullable: true, minLength: 1 }
         logo: { type: string, nullable: true, minLength: 1 }
@@ -5373,7 +5354,7 @@ components:
       additionalProperties: false
       required: [message]
       properties:
-        message: { $ref: "#/components/schemas/NonBlankString" }
+        message: { type: string }
     CreateContactPointRequest:
       type: object
       required: [email]
@@ -5402,8 +5383,8 @@ components:
         id: { type: string, format: uuid }
         name: { type: string, minLength: 1 }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
-        logo_url: { type: string, format: uri, nullable: true, minLength: 1 }
-        page_url: { type: string, format: uri, nullable: true, minLength: 1 }
+        logo_url: { type: string, format: uri, nullable: true, minLength: 1, description: Absolute HTTP(S) URL with a host. }
+        page_url: { type: string, format: uri, nullable: true, minLength: 1, description: Absolute HTTP(S) URL with a host. }
         email: { type: string, format: email, nullable: true, minLength: 1 }
         identifiers:
           type: array
@@ -5416,10 +5397,10 @@ components:
       required: [name]
       additionalProperties: false
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
-        logo_url: { type: string, format: uri, nullable: true, minLength: 1 }
-        page_url: { type: string, format: uri, nullable: true, minLength: 1 }
+        logo_url: { type: string, format: uri, nullable: true, minLength: 1, description: Absolute HTTP(S) URL with a host. }
+        page_url: { type: string, format: uri, nullable: true, minLength: 1, description: Absolute HTTP(S) URL with a host. }
         email: { type: string, format: email, nullable: true, minLength: 1 }
         identifiers:
           type: array
@@ -5441,10 +5422,10 @@ components:
         ]
       additionalProperties: false
       properties:
-        name: { $ref: "#/components/schemas/NonBlankString" }
+        name: { type: string }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
-        logo_url: { type: string, format: uri, nullable: true, minLength: 1 }
-        page_url: { type: string, format: uri, nullable: true, minLength: 1 }
+        logo_url: { type: string, format: uri, nullable: true, minLength: 1, description: Absolute HTTP(S) URL with a host. }
+        page_url: { type: string, format: uri, nullable: true, minLength: 1, description: Absolute HTTP(S) URL with a host. }
         email: { type: string, format: email, nullable: true, minLength: 1 }
         identifiers:
           type: array

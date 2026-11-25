@@ -119,8 +119,8 @@ func TestProblemResponseUsesSharedErrorAndTrace(t *testing.T) {
 	}
 }
 
-func TestProblemResponseReportsNestedEmptyParameterLabel(t *testing.T) {
-	const body = `{"resource_type":"dataset","revision":1,"metadata":{"title":"title","description":"description","distributions":[{"title":"distribution","type":"WEB_SERVICE","web_service":{"type":"HTTP","template_url":"https://example.org/query","method":"GET","format":"application/json","parameters":[{"kind":"DATETIME","position":0,"name":"starttime","label":"","required":true,"read_only":false,"location":"QUERY","explode":false}]}}]}}`
+func TestProblemResponseReportsNestedInvalidParameterLocation(t *testing.T) {
+	const body = `{"resource_type":"dataset","revision":1,"metadata":{"title":"title","description":"description","distributions":[{"title":"distribution","type":"WEB_SERVICE","web_service":{"type":"HTTP","template_url":"https://example.org/query","method":"GET","format":"application/json","parameters":[{"kind":"DATETIME","position":0,"name":"starttime","label":"Start time","required":true,"read_only":false,"location":"INVALID","explode":false}]}}]}}`
 	var request gatewayapi.ReplaceResourceDraftRequest
 	if err := json.Unmarshal([]byte(body), &request); err != nil {
 		t.Fatal(err)
@@ -130,16 +130,16 @@ func TestProblemResponseReportsNestedEmptyParameterLabel(t *testing.T) {
 		t.Fatal("decoded request is not a dataset draft")
 	}
 	if err := draft.Validate(); err == nil {
-		t.Fatal("expected generated request validation to reject empty parameter label")
+		t.Fatal("expected generated request validation to reject invalid parameter location")
 	} else {
 		status, problem := problemResponse(context.Background(), err)
 		if status != http.StatusBadRequest {
 			t.Fatalf("status = %d, want %d", status, http.StatusBadRequest)
 		}
-		if !problem.Target.Set || problem.Target.Value != "metadata.distributions[0].web_service.parameters[0].label" {
+		if !problem.Target.Set || problem.Target.Value != "metadata.distributions[0].web_service.parameters[0].location" {
 			t.Fatalf("target = %+v", problem.Target)
 		}
-		if !problem.Detail.Set || problem.Detail.Value != "Field must not be blank." {
+		if !problem.Detail.Set || problem.Detail.Value != "Value is invalid." {
 			t.Fatalf("detail = %+v", problem.Detail)
 		}
 	}

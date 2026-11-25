@@ -77,16 +77,20 @@ type SoftwareApplicationVersion struct {
 func (value *SoftwareApplicationInput) Normalize() error {
 	value.Name = strings.TrimSpace(value.Name)
 	if value.Name == "" {
-		return invalidField("name", "Name must not be blank.", nil)
+		return apperror.Field("name", "Name must not be blank.", nil)
 	}
 	value.Description = strings.TrimSpace(value.Description)
 	if value.Description == "" {
-		return invalidField("description", "Description must not be blank.", nil)
+		return apperror.Field("description", "Description must not be blank.", nil)
 	}
-	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
+	if err := normalizeOptionalHTTPURL(value.MainEntityOfPage, "main_entity_of_page"); err != nil {
+		return err
+	}
 	value.License = optionalTrimmedString(value.License)
 	value.Version = optionalTrimmedString(value.Version)
-	value.DownloadURL = optionalTrimmedString(value.DownloadURL)
+	if err := normalizeOptionalHTTPURL(value.DownloadURL, "download_url"); err != nil {
+		return err
+	}
 	value.Requirements = optionalTrimmedString(value.Requirements)
 	value.OperatingSystem = optionalTrimmedString(value.OperatingSystem)
 	keywords, err := normalizeKeywordInput(value.Keywords)
@@ -115,7 +119,7 @@ func (value *SoftwareApplicationInput) Normalize() error {
 // Normalize validates a draft replacement command.
 func (value *SoftwareApplicationDraftInput) Normalize() error {
 	if value.Revision < 1 {
-		return invalidField("revision", "Revision must be positive.", nil)
+		return apperror.Field("revision", "Revision must be positive.", nil)
 	}
 	if err := value.Metadata.Normalize(); err != nil {
 		return fmt.Errorf("validate software application draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
@@ -127,7 +131,7 @@ func (value *SoftwareApplicationDraftInput) Normalize() error {
 func (value *SoftwareApplicationRejectionInput) Normalize() error {
 	value.Note = strings.TrimSpace(value.Note)
 	if value.Note == "" {
-		return invalidField("note", "Rejection note must not be blank.", nil)
+		return apperror.Field("note", "Rejection note must not be blank.", nil)
 	}
 	return nil
 }
@@ -150,10 +154,14 @@ func (value *SoftwareApplicationMetadata) Normalize() (err error) {
 	if value.Description == "" {
 		return fmt.Errorf("software application description is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
-	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
+	if err := normalizeOptionalHTTPURL(value.MainEntityOfPage, "main_entity_of_page"); err != nil {
+		return err
+	}
 	value.License = optionalTrimmedString(value.License)
 	value.Version = optionalTrimmedString(value.Version)
-	value.DownloadURL = optionalTrimmedString(value.DownloadURL)
+	if err := normalizeOptionalHTTPURL(value.DownloadURL, "download_url"); err != nil {
+		return err
+	}
 	value.Requirements = optionalTrimmedString(value.Requirements)
 	value.OperatingSystem = optionalTrimmedString(value.OperatingSystem)
 	keywords, err := normalizeKeywords(value.Keywords)

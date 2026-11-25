@@ -45,7 +45,7 @@ func (w *HTTPWebService) PrepareAccess(input DistributionAccessInput) (PreparedH
 	}
 	parameters, ok := input.Input.(HTTPAccessInput)
 	if !ok {
-		return PreparedHTTPRequest{}, invalidField("type", "Request type does not match service configuration.", nil)
+		return PreparedHTTPRequest{}, apperror.Field("type", "Request type does not match service configuration.", nil)
 	}
 	return w.prepareHTTPRequest(parameters.Parameters, input.OutputFormat)
 }

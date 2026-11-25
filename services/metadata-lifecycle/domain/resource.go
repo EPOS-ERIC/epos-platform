@@ -123,6 +123,12 @@ func (value *OrganizationMetadata) Normalize() error {
 	if value.ID == uuid.Nil || value.Name == "" {
 		return fmt.Errorf("organization requires ID and name: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
+	if err := normalizeOptionalHTTPURL(value.LogoURL, "logo_url"); err != nil {
+		return err
+	}
+	if err := normalizeOptionalHTTPURL(value.PageURL, "page_url"); err != nil {
+		return err
+	}
 
 	seen := make(map[uuid.UUID]struct{}, len(value.Identifiers))
 	for i := range value.Identifiers {

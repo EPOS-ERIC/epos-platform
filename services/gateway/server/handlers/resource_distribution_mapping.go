@@ -20,6 +20,10 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 			return gatewayapi.Distribution{}, fmt.Errorf("upstream distribution type does not match downloadable-file delivery")
 		}
 		v := value.GetDownloadableFile()
+		fileURL, err := parseURI(v.Url)
+		if err != nil {
+			return gatewayapi.Distribution{}, fmt.Errorf("decode upstream downloadable_file.url: %w", err)
+		}
 		id, err := parseUUID("downloadable_file_distribution.id", value.Id)
 		if err != nil {
 			return gatewayapi.Distribution{}, err
@@ -33,8 +37,8 @@ func toAPIDistribution(value *metadatalifecyclev1.Distribution) (gatewayapi.Dist
 			Type:        gatewayapi.DownloadableFileDistributionTypeDOWNLOADABLEFILE,
 			ByteSize:    toAPINilInt64(value.ByteSize),
 			DownloadableFile: gatewayapi.DownloadableFile{
-				URL:    gatewayapi.NonBlankString(v.Url),
-				Format: gatewayapi.NonBlankString(v.Format),
+				URL:    fileURL,
+				Format: v.Format,
 			},
 		}), nil
 	case value.GetWebService() != nil:
@@ -107,17 +111,9 @@ func toAPIWebServiceCommon(value *metadatalifecyclev1.WebServiceCommon) (gateway
 		ResourceID:    resourceID,
 		VisibleOn:     visibleOn,
 		ContactPoints: make([]uuid.UUID, 0, len(value.ContactPoints)),
-		AccessRights:  toAPINilString(value.AccessRights),
-		License:       toAPINilString(value.License),
 	}
 	if len(value.Keywords) > 0 {
 		result.Keywords = toAPIKeywords(value.Keywords)
-	}
-	if len(value.Categories) > 0 {
-		result.Categories, err = toAPIReferences(value.Categories, "web_service.category_id")
-		if err != nil {
-			return gatewayapi.HttpWebService{}, err
-		}
 	}
 	if value.ProviderReference != nil {
 		providerID, err := parseUUID("web_service.provider_id", value.ProviderReference.GetId())
@@ -173,9 +169,6 @@ func toAPIWebService(value *metadatalifecyclev1.WebService) (gatewayapi.DatasetW
 			DocumentationURI: generic.DocumentationURI,
 			ContactPoints:    generic.ContactPoints,
 			Keywords:         generic.Keywords,
-			AccessRights:     generic.AccessRights,
-			License:          generic.License,
-			Categories:       generic.Categories,
 			Type:             gatewayapi.DynamicWebServiceTypeDYNAMIC,
 			TemplateURL:      generic.TemplateURL,
 			Method:           generic.Method,
@@ -284,24 +277,17 @@ func toAPIWFSWebServiceConfiguration(value *metadatalifecyclev1.WFSWebService) (
 		DocumentationURI:      common.DocumentationURI,
 		ContactPoints:         common.ContactPoints,
 		Keywords:              common.Keywords,
-		AccessRights:          common.AccessRights,
-		License:               common.License,
-		Categories:            common.Categories,
 		AvailableFormats:      formats,
 		Type:                  gatewayapi.WfsWebServiceTypeWFS,
 		GetFeatureTemplateURL: value.GetGetFeatureTemplateUrl(),
 		Version:               version,
-		DefaultFeatureType:    gatewayapi.NonBlankString(value.GetDefaultFeatureType()),
-		DefaultOutputFormat:   gatewayapi.NonBlankString(value.GetDefaultOutputFormat()),
+		DefaultFeatureType:    value.GetDefaultFeatureType(),
+		DefaultOutputFormat:   value.GetDefaultOutputFormat(),
 		ResultLimit:           toAPINilInt64(value.ResultLimit),
 		ResultLimitEditable:   value.GetResultLimitEditable(),
 	}
-	for _, featureType := range value.GetFeatureTypes() {
-		result.FeatureTypes = append(result.FeatureTypes, gatewayapi.NonBlankString(featureType))
-	}
-	for _, format := range value.GetOutputFormats() {
-		result.OutputFormats = append(result.OutputFormats, gatewayapi.NonBlankString(format))
-	}
+	result.FeatureTypes = value.GetFeatureTypes()
+	result.OutputFormats = value.GetOutputFormats()
 	result.Parameters, err = toAPIParameters(value.GetParameters())
 	if err != nil {
 		return gatewayapi.WfsWebService{}, err
@@ -314,6 +300,10 @@ func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebService)
 	if err != nil {
 		return gatewayapi.WmtsWebService{}, err
 	}
+	capabilitiesURL, err := parseURI(value.GetCapabilitiesUrl())
+	if err != nil {
+		return gatewayapi.WmtsWebService{}, fmt.Errorf("decode upstream wmts.capabilities_url: %w", err)
+	}
 	result := gatewayapi.WmtsWebService{
 		ID:               common.ID,
 		ResourceID:       common.ResourceID,
@@ -322,12 +312,9 @@ func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebService)
 		DocumentationURI: common.DocumentationURI,
 		ContactPoints:    common.ContactPoints,
 		Keywords:         common.Keywords,
-		AccessRights:     common.AccessRights,
-		License:          common.License,
-		Categories:       common.Categories,
 		Type:             gatewayapi.WmtsWebServiceTypeWMTS,
-		CapabilitiesURL:  value.GetCapabilitiesUrl(),
-		DefaultLayer:     gatewayapi.NonBlankString(value.GetDefaultLayer()),
+		CapabilitiesURL:  capabilitiesURL,
+		DefaultLayer:     value.GetDefaultLayer(),
 	}
 	for _, layer := range value.GetLayers() {
 		if layer == nil {
@@ -345,15 +332,13 @@ func toAPIWMTSWebServiceConfiguration(value *metadatalifecyclev1.WMTSWebService)
 		mapped := gatewayapi.WmtsLayer{
 			ID:         id,
 			ResourceID: resourceID,
-			Name:       gatewayapi.NonBlankString(layer.GetName()),
+			Name:       layer.GetName(),
 		}
 
 		if layer.DefaultStyle != nil {
-			mapped.DefaultStyle.SetTo(gatewayapi.NonBlankString(*layer.DefaultStyle))
+			mapped.DefaultStyle.SetTo(*layer.DefaultStyle)
 		}
-		for _, style := range layer.GetStyles() {
-			mapped.Styles = append(mapped.Styles, gatewayapi.NonBlankString(style))
-		}
+		mapped.Styles = layer.GetStyles()
 		result.Layers = append(result.Layers, mapped)
 	}
 	result.GetTileParameters, err = toAPIParameters(value.GetGetTileParameters())
@@ -372,6 +357,10 @@ func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebService) (
 	if err != nil {
 		return gatewayapi.WmsWebService{}, err
 	}
+	capabilitiesURL, err := parseURI(value.GetCapabilitiesUrl())
+	if err != nil {
+		return gatewayapi.WmsWebService{}, fmt.Errorf("decode upstream wms.capabilities_url: %w", err)
+	}
 	result := gatewayapi.WmsWebService{
 		ID:                   common.ID,
 		ResourceID:           common.ResourceID,
@@ -380,12 +369,9 @@ func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebService) (
 		DocumentationURI:     common.DocumentationURI,
 		ContactPoints:        common.ContactPoints,
 		Keywords:             common.Keywords,
-		AccessRights:         common.AccessRights,
-		License:              common.License,
-		Categories:           common.Categories,
 		Type:                 gatewayapi.WmsWebServiceTypeWMS,
-		CapabilitiesURL:      value.GetCapabilitiesUrl(),
-		DefaultLayer:         gatewayapi.NonBlankString(value.GetDefaultLayer()),
+		CapabilitiesURL:      capabilitiesURL,
+		DefaultLayer:         value.GetDefaultLayer(),
 		TransparencyEditable: value.GetTransparencyEditable(),
 		DefaultTransparency:  value.GetDefaultTransparency(),
 	}
@@ -404,7 +390,7 @@ func toAPIWMSWebServiceConfiguration(value *metadatalifecyclev1.WMSWebService) (
 		mapped := gatewayapi.WmsLayer{
 			ID:           id,
 			ResourceID:   resourceID,
-			Name:         gatewayapi.NonBlankString(layer.GetName()),
+			Name:         layer.GetName(),
 			DefaultStyle: layer.GetDefaultStyle(),
 			Styles:       layer.GetStyles(),
 		}
@@ -501,7 +487,6 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 		return gatewayapi.Parameter{}, err
 	}
 	description := toAPINilString(value.Description)
-	property := toAPINilString(value.Property)
 	role, err := toAPIParameterRole(value.Role)
 	if err != nil {
 		return gatewayapi.Parameter{}, err
@@ -522,11 +507,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			ResourceID:     resourceID,
 			Kind:           gatewayapi.StringParameterKindSTRING,
 			Position:       value.Position,
-			Name:           gatewayapi.NonBlankString(value.Name),
-			Label:          gatewayapi.NonBlankString(value.Label),
+			Name:           value.Name,
+			Label:          value.Label,
 			Description:    description,
 			Required:       value.Required,
-			Property:       property,
 			Role:           role,
 			Location:       location,
 			Explode:        value.Explode,
@@ -543,11 +527,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			ResourceID:  resourceID,
 			Kind:        gatewayapi.BooleanParameterKindBOOLEAN,
 			Position:    value.Position,
-			Name:        gatewayapi.NonBlankString(value.Name),
-			Label:       gatewayapi.NonBlankString(value.Label),
+			Name:        value.Name,
+			Label:       value.Label,
 			Description: description,
 			Required:    value.Required,
-			Property:    property,
 			Role:        role,
 			Location:    location,
 			Explode:     value.Explode,
@@ -565,11 +548,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			ResourceID:     resourceID,
 			Kind:           gatewayapi.IntegerParameterKindINTEGER,
 			Position:       value.Position,
-			Name:           gatewayapi.NonBlankString(value.Name),
-			Label:          gatewayapi.NonBlankString(value.Label),
+			Name:           value.Name,
+			Label:          value.Label,
 			Description:    description,
 			Required:       value.Required,
-			Property:       property,
 			Role:           role,
 			Location:       location,
 			Explode:        value.Explode,
@@ -591,11 +573,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			ResourceID:     resourceID,
 			Kind:           gatewayapi.FloatParameterKindFLOAT,
 			Position:       value.Position,
-			Name:           gatewayapi.NonBlankString(value.Name),
-			Label:          gatewayapi.NonBlankString(value.Label),
+			Name:           value.Name,
+			Label:          value.Label,
 			Description:    description,
 			Required:       value.Required,
-			Property:       property,
 			Role:           role,
 			Location:       location,
 			Explode:        value.Explode,
@@ -613,11 +594,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			ResourceID:  resourceID,
 			Kind:        gatewayapi.DateTimeParameterKindDATETIME,
 			Position:    value.Position,
-			Name:        gatewayapi.NonBlankString(value.Name),
-			Label:       gatewayapi.NonBlankString(value.Label),
+			Name:        value.Name,
+			Label:       value.Label,
 			Description: description,
 			Required:    value.Required,
-			Property:    property,
 			Role:        role,
 			Location:    location,
 			Explode:     value.Explode,
@@ -642,11 +622,10 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			ResourceID:  resourceID,
 			Kind:        gatewayapi.TemplateParameterKindTEMPLATE,
 			Position:    value.Position,
-			Name:        gatewayapi.NonBlankString(value.Name),
-			Label:       gatewayapi.NonBlankString(value.Label),
+			Name:        value.Name,
+			Label:       value.Label,
 			Description: description,
 			Required:    value.Required,
-			Property:    property,
 			Role:        role,
 			Location:    location,
 			Explode:     value.Explode,
@@ -684,14 +663,13 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			return gatewayapi.ScalarParameter{}, err
 		}
 		return gatewayapi.NewStringScalarParameterScalarParameter(gatewayapi.StringScalarParameter{
-			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
 			ResourceID:  resourceID,
 			Kind:        gatewayapi.StringScalarParameterKindSTRING,
 			Position:    value.Position,
-			Name:        gatewayapi.NonBlankString(value.Name),
-			Label:       gatewayapi.NonBlankString(value.Label),
+			Name:        value.Name,
+			Label:       value.Label,
 			Description: description,
 			Required:    value.Required,
 			ReadOnly:    value.ReadOnly,
@@ -702,14 +680,13 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	case value.GetBoolean() != nil:
 		v := value.GetBoolean()
 		return gatewayapi.NewBooleanScalarParameterScalarParameter(gatewayapi.BooleanScalarParameter{
-			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
 			ResourceID:  resourceID,
 			Kind:        gatewayapi.BooleanScalarParameterKindBOOLEAN,
 			Position:    value.Position,
-			Name:        gatewayapi.NonBlankString(value.Name),
-			Label:       gatewayapi.NonBlankString(value.Label),
+			Name:        value.Name,
+			Label:       value.Label,
 			Description: description,
 			Required:    value.Required,
 			ReadOnly:    value.ReadOnly,
@@ -722,14 +699,13 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			return gatewayapi.ScalarParameter{}, err
 		}
 		return gatewayapi.NewIntegerScalarParameterScalarParameter(gatewayapi.IntegerScalarParameter{
-			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
 			ResourceID:  resourceID,
 			Kind:        gatewayapi.IntegerScalarParameterKindINTEGER,
 			Position:    value.Position,
-			Name:        gatewayapi.NonBlankString(value.Name),
-			Label:       gatewayapi.NonBlankString(value.Label),
+			Name:        value.Name,
+			Label:       value.Label,
 			Description: description,
 			Required:    value.Required,
 			ReadOnly:    value.ReadOnly,
@@ -745,14 +721,13 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 			return gatewayapi.ScalarParameter{}, err
 		}
 		return gatewayapi.NewFloatScalarParameterScalarParameter(gatewayapi.FloatScalarParameter{
-			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
 			ResourceID:  resourceID,
 			Kind:        gatewayapi.FloatScalarParameterKindFLOAT,
 			Position:    value.Position,
-			Name:        gatewayapi.NonBlankString(value.Name),
-			Label:       gatewayapi.NonBlankString(value.Label),
+			Name:        value.Name,
+			Label:       value.Label,
 			Description: description,
 			Required:    value.Required,
 			ReadOnly:    value.ReadOnly,
@@ -764,14 +739,13 @@ func toAPIScalarParameter(value *metadatalifecyclev1.ScalarParameter) (gatewayap
 	case value.GetDateTime() != nil:
 		v := value.GetDateTime()
 		return gatewayapi.NewDateTimeScalarParameterScalarParameter(gatewayapi.DateTimeScalarParameter{
-			Property:    toAPINilString(value.Property),
 			Role:        role,
 			ID:          id,
 			ResourceID:  resourceID,
 			Kind:        gatewayapi.DateTimeScalarParameterKindDATETIME,
 			Position:    value.Position,
-			Name:        gatewayapi.NonBlankString(value.Name),
-			Label:       gatewayapi.NonBlankString(value.Label),
+			Name:        value.Name,
+			Label:       value.Label,
 			Description: description,
 			Required:    value.Required,
 			ReadOnly:    value.ReadOnly,

@@ -14,8 +14,8 @@ import (
 func TestScalarParameterMappingsOmitTopLevelFields(t *testing.T) {
 	draft := gatewayapi.NewStringScalarParameterDraftScalarParameterDraft(gatewayapi.StringScalarParameterDraft{
 		Position: 1,
-		Name:     gatewayapi.NonBlankString("value"),
-		Label:    gatewayapi.NonBlankString("Value"),
+		Name:     "value",
+		Label:    "Value",
 		Enum:     []gatewayapi.StringEnumOption{{Value: "one", Label: gatewayapi.NewOptString("One")}, {Value: "two"}},
 	})
 	proto := toProtoScalarParameterDraft(draft)
@@ -126,13 +126,13 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 				gatewayapi.WebServiceVisibleOnGRAPH,
 			}),
 			Type:        gatewayapi.HttpWebServiceDraftTypeHTTP,
-			TemplateURL: gatewayapi.NonBlankString("https://example.test/{?value}"),
+			TemplateURL: "https://example.test/{?value}",
 			Method:      gatewayapi.WebServiceMethodGET,
-			Format:      gatewayapi.NonBlankString("json"),
+			Format:      "json",
 			Parameters: []gatewayapi.ParameterDraft{gatewayapi.NewStringParameterDraftParameterDraft(gatewayapi.StringParameterDraft{
 				Position:       0,
-				Name:           gatewayapi.NonBlankString("value"),
-				Label:          gatewayapi.NonBlankString("Value"),
+				Name:           "value",
+				Label:          "Value",
 				Location:       gatewayapi.ParameterLocationQUERY,
 				Explode:        true,
 				MultipleValues: true,

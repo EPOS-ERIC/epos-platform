@@ -115,11 +115,11 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
         self.assertEqual(self.request(replaced, "prepare", body).status_code, 200)
 
     def test_clone_nested_coordinate_roles(self) -> None:
-        """Regression: both clone flows preserve template-child roles and properties."""
+        """Regression: both clone flows preserve template-child roles."""
         source = dynamic_distribution([
             parameter("point", "TEMPLATE", template="{{.lon}},{{.lat}}", parameters=[
-                child("lon", "FLOAT", required=True, role="LONGITUDE", property="geo:longitude"),
-                child("lat", "FLOAT", position=1, required=True, role="LATITUDE", property="geo:latitude"),
+                child("lon", "FLOAT", required=True, role="LONGITUDE"),
+                child("lat", "FLOAT", position=1, required=True, role="LATITUDE"),
             ]),
         ])
         detail = self.create_draft([source])
@@ -143,8 +143,8 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
                 distribution = clone["metadata"]["distributions"][0]
                 parameters = distribution["web_service"]["parameters"][0]["parameters"]
                 self.assertEqual(
-                    {item["name"]: (item["role"], item["property"]) for item in parameters},
-                    {"lon": ("LONGITUDE", "geo:longitude"), "lat": ("LATITUDE", "geo:latitude")},
+                    {item["name"]: item["role"] for item in parameters},
+                    {"lon": "LONGITUDE", "lat": "LATITUDE"},
                 )
                 response = self.request(distribution, "prepare", {
                     "type": "DYNAMIC", "longitude": 12.5, "latitude": -42, "parameters": [],

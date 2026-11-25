@@ -79,12 +79,12 @@ func parseWebServiceParameterInputs(values []WebServiceParameterInput, field str
 			return nil, fmt.Errorf("validate web service parameter: %w", apperror.PrefixTarget(err, fmt.Sprintf("%s[%d]", field, i)))
 		}
 		if _, exists := seen[parsed.Name]; exists {
-			return nil, invalidField(fmt.Sprintf("%s[%d].name", field, i), "Parameter names must be unique.", nil)
+			return nil, apperror.Field(fmt.Sprintf("%s[%d].name", field, i), "Parameter names must be unique.", nil)
 		}
 		if parsed.Location == ParameterLocationHeader {
 			name := textproto.CanonicalMIMEHeaderKey(parsed.Name)
 			if _, exists := seenHeaders[name]; exists {
-				return nil, invalidField(fmt.Sprintf("%s[%d].name", field, i), "Header names must be unique ignoring case.", nil)
+				return nil, apperror.Field(fmt.Sprintf("%s[%d].name", field, i), "Header names must be unique ignoring case.", nil)
 			}
 			seenHeaders[name] = struct{}{}
 		}
@@ -98,29 +98,28 @@ func parseParameter(value ParameterInput, allowTemplate, allowMultipleValues boo
 	value.Name = strings.TrimSpace(value.Name)
 	value.Label = strings.TrimSpace(value.Label)
 	value.Description = optionalTrimmedString(value.Description)
-	value.Property = optionalTrimmedString(value.Property)
 	if value.Role != nil {
 		role := WebServiceParameterRole(strings.ToUpper(strings.TrimSpace(string(*value.Role))))
 		if !role.Valid() {
-			return ParameterInput{}, invalidField("role", "Role is not supported.", nil)
+			return ParameterInput{}, apperror.Field("role", "Role is not supported.", nil)
 		}
 		value.Role = &role
 	}
 	if value.Name == "" {
-		return ParameterInput{}, invalidField("name", "Name must not be blank.", nil)
+		return ParameterInput{}, apperror.Field("name", "Name must not be blank.", nil)
 	}
 	if value.Label == "" {
-		return ParameterInput{}, invalidField("label", "Label must not be blank.", nil)
+		return ParameterInput{}, apperror.Field("label", "Label must not be blank.", nil)
 	}
 	if value.Schema == nil {
-		return ParameterInput{}, invalidField("kind", "Parameter kind is required.", nil)
+		return ParameterInput{}, apperror.Field("kind", "Parameter kind is required.", nil)
 	}
 	schema, err := parseParameterSchema(value.Schema, allowTemplate)
 	if err != nil {
 		return ParameterInput{}, err
 	}
 	if !allowMultipleValues && schema.AllowsMultipleValues() {
-		return ParameterInput{}, invalidField("multiple_values", "Multiple values are not allowed here.", nil)
+		return ParameterInput{}, apperror.Field("multiple_values", "Multiple values are not allowed here.", nil)
 	}
 	value.Schema = schema
 	return value, nil
@@ -135,10 +134,10 @@ func parseParameters(values []ParameterInput) ([]ParameterInput, error) {
 			return nil, fmt.Errorf("validate nested parameter: %w", apperror.PrefixTarget(err, fmt.Sprintf("[%d]", i)))
 		}
 		if !templateParameterNamePattern.MatchString(parsed.Name) {
-			return nil, invalidField(fmt.Sprintf("[%d].name", i), "Name must start with a letter or underscore and contain only letters, numbers, and underscores.", nil)
+			return nil, apperror.Field(fmt.Sprintf("[%d].name", i), "Name must start with a letter or underscore and contain only letters, numbers, and underscores.", nil)
 		}
 		if _, exists := seen[parsed.Name]; exists {
-			return nil, invalidField(fmt.Sprintf("[%d].name", i), "Parameter names must be unique.", nil)
+			return nil, apperror.Field(fmt.Sprintf("[%d].name", i), "Parameter names must be unique.", nil)
 		}
 		seen[parsed.Name] = struct{}{}
 		result = append(result, parsed)
@@ -160,11 +159,11 @@ func parseParameterSchema(value ParameterSchema, allowTemplate bool) (ParameterS
 		return parseDateTimeSchema(schema)
 	case TemplateSchemaInput:
 		if !allowTemplate {
-			return nil, invalidField("kind", "Template parameters are not allowed here.", nil)
+			return nil, apperror.Field("kind", "Template parameters are not allowed here.", nil)
 		}
 		return parseTemplateSchema(schema)
 	default:
-		return nil, invalidField("kind", "Parameter kind is not supported.", nil)
+		return nil, apperror.Field("kind", "Parameter kind is not supported.", nil)
 	}
 }
 
@@ -172,51 +171,51 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 	value.Pattern = optionalTrimmedString(value.Pattern)
 	if value.Pattern != nil {
 		if _, err := regexp.Compile(*value.Pattern); err != nil {
-			return StringSchema{}, invalidField("pattern", "Pattern must be a valid regular expression.", err)
+			return StringSchema{}, apperror.Field("pattern", "Pattern must be a valid regular expression.", err)
 		}
 	}
 	if value.Enum != nil && len(value.Enum) == 0 {
-		return StringSchema{}, invalidField("enum", "Enum must not be empty.", nil)
+		return StringSchema{}, apperror.Field("enum", "Enum must not be empty.", nil)
 	}
 	seen := make(map[string]struct{}, len(value.Enum))
 	for i := range value.Enum {
 		item := &value.Enum[i]
 		if item.Value == "" {
-			return StringSchema{}, invalidField(fmt.Sprintf("enum[%d].value", i), "Enum value must not be empty.", nil)
+			return StringSchema{}, apperror.Field(fmt.Sprintf("enum[%d].value", i), "Enum value must not be empty.", nil)
 		}
 		if _, exists := seen[item.Value]; exists {
-			return StringSchema{}, invalidField(fmt.Sprintf("enum[%d].value", i), "Enum values must be unique.", nil)
+			return StringSchema{}, apperror.Field(fmt.Sprintf("enum[%d].value", i), "Enum values must be unique.", nil)
 		}
 		seen[item.Value] = struct{}{}
 		if item.Label != nil {
 			label := strings.TrimSpace(*item.Label)
 			if label == "" {
-				return StringSchema{}, invalidField(fmt.Sprintf("enum[%d].label", i), "Enum label must not be blank.", nil)
+				return StringSchema{}, apperror.Field(fmt.Sprintf("enum[%d].label", i), "Enum label must not be blank.", nil)
 			}
 			item.Label = &label
 		}
 		if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(item.Value) {
-			return StringSchema{}, invalidField(fmt.Sprintf("enum[%d].value", i), "Enum value must match the pattern.", nil)
+			return StringSchema{}, apperror.Field(fmt.Sprintf("enum[%d].value", i), "Enum value must match the pattern.", nil)
 		}
 	}
 	if value.Default != nil {
 		if len(value.Default) == 0 {
-			return StringSchema{}, invalidField("default", "Default must not be empty.", nil)
+			return StringSchema{}, apperror.Field("default", "Default must not be empty.", nil)
 		}
 		if !value.MultipleValues && len(value.Default) > 1 {
-			return StringSchema{}, invalidField("default", "Single-value parameters allow at most one default.", nil)
+			return StringSchema{}, apperror.Field("default", "Single-value parameters allow at most one default.", nil)
 		}
 		for _, defaultValue := range value.Default {
 			if strings.TrimSpace(defaultValue) == "" {
-				return StringSchema{}, invalidField("default", "Default must not be blank.", nil)
+				return StringSchema{}, apperror.Field("default", "Default must not be blank.", nil)
 			}
 			if value.Pattern != nil && !regexp.MustCompile(*value.Pattern).MatchString(defaultValue) {
-				return StringSchema{}, invalidField("default", "Default must match the pattern.", nil)
+				return StringSchema{}, apperror.Field("default", "Default must match the pattern.", nil)
 			}
 			if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item StringEnumOption) bool {
 				return item.Value == defaultValue
 			}) {
-				return StringSchema{}, invalidField("default", "Default must be an allowed value.", nil)
+				return StringSchema{}, apperror.Field("default", "Default must be an allowed value.", nil)
 			}
 		}
 	}
@@ -225,44 +224,44 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 
 func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 	if value.Enum != nil && len(value.Enum) == 0 {
-		return IntegerSchema{}, invalidField("enum", "Enum must not be empty.", nil)
+		return IntegerSchema{}, apperror.Field("enum", "Enum must not be empty.", nil)
 	}
 	if value.Minimum != nil && value.Maximum != nil && *value.Minimum > *value.Maximum {
-		return IntegerSchema{}, invalidField("minimum", "Minimum must not exceed maximum.", nil)
+		return IntegerSchema{}, apperror.Field("minimum", "Minimum must not exceed maximum.", nil)
 	}
 	seen := make(map[int64]struct{}, len(value.Enum))
 	for i := range value.Enum {
 		item := &value.Enum[i]
 		if _, exists := seen[item.Value]; exists {
-			return IntegerSchema{}, invalidField(fmt.Sprintf("enum[%d].value", i), "Enum values must be unique.", nil)
+			return IntegerSchema{}, apperror.Field(fmt.Sprintf("enum[%d].value", i), "Enum values must be unique.", nil)
 		}
 		seen[item.Value] = struct{}{}
 		if item.Label != nil {
 			label := strings.TrimSpace(*item.Label)
 			if label == "" {
-				return IntegerSchema{}, invalidField(fmt.Sprintf("enum[%d].label", i), "Enum label must not be blank.", nil)
+				return IntegerSchema{}, apperror.Field(fmt.Sprintf("enum[%d].label", i), "Enum label must not be blank.", nil)
 			}
 			item.Label = &label
 		}
 		if !integerInRange(item.Value, value.Minimum, value.Maximum) {
-			return IntegerSchema{}, invalidField(fmt.Sprintf("enum[%d].value", i), "Enum value must be within the allowed range.", nil)
+			return IntegerSchema{}, apperror.Field(fmt.Sprintf("enum[%d].value", i), "Enum value must be within the allowed range.", nil)
 		}
 	}
 	if value.Default != nil {
 		if len(value.Default) == 0 {
-			return IntegerSchema{}, invalidField("default", "Default must not be empty.", nil)
+			return IntegerSchema{}, apperror.Field("default", "Default must not be empty.", nil)
 		}
 		if !value.MultipleValues && len(value.Default) > 1 {
-			return IntegerSchema{}, invalidField("default", "Single-value parameters allow at most one default.", nil)
+			return IntegerSchema{}, apperror.Field("default", "Single-value parameters allow at most one default.", nil)
 		}
 		for _, defaultValue := range value.Default {
 			if !integerInRange(defaultValue, value.Minimum, value.Maximum) {
-				return IntegerSchema{}, invalidField("default", "Default must be within the allowed range.", nil)
+				return IntegerSchema{}, apperror.Field("default", "Default must be within the allowed range.", nil)
 			}
 			if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item IntegerEnumOption) bool {
 				return item.Value == defaultValue
 			}) {
-				return IntegerSchema{}, invalidField("default", "Default must be an allowed value.", nil)
+				return IntegerSchema{}, apperror.Field("default", "Default must be an allowed value.", nil)
 			}
 		}
 	}
@@ -271,44 +270,44 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 
 func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
 	if value.Enum != nil && len(value.Enum) == 0 {
-		return FloatSchema{}, invalidField("enum", "Enum must not be empty.", nil)
+		return FloatSchema{}, apperror.Field("enum", "Enum must not be empty.", nil)
 	}
 	seen := make(map[float64]struct{}, len(value.Enum))
 	for i := range value.Enum {
 		item := &value.Enum[i]
 		if _, exists := seen[item.Value]; exists {
-			return FloatSchema{}, invalidField(fmt.Sprintf("enum[%d].value", i), "Enum values must be unique.", nil)
+			return FloatSchema{}, apperror.Field(fmt.Sprintf("enum[%d].value", i), "Enum values must be unique.", nil)
 		}
 		seen[item.Value] = struct{}{}
 		if item.Label != nil {
 			label := strings.TrimSpace(*item.Label)
 			if label == "" {
-				return FloatSchema{}, invalidField(fmt.Sprintf("enum[%d].label", i), "Enum label must not be blank.", nil)
+				return FloatSchema{}, apperror.Field(fmt.Sprintf("enum[%d].label", i), "Enum label must not be blank.", nil)
 			}
 			item.Label = &label
 		}
 		if math.IsNaN(item.Value) || math.IsInf(item.Value, 0) || !floatInRange(item.Value, value.Minimum, value.Maximum) {
-			return FloatSchema{}, invalidField(fmt.Sprintf("enum[%d].value", i), "Enum value must be finite and within the allowed range.", nil)
+			return FloatSchema{}, apperror.Field(fmt.Sprintf("enum[%d].value", i), "Enum value must be finite and within the allowed range.", nil)
 		}
 	}
 	if value.Minimum != nil && value.Maximum != nil && *value.Minimum > *value.Maximum {
-		return FloatSchema{}, invalidField("minimum", "Minimum must not exceed maximum.", nil)
+		return FloatSchema{}, apperror.Field("minimum", "Minimum must not exceed maximum.", nil)
 	}
 	if value.Default != nil {
 		if len(value.Default) == 0 {
-			return FloatSchema{}, invalidField("default", "Default must not be empty.", nil)
+			return FloatSchema{}, apperror.Field("default", "Default must not be empty.", nil)
 		}
 		if !value.MultipleValues && len(value.Default) > 1 {
-			return FloatSchema{}, invalidField("default", "Single-value parameters allow at most one default.", nil)
+			return FloatSchema{}, apperror.Field("default", "Single-value parameters allow at most one default.", nil)
 		}
 		for _, defaultValue := range value.Default {
 			if math.IsNaN(defaultValue) || math.IsInf(defaultValue, 0) || !floatInRange(defaultValue, value.Minimum, value.Maximum) {
-				return FloatSchema{}, invalidField("default", "Default must be finite and within the allowed range.", nil)
+				return FloatSchema{}, apperror.Field("default", "Default must be finite and within the allowed range.", nil)
 			}
 			if value.Enum != nil && !slices.ContainsFunc(value.Enum, func(item FloatEnumOption) bool {
 				return item.Value == defaultValue
 			}) {
-				return FloatSchema{}, invalidField("default", "Default must be an allowed value.", nil)
+				return FloatSchema{}, apperror.Field("default", "Default must be an allowed value.", nil)
 			}
 		}
 	}
@@ -320,14 +319,14 @@ func parseDateTimeSchema(value DateTimeSchema) (DateTimeSchema, error) {
 		layout := strings.TrimSpace(*value.Layout)
 		value.Layout = &layout
 		if err := validateDateTimeLayout(layout); err != nil {
-			return DateTimeSchema{}, invalidField("layout", "Layout contains unsupported date-time tokens.", err)
+			return DateTimeSchema{}, apperror.Field("layout", "Layout contains unsupported date-time tokens.", err)
 		}
 	}
 	if value.Minimum != nil && value.Maximum != nil && value.Minimum.After(*value.Maximum) {
-		return DateTimeSchema{}, invalidField("minimum", "Minimum must not be after maximum.", nil)
+		return DateTimeSchema{}, apperror.Field("minimum", "Minimum must not be after maximum.", nil)
 	}
 	if value.Default != nil && !timeInRange(*value.Default, value.Minimum, value.Maximum) {
-		return DateTimeSchema{}, invalidField("default", "Default must be within the allowed range.", nil)
+		return DateTimeSchema{}, apperror.Field("default", "Default must be within the allowed range.", nil)
 	}
 	return value, nil
 }

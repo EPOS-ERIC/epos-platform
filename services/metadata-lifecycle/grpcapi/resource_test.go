@@ -131,7 +131,6 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 	}
 
 	id := uuid.New()
-	property := "https://example.test/value"
 	documentationURI := "https://example.test/docs"
 	output := toProtoWebService(&domain.HTTPWebService{
 		ID:               id,
@@ -148,7 +147,6 @@ func TestWebServiceParameterMappingsPreserveExplode(t *testing.T) {
 			Label:    "Value",
 			Schema:   domain.StringSchema{Default: []string{"one", "two"}, Enum: []domain.StringEnumOption{{Value: "one"}, {Value: "two"}}, MultipleValues: true},
 			ID:       id,
-			Property: &property,
 			Location: domain.ParameterLocationQuery,
 			Explode:  true,
 		}},

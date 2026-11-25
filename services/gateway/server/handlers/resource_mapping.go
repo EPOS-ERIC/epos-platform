@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -44,9 +45,9 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion, enrichment dom
 		metadata.DatasetResourceMetadata = withAvailableConversions(metadata.DatasetResourceMetadata, enrichment.ConversionsByDistribution)
 	}
 
-	var rejectionNote gatewayapi.OptNonBlankString
+	var rejectionNote gatewayapi.OptString
 	if v.RejectionNote != nil {
-		rejectionNote = gatewayapi.NewOptNonBlankString(gatewayapi.NonBlankString(*v.RejectionNote))
+		rejectionNote = gatewayapi.NewOptString(*v.RejectionNote)
 	}
 	rejectedBy := gatewayapi.OptString{}
 	if v.RejectedBy != nil {
@@ -191,7 +192,6 @@ func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatew
 		Title:                     v.GetTitle(),
 		Description:               v.GetDescription(),
 		Keywords:                  toAPIKeywords(v.GetKeywords()),
-		QualityAnnotation:         toAPINilString(v.QualityAnnotation),
 		ConformsTo:                toAPINilString(v.ConformsTo),
 		Provenance:                toAPINilString(v.Provenance),
 		Type:                      toAPINilString(v.Type),
@@ -201,6 +201,9 @@ func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatew
 		SpatialCoverage:           toAPINilString(v.SpatialCoverage),
 		Created:                   toAPINilTime(v.Created),
 		Updated:                   toAPINilTime(v.Updated),
+	}
+	if err := setProtoOptURI(&result.QualityAnnotation, v.QualityAnnotation); err != nil {
+		return gatewayapi.DatasetResourceMetadata{}, fmt.Errorf("decode upstream dataset.quality_annotation: %w", err)
 	}
 	result.AccrualPeriodicity, err = toAPIDatasetAccrualPeriodicity(v.AccrualPeriodicity)
 	if err != nil {
@@ -263,16 +266,20 @@ func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatew
 func toAPISoftwareApplicationMetadata(v *metadatalifecyclev1.SoftwareApplicationResourceMetadata) (gatewayapi.SoftwareApplicationResourceMetadata, error) {
 	var err error
 	result := gatewayapi.SoftwareApplicationResourceMetadata{
-		ResourceType:     gatewayapi.SoftwareApplicationResourceMetadataResourceTypeSoftwareApplication,
-		Name:             v.GetName(),
-		Description:      v.GetDescription(),
-		MainEntityOfPage: toAPINilString(v.MainEntityOfPage),
-		License:          toAPINilString(v.License),
-		Version:          toAPINilString(v.Version),
-		Keywords:         toAPIKeywords(v.Keywords),
-		DownloadURL:      toAPINilString(v.DownloadUrl),
-		Requirements:     toAPINilString(v.Requirements),
-		OperatingSystem:  toAPINilString(v.OperatingSystem),
+		ResourceType:    gatewayapi.SoftwareApplicationResourceMetadataResourceTypeSoftwareApplication,
+		Name:            v.GetName(),
+		Description:     v.GetDescription(),
+		License:         toAPINilString(v.License),
+		Version:         toAPINilString(v.Version),
+		Keywords:        toAPIKeywords(v.Keywords),
+		Requirements:    toAPINilString(v.Requirements),
+		OperatingSystem: toAPINilString(v.OperatingSystem),
+	}
+	if err := setProtoOptURI(&result.MainEntityOfPage, v.MainEntityOfPage); err != nil {
+		return gatewayapi.SoftwareApplicationResourceMetadata{}, fmt.Errorf("decode upstream software_application.main_entity_of_page: %w", err)
+	}
+	if err := setProtoOptURI(&result.DownloadURL, v.DownloadUrl); err != nil {
+		return gatewayapi.SoftwareApplicationResourceMetadata{}, fmt.Errorf("decode upstream software_application.download_url: %w", err)
 	}
 	result.Creators, err = toAPIReferences(v.Creators, "software_application.creator_id")
 	if err != nil {
@@ -298,12 +305,16 @@ func toAPISoftwareSourceCodeMetadata(v *metadatalifecyclev1.SoftwareSourceCodeRe
 		Description:          v.GetDescription(),
 		ProgrammingLanguage:  toAPINilString(v.ProgrammingLanguage),
 		Keywords:             toAPIKeywords(v.Keywords),
-		Repository:           toAPINilString(v.Repository),
 		License:              toAPINilString(v.License),
 		SoftwareRequirements: toAPINilString(v.SoftwareRequirements),
 		RuntimePlatform:      toAPINilString(v.RuntimePlatform),
-		MainEntityOfPage:     toAPINilString(v.MainEntityOfPage),
 		Version:              toAPINilString(v.Version),
+	}
+	if err := setProtoOptURI(&result.Repository, v.Repository); err != nil {
+		return gatewayapi.SoftwareSourceCodeResourceMetadata{}, fmt.Errorf("decode upstream software_source_code.repository: %w", err)
+	}
+	if err := setProtoOptURI(&result.MainEntityOfPage, v.MainEntityOfPage); err != nil {
+		return gatewayapi.SoftwareSourceCodeResourceMetadata{}, fmt.Errorf("decode upstream software_source_code.main_entity_of_page: %w", err)
 	}
 	result.Creators, err = toAPIReferences(v.Creators, "software_source_code.creator_id")
 	if err != nil {

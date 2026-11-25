@@ -2,9 +2,7 @@ package domain
 
 import (
 	"fmt"
-	"net/url"
 	"reflect"
-	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
@@ -97,9 +95,6 @@ type WebServiceCommon struct {
 	DocumentationURI *string
 	ContactPoints    []ContactPoint
 	Keywords         []string
-	AccessRights     *string
-	License          *string
-	Categories       []CategoryMetadata
 }
 
 func (w *WebServiceCommon) Common() *WebServiceCommon {
@@ -120,24 +115,9 @@ func (w *WebServiceCommon) Normalize() error {
 	if err != nil {
 		return fmt.Errorf("keywords: %w", err)
 	}
-	w.AccessRights = optionalTrimmedString(w.AccessRights)
-	w.License = optionalTrimmedString(w.License)
-	if err := validateCategories(w.Categories, "category"); err != nil {
-		return fmt.Errorf("categories: %w", err)
-	}
 
-	if w.DocumentationURI != nil {
-		uri := strings.TrimSpace(*w.DocumentationURI)
-		if uri == "" {
-			return fmt.Errorf("documentation URI must not be blank: %w", apperror.Default(apperror.CodeValidationFailed))
-		}
-
-		parsed, err := url.Parse(uri)
-		if err != nil || !parsed.IsAbs() || strings.ContainsAny(uri, " \t\r\n") {
-			return fmt.Errorf("documentation URI must be an absolute URI: %w", apperror.Default(apperror.CodeValidationFailed))
-		}
-
-		w.DocumentationURI = &uri
+	if err := normalizeOptionalHTTPURL(w.DocumentationURI, "documentation_uri"); err != nil {
+		return err
 	}
 
 	if w.Provider != nil {
@@ -169,9 +149,6 @@ type WebServiceCommonInput struct {
 	DocumentationURI *string
 	ContactPointIDs  []uuid.UUID
 	Keywords         []string
-	AccessRights     *string
-	License          *string
-	CategoryIDs      []uuid.UUID
 }
 
 func (w *WebServiceCommonInput) CommonInput() *WebServiceCommonInput {
@@ -181,37 +158,22 @@ func (w *WebServiceCommonInput) CommonInput() *WebServiceCommonInput {
 func (w *WebServiceCommonInput) Normalize() error {
 	visibleOn, err := normalizeWebServiceVisibleOn(w.VisibleOn)
 	if err != nil {
-		return invalidField("visible_on", "Audience selection must contain supported values.", err)
+		return apperror.Field("visible_on", "Audience selection must contain supported values.", err)
 	}
 	w.VisibleOn = visibleOn
 	w.Keywords, err = normalizeKeywordInput(w.Keywords)
 	if err != nil {
 		return err
 	}
-	w.AccessRights = optionalTrimmedString(w.AccessRights)
-	w.License = optionalTrimmedString(w.License)
-	if err := validateUUIDListField(w.CategoryIDs, "categories", "Category"); err != nil {
-		return err
-	}
 
 	if w.ProviderID != nil && *w.ProviderID == uuid.Nil {
-		return invalidField("provider", "Provider must be a valid UUID.", nil)
+		return apperror.Field("provider", "Provider must be a valid UUID.", nil)
 	}
 	if err := validateUUIDListField(w.ContactPointIDs, "contact_points", "Contact point"); err != nil {
 		return err
 	}
-	if w.DocumentationURI != nil {
-		uri := strings.TrimSpace(*w.DocumentationURI)
-		if uri == "" {
-			return invalidField("documentation_uri", "Documentation URI must not be blank.", nil)
-		}
-
-		parsed, err := url.Parse(uri)
-		if err != nil || !parsed.IsAbs() || strings.ContainsAny(uri, " \t\r\n") {
-			return invalidField("documentation_uri", "Documentation URI must be an absolute URI.", err)
-		}
-
-		w.DocumentationURI = &uri
+	if err := normalizeOptionalHTTPURL(w.DocumentationURI, "documentation_uri"); err != nil {
+		return err
 	}
 	return nil
 }

@@ -64,11 +64,15 @@ func (value *OrganizationInput) Normalize() error {
 	value.Locality = optionalTrimmedString(value.Locality)
 	value.PostalCode = optionalTrimmedString(value.PostalCode)
 	value.Country = optionalTrimmedString(value.Country)
-	value.LogoURL = optionalTrimmedString(value.LogoURL)
-	value.PageURL = optionalTrimmedString(value.PageURL)
 	value.Email = optionalTrimmedString(value.Email)
 	if value.Name == "" {
-		return invalidField("name", "Name must not be blank.", nil)
+		return apperror.Field("name", "Name must not be blank.", nil)
+	}
+	if err := normalizeOptionalHTTPURL(value.LogoURL, "logo_url"); err != nil {
+		return err
+	}
+	if err := normalizeOptionalHTTPURL(value.PageURL, "page_url"); err != nil {
+		return err
 	}
 	if err := validateUUIDListField(value.Parents, "parents", "Parent organization"); err != nil {
 		return err
@@ -126,10 +130,10 @@ func (value *OrganizationIdentifierInput) Normalize() error {
 	value.Type = strings.TrimSpace(value.Type)
 	value.Value = strings.TrimSpace(value.Value)
 	if value.Type == "" {
-		return invalidField("type", "Type must not be blank.", nil)
+		return apperror.Field("type", "Type must not be blank.", nil)
 	}
 	if value.Value == "" {
-		return invalidField("value", "Value must not be blank.", nil)
+		return apperror.Field("value", "Value must not be blank.", nil)
 	}
 	return nil
 }

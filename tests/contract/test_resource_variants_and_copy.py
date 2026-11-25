@@ -106,7 +106,9 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         return response.json()
 
-    def version(self, resource_type: str, resource_id: str, status: str) -> dict[str, Any]:
+    def version(
+        self, resource_type: str, resource_id: str, status: str
+    ) -> dict[str, Any]:
         matches = [
             version
             for version in self.versions(resource_type, resource_id)
@@ -185,22 +187,30 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         key: str,
     ) -> None:
         self.assertEqual(
-            [item["id"] if isinstance(item, dict) else item for item in copied_metadata[key]],
-            [item["id"] if isinstance(item, dict) else item for item in source_metadata[key]],
+            [
+                item["id"] if isinstance(item, dict) else item
+                for item in copied_metadata[key]
+            ],
+            [
+                item["id"] if isinstance(item, dict) else item
+                for item in source_metadata[key]
+            ],
         )
 
     def assert_web_service_roles(self, metadata: dict[str, Any]) -> None:
         distribution = next(
-            item for item in metadata["distributions"] if item["title"].startswith("Role metadata")
+            item
+            for item in metadata["distributions"]
+            if item["title"].startswith("Role metadata")
         )
         self.assertEqual(
             {
-                parameter["name"]: (parameter.get("role"), parameter.get("property"))
+                parameter["name"]: parameter.get("role")
                 for parameter in distribution["web_service"]["parameters"]
             },
             {
-                "start": ("START_DATE", "custom:start"),
-                "west": ("MIN_LON", "custom:west"),
+                "start": "START_DATE",
+                "west": "MIN_LON",
             },
         )
 
@@ -227,13 +237,11 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                     body_template="{{.payload}}",
                     body_parameters=[child("payload")],
                     keywords=["service"],
-                    access_rights="public",
-                    license="license",
-                    categories=[category_id],
                 )
             ],
         }
         metadata["distributions"][0]["byte_size"] = 3_000_000_000
+        metadata["distributions"][0]["license"] = "license"
         resource_id = self.create_and_publish(group_id, "dataset", metadata)
         published_version = self.version("dataset", resource_id, "PUBLISHED")
         published_details = self.details(
@@ -257,30 +265,45 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
         draft_distribution = draft_details["metadata"]["distributions"][0]
         draft_service = draft_distribution["web_service"]
         draft_parameter = draft_service["body_parameters"][0]
-        for field in ("conforms_to", "provenance", "type", "version", "spatial_resolution_in_meters", "temporal_resolution"):
+        for field in (
+            "conforms_to",
+            "provenance",
+            "type",
+            "version",
+            "spatial_resolution_in_meters",
+            "temporal_resolution",
+        ):
             self.assertEqual(draft_details["metadata"][field], metadata[field])
         for distribution in (source_distribution, draft_distribution):
             service = distribution["web_service"]
             self.assertEqual(distribution["byte_size"], 3_000_000_000)
+            self.assertEqual(distribution["license"], "license")
             self.assertEqual(service["keywords"], ["service"])
-            self.assertEqual([category["id"] for category in service["categories"]], [category_id])
-            self.assertEqual(service["access_rights"], "public")
-            self.assertEqual(service["license"], "license")
+            for field in ("access_rights", "license", "categories"):
+                self.assertNotIn(field, service)
         self.assertEqual(draft_parameter["name"], source_parameter["name"])
         self.assertNotEqual(draft_parameter["id"], source_parameter["id"])
-        self.assertEqual(draft_service["body_template"], source_service["body_template"])
-        self.assertEqual([category["id"] for category in draft_details["metadata"]["categories"]], [category_id])
+        self.assertEqual(
+            draft_service["body_template"], source_service["body_template"]
+        )
+        self.assertEqual(
+            [category["id"] for category in draft_details["metadata"]["categories"]],
+            [category_id],
+        )
 
         copied = self.gateway.post(
             "/groups/{groupId}/resources/{resourceType}/{id}/copy",
-            groupId=group_id, resourceType="dataset", id=resource_id,
+            groupId=group_id,
+            resourceType="dataset",
+            id=resource_id,
         )
         self.assertEqual(copied.status_code, 201)
         copied_id = copied.json()["id"]
         copied_version = self.version("dataset", copied_id, "DRAFT")
-        copied_metadata = self.details("dataset", copied_id, copied_version["id"])["metadata"]
+        copied_metadata = self.details("dataset", copied_id, copied_version["id"])[
+            "metadata"
+        ]
         self.assertEqual(copied_metadata["categories"], [])
-        self.assertFalse(copied_metadata["distributions"][0]["web_service"].get("categories"))
 
     def test_resource_variants_and_copy(self) -> None:
         """Verify resource variants, copied ownership, and publication drafts."""
@@ -323,10 +346,12 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             "providers": [organization_id],
             "categories": [source_category_id],
         }
-        role_distribution = web_distribution([
-            parameter("start", "DATETIME", role="START_DATE", property="custom:start"),
-            parameter("west", "FLOAT", position=1, role="MIN_LON", property="custom:west"),
-        ])
+        role_distribution = web_distribution(
+            [
+                parameter("start", "DATETIME", role="START_DATE"),
+                parameter("west", "FLOAT", position=1, role="MIN_LON"),
+            ]
+        )
         role_distribution["title"] = f"Role metadata {suffix}"
         dataset_metadata["distributions"].append(role_distribution)
         application_metadata = {
@@ -383,7 +408,9 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             )
             source_result_metadata = source_details["metadata"]
             self.assertEqual(source_result_metadata["resource_type"], resource_type)
-            self.assertEqual(source_result_metadata[name_key], source_metadata[name_key])
+            self.assertEqual(
+                source_result_metadata[name_key], source_metadata[name_key]
+            )
 
             copied = editor.post(
                 "/groups/{groupId}/resources/{resourceType}/{id}/copy",
@@ -404,7 +431,9 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             )
             copied_metadata = copied_details["metadata"]
             self.assertEqual(copied_details["group_id"], target_group_id)
-            self.assertEqual(copied_metadata[name_key], source_result_metadata[name_key])
+            self.assertEqual(
+                copied_metadata[name_key], source_result_metadata[name_key]
+            )
             self.assertEqual(
                 copied_metadata["description"], source_result_metadata["description"]
             )
@@ -415,15 +444,18 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             if resource_type == "dataset":
                 self.assert_web_service_roles(source_result_metadata)
                 source_download = next(
-                    item for item in source_result_metadata["distributions"]
+                    item
+                    for item in source_result_metadata["distributions"]
                     if item["title"] == "Dataset download"
                 )
                 copied_download = next(
-                    item for item in copied_metadata["distributions"]
+                    item
+                    for item in copied_metadata["distributions"]
                     if item["title"] == "Dataset download"
                 )
                 self.assertEqual(
-                    copied_download["title"], source_download["title"],
+                    copied_download["title"],
+                    source_download["title"],
                 )
                 self.assertEqual(
                     copied_download["downloadable_file"]["url"],
@@ -459,7 +491,11 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
 
             replacement = copy.deepcopy(source_metadata)
             replacement[identifier_key] = [
-                {"resource_id": item["resource_id"], "type": item["type"], "value": item["value"]}
+                {
+                    "resource_id": item["resource_id"],
+                    "type": item["type"],
+                    "value": item["value"],
+                }
                 for item in copied_metadata[identifier_key]
             ]
             replacement["categories"] = [target_category_id]
@@ -480,9 +516,12 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                 copied_id,
                 self.version(resource_type, copied_id, "DRAFT")["id"],
             )
-            self.assertEqual(replaced_details["metadata"][name_key], replacement[name_key])
             self.assertEqual(
-                replaced_details["metadata"][identifier_key], copied_metadata[identifier_key]
+                replaced_details["metadata"][name_key], replacement[name_key]
+            )
+            self.assertEqual(
+                replaced_details["metadata"][identifier_key],
+                copied_metadata[identifier_key],
             )
             self.assertEqual(
                 [item["id"] for item in replaced_details["metadata"]["categories"]],
@@ -502,15 +541,21 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                 resource_type, source_id, publication_draft["id"]
             )
             publication_metadata = publication_draft_details["metadata"]
-            self.assertEqual(publication_metadata[name_key], source_result_metadata[name_key])
             self.assertEqual(
-                publication_metadata["description"], source_result_metadata["description"]
+                publication_metadata[name_key], source_result_metadata[name_key]
+            )
+            self.assertEqual(
+                publication_metadata["description"],
+                source_result_metadata["description"],
             )
             self.assertEqual(
                 publication_metadata["keywords"], source_result_metadata["keywords"]
             )
             self.assert_identifier_clones(
-                source_result_metadata, publication_metadata, identifier_key, same_resource=True
+                source_result_metadata,
+                publication_metadata,
+                identifier_key,
+                same_resource=True,
             )
             self.assertEqual(
                 [item["id"] for item in publication_metadata["categories"]],

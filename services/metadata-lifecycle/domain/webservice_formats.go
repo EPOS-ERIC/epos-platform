@@ -1,5 +1,7 @@
 package domain
 
+import "github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
+
 import "fmt"
 
 type NativeFormat struct {
@@ -30,7 +32,7 @@ func validateWebServiceParameterRoles(serviceType WebServiceType, parameters []W
 	if serviceType == WebServiceTypeDynamic {
 		for _, role := range []WebServiceParameterRole{WebServiceParameterRoleLongitude, WebServiceParameterRoleLatitude} {
 			if _, exists := seen[role]; !exists {
-				return invalidField(field, "DYNAMIC services require exactly one LONGITUDE and one LATITUDE parameter.", nil)
+				return apperror.Field(field, "DYNAMIC services require exactly one LONGITUDE and one LATITUDE parameter.", nil)
 			}
 		}
 	}
@@ -43,66 +45,66 @@ func validateParameterRole(serviceType WebServiceType, parameter ParameterInput,
 	}
 	role := *parameter.Role
 	if _, exists := seen[role]; exists {
-		return invalidField(target+".role", "Only one parameter per role is allowed.", nil)
+		return apperror.Field(target+".role", "Only one parameter per role is allowed.", nil)
 	}
 	seen[role] = struct{}{}
 	if parameter.Schema.Kind() == ParameterSchemaKindTemplate {
-		return invalidField(target+".role", "Roles are only supported on non-template parameters.", nil)
+		return apperror.Field(target+".role", "Roles are only supported on non-template parameters.", nil)
 	}
 	switch role {
 	case WebServiceParameterRoleFormat:
 		schema, ok := parameter.Schema.(StringSchema)
 		if !ok {
-			return invalidField(target+".kind", "FORMAT role requires a STRING parameter.", nil)
+			return apperror.Field(target+".kind", "FORMAT role requires a STRING parameter.", nil)
 		}
 		if schema.MultipleValues {
-			return invalidField(target+".multiple_values", "FORMAT role requires a single-value parameter.", nil)
+			return apperror.Field(target+".multiple_values", "FORMAT role requires a single-value parameter.", nil)
 		}
 		if !parameter.ReadOnly {
-			return invalidField(target+".read_only", "FORMAT role requires a read-only parameter.", nil)
+			return apperror.Field(target+".read_only", "FORMAT role requires a read-only parameter.", nil)
 		}
 		if len(schema.Default) == 0 {
-			return invalidField(target+".default", "FORMAT role requires a default.", nil)
+			return apperror.Field(target+".default", "FORMAT role requires a default.", nil)
 		}
 	case WebServiceParameterRoleStartDate, WebServiceParameterRoleEndDate:
 		if _, ok := parameter.Schema.(DateTimeSchema); !ok {
-			return invalidField(target+".kind", "Date roles require a DATETIME parameter.", nil)
+			return apperror.Field(target+".kind", "Date roles require a DATETIME parameter.", nil)
 		}
 	case WebServiceParameterRoleMinLon, WebServiceParameterRoleMaxLon,
 		WebServiceParameterRoleMinLat, WebServiceParameterRoleMaxLat:
 		switch parameter.Schema.(type) {
 		case IntegerSchema, FloatSchema:
 			if parameter.Schema.AllowsMultipleValues() {
-				return invalidField(target+".multiple_values", "Coordinate roles require a single-value parameter.", nil)
+				return apperror.Field(target+".multiple_values", "Coordinate roles require a single-value parameter.", nil)
 			}
 		default:
-			return invalidField(target+".kind", "Coordinate roles require an INTEGER or FLOAT parameter.", nil)
+			return apperror.Field(target+".kind", "Coordinate roles require an INTEGER or FLOAT parameter.", nil)
 		}
 	case WebServiceParameterRoleLongitude, WebServiceParameterRoleLatitude:
 		if serviceType != WebServiceTypeDynamic {
-			return invalidField(target+".role", "LONGITUDE and LATITUDE roles are only supported on DYNAMIC services.", nil)
+			return apperror.Field(target+".role", "LONGITUDE and LATITUDE roles are only supported on DYNAMIC services.", nil)
 		}
 		schema, ok := parameter.Schema.(FloatSchema)
 		if !ok {
-			return invalidField(target+".kind", "LONGITUDE and LATITUDE roles require a FLOAT parameter.", nil)
+			return apperror.Field(target+".kind", "LONGITUDE and LATITUDE roles require a FLOAT parameter.", nil)
 		}
 		if !parameter.Required {
-			return invalidField(target+".required", "DYNAMIC coordinate parameters must be required.", nil)
+			return apperror.Field(target+".required", "DYNAMIC coordinate parameters must be required.", nil)
 		}
 		if parameter.ReadOnly {
-			return invalidField(target+".read_only", "DYNAMIC coordinate parameters must be editable.", nil)
+			return apperror.Field(target+".read_only", "DYNAMIC coordinate parameters must be editable.", nil)
 		}
 		if schema.MultipleValues {
-			return invalidField(target+".multiple_values", "DYNAMIC coordinate parameters must have a single value.", nil)
+			return apperror.Field(target+".multiple_values", "DYNAMIC coordinate parameters must have a single value.", nil)
 		}
 		if len(schema.Default) != 0 {
-			return invalidField(target+".default", "DYNAMIC coordinate parameters must not have a default.", nil)
+			return apperror.Field(target+".default", "DYNAMIC coordinate parameters must not have a default.", nil)
 		}
 		if len(schema.Enum) != 0 {
-			return invalidField(target+".enum", "DYNAMIC coordinate parameters must not define an enum.", nil)
+			return apperror.Field(target+".enum", "DYNAMIC coordinate parameters must not define an enum.", nil)
 		}
 	default:
-		return invalidField(target+".role", "Role is not supported.", nil)
+		return apperror.Field(target+".role", "Role is not supported.", nil)
 	}
 	return nil
 }

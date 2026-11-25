@@ -180,18 +180,20 @@ type DatasetVersion struct {
 func (value *DatasetInput) Normalize() error {
 	value.Title = strings.TrimSpace(value.Title)
 	if value.Title == "" {
-		return invalidField("title", "Title must not be blank.", nil)
+		return apperror.Field("title", "Title must not be blank.", nil)
 	}
 	value.Description = strings.TrimSpace(value.Description)
 	if value.Description == "" {
-		return invalidField("description", "Description must not be blank.", nil)
+		return apperror.Field("description", "Description must not be blank.", nil)
 	}
 	accrualPeriodicity, err := optionalAccrualPeriodicity(value.AccrualPeriodicity)
 	if err != nil {
 		return err
 	}
 	value.AccrualPeriodicity = accrualPeriodicity
-	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
+	if err := normalizeOptionalHTTPURL(value.QualityAnnotation, "quality_annotation"); err != nil {
+		return err
+	}
 	value.ConformsTo = optionalTrimmedString(value.ConformsTo)
 	value.Provenance = optionalTrimmedString(value.Provenance)
 	value.Type = optionalTrimmedString(value.Type)
@@ -214,7 +216,7 @@ func (value *DatasetInput) Normalize() error {
 		if value.GeologicalTemporalCoverage != nil {
 			target, detail = "geological_temporal_coverage", "Temporal and geological coverage cannot both be set."
 		}
-		return invalidField(target, detail, err)
+		return apperror.Field(target, detail, err)
 	}
 	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
 		return err
@@ -247,7 +249,7 @@ func (value *DatasetInput) Normalize() error {
 // Normalize validates a dataset draft replacement command.
 func (value *DatasetDraftInput) Normalize() error {
 	if value.Revision < 1 {
-		return invalidField("revision", "Revision must be positive.", nil)
+		return apperror.Field("revision", "Revision must be positive.", nil)
 	}
 	if err := value.Metadata.Normalize(); err != nil {
 		return fmt.Errorf("validate dataset draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
@@ -259,7 +261,7 @@ func (value *DatasetDraftInput) Normalize() error {
 func (value *DatasetRejectionInput) Normalize() error {
 	value.Note = strings.TrimSpace(value.Note)
 	if value.Note == "" {
-		return invalidField("note", "Rejection note must not be blank.", nil)
+		return apperror.Field("note", "Rejection note must not be blank.", nil)
 	}
 	return nil
 }
@@ -286,7 +288,9 @@ func (value *DatasetMetadata) Normalize() (err error) {
 	if err != nil {
 		return fmt.Errorf("dataset accrual periodicity: %w", err)
 	}
-	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
+	if err := normalizeOptionalHTTPURL(value.QualityAnnotation, "quality_annotation"); err != nil {
+		return err
+	}
 	value.ConformsTo = optionalTrimmedString(value.ConformsTo)
 	value.Provenance = optionalTrimmedString(value.Provenance)
 	value.Type = optionalTrimmedString(value.Type)
@@ -345,10 +349,10 @@ func (value *DatasetMetadata) Normalize() (err error) {
 
 func validateResolutions(spatial, temporal *float64) error {
 	if spatial != nil && *spatial < 0 {
-		return invalidField("spatial_resolution_in_meters", "Resolution must be a non-negative number.", nil)
+		return apperror.Field("spatial_resolution_in_meters", "Resolution must be a non-negative number.", nil)
 	}
 	if temporal != nil && *temporal < 0 {
-		return invalidField("temporal_resolution", "Resolution must be a non-negative number.", nil)
+		return apperror.Field("temporal_resolution", "Resolution must be a non-negative number.", nil)
 	}
 	return nil
 }
@@ -437,7 +441,7 @@ func optionalAccessRight(value *AccessRight) (*AccessRight, error) {
 		return nil, nil
 	}
 	if !normalized.Valid() {
-		return nil, invalidField("access_right", "Access right is not supported.", nil)
+		return nil, apperror.Field("access_right", "Access right is not supported.", nil)
 	}
 	return &normalized, nil
 }
@@ -451,7 +455,7 @@ func optionalAccrualPeriodicity(value *AccrualPeriodicity) (*AccrualPeriodicity,
 		return nil, nil
 	}
 	if !normalized.Valid() {
-		return nil, invalidField("accrual_periodicity", "Accrual periodicity is not supported.", nil)
+		return nil, apperror.Field("accrual_periodicity", "Accrual periodicity is not supported.", nil)
 	}
 	return &normalized, nil
 }
