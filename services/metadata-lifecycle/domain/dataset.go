@@ -212,11 +212,7 @@ func (value *DatasetInput) Normalize() error {
 	}
 	value.Keywords = keywords
 	if err := validateDatasetTemporal(value.TemporalCoverage, value.GeologicalTemporalCoverage); err != nil {
-		target, detail := "temporal_coverage", "Temporal coverage is invalid."
-		if value.GeologicalTemporalCoverage != nil {
-			target, detail = "geological_temporal_coverage", "Temporal and geological coverage cannot both be set."
-		}
-		return apperror.Field(target, detail, err)
+		return err
 	}
 	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
 		return err
@@ -405,14 +401,14 @@ func (value *DatasetVersion) Normalize() (err error) {
 
 func validateTemporal(value *Temporal) error {
 	if value != nil && value.Start != nil && value.End != nil && value.Start.After(*value.End) {
-		return fmt.Errorf("start must not be after end: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("temporal_coverage", "Start date must not be after end date.", nil)
 	}
 	return nil
 }
 
 func validateDatasetTemporal(temporal *Temporal, geological *GeologicalTemporal) error {
 	if temporal != nil && geological != nil {
-		return fmt.Errorf("calendar and geological temporal coverage are mutually exclusive: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("geological_temporal_coverage", "Temporal and geological coverage cannot both be set.", nil)
 	}
 	if err := validateTemporal(temporal); err != nil {
 		return err
@@ -421,13 +417,13 @@ func validateDatasetTemporal(temporal *Temporal, geological *GeologicalTemporal)
 		return nil
 	}
 	if value := geological.StartMYA; value != nil && (math.IsNaN(*value) || math.IsInf(*value, 0) || *value < 0) {
-		return fmt.Errorf("start_mya must be finite and non-negative: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("geological_temporal_coverage.start_mya", "Geological start age must be finite and non-negative.", nil)
 	}
 	if value := geological.EndMYA; value != nil && (math.IsNaN(*value) || math.IsInf(*value, 0) || *value < 0) {
-		return fmt.Errorf("end_mya must be finite and non-negative: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("geological_temporal_coverage.end_mya", "Geological end age must be finite and non-negative.", nil)
 	}
 	if geological.StartMYA != nil && geological.EndMYA != nil && *geological.StartMYA < *geological.EndMYA {
-		return fmt.Errorf("start_mya must not be less than end_mya: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("geological_temporal_coverage", "Geological start age must be older than or equal to the end age.", nil)
 	}
 	return nil
 }
