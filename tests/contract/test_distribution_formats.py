@@ -211,12 +211,11 @@ class DistributionFormatsContractTest(unittest.TestCase):
         self.assert_formats(published["metadata"]["distributions"][0], [("format-B", "format-B")])
 
     def test_invalid_format_metadata_is_rejected(self) -> None:
-        """Regression: reject empty/invalid format enums without mutating drafts."""
+        """Regression: reject invalid format metadata without mutating drafts."""
         group_id = create_group(self.gateway, f"format-validation-{uuid4().hex}")
         metadata = self.metadata([
             self.distribution("valid", "unused-format", [self.format_parameter()])
         ])
-        resource_id, draft = self.create_draft(group_id, metadata)
         boolean = self.format_parameter(kind="BOOLEAN", default=True)
         boolean.pop("multiple_values")
         template = self.format_parameter(kind="TEMPLATE", template="fixed", parameters=[])
@@ -236,7 +235,6 @@ class DistributionFormatsContractTest(unittest.TestCase):
             )]),
             ("not read only", [self.format_parameter(read_only=False)]),
             ("missing default", [missing_default]),
-            ("empty enum", [self.format_parameter(enum=[])]),
             ("default outside enum", [self.format_parameter(enum=[{"value": "GeoJSON"}])]),
             ("default violates pattern", [self.format_parameter(pattern="^GeoJSON$")]),
         ]
@@ -252,6 +250,7 @@ class DistributionFormatsContractTest(unittest.TestCase):
                             json={"resource_type": "dataset", "metadata": invalid},
                         )
                     else:
+                        resource_id, draft = self.create_draft(group_id, metadata)
                         response = self.gateway.put(
                             "/resources/{id}/versions/{versionId}/draft",
                             id=resource_id, versionId=draft["id"],
@@ -273,3 +272,30 @@ class DistributionFormatsContractTest(unittest.TestCase):
                         self.assert_formats(
                             unchanged["metadata"]["distributions"][0], [("xml_dc", "xml_dc")]
                         )
+
+    def test_empty_optional_lists_are_unset(self) -> None:
+        """Catch empty optional lists being treated differently from omitted fields."""
+        group_id = create_group(self.gateway, f"empty-lists-{uuid4().hex}")
+        for kind in ("STRING", "INTEGER", "FLOAT"):
+            for field in ("enum", "default"):
+                with self.subTest(kind=kind, field=field):
+                    parameter = self.format_parameter(kind=kind, role=None)
+                    parameter.pop("default")
+                    metadata = self.metadata([
+                        self.distribution("optional", "text/plain", [parameter])
+                    ])
+                    _, draft = self.create_draft(group_id, metadata)
+                    before = draft["metadata"]["distributions"][0]["web_service"]
+                    metadata["distributions"][0]["web_service"]["visible_on"] = []
+                    parameter[field] = []
+                    _, created = self.create_draft(group_id, metadata)
+                    replaced = self.replace_draft(draft, metadata)
+                    for result in (created, replaced):
+                        distribution = result["metadata"]["distributions"][0]
+                        after = distribution["web_service"]
+                        self.assertEqual(after.get("visible_on"), before.get("visible_on"))
+                        self.assertEqual(
+                            after["parameters"][0].get(field),
+                            before["parameters"][0].get(field),
+                        )
+                        self.assert_formats(distribution, [("text/plain", "text/plain")])

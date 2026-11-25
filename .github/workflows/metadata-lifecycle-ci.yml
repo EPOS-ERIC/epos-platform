@@ -13,7 +13,6 @@ on:
       - packages/go/postgres/**
       - packages/protobuf/**
       - packages/scripts/epos-banner.sh
-      - Makefile
       - .github/workflows/metadata-lifecycle-ci.yml
       - .github/workflows/_go-service-ci.yml
       - .github/workflows/_go-service-cd.yml
@@ -33,7 +32,6 @@ on:
       - packages/go/postgres/**
       - packages/protobuf/**
       - packages/scripts/epos-banner.sh
-      - Makefile
       - .github/workflows/metadata-lifecycle-ci.yml
       - .github/workflows/_go-service-ci.yml
       - .github/workflows/_go-service-cd.yml
