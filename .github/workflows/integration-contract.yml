@@ -51,9 +51,26 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build and start CI stack
+      # explicitly set up go so to have caching
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: services/gateway/go.mod
+          cache-dependency-path: |
+            services/gateway/go.sum
+            services/metadata-lifecycle/go.sum
+            services/data-retriever/go.sum
+            services/converter/go.sum
+            services/sharing/go.sum
+            services/oss-aai-service/go.sum
+
+      - name: Build CI images
         shell: bash
-        run: make ci
+        run: make ci-images
+
+      - name: Start CI stack
+        shell: bash
+        run: make ci-start
 
       - name: Populate integration metadata
         shell: bash

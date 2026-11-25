@@ -27,7 +27,11 @@ populate-metadatone:
 	./packages/scripts/metadatone.sh
 
 ci:
+	+$(MAKE) ci-images
+	$(MAKE) ci-start
+ci-images:
 	+$(MAKE) -j ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-converter-image ci-sharing-image ci-oss-aai-image
+ci-start:
 	docker compose -f docker/compose.ci.yaml up -d --wait gateway-service metadata-lifecycle data-retriever converter sharing oss-aai-service
 ci-gateway-image:
 	+$(MAKE) -C $(GATEWAY_DIR) docker
@@ -121,4 +125,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up ci ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-converter-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-converter test-oss-aai-service test-cli test-backoffice test-platform-legacy lint lint-gateway lint-data-retriever lint-converter lint-oss-aai-service lint-metadata-lifecycle lint-sharing lint-cli lint-platform-legacy test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing generate-data-retriever generate-converter generate-protobuf generate-cli
+.PHONY: up ci ci-images ci-start ci-gateway-image ci-metadata-lifecycle-image ci-data-retriever-image ci-converter-image ci-sharing-image ci-oss-aai-image down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-sharing test-data-retriever test-converter test-oss-aai-service test-cli test-backoffice test-platform-legacy lint lint-gateway lint-data-retriever lint-converter lint-oss-aai-service lint-metadata-lifecycle lint-sharing lint-cli lint-platform-legacy test-integration get-dev-token generate generate-gateway generate-metadata-lifecycle generate-sharing generate-data-retriever generate-converter generate-protobuf generate-cli
