@@ -29,7 +29,7 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 		QualityAnnotation:          value.QualityAnnotation,
 		ConformsTo:                 value.ConformsTo,
 		Provenance:                 value.Provenance,
-		Type:                       value.Type,
+		Type:                       (*sqlc.DatasetType)(value.Type),
 		Version:                    value.Version,
 		SpatialResolutionInMeters:  value.SpatialResolutionInMeters,
 		TemporalResolution:         value.TemporalResolution,
@@ -140,8 +140,6 @@ func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {
 		VisibleOn:        domainVisibleOnValues(value.VisibleOn),
 		DocumentationURI: value.DocumentationUri,
 		Keywords:         value.Keywords,
-		AccessRights:     value.AccessRights,
-		License:          value.License,
 	}
 	switch domain.WebServiceType(value.Type) {
 	case domain.WebServiceTypeHTTP:

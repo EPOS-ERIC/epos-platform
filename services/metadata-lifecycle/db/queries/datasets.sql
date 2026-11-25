@@ -440,9 +440,7 @@ inserted_web_services AS (
             visible_on,
             provider_organization_id,
             documentation_uri,
-            keywords,
-            access_rights,
-            license
+            keywords
         )
     SELECT
         uuid_generate_v5(
@@ -473,41 +471,13 @@ inserted_web_services AS (
         visible_on,
         provider_organization_id,
         documentation_uri,
-        keywords,
-        access_rights,
-        license
+        keywords
     FROM
         web_services AS source
     WHERE
         dataset_version_id = sqlc.arg(source_version_id)
     RETURNING
         id
-),
-web_service_categories_copy AS (
-    INSERT INTO
-        web_service_categories (web_service_id, group_id, category_id)
-    SELECT
-        target.id,
-        link.group_id,
-        link.category_id
-    FROM
-        web_service_categories AS link
-        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
-            (
-                SELECT
-                    id
-                FROM
-                    inserted
-            ),
-            link.web_service_id::text
-        )
-    WHERE
-        (
-            SELECT
-                same_dataset
-            FROM
-                source
-        )
 ),
 inserted_generic_web_services AS (
     INSERT INTO
@@ -768,7 +738,6 @@ inserted_parameters AS (
             description,
             required,
             READ_ONLY,
-            property,
             role,
             location,
             explode,
@@ -825,7 +794,6 @@ inserted_parameters AS (
         parameter.description,
         parameter.required,
         parameter.read_only,
-        parameter.property,
         parameter.role,
         parameter.location,
         parameter.explode,
@@ -911,7 +879,6 @@ template_parameters AS (
             description,
             required,
             READ_ONLY,
-            property,
             role,
             schema_kind
         )
@@ -949,7 +916,6 @@ template_parameters AS (
         source_parameter.description,
         source_parameter.required,
         source_parameter.read_only,
-        source_parameter.property,
         source_parameter.role,
         source_parameter.schema_kind
     FROM
@@ -1221,9 +1187,7 @@ INSERT INTO
         visible_on,
         provider_organization_id,
         documentation_uri,
-        keywords,
-        access_rights,
-        license
+        keywords
     )
 VALUES
     (
@@ -1234,25 +1198,8 @@ VALUES
         sqlc.arg(visible_on),
         sqlc.narg(provider_organization_id),
         sqlc.narg(documentation_uri),
-        sqlc.arg(keywords),
-        sqlc.narg(access_rights),
-        sqlc.narg(license)
+        sqlc.arg(keywords)
     );
-
--- name: AddLifecycleWebServiceCategories :exec
-INSERT INTO
-    web_service_categories (web_service_id, group_id, category_id)
-SELECT
-    service.id,
-    dataset.group_id,
-    category.id
-FROM
-    web_services AS service
-    JOIN dataset_versions AS version ON version.id = service.dataset_version_id
-    JOIN datasets AS dataset ON dataset.id = version.dataset_id
-    CROSS JOIN unnest(sqlc.arg(category_ids)::uuid []) AS category(id)
-WHERE
-    service.id = sqlc.arg(web_service_id);
 
 -- name: AddLifecycleGenericWebService :exec
 INSERT INTO
@@ -1409,7 +1356,6 @@ INSERT INTO
         description,
         required,
         READ_ONLY,
-        property,
         role,
         location,
         explode,
@@ -1433,7 +1379,6 @@ VALUES
         sqlc.narg(description),
         sqlc.arg(required),
         sqlc.arg(READ_ONLY),
-        sqlc.narg(property),
         sqlc.narg(role),
         sqlc.narg(location),
         sqlc.arg(explode),
@@ -1764,20 +1709,6 @@ WHERE
     service.dataset_version_id = sqlc.arg(dataset_version_id)
 ORDER BY
     service.id;
-
--- name: ListLifecycleWebServiceCategories :many
-SELECT
-    link.web_service_id,
-    category.id,
-    category.name
-FROM
-    web_service_categories AS link
-    JOIN categories AS category ON category.id = link.category_id
-WHERE
-    link.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
-ORDER BY
-    link.web_service_id,
-    category.id;
 
 -- name: ListLifecycleGenericWebServices :many
 SELECT

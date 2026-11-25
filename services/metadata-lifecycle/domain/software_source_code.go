@@ -79,18 +79,22 @@ type SoftwareSourceCodeVersion struct {
 func (value *SoftwareSourceCodeInput) Normalize() error {
 	value.Name = strings.TrimSpace(value.Name)
 	if value.Name == "" {
-		return invalidField("name", "Name must not be blank.", nil)
+		return apperror.Field("name", "Name must not be blank.", nil)
 	}
 	value.Description = strings.TrimSpace(value.Description)
 	if value.Description == "" {
-		return invalidField("description", "Description must not be blank.", nil)
+		return apperror.Field("description", "Description must not be blank.", nil)
 	}
 	value.ProgrammingLanguage = optionalTrimmedString(value.ProgrammingLanguage)
-	value.Repository = optionalTrimmedString(value.Repository)
+	if err := normalizeOptionalHTTPURL(value.Repository, "repository"); err != nil {
+		return err
+	}
 	value.License = optionalTrimmedString(value.License)
 	value.SoftwareRequirements = optionalTrimmedString(value.SoftwareRequirements)
 	value.RuntimePlatform = optionalTrimmedString(value.RuntimePlatform)
-	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
+	if err := normalizeOptionalHTTPURL(value.MainEntityOfPage, "main_entity_of_page"); err != nil {
+		return err
+	}
 	value.Version = optionalTrimmedString(value.Version)
 	keywords, err := normalizeKeywordInput(value.Keywords)
 	if err != nil {
@@ -118,7 +122,7 @@ func (value *SoftwareSourceCodeInput) Normalize() error {
 // Normalize validates a draft replacement command.
 func (value *SoftwareSourceCodeDraftInput) Normalize() error {
 	if value.Revision < 1 {
-		return invalidField("revision", "Revision must be positive.", nil)
+		return apperror.Field("revision", "Revision must be positive.", nil)
 	}
 	if err := value.Metadata.Normalize(); err != nil {
 		return fmt.Errorf("validate software source-code draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
@@ -130,7 +134,7 @@ func (value *SoftwareSourceCodeDraftInput) Normalize() error {
 func (value *SoftwareSourceCodeRejectionInput) Normalize() error {
 	value.Note = strings.TrimSpace(value.Note)
 	if value.Note == "" {
-		return invalidField("note", "Rejection note must not be blank.", nil)
+		return apperror.Field("note", "Rejection note must not be blank.", nil)
 	}
 	return nil
 }
@@ -154,11 +158,15 @@ func (value *SoftwareSourceCodeMetadata) Normalize() (err error) {
 		return fmt.Errorf("software source code description is required: %w", apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.ProgrammingLanguage = optionalTrimmedString(value.ProgrammingLanguage)
-	value.Repository = optionalTrimmedString(value.Repository)
+	if err := normalizeOptionalHTTPURL(value.Repository, "repository"); err != nil {
+		return err
+	}
 	value.License = optionalTrimmedString(value.License)
 	value.SoftwareRequirements = optionalTrimmedString(value.SoftwareRequirements)
 	value.RuntimePlatform = optionalTrimmedString(value.RuntimePlatform)
-	value.MainEntityOfPage = optionalTrimmedString(value.MainEntityOfPage)
+	if err := normalizeOptionalHTTPURL(value.MainEntityOfPage, "main_entity_of_page"); err != nil {
+		return err
+	}
 	value.Version = optionalTrimmedString(value.Version)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {

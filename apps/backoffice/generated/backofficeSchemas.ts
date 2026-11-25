@@ -253,7 +253,7 @@ export type DynamicDistributionAccessRequest = {
 
 export type WFSDistributionAccessRequest = {
   type: "WFS";
-  feature_type?: NonBlankString;
+  feature_type?: string;
   /**
    * @format int64
    * @minimum 1
@@ -278,12 +278,6 @@ export type DistributionAccessParameter = {
 };
 
 export type DistributionAccessScalar = string | boolean | number;
-
-/**
- * @minLength 1
- * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
- */
-export type NonBlankString = string;
 
 export type StringEnumOption = {
   /**
@@ -503,15 +497,44 @@ export type DatasetAccrualPeriodicity =
   | "IRREGULAR"
   | null;
 
+export type DatasetType =
+  | "RELEASE"
+  | "SCHEMA"
+  | "APROF"
+  | "CODE_LIST"
+  | "CORE_COMP"
+  | "DIRECTORY"
+  | "DOMAIN_MODEL"
+  | "DSCRP_SERV"
+  | "GEOSPATIAL"
+  | "GLOSSARY"
+  | "HVD"
+  | "IEPD"
+  | "OP_DATPRO"
+  | "STATISTICAL"
+  | "STYLES"
+  | "SYNTAX_ECD_SCHEME"
+  | "SYNTHETIC_DATA"
+  | "TAXONOMY"
+  | "TEST_DATA"
+  | "ENVIRONMENTAL"
+  | null;
+
 export type DatasetDraftMetadata = {
-  title: NonBlankString;
-  description: NonBlankString;
+  title: string;
+  description: string;
   keywords?: Keyword[];
   accrual_periodicity?: DatasetAccrualPeriodicity;
+  /**
+   * Absolute HTTP(S) URL with a host.
+   *
+   * @format uri
+   * @minLength 1
+   */
   quality_annotation?: string | null;
   conforms_to?: string | null;
   provenance?: string | null;
-  type?: string | null;
+  type?: DatasetType;
   version?: string | null;
   /**
    * @format double
@@ -554,18 +577,22 @@ export type DatasetDraftMetadata = {
 };
 
 export type SoftwareApplicationDraftMetadata = {
-  name: NonBlankString;
-  description: NonBlankString;
+  name: string;
+  description: string;
   keywords?: Keyword[];
   license?: string | null;
   version?: string | null;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    */
   download_url?: string;
   requirements?: string | null;
   operating_system?: string | null;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    */
   main_entity_of_page?: string;
@@ -576,10 +603,12 @@ export type SoftwareApplicationDraftMetadata = {
 };
 
 export type SoftwareSourceCodeDraftMetadata = {
-  name: NonBlankString;
-  description: NonBlankString;
+  name: string;
+  description: string;
   keywords?: Keyword[];
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    */
   repository?: string;
@@ -588,6 +617,8 @@ export type SoftwareSourceCodeDraftMetadata = {
   software_requirements?: string | null;
   runtime_platform?: string | null;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    */
   main_entity_of_page?: string;
@@ -603,13 +634,13 @@ export type VersionedIdentifierInput = {
    * @format uuid
    */
   resource_id?: string;
-  type: NonBlankString;
-  value: NonBlankString;
+  type: string;
+  value: string;
 };
 
 export type IdentifierInput = {
-  type: NonBlankString;
-  value: NonBlankString;
+  type: string;
+  value: string;
 };
 
 export type DistributionDraft =
@@ -671,24 +702,20 @@ export type WebServiceDraftCommon = {
    * @format uuid
    */
   resource_id?: string;
-  /**
-   * @minItems 1
-   */
   visible_on?: WebServiceVisibleOn[] | null;
   /**
    * @format uuid
    */
   provider?: string;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    * @minLength 1
    */
   documentation_uri?: string;
   contact_points?: string[];
   keywords?: Keyword[];
-  access_rights?: string | null;
-  license?: string | null;
-  categories?: string[];
 };
 
 export type HttpWebServiceDraft = WebServiceDraftCommon &
@@ -729,17 +756,17 @@ export type DynamicWebServiceConfigurationDraft =
   };
 
 export type SharedWebServiceConfigurationDraft = {
-  template_url: NonBlankString;
+  template_url: string;
   method: WebServiceMethod;
   parameters?: ParameterDraft[];
-  body_content_type?: NonBlankString;
-  body_template?: NonBlankString;
+  body_content_type?: string;
+  body_template?: string;
   /**
    * Defaults to true when a request body is configured. Must be omitted when no body is configured. Optional bodies are omitted only when unresolved and no child values were supplied.
    */
   body_required?: boolean;
   body_parameters?: ScalarParameterDraft[];
-  format: NonBlankString;
+  format: string;
 };
 
 export type WfsWebServiceConfigurationDraft = {
@@ -755,16 +782,16 @@ export type WfsWebServiceConfigurationDraft = {
    * @minItems 1
    * @uniqueItems true
    */
-  feature_types: NonBlankString[];
-  default_feature_type: NonBlankString;
+  feature_types: string[];
+  default_feature_type: string;
   /**
    * Exact provider outputFormat values, advertised as native formats.
    *
    * @minItems 1
    * @uniqueItems true
    */
-  output_formats: NonBlankString[];
-  default_output_format: NonBlankString;
+  output_formats: string[];
+  default_output_format: string;
   /**
    * Optional maximum features requested in one upstream request. Omitted or null means no configured limit; count/maxFeatures is omitted unless an editable limit is supplied during access. No automatic pagination.
    *
@@ -787,16 +814,14 @@ export type WmsWebServiceConfigurationDraft = {
   /**
    * Absolute HTTP(S) capabilities URL, including provider query parameters.
    *
+   * @format uri
    * @minLength 1
    */
   capabilities_url: string;
   /**
    * Must name one configured layer.
-   *
-   * @minLength 1
-   * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
    */
-  default_layer: NonBlankString;
+  default_layer: string;
   /**
    * Allowed layers in display order. A single layer fixes selection.
    *
@@ -826,10 +851,11 @@ export type WmtsWebServiceConfigurationDraft = {
   /**
    * Absolute HTTP(S) capabilities URL including provider query parameters.
    *
+   * @format uri
    * @minLength 1
    */
   capabilities_url: string;
-  default_layer: NonBlankString;
+  default_layer: string;
   /**
    * @minItems 1
    */
@@ -843,20 +869,17 @@ export type WmtsLayerDraft = {
    * @format uuid
    */
   resource_id?: string;
-  name: NonBlankString;
+  name: string;
   /**
    * Configured default style. When omitted, use the provider default if allowed by styles.
-   *
-   * @minLength 1
-   * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
    */
-  default_style?: NonBlankString;
+  default_style?: string;
   /**
    * Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
    *
    * @uniqueItems true
    */
-  styles?: NonBlankString[];
+  styles?: string[];
 };
 
 export type WmsLayerDraft = {
@@ -864,7 +887,7 @@ export type WmsLayerDraft = {
    * @format uuid
    */
   resource_id?: string;
-  name: NonBlankString;
+  name: string;
   /**
    * Default configured style. Empty string uses the provider default.
    */
@@ -918,23 +941,16 @@ export type StringParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
-  /**
-   * @minItems 1
-   */
   ["default"]?: string[] | null;
-  /**
-   * @minItems 1
-   */
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
@@ -949,11 +965,10 @@ export type BooleanParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -971,11 +986,10 @@ export type IntegerParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -989,9 +1003,6 @@ export type IntegerParameterDraft = {
    * @format int64
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
@@ -1006,11 +1017,10 @@ export type FloatParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -1024,9 +1034,6 @@ export type FloatParameterDraft = {
    * @format double
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
@@ -1041,11 +1048,10 @@ export type DateTimeParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -1079,19 +1085,15 @@ export type StringParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
-  /**
-   * @minItems 1
-   */
   ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
@@ -1111,11 +1113,10 @@ export type BooleanParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -1137,11 +1138,10 @@ export type IntegerParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -1155,9 +1155,6 @@ export type IntegerParameter = {
    * @format int64
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
@@ -1176,11 +1173,10 @@ export type FloatParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -1194,9 +1190,6 @@ export type FloatParameter = {
    * @format double
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
@@ -1215,11 +1208,10 @@ export type DateTimeParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -1249,11 +1241,10 @@ export type TemplateParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -1279,11 +1270,10 @@ export type TemplateParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
   required: boolean;
-  property?: string | null;
   role?: ParameterRole;
   location: ParameterLocation;
   explode: boolean;
@@ -1305,16 +1295,12 @@ export type StringScalarParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
-  /**
-   * @minItems 1
-   */
   ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
@@ -1330,10 +1316,9 @@ export type BooleanScalarParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
@@ -1350,10 +1335,9 @@ export type IntegerScalarParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
@@ -1365,9 +1349,6 @@ export type IntegerScalarParameterDraft = {
    * @format int64
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
@@ -1382,10 +1363,9 @@ export type FloatScalarParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
@@ -1397,9 +1377,6 @@ export type FloatScalarParameterDraft = {
    * @format double
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
@@ -1414,10 +1391,9 @@ export type DateTimeScalarParameterDraft = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
@@ -1450,16 +1426,12 @@ export type StringScalarParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
-  /**
-   * @minItems 1
-   */
   ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
@@ -1479,10 +1451,9 @@ export type BooleanScalarParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
@@ -1503,10 +1474,9 @@ export type IntegerScalarParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
@@ -1518,9 +1488,6 @@ export type IntegerScalarParameter = {
    * @format int64
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
@@ -1539,10 +1506,9 @@ export type FloatScalarParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
@@ -1554,9 +1520,6 @@ export type FloatScalarParameter = {
    * @format double
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
@@ -1575,10 +1538,9 @@ export type DateTimeScalarParameter = {
    * @format int32
    */
   position: number;
-  name: NonBlankString;
-  label: NonBlankString;
+  name: string;
+  label: string;
   description?: string | null;
-  property?: string | null;
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
@@ -1618,8 +1580,14 @@ export type WebServiceType = "WMS" | "HTTP" | "WMTS" | "WFS" | "DYNAMIC";
 export type WebServiceVisibleOn = "GRAPH" | "TABLE" | "MAP";
 
 export type DownloadableFile = {
-  url: NonBlankString;
-  format: NonBlankString;
+  /**
+   * Absolute HTTP(S) URL with a host.
+   *
+   * @format uri
+   * @minLength 1
+   */
+  url: string;
+  format: string;
 };
 
 export type TemporalCoverage = {
@@ -1705,7 +1673,7 @@ export type ReplaceResourceDraftRequest =
   | ReplaceSoftwareSourceCodeDraftRequest;
 
 export type RejectResourceRequest = {
-  note: NonBlankString;
+  note: string;
 };
 
 export type ResourceVersion = {
@@ -1748,7 +1716,7 @@ export type ResourceVersion = {
    * @format date-time
    */
   rejected_at?: string;
-  rejection_note?: NonBlankString;
+  rejection_note?: string;
   metadata:
     | DatasetResourceMetadata
     | SoftwareApplicationResourceMetadata
@@ -1831,10 +1799,16 @@ export type DatasetResourceMetadata = {
   description: string;
   keywords: Keyword[];
   accrual_periodicity?: DatasetAccrualPeriodicity;
+  /**
+   * Absolute HTTP(S) URL with a host.
+   *
+   * @format uri
+   * @minLength 1
+   */
   quality_annotation?: string | null;
   conforms_to?: string | null;
   provenance?: string | null;
-  type?: string | null;
+  type?: DatasetType;
   version?: string | null;
   /**
    * @format double
@@ -1880,10 +1854,20 @@ export type SoftwareApplicationResourceMetadata = {
   resource_type: "software-application";
   name: string;
   description: string;
+  /**
+   * Absolute HTTP(S) URL with a host.
+   *
+   * @format uri
+   */
   main_entity_of_page?: string | null;
   license?: string | null;
   version?: string | null;
   keywords: Keyword[];
+  /**
+   * Absolute HTTP(S) URL with a host.
+   *
+   * @format uri
+   */
   download_url?: string | null;
   requirements?: string | null;
   operating_system?: string | null;
@@ -1899,10 +1883,20 @@ export type SoftwareSourceCodeResourceMetadata = {
   description: string;
   programming_language?: string | null;
   keywords: Keyword[];
+  /**
+   * Absolute HTTP(S) URL with a host.
+   *
+   * @format uri
+   */
   repository?: string | null;
   license?: string | null;
   software_requirements?: string | null;
   runtime_platform?: string | null;
+  /**
+   * Absolute HTTP(S) URL with a host.
+   *
+   * @format uri
+   */
   main_entity_of_page?: string | null;
   version?: string | null;
   creators: ResourceVersionReference[];
@@ -2010,21 +2004,17 @@ export type WebServiceCommon = {
    * @format uuid
    */
   resource_id: string;
-  /**
-   * @minItems 1
-   */
   visible_on?: WebServiceVisibleOn[] | null;
   provider?: ResourceVersionReference;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    * @minLength 1
    */
   documentation_uri?: string;
   contact_points?: string[];
   keywords?: Keyword[];
-  access_rights?: string | null;
-  license?: string | null;
-  categories?: ResourceVersionReference[];
 };
 
 export type WebServiceAvailableFormats = {
@@ -2097,16 +2087,16 @@ export type WfsWebServiceConfiguration = {
    * @minItems 1
    * @uniqueItems true
    */
-  feature_types: NonBlankString[];
-  default_feature_type: NonBlankString;
+  feature_types: string[];
+  default_feature_type: string;
   /**
    * Exact provider outputFormat values, advertised as native formats.
    *
    * @minItems 1
    * @uniqueItems true
    */
-  output_formats: NonBlankString[];
-  default_output_format: NonBlankString;
+  output_formats: string[];
+  default_output_format: string;
   /**
    * Optional default feature limit. Omitted or null means no configured limit.
    *
@@ -2129,16 +2119,14 @@ export type WmsWebServiceConfiguration = {
   /**
    * Absolute HTTP(S) capabilities URL, including provider query parameters.
    *
+   * @format uri
    * @minLength 1
    */
   capabilities_url: string;
   /**
    * Must name one configured layer.
-   *
-   * @minLength 1
-   * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
    */
-  default_layer: NonBlankString;
+  default_layer: string;
   /**
    * Allowed layers in display order. A single layer fixes selection.
    *
@@ -2166,10 +2154,11 @@ export type WmsWebServiceConfiguration = {
 export type WmtsWebServiceConfiguration = {
   type: "WMTS";
   /**
+   * @format uri
    * @minLength 1
    */
   capabilities_url: string;
-  default_layer: NonBlankString;
+  default_layer: string;
   /**
    * @minItems 1
    */
@@ -2187,20 +2176,17 @@ export type WmtsLayer = {
    * @format uuid
    */
   resource_id: string;
-  name: NonBlankString;
+  name: string;
   /**
    * Configured default style. When omitted, use the provider default if allowed by styles.
-   *
-   * @minLength 1
-   * @pattern [^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
    */
-  default_style?: NonBlankString;
+  default_style?: string;
   /**
    * Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
    *
    * @uniqueItems true
    */
-  styles?: NonBlankString[];
+  styles?: string[];
 };
 
 export type WmsLayer = {
@@ -2212,7 +2198,7 @@ export type WmsLayer = {
    * @format uuid
    */
   resource_id: string;
-  name: NonBlankString;
+  name: string;
   /**
    * Default configured style. Empty string uses the provider default.
    */
@@ -2349,9 +2335,6 @@ export type DiscoveryWebServiceDistribution = {
   name: string;
   type: "WEB_SERVICE";
   web_service_type: WebServiceType;
-  /**
-   * @minItems 1
-   */
   visible_on?: WebServiceVisibleOn[] | null;
   provider?: Reference;
 };
@@ -2420,7 +2403,7 @@ export type SoftwareSourceCodeDiscoveryItem = {
 export type UserStatus = "ACTIVE" | "BLOCKED";
 
 export type BlockUserRequest = {
-  reason: NonBlankString;
+  reason: string;
 };
 
 /**
@@ -2489,7 +2472,7 @@ export type Category = {
 };
 
 export type CreateCategoryRequest = {
-  name: NonBlankString;
+  name: string;
   /**
    * @format uuid
    */
@@ -2497,7 +2480,7 @@ export type CreateCategoryRequest = {
 };
 
 export type ReplaceCategoryRequest = {
-  name: NonBlankString;
+  name: string;
   /**
    * @format uuid
    */
@@ -2516,11 +2499,11 @@ export type Concept = {
 };
 
 export type ConceptInput = {
-  name: NonBlankString;
+  name: string;
 };
 
 export type CreateGroupRequest = {
-  name: NonBlankString;
+  name: string;
   /**
    * @minLength 1
    */
@@ -2552,7 +2535,7 @@ export type CreateGroupRequest = {
 };
 
 export type ReplaceGroupRequest = {
-  name: NonBlankString;
+  name: string;
   /**
    * @minLength 1
    */
@@ -2596,7 +2579,7 @@ export type ContactPoint = {
 };
 
 export type ContactRequestMessage = {
-  message: NonBlankString;
+  message: string;
 };
 
 export type CreateContactPointRequest = {
@@ -2645,11 +2628,15 @@ export type CanonicalOrganization = {
   name: string;
   address: OrganizationAddress;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    * @minLength 1
    */
   logo_url?: string | null;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    * @minLength 1
    */
@@ -2664,14 +2651,18 @@ export type CanonicalOrganization = {
 };
 
 export type CreateOrganizationRequest = {
-  name: NonBlankString;
+  name: string;
   address?: OrganizationAddress;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    * @minLength 1
    */
   logo_url?: string | null;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    * @minLength 1
    */
@@ -2686,14 +2677,18 @@ export type CreateOrganizationRequest = {
 };
 
 export type ReplaceOrganizationRequest = {
-  name: NonBlankString;
+  name: string;
   address: OrganizationAddress;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    * @minLength 1
    */
   logo_url: string | null;
   /**
+   * Absolute HTTP(S) URL with a host.
+   *
    * @format uri
    * @minLength 1
    */

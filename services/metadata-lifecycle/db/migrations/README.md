@@ -12,10 +12,7 @@
 | there is no direct mapping but it's a separate object | `dcat:endpointDescription` | the reference to the operation |
 | `keywords`                                            | `dcat:keyword`             |                                |
 | `provider`                                            | `dct:publisher`            |                                |
-| `web_service_categories`                              | `dcat:theme`               |                                |
-| `access_rights`                                       | `dct:accessRights`         |                                |
 | `format` for generic web services                     | `dct:format`               |                                |
-| `license`                                             | `dct:license`              |                                |
 
 ## Distribution -> Distribution
 
@@ -27,33 +24,33 @@
 | `license`                                                                              | `dct:license`        |                                   |
 | there is no direct mapping but it's a separate object                                  | `dcat:accessService` | the reference to the Data Service |
 | `byte_size`                                                                            | `dcat:byteSize`      |                                   |
-|                                                                                        | `dct:conformsTo`     | ?                                 |
+| `conforms_to`                                                                          | `dct:conformsTo`     | ?                                 |
 | `downloadable_file_url`                                                                | `dcat:downloadURL`   |                                   |
 | `title`                                                                                | `dct:title`          |                                   |
 
 ## Dataset -> Dataset
 
-| Our                                                   | DCAT                             | What                                 |
-| ----------------------------------------------------- | -------------------------------- | ------------------------------------ |
-| `description`                                         | `dct:description`                |                                      |
-| `title`                                               | `dct:title`                      |                                      |
-| the connected contact points to a dataset             | `dcat:contactPoint`              |                                      |
-| there is no direct mapping but it's a separate object | `dcat:distribution`              | the reference to the distribution(s) |
-| `keywords`                                            | `dcat:keyword`                   |                                      |
-| `providers`                                           | `dct:publisher`                  |                                      |
-| `spatial`                                             | `dct:spatial`                    |                                      |
-| `temporal`                                            | `dct:temporal`                   |                                      |
-| linked categories                                     | `dcat:theme`                     |                                      |
-| `access_rights`                                       | `dct:accessRights`               |                                      |
-| `accrual_periodicity`                                 | `dct:accrualPeriodicity`         |                                      |
-| `conforms_to`                                         | `dct:conformsTo`                 |                                      |
-| ignore for now                                        | `dct:creator`                    |                                      |
-| `quality_annotation`                                  | `dqv:hasQualityAnnotation`       |                                      |
-| the connected identifiers to a dataset                | `adms:identifier`                |                                      |
-| `created_at`                                          | `dct:issued`                     |                                      |
-| `updated_at`                                          | `dct:modified`                   |                                      |
-| `provenance`                                          | `dct:provenance`                 |                                      |
-| `spatial_resolution_in_meters`                        | `dcat:spatialResolutionInMeters` |                                      |
-| `temporal_resolution`                                 | `dcat:temporalResolution`        |                                      |
-| `type`                                                | `dct:type`                       |                                      |
-| `version`                                             | `dcat:version`                   |                                      |
+| Our                                                   | DCAT                             | What                                                                                                   |
+| ----------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `description`                                         | `dct:description`                |                                                                                                        |
+| `title`                                               | `dct:title`                      |                                                                                                        |
+| the connected contact points to a dataset             | `dcat:contactPoint`              |                                                                                                        |
+| there is no direct mapping but it's a separate object | `dcat:distribution`              | the reference to the distribution(s)                                                                   |
+| `keywords`                                            | `dcat:keyword`                   |                                                                                                        |
+| `providers`                                           | `dct:publisher`                  |                                                                                                        |
+| `spatial`                                             | `dct:spatial`                    |                                                                                                        |
+| `temporal`                                            | `dct:temporal`                   |                                                                                                        |
+| linked categories                                     | `dcat:theme`                     |                                                                                                        |
+| `access_rights`                                       | `dct:accessRights`               |                                                                                                        |
+| `accrual_periodicity`                                 | `dct:accrualPeriodicity`         |                                                                                                        |
+| `conforms_to`                                         | `dct:conformsTo`                 |                                                                                                        |
+| ignore for now                                        | `dct:creator`                    |                                                                                                        |
+| `quality_annotation`                                  | `dqv:hasQualityAnnotation`       | Absolute HTTP(S) URL                                                                                   |
+| the connected identifiers to a dataset                | `adms:identifier`                |                                                                                                        |
+| `created_at`                                          | `dct:issued`                     |                                                                                                        |
+| `updated_at`                                          | `dct:modified`                   |                                                                                                        |
+| `provenance`                                          | `dct:provenance`                 |                                                                                                        |
+| `spatial_resolution_in_meters`                        | `dcat:spatialResolutionInMeters` |                                                                                                        |
+| `temporal_resolution`                                 | `dcat:temporalResolution`        |                                                                                                        |
+| `type`                                                | `dct:type`                       | [EU dataset type authority short code](https://publications.europa.eu/resource/authority/dataset-type) |
+| `version`                                             | `dcat:version`                   |                                                                                                        |

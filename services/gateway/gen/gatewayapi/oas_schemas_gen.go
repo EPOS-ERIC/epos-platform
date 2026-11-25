@@ -159,16 +159,16 @@ type BlockUserNoContent struct{}
 
 // Ref: #/components/schemas/BlockUserRequest
 type BlockUserRequest struct {
-	Reason NonBlankString `json:"reason"`
+	Reason string `json:"reason"`
 }
 
 // GetReason returns the value of Reason.
-func (s *BlockUserRequest) GetReason() NonBlankString {
+func (s *BlockUserRequest) GetReason() string {
 	return s.Reason
 }
 
 // SetReason sets the value of Reason.
-func (s *BlockUserRequest) SetReason(val NonBlankString) {
+func (s *BlockUserRequest) SetReason(val string) {
 	s.Reason = val
 }
 
@@ -178,11 +178,10 @@ type BooleanParameter struct {
 	ResourceID  uuid.UUID            `json:"resource_id"`
 	Kind        BooleanParameterKind `json:"kind"`
 	Position    int32                `json:"position"`
-	Name        NonBlankString       `json:"name"`
-	Label       NonBlankString       `json:"label"`
+	Name        string               `json:"name"`
+	Label       string               `json:"label"`
 	Description OptNilString         `json:"description"`
 	Required    bool                 `json:"required"`
-	Property    OptNilString         `json:"property"`
 	Role        OptNilParameterRole  `json:"role"`
 	Location    ParameterLocation    `json:"location"`
 	Explode     bool                 `json:"explode"`
@@ -211,12 +210,12 @@ func (s *BooleanParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *BooleanParameter) GetName() NonBlankString {
+func (s *BooleanParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *BooleanParameter) GetLabel() NonBlankString {
+func (s *BooleanParameter) GetLabel() string {
 	return s.Label
 }
 
@@ -228,11 +227,6 @@ func (s *BooleanParameter) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *BooleanParameter) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *BooleanParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -281,12 +275,12 @@ func (s *BooleanParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *BooleanParameter) SetName(val NonBlankString) {
+func (s *BooleanParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *BooleanParameter) SetLabel(val NonBlankString) {
+func (s *BooleanParameter) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -298,11 +292,6 @@ func (s *BooleanParameter) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *BooleanParameter) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *BooleanParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -335,11 +324,10 @@ type BooleanParameterDraft struct {
 	ResourceID  OptUUID                   `json:"resource_id"`
 	Kind        BooleanParameterDraftKind `json:"kind"`
 	Position    int32                     `json:"position"`
-	Name        NonBlankString            `json:"name"`
-	Label       NonBlankString            `json:"label"`
+	Name        string                    `json:"name"`
+	Label       string                    `json:"label"`
 	Description OptNilString              `json:"description"`
 	Required    bool                      `json:"required"`
-	Property    OptNilString              `json:"property"`
 	Role        OptNilParameterRole       `json:"role"`
 	Location    ParameterLocation         `json:"location"`
 	Explode     bool                      `json:"explode"`
@@ -363,12 +351,12 @@ func (s *BooleanParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *BooleanParameterDraft) GetName() NonBlankString {
+func (s *BooleanParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *BooleanParameterDraft) GetLabel() NonBlankString {
+func (s *BooleanParameterDraft) GetLabel() string {
 	return s.Label
 }
 
@@ -380,11 +368,6 @@ func (s *BooleanParameterDraft) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *BooleanParameterDraft) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *BooleanParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -428,12 +411,12 @@ func (s *BooleanParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *BooleanParameterDraft) SetName(val NonBlankString) {
+func (s *BooleanParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *BooleanParameterDraft) SetLabel(val NonBlankString) {
+func (s *BooleanParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -445,11 +428,6 @@ func (s *BooleanParameterDraft) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *BooleanParameterDraft) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *BooleanParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -551,10 +529,9 @@ type BooleanScalarParameter struct {
 	ResourceID  uuid.UUID                  `json:"resource_id"`
 	Kind        BooleanScalarParameterKind `json:"kind"`
 	Position    int32                      `json:"position"`
-	Name        NonBlankString             `json:"name"`
-	Label       NonBlankString             `json:"label"`
+	Name        string                     `json:"name"`
+	Label       string                     `json:"label"`
 	Description OptNilString               `json:"description"`
-	Property    OptNilString               `json:"property"`
 	Role        OptNilParameterRole        `json:"role"`
 	Required    bool                       `json:"required"`
 	ReadOnly    bool                       `json:"read_only"`
@@ -582,23 +559,18 @@ func (s *BooleanScalarParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *BooleanScalarParameter) GetName() NonBlankString {
+func (s *BooleanScalarParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *BooleanScalarParameter) GetLabel() NonBlankString {
+func (s *BooleanScalarParameter) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *BooleanScalarParameter) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *BooleanScalarParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -642,23 +614,18 @@ func (s *BooleanScalarParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *BooleanScalarParameter) SetName(val NonBlankString) {
+func (s *BooleanScalarParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *BooleanScalarParameter) SetLabel(val NonBlankString) {
+func (s *BooleanScalarParameter) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *BooleanScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *BooleanScalarParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -686,10 +653,9 @@ type BooleanScalarParameterDraft struct {
 	ResourceID  OptUUID                         `json:"resource_id"`
 	Kind        BooleanScalarParameterDraftKind `json:"kind"`
 	Position    int32                           `json:"position"`
-	Name        NonBlankString                  `json:"name"`
-	Label       NonBlankString                  `json:"label"`
+	Name        string                          `json:"name"`
+	Label       string                          `json:"label"`
 	Description OptNilString                    `json:"description"`
-	Property    OptNilString                    `json:"property"`
 	Role        OptNilParameterRole             `json:"role"`
 	Required    bool                            `json:"required"`
 	ReadOnly    bool                            `json:"read_only"`
@@ -712,23 +678,18 @@ func (s *BooleanScalarParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *BooleanScalarParameterDraft) GetName() NonBlankString {
+func (s *BooleanScalarParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *BooleanScalarParameterDraft) GetLabel() NonBlankString {
+func (s *BooleanScalarParameterDraft) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *BooleanScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *BooleanScalarParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -767,23 +728,18 @@ func (s *BooleanScalarParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *BooleanScalarParameterDraft) SetName(val NonBlankString) {
+func (s *BooleanScalarParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *BooleanScalarParameterDraft) SetLabel(val NonBlankString) {
+func (s *BooleanScalarParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *BooleanScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *BooleanScalarParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -876,14 +832,16 @@ func (s *BooleanScalarParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/CanonicalOrganization
 type CanonicalOrganization struct {
-	ID          uuid.UUID           `json:"id"`
-	Name        string              `json:"name"`
-	Address     OrganizationAddress `json:"address"`
-	LogoURL     OptNilURI           `json:"logo_url"`
-	PageURL     OptNilURI           `json:"page_url"`
-	Email       OptNilString        `json:"email"`
-	Identifiers []Identifier        `json:"identifiers"`
-	Parents     []uuid.UUID         `json:"parents"`
+	ID      uuid.UUID           `json:"id"`
+	Name    string              `json:"name"`
+	Address OrganizationAddress `json:"address"`
+	// Absolute HTTP(S) URL with a host.
+	LogoURL OptNilURI `json:"logo_url"`
+	// Absolute HTTP(S) URL with a host.
+	PageURL     OptNilURI    `json:"page_url"`
+	Email       OptNilString `json:"email"`
+	Identifiers []Identifier `json:"identifiers"`
+	Parents     []uuid.UUID  `json:"parents"`
 }
 
 // GetID returns the value of ID.
@@ -1217,16 +1175,16 @@ func (s *Concept) SetName(val string) {
 
 // Ref: #/components/schemas/ConceptInput
 type ConceptInput struct {
-	Name NonBlankString `json:"name"`
+	Name string `json:"name"`
 }
 
 // GetName returns the value of Name.
-func (s *ConceptInput) GetName() NonBlankString {
+func (s *ConceptInput) GetName() string {
 	return s.Name
 }
 
 // SetName sets the value of Name.
-func (s *ConceptInput) SetName(val NonBlankString) {
+func (s *ConceptInput) SetName(val string) {
 	s.Name = val
 }
 
@@ -1543,16 +1501,16 @@ func (s *ContactPoint) SetEmail(val string) {
 
 // Ref: #/components/schemas/ContactRequestMessage
 type ContactRequestMessage struct {
-	Message NonBlankString `json:"message"`
+	Message string `json:"message"`
 }
 
 // GetMessage returns the value of Message.
-func (s *ContactRequestMessage) GetMessage() NonBlankString {
+func (s *ContactRequestMessage) GetMessage() string {
 	return s.Message
 }
 
 // SetMessage sets the value of Message.
-func (s *ContactRequestMessage) SetMessage(val NonBlankString) {
+func (s *ContactRequestMessage) SetMessage(val string) {
 	s.Message = val
 }
 
@@ -1873,12 +1831,12 @@ func (s *ConvertedFormatKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/CreateCategoryRequest
 type CreateCategoryRequest struct {
-	Name             NonBlankString `json:"name"`
-	ParentCategoryID OptNilUUID     `json:"parent_category_id"`
+	Name             string     `json:"name"`
+	ParentCategoryID OptNilUUID `json:"parent_category_id"`
 }
 
 // GetName returns the value of Name.
-func (s *CreateCategoryRequest) GetName() NonBlankString {
+func (s *CreateCategoryRequest) GetName() string {
 	return s.Name
 }
 
@@ -1888,7 +1846,7 @@ func (s *CreateCategoryRequest) GetParentCategoryID() OptNilUUID {
 }
 
 // SetName sets the value of Name.
-func (s *CreateCategoryRequest) SetName(val NonBlankString) {
+func (s *CreateCategoryRequest) SetName(val string) {
 	s.Name = val
 }
 
@@ -2045,18 +2003,18 @@ func (s *CreateDatasetResourceRequestResourceType) UnmarshalText(data []byte) er
 
 // Ref: #/components/schemas/CreateGroupRequest
 type CreateGroupRequest struct {
-	Name        NonBlankString `json:"name"`
-	Description OptNilString   `json:"description"`
-	Label       OptNilString   `json:"label"`
-	Logo        OptNilString   `json:"logo"`
-	Page        OptNilString   `json:"page"`
-	Color       OptNilString   `json:"color"`
-	Position    OptInt32       `json:"position"`
-	ConceptID   uuid.UUID      `json:"concept_id"`
+	Name        string       `json:"name"`
+	Description OptNilString `json:"description"`
+	Label       OptNilString `json:"label"`
+	Logo        OptNilString `json:"logo"`
+	Page        OptNilString `json:"page"`
+	Color       OptNilString `json:"color"`
+	Position    OptInt32     `json:"position"`
+	ConceptID   uuid.UUID    `json:"concept_id"`
 }
 
 // GetName returns the value of Name.
-func (s *CreateGroupRequest) GetName() NonBlankString {
+func (s *CreateGroupRequest) GetName() string {
 	return s.Name
 }
 
@@ -2096,7 +2054,7 @@ func (s *CreateGroupRequest) GetConceptID() uuid.UUID {
 }
 
 // SetName sets the value of Name.
-func (s *CreateGroupRequest) SetName(val NonBlankString) {
+func (s *CreateGroupRequest) SetName(val string) {
 	s.Name = val
 }
 
@@ -2193,17 +2151,19 @@ func (s *CreateMembershipRequestRolesItem) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/CreateOrganizationRequest
 type CreateOrganizationRequest struct {
-	Name        NonBlankString         `json:"name"`
-	Address     OptOrganizationAddress `json:"address"`
-	LogoURL     OptNilURI              `json:"logo_url"`
-	PageURL     OptNilURI              `json:"page_url"`
-	Email       OptNilString           `json:"email"`
-	Identifiers []IdentifierInput      `json:"identifiers"`
-	Parents     []uuid.UUID            `json:"parents"`
+	Name    string                 `json:"name"`
+	Address OptOrganizationAddress `json:"address"`
+	// Absolute HTTP(S) URL with a host.
+	LogoURL OptNilURI `json:"logo_url"`
+	// Absolute HTTP(S) URL with a host.
+	PageURL     OptNilURI         `json:"page_url"`
+	Email       OptNilString      `json:"email"`
+	Identifiers []IdentifierInput `json:"identifiers"`
+	Parents     []uuid.UUID       `json:"parents"`
 }
 
 // GetName returns the value of Name.
-func (s *CreateOrganizationRequest) GetName() NonBlankString {
+func (s *CreateOrganizationRequest) GetName() string {
 	return s.Name
 }
 
@@ -2238,7 +2198,7 @@ func (s *CreateOrganizationRequest) GetParents() []uuid.UUID {
 }
 
 // SetName sets the value of Name.
-func (s *CreateOrganizationRequest) SetName(val NonBlankString) {
+func (s *CreateOrganizationRequest) SetName(val string) {
 	s.Name = val
 }
 
@@ -2943,16 +2903,17 @@ func (s *DatasetDiscoveryItemType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/DatasetDraftMetadata
 type DatasetDraftMetadata struct {
-	Title                     NonBlankString                  `json:"title"`
-	Description               NonBlankString                  `json:"description"`
-	Keywords                  []Keyword                       `json:"keywords"`
-	AccrualPeriodicity        OptNilDatasetAccrualPeriodicity `json:"accrual_periodicity"`
-	QualityAnnotation         OptNilString                    `json:"quality_annotation"`
-	ConformsTo                OptNilString                    `json:"conforms_to"`
-	Provenance                OptNilString                    `json:"provenance"`
-	Type                      OptNilString                    `json:"type"`
-	Version                   OptNilString                    `json:"version"`
-	SpatialResolutionInMeters OptNilFloat64                   `json:"spatial_resolution_in_meters"`
+	Title              string                          `json:"title"`
+	Description        string                          `json:"description"`
+	Keywords           []Keyword                       `json:"keywords"`
+	AccrualPeriodicity OptNilDatasetAccrualPeriodicity `json:"accrual_periodicity"`
+	// Absolute HTTP(S) URL with a host.
+	QualityAnnotation         OptNilURI         `json:"quality_annotation"`
+	ConformsTo                OptNilString      `json:"conforms_to"`
+	Provenance                OptNilString      `json:"provenance"`
+	Type                      OptNilDatasetType `json:"type"`
+	Version                   OptNilString      `json:"version"`
+	SpatialResolutionInMeters OptNilFloat64     `json:"spatial_resolution_in_meters"`
 	// Resolution in seconds.
 	TemporalResolution OptNilFloat64            `json:"temporal_resolution"`
 	AccessRight        OptNilDatasetAccessRight `json:"access_right"`
@@ -2971,12 +2932,12 @@ type DatasetDraftMetadata struct {
 }
 
 // GetTitle returns the value of Title.
-func (s *DatasetDraftMetadata) GetTitle() NonBlankString {
+func (s *DatasetDraftMetadata) GetTitle() string {
 	return s.Title
 }
 
 // GetDescription returns the value of Description.
-func (s *DatasetDraftMetadata) GetDescription() NonBlankString {
+func (s *DatasetDraftMetadata) GetDescription() string {
 	return s.Description
 }
 
@@ -2991,7 +2952,7 @@ func (s *DatasetDraftMetadata) GetAccrualPeriodicity() OptNilDatasetAccrualPerio
 }
 
 // GetQualityAnnotation returns the value of QualityAnnotation.
-func (s *DatasetDraftMetadata) GetQualityAnnotation() OptNilString {
+func (s *DatasetDraftMetadata) GetQualityAnnotation() OptNilURI {
 	return s.QualityAnnotation
 }
 
@@ -3006,7 +2967,7 @@ func (s *DatasetDraftMetadata) GetProvenance() OptNilString {
 }
 
 // GetType returns the value of Type.
-func (s *DatasetDraftMetadata) GetType() OptNilString {
+func (s *DatasetDraftMetadata) GetType() OptNilDatasetType {
 	return s.Type
 }
 
@@ -3081,12 +3042,12 @@ func (s *DatasetDraftMetadata) GetUpdated() OptNilDateTime {
 }
 
 // SetTitle sets the value of Title.
-func (s *DatasetDraftMetadata) SetTitle(val NonBlankString) {
+func (s *DatasetDraftMetadata) SetTitle(val string) {
 	s.Title = val
 }
 
 // SetDescription sets the value of Description.
-func (s *DatasetDraftMetadata) SetDescription(val NonBlankString) {
+func (s *DatasetDraftMetadata) SetDescription(val string) {
 	s.Description = val
 }
 
@@ -3101,7 +3062,7 @@ func (s *DatasetDraftMetadata) SetAccrualPeriodicity(val OptNilDatasetAccrualPer
 }
 
 // SetQualityAnnotation sets the value of QualityAnnotation.
-func (s *DatasetDraftMetadata) SetQualityAnnotation(val OptNilString) {
+func (s *DatasetDraftMetadata) SetQualityAnnotation(val OptNilURI) {
 	s.QualityAnnotation = val
 }
 
@@ -3116,7 +3077,7 @@ func (s *DatasetDraftMetadata) SetProvenance(val OptNilString) {
 }
 
 // SetType sets the value of Type.
-func (s *DatasetDraftMetadata) SetType(val OptNilString) {
+func (s *DatasetDraftMetadata) SetType(val OptNilDatasetType) {
 	s.Type = val
 }
 
@@ -3192,17 +3153,18 @@ func (s *DatasetDraftMetadata) SetUpdated(val OptNilDateTime) {
 
 // Ref: #/components/schemas/DatasetResourceMetadata
 type DatasetResourceMetadata struct {
-	ResourceType              DatasetResourceMetadataResourceType `json:"resource_type"`
-	Title                     string                              `json:"title"`
-	Description               string                              `json:"description"`
-	Keywords                  []Keyword                           `json:"keywords"`
-	AccrualPeriodicity        OptNilDatasetAccrualPeriodicity     `json:"accrual_periodicity"`
-	QualityAnnotation         OptNilString                        `json:"quality_annotation"`
-	ConformsTo                OptNilString                        `json:"conforms_to"`
-	Provenance                OptNilString                        `json:"provenance"`
-	Type                      OptNilString                        `json:"type"`
-	Version                   OptNilString                        `json:"version"`
-	SpatialResolutionInMeters OptNilFloat64                       `json:"spatial_resolution_in_meters"`
+	ResourceType       DatasetResourceMetadataResourceType `json:"resource_type"`
+	Title              string                              `json:"title"`
+	Description        string                              `json:"description"`
+	Keywords           []Keyword                           `json:"keywords"`
+	AccrualPeriodicity OptNilDatasetAccrualPeriodicity     `json:"accrual_periodicity"`
+	// Absolute HTTP(S) URL with a host.
+	QualityAnnotation         OptNilURI         `json:"quality_annotation"`
+	ConformsTo                OptNilString      `json:"conforms_to"`
+	Provenance                OptNilString      `json:"provenance"`
+	Type                      OptNilDatasetType `json:"type"`
+	Version                   OptNilString      `json:"version"`
+	SpatialResolutionInMeters OptNilFloat64     `json:"spatial_resolution_in_meters"`
 	// Resolution in seconds.
 	TemporalResolution OptNilFloat64            `json:"temporal_resolution"`
 	AccessRight        OptNilDatasetAccessRight `json:"access_right"`
@@ -3246,7 +3208,7 @@ func (s *DatasetResourceMetadata) GetAccrualPeriodicity() OptNilDatasetAccrualPe
 }
 
 // GetQualityAnnotation returns the value of QualityAnnotation.
-func (s *DatasetResourceMetadata) GetQualityAnnotation() OptNilString {
+func (s *DatasetResourceMetadata) GetQualityAnnotation() OptNilURI {
 	return s.QualityAnnotation
 }
 
@@ -3261,7 +3223,7 @@ func (s *DatasetResourceMetadata) GetProvenance() OptNilString {
 }
 
 // GetType returns the value of Type.
-func (s *DatasetResourceMetadata) GetType() OptNilString {
+func (s *DatasetResourceMetadata) GetType() OptNilDatasetType {
 	return s.Type
 }
 
@@ -3361,7 +3323,7 @@ func (s *DatasetResourceMetadata) SetAccrualPeriodicity(val OptNilDatasetAccrual
 }
 
 // SetQualityAnnotation sets the value of QualityAnnotation.
-func (s *DatasetResourceMetadata) SetQualityAnnotation(val OptNilString) {
+func (s *DatasetResourceMetadata) SetQualityAnnotation(val OptNilURI) {
 	s.QualityAnnotation = val
 }
 
@@ -3376,7 +3338,7 @@ func (s *DatasetResourceMetadata) SetProvenance(val OptNilString) {
 }
 
 // SetType sets the value of Type.
-func (s *DatasetResourceMetadata) SetType(val OptNilString) {
+func (s *DatasetResourceMetadata) SetType(val OptNilDatasetType) {
 	s.Type = val
 }
 
@@ -3478,6 +3440,174 @@ func (s *DatasetResourceMetadataResourceType) UnmarshalText(data []byte) error {
 	switch DatasetResourceMetadataResourceType(data) {
 	case DatasetResourceMetadataResourceTypeDataset:
 		*s = DatasetResourceMetadataResourceTypeDataset
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/DatasetType
+type DatasetType string
+
+const (
+	DatasetTypeRELEASE         DatasetType = "RELEASE"
+	DatasetTypeSCHEMA          DatasetType = "SCHEMA"
+	DatasetTypeAPROF           DatasetType = "APROF"
+	DatasetTypeCODELIST        DatasetType = "CODE_LIST"
+	DatasetTypeCORECOMP        DatasetType = "CORE_COMP"
+	DatasetTypeDIRECTORY       DatasetType = "DIRECTORY"
+	DatasetTypeDOMAINMODEL     DatasetType = "DOMAIN_MODEL"
+	DatasetTypeDSCRPSERV       DatasetType = "DSCRP_SERV"
+	DatasetTypeGEOSPATIAL      DatasetType = "GEOSPATIAL"
+	DatasetTypeGLOSSARY        DatasetType = "GLOSSARY"
+	DatasetTypeHVD             DatasetType = "HVD"
+	DatasetTypeIEPD            DatasetType = "IEPD"
+	DatasetTypeOPDATPRO        DatasetType = "OP_DATPRO"
+	DatasetTypeSTATISTICAL     DatasetType = "STATISTICAL"
+	DatasetTypeSTYLES          DatasetType = "STYLES"
+	DatasetTypeSYNTAXECDSCHEME DatasetType = "SYNTAX_ECD_SCHEME"
+	DatasetTypeSYNTHETICDATA   DatasetType = "SYNTHETIC_DATA"
+	DatasetTypeTAXONOMY        DatasetType = "TAXONOMY"
+	DatasetTypeTESTDATA        DatasetType = "TEST_DATA"
+	DatasetTypeENVIRONMENTAL   DatasetType = "ENVIRONMENTAL"
+)
+
+// AllValues returns all DatasetType values.
+func (DatasetType) AllValues() []DatasetType {
+	return []DatasetType{
+		DatasetTypeRELEASE,
+		DatasetTypeSCHEMA,
+		DatasetTypeAPROF,
+		DatasetTypeCODELIST,
+		DatasetTypeCORECOMP,
+		DatasetTypeDIRECTORY,
+		DatasetTypeDOMAINMODEL,
+		DatasetTypeDSCRPSERV,
+		DatasetTypeGEOSPATIAL,
+		DatasetTypeGLOSSARY,
+		DatasetTypeHVD,
+		DatasetTypeIEPD,
+		DatasetTypeOPDATPRO,
+		DatasetTypeSTATISTICAL,
+		DatasetTypeSTYLES,
+		DatasetTypeSYNTAXECDSCHEME,
+		DatasetTypeSYNTHETICDATA,
+		DatasetTypeTAXONOMY,
+		DatasetTypeTESTDATA,
+		DatasetTypeENVIRONMENTAL,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DatasetType) MarshalText() ([]byte, error) {
+	switch s {
+	case DatasetTypeRELEASE:
+		return []byte(s), nil
+	case DatasetTypeSCHEMA:
+		return []byte(s), nil
+	case DatasetTypeAPROF:
+		return []byte(s), nil
+	case DatasetTypeCODELIST:
+		return []byte(s), nil
+	case DatasetTypeCORECOMP:
+		return []byte(s), nil
+	case DatasetTypeDIRECTORY:
+		return []byte(s), nil
+	case DatasetTypeDOMAINMODEL:
+		return []byte(s), nil
+	case DatasetTypeDSCRPSERV:
+		return []byte(s), nil
+	case DatasetTypeGEOSPATIAL:
+		return []byte(s), nil
+	case DatasetTypeGLOSSARY:
+		return []byte(s), nil
+	case DatasetTypeHVD:
+		return []byte(s), nil
+	case DatasetTypeIEPD:
+		return []byte(s), nil
+	case DatasetTypeOPDATPRO:
+		return []byte(s), nil
+	case DatasetTypeSTATISTICAL:
+		return []byte(s), nil
+	case DatasetTypeSTYLES:
+		return []byte(s), nil
+	case DatasetTypeSYNTAXECDSCHEME:
+		return []byte(s), nil
+	case DatasetTypeSYNTHETICDATA:
+		return []byte(s), nil
+	case DatasetTypeTAXONOMY:
+		return []byte(s), nil
+	case DatasetTypeTESTDATA:
+		return []byte(s), nil
+	case DatasetTypeENVIRONMENTAL:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DatasetType) UnmarshalText(data []byte) error {
+	switch DatasetType(data) {
+	case DatasetTypeRELEASE:
+		*s = DatasetTypeRELEASE
+		return nil
+	case DatasetTypeSCHEMA:
+		*s = DatasetTypeSCHEMA
+		return nil
+	case DatasetTypeAPROF:
+		*s = DatasetTypeAPROF
+		return nil
+	case DatasetTypeCODELIST:
+		*s = DatasetTypeCODELIST
+		return nil
+	case DatasetTypeCORECOMP:
+		*s = DatasetTypeCORECOMP
+		return nil
+	case DatasetTypeDIRECTORY:
+		*s = DatasetTypeDIRECTORY
+		return nil
+	case DatasetTypeDOMAINMODEL:
+		*s = DatasetTypeDOMAINMODEL
+		return nil
+	case DatasetTypeDSCRPSERV:
+		*s = DatasetTypeDSCRPSERV
+		return nil
+	case DatasetTypeGEOSPATIAL:
+		*s = DatasetTypeGEOSPATIAL
+		return nil
+	case DatasetTypeGLOSSARY:
+		*s = DatasetTypeGLOSSARY
+		return nil
+	case DatasetTypeHVD:
+		*s = DatasetTypeHVD
+		return nil
+	case DatasetTypeIEPD:
+		*s = DatasetTypeIEPD
+		return nil
+	case DatasetTypeOPDATPRO:
+		*s = DatasetTypeOPDATPRO
+		return nil
+	case DatasetTypeSTATISTICAL:
+		*s = DatasetTypeSTATISTICAL
+		return nil
+	case DatasetTypeSTYLES:
+		*s = DatasetTypeSTYLES
+		return nil
+	case DatasetTypeSYNTAXECDSCHEME:
+		*s = DatasetTypeSYNTAXECDSCHEME
+		return nil
+	case DatasetTypeSYNTHETICDATA:
+		*s = DatasetTypeSYNTHETICDATA
+		return nil
+	case DatasetTypeTAXONOMY:
+		*s = DatasetTypeTAXONOMY
+		return nil
+	case DatasetTypeTESTDATA:
+		*s = DatasetTypeTESTDATA
+		return nil
+	case DatasetTypeENVIRONMENTAL:
+		*s = DatasetTypeENVIRONMENTAL
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -3636,11 +3766,10 @@ type DateTimeParameter struct {
 	ResourceID  uuid.UUID             `json:"resource_id"`
 	Kind        DateTimeParameterKind `json:"kind"`
 	Position    int32                 `json:"position"`
-	Name        NonBlankString        `json:"name"`
-	Label       NonBlankString        `json:"label"`
+	Name        string                `json:"name"`
+	Label       string                `json:"label"`
 	Description OptNilString          `json:"description"`
 	Required    bool                  `json:"required"`
-	Property    OptNilString          `json:"property"`
 	Role        OptNilParameterRole   `json:"role"`
 	Location    ParameterLocation     `json:"location"`
 	Explode     bool                  `json:"explode"`
@@ -3672,12 +3801,12 @@ func (s *DateTimeParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *DateTimeParameter) GetName() NonBlankString {
+func (s *DateTimeParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *DateTimeParameter) GetLabel() NonBlankString {
+func (s *DateTimeParameter) GetLabel() string {
 	return s.Label
 }
 
@@ -3689,11 +3818,6 @@ func (s *DateTimeParameter) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *DateTimeParameter) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *DateTimeParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -3757,12 +3881,12 @@ func (s *DateTimeParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *DateTimeParameter) SetName(val NonBlankString) {
+func (s *DateTimeParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *DateTimeParameter) SetLabel(val NonBlankString) {
+func (s *DateTimeParameter) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -3774,11 +3898,6 @@ func (s *DateTimeParameter) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *DateTimeParameter) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *DateTimeParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -3826,11 +3945,10 @@ type DateTimeParameterDraft struct {
 	ResourceID  OptUUID                    `json:"resource_id"`
 	Kind        DateTimeParameterDraftKind `json:"kind"`
 	Position    int32                      `json:"position"`
-	Name        NonBlankString             `json:"name"`
-	Label       NonBlankString             `json:"label"`
+	Name        string                     `json:"name"`
+	Label       string                     `json:"label"`
 	Description OptNilString               `json:"description"`
 	Required    bool                       `json:"required"`
-	Property    OptNilString               `json:"property"`
 	Role        OptNilParameterRole        `json:"role"`
 	Location    ParameterLocation          `json:"location"`
 	Explode     bool                       `json:"explode"`
@@ -3857,12 +3975,12 @@ func (s *DateTimeParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *DateTimeParameterDraft) GetName() NonBlankString {
+func (s *DateTimeParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *DateTimeParameterDraft) GetLabel() NonBlankString {
+func (s *DateTimeParameterDraft) GetLabel() string {
 	return s.Label
 }
 
@@ -3874,11 +3992,6 @@ func (s *DateTimeParameterDraft) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *DateTimeParameterDraft) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *DateTimeParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -3937,12 +4050,12 @@ func (s *DateTimeParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *DateTimeParameterDraft) SetName(val NonBlankString) {
+func (s *DateTimeParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *DateTimeParameterDraft) SetLabel(val NonBlankString) {
+func (s *DateTimeParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -3954,11 +4067,6 @@ func (s *DateTimeParameterDraft) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *DateTimeParameterDraft) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *DateTimeParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -4075,10 +4183,9 @@ type DateTimeScalarParameter struct {
 	ResourceID  uuid.UUID                   `json:"resource_id"`
 	Kind        DateTimeScalarParameterKind `json:"kind"`
 	Position    int32                       `json:"position"`
-	Name        NonBlankString              `json:"name"`
-	Label       NonBlankString              `json:"label"`
+	Name        string                      `json:"name"`
+	Label       string                      `json:"label"`
 	Description OptNilString                `json:"description"`
-	Property    OptNilString                `json:"property"`
 	Role        OptNilParameterRole         `json:"role"`
 	Required    bool                        `json:"required"`
 	ReadOnly    bool                        `json:"read_only"`
@@ -4109,23 +4216,18 @@ func (s *DateTimeScalarParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *DateTimeScalarParameter) GetName() NonBlankString {
+func (s *DateTimeScalarParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *DateTimeScalarParameter) GetLabel() NonBlankString {
+func (s *DateTimeScalarParameter) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *DateTimeScalarParameter) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *DateTimeScalarParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -4184,23 +4286,18 @@ func (s *DateTimeScalarParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *DateTimeScalarParameter) SetName(val NonBlankString) {
+func (s *DateTimeScalarParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *DateTimeScalarParameter) SetLabel(val NonBlankString) {
+func (s *DateTimeScalarParameter) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *DateTimeScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *DateTimeScalarParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -4243,10 +4340,9 @@ type DateTimeScalarParameterDraft struct {
 	ResourceID  OptUUID                          `json:"resource_id"`
 	Kind        DateTimeScalarParameterDraftKind `json:"kind"`
 	Position    int32                            `json:"position"`
-	Name        NonBlankString                   `json:"name"`
-	Label       NonBlankString                   `json:"label"`
+	Name        string                           `json:"name"`
+	Label       string                           `json:"label"`
 	Description OptNilString                     `json:"description"`
-	Property    OptNilString                     `json:"property"`
 	Role        OptNilParameterRole              `json:"role"`
 	Required    bool                             `json:"required"`
 	ReadOnly    bool                             `json:"read_only"`
@@ -4272,23 +4368,18 @@ func (s *DateTimeScalarParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *DateTimeScalarParameterDraft) GetName() NonBlankString {
+func (s *DateTimeScalarParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *DateTimeScalarParameterDraft) GetLabel() NonBlankString {
+func (s *DateTimeScalarParameterDraft) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *DateTimeScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *DateTimeScalarParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -4342,23 +4433,18 @@ func (s *DateTimeScalarParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *DateTimeScalarParameterDraft) SetName(val NonBlankString) {
+func (s *DateTimeScalarParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *DateTimeScalarParameterDraft) SetLabel(val NonBlankString) {
+func (s *DateTimeScalarParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *DateTimeScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *DateTimeScalarParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -5560,27 +5646,28 @@ func (s *DownloadDistribution2XXStatusCode) SetResponse(val DownloadDistribution
 
 // Ref: #/components/schemas/DownloadableFile
 type DownloadableFile struct {
-	URL    NonBlankString `json:"url"`
-	Format NonBlankString `json:"format"`
+	// Absolute HTTP(S) URL with a host.
+	URL    url.URL `json:"url"`
+	Format string  `json:"format"`
 }
 
 // GetURL returns the value of URL.
-func (s *DownloadableFile) GetURL() NonBlankString {
+func (s *DownloadableFile) GetURL() url.URL {
 	return s.URL
 }
 
 // GetFormat returns the value of Format.
-func (s *DownloadableFile) GetFormat() NonBlankString {
+func (s *DownloadableFile) GetFormat() string {
 	return s.Format
 }
 
 // SetURL sets the value of URL.
-func (s *DownloadableFile) SetURL(val NonBlankString) {
+func (s *DownloadableFile) SetURL(val url.URL) {
 	s.URL = val
 }
 
 // SetFormat sets the value of Format.
-func (s *DownloadableFile) SetFormat(val NonBlankString) {
+func (s *DownloadableFile) SetFormat(val string) {
 	s.Format = val
 }
 
@@ -5912,21 +5999,19 @@ func (s *DynamicDistributionAccessRequestType) UnmarshalText(data []byte) error 
 // Merged schema.
 // Ref: #/components/schemas/DynamicWebService
 type DynamicWebService struct {
-	ID               uuid.UUID                      `json:"id"`
-	ResourceID       uuid.UUID                      `json:"resource_id"`
-	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider         OptResourceVersionReference    `json:"provider"`
-	DocumentationURI OptURI                         `json:"documentation_uri"`
-	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Keywords         []Keyword                      `json:"keywords"`
-	AccessRights     OptNilString                   `json:"access_rights"`
-	License          OptNilString                   `json:"license"`
-	Categories       []ResourceVersionReference     `json:"categories"`
-	TemplateURL      string                         `json:"template_url"`
-	Method           WebServiceMethod               `json:"method"`
-	Parameters       []Parameter                    `json:"parameters"`
-	BodyContentType  OptNilString                   `json:"body_content_type"`
-	BodyTemplate     OptNilString                   `json:"body_template"`
+	ID         uuid.UUID                      `json:"id"`
+	ResourceID uuid.UUID                      `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptResourceVersionReference    `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI OptURI           `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID      `json:"contact_points"`
+	Keywords         []Keyword        `json:"keywords"`
+	TemplateURL      string           `json:"template_url"`
+	Method           WebServiceMethod `json:"method"`
+	Parameters       []Parameter      `json:"parameters"`
+	BodyContentType  OptNilString     `json:"body_content_type"`
+	BodyTemplate     OptNilString     `json:"body_template"`
 	// Whether the configured request body must be rendered. Omitted when no request body is configured.
 	BodyRequired   OptBool               `json:"body_required"`
 	BodyParameters []ScalarParameter     `json:"body_parameters"`
@@ -5971,21 +6056,6 @@ func (s *DynamicWebService) GetContactPoints() []uuid.UUID {
 // GetKeywords returns the value of Keywords.
 func (s *DynamicWebService) GetKeywords() []Keyword {
 	return s.Keywords
-}
-
-// GetAccessRights returns the value of AccessRights.
-func (s *DynamicWebService) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *DynamicWebService) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *DynamicWebService) GetCategories() []ResourceVersionReference {
-	return s.Categories
 }
 
 // GetTemplateURL returns the value of TemplateURL.
@@ -6073,21 +6143,6 @@ func (s *DynamicWebService) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *DynamicWebService) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *DynamicWebService) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *DynamicWebService) SetCategories(val []ResourceVersionReference) {
-	s.Categories = val
-}
-
 // SetTemplateURL sets the value of TemplateURL.
 func (s *DynamicWebService) SetTemplateURL(val string) {
 	s.TemplateURL = val
@@ -6141,25 +6196,23 @@ func (s *DynamicWebService) SetAvailableFormats(val []AvailableFormat) {
 // Merged schema.
 // Ref: #/components/schemas/DynamicWebServiceDraft
 type DynamicWebServiceDraft struct {
-	ResourceID       OptUUID                        `json:"resource_id"`
-	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider         OptUUID                        `json:"provider"`
-	DocumentationURI OptURI                         `json:"documentation_uri"`
-	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Keywords         []Keyword                      `json:"keywords"`
-	AccessRights     OptNilString                   `json:"access_rights"`
-	License          OptNilString                   `json:"license"`
-	Categories       []uuid.UUID                    `json:"categories"`
-	TemplateURL      NonBlankString                 `json:"template_url"`
-	Method           WebServiceMethod               `json:"method"`
-	Parameters       []ParameterDraft               `json:"parameters"`
-	BodyContentType  OptNonBlankString              `json:"body_content_type"`
-	BodyTemplate     OptNonBlankString              `json:"body_template"`
+	ResourceID OptUUID                        `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptUUID                        `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI OptURI           `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID      `json:"contact_points"`
+	Keywords         []Keyword        `json:"keywords"`
+	TemplateURL      string           `json:"template_url"`
+	Method           WebServiceMethod `json:"method"`
+	Parameters       []ParameterDraft `json:"parameters"`
+	BodyContentType  OptString        `json:"body_content_type"`
+	BodyTemplate     OptString        `json:"body_template"`
 	// Defaults to true when a request body is configured. Must be omitted when no body is configured.
 	// Optional bodies are omitted only when unresolved and no child values were supplied.
 	BodyRequired   OptBool                    `json:"body_required"`
 	BodyParameters []ScalarParameterDraft     `json:"body_parameters"`
-	Format         NonBlankString             `json:"format"`
+	Format         string                     `json:"format"`
 	Type           DynamicWebServiceDraftType `json:"type"`
 }
 
@@ -6193,23 +6246,8 @@ func (s *DynamicWebServiceDraft) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
-// GetAccessRights returns the value of AccessRights.
-func (s *DynamicWebServiceDraft) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *DynamicWebServiceDraft) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *DynamicWebServiceDraft) GetCategories() []uuid.UUID {
-	return s.Categories
-}
-
 // GetTemplateURL returns the value of TemplateURL.
-func (s *DynamicWebServiceDraft) GetTemplateURL() NonBlankString {
+func (s *DynamicWebServiceDraft) GetTemplateURL() string {
 	return s.TemplateURL
 }
 
@@ -6224,12 +6262,12 @@ func (s *DynamicWebServiceDraft) GetParameters() []ParameterDraft {
 }
 
 // GetBodyContentType returns the value of BodyContentType.
-func (s *DynamicWebServiceDraft) GetBodyContentType() OptNonBlankString {
+func (s *DynamicWebServiceDraft) GetBodyContentType() OptString {
 	return s.BodyContentType
 }
 
 // GetBodyTemplate returns the value of BodyTemplate.
-func (s *DynamicWebServiceDraft) GetBodyTemplate() OptNonBlankString {
+func (s *DynamicWebServiceDraft) GetBodyTemplate() OptString {
 	return s.BodyTemplate
 }
 
@@ -6244,7 +6282,7 @@ func (s *DynamicWebServiceDraft) GetBodyParameters() []ScalarParameterDraft {
 }
 
 // GetFormat returns the value of Format.
-func (s *DynamicWebServiceDraft) GetFormat() NonBlankString {
+func (s *DynamicWebServiceDraft) GetFormat() string {
 	return s.Format
 }
 
@@ -6283,23 +6321,8 @@ func (s *DynamicWebServiceDraft) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *DynamicWebServiceDraft) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *DynamicWebServiceDraft) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *DynamicWebServiceDraft) SetCategories(val []uuid.UUID) {
-	s.Categories = val
-}
-
 // SetTemplateURL sets the value of TemplateURL.
-func (s *DynamicWebServiceDraft) SetTemplateURL(val NonBlankString) {
+func (s *DynamicWebServiceDraft) SetTemplateURL(val string) {
 	s.TemplateURL = val
 }
 
@@ -6314,12 +6337,12 @@ func (s *DynamicWebServiceDraft) SetParameters(val []ParameterDraft) {
 }
 
 // SetBodyContentType sets the value of BodyContentType.
-func (s *DynamicWebServiceDraft) SetBodyContentType(val OptNonBlankString) {
+func (s *DynamicWebServiceDraft) SetBodyContentType(val OptString) {
 	s.BodyContentType = val
 }
 
 // SetBodyTemplate sets the value of BodyTemplate.
-func (s *DynamicWebServiceDraft) SetBodyTemplate(val OptNonBlankString) {
+func (s *DynamicWebServiceDraft) SetBodyTemplate(val OptString) {
 	s.BodyTemplate = val
 }
 
@@ -6334,7 +6357,7 @@ func (s *DynamicWebServiceDraft) SetBodyParameters(val []ScalarParameterDraft) {
 }
 
 // SetFormat sets the value of Format.
-func (s *DynamicWebServiceDraft) SetFormat(val NonBlankString) {
+func (s *DynamicWebServiceDraft) SetFormat(val string) {
 	s.Format = val
 }
 
@@ -6443,11 +6466,10 @@ type FloatParameter struct {
 	ResourceID     uuid.UUID           `json:"resource_id"`
 	Kind           FloatParameterKind  `json:"kind"`
 	Position       int32               `json:"position"`
-	Name           NonBlankString      `json:"name"`
-	Label          NonBlankString      `json:"label"`
+	Name           string              `json:"name"`
+	Label          string              `json:"label"`
 	Description    OptNilString        `json:"description"`
 	Required       bool                `json:"required"`
-	Property       OptNilString        `json:"property"`
 	Role           OptNilParameterRole `json:"role"`
 	Location       ParameterLocation   `json:"location"`
 	Explode        bool                `json:"explode"`
@@ -6480,12 +6502,12 @@ func (s *FloatParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *FloatParameter) GetName() NonBlankString {
+func (s *FloatParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *FloatParameter) GetLabel() NonBlankString {
+func (s *FloatParameter) GetLabel() string {
 	return s.Label
 }
 
@@ -6497,11 +6519,6 @@ func (s *FloatParameter) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *FloatParameter) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *FloatParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -6570,12 +6587,12 @@ func (s *FloatParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *FloatParameter) SetName(val NonBlankString) {
+func (s *FloatParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *FloatParameter) SetLabel(val NonBlankString) {
+func (s *FloatParameter) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -6587,11 +6604,6 @@ func (s *FloatParameter) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *FloatParameter) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *FloatParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -6644,11 +6656,10 @@ type FloatParameterDraft struct {
 	ResourceID     OptUUID                 `json:"resource_id"`
 	Kind           FloatParameterDraftKind `json:"kind"`
 	Position       int32                   `json:"position"`
-	Name           NonBlankString          `json:"name"`
-	Label          NonBlankString          `json:"label"`
+	Name           string                  `json:"name"`
+	Label          string                  `json:"label"`
 	Description    OptNilString            `json:"description"`
 	Required       bool                    `json:"required"`
-	Property       OptNilString            `json:"property"`
 	Role           OptNilParameterRole     `json:"role"`
 	Location       ParameterLocation       `json:"location"`
 	Explode        bool                    `json:"explode"`
@@ -6676,12 +6687,12 @@ func (s *FloatParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *FloatParameterDraft) GetName() NonBlankString {
+func (s *FloatParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *FloatParameterDraft) GetLabel() NonBlankString {
+func (s *FloatParameterDraft) GetLabel() string {
 	return s.Label
 }
 
@@ -6693,11 +6704,6 @@ func (s *FloatParameterDraft) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *FloatParameterDraft) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *FloatParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -6761,12 +6767,12 @@ func (s *FloatParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *FloatParameterDraft) SetName(val NonBlankString) {
+func (s *FloatParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *FloatParameterDraft) SetLabel(val NonBlankString) {
+func (s *FloatParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -6778,11 +6784,6 @@ func (s *FloatParameterDraft) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *FloatParameterDraft) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *FloatParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -6904,10 +6905,9 @@ type FloatScalarParameter struct {
 	ResourceID  uuid.UUID                `json:"resource_id"`
 	Kind        FloatScalarParameterKind `json:"kind"`
 	Position    int32                    `json:"position"`
-	Name        NonBlankString           `json:"name"`
-	Label       NonBlankString           `json:"label"`
+	Name        string                   `json:"name"`
+	Label       string                   `json:"label"`
 	Description OptNilString             `json:"description"`
-	Property    OptNilString             `json:"property"`
 	Role        OptNilParameterRole      `json:"role"`
 	Required    bool                     `json:"required"`
 	ReadOnly    bool                     `json:"read_only"`
@@ -6938,23 +6938,18 @@ func (s *FloatScalarParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *FloatScalarParameter) GetName() NonBlankString {
+func (s *FloatScalarParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *FloatScalarParameter) GetLabel() NonBlankString {
+func (s *FloatScalarParameter) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *FloatScalarParameter) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *FloatScalarParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -7013,23 +7008,18 @@ func (s *FloatScalarParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *FloatScalarParameter) SetName(val NonBlankString) {
+func (s *FloatScalarParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *FloatScalarParameter) SetLabel(val NonBlankString) {
+func (s *FloatScalarParameter) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *FloatScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *FloatScalarParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -7072,10 +7062,9 @@ type FloatScalarParameterDraft struct {
 	ResourceID  OptUUID                       `json:"resource_id"`
 	Kind        FloatScalarParameterDraftKind `json:"kind"`
 	Position    int32                         `json:"position"`
-	Name        NonBlankString                `json:"name"`
-	Label       NonBlankString                `json:"label"`
+	Name        string                        `json:"name"`
+	Label       string                        `json:"label"`
 	Description OptNilString                  `json:"description"`
-	Property    OptNilString                  `json:"property"`
 	Role        OptNilParameterRole           `json:"role"`
 	Required    bool                          `json:"required"`
 	ReadOnly    bool                          `json:"read_only"`
@@ -7101,23 +7090,18 @@ func (s *FloatScalarParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *FloatScalarParameterDraft) GetName() NonBlankString {
+func (s *FloatScalarParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *FloatScalarParameterDraft) GetLabel() NonBlankString {
+func (s *FloatScalarParameterDraft) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *FloatScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *FloatScalarParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -7171,23 +7155,18 @@ func (s *FloatScalarParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *FloatScalarParameterDraft) SetName(val NonBlankString) {
+func (s *FloatScalarParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *FloatScalarParameterDraft) SetLabel(val NonBlankString) {
+func (s *FloatScalarParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *FloatScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *FloatScalarParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -8110,21 +8089,19 @@ func (s *HTTPDistributionAccessRequestType) UnmarshalText(data []byte) error {
 // Merged schema.
 // Ref: #/components/schemas/HttpWebService
 type HttpWebService struct {
-	ID               uuid.UUID                      `json:"id"`
-	ResourceID       uuid.UUID                      `json:"resource_id"`
-	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider         OptResourceVersionReference    `json:"provider"`
-	DocumentationURI OptURI                         `json:"documentation_uri"`
-	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Keywords         []Keyword                      `json:"keywords"`
-	AccessRights     OptNilString                   `json:"access_rights"`
-	License          OptNilString                   `json:"license"`
-	Categories       []ResourceVersionReference     `json:"categories"`
-	TemplateURL      string                         `json:"template_url"`
-	Method           WebServiceMethod               `json:"method"`
-	Parameters       []Parameter                    `json:"parameters"`
-	BodyContentType  OptNilString                   `json:"body_content_type"`
-	BodyTemplate     OptNilString                   `json:"body_template"`
+	ID         uuid.UUID                      `json:"id"`
+	ResourceID uuid.UUID                      `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptResourceVersionReference    `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI OptURI           `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID      `json:"contact_points"`
+	Keywords         []Keyword        `json:"keywords"`
+	TemplateURL      string           `json:"template_url"`
+	Method           WebServiceMethod `json:"method"`
+	Parameters       []Parameter      `json:"parameters"`
+	BodyContentType  OptNilString     `json:"body_content_type"`
+	BodyTemplate     OptNilString     `json:"body_template"`
 	// Whether the configured request body must be rendered. Omitted when no request body is configured.
 	BodyRequired   OptBool            `json:"body_required"`
 	BodyParameters []ScalarParameter  `json:"body_parameters"`
@@ -8169,21 +8146,6 @@ func (s *HttpWebService) GetContactPoints() []uuid.UUID {
 // GetKeywords returns the value of Keywords.
 func (s *HttpWebService) GetKeywords() []Keyword {
 	return s.Keywords
-}
-
-// GetAccessRights returns the value of AccessRights.
-func (s *HttpWebService) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *HttpWebService) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *HttpWebService) GetCategories() []ResourceVersionReference {
-	return s.Categories
 }
 
 // GetTemplateURL returns the value of TemplateURL.
@@ -8271,21 +8233,6 @@ func (s *HttpWebService) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *HttpWebService) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *HttpWebService) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *HttpWebService) SetCategories(val []ResourceVersionReference) {
-	s.Categories = val
-}
-
 // SetTemplateURL sets the value of TemplateURL.
 func (s *HttpWebService) SetTemplateURL(val string) {
 	s.TemplateURL = val
@@ -8339,25 +8286,23 @@ func (s *HttpWebService) SetAvailableFormats(val []AvailableFormat) {
 // Merged schema.
 // Ref: #/components/schemas/HttpWebServiceDraft
 type HttpWebServiceDraft struct {
-	ResourceID       OptUUID                        `json:"resource_id"`
-	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider         OptUUID                        `json:"provider"`
-	DocumentationURI OptURI                         `json:"documentation_uri"`
-	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Keywords         []Keyword                      `json:"keywords"`
-	AccessRights     OptNilString                   `json:"access_rights"`
-	License          OptNilString                   `json:"license"`
-	Categories       []uuid.UUID                    `json:"categories"`
-	TemplateURL      NonBlankString                 `json:"template_url"`
-	Method           WebServiceMethod               `json:"method"`
-	Parameters       []ParameterDraft               `json:"parameters"`
-	BodyContentType  OptNonBlankString              `json:"body_content_type"`
-	BodyTemplate     OptNonBlankString              `json:"body_template"`
+	ResourceID OptUUID                        `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptUUID                        `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI OptURI           `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID      `json:"contact_points"`
+	Keywords         []Keyword        `json:"keywords"`
+	TemplateURL      string           `json:"template_url"`
+	Method           WebServiceMethod `json:"method"`
+	Parameters       []ParameterDraft `json:"parameters"`
+	BodyContentType  OptString        `json:"body_content_type"`
+	BodyTemplate     OptString        `json:"body_template"`
 	// Defaults to true when a request body is configured. Must be omitted when no body is configured.
 	// Optional bodies are omitted only when unresolved and no child values were supplied.
 	BodyRequired   OptBool                 `json:"body_required"`
 	BodyParameters []ScalarParameterDraft  `json:"body_parameters"`
-	Format         NonBlankString          `json:"format"`
+	Format         string                  `json:"format"`
 	Type           HttpWebServiceDraftType `json:"type"`
 }
 
@@ -8391,23 +8336,8 @@ func (s *HttpWebServiceDraft) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
-// GetAccessRights returns the value of AccessRights.
-func (s *HttpWebServiceDraft) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *HttpWebServiceDraft) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *HttpWebServiceDraft) GetCategories() []uuid.UUID {
-	return s.Categories
-}
-
 // GetTemplateURL returns the value of TemplateURL.
-func (s *HttpWebServiceDraft) GetTemplateURL() NonBlankString {
+func (s *HttpWebServiceDraft) GetTemplateURL() string {
 	return s.TemplateURL
 }
 
@@ -8422,12 +8352,12 @@ func (s *HttpWebServiceDraft) GetParameters() []ParameterDraft {
 }
 
 // GetBodyContentType returns the value of BodyContentType.
-func (s *HttpWebServiceDraft) GetBodyContentType() OptNonBlankString {
+func (s *HttpWebServiceDraft) GetBodyContentType() OptString {
 	return s.BodyContentType
 }
 
 // GetBodyTemplate returns the value of BodyTemplate.
-func (s *HttpWebServiceDraft) GetBodyTemplate() OptNonBlankString {
+func (s *HttpWebServiceDraft) GetBodyTemplate() OptString {
 	return s.BodyTemplate
 }
 
@@ -8442,7 +8372,7 @@ func (s *HttpWebServiceDraft) GetBodyParameters() []ScalarParameterDraft {
 }
 
 // GetFormat returns the value of Format.
-func (s *HttpWebServiceDraft) GetFormat() NonBlankString {
+func (s *HttpWebServiceDraft) GetFormat() string {
 	return s.Format
 }
 
@@ -8481,23 +8411,8 @@ func (s *HttpWebServiceDraft) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *HttpWebServiceDraft) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *HttpWebServiceDraft) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *HttpWebServiceDraft) SetCategories(val []uuid.UUID) {
-	s.Categories = val
-}
-
 // SetTemplateURL sets the value of TemplateURL.
-func (s *HttpWebServiceDraft) SetTemplateURL(val NonBlankString) {
+func (s *HttpWebServiceDraft) SetTemplateURL(val string) {
 	s.TemplateURL = val
 }
 
@@ -8512,12 +8427,12 @@ func (s *HttpWebServiceDraft) SetParameters(val []ParameterDraft) {
 }
 
 // SetBodyContentType sets the value of BodyContentType.
-func (s *HttpWebServiceDraft) SetBodyContentType(val OptNonBlankString) {
+func (s *HttpWebServiceDraft) SetBodyContentType(val OptString) {
 	s.BodyContentType = val
 }
 
 // SetBodyTemplate sets the value of BodyTemplate.
-func (s *HttpWebServiceDraft) SetBodyTemplate(val OptNonBlankString) {
+func (s *HttpWebServiceDraft) SetBodyTemplate(val OptString) {
 	s.BodyTemplate = val
 }
 
@@ -8532,7 +8447,7 @@ func (s *HttpWebServiceDraft) SetBodyParameters(val []ScalarParameterDraft) {
 }
 
 // SetFormat sets the value of Format.
-func (s *HttpWebServiceDraft) SetFormat(val NonBlankString) {
+func (s *HttpWebServiceDraft) SetFormat(val string) {
 	s.Format = val
 }
 
@@ -8648,27 +8563,27 @@ func (s *Identifier) SetValue(val string) {
 
 // Ref: #/components/schemas/IdentifierInput
 type IdentifierInput struct {
-	Type  NonBlankString `json:"type"`
-	Value NonBlankString `json:"value"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 // GetType returns the value of Type.
-func (s *IdentifierInput) GetType() NonBlankString {
+func (s *IdentifierInput) GetType() string {
 	return s.Type
 }
 
 // GetValue returns the value of Value.
-func (s *IdentifierInput) GetValue() NonBlankString {
+func (s *IdentifierInput) GetValue() string {
 	return s.Value
 }
 
 // SetType sets the value of Type.
-func (s *IdentifierInput) SetType(val NonBlankString) {
+func (s *IdentifierInput) SetType(val string) {
 	s.Type = val
 }
 
 // SetValue sets the value of Value.
-func (s *IdentifierInput) SetValue(val NonBlankString) {
+func (s *IdentifierInput) SetValue(val string) {
 	s.Value = val
 }
 
@@ -8858,11 +8773,10 @@ type IntegerParameter struct {
 	ResourceID     uuid.UUID            `json:"resource_id"`
 	Kind           IntegerParameterKind `json:"kind"`
 	Position       int32                `json:"position"`
-	Name           NonBlankString       `json:"name"`
-	Label          NonBlankString       `json:"label"`
+	Name           string               `json:"name"`
+	Label          string               `json:"label"`
 	Description    OptNilString         `json:"description"`
 	Required       bool                 `json:"required"`
-	Property       OptNilString         `json:"property"`
 	Role           OptNilParameterRole  `json:"role"`
 	Location       ParameterLocation    `json:"location"`
 	Explode        bool                 `json:"explode"`
@@ -8895,12 +8809,12 @@ func (s *IntegerParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *IntegerParameter) GetName() NonBlankString {
+func (s *IntegerParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *IntegerParameter) GetLabel() NonBlankString {
+func (s *IntegerParameter) GetLabel() string {
 	return s.Label
 }
 
@@ -8912,11 +8826,6 @@ func (s *IntegerParameter) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *IntegerParameter) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *IntegerParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -8985,12 +8894,12 @@ func (s *IntegerParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *IntegerParameter) SetName(val NonBlankString) {
+func (s *IntegerParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *IntegerParameter) SetLabel(val NonBlankString) {
+func (s *IntegerParameter) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -9002,11 +8911,6 @@ func (s *IntegerParameter) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *IntegerParameter) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *IntegerParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -9059,11 +8963,10 @@ type IntegerParameterDraft struct {
 	ResourceID     OptUUID                   `json:"resource_id"`
 	Kind           IntegerParameterDraftKind `json:"kind"`
 	Position       int32                     `json:"position"`
-	Name           NonBlankString            `json:"name"`
-	Label          NonBlankString            `json:"label"`
+	Name           string                    `json:"name"`
+	Label          string                    `json:"label"`
 	Description    OptNilString              `json:"description"`
 	Required       bool                      `json:"required"`
-	Property       OptNilString              `json:"property"`
 	Role           OptNilParameterRole       `json:"role"`
 	Location       ParameterLocation         `json:"location"`
 	Explode        bool                      `json:"explode"`
@@ -9091,12 +8994,12 @@ func (s *IntegerParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *IntegerParameterDraft) GetName() NonBlankString {
+func (s *IntegerParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *IntegerParameterDraft) GetLabel() NonBlankString {
+func (s *IntegerParameterDraft) GetLabel() string {
 	return s.Label
 }
 
@@ -9108,11 +9011,6 @@ func (s *IntegerParameterDraft) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *IntegerParameterDraft) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *IntegerParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -9176,12 +9074,12 @@ func (s *IntegerParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *IntegerParameterDraft) SetName(val NonBlankString) {
+func (s *IntegerParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *IntegerParameterDraft) SetLabel(val NonBlankString) {
+func (s *IntegerParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -9193,11 +9091,6 @@ func (s *IntegerParameterDraft) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *IntegerParameterDraft) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *IntegerParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -9319,10 +9212,9 @@ type IntegerScalarParameter struct {
 	ResourceID  uuid.UUID                  `json:"resource_id"`
 	Kind        IntegerScalarParameterKind `json:"kind"`
 	Position    int32                      `json:"position"`
-	Name        NonBlankString             `json:"name"`
-	Label       NonBlankString             `json:"label"`
+	Name        string                     `json:"name"`
+	Label       string                     `json:"label"`
 	Description OptNilString               `json:"description"`
-	Property    OptNilString               `json:"property"`
 	Role        OptNilParameterRole        `json:"role"`
 	Required    bool                       `json:"required"`
 	ReadOnly    bool                       `json:"read_only"`
@@ -9353,23 +9245,18 @@ func (s *IntegerScalarParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *IntegerScalarParameter) GetName() NonBlankString {
+func (s *IntegerScalarParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *IntegerScalarParameter) GetLabel() NonBlankString {
+func (s *IntegerScalarParameter) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *IntegerScalarParameter) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *IntegerScalarParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -9428,23 +9315,18 @@ func (s *IntegerScalarParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *IntegerScalarParameter) SetName(val NonBlankString) {
+func (s *IntegerScalarParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *IntegerScalarParameter) SetLabel(val NonBlankString) {
+func (s *IntegerScalarParameter) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *IntegerScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *IntegerScalarParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -9487,10 +9369,9 @@ type IntegerScalarParameterDraft struct {
 	ResourceID  OptUUID                         `json:"resource_id"`
 	Kind        IntegerScalarParameterDraftKind `json:"kind"`
 	Position    int32                           `json:"position"`
-	Name        NonBlankString                  `json:"name"`
-	Label       NonBlankString                  `json:"label"`
+	Name        string                          `json:"name"`
+	Label       string                          `json:"label"`
 	Description OptNilString                    `json:"description"`
-	Property    OptNilString                    `json:"property"`
 	Role        OptNilParameterRole             `json:"role"`
 	Required    bool                            `json:"required"`
 	ReadOnly    bool                            `json:"read_only"`
@@ -9516,23 +9397,18 @@ func (s *IntegerScalarParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *IntegerScalarParameterDraft) GetName() NonBlankString {
+func (s *IntegerScalarParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *IntegerScalarParameterDraft) GetLabel() NonBlankString {
+func (s *IntegerScalarParameterDraft) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *IntegerScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *IntegerScalarParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -9586,23 +9462,18 @@ func (s *IntegerScalarParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *IntegerScalarParameterDraft) SetName(val NonBlankString) {
+func (s *IntegerScalarParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *IntegerScalarParameterDraft) SetLabel(val NonBlankString) {
+func (s *IntegerScalarParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *IntegerScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *IntegerScalarParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -10259,8 +10130,6 @@ func (o NilUUID) Or(d uuid.UUID) uuid.UUID {
 	}
 	return d
 }
-
-type NonBlankString string
 
 // Ref: #/components/schemas/NotificationChannel
 type NotificationChannel string
@@ -11157,6 +11026,74 @@ func (o OptNilDatasetAccrualPeriodicity) Or(d DatasetAccrualPeriodicity) Dataset
 	return d
 }
 
+// NewOptNilDatasetType returns new OptNilDatasetType with value set to v.
+func NewOptNilDatasetType(v DatasetType) OptNilDatasetType {
+	return OptNilDatasetType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilDatasetType is optional nullable DatasetType.
+type OptNilDatasetType struct {
+	Value DatasetType
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilDatasetType was set.
+func (o OptNilDatasetType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilDatasetType) Reset() {
+	var v DatasetType
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilDatasetType) SetTo(v DatasetType) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilDatasetType) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilDatasetType) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v DatasetType
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilDatasetType) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilDatasetType) Get() (v DatasetType, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilDatasetType) Or(d DatasetType) DatasetType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilDateTime returns new OptNilDateTime with value set to v.
 func NewOptNilDateTime(v time.Time) OptNilDateTime {
 	return OptNilDateTime{
@@ -11899,52 +11836,6 @@ func (o OptNilWebServiceVisibleOnArray) Get() (v []WebServiceVisibleOn, ok bool)
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilWebServiceVisibleOnArray) Or(d []WebServiceVisibleOn) []WebServiceVisibleOn {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptNonBlankString returns new OptNonBlankString with value set to v.
-func NewOptNonBlankString(v NonBlankString) OptNonBlankString {
-	return OptNonBlankString{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptNonBlankString is optional NonBlankString.
-type OptNonBlankString struct {
-	Value NonBlankString
-	Set   bool
-}
-
-// IsSet returns true if OptNonBlankString was set.
-func (o OptNonBlankString) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptNonBlankString) Reset() {
-	var v NonBlankString
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptNonBlankString) SetTo(v NonBlankString) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptNonBlankString) Get() (v NonBlankString, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptNonBlankString) Or(d NonBlankString) NonBlankString {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -13347,16 +13238,16 @@ func (s *Reference) SetName(val string) {
 
 // Ref: #/components/schemas/RejectResourceRequest
 type RejectResourceRequest struct {
-	Note NonBlankString `json:"note"`
+	Note string `json:"note"`
 }
 
 // GetNote returns the value of Note.
-func (s *RejectResourceRequest) GetNote() NonBlankString {
+func (s *RejectResourceRequest) GetNote() string {
 	return s.Note
 }
 
 // SetNote sets the value of Note.
-func (s *RejectResourceRequest) SetNote(val NonBlankString) {
+func (s *RejectResourceRequest) SetNote(val string) {
 	s.Note = val
 }
 
@@ -13368,12 +13259,12 @@ type RemoveGroupRoleNoContent struct{}
 
 // Ref: #/components/schemas/ReplaceCategoryRequest
 type ReplaceCategoryRequest struct {
-	Name             NonBlankString `json:"name"`
-	ParentCategoryID NilUUID        `json:"parent_category_id"`
+	Name             string  `json:"name"`
+	ParentCategoryID NilUUID `json:"parent_category_id"`
 }
 
 // GetName returns the value of Name.
-func (s *ReplaceCategoryRequest) GetName() NonBlankString {
+func (s *ReplaceCategoryRequest) GetName() string {
 	return s.Name
 }
 
@@ -13383,7 +13274,7 @@ func (s *ReplaceCategoryRequest) GetParentCategoryID() NilUUID {
 }
 
 // SetName sets the value of Name.
-func (s *ReplaceCategoryRequest) SetName(val NonBlankString) {
+func (s *ReplaceCategoryRequest) SetName(val string) {
 	s.Name = val
 }
 
@@ -13562,18 +13453,18 @@ func (s *ReplaceDatasetDraftRequestResourceType) UnmarshalText(data []byte) erro
 
 // Ref: #/components/schemas/ReplaceGroupRequest
 type ReplaceGroupRequest struct {
-	Name        NonBlankString `json:"name"`
-	Description OptNilString   `json:"description"`
-	Label       OptNilString   `json:"label"`
-	Logo        OptNilString   `json:"logo"`
-	Page        OptNilString   `json:"page"`
-	Color       OptNilString   `json:"color"`
-	Position    OptInt32       `json:"position"`
-	ConceptID   uuid.UUID      `json:"concept_id"`
+	Name        string       `json:"name"`
+	Description OptNilString `json:"description"`
+	Label       OptNilString `json:"label"`
+	Logo        OptNilString `json:"logo"`
+	Page        OptNilString `json:"page"`
+	Color       OptNilString `json:"color"`
+	Position    OptInt32     `json:"position"`
+	ConceptID   uuid.UUID    `json:"concept_id"`
 }
 
 // GetName returns the value of Name.
-func (s *ReplaceGroupRequest) GetName() NonBlankString {
+func (s *ReplaceGroupRequest) GetName() string {
 	return s.Name
 }
 
@@ -13613,7 +13504,7 @@ func (s *ReplaceGroupRequest) GetConceptID() uuid.UUID {
 }
 
 // SetName sets the value of Name.
-func (s *ReplaceGroupRequest) SetName(val NonBlankString) {
+func (s *ReplaceGroupRequest) SetName(val string) {
 	s.Name = val
 }
 
@@ -13654,17 +13545,19 @@ func (s *ReplaceGroupRequest) SetConceptID(val uuid.UUID) {
 
 // Ref: #/components/schemas/ReplaceOrganizationRequest
 type ReplaceOrganizationRequest struct {
-	Name        NonBlankString      `json:"name"`
-	Address     OrganizationAddress `json:"address"`
-	LogoURL     NilURI              `json:"logo_url"`
-	PageURL     NilURI              `json:"page_url"`
-	Email       NilString           `json:"email"`
-	Identifiers []IdentifierInput   `json:"identifiers"`
-	Parents     []uuid.UUID         `json:"parents"`
+	Name    string              `json:"name"`
+	Address OrganizationAddress `json:"address"`
+	// Absolute HTTP(S) URL with a host.
+	LogoURL NilURI `json:"logo_url"`
+	// Absolute HTTP(S) URL with a host.
+	PageURL     NilURI            `json:"page_url"`
+	Email       NilString         `json:"email"`
+	Identifiers []IdentifierInput `json:"identifiers"`
+	Parents     []uuid.UUID       `json:"parents"`
 }
 
 // GetName returns the value of Name.
-func (s *ReplaceOrganizationRequest) GetName() NonBlankString {
+func (s *ReplaceOrganizationRequest) GetName() string {
 	return s.Name
 }
 
@@ -13699,7 +13592,7 @@ func (s *ReplaceOrganizationRequest) GetParents() []uuid.UUID {
 }
 
 // SetName sets the value of Name.
-func (s *ReplaceOrganizationRequest) SetName(val NonBlankString) {
+func (s *ReplaceOrganizationRequest) SetName(val string) {
 	s.Name = val
 }
 
@@ -14053,7 +13946,7 @@ type ResourceVersion struct {
 	UpdatedAt     time.Time               `json:"updated_at"`
 	RejectedBy    OptString               `json:"rejected_by"`
 	RejectedAt    OptDateTime             `json:"rejected_at"`
-	RejectionNote OptNonBlankString       `json:"rejection_note"`
+	RejectionNote OptString               `json:"rejection_note"`
 	Metadata      ResourceVersionMetadata `json:"metadata"`
 }
 
@@ -14113,7 +14006,7 @@ func (s *ResourceVersion) GetRejectedAt() OptDateTime {
 }
 
 // GetRejectionNote returns the value of RejectionNote.
-func (s *ResourceVersion) GetRejectionNote() OptNonBlankString {
+func (s *ResourceVersion) GetRejectionNote() OptString {
 	return s.RejectionNote
 }
 
@@ -14178,7 +14071,7 @@ func (s *ResourceVersion) SetRejectedAt(val OptDateTime) {
 }
 
 // SetRejectionNote sets the value of RejectionNote.
-func (s *ResourceVersion) SetRejectionNote(val OptNonBlankString) {
+func (s *ResourceVersion) SetRejectionNote(val OptString) {
 	s.RejectionNote = val
 }
 
@@ -15140,14 +15033,16 @@ func (s *SoftwareApplicationDiscoveryItemType) UnmarshalText(data []byte) error 
 
 // Ref: #/components/schemas/SoftwareApplicationDraftMetadata
 type SoftwareApplicationDraftMetadata struct {
-	Name             NonBlankString             `json:"name"`
-	Description      NonBlankString             `json:"description"`
-	Keywords         []Keyword                  `json:"keywords"`
-	License          OptNilString               `json:"license"`
-	Version          OptNilString               `json:"version"`
-	DownloadURL      OptURI                     `json:"download_url"`
-	Requirements     OptNilString               `json:"requirements"`
-	OperatingSystem  OptNilString               `json:"operating_system"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Keywords    []Keyword    `json:"keywords"`
+	License     OptNilString `json:"license"`
+	Version     OptNilString `json:"version"`
+	// Absolute HTTP(S) URL with a host.
+	DownloadURL     OptURI       `json:"download_url"`
+	Requirements    OptNilString `json:"requirements"`
+	OperatingSystem OptNilString `json:"operating_system"`
+	// Absolute HTTP(S) URL with a host.
 	MainEntityOfPage OptURI                     `json:"main_entity_of_page"`
 	Creators         []uuid.UUID                `json:"creators"`
 	Identifiers      []VersionedIdentifierInput `json:"identifiers"`
@@ -15156,12 +15051,12 @@ type SoftwareApplicationDraftMetadata struct {
 }
 
 // GetName returns the value of Name.
-func (s *SoftwareApplicationDraftMetadata) GetName() NonBlankString {
+func (s *SoftwareApplicationDraftMetadata) GetName() string {
 	return s.Name
 }
 
 // GetDescription returns the value of Description.
-func (s *SoftwareApplicationDraftMetadata) GetDescription() NonBlankString {
+func (s *SoftwareApplicationDraftMetadata) GetDescription() string {
 	return s.Description
 }
 
@@ -15221,12 +15116,12 @@ func (s *SoftwareApplicationDraftMetadata) GetContactPoints() []uuid.UUID {
 }
 
 // SetName sets the value of Name.
-func (s *SoftwareApplicationDraftMetadata) SetName(val NonBlankString) {
+func (s *SoftwareApplicationDraftMetadata) SetName(val string) {
 	s.Name = val
 }
 
 // SetDescription sets the value of Description.
-func (s *SoftwareApplicationDraftMetadata) SetDescription(val NonBlankString) {
+func (s *SoftwareApplicationDraftMetadata) SetDescription(val string) {
 	s.Description = val
 }
 
@@ -15287,20 +15182,22 @@ func (s *SoftwareApplicationDraftMetadata) SetContactPoints(val []uuid.UUID) {
 
 // Ref: #/components/schemas/SoftwareApplicationResourceMetadata
 type SoftwareApplicationResourceMetadata struct {
-	ResourceType     SoftwareApplicationResourceMetadataResourceType `json:"resource_type"`
-	Name             string                                          `json:"name"`
-	Description      string                                          `json:"description"`
-	MainEntityOfPage OptNilString                                    `json:"main_entity_of_page"`
-	License          OptNilString                                    `json:"license"`
-	Version          OptNilString                                    `json:"version"`
-	Keywords         []Keyword                                       `json:"keywords"`
-	DownloadURL      OptNilString                                    `json:"download_url"`
-	Requirements     OptNilString                                    `json:"requirements"`
-	OperatingSystem  OptNilString                                    `json:"operating_system"`
-	Creators         []ResourceVersionReference                      `json:"creators"`
-	Identifiers      []VersionedIdentifier                           `json:"identifiers"`
-	ContactPoints    []uuid.UUID                                     `json:"contact_points"`
-	Categories       []ResourceVersionReference                      `json:"categories"`
+	ResourceType SoftwareApplicationResourceMetadataResourceType `json:"resource_type"`
+	Name         string                                          `json:"name"`
+	Description  string                                          `json:"description"`
+	// Absolute HTTP(S) URL with a host.
+	MainEntityOfPage OptNilURI    `json:"main_entity_of_page"`
+	License          OptNilString `json:"license"`
+	Version          OptNilString `json:"version"`
+	Keywords         []Keyword    `json:"keywords"`
+	// Absolute HTTP(S) URL with a host.
+	DownloadURL     OptNilURI                  `json:"download_url"`
+	Requirements    OptNilString               `json:"requirements"`
+	OperatingSystem OptNilString               `json:"operating_system"`
+	Creators        []ResourceVersionReference `json:"creators"`
+	Identifiers     []VersionedIdentifier      `json:"identifiers"`
+	ContactPoints   []uuid.UUID                `json:"contact_points"`
+	Categories      []ResourceVersionReference `json:"categories"`
 }
 
 // GetResourceType returns the value of ResourceType.
@@ -15319,7 +15216,7 @@ func (s *SoftwareApplicationResourceMetadata) GetDescription() string {
 }
 
 // GetMainEntityOfPage returns the value of MainEntityOfPage.
-func (s *SoftwareApplicationResourceMetadata) GetMainEntityOfPage() OptNilString {
+func (s *SoftwareApplicationResourceMetadata) GetMainEntityOfPage() OptNilURI {
 	return s.MainEntityOfPage
 }
 
@@ -15339,7 +15236,7 @@ func (s *SoftwareApplicationResourceMetadata) GetKeywords() []Keyword {
 }
 
 // GetDownloadURL returns the value of DownloadURL.
-func (s *SoftwareApplicationResourceMetadata) GetDownloadURL() OptNilString {
+func (s *SoftwareApplicationResourceMetadata) GetDownloadURL() OptNilURI {
 	return s.DownloadURL
 }
 
@@ -15389,7 +15286,7 @@ func (s *SoftwareApplicationResourceMetadata) SetDescription(val string) {
 }
 
 // SetMainEntityOfPage sets the value of MainEntityOfPage.
-func (s *SoftwareApplicationResourceMetadata) SetMainEntityOfPage(val OptNilString) {
+func (s *SoftwareApplicationResourceMetadata) SetMainEntityOfPage(val OptNilURI) {
 	s.MainEntityOfPage = val
 }
 
@@ -15409,7 +15306,7 @@ func (s *SoftwareApplicationResourceMetadata) SetKeywords(val []Keyword) {
 }
 
 // SetDownloadURL sets the value of DownloadURL.
-func (s *SoftwareApplicationResourceMetadata) SetDownloadURL(val OptNilString) {
+func (s *SoftwareApplicationResourceMetadata) SetDownloadURL(val OptNilURI) {
 	s.DownloadURL = val
 }
 
@@ -15639,29 +15536,31 @@ func (s *SoftwareSourceCodeDiscoveryItemType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/SoftwareSourceCodeDraftMetadata
 type SoftwareSourceCodeDraftMetadata struct {
-	Name                 NonBlankString             `json:"name"`
-	Description          NonBlankString             `json:"description"`
-	Keywords             []Keyword                  `json:"keywords"`
-	Repository           OptURI                     `json:"repository"`
-	ProgrammingLanguage  OptString                  `json:"programming_language"`
-	License              OptNilString               `json:"license"`
-	SoftwareRequirements OptNilString               `json:"software_requirements"`
-	RuntimePlatform      OptNilString               `json:"runtime_platform"`
-	MainEntityOfPage     OptURI                     `json:"main_entity_of_page"`
-	Version              OptNilString               `json:"version"`
-	Creators             []uuid.UUID                `json:"creators"`
-	Identifiers          []VersionedIdentifierInput `json:"identifiers"`
-	Categories           []uuid.UUID                `json:"categories"`
-	ContactPoints        []uuid.UUID                `json:"contact_points"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Keywords    []Keyword `json:"keywords"`
+	// Absolute HTTP(S) URL with a host.
+	Repository           OptURI       `json:"repository"`
+	ProgrammingLanguage  OptString    `json:"programming_language"`
+	License              OptNilString `json:"license"`
+	SoftwareRequirements OptNilString `json:"software_requirements"`
+	RuntimePlatform      OptNilString `json:"runtime_platform"`
+	// Absolute HTTP(S) URL with a host.
+	MainEntityOfPage OptURI                     `json:"main_entity_of_page"`
+	Version          OptNilString               `json:"version"`
+	Creators         []uuid.UUID                `json:"creators"`
+	Identifiers      []VersionedIdentifierInput `json:"identifiers"`
+	Categories       []uuid.UUID                `json:"categories"`
+	ContactPoints    []uuid.UUID                `json:"contact_points"`
 }
 
 // GetName returns the value of Name.
-func (s *SoftwareSourceCodeDraftMetadata) GetName() NonBlankString {
+func (s *SoftwareSourceCodeDraftMetadata) GetName() string {
 	return s.Name
 }
 
 // GetDescription returns the value of Description.
-func (s *SoftwareSourceCodeDraftMetadata) GetDescription() NonBlankString {
+func (s *SoftwareSourceCodeDraftMetadata) GetDescription() string {
 	return s.Description
 }
 
@@ -15726,12 +15625,12 @@ func (s *SoftwareSourceCodeDraftMetadata) GetContactPoints() []uuid.UUID {
 }
 
 // SetName sets the value of Name.
-func (s *SoftwareSourceCodeDraftMetadata) SetName(val NonBlankString) {
+func (s *SoftwareSourceCodeDraftMetadata) SetName(val string) {
 	s.Name = val
 }
 
 // SetDescription sets the value of Description.
-func (s *SoftwareSourceCodeDraftMetadata) SetDescription(val NonBlankString) {
+func (s *SoftwareSourceCodeDraftMetadata) SetDescription(val string) {
 	s.Description = val
 }
 
@@ -15797,21 +15696,23 @@ func (s *SoftwareSourceCodeDraftMetadata) SetContactPoints(val []uuid.UUID) {
 
 // Ref: #/components/schemas/SoftwareSourceCodeResourceMetadata
 type SoftwareSourceCodeResourceMetadata struct {
-	ResourceType         SoftwareSourceCodeResourceMetadataResourceType `json:"resource_type"`
-	Name                 string                                         `json:"name"`
-	Description          string                                         `json:"description"`
-	ProgrammingLanguage  OptNilString                                   `json:"programming_language"`
-	Keywords             []Keyword                                      `json:"keywords"`
-	Repository           OptNilString                                   `json:"repository"`
-	License              OptNilString                                   `json:"license"`
-	SoftwareRequirements OptNilString                                   `json:"software_requirements"`
-	RuntimePlatform      OptNilString                                   `json:"runtime_platform"`
-	MainEntityOfPage     OptNilString                                   `json:"main_entity_of_page"`
-	Version              OptNilString                                   `json:"version"`
-	Creators             []ResourceVersionReference                     `json:"creators"`
-	Identifiers          []VersionedIdentifier                          `json:"identifiers"`
-	ContactPoints        []uuid.UUID                                    `json:"contact_points"`
-	Categories           []ResourceVersionReference                     `json:"categories"`
+	ResourceType        SoftwareSourceCodeResourceMetadataResourceType `json:"resource_type"`
+	Name                string                                         `json:"name"`
+	Description         string                                         `json:"description"`
+	ProgrammingLanguage OptNilString                                   `json:"programming_language"`
+	Keywords            []Keyword                                      `json:"keywords"`
+	// Absolute HTTP(S) URL with a host.
+	Repository           OptNilURI    `json:"repository"`
+	License              OptNilString `json:"license"`
+	SoftwareRequirements OptNilString `json:"software_requirements"`
+	RuntimePlatform      OptNilString `json:"runtime_platform"`
+	// Absolute HTTP(S) URL with a host.
+	MainEntityOfPage OptNilURI                  `json:"main_entity_of_page"`
+	Version          OptNilString               `json:"version"`
+	Creators         []ResourceVersionReference `json:"creators"`
+	Identifiers      []VersionedIdentifier      `json:"identifiers"`
+	ContactPoints    []uuid.UUID                `json:"contact_points"`
+	Categories       []ResourceVersionReference `json:"categories"`
 }
 
 // GetResourceType returns the value of ResourceType.
@@ -15840,7 +15741,7 @@ func (s *SoftwareSourceCodeResourceMetadata) GetKeywords() []Keyword {
 }
 
 // GetRepository returns the value of Repository.
-func (s *SoftwareSourceCodeResourceMetadata) GetRepository() OptNilString {
+func (s *SoftwareSourceCodeResourceMetadata) GetRepository() OptNilURI {
 	return s.Repository
 }
 
@@ -15860,7 +15761,7 @@ func (s *SoftwareSourceCodeResourceMetadata) GetRuntimePlatform() OptNilString {
 }
 
 // GetMainEntityOfPage returns the value of MainEntityOfPage.
-func (s *SoftwareSourceCodeResourceMetadata) GetMainEntityOfPage() OptNilString {
+func (s *SoftwareSourceCodeResourceMetadata) GetMainEntityOfPage() OptNilURI {
 	return s.MainEntityOfPage
 }
 
@@ -15915,7 +15816,7 @@ func (s *SoftwareSourceCodeResourceMetadata) SetKeywords(val []Keyword) {
 }
 
 // SetRepository sets the value of Repository.
-func (s *SoftwareSourceCodeResourceMetadata) SetRepository(val OptNilString) {
+func (s *SoftwareSourceCodeResourceMetadata) SetRepository(val OptNilURI) {
 	s.Repository = val
 }
 
@@ -15935,7 +15836,7 @@ func (s *SoftwareSourceCodeResourceMetadata) SetRuntimePlatform(val OptNilString
 }
 
 // SetMainEntityOfPage sets the value of MainEntityOfPage.
-func (s *SoftwareSourceCodeResourceMetadata) SetMainEntityOfPage(val OptNilString) {
+func (s *SoftwareSourceCodeResourceMetadata) SetMainEntityOfPage(val OptNilURI) {
 	s.MainEntityOfPage = val
 }
 
@@ -16030,11 +15931,10 @@ type StringParameter struct {
 	ResourceID     uuid.UUID           `json:"resource_id"`
 	Kind           StringParameterKind `json:"kind"`
 	Position       int32               `json:"position"`
-	Name           NonBlankString      `json:"name"`
-	Label          NonBlankString      `json:"label"`
+	Name           string              `json:"name"`
+	Label          string              `json:"label"`
 	Description    OptNilString        `json:"description"`
 	Required       bool                `json:"required"`
-	Property       OptNilString        `json:"property"`
 	Role           OptNilParameterRole `json:"role"`
 	Location       ParameterLocation   `json:"location"`
 	Explode        bool                `json:"explode"`
@@ -16066,12 +15966,12 @@ func (s *StringParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *StringParameter) GetName() NonBlankString {
+func (s *StringParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *StringParameter) GetLabel() NonBlankString {
+func (s *StringParameter) GetLabel() string {
 	return s.Label
 }
 
@@ -16083,11 +15983,6 @@ func (s *StringParameter) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *StringParameter) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *StringParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -16151,12 +16046,12 @@ func (s *StringParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *StringParameter) SetName(val NonBlankString) {
+func (s *StringParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *StringParameter) SetLabel(val NonBlankString) {
+func (s *StringParameter) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -16168,11 +16063,6 @@ func (s *StringParameter) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *StringParameter) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *StringParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -16220,11 +16110,10 @@ type StringParameterDraft struct {
 	ResourceID     OptUUID                  `json:"resource_id"`
 	Kind           StringParameterDraftKind `json:"kind"`
 	Position       int32                    `json:"position"`
-	Name           NonBlankString           `json:"name"`
-	Label          NonBlankString           `json:"label"`
+	Name           string                   `json:"name"`
+	Label          string                   `json:"label"`
 	Description    OptNilString             `json:"description"`
 	Required       bool                     `json:"required"`
-	Property       OptNilString             `json:"property"`
 	Role           OptNilParameterRole      `json:"role"`
 	Location       ParameterLocation        `json:"location"`
 	Explode        bool                     `json:"explode"`
@@ -16251,12 +16140,12 @@ func (s *StringParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *StringParameterDraft) GetName() NonBlankString {
+func (s *StringParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *StringParameterDraft) GetLabel() NonBlankString {
+func (s *StringParameterDraft) GetLabel() string {
 	return s.Label
 }
 
@@ -16268,11 +16157,6 @@ func (s *StringParameterDraft) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *StringParameterDraft) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *StringParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -16331,12 +16215,12 @@ func (s *StringParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *StringParameterDraft) SetName(val NonBlankString) {
+func (s *StringParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *StringParameterDraft) SetLabel(val NonBlankString) {
+func (s *StringParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -16348,11 +16232,6 @@ func (s *StringParameterDraft) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *StringParameterDraft) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *StringParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -16469,10 +16348,9 @@ type StringScalarParameter struct {
 	ResourceID  uuid.UUID                 `json:"resource_id"`
 	Kind        StringScalarParameterKind `json:"kind"`
 	Position    int32                     `json:"position"`
-	Name        NonBlankString            `json:"name"`
-	Label       NonBlankString            `json:"label"`
+	Name        string                    `json:"name"`
+	Label       string                    `json:"label"`
 	Description OptNilString              `json:"description"`
-	Property    OptNilString              `json:"property"`
 	Role        OptNilParameterRole       `json:"role"`
 	Required    bool                      `json:"required"`
 	ReadOnly    bool                      `json:"read_only"`
@@ -16502,23 +16380,18 @@ func (s *StringScalarParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *StringScalarParameter) GetName() NonBlankString {
+func (s *StringScalarParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *StringScalarParameter) GetLabel() NonBlankString {
+func (s *StringScalarParameter) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *StringScalarParameter) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *StringScalarParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -16572,23 +16445,18 @@ func (s *StringScalarParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *StringScalarParameter) SetName(val NonBlankString) {
+func (s *StringScalarParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *StringScalarParameter) SetLabel(val NonBlankString) {
+func (s *StringScalarParameter) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *StringScalarParameter) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *StringScalarParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -16626,10 +16494,9 @@ type StringScalarParameterDraft struct {
 	ResourceID  OptUUID                        `json:"resource_id"`
 	Kind        StringScalarParameterDraftKind `json:"kind"`
 	Position    int32                          `json:"position"`
-	Name        NonBlankString                 `json:"name"`
-	Label       NonBlankString                 `json:"label"`
+	Name        string                         `json:"name"`
+	Label       string                         `json:"label"`
 	Description OptNilString                   `json:"description"`
-	Property    OptNilString                   `json:"property"`
 	Role        OptNilParameterRole            `json:"role"`
 	Required    bool                           `json:"required"`
 	ReadOnly    bool                           `json:"read_only"`
@@ -16654,23 +16521,18 @@ func (s *StringScalarParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *StringScalarParameterDraft) GetName() NonBlankString {
+func (s *StringScalarParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *StringScalarParameterDraft) GetLabel() NonBlankString {
+func (s *StringScalarParameterDraft) GetLabel() string {
 	return s.Label
 }
 
 // GetDescription returns the value of Description.
 func (s *StringScalarParameterDraft) GetDescription() OptNilString {
 	return s.Description
-}
-
-// GetProperty returns the value of Property.
-func (s *StringScalarParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -16719,23 +16581,18 @@ func (s *StringScalarParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *StringScalarParameterDraft) SetName(val NonBlankString) {
+func (s *StringScalarParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *StringScalarParameterDraft) SetLabel(val NonBlankString) {
+func (s *StringScalarParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
 // SetDescription sets the value of Description.
 func (s *StringScalarParameterDraft) SetDescription(val OptNilString) {
 	s.Description = val
-}
-
-// SetProperty sets the value of Property.
-func (s *StringScalarParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -16848,11 +16705,10 @@ type TemplateParameter struct {
 	ResourceID  uuid.UUID             `json:"resource_id"`
 	Kind        TemplateParameterKind `json:"kind"`
 	Position    int32                 `json:"position"`
-	Name        NonBlankString        `json:"name"`
-	Label       NonBlankString        `json:"label"`
+	Name        string                `json:"name"`
+	Label       string                `json:"label"`
 	Description OptNilString          `json:"description"`
 	Required    bool                  `json:"required"`
-	Property    OptNilString          `json:"property"`
 	Role        OptNilParameterRole   `json:"role"`
 	Location    ParameterLocation     `json:"location"`
 	Explode     bool                  `json:"explode"`
@@ -16882,12 +16738,12 @@ func (s *TemplateParameter) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *TemplateParameter) GetName() NonBlankString {
+func (s *TemplateParameter) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *TemplateParameter) GetLabel() NonBlankString {
+func (s *TemplateParameter) GetLabel() string {
 	return s.Label
 }
 
@@ -16899,11 +16755,6 @@ func (s *TemplateParameter) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *TemplateParameter) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *TemplateParameter) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -16957,12 +16808,12 @@ func (s *TemplateParameter) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *TemplateParameter) SetName(val NonBlankString) {
+func (s *TemplateParameter) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *TemplateParameter) SetLabel(val NonBlankString) {
+func (s *TemplateParameter) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -16974,11 +16825,6 @@ func (s *TemplateParameter) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *TemplateParameter) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *TemplateParameter) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -17016,11 +16862,10 @@ type TemplateParameterDraft struct {
 	ResourceID  OptUUID                    `json:"resource_id"`
 	Kind        TemplateParameterDraftKind `json:"kind"`
 	Position    int32                      `json:"position"`
-	Name        NonBlankString             `json:"name"`
-	Label       NonBlankString             `json:"label"`
+	Name        string                     `json:"name"`
+	Label       string                     `json:"label"`
 	Description OptNilString               `json:"description"`
 	Required    bool                       `json:"required"`
-	Property    OptNilString               `json:"property"`
 	Role        OptNilParameterRole        `json:"role"`
 	Location    ParameterLocation          `json:"location"`
 	Explode     bool                       `json:"explode"`
@@ -17045,12 +16890,12 @@ func (s *TemplateParameterDraft) GetPosition() int32 {
 }
 
 // GetName returns the value of Name.
-func (s *TemplateParameterDraft) GetName() NonBlankString {
+func (s *TemplateParameterDraft) GetName() string {
 	return s.Name
 }
 
 // GetLabel returns the value of Label.
-func (s *TemplateParameterDraft) GetLabel() NonBlankString {
+func (s *TemplateParameterDraft) GetLabel() string {
 	return s.Label
 }
 
@@ -17062,11 +16907,6 @@ func (s *TemplateParameterDraft) GetDescription() OptNilString {
 // GetRequired returns the value of Required.
 func (s *TemplateParameterDraft) GetRequired() bool {
 	return s.Required
-}
-
-// GetProperty returns the value of Property.
-func (s *TemplateParameterDraft) GetProperty() OptNilString {
-	return s.Property
 }
 
 // GetRole returns the value of Role.
@@ -17115,12 +16955,12 @@ func (s *TemplateParameterDraft) SetPosition(val int32) {
 }
 
 // SetName sets the value of Name.
-func (s *TemplateParameterDraft) SetName(val NonBlankString) {
+func (s *TemplateParameterDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetLabel sets the value of Label.
-func (s *TemplateParameterDraft) SetLabel(val NonBlankString) {
+func (s *TemplateParameterDraft) SetLabel(val string) {
 	s.Label = val
 }
 
@@ -17132,11 +16972,6 @@ func (s *TemplateParameterDraft) SetDescription(val OptNilString) {
 // SetRequired sets the value of Required.
 func (s *TemplateParameterDraft) SetRequired(val bool) {
 	s.Required = val
-}
-
-// SetProperty sets the value of Property.
-func (s *TemplateParameterDraft) SetProperty(val OptNilString) {
-	s.Property = val
 }
 
 // SetRole sets the value of Role.
@@ -17715,9 +17550,9 @@ func (s *VersionedIdentifier) SetValue(val string) {
 
 // Ref: #/components/schemas/VersionedIdentifierInput
 type VersionedIdentifierInput struct {
-	ResourceID OptUUID        `json:"resource_id"`
-	Type       NonBlankString `json:"type"`
-	Value      NonBlankString `json:"value"`
+	ResourceID OptUUID `json:"resource_id"`
+	Type       string  `json:"type"`
+	Value      string  `json:"value"`
 }
 
 // GetResourceID returns the value of ResourceID.
@@ -17726,12 +17561,12 @@ func (s *VersionedIdentifierInput) GetResourceID() OptUUID {
 }
 
 // GetType returns the value of Type.
-func (s *VersionedIdentifierInput) GetType() NonBlankString {
+func (s *VersionedIdentifierInput) GetType() string {
 	return s.Type
 }
 
 // GetValue returns the value of Value.
-func (s *VersionedIdentifierInput) GetValue() NonBlankString {
+func (s *VersionedIdentifierInput) GetValue() string {
 	return s.Value
 }
 
@@ -17741,12 +17576,12 @@ func (s *VersionedIdentifierInput) SetResourceID(val OptUUID) {
 }
 
 // SetType sets the value of Type.
-func (s *VersionedIdentifierInput) SetType(val NonBlankString) {
+func (s *VersionedIdentifierInput) SetType(val string) {
 	s.Type = val
 }
 
 // SetValue sets the value of Value.
-func (s *VersionedIdentifierInput) SetValue(val NonBlankString) {
+func (s *VersionedIdentifierInput) SetValue(val string) {
 	s.Value = val
 }
 
@@ -17817,7 +17652,7 @@ func (s *VersioningStatus) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/WFSDistributionAccessRequest
 type WFSDistributionAccessRequest struct {
 	Type        WFSDistributionAccessRequestType `json:"type"`
-	FeatureType OptNonBlankString                `json:"feature_type"`
+	FeatureType OptString                        `json:"feature_type"`
 	ResultLimit OptInt64                         `json:"result_limit"`
 	// Optional CRS84 bounds [west, south, east, north] in degrees, longitude first. Passed to provider
 	// without geographic validation or antimeridian handling. Output CRS is always CRS84.
@@ -17831,7 +17666,7 @@ func (s *WFSDistributionAccessRequest) GetType() WFSDistributionAccessRequestTyp
 }
 
 // GetFeatureType returns the value of FeatureType.
-func (s *WFSDistributionAccessRequest) GetFeatureType() OptNonBlankString {
+func (s *WFSDistributionAccessRequest) GetFeatureType() OptString {
 	return s.FeatureType
 }
 
@@ -17856,7 +17691,7 @@ func (s *WFSDistributionAccessRequest) SetType(val WFSDistributionAccessRequestT
 }
 
 // SetFeatureType sets the value of FeatureType.
-func (s *WFSDistributionAccessRequest) SetFeatureType(val OptNonBlankString) {
+func (s *WFSDistributionAccessRequest) SetFeatureType(val OptString) {
 	s.FeatureType = val
 }
 
@@ -18475,24 +18310,22 @@ func (s *WebServiceVisibleOn) UnmarshalText(data []byte) error {
 // Merged schema.
 // Ref: #/components/schemas/WfsWebService
 type WfsWebService struct {
-	ID                    uuid.UUID                      `json:"id"`
-	ResourceID            uuid.UUID                      `json:"resource_id"`
-	VisibleOn             OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider              OptResourceVersionReference    `json:"provider"`
-	DocumentationURI      OptURI                         `json:"documentation_uri"`
-	ContactPoints         []uuid.UUID                    `json:"contact_points"`
-	Keywords              []Keyword                      `json:"keywords"`
-	AccessRights          OptNilString                   `json:"access_rights"`
-	License               OptNilString                   `json:"license"`
-	Categories            []ResourceVersionReference     `json:"categories"`
-	Type                  WfsWebServiceType              `json:"type"`
-	GetFeatureTemplateURL string                         `json:"get_feature_template_url"`
-	Version               WfsWebServiceVersion           `json:"version"`
-	FeatureTypes          []NonBlankString               `json:"feature_types"`
-	DefaultFeatureType    NonBlankString                 `json:"default_feature_type"`
+	ID         uuid.UUID                      `json:"id"`
+	ResourceID uuid.UUID                      `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptResourceVersionReference    `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI      OptURI               `json:"documentation_uri"`
+	ContactPoints         []uuid.UUID          `json:"contact_points"`
+	Keywords              []Keyword            `json:"keywords"`
+	Type                  WfsWebServiceType    `json:"type"`
+	GetFeatureTemplateURL string               `json:"get_feature_template_url"`
+	Version               WfsWebServiceVersion `json:"version"`
+	FeatureTypes          []string             `json:"feature_types"`
+	DefaultFeatureType    string               `json:"default_feature_type"`
 	// Exact provider outputFormat values, advertised as native formats.
-	OutputFormats       []NonBlankString `json:"output_formats"`
-	DefaultOutputFormat NonBlankString   `json:"default_output_format"`
+	OutputFormats       []string `json:"output_formats"`
+	DefaultOutputFormat string   `json:"default_output_format"`
 	// Optional default feature limit. Omitted or null means no configured limit.
 	ResultLimit OptNilInt64 `json:"result_limit"`
 	// Whether callers may supply a different limit. False with no configured limit prevents callers from
@@ -18540,21 +18373,6 @@ func (s *WfsWebService) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
-// GetAccessRights returns the value of AccessRights.
-func (s *WfsWebService) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *WfsWebService) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *WfsWebService) GetCategories() []ResourceVersionReference {
-	return s.Categories
-}
-
 // GetType returns the value of Type.
 func (s *WfsWebService) GetType() WfsWebServiceType {
 	return s.Type
@@ -18571,22 +18389,22 @@ func (s *WfsWebService) GetVersion() WfsWebServiceVersion {
 }
 
 // GetFeatureTypes returns the value of FeatureTypes.
-func (s *WfsWebService) GetFeatureTypes() []NonBlankString {
+func (s *WfsWebService) GetFeatureTypes() []string {
 	return s.FeatureTypes
 }
 
 // GetDefaultFeatureType returns the value of DefaultFeatureType.
-func (s *WfsWebService) GetDefaultFeatureType() NonBlankString {
+func (s *WfsWebService) GetDefaultFeatureType() string {
 	return s.DefaultFeatureType
 }
 
 // GetOutputFormats returns the value of OutputFormats.
-func (s *WfsWebService) GetOutputFormats() []NonBlankString {
+func (s *WfsWebService) GetOutputFormats() []string {
 	return s.OutputFormats
 }
 
 // GetDefaultOutputFormat returns the value of DefaultOutputFormat.
-func (s *WfsWebService) GetDefaultOutputFormat() NonBlankString {
+func (s *WfsWebService) GetDefaultOutputFormat() string {
 	return s.DefaultOutputFormat
 }
 
@@ -18645,21 +18463,6 @@ func (s *WfsWebService) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *WfsWebService) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *WfsWebService) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *WfsWebService) SetCategories(val []ResourceVersionReference) {
-	s.Categories = val
-}
-
 // SetType sets the value of Type.
 func (s *WfsWebService) SetType(val WfsWebServiceType) {
 	s.Type = val
@@ -18676,22 +18479,22 @@ func (s *WfsWebService) SetVersion(val WfsWebServiceVersion) {
 }
 
 // SetFeatureTypes sets the value of FeatureTypes.
-func (s *WfsWebService) SetFeatureTypes(val []NonBlankString) {
+func (s *WfsWebService) SetFeatureTypes(val []string) {
 	s.FeatureTypes = val
 }
 
 // SetDefaultFeatureType sets the value of DefaultFeatureType.
-func (s *WfsWebService) SetDefaultFeatureType(val NonBlankString) {
+func (s *WfsWebService) SetDefaultFeatureType(val string) {
 	s.DefaultFeatureType = val
 }
 
 // SetOutputFormats sets the value of OutputFormats.
-func (s *WfsWebService) SetOutputFormats(val []NonBlankString) {
+func (s *WfsWebService) SetOutputFormats(val []string) {
 	s.OutputFormats = val
 }
 
 // SetDefaultOutputFormat sets the value of DefaultOutputFormat.
-func (s *WfsWebService) SetDefaultOutputFormat(val NonBlankString) {
+func (s *WfsWebService) SetDefaultOutputFormat(val string) {
 	s.DefaultOutputFormat = val
 }
 
@@ -18718,25 +18521,23 @@ func (s *WfsWebService) SetAvailableFormats(val []AvailableFormat) {
 // Merged schema.
 // Ref: #/components/schemas/WfsWebServiceDraft
 type WfsWebServiceDraft struct {
-	ResourceID       OptUUID                        `json:"resource_id"`
-	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider         OptUUID                        `json:"provider"`
-	DocumentationURI OptURI                         `json:"documentation_uri"`
-	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Keywords         []Keyword                      `json:"keywords"`
-	AccessRights     OptNilString                   `json:"access_rights"`
-	License          OptNilString                   `json:"license"`
-	Categories       []uuid.UUID                    `json:"categories"`
-	Type             WfsWebServiceDraftType         `json:"type"`
+	ResourceID OptUUID                        `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptUUID                        `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI OptURI                 `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID            `json:"contact_points"`
+	Keywords         []Keyword              `json:"keywords"`
+	Type             WfsWebServiceDraftType `json:"type"`
 	// Absolute HTTP(S) GetFeature URL. Placeholders are allowed only in the path; nonstandard provider
 	// query parameters are retained.
 	GetFeatureTemplateURL string                    `json:"get_feature_template_url"`
 	Version               WfsWebServiceDraftVersion `json:"version"`
-	FeatureTypes          []NonBlankString          `json:"feature_types"`
-	DefaultFeatureType    NonBlankString            `json:"default_feature_type"`
+	FeatureTypes          []string                  `json:"feature_types"`
+	DefaultFeatureType    string                    `json:"default_feature_type"`
 	// Exact provider outputFormat values, advertised as native formats.
-	OutputFormats       []NonBlankString `json:"output_formats"`
-	DefaultOutputFormat NonBlankString   `json:"default_output_format"`
+	OutputFormats       []string `json:"output_formats"`
+	DefaultOutputFormat string   `json:"default_output_format"`
 	// Optional maximum features requested in one upstream request. Omitted or null means no configured
 	// limit; count/maxFeatures is omitted unless an editable limit is supplied during access. No automatic
 	// pagination.
@@ -18777,21 +18578,6 @@ func (s *WfsWebServiceDraft) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
-// GetAccessRights returns the value of AccessRights.
-func (s *WfsWebServiceDraft) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *WfsWebServiceDraft) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *WfsWebServiceDraft) GetCategories() []uuid.UUID {
-	return s.Categories
-}
-
 // GetType returns the value of Type.
 func (s *WfsWebServiceDraft) GetType() WfsWebServiceDraftType {
 	return s.Type
@@ -18808,22 +18594,22 @@ func (s *WfsWebServiceDraft) GetVersion() WfsWebServiceDraftVersion {
 }
 
 // GetFeatureTypes returns the value of FeatureTypes.
-func (s *WfsWebServiceDraft) GetFeatureTypes() []NonBlankString {
+func (s *WfsWebServiceDraft) GetFeatureTypes() []string {
 	return s.FeatureTypes
 }
 
 // GetDefaultFeatureType returns the value of DefaultFeatureType.
-func (s *WfsWebServiceDraft) GetDefaultFeatureType() NonBlankString {
+func (s *WfsWebServiceDraft) GetDefaultFeatureType() string {
 	return s.DefaultFeatureType
 }
 
 // GetOutputFormats returns the value of OutputFormats.
-func (s *WfsWebServiceDraft) GetOutputFormats() []NonBlankString {
+func (s *WfsWebServiceDraft) GetOutputFormats() []string {
 	return s.OutputFormats
 }
 
 // GetDefaultOutputFormat returns the value of DefaultOutputFormat.
-func (s *WfsWebServiceDraft) GetDefaultOutputFormat() NonBlankString {
+func (s *WfsWebServiceDraft) GetDefaultOutputFormat() string {
 	return s.DefaultOutputFormat
 }
 
@@ -18872,21 +18658,6 @@ func (s *WfsWebServiceDraft) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *WfsWebServiceDraft) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *WfsWebServiceDraft) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *WfsWebServiceDraft) SetCategories(val []uuid.UUID) {
-	s.Categories = val
-}
-
 // SetType sets the value of Type.
 func (s *WfsWebServiceDraft) SetType(val WfsWebServiceDraftType) {
 	s.Type = val
@@ -18903,22 +18674,22 @@ func (s *WfsWebServiceDraft) SetVersion(val WfsWebServiceDraftVersion) {
 }
 
 // SetFeatureTypes sets the value of FeatureTypes.
-func (s *WfsWebServiceDraft) SetFeatureTypes(val []NonBlankString) {
+func (s *WfsWebServiceDraft) SetFeatureTypes(val []string) {
 	s.FeatureTypes = val
 }
 
 // SetDefaultFeatureType sets the value of DefaultFeatureType.
-func (s *WfsWebServiceDraft) SetDefaultFeatureType(val NonBlankString) {
+func (s *WfsWebServiceDraft) SetDefaultFeatureType(val string) {
 	s.DefaultFeatureType = val
 }
 
 // SetOutputFormats sets the value of OutputFormats.
-func (s *WfsWebServiceDraft) SetOutputFormats(val []NonBlankString) {
+func (s *WfsWebServiceDraft) SetOutputFormats(val []string) {
 	s.OutputFormats = val
 }
 
 // SetDefaultOutputFormat sets the value of DefaultOutputFormat.
-func (s *WfsWebServiceDraft) SetDefaultOutputFormat(val NonBlankString) {
+func (s *WfsWebServiceDraft) SetDefaultOutputFormat(val string) {
 	s.DefaultOutputFormat = val
 }
 
@@ -19095,9 +18866,9 @@ type WithdrawGroupRoleRequestNoContent struct{}
 
 // Ref: #/components/schemas/WmsLayer
 type WmsLayer struct {
-	ID         uuid.UUID      `json:"id"`
-	ResourceID uuid.UUID      `json:"resource_id"`
-	Name       NonBlankString `json:"name"`
+	ID         uuid.UUID `json:"id"`
+	ResourceID uuid.UUID `json:"resource_id"`
+	Name       string    `json:"name"`
 	// Default configured style. Empty string uses the provider default.
 	DefaultStyle string `json:"default_style"`
 	// Allowed styles in display order. Empty string uses the provider default; a single style fixes
@@ -19116,7 +18887,7 @@ func (s *WmsLayer) GetResourceID() uuid.UUID {
 }
 
 // GetName returns the value of Name.
-func (s *WmsLayer) GetName() NonBlankString {
+func (s *WmsLayer) GetName() string {
 	return s.Name
 }
 
@@ -19141,7 +18912,7 @@ func (s *WmsLayer) SetResourceID(val uuid.UUID) {
 }
 
 // SetName sets the value of Name.
-func (s *WmsLayer) SetName(val NonBlankString) {
+func (s *WmsLayer) SetName(val string) {
 	s.Name = val
 }
 
@@ -19157,8 +18928,8 @@ func (s *WmsLayer) SetStyles(val []string) {
 
 // Ref: #/components/schemas/WmsLayerDraft
 type WmsLayerDraft struct {
-	ResourceID OptUUID        `json:"resource_id"`
-	Name       NonBlankString `json:"name"`
+	ResourceID OptUUID `json:"resource_id"`
+	Name       string  `json:"name"`
 	// Default configured style. Empty string uses the provider default.
 	DefaultStyle string `json:"default_style"`
 	// Allowed styles in display order. Empty string uses the provider default; a single style fixes
@@ -19172,7 +18943,7 @@ func (s *WmsLayerDraft) GetResourceID() OptUUID {
 }
 
 // GetName returns the value of Name.
-func (s *WmsLayerDraft) GetName() NonBlankString {
+func (s *WmsLayerDraft) GetName() string {
 	return s.Name
 }
 
@@ -19192,7 +18963,7 @@ func (s *WmsLayerDraft) SetResourceID(val OptUUID) {
 }
 
 // SetName sets the value of Name.
-func (s *WmsLayerDraft) SetName(val NonBlankString) {
+func (s *WmsLayerDraft) SetName(val string) {
 	s.Name = val
 }
 
@@ -19209,21 +18980,19 @@ func (s *WmsLayerDraft) SetStyles(val []string) {
 // Merged schema.
 // Ref: #/components/schemas/WmsWebService
 type WmsWebService struct {
-	ID               uuid.UUID                      `json:"id"`
-	ResourceID       uuid.UUID                      `json:"resource_id"`
-	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider         OptResourceVersionReference    `json:"provider"`
-	DocumentationURI OptURI                         `json:"documentation_uri"`
-	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Keywords         []Keyword                      `json:"keywords"`
-	AccessRights     OptNilString                   `json:"access_rights"`
-	License          OptNilString                   `json:"license"`
-	Categories       []ResourceVersionReference     `json:"categories"`
-	Type             WmsWebServiceType              `json:"type"`
+	ID         uuid.UUID                      `json:"id"`
+	ResourceID uuid.UUID                      `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptResourceVersionReference    `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI OptURI            `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID       `json:"contact_points"`
+	Keywords         []Keyword         `json:"keywords"`
+	Type             WmsWebServiceType `json:"type"`
 	// Absolute HTTP(S) capabilities URL, including provider query parameters.
-	CapabilitiesURL string `json:"capabilities_url"`
+	CapabilitiesURL url.URL `json:"capabilities_url"`
 	// Must name one configured layer.
-	DefaultLayer NonBlankString `json:"default_layer"`
+	DefaultLayer string `json:"default_layer"`
 	// Allowed layers in display order. A single layer fixes selection.
 	Layers               []WmsLayer `json:"layers"`
 	TransparencyEditable bool       `json:"transparency_editable"`
@@ -19271,33 +19040,18 @@ func (s *WmsWebService) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
-// GetAccessRights returns the value of AccessRights.
-func (s *WmsWebService) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *WmsWebService) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *WmsWebService) GetCategories() []ResourceVersionReference {
-	return s.Categories
-}
-
 // GetType returns the value of Type.
 func (s *WmsWebService) GetType() WmsWebServiceType {
 	return s.Type
 }
 
 // GetCapabilitiesURL returns the value of CapabilitiesURL.
-func (s *WmsWebService) GetCapabilitiesURL() string {
+func (s *WmsWebService) GetCapabilitiesURL() url.URL {
 	return s.CapabilitiesURL
 }
 
 // GetDefaultLayer returns the value of DefaultLayer.
-func (s *WmsWebService) GetDefaultLayer() NonBlankString {
+func (s *WmsWebService) GetDefaultLayer() string {
 	return s.DefaultLayer
 }
 
@@ -19361,33 +19115,18 @@ func (s *WmsWebService) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *WmsWebService) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *WmsWebService) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *WmsWebService) SetCategories(val []ResourceVersionReference) {
-	s.Categories = val
-}
-
 // SetType sets the value of Type.
 func (s *WmsWebService) SetType(val WmsWebServiceType) {
 	s.Type = val
 }
 
 // SetCapabilitiesURL sets the value of CapabilitiesURL.
-func (s *WmsWebService) SetCapabilitiesURL(val string) {
+func (s *WmsWebService) SetCapabilitiesURL(val url.URL) {
 	s.CapabilitiesURL = val
 }
 
 // SetDefaultLayer sets the value of DefaultLayer.
-func (s *WmsWebService) SetDefaultLayer(val NonBlankString) {
+func (s *WmsWebService) SetDefaultLayer(val string) {
 	s.DefaultLayer = val
 }
 
@@ -19419,20 +19158,18 @@ func (s *WmsWebService) SetGetFeatureInfoParameters(val []Parameter) {
 // Merged schema.
 // Ref: #/components/schemas/WmsWebServiceDraft
 type WmsWebServiceDraft struct {
-	ResourceID       OptUUID                        `json:"resource_id"`
-	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider         OptUUID                        `json:"provider"`
-	DocumentationURI OptURI                         `json:"documentation_uri"`
-	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Keywords         []Keyword                      `json:"keywords"`
-	AccessRights     OptNilString                   `json:"access_rights"`
-	License          OptNilString                   `json:"license"`
-	Categories       []uuid.UUID                    `json:"categories"`
-	Type             WmsWebServiceDraftType         `json:"type"`
+	ResourceID OptUUID                        `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptUUID                        `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI OptURI                 `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID            `json:"contact_points"`
+	Keywords         []Keyword              `json:"keywords"`
+	Type             WmsWebServiceDraftType `json:"type"`
 	// Absolute HTTP(S) capabilities URL, including provider query parameters.
-	CapabilitiesURL string `json:"capabilities_url"`
+	CapabilitiesURL url.URL `json:"capabilities_url"`
 	// Must name one configured layer.
-	DefaultLayer NonBlankString `json:"default_layer"`
+	DefaultLayer string `json:"default_layer"`
 	// Allowed layers in display order. A single layer fixes selection.
 	Layers               []WmsLayerDraft `json:"layers"`
 	TransparencyEditable bool            `json:"transparency_editable"`
@@ -19475,33 +19212,18 @@ func (s *WmsWebServiceDraft) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
-// GetAccessRights returns the value of AccessRights.
-func (s *WmsWebServiceDraft) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *WmsWebServiceDraft) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *WmsWebServiceDraft) GetCategories() []uuid.UUID {
-	return s.Categories
-}
-
 // GetType returns the value of Type.
 func (s *WmsWebServiceDraft) GetType() WmsWebServiceDraftType {
 	return s.Type
 }
 
 // GetCapabilitiesURL returns the value of CapabilitiesURL.
-func (s *WmsWebServiceDraft) GetCapabilitiesURL() string {
+func (s *WmsWebServiceDraft) GetCapabilitiesURL() url.URL {
 	return s.CapabilitiesURL
 }
 
 // GetDefaultLayer returns the value of DefaultLayer.
-func (s *WmsWebServiceDraft) GetDefaultLayer() NonBlankString {
+func (s *WmsWebServiceDraft) GetDefaultLayer() string {
 	return s.DefaultLayer
 }
 
@@ -19560,33 +19282,18 @@ func (s *WmsWebServiceDraft) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *WmsWebServiceDraft) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *WmsWebServiceDraft) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *WmsWebServiceDraft) SetCategories(val []uuid.UUID) {
-	s.Categories = val
-}
-
 // SetType sets the value of Type.
 func (s *WmsWebServiceDraft) SetType(val WmsWebServiceDraftType) {
 	s.Type = val
 }
 
 // SetCapabilitiesURL sets the value of CapabilitiesURL.
-func (s *WmsWebServiceDraft) SetCapabilitiesURL(val string) {
+func (s *WmsWebServiceDraft) SetCapabilitiesURL(val url.URL) {
 	s.CapabilitiesURL = val
 }
 
 // SetDefaultLayer sets the value of DefaultLayer.
-func (s *WmsWebServiceDraft) SetDefaultLayer(val NonBlankString) {
+func (s *WmsWebServiceDraft) SetDefaultLayer(val string) {
 	s.DefaultLayer = val
 }
 
@@ -19685,13 +19392,13 @@ func (s *WmsWebServiceType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/WmtsLayer
 type WmtsLayer struct {
-	ID         uuid.UUID      `json:"id"`
-	ResourceID uuid.UUID      `json:"resource_id"`
-	Name       NonBlankString `json:"name"`
+	ID         uuid.UUID `json:"id"`
+	ResourceID uuid.UUID `json:"resource_id"`
+	Name       string    `json:"name"`
 	// Configured default style. When omitted, use the provider default if allowed by styles.
-	DefaultStyle OptNonBlankString `json:"default_style"`
+	DefaultStyle OptString `json:"default_style"`
 	// Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
-	Styles []NonBlankString `json:"styles"`
+	Styles []string `json:"styles"`
 }
 
 // GetID returns the value of ID.
@@ -19705,17 +19412,17 @@ func (s *WmtsLayer) GetResourceID() uuid.UUID {
 }
 
 // GetName returns the value of Name.
-func (s *WmtsLayer) GetName() NonBlankString {
+func (s *WmtsLayer) GetName() string {
 	return s.Name
 }
 
 // GetDefaultStyle returns the value of DefaultStyle.
-func (s *WmtsLayer) GetDefaultStyle() OptNonBlankString {
+func (s *WmtsLayer) GetDefaultStyle() OptString {
 	return s.DefaultStyle
 }
 
 // GetStyles returns the value of Styles.
-func (s *WmtsLayer) GetStyles() []NonBlankString {
+func (s *WmtsLayer) GetStyles() []string {
 	return s.Styles
 }
 
@@ -19730,28 +19437,28 @@ func (s *WmtsLayer) SetResourceID(val uuid.UUID) {
 }
 
 // SetName sets the value of Name.
-func (s *WmtsLayer) SetName(val NonBlankString) {
+func (s *WmtsLayer) SetName(val string) {
 	s.Name = val
 }
 
 // SetDefaultStyle sets the value of DefaultStyle.
-func (s *WmtsLayer) SetDefaultStyle(val OptNonBlankString) {
+func (s *WmtsLayer) SetDefaultStyle(val OptString) {
 	s.DefaultStyle = val
 }
 
 // SetStyles sets the value of Styles.
-func (s *WmtsLayer) SetStyles(val []NonBlankString) {
+func (s *WmtsLayer) SetStyles(val []string) {
 	s.Styles = val
 }
 
 // Ref: #/components/schemas/WmtsLayerDraft
 type WmtsLayerDraft struct {
-	ResourceID OptUUID        `json:"resource_id"`
-	Name       NonBlankString `json:"name"`
+	ResourceID OptUUID `json:"resource_id"`
+	Name       string  `json:"name"`
 	// Configured default style. When omitted, use the provider default if allowed by styles.
-	DefaultStyle OptNonBlankString `json:"default_style"`
+	DefaultStyle OptString `json:"default_style"`
 	// Allowed styles. Empty or omitted uses the provider default; an explicit default must be listed.
-	Styles []NonBlankString `json:"styles"`
+	Styles []string `json:"styles"`
 }
 
 // GetResourceID returns the value of ResourceID.
@@ -19760,17 +19467,17 @@ func (s *WmtsLayerDraft) GetResourceID() OptUUID {
 }
 
 // GetName returns the value of Name.
-func (s *WmtsLayerDraft) GetName() NonBlankString {
+func (s *WmtsLayerDraft) GetName() string {
 	return s.Name
 }
 
 // GetDefaultStyle returns the value of DefaultStyle.
-func (s *WmtsLayerDraft) GetDefaultStyle() OptNonBlankString {
+func (s *WmtsLayerDraft) GetDefaultStyle() OptString {
 	return s.DefaultStyle
 }
 
 // GetStyles returns the value of Styles.
-func (s *WmtsLayerDraft) GetStyles() []NonBlankString {
+func (s *WmtsLayerDraft) GetStyles() []string {
 	return s.Styles
 }
 
@@ -19780,39 +19487,37 @@ func (s *WmtsLayerDraft) SetResourceID(val OptUUID) {
 }
 
 // SetName sets the value of Name.
-func (s *WmtsLayerDraft) SetName(val NonBlankString) {
+func (s *WmtsLayerDraft) SetName(val string) {
 	s.Name = val
 }
 
 // SetDefaultStyle sets the value of DefaultStyle.
-func (s *WmtsLayerDraft) SetDefaultStyle(val OptNonBlankString) {
+func (s *WmtsLayerDraft) SetDefaultStyle(val OptString) {
 	s.DefaultStyle = val
 }
 
 // SetStyles sets the value of Styles.
-func (s *WmtsLayerDraft) SetStyles(val []NonBlankString) {
+func (s *WmtsLayerDraft) SetStyles(val []string) {
 	s.Styles = val
 }
 
 // Merged schema.
 // Ref: #/components/schemas/WmtsWebService
 type WmtsWebService struct {
-	ID                       uuid.UUID                      `json:"id"`
-	ResourceID               uuid.UUID                      `json:"resource_id"`
-	VisibleOn                OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider                 OptResourceVersionReference    `json:"provider"`
-	DocumentationURI         OptURI                         `json:"documentation_uri"`
-	ContactPoints            []uuid.UUID                    `json:"contact_points"`
-	Keywords                 []Keyword                      `json:"keywords"`
-	AccessRights             OptNilString                   `json:"access_rights"`
-	License                  OptNilString                   `json:"license"`
-	Categories               []ResourceVersionReference     `json:"categories"`
-	Type                     WmtsWebServiceType             `json:"type"`
-	CapabilitiesURL          string                         `json:"capabilities_url"`
-	DefaultLayer             NonBlankString                 `json:"default_layer"`
-	Layers                   []WmtsLayer                    `json:"layers"`
-	GetTileParameters        []Parameter                    `json:"get_tile_parameters"`
-	GetFeatureInfoParameters []Parameter                    `json:"get_feature_info_parameters"`
+	ID         uuid.UUID                      `json:"id"`
+	ResourceID uuid.UUID                      `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptResourceVersionReference    `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI         OptURI             `json:"documentation_uri"`
+	ContactPoints            []uuid.UUID        `json:"contact_points"`
+	Keywords                 []Keyword          `json:"keywords"`
+	Type                     WmtsWebServiceType `json:"type"`
+	CapabilitiesURL          url.URL            `json:"capabilities_url"`
+	DefaultLayer             string             `json:"default_layer"`
+	Layers                   []WmtsLayer        `json:"layers"`
+	GetTileParameters        []Parameter        `json:"get_tile_parameters"`
+	GetFeatureInfoParameters []Parameter        `json:"get_feature_info_parameters"`
 }
 
 // GetID returns the value of ID.
@@ -19850,33 +19555,18 @@ func (s *WmtsWebService) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
-// GetAccessRights returns the value of AccessRights.
-func (s *WmtsWebService) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *WmtsWebService) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *WmtsWebService) GetCategories() []ResourceVersionReference {
-	return s.Categories
-}
-
 // GetType returns the value of Type.
 func (s *WmtsWebService) GetType() WmtsWebServiceType {
 	return s.Type
 }
 
 // GetCapabilitiesURL returns the value of CapabilitiesURL.
-func (s *WmtsWebService) GetCapabilitiesURL() string {
+func (s *WmtsWebService) GetCapabilitiesURL() url.URL {
 	return s.CapabilitiesURL
 }
 
 // GetDefaultLayer returns the value of DefaultLayer.
-func (s *WmtsWebService) GetDefaultLayer() NonBlankString {
+func (s *WmtsWebService) GetDefaultLayer() string {
 	return s.DefaultLayer
 }
 
@@ -19930,33 +19620,18 @@ func (s *WmtsWebService) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *WmtsWebService) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *WmtsWebService) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *WmtsWebService) SetCategories(val []ResourceVersionReference) {
-	s.Categories = val
-}
-
 // SetType sets the value of Type.
 func (s *WmtsWebService) SetType(val WmtsWebServiceType) {
 	s.Type = val
 }
 
 // SetCapabilitiesURL sets the value of CapabilitiesURL.
-func (s *WmtsWebService) SetCapabilitiesURL(val string) {
+func (s *WmtsWebService) SetCapabilitiesURL(val url.URL) {
 	s.CapabilitiesURL = val
 }
 
 // SetDefaultLayer sets the value of DefaultLayer.
-func (s *WmtsWebService) SetDefaultLayer(val NonBlankString) {
+func (s *WmtsWebService) SetDefaultLayer(val string) {
 	s.DefaultLayer = val
 }
 
@@ -19978,19 +19653,17 @@ func (s *WmtsWebService) SetGetFeatureInfoParameters(val []Parameter) {
 // Merged schema.
 // Ref: #/components/schemas/WmtsWebServiceDraft
 type WmtsWebServiceDraft struct {
-	ResourceID       OptUUID                        `json:"resource_id"`
-	VisibleOn        OptNilWebServiceVisibleOnArray `json:"visible_on"`
-	Provider         OptUUID                        `json:"provider"`
-	DocumentationURI OptURI                         `json:"documentation_uri"`
-	ContactPoints    []uuid.UUID                    `json:"contact_points"`
-	Keywords         []Keyword                      `json:"keywords"`
-	AccessRights     OptNilString                   `json:"access_rights"`
-	License          OptNilString                   `json:"license"`
-	Categories       []uuid.UUID                    `json:"categories"`
-	Type             WmtsWebServiceDraftType        `json:"type"`
+	ResourceID OptUUID                        `json:"resource_id"`
+	VisibleOn  OptNilWebServiceVisibleOnArray `json:"visible_on"`
+	Provider   OptUUID                        `json:"provider"`
+	// Absolute HTTP(S) URL with a host.
+	DocumentationURI OptURI                  `json:"documentation_uri"`
+	ContactPoints    []uuid.UUID             `json:"contact_points"`
+	Keywords         []Keyword               `json:"keywords"`
+	Type             WmtsWebServiceDraftType `json:"type"`
 	// Absolute HTTP(S) capabilities URL including provider query parameters.
-	CapabilitiesURL          string           `json:"capabilities_url"`
-	DefaultLayer             NonBlankString   `json:"default_layer"`
+	CapabilitiesURL          url.URL          `json:"capabilities_url"`
+	DefaultLayer             string           `json:"default_layer"`
 	Layers                   []WmtsLayerDraft `json:"layers"`
 	GetTileParameters        []ParameterDraft `json:"get_tile_parameters"`
 	GetFeatureInfoParameters []ParameterDraft `json:"get_feature_info_parameters"`
@@ -20026,33 +19699,18 @@ func (s *WmtsWebServiceDraft) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
-// GetAccessRights returns the value of AccessRights.
-func (s *WmtsWebServiceDraft) GetAccessRights() OptNilString {
-	return s.AccessRights
-}
-
-// GetLicense returns the value of License.
-func (s *WmtsWebServiceDraft) GetLicense() OptNilString {
-	return s.License
-}
-
-// GetCategories returns the value of Categories.
-func (s *WmtsWebServiceDraft) GetCategories() []uuid.UUID {
-	return s.Categories
-}
-
 // GetType returns the value of Type.
 func (s *WmtsWebServiceDraft) GetType() WmtsWebServiceDraftType {
 	return s.Type
 }
 
 // GetCapabilitiesURL returns the value of CapabilitiesURL.
-func (s *WmtsWebServiceDraft) GetCapabilitiesURL() string {
+func (s *WmtsWebServiceDraft) GetCapabilitiesURL() url.URL {
 	return s.CapabilitiesURL
 }
 
 // GetDefaultLayer returns the value of DefaultLayer.
-func (s *WmtsWebServiceDraft) GetDefaultLayer() NonBlankString {
+func (s *WmtsWebServiceDraft) GetDefaultLayer() string {
 	return s.DefaultLayer
 }
 
@@ -20101,33 +19759,18 @@ func (s *WmtsWebServiceDraft) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
-// SetAccessRights sets the value of AccessRights.
-func (s *WmtsWebServiceDraft) SetAccessRights(val OptNilString) {
-	s.AccessRights = val
-}
-
-// SetLicense sets the value of License.
-func (s *WmtsWebServiceDraft) SetLicense(val OptNilString) {
-	s.License = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *WmtsWebServiceDraft) SetCategories(val []uuid.UUID) {
-	s.Categories = val
-}
-
 // SetType sets the value of Type.
 func (s *WmtsWebServiceDraft) SetType(val WmtsWebServiceDraftType) {
 	s.Type = val
 }
 
 // SetCapabilitiesURL sets the value of CapabilitiesURL.
-func (s *WmtsWebServiceDraft) SetCapabilitiesURL(val string) {
+func (s *WmtsWebServiceDraft) SetCapabilitiesURL(val url.URL) {
 	s.CapabilitiesURL = val
 }
 
 // SetDefaultLayer sets the value of DefaultLayer.
-func (s *WmtsWebServiceDraft) SetDefaultLayer(val NonBlankString) {
+func (s *WmtsWebServiceDraft) SetDefaultLayer(val string) {
 	s.DefaultLayer = val
 }
 

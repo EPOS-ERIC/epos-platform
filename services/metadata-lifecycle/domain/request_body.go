@@ -30,11 +30,11 @@ func (value *RequestBodyInput) Normalize() error {
 	value.ContentType = strings.TrimSpace(value.ContentType)
 	value.Template = strings.TrimSpace(value.Template)
 	if value.ContentType == "" {
-		return invalidField("body_content_type", "Content type must not be blank.", nil)
+		return apperror.Field("body_content_type", "Content type must not be blank.", nil)
 	}
 	contentType, err := normalizeMediaType(value.ContentType)
 	if err != nil {
-		return invalidField("body_content_type", "Content type must be a valid media type.", err)
+		return apperror.Field("body_content_type", "Content type must be a valid media type.", err)
 	}
 	value.ContentType = contentType
 	templateValue, parameters, err := parseTemplateDefinition(value.Template, value.Parameters)

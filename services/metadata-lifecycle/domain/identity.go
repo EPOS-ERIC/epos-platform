@@ -64,13 +64,13 @@ func (value *UserClaims) Normalize() error {
 	)
 	switch {
 	case value.ID == "":
-		return invalidField("id", "ID must not be blank.", nil)
+		return apperror.Field("id", "ID must not be blank.", nil)
 	case value.Email == "":
-		return invalidField("email", "Email must not be blank.", nil)
+		return apperror.Field("email", "Email must not be blank.", nil)
 	case value.GivenName == "":
-		return invalidField("given_name", "Given name must not be blank.", nil)
+		return apperror.Field("given_name", "Given name must not be blank.", nil)
 	case value.FamilyName == "":
-		return invalidField("family_name", "Family name must not be blank.", nil)
+		return apperror.Field("family_name", "Family name must not be blank.", nil)
 	}
 
 	return nil

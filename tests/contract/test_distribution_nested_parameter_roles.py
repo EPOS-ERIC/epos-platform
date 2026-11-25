@@ -5,17 +5,15 @@ from distribution_fixtures import DistributionContractTestCase, child, parameter
 
 class DistributionNestedParameterRolesContractTest(DistributionContractTestCase):
     def test_wfs_filter_template_preserves_roles_and_renders_values(self) -> None:
-        """Regression: roles and properties on filter children survive and render correctly."""
+        """Regression: roles on filter children survive and render correctly."""
         children = [
-            child("minlongitude", "FLOAT", role="MIN_LON", property="epos:westernmostLongitude"),
-            child("minlatitude", "FLOAT", position=1, role="MIN_LAT", property="epos:southernmostLatitude"),
-            child("maxlongitude", "FLOAT", position=2, role="MAX_LON", property="epos:easternmostLongitude"),
-            child("maxlatitude", "FLOAT", position=3, role="MAX_LAT", property="epos:northernmostLatitude"),
+            child("minlongitude", "FLOAT", role="MIN_LON"),
+            child("minlatitude", "FLOAT", position=1, role="MIN_LAT"),
+            child("maxlongitude", "FLOAT", position=2, role="MAX_LON"),
+            child("maxlatitude", "FLOAT", position=3, role="MAX_LAT"),
             child("minmagnitude", "FLOAT", position=4),
-            child("startdate", "DATETIME", position=5, role="START_DATE",
-                  property="schema:startDate", layout="YYYY-MM-DD"),
-            child("enddate", "DATETIME", position=6, role="END_DATE",
-                  property="schema:endDate", layout="YYYY-MM-DD"),
+            child("startdate", "DATETIME", position=5, role="START_DATE", layout="YYYY-MM-DD"),
+            child("enddate", "DATETIME", position=6, role="END_DATE", layout="YYYY-MM-DD"),
         ]
         template = (
             "<ogc:Filter><ogc:And><ogc:BBOX><ogc:PropertyName>the_geom</ogc:PropertyName>"
@@ -40,7 +38,7 @@ class DistributionNestedParameterRolesContractTest(DistributionContractTestCase)
         for source in children:
             with self.subTest(parameter=source["name"]):
                 self.assertEqual(stored[source["name"]].get("role"), source.get("role"))
-                self.assertEqual(stored[source["name"]].get("property"), source.get("property"))
+                self.assertNotIn("property", stored[source["name"]])
 
         values = {
             "minlongitude": -26, "minlatitude": 30, "maxlongitude": 46, "maxlatitude": 90,
@@ -58,7 +56,7 @@ class DistributionNestedParameterRolesContractTest(DistributionContractTestCase)
 
     def test_format_selection_in_template_and_body(self) -> None:
         """Regression: nested format roles select output in query templates and request bodies."""
-        format_child = child("format", role="FORMAT", property="schema:encodingFormat", read_only=True,
+        format_child = child("format", role="FORMAT", read_only=True,
                              default="xml", enum=[{"value": "xml"}, {"value": "json"}])
         query = web_distribution([parameter(
             "filter", "TEMPLATE", required=True, template="format={{.format}}", parameters=[format_child],
@@ -73,7 +71,7 @@ class DistributionNestedParameterRolesContractTest(DistributionContractTestCase)
             stored = (config["parameters"][0]["parameters"][0] if distribution["title"] == "query"
                       else config["body_parameters"][0])
             self.assertEqual(stored["role"], "FORMAT")
-            self.assertEqual(stored["property"], "schema:encodingFormat")
+            self.assertNotIn("property", stored)
             for selected in (None, "json"):
                 with self.subTest(location=distribution["title"], selected=selected):
                     kwargs = {} if selected is None else {"params": {"output_format": selected}}

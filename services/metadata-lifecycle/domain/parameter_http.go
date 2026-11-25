@@ -4,6 +4,7 @@ import (
 	"net/textproto"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -16,21 +17,21 @@ func (value *WebServiceParameterInput) Normalize() error {
 	value.ParameterInput = parameter
 	value.Location = ParameterLocation(strings.ToUpper(strings.TrimSpace(string(value.Location))))
 	if !value.Location.Valid() {
-		return invalidField("location", "Location is not supported.", nil)
+		return apperror.Field("location", "Location is not supported.", nil)
 	}
 	if value.Explode && (value.Location != ParameterLocationQuery || !value.Schema.AllowsMultipleValues()) {
-		return invalidField("explode", "Explode requires a query parameter with multiple values.", nil)
+		return apperror.Field("explode", "Explode requires a query parameter with multiple values.", nil)
 	}
 	if value.Location == ParameterLocationPath && !value.Required {
-		return invalidField("required", "Path parameters must be required.", nil)
+		return apperror.Field("required", "Path parameters must be required.", nil)
 	}
 	if value.Location == ParameterLocationHeader {
 		if !httpguts.ValidHeaderFieldName(value.Name) {
-			return invalidField("name", "Header name must be a valid HTTP field name.", nil)
+			return apperror.Field("name", "Header name must be a valid HTTP field name.", nil)
 		}
 		switch textproto.CanonicalMIMEHeaderKey(value.Name) {
 		case "Host", "Content-Length", "Transfer-Encoding", "Connection", "Trailer", "Te", "Upgrade", "Proxy-Connection", "Keep-Alive":
-			return invalidField("name", "Headers must not override destination or HTTP framing.", nil)
+			return apperror.Field("name", "Headers must not override destination or HTTP framing.", nil)
 		}
 	}
 	return nil

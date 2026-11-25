@@ -23,11 +23,10 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		x := v.StringParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
-		result.Property = protoOptionalString(x.Property)
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
@@ -42,11 +41,10 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		x := v.BooleanParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
-		result.Property = protoOptionalString(x.Property)
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
@@ -56,11 +54,10 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		x := v.IntegerParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
-		result.Property = protoOptionalString(x.Property)
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
@@ -76,11 +73,10 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		x := v.FloatParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
-		result.Property = protoOptionalString(x.Property)
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
@@ -96,11 +92,10 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		x := v.DateTimeParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
-		result.Property = protoOptionalString(x.Property)
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
@@ -115,11 +110,10 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		x := v.TemplateParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
-		result.Property = protoOptionalString(x.Property)
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
@@ -141,10 +135,10 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 	case v.IsStringScalarParameterDraft():
 		x := v.StringScalarParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
-		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
@@ -156,10 +150,10 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 	case v.IsBooleanScalarParameterDraft():
 		x := v.BooleanScalarParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
-		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
@@ -167,10 +161,10 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 	case v.IsIntegerScalarParameterDraft():
 		x := v.IntegerScalarParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
-		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
@@ -183,10 +177,10 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 	case v.IsFloatScalarParameterDraft():
 		x := v.FloatScalarParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
-		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Required = x.Required
 		result.Description = protoOptionalString(x.Description)
 		result.ReadOnly = x.ReadOnly
@@ -199,10 +193,10 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 	case v.IsDateTimeScalarParameterDraft():
 		x := v.DateTimeScalarParameterDraft
 		result.ResourceId = protoOptionalUUID(x.ResourceID)
-		result.Property, result.Role = protoOptionalString(x.Property), toProtoParameterRole(x.Role)
+		result.Role = toProtoParameterRole(x.Role)
 		result.Position = x.Position
-		result.Name = string(x.Name)
-		result.Label = string(x.Label)
+		result.Name = x.Name
+		result.Label = x.Label
 		result.Description = protoOptionalString(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly

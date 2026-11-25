@@ -26,7 +26,7 @@ func normalizeKeywords(values []string) ([]string, error) {
 func normalizeKeywordInput(values []string) ([]string, error) {
 	result, err := normalizeKeywords(values)
 	if err != nil {
-		return nil, invalidField("keywords", "Keywords must not be blank and may contain only letters, numbers, spaces, colon, hyphen, and underscore.", err)
+		return nil, apperror.Field("keywords", "Keywords must not be blank and may contain only letters, numbers, spaces, colon, hyphen, and underscore.", err)
 	}
 	return result, nil
 }
@@ -35,10 +35,10 @@ func (value *IdentifierInput) Normalize() error {
 	value.Type = IdentifierType(strings.TrimSpace(string(value.Type)))
 	value.Value = strings.TrimSpace(value.Value)
 	if value.Type == "" {
-		return invalidField("type", "Type must not be blank.", nil)
+		return apperror.Field("type", "Type must not be blank.", nil)
 	}
 	if value.Value == "" {
-		return invalidField("value", "Value must not be blank.", nil)
+		return apperror.Field("value", "Value must not be blank.", nil)
 	}
 	return nil
 }
@@ -62,7 +62,7 @@ func normalizeIdentifierInputs(values []IdentifierInput, field, resource string)
 		}
 		key := string(identifier.Type) + "\x00" + identifier.Value
 		if _, exists := seen[key]; exists {
-			return nil, invalidField(fmt.Sprintf("%s[%d]", field, i), "Identifier must be unique.", nil)
+			return nil, apperror.Field(fmt.Sprintf("%s[%d]", field, i), "Identifier must be unique.", nil)
 		}
 		seen[key] = struct{}{}
 		result[i] = identifier

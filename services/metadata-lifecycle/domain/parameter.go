@@ -61,7 +61,6 @@ type ParameterInput struct {
 	Name        string
 	Label       string
 	Description *string
-	Property    *string
 	Role        *WebServiceParameterRole
 	Required    bool
 	ReadOnly    bool

@@ -25,21 +25,21 @@ var (
 
 func validateWFSChoices(values []string, selected, field, defaultField string) error {
 	if len(values) == 0 {
-		return invalidField(field, "Configure at least one choice.", nil)
+		return apperror.Field(field, "Configure at least one choice.", nil)
 	}
 	seen := make(map[string]struct{}, len(values))
 	for i, value := range values {
 		target := fmt.Sprintf("%s[%d]", field, i)
 		if value == "" || strings.TrimSpace(value) != value {
-			return invalidField(target, "Choices must not be blank or contain surrounding whitespace.", nil)
+			return apperror.Field(target, "Choices must not be blank or contain surrounding whitespace.", nil)
 		}
 		if _, exists := seen[value]; exists {
-			return invalidField(target, "Choices must be unique.", nil)
+			return apperror.Field(target, "Choices must be unique.", nil)
 		}
 		seen[value] = struct{}{}
 	}
 	if _, exists := seen[selected]; !exists {
-		return invalidField(defaultField, "Default must match a configured choice.", nil)
+		return apperror.Field(defaultField, "Default must match a configured choice.", nil)
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ func (value *WFSWebServiceInput) Normalize() error {
 	}
 	value.GetFeatureTemplateURL = strings.TrimSpace(value.GetFeatureTemplateURL)
 	if value.Version != "1.1.0" && value.Version != "2.0.0" {
-		return invalidField("version", "Select WFS version 1.1.0 or 2.0.0.", nil)
+		return apperror.Field("version", "Select WFS version 1.1.0 or 2.0.0.", nil)
 	}
 	if err := validateWFSChoices(value.FeatureTypes, value.DefaultFeatureType, "feature_types", "default_feature_type"); err != nil {
 		return err
@@ -81,7 +81,7 @@ func (value *WFSWebServiceInput) Normalize() error {
 		return err
 	}
 	if value.ResultLimit != nil && *value.ResultLimit <= 0 {
-		return invalidField("result_limit", "Result limit must be positive.", nil)
+		return apperror.Field("result_limit", "Result limit must be positive.", nil)
 	}
 	parameters, err := parseWebServiceParameterInputs(value.Parameters, "parameters")
 	if err != nil {
@@ -101,29 +101,29 @@ func validateWFSParameters(templateURL string, parameters []WebServiceParameterI
 	for i, parameter := range parameters {
 		target := fmt.Sprintf("parameters[%d]", i)
 		if parameter.Location != ParameterLocationPath && parameter.Location != ParameterLocationQuery {
-			return invalidField(target+".location", "WFS parameters must use PATH or QUERY location.", nil)
+			return apperror.Field(target+".location", "WFS parameters must use PATH or QUERY location.", nil)
 		}
 		if _, reserved := wfsReservedParameters[strings.ToUpper(parameter.Name)]; reserved {
-			return invalidField(target+".name", "Standard WFS parameters cannot be redefined.", nil)
+			return apperror.Field(target+".name", "Standard WFS parameters cannot be redefined.", nil)
 		}
 	}
 	endpoint, err := url.Parse(templateURL)
 	if err != nil || endpoint.Host == "" || (endpoint.Scheme != "http" && endpoint.Scheme != "https") || endpoint.Fragment != "" {
-		return invalidField("get_feature_template_url", "URL must be an absolute HTTP(S) URL without a fragment.", err)
+		return apperror.Field("get_feature_template_url", "URL must be an absolute HTTP(S) URL without a fragment.", err)
 	}
 	if pathPlaceholderPattern.MatchString(endpoint.Host) || pathPlaceholderPattern.MatchString(endpoint.RawQuery) {
-		return invalidField("get_feature_template_url", "Placeholders are only supported in the URL path.", nil)
+		return apperror.Field("get_feature_template_url", "Placeholders are only supported in the URL path.", nil)
 	}
 	if err := validatePathParameters(templateURL, pathParameterNames(parameters)); err != nil {
-		return invalidField("get_feature_template_url", "Template URL placeholders must match declared path parameters.", err)
+		return apperror.Field("get_feature_template_url", "Template URL placeholders must match declared path parameters.", err)
 	}
 	query, err := url.ParseQuery(endpoint.RawQuery)
 	if err != nil {
-		return invalidField("get_feature_template_url", "URL query must be valid.", err)
+		return apperror.Field("get_feature_template_url", "URL query must be valid.", err)
 	}
 	for name := range query {
 		if _, reserved := wfsGeneratedParameters[strings.ToUpper(name)]; reserved {
-			return invalidField("get_feature_template_url", "Platform-generated WFS parameters must not appear in the URL query.", nil)
+			return apperror.Field("get_feature_template_url", "Platform-generated WFS parameters must not appear in the URL query.", nil)
 		}
 	}
 	return nil
@@ -162,7 +162,7 @@ func (w *WFSWebService) Normalize() (err error) {
 	}
 	w.GetFeatureTemplateURL = strings.TrimSpace(w.GetFeatureTemplateURL)
 	if w.Version != "1.1.0" && w.Version != "2.0.0" {
-		return invalidField("version", "Select WFS version 1.1.0 or 2.0.0.", nil)
+		return apperror.Field("version", "Select WFS version 1.1.0 or 2.0.0.", nil)
 	}
 	if err := validateWFSChoices(w.FeatureTypes, w.DefaultFeatureType, "feature_types", "default_feature_type"); err != nil {
 		return err
@@ -171,7 +171,7 @@ func (w *WFSWebService) Normalize() (err error) {
 		return err
 	}
 	if w.ResultLimit != nil && *w.ResultLimit <= 0 {
-		return invalidField("result_limit", "Result limit must be positive.", nil)
+		return apperror.Field("result_limit", "Result limit must be positive.", nil)
 	}
 	if err := validatePersistedWebServiceParameters(w.Parameters); err != nil {
 		return err
@@ -201,31 +201,31 @@ func (w *WFSWebService) PrepareAccess(input DistributionAccessInput) (PreparedHT
 	}
 	wfs, ok := input.Input.(WFSAccessInput)
 	if !ok {
-		return PreparedHTTPRequest{}, invalidField("type", "Request type does not match service configuration.", nil)
+		return PreparedHTTPRequest{}, apperror.Field("type", "Request type does not match service configuration.", nil)
 	}
 	featureType := w.DefaultFeatureType
 	if wfs.FeatureType != nil {
 		featureType = *wfs.FeatureType
 	}
 	if !slices.Contains(w.FeatureTypes, featureType) {
-		return PreparedHTTPRequest{}, invalidField("feature_type", "Select a configured feature type.", nil)
+		return PreparedHTTPRequest{}, apperror.Field("feature_type", "Select a configured feature type.", nil)
 	}
 	format := w.DefaultOutputFormat
 	if input.OutputFormat != nil {
 		format = *input.OutputFormat
 	}
 	if !slices.Contains(w.OutputFormats, format) {
-		return PreparedHTTPRequest{}, invalidField("output_format", "Select a native output format for this distribution.", nil)
+		return PreparedHTTPRequest{}, apperror.Field("output_format", "Select a native output format for this distribution.", nil)
 	}
 	limit := w.ResultLimit
 	if wfs.ResultLimit != nil {
 		if !w.ResultLimitEditable && (limit == nil || *wfs.ResultLimit != *limit) {
-			return PreparedHTTPRequest{}, invalidField("result_limit", "Result limit is fixed for this distribution.", nil)
+			return PreparedHTTPRequest{}, apperror.Field("result_limit", "Result limit is fixed for this distribution.", nil)
 		}
 		limit = wfs.ResultLimit
 	}
 	if limit != nil && *limit <= 0 {
-		return PreparedHTTPRequest{}, invalidField("result_limit", "Result limit must be positive.", nil)
+		return PreparedHTTPRequest{}, apperror.Field("result_limit", "Result limit must be positive.", nil)
 	}
 	featureKey, limitKey := "typeName", "maxFeatures"
 	switch w.Version {
@@ -252,7 +252,7 @@ func (w *WFSWebService) PrepareAccess(input DistributionAccessInput) (PreparedHT
 		text := make([]string, 0, 5)
 		for _, coordinate := range coordinates {
 			if math.IsNaN(coordinate) || math.IsInf(coordinate, 0) {
-				return PreparedHTTPRequest{}, invalidField("bbox", "Bounds must contain finite numbers.", nil)
+				return PreparedHTTPRequest{}, apperror.Field("bbox", "Bounds must contain finite numbers.", nil)
 			}
 			text = append(text, strconv.FormatFloat(coordinate, 'g', -1, 64))
 		}

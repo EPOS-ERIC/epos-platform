@@ -21,8 +21,8 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 	case q.IsCreateSoftwareApplicationResourceRequest():
 		v := q.CreateSoftwareApplicationResourceRequest.Metadata
 		metadata := &metadatalifecyclev1.SoftwareApplicationInput{
-			Name:          string(v.Name),
-			Description:   string(v.Description),
+			Name:          v.Name,
+			Description:   v.Description,
 			Keywords:      toProtoKeywords(v.Keywords),
 			Creators:      uuidStrings(v.Creators),
 			Categories:    uuidStrings(v.Categories),
@@ -54,8 +54,8 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 	case q.IsCreateSoftwareSourceCodeResourceRequest():
 		v := q.CreateSoftwareSourceCodeResourceRequest.Metadata
 		metadata := &metadatalifecyclev1.SoftwareSourceCodeInput{
-			Name:          string(v.Name),
-			Description:   string(v.Description),
+			Name:          v.Name,
+			Description:   v.Description,
 			Keywords:      toProtoKeywords(v.Keywords),
 			Creators:      uuidStrings(v.Creators),
 			Categories:    uuidStrings(v.Categories),

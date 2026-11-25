@@ -46,7 +46,6 @@ func parameterParams(
 		Description:                 value.Description,
 		Required:                    value.Required,
 		ReadOnly:                    value.ReadOnly,
-		Property:                    value.Property,
 		Explode:                     explode,
 	}
 	if value.Role != nil {
@@ -366,7 +365,6 @@ func domainParameter(value sqlc.Parameter, template *sqlc.ParameterTemplate, chi
 		Name:        value.Name,
 		Label:       value.Label,
 		Description: value.Description,
-		Property:    value.Property,
 		Role:        role,
 		Required:    value.Required,
 		ReadOnly:    value.ReadOnly,

@@ -39,10 +39,10 @@ func parseWMTSParameters(values []WebServiceParameterInput, field string, reserv
 	for i, parameter := range parameters {
 		path := fmt.Sprintf("%s[%d]", field, i)
 		if parameter.Location != ParameterLocationQuery {
-			return nil, invalidField(path+".location", "WMTS operation parameters must use QUERY location.", nil)
+			return nil, apperror.Field(path+".location", "WMTS operation parameters must use QUERY location.", nil)
 		}
 		if _, exists := reserved[strings.ToUpper(parameter.Name)]; exists {
-			return nil, invalidField(path+".name", "Standard WMTS parameters cannot be redefined.", nil)
+			return nil, apperror.Field(path+".name", "Standard WMTS parameters cannot be redefined.", nil)
 		}
 	}
 	if err := validateWMSRequiredDefaults(field, parameters); err != nil {
@@ -73,8 +73,7 @@ func (value *WMTSWebServiceInput) Normalize() error {
 	if err := value.WebServiceCommonInput.Normalize(); err != nil {
 		return err
 	}
-	value.CapabilitiesURL = strings.TrimSpace(value.CapabilitiesURL)
-	if err := validateWMSURL("capabilities_url", value.CapabilitiesURL); err != nil {
+	if err := normalizeWMSURL(&value.CapabilitiesURL); err != nil {
 		return err
 	}
 	if err := validateWMTSLayers(value.DefaultLayer, value.Layers); err != nil {
@@ -91,40 +90,40 @@ func (value *WMTSWebServiceInput) Normalize() error {
 
 func validateWMTSLayers(defaultLayer string, layers []WMTSLayerInput) error {
 	if len(layers) == 0 {
-		return invalidField("layers", "At least one layer is required.", nil)
+		return apperror.Field("layers", "At least one layer is required.", nil)
 	}
 	names := make(map[string]struct{}, len(layers))
 	for i, layer := range layers {
 		path := fmt.Sprintf("layers[%d]", i)
 		if strings.TrimSpace(layer.Name) == "" {
-			return invalidField(path+".name", "Layer name must not be blank.", nil)
+			return apperror.Field(path+".name", "Layer name must not be blank.", nil)
 		}
 		if _, exists := names[layer.Name]; exists {
-			return invalidField(path+".name", "Layer names must be unique.", nil)
+			return apperror.Field(path+".name", "Layer names must be unique.", nil)
 		}
 		names[layer.Name] = struct{}{}
 		if layer.DefaultStyle != nil && (*layer.DefaultStyle == "" || strings.TrimSpace(*layer.DefaultStyle) != *layer.DefaultStyle) {
-			return invalidField(path+".default_style", "Default style must not be blank or contain surrounding whitespace.", nil)
+			return apperror.Field(path+".default_style", "Default style must not be blank or contain surrounding whitespace.", nil)
 		}
 		styles := make(map[string]struct{}, len(layer.Styles))
 		for j, style := range layer.Styles {
 			target := fmt.Sprintf("%s.styles[%d]", path, j)
 			if strings.TrimSpace(style) == "" {
-				return invalidField(target, "Style name must not be blank.", nil)
+				return apperror.Field(target, "Style name must not be blank.", nil)
 			}
 			if _, exists := styles[style]; exists {
-				return invalidField(target, "Style names must be unique within a layer.", nil)
+				return apperror.Field(target, "Style names must be unique within a layer.", nil)
 			}
 			styles[style] = struct{}{}
 		}
 		if layer.DefaultStyle != nil {
 			if _, exists := styles[*layer.DefaultStyle]; !exists {
-				return invalidField(path+".default_style", "Default style must be one of the configured styles.", nil)
+				return apperror.Field(path+".default_style", "Default style must be one of the configured styles.", nil)
 			}
 		}
 	}
 	if _, exists := names[defaultLayer]; !exists || strings.TrimSpace(defaultLayer) != defaultLayer {
-		return invalidField("default_layer", "Default layer must be one of the configured layers.", nil)
+		return apperror.Field("default_layer", "Default layer must be one of the configured layers.", nil)
 	}
 	return nil
 }
@@ -157,8 +156,7 @@ func (w *WMTSWebService) Normalize() (err error) {
 	if err := w.WebServiceCommon.Normalize(); err != nil {
 		return err
 	}
-	w.CapabilitiesURL = strings.TrimSpace(w.CapabilitiesURL)
-	if err := validateWMSURL("capabilities_url", w.CapabilitiesURL); err != nil {
+	if err := normalizeWMSURL(&w.CapabilitiesURL); err != nil {
 		return err
 	}
 	layers := make([]WMTSLayerInput, len(w.Layers))

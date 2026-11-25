@@ -38,6 +38,61 @@ func (value AccessRight) Valid() bool {
 	}
 }
 
+type DatasetType string
+
+const (
+	DatasetTypeRelease         DatasetType = "RELEASE"
+	DatasetTypeSchema          DatasetType = "SCHEMA"
+	DatasetTypeAprof           DatasetType = "APROF"
+	DatasetTypeCodeList        DatasetType = "CODE_LIST"
+	DatasetTypeCoreComp        DatasetType = "CORE_COMP"
+	DatasetTypeDirectory       DatasetType = "DIRECTORY"
+	DatasetTypeDomainModel     DatasetType = "DOMAIN_MODEL"
+	DatasetTypeDscrpServ       DatasetType = "DSCRP_SERV"
+	DatasetTypeGeospatial      DatasetType = "GEOSPATIAL"
+	DatasetTypeGlossary        DatasetType = "GLOSSARY"
+	DatasetTypeHvd             DatasetType = "HVD"
+	DatasetTypeIepd            DatasetType = "IEPD"
+	DatasetTypeOpDatpro        DatasetType = "OP_DATPRO"
+	DatasetTypeStatistical     DatasetType = "STATISTICAL"
+	DatasetTypeStyles          DatasetType = "STYLES"
+	DatasetTypeSyntaxEcdScheme DatasetType = "SYNTAX_ECD_SCHEME"
+	DatasetTypeSyntheticData   DatasetType = "SYNTHETIC_DATA"
+	DatasetTypeTaxonomy        DatasetType = "TAXONOMY"
+	DatasetTypeTestData        DatasetType = "TEST_DATA"
+	DatasetTypeEnvironmental   DatasetType = "ENVIRONMENTAL"
+)
+
+func (value DatasetType) Valid() bool {
+	switch value {
+	case DatasetTypeRelease, DatasetTypeSchema, DatasetTypeAprof, DatasetTypeCodeList,
+		DatasetTypeCoreComp, DatasetTypeDirectory, DatasetTypeDomainModel, DatasetTypeDscrpServ,
+		DatasetTypeGeospatial, DatasetTypeGlossary, DatasetTypeHvd, DatasetTypeIepd,
+		DatasetTypeOpDatpro, DatasetTypeStatistical, DatasetTypeStyles, DatasetTypeSyntaxEcdScheme,
+		DatasetTypeSyntheticData, DatasetTypeTaxonomy, DatasetTypeTestData, DatasetTypeEnvironmental:
+		return true
+	default:
+		return false
+	}
+}
+
+func optionalDatasetType(value *DatasetType) (*DatasetType, error) {
+	if value == nil {
+		return nil, nil
+	}
+
+	normalized := DatasetType(strings.ToUpper(strings.TrimSpace(string(*value))))
+	if normalized == "" {
+		return nil, nil
+	}
+
+	if !normalized.Valid() {
+		return nil, apperror.Field("type", "Dataset type is not supported.", nil)
+	}
+
+	return &normalized, nil
+}
+
 type AccrualPeriodicity string
 
 const (
@@ -94,7 +149,7 @@ type DatasetInput struct {
 	QualityAnnotation          *string
 	ConformsTo                 *string
 	Provenance                 *string
-	Type                       *string
+	Type                       *DatasetType
 	Version                    *string
 	SpatialResolutionInMeters  *float64
 	TemporalResolution         *float64
@@ -132,7 +187,7 @@ type DatasetMetadata struct {
 	QualityAnnotation          *string
 	ConformsTo                 *string
 	Provenance                 *string
-	Type                       *string
+	Type                       *DatasetType
 	Version                    *string
 	SpatialResolutionInMeters  *float64
 	TemporalResolution         *float64
@@ -180,21 +235,26 @@ type DatasetVersion struct {
 func (value *DatasetInput) Normalize() error {
 	value.Title = strings.TrimSpace(value.Title)
 	if value.Title == "" {
-		return invalidField("title", "Title must not be blank.", nil)
+		return apperror.Field("title", "Title must not be blank.", nil)
 	}
 	value.Description = strings.TrimSpace(value.Description)
 	if value.Description == "" {
-		return invalidField("description", "Description must not be blank.", nil)
+		return apperror.Field("description", "Description must not be blank.", nil)
 	}
 	accrualPeriodicity, err := optionalAccrualPeriodicity(value.AccrualPeriodicity)
 	if err != nil {
 		return err
 	}
 	value.AccrualPeriodicity = accrualPeriodicity
-	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
+	if err := normalizeOptionalHTTPURL(value.QualityAnnotation, "quality_annotation"); err != nil {
+		return err
+	}
 	value.ConformsTo = optionalTrimmedString(value.ConformsTo)
 	value.Provenance = optionalTrimmedString(value.Provenance)
-	value.Type = optionalTrimmedString(value.Type)
+	value.Type, err = optionalDatasetType(value.Type)
+	if err != nil {
+		return err
+	}
 	value.Version = optionalTrimmedString(value.Version)
 	if err := validateResolutions(value.SpatialResolutionInMeters, value.TemporalResolution); err != nil {
 		return err
@@ -210,11 +270,7 @@ func (value *DatasetInput) Normalize() error {
 	}
 	value.Keywords = keywords
 	if err := validateDatasetTemporal(value.TemporalCoverage, value.GeologicalTemporalCoverage); err != nil {
-		target, detail := "temporal_coverage", "Temporal coverage is invalid."
-		if value.GeologicalTemporalCoverage != nil {
-			target, detail = "geological_temporal_coverage", "Temporal and geological coverage cannot both be set."
-		}
-		return invalidField(target, detail, err)
+		return err
 	}
 	if err := validateUUIDListField(value.ContactPointIDs, "contact_points", "Contact point"); err != nil {
 		return err
@@ -247,7 +303,7 @@ func (value *DatasetInput) Normalize() error {
 // Normalize validates a dataset draft replacement command.
 func (value *DatasetDraftInput) Normalize() error {
 	if value.Revision < 1 {
-		return invalidField("revision", "Revision must be positive.", nil)
+		return apperror.Field("revision", "Revision must be positive.", nil)
 	}
 	if err := value.Metadata.Normalize(); err != nil {
 		return fmt.Errorf("validate dataset draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
@@ -259,7 +315,7 @@ func (value *DatasetDraftInput) Normalize() error {
 func (value *DatasetRejectionInput) Normalize() error {
 	value.Note = strings.TrimSpace(value.Note)
 	if value.Note == "" {
-		return invalidField("note", "Rejection note must not be blank.", nil)
+		return apperror.Field("note", "Rejection note must not be blank.", nil)
 	}
 	return nil
 }
@@ -286,10 +342,15 @@ func (value *DatasetMetadata) Normalize() (err error) {
 	if err != nil {
 		return fmt.Errorf("dataset accrual periodicity: %w", err)
 	}
-	value.QualityAnnotation = optionalTrimmedString(value.QualityAnnotation)
+	if err := normalizeOptionalHTTPURL(value.QualityAnnotation, "quality_annotation"); err != nil {
+		return err
+	}
 	value.ConformsTo = optionalTrimmedString(value.ConformsTo)
 	value.Provenance = optionalTrimmedString(value.Provenance)
-	value.Type = optionalTrimmedString(value.Type)
+	value.Type, err = optionalDatasetType(value.Type)
+	if err != nil {
+		return err
+	}
 	value.Version = optionalTrimmedString(value.Version)
 	if err := validateResolutions(value.SpatialResolutionInMeters, value.TemporalResolution); err != nil {
 		return err
@@ -345,10 +406,10 @@ func (value *DatasetMetadata) Normalize() (err error) {
 
 func validateResolutions(spatial, temporal *float64) error {
 	if spatial != nil && *spatial < 0 {
-		return invalidField("spatial_resolution_in_meters", "Resolution must be a non-negative number.", nil)
+		return apperror.Field("spatial_resolution_in_meters", "Resolution must be a non-negative number.", nil)
 	}
 	if temporal != nil && *temporal < 0 {
-		return invalidField("temporal_resolution", "Resolution must be a non-negative number.", nil)
+		return apperror.Field("temporal_resolution", "Resolution must be a non-negative number.", nil)
 	}
 	return nil
 }
@@ -401,14 +462,14 @@ func (value *DatasetVersion) Normalize() (err error) {
 
 func validateTemporal(value *Temporal) error {
 	if value != nil && value.Start != nil && value.End != nil && value.Start.After(*value.End) {
-		return fmt.Errorf("start must not be after end: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("temporal_coverage", "Start date must not be after end date.", nil)
 	}
 	return nil
 }
 
 func validateDatasetTemporal(temporal *Temporal, geological *GeologicalTemporal) error {
 	if temporal != nil && geological != nil {
-		return fmt.Errorf("calendar and geological temporal coverage are mutually exclusive: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("geological_temporal_coverage", "Temporal and geological coverage cannot both be set.", nil)
 	}
 	if err := validateTemporal(temporal); err != nil {
 		return err
@@ -417,13 +478,13 @@ func validateDatasetTemporal(temporal *Temporal, geological *GeologicalTemporal)
 		return nil
 	}
 	if value := geological.StartMYA; value != nil && (math.IsNaN(*value) || math.IsInf(*value, 0) || *value < 0) {
-		return fmt.Errorf("start_mya must be finite and non-negative: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("geological_temporal_coverage.start_mya", "Geological start age must be finite and non-negative.", nil)
 	}
 	if value := geological.EndMYA; value != nil && (math.IsNaN(*value) || math.IsInf(*value, 0) || *value < 0) {
-		return fmt.Errorf("end_mya must be finite and non-negative: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("geological_temporal_coverage.end_mya", "Geological end age must be finite and non-negative.", nil)
 	}
 	if geological.StartMYA != nil && geological.EndMYA != nil && *geological.StartMYA < *geological.EndMYA {
-		return fmt.Errorf("start_mya must not be less than end_mya: %w", apperror.Default(apperror.CodeValidationFailed))
+		return apperror.Field("geological_temporal_coverage", "Geological start age must be older than or equal to the end age.", nil)
 	}
 	return nil
 }
@@ -437,7 +498,7 @@ func optionalAccessRight(value *AccessRight) (*AccessRight, error) {
 		return nil, nil
 	}
 	if !normalized.Valid() {
-		return nil, invalidField("access_right", "Access right is not supported.", nil)
+		return nil, apperror.Field("access_right", "Access right is not supported.", nil)
 	}
 	return &normalized, nil
 }
@@ -451,7 +512,7 @@ func optionalAccrualPeriodicity(value *AccrualPeriodicity) (*AccrualPeriodicity,
 		return nil, nil
 	}
 	if !normalized.Valid() {
-		return nil, invalidField("accrual_periodicity", "Accrual periodicity is not supported.", nil)
+		return nil, apperror.Field("accrual_periodicity", "Accrual periodicity is not supported.", nil)
 	}
 	return &normalized, nil
 }

@@ -71,6 +71,8 @@ func Open(ctx context.Context, log *slog.Logger, cfg config.Config) (*PostgresDB
 				return fmt.Errorf("register PostGIS codec: %w", err)
 			}
 			customTypes, err := conn.LoadTypes(ctx, []string{
+				"dataset_type",
+				"_dataset_type",
 				"web_service_visible_on",
 				"_web_service_visible_on",
 				"string_parameter_enum_option",

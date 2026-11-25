@@ -314,7 +314,7 @@ func (h *ogenHandler) BlockUser(ctx context.Context, q *gatewayapi.BlockUserRequ
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if err := h.metadataLifecycleClient.BlockUser(ctx, a, p.ID, string(q.Reason)); err != nil {
+	if err := h.metadataLifecycleClient.BlockUser(ctx, a, p.ID, q.Reason); err != nil {
 		return fmt.Errorf("block user: %w", err)
 	}
 	return nil

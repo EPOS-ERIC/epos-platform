@@ -71,9 +71,6 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 			DocumentationURI: service.DocumentationURI,
 			ContactPoints:    service.ContactPoints,
 			Keywords:         service.Keywords,
-			AccessRights:     service.AccessRights,
-			License:          service.License,
-			Categories:       service.Categories,
 			TemplateURL:      service.TemplateURL,
 			Method:           service.Method,
 			Format:           service.Format,
@@ -94,17 +91,17 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 	case gatewayapi.WfsWebServiceDraftWebServiceDraft:
 		service := v.WfsWebServiceDraft
 		mapped := toProtoWFSWebServiceConfigurationDraft(service)
-		mapped.Common = toProtoWebServiceCommonInput(service.ResourceID, service.VisibleOn, service.Provider, service.DocumentationURI, service.ContactPoints, service.Keywords, service.AccessRights, service.License, service.Categories)
+		mapped.Common = toProtoWebServiceCommonInput(service.ResourceID, service.VisibleOn, service.Provider, service.DocumentationURI, service.ContactPoints, service.Keywords)
 		r.Service = &metadatalifecyclev1.WebServiceInput_Wfs{Wfs: mapped}
 	case gatewayapi.WmsWebServiceDraftWebServiceDraft:
 		service := v.WmsWebServiceDraft
 		mapped := toProtoWMSWebServiceConfigurationDraft(service)
-		mapped.Common = toProtoWebServiceCommonInput(service.ResourceID, service.VisibleOn, service.Provider, service.DocumentationURI, service.ContactPoints, service.Keywords, service.AccessRights, service.License, service.Categories)
+		mapped.Common = toProtoWebServiceCommonInput(service.ResourceID, service.VisibleOn, service.Provider, service.DocumentationURI, service.ContactPoints, service.Keywords)
 		r.Service = &metadatalifecyclev1.WebServiceInput_Wms{Wms: mapped}
 	case gatewayapi.WmtsWebServiceDraftWebServiceDraft:
 		service := v.WmtsWebServiceDraft
 		mapped := toProtoWMTSWebServiceConfigurationDraft(service)
-		mapped.Common = toProtoWebServiceCommonInput(service.ResourceID, service.VisibleOn, service.Provider, service.DocumentationURI, service.ContactPoints, service.Keywords, service.AccessRights, service.License, service.Categories)
+		mapped.Common = toProtoWebServiceCommonInput(service.ResourceID, service.VisibleOn, service.Provider, service.DocumentationURI, service.ContactPoints, service.Keywords)
 		r.Service = &metadatalifecyclev1.WebServiceInput_Wmts{Wmts: mapped}
 	default:
 		return r
@@ -112,16 +109,13 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 	return r
 }
 
-func toProtoWebServiceCommonInput(resourceID gatewayapi.OptUUID, visibleOn gatewayapi.OptNilWebServiceVisibleOnArray, provider gatewayapi.OptUUID, documentation gatewayapi.OptURI, contacts []uuid.UUID, keywords []gatewayapi.Keyword, accessRights, license gatewayapi.OptNilString, categories []uuid.UUID) *metadatalifecyclev1.WebServiceCommonInput {
+func toProtoWebServiceCommonInput(resourceID gatewayapi.OptUUID, visibleOn gatewayapi.OptNilWebServiceVisibleOnArray, provider gatewayapi.OptUUID, documentation gatewayapi.OptURI, contacts []uuid.UUID, keywords []gatewayapi.Keyword) *metadatalifecyclev1.WebServiceCommonInput {
 	result := &metadatalifecyclev1.WebServiceCommonInput{
 		ResourceId:    protoOptionalUUID(resourceID),
 		ProviderId:    protoOptionalUUID(provider),
 		VisibleOn:     toProtoWebServiceVisibleOn(visibleOn),
 		ContactPoints: uuidStrings(contacts),
 		Keywords:      toProtoKeywords(keywords),
-		AccessRights:  protoOptionalString(accessRights),
-		License:       protoOptionalString(license),
-		Categories:    uuidStrings(categories),
 	}
 	if documentation.Set {
 		result.DocumentationUri = new(documentation.Value.String())
@@ -131,18 +125,18 @@ func toProtoWebServiceCommonInput(resourceID gatewayapi.OptUUID, visibleOn gatew
 
 func toProtoHTTPWebServiceDraft(value gatewayapi.HttpWebServiceDraft) *metadatalifecyclev1.HTTPWebServiceInput {
 	result := &metadatalifecyclev1.HTTPWebServiceInput{
-		Common:      toProtoWebServiceCommonInput(value.ResourceID, value.VisibleOn, value.Provider, value.DocumentationURI, value.ContactPoints, value.Keywords, value.AccessRights, value.License, value.Categories),
-		TemplateUrl: string(value.TemplateURL),
+		Common:      toProtoWebServiceCommonInput(value.ResourceID, value.VisibleOn, value.Provider, value.DocumentationURI, value.ContactPoints, value.Keywords),
+		TemplateUrl: value.TemplateURL,
 		Method:      toProtoWebServiceMethod(value.Method),
-		Format:      string(value.Format),
+		Format:      value.Format,
 	}
 	for _, parameter := range value.Parameters {
 		result.Parameters = append(result.Parameters, toProtoParameterDraft(parameter))
 	}
 	if value.BodyRequired.Set || value.BodyContentType.Set || value.BodyTemplate.Set || len(value.BodyParameters) > 0 {
 		result.Body = &metadatalifecyclev1.RequestBodyInput{
-			ContentType: string(value.BodyContentType.Value),
-			Template:    string(value.BodyTemplate.Value),
+			ContentType: value.BodyContentType.Value,
+			Template:    value.BodyTemplate.Value,
 		}
 		if value.BodyRequired.Set {
 			result.Body.Required = new(value.BodyRequired.Value)
@@ -158,17 +152,13 @@ func toProtoWFSWebServiceConfigurationDraft(value gatewayapi.WfsWebServiceDraft)
 	result := &metadatalifecyclev1.WFSWebServiceInput{
 		GetFeatureTemplateUrl: value.GetFeatureTemplateURL,
 		Version:               string(value.Version),
-		DefaultFeatureType:    string(value.DefaultFeatureType),
-		DefaultOutputFormat:   string(value.DefaultOutputFormat),
+		DefaultFeatureType:    value.DefaultFeatureType,
+		DefaultOutputFormat:   value.DefaultOutputFormat,
 		ResultLimit:           protoOptionalInt64(value.ResultLimit),
 		ResultLimitEditable:   value.ResultLimitEditable,
 	}
-	for _, featureType := range value.FeatureTypes {
-		result.FeatureTypes = append(result.FeatureTypes, string(featureType))
-	}
-	for _, format := range value.OutputFormats {
-		result.OutputFormats = append(result.OutputFormats, string(format))
-	}
+	result.FeatureTypes = value.FeatureTypes
+	result.OutputFormats = value.OutputFormats
 	for _, parameter := range value.Parameters {
 		result.Parameters = append(result.Parameters, toProtoParameterDraft(parameter))
 	}
@@ -176,19 +166,17 @@ func toProtoWFSWebServiceConfigurationDraft(value gatewayapi.WfsWebServiceDraft)
 }
 
 func toProtoWMTSWebServiceConfigurationDraft(value gatewayapi.WmtsWebServiceDraft) *metadatalifecyclev1.WMTSWebServiceInput {
-	result := &metadatalifecyclev1.WMTSWebServiceInput{CapabilitiesUrl: value.CapabilitiesURL, DefaultLayer: string(value.DefaultLayer)}
+	result := &metadatalifecyclev1.WMTSWebServiceInput{CapabilitiesUrl: value.CapabilitiesURL.String(), DefaultLayer: value.DefaultLayer}
 	for _, layer := range value.Layers {
 		mapped := &metadatalifecyclev1.WMTSLayerInput{
-			Name:       string(layer.Name),
+			Name:       layer.Name,
 			ResourceId: protoOptionalUUID(layer.ResourceID),
 		}
 
 		if layer.DefaultStyle.Set {
-			mapped.DefaultStyle = new(string(layer.DefaultStyle.Value))
+			mapped.DefaultStyle = new(layer.DefaultStyle.Value)
 		}
-		for _, style := range layer.Styles {
-			mapped.Styles = append(mapped.Styles, string(style))
-		}
+		mapped.Styles = layer.Styles
 		result.Layers = append(result.Layers, mapped)
 	}
 	for _, parameter := range value.GetTileParameters {
@@ -202,15 +190,15 @@ func toProtoWMTSWebServiceConfigurationDraft(value gatewayapi.WmtsWebServiceDraf
 
 func toProtoWMSWebServiceConfigurationDraft(value gatewayapi.WmsWebServiceDraft) *metadatalifecyclev1.WMSWebServiceInput {
 	result := &metadatalifecyclev1.WMSWebServiceInput{
-		CapabilitiesUrl:      value.CapabilitiesURL,
-		DefaultLayer:         string(value.DefaultLayer),
+		CapabilitiesUrl:      value.CapabilitiesURL.String(),
+		DefaultLayer:         value.DefaultLayer,
 		TransparencyEditable: value.TransparencyEditable,
 		DefaultTransparency:  value.DefaultTransparency,
 	}
 	for _, layer := range value.Layers {
 		mapped := &metadatalifecyclev1.WMSLayerInput{
 			ResourceId:   protoOptionalUUID(layer.ResourceID),
-			Name:         string(layer.Name),
+			Name:         layer.Name,
 			DefaultStyle: layer.DefaultStyle,
 			Styles:       layer.Styles,
 		}
@@ -252,8 +240,8 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) (*metadatalifecyclev1.D
 	r.ResourceId = protoOptionalUUID(x.ResourceID)
 	r.Delivery = &metadatalifecyclev1.DistributionInput_DownloadableFile{
 		DownloadableFile: &metadatalifecyclev1.DownloadableFile{
-			Url:    string(x.DownloadableFile.URL),
-			Format: string(x.DownloadableFile.Format),
+			Url:    x.DownloadableFile.URL.String(),
+			Format: x.DownloadableFile.Format,
 		},
 	}
 	return r, nil

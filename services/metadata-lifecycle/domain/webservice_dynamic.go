@@ -49,7 +49,7 @@ func (w *DynamicWebService) PrepareAccess(input DistributionAccessInput) (Prepar
 	}
 	dynamic, ok := input.Input.(DynamicAccessInput)
 	if !ok {
-		return PreparedHTTPRequest{}, invalidField("type", "Request type does not match service configuration.", nil)
+		return PreparedHTTPRequest{}, apperror.Field("type", "Request type does not match service configuration.", nil)
 	}
 	longitude := w.parameterWithRole(WebServiceParameterRoleLongitude)
 	latitude := w.parameterWithRole(WebServiceParameterRoleLatitude)
@@ -60,7 +60,7 @@ func (w *DynamicWebService) PrepareAccess(input DistributionAccessInput) (Prepar
 	parameters = append(parameters, dynamic.Parameters...)
 	for i, parameter := range dynamic.Parameters {
 		if parameter.ID == longitude.ID || parameter.ID == latitude.ID {
-			return PreparedHTTPRequest{}, invalidField(fmt.Sprintf("parameters[%d].id", i), "Coordinate values must be supplied through longitude and latitude.", nil)
+			return PreparedHTTPRequest{}, apperror.Field(fmt.Sprintf("parameters[%d].id", i), "Coordinate values must be supplied through longitude and latitude.", nil)
 		}
 	}
 	for _, coordinate := range []struct {
@@ -73,7 +73,7 @@ func (w *DynamicWebService) PrepareAccess(input DistributionAccessInput) (Prepar
 	} {
 		if _, err := resolveAccessValue(coordinate.parameter.Schema, AccessFloat(coordinate.value)); err != nil {
 			if apperror.IsCode(err, apperror.CodeValidationFailed) {
-				return PreparedHTTPRequest{}, invalidField(coordinate.name, "Coordinate must match the configured constraints.", err)
+				return PreparedHTTPRequest{}, apperror.Field(coordinate.name, "Coordinate must match the configured constraints.", err)
 			}
 			return PreparedHTTPRequest{}, err
 		}

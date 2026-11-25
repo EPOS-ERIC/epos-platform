@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
@@ -10,6 +11,35 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func toProtoDatasetType(value gatewayapi.OptNilDatasetType) (*metadatalifecyclev1.DatasetType, error) {
+	if !value.Set || value.Null {
+		return nil, nil
+	}
+	if err := value.Value.Validate(); err != nil {
+		return nil, fmt.Errorf("unsupported dataset type %q", value.Value)
+	}
+	number, ok := metadatalifecyclev1.DatasetType_value["DATASET_TYPE_"+string(value.Value)]
+	if !ok || number == 0 {
+		return nil, fmt.Errorf("unsupported dataset type %q", value.Value)
+	}
+	result := metadatalifecyclev1.DatasetType(number)
+	return &result, nil
+}
+
+func toAPIDatasetType(value *metadatalifecyclev1.DatasetType) (gatewayapi.OptNilDatasetType, error) {
+	result := gatewayapi.OptNilDatasetType{}
+	if value == nil {
+		return result, nil
+	}
+	name, ok := metadatalifecyclev1.DatasetType_name[int32(*value)]
+	mapped := gatewayapi.DatasetType(strings.TrimPrefix(name, "DATASET_TYPE_"))
+	if !ok || mapped.Validate() != nil {
+		return result, fmt.Errorf("unsupported upstream dataset type %d", *value)
+	}
+	result.SetTo(mapped)
+	return result, nil
+}
 
 func toClientStringPtr(v gatewayapi.OptNilString) *string {
 	if !v.Set || v.Null {

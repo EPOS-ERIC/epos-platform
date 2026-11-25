@@ -774,7 +774,7 @@ func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.
 		QualityAnnotation:         value.QualityAnnotation,
 		ConformsTo:                value.ConformsTo,
 		Provenance:                value.Provenance,
-		Type:                      value.Type,
+		Type:                      toProtoDatasetType(value.Type),
 		Version:                   value.Version,
 		SpatialResolutionInMeters: value.SpatialResolutionInMeters,
 		TemporalResolution:        value.TemporalResolution,
@@ -940,7 +940,6 @@ func parameterOutput(value domain.WebServiceParameter) *metadatalifecyclev1.Para
 		Description: value.Description,
 		Required:    value.Required,
 		ReadOnly:    value.ReadOnly,
-		Property:    value.Property,
 		Role:        webServiceParameterRoleOutput(value.Role),
 		Location:    webServiceParameterLocationOutput(value.Location),
 		Explode:     value.Explode,
@@ -1007,7 +1006,6 @@ func scalarParameterOutput(value domain.Parameter) *metadatalifecyclev1.ScalarPa
 		Name:        value.Name,
 		Label:       value.Label,
 		Description: value.Description,
-		Property:    value.Property,
 		Role:        webServiceParameterRoleOutput(value.Role),
 		Required:    value.Required,
 		ReadOnly:    value.ReadOnly,
@@ -1155,6 +1153,10 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
+	datasetType, err := toDomainDatasetType(value.Type)
+	if err != nil {
+		return domain.DatasetInput{}, err
+	}
 	temporal, err := temporalInput(value.GetTemporalCoverage())
 	if err != nil {
 		return domain.DatasetInput{}, fmt.Errorf("map temporal coverage: %w", apperror.PrefixTarget(err, "temporal_coverage"))
@@ -1192,7 +1194,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 		QualityAnnotation:          value.QualityAnnotation,
 		ConformsTo:                 value.ConformsTo,
 		Provenance:                 value.Provenance,
-		Type:                       value.Type,
+		Type:                       datasetType,
 		Version:                    value.Version,
 		SpatialResolutionInMeters:  value.SpatialResolutionInMeters,
 		TemporalResolution:         value.TemporalResolution,
@@ -1358,7 +1360,6 @@ func webServiceParameterInput(value *metadatalifecyclev1.ParameterInput) (domain
 	if err != nil {
 		return domain.WebServiceParameterInput{}, err
 	}
-	parameter.Property = value.Property
 	parameter.Role = role
 	return domain.WebServiceParameterInput{ParameterInput: parameter, Location: location, Explode: value.GetExplode()}, nil
 }
@@ -1548,7 +1549,6 @@ func scalarParameterInput(value *metadatalifecyclev1.ScalarParameterInput) (doma
 		Name:        value.GetName(),
 		Label:       value.GetLabel(),
 		Description: value.Description,
-		Property:    value.Property,
 		Role:        role,
 		Required:    value.GetRequired(),
 		ReadOnly:    value.GetReadOnly(),

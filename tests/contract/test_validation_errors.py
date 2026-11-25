@@ -5,7 +5,6 @@ from uuid import uuid4
 
 from auth import get_token, register_user
 from client import SCHEMA, GatewayClient
-from distribution_fixtures import web_distribution
 from fixtures import assert_problem, create_group, concept_id
 
 
@@ -72,7 +71,9 @@ class ValidationErrorsContractTest(unittest.TestCase):
             id=resource_id,
         )
         self.assertEqual(response.status_code, 200)
-        matches = [version for version in response.json() if version["status"] == status]
+        matches = [
+            version for version in response.json() if version["status"] == status
+        ]
         self.assertEqual(len(matches), 1)
         return matches[0]
 
@@ -126,26 +127,38 @@ class ValidationErrorsContractTest(unittest.TestCase):
         )
         for field in ("spatial_resolution_in_meters", "temporal_resolution"):
             with self.subTest(operation="createResource", case=f"negative {field}"):
-                self.assert_bad_request(self.gateway.post(
+                self.assert_bad_request(
+                    self.gateway.post(
+                        "/groups/{groupId}/resources",
+                        groupId=group_id,
+                        json={
+                            "resource_type": "dataset",
+                            "metadata": {
+                                "title": "Invalid resolution",
+                                "description": "Negative resolution must be rejected",
+                                field: -1,
+                            },
+                        },
+                    )
+                )
+        foreign_category_id = self.create_category(
+            membership_group_id, f"foreign-{suffix}"
+        )
+        with self.subTest(operation="createResource", case="foreign dataset category"):
+            self.assert_bad_request(
+                self.gateway.post(
                     "/groups/{groupId}/resources",
                     groupId=group_id,
-                    json={"resource_type": "dataset", "metadata": {
-                        "title": "Invalid resolution",
-                        "description": "Negative resolution must be rejected",
-                        field: -1,
-                    }},
-                ))
-        foreign_category_id = self.create_category(membership_group_id, f"foreign-{suffix}")
-        with self.subTest(operation="createResource", case="foreign web service category"):
-            self.assert_bad_request(self.gateway.post(
-                "/groups/{groupId}/resources",
-                groupId=group_id,
-                json={"resource_type": "dataset", "metadata": {
-                    "title": "Invalid category",
-                    "description": "Web service category must belong to dataset group",
-                    "distributions": [web_distribution(categories=[foreign_category_id])],
-                }},
-            ))
+                    json={
+                        "resource_type": "dataset",
+                        "metadata": {
+                            "title": "Invalid category",
+                            "description": "Category must belong to dataset group",
+                            "categories": [foreign_category_id],
+                        },
+                    },
+                )
+            )
 
         with self.subTest(operation="createGroup", case="wrong media type"):
             self.assert_unsupported_media_type(
@@ -157,7 +170,9 @@ class ValidationErrorsContractTest(unittest.TestCase):
             )
         with self.subTest(operation="createGroup", case="missing field"):
             self.assert_bad_request(
-                self.gateway.post("/groups", json={"concept_id": concept_id(self.gateway, "Data")})
+                self.gateway.post(
+                    "/groups", json={"concept_id": concept_id(self.gateway, "Data")}
+                )
             )
         with self.subTest(operation="createGroup", case="unknown field"):
             self.assert_bad_request(
@@ -325,7 +340,9 @@ class ValidationErrorsContractTest(unittest.TestCase):
                 "description": "Valid replacement description",
             },
         }
-        with self.subTest(operation="replaceResourceDraftVersion", case="missing revision"):
+        with self.subTest(
+            operation="replaceResourceDraftVersion", case="missing revision"
+        ):
             payload = dict(valid_draft_payload)
             payload.pop("revision")
             self.assert_bad_request(
@@ -336,7 +353,9 @@ class ValidationErrorsContractTest(unittest.TestCase):
                     json=payload,
                 )
             )
-        with self.subTest(operation="replaceResourceDraftVersion", case="unknown field"):
+        with self.subTest(
+            operation="replaceResourceDraftVersion", case="unknown field"
+        ):
             payload = dict(valid_draft_payload)
             payload["unexpected"] = True
             self.assert_bad_request(
@@ -347,7 +366,9 @@ class ValidationErrorsContractTest(unittest.TestCase):
                     json=payload,
                 )
             )
-        with self.subTest(operation="replaceResourceDraftVersion", case="invalid discriminator"):
+        with self.subTest(
+            operation="replaceResourceDraftVersion", case="invalid discriminator"
+        ):
             payload = dict(valid_draft_payload)
             payload["resource_type"] = "invalid"
             self.assert_bad_request(
@@ -358,7 +379,9 @@ class ValidationErrorsContractTest(unittest.TestCase):
                     json=payload,
                 )
             )
-        with self.subTest(operation="replaceResourceDraftVersion", case="blank metadata"):
+        with self.subTest(
+            operation="replaceResourceDraftVersion", case="blank metadata"
+        ):
             payload = dict(valid_draft_payload)
             payload["metadata"] = {
                 "title": " ",

@@ -181,6 +181,109 @@ func (DatasetAccrualPeriodicity) EnumDescriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{1}
 }
 
+type DatasetType int32
+
+const (
+	DatasetType_DATASET_TYPE_UNSPECIFIED       DatasetType = 0
+	DatasetType_DATASET_TYPE_RELEASE           DatasetType = 1
+	DatasetType_DATASET_TYPE_SCHEMA            DatasetType = 2
+	DatasetType_DATASET_TYPE_APROF             DatasetType = 3
+	DatasetType_DATASET_TYPE_CODE_LIST         DatasetType = 4
+	DatasetType_DATASET_TYPE_CORE_COMP         DatasetType = 5
+	DatasetType_DATASET_TYPE_DIRECTORY         DatasetType = 6
+	DatasetType_DATASET_TYPE_DOMAIN_MODEL      DatasetType = 7
+	DatasetType_DATASET_TYPE_DSCRP_SERV        DatasetType = 8
+	DatasetType_DATASET_TYPE_GEOSPATIAL        DatasetType = 9
+	DatasetType_DATASET_TYPE_GLOSSARY          DatasetType = 10
+	DatasetType_DATASET_TYPE_HVD               DatasetType = 11
+	DatasetType_DATASET_TYPE_IEPD              DatasetType = 12
+	DatasetType_DATASET_TYPE_OP_DATPRO         DatasetType = 13
+	DatasetType_DATASET_TYPE_STATISTICAL       DatasetType = 14
+	DatasetType_DATASET_TYPE_STYLES            DatasetType = 15
+	DatasetType_DATASET_TYPE_SYNTAX_ECD_SCHEME DatasetType = 16
+	DatasetType_DATASET_TYPE_SYNTHETIC_DATA    DatasetType = 17
+	DatasetType_DATASET_TYPE_TAXONOMY          DatasetType = 18
+	DatasetType_DATASET_TYPE_TEST_DATA         DatasetType = 19
+	DatasetType_DATASET_TYPE_ENVIRONMENTAL     DatasetType = 20
+)
+
+// Enum value maps for DatasetType.
+var (
+	DatasetType_name = map[int32]string{
+		0:  "DATASET_TYPE_UNSPECIFIED",
+		1:  "DATASET_TYPE_RELEASE",
+		2:  "DATASET_TYPE_SCHEMA",
+		3:  "DATASET_TYPE_APROF",
+		4:  "DATASET_TYPE_CODE_LIST",
+		5:  "DATASET_TYPE_CORE_COMP",
+		6:  "DATASET_TYPE_DIRECTORY",
+		7:  "DATASET_TYPE_DOMAIN_MODEL",
+		8:  "DATASET_TYPE_DSCRP_SERV",
+		9:  "DATASET_TYPE_GEOSPATIAL",
+		10: "DATASET_TYPE_GLOSSARY",
+		11: "DATASET_TYPE_HVD",
+		12: "DATASET_TYPE_IEPD",
+		13: "DATASET_TYPE_OP_DATPRO",
+		14: "DATASET_TYPE_STATISTICAL",
+		15: "DATASET_TYPE_STYLES",
+		16: "DATASET_TYPE_SYNTAX_ECD_SCHEME",
+		17: "DATASET_TYPE_SYNTHETIC_DATA",
+		18: "DATASET_TYPE_TAXONOMY",
+		19: "DATASET_TYPE_TEST_DATA",
+		20: "DATASET_TYPE_ENVIRONMENTAL",
+	}
+	DatasetType_value = map[string]int32{
+		"DATASET_TYPE_UNSPECIFIED":       0,
+		"DATASET_TYPE_RELEASE":           1,
+		"DATASET_TYPE_SCHEMA":            2,
+		"DATASET_TYPE_APROF":             3,
+		"DATASET_TYPE_CODE_LIST":         4,
+		"DATASET_TYPE_CORE_COMP":         5,
+		"DATASET_TYPE_DIRECTORY":         6,
+		"DATASET_TYPE_DOMAIN_MODEL":      7,
+		"DATASET_TYPE_DSCRP_SERV":        8,
+		"DATASET_TYPE_GEOSPATIAL":        9,
+		"DATASET_TYPE_GLOSSARY":          10,
+		"DATASET_TYPE_HVD":               11,
+		"DATASET_TYPE_IEPD":              12,
+		"DATASET_TYPE_OP_DATPRO":         13,
+		"DATASET_TYPE_STATISTICAL":       14,
+		"DATASET_TYPE_STYLES":            15,
+		"DATASET_TYPE_SYNTAX_ECD_SCHEME": 16,
+		"DATASET_TYPE_SYNTHETIC_DATA":    17,
+		"DATASET_TYPE_TAXONOMY":          18,
+		"DATASET_TYPE_TEST_DATA":         19,
+		"DATASET_TYPE_ENVIRONMENTAL":     20,
+	}
+)
+
+func (x DatasetType) Enum() *DatasetType {
+	p := new(DatasetType)
+	*p = x
+	return p
+}
+
+func (x DatasetType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DatasetType) Descriptor() protoreflect.EnumDescriptor {
+	return file_metadata_lifecycle_v1_resource_proto_enumTypes[2].Descriptor()
+}
+
+func (DatasetType) Type() protoreflect.EnumType {
+	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[2]
+}
+
+func (x DatasetType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DatasetType.Descriptor instead.
+func (DatasetType) EnumDescriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{2}
+}
+
 type DistributionType int32
 
 const (
@@ -214,11 +317,11 @@ func (x DistributionType) String() string {
 }
 
 func (DistributionType) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_resource_proto_enumTypes[2].Descriptor()
+	return file_metadata_lifecycle_v1_resource_proto_enumTypes[3].Descriptor()
 }
 
 func (DistributionType) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[2]
+	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[3]
 }
 
 func (x DistributionType) Number() protoreflect.EnumNumber {
@@ -227,7 +330,7 @@ func (x DistributionType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DistributionType.Descriptor instead.
 func (DistributionType) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{2}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{3}
 }
 
 type WebServiceMethod int32
@@ -269,11 +372,11 @@ func (x WebServiceMethod) String() string {
 }
 
 func (WebServiceMethod) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_resource_proto_enumTypes[3].Descriptor()
+	return file_metadata_lifecycle_v1_resource_proto_enumTypes[4].Descriptor()
 }
 
 func (WebServiceMethod) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[3]
+	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[4]
 }
 
 func (x WebServiceMethod) Number() protoreflect.EnumNumber {
@@ -282,7 +385,7 @@ func (x WebServiceMethod) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WebServiceMethod.Descriptor instead.
 func (WebServiceMethod) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{3}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{4}
 }
 
 type WebServiceType int32
@@ -327,11 +430,11 @@ func (x WebServiceType) String() string {
 }
 
 func (WebServiceType) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_resource_proto_enumTypes[4].Descriptor()
+	return file_metadata_lifecycle_v1_resource_proto_enumTypes[5].Descriptor()
 }
 
 func (WebServiceType) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[4]
+	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[5]
 }
 
 func (x WebServiceType) Number() protoreflect.EnumNumber {
@@ -340,7 +443,7 @@ func (x WebServiceType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WebServiceType.Descriptor instead.
 func (WebServiceType) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{4}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{5}
 }
 
 type WebServiceVisibleOn int32
@@ -379,11 +482,11 @@ func (x WebServiceVisibleOn) String() string {
 }
 
 func (WebServiceVisibleOn) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_resource_proto_enumTypes[5].Descriptor()
+	return file_metadata_lifecycle_v1_resource_proto_enumTypes[6].Descriptor()
 }
 
 func (WebServiceVisibleOn) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[5]
+	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[6]
 }
 
 func (x WebServiceVisibleOn) Number() protoreflect.EnumNumber {
@@ -392,7 +495,7 @@ func (x WebServiceVisibleOn) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WebServiceVisibleOn.Descriptor instead.
 func (WebServiceVisibleOn) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{5}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{6}
 }
 
 type WebServiceParameterLocation int32
@@ -431,11 +534,11 @@ func (x WebServiceParameterLocation) String() string {
 }
 
 func (WebServiceParameterLocation) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_resource_proto_enumTypes[6].Descriptor()
+	return file_metadata_lifecycle_v1_resource_proto_enumTypes[7].Descriptor()
 }
 
 func (WebServiceParameterLocation) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[6]
+	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[7]
 }
 
 func (x WebServiceParameterLocation) Number() protoreflect.EnumNumber {
@@ -444,7 +547,7 @@ func (x WebServiceParameterLocation) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WebServiceParameterLocation.Descriptor instead.
 func (WebServiceParameterLocation) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{6}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{7}
 }
 
 type WebServiceParameterRole int32
@@ -501,11 +604,11 @@ func (x WebServiceParameterRole) String() string {
 }
 
 func (WebServiceParameterRole) Descriptor() protoreflect.EnumDescriptor {
-	return file_metadata_lifecycle_v1_resource_proto_enumTypes[7].Descriptor()
+	return file_metadata_lifecycle_v1_resource_proto_enumTypes[8].Descriptor()
 }
 
 func (WebServiceParameterRole) Type() protoreflect.EnumType {
-	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[7]
+	return &file_metadata_lifecycle_v1_resource_proto_enumTypes[8]
 }
 
 func (x WebServiceParameterRole) Number() protoreflect.EnumNumber {
@@ -514,7 +617,7 @@ func (x WebServiceParameterRole) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WebServiceParameterRole.Descriptor instead.
 func (WebServiceParameterRole) EnumDescriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{7}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{8}
 }
 
 type CreateResourceRequest struct {
@@ -2334,7 +2437,7 @@ type DatasetResourceMetadata struct {
 	Updated                   *timestamppb.Timestamp                  `protobuf:"bytes,16,opt,name=updated,proto3" json:"updated,omitempty"`
 	ConformsTo                *string                                 `protobuf:"bytes,18,opt,name=conforms_to,json=conformsTo,proto3,oneof" json:"conforms_to,omitempty"`
 	Provenance                *string                                 `protobuf:"bytes,19,opt,name=provenance,proto3,oneof" json:"provenance,omitempty"`
-	Type                      *string                                 `protobuf:"bytes,20,opt,name=type,proto3,oneof" json:"type,omitempty"`
+	Type                      *DatasetType                            `protobuf:"varint,20,opt,name=type,proto3,enum=metadata_lifecycle.v1.DatasetType,oneof" json:"type,omitempty"`
 	Version                   *string                                 `protobuf:"bytes,21,opt,name=version,proto3,oneof" json:"version,omitempty"`
 	SpatialResolutionInMeters *float64                                `protobuf:"fixed64,22,opt,name=spatial_resolution_in_meters,json=spatialResolutionInMeters,proto3,oneof" json:"spatial_resolution_in_meters,omitempty"`
 	TemporalResolution        *float64                                `protobuf:"fixed64,23,opt,name=temporal_resolution,json=temporalResolution,proto3,oneof" json:"temporal_resolution,omitempty"`
@@ -2509,11 +2612,11 @@ func (x *DatasetResourceMetadata) GetProvenance() string {
 	return ""
 }
 
-func (x *DatasetResourceMetadata) GetType() string {
+func (x *DatasetResourceMetadata) GetType() DatasetType {
 	if x != nil && x.Type != nil {
 		return *x.Type
 	}
-	return ""
+	return DatasetType_DATASET_TYPE_UNSPECIFIED
 }
 
 func (x *DatasetResourceMetadata) GetVersion() string {
@@ -3165,7 +3268,7 @@ type DatasetInput struct {
 	Updated                   *timestamppb.Timestamp       `protobuf:"bytes,15,opt,name=updated,proto3" json:"updated,omitempty"`
 	ConformsTo                *string                      `protobuf:"bytes,17,opt,name=conforms_to,json=conformsTo,proto3,oneof" json:"conforms_to,omitempty"`
 	Provenance                *string                      `protobuf:"bytes,18,opt,name=provenance,proto3,oneof" json:"provenance,omitempty"`
-	Type                      *string                      `protobuf:"bytes,19,opt,name=type,proto3,oneof" json:"type,omitempty"`
+	Type                      *DatasetType                 `protobuf:"varint,19,opt,name=type,proto3,enum=metadata_lifecycle.v1.DatasetType,oneof" json:"type,omitempty"`
 	Version                   *string                      `protobuf:"bytes,20,opt,name=version,proto3,oneof" json:"version,omitempty"`
 	SpatialResolutionInMeters *float64                     `protobuf:"fixed64,21,opt,name=spatial_resolution_in_meters,json=spatialResolutionInMeters,proto3,oneof" json:"spatial_resolution_in_meters,omitempty"`
 	TemporalResolution        *float64                     `protobuf:"fixed64,22,opt,name=temporal_resolution,json=temporalResolution,proto3,oneof" json:"temporal_resolution,omitempty"`
@@ -3340,11 +3443,11 @@ func (x *DatasetInput) GetProvenance() string {
 	return ""
 }
 
-func (x *DatasetInput) GetType() string {
+func (x *DatasetInput) GetType() DatasetType {
 	if x != nil && x.Type != nil {
 		return *x.Type
 	}
-	return ""
+	return DatasetType_DATASET_TYPE_UNSPECIFIED
 }
 
 func (x *DatasetInput) GetVersion() string {
@@ -3836,15 +3939,12 @@ func (*WebServiceInput_Wmts) isWebServiceInput_Service() {}
 
 type WebServiceCommonInput struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	ProviderId       *string                `protobuf:"bytes,3,opt,name=provider_id,json=providerId,proto3,oneof" json:"provider_id,omitempty"`
-	DocumentationUri *string                `protobuf:"bytes,4,opt,name=documentation_uri,json=documentationUri,proto3,oneof" json:"documentation_uri,omitempty"`
-	ContactPoints    []string               `protobuf:"bytes,7,rep,name=contact_points,json=contactPoints,proto3" json:"contact_points,omitempty"`
-	VisibleOn        []WebServiceVisibleOn  `protobuf:"varint,9,rep,packed,name=visible_on,json=visibleOn,proto3,enum=metadata_lifecycle.v1.WebServiceVisibleOn" json:"visible_on,omitempty"`
-	ResourceId       *string                `protobuf:"bytes,15,opt,name=resource_id,json=resourceId,proto3,oneof" json:"resource_id,omitempty"`
-	Keywords         []string               `protobuf:"bytes,16,rep,name=keywords,proto3" json:"keywords,omitempty"`
-	AccessRights     *string                `protobuf:"bytes,17,opt,name=access_rights,json=accessRights,proto3,oneof" json:"access_rights,omitempty"`
-	License          *string                `protobuf:"bytes,18,opt,name=license,proto3,oneof" json:"license,omitempty"`
-	Categories       []string               `protobuf:"bytes,19,rep,name=categories,proto3" json:"categories,omitempty"`
+	ProviderId       *string                `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3,oneof" json:"provider_id,omitempty"`
+	DocumentationUri *string                `protobuf:"bytes,2,opt,name=documentation_uri,json=documentationUri,proto3,oneof" json:"documentation_uri,omitempty"`
+	ContactPoints    []string               `protobuf:"bytes,3,rep,name=contact_points,json=contactPoints,proto3" json:"contact_points,omitempty"`
+	VisibleOn        []WebServiceVisibleOn  `protobuf:"varint,4,rep,packed,name=visible_on,json=visibleOn,proto3,enum=metadata_lifecycle.v1.WebServiceVisibleOn" json:"visible_on,omitempty"`
+	ResourceId       *string                `protobuf:"bytes,5,opt,name=resource_id,json=resourceId,proto3,oneof" json:"resource_id,omitempty"`
+	Keywords         []string               `protobuf:"bytes,6,rep,name=keywords,proto3" json:"keywords,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -3917,27 +4017,6 @@ func (x *WebServiceCommonInput) GetResourceId() string {
 func (x *WebServiceCommonInput) GetKeywords() []string {
 	if x != nil {
 		return x.Keywords
-	}
-	return nil
-}
-
-func (x *WebServiceCommonInput) GetAccessRights() string {
-	if x != nil && x.AccessRights != nil {
-		return *x.AccessRights
-	}
-	return ""
-}
-
-func (x *WebServiceCommonInput) GetLicense() string {
-	if x != nil && x.License != nil {
-		return *x.License
-	}
-	return ""
-}
-
-func (x *WebServiceCommonInput) GetCategories() []string {
-	if x != nil {
-		return x.Categories
 	}
 	return nil
 }
@@ -4074,16 +4153,13 @@ func (*WebService_Wmts) isWebService_Service() {}
 
 type WebServiceCommon struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	DocumentationUri  *string                `protobuf:"bytes,3,opt,name=documentation_uri,json=documentationUri,proto3,oneof" json:"documentation_uri,omitempty"`
-	ContactPoints     []string               `protobuf:"bytes,6,rep,name=contact_points,json=contactPoints,proto3" json:"contact_points,omitempty"`
-	Id                string                 `protobuf:"bytes,7,opt,name=id,proto3" json:"id,omitempty"`
-	ProviderReference *EntityReference       `protobuf:"bytes,8,opt,name=provider_reference,json=providerReference,proto3" json:"provider_reference,omitempty"`
-	VisibleOn         []WebServiceVisibleOn  `protobuf:"varint,10,rep,packed,name=visible_on,json=visibleOn,proto3,enum=metadata_lifecycle.v1.WebServiceVisibleOn" json:"visible_on,omitempty"`
-	ResourceId        string                 `protobuf:"bytes,16,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
-	Keywords          []string               `protobuf:"bytes,17,rep,name=keywords,proto3" json:"keywords,omitempty"`
-	AccessRights      *string                `protobuf:"bytes,18,opt,name=access_rights,json=accessRights,proto3,oneof" json:"access_rights,omitempty"`
-	License           *string                `protobuf:"bytes,19,opt,name=license,proto3,oneof" json:"license,omitempty"`
-	Categories        []*EntityReference     `protobuf:"bytes,20,rep,name=categories,proto3" json:"categories,omitempty"`
+	DocumentationUri  *string                `protobuf:"bytes,1,opt,name=documentation_uri,json=documentationUri,proto3,oneof" json:"documentation_uri,omitempty"`
+	ContactPoints     []string               `protobuf:"bytes,2,rep,name=contact_points,json=contactPoints,proto3" json:"contact_points,omitempty"`
+	Id                string                 `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	ProviderReference *EntityReference       `protobuf:"bytes,4,opt,name=provider_reference,json=providerReference,proto3" json:"provider_reference,omitempty"`
+	VisibleOn         []WebServiceVisibleOn  `protobuf:"varint,5,rep,packed,name=visible_on,json=visibleOn,proto3,enum=metadata_lifecycle.v1.WebServiceVisibleOn" json:"visible_on,omitempty"`
+	ResourceId        string                 `protobuf:"bytes,6,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	Keywords          []string               `protobuf:"bytes,7,rep,name=keywords,proto3" json:"keywords,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -4163,27 +4239,6 @@ func (x *WebServiceCommon) GetResourceId() string {
 func (x *WebServiceCommon) GetKeywords() []string {
 	if x != nil {
 		return x.Keywords
-	}
-	return nil
-}
-
-func (x *WebServiceCommon) GetAccessRights() string {
-	if x != nil && x.AccessRights != nil {
-		return *x.AccessRights
-	}
-	return ""
-}
-
-func (x *WebServiceCommon) GetLicense() string {
-	if x != nil && x.License != nil {
-		return *x.License
-	}
-	return ""
-}
-
-func (x *WebServiceCommon) GetCategories() []*EntityReference {
-	if x != nil {
-		return x.Categories
 	}
 	return nil
 }
@@ -5641,11 +5696,10 @@ type ParameterInput struct {
 	//	*ParameterInput_DateTime
 	//	*ParameterInput_Template
 	Value         isParameterInput_Value      `protobuf_oneof:"value"`
-	Property      *string                     `protobuf:"bytes,13,opt,name=property,proto3,oneof" json:"property,omitempty"`
-	Location      WebServiceParameterLocation `protobuf:"varint,14,opt,name=location,proto3,enum=metadata_lifecycle.v1.WebServiceParameterLocation" json:"location,omitempty"`
-	Explode       bool                        `protobuf:"varint,15,opt,name=explode,proto3" json:"explode,omitempty"`
-	Role          WebServiceParameterRole     `protobuf:"varint,16,opt,name=role,proto3,enum=metadata_lifecycle.v1.WebServiceParameterRole" json:"role,omitempty"`
-	ResourceId    *string                     `protobuf:"bytes,17,opt,name=resource_id,json=resourceId,proto3,oneof" json:"resource_id,omitempty"`
+	Location      WebServiceParameterLocation `protobuf:"varint,13,opt,name=location,proto3,enum=metadata_lifecycle.v1.WebServiceParameterLocation" json:"location,omitempty"`
+	Explode       bool                        `protobuf:"varint,14,opt,name=explode,proto3" json:"explode,omitempty"`
+	Role          WebServiceParameterRole     `protobuf:"varint,15,opt,name=role,proto3,enum=metadata_lifecycle.v1.WebServiceParameterRole" json:"role,omitempty"`
+	ResourceId    *string                     `protobuf:"bytes,16,opt,name=resource_id,json=resourceId,proto3,oneof" json:"resource_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5783,13 +5837,6 @@ func (x *ParameterInput) GetTemplate() *TemplateParameterInput {
 	return nil
 }
 
-func (x *ParameterInput) GetProperty() string {
-	if x != nil && x.Property != nil {
-		return *x.Property
-	}
-	return ""
-}
-
 func (x *ParameterInput) GetLocation() WebServiceParameterLocation {
 	if x != nil {
 		return x.Location
@@ -5875,12 +5922,11 @@ type Parameter struct {
 	//	*Parameter_DateTime
 	//	*Parameter_Template
 	Value         isParameter_Value           `protobuf_oneof:"value"`
-	Property      *string                     `protobuf:"bytes,13,opt,name=property,proto3,oneof" json:"property,omitempty"`
-	Location      WebServiceParameterLocation `protobuf:"varint,14,opt,name=location,proto3,enum=metadata_lifecycle.v1.WebServiceParameterLocation" json:"location,omitempty"`
-	Explode       bool                        `protobuf:"varint,15,opt,name=explode,proto3" json:"explode,omitempty"`
-	Role          WebServiceParameterRole     `protobuf:"varint,16,opt,name=role,proto3,enum=metadata_lifecycle.v1.WebServiceParameterRole" json:"role,omitempty"`
-	Id            string                      `protobuf:"bytes,17,opt,name=id,proto3" json:"id,omitempty"`
-	ResourceId    string                      `protobuf:"bytes,18,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	Location      WebServiceParameterLocation `protobuf:"varint,13,opt,name=location,proto3,enum=metadata_lifecycle.v1.WebServiceParameterLocation" json:"location,omitempty"`
+	Explode       bool                        `protobuf:"varint,14,opt,name=explode,proto3" json:"explode,omitempty"`
+	Role          WebServiceParameterRole     `protobuf:"varint,15,opt,name=role,proto3,enum=metadata_lifecycle.v1.WebServiceParameterRole" json:"role,omitempty"`
+	Id            string                      `protobuf:"bytes,16,opt,name=id,proto3" json:"id,omitempty"`
+	ResourceId    string                      `protobuf:"bytes,17,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6018,13 +6064,6 @@ func (x *Parameter) GetTemplate() *TemplateParameter {
 	return nil
 }
 
-func (x *Parameter) GetProperty() string {
-	if x != nil && x.Property != nil {
-		return *x.Property
-	}
-	return ""
-}
-
 func (x *Parameter) GetLocation() WebServiceParameterLocation {
 	if x != nil {
 		return x.Location
@@ -6116,9 +6155,8 @@ type ScalarParameterInput struct {
 	//	*ScalarParameterInput_Float
 	//	*ScalarParameterInput_DateTime
 	Value         isScalarParameterInput_Value `protobuf_oneof:"value"`
-	Property      *string                      `protobuf:"bytes,12,opt,name=property,proto3,oneof" json:"property,omitempty"`
-	Role          WebServiceParameterRole      `protobuf:"varint,13,opt,name=role,proto3,enum=metadata_lifecycle.v1.WebServiceParameterRole" json:"role,omitempty"`
-	ResourceId    *string                      `protobuf:"bytes,14,opt,name=resource_id,json=resourceId,proto3,oneof" json:"resource_id,omitempty"`
+	Role          WebServiceParameterRole      `protobuf:"varint,12,opt,name=role,proto3,enum=metadata_lifecycle.v1.WebServiceParameterRole" json:"role,omitempty"`
+	ResourceId    *string                      `protobuf:"bytes,13,opt,name=resource_id,json=resourceId,proto3,oneof" json:"resource_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6247,13 +6285,6 @@ func (x *ScalarParameterInput) GetDateTime() *ScalarDateTimeParameter {
 	return nil
 }
 
-func (x *ScalarParameterInput) GetProperty() string {
-	if x != nil && x.Property != nil {
-		return *x.Property
-	}
-	return ""
-}
-
 func (x *ScalarParameterInput) GetRole() WebServiceParameterRole {
 	if x != nil {
 		return x.Role
@@ -6319,9 +6350,8 @@ type ScalarParameter struct {
 	//	*ScalarParameter_DateTime
 	Value         isScalarParameter_Value `protobuf_oneof:"value"`
 	Id            string                  `protobuf:"bytes,12,opt,name=id,proto3" json:"id,omitempty"`
-	Property      *string                 `protobuf:"bytes,13,opt,name=property,proto3,oneof" json:"property,omitempty"`
-	Role          WebServiceParameterRole `protobuf:"varint,14,opt,name=role,proto3,enum=metadata_lifecycle.v1.WebServiceParameterRole" json:"role,omitempty"`
-	ResourceId    string                  `protobuf:"bytes,15,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	Role          WebServiceParameterRole `protobuf:"varint,13,opt,name=role,proto3,enum=metadata_lifecycle.v1.WebServiceParameterRole" json:"role,omitempty"`
+	ResourceId    string                  `protobuf:"bytes,14,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6453,13 +6483,6 @@ func (x *ScalarParameter) GetDateTime() *ScalarDateTimeParameter {
 func (x *ScalarParameter) GetId() string {
 	if x != nil {
 		return x.Id
-	}
-	return ""
-}
-
-func (x *ScalarParameter) GetProperty() string {
-	if x != nil && x.Property != nil {
-		return *x.Property
 	}
 	return ""
 }
@@ -9135,13 +9158,13 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\n" +
 	"\bmetadataB\x11\n" +
 	"\x0f_rejection_noteB\x0e\n" +
-	"\f_rejected_by\"\xdc\f\n" +
+	"\f_rejected_by\"\x8b\r\n" +
 	"\x17DatasetResourceMetadata\x12\x1d\n" +
 	"\x05title\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05title\x12)\n" +
 	"\vdescription\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x12:\n" +
 	"\bkeywords\x18\x04 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x12p\n" +
-	"\x13accrual_periodicity\x18\x05 \x01(\x0e20.metadata_lifecycle.v1.DatasetAccrualPeriodicityB\b\xbaH\x05\x82\x01\x02\x10\x01H\x01R\x12accrualPeriodicity\x88\x01\x01\x12;\n" +
-	"\x12quality_annotation\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\x11qualityAnnotation\x88\x01\x01\x12[\n" +
+	"\x13accrual_periodicity\x18\x05 \x01(\x0e20.metadata_lifecycle.v1.DatasetAccrualPeriodicityB\b\xbaH\x05\x82\x01\x02\x10\x01H\x01R\x12accrualPeriodicity\x88\x01\x01\x12<\n" +
+	"\x12quality_annotation\x18\x06 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x02R\x11qualityAnnotation\x88\x01\x01\x12[\n" +
 	"\faccess_right\x18\a \x01(\x0e2).metadata_lifecycle.v1.DatasetAccessRightB\b\xbaH\x05\x82\x01\x02\x10\x01H\x03R\vaccessRight\x88\x01\x01\x12I\n" +
 	"\rdistributions\x18\b \x03(\v2#.metadata_lifecycle.v1.DistributionR\rdistributions\x127\n" +
 	"\x10spatial_coverage\x18\t \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x0fspatialCoverage\x88\x01\x01\x12N\n" +
@@ -9161,8 +9184,8 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"conformsTo\x88\x01\x01\x12#\n" +
 	"\n" +
 	"provenance\x18\x13 \x01(\tH\x06R\n" +
-	"provenance\x88\x01\x01\x12\x17\n" +
-	"\x04type\x18\x14 \x01(\tH\aR\x04type\x88\x01\x01\x12\x1d\n" +
+	"provenance\x88\x01\x01\x12E\n" +
+	"\x04type\x18\x14 \x01(\x0e2\".metadata_lifecycle.v1.DatasetTypeB\b\xbaH\x05\x82\x01\x02\x10\x01H\aR\x04type\x88\x01\x01\x12\x1d\n" +
 	"\aversion\x18\x15 \x01(\tH\bR\aversion\x88\x01\x01\x12D\n" +
 	"\x1cspatial_resolution_in_meters\x18\x16 \x01(\x01H\tR\x19spatialResolutionInMeters\x88\x01\x01\x124\n" +
 	"\x13temporal_resolution\x18\x17 \x01(\x01H\n" +
@@ -9178,11 +9201,11 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\n" +
 	"\b_versionB\x1f\n" +
 	"\x1d_spatial_resolution_in_metersB\x16\n" +
-	"\x14_temporal_resolution\"\xca\x06\n" +
+	"\x14_temporal_resolution\"\xcb\x06\n" +
 	"#SoftwareApplicationResourceMetadata\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12)\n" +
-	"\vdescription\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x12;\n" +
-	"\x13main_entity_of_page\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x10mainEntityOfPage\x88\x01\x01\x12&\n" +
+	"\vdescription\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x12<\n" +
+	"\x13main_entity_of_page\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x00R\x10mainEntityOfPage\x88\x01\x01\x12&\n" +
 	"\alicense\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\alicense\x88\x01\x01\x12&\n" +
 	"\aversion\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\aversion\x88\x01\x01\x12:\n" +
 	"\bkeywords\x18\a \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x120\n" +
@@ -9204,20 +9227,20 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\b_versionB\x0f\n" +
 	"\r_download_urlB\x0f\n" +
 	"\r_requirementsB\x13\n" +
-	"\x11_operating_system\"\xb7\a\n" +
+	"\x11_operating_system\"\xb9\a\n" +
 	"\"SoftwareSourceCodeResourceMetadata\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12)\n" +
 	"\vdescription\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x12?\n" +
 	"\x14programming_language\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x13programmingLanguage\x88\x01\x01\x12:\n" +
-	"\bkeywords\x18\x05 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x12,\n" +
+	"\bkeywords\x18\x05 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x12-\n" +
 	"\n" +
-	"repository\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\n" +
+	"repository\x18\x06 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x01R\n" +
 	"repository\x88\x01\x01\x12&\n" +
 	"\alicense\x18\a \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\alicense\x88\x01\x01\x12A\n" +
 	"\x15software_requirements\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\x14softwareRequirements\x88\x01\x01\x127\n" +
-	"\x10runtime_platform\x18\t \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x0fruntimePlatform\x88\x01\x01\x12;\n" +
+	"\x10runtime_platform\x18\t \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x0fruntimePlatform\x88\x01\x01\x12<\n" +
 	"\x13main_entity_of_page\x18\n" +
-	" \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x05R\x10mainEntityOfPage\x88\x01\x01\x12&\n" +
+	" \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x05R\x10mainEntityOfPage\x88\x01\x01\x12&\n" +
 	"\aversion\x18\v \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x06R\aversion\x88\x01\x01\x12B\n" +
 	"\bcreators\x18\f \x03(\v2&.metadata_lifecycle.v1.EntityReferenceR\bcreators\x12L\n" +
 	"\videntifiers\x18\r \x03(\v2*.metadata_lifecycle.v1.VersionedIdentifierR\videntifiers\x12F\n" +
@@ -9263,13 +9286,13 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\n" +
 	"_start_myaB\n" +
 	"\n" +
-	"\b_end_mya\"\xa9\f\n" +
+	"\b_end_mya\"\xd8\f\n" +
 	"\fDatasetInput\x12\x1d\n" +
 	"\x05title\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05title\x12)\n" +
 	"\vdescription\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x12:\n" +
 	"\bkeywords\x18\x03 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x12p\n" +
-	"\x13accrual_periodicity\x18\x04 \x01(\x0e20.metadata_lifecycle.v1.DatasetAccrualPeriodicityB\b\xbaH\x05\x82\x01\x02\x10\x01H\x01R\x12accrualPeriodicity\x88\x01\x01\x12;\n" +
-	"\x12quality_annotation\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\x11qualityAnnotation\x88\x01\x01\x12[\n" +
+	"\x13accrual_periodicity\x18\x04 \x01(\x0e20.metadata_lifecycle.v1.DatasetAccrualPeriodicityB\b\xbaH\x05\x82\x01\x02\x10\x01H\x01R\x12accrualPeriodicity\x88\x01\x01\x12<\n" +
+	"\x12quality_annotation\x18\x05 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x02R\x11qualityAnnotation\x88\x01\x01\x12[\n" +
 	"\faccess_right\x18\x06 \x01(\x0e2).metadata_lifecycle.v1.DatasetAccessRightB\b\xbaH\x05\x82\x01\x02\x10\x01H\x03R\vaccessRight\x88\x01\x01\x12N\n" +
 	"\rdistributions\x18\a \x03(\v2(.metadata_lifecycle.v1.DistributionInputR\rdistributions\x127\n" +
 	"\x10spatial_coverage\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x0fspatialCoverage\x88\x01\x01\x12N\n" +
@@ -9291,8 +9314,8 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"conformsTo\x88\x01\x01\x12#\n" +
 	"\n" +
 	"provenance\x18\x12 \x01(\tH\x06R\n" +
-	"provenance\x88\x01\x01\x12\x17\n" +
-	"\x04type\x18\x13 \x01(\tH\aR\x04type\x88\x01\x01\x12\x1d\n" +
+	"provenance\x88\x01\x01\x12E\n" +
+	"\x04type\x18\x13 \x01(\x0e2\".metadata_lifecycle.v1.DatasetTypeB\b\xbaH\x05\x82\x01\x02\x10\x01H\aR\x04type\x88\x01\x01\x12\x1d\n" +
 	"\aversion\x18\x14 \x01(\tH\bR\aversion\x88\x01\x01\x12D\n" +
 	"\x1cspatial_resolution_in_meters\x18\x15 \x01(\x01H\tR\x19spatialResolutionInMeters\x88\x01\x01\x124\n" +
 	"\x13temporal_resolution\x18\x16 \x01(\x01H\n" +
@@ -9355,31 +9378,22 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x03wfs\x18\x03 \x01(\v2).metadata_lifecycle.v1.WFSWebServiceInputH\x00R\x03wfs\x12=\n" +
 	"\x03wms\x18\x04 \x01(\v2).metadata_lifecycle.v1.WMSWebServiceInputH\x00R\x03wms\x12@\n" +
 	"\x04wmts\x18\x05 \x01(\v2*.metadata_lifecycle.v1.WMTSWebServiceInputH\x00R\x04wmtsB\x10\n" +
-	"\aservice\x12\x05\xbaH\x02\b\x01\"\xdd\x04\n" +
+	"\aservice\x12\x05\xbaH\x02\b\x01\"\xb5\x03\n" +
 	"\x15WebServiceCommonInput\x12.\n" +
-	"\vprovider_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\n" +
+	"\vprovider_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\n" +
 	"providerId\x88\x01\x01\x12:\n" +
-	"\x11documentation_uri\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x01R\x10documentationUri\x88\x01\x01\x124\n" +
-	"\x0econtact_points\x18\a \x03(\tB\r\xbaH\n" +
+	"\x11documentation_uri\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x01R\x10documentationUri\x88\x01\x01\x124\n" +
+	"\x0econtact_points\x18\x03 \x03(\tB\r\xbaH\n" +
 	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\rcontactPoints\x12X\n" +
 	"\n" +
-	"visible_on\x18\t \x03(\x0e2*.metadata_lifecycle.v1.WebServiceVisibleOnB\r\xbaH\n" +
+	"visible_on\x18\x04 \x03(\x0e2*.metadata_lifecycle.v1.WebServiceVisibleOnB\r\xbaH\n" +
 	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\tvisibleOn\x12.\n" +
-	"\vresource_id\x18\x0f \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x02R\n" +
+	"\vresource_id\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x02R\n" +
 	"resourceId\x88\x01\x01\x12:\n" +
-	"\bkeywords\x18\x10 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x121\n" +
-	"\raccess_rights\x18\x11 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\faccessRights\x88\x01\x01\x12&\n" +
-	"\alicense\x18\x12 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\alicense\x88\x01\x01\x12-\n" +
-	"\n" +
-	"categories\x18\x13 \x03(\tB\r\xbaH\n" +
-	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\n" +
-	"categoriesB\x0e\n" +
+	"\bkeywords\x18\x06 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywordsB\x0e\n" +
 	"\f_provider_idB\x14\n" +
 	"\x12_documentation_uriB\x0e\n" +
-	"\f_resource_idB\x10\n" +
-	"\x0e_access_rightsB\n" +
-	"\n" +
-	"\b_license\"\xd2\x02\n" +
+	"\f_resource_id\"\xd2\x02\n" +
 	"\n" +
 	"WebService\x12;\n" +
 	"\x04http\x18\x01 \x01(\v2%.metadata_lifecycle.v1.HTTPWebServiceH\x00R\x04http\x12D\n" +
@@ -9387,29 +9401,20 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x03wfs\x18\x03 \x01(\v2$.metadata_lifecycle.v1.WFSWebServiceH\x00R\x03wfs\x128\n" +
 	"\x03wms\x18\x04 \x01(\v2$.metadata_lifecycle.v1.WMSWebServiceH\x00R\x03wms\x12;\n" +
 	"\x04wmts\x18\x05 \x01(\v2%.metadata_lifecycle.v1.WMTSWebServiceH\x00R\x04wmtsB\x10\n" +
-	"\aservice\x12\x05\xbaH\x02\b\x01\"\x8d\x05\n" +
+	"\aservice\x12\x05\xbaH\x02\b\x01\"\xcc\x03\n" +
 	"\x10WebServiceCommon\x12:\n" +
-	"\x11documentation_uri\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x00R\x10documentationUri\x88\x01\x01\x124\n" +
-	"\x0econtact_points\x18\x06 \x03(\tB\r\xbaH\n" +
+	"\x11documentation_uri\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x00R\x10documentationUri\x88\x01\x01\x124\n" +
+	"\x0econtact_points\x18\x02 \x03(\tB\r\xbaH\n" +
 	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\rcontactPoints\x12\x18\n" +
-	"\x02id\x18\a \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12U\n" +
-	"\x12provider_reference\x18\b \x01(\v2&.metadata_lifecycle.v1.EntityReferenceR\x11providerReference\x12X\n" +
+	"\x02id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12U\n" +
+	"\x12provider_reference\x18\x04 \x01(\v2&.metadata_lifecycle.v1.EntityReferenceR\x11providerReference\x12X\n" +
 	"\n" +
-	"visible_on\x18\n" +
-	" \x03(\x0e2*.metadata_lifecycle.v1.WebServiceVisibleOnB\r\xbaH\n" +
+	"visible_on\x18\x05 \x03(\x0e2*.metadata_lifecycle.v1.WebServiceVisibleOnB\r\xbaH\n" +
 	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\tvisibleOn\x12)\n" +
-	"\vresource_id\x18\x10 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
+	"\vresource_id\x18\x06 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"resourceId\x12:\n" +
-	"\bkeywords\x18\x11 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x121\n" +
-	"\raccess_rights\x18\x12 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\faccessRights\x88\x01\x01\x12&\n" +
-	"\alicense\x18\x13 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\alicense\x88\x01\x01\x12F\n" +
-	"\n" +
-	"categories\x18\x14 \x03(\v2&.metadata_lifecycle.v1.EntityReferenceR\n" +
-	"categoriesB\x14\n" +
-	"\x12_documentation_uriB\x10\n" +
-	"\x0e_access_rightsB\n" +
-	"\n" +
-	"\b_license\"\xde\x01\n" +
+	"\bkeywords\x18\a \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywordsB\x14\n" +
+	"\x12_documentation_uri\"\xde\x01\n" +
 	"\x10RequestBodyInput\x12\x1f\n" +
 	"\brequired\x18\x01 \x01(\bH\x00R\brequired\x88\x01\x01\x12*\n" +
 	"\fcontent_type\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vcontentType\x12#\n" +
@@ -9560,7 +9565,7 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\f_resource_id\"O\n" +
 	"\x10DownloadableFile\x12\x1a\n" +
 	"\x03url\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01R\x03url\x12\x1f\n" +
-	"\x06format\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06format\"\xc2\a\n" +
+	"\x06format\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06format\"\x94\a\n" +
 	"\x0eParameterInput\x12\x1a\n" +
 	"\bposition\x18\x01 \x01(\x05R\bposition\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x1d\n" +
@@ -9574,17 +9579,15 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x05float\x18\n" +
 	" \x01(\v2%.metadata_lifecycle.v1.FloatParameterH\x00R\x05float\x12G\n" +
 	"\tdate_time\x18\v \x01(\v2(.metadata_lifecycle.v1.DateTimeParameterH\x00R\bdateTime\x12K\n" +
-	"\btemplate\x18\f \x01(\v2-.metadata_lifecycle.v1.TemplateParameterInputH\x00R\btemplate\x12\x1f\n" +
-	"\bproperty\x18\r \x01(\tH\x02R\bproperty\x88\x01\x01\x12X\n" +
-	"\blocation\x18\x0e \x01(\x0e22.metadata_lifecycle.v1.WebServiceParameterLocationB\b\xbaH\x05\x82\x01\x02\x10\x01R\blocation\x12\x18\n" +
-	"\aexplode\x18\x0f \x01(\bR\aexplode\x12L\n" +
-	"\x04role\x18\x10 \x01(\x0e2..metadata_lifecycle.v1.WebServiceParameterRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\x12.\n" +
-	"\vresource_id\x18\x11 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x03R\n" +
+	"\btemplate\x18\f \x01(\v2-.metadata_lifecycle.v1.TemplateParameterInputH\x00R\btemplate\x12X\n" +
+	"\blocation\x18\r \x01(\x0e22.metadata_lifecycle.v1.WebServiceParameterLocationB\b\xbaH\x05\x82\x01\x02\x10\x01R\blocation\x12\x18\n" +
+	"\aexplode\x18\x0e \x01(\bR\aexplode\x12L\n" +
+	"\x04role\x18\x0f \x01(\x0e2..metadata_lifecycle.v1.WebServiceParameterRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\x12.\n" +
+	"\vresource_id\x18\x10 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x02R\n" +
 	"resourceId\x88\x01\x01B\x0e\n" +
 	"\x05value\x12\x05\xbaH\x02\b\x01B\x0e\n" +
-	"\f_descriptionB\v\n" +
-	"\t_propertyB\x0e\n" +
-	"\f_resource_id\"\xbd\a\n" +
+	"\f_descriptionB\x0e\n" +
+	"\f_resource_id\"\x8f\a\n" +
 	"\tParameter\x12\x1a\n" +
 	"\bposition\x18\x01 \x01(\x05R\bposition\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x1d\n" +
@@ -9598,17 +9601,15 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x05float\x18\n" +
 	" \x01(\v2%.metadata_lifecycle.v1.FloatParameterH\x00R\x05float\x12G\n" +
 	"\tdate_time\x18\v \x01(\v2(.metadata_lifecycle.v1.DateTimeParameterH\x00R\bdateTime\x12F\n" +
-	"\btemplate\x18\f \x01(\v2(.metadata_lifecycle.v1.TemplateParameterH\x00R\btemplate\x12\x1f\n" +
-	"\bproperty\x18\r \x01(\tH\x02R\bproperty\x88\x01\x01\x12X\n" +
-	"\blocation\x18\x0e \x01(\x0e22.metadata_lifecycle.v1.WebServiceParameterLocationB\b\xbaH\x05\x82\x01\x02\x10\x01R\blocation\x12\x18\n" +
-	"\aexplode\x18\x0f \x01(\bR\aexplode\x12L\n" +
-	"\x04role\x18\x10 \x01(\x0e2..metadata_lifecycle.v1.WebServiceParameterRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\x12\x18\n" +
-	"\x02id\x18\x11 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12)\n" +
-	"\vresource_id\x18\x12 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
+	"\btemplate\x18\f \x01(\v2(.metadata_lifecycle.v1.TemplateParameterH\x00R\btemplate\x12X\n" +
+	"\blocation\x18\r \x01(\x0e22.metadata_lifecycle.v1.WebServiceParameterLocationB\b\xbaH\x05\x82\x01\x02\x10\x01R\blocation\x12\x18\n" +
+	"\aexplode\x18\x0e \x01(\bR\aexplode\x12L\n" +
+	"\x04role\x18\x0f \x01(\x0e2..metadata_lifecycle.v1.WebServiceParameterRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\x12\x18\n" +
+	"\x02id\x18\x10 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12)\n" +
+	"\vresource_id\x18\x11 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"resourceIdB\x0e\n" +
 	"\x05value\x12\x05\xbaH\x02\b\x01B\x0e\n" +
-	"\f_descriptionB\v\n" +
-	"\t_property\"\xa5\x06\n" +
+	"\f_description\"\xf7\x05\n" +
 	"\x14ScalarParameterInput\x12\x1a\n" +
 	"\bposition\x18\x01 \x01(\x05R\bposition\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x1d\n" +
@@ -9621,15 +9622,13 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\ainteger\x18\t \x01(\v2-.metadata_lifecycle.v1.ScalarIntegerParameterH\x00R\ainteger\x12C\n" +
 	"\x05float\x18\n" +
 	" \x01(\v2+.metadata_lifecycle.v1.ScalarFloatParameterH\x00R\x05float\x12M\n" +
-	"\tdate_time\x18\v \x01(\v2..metadata_lifecycle.v1.ScalarDateTimeParameterH\x00R\bdateTime\x12\x1f\n" +
-	"\bproperty\x18\f \x01(\tH\x02R\bproperty\x88\x01\x01\x12L\n" +
-	"\x04role\x18\r \x01(\x0e2..metadata_lifecycle.v1.WebServiceParameterRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\x12.\n" +
-	"\vresource_id\x18\x0e \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x03R\n" +
+	"\tdate_time\x18\v \x01(\v2..metadata_lifecycle.v1.ScalarDateTimeParameterH\x00R\bdateTime\x12L\n" +
+	"\x04role\x18\f \x01(\x0e2..metadata_lifecycle.v1.WebServiceParameterRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\x12.\n" +
+	"\vresource_id\x18\r \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x02R\n" +
 	"resourceId\x88\x01\x01B\x0e\n" +
 	"\x05value\x12\x05\xbaH\x02\b\x01B\x0e\n" +
-	"\f_descriptionB\v\n" +
-	"\t_propertyB\x0e\n" +
-	"\f_resource_id\"\xa5\x06\n" +
+	"\f_descriptionB\x0e\n" +
+	"\f_resource_id\"\xf7\x05\n" +
 	"\x0fScalarParameter\x12\x1a\n" +
 	"\bposition\x18\x01 \x01(\x05R\bposition\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x1d\n" +
@@ -9643,14 +9642,12 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\x05float\x18\n" +
 	" \x01(\v2+.metadata_lifecycle.v1.ScalarFloatParameterH\x00R\x05float\x12M\n" +
 	"\tdate_time\x18\v \x01(\v2..metadata_lifecycle.v1.ScalarDateTimeParameterH\x00R\bdateTime\x12\x18\n" +
-	"\x02id\x18\f \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1f\n" +
-	"\bproperty\x18\r \x01(\tH\x02R\bproperty\x88\x01\x01\x12L\n" +
-	"\x04role\x18\x0e \x01(\x0e2..metadata_lifecycle.v1.WebServiceParameterRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\x12)\n" +
-	"\vresource_id\x18\x0f \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
+	"\x02id\x18\f \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12L\n" +
+	"\x04role\x18\r \x01(\x0e2..metadata_lifecycle.v1.WebServiceParameterRoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\x12)\n" +
+	"\vresource_id\x18\x0e \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"resourceIdB\x0e\n" +
 	"\x05value\x12\x05\xbaH\x02\b\x01B\x0e\n" +
-	"\f_descriptionB\v\n" +
-	"\t_property\"_\n" +
+	"\f_description\"_\n" +
 	"\x10StringEnumOption\x12\x1d\n" +
 	"\x05value\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05value\x12\"\n" +
 	"\x05label\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x05label\x88\x01\x01B\b\n" +
@@ -9755,11 +9752,11 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\b_maximumB\n" +
 	"\n" +
 	"\b_defaultB\t\n" +
-	"\a_layout\"\x92\x06\n" +
+	"\a_layout\"\x93\x06\n" +
 	"\x18SoftwareApplicationInput\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12)\n" +
-	"\vdescription\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x12;\n" +
-	"\x13main_entity_of_page\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x10mainEntityOfPage\x88\x01\x01\x12&\n" +
+	"\vdescription\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x12<\n" +
+	"\x13main_entity_of_page\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x00R\x10mainEntityOfPage\x88\x01\x01\x12&\n" +
 	"\alicense\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\alicense\x88\x01\x01\x12&\n" +
 	"\aversion\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\aversion\x88\x01\x01\x12:\n" +
 	"\bkeywords\x18\x06 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x120\n" +
@@ -9783,19 +9780,19 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\b_versionB\x0f\n" +
 	"\r_download_urlB\x0f\n" +
 	"\r_requirementsB\x13\n" +
-	"\x11_operating_system\"\xff\x06\n" +
+	"\x11_operating_system\"\x81\a\n" +
 	"\x17SoftwareSourceCodeInput\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12)\n" +
 	"\vdescription\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\vdescription\x12?\n" +
 	"\x14programming_language\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x13programmingLanguage\x88\x01\x01\x12:\n" +
-	"\bkeywords\x18\x04 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x12,\n" +
+	"\bkeywords\x18\x04 \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x12-\n" +
 	"\n" +
-	"repository\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\n" +
+	"repository\x18\x05 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x01R\n" +
 	"repository\x88\x01\x01\x12&\n" +
 	"\alicense\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\alicense\x88\x01\x01\x12A\n" +
 	"\x15software_requirements\x18\a \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\x14softwareRequirements\x88\x01\x01\x127\n" +
-	"\x10runtime_platform\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x0fruntimePlatform\x88\x01\x01\x12;\n" +
-	"\x13main_entity_of_page\x18\t \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x05R\x10mainEntityOfPage\x88\x01\x01\x12&\n" +
+	"\x10runtime_platform\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x04R\x0fruntimePlatform\x88\x01\x01\x12<\n" +
+	"\x13main_entity_of_page\x18\t \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x05R\x10mainEntityOfPage\x88\x01\x01\x12&\n" +
 	"\aversion\x18\n" +
 	" \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x06R\aversion\x88\x01\x01\x12)\n" +
 	"\bcreators\x18\v \x03(\tB\r\xbaH\n" +
@@ -9949,7 +9946,30 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	".DATASET_ACCRUAL_PERIODICITY_THREE_TIMES_A_WEEK\x10\x0e\x12%\n" +
 	"!DATASET_ACCRUAL_PERIODICITY_DAILY\x10\x0f\x12*\n" +
 	"&DATASET_ACCRUAL_PERIODICITY_CONTINUOUS\x10\x10\x12)\n" +
-	"%DATASET_ACCRUAL_PERIODICITY_IRREGULAR\x10\x11*\x81\x01\n" +
+	"%DATASET_ACCRUAL_PERIODICITY_IRREGULAR\x10\x11*\xda\x04\n" +
+	"\vDatasetType\x12\x1c\n" +
+	"\x18DATASET_TYPE_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14DATASET_TYPE_RELEASE\x10\x01\x12\x17\n" +
+	"\x13DATASET_TYPE_SCHEMA\x10\x02\x12\x16\n" +
+	"\x12DATASET_TYPE_APROF\x10\x03\x12\x1a\n" +
+	"\x16DATASET_TYPE_CODE_LIST\x10\x04\x12\x1a\n" +
+	"\x16DATASET_TYPE_CORE_COMP\x10\x05\x12\x1a\n" +
+	"\x16DATASET_TYPE_DIRECTORY\x10\x06\x12\x1d\n" +
+	"\x19DATASET_TYPE_DOMAIN_MODEL\x10\a\x12\x1b\n" +
+	"\x17DATASET_TYPE_DSCRP_SERV\x10\b\x12\x1b\n" +
+	"\x17DATASET_TYPE_GEOSPATIAL\x10\t\x12\x19\n" +
+	"\x15DATASET_TYPE_GLOSSARY\x10\n" +
+	"\x12\x14\n" +
+	"\x10DATASET_TYPE_HVD\x10\v\x12\x15\n" +
+	"\x11DATASET_TYPE_IEPD\x10\f\x12\x1a\n" +
+	"\x16DATASET_TYPE_OP_DATPRO\x10\r\x12\x1c\n" +
+	"\x18DATASET_TYPE_STATISTICAL\x10\x0e\x12\x17\n" +
+	"\x13DATASET_TYPE_STYLES\x10\x0f\x12\"\n" +
+	"\x1eDATASET_TYPE_SYNTAX_ECD_SCHEME\x10\x10\x12\x1f\n" +
+	"\x1bDATASET_TYPE_SYNTHETIC_DATA\x10\x11\x12\x19\n" +
+	"\x15DATASET_TYPE_TAXONOMY\x10\x12\x12\x1a\n" +
+	"\x16DATASET_TYPE_TEST_DATA\x10\x13\x12\x1e\n" +
+	"\x1aDATASET_TYPE_ENVIRONMENTAL\x10\x14*\x81\x01\n" +
 	"\x10DistributionType\x12!\n" +
 	"\x1dDISTRIBUTION_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dDISTRIBUTION_TYPE_WEB_SERVICE\x10\x01\x12'\n" +
@@ -10021,371 +10041,373 @@ func file_metadata_lifecycle_v1_resource_proto_rawDescGZIP() []byte {
 	return file_metadata_lifecycle_v1_resource_proto_rawDescData
 }
 
-var file_metadata_lifecycle_v1_resource_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
+var file_metadata_lifecycle_v1_resource_proto_enumTypes = make([]protoimpl.EnumInfo, 9)
 var file_metadata_lifecycle_v1_resource_proto_msgTypes = make([]protoimpl.MessageInfo, 105)
 var file_metadata_lifecycle_v1_resource_proto_goTypes = []any{
 	(DatasetAccessRight)(0),                        // 0: metadata_lifecycle.v1.DatasetAccessRight
 	(DatasetAccrualPeriodicity)(0),                 // 1: metadata_lifecycle.v1.DatasetAccrualPeriodicity
-	(DistributionType)(0),                          // 2: metadata_lifecycle.v1.DistributionType
-	(WebServiceMethod)(0),                          // 3: metadata_lifecycle.v1.WebServiceMethod
-	(WebServiceType)(0),                            // 4: metadata_lifecycle.v1.WebServiceType
-	(WebServiceVisibleOn)(0),                       // 5: metadata_lifecycle.v1.WebServiceVisibleOn
-	(WebServiceParameterLocation)(0),               // 6: metadata_lifecycle.v1.WebServiceParameterLocation
-	(WebServiceParameterRole)(0),                   // 7: metadata_lifecycle.v1.WebServiceParameterRole
-	(*CreateResourceRequest)(nil),                  // 8: metadata_lifecycle.v1.CreateResourceRequest
-	(*CreateResourceResponse)(nil),                 // 9: metadata_lifecycle.v1.CreateResourceResponse
-	(*GetResourceVersionRequest)(nil),              // 10: metadata_lifecycle.v1.GetResourceVersionRequest
-	(*GetResourceVersionResponse)(nil),             // 11: metadata_lifecycle.v1.GetResourceVersionResponse
-	(*PrepareDistributionDownloadRequest)(nil),     // 12: metadata_lifecycle.v1.PrepareDistributionDownloadRequest
-	(*GetDistributionFormatsRequest)(nil),          // 13: metadata_lifecycle.v1.GetDistributionFormatsRequest
-	(*GetDistributionFormatsResponse)(nil),         // 14: metadata_lifecycle.v1.GetDistributionFormatsResponse
-	(*RequestDistributionConversionRequest)(nil),   // 15: metadata_lifecycle.v1.RequestDistributionConversionRequest
-	(*RequestDistributionConversionResponse)(nil),  // 16: metadata_lifecycle.v1.RequestDistributionConversionResponse
-	(*CheckDistributionReadRequest)(nil),           // 17: metadata_lifecycle.v1.CheckDistributionReadRequest
-	(*CheckDistributionReadResponse)(nil),          // 18: metadata_lifecycle.v1.CheckDistributionReadResponse
-	(*PrepareDistributionDownloadResponse)(nil),    // 19: metadata_lifecycle.v1.PrepareDistributionDownloadResponse
-	(*DistributionAccessParameterInput)(nil),       // 20: metadata_lifecycle.v1.DistributionAccessParameterInput
-	(*DistributionAccessScalarValue)(nil),          // 21: metadata_lifecycle.v1.DistributionAccessScalarValue
-	(*DistributionAccessArrayValue)(nil),           // 22: metadata_lifecycle.v1.DistributionAccessArrayValue
-	(*PrepareDistributionAccessRequest)(nil),       // 23: metadata_lifecycle.v1.PrepareDistributionAccessRequest
-	(*HTTPDistributionAccessInput)(nil),            // 24: metadata_lifecycle.v1.HTTPDistributionAccessInput
-	(*WFSDistributionAccessInput)(nil),             // 25: metadata_lifecycle.v1.WFSDistributionAccessInput
-	(*DynamicDistributionAccessInput)(nil),         // 26: metadata_lifecycle.v1.DynamicDistributionAccessInput
-	(*WFSBoundingBox)(nil),                         // 27: metadata_lifecycle.v1.WFSBoundingBox
-	(*PrepareDistributionAccessResponse)(nil),      // 28: metadata_lifecycle.v1.PrepareDistributionAccessResponse
-	(*ListResourceVersionsRequest)(nil),            // 29: metadata_lifecycle.v1.ListResourceVersionsRequest
-	(*ResourceVersionSummary)(nil),                 // 30: metadata_lifecycle.v1.ResourceVersionSummary
-	(*ListResourceVersionsResponse)(nil),           // 31: metadata_lifecycle.v1.ListResourceVersionsResponse
-	(*ResourceVersion)(nil),                        // 32: metadata_lifecycle.v1.ResourceVersion
-	(*DatasetResourceMetadata)(nil),                // 33: metadata_lifecycle.v1.DatasetResourceMetadata
-	(*SoftwareApplicationResourceMetadata)(nil),    // 34: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata
-	(*SoftwareSourceCodeResourceMetadata)(nil),     // 35: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata
-	(*ResourceRecord)(nil),                         // 36: metadata_lifecycle.v1.ResourceRecord
-	(*VersionedIdentifier)(nil),                    // 37: metadata_lifecycle.v1.VersionedIdentifier
-	(*VersionedIdentifierInput)(nil),               // 38: metadata_lifecycle.v1.VersionedIdentifierInput
-	(*Temporal)(nil),                               // 39: metadata_lifecycle.v1.Temporal
-	(*GeologicalTemporalCoverage)(nil),             // 40: metadata_lifecycle.v1.GeologicalTemporalCoverage
-	(*DatasetInput)(nil),                           // 41: metadata_lifecycle.v1.DatasetInput
-	(*DistributionInput)(nil),                      // 42: metadata_lifecycle.v1.DistributionInput
-	(*Distribution)(nil),                           // 43: metadata_lifecycle.v1.Distribution
-	(*NativeFormat)(nil),                           // 44: metadata_lifecycle.v1.NativeFormat
-	(*WebServiceInput)(nil),                        // 45: metadata_lifecycle.v1.WebServiceInput
-	(*WebServiceCommonInput)(nil),                  // 46: metadata_lifecycle.v1.WebServiceCommonInput
-	(*WebService)(nil),                             // 47: metadata_lifecycle.v1.WebService
-	(*WebServiceCommon)(nil),                       // 48: metadata_lifecycle.v1.WebServiceCommon
-	(*RequestBodyInput)(nil),                       // 49: metadata_lifecycle.v1.RequestBodyInput
-	(*RequestBody)(nil),                            // 50: metadata_lifecycle.v1.RequestBody
-	(*HTTPWebServiceInput)(nil),                    // 51: metadata_lifecycle.v1.HTTPWebServiceInput
-	(*DynamicWebServiceInput)(nil),                 // 52: metadata_lifecycle.v1.DynamicWebServiceInput
-	(*HTTPWebService)(nil),                         // 53: metadata_lifecycle.v1.HTTPWebService
-	(*DynamicWebService)(nil),                      // 54: metadata_lifecycle.v1.DynamicWebService
-	(*WFSWebServiceInput)(nil),                     // 55: metadata_lifecycle.v1.WFSWebServiceInput
-	(*WFSWebService)(nil),                          // 56: metadata_lifecycle.v1.WFSWebService
-	(*WMSWebServiceInput)(nil),                     // 57: metadata_lifecycle.v1.WMSWebServiceInput
-	(*WMSWebService)(nil),                          // 58: metadata_lifecycle.v1.WMSWebService
-	(*WMSLayer)(nil),                               // 59: metadata_lifecycle.v1.WMSLayer
-	(*WMSLayerInput)(nil),                          // 60: metadata_lifecycle.v1.WMSLayerInput
-	(*WMTSWebServiceInput)(nil),                    // 61: metadata_lifecycle.v1.WMTSWebServiceInput
-	(*WMTSWebService)(nil),                         // 62: metadata_lifecycle.v1.WMTSWebService
-	(*WMTSLayer)(nil),                              // 63: metadata_lifecycle.v1.WMTSLayer
-	(*WMTSLayerInput)(nil),                         // 64: metadata_lifecycle.v1.WMTSLayerInput
-	(*DownloadableFile)(nil),                       // 65: metadata_lifecycle.v1.DownloadableFile
-	(*ParameterInput)(nil),                         // 66: metadata_lifecycle.v1.ParameterInput
-	(*Parameter)(nil),                              // 67: metadata_lifecycle.v1.Parameter
-	(*ScalarParameterInput)(nil),                   // 68: metadata_lifecycle.v1.ScalarParameterInput
-	(*ScalarParameter)(nil),                        // 69: metadata_lifecycle.v1.ScalarParameter
-	(*StringEnumOption)(nil),                       // 70: metadata_lifecycle.v1.StringEnumOption
-	(*IntegerEnumOption)(nil),                      // 71: metadata_lifecycle.v1.IntegerEnumOption
-	(*FloatEnumOption)(nil),                        // 72: metadata_lifecycle.v1.FloatEnumOption
-	(*StringParameter)(nil),                        // 73: metadata_lifecycle.v1.StringParameter
-	(*BooleanParameter)(nil),                       // 74: metadata_lifecycle.v1.BooleanParameter
-	(*IntegerParameter)(nil),                       // 75: metadata_lifecycle.v1.IntegerParameter
-	(*FloatParameter)(nil),                         // 76: metadata_lifecycle.v1.FloatParameter
-	(*DateTimeParameter)(nil),                      // 77: metadata_lifecycle.v1.DateTimeParameter
-	(*TemplateParameter)(nil),                      // 78: metadata_lifecycle.v1.TemplateParameter
-	(*TemplateParameterInput)(nil),                 // 79: metadata_lifecycle.v1.TemplateParameterInput
-	(*ScalarStringParameter)(nil),                  // 80: metadata_lifecycle.v1.ScalarStringParameter
-	(*ScalarBooleanParameter)(nil),                 // 81: metadata_lifecycle.v1.ScalarBooleanParameter
-	(*ScalarIntegerParameter)(nil),                 // 82: metadata_lifecycle.v1.ScalarIntegerParameter
-	(*ScalarFloatParameter)(nil),                   // 83: metadata_lifecycle.v1.ScalarFloatParameter
-	(*ScalarDateTimeParameter)(nil),                // 84: metadata_lifecycle.v1.ScalarDateTimeParameter
-	(*SoftwareApplicationInput)(nil),               // 85: metadata_lifecycle.v1.SoftwareApplicationInput
-	(*SoftwareSourceCodeInput)(nil),                // 86: metadata_lifecycle.v1.SoftwareSourceCodeInput
-	(*DiscardResourceDraftRequest)(nil),            // 87: metadata_lifecycle.v1.DiscardResourceDraftRequest
-	(*SubmitResourceRequest)(nil),                  // 88: metadata_lifecycle.v1.SubmitResourceRequest
-	(*WithdrawResourceRequest)(nil),                // 89: metadata_lifecycle.v1.WithdrawResourceRequest
-	(*ReopenResourceRequest)(nil),                  // 90: metadata_lifecycle.v1.ReopenResourceRequest
-	(*PublishResourceRequest)(nil),                 // 91: metadata_lifecycle.v1.PublishResourceRequest
-	(*UnpublishResourceRequest)(nil),               // 92: metadata_lifecycle.v1.UnpublishResourceRequest
-	(*SubmitResourceResponse)(nil),                 // 93: metadata_lifecycle.v1.SubmitResourceResponse
-	(*WithdrawResourceResponse)(nil),               // 94: metadata_lifecycle.v1.WithdrawResourceResponse
-	(*ReopenResourceResponse)(nil),                 // 95: metadata_lifecycle.v1.ReopenResourceResponse
-	(*PublishResourceResponse)(nil),                // 96: metadata_lifecycle.v1.PublishResourceResponse
-	(*UnpublishResourceResponse)(nil),              // 97: metadata_lifecycle.v1.UnpublishResourceResponse
-	(*DiscardResourceDraftResponse)(nil),           // 98: metadata_lifecycle.v1.DiscardResourceDraftResponse
-	(*RejectResourceRequest)(nil),                  // 99: metadata_lifecycle.v1.RejectResourceRequest
-	(*RejectResourceResponse)(nil),                 // 100: metadata_lifecycle.v1.RejectResourceResponse
-	(*DraftResourceFromPublicationRequest)(nil),    // 101: metadata_lifecycle.v1.DraftResourceFromPublicationRequest
-	(*DraftResourceFromPublicationResponse)(nil),   // 102: metadata_lifecycle.v1.DraftResourceFromPublicationResponse
-	(*DraftResourceFromLatestArchiveRequest)(nil),  // 103: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
-	(*DraftResourceFromLatestArchiveResponse)(nil), // 104: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
-	(*CopyPublishedResourceRequest)(nil),           // 105: metadata_lifecycle.v1.CopyPublishedResourceRequest
-	(*CopyPublishedResourceResponse)(nil),          // 106: metadata_lifecycle.v1.CopyPublishedResourceResponse
-	(*ReplaceResourceDraftRequest)(nil),            // 107: metadata_lifecycle.v1.ReplaceResourceDraftRequest
-	(*ReplaceResourceDraftResponse)(nil),           // 108: metadata_lifecycle.v1.ReplaceResourceDraftResponse
-	nil,                                            // 109: metadata_lifecycle.v1.PrepareDistributionAccessResponse.HeadersEntry
-	nil,                                            // 110: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.CopiedDistributionsEntry
-	nil,                                            // 111: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.CopiedDistributionsEntry
-	nil,                                            // 112: metadata_lifecycle.v1.CopyPublishedResourceResponse.CopiedDistributionsEntry
-	(ResourceType)(0),                              // 113: metadata_lifecycle.v1.ResourceType
-	(*Notification)(nil),                           // 114: metadata_lifecycle.v1.Notification
-	(VersioningStatus)(0),                          // 115: metadata_lifecycle.v1.VersioningStatus
-	(*timestamppb.Timestamp)(nil),                  // 116: google.protobuf.Timestamp
-	(*EntityReference)(nil),                        // 117: metadata_lifecycle.v1.EntityReference
+	(DatasetType)(0),                               // 2: metadata_lifecycle.v1.DatasetType
+	(DistributionType)(0),                          // 3: metadata_lifecycle.v1.DistributionType
+	(WebServiceMethod)(0),                          // 4: metadata_lifecycle.v1.WebServiceMethod
+	(WebServiceType)(0),                            // 5: metadata_lifecycle.v1.WebServiceType
+	(WebServiceVisibleOn)(0),                       // 6: metadata_lifecycle.v1.WebServiceVisibleOn
+	(WebServiceParameterLocation)(0),               // 7: metadata_lifecycle.v1.WebServiceParameterLocation
+	(WebServiceParameterRole)(0),                   // 8: metadata_lifecycle.v1.WebServiceParameterRole
+	(*CreateResourceRequest)(nil),                  // 9: metadata_lifecycle.v1.CreateResourceRequest
+	(*CreateResourceResponse)(nil),                 // 10: metadata_lifecycle.v1.CreateResourceResponse
+	(*GetResourceVersionRequest)(nil),              // 11: metadata_lifecycle.v1.GetResourceVersionRequest
+	(*GetResourceVersionResponse)(nil),             // 12: metadata_lifecycle.v1.GetResourceVersionResponse
+	(*PrepareDistributionDownloadRequest)(nil),     // 13: metadata_lifecycle.v1.PrepareDistributionDownloadRequest
+	(*GetDistributionFormatsRequest)(nil),          // 14: metadata_lifecycle.v1.GetDistributionFormatsRequest
+	(*GetDistributionFormatsResponse)(nil),         // 15: metadata_lifecycle.v1.GetDistributionFormatsResponse
+	(*RequestDistributionConversionRequest)(nil),   // 16: metadata_lifecycle.v1.RequestDistributionConversionRequest
+	(*RequestDistributionConversionResponse)(nil),  // 17: metadata_lifecycle.v1.RequestDistributionConversionResponse
+	(*CheckDistributionReadRequest)(nil),           // 18: metadata_lifecycle.v1.CheckDistributionReadRequest
+	(*CheckDistributionReadResponse)(nil),          // 19: metadata_lifecycle.v1.CheckDistributionReadResponse
+	(*PrepareDistributionDownloadResponse)(nil),    // 20: metadata_lifecycle.v1.PrepareDistributionDownloadResponse
+	(*DistributionAccessParameterInput)(nil),       // 21: metadata_lifecycle.v1.DistributionAccessParameterInput
+	(*DistributionAccessScalarValue)(nil),          // 22: metadata_lifecycle.v1.DistributionAccessScalarValue
+	(*DistributionAccessArrayValue)(nil),           // 23: metadata_lifecycle.v1.DistributionAccessArrayValue
+	(*PrepareDistributionAccessRequest)(nil),       // 24: metadata_lifecycle.v1.PrepareDistributionAccessRequest
+	(*HTTPDistributionAccessInput)(nil),            // 25: metadata_lifecycle.v1.HTTPDistributionAccessInput
+	(*WFSDistributionAccessInput)(nil),             // 26: metadata_lifecycle.v1.WFSDistributionAccessInput
+	(*DynamicDistributionAccessInput)(nil),         // 27: metadata_lifecycle.v1.DynamicDistributionAccessInput
+	(*WFSBoundingBox)(nil),                         // 28: metadata_lifecycle.v1.WFSBoundingBox
+	(*PrepareDistributionAccessResponse)(nil),      // 29: metadata_lifecycle.v1.PrepareDistributionAccessResponse
+	(*ListResourceVersionsRequest)(nil),            // 30: metadata_lifecycle.v1.ListResourceVersionsRequest
+	(*ResourceVersionSummary)(nil),                 // 31: metadata_lifecycle.v1.ResourceVersionSummary
+	(*ListResourceVersionsResponse)(nil),           // 32: metadata_lifecycle.v1.ListResourceVersionsResponse
+	(*ResourceVersion)(nil),                        // 33: metadata_lifecycle.v1.ResourceVersion
+	(*DatasetResourceMetadata)(nil),                // 34: metadata_lifecycle.v1.DatasetResourceMetadata
+	(*SoftwareApplicationResourceMetadata)(nil),    // 35: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata
+	(*SoftwareSourceCodeResourceMetadata)(nil),     // 36: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata
+	(*ResourceRecord)(nil),                         // 37: metadata_lifecycle.v1.ResourceRecord
+	(*VersionedIdentifier)(nil),                    // 38: metadata_lifecycle.v1.VersionedIdentifier
+	(*VersionedIdentifierInput)(nil),               // 39: metadata_lifecycle.v1.VersionedIdentifierInput
+	(*Temporal)(nil),                               // 40: metadata_lifecycle.v1.Temporal
+	(*GeologicalTemporalCoverage)(nil),             // 41: metadata_lifecycle.v1.GeologicalTemporalCoverage
+	(*DatasetInput)(nil),                           // 42: metadata_lifecycle.v1.DatasetInput
+	(*DistributionInput)(nil),                      // 43: metadata_lifecycle.v1.DistributionInput
+	(*Distribution)(nil),                           // 44: metadata_lifecycle.v1.Distribution
+	(*NativeFormat)(nil),                           // 45: metadata_lifecycle.v1.NativeFormat
+	(*WebServiceInput)(nil),                        // 46: metadata_lifecycle.v1.WebServiceInput
+	(*WebServiceCommonInput)(nil),                  // 47: metadata_lifecycle.v1.WebServiceCommonInput
+	(*WebService)(nil),                             // 48: metadata_lifecycle.v1.WebService
+	(*WebServiceCommon)(nil),                       // 49: metadata_lifecycle.v1.WebServiceCommon
+	(*RequestBodyInput)(nil),                       // 50: metadata_lifecycle.v1.RequestBodyInput
+	(*RequestBody)(nil),                            // 51: metadata_lifecycle.v1.RequestBody
+	(*HTTPWebServiceInput)(nil),                    // 52: metadata_lifecycle.v1.HTTPWebServiceInput
+	(*DynamicWebServiceInput)(nil),                 // 53: metadata_lifecycle.v1.DynamicWebServiceInput
+	(*HTTPWebService)(nil),                         // 54: metadata_lifecycle.v1.HTTPWebService
+	(*DynamicWebService)(nil),                      // 55: metadata_lifecycle.v1.DynamicWebService
+	(*WFSWebServiceInput)(nil),                     // 56: metadata_lifecycle.v1.WFSWebServiceInput
+	(*WFSWebService)(nil),                          // 57: metadata_lifecycle.v1.WFSWebService
+	(*WMSWebServiceInput)(nil),                     // 58: metadata_lifecycle.v1.WMSWebServiceInput
+	(*WMSWebService)(nil),                          // 59: metadata_lifecycle.v1.WMSWebService
+	(*WMSLayer)(nil),                               // 60: metadata_lifecycle.v1.WMSLayer
+	(*WMSLayerInput)(nil),                          // 61: metadata_lifecycle.v1.WMSLayerInput
+	(*WMTSWebServiceInput)(nil),                    // 62: metadata_lifecycle.v1.WMTSWebServiceInput
+	(*WMTSWebService)(nil),                         // 63: metadata_lifecycle.v1.WMTSWebService
+	(*WMTSLayer)(nil),                              // 64: metadata_lifecycle.v1.WMTSLayer
+	(*WMTSLayerInput)(nil),                         // 65: metadata_lifecycle.v1.WMTSLayerInput
+	(*DownloadableFile)(nil),                       // 66: metadata_lifecycle.v1.DownloadableFile
+	(*ParameterInput)(nil),                         // 67: metadata_lifecycle.v1.ParameterInput
+	(*Parameter)(nil),                              // 68: metadata_lifecycle.v1.Parameter
+	(*ScalarParameterInput)(nil),                   // 69: metadata_lifecycle.v1.ScalarParameterInput
+	(*ScalarParameter)(nil),                        // 70: metadata_lifecycle.v1.ScalarParameter
+	(*StringEnumOption)(nil),                       // 71: metadata_lifecycle.v1.StringEnumOption
+	(*IntegerEnumOption)(nil),                      // 72: metadata_lifecycle.v1.IntegerEnumOption
+	(*FloatEnumOption)(nil),                        // 73: metadata_lifecycle.v1.FloatEnumOption
+	(*StringParameter)(nil),                        // 74: metadata_lifecycle.v1.StringParameter
+	(*BooleanParameter)(nil),                       // 75: metadata_lifecycle.v1.BooleanParameter
+	(*IntegerParameter)(nil),                       // 76: metadata_lifecycle.v1.IntegerParameter
+	(*FloatParameter)(nil),                         // 77: metadata_lifecycle.v1.FloatParameter
+	(*DateTimeParameter)(nil),                      // 78: metadata_lifecycle.v1.DateTimeParameter
+	(*TemplateParameter)(nil),                      // 79: metadata_lifecycle.v1.TemplateParameter
+	(*TemplateParameterInput)(nil),                 // 80: metadata_lifecycle.v1.TemplateParameterInput
+	(*ScalarStringParameter)(nil),                  // 81: metadata_lifecycle.v1.ScalarStringParameter
+	(*ScalarBooleanParameter)(nil),                 // 82: metadata_lifecycle.v1.ScalarBooleanParameter
+	(*ScalarIntegerParameter)(nil),                 // 83: metadata_lifecycle.v1.ScalarIntegerParameter
+	(*ScalarFloatParameter)(nil),                   // 84: metadata_lifecycle.v1.ScalarFloatParameter
+	(*ScalarDateTimeParameter)(nil),                // 85: metadata_lifecycle.v1.ScalarDateTimeParameter
+	(*SoftwareApplicationInput)(nil),               // 86: metadata_lifecycle.v1.SoftwareApplicationInput
+	(*SoftwareSourceCodeInput)(nil),                // 87: metadata_lifecycle.v1.SoftwareSourceCodeInput
+	(*DiscardResourceDraftRequest)(nil),            // 88: metadata_lifecycle.v1.DiscardResourceDraftRequest
+	(*SubmitResourceRequest)(nil),                  // 89: metadata_lifecycle.v1.SubmitResourceRequest
+	(*WithdrawResourceRequest)(nil),                // 90: metadata_lifecycle.v1.WithdrawResourceRequest
+	(*ReopenResourceRequest)(nil),                  // 91: metadata_lifecycle.v1.ReopenResourceRequest
+	(*PublishResourceRequest)(nil),                 // 92: metadata_lifecycle.v1.PublishResourceRequest
+	(*UnpublishResourceRequest)(nil),               // 93: metadata_lifecycle.v1.UnpublishResourceRequest
+	(*SubmitResourceResponse)(nil),                 // 94: metadata_lifecycle.v1.SubmitResourceResponse
+	(*WithdrawResourceResponse)(nil),               // 95: metadata_lifecycle.v1.WithdrawResourceResponse
+	(*ReopenResourceResponse)(nil),                 // 96: metadata_lifecycle.v1.ReopenResourceResponse
+	(*PublishResourceResponse)(nil),                // 97: metadata_lifecycle.v1.PublishResourceResponse
+	(*UnpublishResourceResponse)(nil),              // 98: metadata_lifecycle.v1.UnpublishResourceResponse
+	(*DiscardResourceDraftResponse)(nil),           // 99: metadata_lifecycle.v1.DiscardResourceDraftResponse
+	(*RejectResourceRequest)(nil),                  // 100: metadata_lifecycle.v1.RejectResourceRequest
+	(*RejectResourceResponse)(nil),                 // 101: metadata_lifecycle.v1.RejectResourceResponse
+	(*DraftResourceFromPublicationRequest)(nil),    // 102: metadata_lifecycle.v1.DraftResourceFromPublicationRequest
+	(*DraftResourceFromPublicationResponse)(nil),   // 103: metadata_lifecycle.v1.DraftResourceFromPublicationResponse
+	(*DraftResourceFromLatestArchiveRequest)(nil),  // 104: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
+	(*DraftResourceFromLatestArchiveResponse)(nil), // 105: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
+	(*CopyPublishedResourceRequest)(nil),           // 106: metadata_lifecycle.v1.CopyPublishedResourceRequest
+	(*CopyPublishedResourceResponse)(nil),          // 107: metadata_lifecycle.v1.CopyPublishedResourceResponse
+	(*ReplaceResourceDraftRequest)(nil),            // 108: metadata_lifecycle.v1.ReplaceResourceDraftRequest
+	(*ReplaceResourceDraftResponse)(nil),           // 109: metadata_lifecycle.v1.ReplaceResourceDraftResponse
+	nil,                                            // 110: metadata_lifecycle.v1.PrepareDistributionAccessResponse.HeadersEntry
+	nil,                                            // 111: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.CopiedDistributionsEntry
+	nil,                                            // 112: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.CopiedDistributionsEntry
+	nil,                                            // 113: metadata_lifecycle.v1.CopyPublishedResourceResponse.CopiedDistributionsEntry
+	(ResourceType)(0),                              // 114: metadata_lifecycle.v1.ResourceType
+	(*Notification)(nil),                           // 115: metadata_lifecycle.v1.Notification
+	(VersioningStatus)(0),                          // 116: metadata_lifecycle.v1.VersioningStatus
+	(*timestamppb.Timestamp)(nil),                  // 117: google.protobuf.Timestamp
+	(*EntityReference)(nil),                        // 118: metadata_lifecycle.v1.EntityReference
 }
 var file_metadata_lifecycle_v1_resource_proto_depIdxs = []int32{
-	41,  // 0: metadata_lifecycle.v1.CreateResourceRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
-	85,  // 1: metadata_lifecycle.v1.CreateResourceRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
-	86,  // 2: metadata_lifecycle.v1.CreateResourceRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
-	36,  // 3: metadata_lifecycle.v1.CreateResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	113, // 4: metadata_lifecycle.v1.GetResourceVersionRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	32,  // 5: metadata_lifecycle.v1.GetResourceVersionResponse.resource:type_name -> metadata_lifecycle.v1.ResourceVersion
-	5,   // 6: metadata_lifecycle.v1.RequestDistributionConversionRequest.visualizations:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
-	114, // 7: metadata_lifecycle.v1.RequestDistributionConversionResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	21,  // 8: metadata_lifecycle.v1.DistributionAccessParameterInput.scalar:type_name -> metadata_lifecycle.v1.DistributionAccessScalarValue
-	22,  // 9: metadata_lifecycle.v1.DistributionAccessParameterInput.array:type_name -> metadata_lifecycle.v1.DistributionAccessArrayValue
-	21,  // 10: metadata_lifecycle.v1.DistributionAccessArrayValue.values:type_name -> metadata_lifecycle.v1.DistributionAccessScalarValue
-	24,  // 11: metadata_lifecycle.v1.PrepareDistributionAccessRequest.http:type_name -> metadata_lifecycle.v1.HTTPDistributionAccessInput
-	25,  // 12: metadata_lifecycle.v1.PrepareDistributionAccessRequest.wfs:type_name -> metadata_lifecycle.v1.WFSDistributionAccessInput
-	26,  // 13: metadata_lifecycle.v1.PrepareDistributionAccessRequest.dynamic:type_name -> metadata_lifecycle.v1.DynamicDistributionAccessInput
-	20,  // 14: metadata_lifecycle.v1.HTTPDistributionAccessInput.parameters:type_name -> metadata_lifecycle.v1.DistributionAccessParameterInput
-	27,  // 15: metadata_lifecycle.v1.WFSDistributionAccessInput.bbox:type_name -> metadata_lifecycle.v1.WFSBoundingBox
-	20,  // 16: metadata_lifecycle.v1.WFSDistributionAccessInput.parameters:type_name -> metadata_lifecycle.v1.DistributionAccessParameterInput
-	20,  // 17: metadata_lifecycle.v1.DynamicDistributionAccessInput.parameters:type_name -> metadata_lifecycle.v1.DistributionAccessParameterInput
-	3,   // 18: metadata_lifecycle.v1.PrepareDistributionAccessResponse.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	109, // 19: metadata_lifecycle.v1.PrepareDistributionAccessResponse.headers:type_name -> metadata_lifecycle.v1.PrepareDistributionAccessResponse.HeadersEntry
-	113, // 20: metadata_lifecycle.v1.ListResourceVersionsRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	113, // 21: metadata_lifecycle.v1.ResourceVersionSummary.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	115, // 22: metadata_lifecycle.v1.ResourceVersionSummary.status:type_name -> metadata_lifecycle.v1.VersioningStatus
-	116, // 23: metadata_lifecycle.v1.ResourceVersionSummary.created_at:type_name -> google.protobuf.Timestamp
-	116, // 24: metadata_lifecycle.v1.ResourceVersionSummary.updated_at:type_name -> google.protobuf.Timestamp
-	116, // 25: metadata_lifecycle.v1.ResourceVersionSummary.submitted_at:type_name -> google.protobuf.Timestamp
-	116, // 26: metadata_lifecycle.v1.ResourceVersionSummary.published_at:type_name -> google.protobuf.Timestamp
-	116, // 27: metadata_lifecycle.v1.ResourceVersionSummary.archived_at:type_name -> google.protobuf.Timestamp
-	116, // 28: metadata_lifecycle.v1.ResourceVersionSummary.rejected_at:type_name -> google.protobuf.Timestamp
-	30,  // 29: metadata_lifecycle.v1.ListResourceVersionsResponse.versions:type_name -> metadata_lifecycle.v1.ResourceVersionSummary
-	115, // 30: metadata_lifecycle.v1.ResourceVersion.status:type_name -> metadata_lifecycle.v1.VersioningStatus
-	116, // 31: metadata_lifecycle.v1.ResourceVersion.created_at:type_name -> google.protobuf.Timestamp
-	116, // 32: metadata_lifecycle.v1.ResourceVersion.updated_at:type_name -> google.protobuf.Timestamp
-	33,  // 33: metadata_lifecycle.v1.ResourceVersion.dataset:type_name -> metadata_lifecycle.v1.DatasetResourceMetadata
-	34,  // 34: metadata_lifecycle.v1.ResourceVersion.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationResourceMetadata
-	35,  // 35: metadata_lifecycle.v1.ResourceVersion.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata
-	116, // 36: metadata_lifecycle.v1.ResourceVersion.rejected_at:type_name -> google.protobuf.Timestamp
+	42,  // 0: metadata_lifecycle.v1.CreateResourceRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
+	86,  // 1: metadata_lifecycle.v1.CreateResourceRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
+	87,  // 2: metadata_lifecycle.v1.CreateResourceRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
+	37,  // 3: metadata_lifecycle.v1.CreateResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	114, // 4: metadata_lifecycle.v1.GetResourceVersionRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	33,  // 5: metadata_lifecycle.v1.GetResourceVersionResponse.resource:type_name -> metadata_lifecycle.v1.ResourceVersion
+	6,   // 6: metadata_lifecycle.v1.RequestDistributionConversionRequest.visualizations:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
+	115, // 7: metadata_lifecycle.v1.RequestDistributionConversionResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	22,  // 8: metadata_lifecycle.v1.DistributionAccessParameterInput.scalar:type_name -> metadata_lifecycle.v1.DistributionAccessScalarValue
+	23,  // 9: metadata_lifecycle.v1.DistributionAccessParameterInput.array:type_name -> metadata_lifecycle.v1.DistributionAccessArrayValue
+	22,  // 10: metadata_lifecycle.v1.DistributionAccessArrayValue.values:type_name -> metadata_lifecycle.v1.DistributionAccessScalarValue
+	25,  // 11: metadata_lifecycle.v1.PrepareDistributionAccessRequest.http:type_name -> metadata_lifecycle.v1.HTTPDistributionAccessInput
+	26,  // 12: metadata_lifecycle.v1.PrepareDistributionAccessRequest.wfs:type_name -> metadata_lifecycle.v1.WFSDistributionAccessInput
+	27,  // 13: metadata_lifecycle.v1.PrepareDistributionAccessRequest.dynamic:type_name -> metadata_lifecycle.v1.DynamicDistributionAccessInput
+	21,  // 14: metadata_lifecycle.v1.HTTPDistributionAccessInput.parameters:type_name -> metadata_lifecycle.v1.DistributionAccessParameterInput
+	28,  // 15: metadata_lifecycle.v1.WFSDistributionAccessInput.bbox:type_name -> metadata_lifecycle.v1.WFSBoundingBox
+	21,  // 16: metadata_lifecycle.v1.WFSDistributionAccessInput.parameters:type_name -> metadata_lifecycle.v1.DistributionAccessParameterInput
+	21,  // 17: metadata_lifecycle.v1.DynamicDistributionAccessInput.parameters:type_name -> metadata_lifecycle.v1.DistributionAccessParameterInput
+	4,   // 18: metadata_lifecycle.v1.PrepareDistributionAccessResponse.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
+	110, // 19: metadata_lifecycle.v1.PrepareDistributionAccessResponse.headers:type_name -> metadata_lifecycle.v1.PrepareDistributionAccessResponse.HeadersEntry
+	114, // 20: metadata_lifecycle.v1.ListResourceVersionsRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	114, // 21: metadata_lifecycle.v1.ResourceVersionSummary.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	116, // 22: metadata_lifecycle.v1.ResourceVersionSummary.status:type_name -> metadata_lifecycle.v1.VersioningStatus
+	117, // 23: metadata_lifecycle.v1.ResourceVersionSummary.created_at:type_name -> google.protobuf.Timestamp
+	117, // 24: metadata_lifecycle.v1.ResourceVersionSummary.updated_at:type_name -> google.protobuf.Timestamp
+	117, // 25: metadata_lifecycle.v1.ResourceVersionSummary.submitted_at:type_name -> google.protobuf.Timestamp
+	117, // 26: metadata_lifecycle.v1.ResourceVersionSummary.published_at:type_name -> google.protobuf.Timestamp
+	117, // 27: metadata_lifecycle.v1.ResourceVersionSummary.archived_at:type_name -> google.protobuf.Timestamp
+	117, // 28: metadata_lifecycle.v1.ResourceVersionSummary.rejected_at:type_name -> google.protobuf.Timestamp
+	31,  // 29: metadata_lifecycle.v1.ListResourceVersionsResponse.versions:type_name -> metadata_lifecycle.v1.ResourceVersionSummary
+	116, // 30: metadata_lifecycle.v1.ResourceVersion.status:type_name -> metadata_lifecycle.v1.VersioningStatus
+	117, // 31: metadata_lifecycle.v1.ResourceVersion.created_at:type_name -> google.protobuf.Timestamp
+	117, // 32: metadata_lifecycle.v1.ResourceVersion.updated_at:type_name -> google.protobuf.Timestamp
+	34,  // 33: metadata_lifecycle.v1.ResourceVersion.dataset:type_name -> metadata_lifecycle.v1.DatasetResourceMetadata
+	35,  // 34: metadata_lifecycle.v1.ResourceVersion.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationResourceMetadata
+	36,  // 35: metadata_lifecycle.v1.ResourceVersion.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata
+	117, // 36: metadata_lifecycle.v1.ResourceVersion.rejected_at:type_name -> google.protobuf.Timestamp
 	1,   // 37: metadata_lifecycle.v1.DatasetResourceMetadata.accrual_periodicity:type_name -> metadata_lifecycle.v1.DatasetAccrualPeriodicity
 	0,   // 38: metadata_lifecycle.v1.DatasetResourceMetadata.access_right:type_name -> metadata_lifecycle.v1.DatasetAccessRight
-	43,  // 39: metadata_lifecycle.v1.DatasetResourceMetadata.distributions:type_name -> metadata_lifecycle.v1.Distribution
-	39,  // 40: metadata_lifecycle.v1.DatasetResourceMetadata.temporal_coverage:type_name -> metadata_lifecycle.v1.Temporal
-	40,  // 41: metadata_lifecycle.v1.DatasetResourceMetadata.geological_temporal_coverage:type_name -> metadata_lifecycle.v1.GeologicalTemporalCoverage
-	37,  // 42: metadata_lifecycle.v1.DatasetResourceMetadata.persistent_identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
-	117, // 43: metadata_lifecycle.v1.DatasetResourceMetadata.providers:type_name -> metadata_lifecycle.v1.EntityReference
-	117, // 44: metadata_lifecycle.v1.DatasetResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
-	116, // 45: metadata_lifecycle.v1.DatasetResourceMetadata.created:type_name -> google.protobuf.Timestamp
-	116, // 46: metadata_lifecycle.v1.DatasetResourceMetadata.updated:type_name -> google.protobuf.Timestamp
-	117, // 47: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.creators:type_name -> metadata_lifecycle.v1.EntityReference
-	37,  // 48: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
-	117, // 49: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
-	117, // 50: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.creators:type_name -> metadata_lifecycle.v1.EntityReference
-	37,  // 51: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
-	117, // 52: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
-	115, // 53: metadata_lifecycle.v1.ResourceRecord.status:type_name -> metadata_lifecycle.v1.VersioningStatus
-	116, // 54: metadata_lifecycle.v1.Temporal.start:type_name -> google.protobuf.Timestamp
-	116, // 55: metadata_lifecycle.v1.Temporal.end:type_name -> google.protobuf.Timestamp
-	1,   // 56: metadata_lifecycle.v1.DatasetInput.accrual_periodicity:type_name -> metadata_lifecycle.v1.DatasetAccrualPeriodicity
-	0,   // 57: metadata_lifecycle.v1.DatasetInput.access_right:type_name -> metadata_lifecycle.v1.DatasetAccessRight
-	42,  // 58: metadata_lifecycle.v1.DatasetInput.distributions:type_name -> metadata_lifecycle.v1.DistributionInput
-	39,  // 59: metadata_lifecycle.v1.DatasetInput.temporal_coverage:type_name -> metadata_lifecycle.v1.Temporal
-	40,  // 60: metadata_lifecycle.v1.DatasetInput.geological_temporal_coverage:type_name -> metadata_lifecycle.v1.GeologicalTemporalCoverage
-	38,  // 61: metadata_lifecycle.v1.DatasetInput.persistent_identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
-	116, // 62: metadata_lifecycle.v1.DatasetInput.created:type_name -> google.protobuf.Timestamp
-	116, // 63: metadata_lifecycle.v1.DatasetInput.updated:type_name -> google.protobuf.Timestamp
-	2,   // 64: metadata_lifecycle.v1.DistributionInput.type:type_name -> metadata_lifecycle.v1.DistributionType
-	45,  // 65: metadata_lifecycle.v1.DistributionInput.web_service:type_name -> metadata_lifecycle.v1.WebServiceInput
-	65,  // 66: metadata_lifecycle.v1.DistributionInput.downloadable_file:type_name -> metadata_lifecycle.v1.DownloadableFile
-	2,   // 67: metadata_lifecycle.v1.Distribution.type:type_name -> metadata_lifecycle.v1.DistributionType
-	47,  // 68: metadata_lifecycle.v1.Distribution.web_service:type_name -> metadata_lifecycle.v1.WebService
-	65,  // 69: metadata_lifecycle.v1.Distribution.downloadable_file:type_name -> metadata_lifecycle.v1.DownloadableFile
-	51,  // 70: metadata_lifecycle.v1.WebServiceInput.http:type_name -> metadata_lifecycle.v1.HTTPWebServiceInput
-	52,  // 71: metadata_lifecycle.v1.WebServiceInput.dynamic:type_name -> metadata_lifecycle.v1.DynamicWebServiceInput
-	55,  // 72: metadata_lifecycle.v1.WebServiceInput.wfs:type_name -> metadata_lifecycle.v1.WFSWebServiceInput
-	57,  // 73: metadata_lifecycle.v1.WebServiceInput.wms:type_name -> metadata_lifecycle.v1.WMSWebServiceInput
-	61,  // 74: metadata_lifecycle.v1.WebServiceInput.wmts:type_name -> metadata_lifecycle.v1.WMTSWebServiceInput
-	5,   // 75: metadata_lifecycle.v1.WebServiceCommonInput.visible_on:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
-	53,  // 76: metadata_lifecycle.v1.WebService.http:type_name -> metadata_lifecycle.v1.HTTPWebService
-	54,  // 77: metadata_lifecycle.v1.WebService.dynamic:type_name -> metadata_lifecycle.v1.DynamicWebService
-	56,  // 78: metadata_lifecycle.v1.WebService.wfs:type_name -> metadata_lifecycle.v1.WFSWebService
-	58,  // 79: metadata_lifecycle.v1.WebService.wms:type_name -> metadata_lifecycle.v1.WMSWebService
-	62,  // 80: metadata_lifecycle.v1.WebService.wmts:type_name -> metadata_lifecycle.v1.WMTSWebService
-	117, // 81: metadata_lifecycle.v1.WebServiceCommon.provider_reference:type_name -> metadata_lifecycle.v1.EntityReference
-	5,   // 82: metadata_lifecycle.v1.WebServiceCommon.visible_on:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
-	117, // 83: metadata_lifecycle.v1.WebServiceCommon.categories:type_name -> metadata_lifecycle.v1.EntityReference
-	68,  // 84: metadata_lifecycle.v1.RequestBodyInput.parameters:type_name -> metadata_lifecycle.v1.ScalarParameterInput
-	69,  // 85: metadata_lifecycle.v1.RequestBody.parameters:type_name -> metadata_lifecycle.v1.ScalarParameter
-	46,  // 86: metadata_lifecycle.v1.HTTPWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	66,  // 87: metadata_lifecycle.v1.HTTPWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	3,   // 88: metadata_lifecycle.v1.HTTPWebServiceInput.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	49,  // 89: metadata_lifecycle.v1.HTTPWebServiceInput.body:type_name -> metadata_lifecycle.v1.RequestBodyInput
-	46,  // 90: metadata_lifecycle.v1.DynamicWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	66,  // 91: metadata_lifecycle.v1.DynamicWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	3,   // 92: metadata_lifecycle.v1.DynamicWebServiceInput.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	49,  // 93: metadata_lifecycle.v1.DynamicWebServiceInput.body:type_name -> metadata_lifecycle.v1.RequestBodyInput
-	48,  // 94: metadata_lifecycle.v1.HTTPWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	67,  // 95: metadata_lifecycle.v1.HTTPWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
-	3,   // 96: metadata_lifecycle.v1.HTTPWebService.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	50,  // 97: metadata_lifecycle.v1.HTTPWebService.body:type_name -> metadata_lifecycle.v1.RequestBody
-	44,  // 98: metadata_lifecycle.v1.HTTPWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
-	48,  // 99: metadata_lifecycle.v1.DynamicWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	67,  // 100: metadata_lifecycle.v1.DynamicWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
-	3,   // 101: metadata_lifecycle.v1.DynamicWebService.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	50,  // 102: metadata_lifecycle.v1.DynamicWebService.body:type_name -> metadata_lifecycle.v1.RequestBody
-	44,  // 103: metadata_lifecycle.v1.DynamicWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
-	46,  // 104: metadata_lifecycle.v1.WFSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	66,  // 105: metadata_lifecycle.v1.WFSWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	48,  // 106: metadata_lifecycle.v1.WFSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	44,  // 107: metadata_lifecycle.v1.WFSWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
-	67,  // 108: metadata_lifecycle.v1.WFSWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
-	46,  // 109: metadata_lifecycle.v1.WMSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	60,  // 110: metadata_lifecycle.v1.WMSWebServiceInput.layers:type_name -> metadata_lifecycle.v1.WMSLayerInput
-	66,  // 111: metadata_lifecycle.v1.WMSWebServiceInput.get_map_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	66,  // 112: metadata_lifecycle.v1.WMSWebServiceInput.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	48,  // 113: metadata_lifecycle.v1.WMSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	59,  // 114: metadata_lifecycle.v1.WMSWebService.layers:type_name -> metadata_lifecycle.v1.WMSLayer
-	67,  // 115: metadata_lifecycle.v1.WMSWebService.get_map_parameters:type_name -> metadata_lifecycle.v1.Parameter
-	67,  // 116: metadata_lifecycle.v1.WMSWebService.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.Parameter
-	46,  // 117: metadata_lifecycle.v1.WMTSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	64,  // 118: metadata_lifecycle.v1.WMTSWebServiceInput.layers:type_name -> metadata_lifecycle.v1.WMTSLayerInput
-	66,  // 119: metadata_lifecycle.v1.WMTSWebServiceInput.get_tile_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	66,  // 120: metadata_lifecycle.v1.WMTSWebServiceInput.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	48,  // 121: metadata_lifecycle.v1.WMTSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	63,  // 122: metadata_lifecycle.v1.WMTSWebService.layers:type_name -> metadata_lifecycle.v1.WMTSLayer
-	67,  // 123: metadata_lifecycle.v1.WMTSWebService.get_tile_parameters:type_name -> metadata_lifecycle.v1.Parameter
-	67,  // 124: metadata_lifecycle.v1.WMTSWebService.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.Parameter
-	73,  // 125: metadata_lifecycle.v1.ParameterInput.string:type_name -> metadata_lifecycle.v1.StringParameter
-	74,  // 126: metadata_lifecycle.v1.ParameterInput.boolean:type_name -> metadata_lifecycle.v1.BooleanParameter
-	75,  // 127: metadata_lifecycle.v1.ParameterInput.integer:type_name -> metadata_lifecycle.v1.IntegerParameter
-	76,  // 128: metadata_lifecycle.v1.ParameterInput.float:type_name -> metadata_lifecycle.v1.FloatParameter
-	77,  // 129: metadata_lifecycle.v1.ParameterInput.date_time:type_name -> metadata_lifecycle.v1.DateTimeParameter
-	79,  // 130: metadata_lifecycle.v1.ParameterInput.template:type_name -> metadata_lifecycle.v1.TemplateParameterInput
-	6,   // 131: metadata_lifecycle.v1.ParameterInput.location:type_name -> metadata_lifecycle.v1.WebServiceParameterLocation
-	7,   // 132: metadata_lifecycle.v1.ParameterInput.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
-	73,  // 133: metadata_lifecycle.v1.Parameter.string:type_name -> metadata_lifecycle.v1.StringParameter
-	74,  // 134: metadata_lifecycle.v1.Parameter.boolean:type_name -> metadata_lifecycle.v1.BooleanParameter
-	75,  // 135: metadata_lifecycle.v1.Parameter.integer:type_name -> metadata_lifecycle.v1.IntegerParameter
-	76,  // 136: metadata_lifecycle.v1.Parameter.float:type_name -> metadata_lifecycle.v1.FloatParameter
-	77,  // 137: metadata_lifecycle.v1.Parameter.date_time:type_name -> metadata_lifecycle.v1.DateTimeParameter
-	78,  // 138: metadata_lifecycle.v1.Parameter.template:type_name -> metadata_lifecycle.v1.TemplateParameter
-	6,   // 139: metadata_lifecycle.v1.Parameter.location:type_name -> metadata_lifecycle.v1.WebServiceParameterLocation
-	7,   // 140: metadata_lifecycle.v1.Parameter.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
-	80,  // 141: metadata_lifecycle.v1.ScalarParameterInput.string:type_name -> metadata_lifecycle.v1.ScalarStringParameter
-	81,  // 142: metadata_lifecycle.v1.ScalarParameterInput.boolean:type_name -> metadata_lifecycle.v1.ScalarBooleanParameter
-	82,  // 143: metadata_lifecycle.v1.ScalarParameterInput.integer:type_name -> metadata_lifecycle.v1.ScalarIntegerParameter
-	83,  // 144: metadata_lifecycle.v1.ScalarParameterInput.float:type_name -> metadata_lifecycle.v1.ScalarFloatParameter
-	84,  // 145: metadata_lifecycle.v1.ScalarParameterInput.date_time:type_name -> metadata_lifecycle.v1.ScalarDateTimeParameter
-	7,   // 146: metadata_lifecycle.v1.ScalarParameterInput.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
-	80,  // 147: metadata_lifecycle.v1.ScalarParameter.string:type_name -> metadata_lifecycle.v1.ScalarStringParameter
-	81,  // 148: metadata_lifecycle.v1.ScalarParameter.boolean:type_name -> metadata_lifecycle.v1.ScalarBooleanParameter
-	82,  // 149: metadata_lifecycle.v1.ScalarParameter.integer:type_name -> metadata_lifecycle.v1.ScalarIntegerParameter
-	83,  // 150: metadata_lifecycle.v1.ScalarParameter.float:type_name -> metadata_lifecycle.v1.ScalarFloatParameter
-	84,  // 151: metadata_lifecycle.v1.ScalarParameter.date_time:type_name -> metadata_lifecycle.v1.ScalarDateTimeParameter
-	7,   // 152: metadata_lifecycle.v1.ScalarParameter.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
-	70,  // 153: metadata_lifecycle.v1.StringParameter.enum:type_name -> metadata_lifecycle.v1.StringEnumOption
-	71,  // 154: metadata_lifecycle.v1.IntegerParameter.enum:type_name -> metadata_lifecycle.v1.IntegerEnumOption
-	72,  // 155: metadata_lifecycle.v1.FloatParameter.enum:type_name -> metadata_lifecycle.v1.FloatEnumOption
-	116, // 156: metadata_lifecycle.v1.DateTimeParameter.minimum:type_name -> google.protobuf.Timestamp
-	116, // 157: metadata_lifecycle.v1.DateTimeParameter.maximum:type_name -> google.protobuf.Timestamp
-	116, // 158: metadata_lifecycle.v1.DateTimeParameter.default:type_name -> google.protobuf.Timestamp
-	69,  // 159: metadata_lifecycle.v1.TemplateParameter.parameters:type_name -> metadata_lifecycle.v1.ScalarParameter
-	68,  // 160: metadata_lifecycle.v1.TemplateParameterInput.parameters:type_name -> metadata_lifecycle.v1.ScalarParameterInput
-	70,  // 161: metadata_lifecycle.v1.ScalarStringParameter.enum:type_name -> metadata_lifecycle.v1.StringEnumOption
-	71,  // 162: metadata_lifecycle.v1.ScalarIntegerParameter.enum:type_name -> metadata_lifecycle.v1.IntegerEnumOption
-	72,  // 163: metadata_lifecycle.v1.ScalarFloatParameter.enum:type_name -> metadata_lifecycle.v1.FloatEnumOption
-	116, // 164: metadata_lifecycle.v1.ScalarDateTimeParameter.minimum:type_name -> google.protobuf.Timestamp
-	116, // 165: metadata_lifecycle.v1.ScalarDateTimeParameter.maximum:type_name -> google.protobuf.Timestamp
-	116, // 166: metadata_lifecycle.v1.ScalarDateTimeParameter.default:type_name -> google.protobuf.Timestamp
-	38,  // 167: metadata_lifecycle.v1.SoftwareApplicationInput.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
-	38,  // 168: metadata_lifecycle.v1.SoftwareSourceCodeInput.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
-	113, // 169: metadata_lifecycle.v1.DiscardResourceDraftRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	113, // 170: metadata_lifecycle.v1.SubmitResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	113, // 171: metadata_lifecycle.v1.WithdrawResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	113, // 172: metadata_lifecycle.v1.ReopenResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	113, // 173: metadata_lifecycle.v1.PublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	113, // 174: metadata_lifecycle.v1.UnpublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	36,  // 175: metadata_lifecycle.v1.SubmitResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	114, // 176: metadata_lifecycle.v1.SubmitResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	36,  // 177: metadata_lifecycle.v1.WithdrawResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	36,  // 178: metadata_lifecycle.v1.ReopenResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	36,  // 179: metadata_lifecycle.v1.PublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	114, // 180: metadata_lifecycle.v1.PublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	36,  // 181: metadata_lifecycle.v1.UnpublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	114, // 182: metadata_lifecycle.v1.UnpublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	113, // 183: metadata_lifecycle.v1.RejectResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	36,  // 184: metadata_lifecycle.v1.RejectResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	114, // 185: metadata_lifecycle.v1.RejectResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	113, // 186: metadata_lifecycle.v1.DraftResourceFromPublicationRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	36,  // 187: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	110, // 188: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.copied_distributions:type_name -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse.CopiedDistributionsEntry
-	113, // 189: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	36,  // 190: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	111, // 191: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.copied_distributions:type_name -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.CopiedDistributionsEntry
-	113, // 192: metadata_lifecycle.v1.CopyPublishedResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	36,  // 193: metadata_lifecycle.v1.CopyPublishedResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	112, // 194: metadata_lifecycle.v1.CopyPublishedResourceResponse.copied_distributions:type_name -> metadata_lifecycle.v1.CopyPublishedResourceResponse.CopiedDistributionsEntry
-	41,  // 195: metadata_lifecycle.v1.ReplaceResourceDraftRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
-	85,  // 196: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
-	86,  // 197: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
-	36,  // 198: metadata_lifecycle.v1.ReplaceResourceDraftResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	15,  // 199: metadata_lifecycle.v1.ResourceService.RequestDistributionConversion:input_type -> metadata_lifecycle.v1.RequestDistributionConversionRequest
-	8,   // 200: metadata_lifecycle.v1.ResourceService.CreateResource:input_type -> metadata_lifecycle.v1.CreateResourceRequest
-	10,  // 201: metadata_lifecycle.v1.ResourceService.GetResourceVersion:input_type -> metadata_lifecycle.v1.GetResourceVersionRequest
-	13,  // 202: metadata_lifecycle.v1.ResourceService.GetDistributionFormats:input_type -> metadata_lifecycle.v1.GetDistributionFormatsRequest
-	17,  // 203: metadata_lifecycle.v1.ResourceService.CheckDistributionRead:input_type -> metadata_lifecycle.v1.CheckDistributionReadRequest
-	12,  // 204: metadata_lifecycle.v1.ResourceService.PrepareDistributionDownload:input_type -> metadata_lifecycle.v1.PrepareDistributionDownloadRequest
-	23,  // 205: metadata_lifecycle.v1.ResourceService.PrepareDistributionAccess:input_type -> metadata_lifecycle.v1.PrepareDistributionAccessRequest
-	29,  // 206: metadata_lifecycle.v1.ResourceService.ListResourceVersions:input_type -> metadata_lifecycle.v1.ListResourceVersionsRequest
-	107, // 207: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:input_type -> metadata_lifecycle.v1.ReplaceResourceDraftRequest
-	87,  // 208: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:input_type -> metadata_lifecycle.v1.DiscardResourceDraftRequest
-	88,  // 209: metadata_lifecycle.v1.ResourceService.SubmitResource:input_type -> metadata_lifecycle.v1.SubmitResourceRequest
-	89,  // 210: metadata_lifecycle.v1.ResourceService.WithdrawResource:input_type -> metadata_lifecycle.v1.WithdrawResourceRequest
-	99,  // 211: metadata_lifecycle.v1.ResourceService.RejectResource:input_type -> metadata_lifecycle.v1.RejectResourceRequest
-	90,  // 212: metadata_lifecycle.v1.ResourceService.ReopenResource:input_type -> metadata_lifecycle.v1.ReopenResourceRequest
-	91,  // 213: metadata_lifecycle.v1.ResourceService.PublishResource:input_type -> metadata_lifecycle.v1.PublishResourceRequest
-	92,  // 214: metadata_lifecycle.v1.ResourceService.UnpublishResource:input_type -> metadata_lifecycle.v1.UnpublishResourceRequest
-	101, // 215: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:input_type -> metadata_lifecycle.v1.DraftResourceFromPublicationRequest
-	103, // 216: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:input_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
-	105, // 217: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:input_type -> metadata_lifecycle.v1.CopyPublishedResourceRequest
-	16,  // 218: metadata_lifecycle.v1.ResourceService.RequestDistributionConversion:output_type -> metadata_lifecycle.v1.RequestDistributionConversionResponse
-	9,   // 219: metadata_lifecycle.v1.ResourceService.CreateResource:output_type -> metadata_lifecycle.v1.CreateResourceResponse
-	11,  // 220: metadata_lifecycle.v1.ResourceService.GetResourceVersion:output_type -> metadata_lifecycle.v1.GetResourceVersionResponse
-	14,  // 221: metadata_lifecycle.v1.ResourceService.GetDistributionFormats:output_type -> metadata_lifecycle.v1.GetDistributionFormatsResponse
-	18,  // 222: metadata_lifecycle.v1.ResourceService.CheckDistributionRead:output_type -> metadata_lifecycle.v1.CheckDistributionReadResponse
-	19,  // 223: metadata_lifecycle.v1.ResourceService.PrepareDistributionDownload:output_type -> metadata_lifecycle.v1.PrepareDistributionDownloadResponse
-	28,  // 224: metadata_lifecycle.v1.ResourceService.PrepareDistributionAccess:output_type -> metadata_lifecycle.v1.PrepareDistributionAccessResponse
-	31,  // 225: metadata_lifecycle.v1.ResourceService.ListResourceVersions:output_type -> metadata_lifecycle.v1.ListResourceVersionsResponse
-	108, // 226: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:output_type -> metadata_lifecycle.v1.ReplaceResourceDraftResponse
-	98,  // 227: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:output_type -> metadata_lifecycle.v1.DiscardResourceDraftResponse
-	93,  // 228: metadata_lifecycle.v1.ResourceService.SubmitResource:output_type -> metadata_lifecycle.v1.SubmitResourceResponse
-	94,  // 229: metadata_lifecycle.v1.ResourceService.WithdrawResource:output_type -> metadata_lifecycle.v1.WithdrawResourceResponse
-	100, // 230: metadata_lifecycle.v1.ResourceService.RejectResource:output_type -> metadata_lifecycle.v1.RejectResourceResponse
-	95,  // 231: metadata_lifecycle.v1.ResourceService.ReopenResource:output_type -> metadata_lifecycle.v1.ReopenResourceResponse
-	96,  // 232: metadata_lifecycle.v1.ResourceService.PublishResource:output_type -> metadata_lifecycle.v1.PublishResourceResponse
-	97,  // 233: metadata_lifecycle.v1.ResourceService.UnpublishResource:output_type -> metadata_lifecycle.v1.UnpublishResourceResponse
-	102, // 234: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:output_type -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse
-	104, // 235: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:output_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
-	106, // 236: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:output_type -> metadata_lifecycle.v1.CopyPublishedResourceResponse
-	218, // [218:237] is the sub-list for method output_type
-	199, // [199:218] is the sub-list for method input_type
-	199, // [199:199] is the sub-list for extension type_name
-	199, // [199:199] is the sub-list for extension extendee
-	0,   // [0:199] is the sub-list for field type_name
+	44,  // 39: metadata_lifecycle.v1.DatasetResourceMetadata.distributions:type_name -> metadata_lifecycle.v1.Distribution
+	40,  // 40: metadata_lifecycle.v1.DatasetResourceMetadata.temporal_coverage:type_name -> metadata_lifecycle.v1.Temporal
+	41,  // 41: metadata_lifecycle.v1.DatasetResourceMetadata.geological_temporal_coverage:type_name -> metadata_lifecycle.v1.GeologicalTemporalCoverage
+	38,  // 42: metadata_lifecycle.v1.DatasetResourceMetadata.persistent_identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
+	118, // 43: metadata_lifecycle.v1.DatasetResourceMetadata.providers:type_name -> metadata_lifecycle.v1.EntityReference
+	118, // 44: metadata_lifecycle.v1.DatasetResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
+	117, // 45: metadata_lifecycle.v1.DatasetResourceMetadata.created:type_name -> google.protobuf.Timestamp
+	117, // 46: metadata_lifecycle.v1.DatasetResourceMetadata.updated:type_name -> google.protobuf.Timestamp
+	2,   // 47: metadata_lifecycle.v1.DatasetResourceMetadata.type:type_name -> metadata_lifecycle.v1.DatasetType
+	118, // 48: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.creators:type_name -> metadata_lifecycle.v1.EntityReference
+	38,  // 49: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
+	118, // 50: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
+	118, // 51: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.creators:type_name -> metadata_lifecycle.v1.EntityReference
+	38,  // 52: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
+	118, // 53: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
+	116, // 54: metadata_lifecycle.v1.ResourceRecord.status:type_name -> metadata_lifecycle.v1.VersioningStatus
+	117, // 55: metadata_lifecycle.v1.Temporal.start:type_name -> google.protobuf.Timestamp
+	117, // 56: metadata_lifecycle.v1.Temporal.end:type_name -> google.protobuf.Timestamp
+	1,   // 57: metadata_lifecycle.v1.DatasetInput.accrual_periodicity:type_name -> metadata_lifecycle.v1.DatasetAccrualPeriodicity
+	0,   // 58: metadata_lifecycle.v1.DatasetInput.access_right:type_name -> metadata_lifecycle.v1.DatasetAccessRight
+	43,  // 59: metadata_lifecycle.v1.DatasetInput.distributions:type_name -> metadata_lifecycle.v1.DistributionInput
+	40,  // 60: metadata_lifecycle.v1.DatasetInput.temporal_coverage:type_name -> metadata_lifecycle.v1.Temporal
+	41,  // 61: metadata_lifecycle.v1.DatasetInput.geological_temporal_coverage:type_name -> metadata_lifecycle.v1.GeologicalTemporalCoverage
+	39,  // 62: metadata_lifecycle.v1.DatasetInput.persistent_identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
+	117, // 63: metadata_lifecycle.v1.DatasetInput.created:type_name -> google.protobuf.Timestamp
+	117, // 64: metadata_lifecycle.v1.DatasetInput.updated:type_name -> google.protobuf.Timestamp
+	2,   // 65: metadata_lifecycle.v1.DatasetInput.type:type_name -> metadata_lifecycle.v1.DatasetType
+	3,   // 66: metadata_lifecycle.v1.DistributionInput.type:type_name -> metadata_lifecycle.v1.DistributionType
+	46,  // 67: metadata_lifecycle.v1.DistributionInput.web_service:type_name -> metadata_lifecycle.v1.WebServiceInput
+	66,  // 68: metadata_lifecycle.v1.DistributionInput.downloadable_file:type_name -> metadata_lifecycle.v1.DownloadableFile
+	3,   // 69: metadata_lifecycle.v1.Distribution.type:type_name -> metadata_lifecycle.v1.DistributionType
+	48,  // 70: metadata_lifecycle.v1.Distribution.web_service:type_name -> metadata_lifecycle.v1.WebService
+	66,  // 71: metadata_lifecycle.v1.Distribution.downloadable_file:type_name -> metadata_lifecycle.v1.DownloadableFile
+	52,  // 72: metadata_lifecycle.v1.WebServiceInput.http:type_name -> metadata_lifecycle.v1.HTTPWebServiceInput
+	53,  // 73: metadata_lifecycle.v1.WebServiceInput.dynamic:type_name -> metadata_lifecycle.v1.DynamicWebServiceInput
+	56,  // 74: metadata_lifecycle.v1.WebServiceInput.wfs:type_name -> metadata_lifecycle.v1.WFSWebServiceInput
+	58,  // 75: metadata_lifecycle.v1.WebServiceInput.wms:type_name -> metadata_lifecycle.v1.WMSWebServiceInput
+	62,  // 76: metadata_lifecycle.v1.WebServiceInput.wmts:type_name -> metadata_lifecycle.v1.WMTSWebServiceInput
+	6,   // 77: metadata_lifecycle.v1.WebServiceCommonInput.visible_on:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
+	54,  // 78: metadata_lifecycle.v1.WebService.http:type_name -> metadata_lifecycle.v1.HTTPWebService
+	55,  // 79: metadata_lifecycle.v1.WebService.dynamic:type_name -> metadata_lifecycle.v1.DynamicWebService
+	57,  // 80: metadata_lifecycle.v1.WebService.wfs:type_name -> metadata_lifecycle.v1.WFSWebService
+	59,  // 81: metadata_lifecycle.v1.WebService.wms:type_name -> metadata_lifecycle.v1.WMSWebService
+	63,  // 82: metadata_lifecycle.v1.WebService.wmts:type_name -> metadata_lifecycle.v1.WMTSWebService
+	118, // 83: metadata_lifecycle.v1.WebServiceCommon.provider_reference:type_name -> metadata_lifecycle.v1.EntityReference
+	6,   // 84: metadata_lifecycle.v1.WebServiceCommon.visible_on:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
+	69,  // 85: metadata_lifecycle.v1.RequestBodyInput.parameters:type_name -> metadata_lifecycle.v1.ScalarParameterInput
+	70,  // 86: metadata_lifecycle.v1.RequestBody.parameters:type_name -> metadata_lifecycle.v1.ScalarParameter
+	47,  // 87: metadata_lifecycle.v1.HTTPWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	67,  // 88: metadata_lifecycle.v1.HTTPWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	4,   // 89: metadata_lifecycle.v1.HTTPWebServiceInput.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
+	50,  // 90: metadata_lifecycle.v1.HTTPWebServiceInput.body:type_name -> metadata_lifecycle.v1.RequestBodyInput
+	47,  // 91: metadata_lifecycle.v1.DynamicWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	67,  // 92: metadata_lifecycle.v1.DynamicWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	4,   // 93: metadata_lifecycle.v1.DynamicWebServiceInput.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
+	50,  // 94: metadata_lifecycle.v1.DynamicWebServiceInput.body:type_name -> metadata_lifecycle.v1.RequestBodyInput
+	49,  // 95: metadata_lifecycle.v1.HTTPWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	68,  // 96: metadata_lifecycle.v1.HTTPWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
+	4,   // 97: metadata_lifecycle.v1.HTTPWebService.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
+	51,  // 98: metadata_lifecycle.v1.HTTPWebService.body:type_name -> metadata_lifecycle.v1.RequestBody
+	45,  // 99: metadata_lifecycle.v1.HTTPWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
+	49,  // 100: metadata_lifecycle.v1.DynamicWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	68,  // 101: metadata_lifecycle.v1.DynamicWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
+	4,   // 102: metadata_lifecycle.v1.DynamicWebService.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
+	51,  // 103: metadata_lifecycle.v1.DynamicWebService.body:type_name -> metadata_lifecycle.v1.RequestBody
+	45,  // 104: metadata_lifecycle.v1.DynamicWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
+	47,  // 105: metadata_lifecycle.v1.WFSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	67,  // 106: metadata_lifecycle.v1.WFSWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	49,  // 107: metadata_lifecycle.v1.WFSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	45,  // 108: metadata_lifecycle.v1.WFSWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
+	68,  // 109: metadata_lifecycle.v1.WFSWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
+	47,  // 110: metadata_lifecycle.v1.WMSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	61,  // 111: metadata_lifecycle.v1.WMSWebServiceInput.layers:type_name -> metadata_lifecycle.v1.WMSLayerInput
+	67,  // 112: metadata_lifecycle.v1.WMSWebServiceInput.get_map_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	67,  // 113: metadata_lifecycle.v1.WMSWebServiceInput.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	49,  // 114: metadata_lifecycle.v1.WMSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	60,  // 115: metadata_lifecycle.v1.WMSWebService.layers:type_name -> metadata_lifecycle.v1.WMSLayer
+	68,  // 116: metadata_lifecycle.v1.WMSWebService.get_map_parameters:type_name -> metadata_lifecycle.v1.Parameter
+	68,  // 117: metadata_lifecycle.v1.WMSWebService.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.Parameter
+	47,  // 118: metadata_lifecycle.v1.WMTSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	65,  // 119: metadata_lifecycle.v1.WMTSWebServiceInput.layers:type_name -> metadata_lifecycle.v1.WMTSLayerInput
+	67,  // 120: metadata_lifecycle.v1.WMTSWebServiceInput.get_tile_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	67,  // 121: metadata_lifecycle.v1.WMTSWebServiceInput.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	49,  // 122: metadata_lifecycle.v1.WMTSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	64,  // 123: metadata_lifecycle.v1.WMTSWebService.layers:type_name -> metadata_lifecycle.v1.WMTSLayer
+	68,  // 124: metadata_lifecycle.v1.WMTSWebService.get_tile_parameters:type_name -> metadata_lifecycle.v1.Parameter
+	68,  // 125: metadata_lifecycle.v1.WMTSWebService.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.Parameter
+	74,  // 126: metadata_lifecycle.v1.ParameterInput.string:type_name -> metadata_lifecycle.v1.StringParameter
+	75,  // 127: metadata_lifecycle.v1.ParameterInput.boolean:type_name -> metadata_lifecycle.v1.BooleanParameter
+	76,  // 128: metadata_lifecycle.v1.ParameterInput.integer:type_name -> metadata_lifecycle.v1.IntegerParameter
+	77,  // 129: metadata_lifecycle.v1.ParameterInput.float:type_name -> metadata_lifecycle.v1.FloatParameter
+	78,  // 130: metadata_lifecycle.v1.ParameterInput.date_time:type_name -> metadata_lifecycle.v1.DateTimeParameter
+	80,  // 131: metadata_lifecycle.v1.ParameterInput.template:type_name -> metadata_lifecycle.v1.TemplateParameterInput
+	7,   // 132: metadata_lifecycle.v1.ParameterInput.location:type_name -> metadata_lifecycle.v1.WebServiceParameterLocation
+	8,   // 133: metadata_lifecycle.v1.ParameterInput.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
+	74,  // 134: metadata_lifecycle.v1.Parameter.string:type_name -> metadata_lifecycle.v1.StringParameter
+	75,  // 135: metadata_lifecycle.v1.Parameter.boolean:type_name -> metadata_lifecycle.v1.BooleanParameter
+	76,  // 136: metadata_lifecycle.v1.Parameter.integer:type_name -> metadata_lifecycle.v1.IntegerParameter
+	77,  // 137: metadata_lifecycle.v1.Parameter.float:type_name -> metadata_lifecycle.v1.FloatParameter
+	78,  // 138: metadata_lifecycle.v1.Parameter.date_time:type_name -> metadata_lifecycle.v1.DateTimeParameter
+	79,  // 139: metadata_lifecycle.v1.Parameter.template:type_name -> metadata_lifecycle.v1.TemplateParameter
+	7,   // 140: metadata_lifecycle.v1.Parameter.location:type_name -> metadata_lifecycle.v1.WebServiceParameterLocation
+	8,   // 141: metadata_lifecycle.v1.Parameter.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
+	81,  // 142: metadata_lifecycle.v1.ScalarParameterInput.string:type_name -> metadata_lifecycle.v1.ScalarStringParameter
+	82,  // 143: metadata_lifecycle.v1.ScalarParameterInput.boolean:type_name -> metadata_lifecycle.v1.ScalarBooleanParameter
+	83,  // 144: metadata_lifecycle.v1.ScalarParameterInput.integer:type_name -> metadata_lifecycle.v1.ScalarIntegerParameter
+	84,  // 145: metadata_lifecycle.v1.ScalarParameterInput.float:type_name -> metadata_lifecycle.v1.ScalarFloatParameter
+	85,  // 146: metadata_lifecycle.v1.ScalarParameterInput.date_time:type_name -> metadata_lifecycle.v1.ScalarDateTimeParameter
+	8,   // 147: metadata_lifecycle.v1.ScalarParameterInput.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
+	81,  // 148: metadata_lifecycle.v1.ScalarParameter.string:type_name -> metadata_lifecycle.v1.ScalarStringParameter
+	82,  // 149: metadata_lifecycle.v1.ScalarParameter.boolean:type_name -> metadata_lifecycle.v1.ScalarBooleanParameter
+	83,  // 150: metadata_lifecycle.v1.ScalarParameter.integer:type_name -> metadata_lifecycle.v1.ScalarIntegerParameter
+	84,  // 151: metadata_lifecycle.v1.ScalarParameter.float:type_name -> metadata_lifecycle.v1.ScalarFloatParameter
+	85,  // 152: metadata_lifecycle.v1.ScalarParameter.date_time:type_name -> metadata_lifecycle.v1.ScalarDateTimeParameter
+	8,   // 153: metadata_lifecycle.v1.ScalarParameter.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
+	71,  // 154: metadata_lifecycle.v1.StringParameter.enum:type_name -> metadata_lifecycle.v1.StringEnumOption
+	72,  // 155: metadata_lifecycle.v1.IntegerParameter.enum:type_name -> metadata_lifecycle.v1.IntegerEnumOption
+	73,  // 156: metadata_lifecycle.v1.FloatParameter.enum:type_name -> metadata_lifecycle.v1.FloatEnumOption
+	117, // 157: metadata_lifecycle.v1.DateTimeParameter.minimum:type_name -> google.protobuf.Timestamp
+	117, // 158: metadata_lifecycle.v1.DateTimeParameter.maximum:type_name -> google.protobuf.Timestamp
+	117, // 159: metadata_lifecycle.v1.DateTimeParameter.default:type_name -> google.protobuf.Timestamp
+	70,  // 160: metadata_lifecycle.v1.TemplateParameter.parameters:type_name -> metadata_lifecycle.v1.ScalarParameter
+	69,  // 161: metadata_lifecycle.v1.TemplateParameterInput.parameters:type_name -> metadata_lifecycle.v1.ScalarParameterInput
+	71,  // 162: metadata_lifecycle.v1.ScalarStringParameter.enum:type_name -> metadata_lifecycle.v1.StringEnumOption
+	72,  // 163: metadata_lifecycle.v1.ScalarIntegerParameter.enum:type_name -> metadata_lifecycle.v1.IntegerEnumOption
+	73,  // 164: metadata_lifecycle.v1.ScalarFloatParameter.enum:type_name -> metadata_lifecycle.v1.FloatEnumOption
+	117, // 165: metadata_lifecycle.v1.ScalarDateTimeParameter.minimum:type_name -> google.protobuf.Timestamp
+	117, // 166: metadata_lifecycle.v1.ScalarDateTimeParameter.maximum:type_name -> google.protobuf.Timestamp
+	117, // 167: metadata_lifecycle.v1.ScalarDateTimeParameter.default:type_name -> google.protobuf.Timestamp
+	39,  // 168: metadata_lifecycle.v1.SoftwareApplicationInput.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
+	39,  // 169: metadata_lifecycle.v1.SoftwareSourceCodeInput.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
+	114, // 170: metadata_lifecycle.v1.DiscardResourceDraftRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	114, // 171: metadata_lifecycle.v1.SubmitResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	114, // 172: metadata_lifecycle.v1.WithdrawResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	114, // 173: metadata_lifecycle.v1.ReopenResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	114, // 174: metadata_lifecycle.v1.PublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	114, // 175: metadata_lifecycle.v1.UnpublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	37,  // 176: metadata_lifecycle.v1.SubmitResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	115, // 177: metadata_lifecycle.v1.SubmitResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	37,  // 178: metadata_lifecycle.v1.WithdrawResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	37,  // 179: metadata_lifecycle.v1.ReopenResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	37,  // 180: metadata_lifecycle.v1.PublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	115, // 181: metadata_lifecycle.v1.PublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	37,  // 182: metadata_lifecycle.v1.UnpublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	115, // 183: metadata_lifecycle.v1.UnpublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	114, // 184: metadata_lifecycle.v1.RejectResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	37,  // 185: metadata_lifecycle.v1.RejectResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	115, // 186: metadata_lifecycle.v1.RejectResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	114, // 187: metadata_lifecycle.v1.DraftResourceFromPublicationRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	37,  // 188: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	111, // 189: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.copied_distributions:type_name -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse.CopiedDistributionsEntry
+	114, // 190: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	37,  // 191: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	112, // 192: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.copied_distributions:type_name -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.CopiedDistributionsEntry
+	114, // 193: metadata_lifecycle.v1.CopyPublishedResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	37,  // 194: metadata_lifecycle.v1.CopyPublishedResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	113, // 195: metadata_lifecycle.v1.CopyPublishedResourceResponse.copied_distributions:type_name -> metadata_lifecycle.v1.CopyPublishedResourceResponse.CopiedDistributionsEntry
+	42,  // 196: metadata_lifecycle.v1.ReplaceResourceDraftRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
+	86,  // 197: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
+	87,  // 198: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
+	37,  // 199: metadata_lifecycle.v1.ReplaceResourceDraftResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	16,  // 200: metadata_lifecycle.v1.ResourceService.RequestDistributionConversion:input_type -> metadata_lifecycle.v1.RequestDistributionConversionRequest
+	9,   // 201: metadata_lifecycle.v1.ResourceService.CreateResource:input_type -> metadata_lifecycle.v1.CreateResourceRequest
+	11,  // 202: metadata_lifecycle.v1.ResourceService.GetResourceVersion:input_type -> metadata_lifecycle.v1.GetResourceVersionRequest
+	14,  // 203: metadata_lifecycle.v1.ResourceService.GetDistributionFormats:input_type -> metadata_lifecycle.v1.GetDistributionFormatsRequest
+	18,  // 204: metadata_lifecycle.v1.ResourceService.CheckDistributionRead:input_type -> metadata_lifecycle.v1.CheckDistributionReadRequest
+	13,  // 205: metadata_lifecycle.v1.ResourceService.PrepareDistributionDownload:input_type -> metadata_lifecycle.v1.PrepareDistributionDownloadRequest
+	24,  // 206: metadata_lifecycle.v1.ResourceService.PrepareDistributionAccess:input_type -> metadata_lifecycle.v1.PrepareDistributionAccessRequest
+	30,  // 207: metadata_lifecycle.v1.ResourceService.ListResourceVersions:input_type -> metadata_lifecycle.v1.ListResourceVersionsRequest
+	108, // 208: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:input_type -> metadata_lifecycle.v1.ReplaceResourceDraftRequest
+	88,  // 209: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:input_type -> metadata_lifecycle.v1.DiscardResourceDraftRequest
+	89,  // 210: metadata_lifecycle.v1.ResourceService.SubmitResource:input_type -> metadata_lifecycle.v1.SubmitResourceRequest
+	90,  // 211: metadata_lifecycle.v1.ResourceService.WithdrawResource:input_type -> metadata_lifecycle.v1.WithdrawResourceRequest
+	100, // 212: metadata_lifecycle.v1.ResourceService.RejectResource:input_type -> metadata_lifecycle.v1.RejectResourceRequest
+	91,  // 213: metadata_lifecycle.v1.ResourceService.ReopenResource:input_type -> metadata_lifecycle.v1.ReopenResourceRequest
+	92,  // 214: metadata_lifecycle.v1.ResourceService.PublishResource:input_type -> metadata_lifecycle.v1.PublishResourceRequest
+	93,  // 215: metadata_lifecycle.v1.ResourceService.UnpublishResource:input_type -> metadata_lifecycle.v1.UnpublishResourceRequest
+	102, // 216: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:input_type -> metadata_lifecycle.v1.DraftResourceFromPublicationRequest
+	104, // 217: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:input_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
+	106, // 218: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:input_type -> metadata_lifecycle.v1.CopyPublishedResourceRequest
+	17,  // 219: metadata_lifecycle.v1.ResourceService.RequestDistributionConversion:output_type -> metadata_lifecycle.v1.RequestDistributionConversionResponse
+	10,  // 220: metadata_lifecycle.v1.ResourceService.CreateResource:output_type -> metadata_lifecycle.v1.CreateResourceResponse
+	12,  // 221: metadata_lifecycle.v1.ResourceService.GetResourceVersion:output_type -> metadata_lifecycle.v1.GetResourceVersionResponse
+	15,  // 222: metadata_lifecycle.v1.ResourceService.GetDistributionFormats:output_type -> metadata_lifecycle.v1.GetDistributionFormatsResponse
+	19,  // 223: metadata_lifecycle.v1.ResourceService.CheckDistributionRead:output_type -> metadata_lifecycle.v1.CheckDistributionReadResponse
+	20,  // 224: metadata_lifecycle.v1.ResourceService.PrepareDistributionDownload:output_type -> metadata_lifecycle.v1.PrepareDistributionDownloadResponse
+	29,  // 225: metadata_lifecycle.v1.ResourceService.PrepareDistributionAccess:output_type -> metadata_lifecycle.v1.PrepareDistributionAccessResponse
+	32,  // 226: metadata_lifecycle.v1.ResourceService.ListResourceVersions:output_type -> metadata_lifecycle.v1.ListResourceVersionsResponse
+	109, // 227: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:output_type -> metadata_lifecycle.v1.ReplaceResourceDraftResponse
+	99,  // 228: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:output_type -> metadata_lifecycle.v1.DiscardResourceDraftResponse
+	94,  // 229: metadata_lifecycle.v1.ResourceService.SubmitResource:output_type -> metadata_lifecycle.v1.SubmitResourceResponse
+	95,  // 230: metadata_lifecycle.v1.ResourceService.WithdrawResource:output_type -> metadata_lifecycle.v1.WithdrawResourceResponse
+	101, // 231: metadata_lifecycle.v1.ResourceService.RejectResource:output_type -> metadata_lifecycle.v1.RejectResourceResponse
+	96,  // 232: metadata_lifecycle.v1.ResourceService.ReopenResource:output_type -> metadata_lifecycle.v1.ReopenResourceResponse
+	97,  // 233: metadata_lifecycle.v1.ResourceService.PublishResource:output_type -> metadata_lifecycle.v1.PublishResourceResponse
+	98,  // 234: metadata_lifecycle.v1.ResourceService.UnpublishResource:output_type -> metadata_lifecycle.v1.UnpublishResourceResponse
+	103, // 235: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:output_type -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse
+	105, // 236: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:output_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
+	107, // 237: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:output_type -> metadata_lifecycle.v1.CopyPublishedResourceResponse
+	219, // [219:238] is the sub-list for method output_type
+	200, // [200:219] is the sub-list for method input_type
+	200, // [200:200] is the sub-list for extension type_name
+	200, // [200:200] is the sub-list for extension extendee
+	0,   // [0:200] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_resource_proto_init() }
@@ -10520,7 +10542,7 @@ func file_metadata_lifecycle_v1_resource_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_resource_proto_rawDesc), len(file_metadata_lifecycle_v1_resource_proto_rawDesc)),
-			NumEnums:      8,
+			NumEnums:      9,
 			NumMessages:   105,
 			NumExtensions: 0,
 			NumServices:   1,

@@ -95,7 +95,7 @@ func (value *DiscoveryFilter) Normalize() error {
 	concepts := make([]uuid.UUID, 0, len(value.Concepts))
 	for _, concept := range value.Concepts {
 		if concept == uuid.Nil {
-			return invalidField("concepts", "Concept IDs must be valid UUIDs.", nil)
+			return apperror.Field("concepts", "Concept IDs must be valid UUIDs.", nil)
 		}
 		if !slices.Contains(concepts, concept) {
 			concepts = append(concepts, concept)
@@ -103,7 +103,7 @@ func (value *DiscoveryFilter) Normalize() error {
 	}
 	value.Concepts = concepts
 	if value.GroupID != nil && *value.GroupID == uuid.Nil {
-		return invalidField("group_id", "Group ID must be a valid UUID.", nil)
+		return apperror.Field("group_id", "Group ID must be a valid UUID.", nil)
 	}
 
 	types := make([]ResourceType, 0, len(value.Types))
@@ -113,7 +113,7 @@ func (value *DiscoveryFilter) Normalize() error {
 			continue
 		}
 		if !validResourceType(resourceType) {
-			return invalidField("types", "Resource type is not supported.", nil)
+			return apperror.Field("types", "Resource type is not supported.", nil)
 		}
 		if !slices.Contains(types, resourceType) {
 			types = append(types, resourceType)
@@ -128,7 +128,7 @@ func (value *DiscoveryFilter) Normalize() error {
 			continue
 		}
 		if !status.Valid() {
-			return invalidField("versioning_statuses", "Status is not supported.", nil)
+			return apperror.Field("versioning_statuses", "Status is not supported.", nil)
 		}
 		if !slices.Contains(statuses, status) {
 			statuses = append(statuses, status)
@@ -140,19 +140,19 @@ func (value *DiscoveryFilter) Normalize() error {
 	value.VersioningStatuses = statuses
 
 	if slices.Contains(value.Providers, uuid.Nil) {
-		return invalidField("providers", "Provider IDs must be valid UUIDs.", nil)
+		return apperror.Field("providers", "Provider IDs must be valid UUIDs.", nil)
 	}
 	providers := make([]uuid.UUID, len(value.Providers))
 	copy(providers, value.Providers)
 	value.Providers = providers
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
-		return invalidField("keywords", "Keywords are invalid.", err)
+		return apperror.Field("keywords", "Keywords are invalid.", err)
 	}
 	value.Keywords = keywords
 
 	if value.DateFrom != nil && value.DateTo != nil && value.DateFrom.After(*value.DateTo) {
-		return invalidField("date_from", "Start date must not be after end date.", nil)
+		return apperror.Field("date_from", "Start date must not be after end date.", nil)
 	}
 
 	return nil

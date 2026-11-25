@@ -83,7 +83,7 @@ func (r *Repo) ReplaceDraft(
 	var result domain.DatasetVersion
 	var removed []uuid.UUID
 	err := dbtx.Run(ctx, r.db, r.q, func(q *sqlc.Queries) error {
-		if len(value.Metadata.CategoryIDs) > 0 || len(value.Metadata.Distributions) > 0 {
+		if len(value.Metadata.CategoryIDs) > 0 {
 			dataset, err := q.GetLifecycleDataset(ctx, datasetID)
 			if err != nil {
 				return fmt.Errorf("get dataset for category validation: %w", err)
@@ -149,18 +149,6 @@ func validateDatasetCategories(ctx context.Context, q *sqlc.Queries, groupID uui
 	}
 	if invalidIndex >= 0 {
 		return apperror.Field(fmt.Sprintf("metadata.categories[%d]", invalidIndex), "Category must belong to this group and appear only once.", nil)
-	}
-	for i, distribution := range value.Distributions {
-		if distribution.WebService == nil {
-			continue
-		}
-		invalidIndex, err := resourcedb.CategoriesBelongToGroup(ctx, q, groupID, distribution.WebService.CommonInput().CategoryIDs)
-		if err != nil {
-			return fmt.Errorf("validate web service categories: %w", err)
-		}
-		if invalidIndex >= 0 {
-			return apperror.Field(fmt.Sprintf("metadata.distributions[%d].web_service.categories[%d]", i, invalidIndex), "Category must belong to this group and appear only once.", nil)
-		}
 	}
 	return nil
 }
@@ -578,19 +566,9 @@ func persistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			ProviderOrganizationID: common.ProviderID,
 			DocumentationUri:       common.DocumentationURI,
 			Keywords:               common.Keywords,
-			AccessRights:           common.AccessRights,
-			License:                common.License,
 		})
 		if err != nil {
 			return fmt.Errorf("add web service: %w", err)
-		}
-		if len(common.CategoryIDs) > 0 {
-			if err := q.AddLifecycleWebServiceCategories(ctx, sqlc.AddLifecycleWebServiceCategoriesParams{
-				WebServiceID: serviceID,
-				CategoryIds:  common.CategoryIDs,
-			}); err != nil {
-				return fmt.Errorf("add web service categories: %w", err)
-			}
 		}
 		for _, contactID := range common.ContactPointIDs {
 			if err := q.AddLifecycleWebServiceContactPoint(ctx, sqlc.AddLifecycleWebServiceContactPointParams{
@@ -809,7 +787,7 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		QualityAnnotation:          version.QualityAnnotation,
 		ConformsTo:                 version.ConformsTo,
 		Provenance:                 version.Provenance,
-		Type:                       version.Type,
+		Type:                       (*domain.DatasetType)(version.Type),
 		Version:                    version.Version,
 		SpatialResolutionInMeters:  version.SpatialResolutionInMeters,
 		TemporalResolution:         version.TemporalResolution,
@@ -874,17 +852,6 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 	}
 	if len(rows) == 0 {
 		return result, nil
-	}
-	categories, err := q.ListLifecycleWebServiceCategories(ctx, ids)
-	if err != nil {
-		return nil, fmt.Errorf("list web service categories: %w", err)
-	}
-	for _, category := range categories {
-		service, exists := result[category.WebServiceID]
-		if !exists {
-			return nil, fmt.Errorf("category references missing web service %s", category.WebServiceID)
-		}
-		service.Common().Categories = append(service.Common().Categories, domain.CategoryMetadata{ID: category.ID, Name: category.Name})
 	}
 	genericConfigurations, err := q.ListLifecycleGenericWebServices(ctx, ids)
 	if err != nil {

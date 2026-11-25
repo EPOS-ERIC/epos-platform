@@ -27,7 +27,7 @@ type SyncedContactPoint struct {
 func (value *ContactPointInput) Normalize() error {
 	value.Email = strings.TrimSpace(value.Email)
 	if value.Email == "" {
-		return invalidField("email", "Email must not be blank.", nil)
+		return apperror.Field("email", "Email must not be blank.", nil)
 	}
 	return nil
 }
@@ -44,7 +44,7 @@ func (value *ContactPoint) Normalize() (err error) {
 	}
 	value.Email = strings.TrimSpace(value.Email)
 	if value.Email == "" {
-		return invalidField("email", "Email must not be blank.", nil)
+		return apperror.Field("email", "Email must not be blank.", nil)
 	}
 	return nil
 }
