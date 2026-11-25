@@ -5,7 +5,6 @@ on:
     paths:
       - "services/oss-aai-service/**"
       - "packages/scripts/epos-banner.sh"
-      - "Makefile"
       - ".github/workflows/oss-aai-ci.yml"
       - ".github/workflows/_go-service-ci.yml"
       - ".github/workflows/_go-service-cd.yml"
@@ -17,7 +16,6 @@ on:
     paths:
       - "services/oss-aai-service/**"
       - "packages/scripts/epos-banner.sh"
-      - "Makefile"
       - ".github/workflows/oss-aai-ci.yml"
       - ".github/workflows/_go-service-ci.yml"
       - ".github/workflows/_go-service-cd.yml"
