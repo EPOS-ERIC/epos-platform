@@ -194,7 +194,6 @@ func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatew
 		Keywords:                  toAPIKeywords(v.GetKeywords()),
 		ConformsTo:                toAPINilString(v.ConformsTo),
 		Provenance:                toAPINilString(v.Provenance),
-		Type:                      toAPINilString(v.Type),
 		Version:                   toAPINilString(v.Version),
 		SpatialResolutionInMeters: toAPINilFloat64(v.SpatialResolutionInMeters),
 		TemporalResolution:        toAPINilFloat64(v.TemporalResolution),
@@ -204,6 +203,10 @@ func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatew
 	}
 	if err := setProtoOptURI(&result.QualityAnnotation, v.QualityAnnotation); err != nil {
 		return gatewayapi.DatasetResourceMetadata{}, fmt.Errorf("decode upstream dataset.quality_annotation: %w", err)
+	}
+	result.Type, err = toAPIDatasetType(v.Type)
+	if err != nil {
+		return gatewayapi.DatasetResourceMetadata{}, err
 	}
 	result.AccrualPeriodicity, err = toAPIDatasetAccrualPeriodicity(v.AccrualPeriodicity)
 	if err != nil {

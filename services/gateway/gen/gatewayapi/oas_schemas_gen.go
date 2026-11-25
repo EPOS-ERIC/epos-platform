@@ -2908,12 +2908,12 @@ type DatasetDraftMetadata struct {
 	Keywords           []Keyword                       `json:"keywords"`
 	AccrualPeriodicity OptNilDatasetAccrualPeriodicity `json:"accrual_periodicity"`
 	// Absolute HTTP(S) URL with a host.
-	QualityAnnotation         OptNilURI     `json:"quality_annotation"`
-	ConformsTo                OptNilString  `json:"conforms_to"`
-	Provenance                OptNilString  `json:"provenance"`
-	Type                      OptNilString  `json:"type"`
-	Version                   OptNilString  `json:"version"`
-	SpatialResolutionInMeters OptNilFloat64 `json:"spatial_resolution_in_meters"`
+	QualityAnnotation         OptNilURI         `json:"quality_annotation"`
+	ConformsTo                OptNilString      `json:"conforms_to"`
+	Provenance                OptNilString      `json:"provenance"`
+	Type                      OptNilDatasetType `json:"type"`
+	Version                   OptNilString      `json:"version"`
+	SpatialResolutionInMeters OptNilFloat64     `json:"spatial_resolution_in_meters"`
 	// Resolution in seconds.
 	TemporalResolution OptNilFloat64            `json:"temporal_resolution"`
 	AccessRight        OptNilDatasetAccessRight `json:"access_right"`
@@ -2967,7 +2967,7 @@ func (s *DatasetDraftMetadata) GetProvenance() OptNilString {
 }
 
 // GetType returns the value of Type.
-func (s *DatasetDraftMetadata) GetType() OptNilString {
+func (s *DatasetDraftMetadata) GetType() OptNilDatasetType {
 	return s.Type
 }
 
@@ -3077,7 +3077,7 @@ func (s *DatasetDraftMetadata) SetProvenance(val OptNilString) {
 }
 
 // SetType sets the value of Type.
-func (s *DatasetDraftMetadata) SetType(val OptNilString) {
+func (s *DatasetDraftMetadata) SetType(val OptNilDatasetType) {
 	s.Type = val
 }
 
@@ -3159,12 +3159,12 @@ type DatasetResourceMetadata struct {
 	Keywords           []Keyword                           `json:"keywords"`
 	AccrualPeriodicity OptNilDatasetAccrualPeriodicity     `json:"accrual_periodicity"`
 	// Absolute HTTP(S) URL with a host.
-	QualityAnnotation         OptNilURI     `json:"quality_annotation"`
-	ConformsTo                OptNilString  `json:"conforms_to"`
-	Provenance                OptNilString  `json:"provenance"`
-	Type                      OptNilString  `json:"type"`
-	Version                   OptNilString  `json:"version"`
-	SpatialResolutionInMeters OptNilFloat64 `json:"spatial_resolution_in_meters"`
+	QualityAnnotation         OptNilURI         `json:"quality_annotation"`
+	ConformsTo                OptNilString      `json:"conforms_to"`
+	Provenance                OptNilString      `json:"provenance"`
+	Type                      OptNilDatasetType `json:"type"`
+	Version                   OptNilString      `json:"version"`
+	SpatialResolutionInMeters OptNilFloat64     `json:"spatial_resolution_in_meters"`
 	// Resolution in seconds.
 	TemporalResolution OptNilFloat64            `json:"temporal_resolution"`
 	AccessRight        OptNilDatasetAccessRight `json:"access_right"`
@@ -3223,7 +3223,7 @@ func (s *DatasetResourceMetadata) GetProvenance() OptNilString {
 }
 
 // GetType returns the value of Type.
-func (s *DatasetResourceMetadata) GetType() OptNilString {
+func (s *DatasetResourceMetadata) GetType() OptNilDatasetType {
 	return s.Type
 }
 
@@ -3338,7 +3338,7 @@ func (s *DatasetResourceMetadata) SetProvenance(val OptNilString) {
 }
 
 // SetType sets the value of Type.
-func (s *DatasetResourceMetadata) SetType(val OptNilString) {
+func (s *DatasetResourceMetadata) SetType(val OptNilDatasetType) {
 	s.Type = val
 }
 
@@ -3440,6 +3440,174 @@ func (s *DatasetResourceMetadataResourceType) UnmarshalText(data []byte) error {
 	switch DatasetResourceMetadataResourceType(data) {
 	case DatasetResourceMetadataResourceTypeDataset:
 		*s = DatasetResourceMetadataResourceTypeDataset
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/DatasetType
+type DatasetType string
+
+const (
+	DatasetTypeRELEASE         DatasetType = "RELEASE"
+	DatasetTypeSCHEMA          DatasetType = "SCHEMA"
+	DatasetTypeAPROF           DatasetType = "APROF"
+	DatasetTypeCODELIST        DatasetType = "CODE_LIST"
+	DatasetTypeCORECOMP        DatasetType = "CORE_COMP"
+	DatasetTypeDIRECTORY       DatasetType = "DIRECTORY"
+	DatasetTypeDOMAINMODEL     DatasetType = "DOMAIN_MODEL"
+	DatasetTypeDSCRPSERV       DatasetType = "DSCRP_SERV"
+	DatasetTypeGEOSPATIAL      DatasetType = "GEOSPATIAL"
+	DatasetTypeGLOSSARY        DatasetType = "GLOSSARY"
+	DatasetTypeHVD             DatasetType = "HVD"
+	DatasetTypeIEPD            DatasetType = "IEPD"
+	DatasetTypeOPDATPRO        DatasetType = "OP_DATPRO"
+	DatasetTypeSTATISTICAL     DatasetType = "STATISTICAL"
+	DatasetTypeSTYLES          DatasetType = "STYLES"
+	DatasetTypeSYNTAXECDSCHEME DatasetType = "SYNTAX_ECD_SCHEME"
+	DatasetTypeSYNTHETICDATA   DatasetType = "SYNTHETIC_DATA"
+	DatasetTypeTAXONOMY        DatasetType = "TAXONOMY"
+	DatasetTypeTESTDATA        DatasetType = "TEST_DATA"
+	DatasetTypeENVIRONMENTAL   DatasetType = "ENVIRONMENTAL"
+)
+
+// AllValues returns all DatasetType values.
+func (DatasetType) AllValues() []DatasetType {
+	return []DatasetType{
+		DatasetTypeRELEASE,
+		DatasetTypeSCHEMA,
+		DatasetTypeAPROF,
+		DatasetTypeCODELIST,
+		DatasetTypeCORECOMP,
+		DatasetTypeDIRECTORY,
+		DatasetTypeDOMAINMODEL,
+		DatasetTypeDSCRPSERV,
+		DatasetTypeGEOSPATIAL,
+		DatasetTypeGLOSSARY,
+		DatasetTypeHVD,
+		DatasetTypeIEPD,
+		DatasetTypeOPDATPRO,
+		DatasetTypeSTATISTICAL,
+		DatasetTypeSTYLES,
+		DatasetTypeSYNTAXECDSCHEME,
+		DatasetTypeSYNTHETICDATA,
+		DatasetTypeTAXONOMY,
+		DatasetTypeTESTDATA,
+		DatasetTypeENVIRONMENTAL,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DatasetType) MarshalText() ([]byte, error) {
+	switch s {
+	case DatasetTypeRELEASE:
+		return []byte(s), nil
+	case DatasetTypeSCHEMA:
+		return []byte(s), nil
+	case DatasetTypeAPROF:
+		return []byte(s), nil
+	case DatasetTypeCODELIST:
+		return []byte(s), nil
+	case DatasetTypeCORECOMP:
+		return []byte(s), nil
+	case DatasetTypeDIRECTORY:
+		return []byte(s), nil
+	case DatasetTypeDOMAINMODEL:
+		return []byte(s), nil
+	case DatasetTypeDSCRPSERV:
+		return []byte(s), nil
+	case DatasetTypeGEOSPATIAL:
+		return []byte(s), nil
+	case DatasetTypeGLOSSARY:
+		return []byte(s), nil
+	case DatasetTypeHVD:
+		return []byte(s), nil
+	case DatasetTypeIEPD:
+		return []byte(s), nil
+	case DatasetTypeOPDATPRO:
+		return []byte(s), nil
+	case DatasetTypeSTATISTICAL:
+		return []byte(s), nil
+	case DatasetTypeSTYLES:
+		return []byte(s), nil
+	case DatasetTypeSYNTAXECDSCHEME:
+		return []byte(s), nil
+	case DatasetTypeSYNTHETICDATA:
+		return []byte(s), nil
+	case DatasetTypeTAXONOMY:
+		return []byte(s), nil
+	case DatasetTypeTESTDATA:
+		return []byte(s), nil
+	case DatasetTypeENVIRONMENTAL:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DatasetType) UnmarshalText(data []byte) error {
+	switch DatasetType(data) {
+	case DatasetTypeRELEASE:
+		*s = DatasetTypeRELEASE
+		return nil
+	case DatasetTypeSCHEMA:
+		*s = DatasetTypeSCHEMA
+		return nil
+	case DatasetTypeAPROF:
+		*s = DatasetTypeAPROF
+		return nil
+	case DatasetTypeCODELIST:
+		*s = DatasetTypeCODELIST
+		return nil
+	case DatasetTypeCORECOMP:
+		*s = DatasetTypeCORECOMP
+		return nil
+	case DatasetTypeDIRECTORY:
+		*s = DatasetTypeDIRECTORY
+		return nil
+	case DatasetTypeDOMAINMODEL:
+		*s = DatasetTypeDOMAINMODEL
+		return nil
+	case DatasetTypeDSCRPSERV:
+		*s = DatasetTypeDSCRPSERV
+		return nil
+	case DatasetTypeGEOSPATIAL:
+		*s = DatasetTypeGEOSPATIAL
+		return nil
+	case DatasetTypeGLOSSARY:
+		*s = DatasetTypeGLOSSARY
+		return nil
+	case DatasetTypeHVD:
+		*s = DatasetTypeHVD
+		return nil
+	case DatasetTypeIEPD:
+		*s = DatasetTypeIEPD
+		return nil
+	case DatasetTypeOPDATPRO:
+		*s = DatasetTypeOPDATPRO
+		return nil
+	case DatasetTypeSTATISTICAL:
+		*s = DatasetTypeSTATISTICAL
+		return nil
+	case DatasetTypeSTYLES:
+		*s = DatasetTypeSTYLES
+		return nil
+	case DatasetTypeSYNTAXECDSCHEME:
+		*s = DatasetTypeSYNTAXECDSCHEME
+		return nil
+	case DatasetTypeSYNTHETICDATA:
+		*s = DatasetTypeSYNTHETICDATA
+		return nil
+	case DatasetTypeTAXONOMY:
+		*s = DatasetTypeTAXONOMY
+		return nil
+	case DatasetTypeTESTDATA:
+		*s = DatasetTypeTESTDATA
+		return nil
+	case DatasetTypeENVIRONMENTAL:
+		*s = DatasetTypeENVIRONMENTAL
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -10852,6 +11020,74 @@ func (o OptNilDatasetAccrualPeriodicity) Get() (v DatasetAccrualPeriodicity, ok 
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilDatasetAccrualPeriodicity) Or(d DatasetAccrualPeriodicity) DatasetAccrualPeriodicity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilDatasetType returns new OptNilDatasetType with value set to v.
+func NewOptNilDatasetType(v DatasetType) OptNilDatasetType {
+	return OptNilDatasetType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilDatasetType is optional nullable DatasetType.
+type OptNilDatasetType struct {
+	Value DatasetType
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilDatasetType was set.
+func (o OptNilDatasetType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilDatasetType) Reset() {
+	var v DatasetType
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilDatasetType) SetTo(v DatasetType) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilDatasetType) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilDatasetType) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v DatasetType
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilDatasetType) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilDatasetType) Get() (v DatasetType, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilDatasetType) Or(d DatasetType) DatasetType {
 	if v, ok := o.Get(); ok {
 		return v
 	}

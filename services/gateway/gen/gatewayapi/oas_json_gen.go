@@ -7520,6 +7520,82 @@ func (s *DatasetResourceMetadataResourceType) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes DatasetType as json.
+func (s DatasetType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes DatasetType from json.
+func (s *DatasetType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DatasetType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch DatasetType(v) {
+	case DatasetTypeRELEASE:
+		*s = DatasetTypeRELEASE
+	case DatasetTypeSCHEMA:
+		*s = DatasetTypeSCHEMA
+	case DatasetTypeAPROF:
+		*s = DatasetTypeAPROF
+	case DatasetTypeCODELIST:
+		*s = DatasetTypeCODELIST
+	case DatasetTypeCORECOMP:
+		*s = DatasetTypeCORECOMP
+	case DatasetTypeDIRECTORY:
+		*s = DatasetTypeDIRECTORY
+	case DatasetTypeDOMAINMODEL:
+		*s = DatasetTypeDOMAINMODEL
+	case DatasetTypeDSCRPSERV:
+		*s = DatasetTypeDSCRPSERV
+	case DatasetTypeGEOSPATIAL:
+		*s = DatasetTypeGEOSPATIAL
+	case DatasetTypeGLOSSARY:
+		*s = DatasetTypeGLOSSARY
+	case DatasetTypeHVD:
+		*s = DatasetTypeHVD
+	case DatasetTypeIEPD:
+		*s = DatasetTypeIEPD
+	case DatasetTypeOPDATPRO:
+		*s = DatasetTypeOPDATPRO
+	case DatasetTypeSTATISTICAL:
+		*s = DatasetTypeSTATISTICAL
+	case DatasetTypeSTYLES:
+		*s = DatasetTypeSTYLES
+	case DatasetTypeSYNTAXECDSCHEME:
+		*s = DatasetTypeSYNTAXECDSCHEME
+	case DatasetTypeSYNTHETICDATA:
+		*s = DatasetTypeSYNTHETICDATA
+	case DatasetTypeTAXONOMY:
+		*s = DatasetTypeTAXONOMY
+	case DatasetTypeTESTDATA:
+		*s = DatasetTypeTESTDATA
+	case DatasetTypeENVIRONMENTAL:
+		*s = DatasetTypeENVIRONMENTAL
+	default:
+		*s = DatasetType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s DatasetType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DatasetType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes DatasetWebService as json.
 func (s DatasetWebService) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -20586,6 +20662,55 @@ func (s OptNilDatasetAccrualPeriodicity) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptNilDatasetAccrualPeriodicity) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes DatasetType as json.
+func (o OptNilDatasetType) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes DatasetType from json.
+func (o *OptNilDatasetType) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilDatasetType to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v DatasetType
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilDatasetType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilDatasetType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

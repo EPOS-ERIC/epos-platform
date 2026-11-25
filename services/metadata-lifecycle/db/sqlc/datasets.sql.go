@@ -1818,7 +1818,7 @@ type CreateLifecycleDatasetVersionParams struct {
 	QualityAnnotation          *string
 	ConformsTo                 *string
 	Provenance                 *string
-	Type                       *string
+	Type                       *DatasetType
 	Version                    *string
 	SpatialResolutionInMeters  *float64
 	TemporalResolution         *float64
@@ -2269,7 +2269,7 @@ type GetLifecycleDatasetVersionRow struct {
 	QualityAnnotation          *string
 	ConformsTo                 *string
 	Provenance                 *string
-	Type                       *string
+	Type                       *DatasetType
 	Version                    *string
 	SpatialResolutionInMeters  *float64
 	TemporalResolution         *float64
@@ -3732,7 +3732,7 @@ type ReplaceLifecycleDatasetDraftParams struct {
 	QualityAnnotation          *string
 	ConformsTo                 *string
 	Provenance                 *string
-	Type                       *string
+	Type                       *DatasetType
 	Version                    *string
 	SpatialResolutionInMeters  *float64
 	TemporalResolution         *float64

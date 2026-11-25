@@ -1,6 +1,12 @@
 -- +goose Up
 
-CREATE TYPE resource_status AS ENUM ('DRAFT', 'SUBMITTED', 'REJECTED', 'PUBLISHED', 'ARCHIVED');
+CREATE TYPE resource_status AS ENUM (
+	'DRAFT',
+	'SUBMITTED',
+	'REJECTED',
+	'PUBLISHED',
+	'ARCHIVED'
+);
 CREATE TYPE dataset_access_right AS ENUM (
     'NON_PUBLIC',
     'NORMAL',
@@ -9,6 +15,28 @@ CREATE TYPE dataset_access_right AS ENUM (
     'RESTRICTED',
     'CONFIDENTIAL',
     'SENSITIVE'
+);
+CREATE TYPE dataset_type AS ENUM (
+	'RELEASE',
+	'SCHEMA',
+	'APROF',
+	'CODE_LIST',
+	'CORE_COMP',
+	'DIRECTORY',
+	'DOMAIN_MODEL',
+	'DSCRP_SERV',
+	'GEOSPATIAL',
+	'GLOSSARY',
+	'HVD',
+	'IEPD',
+	'OP_DATPRO',
+	'STATISTICAL',
+	'STYLES',
+	'SYNTAX_ECD_SCHEME',
+	'SYNTHETIC_DATA',
+	'TAXONOMY',
+	'TEST_DATA',
+	'ENVIRONMENTAL'
 );
 CREATE TYPE dataset_accrual_periodicity AS ENUM (
     'TRIENNIAL',
@@ -64,7 +92,7 @@ CREATE TABLE dataset_versions (
     quality_annotation  nonblank_text_opt,
     conforms_to         nonblank_text_opt,
     provenance          nonblank_text_opt,
-    type                nonblank_text_opt,
+    type                dataset_type,
     version             nonblank_text_opt,
     access_right        dataset_access_right,
     spatial_resolution_in_meters double precision CHECK (spatial_resolution_in_meters >= 0),
@@ -218,3 +246,4 @@ DROP TABLE IF EXISTS software_source_code_versions, software_application_version
 DROP TYPE IF EXISTS resource_status;
 DROP TYPE IF EXISTS dataset_access_right;
 DROP TYPE IF EXISTS dataset_accrual_periodicity;
+DROP TYPE IF EXISTS dataset_type;

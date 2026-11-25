@@ -225,7 +225,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
             "description": "Dataset with web-service body parameter",
             "conforms_to": "standard",
             "provenance": "source",
-            "type": "observation",
+            "type": "GEOSPATIAL",
             "version": "1.0",
             "spatial_resolution_in_meters": 0.25,
             "temporal_resolution": 0,

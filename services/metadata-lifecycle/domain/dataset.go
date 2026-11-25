@@ -38,6 +38,61 @@ func (value AccessRight) Valid() bool {
 	}
 }
 
+type DatasetType string
+
+const (
+	DatasetTypeRelease         DatasetType = "RELEASE"
+	DatasetTypeSchema          DatasetType = "SCHEMA"
+	DatasetTypeAprof           DatasetType = "APROF"
+	DatasetTypeCodeList        DatasetType = "CODE_LIST"
+	DatasetTypeCoreComp        DatasetType = "CORE_COMP"
+	DatasetTypeDirectory       DatasetType = "DIRECTORY"
+	DatasetTypeDomainModel     DatasetType = "DOMAIN_MODEL"
+	DatasetTypeDscrpServ       DatasetType = "DSCRP_SERV"
+	DatasetTypeGeospatial      DatasetType = "GEOSPATIAL"
+	DatasetTypeGlossary        DatasetType = "GLOSSARY"
+	DatasetTypeHvd             DatasetType = "HVD"
+	DatasetTypeIepd            DatasetType = "IEPD"
+	DatasetTypeOpDatpro        DatasetType = "OP_DATPRO"
+	DatasetTypeStatistical     DatasetType = "STATISTICAL"
+	DatasetTypeStyles          DatasetType = "STYLES"
+	DatasetTypeSyntaxEcdScheme DatasetType = "SYNTAX_ECD_SCHEME"
+	DatasetTypeSyntheticData   DatasetType = "SYNTHETIC_DATA"
+	DatasetTypeTaxonomy        DatasetType = "TAXONOMY"
+	DatasetTypeTestData        DatasetType = "TEST_DATA"
+	DatasetTypeEnvironmental   DatasetType = "ENVIRONMENTAL"
+)
+
+func (value DatasetType) Valid() bool {
+	switch value {
+	case DatasetTypeRelease, DatasetTypeSchema, DatasetTypeAprof, DatasetTypeCodeList,
+		DatasetTypeCoreComp, DatasetTypeDirectory, DatasetTypeDomainModel, DatasetTypeDscrpServ,
+		DatasetTypeGeospatial, DatasetTypeGlossary, DatasetTypeHvd, DatasetTypeIepd,
+		DatasetTypeOpDatpro, DatasetTypeStatistical, DatasetTypeStyles, DatasetTypeSyntaxEcdScheme,
+		DatasetTypeSyntheticData, DatasetTypeTaxonomy, DatasetTypeTestData, DatasetTypeEnvironmental:
+		return true
+	default:
+		return false
+	}
+}
+
+func optionalDatasetType(value *DatasetType) (*DatasetType, error) {
+	if value == nil {
+		return nil, nil
+	}
+
+	normalized := DatasetType(strings.ToUpper(strings.TrimSpace(string(*value))))
+	if normalized == "" {
+		return nil, nil
+	}
+
+	if !normalized.Valid() {
+		return nil, apperror.Field("type", "Dataset type is not supported.", nil)
+	}
+
+	return &normalized, nil
+}
+
 type AccrualPeriodicity string
 
 const (
@@ -94,7 +149,7 @@ type DatasetInput struct {
 	QualityAnnotation          *string
 	ConformsTo                 *string
 	Provenance                 *string
-	Type                       *string
+	Type                       *DatasetType
 	Version                    *string
 	SpatialResolutionInMeters  *float64
 	TemporalResolution         *float64
@@ -132,7 +187,7 @@ type DatasetMetadata struct {
 	QualityAnnotation          *string
 	ConformsTo                 *string
 	Provenance                 *string
-	Type                       *string
+	Type                       *DatasetType
 	Version                    *string
 	SpatialResolutionInMeters  *float64
 	TemporalResolution         *float64
@@ -196,7 +251,10 @@ func (value *DatasetInput) Normalize() error {
 	}
 	value.ConformsTo = optionalTrimmedString(value.ConformsTo)
 	value.Provenance = optionalTrimmedString(value.Provenance)
-	value.Type = optionalTrimmedString(value.Type)
+	value.Type, err = optionalDatasetType(value.Type)
+	if err != nil {
+		return err
+	}
 	value.Version = optionalTrimmedString(value.Version)
 	if err := validateResolutions(value.SpatialResolutionInMeters, value.TemporalResolution); err != nil {
 		return err
@@ -289,7 +347,10 @@ func (value *DatasetMetadata) Normalize() (err error) {
 	}
 	value.ConformsTo = optionalTrimmedString(value.ConformsTo)
 	value.Provenance = optionalTrimmedString(value.Provenance)
-	value.Type = optionalTrimmedString(value.Type)
+	value.Type, err = optionalDatasetType(value.Type)
+	if err != nil {
+		return err
+	}
 	value.Version = optionalTrimmedString(value.Version)
 	if err := validateResolutions(value.SpatialResolutionInMeters, value.TemporalResolution); err != nil {
 		return err

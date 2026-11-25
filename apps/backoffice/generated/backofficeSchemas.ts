@@ -497,6 +497,29 @@ export type DatasetAccrualPeriodicity =
   | "IRREGULAR"
   | null;
 
+export type DatasetType =
+  | "RELEASE"
+  | "SCHEMA"
+  | "APROF"
+  | "CODE_LIST"
+  | "CORE_COMP"
+  | "DIRECTORY"
+  | "DOMAIN_MODEL"
+  | "DSCRP_SERV"
+  | "GEOSPATIAL"
+  | "GLOSSARY"
+  | "HVD"
+  | "IEPD"
+  | "OP_DATPRO"
+  | "STATISTICAL"
+  | "STYLES"
+  | "SYNTAX_ECD_SCHEME"
+  | "SYNTHETIC_DATA"
+  | "TAXONOMY"
+  | "TEST_DATA"
+  | "ENVIRONMENTAL"
+  | null;
+
 export type DatasetDraftMetadata = {
   title: string;
   description: string;
@@ -511,7 +534,7 @@ export type DatasetDraftMetadata = {
   quality_annotation?: string | null;
   conforms_to?: string | null;
   provenance?: string | null;
-  type?: string | null;
+  type?: DatasetType;
   version?: string | null;
   /**
    * @format double
@@ -1827,7 +1850,7 @@ export type DatasetResourceMetadata = {
   quality_annotation?: string | null;
   conforms_to?: string | null;
   provenance?: string | null;
-  type?: string | null;
+  type?: DatasetType;
   version?: string | null;
   /**
    * @format double

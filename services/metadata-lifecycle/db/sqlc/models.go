@@ -118,6 +118,66 @@ func (ns NullDatasetAccrualPeriodicity) Value() (driver.Value, error) {
 	return string(ns.DatasetAccrualPeriodicity), nil
 }
 
+type DatasetType string
+
+const (
+	DatasetTypeRELEASE         DatasetType = "RELEASE"
+	DatasetTypeSCHEMA          DatasetType = "SCHEMA"
+	DatasetTypeAPROF           DatasetType = "APROF"
+	DatasetTypeCODELIST        DatasetType = "CODE_LIST"
+	DatasetTypeCORECOMP        DatasetType = "CORE_COMP"
+	DatasetTypeDIRECTORY       DatasetType = "DIRECTORY"
+	DatasetTypeDOMAINMODEL     DatasetType = "DOMAIN_MODEL"
+	DatasetTypeDSCRPSERV       DatasetType = "DSCRP_SERV"
+	DatasetTypeGEOSPATIAL      DatasetType = "GEOSPATIAL"
+	DatasetTypeGLOSSARY        DatasetType = "GLOSSARY"
+	DatasetTypeHVD             DatasetType = "HVD"
+	DatasetTypeIEPD            DatasetType = "IEPD"
+	DatasetTypeOPDATPRO        DatasetType = "OP_DATPRO"
+	DatasetTypeSTATISTICAL     DatasetType = "STATISTICAL"
+	DatasetTypeSTYLES          DatasetType = "STYLES"
+	DatasetTypeSYNTAXECDSCHEME DatasetType = "SYNTAX_ECD_SCHEME"
+	DatasetTypeSYNTHETICDATA   DatasetType = "SYNTHETIC_DATA"
+	DatasetTypeTAXONOMY        DatasetType = "TAXONOMY"
+	DatasetTypeTESTDATA        DatasetType = "TEST_DATA"
+	DatasetTypeENVIRONMENTAL   DatasetType = "ENVIRONMENTAL"
+)
+
+func (e *DatasetType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DatasetType(s)
+	case string:
+		*e = DatasetType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DatasetType: %T", src)
+	}
+	return nil
+}
+
+type NullDatasetType struct {
+	DatasetType DatasetType
+	Valid       bool // Valid is true if DatasetType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDatasetType) Scan(value interface{}) error {
+	if value == nil {
+		ns.DatasetType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DatasetType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDatasetType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DatasetType), nil
+}
+
 type DistributionType string
 
 const (
@@ -817,7 +877,7 @@ type DatasetVersion struct {
 	QualityAnnotation          *string
 	ConformsTo                 *string
 	Provenance                 *string
-	Type                       *string
+	Type                       *DatasetType
 	Version                    *string
 	AccessRight                *DatasetAccessRight
 	SpatialResolutionInMeters  *float64

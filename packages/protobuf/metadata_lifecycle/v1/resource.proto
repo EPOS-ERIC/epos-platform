@@ -226,6 +226,30 @@ enum DatasetAccrualPeriodicity {
   DATASET_ACCRUAL_PERIODICITY_IRREGULAR = 17;
 }
 
+enum DatasetType {
+  DATASET_TYPE_UNSPECIFIED = 0;
+  DATASET_TYPE_RELEASE = 1;
+  DATASET_TYPE_SCHEMA = 2;
+  DATASET_TYPE_APROF = 3;
+  DATASET_TYPE_CODE_LIST = 4;
+  DATASET_TYPE_CORE_COMP = 5;
+  DATASET_TYPE_DIRECTORY = 6;
+  DATASET_TYPE_DOMAIN_MODEL = 7;
+  DATASET_TYPE_DSCRP_SERV = 8;
+  DATASET_TYPE_GEOSPATIAL = 9;
+  DATASET_TYPE_GLOSSARY = 10;
+  DATASET_TYPE_HVD = 11;
+  DATASET_TYPE_IEPD = 12;
+  DATASET_TYPE_OP_DATPRO = 13;
+  DATASET_TYPE_STATISTICAL = 14;
+  DATASET_TYPE_STYLES = 15;
+  DATASET_TYPE_SYNTAX_ECD_SCHEME = 16;
+  DATASET_TYPE_SYNTHETIC_DATA = 17;
+  DATASET_TYPE_TAXONOMY = 18;
+  DATASET_TYPE_TEST_DATA = 19;
+  DATASET_TYPE_ENVIRONMENTAL = 20;
+}
+
 enum DistributionType {
   DISTRIBUTION_TYPE_UNSPECIFIED = 0;
   DISTRIBUTION_TYPE_WEB_SERVICE = 1;
@@ -253,7 +277,7 @@ message DatasetResourceMetadata {
   google.protobuf.Timestamp updated = 16;
   optional string conforms_to = 18;
   optional string provenance = 19;
-  optional string type = 20;
+  optional DatasetType type = 20 [(buf.validate.field).enum.defined_only = true];
   optional string version = 21;
   optional double spatial_resolution_in_meters = 22;
   optional double temporal_resolution = 23;
@@ -343,7 +367,7 @@ message DatasetInput {
   google.protobuf.Timestamp updated = 15;
   optional string conforms_to = 17;
   optional string provenance = 18;
-  optional string type = 19;
+  optional DatasetType type = 19 [(buf.validate.field).enum.defined_only = true];
   optional string version = 20;
   optional double spatial_resolution_in_meters = 21;
   optional double temporal_resolution = 22;

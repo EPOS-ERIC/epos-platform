@@ -3249,6 +3249,33 @@ components:
           IRREGULAR,
         ]
 
+    DatasetType:
+      type: string
+      nullable: true
+      enum:
+        [
+          RELEASE,
+          SCHEMA,
+          APROF,
+          CODE_LIST,
+          CORE_COMP,
+          DIRECTORY,
+          DOMAIN_MODEL,
+          DSCRP_SERV,
+          GEOSPATIAL,
+          GLOSSARY,
+          HVD,
+          IEPD,
+          OP_DATPRO,
+          STATISTICAL,
+          STYLES,
+          SYNTAX_ECD_SCHEME,
+          SYNTHETIC_DATA,
+          TAXONOMY,
+          TEST_DATA,
+          ENVIRONMENTAL
+        ]
+
     DatasetDraftMetadata:
       type: object
       additionalProperties: false
@@ -3268,7 +3295,7 @@ components:
           description: Absolute HTTP(S) URL with a host.
         conforms_to: { type: string, nullable: true }
         provenance: { type: string, nullable: true }
-        type: { type: string, nullable: true }
+        type: { $ref: "#/components/schemas/DatasetType" }
         version: { type: string, nullable: true }
         spatial_resolution_in_meters: { type: number, format: double, minimum: 0, nullable: true }
         temporal_resolution: { type: number, format: double, minimum: 0, nullable: true, description: Resolution in seconds. }
@@ -4514,7 +4541,7 @@ components:
           description: Absolute HTTP(S) URL with a host.
         conforms_to: { type: string, nullable: true }
         provenance: { type: string, nullable: true }
-        type: { type: string, nullable: true }
+        type: { $ref: "#/components/schemas/DatasetType" }
         version: { type: string, nullable: true }
         spatial_resolution_in_meters: { type: number, format: double, minimum: 0, nullable: true }
         temporal_resolution: { type: number, format: double, minimum: 0, nullable: true, description: Resolution in seconds. }

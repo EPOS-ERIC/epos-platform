@@ -1780,6 +1780,24 @@ func (s *DatasetDraftMetadata) Validate() error {
 		})
 	}
 	if err := func() error {
+		if value, ok := s.Type.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
 		if value, ok := s.SpatialResolutionInMeters.Get(); ok {
 			if err := func() error {
 				if err := (validate.Float{
@@ -1996,6 +2014,24 @@ func (s *DatasetResourceMetadata) Validate() error {
 		})
 	}
 	if err := func() error {
+		if value, ok := s.Type.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
 		if value, ok := s.SpatialResolutionInMeters.Get(); ok {
 			if err := func() error {
 				if err := (validate.Float{
@@ -2204,6 +2240,53 @@ func (s *DatasetResourceMetadata) Validate() error {
 func (s DatasetResourceMetadataResourceType) Validate() error {
 	switch s {
 	case "dataset":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s DatasetType) Validate() error {
+	switch s {
+	case "RELEASE":
+		return nil
+	case "SCHEMA":
+		return nil
+	case "APROF":
+		return nil
+	case "CODE_LIST":
+		return nil
+	case "CORE_COMP":
+		return nil
+	case "DIRECTORY":
+		return nil
+	case "DOMAIN_MODEL":
+		return nil
+	case "DSCRP_SERV":
+		return nil
+	case "GEOSPATIAL":
+		return nil
+	case "GLOSSARY":
+		return nil
+	case "HVD":
+		return nil
+	case "IEPD":
+		return nil
+	case "OP_DATPRO":
+		return nil
+	case "STATISTICAL":
+		return nil
+	case "STYLES":
+		return nil
+	case "SYNTAX_ECD_SCHEME":
+		return nil
+	case "SYNTHETIC_DATA":
+		return nil
+	case "TAXONOMY":
+		return nil
+	case "TEST_DATA":
+		return nil
+	case "ENVIRONMENTAL":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

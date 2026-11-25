@@ -774,7 +774,7 @@ func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.
 		QualityAnnotation:         value.QualityAnnotation,
 		ConformsTo:                value.ConformsTo,
 		Provenance:                value.Provenance,
-		Type:                      value.Type,
+		Type:                      toProtoDatasetType(value.Type),
 		Version:                   value.Version,
 		SpatialResolutionInMeters: value.SpatialResolutionInMeters,
 		TemporalResolution:        value.TemporalResolution,
@@ -1153,6 +1153,10 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 	if err != nil {
 		return domain.DatasetInput{}, err
 	}
+	datasetType, err := toDomainDatasetType(value.Type)
+	if err != nil {
+		return domain.DatasetInput{}, err
+	}
 	temporal, err := temporalInput(value.GetTemporalCoverage())
 	if err != nil {
 		return domain.DatasetInput{}, fmt.Errorf("map temporal coverage: %w", apperror.PrefixTarget(err, "temporal_coverage"))
@@ -1190,7 +1194,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput,
 		QualityAnnotation:          value.QualityAnnotation,
 		ConformsTo:                 value.ConformsTo,
 		Provenance:                 value.Provenance,
-		Type:                       value.Type,
+		Type:                       datasetType,
 		Version:                    value.Version,
 		SpatialResolutionInMeters:  value.SpatialResolutionInMeters,
 		TemporalResolution:         value.TemporalResolution,

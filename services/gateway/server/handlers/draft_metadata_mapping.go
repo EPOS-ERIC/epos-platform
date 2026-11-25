@@ -14,7 +14,6 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 		Keywords:                  toProtoKeywords(v.Keywords),
 		ConformsTo:                protoOptionalString(v.ConformsTo),
 		Provenance:                protoOptionalString(v.Provenance),
-		Type:                      protoOptionalString(v.Type),
 		Version:                   protoOptionalString(v.Version),
 		QualityAnnotation:         toProtoOptURIString(v.QualityAnnotation),
 		SpatialCoverage:           protoOptionalString(v.SpatialCoverage),
@@ -34,6 +33,10 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 		r.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: temporalRange.geological}
 	}
 	r.Description = v.Description
+	r.Type, err = toProtoDatasetType(v.Type)
+	if err != nil {
+		return nil, err
+	}
 	accrualPeriodicity, err := toProtoDatasetAccrualPeriodicity(v.AccrualPeriodicity)
 	if err != nil {
 		return nil, err

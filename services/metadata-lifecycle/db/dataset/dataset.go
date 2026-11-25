@@ -787,7 +787,7 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		QualityAnnotation:          version.QualityAnnotation,
 		ConformsTo:                 version.ConformsTo,
 		Provenance:                 version.Provenance,
-		Type:                       version.Type,
+		Type:                       (*domain.DatasetType)(version.Type),
 		Version:                    version.Version,
 		SpatialResolutionInMeters:  version.SpatialResolutionInMeters,
 		TemporalResolution:         version.TemporalResolution,
