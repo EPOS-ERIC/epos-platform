@@ -27,12 +27,9 @@ func reservedParameterNames(names ...string) map[string]struct{} {
 }
 
 func normalizeWebServiceVisibleOn(values []WebServiceVisibleOn) ([]WebServiceVisibleOn, error) {
-	// TODO: add normalie functin to the type
-	if values == nil {
-		return nil, nil
-	}
+	// TODO: add normalie function to the type
 	if len(values) == 0 {
-		return nil, fmt.Errorf("visible on must contain at least one value: %w", apperror.Default(apperror.CodeValidationFailed))
+		return nil, nil
 	}
 
 	result := make([]WebServiceVisibleOn, 0, len(values))
@@ -174,8 +171,11 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 			return StringSchema{}, apperror.Field("pattern", "Pattern must be a valid regular expression.", err)
 		}
 	}
-	if value.Enum != nil && len(value.Enum) == 0 {
-		return StringSchema{}, apperror.Field("enum", "Enum must not be empty.", nil)
+	if len(value.Enum) == 0 {
+		value.Enum = nil
+	}
+	if len(value.Default) == 0 {
+		value.Default = nil
 	}
 	seen := make(map[string]struct{}, len(value.Enum))
 	for i := range value.Enum {
@@ -199,9 +199,6 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 		}
 	}
 	if value.Default != nil {
-		if len(value.Default) == 0 {
-			return StringSchema{}, apperror.Field("default", "Default must not be empty.", nil)
-		}
 		if !value.MultipleValues && len(value.Default) > 1 {
 			return StringSchema{}, apperror.Field("default", "Single-value parameters allow at most one default.", nil)
 		}
@@ -223,8 +220,11 @@ func parseStringSchema(value StringSchema) (StringSchema, error) {
 }
 
 func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
-	if value.Enum != nil && len(value.Enum) == 0 {
-		return IntegerSchema{}, apperror.Field("enum", "Enum must not be empty.", nil)
+	if len(value.Enum) == 0 {
+		value.Enum = nil
+	}
+	if len(value.Default) == 0 {
+		value.Default = nil
 	}
 	if value.Minimum != nil && value.Maximum != nil && *value.Minimum > *value.Maximum {
 		return IntegerSchema{}, apperror.Field("minimum", "Minimum must not exceed maximum.", nil)
@@ -248,9 +248,6 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 		}
 	}
 	if value.Default != nil {
-		if len(value.Default) == 0 {
-			return IntegerSchema{}, apperror.Field("default", "Default must not be empty.", nil)
-		}
 		if !value.MultipleValues && len(value.Default) > 1 {
 			return IntegerSchema{}, apperror.Field("default", "Single-value parameters allow at most one default.", nil)
 		}
@@ -269,8 +266,11 @@ func parseIntegerSchema(value IntegerSchema) (IntegerSchema, error) {
 }
 
 func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
-	if value.Enum != nil && len(value.Enum) == 0 {
-		return FloatSchema{}, apperror.Field("enum", "Enum must not be empty.", nil)
+	if len(value.Enum) == 0 {
+		value.Enum = nil
+	}
+	if len(value.Default) == 0 {
+		value.Default = nil
 	}
 	seen := make(map[float64]struct{}, len(value.Enum))
 	for i := range value.Enum {
@@ -294,9 +294,6 @@ func parseFloatSchema(value FloatSchema) (FloatSchema, error) {
 		return FloatSchema{}, apperror.Field("minimum", "Minimum must not exceed maximum.", nil)
 	}
 	if value.Default != nil {
-		if len(value.Default) == 0 {
-			return FloatSchema{}, apperror.Field("default", "Default must not be empty.", nil)
-		}
 		if !value.MultipleValues && len(value.Default) > 1 {
 			return FloatSchema{}, apperror.Field("default", "Single-value parameters allow at most one default.", nil)
 		}

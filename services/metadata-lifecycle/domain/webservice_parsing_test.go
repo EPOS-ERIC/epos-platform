@@ -120,7 +120,7 @@ func TestNewWebServiceParameterInputAllowsMultipleEnumValues(t *testing.T) {
 		})
 	}
 
-	for _, defaults := range [][]string{{}, {"json", "xml"}} {
+	for _, defaults := range [][]string{{"json", "xml"}} {
 		input := WebServiceParameterInput{
 			Name: "value", Label: "Value",
 			Schema: StringSchema{
@@ -257,7 +257,6 @@ func TestNewWebServiceInputRejectsInvalidVisibleOn(t *testing.T) {
 		name      string
 		visibleOn []WebServiceVisibleOn
 	}{
-		{name: "empty", visibleOn: []WebServiceVisibleOn{}},
 		{name: "unsupported", visibleOn: []WebServiceVisibleOn{"GRAPH", "FORM"}},
 	}
 

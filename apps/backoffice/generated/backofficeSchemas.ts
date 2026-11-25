@@ -702,9 +702,6 @@ export type WebServiceDraftCommon = {
    * @format uuid
    */
   resource_id?: string;
-  /**
-   * @minItems 1
-   */
   visible_on?: WebServiceVisibleOn[] | null;
   /**
    * @format uuid
@@ -953,13 +950,7 @@ export type StringParameterDraft = {
   explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
-  /**
-   * @minItems 1
-   */
   ["default"]?: string[] | null;
-  /**
-   * @minItems 1
-   */
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
 };
@@ -1012,9 +1003,6 @@ export type IntegerParameterDraft = {
    * @format int64
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
@@ -1046,9 +1034,6 @@ export type FloatParameterDraft = {
    * @format double
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
@@ -1109,9 +1094,6 @@ export type StringParameter = {
   explode: boolean;
   multiple_values: boolean;
   read_only: boolean;
-  /**
-   * @minItems 1
-   */
   ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
@@ -1173,9 +1155,6 @@ export type IntegerParameter = {
    * @format int64
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
@@ -1211,9 +1190,6 @@ export type FloatParameter = {
    * @format double
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
@@ -1325,9 +1301,6 @@ export type StringScalarParameterDraft = {
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
-  /**
-   * @minItems 1
-   */
   ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
@@ -1376,9 +1349,6 @@ export type IntegerScalarParameterDraft = {
    * @format int64
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
@@ -1407,9 +1377,6 @@ export type FloatScalarParameterDraft = {
    * @format double
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
@@ -1465,9 +1432,6 @@ export type StringScalarParameter = {
   role?: ParameterRole;
   required: boolean;
   read_only: boolean;
-  /**
-   * @minItems 1
-   */
   ["default"]?: string[] | null;
   ["enum"]?: StringEnumOption[];
   pattern?: string | null;
@@ -1524,9 +1488,6 @@ export type IntegerScalarParameter = {
    * @format int64
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: IntegerEnumOption[];
 };
@@ -1559,9 +1520,6 @@ export type FloatScalarParameter = {
    * @format double
    */
   maximum?: number | null;
-  /**
-   * @minItems 1
-   */
   ["default"]?: number[] | null;
   ["enum"]?: FloatEnumOption[];
 };
@@ -2046,9 +2004,6 @@ export type WebServiceCommon = {
    * @format uuid
    */
   resource_id: string;
-  /**
-   * @minItems 1
-   */
   visible_on?: WebServiceVisibleOn[] | null;
   provider?: ResourceVersionReference;
   /**
@@ -2380,9 +2335,6 @@ export type DiscoveryWebServiceDistribution = {
   name: string;
   type: "WEB_SERVICE";
   web_service_type: WebServiceType;
-  /**
-   * @minItems 1
-   */
   visible_on?: WebServiceVisibleOn[] | null;
   provider?: Reference;
 };

@@ -3461,7 +3461,6 @@ components:
         visible_on:
           type: array
           nullable: true
-          minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         provider: { type: string, format: uuid }
         documentation_uri: { type: string, format: uri, minLength: 1, description: Absolute HTTP(S) URL with a host. }
@@ -3747,8 +3746,8 @@ components:
         explode: { type: boolean }
         multiple_values: { type: boolean }
         read_only: { type: boolean }
-        default: { type: array, nullable: true, minItems: 1, items: { type: string } }
-        enum: { type: array, minItems: 1, items: { $ref: "#/components/schemas/StringEnumOption" } }
+        default: { type: array, nullable: true, items: { type: string } }
+        enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
     BooleanParameterDraft:
@@ -3800,7 +3799,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
-        default: { type: array, nullable: true, minItems: 1, items: { type: integer, format: int64 } }
+        default: { type: array, nullable: true, items: { type: integer, format: int64 } }
         enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatParameterDraft:
@@ -3833,7 +3832,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
-        default: { type: array, nullable: true, minItems: 1, items: { type: number, format: double } }
+        default: { type: array, nullable: true, items: { type: number, format: double } }
         enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeParameterDraft:
@@ -3889,7 +3888,7 @@ components:
         explode: { type: boolean }
         multiple_values: { type: boolean }
         read_only: { type: boolean }
-        default: { type: array, nullable: true, minItems: 1, items: { type: string } }
+        default: { type: array, nullable: true, items: { type: string } }
         enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
@@ -3957,7 +3956,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
-        default: { type: array, nullable: true, minItems: 1, items: { type: integer, format: int64 } }
+        default: { type: array, nullable: true, items: { type: integer, format: int64 } }
         enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatParameter:
@@ -3993,7 +3992,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
-        default: { type: array, nullable: true, minItems: 1, items: { type: number, format: double } }
+        default: { type: array, nullable: true, items: { type: number, format: double } }
         enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeParameter:
@@ -4117,7 +4116,7 @@ components:
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
-        default: { type: array, nullable: true, minItems: 1, items: { type: string } }
+        default: { type: array, nullable: true, items: { type: string } }
         enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
@@ -4153,7 +4152,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
-        default: { type: array, nullable: true, minItems: 1, items: { type: integer, format: int64 } }
+        default: { type: array, nullable: true, items: { type: integer, format: int64 } }
         enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatScalarParameterDraft:
@@ -4172,7 +4171,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
-        default: { type: array, nullable: true, minItems: 1, items: { type: number, format: double } }
+        default: { type: array, nullable: true, items: { type: number, format: double } }
         enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeScalarParameterDraft:
@@ -4209,7 +4208,7 @@ components:
         role: { $ref: "#/components/schemas/ParameterRole" }
         required: { type: boolean }
         read_only: { type: boolean }
-        default: { type: array, nullable: true, minItems: 1, items: { type: string } }
+        default: { type: array, nullable: true, items: { type: string } }
         enum: { type: array, items: { $ref: "#/components/schemas/StringEnumOption" } }
         pattern: { type: string, nullable: true }
 
@@ -4247,7 +4246,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
-        default: { type: array, nullable: true, minItems: 1, items: { type: integer, format: int64 } }
+        default: { type: array, nullable: true, items: { type: integer, format: int64 } }
         enum: { type: array, items: { $ref: "#/components/schemas/IntegerEnumOption" } }
 
     FloatScalarParameter:
@@ -4267,7 +4266,7 @@ components:
         read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
-        default: { type: array, nullable: true, minItems: 1, items: { type: number, format: double } }
+        default: { type: array, nullable: true, items: { type: number, format: double } }
         enum: { type: array, items: { $ref: "#/components/schemas/FloatEnumOption" } }
 
     DateTimeScalarParameter:
@@ -4768,7 +4767,6 @@ components:
         visible_on:
           type: array
           nullable: true
-          minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         provider: { $ref: "#/components/schemas/ResourceVersionReference" }
         documentation_uri: { type: string, format: uri, minLength: 1, description: Absolute HTTP(S) URL with a host. }
@@ -5139,7 +5137,6 @@ components:
         visible_on:
           type: array
           nullable: true
-          minItems: 1
           items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         provider: { $ref: "#/components/schemas/Reference" }
 

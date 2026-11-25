@@ -2676,14 +2676,6 @@ func (s *DiscoveryWebServiceDistribution) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				var failures []validate.FieldError
 				for i, elem := range value {
 					if err := func() error {
@@ -3124,14 +3116,6 @@ func (s *DynamicWebService) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				var failures []validate.FieldError
 				for i, elem := range value {
 					if err := func() error {
@@ -3311,14 +3295,6 @@ func (s *DynamicWebServiceDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				var failures []validate.FieldError
 				for i, elem := range value {
@@ -3611,14 +3587,6 @@ func (s *FloatParameter) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				var failures []validate.FieldError
 				for i, elem := range value {
 					if err := func() error {
@@ -3766,14 +3734,6 @@ func (s *FloatParameterDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				var failures []validate.FieldError
 				for i, elem := range value {
@@ -3930,14 +3890,6 @@ func (s *FloatScalarParameter) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				var failures []validate.FieldError
 				for i, elem := range value {
 					if err := func() error {
@@ -4074,14 +4026,6 @@ func (s *FloatScalarParameterDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				var failures []validate.FieldError
 				for i, elem := range value {
@@ -4791,14 +4735,6 @@ func (s *HttpWebService) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				var failures []validate.FieldError
 				for i, elem := range value {
 					if err := func() error {
@@ -4978,14 +4914,6 @@ func (s *HttpWebServiceDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				var failures []validate.FieldError
 				for i, elem := range value {
@@ -5312,14 +5240,6 @@ func (s *IntegerParameter) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				return nil
 			}(); err != nil {
 				return err
@@ -5414,14 +5334,6 @@ func (s *IntegerParameterDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				return nil
 			}(); err != nil {
@@ -5525,14 +5437,6 @@ func (s *IntegerScalarParameter) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				return nil
 			}(); err != nil {
 				return err
@@ -5616,14 +5520,6 @@ func (s *IntegerScalarParameterDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				return nil
 			}(); err != nil {
@@ -8318,14 +8214,6 @@ func (s *StringParameter) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				return nil
 			}(); err != nil {
 				return err
@@ -8421,14 +8309,6 @@ func (s *StringParameterDraft) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				return nil
 			}(); err != nil {
 				return err
@@ -8442,17 +8322,6 @@ func (s *StringParameterDraft) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.Enum == nil {
-			return nil // optional
-		}
-		if err := (validate.Array{
-			MinLength:    1,
-			MinLengthSet: true,
-			MaxLength:    0,
-			MaxLengthSet: false,
-		}).ValidateLength(len(s.Enum)); err != nil {
-			return errors.Wrap(err, "array")
-		}
 		var failures []validate.FieldError
 		for i, elem := range s.Enum {
 			if err := func() error {
@@ -8542,14 +8411,6 @@ func (s *StringScalarParameter) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				return nil
 			}(); err != nil {
 				return err
@@ -8633,14 +8494,6 @@ func (s *StringScalarParameterDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				return nil
 			}(); err != nil {
@@ -9711,14 +9564,6 @@ func (s *WfsWebService) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				var failures []validate.FieldError
 				for i, elem := range value {
 					if err := func() error {
@@ -9971,14 +9816,6 @@ func (s *WfsWebServiceDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				var failures []validate.FieldError
 				for i, elem := range value {
@@ -10305,14 +10142,6 @@ func (s *WmsWebService) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				var failures []validate.FieldError
 				for i, elem := range value {
 					if err := func() error {
@@ -10487,14 +10316,6 @@ func (s *WmsWebServiceDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				var failures []validate.FieldError
 				for i, elem := range value {
@@ -10757,14 +10578,6 @@ func (s *WmtsWebService) Validate() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
 				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
-				}
 				var failures []validate.FieldError
 				for i, elem := range value {
 					if err := func() error {
@@ -10939,14 +10752,6 @@ func (s *WmtsWebServiceDraft) Validate() error {
 			if err := func() error {
 				if value == nil {
 					return errors.New("nil is invalid value")
-				}
-				if err := (validate.Array{
-					MinLength:    1,
-					MinLengthSet: true,
-					MaxLength:    0,
-					MaxLengthSet: false,
-				}).ValidateLength(len(value)); err != nil {
-					return errors.Wrap(err, "array")
 				}
 				var failures []validate.FieldError
 				for i, elem := range value {
