@@ -4,8 +4,15 @@
  * @version 1.0.0
  */
 export type Capabilities = {
-  organizations: {
+  /**
+   * Shared management mode for organizations and contact points.
+   */
+  metadata_sync: {
     management: "local" | "remote_sync";
+    /**
+     * Configured remote metadata source URL, present only in remote sync mode.
+     */
+    base_url?: string;
   };
   authentication: {
     /**

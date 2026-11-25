@@ -2,13 +2,9 @@ package metadatasync
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"strconv"
+	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
@@ -51,107 +47,23 @@ type remoteOrganization struct {
 	VIAF    []remoteString  `json:"field_viaf"`
 }
 
-// syncOrganizations fetches every organization page from the remote API and
-// applies the result as a single snapshot. It returns the number of
-// organizations collected and the number of pages requested.
-func (w *Worker) syncOrganizations(ctx context.Context) (int, int, error) {
-	endpoint, err := url.JoinPath(w.config.BaseURL, organizationsPath)
+func (w *Worker) fetchOrganizations(ctx context.Context) ([]domain.SyncedOrganization, int, error) {
+	rows, pages, err := fetchSnapshot[remoteOrganization](ctx, w, organizationsPath)
 	if err != nil {
-		return 0, 0, fmt.Errorf("build organization URL: %w", err)
+		return nil, pages, err
 	}
 
-	values := make([]domain.SyncedOrganization, 0)
-
-	// TODO: when we will have a way to know the total number of pages we can make this nicer
-	for page := 0; ; page++ {
-		nodes, err := w.fetchOrganizationPage(ctx, endpoint, page)
+	values := make([]domain.SyncedOrganization, 0, len(rows))
+	for i, row := range rows {
+		org, err := row.toDomain()
 		if err != nil {
-			return len(values), page, err
+			return values, pages, fmt.Errorf("invalid organization at row %d: %w", i, err)
 		}
 
-		pages := page + 1
-
-		if len(nodes) == 0 {
-			if err := w.metadata.SyncOrganizations(ctx, values); err != nil {
-				return len(values), pages, fmt.Errorf("apply organization snapshot: %w", err)
-			}
-
-			return len(values), pages, nil
-		}
-
-		for _, node := range nodes {
-			org, err := node.toDomain()
-			if err != nil {
-				return len(values), pages, fmt.Errorf("invalid organization on page %d: %w", page, err)
-			}
-			values = append(values, org)
-		}
-	}
-}
-
-// fetchOrganizationPage requests and decodes a single page of organizations.
-func (w *Worker) fetchOrganizationPage(ctx context.Context, endpoint string, page int) ([]remoteOrganization, error) {
-	parsed, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("parse organization URL: %w", err)
+		values = append(values, org)
 	}
 
-	query := parsed.Query()
-	query.Set("_format", "json")
-	query.Set("page", strconv.Itoa(page))
-	parsed.RawQuery = query.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("create organization request: %w", err)
-	}
-	req.SetBasicAuth(w.config.Username, w.password)
-
-	resp, err := w.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("request organization page %d: %w", page, err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		_ = resp.Body.Close()
-		return nil, fmt.Errorf("organization page %d returned HTTP %d", page, resp.StatusCode)
-	}
-
-	nodes, decodeErr := decodeOrganizations(resp.Body)
-	closeErr := resp.Body.Close()
-
-	if decodeErr != nil {
-		return nil, fmt.Errorf("decode organization page %d: invalid response", page)
-	}
-	if closeErr != nil {
-		return nil, fmt.Errorf("close organization page %d: %w", page, closeErr)
-	}
-
-	return nodes, nil
-}
-
-// decodeOrganizations strictly decodes a JSON array of organizations,
-// rejecting a null body and any data after the array.
-func decodeOrganizations(r io.Reader) ([]remoteOrganization, error) {
-	var nodes []remoteOrganization
-
-	decoder := json.NewDecoder(r)
-	if err := decoder.Decode(&nodes); err != nil {
-		return nil, err
-	}
-	if nodes == nil {
-		return nil, errors.New("null response")
-	}
-
-	var extra any
-	if err := decoder.Decode(&extra); err != io.EOF {
-		if err == nil {
-			return nil, errors.New("trailing data")
-		}
-		return nil, err
-	}
-
-	return nodes, nil
+	return values, pages, nil
 }
 
 // toDomain validates the remote payload and converts it to a domain value.
@@ -173,10 +85,10 @@ func (n remoteOrganization) toDomain() (domain.SyncedOrganization, error) {
 
 	if len(n.Address) == 1 {
 		addr := n.Address[0]
-		org.Street = &addr.Street
-		org.Locality = &addr.Locality
-		org.PostalCode = &addr.PostalCode
-		org.Country = &addr.Country
+		org.Street = nonBlank(addr.Street)
+		org.Locality = nonBlank(addr.Locality)
+		org.PostalCode = nonBlank(addr.PostalCode)
+		org.Country = nonBlank(addr.Country)
 	}
 
 	for _, parent := range n.Parent {
@@ -205,6 +117,13 @@ func (n remoteOrganization) toDomain() (domain.SyncedOrganization, error) {
 	}
 
 	return org, nil
+}
+
+func nonBlank(value string) *string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	return &value
 }
 
 // linkURI returns the URI of the only link in links, or nil if there is none.

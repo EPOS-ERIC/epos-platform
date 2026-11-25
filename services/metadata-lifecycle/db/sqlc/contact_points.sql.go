@@ -21,6 +21,7 @@ VALUES
     )
 RETURNING
     id,
+    remote_nid,
     email
 `
 
@@ -32,8 +33,21 @@ type CreateContactPointParams struct {
 func (q *Queries) CreateContactPoint(ctx context.Context, arg CreateContactPointParams) (ContactPoint, error) {
 	row := q.db.QueryRow(ctx, createContactPoint, arg.ID, arg.Email)
 	var i ContactPoint
-	err := row.Scan(&i.ID, &i.Email)
+	err := row.Scan(&i.ID, &i.RemoteNid, &i.Email)
 	return i, err
+}
+
+const deleteAbsentSyncedContactPoints = `-- name: DeleteAbsentSyncedContactPoints :exec
+DELETE FROM
+    contact_points
+WHERE
+    remote_nid IS NOT NULL
+    AND remote_nid <> ALL ($1::bigint [])
+`
+
+func (q *Queries) DeleteAbsentSyncedContactPoints(ctx context.Context, remoteNids []int64) error {
+	_, err := q.db.Exec(ctx, deleteAbsentSyncedContactPoints, remoteNids)
+	return err
 }
 
 const deleteContactPoint = `-- name: DeleteContactPoint :execrows
@@ -54,6 +68,7 @@ func (q *Queries) DeleteContactPoint(ctx context.Context, id uuid.UUID) (int64, 
 const getContactPoint = `-- name: GetContactPoint :one
 SELECT
     id,
+    remote_nid,
     email
 FROM
     contact_points
@@ -64,13 +79,14 @@ WHERE
 func (q *Queries) GetContactPoint(ctx context.Context, id uuid.UUID) (ContactPoint, error) {
 	row := q.db.QueryRow(ctx, getContactPoint, id)
 	var i ContactPoint
-	err := row.Scan(&i.ID, &i.Email)
+	err := row.Scan(&i.ID, &i.RemoteNid, &i.Email)
 	return i, err
 }
 
 const listContactPoints = `-- name: ListContactPoints :many
 SELECT
     id,
+    remote_nid,
     email
 FROM
     contact_points
@@ -88,7 +104,7 @@ func (q *Queries) ListContactPoints(ctx context.Context) ([]ContactPoint, error)
 	var items []ContactPoint
 	for rows.Next() {
 		var i ContactPoint
-		if err := rows.Scan(&i.ID, &i.Email); err != nil {
+		if err := rows.Scan(&i.ID, &i.RemoteNid, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -108,6 +124,7 @@ WHERE
     id = $2
 RETURNING
     id,
+    remote_nid,
     email
 `
 
@@ -119,6 +136,26 @@ type ReplaceContactPointParams struct {
 func (q *Queries) ReplaceContactPoint(ctx context.Context, arg ReplaceContactPointParams) (ContactPoint, error) {
 	row := q.db.QueryRow(ctx, replaceContactPoint, arg.Email, arg.ID)
 	var i ContactPoint
-	err := row.Scan(&i.ID, &i.Email)
+	err := row.Scan(&i.ID, &i.RemoteNid, &i.Email)
 	return i, err
+}
+
+const upsertSyncedContactPoint = `-- name: UpsertSyncedContactPoint :exec
+INSERT INTO
+    contact_points (remote_nid, email)
+VALUES
+    ($1, $2) ON CONFLICT (remote_nid) DO
+UPDATE
+SET
+    email = EXCLUDED.email
+`
+
+type UpsertSyncedContactPointParams struct {
+	RemoteNid *int64
+	Email     string
+}
+
+func (q *Queries) UpsertSyncedContactPoint(ctx context.Context, arg UpsertSyncedContactPointParams) error {
+	_, err := q.db.Exec(ctx, upsertSyncedContactPoint, arg.RemoteNid, arg.Email)
+	return err
 }

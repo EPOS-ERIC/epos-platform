@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
-	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 )
@@ -111,13 +110,11 @@ func (h *ogenHandler) CreateContactPoint(ctx context.Context, q *gatewayapi.Crea
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	v, err := h.metadataLifecycleClient.CreateContactPoint(ctx, a, &metadatalifecyclev1.CreateContactPointRequest{
-		Email: string(q.Email),
-	})
+	v, err := h.contactPoints.Create(ctx, a, q.Email)
 	if err != nil {
-		return nil, fmt.Errorf("create contact point: %w", err)
+		return nil, err
 	}
-	r, err := toAPIProtoContactPoint(v.ContactPoint)
+	r, err := toAPIProtoContactPoint(v)
 	if err != nil {
 		return nil, err
 	}
@@ -129,14 +126,11 @@ func (h *ogenHandler) ReplaceContactPoint(ctx context.Context, q *gatewayapi.Rep
 	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
-	v, err := h.metadataLifecycleClient.ReplaceContactPoint(ctx, a, &metadatalifecyclev1.ReplaceContactPointRequest{
-		ContactPointId: p.ContactPointId.String(),
-		Email:          string(q.Email),
-	})
+	v, err := h.contactPoints.Replace(ctx, a, p.ContactPointId.String(), q.Email)
 	if err != nil {
-		return nil, fmt.Errorf("replace contact point: %w", err)
+		return nil, err
 	}
-	r, err := toAPIProtoContactPoint(v.ContactPoint)
+	r, err := toAPIProtoContactPoint(v)
 	if err != nil {
 		return nil, err
 	}
@@ -148,10 +142,7 @@ func (h *ogenHandler) DeleteContactPoint(ctx context.Context, p gatewayapi.Delet
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if _, err := h.metadataLifecycleClient.DeleteContactPoint(ctx, a, &metadatalifecyclev1.DeleteContactPointRequest{ContactPointId: p.ContactPointId.String()}); err != nil {
-		return fmt.Errorf("delete contact point: %w", err)
-	}
-	return nil
+	return h.contactPoints.Delete(ctx, a, p.ContactPointId.String())
 }
 
 func (h *ogenHandler) DeleteOrganization(ctx context.Context, p gatewayapi.DeleteOrganizationParams) error {

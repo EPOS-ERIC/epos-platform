@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OrganizationService_SyncOrganizations_FullMethodName   = "/metadata_lifecycle.v1.OrganizationService/SyncOrganizations"
 	OrganizationService_ListOrganizations_FullMethodName   = "/metadata_lifecycle.v1.OrganizationService/ListOrganizations"
 	OrganizationService_GetOrganization_FullMethodName     = "/metadata_lifecycle.v1.OrganizationService/GetOrganization"
 	OrganizationService_CreateOrganization_FullMethodName  = "/metadata_lifecycle.v1.OrganizationService/CreateOrganization"
@@ -31,7 +30,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrganizationServiceClient interface {
-	SyncOrganizations(ctx context.Context, in *SyncOrganizationsRequest, opts ...grpc.CallOption) (*SyncOrganizationsResponse, error)
 	ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*ListOrganizationsResponse, error)
 	GetOrganization(ctx context.Context, in *GetOrganizationRequest, opts ...grpc.CallOption) (*GetOrganizationResponse, error)
 	CreateOrganization(ctx context.Context, in *CreateOrganizationRequest, opts ...grpc.CallOption) (*CreateOrganizationResponse, error)
@@ -45,16 +43,6 @@ type organizationServiceClient struct {
 
 func NewOrganizationServiceClient(cc grpc.ClientConnInterface) OrganizationServiceClient {
 	return &organizationServiceClient{cc}
-}
-
-func (c *organizationServiceClient) SyncOrganizations(ctx context.Context, in *SyncOrganizationsRequest, opts ...grpc.CallOption) (*SyncOrganizationsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SyncOrganizationsResponse)
-	err := c.cc.Invoke(ctx, OrganizationService_SyncOrganizations_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *organizationServiceClient) ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*ListOrganizationsResponse, error) {
@@ -111,7 +99,6 @@ func (c *organizationServiceClient) DeleteOrganization(ctx context.Context, in *
 // All implementations must embed UnimplementedOrganizationServiceServer
 // for forward compatibility.
 type OrganizationServiceServer interface {
-	SyncOrganizations(context.Context, *SyncOrganizationsRequest) (*SyncOrganizationsResponse, error)
 	ListOrganizations(context.Context, *ListOrganizationsRequest) (*ListOrganizationsResponse, error)
 	GetOrganization(context.Context, *GetOrganizationRequest) (*GetOrganizationResponse, error)
 	CreateOrganization(context.Context, *CreateOrganizationRequest) (*CreateOrganizationResponse, error)
@@ -127,9 +114,6 @@ type OrganizationServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedOrganizationServiceServer struct{}
 
-func (UnimplementedOrganizationServiceServer) SyncOrganizations(context.Context, *SyncOrganizationsRequest) (*SyncOrganizationsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method SyncOrganizations not implemented")
-}
 func (UnimplementedOrganizationServiceServer) ListOrganizations(context.Context, *ListOrganizationsRequest) (*ListOrganizationsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListOrganizations not implemented")
 }
@@ -164,24 +148,6 @@ func RegisterOrganizationServiceServer(s grpc.ServiceRegistrar, srv Organization
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&OrganizationService_ServiceDesc, srv)
-}
-
-func _OrganizationService_SyncOrganizations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SyncOrganizationsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrganizationServiceServer).SyncOrganizations(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OrganizationService_SyncOrganizations_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrganizationServiceServer).SyncOrganizations(ctx, req.(*SyncOrganizationsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _OrganizationService_ListOrganizations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -281,10 +247,6 @@ var OrganizationService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "metadata_lifecycle.v1.OrganizationService",
 	HandlerType: (*OrganizationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "SyncOrganizations",
-			Handler:    _OrganizationService_SyncOrganizations_Handler,
-		},
 		{
 			MethodName: "ListOrganizations",
 			Handler:    _OrganizationService_ListOrganizations_Handler,

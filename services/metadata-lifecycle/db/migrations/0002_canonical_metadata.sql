@@ -51,6 +51,7 @@ CREATE TABLE organization_memberships (
 CREATE TABLE contact_points (
     -- Canonical contact-point identity
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    remote_nid bigint UNIQUE,
 
     -- Contact-point metadata
     email      nonblank_text NOT NULL UNIQUE

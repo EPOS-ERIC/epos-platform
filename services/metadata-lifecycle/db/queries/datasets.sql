@@ -1733,6 +1733,7 @@ ORDER BY
 -- name: ListLifecycleDatasetContactPoints :many
 SELECT
     contact.id,
+    contact.remote_nid,
     contact.email
 FROM
     dataset_version_contact_points AS link

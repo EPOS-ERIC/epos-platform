@@ -23,34 +23,38 @@ func (c *MetadataLifecycle) GetContactPoint(ctx context.Context, actorID, id str
 	if err != nil {
 		return nil, c.wrapError(ctx, "get metadata-lifecycle contact point", err)
 	}
+
 	return response, nil
 }
 
-func (c *MetadataLifecycle) CreateContactPoint(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateContactPointRequest) (*metadatalifecyclev1.CreateContactPointResponse, error) {
+func (c *MetadataLifecycle) CreateContactPoint(ctx context.Context, actorID, email string) (*metadatalifecyclev1.ContactPoint, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.contactPoints.CreateContactPoint(ctx, request)
+	response, err := c.contactPoints.CreateContactPoint(ctx, &metadatalifecyclev1.CreateContactPointRequest{Email: email})
 	if err != nil {
 		return nil, c.wrapError(ctx, "create metadata-lifecycle contact point", err)
 	}
-	return response, nil
+
+	return response.GetContactPoint(), nil
 }
 
-func (c *MetadataLifecycle) ReplaceContactPoint(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceContactPointRequest) (*metadatalifecyclev1.ReplaceContactPointResponse, error) {
+func (c *MetadataLifecycle) ReplaceContactPoint(ctx context.Context, actorID, id, email string) (*metadatalifecyclev1.ContactPoint, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.contactPoints.ReplaceContactPoint(ctx, request)
+	response, err := c.contactPoints.ReplaceContactPoint(ctx, &metadatalifecyclev1.ReplaceContactPointRequest{ContactPointId: id, Email: email})
 	if err != nil {
 		return nil, c.wrapError(ctx, "replace metadata-lifecycle contact point", err)
 	}
-	return response, nil
+
+	return response.GetContactPoint(), nil
 }
 
-func (c *MetadataLifecycle) DeleteContactPoint(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteContactPointRequest) (*metadatalifecyclev1.DeleteContactPointResponse, error) {
+func (c *MetadataLifecycle) DeleteContactPoint(ctx context.Context, actorID, id string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.contactPoints.DeleteContactPoint(ctx, request)
+	_, err := c.contactPoints.DeleteContactPoint(ctx, &metadatalifecyclev1.DeleteContactPointRequest{ContactPointId: id})
 	if err != nil {
-		return nil, c.wrapError(ctx, "delete metadata-lifecycle contact point", err)
+		return c.wrapError(ctx, "delete metadata-lifecycle contact point", err)
 	}
-	return response, nil
+
+	return nil
 }
 
 func (c *MetadataLifecycle) ListOrganizations(ctx context.Context) (*metadatalifecyclev1.ListOrganizationsResponse, error) {
@@ -58,6 +62,7 @@ func (c *MetadataLifecycle) ListOrganizations(ctx context.Context) (*metadatalif
 	if err != nil {
 		return nil, c.wrapError(ctx, "list metadata-lifecycle organizations", err)
 	}
+
 	return response, nil
 }
 
@@ -66,6 +71,7 @@ func (c *MetadataLifecycle) GetOrganization(ctx context.Context, id string) (*me
 	if err != nil {
 		return nil, c.wrapError(ctx, "get metadata-lifecycle organization", err)
 	}
+
 	return response, nil
 }
 
