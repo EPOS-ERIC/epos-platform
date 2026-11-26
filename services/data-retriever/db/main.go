@@ -24,6 +24,10 @@ type PostgresDB struct {
 	Retrievals *retrievals.Repo
 }
 
+func (d *PostgresDB) Ping(ctx context.Context) error {
+	return d.db.Ping(ctx)
+}
+
 // Open connects to PostgreSQL, applies embedded migrations, and constructs repositories.
 func Open(ctx context.Context, log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 	migrations, err := fs.Sub(embeddedMigrations, "migrations")
