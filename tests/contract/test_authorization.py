@@ -363,6 +363,7 @@ class AuthorizationContractTest(unittest.TestCase):
                 "global.membership.manage",
                 "global.role.manage",
                 "global.permission.manage",
+                "global.user_api_token.revoke",
                 "global.notification.manage",
                 "global.organization.manage",
                 "global.contact_point.manage",
