@@ -17,7 +17,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/metadatasync"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resource"
@@ -33,7 +32,6 @@ type ogenHandler struct {
 	metadataLifecycleClient *clients.MetadataLifecycle
 	sharing                 *sharing.Service
 	identity                *identity.Service
-	membership              *membership.Service
 	distributionAccess      *distributionaccess.Service
 	contactRequest          *contactrequest.Service
 	resource                *resource.Service
@@ -47,7 +45,6 @@ type ogenHandler struct {
 
 func NewOgenHandler(
 	identity *identity.Service,
-	membership *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
 	sharing *sharing.Service,
 	distributionAccess *distributionaccess.Service,
@@ -64,7 +61,6 @@ func NewOgenHandler(
 		metadataLifecycleClient: metadataLifecycleClient,
 		sharing:                 sharing,
 		identity:                identity,
-		membership:              membership,
 		distributionAccess:      distributionAccess,
 		contactRequest:          contactRequest,
 		resource:                resources,

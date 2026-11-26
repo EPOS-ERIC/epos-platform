@@ -24,11 +24,6 @@ func NewService(log *slog.Logger, metadataLifecycle *clients.MetadataLifecycle) 
 }
 
 func (s *Service) GetUser(ctx context.Context, actorID, id string) (domain.User, error) {
-	// TODO: move the self resolution in the metadataLifecycle
-	if id == "self" {
-		id = actorID
-	}
-
 	if id == "" {
 		return domain.User{}, fmt.Errorf("invalid user id: %w", apperror.Default(apperror.CodeValidationFailed))
 	}

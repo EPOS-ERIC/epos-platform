@@ -171,6 +171,10 @@ func (s *Service) DecideMembership(ctx context.Context, actorID domain.Actor, gr
 }
 
 func (s *Service) RevokeMembership(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string) error {
+	if userID == "self" {
+		userID = string(actorID)
+	}
+
 	if groupID == uuid.Nil || userID == "" {
 		return apperror.Default(apperror.CodeValidationFailed)
 	}

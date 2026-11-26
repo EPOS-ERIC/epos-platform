@@ -55,6 +55,10 @@ func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier
 }
 
 func (s *Service) GetByID(ctx context.Context, actorID domain.Actor, userID string) (domain.User, error) {
+	if userID == "self" {
+		userID = string(actorID)
+	}
+
 	// Resolve self before authorization so callers can distinguish a missing
 	// authenticated user and provision it. Keep this limited to self-reads to
 	// avoid exposing whether other user IDs exist to unauthorized callers.

@@ -419,7 +419,7 @@ func (h *ogenHandler) DeleteGroupMembership(ctx context.Context, params gatewaya
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if err := h.membership.RevokeMembership(ctx, a, params.GroupId.String(), params.UserId); err != nil {
+	if err := h.metadataLifecycleClient.RevokeMembership(ctx, params.GroupId.String(), params.UserId, a); err != nil {
 		return fmt.Errorf("revoke membership: %w", err)
 	}
 	return nil
