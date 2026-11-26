@@ -34,11 +34,6 @@ type SoftwareSourceCodeDraftInput struct {
 	Metadata SoftwareSourceCodeInput
 }
 
-// SoftwareSourceCodeRejectionInput contains a validated rejection command.
-type SoftwareSourceCodeRejectionInput struct {
-	Note string
-}
-
 // SoftwareSourceCodeMetadata is persisted or imported software source-code metadata.
 type SoftwareSourceCodeMetadata struct {
 	ID                   uuid.UUID
@@ -126,15 +121,6 @@ func (value *SoftwareSourceCodeDraftInput) Normalize() error {
 	}
 	if err := value.Metadata.Normalize(); err != nil {
 		return fmt.Errorf("validate software source-code draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
-	}
-	return nil
-}
-
-// Normalize validates and normalizes a rejection note.
-func (value *SoftwareSourceCodeRejectionInput) Normalize() error {
-	value.Note = strings.TrimSpace(value.Note)
-	if value.Note == "" {
-		return apperror.Field("note", "Rejection note must not be blank.", nil)
 	}
 	return nil
 }

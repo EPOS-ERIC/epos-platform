@@ -96,11 +96,6 @@ func Default() Config {
 
 // Load loads configuration from file
 func Load(cfgPath string) (*Config, error) {
-	// Load from file if it exists
-	if _, err := os.Stat(cfgPath); err != nil {
-		return nil, fmt.Errorf("load config file %s: %w", cfgPath, err)
-	}
-
 	rawCfg, err := os.ReadFile(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("read config file %s: %w", cfgPath, err)

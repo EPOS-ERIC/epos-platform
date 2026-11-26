@@ -68,15 +68,9 @@ func requestLogger(log *slog.Logger) func(http.Handler) http.Handler {
 }
 
 func shouldSkipHealthLog(r *http.Request, status int) bool {
-	if r.Method != http.MethodGet {
-		return false
-	}
-
-	if r.URL.Path != "/health" && r.URL.Path != "/healthz" {
-		return false
-	}
-
-	return status < http.StatusBadRequest
+	return r.Method == http.MethodGet &&
+		(r.URL.Path == "/health" || r.URL.Path == "/healthz") &&
+		status < http.StatusBadRequest
 }
 
 func corsMiddleware(allowOrigin string) func(http.Handler) http.Handler {

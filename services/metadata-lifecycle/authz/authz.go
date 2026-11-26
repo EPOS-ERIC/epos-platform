@@ -25,9 +25,6 @@ type repository interface {
 	DatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error)
 	SoftwareApplicationGroup(context.Context, uuid.UUID) (uuid.UUID, error)
 	SoftwareSourceCodeGroup(context.Context, uuid.UUID) (uuid.UUID, error)
-	IsDatasetPublished(context.Context, uuid.UUID) (bool, error)
-	IsSoftwareApplicationPublished(context.Context, uuid.UUID) (bool, error)
-	IsSoftwareSourceCodePublished(context.Context, uuid.UUID) (bool, error)
 	DatasetVersionAuthz(context.Context, uuid.UUID, uuid.UUID) (domain.VersionAuthz, error)
 	SoftwareApplicationVersionAuthz(context.Context, uuid.UUID, uuid.UUID) (domain.VersionAuthz, error)
 	SoftwareSourceCodeVersionAuthz(context.Context, uuid.UUID, uuid.UUID) (domain.VersionAuthz, error)
@@ -558,47 +555,12 @@ func (a *Authorizer) CanReadSoftwareSourceCodeVersion(ctx context.Context, userI
 // authorizeVersionRead loads actor facts needed to evaluate one non-public version.
 func (a *Authorizer) authorizeVersionRead(ctx context.Context, userID *string, groupID uuid.UUID, status domain.Status) (domain.Result, error) {
 	if status == domain.Published {
-		return versionReadDecision(status, userID != nil, false, false, false, ""), nil
+		return domain.Result{Allowed: true, Reason: "public published resource"}, nil
 	}
 	if userID == nil {
-		return versionReadDecision(status, false, false, false, false, ""), nil
+		return domain.Result{Allowed: false, Reason: "authentication required"}, nil
 	}
-	_, result, err := a.activeUser(ctx, *userID)
-	if err != nil || !result.Allowed {
-		return versionReadDecision(status, true, false, false, false, result.Reason), err
-	}
-	admin, err := a.repository.IsGlobalAdmin(ctx, *userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return versionReadDecision(status, true, true, true, false, result.Reason), nil
-	}
-	member, err := a.repository.IsActiveMember(ctx, *userID, groupID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check group membership: %w", err)
-	}
-	return versionReadDecision(status, true, true, false, member, result.Reason), nil
-}
-
-// versionReadDecision applies the shared version visibility rule to loaded facts.
-func versionReadDecision(status domain.Status, authenticated, active, admin, member bool, inactiveReason string) domain.Result {
-	if status == domain.Published {
-		return domain.Result{Allowed: true, Reason: "public published resource"}
-	}
-	if !authenticated {
-		return domain.Result{Allowed: false, Reason: "authentication required"}
-	}
-	if !active {
-		return domain.Result{Allowed: false, Reason: inactiveReason}
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}
-	}
-	if !member {
-		return domain.Result{Allowed: false, Reason: "user is not an active group member"}
-	}
-	return domain.Result{Allowed: true, Reason: "active group member"}
+	return a.canReadResourceGroup(ctx, *userID, groupID)
 }
 
 // AuthorizeAdmin permits active global administrators only.
@@ -741,35 +703,6 @@ func globalPermissionForGroupPermission(permission domain.GroupPermission) (doma
 	}
 }
 
-// CanReadResource permits public reads of published resources. Non-public
-// resources require an active member in stored resource group or global admin.
-func (a *Authorizer) CanReadResource(ctx context.Context, userID *string, resourceType domain.ResourceType, resourceID uuid.UUID) (result domain.Result, err error) {
-	defer func() {
-		recordAuthzDecision(ctx, "CanReadResource", result.Allowed, result.Reason, err)
-	}()
-
-	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
-	if apperror.IsCode(err, apperror.CodeNotFound) {
-		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
-	}
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("load resource group: %w", err)
-	}
-
-	published, err := a.resourcePublished(ctx, resourceType, resourceID)
-	if err != nil {
-		return domain.Result{}, err
-	}
-	if published {
-		return domain.Result{Allowed: true, Reason: "public published resource"}, nil
-	}
-	if userID == nil {
-		return domain.Result{Allowed: false, Reason: "authentication required"}, nil
-	}
-
-	return a.canReadResourceGroup(ctx, *userID, groupID)
-}
-
 // CanReadResourceVersions requires access to the resource's owning group.
 func (a *Authorizer) CanReadResourceVersions(ctx context.Context, userID string, resourceType domain.ResourceType, resourceID uuid.UUID) (result domain.Result, err error) {
 	defer func() {
@@ -789,11 +722,15 @@ func (a *Authorizer) CanReadResourceVersions(ctx context.Context, userID string,
 
 // canReadResourceGroup permits active users who are global admins or active group members.
 func (a *Authorizer) canReadResourceGroup(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
-	result, admin, err := a.activeGlobalAdmin(ctx, userID)
+	_, result, err := a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
 
+	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
+	}
 	if admin {
 		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
@@ -807,20 +744,6 @@ func (a *Authorizer) canReadResourceGroup(ctx context.Context, userID string, gr
 	}
 
 	return domain.Result{Allowed: true, Reason: "active group member"}, nil
-}
-
-func (a *Authorizer) activeGlobalAdmin(ctx context.Context, userID string) (domain.Result, bool, error) {
-	_, result, err := a.activeUser(ctx, userID)
-	if err != nil || !result.Allowed {
-		return result, false, err
-	}
-
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
-	if err != nil {
-		return domain.Result{}, false, fmt.Errorf("check global admin: %w", err)
-	}
-
-	return result, admin, nil
 }
 
 // CanReadContactPoint protects email data while allowing active members in any group.
@@ -935,31 +858,6 @@ func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *string, cand
 		AllowedCandidates: allowed,
 		CreatedByGroupIDs: visibleGroupIDs,
 	}, nil
-}
-
-func (a *Authorizer) resourcePublished(ctx context.Context, typ domain.ResourceType, id uuid.UUID) (bool, error) {
-	switch typ {
-	case domain.Dataset:
-		published, err := a.repository.IsDatasetPublished(ctx, id)
-		if err != nil {
-			return false, fmt.Errorf("check dataset publication: %w", err)
-		}
-		return published, nil
-	case domain.SoftwareApplication:
-		published, err := a.repository.IsSoftwareApplicationPublished(ctx, id)
-		if err != nil {
-			return false, fmt.Errorf("check software application publication: %w", err)
-		}
-		return published, nil
-	case domain.SoftwareSourceCode:
-		published, err := a.repository.IsSoftwareSourceCodePublished(ctx, id)
-		if err != nil {
-			return false, fmt.Errorf("check software source code publication: %w", err)
-		}
-		return published, nil
-	default:
-		return false, fmt.Errorf("unsupported resource type: %q", typ)
-	}
 }
 
 func (a *Authorizer) activeUser(ctx context.Context, userID string) (domain.AuthorizationUser, domain.Result, error) {

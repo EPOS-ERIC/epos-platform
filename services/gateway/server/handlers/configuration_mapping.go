@@ -41,8 +41,10 @@ func toProtoSetConfigurationOfficialStatusRequest(id string, request *gatewayapi
 	if request == nil {
 		return nil, apperror.Field("request", "Request is required.", nil)
 	}
-	isOfficial := request.IsOfficial
-	return &configurationv1.SetConfigurationOfficialStatusRequest{Id: id, IsOfficial: &isOfficial}, nil
+	return &configurationv1.SetConfigurationOfficialStatusRequest{
+		Id:         id,
+		IsOfficial: new(request.IsOfficial),
+	}, nil
 }
 
 func toAPIConfiguration(record *configurationv1.Configuration, includeOwner bool) (gatewayapi.ConfigurationDetail, error) {

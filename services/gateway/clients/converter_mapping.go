@@ -38,16 +38,9 @@ func fromProtoPlugin(value *converterv1.Plugin) (domain.Plugin, error) {
 	if err != nil {
 		return domain.Plugin{}, fmt.Errorf("invalid plugin id: %w", err)
 	}
-	var runtime domain.ConversionRuntime
-	switch value.GetInput().GetRuntime() {
-	case converterv1.Runtime_RUNTIME_PYTHON:
-		runtime = domain.ConversionRuntimePython
-	case converterv1.Runtime_RUNTIME_JAVA:
-		runtime = domain.ConversionRuntimeJava
-	case converterv1.Runtime_RUNTIME_BINARY:
-		runtime = domain.ConversionRuntimeBinary
-	default:
-		return domain.Plugin{}, fmt.Errorf("converter returned unknown runtime")
+	runtime, err := fromProtoRuntime(value.GetInput().GetRuntime())
+	if err != nil {
+		return domain.Plugin{}, err
 	}
 	input := value.GetInput()
 	return domain.Plugin{
@@ -64,6 +57,19 @@ func fromProtoPlugin(value *converterv1.Plugin) (domain.Plugin, error) {
 		CreatedBy:       value.GetCreatedBy(),
 		UpdatedBy:       value.GetUpdatedBy(),
 	}, nil
+}
+
+func fromProtoRuntime(value converterv1.Runtime) (domain.ConversionRuntime, error) {
+	switch value {
+	case converterv1.Runtime_RUNTIME_PYTHON:
+		return domain.ConversionRuntimePython, nil
+	case converterv1.Runtime_RUNTIME_JAVA:
+		return domain.ConversionRuntimeJava, nil
+	case converterv1.Runtime_RUNTIME_BINARY:
+		return domain.ConversionRuntimeBinary, nil
+	default:
+		return "", fmt.Errorf("converter returned unknown runtime")
+	}
 }
 
 func toProtoRelationInput(relation domain.Relation) *converterv1.RelationInput {

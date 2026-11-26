@@ -23,11 +23,6 @@ type Identity struct {
 	FamilyName     string
 }
 
-type ValidationResult struct {
-	Active   bool
-	Identity Identity
-}
-
 type Service struct {
 	log         *slog.Logger
 	userInfoURL string
@@ -59,7 +54,7 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Identity, err
 		return Identity{}, apperror.Default(apperror.CodeUnauthenticated)
 	}
 
-	result, err := s.Validate(ctx, token)
+	identity, err := s.Validate(ctx, token)
 	if err != nil {
 		s.log.ErrorContext(ctx, "auth token validation failed", "error", err)
 		if apperror.IsCode(err, apperror.CodeUnauthenticated) {
@@ -71,38 +66,33 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Identity, err
 		return Identity{}, apperror.Wrap(apperror.CodeUpstreamUnavailable, "", fmt.Errorf("validate access token: %w", err))
 	}
 
-	if !result.Active {
-		s.log.WarnContext(ctx, "auth token rejected")
-		return Identity{}, apperror.Default(apperror.CodeUnauthenticated)
-	}
-
-	if strings.TrimSpace(result.Identity.AuthIdentifier) == "" {
+	if strings.TrimSpace(identity.AuthIdentifier) == "" {
 		s.log.WarnContext(ctx, "auth token missing identity")
 		return Identity{}, apperror.Default(apperror.CodeUnauthenticated)
 	}
 
-	return result.Identity, nil
+	return identity, nil
 }
 
 // Validate checks token state at external auth provider.
-func (s *Service) Validate(ctx context.Context, token string) (ValidationResult, error) {
+func (s *Service) Validate(ctx context.Context, token string) (Identity, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.userInfoURL, nil)
 	if err != nil {
-		return ValidationResult{}, fmt.Errorf("build auth validation request: %w", err)
+		return Identity{}, fmt.Errorf("build auth validation request: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return ValidationResult{}, fmt.Errorf("call auth validation endpoint: %w", err)
+		return Identity{}, fmt.Errorf("call auth validation endpoint: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusUnauthorized {
-			return ValidationResult{}, apperror.Default(apperror.CodeUnauthenticated)
+			return Identity{}, apperror.Default(apperror.CodeUnauthenticated)
 		}
-		return ValidationResult{}, fmt.Errorf("auth validation request failed: %s", resp.Status)
+		return Identity{}, fmt.Errorf("auth validation request failed: %s", resp.Status)
 	}
 
 	var payload struct {
@@ -113,16 +103,13 @@ func (s *Service) Validate(ctx context.Context, token string) (ValidationResult,
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return ValidationResult{}, fmt.Errorf("decode auth validation response: %w", err)
+		return Identity{}, fmt.Errorf("decode auth validation response: %w", err)
 	}
 
-	return ValidationResult{
-		Active: true,
-		Identity: Identity{
-			AuthIdentifier: payload.AuthID,
-			Email:          payload.Email,
-			GivenName:      payload.GivenName,
-			FamilyName:     payload.FamilyName,
-		},
+	return Identity{
+		AuthIdentifier: payload.AuthID,
+		Email:          payload.Email,
+		GivenName:      payload.GivenName,
+		FamilyName:     payload.FamilyName,
 	}, nil
 }

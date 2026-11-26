@@ -480,39 +480,3 @@ FROM
     software_source_codes
 WHERE
     id = sqlc.arg(software_source_code_id);
-
--- name: IsDatasetPublished :one
-SELECT
-    EXISTS (
-        SELECT
-            1
-        FROM
-            dataset_versions
-        WHERE
-            dataset_id = sqlc.arg(dataset_id)
-            AND STATUS = 'PUBLISHED'
-    ) AS published;
-
--- name: IsSoftwareApplicationPublished :one
-SELECT
-    EXISTS (
-        SELECT
-            1
-        FROM
-            software_application_versions
-        WHERE
-            software_application_id = sqlc.arg(software_application_id)
-            AND STATUS = 'PUBLISHED'
-    ) AS published;
-
--- name: IsSoftwareSourceCodePublished :one
-SELECT
-    EXISTS (
-        SELECT
-            1
-        FROM
-            software_source_code_versions
-        WHERE
-            software_source_code_id = sqlc.arg(software_source_code_id)
-            AND STATUS = 'PUBLISHED'
-    ) AS published;

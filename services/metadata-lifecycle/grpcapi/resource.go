@@ -268,7 +268,7 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 			return nil, err
 		}
 		return &metadatalifecyclev1.ReplaceResourceDraftResponse{
-			RemovedDistributionIds: toProtoDistributionIDs(removed),
+			RemovedDistributionIds: uuidStrings(removed),
 			Resource: &metadatalifecyclev1.ResourceRecord{
 				ResourceId: result.DatasetID.String(),
 				VersionId:  result.VersionID.String(),
@@ -336,7 +336,7 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 }
 
 func (s *ResourceServer) DiscardResourceDraft(ctx context.Context, request *metadatalifecyclev1.DiscardResourceDraftRequest) (*metadatalifecyclev1.DiscardResourceDraftResponse, error) {
-	actor, resourceID, versionID, _, err := s.lifecycleRequest(ctx, request)
+	actor, resourceID, versionID, err := s.lifecycleRequest(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +355,7 @@ func (s *ResourceServer) DiscardResourceDraft(ctx context.Context, request *meta
 		return nil, err
 	}
 	return &metadatalifecyclev1.DiscardResourceDraftResponse{
-		RemovedDistributionIds: toProtoDistributionIDs(removed),
+		RemovedDistributionIds: uuidStrings(removed),
 	}, nil
 }
 
@@ -411,84 +411,37 @@ func (s *ResourceServer) RejectResource(ctx context.Context, request *metadatali
 	if request == nil {
 		return nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
 	}
-	actor, resourceID, versionID, _, err := s.lifecycleRequest(ctx, request)
+	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor string, resourceID, versionID uuid.UUID) (any, []domain.Notification, error) {
+		switch request.GetResourceType() {
+		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET,
+			metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION,
+			metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
+		default:
+			return nil, nil, apperror.New(apperror.CodeValidationFailed, "resource type is required")
+		}
+		value := domain.RejectionInput{Note: request.GetNote()}
+		if err := value.Normalize(); err != nil {
+			return nil, nil, err
+		}
+		switch request.GetResourceType() {
+		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
+			return s.datasets.Reject(ctx, actor, resourceID, versionID, value)
+		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
+			return s.applications.Reject(ctx, actor, resourceID, versionID, value)
+		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
+			return s.sourceCodes.Reject(ctx, actor, resourceID, versionID, value)
+		default:
+			return nil, nil, apperror.New(apperror.CodeValidationFailed, "resource type is required")
+		}
+	})
 	if err != nil {
 		return nil, err
 	}
-	switch request.GetResourceType() {
-	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
-		value := domain.DatasetRejectionInput{
-			Note: request.GetNote(),
-		}
-		if e := value.Normalize(); e != nil {
-			return nil, e
-		}
-		result, notifications, e := s.datasets.Reject(ctx, actor, resourceID, versionID, value)
-		if e != nil {
-			return nil, e
-		}
-		record, e := lifecycleResponse(result)
-		if e != nil {
-			return nil, e
-		}
-
-		protoNotifications, e := mapSliceErr(notifications, toProtoNotification)
-		if e != nil {
-			return nil, e
-		}
-
-		return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
-	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
-		value := domain.SoftwareApplicationRejectionInput{
-			Note: request.GetNote(),
-		}
-		if e := value.Normalize(); e != nil {
-			return nil, e
-		}
-
-		result, notifications, e := s.applications.Reject(ctx, actor, resourceID, versionID, value)
-		if e != nil {
-			return nil, e
-		}
-
-		record, e := lifecycleResponse(result)
-		if e != nil {
-			return nil, e
-		}
-
-		protoNotifications, e := mapSliceErr(notifications, toProtoNotification)
-		if e != nil {
-			return nil, e
-		}
-
-		return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
-	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
-		value := domain.SoftwareSourceCodeRejectionInput{
-			Note: request.GetNote(),
-		}
-		if e := value.Normalize(); e != nil {
-			return nil, e
-		}
-
-		result, notifications, e := s.sourceCodes.Reject(ctx, actor, resourceID, versionID, value)
-		if e != nil {
-			return nil, e
-		}
-
-		record, e := lifecycleResponse(result)
-		if e != nil {
-			return nil, e
-		}
-
-		protoNotifications, e := mapSliceErr(notifications, toProtoNotification)
-		if e != nil {
-			return nil, e
-		}
-
-		return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
-	default:
-		return nil, apperror.New(apperror.CodeValidationFailed, "resource type is required")
+	protoNotifications, err := mapSliceErr(notifications, toProtoNotification)
+	if err != nil {
+		return nil, err
 	}
+	return &metadatalifecyclev1.RejectResourceResponse{Resource: record, Notifications: protoNotifications}, nil
 }
 
 func (s *ResourceServer) ReopenResource(ctx context.Context, request *metadatalifecyclev1.ReopenResourceRequest) (*metadatalifecyclev1.ReopenResourceResponse, error) {
@@ -563,7 +516,7 @@ func (s *ResourceServer) UnpublishResource(ctx context.Context, request *metadat
 }
 
 func (s *ResourceServer) DraftResourceFromPublication(ctx context.Context, request *metadatalifecyclev1.DraftResourceFromPublicationRequest) (*metadatalifecyclev1.DraftResourceFromPublicationResponse, error) {
-	record, pairs, err := s.draftResource(ctx, request, "publication")
+	record, pairs, err := s.draftResource(ctx, request, true)
 	if err != nil {
 		return nil, err
 	}
@@ -574,7 +527,7 @@ func (s *ResourceServer) DraftResourceFromPublication(ctx context.Context, reque
 }
 
 func (s *ResourceServer) DraftResourceFromLatestArchive(ctx context.Context, request *metadatalifecyclev1.DraftResourceFromLatestArchiveRequest) (*metadatalifecyclev1.DraftResourceFromLatestArchiveResponse, error) {
-	record, pairs, err := s.draftResource(ctx, request, "archive")
+	record, pairs, err := s.draftResource(ctx, request, false)
 	if err != nil {
 		return nil, err
 	}
@@ -631,32 +584,31 @@ func (s *ResourceServer) CopyPublishedResource(ctx context.Context, request *met
 }
 
 type resourceVersionRequest interface {
-	GetResourceType() metadatalifecyclev1.ResourceType
 	GetResourceId() string
 	GetVersionId() string
 }
 
-func (s *ResourceServer) lifecycleRequest(ctx context.Context, request resourceVersionRequest) (string, uuid.UUID, uuid.UUID, any, error) {
+func (s *ResourceServer) lifecycleRequest(ctx context.Context, request resourceVersionRequest) (string, uuid.UUID, uuid.UUID, error) {
 	if request == nil {
-		return "", uuid.Nil, uuid.Nil, nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
+		return "", uuid.Nil, uuid.Nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
 	}
 	actor, err := actorFromContext(ctx)
 	if err != nil {
-		return "", uuid.Nil, uuid.Nil, nil, err
+		return "", uuid.Nil, uuid.Nil, err
 	}
 	id, err := parseUUIDAt(request.GetResourceId(), "resource id", "id")
 	if err != nil {
-		return "", uuid.Nil, uuid.Nil, nil, err
+		return "", uuid.Nil, uuid.Nil, err
 	}
 	version, err := parseUUIDAt(request.GetVersionId(), "version id", "versionId")
 	if err != nil {
-		return "", uuid.Nil, uuid.Nil, nil, err
+		return "", uuid.Nil, uuid.Nil, err
 	}
-	return actor, id, version, nil, nil
+	return actor, id, version, nil
 }
 
 func (s *ResourceServer) lifecycleTransition(ctx context.Context, request resourceVersionRequest, call func(string, uuid.UUID, uuid.UUID) (any, error)) (*metadatalifecyclev1.ResourceRecord, error) {
-	actor, id, version, _, err := s.lifecycleRequest(ctx, request)
+	actor, id, version, err := s.lifecycleRequest(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -669,7 +621,7 @@ func (s *ResourceServer) lifecycleTransition(ctx context.Context, request resour
 
 func (s *ResourceServer) lifecycleNotificationTransition(ctx context.Context, request resourceVersionRequest, call func(string, uuid.UUID, uuid.UUID) (any, []domain.Notification, error)) (*metadatalifecyclev1.ResourceRecord, []domain.Notification, error) {
 	// TODO: to simplify this whole file with the submit/publis/reject actions which are basically the same, we could create an interface and use that to switch on the functions?
-	actor, id, version, _, err := s.lifecycleRequest(ctx, request)
+	actor, id, version, err := s.lifecycleRequest(ctx, request)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -689,7 +641,7 @@ type draftResourceRequest interface {
 	GetResourceId() string
 }
 
-func (s *ResourceServer) draftResource(ctx context.Context, request draftResourceRequest, source string) (*metadatalifecyclev1.ResourceRecord, map[uuid.UUID]uuid.UUID, error) {
+func (s *ResourceServer) draftResource(ctx context.Context, request draftResourceRequest, fromPublication bool) (*metadatalifecyclev1.ResourceRecord, map[uuid.UUID]uuid.UUID, error) {
 	if request == nil {
 		return nil, nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
 	}
@@ -705,19 +657,19 @@ func (s *ResourceServer) draftResource(ctx context.Context, request draftResourc
 	var pairs map[uuid.UUID]uuid.UUID
 	switch request.GetResourceType() {
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
-		if source == "publication" {
+		if fromPublication {
 			result, pairs, err = s.datasets.DraftFromPublication(ctx, actor, id)
 		} else {
 			result, pairs, err = s.datasets.DraftFromLatestArchive(ctx, actor, id)
 		}
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
-		if source == "publication" {
+		if fromPublication {
 			result, err = s.applications.DraftFromPublication(ctx, actor, id)
 		} else {
 			result, err = s.applications.DraftFromLatestArchive(ctx, actor, id)
 		}
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
-		if source == "publication" {
+		if fromPublication {
 			result, err = s.sourceCodes.DraftFromPublication(ctx, actor, id)
 		} else {
 			result, err = s.sourceCodes.DraftFromLatestArchive(ctx, actor, id)

@@ -21,7 +21,7 @@ type Store interface {
 	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, domain.DatasetDraftInput) (domain.DatasetVersion, []uuid.UUID, error)
 	Submit(context.Context, string, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
 	Withdraw(context.Context, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
-	Reject(context.Context, string, uuid.UUID, uuid.UUID, domain.DatasetRejectionInput) (domain.DatasetVersion, error)
+	Reject(context.Context, string, uuid.UUID, uuid.UUID, domain.RejectionInput) (domain.DatasetVersion, error)
 	Reopen(context.Context, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
 	Publish(context.Context, string, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
 	Discard(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error)
@@ -172,7 +172,7 @@ func (s *Service) Submit(ctx context.Context, actor string, datasetID, versionID
 	notification, buildErr := s.notifier.Build(ctx, domain.ResourceSubmitted{
 		ActorID:  actor,
 		GroupID:  dataset.Group.ID,
-		Resource: *datasetNotificationResource(dataset),
+		Resource: datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourceSubmitted, "error", buildErr)
@@ -190,7 +190,7 @@ func (s *Service) Withdraw(ctx context.Context, actor string, datasetID, version
 	return dataset, operationError("withdraw submission", err)
 }
 
-func (s *Service) Reject(ctx context.Context, actor string, datasetID, versionID uuid.UUID, value domain.DatasetRejectionInput) (domain.DatasetVersion, []domain.Notification, error) {
+func (s *Service) Reject(ctx context.Context, actor string, datasetID, versionID uuid.UUID, value domain.RejectionInput) (domain.DatasetVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, datasetID, domain.GroupPermissionResourceReject); err != nil {
 		return domain.DatasetVersion{}, nil, operationError("authorize rejection", err)
 	}
@@ -203,7 +203,7 @@ func (s *Service) Reject(ctx context.Context, actor string, datasetID, versionID
 	notification, buildErr := s.notifier.Build(ctx, domain.ResourceRejected{
 		ActorID:  actor,
 		GroupID:  dataset.Group.ID,
-		Resource: *datasetNotificationResource(dataset),
+		Resource: datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourceRejected, "error", buildErr)
@@ -235,7 +235,7 @@ func (s *Service) Publish(ctx context.Context, actor string, datasetID, versionI
 	notification, buildErr := s.notifier.Build(ctx, domain.ResourcePublished{
 		ActorID:  actor,
 		GroupID:  dataset.Group.ID,
-		Resource: *datasetNotificationResource(dataset),
+		Resource: datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourcePublished, "error", buildErr)
@@ -268,7 +268,7 @@ func (s *Service) Unpublish(ctx context.Context, actor string, datasetID, versio
 	notification, buildErr := s.notifier.Build(ctx, domain.ResourceUnpublished{
 		ActorID:  actor,
 		GroupID:  dataset.Group.ID,
-		Resource: *datasetNotificationResource(dataset),
+		Resource: datasetNotificationResource(dataset),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notification failed", "event", domain.NotificationEventResourceUnpublished, "error", buildErr)
@@ -278,8 +278,8 @@ func (s *Service) Unpublish(ctx context.Context, actor string, datasetID, versio
 	return dataset, notification, nil
 }
 
-func datasetNotificationResource(value domain.DatasetVersion) *domain.NotificationResource {
-	return &domain.NotificationResource{
+func datasetNotificationResource(value domain.DatasetVersion) domain.NotificationResource {
+	return domain.NotificationResource{
 		Type:          domain.Dataset,
 		ResourceID:    value.DatasetID,
 		VersionID:     value.VersionID,

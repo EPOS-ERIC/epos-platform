@@ -142,9 +142,7 @@ func (value *DiscoveryFilter) Normalize() error {
 	if slices.Contains(value.Providers, uuid.Nil) {
 		return apperror.Field("providers", "Provider IDs must be valid UUIDs.", nil)
 	}
-	providers := make([]uuid.UUID, len(value.Providers))
-	copy(providers, value.Providers)
-	value.Providers = providers
+	value.Providers = append([]uuid.UUID{}, value.Providers...)
 	keywords, err := normalizeKeywords(value.Keywords)
 	if err != nil {
 		return apperror.Field("keywords", "Keywords are invalid.", err)

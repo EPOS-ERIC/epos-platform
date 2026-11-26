@@ -44,14 +44,6 @@ func toDomainResourceType(value metadatalifecyclev1.ResourceType) (domain.Resour
 	}
 }
 
-func toProtoDistributionIDs(ids []uuid.UUID) []string {
-	result := make([]string, 0, len(ids))
-	for _, id := range ids {
-		result = append(result, id.String())
-	}
-	return result
-}
-
 func toProtoDistributionIDPairs(pairs map[uuid.UUID]uuid.UUID) map[string]string {
 	result := make(map[string]string, len(pairs))
 	for sourceID, targetID := range pairs {

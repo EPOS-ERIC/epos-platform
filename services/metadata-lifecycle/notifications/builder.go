@@ -20,114 +20,40 @@ import (
 func (s *Service) Build(ctx context.Context, input domain.NotificationEvent) ([]domain.Notification, error) {
 	var notification domain.Notification
 	var recipients []domain.NotificationRecipient
+	var err error
 
 	switch event := input.(type) {
 	case domain.ConversionRequested:
-		n, r, err := s.conversionRequested(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.conversionRequested(ctx, event)
 	case domain.MembershipRequested:
-		n, r, err := s.membershipRequested(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.membershipRequested(ctx, event)
 	case domain.MembershipAccepted:
-		n, r, err := s.membershipAccepted(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.membershipAccepted(ctx, event)
 	case domain.MembershipRejectedEvent:
-		n, r, err := s.membershipRejected(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.membershipRejected(ctx, event)
 	case domain.RoleRequested:
-		n, r, err := s.roleRequested(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.roleRequested(ctx, event)
 	case domain.RoleRequestAcceptedEvent:
-		n, r, err := s.roleRequestAccepted(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.roleRequestAccepted(ctx, event)
 	case domain.RoleRequestRejectedEvent:
-		n, r, err := s.roleRequestRejected(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.roleRequestRejected(ctx, event)
 	case domain.RoleAssigned:
-		n, r, err := s.roleAssigned(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.roleAssigned(ctx, event)
 	case domain.PermissionAssigned:
-		n, r, err := s.permissionAssigned(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.permissionAssigned(ctx, event)
 	case domain.ResourceSubmitted:
-		n, r, err := s.resourceSubmitted(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.resourceSubmitted(ctx, event)
 	case domain.ResourcePublished:
-		n, r, err := s.resourcePublished(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.resourcePublished(ctx, event)
 	case domain.ResourceRejected:
-		n, r, err := s.resourceRejected(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.resourceRejected(ctx, event)
 	case domain.ResourceUnpublished:
-		n, r, err := s.resourceUnpublished(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.resourceUnpublished(ctx, event)
 	default:
 		return nil, apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("unsupported notification event %T", input))
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	notifications := make([]domain.Notification, 0, len(recipients))
@@ -224,7 +150,7 @@ func (s *Service) groupLabel(ctx context.Context, id uuid.UUID) string {
 }
 
 func (s *Service) userLabel(ctx context.Context, id string) string {
-	user, err := s.store.GetNotificationUserContext(ctx, string(id))
+	user, err := s.store.GetNotificationUserContext(ctx, id)
 	if err != nil {
 		s.log.WarnContext(ctx, "resolve notification user failed", "user_id", id, "error", err)
 		return fmt.Sprintf("Unknown name (user ID: %s)", id)
@@ -263,7 +189,7 @@ func (s *Service) resourceURL(resource domain.NotificationResource) string {
 		return ""
 	}
 
-	if s.publicURL == "" || section == "" || resource.ResourceID == uuid.Nil || resource.VersionID == uuid.Nil {
+	if s.publicURL == "" || resource.ResourceID == uuid.Nil || resource.VersionID == uuid.Nil {
 		return ""
 	}
 

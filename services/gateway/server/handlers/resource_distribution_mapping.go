@@ -767,14 +767,6 @@ func toAPINilTime(value *timestamppb.Timestamp) gatewayapi.OptNilDateTime {
 	return result
 }
 
-func toAPINilString(value *string) gatewayapi.OptNilString {
-	result := gatewayapi.OptNilString{}
-	if value != nil {
-		result.SetTo(*value)
-	}
-	return result
-}
-
 func toAPINilInt64(value *int64) gatewayapi.OptNilInt64 {
 	result := gatewayapi.OptNilInt64{}
 	if value != nil {

@@ -205,5 +205,10 @@ func (s *Service) syncAll(ctx context.Context) {
 }
 
 func definition(record domain.Plugin) plugin.Definition {
-	return plugin.Definition{ID: record.ID, Repository: record.Repository, Branch: record.Branch, Runtime: record.Runtime, Arguments: record.Arguments}
+	return plugin.Definition{
+		ID:         record.ID,
+		Repository: record.Repository,
+		Branch:     record.Branch,
+		Runtime:    record.Runtime,
+	}
 }

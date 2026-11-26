@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
@@ -12,27 +14,27 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) (*metadatali
 		Providers:                 uuidStrings(v.Providers),
 		Categories:                uuidStrings(v.Categories),
 		Keywords:                  toProtoKeywords(v.Keywords),
-		ConformsTo:                protoOptionalString(v.ConformsTo),
-		Provenance:                protoOptionalString(v.Provenance),
-		Version:                   protoOptionalString(v.Version),
+		ConformsTo:                toClientStringPtr(v.ConformsTo),
+		Provenance:                toClientStringPtr(v.Provenance),
+		Version:                   toClientStringPtr(v.Version),
 		QualityAnnotation:         toProtoOptURIString(v.QualityAnnotation),
-		SpatialCoverage:           protoOptionalString(v.SpatialCoverage),
+		SpatialCoverage:           toClientStringPtr(v.SpatialCoverage),
 		SpatialResolutionInMeters: protoOptionalFloat(v.SpatialResolutionInMeters),
 		TemporalResolution:        protoOptionalFloat(v.TemporalResolution),
 		Created:                   protoOptionalTime(v.Created),
 		Updated:                   protoOptionalTime(v.Updated),
 	}
-	temporalRange, err := toProtoDatasetTemporalRange(v.TemporalCoverage, v.GeologicalTemporalCoverage)
-	if err != nil {
-		return nil, err
+	if v.TemporalCoverage.Set && v.GeologicalTemporalCoverage.Set {
+		return nil, errors.New("dataset temporal coverage fields are mutually exclusive")
 	}
 	switch {
-	case temporalRange.temporal != nil:
-		r.TemporalRange = &metadatalifecyclev1.DatasetInput_TemporalCoverage{TemporalCoverage: temporalRange.temporal}
-	case temporalRange.geological != nil:
-		r.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: temporalRange.geological}
+	case v.TemporalCoverage.Set:
+		r.TemporalRange = &metadatalifecyclev1.DatasetInput_TemporalCoverage{TemporalCoverage: toProtoTemporal(v.TemporalCoverage)}
+	case v.GeologicalTemporalCoverage.Set:
+		r.TemporalRange = &metadatalifecyclev1.DatasetInput_GeologicalTemporalCoverage{GeologicalTemporalCoverage: toProtoGeologicalTemporal(v.GeologicalTemporalCoverage.Value)}
 	}
 	r.Description = v.Description
+	var err error
 	r.Type, err = toProtoDatasetType(v.Type)
 	if err != nil {
 		return nil, err
@@ -131,10 +133,9 @@ func toProtoSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraft
 }
 
 func toProtoVersionedIdentifierInput(value gatewayapi.VersionedIdentifierInput) *metadatalifecyclev1.VersionedIdentifierInput {
-	result := &metadatalifecyclev1.VersionedIdentifierInput{
+	return &metadatalifecyclev1.VersionedIdentifierInput{
 		ResourceId: protoOptionalUUID(value.ResourceID),
 		Type:       value.Type,
 		Value:      value.Value,
 	}
-	return result
 }

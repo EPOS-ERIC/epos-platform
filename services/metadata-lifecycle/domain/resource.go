@@ -9,6 +9,20 @@ import (
 	"github.com/google/uuid"
 )
 
+// RejectionInput contains a validated rejection command.
+type RejectionInput struct {
+	Note string
+}
+
+// Normalize validates and normalizes a rejection note.
+func (value *RejectionInput) Normalize() error {
+	value.Note = strings.TrimSpace(value.Note)
+	if value.Note == "" {
+		return apperror.Field("note", "Rejection note must not be blank.", nil)
+	}
+	return nil
+}
+
 type ResourceType string
 
 const (

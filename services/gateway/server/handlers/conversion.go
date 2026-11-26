@@ -11,7 +11,7 @@ import (
 
 func (h *ogenHandler) ListDistributionConversionRelations(ctx context.Context, params gatewayapi.ListDistributionConversionRelationsParams) ([]gatewayapi.DistributionConversionPlugin, error) {
 	actor, ok := authcontext.ActorID(ctx)
-	if !ok || actor == "" {
+	if !ok {
 		return nil, apperror.Default(apperror.CodeUnauthenticated)
 	}
 

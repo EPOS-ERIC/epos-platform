@@ -33,11 +33,6 @@ type SoftwareApplicationDraftInput struct {
 	Metadata SoftwareApplicationInput
 }
 
-// SoftwareApplicationRejectionInput contains a validated rejection command.
-type SoftwareApplicationRejectionInput struct {
-	Note string
-}
-
 // SoftwareApplicationMetadata is persisted or imported software application metadata.
 type SoftwareApplicationMetadata struct {
 	ID               uuid.UUID
@@ -123,15 +118,6 @@ func (value *SoftwareApplicationDraftInput) Normalize() error {
 	}
 	if err := value.Metadata.Normalize(); err != nil {
 		return fmt.Errorf("validate software application draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
-	}
-	return nil
-}
-
-// Normalize validates and normalizes a rejection note.
-func (value *SoftwareApplicationRejectionInput) Normalize() error {
-	value.Note = strings.TrimSpace(value.Note)
-	if value.Note == "" {
-		return apperror.Field("note", "Rejection note must not be blank.", nil)
 	}
 	return nil
 }

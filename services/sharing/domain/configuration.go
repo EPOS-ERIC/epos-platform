@@ -129,7 +129,6 @@ func NewConfigurationSummary(id uuid.UUID, title string, description *string, se
 		Title:          title,
 		Description:    description,
 		ListOfServices: services,
-		IsPublic:       new(isPublic),
 	})
 	if err != nil {
 		return ConfigurationSummary{}, apperror.Wrap(apperror.CodeInternal, "", err)

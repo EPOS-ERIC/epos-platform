@@ -28,7 +28,6 @@ func (value *RequestBodyInput) Normalize() error {
 		value.Required = new(true)
 	}
 	value.ContentType = strings.TrimSpace(value.ContentType)
-	value.Template = strings.TrimSpace(value.Template)
 	if value.ContentType == "" {
 		return apperror.Field("body_content_type", "Content type must not be blank.", nil)
 	}

@@ -843,26 +843,6 @@ func (q *Queries) IsActiveMember(ctx context.Context, arg IsActiveMemberParams) 
 	return active, err
 }
 
-const isDatasetPublished = `-- name: IsDatasetPublished :one
-SELECT
-    EXISTS (
-        SELECT
-            1
-        FROM
-            dataset_versions
-        WHERE
-            dataset_id = $1
-            AND STATUS = 'PUBLISHED'
-    ) AS published
-`
-
-func (q *Queries) IsDatasetPublished(ctx context.Context, datasetID uuid.UUID) (bool, error) {
-	row := q.db.QueryRow(ctx, isDatasetPublished, datasetID)
-	var published bool
-	err := row.Scan(&published)
-	return published, err
-}
-
 const isGlobalAdmin = `-- name: IsGlobalAdmin :one
 SELECT
     EXISTS (
@@ -881,46 +861,6 @@ func (q *Queries) IsGlobalAdmin(ctx context.Context, userID string) (bool, error
 	var allowed bool
 	err := row.Scan(&allowed)
 	return allowed, err
-}
-
-const isSoftwareApplicationPublished = `-- name: IsSoftwareApplicationPublished :one
-SELECT
-    EXISTS (
-        SELECT
-            1
-        FROM
-            software_application_versions
-        WHERE
-            software_application_id = $1
-            AND STATUS = 'PUBLISHED'
-    ) AS published
-`
-
-func (q *Queries) IsSoftwareApplicationPublished(ctx context.Context, softwareApplicationID uuid.UUID) (bool, error) {
-	row := q.db.QueryRow(ctx, isSoftwareApplicationPublished, softwareApplicationID)
-	var published bool
-	err := row.Scan(&published)
-	return published, err
-}
-
-const isSoftwareSourceCodePublished = `-- name: IsSoftwareSourceCodePublished :one
-SELECT
-    EXISTS (
-        SELECT
-            1
-        FROM
-            software_source_code_versions
-        WHERE
-            software_source_code_id = $1
-            AND STATUS = 'PUBLISHED'
-    ) AS published
-`
-
-func (q *Queries) IsSoftwareSourceCodePublished(ctx context.Context, softwareSourceCodeID uuid.UUID) (bool, error) {
-	row := q.db.QueryRow(ctx, isSoftwareSourceCodePublished, softwareSourceCodeID)
-	var published bool
-	err := row.Scan(&published)
-	return published, err
 }
 
 const listActiveMemberGroupIDs = `-- name: ListActiveMemberGroupIDs :many

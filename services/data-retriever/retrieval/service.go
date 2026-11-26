@@ -173,11 +173,8 @@ func upstreamError(ctx context.Context, err error) error {
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		return ctxErr
 	}
-	if errors.Is(err, context.DeadlineExceeded) {
-		return apperror.Wrap(apperror.CodeUpstreamTimeout, "", err)
-	}
 	var networkError net.Error
-	if errors.As(err, &networkError) && networkError.Timeout() {
+	if errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &networkError) && networkError.Timeout()) {
 		return apperror.Wrap(apperror.CodeUpstreamTimeout, "", err)
 	}
 	return apperror.Wrap(apperror.CodeUpstreamUnavailable, "", err)

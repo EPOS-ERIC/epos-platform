@@ -20,7 +20,7 @@ type Store interface {
 	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, domain.SoftwareSourceCodeDraftInput) (domain.SoftwareSourceCodeVersion, error)
 	Submit(context.Context, string, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 	Withdraw(context.Context, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
-	Reject(context.Context, string, uuid.UUID, uuid.UUID, domain.SoftwareSourceCodeRejectionInput) (domain.SoftwareSourceCodeVersion, error)
+	Reject(context.Context, string, uuid.UUID, uuid.UUID, domain.RejectionInput) (domain.SoftwareSourceCodeVersion, error)
 	Reopen(context.Context, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 	Publish(context.Context, string, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 	Discard(context.Context, uuid.UUID, uuid.UUID) error
@@ -140,7 +140,7 @@ func (s *Service) Submit(ctx context.Context, actor string, sourceCodeID, versio
 	notifications, buildErr := s.notifier.Build(ctx, domain.ResourceSubmitted{
 		ActorID:  actor,
 		GroupID:  sourceCode.Group.ID,
-		Resource: *sourceCodeNotificationResource(sourceCode),
+		Resource: sourceCodeNotificationResource(sourceCode),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceSubmitted, "error", buildErr)
@@ -158,7 +158,7 @@ func (s *Service) Withdraw(ctx context.Context, actor string, sourceCodeID, vers
 	return sourceCode, operationError("withdraw submission", err)
 }
 
-func (s *Service) Reject(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeRejectionInput) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
+func (s *Service) Reject(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID, value domain.RejectionInput) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceReject); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, nil, operationError("authorize rejection", err)
 	}
@@ -171,7 +171,7 @@ func (s *Service) Reject(ctx context.Context, actor string, sourceCodeID, versio
 	notifications, buildErr := s.notifier.Build(ctx, domain.ResourceRejected{
 		ActorID:  actor,
 		GroupID:  sourceCode.Group.ID,
-		Resource: *sourceCodeNotificationResource(sourceCode),
+		Resource: sourceCodeNotificationResource(sourceCode),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceRejected, "error", buildErr)
@@ -203,7 +203,7 @@ func (s *Service) Publish(ctx context.Context, actor string, sourceCodeID, versi
 	notifications, buildErr := s.notifier.Build(ctx, domain.ResourcePublished{
 		ActorID:  actor,
 		GroupID:  sourceCode.Group.ID,
-		Resource: *sourceCodeNotificationResource(sourceCode),
+		Resource: sourceCodeNotificationResource(sourceCode),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourcePublished, "error", buildErr)
@@ -234,7 +234,7 @@ func (s *Service) Unpublish(ctx context.Context, actor string, sourceCodeID, ver
 	notifications, buildErr := s.notifier.Build(ctx, domain.ResourceUnpublished{
 		ActorID:  actor,
 		GroupID:  sourceCode.Group.ID,
-		Resource: *sourceCodeNotificationResource(sourceCode),
+		Resource: sourceCodeNotificationResource(sourceCode),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceUnpublished, "error", buildErr)
@@ -244,8 +244,8 @@ func (s *Service) Unpublish(ctx context.Context, actor string, sourceCodeID, ver
 	return sourceCode, notifications, nil
 }
 
-func sourceCodeNotificationResource(value domain.SoftwareSourceCodeVersion) *domain.NotificationResource {
-	return &domain.NotificationResource{
+func sourceCodeNotificationResource(value domain.SoftwareSourceCodeVersion) domain.NotificationResource {
+	return domain.NotificationResource{
 		Type:          domain.SoftwareSourceCode,
 		ResourceID:    value.SoftwareSourceCodeID,
 		VersionID:     value.VersionID,

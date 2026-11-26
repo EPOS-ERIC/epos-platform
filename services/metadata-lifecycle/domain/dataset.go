@@ -172,11 +172,6 @@ type DatasetDraftInput struct {
 	Metadata DatasetInput
 }
 
-// DatasetRejectionInput contains a validated rejection command.
-type DatasetRejectionInput struct {
-	Note string
-}
-
 // DatasetMetadata is persisted dataset version metadata.
 type DatasetMetadata struct {
 	ID                         uuid.UUID
@@ -307,15 +302,6 @@ func (value *DatasetDraftInput) Normalize() error {
 	}
 	if err := value.Metadata.Normalize(); err != nil {
 		return fmt.Errorf("validate dataset draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
-	}
-	return nil
-}
-
-// Normalize validates and normalizes a rejection note.
-func (value *DatasetRejectionInput) Normalize() error {
-	value.Note = strings.TrimSpace(value.Note)
-	if value.Note == "" {
-		return apperror.Field("note", "Rejection note must not be blank.", nil)
 	}
 	return nil
 }

@@ -79,9 +79,6 @@ func parameterInputs(values []Parameter) []ParameterInput {
 }
 
 func requestBodyInput(value *RequestBody) *RequestBodyInput {
-	if value == nil {
-		return nil
-	}
 	return &RequestBodyInput{
 		Required:    new(value.Required),
 		ContentType: value.ContentType,
