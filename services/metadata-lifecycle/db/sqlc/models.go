@@ -1245,16 +1245,17 @@ type StringParameterSchema struct {
 }
 
 type User struct {
-	ID          string
-	FamilyName  string
-	GivenName   string
-	Email       string
-	Status      UserStatus
-	BlockReason *string
-	BlockedBy   *string
-	BlockedAt   *time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID             string
+	FamilyName     string
+	GivenName      string
+	Email          string
+	Status         UserStatus
+	BlockReason    *string
+	BlockedBy      *string
+	BlockedAt      *time.Time
+	ApiTokenDigest []byte
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type UserGlobalRole struct {

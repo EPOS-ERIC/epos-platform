@@ -97,7 +97,7 @@ func Open(ctx context.Context, log *slog.Logger, cfg config.Config) (*PostgresDB
 	return &PostgresDB{
 		db:                   db,
 		Authorization:        authdb.New(db),
-		Users:                usersdb.New(db),
+		Users:                usersdb.New(log, db),
 		Groups:               groupdb.New(db),
 		Concepts:             conceptdb.New(db),
 		Access:               accessdb.New(db),

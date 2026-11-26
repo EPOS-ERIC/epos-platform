@@ -309,6 +309,13 @@ type Handler interface {
 	//
 	// POST /imports/turtle
 	ImportTurtleMetadata(ctx context.Context, req ImportTurtleMetadataReq) (*ImportResult, error)
+	// IssueUserAPIToken implements issueUserAPIToken operation.
+	//
+	// Issue one non-expiring token for the authenticated user. Requires OAuth; the secret is returned
+	// once. Returns 409 if a token already exists.
+	//
+	// POST /users/self/api-token
+	IssueUserAPIToken(ctx context.Context) (*UserAPITokenHeaders, error)
 	// ListConcepts implements listConcepts operation.
 	//
 	// List concepts.
@@ -566,6 +573,26 @@ type Handler interface {
 	//
 	// DELETE /groups/{groupId}/memberships/{userId}/permissions/{permission}
 	RevokeGroupPermission(ctx context.Context, params RevokeGroupPermissionParams) error
+	// RevokeSelfUserAPIToken implements revokeSelfUserAPIToken operation.
+	//
+	// Requires OAuth. Succeeds if no token exists.
+	//
+	// DELETE /users/self/api-token
+	RevokeSelfUserAPIToken(ctx context.Context) error
+	// RevokeUserAPIToken implements revokeUserAPIToken operation.
+	//
+	// Requires OAuth. Use self for your own token; revoking another user's token requires
+	// global.user_api_token.revoke.
+	//
+	// DELETE /users/{userId}/api-token
+	RevokeUserAPIToken(ctx context.Context, params RevokeUserAPITokenParams) error
+	// RotateUserAPIToken implements rotateUserAPIToken operation.
+	//
+	// Replace the authenticated user's token. Requires OAuth; the secret is returned once. Returns 404 if
+	// no token exists.
+	//
+	// POST /users/self/api-token/rotate
+	RotateUserAPIToken(ctx context.Context) (*UserAPITokenHeaders, error)
 	// SetConfigurationOfficialStatus implements setConfigurationOfficialStatus operation.
 	//
 	// Sets whether a configuration is official. Requires `global.configuration.manage`; promotion makes it

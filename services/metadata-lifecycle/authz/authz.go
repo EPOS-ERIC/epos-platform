@@ -282,6 +282,7 @@ func (a *Authorizer) canManageUserDirectory(ctx context.Context, userID string) 
 }
 
 // AuthorizeActiveUser permits authenticated operations for active users.
+// TODO: this sholud take domain.Actor instead of string
 func (a *Authorizer) AuthorizeActiveUser(ctx context.Context, userID string) (result domain.Result, err error) {
 	defer func() {
 		recordAuthzDecision(ctx, "AuthorizeActiveUser", result.Allowed, result.Reason, err)

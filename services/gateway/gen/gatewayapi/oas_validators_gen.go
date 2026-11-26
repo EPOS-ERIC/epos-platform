@@ -4221,6 +4221,8 @@ func (s GlobalPermission) Validate() error {
 		return nil
 	case "global.permission.manage":
 		return nil
+	case "global.user_api_token.revoke":
+		return nil
 	case "global.notification.manage":
 		return nil
 	case "global.organization.manage":
@@ -8889,6 +8891,29 @@ func (s *User) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "memberships",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *UserAPITokenHeaders) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.CacheControl.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "CacheControl",
 			Error: err,
 		})
 	}

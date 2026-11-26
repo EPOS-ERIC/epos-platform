@@ -65,8 +65,7 @@ message RevokeGlobalPermissionRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
   GlobalPermission permission = 2 [(buf.validate.field).enum.defined_only = true];
 }
-message RevokeGlobalPermissionResponse {
-}
+message RevokeGlobalPermissionResponse {}
 
 message AssignGlobalRoleRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
@@ -80,8 +79,7 @@ message RemoveGlobalRoleRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
   GlobalRole role = 2 [(buf.validate.field).enum.defined_only = true];
 }
-message RemoveGlobalRoleResponse {
-}
+message RemoveGlobalRoleResponse {}
 
 message BlockUserRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
@@ -93,6 +91,25 @@ message UnblockUserRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
 }
 message UnblockUserResponse {}
+
+message IssueUserAPITokenRequest {}
+message RotateUserAPITokenRequest {}
+message IssueUserAPITokenResponse {
+  string token = 1;
+}
+message RotateUserAPITokenResponse {
+  string token = 1;
+}
+message RevokeUserAPITokenRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+message RevokeUserAPITokenResponse {}
+message ValidateUserAPITokenRequest {
+  bytes digest = 1;
+}
+message ValidateUserAPITokenResponse {
+  string user_id = 1;
+}
 
 message UserMembership {
   EntityReference group = 1;
@@ -111,6 +128,18 @@ message RoleRequest {
   google.protobuf.Timestamp requested_at = 4;
 }
 service UserService {
+  rpc IssueUserAPIToken(IssueUserAPITokenRequest) returns (IssueUserAPITokenResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RotateUserAPIToken(RotateUserAPITokenRequest) returns (RotateUserAPITokenResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RevokeUserAPIToken(RevokeUserAPITokenRequest) returns (RevokeUserAPITokenResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ValidateUserAPIToken(ValidateUserAPITokenRequest) returns (ValidateUserAPITokenResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
   }

@@ -19,6 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	UserService_IssueUserAPIToken_FullMethodName      = "/metadata_lifecycle.v1.UserService/IssueUserAPIToken"
+	UserService_RotateUserAPIToken_FullMethodName     = "/metadata_lifecycle.v1.UserService/RotateUserAPIToken"
+	UserService_RevokeUserAPIToken_FullMethodName     = "/metadata_lifecycle.v1.UserService/RevokeUserAPIToken"
+	UserService_ValidateUserAPIToken_FullMethodName   = "/metadata_lifecycle.v1.UserService/ValidateUserAPIToken"
 	UserService_GetUser_FullMethodName                = "/metadata_lifecycle.v1.UserService/GetUser"
 	UserService_ListUsers_FullMethodName              = "/metadata_lifecycle.v1.UserService/ListUsers"
 	UserService_GrantGlobalPermission_FullMethodName  = "/metadata_lifecycle.v1.UserService/GrantGlobalPermission"
@@ -33,6 +37,10 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
+	IssueUserAPIToken(ctx context.Context, in *IssueUserAPITokenRequest, opts ...grpc.CallOption) (*IssueUserAPITokenResponse, error)
+	RotateUserAPIToken(ctx context.Context, in *RotateUserAPITokenRequest, opts ...grpc.CallOption) (*RotateUserAPITokenResponse, error)
+	RevokeUserAPIToken(ctx context.Context, in *RevokeUserAPITokenRequest, opts ...grpc.CallOption) (*RevokeUserAPITokenResponse, error)
+	ValidateUserAPIToken(ctx context.Context, in *ValidateUserAPITokenRequest, opts ...grpc.CallOption) (*ValidateUserAPITokenResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error)
 	GrantGlobalPermission(ctx context.Context, in *GrantGlobalPermissionRequest, opts ...grpc.CallOption) (*GrantGlobalPermissionResponse, error)
@@ -49,6 +57,46 @@ type userServiceClient struct {
 
 func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
+}
+
+func (c *userServiceClient) IssueUserAPIToken(ctx context.Context, in *IssueUserAPITokenRequest, opts ...grpc.CallOption) (*IssueUserAPITokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueUserAPITokenResponse)
+	err := c.cc.Invoke(ctx, UserService_IssueUserAPIToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) RotateUserAPIToken(ctx context.Context, in *RotateUserAPITokenRequest, opts ...grpc.CallOption) (*RotateUserAPITokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RotateUserAPITokenResponse)
+	err := c.cc.Invoke(ctx, UserService_RotateUserAPIToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) RevokeUserAPIToken(ctx context.Context, in *RevokeUserAPITokenRequest, opts ...grpc.CallOption) (*RevokeUserAPITokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevokeUserAPITokenResponse)
+	err := c.cc.Invoke(ctx, UserService_RevokeUserAPIToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) ValidateUserAPIToken(ctx context.Context, in *ValidateUserAPITokenRequest, opts ...grpc.CallOption) (*ValidateUserAPITokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ValidateUserAPITokenResponse)
+	err := c.cc.Invoke(ctx, UserService_ValidateUserAPIToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
@@ -135,6 +183,10 @@ func (c *userServiceClient) UnblockUser(ctx context.Context, in *UnblockUserRequ
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
+	IssueUserAPIToken(context.Context, *IssueUserAPITokenRequest) (*IssueUserAPITokenResponse, error)
+	RotateUserAPIToken(context.Context, *RotateUserAPITokenRequest) (*RotateUserAPITokenResponse, error)
+	RevokeUserAPIToken(context.Context, *RevokeUserAPITokenRequest) (*RevokeUserAPITokenResponse, error)
+	ValidateUserAPIToken(context.Context, *ValidateUserAPITokenRequest) (*ValidateUserAPITokenResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
 	GrantGlobalPermission(context.Context, *GrantGlobalPermissionRequest) (*GrantGlobalPermissionResponse, error)
@@ -153,6 +205,18 @@ type UserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
+func (UnimplementedUserServiceServer) IssueUserAPIToken(context.Context, *IssueUserAPITokenRequest) (*IssueUserAPITokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method IssueUserAPIToken not implemented")
+}
+func (UnimplementedUserServiceServer) RotateUserAPIToken(context.Context, *RotateUserAPITokenRequest) (*RotateUserAPITokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RotateUserAPIToken not implemented")
+}
+func (UnimplementedUserServiceServer) RevokeUserAPIToken(context.Context, *RevokeUserAPITokenRequest) (*RevokeUserAPITokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeUserAPIToken not implemented")
+}
+func (UnimplementedUserServiceServer) ValidateUserAPIToken(context.Context, *ValidateUserAPITokenRequest) (*ValidateUserAPITokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ValidateUserAPIToken not implemented")
+}
 func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUser not implemented")
 }
@@ -196,6 +260,78 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&UserService_ServiceDesc, srv)
+}
+
+func _UserService_IssueUserAPIToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueUserAPITokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).IssueUserAPIToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_IssueUserAPIToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).IssueUserAPIToken(ctx, req.(*IssueUserAPITokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_RotateUserAPIToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RotateUserAPITokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).RotateUserAPIToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_RotateUserAPIToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).RotateUserAPIToken(ctx, req.(*RotateUserAPITokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_RevokeUserAPIToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeUserAPITokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).RevokeUserAPIToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_RevokeUserAPIToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).RevokeUserAPIToken(ctx, req.(*RevokeUserAPITokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_ValidateUserAPIToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateUserAPITokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ValidateUserAPIToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ValidateUserAPIToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ValidateUserAPIToken(ctx, req.(*ValidateUserAPITokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -349,6 +485,22 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "metadata_lifecycle.v1.UserService",
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "IssueUserAPIToken",
+			Handler:    _UserService_IssueUserAPIToken_Handler,
+		},
+		{
+			MethodName: "RotateUserAPIToken",
+			Handler:    _UserService_RotateUserAPIToken_Handler,
+		},
+		{
+			MethodName: "RevokeUserAPIToken",
+			Handler:    _UserService_RevokeUserAPIToken_Handler,
+		},
+		{
+			MethodName: "ValidateUserAPIToken",
+			Handler:    _UserService_ValidateUserAPIToken_Handler,
+		},
 		{
 			MethodName: "GetUser",
 			Handler:    _UserService_GetUser_Handler,

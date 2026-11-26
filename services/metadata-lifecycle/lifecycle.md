@@ -180,49 +180,60 @@ Users may hold both `EDITOR` and `REVIEWER` in same group. Active membership its
 
 ### Permission Catalog
 
-| Permission                    | Scope  | Meaning                                                                                                                                             |
-| ----------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `group.resource.create`       | Group  | Create logical dataset or software resource, draft, or copy in member group.                                                                        |
-| `global.resource.create`      | Global | Create logical dataset or software resource, draft, or copy in any group without membership.                                                        |
-| `group.resource.edit`         | Group  | Modify group resource draft.                                                                                                                        |
-| `global.resource.edit`        | Global | Modify resource drafts in any group without membership.                                                                                             |
-| `group.resource.submit`       | Group  | Submit group resource draft.                                                                                                                        |
-| `global.resource.submit`      | Global | Submit resource drafts in any group without membership.                                                                                             |
-| `group.resource.withdraw`     | Group  | Return submitted resource version to draft.                                                                                                         |
-| `global.resource.withdraw`    | Global | Return submitted resource versions to draft in any group without membership.                                                                        |
-| `group.resource.reopen`       | Group  | Return rejected resource version to draft.                                                                                                          |
-| `global.resource.reopen`      | Global | Return rejected resource versions to draft in any group without membership.                                                                         |
-| `group.resource.discard`      | Group  | Delete resource draft or rejected version.                                                                                                          |
-| `global.resource.discard`     | Global | Delete resource drafts or rejected versions in any group without membership.                                                                        |
-| `group.resource.reject`       | Group  | Reject submitted resource version.                                                                                                                  |
-| `global.resource.reject`      | Global | Reject submitted resource versions in any group without membership.                                                                                 |
-| `group.resource.publish`      | Group  | Publish submitted resource version.                                                                                                                 |
-| `global.resource.publish`     | Global | Publish submitted resource versions in any group without membership.                                                                                |
-| `group.resource.unpublish`    | Group  | Archive current published resource version without replacement.                                                                                     |
-| `global.resource.unpublish`   | Global | Archive published resource versions in any group without membership.                                                                                |
-| `group.membership.manage`     | Group  | View group membership roster and accept, reject, or revoke memberships.                                                                             |
-| `group.role.manage`           | Group  | View group membership roster; accept or reject role requests and assign or remove fixed group roles.                                                |
-| `group.permission.manage`     | Group  | View group membership roster and grant or revoke group-scoped granted permissions.                                                                  |
-| `global.membership.manage`    | Global | List and read users; view every group membership roster and accept, reject, or revoke memberships in every group.                                   |
-| `global.role.manage`          | Global | List and read users; view every group membership roster; accept or reject role requests and assign or remove fixed group roles in every group.      |
-| `global.permission.manage`    | Global | List and read users; grant or revoke globally scoped permissions.                                                                                   |
-| `global.organization.manage`  | Global | Manage canonical organizations, identifiers, and hierarchy.                                                                                         |
-| `global.contact_point.manage` | Global | Manage canonical contact points.                                                                                                                    |
-| `global.group.manage`         | Global | Create, edit, and delete groups and their metadata.                                                                                                 |
-| `global.concept.manage`       | Global | Create, edit, and delete concepts.                                                                                                                  |
-| `group.category.manage`       | Group  | Manage canonical categories in owning group.                                                                                                        |
-| `global.category.manage`      | Global | Manage canonical categories in any group without membership.                                                                                        |
-| `global.configuration.manage` | Global | Manage official configurations and every user's personal configurations in the Sharing service. See [Sharing authorization](../sharing/sharing.md). |
+| Permission                     | Scope  | Meaning                                                                                                                                             |
+| ------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `group.resource.create`        | Group  | Create logical dataset or software resource, draft, or copy in member group.                                                                        |
+| `global.resource.create`       | Global | Create logical dataset or software resource, draft, or copy in any group without membership.                                                        |
+| `group.resource.edit`          | Group  | Modify group resource draft.                                                                                                                        |
+| `global.resource.edit`         | Global | Modify resource drafts in any group without membership.                                                                                             |
+| `group.resource.submit`        | Group  | Submit group resource draft.                                                                                                                        |
+| `global.resource.submit`       | Global | Submit resource drafts in any group without membership.                                                                                             |
+| `group.resource.withdraw`      | Group  | Return submitted resource version to draft.                                                                                                         |
+| `global.resource.withdraw`     | Global | Return submitted resource versions to draft in any group without membership.                                                                        |
+| `group.resource.reopen`        | Group  | Return rejected resource version to draft.                                                                                                          |
+| `global.resource.reopen`       | Global | Return rejected resource versions to draft in any group without membership.                                                                         |
+| `group.resource.discard`       | Group  | Delete resource draft or rejected version.                                                                                                          |
+| `global.resource.discard`      | Global | Delete resource drafts or rejected versions in any group without membership.                                                                        |
+| `group.resource.reject`        | Group  | Reject submitted resource version.                                                                                                                  |
+| `global.resource.reject`       | Global | Reject submitted resource versions in any group without membership.                                                                                 |
+| `group.resource.publish`       | Group  | Publish submitted resource version.                                                                                                                 |
+| `global.resource.publish`      | Global | Publish submitted resource versions in any group without membership.                                                                                |
+| `group.resource.unpublish`     | Group  | Archive current published resource version without replacement.                                                                                     |
+| `global.resource.unpublish`    | Global | Archive published resource versions in any group without membership.                                                                                |
+| `group.membership.manage`      | Group  | View group membership roster and accept, reject, or revoke memberships.                                                                             |
+| `group.role.manage`            | Group  | View group membership roster; accept or reject role requests and assign or remove fixed group roles.                                                |
+| `group.permission.manage`      | Group  | View group membership roster and grant or revoke group-scoped granted permissions.                                                                  |
+| `global.membership.manage`     | Global | List and read users; view every group membership roster and accept, reject, or revoke memberships in every group.                                   |
+| `global.role.manage`           | Global | List and read users; view every group membership roster; accept or reject role requests and assign or remove fixed group roles in every group.      |
+| `global.permission.manage`     | Global | List and read users; grant or revoke globally scoped permissions.                                                                                   |
+| `global.user_api_token.revoke` | Global | Revoke another user's API token.                                                                                                                    |
+| `global.organization.manage`   | Global | Manage canonical organizations, identifiers, and hierarchy.                                                                                         |
+| `global.contact_point.manage`  | Global | Manage canonical contact points.                                                                                                                    |
+| `global.group.manage`          | Global | Create, edit, and delete groups and their metadata.                                                                                                 |
+| `global.concept.manage`        | Global | Create, edit, and delete concepts.                                                                                                                  |
+| `group.category.manage`        | Group  | Manage canonical categories in owning group.                                                                                                        |
+| `global.category.manage`       | Global | Manage canonical categories in any group without membership.                                                                                        |
+| `global.configuration.manage`  | Global | Manage official configurations and every user's personal configurations in the Sharing service. See [Sharing authorization](../sharing/sharing.md). |
 
 An active user with `global.permission.manage` grants and revokes globally scoped permissions. An active member with a `group.*` permission performs that action only in their group. A user with the corresponding `global.*` permission performs that action in every group without membership. Group role managers may assign or remove `EDITOR` and `REVIEWER` only; a user with `global.role.manage` may also assign or remove `GROUP_ADMIN`. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires `global.membership.manage`. Group permission managers grant and revoke group-scoped granted permissions in their group. `GROUP_ADMIN` includes all three group management permissions. Users with `global.organization.manage`, `global.contact_point.manage`, `global.group.manage`, `global.concept.manage`, or `global.category.manage` manage corresponding canonical entities globally. A user with `group.category.manage` manages canonical categories only in the group where permission is granted. Global `ADMIN` assignment, user blocking, and non-public read/discovery retain explicit `AuthorizeAdmin` behavior for now; future permission-specific replacements are listed below.
 
 `global.configuration.manage` is the permission for Sharing administration. It is granted to global `ADMIN` through `role_permissions` and may also be granted directly by a user with `global.permission.manage`. Its Sharing authorization flow is specified in [sharing.md](../sharing/sharing.md).
 
-Groups and categories are publicly readable without authentication. Public group metadata never includes memberships, roles, granted permissions, or role requests. A user with a global management permission may list users and read any user detail; users may also read their own detail. Group membership roster access requires a global membership/role management permission or an active membership with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` in that group. Roster entries expose member ID, given name, family name, email, membership status, assigned roles, granted group permissions, role-derived group permissions, and pending role requests. A user may read the same assigned roles, granted group permissions, and role-derived group permissions for their own memberships.
+Groups and categories are publicly readable without authentication. Public group metadata never includes memberships, roles, granted permissions, or role requests. A user with `global.membership.manage`, `global.role.manage`, `global.permission.manage`, or `global.notification.manage` may list users and read any user detail; users may also read their own detail. Group membership roster access requires a global membership/role management permission or an active membership with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` in that group. Roster entries expose member ID, given name, family name, email, membership status, assigned roles, granted group permissions, role-derived group permissions, and pending role requests. A user may read the same assigned roles, granted group permissions, and role-derived group permissions for their own memberships.
 
 User list and detail responses expose global `global_granted_permissions` and `global_role_permissions`. User membership summaries and group membership responses expose `granted_permissions` and `role_permissions`. These lists preserve their sources; a permission present in both sources appears in both lists. Group membership responses do not expose global roles or global permissions.
 
 Group roles and additive group permissions may be assigned only to active members of target group. Pending, rejected, and revoked memberships cannot hold dormant assignments.
+
+### User API Tokens
+
+Each user may have one optional, non-expiring API token. Users start without one. An active user may issue a token when none exists, rotate an existing token, or revoke their own token without a special permission. Issuing when one exists conflicts; rotating without one returns not found. Rotation replaces the old token atomically. Revocation succeeds when the target user exists even if no token is present.
+
+An active user with `global.user_api_token.revoke` may revoke another user's token, including a blocked user's token. `ADMIN` receives this permission through its seeded role bundle; it may also be granted directly. Authorization checks the permission, not the role name. The permission does not grant user-directory access or allow issuing or rotating another user's token.
+
+Token management requires an OAuth bearer credential at Gateway. API tokens cannot manage tokens, but may perform any other operation allowed to their user. Every request uses current user status, permissions, memberships, and workflow rules; tokens do not bypass authorization. Gateway validates the token digest through the trusted Metadata Lifecycle boundary and loads the existing user without provisioning.
+
+The plaintext token is returned only when issued or rotated; it cannot be revealed later. Storage retains only a unique SHA-256 digest. User responses and normal user reads do not expose the token or digest. Successful issue, rotation, and revocation produce structured audit logs with actor and target user IDs; logs and errors never contain token values or digests.
 
 ### Decision Order
 
@@ -272,7 +283,7 @@ First created user receives global `ADMIN` role. Removing its legacy `users.is_s
 
 ### User Blocking
 
-Global `ADMIN` may block user with required non-empty reason and may later unblock user. Block stores reason, actor, and timestamp. Memberships, roles, grants, and subscriptions remain stored but dormant. Unblocking restores their effect subject to normal active-membership checks.
+Global `ADMIN` may block user with required non-empty reason and may later unblock user. Block stores reason, actor, and timestamp. Memberships, roles, grants, and subscriptions remain stored but dormant. Blocking also revokes any API token in the same transaction; if the last-active-admin safeguard rejects the block, token revocation rolls back. Unblocking restores memberships, roles, grants, and subscriptions subject to normal active-membership checks, but does not restore the token. The user must issue a new token.
 
 Blocked identity remains attributable. Operations requiring or optionally accepting authentication reject blocked bearer tokens; fully public operations ignore supplied credentials and remain readable. Requests without user identity retain public-read access. Blocking last active global `ADMIN` is forbidden. An attempted authenticated action by a blocked user is denied and remains attributable in authorization/audit telemetry; it does not produce an email notification topic.
 
@@ -411,6 +422,12 @@ If a user qualifies for multiple routes, Metadata deduplicates before returning 
 | Membership is revoked                                                   | Membership and related access/subscriptions/pending requests are deleted; user may request again.                                                                                        |
 | Blocked user with bearer token performs fully public read               | Allowed; optional-auth public reads reject the blocked token.                                                                                                                            |
 | Blocked user attempts authenticated action                              | Denied and attributable in authorization/audit telemetry; no email notification topic is emitted.                                                                                        |
+| User issues a token when one exists or rotates without one              | Issue conflicts; rotation returns not found.                                                                                                                                             |
+| User rotates or revokes a token                                         | Previous token is invalid immediately; revoking an absent token for an existing user succeeds.                                                                                           |
+| User's permission is removed after issuing a token                      | Next token-authenticated request uses current permissions.                                                                                                                               |
+| User revokes another user's token                                       | Requires `global.user_api_token.revoke` and OAuth authentication; an API token cannot manage tokens.                                                                                     |
+| User is blocked and later unblocked                                     | Existing API token remains revoked; user may issue a new token after unblocking.                                                                                                         |
+| Last active admin is blocked                                            | Block fails; any existing API token remains valid because revocation rolls back.                                                                                                         |
 | System Admin unblocks user                                              | Prior memberships, roles, grants, and subscriptions become effective again when otherwise valid.                                                                                         |
 | New System Admin or global topic is added                               | Active `ADMIN` receives the global subscription by default and may opt out; any otherwise eligible active user may opt in.                                                               |
 | User subscribes to group publication notifications                      | User must be an active member; subscription is explicit and does not automatically include other group members.                                                                          |

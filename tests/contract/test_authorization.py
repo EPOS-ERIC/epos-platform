@@ -147,6 +147,7 @@ class AuthorizationContractTest(unittest.TestCase):
             "global.membership.manage": "GLOBAL",
             "global.role.manage": "GLOBAL",
             "global.permission.manage": "GLOBAL",
+            "global.user_api_token.revoke": "GLOBAL",
             "global.notification.manage": "GLOBAL",
             "global.organization.manage": "GLOBAL",
             "global.contact_point.manage": "GLOBAL",

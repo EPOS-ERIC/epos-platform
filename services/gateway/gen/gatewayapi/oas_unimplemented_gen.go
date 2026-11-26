@@ -446,6 +446,16 @@ func (UnimplementedHandler) ImportTurtleMetadata(ctx context.Context, req Import
 	return r, ht.ErrNotImplemented
 }
 
+// IssueUserAPIToken implements issueUserAPIToken operation.
+//
+// Issue one non-expiring token for the authenticated user. Requires OAuth; the secret is returned
+// once. Returns 409 if a token already exists.
+//
+// POST /users/self/api-token
+func (UnimplementedHandler) IssueUserAPIToken(ctx context.Context) (r *UserAPITokenHeaders, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListConcepts implements listConcepts operation.
 //
 // List concepts.
@@ -815,6 +825,35 @@ func (UnimplementedHandler) RevokeGlobalPermission(ctx context.Context, params R
 // DELETE /groups/{groupId}/memberships/{userId}/permissions/{permission}
 func (UnimplementedHandler) RevokeGroupPermission(ctx context.Context, params RevokeGroupPermissionParams) error {
 	return ht.ErrNotImplemented
+}
+
+// RevokeSelfUserAPIToken implements revokeSelfUserAPIToken operation.
+//
+// Requires OAuth. Succeeds if no token exists.
+//
+// DELETE /users/self/api-token
+func (UnimplementedHandler) RevokeSelfUserAPIToken(ctx context.Context) error {
+	return ht.ErrNotImplemented
+}
+
+// RevokeUserAPIToken implements revokeUserAPIToken operation.
+//
+// Requires OAuth. Use self for your own token; revoking another user's token requires
+// global.user_api_token.revoke.
+//
+// DELETE /users/{userId}/api-token
+func (UnimplementedHandler) RevokeUserAPIToken(ctx context.Context, params RevokeUserAPITokenParams) error {
+	return ht.ErrNotImplemented
+}
+
+// RotateUserAPIToken implements rotateUserAPIToken operation.
+//
+// Replace the authenticated user's token. Requires OAuth; the secret is returned once. Returns 404 if
+// no token exists.
+//
+// POST /users/self/api-token/rotate
+func (UnimplementedHandler) RotateUserAPIToken(ctx context.Context) (r *UserAPITokenHeaders, _ error) {
+	return r, ht.ErrNotImplemented
 }
 
 // SetConfigurationOfficialStatus implements setConfigurationOfficialStatus operation.

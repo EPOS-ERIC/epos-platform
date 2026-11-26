@@ -1026,6 +1026,334 @@ func (*UnblockUserResponse) Descriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{16}
 }
 
+type IssueUserAPITokenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IssueUserAPITokenRequest) Reset() {
+	*x = IssueUserAPITokenRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueUserAPITokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueUserAPITokenRequest) ProtoMessage() {}
+
+func (x *IssueUserAPITokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IssueUserAPITokenRequest.ProtoReflect.Descriptor instead.
+func (*IssueUserAPITokenRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{17}
+}
+
+type RotateUserAPITokenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RotateUserAPITokenRequest) Reset() {
+	*x = RotateUserAPITokenRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RotateUserAPITokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RotateUserAPITokenRequest) ProtoMessage() {}
+
+func (x *RotateUserAPITokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RotateUserAPITokenRequest.ProtoReflect.Descriptor instead.
+func (*RotateUserAPITokenRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{18}
+}
+
+type IssueUserAPITokenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IssueUserAPITokenResponse) Reset() {
+	*x = IssueUserAPITokenResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueUserAPITokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueUserAPITokenResponse) ProtoMessage() {}
+
+func (x *IssueUserAPITokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IssueUserAPITokenResponse.ProtoReflect.Descriptor instead.
+func (*IssueUserAPITokenResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *IssueUserAPITokenResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+type RotateUserAPITokenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RotateUserAPITokenResponse) Reset() {
+	*x = RotateUserAPITokenResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RotateUserAPITokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RotateUserAPITokenResponse) ProtoMessage() {}
+
+func (x *RotateUserAPITokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RotateUserAPITokenResponse.ProtoReflect.Descriptor instead.
+func (*RotateUserAPITokenResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RotateUserAPITokenResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+type RevokeUserAPITokenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeUserAPITokenRequest) Reset() {
+	*x = RevokeUserAPITokenRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeUserAPITokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeUserAPITokenRequest) ProtoMessage() {}
+
+func (x *RevokeUserAPITokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeUserAPITokenRequest.ProtoReflect.Descriptor instead.
+func (*RevokeUserAPITokenRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *RevokeUserAPITokenRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type RevokeUserAPITokenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeUserAPITokenResponse) Reset() {
+	*x = RevokeUserAPITokenResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeUserAPITokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeUserAPITokenResponse) ProtoMessage() {}
+
+func (x *RevokeUserAPITokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeUserAPITokenResponse.ProtoReflect.Descriptor instead.
+func (*RevokeUserAPITokenResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{22}
+}
+
+type ValidateUserAPITokenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Digest        []byte                 `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ValidateUserAPITokenRequest) Reset() {
+	*x = ValidateUserAPITokenRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ValidateUserAPITokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ValidateUserAPITokenRequest) ProtoMessage() {}
+
+func (x *ValidateUserAPITokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ValidateUserAPITokenRequest.ProtoReflect.Descriptor instead.
+func (*ValidateUserAPITokenRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ValidateUserAPITokenRequest) GetDigest() []byte {
+	if x != nil {
+		return x.Digest
+	}
+	return nil
+}
+
+type ValidateUserAPITokenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ValidateUserAPITokenResponse) Reset() {
+	*x = ValidateUserAPITokenResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ValidateUserAPITokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ValidateUserAPITokenResponse) ProtoMessage() {}
+
+func (x *ValidateUserAPITokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ValidateUserAPITokenResponse.ProtoReflect.Descriptor instead.
+func (*ValidateUserAPITokenResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ValidateUserAPITokenResponse) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 type UserMembership struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	Group              *EntityReference       `protobuf:"bytes,1,opt,name=group,proto3" json:"group,omitempty"`
@@ -1042,7 +1370,7 @@ type UserMembership struct {
 
 func (x *UserMembership) Reset() {
 	*x = UserMembership{}
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[17]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1054,7 +1382,7 @@ func (x *UserMembership) String() string {
 func (*UserMembership) ProtoMessage() {}
 
 func (x *UserMembership) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[17]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1067,7 +1395,7 @@ func (x *UserMembership) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserMembership.ProtoReflect.Descriptor instead.
 func (*UserMembership) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{17}
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *UserMembership) GetGroup() *EntityReference {
@@ -1138,7 +1466,7 @@ type RoleRequest struct {
 
 func (x *RoleRequest) Reset() {
 	*x = RoleRequest{}
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[18]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1150,7 +1478,7 @@ func (x *RoleRequest) String() string {
 func (*RoleRequest) ProtoMessage() {}
 
 func (x *RoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[18]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1163,7 +1491,7 @@ func (x *RoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleRequest.ProtoReflect.Descriptor instead.
 func (*RoleRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{18}
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *RoleRequest) GetId() string {
@@ -1273,7 +1601,20 @@ const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"\x11BlockUserResponse\"6\n" +
 	"\x12UnblockUserRequest\x12 \n" +
 	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\x15\n" +
-	"\x13UnblockUserResponse\"\xf4\x04\n" +
+	"\x13UnblockUserResponse\"\x1a\n" +
+	"\x18IssueUserAPITokenRequest\"\x1b\n" +
+	"\x19RotateUserAPITokenRequest\"1\n" +
+	"\x19IssueUserAPITokenResponse\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"2\n" +
+	"\x1aRotateUserAPITokenResponse\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"=\n" +
+	"\x19RevokeUserAPITokenRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\x1c\n" +
+	"\x1aRevokeUserAPITokenResponse\"5\n" +
+	"\x1bValidateUserAPITokenRequest\x12\x16\n" +
+	"\x06digest\x18\x01 \x01(\fR\x06digest\"7\n" +
+	"\x1cValidateUserAPITokenResponse\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xf4\x04\n" +
 	"\x0eUserMembership\x12<\n" +
 	"\x05group\x18\x01 \x01(\v2&.metadata_lifecycle.v1.EntityReferenceR\x05group\x12P\n" +
 	"\vgroup_roles\x18\x02 \x03(\x0e2 .metadata_lifecycle.v1.GroupRoleB\r\xbaH\n" +
@@ -1303,8 +1644,12 @@ const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"GlobalRole\x12\x1b\n" +
 	"\x17GLOBAL_ROLE_UNSPECIFIED\x10\x00\x12\x15\n" +
-	"\x11GLOBAL_ROLE_ADMIN\x10\x012\xb4\a\n" +
-	"\vUserService\x12^\n" +
+	"\x11GLOBAL_ROLE_ADMIN\x10\x012\xbc\v\n" +
+	"\vUserService\x12|\n" +
+	"\x11IssueUserAPIToken\x12/.metadata_lifecycle.v1.IssueUserAPITokenRequest\x1a0.metadata_lifecycle.v1.IssueUserAPITokenResponse\"\x04\x80\xb5\x18\x03\x12\x7f\n" +
+	"\x12RotateUserAPIToken\x120.metadata_lifecycle.v1.RotateUserAPITokenRequest\x1a1.metadata_lifecycle.v1.RotateUserAPITokenResponse\"\x04\x80\xb5\x18\x03\x12\x7f\n" +
+	"\x12RevokeUserAPIToken\x120.metadata_lifecycle.v1.RevokeUserAPITokenRequest\x1a1.metadata_lifecycle.v1.RevokeUserAPITokenResponse\"\x04\x80\xb5\x18\x03\x12\x85\x01\n" +
+	"\x14ValidateUserAPIToken\x122.metadata_lifecycle.v1.ValidateUserAPITokenRequest\x1a3.metadata_lifecycle.v1.ValidateUserAPITokenResponse\"\x04\x80\xb5\x18\x01\x12^\n" +
 	"\aGetUser\x12%.metadata_lifecycle.v1.GetUserRequest\x1a&.metadata_lifecycle.v1.GetUserResponse\"\x04\x80\xb5\x18\x03\x12d\n" +
 	"\tListUsers\x12'.metadata_lifecycle.v1.ListUsersRequest\x1a(.metadata_lifecycle.v1.ListUsersResponse\"\x04\x80\xb5\x18\x03\x12\x88\x01\n" +
 	"\x15GrantGlobalPermission\x123.metadata_lifecycle.v1.GrantGlobalPermissionRequest\x1a4.metadata_lifecycle.v1.GrantGlobalPermissionResponse\"\x04\x80\xb5\x18\x03\x12\x8b\x01\n" +
@@ -1327,7 +1672,7 @@ func file_metadata_lifecycle_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_metadata_lifecycle_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_metadata_lifecycle_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_metadata_lifecycle_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_metadata_lifecycle_v1_user_proto_goTypes = []any{
 	(UserStatus)(0),                        // 0: metadata_lifecycle.v1.UserStatus
 	(GlobalRole)(0),                        // 1: metadata_lifecycle.v1.GlobalRole
@@ -1348,67 +1693,83 @@ var file_metadata_lifecycle_v1_user_proto_goTypes = []any{
 	(*BlockUserResponse)(nil),              // 16: metadata_lifecycle.v1.BlockUserResponse
 	(*UnblockUserRequest)(nil),             // 17: metadata_lifecycle.v1.UnblockUserRequest
 	(*UnblockUserResponse)(nil),            // 18: metadata_lifecycle.v1.UnblockUserResponse
-	(*UserMembership)(nil),                 // 19: metadata_lifecycle.v1.UserMembership
-	(*RoleRequest)(nil),                    // 20: metadata_lifecycle.v1.RoleRequest
-	(GlobalPermission)(0),                  // 21: metadata_lifecycle.v1.GlobalPermission
-	(*timestamppb.Timestamp)(nil),          // 22: google.protobuf.Timestamp
-	(*Notification)(nil),                   // 23: metadata_lifecycle.v1.Notification
-	(*EntityReference)(nil),                // 24: metadata_lifecycle.v1.EntityReference
-	(GroupRole)(0),                         // 25: metadata_lifecycle.v1.GroupRole
-	(MembershipStatus)(0),                  // 26: metadata_lifecycle.v1.MembershipStatus
-	(GroupPermission)(0),                   // 27: metadata_lifecycle.v1.GroupPermission
-	(RoleRequestStatus)(0),                 // 28: metadata_lifecycle.v1.RoleRequestStatus
+	(*IssueUserAPITokenRequest)(nil),       // 19: metadata_lifecycle.v1.IssueUserAPITokenRequest
+	(*RotateUserAPITokenRequest)(nil),      // 20: metadata_lifecycle.v1.RotateUserAPITokenRequest
+	(*IssueUserAPITokenResponse)(nil),      // 21: metadata_lifecycle.v1.IssueUserAPITokenResponse
+	(*RotateUserAPITokenResponse)(nil),     // 22: metadata_lifecycle.v1.RotateUserAPITokenResponse
+	(*RevokeUserAPITokenRequest)(nil),      // 23: metadata_lifecycle.v1.RevokeUserAPITokenRequest
+	(*RevokeUserAPITokenResponse)(nil),     // 24: metadata_lifecycle.v1.RevokeUserAPITokenResponse
+	(*ValidateUserAPITokenRequest)(nil),    // 25: metadata_lifecycle.v1.ValidateUserAPITokenRequest
+	(*ValidateUserAPITokenResponse)(nil),   // 26: metadata_lifecycle.v1.ValidateUserAPITokenResponse
+	(*UserMembership)(nil),                 // 27: metadata_lifecycle.v1.UserMembership
+	(*RoleRequest)(nil),                    // 28: metadata_lifecycle.v1.RoleRequest
+	(GlobalPermission)(0),                  // 29: metadata_lifecycle.v1.GlobalPermission
+	(*timestamppb.Timestamp)(nil),          // 30: google.protobuf.Timestamp
+	(*Notification)(nil),                   // 31: metadata_lifecycle.v1.Notification
+	(*EntityReference)(nil),                // 32: metadata_lifecycle.v1.EntityReference
+	(GroupRole)(0),                         // 33: metadata_lifecycle.v1.GroupRole
+	(MembershipStatus)(0),                  // 34: metadata_lifecycle.v1.MembershipStatus
+	(GroupPermission)(0),                   // 35: metadata_lifecycle.v1.GroupPermission
+	(RoleRequestStatus)(0),                 // 36: metadata_lifecycle.v1.RoleRequestStatus
 }
 var file_metadata_lifecycle_v1_user_proto_depIdxs = []int32{
 	0,  // 0: metadata_lifecycle.v1.UserListItem.status:type_name -> metadata_lifecycle.v1.UserStatus
 	1,  // 1: metadata_lifecycle.v1.UserListItem.global_roles:type_name -> metadata_lifecycle.v1.GlobalRole
-	21, // 2: metadata_lifecycle.v1.UserListItem.global_granted_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
-	22, // 3: metadata_lifecycle.v1.UserListItem.created_at:type_name -> google.protobuf.Timestamp
-	22, // 4: metadata_lifecycle.v1.UserListItem.updated_at:type_name -> google.protobuf.Timestamp
-	21, // 5: metadata_lifecycle.v1.UserListItem.global_role_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
+	29, // 2: metadata_lifecycle.v1.UserListItem.global_granted_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
+	30, // 3: metadata_lifecycle.v1.UserListItem.created_at:type_name -> google.protobuf.Timestamp
+	30, // 4: metadata_lifecycle.v1.UserListItem.updated_at:type_name -> google.protobuf.Timestamp
+	29, // 5: metadata_lifecycle.v1.UserListItem.global_role_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
 	3,  // 6: metadata_lifecycle.v1.ListUsersResponse.users:type_name -> metadata_lifecycle.v1.UserListItem
 	0,  // 7: metadata_lifecycle.v1.GetUserResponse.status:type_name -> metadata_lifecycle.v1.UserStatus
 	1,  // 8: metadata_lifecycle.v1.GetUserResponse.global_roles:type_name -> metadata_lifecycle.v1.GlobalRole
-	21, // 9: metadata_lifecycle.v1.GetUserResponse.global_granted_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
-	22, // 10: metadata_lifecycle.v1.GetUserResponse.created_at:type_name -> google.protobuf.Timestamp
-	22, // 11: metadata_lifecycle.v1.GetUserResponse.updated_at:type_name -> google.protobuf.Timestamp
-	19, // 12: metadata_lifecycle.v1.GetUserResponse.memberships:type_name -> metadata_lifecycle.v1.UserMembership
-	21, // 13: metadata_lifecycle.v1.GetUserResponse.global_role_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
-	21, // 14: metadata_lifecycle.v1.GrantGlobalPermissionRequest.permission:type_name -> metadata_lifecycle.v1.GlobalPermission
-	23, // 15: metadata_lifecycle.v1.GrantGlobalPermissionResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	21, // 16: metadata_lifecycle.v1.RevokeGlobalPermissionRequest.permission:type_name -> metadata_lifecycle.v1.GlobalPermission
+	29, // 9: metadata_lifecycle.v1.GetUserResponse.global_granted_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
+	30, // 10: metadata_lifecycle.v1.GetUserResponse.created_at:type_name -> google.protobuf.Timestamp
+	30, // 11: metadata_lifecycle.v1.GetUserResponse.updated_at:type_name -> google.protobuf.Timestamp
+	27, // 12: metadata_lifecycle.v1.GetUserResponse.memberships:type_name -> metadata_lifecycle.v1.UserMembership
+	29, // 13: metadata_lifecycle.v1.GetUserResponse.global_role_permissions:type_name -> metadata_lifecycle.v1.GlobalPermission
+	29, // 14: metadata_lifecycle.v1.GrantGlobalPermissionRequest.permission:type_name -> metadata_lifecycle.v1.GlobalPermission
+	31, // 15: metadata_lifecycle.v1.GrantGlobalPermissionResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	29, // 16: metadata_lifecycle.v1.RevokeGlobalPermissionRequest.permission:type_name -> metadata_lifecycle.v1.GlobalPermission
 	1,  // 17: metadata_lifecycle.v1.AssignGlobalRoleRequest.role:type_name -> metadata_lifecycle.v1.GlobalRole
-	23, // 18: metadata_lifecycle.v1.AssignGlobalRoleResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	31, // 18: metadata_lifecycle.v1.AssignGlobalRoleResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
 	1,  // 19: metadata_lifecycle.v1.RemoveGlobalRoleRequest.role:type_name -> metadata_lifecycle.v1.GlobalRole
-	24, // 20: metadata_lifecycle.v1.UserMembership.group:type_name -> metadata_lifecycle.v1.EntityReference
-	25, // 21: metadata_lifecycle.v1.UserMembership.group_roles:type_name -> metadata_lifecycle.v1.GroupRole
-	26, // 22: metadata_lifecycle.v1.UserMembership.status:type_name -> metadata_lifecycle.v1.MembershipStatus
-	27, // 23: metadata_lifecycle.v1.UserMembership.granted_permissions:type_name -> metadata_lifecycle.v1.GroupPermission
-	20, // 24: metadata_lifecycle.v1.UserMembership.role_requests:type_name -> metadata_lifecycle.v1.RoleRequest
-	22, // 25: metadata_lifecycle.v1.UserMembership.created_at:type_name -> google.protobuf.Timestamp
-	22, // 26: metadata_lifecycle.v1.UserMembership.updated_at:type_name -> google.protobuf.Timestamp
-	27, // 27: metadata_lifecycle.v1.UserMembership.role_permissions:type_name -> metadata_lifecycle.v1.GroupPermission
-	25, // 28: metadata_lifecycle.v1.RoleRequest.group_role:type_name -> metadata_lifecycle.v1.GroupRole
-	28, // 29: metadata_lifecycle.v1.RoleRequest.status:type_name -> metadata_lifecycle.v1.RoleRequestStatus
-	22, // 30: metadata_lifecycle.v1.RoleRequest.requested_at:type_name -> google.protobuf.Timestamp
-	5,  // 31: metadata_lifecycle.v1.UserService.GetUser:input_type -> metadata_lifecycle.v1.GetUserRequest
-	2,  // 32: metadata_lifecycle.v1.UserService.ListUsers:input_type -> metadata_lifecycle.v1.ListUsersRequest
-	7,  // 33: metadata_lifecycle.v1.UserService.GrantGlobalPermission:input_type -> metadata_lifecycle.v1.GrantGlobalPermissionRequest
-	9,  // 34: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:input_type -> metadata_lifecycle.v1.RevokeGlobalPermissionRequest
-	11, // 35: metadata_lifecycle.v1.UserService.AssignGlobalRole:input_type -> metadata_lifecycle.v1.AssignGlobalRoleRequest
-	13, // 36: metadata_lifecycle.v1.UserService.RemoveGlobalRole:input_type -> metadata_lifecycle.v1.RemoveGlobalRoleRequest
-	15, // 37: metadata_lifecycle.v1.UserService.BlockUser:input_type -> metadata_lifecycle.v1.BlockUserRequest
-	17, // 38: metadata_lifecycle.v1.UserService.UnblockUser:input_type -> metadata_lifecycle.v1.UnblockUserRequest
-	6,  // 39: metadata_lifecycle.v1.UserService.GetUser:output_type -> metadata_lifecycle.v1.GetUserResponse
-	4,  // 40: metadata_lifecycle.v1.UserService.ListUsers:output_type -> metadata_lifecycle.v1.ListUsersResponse
-	8,  // 41: metadata_lifecycle.v1.UserService.GrantGlobalPermission:output_type -> metadata_lifecycle.v1.GrantGlobalPermissionResponse
-	10, // 42: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:output_type -> metadata_lifecycle.v1.RevokeGlobalPermissionResponse
-	12, // 43: metadata_lifecycle.v1.UserService.AssignGlobalRole:output_type -> metadata_lifecycle.v1.AssignGlobalRoleResponse
-	14, // 44: metadata_lifecycle.v1.UserService.RemoveGlobalRole:output_type -> metadata_lifecycle.v1.RemoveGlobalRoleResponse
-	16, // 45: metadata_lifecycle.v1.UserService.BlockUser:output_type -> metadata_lifecycle.v1.BlockUserResponse
-	18, // 46: metadata_lifecycle.v1.UserService.UnblockUser:output_type -> metadata_lifecycle.v1.UnblockUserResponse
-	39, // [39:47] is the sub-list for method output_type
-	31, // [31:39] is the sub-list for method input_type
+	32, // 20: metadata_lifecycle.v1.UserMembership.group:type_name -> metadata_lifecycle.v1.EntityReference
+	33, // 21: metadata_lifecycle.v1.UserMembership.group_roles:type_name -> metadata_lifecycle.v1.GroupRole
+	34, // 22: metadata_lifecycle.v1.UserMembership.status:type_name -> metadata_lifecycle.v1.MembershipStatus
+	35, // 23: metadata_lifecycle.v1.UserMembership.granted_permissions:type_name -> metadata_lifecycle.v1.GroupPermission
+	28, // 24: metadata_lifecycle.v1.UserMembership.role_requests:type_name -> metadata_lifecycle.v1.RoleRequest
+	30, // 25: metadata_lifecycle.v1.UserMembership.created_at:type_name -> google.protobuf.Timestamp
+	30, // 26: metadata_lifecycle.v1.UserMembership.updated_at:type_name -> google.protobuf.Timestamp
+	35, // 27: metadata_lifecycle.v1.UserMembership.role_permissions:type_name -> metadata_lifecycle.v1.GroupPermission
+	33, // 28: metadata_lifecycle.v1.RoleRequest.group_role:type_name -> metadata_lifecycle.v1.GroupRole
+	36, // 29: metadata_lifecycle.v1.RoleRequest.status:type_name -> metadata_lifecycle.v1.RoleRequestStatus
+	30, // 30: metadata_lifecycle.v1.RoleRequest.requested_at:type_name -> google.protobuf.Timestamp
+	19, // 31: metadata_lifecycle.v1.UserService.IssueUserAPIToken:input_type -> metadata_lifecycle.v1.IssueUserAPITokenRequest
+	20, // 32: metadata_lifecycle.v1.UserService.RotateUserAPIToken:input_type -> metadata_lifecycle.v1.RotateUserAPITokenRequest
+	23, // 33: metadata_lifecycle.v1.UserService.RevokeUserAPIToken:input_type -> metadata_lifecycle.v1.RevokeUserAPITokenRequest
+	25, // 34: metadata_lifecycle.v1.UserService.ValidateUserAPIToken:input_type -> metadata_lifecycle.v1.ValidateUserAPITokenRequest
+	5,  // 35: metadata_lifecycle.v1.UserService.GetUser:input_type -> metadata_lifecycle.v1.GetUserRequest
+	2,  // 36: metadata_lifecycle.v1.UserService.ListUsers:input_type -> metadata_lifecycle.v1.ListUsersRequest
+	7,  // 37: metadata_lifecycle.v1.UserService.GrantGlobalPermission:input_type -> metadata_lifecycle.v1.GrantGlobalPermissionRequest
+	9,  // 38: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:input_type -> metadata_lifecycle.v1.RevokeGlobalPermissionRequest
+	11, // 39: metadata_lifecycle.v1.UserService.AssignGlobalRole:input_type -> metadata_lifecycle.v1.AssignGlobalRoleRequest
+	13, // 40: metadata_lifecycle.v1.UserService.RemoveGlobalRole:input_type -> metadata_lifecycle.v1.RemoveGlobalRoleRequest
+	15, // 41: metadata_lifecycle.v1.UserService.BlockUser:input_type -> metadata_lifecycle.v1.BlockUserRequest
+	17, // 42: metadata_lifecycle.v1.UserService.UnblockUser:input_type -> metadata_lifecycle.v1.UnblockUserRequest
+	21, // 43: metadata_lifecycle.v1.UserService.IssueUserAPIToken:output_type -> metadata_lifecycle.v1.IssueUserAPITokenResponse
+	22, // 44: metadata_lifecycle.v1.UserService.RotateUserAPIToken:output_type -> metadata_lifecycle.v1.RotateUserAPITokenResponse
+	24, // 45: metadata_lifecycle.v1.UserService.RevokeUserAPIToken:output_type -> metadata_lifecycle.v1.RevokeUserAPITokenResponse
+	26, // 46: metadata_lifecycle.v1.UserService.ValidateUserAPIToken:output_type -> metadata_lifecycle.v1.ValidateUserAPITokenResponse
+	6,  // 47: metadata_lifecycle.v1.UserService.GetUser:output_type -> metadata_lifecycle.v1.GetUserResponse
+	4,  // 48: metadata_lifecycle.v1.UserService.ListUsers:output_type -> metadata_lifecycle.v1.ListUsersResponse
+	8,  // 49: metadata_lifecycle.v1.UserService.GrantGlobalPermission:output_type -> metadata_lifecycle.v1.GrantGlobalPermissionResponse
+	10, // 50: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:output_type -> metadata_lifecycle.v1.RevokeGlobalPermissionResponse
+	12, // 51: metadata_lifecycle.v1.UserService.AssignGlobalRole:output_type -> metadata_lifecycle.v1.AssignGlobalRoleResponse
+	14, // 52: metadata_lifecycle.v1.UserService.RemoveGlobalRole:output_type -> metadata_lifecycle.v1.RemoveGlobalRoleResponse
+	16, // 53: metadata_lifecycle.v1.UserService.BlockUser:output_type -> metadata_lifecycle.v1.BlockUserResponse
+	18, // 54: metadata_lifecycle.v1.UserService.UnblockUser:output_type -> metadata_lifecycle.v1.UnblockUserResponse
+	43, // [43:55] is the sub-list for method output_type
+	31, // [31:43] is the sub-list for method input_type
 	31, // [31:31] is the sub-list for extension type_name
 	31, // [31:31] is the sub-list for extension extendee
 	0,  // [0:31] is the sub-list for field type_name
@@ -1428,7 +1789,7 @@ func file_metadata_lifecycle_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_user_proto_rawDesc), len(file_metadata_lifecycle_v1_user_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   19,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
