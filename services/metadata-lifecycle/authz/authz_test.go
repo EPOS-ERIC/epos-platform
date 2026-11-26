@@ -345,9 +345,9 @@ func TestAuthorizeDiscoveryPreservesVersionVisibilityRules(t *testing.T) {
 		{Type: domain.SoftwareApplication, ResourceID: uuid.New(), VersionID: uuid.New(), GroupID: groupID, Status: domain.Draft, Name: "member draft"},
 		{Type: domain.SoftwareSourceCode, ResourceID: uuid.New(), VersionID: uuid.New(), GroupID: otherGroupID, Status: domain.Draft, Name: "other draft"},
 	}
-	actor := domain.Actor("user-1")
+	actor := "user-1"
 	result, err := New(slog.Default(), fakeRepository{
-		user:         domain.AuthorizationUser{ID: string(actor), Status: domain.UserStatusActive},
+		user:         domain.AuthorizationUser{ID: actor, Status: domain.UserStatusActive},
 		activeGroups: []uuid.UUID{groupID},
 	}).AuthorizeDiscovery(context.Background(), &actor, candidates)
 	if err != nil {
@@ -375,10 +375,10 @@ func TestAuthorizeDiscoveryUsesGlobalAdminFromAuthorizationUser(t *testing.T) {
 		Status:     domain.Draft,
 		Name:       "admin draft",
 	}
-	actor := domain.Actor("admin")
+	actor := "admin"
 	result, err := New(slog.Default(), fakeRepository{
 		user: domain.AuthorizationUser{
-			ID:          string(actor),
+			ID:          actor,
 			Status:      domain.UserStatusActive,
 			GlobalAdmin: true,
 		},

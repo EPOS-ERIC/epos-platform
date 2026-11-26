@@ -37,8 +37,8 @@ func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
 	}
 }
 
-func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain.OrganizationInput) (domain.Organization, error) {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionOrganizationManage)
+func (s *Service) Create(ctx context.Context, actorID string, input domain.OrganizationInput) (domain.Organization, error) {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionOrganizationManage)
 	if err != nil {
 		return domain.Organization{}, fmt.Errorf("authorize organization creation: %w", err)
 	}
@@ -54,12 +54,12 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain
 	return organization, nil
 }
 
-func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUID, input domain.OrganizationInput) (domain.Organization, error) {
+func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, input domain.OrganizationInput) (domain.Organization, error) {
 	if id == uuid.Nil {
 		return domain.Organization{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionOrganizationManage)
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionOrganizationManage)
 	if err != nil {
 		return domain.Organization{}, fmt.Errorf("authorize organization replacement: %w", err)
 	}
@@ -74,12 +74,12 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 	return organization, nil
 }
 
-func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID) error {
+func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionOrganizationManage)
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionOrganizationManage)
 	if err != nil {
 		return fmt.Errorf("authorize organization deletion: %w", err)
 	}

@@ -13,8 +13,8 @@ import (
 
 const tokenPrefix = "epos_pat_"
 
-func (s *Service) IssueAPIToken(ctx context.Context, actor domain.Actor, rotate bool) (string, error) {
-	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, string(actor))
+func (s *Service) IssueAPIToken(ctx context.Context, actor string, rotate bool) (string, error) {
+	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, actor)
 	if err != nil {
 		return "", fmt.Errorf("authorize API token management: %w", err)
 	}
@@ -29,9 +29,9 @@ func (s *Service) IssueAPIToken(ctx context.Context, actor domain.Actor, rotate 
 	token := tokenPrefix + base64.RawURLEncoding.EncodeToString(random[:])
 	digest := sha256.Sum256([]byte(token))
 	if rotate {
-		err = s.store.RotateAPIToken(ctx, string(actor), digest[:])
+		err = s.store.RotateAPIToken(ctx, actor, digest[:])
 	} else {
-		err = s.store.IssueAPIToken(ctx, string(actor), digest[:])
+		err = s.store.IssueAPIToken(ctx, actor, digest[:])
 	}
 	if err != nil {
 		return "", fmt.Errorf("save user API token: %w", err)
@@ -42,19 +42,19 @@ func (s *Service) IssueAPIToken(ctx context.Context, actor domain.Actor, rotate 
 		event = "user API token rotated"
 	}
 
-	s.log.InfoContext(ctx, event, "actor_id", string(actor), "target_user_id", string(actor))
+	s.log.InfoContext(ctx, event, "actor_id", actor, "target_user_id", actor)
 
 	return token, nil
 }
 
-func (s *Service) RevokeAPIToken(ctx context.Context, actor domain.Actor, userID string) error {
+func (s *Service) RevokeAPIToken(ctx context.Context, actor string, userID string) error {
 	var allowed domain.Result
 	var err error
 
-	if string(actor) == userID {
-		allowed, err = s.authorizer.AuthorizeActiveUser(ctx, string(actor))
+	if actor == userID {
+		allowed, err = s.authorizer.AuthorizeActiveUser(ctx, actor)
 	} else {
-		allowed, err = s.authorizer.AuthorizeGlobal(ctx, string(actor), domain.GlobalPermissionUserAPITokenRevoke)
+		allowed, err = s.authorizer.AuthorizeGlobal(ctx, actor, domain.GlobalPermissionUserAPITokenRevoke)
 	}
 	if err != nil {
 		return fmt.Errorf("authorize API token revocation: %w", err)
@@ -68,7 +68,7 @@ func (s *Service) RevokeAPIToken(ctx context.Context, actor domain.Actor, userID
 		return fmt.Errorf("revoke API token: %w", err)
 	}
 
-	s.log.InfoContext(ctx, "user API token revoked", "actor_id", string(actor), "target_user_id", userID)
+	s.log.InfoContext(ctx, "user API token revoked", "actor_id", actor, "target_user_id", userID)
 
 	return nil
 }

@@ -43,7 +43,7 @@ type ResourceVersionSummary struct {
 	Revision      int32
 	Status        Status
 	Name          string
-	CreatedBy     Actor
+	CreatedBy     string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	SubmittedBy   *string

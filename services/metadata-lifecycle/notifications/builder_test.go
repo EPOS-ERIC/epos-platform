@@ -33,7 +33,7 @@ func (s conversionStore) GlobalRecipients(_ context.Context, topic domain.Notifi
 
 func TestBuildConversionRequested(t *testing.T) {
 	event := domain.ConversionRequested{
-		ActorID: domain.Actor("requester-1"),
+		ActorID: "requester-1",
 		Resource: domain.NotificationResource{
 			Type:       domain.Dataset,
 			Name:       "Example dataset",

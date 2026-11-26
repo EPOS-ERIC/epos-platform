@@ -54,9 +54,9 @@ func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier
 	}
 }
 
-func (s *Service) GetByID(ctx context.Context, actorID domain.Actor, userID string) (domain.User, error) {
+func (s *Service) GetByID(ctx context.Context, actorID string, userID string) (domain.User, error) {
 	if userID == "self" {
-		userID = string(actorID)
+		userID = actorID
 	}
 
 	// Resolve self before authorization so callers can distinguish a missing
@@ -64,7 +64,7 @@ func (s *Service) GetByID(ctx context.Context, actorID domain.Actor, userID stri
 	// avoid exposing whether other user IDs exist to unauthorized callers.
 	var self domain.User
 	var err error
-	if string(actorID) == userID {
+	if actorID == userID {
 		self, err = s.store.GetUserByID(ctx, userID)
 		if apperror.IsCode(err, apperror.CodeNotFound) {
 			return domain.User{}, apperror.Default(apperror.CodeNotFound)
@@ -74,7 +74,7 @@ func (s *Service) GetByID(ctx context.Context, actorID domain.Actor, userID stri
 		}
 	}
 
-	allowed, err := s.authorizer.CanReadUser(ctx, string(actorID), userID)
+	allowed, err := s.authorizer.CanReadUser(ctx, actorID, userID)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("authorize user read: %w", err)
 	}
@@ -83,7 +83,7 @@ func (s *Service) GetByID(ctx context.Context, actorID domain.Actor, userID stri
 		return domain.User{}, apperror.Default(apperror.CodePermissionDenied)
 	}
 
-	if string(actorID) == userID {
+	if actorID == userID {
 		return self, nil
 	}
 
@@ -95,8 +95,8 @@ func (s *Service) GetByID(ctx context.Context, actorID domain.Actor, userID stri
 	return user, nil
 }
 
-func (s *Service) List(ctx context.Context, actorID domain.Actor) ([]domain.UserSummary, error) {
-	allowed, err := s.authorizer.CanListUsers(ctx, string(actorID))
+func (s *Service) List(ctx context.Context, actorID string) ([]domain.UserSummary, error) {
+	allowed, err := s.authorizer.CanListUsers(ctx, actorID)
 	if err != nil {
 		return nil, fmt.Errorf("authorize user list: %w", err)
 	}
@@ -113,8 +113,8 @@ func (s *Service) List(ctx context.Context, actorID domain.Actor) ([]domain.User
 	return users, nil
 }
 
-func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Actor, userID string, permission domain.GlobalPermission) ([]domain.Notification, error) {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionPermissionManage)
+func (s *Service) GrantGlobalPermission(ctx context.Context, actorID string, userID string, permission domain.GlobalPermission) ([]domain.Notification, error) {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionPermissionManage)
 	if err != nil {
 		return nil, fmt.Errorf("authorize global permission grant: %w", err)
 	}
@@ -123,7 +123,7 @@ func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Acto
 		return nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
-	changed, err := s.store.GrantGlobalPermission(ctx, userID, permission, string(actorID))
+	changed, err := s.store.GrantGlobalPermission(ctx, userID, permission, actorID)
 	if err != nil {
 		return nil, fmt.Errorf("grant global permission: %w", err)
 	}
@@ -145,8 +145,8 @@ func (s *Service) GrantGlobalPermission(ctx context.Context, actorID domain.Acto
 	return notifications, nil
 }
 
-func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID domain.Actor, userID string, permission domain.GlobalPermission) error {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionPermissionManage)
+func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID string, userID string, permission domain.GlobalPermission) error {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionPermissionManage)
 	if err != nil {
 		return fmt.Errorf("authorize global permission revoke: %w", err)
 	}
@@ -163,8 +163,8 @@ func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID domain.Act
 	return nil
 }
 
-func (s *Service) AssignGlobalRole(ctx context.Context, actorID domain.Actor, userID, role string) ([]domain.Notification, error) {
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
+func (s *Service) AssignGlobalRole(ctx context.Context, actorID string, userID, role string) ([]domain.Notification, error) {
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {
 		return nil, fmt.Errorf("authorize global role assignment: %w", err)
 	}
@@ -172,7 +172,7 @@ func (s *Service) AssignGlobalRole(ctx context.Context, actorID domain.Actor, us
 		return nil, apperror.Default(apperror.CodePermissionDenied)
 	}
 
-	changed, err := s.store.AssignGlobalRole(ctx, userID, string(actorID), role)
+	changed, err := s.store.AssignGlobalRole(ctx, userID, actorID, role)
 	if err != nil {
 		return nil, fmt.Errorf("assign global role: %w", err)
 	}
@@ -194,8 +194,8 @@ func (s *Service) AssignGlobalRole(ctx context.Context, actorID domain.Actor, us
 	return notifications, nil
 }
 
-func (s *Service) RemoveGlobalRole(ctx context.Context, actorID domain.Actor, userID, role string) error {
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
+func (s *Service) RemoveGlobalRole(ctx context.Context, actorID string, userID, role string) error {
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {
 		return fmt.Errorf("authorize global role removal: %w", err)
 	}
@@ -211,8 +211,8 @@ func (s *Service) RemoveGlobalRole(ctx context.Context, actorID domain.Actor, us
 	return nil
 }
 
-func (s *Service) BlockUser(ctx context.Context, actorID domain.Actor, userID, reason string) error {
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
+func (s *Service) BlockUser(ctx context.Context, actorID string, userID, reason string) error {
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {
 		return fmt.Errorf("authorize user blocking: %w", err)
 	}
@@ -220,7 +220,7 @@ func (s *Service) BlockUser(ctx context.Context, actorID domain.Actor, userID, r
 		return apperror.Default(apperror.CodePermissionDenied)
 	}
 
-	err = s.store.BlockUser(ctx, string(actorID), userID, reason)
+	err = s.store.BlockUser(ctx, actorID, userID, reason)
 	if err != nil {
 		return fmt.Errorf("block user: %w", err)
 	}
@@ -228,8 +228,8 @@ func (s *Service) BlockUser(ctx context.Context, actorID domain.Actor, userID, r
 	return nil
 }
 
-func (s *Service) UnblockUser(ctx context.Context, actorID domain.Actor, userID string) error {
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
+func (s *Service) UnblockUser(ctx context.Context, actorID string, userID string) error {
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {
 		return fmt.Errorf("authorize user unblocking: %w", err)
 	}

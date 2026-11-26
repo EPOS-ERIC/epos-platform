@@ -63,7 +63,7 @@ func (s *Service) Get(ctx context.Context, groupID, categoryID uuid.UUID) (domai
 	return item, nil
 }
 
-func (s *Service) Create(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, input domain.CategoryInput) (domain.Category, error) {
+func (s *Service) Create(ctx context.Context, actorID string, groupID uuid.UUID, input domain.CategoryInput) (domain.Category, error) {
 	if groupID == uuid.Nil {
 		return domain.Category{}, apperror.Default(apperror.CodeValidationFailed)
 	}
@@ -80,7 +80,7 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, groupID uuid
 	return item, nil
 }
 
-func (s *Service) Replace(ctx context.Context, actorID domain.Actor, groupID, categoryID uuid.UUID, input domain.CategoryInput) (domain.Category, error) {
+func (s *Service) Replace(ctx context.Context, actorID string, groupID, categoryID uuid.UUID, input domain.CategoryInput) (domain.Category, error) {
 	if groupID == uuid.Nil || categoryID == uuid.Nil {
 		return domain.Category{}, apperror.Default(apperror.CodeValidationFailed)
 	}
@@ -97,7 +97,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, groupID, ca
 	return item, nil
 }
 
-func (s *Service) Delete(ctx context.Context, actorID domain.Actor, groupID, categoryID uuid.UUID) error {
+func (s *Service) Delete(ctx context.Context, actorID string, groupID, categoryID uuid.UUID) error {
 	if groupID == uuid.Nil || categoryID == uuid.Nil {
 		return apperror.Default(apperror.CodeValidationFailed)
 	}
@@ -113,8 +113,8 @@ func (s *Service) Delete(ctx context.Context, actorID domain.Actor, groupID, cat
 	return nil
 }
 
-func (s *Service) authorize(ctx context.Context, actorID domain.Actor, groupID uuid.UUID) error {
-	allowed, err := s.authorizer.AuthorizeGroup(ctx, string(actorID), groupID, domain.GroupPermissionCategoryManage)
+func (s *Service) authorize(ctx context.Context, actorID string, groupID uuid.UUID) error {
+	allowed, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, domain.GroupPermissionCategoryManage)
 	if err != nil {
 		return fmt.Errorf("authorize category management: %w", err)
 	}

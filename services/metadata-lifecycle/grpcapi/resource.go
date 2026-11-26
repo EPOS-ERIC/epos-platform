@@ -361,7 +361,7 @@ func (s *ResourceServer) DiscardResourceDraft(ctx context.Context, request *meta
 
 //nolint:dupl // Resource lifecycle transitions intentionally mirror per-resource services.
 func (s *ResourceServer) SubmitResource(ctx context.Context, request *metadatalifecyclev1.SubmitResourceRequest) (*metadatalifecyclev1.SubmitResourceResponse, error) {
-	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, []domain.Notification, error) {
+	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor string, id, version uuid.UUID) (any, []domain.Notification, error) {
 		switch request.GetResourceType() {
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 			return s.datasets.Submit(ctx, actor, id, version)
@@ -389,7 +389,7 @@ func (s *ResourceServer) SubmitResource(ctx context.Context, request *metadatali
 }
 
 func (s *ResourceServer) WithdrawResource(ctx context.Context, request *metadatalifecyclev1.WithdrawResourceRequest) (*metadatalifecyclev1.WithdrawResourceResponse, error) {
-	record, err := s.lifecycleTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, error) {
+	record, err := s.lifecycleTransition(ctx, request, func(actor string, id, version uuid.UUID) (any, error) {
 		switch request.GetResourceType() {
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 			return s.datasets.Withdraw(ctx, actor, id, version)
@@ -492,7 +492,7 @@ func (s *ResourceServer) RejectResource(ctx context.Context, request *metadatali
 }
 
 func (s *ResourceServer) ReopenResource(ctx context.Context, request *metadatalifecyclev1.ReopenResourceRequest) (*metadatalifecyclev1.ReopenResourceResponse, error) {
-	record, err := s.lifecycleTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, error) {
+	record, err := s.lifecycleTransition(ctx, request, func(actor string, id, version uuid.UUID) (any, error) {
 		switch request.GetResourceType() {
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 			return s.datasets.Reopen(ctx, actor, id, version)
@@ -512,7 +512,7 @@ func (s *ResourceServer) ReopenResource(ctx context.Context, request *metadatali
 
 //nolint:dupl // Resource lifecycle transitions intentionally mirror per-resource services.
 func (s *ResourceServer) PublishResource(ctx context.Context, request *metadatalifecyclev1.PublishResourceRequest) (*metadatalifecyclev1.PublishResourceResponse, error) {
-	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, []domain.Notification, error) {
+	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor string, id, version uuid.UUID) (any, []domain.Notification, error) {
 		switch request.GetResourceType() {
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 			return s.datasets.Publish(ctx, actor, id, version)
@@ -538,7 +538,7 @@ func (s *ResourceServer) PublishResource(ctx context.Context, request *metadatal
 
 //nolint:dupl // Resource lifecycle transitions intentionally mirror per-resource services.
 func (s *ResourceServer) UnpublishResource(ctx context.Context, request *metadatalifecyclev1.UnpublishResourceRequest) (*metadatalifecyclev1.UnpublishResourceResponse, error) {
-	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor domain.Actor, id, version uuid.UUID) (any, []domain.Notification, error) {
+	record, notifications, err := s.lifecycleNotificationTransition(ctx, request, func(actor string, id, version uuid.UUID) (any, []domain.Notification, error) {
 		switch request.GetResourceType() {
 		case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 			return s.datasets.Unpublish(ctx, actor, id, version)
@@ -636,26 +636,26 @@ type resourceVersionRequest interface {
 	GetVersionId() string
 }
 
-func (s *ResourceServer) lifecycleRequest(ctx context.Context, request resourceVersionRequest) (domain.Actor, uuid.UUID, uuid.UUID, any, error) {
+func (s *ResourceServer) lifecycleRequest(ctx context.Context, request resourceVersionRequest) (string, uuid.UUID, uuid.UUID, any, error) {
 	if request == nil {
-		return domain.Actor(""), uuid.Nil, uuid.Nil, nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
+		return "", uuid.Nil, uuid.Nil, nil, apperror.New(apperror.CodeValidationFailed, "resource request is required")
 	}
 	actor, err := actorFromContext(ctx)
 	if err != nil {
-		return domain.Actor(""), uuid.Nil, uuid.Nil, nil, err
+		return "", uuid.Nil, uuid.Nil, nil, err
 	}
 	id, err := parseUUIDAt(request.GetResourceId(), "resource id", "id")
 	if err != nil {
-		return domain.Actor(""), uuid.Nil, uuid.Nil, nil, err
+		return "", uuid.Nil, uuid.Nil, nil, err
 	}
 	version, err := parseUUIDAt(request.GetVersionId(), "version id", "versionId")
 	if err != nil {
-		return domain.Actor(""), uuid.Nil, uuid.Nil, nil, err
+		return "", uuid.Nil, uuid.Nil, nil, err
 	}
 	return actor, id, version, nil, nil
 }
 
-func (s *ResourceServer) lifecycleTransition(ctx context.Context, request resourceVersionRequest, call func(domain.Actor, uuid.UUID, uuid.UUID) (any, error)) (*metadatalifecyclev1.ResourceRecord, error) {
+func (s *ResourceServer) lifecycleTransition(ctx context.Context, request resourceVersionRequest, call func(string, uuid.UUID, uuid.UUID) (any, error)) (*metadatalifecyclev1.ResourceRecord, error) {
 	actor, id, version, _, err := s.lifecycleRequest(ctx, request)
 	if err != nil {
 		return nil, err
@@ -667,7 +667,7 @@ func (s *ResourceServer) lifecycleTransition(ctx context.Context, request resour
 	return lifecycleResponse(result)
 }
 
-func (s *ResourceServer) lifecycleNotificationTransition(ctx context.Context, request resourceVersionRequest, call func(domain.Actor, uuid.UUID, uuid.UUID) (any, []domain.Notification, error)) (*metadatalifecyclev1.ResourceRecord, []domain.Notification, error) {
+func (s *ResourceServer) lifecycleNotificationTransition(ctx context.Context, request resourceVersionRequest, call func(string, uuid.UUID, uuid.UUID) (any, []domain.Notification, error)) (*metadatalifecyclev1.ResourceRecord, []domain.Notification, error) {
 	// TODO: to simplify this whole file with the submit/publis/reject actions which are basically the same, we could create an interface and use that to switch on the functions?
 	actor, id, version, _, err := s.lifecycleRequest(ctx, request)
 	if err != nil {
@@ -746,7 +746,7 @@ func lifecycleResponse(value any) (*metadatalifecyclev1.ResourceRecord, error) {
 	}
 }
 
-func optionalActorFromContext(ctx context.Context) (*domain.Actor, error) {
+func optionalActorFromContext(ctx context.Context) (*string, error) {
 	md, ok := grpcmetadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, nil
@@ -758,7 +758,7 @@ func optionalActorFromContext(ctx context.Context) (*domain.Actor, error) {
 	if len(values) != 1 {
 		return nil, apperror.New(apperror.CodeValidationFailed, "invalid actor")
 	}
-	actor, err := domain.NewActor(values[0])
+	actor, err := domain.NormalizeActor(values[0])
 	if err != nil {
 		return nil, apperror.New(apperror.CodeValidationFailed, "invalid actor")
 	}
@@ -1865,7 +1865,7 @@ func resourceVersionSummaryOutput(value domain.ResourceVersionSummary) *metadata
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
 		Name:          value.Name,
-		CreatedBy:     string(value.CreatedBy),
+		CreatedBy:     value.CreatedBy,
 		CreatedAt:     timestamppb.New(value.CreatedAt),
 		UpdatedAt:     timestamppb.New(value.UpdatedAt),
 		SubmittedBy:   value.SubmittedBy,

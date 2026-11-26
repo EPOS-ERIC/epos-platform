@@ -153,7 +153,7 @@ type NotificationEvent interface {
 
 // NotificationEventCommon contains data shared by all notification events.
 type NotificationEventCommon struct {
-	ActorID Actor
+	ActorID string
 }
 
 type MembershipRequested struct {

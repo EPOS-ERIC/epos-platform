@@ -67,15 +67,15 @@ func (s *Service) ListTopics(ctx context.Context) ([]domain.NotificationTopic, e
 	return result, nil
 }
 
-func (s *Service) ListSubscriptions(ctx context.Context, actor domain.Actor, userID string) ([]domain.NotificationSubscription, error) {
-	allowed, err := s.authorizer.CanManageGlobalNotificationSubscriptions(ctx, string(actor), userID)
+func (s *Service) ListSubscriptions(ctx context.Context, actor string, userID string) ([]domain.NotificationSubscription, error) {
+	allowed, err := s.authorizer.CanManageGlobalNotificationSubscriptions(ctx, actor, userID)
 	if err != nil {
 		return nil, fmt.Errorf("authorize notification subscription list: %w", err)
 	}
 
 	visibleGroupIDs := map[uuid.UUID]struct{}{}
 	if !allowed.Allowed {
-		groupIDs, err := s.authorizer.GroupsWithAnyPermissionForActiveMember(ctx, string(actor), userID, []domain.GroupPermission{domain.GroupPermissionNotificationManage})
+		groupIDs, err := s.authorizer.GroupsWithAnyPermissionForActiveMember(ctx, actor, userID, []domain.GroupPermission{domain.GroupPermissionNotificationManage})
 		if err != nil {
 			return nil, fmt.Errorf("authorize group notification subscription list: %w", err)
 		}
@@ -112,7 +112,7 @@ func (s *Service) ListSubscriptions(ctx context.Context, actor domain.Actor, use
 	return visible, nil
 }
 
-func (s *Service) Subscribe(ctx context.Context, actor domain.Actor, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) (domain.NotificationSubscription, error) {
+func (s *Service) Subscribe(ctx context.Context, actor string, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) (domain.NotificationSubscription, error) {
 	topic, err := s.authorizeSubscription(ctx, actor, userID, groupID, topicKey, channel)
 	if err != nil {
 		return domain.NotificationSubscription{}, err
@@ -130,7 +130,7 @@ func (s *Service) Subscribe(ctx context.Context, actor domain.Actor, userID stri
 	return domain.NotificationSubscription{UserID: userID, GroupID: groupID, TopicKey: topic.Key, Channel: channel}, nil
 }
 
-func (s *Service) Unsubscribe(ctx context.Context, actor domain.Actor, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) error {
+func (s *Service) Unsubscribe(ctx context.Context, actor string, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) error {
 	_, err := s.authorizeSubscription(ctx, actor, userID, groupID, topicKey, channel)
 	if err != nil {
 		return err
@@ -149,7 +149,7 @@ func (s *Service) Unsubscribe(ctx context.Context, actor domain.Actor, userID st
 	return nil
 }
 
-func (s *Service) authorizeSubscription(ctx context.Context, actor domain.Actor, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) (domain.NotificationTopic, error) {
+func (s *Service) authorizeSubscription(ctx context.Context, actor string, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) (domain.NotificationTopic, error) {
 	topic, err := s.topic(ctx, topicKey)
 	if err != nil {
 		return domain.NotificationTopic{}, err
@@ -162,7 +162,7 @@ func (s *Service) authorizeSubscription(ctx context.Context, actor domain.Actor,
 		if topic.Scope != domain.NotificationScopeGlobal {
 			return domain.NotificationTopic{}, apperror.Default(apperror.CodeValidationFailed)
 		}
-		allowed, err := s.authorizer.CanManageGlobalNotificationSubscriptions(ctx, string(actor), userID)
+		allowed, err := s.authorizer.CanManageGlobalNotificationSubscriptions(ctx, actor, userID)
 		if err != nil {
 			return domain.NotificationTopic{}, fmt.Errorf("authorize global notification subscription: %w", err)
 		}
@@ -175,7 +175,7 @@ func (s *Service) authorizeSubscription(ctx context.Context, actor domain.Actor,
 	if topic.Scope != domain.NotificationScopeGroup || *groupID == uuid.Nil {
 		return domain.NotificationTopic{}, apperror.Default(apperror.CodeValidationFailed)
 	}
-	allowed, err := s.authorizer.CanManageGroupNotificationSubscriptions(ctx, string(actor), userID, *groupID)
+	allowed, err := s.authorizer.CanManageGroupNotificationSubscriptions(ctx, actor, userID, *groupID)
 	if err != nil {
 		return domain.NotificationTopic{}, fmt.Errorf("authorize group notification subscription: %w", err)
 	}

@@ -38,7 +38,7 @@ func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, actorID domain.Actor) ([]domain.ContactPoint, error) {
+func (s *Service) List(ctx context.Context, actorID string) ([]domain.ContactPoint, error) {
 	if err := s.authorize(ctx, actorID); err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (s *Service) List(ctx context.Context, actorID domain.Actor) ([]domain.Cont
 	return contactPoints, nil
 }
 
-func (s *Service) Get(ctx context.Context, actorID domain.Actor, id uuid.UUID) (domain.ContactPoint, error) {
+func (s *Service) Get(ctx context.Context, actorID string, id uuid.UUID) (domain.ContactPoint, error) {
 	if id == uuid.Nil {
 		return domain.ContactPoint{}, apperror.Default(apperror.CodeValidationFailed)
 	}
@@ -67,7 +67,7 @@ func (s *Service) Get(ctx context.Context, actorID domain.Actor, id uuid.UUID) (
 	return contactPoint, nil
 }
 
-func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain.ContactPointInput) (domain.ContactPoint, error) {
+func (s *Service) Create(ctx context.Context, actorID string, input domain.ContactPointInput) (domain.ContactPoint, error) {
 	if err := s.authorizeManage(ctx, actorID); err != nil {
 		return domain.ContactPoint{}, err
 	}
@@ -80,7 +80,7 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain
 	return contactPoint, nil
 }
 
-func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUID, input domain.ContactPointInput) (domain.ContactPoint, error) {
+func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, input domain.ContactPointInput) (domain.ContactPoint, error) {
 	if id == uuid.Nil {
 		return domain.ContactPoint{}, apperror.Default(apperror.CodeValidationFailed)
 	}
@@ -97,7 +97,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 	return contactPoint, nil
 }
 
-func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID) error {
+func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return apperror.Default(apperror.CodeValidationFailed)
 	}
@@ -113,8 +113,8 @@ func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID
 	return nil
 }
 
-func (s *Service) authorizeManage(ctx context.Context, actorID domain.Actor) error {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionContactPointManage)
+func (s *Service) authorizeManage(ctx context.Context, actorID string) error {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionContactPointManage)
 	if err != nil {
 		return fmt.Errorf("authorize contact point management: %w", err)
 	}
@@ -124,8 +124,8 @@ func (s *Service) authorizeManage(ctx context.Context, actorID domain.Actor) err
 	return nil
 }
 
-func (s *Service) authorize(ctx context.Context, actorID domain.Actor) error {
-	allowed, err := s.authorizer.CanReadContactPoint(ctx, string(actorID))
+func (s *Service) authorize(ctx context.Context, actorID string) error {
+	allowed, err := s.authorizer.CanReadContactPoint(ctx, actorID)
 	if err != nil {
 		return fmt.Errorf("authorize contact point read: %w", err)
 	}

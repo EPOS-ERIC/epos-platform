@@ -98,7 +98,7 @@ func (s *AccessServer) RequestMembership(ctx context.Context, request *metadatal
 }
 
 func (s *AccessServer) WithdrawMembership(ctx context.Context, request *metadatalifecyclev1.WithdrawMembershipRequest) (*metadatalifecyclev1.WithdrawMembershipResponse, error) {
-	err := s.runActor(ctx, func(actor domain.Actor) error {
+	err := s.runActor(ctx, func(actor string) error {
 		groupID, err := parseAccessID(request.GroupId, "group id")
 		if err != nil {
 			return err
@@ -147,7 +147,7 @@ func (s *AccessServer) DecideMembership(ctx context.Context, request *metadatali
 }
 
 func (s *AccessServer) RevokeMembership(ctx context.Context, request *metadatalifecyclev1.RevokeMembershipRequest) (*metadatalifecyclev1.RevokeMembershipResponse, error) {
-	err := s.runActor(ctx, func(actor domain.Actor) error {
+	err := s.runActor(ctx, func(actor string) error {
 		groupID, err := parseAccessID(request.GroupId, "group id")
 		if err != nil {
 			return err
@@ -221,7 +221,7 @@ func (s *AccessServer) DecideRoleRequest(ctx context.Context, request *metadatal
 }
 
 func (s *AccessServer) WithdrawRoleRequest(ctx context.Context, request *metadatalifecyclev1.WithdrawRoleRequestRequest) (*metadatalifecyclev1.WithdrawRoleRequestResponse, error) {
-	err := s.runActor(ctx, func(actor domain.Actor) error {
+	err := s.runActor(ctx, func(actor string) error {
 		groupID, err := parseAccessID(request.GroupId, "group id")
 		if err != nil {
 			return err
@@ -323,7 +323,7 @@ func (s *AccessServer) RevokePermission(ctx context.Context, request *metadatali
 	return &metadatalifecyclev1.RevokePermissionResponse{}, nil
 }
 
-func (s *AccessServer) runActor(ctx context.Context, f func(domain.Actor) error) error {
+func (s *AccessServer) runActor(ctx context.Context, f func(string) error) error {
 	actor, err := actorFromContext(ctx)
 	if err != nil {
 		return err

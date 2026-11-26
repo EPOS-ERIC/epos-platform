@@ -64,8 +64,8 @@ type SoftwareSourceCodeVersion struct {
 	VersionID            uuid.UUID
 	Revision             int32
 	Status               Status
-	CreatedBy            Actor
-	SubmittedBy          *Actor
+	CreatedBy            string
+	SubmittedBy          *string
 	Group                Group
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
@@ -212,13 +212,13 @@ func (value *SoftwareSourceCodeVersion) Normalize() (err error) {
 	if !value.Status.Valid() {
 		return fmt.Errorf("software source code status %q is invalid: %w", value.Status, apperror.Default(apperror.CodeValidationFailed))
 	}
-	actor, err := NewActor(string(value.CreatedBy))
+	actor, err := NormalizeActor(value.CreatedBy)
 	if err != nil {
 		return fmt.Errorf("software source code creator: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.CreatedBy = actor
 	if value.SubmittedBy != nil {
-		submittedBy, err := NewActor(string(*value.SubmittedBy))
+		submittedBy, err := NormalizeActor(*value.SubmittedBy)
 		if err != nil {
 			return fmt.Errorf("software source code submitter: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 		}

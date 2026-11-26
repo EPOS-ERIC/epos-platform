@@ -202,7 +202,7 @@ func (u *UserServer) UnblockUser(ctx context.Context, request *metadatalifecycle
 	return &metadatalifecyclev1.UnblockUserResponse{}, nil
 }
 
-func actorFromContext(ctx context.Context) (domain.Actor, error) {
+func actorFromContext(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", apperror.New(apperror.CodeUnauthenticated, "actor required")
@@ -213,7 +213,7 @@ func actorFromContext(ctx context.Context) (domain.Actor, error) {
 		return "", apperror.New(apperror.CodeUnauthenticated, "actor required")
 	}
 
-	actor, err := domain.NewActor(values[0])
+	actor, err := domain.NormalizeActor(values[0])
 	if err != nil {
 		return "", apperror.New(apperror.CodeValidationFailed, "invalid actor")
 	}

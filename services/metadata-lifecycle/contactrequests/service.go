@@ -19,7 +19,7 @@ type targetReader interface {
 }
 
 type userReader interface {
-	GetByID(context.Context, domain.Actor, string) (domain.User, error)
+	GetByID(context.Context, string, string) (domain.User, error)
 }
 
 type Service struct {
@@ -46,7 +46,7 @@ type PreparedEmail struct {
 	Body        string
 }
 
-func (s *Service) Prepare(ctx context.Context, actor domain.Actor, target Target, message string) ([]PreparedEmail, error) {
+func (s *Service) Prepare(ctx context.Context, actor string, target Target, message string) ([]PreparedEmail, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (s *Service) Prepare(ctx context.Context, actor domain.Actor, target Target
 		return nil, apperror.New(apperror.CodeNotFound, "No contact points are available for this resource.")
 	}
 
-	user, err := s.users.GetByID(ctx, actor, string(actor))
+	user, err := s.users.GetByID(ctx, actor, actor)
 	if err != nil {
 		return nil, fmt.Errorf("get contact request sender: %w", err)
 	}

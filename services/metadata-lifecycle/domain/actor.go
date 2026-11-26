@@ -6,21 +6,11 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 )
 
-// Actor identifies the user performing a request.
-type Actor string
-
-// NewActor validates and normalizes an actor identifier.
-func NewActor(value string) (Actor, error) {
+// NormalizeActor validates and normalizes an actor identifier.
+func NormalizeActor(value string) (string, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {
 		return "", apperror.Default(apperror.CodeValidationFailed)
 	}
-	return Actor(value), nil
-}
-
-func (a *Actor) OptionalString() *string {
-	if a == nil {
-		return nil
-	}
-	return new(string(*a))
+	return value, nil
 }

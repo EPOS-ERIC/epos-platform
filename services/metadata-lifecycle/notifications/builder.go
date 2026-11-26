@@ -187,8 +187,8 @@ func (s *Service) render(ctx context.Context, event domain.NotificationEvent) (s
 		"pageURL":          s.pageURL,
 		"resourceURL":      s.resourceURL,
 		"groupRequestsURL": s.groupRequestsURL,
-		"userLabel":        func(id domain.Actor) string { return s.userLabel(ctx, id) },
-		"subjectLabel":     func(id string) string { return s.userLabel(ctx, domain.Actor(id)) },
+		"userLabel":        func(id string) string { return s.userLabel(ctx, id) },
+		"subjectLabel":     func(id string) string { return s.userLabel(ctx, id) },
 		"groupLabel":       func(id uuid.UUID) string { return s.groupLabel(ctx, id) },
 	}).ParseFS(templateFiles, "*.html")
 	if err != nil {
@@ -223,7 +223,7 @@ func (s *Service) groupLabel(ctx context.Context, id uuid.UUID) string {
 	return fmt.Sprintf("%s (concept: %s, group ID: %s)", name, concept, id)
 }
 
-func (s *Service) userLabel(ctx context.Context, id domain.Actor) string {
+func (s *Service) userLabel(ctx context.Context, id string) string {
 	user, err := s.store.GetNotificationUserContext(ctx, string(id))
 	if err != nil {
 		s.log.WarnContext(ctx, "resolve notification user failed", "user_id", id, "error", err)
