@@ -7396,6 +7396,7 @@ const (
 	GlobalPermissionGlobalMembershipManage    GlobalPermission = "global.membership.manage"
 	GlobalPermissionGlobalRoleManage          GlobalPermission = "global.role.manage"
 	GlobalPermissionGlobalPermissionManage    GlobalPermission = "global.permission.manage"
+	GlobalPermissionGlobalUserAPITokenRevoke  GlobalPermission = "global.user_api_token.revoke"
 	GlobalPermissionGlobalNotificationManage  GlobalPermission = "global.notification.manage"
 	GlobalPermissionGlobalOrganizationManage  GlobalPermission = "global.organization.manage"
 	GlobalPermissionGlobalContactPointManage  GlobalPermission = "global.contact_point.manage"
@@ -7421,6 +7422,7 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalMembershipManage,
 		GlobalPermissionGlobalRoleManage,
 		GlobalPermissionGlobalPermissionManage,
+		GlobalPermissionGlobalUserAPITokenRevoke,
 		GlobalPermissionGlobalNotificationManage,
 		GlobalPermissionGlobalOrganizationManage,
 		GlobalPermissionGlobalContactPointManage,
@@ -7449,6 +7451,8 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 	case GlobalPermissionGlobalRoleManage:
 		return []byte(s), nil
 	case GlobalPermissionGlobalPermissionManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalUserAPITokenRevoke:
 		return []byte(s), nil
 	case GlobalPermissionGlobalNotificationManage:
 		return []byte(s), nil
@@ -7500,6 +7504,9 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 		return nil
 	case GlobalPermissionGlobalPermissionManage:
 		*s = GlobalPermissionGlobalPermissionManage
+		return nil
+	case GlobalPermissionGlobalUserAPITokenRevoke:
+		*s = GlobalPermissionGlobalUserAPITokenRevoke
 		return nil
 	case GlobalPermissionGlobalNotificationManage:
 		*s = GlobalPermissionGlobalNotificationManage
@@ -14411,6 +14418,12 @@ type RevokeGlobalPermissionNoContent struct{}
 // RevokeGroupPermissionNoContent is response for RevokeGroupPermission operation.
 type RevokeGroupPermissionNoContent struct{}
 
+// RevokeSelfUserAPITokenNoContent is response for RevokeSelfUserAPIToken operation.
+type RevokeSelfUserAPITokenNoContent struct{}
+
+// RevokeUserAPITokenNoContent is response for RevokeUserAPIToken operation.
+type RevokeUserAPITokenNoContent struct{}
+
 // Ref: #/components/schemas/RoleRequest
 type RoleRequest struct {
 	ID          uuid.UUID         `json:"id"`
@@ -17247,6 +17260,47 @@ func (s *User) SetMemberships(val []UserMembershipSummary) {
 // SetBlockReason sets the value of BlockReason.
 func (s *User) SetBlockReason(val OptNilString) {
 	s.BlockReason = val
+}
+
+// Ref: #/components/schemas/UserAPIToken
+type UserAPIToken struct {
+	Token string `json:"token"`
+}
+
+// GetToken returns the value of Token.
+func (s *UserAPIToken) GetToken() string {
+	return s.Token
+}
+
+// SetToken sets the value of Token.
+func (s *UserAPIToken) SetToken(val string) {
+	s.Token = val
+}
+
+// UserAPITokenHeaders wraps UserAPIToken with response headers.
+type UserAPITokenHeaders struct {
+	CacheControl PrepareDistributionOKCacheControl
+	Response     UserAPIToken
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *UserAPITokenHeaders) GetCacheControl() PrepareDistributionOKCacheControl {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *UserAPITokenHeaders) GetResponse() UserAPIToken {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *UserAPITokenHeaders) SetCacheControl(val PrepareDistributionOKCacheControl) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *UserAPITokenHeaders) SetResponse(val UserAPIToken) {
+	s.Response = val
 }
 
 // User record returned by the user list endpoint.

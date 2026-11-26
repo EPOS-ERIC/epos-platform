@@ -1,8 +1,10 @@
 package domain
 
-import "github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
+import (
+	"fmt"
 
-import "fmt"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
+)
 
 type NativeFormat struct {
 	OutputFormat string

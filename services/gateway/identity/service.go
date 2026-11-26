@@ -55,3 +55,12 @@ func (s *Service) EnsureUser(ctx context.Context, identity domain.ActorIdentity)
 
 	return user, nil
 }
+
+func (s *Service) UserForAPIToken(ctx context.Context, digest []byte) (domain.User, error) {
+	userID, err := s.metadataLifecycle.ValidateUserAPIToken(ctx, digest)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	return s.GetUser(ctx, userID, userID)
+}

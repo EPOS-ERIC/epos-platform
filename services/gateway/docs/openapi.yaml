@@ -11,7 +11,7 @@ info:
 
     Authentication:
     - Public catalogue reads do not require credentials.
-    - Supply an OAuth2 bearer token for authenticated reads and metadata write operations. Published distribution access permits anonymous requests.
+    - Supply an OAuth2 bearer token or user API token for authenticated operations. Token management requires OAuth2. Published distribution access permits anonymous requests.
     - JSON request bodies must use `Content-Type: application/json`; other media types receive `415`.
     - Error responses use `application/problem+json` unless noted otherwise.
     - Operations backed by Metadata Lifecycle can return `503` when it is unavailable or `504` when a request times out.
@@ -1750,6 +1750,88 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /users/self/api-token:
+    post:
+      tags: [Users]
+      summary: Issue a user API token
+      description: Issue one non-expiring token for the authenticated user. Requires OAuth; the secret is returned once. Returns 409 if a token already exists.
+      operationId: issueUserAPIToken
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Token issued
+          headers:
+            Cache-Control:
+              required: true
+              schema: { type: string, enum: [no-store] }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserAPIToken" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+    delete:
+      tags: [Users]
+      summary: Revoke own API token
+      description: Requires OAuth. Succeeds if no token exists.
+      operationId: revokeSelfUserAPIToken
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Token revoked or absent
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /users/self/api-token/rotate:
+    post:
+      tags: [Users]
+      summary: Rotate a user API token
+      description: Replace the authenticated user's token. Requires OAuth; the secret is returned once. Returns 404 if no token exists.
+      operationId: rotateUserAPIToken
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Token rotated
+          headers:
+            Cache-Control:
+              required: true
+              schema: { type: string, enum: [no-store] }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserAPIToken" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /users/{userId}/api-token:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: { type: string, minLength: 1 }
+    delete:
+      tags: [Users]
+      summary: Revoke a user API token
+      description: Requires OAuth. Use self for your own token; revoking another user's token requires global.user_api_token.revoke.
+      operationId: revokeUserAPIToken
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Token revoked or absent
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /users/{id}:
     parameters:
       - $ref: "#/components/parameters/GetUserID"
@@ -2784,6 +2866,12 @@ components:
                 detail: "A required service is unavailable."
 
   schemas:
+    UserAPIToken:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
     Capabilities:
       type: object
       required: [metadata_sync, authentication, notifications]
@@ -3068,6 +3156,7 @@ components:
         - global.membership.manage
         - global.role.manage
         - global.permission.manage
+        - global.user_api_token.revoke
         - global.notification.manage
         - global.organization.manage
         - global.contact_point.manage

@@ -297,7 +297,10 @@ func (q *Queries) DecideRoleRequest(ctx context.Context, arg DecideRoleRequestPa
 const getGroupMembership = `-- name: GetGroupMembership :one
 SELECT
     membership.user_id, membership.group_id, membership.status, membership.created_at, membership.updated_at,
-    users.id, users.family_name, users.given_name, users.email, users.status, users.block_reason, users.blocked_by, users.blocked_at, users.created_at, users.updated_at
+    users.id AS member_id,
+    users.given_name,
+    users.family_name,
+    users.email
 FROM
     group_memberships AS membership
     JOIN users ON users.id = membership.user_id
@@ -313,7 +316,10 @@ type GetGroupMembershipParams struct {
 
 type GetGroupMembershipRow struct {
 	GroupMembership GroupMembership
-	User            User
+	MemberID        string
+	GivenName       string
+	FamilyName      string
+	Email           string
 }
 
 func (q *Queries) GetGroupMembership(ctx context.Context, arg GetGroupMembershipParams) (GetGroupMembershipRow, error) {
@@ -325,16 +331,10 @@ func (q *Queries) GetGroupMembership(ctx context.Context, arg GetGroupMembership
 		&i.GroupMembership.Status,
 		&i.GroupMembership.CreatedAt,
 		&i.GroupMembership.UpdatedAt,
-		&i.User.ID,
-		&i.User.FamilyName,
-		&i.User.GivenName,
-		&i.User.Email,
-		&i.User.Status,
-		&i.User.BlockReason,
-		&i.User.BlockedBy,
-		&i.User.BlockedAt,
-		&i.User.CreatedAt,
-		&i.User.UpdatedAt,
+		&i.MemberID,
+		&i.GivenName,
+		&i.FamilyName,
+		&i.Email,
 	)
 	return i, err
 }
@@ -573,7 +573,10 @@ func (q *Queries) ListGroupMembershipRoles(ctx context.Context, groupID uuid.UUI
 const listGroupMemberships = `-- name: ListGroupMemberships :many
 SELECT
     membership.user_id, membership.group_id, membership.status, membership.created_at, membership.updated_at,
-    users.id, users.family_name, users.given_name, users.email, users.status, users.block_reason, users.blocked_by, users.blocked_at, users.created_at, users.updated_at
+    users.id AS member_id,
+    users.given_name,
+    users.family_name,
+    users.email
 FROM
     group_memberships AS membership
     JOIN users ON users.id = membership.user_id
@@ -587,7 +590,10 @@ ORDER BY
 
 type ListGroupMembershipsRow struct {
 	GroupMembership GroupMembership
-	User            User
+	MemberID        string
+	GivenName       string
+	FamilyName      string
+	Email           string
 }
 
 func (q *Queries) ListGroupMemberships(ctx context.Context, groupID uuid.UUID) ([]ListGroupMembershipsRow, error) {
@@ -605,16 +611,10 @@ func (q *Queries) ListGroupMemberships(ctx context.Context, groupID uuid.UUID) (
 			&i.GroupMembership.Status,
 			&i.GroupMembership.CreatedAt,
 			&i.GroupMembership.UpdatedAt,
-			&i.User.ID,
-			&i.User.FamilyName,
-			&i.User.GivenName,
-			&i.User.Email,
-			&i.User.Status,
-			&i.User.BlockReason,
-			&i.User.BlockedBy,
-			&i.User.BlockedAt,
-			&i.User.CreatedAt,
-			&i.User.UpdatedAt,
+			&i.MemberID,
+			&i.GivenName,
+			&i.FamilyName,
+			&i.Email,
 		); err != nil {
 			return nil, err
 		}

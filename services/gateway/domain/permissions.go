@@ -9,6 +9,7 @@ const (
 	GlobalPermissionMembershipManage    GlobalPermission = "global.membership.manage"
 	GlobalPermissionRoleManage          GlobalPermission = "global.role.manage"
 	GlobalPermissionPermissionManage    GlobalPermission = "global.permission.manage"
+	GlobalPermissionUserAPITokenRevoke  GlobalPermission = "global.user_api_token.revoke"
 	GlobalPermissionNotificationManage  GlobalPermission = "global.notification.manage"
 	GlobalPermissionOrganizationManage  GlobalPermission = "global.organization.manage"
 	GlobalPermissionContactPointManage  GlobalPermission = "global.contact_point.manage"
@@ -54,6 +55,7 @@ func NewGlobalPermission(value string) (GlobalPermission, error) {
 	case GlobalPermissionMembershipManage,
 		GlobalPermissionRoleManage,
 		GlobalPermissionPermissionManage,
+		GlobalPermissionUserAPITokenRevoke,
 		GlobalPermissionNotificationManage,
 		GlobalPermissionOrganizationManage,
 		GlobalPermissionContactPointManage,

@@ -97,10 +97,10 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 	for _, row := range rows {
 		membership, err := toDomainGroupMembership(
 			domain.MembershipUser{
-				ID:         row.User.ID,
-				GivenName:  row.User.GivenName,
-				FamilyName: row.User.FamilyName,
-				Email:      row.User.Email,
+				ID:         row.MemberID,
+				GivenName:  row.GivenName,
+				FamilyName: row.FamilyName,
+				Email:      row.Email,
 			},
 			row.GroupMembership,
 			rolesByUser[row.GroupMembership.UserID],
@@ -689,10 +689,10 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 
 	membership, err := toDomainGroupMembership(
 		domain.MembershipUser{
-			ID:         row.User.ID,
-			GivenName:  row.User.GivenName,
-			FamilyName: row.User.FamilyName,
-			Email:      row.User.Email,
+			ID:         row.MemberID,
+			GivenName:  row.GivenName,
+			FamilyName: row.FamilyName,
+			Email:      row.Email,
 		},
 		row.GroupMembership,
 		memberRoles,

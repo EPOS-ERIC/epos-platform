@@ -1,7 +1,10 @@
 -- name: ListGroupMemberships :many
 SELECT
     sqlc.embed(membership),
-    sqlc.embed(users)
+    users.id AS member_id,
+    users.given_name,
+    users.family_name,
+    users.email
 FROM
     group_memberships AS membership
     JOIN users ON users.id = membership.user_id
@@ -15,7 +18,10 @@ ORDER BY
 -- name: GetGroupMembership :one
 SELECT
     sqlc.embed(membership),
-    sqlc.embed(users)
+    users.id AS member_id,
+    users.given_name,
+    users.family_name,
+    users.email
 FROM
     group_memberships AS membership
     JOIN users ON users.id = membership.user_id

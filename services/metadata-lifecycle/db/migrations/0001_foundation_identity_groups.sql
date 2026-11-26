@@ -24,16 +24,17 @@ CREATE TABLE concepts (
 INSERT INTO concepts (name) VALUES ('Data'), ('Facilities'), ('Software');
 
 CREATE TABLE users (
-    id              text PRIMARY KEY,
-    family_name     nonblank_text NOT NULL,
-    given_name      nonblank_text NOT NULL,
-    email           nonblank_text NOT NULL UNIQUE,
-    status          user_status NOT NULL DEFAULT 'ACTIVE',
-    block_reason    nonblank_text_opt,
-    blocked_by      text REFERENCES users(id) ON DELETE RESTRICT,
-    blocked_at      timestamptz,
-    created_at      timestamptz NOT NULL DEFAULT now(),
-    updated_at      timestamptz NOT NULL DEFAULT now(),
+    id               text PRIMARY KEY,
+    family_name      nonblank_text NOT NULL,
+    given_name       nonblank_text NOT NULL,
+    email            nonblank_text NOT NULL UNIQUE,
+    status           user_status NOT NULL DEFAULT 'ACTIVE',
+    block_reason     nonblank_text_opt,
+    blocked_by       text REFERENCES users(id) ON DELETE RESTRICT,
+    blocked_at       timestamptz,
+    api_token_digest bytea UNIQUE,
+    created_at       timestamptz NOT NULL DEFAULT now(),
+    updated_at       timestamptz NOT NULL DEFAULT now(),
     CHECK ((status = 'BLOCKED') = (block_reason IS NOT NULL AND blocked_by IS NOT NULL AND blocked_at IS NOT NULL))
 );
 

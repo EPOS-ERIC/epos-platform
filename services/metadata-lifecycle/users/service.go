@@ -20,6 +20,10 @@ type Store interface {
 	RemoveGlobalRole(context.Context, string, string) error
 	BlockUser(context.Context, string, string, string) error
 	UnblockUser(context.Context, string) error
+	IssueAPIToken(context.Context, string, []byte) error
+	RotateAPIToken(context.Context, string, []byte) error
+	RevokeAPIToken(context.Context, string) error
+	FindUserByTokenDigest(context.Context, []byte) (string, error)
 }
 
 type Authorizer interface {
@@ -27,6 +31,7 @@ type Authorizer interface {
 	CanListUsers(context.Context, string) (domain.Result, error)
 	AuthorizeAdmin(context.Context, string) (domain.Result, error)
 	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
+	AuthorizeActiveUser(context.Context, string) (domain.Result, error)
 }
 
 type Notifier interface {

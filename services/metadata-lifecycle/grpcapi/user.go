@@ -382,6 +382,8 @@ func toProtoGlobalPermission(value domain.GlobalPermission) (metadatalifecyclev1
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ROLE_MANAGE, nil
 	case domain.GlobalPermissionPermissionManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE, nil
+	case domain.GlobalPermissionUserAPITokenRevoke:
+		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_USER_API_TOKEN_REVOKE, nil
 	case domain.GlobalPermissionNotificationManage:
 		return metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE, nil
 	case domain.GlobalPermissionOrganizationManage:
@@ -429,6 +431,8 @@ func toDomainGlobalPermission(value metadatalifecyclev1.GlobalPermission) (domai
 		return domain.GlobalPermissionRoleManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_PERMISSION_MANAGE:
 		return domain.GlobalPermissionPermissionManage, nil
+	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_USER_API_TOKEN_REVOKE:
+		return domain.GlobalPermissionUserAPITokenRevoke, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_NOTIFICATION_MANAGE:
 		return domain.GlobalPermissionNotificationManage, nil
 	case metadatalifecyclev1.GlobalPermission_GLOBAL_PERMISSION_ORGANIZATION_MANAGE:

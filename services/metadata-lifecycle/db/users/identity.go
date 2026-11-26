@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
@@ -19,13 +20,15 @@ import (
 
 type Repo struct {
 	*sqlc.Queries
-	db *pgxpool.Pool
+	db  *pgxpool.Pool
+	log *slog.Logger
 }
 
-func New(db *pgxpool.Pool) *Repo {
+func New(log *slog.Logger, db *pgxpool.Pool) *Repo {
 	return &Repo{
 		Queries: sqlc.New(db),
 		db:      db,
+		log:     log,
 	}
 }
 
@@ -363,6 +366,7 @@ func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) er
 		return fmt.Errorf("identity database pool is not configured")
 	}
 
+	var revoked bool
 	err := dbtx.Run(ctx, r.db, r.Queries, func(queries *sqlc.Queries) error {
 		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
 			return fmt.Errorf("lock global admin changes: %w", err)
@@ -388,6 +392,12 @@ func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) er
 			return nil
 		}
 
+		count, err := queries.RevokeUserAPIToken(ctx, userID)
+		if err != nil {
+			return fmt.Errorf("revoke blocked user's API token: %w", err)
+		}
+		revoked = count != 0
+
 		admins, err := queries.CountActiveGlobalAdmins(ctx)
 		if err != nil {
 			return fmt.Errorf("count active global admins: %w", err)
@@ -400,6 +410,10 @@ func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) er
 	})
 	if err != nil {
 		return fmt.Errorf("block user transaction: %w", err)
+	}
+
+	if revoked {
+		r.log.InfoContext(ctx, "user API token revoked", "actor_id", actorID, "target_user_id", userID)
 	}
 
 	return nil

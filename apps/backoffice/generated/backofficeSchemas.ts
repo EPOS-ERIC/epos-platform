@@ -3,6 +3,10 @@
  *
  * @version 1.0.0
  */
+export type UserAPIToken = {
+  token: string;
+};
+
 export type Capabilities = {
   /**
    * Shared management mode for organizations and contact points.
@@ -325,6 +329,7 @@ export type GlobalPermission =
   | "global.membership.manage"
   | "global.role.manage"
   | "global.permission.manage"
+  | "global.user_api_token.revoke"
   | "global.notification.manage"
   | "global.organization.manage"
   | "global.contact_point.manage"

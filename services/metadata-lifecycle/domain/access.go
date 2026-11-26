@@ -92,6 +92,7 @@ func ParseGlobalPermission(value string) (GlobalPermission, error) {
 	case GlobalPermissionMembershipManage,
 		GlobalPermissionRoleManage,
 		GlobalPermissionPermissionManage,
+		GlobalPermissionUserAPITokenRevoke,
 		GlobalPermissionNotificationManage,
 		GlobalPermissionOrganizationManage,
 		GlobalPermissionContactPointManage,
