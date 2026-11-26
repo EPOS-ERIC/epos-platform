@@ -20,7 +20,7 @@ type Store interface {
 	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, domain.SoftwareSourceCodeDraftInput) (domain.SoftwareSourceCodeVersion, error)
 	Submit(context.Context, string, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 	Withdraw(context.Context, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
-	Reject(context.Context, string, uuid.UUID, uuid.UUID, domain.SoftwareSourceCodeRejectionInput) (domain.SoftwareSourceCodeVersion, error)
+	Reject(context.Context, string, uuid.UUID, uuid.UUID, domain.RejectionInput) (domain.SoftwareSourceCodeVersion, error)
 	Reopen(context.Context, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 	Publish(context.Context, string, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 	Discard(context.Context, uuid.UUID, uuid.UUID) error
@@ -49,6 +49,18 @@ type Service struct {
 }
 
 func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier) *Service {
+	if log == nil {
+		panic("softwaresourcecodes: nil logger")
+	}
+	if store == nil {
+		panic("softwaresourcecodes: nil store")
+	}
+	if authorizer == nil {
+		panic("softwaresourcecodes: nil authorizer")
+	}
+	if notifier == nil {
+		panic("softwaresourcecodes: nil notifier")
+	}
 	return &Service{
 		store:      store,
 		authorizer: authorizer,
@@ -57,18 +69,18 @@ func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier
 	}
 }
 
-func (s *Service) CreateDraft(ctx context.Context, actor domain.Actor, groupID uuid.UUID, value domain.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeVersion, error) {
+func (s *Service) CreateDraft(ctx context.Context, actor string, groupID uuid.UUID, value domain.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeVersion, error) {
 	if err := s.authorizeGroup(ctx, actor, groupID, domain.GroupPermissionResourceCreate); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize draft creation", err)
 	}
-	sourceCode, err := s.store.CreateDraft(ctx, string(actor), groupID, value)
+	sourceCode, err := s.store.CreateDraft(ctx, actor, groupID, value)
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("create draft", err)
 	}
 	return sourceCode, nil
 }
 
-func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeDraftInput) (domain.SoftwareSourceCodeVersion, error) {
+func (s *Service) ReplaceDraft(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeDraftInput) (domain.SoftwareSourceCodeVersion, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceEdit); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize draft replacement", err)
 	}
@@ -79,8 +91,8 @@ func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, sourceCo
 	return sourceCode, nil
 }
 
-func (s *Service) Read(ctx context.Context, actor *domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
-	result, err := s.authorizer.CanReadSoftwareSourceCodeVersion(ctx, actor.OptionalString(), sourceCodeID, versionID)
+func (s *Service) Read(ctx context.Context, actor *string, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
+	result, err := s.authorizer.CanReadSoftwareSourceCodeVersion(ctx, actor, sourceCodeID, versionID)
 	if apperror.IsCode(err, apperror.CodeNotFound) {
 		return domain.SoftwareSourceCodeVersion{}, apperror.Default(apperror.CodeNotFound)
 	}
@@ -98,8 +110,8 @@ func (s *Service) Read(ctx context.Context, actor *domain.Actor, sourceCodeID, v
 	return sourceCode, nil
 }
 
-func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
-	result, err := s.authorizer.CanReadResourceVersions(ctx, string(actor), domain.SoftwareSourceCode, sourceCodeID)
+func (s *Service) ListVersions(ctx context.Context, actor string, sourceCodeID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
+	result, err := s.authorizer.CanReadResourceVersions(ctx, actor, domain.SoftwareSourceCode, sourceCodeID)
 	if err != nil {
 		return nil, operationError("authorize source code version history", err)
 	}
@@ -115,12 +127,12 @@ func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, sourceCo
 }
 
 //nolint:dupl // Resource lifecycle notification paths intentionally mirror each other.
-func (s *Service) Submit(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
+func (s *Service) Submit(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceSubmit); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, nil, operationError("authorize submission", err)
 	}
 
-	sourceCode, err := s.store.Submit(ctx, string(actor), sourceCodeID, versionID)
+	sourceCode, err := s.store.Submit(ctx, actor, sourceCodeID, versionID)
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, nil, operationError("submit draft", err)
 	}
@@ -128,7 +140,7 @@ func (s *Service) Submit(ctx context.Context, actor domain.Actor, sourceCodeID, 
 	notifications, buildErr := s.notifier.Build(ctx, domain.ResourceSubmitted{
 		ActorID:  actor,
 		GroupID:  sourceCode.Group.ID,
-		Resource: *sourceCodeNotificationResource(sourceCode),
+		Resource: sourceCodeNotificationResource(sourceCode),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceSubmitted, "error", buildErr)
@@ -138,7 +150,7 @@ func (s *Service) Submit(ctx context.Context, actor domain.Actor, sourceCodeID, 
 	return sourceCode, notifications, nil
 }
 
-func (s *Service) Withdraw(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
+func (s *Service) Withdraw(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceWithdraw); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize withdrawal", err)
 	}
@@ -146,12 +158,12 @@ func (s *Service) Withdraw(ctx context.Context, actor domain.Actor, sourceCodeID
 	return sourceCode, operationError("withdraw submission", err)
 }
 
-func (s *Service) Reject(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID, value domain.SoftwareSourceCodeRejectionInput) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
+func (s *Service) Reject(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID, value domain.RejectionInput) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceReject); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, nil, operationError("authorize rejection", err)
 	}
 
-	sourceCode, err := s.store.Reject(ctx, string(actor), sourceCodeID, versionID, value)
+	sourceCode, err := s.store.Reject(ctx, actor, sourceCodeID, versionID, value)
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, nil, operationError("reject submission", err)
 	}
@@ -159,7 +171,7 @@ func (s *Service) Reject(ctx context.Context, actor domain.Actor, sourceCodeID, 
 	notifications, buildErr := s.notifier.Build(ctx, domain.ResourceRejected{
 		ActorID:  actor,
 		GroupID:  sourceCode.Group.ID,
-		Resource: *sourceCodeNotificationResource(sourceCode),
+		Resource: sourceCodeNotificationResource(sourceCode),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceRejected, "error", buildErr)
@@ -169,7 +181,7 @@ func (s *Service) Reject(ctx context.Context, actor domain.Actor, sourceCodeID, 
 	return sourceCode, notifications, nil
 }
 
-func (s *Service) Reopen(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
+func (s *Service) Reopen(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceReopen); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize reopening", err)
 	}
@@ -178,12 +190,12 @@ func (s *Service) Reopen(ctx context.Context, actor domain.Actor, sourceCodeID, 
 }
 
 //nolint:dupl // Resource lifecycle notification paths intentionally mirror each other.
-func (s *Service) Publish(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
+func (s *Service) Publish(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourcePublish); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, nil, operationError("authorize publication", err)
 	}
 
-	sourceCode, err := s.store.Publish(ctx, string(actor), sourceCodeID, versionID)
+	sourceCode, err := s.store.Publish(ctx, actor, sourceCodeID, versionID)
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, nil, operationError("publish version", err)
 	}
@@ -191,7 +203,7 @@ func (s *Service) Publish(ctx context.Context, actor domain.Actor, sourceCodeID,
 	notifications, buildErr := s.notifier.Build(ctx, domain.ResourcePublished{
 		ActorID:  actor,
 		GroupID:  sourceCode.Group.ID,
-		Resource: *sourceCodeNotificationResource(sourceCode),
+		Resource: sourceCodeNotificationResource(sourceCode),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourcePublished, "error", buildErr)
@@ -201,7 +213,7 @@ func (s *Service) Publish(ctx context.Context, actor domain.Actor, sourceCodeID,
 	return sourceCode, notifications, nil
 }
 
-func (s *Service) Discard(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) error {
+func (s *Service) Discard(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID) error {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceDiscard); err != nil {
 		return operationError("authorize discard", err)
 	}
@@ -209,12 +221,12 @@ func (s *Service) Discard(ctx context.Context, actor domain.Actor, sourceCodeID,
 }
 
 //nolint:dupl // Resource lifecycle notification paths intentionally mirror each other.
-func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
+func (s *Service) Unpublish(ctx context.Context, actor string, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, []domain.Notification, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceUnpublish); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, nil, operationError("authorize unpublication", err)
 	}
 
-	sourceCode, err := s.store.Unpublish(ctx, string(actor), sourceCodeID, versionID)
+	sourceCode, err := s.store.Unpublish(ctx, actor, sourceCodeID, versionID)
 	if err != nil {
 		return domain.SoftwareSourceCodeVersion{}, nil, operationError("unpublish version", err)
 	}
@@ -222,7 +234,7 @@ func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, sourceCodeI
 	notifications, buildErr := s.notifier.Build(ctx, domain.ResourceUnpublished{
 		ActorID:  actor,
 		GroupID:  sourceCode.Group.ID,
-		Resource: *sourceCodeNotificationResource(sourceCode),
+		Resource: sourceCodeNotificationResource(sourceCode),
 	})
 	if buildErr != nil {
 		s.log.ErrorContext(ctx, "build notification notifications failed", "event", domain.NotificationEventResourceUnpublished, "error", buildErr)
@@ -232,45 +244,45 @@ func (s *Service) Unpublish(ctx context.Context, actor domain.Actor, sourceCodeI
 	return sourceCode, notifications, nil
 }
 
-func sourceCodeNotificationResource(value domain.SoftwareSourceCodeVersion) *domain.NotificationResource {
-	return &domain.NotificationResource{
+func sourceCodeNotificationResource(value domain.SoftwareSourceCodeVersion) domain.NotificationResource {
+	return domain.NotificationResource{
 		Type:          domain.SoftwareSourceCode,
 		ResourceID:    value.SoftwareSourceCodeID,
 		VersionID:     value.VersionID,
 		Revision:      value.Revision,
 		Status:        value.Status,
 		Name:          value.Metadata.Name,
-		SubmittedBy:   value.SubmittedBy.OptionalString(),
+		SubmittedBy:   value.SubmittedBy,
 		RejectionNote: value.RejectionNote,
 	}
 }
 
-func (s *Service) DraftFromPublication(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
+func (s *Service) DraftFromPublication(ctx context.Context, actor string, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceCreate); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize draft creation", err)
 	}
-	sourceCode, err := s.store.DraftFromPublication(ctx, string(actor), sourceCodeID)
+	sourceCode, err := s.store.DraftFromPublication(ctx, actor, sourceCodeID)
 	return sourceCode, operationError("create draft from publication", err)
 }
 
-func (s *Service) DraftFromLatestArchive(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
+func (s *Service) DraftFromLatestArchive(ctx context.Context, actor string, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	if err := s.authorizeResource(ctx, actor, sourceCodeID, domain.GroupPermissionResourceCreate); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize draft creation", err)
 	}
-	sourceCode, err := s.store.DraftFromLatestArchive(ctx, string(actor), sourceCodeID)
+	sourceCode, err := s.store.DraftFromLatestArchive(ctx, actor, sourceCodeID)
 	return sourceCode, operationError("create draft from archive", err)
 }
 
-func (s *Service) CopyPublished(ctx context.Context, actor domain.Actor, sourceSourceCodeID, targetGroupID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
+func (s *Service) CopyPublished(ctx context.Context, actor string, sourceSourceCodeID, targetGroupID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	if err := s.authorizeGroup(ctx, actor, targetGroupID, domain.GroupPermissionResourceCreate); err != nil {
 		return domain.SoftwareSourceCodeVersion{}, operationError("authorize source code copy", err)
 	}
-	sourceCode, err := s.store.CopyPublished(ctx, string(actor), sourceSourceCodeID, targetGroupID)
+	sourceCode, err := s.store.CopyPublished(ctx, actor, sourceSourceCodeID, targetGroupID)
 	return sourceCode, operationError("copy published source code", err)
 }
 
-func (s *Service) authorizeGroup(ctx context.Context, actor domain.Actor, groupID uuid.UUID, permission domain.GroupPermission) error {
-	result, err := s.authorizer.AuthorizeGroup(ctx, string(actor), groupID, permission)
+func (s *Service) authorizeGroup(ctx context.Context, actor string, groupID uuid.UUID, permission domain.GroupPermission) error {
+	result, err := s.authorizer.AuthorizeGroup(ctx, actor, groupID, permission)
 	if err != nil {
 		return fmt.Errorf("authorize group: %w", err)
 	}
@@ -280,8 +292,8 @@ func (s *Service) authorizeGroup(ctx context.Context, actor domain.Actor, groupI
 	return nil
 }
 
-func (s *Service) authorizeResource(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID, permission domain.GroupPermission) error {
-	result, err := s.authorizer.AuthorizeResource(ctx, string(actor), domain.SoftwareSourceCode, sourceCodeID, permission)
+func (s *Service) authorizeResource(ctx context.Context, actor string, sourceCodeID uuid.UUID, permission domain.GroupPermission) error {
+	result, err := s.authorizer.AuthorizeResource(ctx, actor, domain.SoftwareSourceCode, sourceCodeID, permission)
 	if err != nil {
 		return fmt.Errorf("authorize source code: %w", err)
 	}

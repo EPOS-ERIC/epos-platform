@@ -44,14 +44,6 @@ func toDomainResourceType(value metadatalifecyclev1.ResourceType) (domain.Resour
 	}
 }
 
-func toProtoDistributionIDs(ids []uuid.UUID) []string {
-	result := make([]string, 0, len(ids))
-	for _, id := range ids {
-		result = append(result, id.String())
-	}
-	return result
-}
-
 func toProtoDistributionIDPairs(pairs map[uuid.UUID]uuid.UUID) map[string]string {
 	result := make(map[string]string, len(pairs))
 	for sourceID, targetID := range pairs {
@@ -190,7 +182,7 @@ func toProtoDatasetVersion(value domain.DatasetVersion) *metadatalifecyclev1.Res
 		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
-		CreatedBy:     string(value.CreatedBy),
+		CreatedBy:     value.CreatedBy,
 		GroupId:       value.Group.ID.String(),
 		GroupName:     value.Group.Name,
 		CreatedAt:     timestamppb.New(value.CreatedAt),
@@ -332,7 +324,7 @@ func toProtoSoftwareApplicationVersion(value domain.SoftwareApplicationVersion) 
 		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
-		CreatedBy:     string(value.CreatedBy),
+		CreatedBy:     value.CreatedBy,
 		GroupId:       value.Group.ID.String(),
 		GroupName:     value.Group.Name,
 		CreatedAt:     timestamppb.New(value.CreatedAt),
@@ -350,7 +342,7 @@ func toProtoSoftwareSourceCodeVersion(value domain.SoftwareSourceCodeVersion) *m
 		Id:            value.VersionID.String(),
 		Revision:      value.Revision,
 		Status:        toGRPCVersioningStatus(value.Status),
-		CreatedBy:     string(value.CreatedBy),
+		CreatedBy:     value.CreatedBy,
 		GroupId:       value.Group.ID.String(),
 		GroupName:     value.Group.Name,
 		CreatedAt:     timestamppb.New(value.CreatedAt),

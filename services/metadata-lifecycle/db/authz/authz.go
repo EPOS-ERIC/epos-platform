@@ -105,7 +105,7 @@ func (r *Repo) IsActiveMember(ctx context.Context, userID string, groupID uuid.U
 
 // ListActiveUserMemberships returns all groups where user has active membership.
 func (r *Repo) ListActiveUserMemberships(ctx context.Context, userID string) ([]uuid.UUID, error) {
-	result, err := r.ListActiveMemberGroupIDs(ctx, string(userID))
+	result, err := r.ListActiveMemberGroupIDs(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("list active member groups: %w", err)
 	}

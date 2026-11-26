@@ -20,114 +20,40 @@ import (
 func (s *Service) Build(ctx context.Context, input domain.NotificationEvent) ([]domain.Notification, error) {
 	var notification domain.Notification
 	var recipients []domain.NotificationRecipient
+	var err error
 
 	switch event := input.(type) {
 	case domain.ConversionRequested:
-		n, r, err := s.conversionRequested(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.conversionRequested(ctx, event)
 	case domain.MembershipRequested:
-		n, r, err := s.membershipRequested(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.membershipRequested(ctx, event)
 	case domain.MembershipAccepted:
-		n, r, err := s.membershipAccepted(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.membershipAccepted(ctx, event)
 	case domain.MembershipRejectedEvent:
-		n, r, err := s.membershipRejected(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.membershipRejected(ctx, event)
 	case domain.RoleRequested:
-		n, r, err := s.roleRequested(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.roleRequested(ctx, event)
 	case domain.RoleRequestAcceptedEvent:
-		n, r, err := s.roleRequestAccepted(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.roleRequestAccepted(ctx, event)
 	case domain.RoleRequestRejectedEvent:
-		n, r, err := s.roleRequestRejected(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.roleRequestRejected(ctx, event)
 	case domain.RoleAssigned:
-		n, r, err := s.roleAssigned(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.roleAssigned(ctx, event)
 	case domain.PermissionAssigned:
-		n, r, err := s.permissionAssigned(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.permissionAssigned(ctx, event)
 	case domain.ResourceSubmitted:
-		n, r, err := s.resourceSubmitted(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.resourceSubmitted(ctx, event)
 	case domain.ResourcePublished:
-		n, r, err := s.resourcePublished(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.resourcePublished(ctx, event)
 	case domain.ResourceRejected:
-		n, r, err := s.resourceRejected(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.resourceRejected(ctx, event)
 	case domain.ResourceUnpublished:
-		n, r, err := s.resourceUnpublished(ctx, event)
-		if err != nil {
-			return nil, err
-		}
-
-		notification = n
-		recipients = r
+		notification, recipients, err = s.resourceUnpublished(ctx, event)
 	default:
 		return nil, apperror.Wrap(apperror.CodeInternal, "", fmt.Errorf("unsupported notification event %T", input))
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	notifications := make([]domain.Notification, 0, len(recipients))
@@ -187,8 +113,8 @@ func (s *Service) render(ctx context.Context, event domain.NotificationEvent) (s
 		"pageURL":          s.pageURL,
 		"resourceURL":      s.resourceURL,
 		"groupRequestsURL": s.groupRequestsURL,
-		"userLabel":        func(id domain.Actor) string { return s.userLabel(ctx, id) },
-		"subjectLabel":     func(id string) string { return s.userLabel(ctx, domain.Actor(id)) },
+		"userLabel":        func(id string) string { return s.userLabel(ctx, id) },
+		"subjectLabel":     func(id string) string { return s.userLabel(ctx, id) },
 		"groupLabel":       func(id uuid.UUID) string { return s.groupLabel(ctx, id) },
 	}).ParseFS(templateFiles, "*.html")
 	if err != nil {
@@ -223,8 +149,8 @@ func (s *Service) groupLabel(ctx context.Context, id uuid.UUID) string {
 	return fmt.Sprintf("%s (concept: %s, group ID: %s)", name, concept, id)
 }
 
-func (s *Service) userLabel(ctx context.Context, id domain.Actor) string {
-	user, err := s.store.GetNotificationUserContext(ctx, string(id))
+func (s *Service) userLabel(ctx context.Context, id string) string {
+	user, err := s.store.GetNotificationUserContext(ctx, id)
 	if err != nil {
 		s.log.WarnContext(ctx, "resolve notification user failed", "user_id", id, "error", err)
 		return fmt.Sprintf("Unknown name (user ID: %s)", id)
@@ -263,7 +189,7 @@ func (s *Service) resourceURL(resource domain.NotificationResource) string {
 		return ""
 	}
 
-	if s.publicURL == "" || section == "" || resource.ResourceID == uuid.Nil || resource.VersionID == uuid.Nil {
+	if s.publicURL == "" || resource.ResourceID == uuid.Nil || resource.VersionID == uuid.Nil {
 		return ""
 	}
 
@@ -275,7 +201,5 @@ func (s *Service) groupRequestsURL(groupID uuid.UUID, concept domain.Concept) st
 	if s.publicURL == "" || groupID == uuid.Nil {
 		return ""
 	}
-	// TODO: update this with the right url for the backoffice page
-
 	return fmt.Sprintf("%s/%s/manage-group?groupId=%s&panel=membership-requests", s.publicURL, section, groupID)
 }

@@ -126,7 +126,7 @@ func toOrganizationInput(name string, street, locality, postalCode, country, log
 		}
 	}
 	var err error
-	input.Parents, err = parseUUIDs(parents, "parents")
+	input.Parents, err = resourceParseUUIDs(parents, "parents", "parents")
 	if err != nil {
 		return domain.OrganizationInput{}, err
 	}
@@ -135,21 +135,6 @@ func toOrganizationInput(name string, street, locality, postalCode, country, log
 	}
 
 	return input, nil
-}
-
-func parseUUIDs(values []string, target string) ([]uuid.UUID, error) {
-	result := make([]uuid.UUID, len(values))
-	for i, value := range values {
-		id, err := uuid.Parse(value)
-		if err != nil || id == uuid.Nil {
-			if err == nil {
-				err = fmt.Errorf("%s must not be the zero UUID", target)
-			}
-			return nil, apperror.Field(fmt.Sprintf("%s[%d]", target, i), "Must be a valid UUID.", fmt.Errorf("parse %s: %w", target, err))
-		}
-		result[i] = id
-	}
-	return result, nil
 }
 
 func toProtoOrganization(value domain.Organization) *metadatalifecyclev1.Organization {

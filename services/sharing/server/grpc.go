@@ -16,8 +16,9 @@ import (
 func Run(ctx context.Context, cfg config.Config, log *slog.Logger, database *db.PostgresDB) error {
 	service := configuration.New(database.Configurations)
 	return sharedgrpc.Run(ctx, sharedgrpc.Config{
-		Address: ":" + cfg.ServerPort,
-		Logger:  log,
+		HealthCheck: database.Ping,
+		Address:     ":" + cfg.ServerPort,
+		Logger:      log,
 		ValidationError: func(_ *grpc.UnaryServerInfo, err error) error {
 			return grpcapi.ValidationAppError(err)
 		},

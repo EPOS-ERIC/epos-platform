@@ -53,13 +53,12 @@ func (s *Service) send(ctx context.Context, emails []domain.ContactRequestEmail)
 	if len(emails) == 0 {
 		return apperror.New(apperror.CodeNotFound, "No contact points are available for this resource.")
 	}
+	if s.sender == nil {
+		return apperror.New(apperror.CodeUpstreamUnavailable, "Unable to send email to contact points.")
+	}
 
 	sent := false
 	for _, email := range emails {
-		if s.sender == nil {
-			continue
-		}
-
 		if err := s.sender.SendContactRequest(ctx, email); err != nil {
 			continue
 		}

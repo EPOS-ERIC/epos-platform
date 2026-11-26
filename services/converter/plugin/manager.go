@@ -31,7 +31,6 @@ type Definition struct {
 	Repository url.URL
 	Branch     string
 	Runtime    domain.Runtime
-	Arguments  []string
 }
 
 type Status struct {
@@ -217,8 +216,8 @@ func (m *Manager) Remove(id uuid.UUID) error {
 }
 
 // Execute buffers output until the plugin completes successfully.
-func (m *Manager) Execute(ctx context.Context, definition Definition, input io.Reader) ([]byte, error) {
-	installed, dir, err := m.current(ctx, definition.ID)
+func (m *Manager) Execute(ctx context.Context, id uuid.UUID, args []string, input io.Reader) ([]byte, error) {
+	installed, dir, err := m.current(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +227,7 @@ func (m *Manager) Execute(ctx context.Context, definition Definition, input io.R
 	ctx, cancel := context.WithTimeout(ctx, m.timeout)
 	defer cancel()
 
-	cmd, err := command(ctx, installed.Runtime, dir, definition.Arguments)
+	cmd, err := command(ctx, installed.Runtime, dir, args)
 	if err != nil {
 		return nil, err
 	}

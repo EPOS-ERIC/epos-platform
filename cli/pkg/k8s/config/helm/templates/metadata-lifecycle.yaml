@@ -56,8 +56,9 @@ spec:
               value: {{ include "epos.backofficeURL" . | quote }}
 
           readinessProbe:
-            tcpSocket:
+            grpc:
               port: 5000
+            timeoutSeconds: 3
 ---
 apiVersion: v1
 kind: Service

@@ -69,6 +69,7 @@ func TestExtractDistinguishesInvalidFromValidEmpty(t *testing.T) {
 		{"malformed JSON", "application/json", []byte(`{"a":`), false},
 		{"valid empty JSON", "application/json", []byte(`{}`), true},
 		{"malformed XML", "application/xml", []byte(`<root>`), false},
+		{"unmatched XML close", "application/xml", []byte(`</root>`), false},
 		{"unsupported format", "image/tiff", []byte("binary"), false},
 	} {
 		t.Run(test.name, func(t *testing.T) {

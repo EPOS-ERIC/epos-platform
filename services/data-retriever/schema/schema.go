@@ -2,6 +2,7 @@
 package schema
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"encoding/xml"
@@ -103,8 +104,6 @@ func walkJSON(value any, prefix string, depth int, output *collector) {
 
 func jsonKind(value any) string {
 	switch typed := value.(type) {
-	case nil:
-		return ""
 	case bool:
 		return "BOOLEAN"
 	case string:
@@ -126,9 +125,6 @@ func jsonKind(value any) string {
 
 func isDatetime(value string) bool {
 	value = strings.TrimSpace(value)
-	if value == "" {
-		return false
-	}
 	for _, layout := range datetimeLayouts {
 		if _, err := time.Parse(layout, value); err == nil {
 			return true
@@ -138,7 +134,7 @@ func isDatetime(value string) bool {
 }
 
 func extractXML(payload []byte) ([]domain.OutputParameter, bool) {
-	decoder := xml.NewDecoder(strings.NewReader(string(payload)))
+	decoder := xml.NewDecoder(bytes.NewReader(payload))
 	output := &collector{seen: map[string]struct{}{}}
 	var stack []string
 	rootSeen := false
@@ -167,16 +163,13 @@ func extractXML(payload []byte) ([]domain.OutputParameter, bool) {
 				}
 			}
 		case xml.EndElement:
-			if len(stack) > 0 {
-				stack = stack[:len(stack)-1]
-			}
+			stack = stack[:len(stack)-1]
 		}
 	}
 }
 
 func extractCSV(payload []byte) ([]domain.OutputParameter, bool) {
-	reader := csv.NewReader(strings.NewReader(string(payload)))
-	reader.FieldsPerRecord = -1
+	reader := csv.NewReader(bytes.NewReader(payload))
 	header, err := reader.Read()
 	if err != nil {
 		return nil, false

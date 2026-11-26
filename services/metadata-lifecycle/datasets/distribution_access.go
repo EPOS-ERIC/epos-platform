@@ -9,14 +9,14 @@ import (
 )
 
 // CheckDistributionRead verifies access without preparing a distribution request.
-func (s *Service) CheckDistributionRead(ctx context.Context, actor domain.Actor, distributionID uuid.UUID) error {
+func (s *Service) CheckDistributionRead(ctx context.Context, actor string, distributionID uuid.UUID) error {
 	_, _, _, err := s.readDistribution(ctx, &actor, distributionID)
 	return err
 }
 
 // DistributionFormats returns native formats to authorized converter managers.
-func (s *Service) DistributionFormats(ctx context.Context, actor domain.Actor, distributionID uuid.UUID) ([]string, error) {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actor), domain.GlobalPermissionConverterManage)
+func (s *Service) DistributionFormats(ctx context.Context, actor string, distributionID uuid.UUID) ([]string, error) {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actor, domain.GlobalPermissionConverterManage)
 	if err != nil {
 		return nil, operationError("authorize converter management", err)
 	}
@@ -61,7 +61,7 @@ func (s *Service) DistributionFormats(ctx context.Context, actor domain.Actor, d
 	return nil, apperror.Default(apperror.CodeNotFound)
 }
 
-func (s *Service) PrepareAccess(ctx context.Context, actor *domain.Actor, distributionID uuid.UUID, input domain.DistributionAccessInput) (domain.DistributionAccess, error) {
+func (s *Service) PrepareAccess(ctx context.Context, actor *string, distributionID uuid.UUID, input domain.DistributionAccessInput) (domain.DistributionAccess, error) {
 	if err := ctx.Err(); err != nil {
 		return domain.DistributionAccess{}, err
 	}
@@ -92,7 +92,7 @@ func (s *Service) PrepareAccess(ctx context.Context, actor *domain.Actor, distri
 	}, nil
 }
 
-func (s *Service) readDistribution(ctx context.Context, actor *domain.Actor, distributionID uuid.UUID) (uuid.UUID, uuid.UUID, domain.Distribution, error) {
+func (s *Service) readDistribution(ctx context.Context, actor *string, distributionID uuid.UUID) (uuid.UUID, uuid.UUID, domain.Distribution, error) {
 	if distributionID == uuid.Nil {
 		return uuid.Nil, uuid.Nil, domain.Distribution{}, apperror.Field("distribution_id", "Distribution ID must be a UUID.", nil)
 	}

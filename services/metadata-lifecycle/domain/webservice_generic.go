@@ -55,13 +55,11 @@ func (w *GenericWebServiceInput) normalize(serviceType WebServiceType) error {
 		return err
 	}
 	w.Parameters = parameters
+	var bodyParameters []ParameterInput
 	if w.Body != nil {
 		if err := w.Body.Normalize(); err != nil {
 			return err
 		}
-	}
-	var bodyParameters []ParameterInput
-	if w.Body != nil {
 		bodyParameters = w.Body.Parameters
 	}
 	if err := validateWebServiceParameterRoles(serviceType, parameters, "parameters", bodyParameters); err != nil {

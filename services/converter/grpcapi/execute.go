@@ -7,7 +7,6 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	converterv1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/converter/v1"
-	"github.com/EPOS-ERIC/epos-platform/services/converter/plugin"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -65,9 +64,7 @@ func (s *Server) Execute(stream grpc.BidiStreamingServer[converterv1.ExecuteRequ
 	if len(input) == 0 {
 		return apperror.New(apperror.CodeValidationFailed, "Conversion input is empty.")
 	}
-	output, err := s.manager.Execute(stream.Context(), plugin.Definition{
-		ID: record.ID, Arguments: record.Arguments,
-	}, bytes.NewReader(input))
+	output, err := s.manager.Execute(stream.Context(), record.ID, record.Arguments, bytes.NewReader(input))
 	if err != nil {
 		return err
 	}

@@ -160,7 +160,7 @@ func (r *Repo) Withdraw(ctx context.Context, applicationID, versionID uuid.UUID)
 	})
 }
 
-func (r *Repo) Reject(ctx context.Context, actorID string, applicationID, versionID uuid.UUID, value domain.SoftwareApplicationRejectionInput) (domain.SoftwareApplicationVersion, error) {
+func (r *Repo) Reject(ctx context.Context, actorID string, applicationID, versionID uuid.UUID, value domain.RejectionInput) (domain.SoftwareApplicationVersion, error) {
 	return r.transition(ctx, applicationID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareApplicationVersion, error) {
 		return q.RejectLifecycleSoftwareApplicationVersion(ctx, sqlc.RejectLifecycleSoftwareApplicationVersionParams{
 			ActorID:       &actorID,

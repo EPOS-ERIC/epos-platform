@@ -55,6 +55,14 @@ func toAPIRequiredNilString(value *string) gatewayapi.NilString {
 	return gatewayapi.NewNilString(*value)
 }
 
+func toAPINilString(value *string) gatewayapi.OptNilString {
+	result := gatewayapi.OptNilString{}
+	if value != nil {
+		result.SetTo(*value)
+	}
+	return result
+}
+
 func toAPIOptURI(field string, value *string) (gatewayapi.OptURI, error) {
 	result := gatewayapi.OptURI{}
 	if value == nil {

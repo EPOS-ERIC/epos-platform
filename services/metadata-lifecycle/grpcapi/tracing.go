@@ -21,8 +21,8 @@ func ActorTracingInterceptor() grpc.UnaryServerInterceptor {
 		if incomingMetadata, ok := metadata.FromIncomingContext(ctx); ok {
 			values := incomingMetadata.Get(actorMetadataKey)
 			if len(values) == 1 {
-				if actor, err := domain.NewActor(values[0]); err == nil {
-					observability.SetActorID(ctx, string(actor))
+				if actor, err := domain.NormalizeActor(values[0]); err == nil {
+					observability.SetActorID(ctx, actor)
 				}
 			}
 		}

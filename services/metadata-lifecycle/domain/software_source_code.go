@@ -34,11 +34,6 @@ type SoftwareSourceCodeDraftInput struct {
 	Metadata SoftwareSourceCodeInput
 }
 
-// SoftwareSourceCodeRejectionInput contains a validated rejection command.
-type SoftwareSourceCodeRejectionInput struct {
-	Note string
-}
-
 // SoftwareSourceCodeMetadata is persisted or imported software source-code metadata.
 type SoftwareSourceCodeMetadata struct {
 	ID                   uuid.UUID
@@ -64,8 +59,8 @@ type SoftwareSourceCodeVersion struct {
 	VersionID            uuid.UUID
 	Revision             int32
 	Status               Status
-	CreatedBy            Actor
-	SubmittedBy          *Actor
+	CreatedBy            string
+	SubmittedBy          *string
 	Group                Group
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
@@ -126,15 +121,6 @@ func (value *SoftwareSourceCodeDraftInput) Normalize() error {
 	}
 	if err := value.Metadata.Normalize(); err != nil {
 		return fmt.Errorf("validate software source-code draft metadata: %w", apperror.PrefixTarget(err, "metadata"))
-	}
-	return nil
-}
-
-// Normalize validates and normalizes a rejection note.
-func (value *SoftwareSourceCodeRejectionInput) Normalize() error {
-	value.Note = strings.TrimSpace(value.Note)
-	if value.Note == "" {
-		return apperror.Field("note", "Rejection note must not be blank.", nil)
 	}
 	return nil
 }
@@ -212,13 +198,13 @@ func (value *SoftwareSourceCodeVersion) Normalize() (err error) {
 	if !value.Status.Valid() {
 		return fmt.Errorf("software source code status %q is invalid: %w", value.Status, apperror.Default(apperror.CodeValidationFailed))
 	}
-	actor, err := NewActor(string(value.CreatedBy))
+	actor, err := NormalizeActor(value.CreatedBy)
 	if err != nil {
 		return fmt.Errorf("software source code creator: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 	}
 	value.CreatedBy = actor
 	if value.SubmittedBy != nil {
-		submittedBy, err := NewActor(string(*value.SubmittedBy))
+		submittedBy, err := NormalizeActor(*value.SubmittedBy)
 		if err != nil {
 			return fmt.Errorf("software source code submitter: %w: %w", err, apperror.Default(apperror.CodeValidationFailed))
 		}

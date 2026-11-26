@@ -22,7 +22,7 @@ type Repository interface {
 }
 
 type Authorizer interface {
-	AuthorizeDiscovery(context.Context, *domain.Actor, []domain.DiscoveryCandidate) (domain.DiscoveryAuthorization, error)
+	AuthorizeDiscovery(context.Context, *string, []domain.DiscoveryCandidate) (domain.DiscoveryAuthorization, error)
 }
 
 type Service struct {
@@ -37,6 +37,15 @@ func New(
 	repository Repository,
 	authorizer Authorizer,
 ) *Service {
+	if log == nil {
+		panic("discovery: nil logger")
+	}
+	if repository == nil {
+		panic("discovery: nil repository")
+	}
+	if authorizer == nil {
+		panic("discovery: nil authorizer")
+	}
 	return &Service{
 		repository: repository,
 		authorizer: authorizer,
@@ -45,7 +54,7 @@ func New(
 }
 
 // Search returns sorted discovery items visible to actor.
-func (s *Service) Search(ctx context.Context, actor *domain.Actor, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
+func (s *Service) Search(ctx context.Context, actor *string, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
 	if actor == nil {
 		filter.VersioningStatuses = []domain.Status{domain.Published}
 	}

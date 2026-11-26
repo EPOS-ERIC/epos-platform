@@ -2,23 +2,33 @@
 package docs
 
 import (
-	_ "embed"
+	"embed"
+	"fmt"
 	"io/fs"
-
-	apidocs "github.com/EPOS-ERIC/epos-platform/packages/go/apidocs"
 )
 
 //go:embed openapi.yaml
 var openapiSpec []byte
+
+//go:embed scalar swagger-ui
+var ui embed.FS
 
 func GetSpec() []byte {
 	return openapiSpec
 }
 
 func GetUI() fs.FS {
-	return apidocs.GetUI()
+	return uiFS("swagger-ui")
 }
 
 func GetScalarUI() fs.FS {
-	return apidocs.GetScalarUI()
+	return uiFS("scalar")
+}
+
+func uiFS(dir string) fs.FS {
+	sub, err := fs.Sub(ui, dir)
+	if err != nil {
+		panic(fmt.Errorf("load docs ui filesystem: %w", err))
+	}
+	return sub
 }

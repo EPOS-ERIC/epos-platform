@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"net/http"
 	"net/textproto"
 	"net/url"
 	"slices"
@@ -11,13 +12,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/google/uuid"
 	"golang.org/x/net/http/httpguts"
-)
-
-const (
-	methodGet    = "GET"
-	methodPost   = "POST"
-	methodPut    = "PUT"
-	methodDelete = "DELETE"
 )
 
 type RetrievalInput struct {
@@ -74,7 +68,7 @@ func NewPreparedRetrieval(input RetrievalInput) (PreparedRetrieval, error) {
 	}
 
 	method := strings.ToUpper(strings.TrimSpace(input.Method))
-	if !slices.Contains([]string{methodGet, methodPost, methodPut, methodDelete}, method) {
+	if !slices.Contains([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}, method) {
 		return PreparedRetrieval{}, apperror.Field("method", "Value is invalid.", errors.New("method must be one of GET, POST, PUT, DELETE"))
 	}
 	input.Method = method
@@ -108,7 +102,7 @@ func NewPreparedRetrieval(input RetrievalInput) (PreparedRetrieval, error) {
 		}
 	}
 
-	if input.Body != nil && (method == methodGet || method == methodDelete) {
+	if input.Body != nil && (method == http.MethodGet || method == http.MethodDelete) {
 		return PreparedRetrieval{}, apperror.Field("body", "Request bodies are not supported for GET or DELETE.", nil)
 	}
 	return PreparedRetrieval{RetrievalInput: input}, nil

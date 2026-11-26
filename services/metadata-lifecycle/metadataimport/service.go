@@ -26,6 +26,15 @@ type Service struct {
 
 // New creates an authorized metadata import service.
 func New(log *slog.Logger, repository Repository, authorizer Authorizer) *Service {
+	if log == nil {
+		panic("metadataimport: nil logger")
+	}
+	if repository == nil {
+		panic("metadataimport: nil repository")
+	}
+	if authorizer == nil {
+		panic("metadataimport: nil authorizer")
+	}
 	return &Service{
 		authorizer: authorizer,
 		repository: repository,
@@ -34,8 +43,8 @@ func New(log *slog.Logger, repository Repository, authorizer Authorizer) *Servic
 }
 
 // Import authorizes and persists a validated metadata batch.
-func (s *Service) Import(ctx context.Context, actor domain.Actor, batch domain.ImportBatch) (domain.ImportResult, error) {
-	decision, err := s.authorizer.AuthorizeAdmin(ctx, string(actor))
+func (s *Service) Import(ctx context.Context, actor string, batch domain.ImportBatch) (domain.ImportResult, error) {
+	decision, err := s.authorizer.AuthorizeAdmin(ctx, actor)
 	if err != nil {
 		return domain.ImportResult{}, operationError("authorize import", err)
 	}
@@ -43,7 +52,7 @@ func (s *Service) Import(ctx context.Context, actor domain.Actor, batch domain.I
 		return domain.ImportResult{}, fmt.Errorf("%w: %s", apperror.Default(apperror.CodePermissionDenied), decision.Reason)
 	}
 
-	result, err := s.repository.Import(ctx, string(actor), batch)
+	result, err := s.repository.Import(ctx, actor, batch)
 	return result, operationError("persist import", err)
 }
 

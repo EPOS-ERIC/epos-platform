@@ -56,10 +56,10 @@ func TestConfigRender(t *testing.T) {
 			wantContains: map[string][]string{
 				"templates/dataportal.yaml":         {"name: dataportal", `value: "http://localhost/test-default/aai"`},
 				"templates/gateway.yaml":            {"name: gateway", `url: "http://aai-service:8080/oauth2/userinfo"`, `url: "converter:8200"`, "imagePullPolicy: IfNotPresent", `nginx.ingress.kubernetes.io/proxy-body-size: "10m"`},
-				"templates/metadata-lifecycle.yaml": {"name: metadata-lifecycle", "claimName: metadata-database", "kind: PersistentVolumeClaim\nmetadata:\n  name: metadata-database"},
-				"templates/data-retriever.yaml":     {"name: data-retriever", "claimName: retriever-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: retriever-db"},
-				"templates/converter.yaml":          {"name: converter", "claimName: converter-plugins", "type: Recreate", "fsGroup: 1000", "kind: PersistentVolumeClaim\nmetadata:\n  name: converter-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: converter-plugins"},
-				"templates/sharing.yaml":            {"name: sharing", "claimName: sharing-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: sharing-db"},
+				"templates/metadata-lifecycle.yaml": {"name: metadata-lifecycle", "claimName: metadata-database", "kind: PersistentVolumeClaim\nmetadata:\n  name: metadata-database", "grpc:\n              port: 5000\n            timeoutSeconds: 3"},
+				"templates/data-retriever.yaml":     {"name: data-retriever", "claimName: retriever-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: retriever-db", "grpc:\n              port: 8100\n            timeoutSeconds: 3"},
+				"templates/converter.yaml":          {"name: converter", "claimName: converter-plugins", "type: Recreate", "fsGroup: 1000", "kind: PersistentVolumeClaim\nmetadata:\n  name: converter-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: converter-plugins", "grpc:\n              port: 8200\n            timeoutSeconds: 3"},
+				"templates/sharing.yaml":            {"name: sharing", "claimName: sharing-db", "kind: PersistentVolumeClaim\nmetadata:\n  name: sharing-db", "grpc:\n              port: 8200\n            timeoutSeconds: 3"},
 			},
 		},
 		{

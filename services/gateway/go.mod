@@ -3,7 +3,6 @@ module github.com/EPOS-ERIC/epos-platform/services/gateway
 go 1.27.4
 
 require (
-	github.com/EPOS-ERIC/epos-platform/packages/go/apidocs v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/go/apperror v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
@@ -71,8 +70,6 @@ require (
 replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => ../../packages/go/logging
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/apperror => ../../packages/go/apperror
-
-replace github.com/EPOS-ERIC/epos-platform/packages/go/apidocs => ../../packages/go/apidocs
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => ../../packages/go/observability
 

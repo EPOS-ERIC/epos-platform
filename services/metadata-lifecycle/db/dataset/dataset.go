@@ -250,7 +250,7 @@ func (r *Repo) Withdraw(ctx context.Context, datasetID, versionID uuid.UUID) (do
 	return datasetResultByID(ctx, r.q, v.DatasetID, v.ID)
 }
 
-func (r *Repo) Reject(ctx context.Context, actorID string, datasetID, versionID uuid.UUID, value domain.DatasetRejectionInput) (domain.DatasetVersion, error) {
+func (r *Repo) Reject(ctx context.Context, actorID string, datasetID, versionID uuid.UUID, value domain.RejectionInput) (domain.DatasetVersion, error) {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
 		return domain.DatasetVersion{}, fmt.Errorf("reject dataset version: %w", err)
 	}

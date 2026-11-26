@@ -9,7 +9,7 @@ import (
 )
 
 // RequestConversion builds notifications for an editable draft web service.
-func (s *Service) RequestConversion(ctx context.Context, actor domain.Actor, distributionID uuid.UUID, input domain.ConversionRequestInput) ([]domain.Notification, error) {
+func (s *Service) RequestConversion(ctx context.Context, actor string, distributionID uuid.UUID, input domain.ConversionRequestInput) ([]domain.Notification, error) {
 	if distributionID == uuid.Nil {
 		return nil, apperror.Field("distribution_id", "Distribution ID must be a UUID.", nil)
 	}

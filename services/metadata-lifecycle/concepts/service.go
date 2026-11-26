@@ -28,6 +28,12 @@ type Service struct {
 }
 
 func New(store Store, authorizer Authorizer) *Service {
+	if store == nil {
+		panic("concepts: nil store")
+	}
+	if authorizer == nil {
+		panic("concepts: nil authorizer")
+	}
 	return &Service{store: store, authorizer: authorizer}
 }
 
@@ -43,8 +49,8 @@ func (s *Service) GetConcept(ctx context.Context, id uuid.UUID) (domain.Concept,
 	return s.store.GetConcept(ctx, id)
 }
 
-func (s *Service) authorizeConcept(ctx context.Context, actor domain.Actor) error {
-	result, err := s.authorizer.AuthorizeGlobal(ctx, string(actor), domain.GlobalPermissionConceptManage)
+func (s *Service) authorizeConcept(ctx context.Context, actor string) error {
+	result, err := s.authorizer.AuthorizeGlobal(ctx, actor, domain.GlobalPermissionConceptManage)
 	if err != nil {
 		return fmt.Errorf("authorize concept management: %w", err)
 	}
@@ -56,7 +62,7 @@ func (s *Service) authorizeConcept(ctx context.Context, actor domain.Actor) erro
 	return nil
 }
 
-func (s *Service) CreateConcept(ctx context.Context, actor domain.Actor, input domain.ConceptInput) (domain.Concept, error) {
+func (s *Service) CreateConcept(ctx context.Context, actor string, input domain.ConceptInput) (domain.Concept, error) {
 	if err := s.authorizeConcept(ctx, actor); err != nil {
 		return domain.Concept{}, err
 	}
@@ -64,7 +70,7 @@ func (s *Service) CreateConcept(ctx context.Context, actor domain.Actor, input d
 	return s.store.CreateConcept(ctx, input)
 }
 
-func (s *Service) ReplaceConcept(ctx context.Context, actor domain.Actor, id uuid.UUID, input domain.ConceptInput) (domain.Concept, error) {
+func (s *Service) ReplaceConcept(ctx context.Context, actor string, id uuid.UUID, input domain.ConceptInput) (domain.Concept, error) {
 	if id == uuid.Nil {
 		return domain.Concept{}, apperror.Default(apperror.CodeValidationFailed)
 	}
@@ -76,7 +82,7 @@ func (s *Service) ReplaceConcept(ctx context.Context, actor domain.Actor, id uui
 	return s.store.ReplaceConcept(ctx, id, input)
 }
 
-func (s *Service) DeleteConcept(ctx context.Context, actor domain.Actor, id uuid.UUID) error {
+func (s *Service) DeleteConcept(ctx context.Context, actor string, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return apperror.Default(apperror.CodeValidationFailed)
 	}

@@ -17,6 +17,9 @@ type Service struct {
 }
 
 func New(store Store) *Service {
+	if store == nil {
+		panic("metadatasync: nil store")
+	}
 	return &Service{
 		store: store,
 	}

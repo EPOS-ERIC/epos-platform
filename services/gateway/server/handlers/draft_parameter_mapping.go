@@ -25,16 +25,16 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
 		result.Explode = x.Explode
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.ParameterInput_String_{String_: &metadatalifecyclev1.StringParameter{
-			Default:        protoOptionalStringArray(x.Default),
+			Default:        x.Default.Or(nil),
 			Enum:           toProtoStringEnumOptions(x.Enum),
-			Pattern:        protoOptionalString(x.Pattern),
+			Pattern:        toClientStringPtr(x.Pattern),
 			MultipleValues: x.MultipleValues,
 		}}
 	case v.IsBooleanParameterDraft():
@@ -43,7 +43,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
@@ -56,7 +56,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
@@ -65,7 +65,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Value = &metadatalifecyclev1.ParameterInput_Integer{Integer: &metadatalifecyclev1.IntegerParameter{
 			Minimum:        protoOptionalInt64(x.Minimum),
 			Maximum:        protoOptionalInt64(x.Maximum),
-			Default:        protoOptionalInt64Array(x.Default),
+			Default:        x.Default.Or(nil),
 			Enum:           toProtoIntegerEnumOptions(x.Enum),
 			MultipleValues: x.MultipleValues,
 		}}
@@ -75,7 +75,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
@@ -84,7 +84,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Value = &metadatalifecyclev1.ParameterInput_Float{Float: &metadatalifecyclev1.FloatParameter{
 			Minimum:        protoOptionalFloat(x.Minimum),
 			Maximum:        protoOptionalFloat(x.Maximum),
-			Default:        protoOptionalFloatArray(x.Default),
+			Default:        x.Default.Or(nil),
 			Enum:           toProtoFloatEnumOptions(x.Enum),
 			MultipleValues: x.MultipleValues,
 		}}
@@ -94,7 +94,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
@@ -104,7 +104,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 			Minimum: protoOptionalTime(x.Minimum),
 			Maximum: protoOptionalTime(x.Maximum),
 			Default: protoOptionalTime(x.Default),
-			Layout:  protoOptionalString(x.Layout),
+			Layout:  toClientStringPtr(x.Layout),
 		}}
 	case v.IsTemplateParameterDraft():
 		x := v.TemplateParameterDraft
@@ -112,7 +112,7 @@ func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.Par
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.Role = toProtoParameterRole(x.Role)
 		result.Location = toProtoParameterLocation(x.Location)
@@ -139,13 +139,13 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_String_{String_: &metadatalifecyclev1.ScalarStringParameter{
-			Default: protoOptionalStringArray(x.Default),
+			Default: x.Default.Or(nil),
 			Enum:    toProtoStringEnumOptions(x.Enum),
-			Pattern: protoOptionalString(x.Pattern),
+			Pattern: toClientStringPtr(x.Pattern),
 		}}
 	case v.IsBooleanScalarParameterDraft():
 		x := v.BooleanScalarParameterDraft
@@ -154,7 +154,7 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_Boolean{Boolean: &metadatalifecyclev1.ScalarBooleanParameter{Default: protoOptionalBool(x.Default)}}
@@ -165,13 +165,13 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_Integer{Integer: &metadatalifecyclev1.ScalarIntegerParameter{
 			Minimum: protoOptionalInt64(x.Minimum),
 			Maximum: protoOptionalInt64(x.Maximum),
-			Default: protoOptionalInt64Array(x.Default),
+			Default: x.Default.Or(nil),
 			Enum:    toProtoIntegerEnumOptions(x.Enum),
 		}}
 	case v.IsFloatScalarParameterDraft():
@@ -182,12 +182,12 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Name = x.Name
 		result.Label = x.Label
 		result.Required = x.Required
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_Float{Float: &metadatalifecyclev1.ScalarFloatParameter{
 			Minimum: protoOptionalFloat(x.Minimum),
 			Maximum: protoOptionalFloat(x.Maximum),
-			Default: protoOptionalFloatArray(x.Default),
+			Default: x.Default.Or(nil),
 			Enum:    toProtoFloatEnumOptions(x.Enum),
 		}}
 	case v.IsDateTimeScalarParameterDraft():
@@ -197,48 +197,17 @@ func toProtoScalarParameterDraft(v gatewayapi.ScalarParameterDraft) *metadatalif
 		result.Position = x.Position
 		result.Name = x.Name
 		result.Label = x.Label
-		result.Description = protoOptionalString(x.Description)
+		result.Description = toClientStringPtr(x.Description)
 		result.Required = x.Required
 		result.ReadOnly = x.ReadOnly
 		result.Value = &metadatalifecyclev1.ScalarParameterInput_DateTime{DateTime: &metadatalifecyclev1.ScalarDateTimeParameter{
 			Minimum: protoOptionalTime(x.Minimum),
 			Maximum: protoOptionalTime(x.Maximum),
 			Default: protoOptionalTime(x.Default),
-			Layout:  protoOptionalString(x.Layout),
+			Layout:  toClientStringPtr(x.Layout),
 		}}
 	}
 	return result
-}
-
-func protoOptionalString(v gatewayapi.OptNilString) *string {
-	if !v.Set || v.Null {
-		return nil
-	}
-	return new(v.Value)
-}
-
-func protoOptionalStringArray(v gatewayapi.OptNilStringArray) []string {
-	values, ok := v.Get()
-	if !ok {
-		return nil
-	}
-	return values
-}
-
-func protoOptionalInt64Array(v gatewayapi.OptNilInt64Array) []int64 {
-	values, ok := v.Get()
-	if !ok {
-		return nil
-	}
-	return values
-}
-
-func protoOptionalFloatArray(v gatewayapi.OptNilFloat64Array) []float64 {
-	values, ok := v.Get()
-	if !ok {
-		return nil
-	}
-	return values
 }
 
 func toProtoStringEnumOptions(values []gatewayapi.StringEnumOption) []*metadatalifecyclev1.StringEnumOption {

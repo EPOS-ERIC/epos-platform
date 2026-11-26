@@ -160,19 +160,10 @@ func (c *Converter) GetRelation(ctx context.Context, actor string, id uuid.UUID)
 	return fromProtoRelation(response.GetRelation())
 }
 
-func (c *Converter) ListDistributionRelations(ctx context.Context, actor string, distributionID uuid.UUID) (*converterv1.ListDistributionRelationsResponse, error) {
+func (c *Converter) DistributionRelations(ctx context.Context, actor string, distributionID uuid.UUID) ([]domain.DistributionPluginRelation, error) {
 	response, err := c.client.ListDistributionRelations(converterActor(ctx, actor), &converterv1.ListDistributionRelationsRequest{DistributionId: distributionID.String()})
 	if err != nil {
 		return nil, c.wrapError(ctx, "list distribution relations", err)
-	}
-
-	return response, nil
-}
-
-func (c *Converter) DistributionRelations(ctx context.Context, actor string, distributionID uuid.UUID) ([]domain.DistributionPluginRelation, error) {
-	response, err := c.ListDistributionRelations(ctx, actor, distributionID)
-	if err != nil {
-		return nil, err
 	}
 
 	result := make([]domain.DistributionPluginRelation, 0, len(response.GetRelations()))
@@ -201,15 +192,8 @@ func (c *Converter) DistributionRelations(ctx context.Context, actor string, dis
 			return nil, apperror.Default(apperror.CodeInternal)
 		}
 
-		var runtime domain.ConversionRuntime
-		switch p.GetInput().GetRuntime() {
-		case converterv1.Runtime_RUNTIME_PYTHON:
-			runtime = domain.ConversionRuntimePython
-		case converterv1.Runtime_RUNTIME_JAVA:
-			runtime = domain.ConversionRuntimeJava
-		case converterv1.Runtime_RUNTIME_BINARY:
-			runtime = domain.ConversionRuntimeBinary
-		default:
+		runtime, err := fromProtoRuntime(p.GetInput().GetRuntime())
+		if err != nil {
 			return nil, apperror.Default(apperror.CodeInternal)
 		}
 

@@ -192,7 +192,7 @@ func toAPIUser(v domain.User) (gatewayapi.User, error) {
 		GlobalRoles:              roles,
 		GlobalGrantedPermissions: globalGrantedPermissions,
 		GlobalRolePermissions:    globalRolePermissions,
-		BlockReason:              optionalString(v.BlockReason),
+		BlockReason:              toAPINilString(v.BlockReason),
 		CreatedAt:                v.CreatedAt,
 		UpdatedAt:                v.UpdatedAt,
 	}

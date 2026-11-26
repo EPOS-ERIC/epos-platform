@@ -108,15 +108,15 @@ func toAPIResourceVersionSummaries(values []*metadatalifecyclev1.ResourceVersion
 			CreatedAt:    value.CreatedAt.AsTime(),
 			UpdatedAt:    value.UpdatedAt.AsTime(),
 		}
-		setProtoNilString(&mapped.SubmittedBy, value.SubmittedBy)
+		mapped.SubmittedBy = toAPIRequiredNilString(value.SubmittedBy)
 		setAPINilDateTime(&mapped.SubmittedAt, value.SubmittedAt)
-		setProtoNilString(&mapped.PublishedBy, value.PublishedBy)
+		mapped.PublishedBy = toAPIRequiredNilString(value.PublishedBy)
 		setAPINilDateTime(&mapped.PublishedAt, value.PublishedAt)
-		setProtoNilString(&mapped.ArchivedBy, value.ArchivedBy)
+		mapped.ArchivedBy = toAPIRequiredNilString(value.ArchivedBy)
 		setAPINilDateTime(&mapped.ArchivedAt, value.ArchivedAt)
-		setProtoNilString(&mapped.RejectedBy, value.RejectedBy)
+		mapped.RejectedBy = toAPIRequiredNilString(value.RejectedBy)
 		setAPINilDateTime(&mapped.RejectedAt, value.RejectedAt)
-		setProtoNilString(&mapped.RejectionNote, value.RejectionNote)
+		mapped.RejectionNote = toAPIRequiredNilString(value.RejectionNote)
 		result = append(result, mapped)
 	}
 	return result, nil

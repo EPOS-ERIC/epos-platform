@@ -43,12 +43,12 @@ func (r *discoveryRepositoryFake) SoftwareSourceCodeRelations(_ context.Context,
 
 type discoveryAuthorizerFake struct {
 	authorization domain.DiscoveryAuthorization
-	actor         *domain.Actor
+	actor         *string
 	candidates    []domain.DiscoveryCandidate
 	calls         int
 }
 
-func (a *discoveryAuthorizerFake) AuthorizeDiscovery(_ context.Context, actor *domain.Actor, candidates []domain.DiscoveryCandidate) (domain.DiscoveryAuthorization, error) {
+func (a *discoveryAuthorizerFake) AuthorizeDiscovery(_ context.Context, actor *string, candidates []domain.DiscoveryCandidate) (domain.DiscoveryAuthorization, error) {
 	a.calls++
 	a.actor = actor
 	a.candidates = candidates
@@ -92,7 +92,7 @@ func TestSearchUsesAuthorizedCandidatesAndBatchedRelations(t *testing.T) {
 		AllowedCandidates: candidates,
 		CreatedByGroupIDs: map[uuid.UUID]struct{}{groupID: {}},
 	}}
-	actor := domain.Actor("user-1")
+	actor := "user-1"
 	items, err := New(slog.Default(), repository, authorizer).Search(context.Background(), &actor, domain.DiscoveryFilter{})
 	if err != nil {
 		t.Fatalf("search discovery: %v", err)

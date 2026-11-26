@@ -42,21 +42,14 @@ func toAPIProtoGroup(v *metadatalifecyclev1.Group) (gatewayapi.Group, error) {
 	return gatewayapi.Group{
 		ID:          id,
 		Name:        v.Name,
-		Description: optionalString(v.Description),
-		Label:       optionalString(v.Label),
-		Logo:        optionalString(v.Logo),
-		Page:        optionalString(v.Page),
-		Color:       optionalString(v.Color),
+		Description: toAPINilString(v.Description),
+		Label:       toAPINilString(v.Label),
+		Logo:        toAPINilString(v.Logo),
+		Page:        toAPINilString(v.Page),
+		Color:       toAPINilString(v.Color),
 		Position:    v.Position,
 		ConceptID:   concept,
 	}, nil
-}
-
-func optionalString(value *string) gatewayapi.OptNilString {
-	if value == nil {
-		return gatewayapi.OptNilString{}
-	}
-	return gatewayapi.OptNilString{Value: *value, Set: true}
 }
 
 func (h *ogenHandler) GetGroup(ctx context.Context, q gatewayapi.GetGroupParams) (*gatewayapi.Group, error) {
@@ -84,9 +77,7 @@ func (h *ogenHandler) CreateGroup(ctx context.Context, q *gatewayapi.CreateGroup
 		Page:        toClientStringPtr(q.Page),
 		Color:       toClientStringPtr(q.Color),
 		ConceptId:   q.ConceptID.String(),
-	}
-	if q.Position.Set {
-		in.Position = q.Position.Value
+		Position:    q.Position.Or(0),
 	}
 	v, err := h.metadataLifecycleClient.CreateGroup(ctx, actor, in)
 	if err != nil {
@@ -113,9 +104,7 @@ func (h *ogenHandler) ReplaceGroup(ctx context.Context, q *gatewayapi.ReplaceGro
 		Page:        toClientStringPtr(q.Page),
 		Color:       toClientStringPtr(q.Color),
 		ConceptId:   q.ConceptID.String(),
-	}
-	if q.Position.Set {
-		in.Position = q.Position.Value
+		Position:    q.Position.Or(0),
 	}
 	v, err := h.metadataLifecycleClient.ReplaceGroup(ctx, a, in)
 	if err != nil {
@@ -419,7 +408,7 @@ func (h *ogenHandler) DeleteGroupMembership(ctx context.Context, params gatewaya
 	if !ok {
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
-	if err := h.membership.RevokeMembership(ctx, a, params.GroupId.String(), params.UserId); err != nil {
+	if err := h.metadataLifecycleClient.RevokeMembership(ctx, params.GroupId.String(), params.UserId, a); err != nil {
 		return fmt.Errorf("revoke membership: %w", err)
 	}
 	return nil

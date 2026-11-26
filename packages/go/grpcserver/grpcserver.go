@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"runtime/debug"
+	"time"
 
 	"buf.build/go/protovalidate"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
@@ -17,7 +18,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	grpcCodes "google.golang.org/grpc/codes"
-	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -27,6 +27,7 @@ import (
 type Config struct {
 	Address               string
 	Logger                *slog.Logger
+	HealthCheck           func(context.Context) error
 	Options               []grpc.ServerOption
 	Interceptors          []grpc.UnaryServerInterceptor
 	ValidationError       func(*grpc.UnaryServerInfo, error) error
@@ -75,9 +76,7 @@ func Run(ctx context.Context, cfg Config) error {
 	options = append(options, cfg.Options...)
 	server := grpc.NewServer(options...)
 
-	healthServer := health.NewServer()
-	healthpb.RegisterHealthServer(server, healthServer)
-	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+	healthpb.RegisterHealthServer(server, healthServer{check: cfg.HealthCheck})
 	cfg.Register(server)
 
 	listener, err := net.Listen("tcp", cfg.Address)
@@ -103,6 +102,30 @@ func Run(ctx context.Context, cfg Config) error {
 		log.Info("grpc server shutdown complete")
 		return nil
 	}
+}
+
+type healthServer struct {
+	healthpb.UnimplementedHealthServer
+	check func(context.Context) error
+}
+
+func (s healthServer) Check(ctx context.Context, req *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
+	if req.GetService() != "" {
+		return nil, status.Error(grpcCodes.NotFound, "unknown service")
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	if s.check != nil && s.check(ctx) != nil {
+		return &healthpb.HealthCheckResponse{
+			Status: healthpb.HealthCheckResponse_NOT_SERVING,
+		}, nil
+	}
+
+	return &healthpb.HealthCheckResponse{
+		Status: healthpb.HealthCheckResponse_SERVING,
+	}, nil
 }
 
 func recoverUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {

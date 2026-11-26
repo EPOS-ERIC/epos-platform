@@ -51,6 +51,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	discoverySvc := discovery.New(log, db.Discovery, authorizer)
 
 	return sharedgrpc.Run(ctx, sharedgrpc.Config{
+		HealthCheck:  db.Ping,
 		Address:      ":" + cfg.ServerPort,
 		Logger:       log,
 		Options:      []grpc.ServerOption{grpc.MaxRecvMsgSize(maxImportTurtleMessageSize)},

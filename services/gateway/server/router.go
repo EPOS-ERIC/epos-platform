@@ -17,7 +17,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/membership"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/metadatasync"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resource"
@@ -29,7 +28,6 @@ import (
 func NewRouter(
 	log *slog.Logger,
 	identityService *identity.Service,
-	membershipService *membership.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
 	contactRequestSender contactrequest.EmailSender,
 	dataRetrieverClient *clients.DataRetriever,
@@ -53,7 +51,6 @@ func NewRouter(
 	r.Use(requestLogger(log))
 	r.Use(recoverer(log))
 
-	// TODO: maybe we can have this endpoint be outside of the logger middleware so that we can siplify the middleware to not manually exclude health logs
 	r.Get("/health", health)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +74,6 @@ func NewRouter(
 	resourceService := resource.New(log, metadataLifecycleClient, converterService)
 	generatedHandler := handlers.NewOgenHandler(
 		identityService,
-		membershipService,
 		metadataLifecycleClient,
 		sharingService,
 		accessService,

@@ -447,11 +447,11 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 		}
 	}
 
-	if created := m.date(source, dctCreated); !created.IsZero() {
+	if created := m.time(source, dctCreated); !created.IsZero() {
 		dataset.SourceCreated = &created
 	}
 
-	if updated := m.date(source, dctModified); !updated.IsZero() {
+	if updated := m.time(source, dctModified); !updated.IsZero() {
 		dataset.SourceUpdated = &updated
 	}
 
@@ -1220,7 +1220,7 @@ func (m *mapper) keywords(subject, predicate string) []string {
 func (m *mapper) bool(subject, predicate string) bool {
 	return strings.EqualFold(m.optionalString(subject, predicate), "true")
 }
-func (m *mapper) date(subject, predicate string) time.Time { return m.time(subject, predicate) }
+
 func (m *mapper) time(subject, predicate string) time.Time {
 	value := m.optionalString(subject, predicate)
 	if parsed, err := time.Parse(time.RFC3339, value); err == nil {

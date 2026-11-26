@@ -19,16 +19,11 @@ type Service struct {
 func NewService(log *slog.Logger, metadataLifecycle *clients.MetadataLifecycle) *Service {
 	return &Service{
 		metadataLifecycle: metadataLifecycle,
-		log:               log.With("TODO-service", "identity"),
+		log:               log.With("component", "identity-service"),
 	}
 }
 
 func (s *Service) GetUser(ctx context.Context, actorID, id string) (domain.User, error) {
-	// TODO: move the self resolution in the metadataLifecycle
-	if id == "self" {
-		id = actorID
-	}
-
 	if id == "" {
 		return domain.User{}, fmt.Errorf("invalid user id: %w", apperror.Default(apperror.CodeValidationFailed))
 	}

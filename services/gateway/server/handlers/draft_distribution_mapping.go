@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"errors"
-
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/google/uuid"
@@ -21,27 +19,6 @@ func toProtoTemporal(v gatewayapi.OptTemporalCoverage) *metadatalifecyclev1.Temp
 		r.End = timestamppb.New(v.Value.End.Value)
 	}
 	return r
-}
-
-type protoDatasetTemporalRange struct {
-	temporal   *metadatalifecyclev1.Temporal
-	geological *metadatalifecyclev1.GeologicalTemporalCoverage
-}
-
-func toProtoDatasetTemporalRange(
-	temporal gatewayapi.OptTemporalCoverage,
-	geological gatewayapi.OptGeologicalTemporalCoverage,
-) (protoDatasetTemporalRange, error) {
-	if temporal.Set && geological.Set {
-		return protoDatasetTemporalRange{}, errors.New("dataset temporal coverage fields are mutually exclusive")
-	}
-	if temporal.Set {
-		return protoDatasetTemporalRange{temporal: toProtoTemporal(temporal)}, nil
-	}
-	if geological.Set {
-		return protoDatasetTemporalRange{geological: toProtoGeologicalTemporal(geological.Value)}, nil
-	}
-	return protoDatasetTemporalRange{}, nil
 }
 
 func toProtoGeologicalTemporal(v gatewayapi.GeologicalTemporalCoverage) *metadatalifecyclev1.GeologicalTemporalCoverage {
@@ -250,10 +227,10 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) (*metadatalifecyclev1.D
 func distributionFields(v gatewayapi.DistributionDraft) (string, string, *string, *int64) {
 	if v.IsWebServiceDistributionDraft() {
 		x := v.WebServiceDistributionDraft
-		return x.Title, x.Description.Value, protoOptionalString(x.License), protoOptionalInt64(x.ByteSize)
+		return x.Title, x.Description.Value, toClientStringPtr(x.License), protoOptionalInt64(x.ByteSize)
 	}
 	x := v.DownloadableFileDistributionDraft
-	return x.Title, x.Description.Value, protoOptionalString(x.License), protoOptionalInt64(x.ByteSize)
+	return x.Title, x.Description.Value, toClientStringPtr(x.License), protoOptionalInt64(x.ByteSize)
 }
 
 func toProtoWebServiceMethod(value gatewayapi.WebServiceMethod) metadatalifecyclev1.WebServiceMethod {

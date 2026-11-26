@@ -32,7 +32,7 @@ func New(pool *pgxpool.Pool) *Repo {
 }
 
 // Import persists one metadata batch in a transaction.
-func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBatch) (domain.ImportResult, error) {
+func (r *Repo) Import(ctx context.Context, actor string, batch domain.ImportBatch) (domain.ImportResult, error) {
 	result := domain.ImportResult{Warnings: batch.Warnings}
 
 	err := dbtx.RunWithTx(ctx, r.db, r.q, func(q *sqlc.Queries, tx pgx.Tx) error {
@@ -68,7 +68,7 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 				continue
 			}
 			imported, err := importEntity(ctx, tx, "dataset", dataset.ID.String(), &result, func() error {
-				return importDataset(ctx, q, actorID, value, groupIDs, organizationIDs, contactIDs, categoryIDs)
+				return importDataset(ctx, q, actor, value, groupIDs, organizationIDs, contactIDs, categoryIDs)
 			})
 			if err != nil {
 				return err
@@ -83,7 +83,7 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 				continue
 			}
 			imported, err := importEntity(ctx, tx, "software application", application.ID.String(), &result, func() error {
-				return importSoftwareApplication(ctx, q, actorID, value, groupIDs, organizationIDs, contactIDs, categoryIDs)
+				return importSoftwareApplication(ctx, q, actor, value, groupIDs, organizationIDs, contactIDs, categoryIDs)
 			})
 			if err != nil {
 				return err
@@ -98,7 +98,7 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 				continue
 			}
 			imported, err := importEntity(ctx, tx, "software source code", sourceCode.ID.String(), &result, func() error {
-				return importSoftwareSourceCode(ctx, q, actorID, value, groupIDs, organizationIDs, contactIDs, categoryIDs)
+				return importSoftwareSourceCode(ctx, q, actor, value, groupIDs, organizationIDs, contactIDs, categoryIDs)
 			})
 			if err != nil {
 				return err

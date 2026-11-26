@@ -30,6 +30,15 @@ type Service struct {
 }
 
 func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
+	if log == nil {
+		panic("groups: nil logger")
+	}
+	if store == nil {
+		panic("groups: nil store")
+	}
+	if authorizer == nil {
+		panic("groups: nil authorizer")
+	}
 	return &Service{
 		store:      store,
 		authorizer: authorizer,
@@ -37,8 +46,8 @@ func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
 	}
 }
 
-func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain.GroupInput) (domain.Group, error) {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionGroupManage)
+func (s *Service) Create(ctx context.Context, actorID string, input domain.GroupInput) (domain.Group, error) {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionGroupManage)
 	if err != nil {
 		return domain.Group{}, fmt.Errorf("authorize group creation: %w", err)
 	}
@@ -54,12 +63,12 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain
 	return group, nil
 }
 
-func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUID, input domain.GroupInput) (domain.Group, error) {
+func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, input domain.GroupInput) (domain.Group, error) {
 	if id == uuid.Nil {
 		return domain.Group{}, apperror.Default(apperror.CodeValidationFailed)
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionGroupManage)
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionGroupManage)
 	if err != nil {
 		return domain.Group{}, fmt.Errorf("authorize group replacement: %w", err)
 	}
@@ -75,12 +84,12 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 	return group, nil
 }
 
-func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID) error {
+func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return apperror.Default(apperror.CodeValidationFailed)
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), domain.GlobalPermissionGroupManage)
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionGroupManage)
 	if err != nil {
 		return fmt.Errorf("authorize group deletion: %w", err)
 	}

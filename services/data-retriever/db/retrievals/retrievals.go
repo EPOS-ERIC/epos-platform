@@ -40,11 +40,7 @@ func (r *Repo) CreatePlaceholder(ctx context.Context, req domain.PreparedRetriev
 		return domain.RetrievalRecord{}, err
 	}
 
-	size := head.ContentLength
-	if size < 0 {
-		size = -1
-	}
-	params, err := upsertRetrievalParams(req, head, size)
+	params, err := upsertRetrievalParams(req, head, max(head.ContentLength, -1))
 	if err != nil {
 		return domain.RetrievalRecord{}, err
 	}
@@ -154,8 +150,7 @@ func upsertRetrievalParams(req domain.PreparedRetrieval, head domain.ResponseHea
 	bodyHash := sha256.Sum256(req.Body)
 	var requestBodyText *string
 	if req.Body != nil {
-		bodyText := string(req.Body)
-		requestBodyText = &bodyText
+		requestBodyText = new(string(req.Body))
 	}
 	return retrievalsqlc.UpsertRetrievalParams{
 		ResourceID:        &req.ResourceID,

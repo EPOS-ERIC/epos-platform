@@ -74,10 +74,6 @@ func (r fakeRepository) SoftwareSourceCodeGroup(context.Context, uuid.UUID) (uui
 	return uuid.Nil, nil
 }
 
-func (r fakeRepository) IsDatasetPublished(context.Context, uuid.UUID) (bool, error) {
-	return r.published, nil
-}
-
 func (r fakeRepository) DatasetVersionAuthz(_ context.Context, datasetID, _ uuid.UUID) (domain.VersionAuthz, error) {
 	return domain.VersionAuthz{ResourceID: datasetID, GroupID: r.datasetGroup, Status: func() domain.Status {
 		if r.published {
@@ -103,14 +99,6 @@ func (r fakeRepository) SoftwareSourceCodeVersionAuthz(_ context.Context, source
 		}
 		return domain.Draft
 	}()}, nil
-}
-
-func (r fakeRepository) IsSoftwareApplicationPublished(context.Context, uuid.UUID) (bool, error) {
-	return r.published, nil
-}
-
-func (r fakeRepository) IsSoftwareSourceCodePublished(context.Context, uuid.UUID) (bool, error) {
-	return r.published, nil
 }
 
 func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
@@ -296,7 +284,7 @@ func TestCanReadPublishedResourceWithoutUser(t *testing.T) {
 	t.Parallel()
 	authorizer := New(slog.Default(), fakeRepository{datasetGroup: uuid.New(), published: true})
 
-	result, err := authorizer.CanReadResource(context.Background(), nil, domain.Dataset, uuid.New())
+	result, err := authorizer.CanReadDatasetVersion(context.Background(), nil, uuid.New(), uuid.New())
 	if err != nil {
 		t.Fatalf("read published resource: %v", err)
 	}
@@ -345,9 +333,9 @@ func TestAuthorizeDiscoveryPreservesVersionVisibilityRules(t *testing.T) {
 		{Type: domain.SoftwareApplication, ResourceID: uuid.New(), VersionID: uuid.New(), GroupID: groupID, Status: domain.Draft, Name: "member draft"},
 		{Type: domain.SoftwareSourceCode, ResourceID: uuid.New(), VersionID: uuid.New(), GroupID: otherGroupID, Status: domain.Draft, Name: "other draft"},
 	}
-	actor := domain.Actor("user-1")
+	actor := "user-1"
 	result, err := New(slog.Default(), fakeRepository{
-		user:         domain.AuthorizationUser{ID: string(actor), Status: domain.UserStatusActive},
+		user:         domain.AuthorizationUser{ID: actor, Status: domain.UserStatusActive},
 		activeGroups: []uuid.UUID{groupID},
 	}).AuthorizeDiscovery(context.Background(), &actor, candidates)
 	if err != nil {
@@ -375,10 +363,10 @@ func TestAuthorizeDiscoveryUsesGlobalAdminFromAuthorizationUser(t *testing.T) {
 		Status:     domain.Draft,
 		Name:       "admin draft",
 	}
-	actor := domain.Actor("admin")
+	actor := "admin"
 	result, err := New(slog.Default(), fakeRepository{
 		user: domain.AuthorizationUser{
-			ID:          string(actor),
+			ID:          actor,
 			Status:      domain.UserStatusActive,
 			GlobalAdmin: true,
 		},

@@ -84,9 +84,11 @@ func run() error {
 		cancelSync()
 		<-syncDone
 	}()
+	log.Info("converter service starting", "version", version)
 	return grpcserver.Run(ctx, grpcserver.Config{
-		Address: ":" + cfg.ServerPort,
-		Logger:  log,
+		HealthCheck: database.Pool.Ping,
+		Address:     ":" + cfg.ServerPort,
+		Logger:      log,
 		ValidationError: func(_ *grpc.UnaryServerInfo, err error) error {
 			return apperror.Field("request", "Invalid request.", err)
 		},

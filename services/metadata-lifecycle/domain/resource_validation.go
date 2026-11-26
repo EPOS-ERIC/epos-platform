@@ -15,7 +15,7 @@ func normalizeKeywords(values []string) ([]string, error) {
 	result := make([]string, 0, len(values))
 	for _, value := range values {
 		value = strings.TrimSpace(value)
-		if value == "" || !keywordPattern.MatchString(value) {
+		if !keywordPattern.MatchString(value) {
 			return nil, fmt.Errorf("keyword %q is invalid", value)
 		}
 		result = append(result, value)

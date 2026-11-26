@@ -22,12 +22,10 @@ func (s *Service) conversionRequested(ctx context.Context, event domain.Conversi
 	}
 
 	notification := domain.Notification{
-		EventKind:    domain.NotificationEventConversionRequested,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      fmt.Sprintf("Conversion requested: %s", event.Resource.Name),
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventConversionRequested,
+		Subject:   fmt.Sprintf("Conversion requested: %s", event.Resource.Name),
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}
 
 	return notification, recipients, nil
@@ -54,12 +52,10 @@ func (s *Service) membershipRequested(ctx context.Context, event domain.Membersh
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventMembershipRequested,
-		Subject:      "Membership requested",
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
+		EventKind: domain.NotificationEventMembershipRequested,
+		Subject:   "Membership requested",
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, append(recipients, globalRecipients...), nil
 }
 
@@ -83,12 +79,10 @@ func (s *Service) membershipAccepted(ctx context.Context, event domain.Membershi
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventMembershipAccepted,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      "Membership accepted",
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventMembershipAccepted,
+		Subject:   "Membership accepted",
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, []domain.NotificationRecipient{recipient}, nil
 }
 
@@ -112,12 +106,10 @@ func (s *Service) membershipRejected(ctx context.Context, event domain.Membershi
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventMembershipRejected,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      "Membership rejected",
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventMembershipRejected,
+		Subject:   "Membership rejected",
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, []domain.NotificationRecipient{recipient}, nil
 }
 
@@ -142,12 +134,10 @@ func (s *Service) roleRequested(ctx context.Context, event domain.RoleRequested)
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventRoleRequested,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      "Role requested",
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventRoleRequested,
+		Subject:   "Role requested",
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, append(recipients, globalRecipients...), nil
 }
 
@@ -171,12 +161,10 @@ func (s *Service) roleRequestAccepted(ctx context.Context, event domain.RoleRequ
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventRoleRequestAccepted,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      "Role request accepted",
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventRoleRequestAccepted,
+		Subject:   "Role request accepted",
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, []domain.NotificationRecipient{recipient}, nil
 }
 
@@ -200,12 +188,10 @@ func (s *Service) roleRequestRejected(ctx context.Context, event domain.RoleRequ
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventRoleRequestRejected,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      "Role request rejected",
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventRoleRequestRejected,
+		Subject:   "Role request rejected",
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, []domain.NotificationRecipient{recipient}, nil
 }
 
@@ -225,12 +211,10 @@ func (s *Service) roleAssigned(ctx context.Context, event domain.RoleAssigned) (
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventRoleAssigned,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      "Role assigned",
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventRoleAssigned,
+		Subject:   "Role assigned",
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, []domain.NotificationRecipient{recipient}, nil
 }
 
@@ -250,12 +234,10 @@ func (s *Service) permissionAssigned(ctx context.Context, event domain.Permissio
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventPermissionAssigned,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      "Permission assigned",
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventPermissionAssigned,
+		Subject:   "Permission assigned",
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, []domain.NotificationRecipient{recipient}, nil
 }
 
@@ -280,12 +262,10 @@ func (s *Service) resourceSubmitted(ctx context.Context, event domain.ResourceSu
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventResourceSubmitted,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      fmt.Sprintf("Resource submitted: %s", event.Resource.Name),
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventResourceSubmitted,
+		Subject:   fmt.Sprintf("Resource submitted: %s", event.Resource.Name),
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, append(recipients, globalRecipients...), nil
 }
 
@@ -321,12 +301,10 @@ func (s *Service) resourcePublished(ctx context.Context, event domain.ResourcePu
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventResourcePublished,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      fmt.Sprintf("Resource published: %s", event.Resource.Name),
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventResourcePublished,
+		Subject:   fmt.Sprintf("Resource published: %s", event.Resource.Name),
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, recipients, nil
 }
 
@@ -350,12 +328,10 @@ func (s *Service) resourceRejected(ctx context.Context, event domain.ResourceRej
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventResourceRejected,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      fmt.Sprintf("Resource rejected: %s", event.Resource.Name),
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventResourceRejected,
+		Subject:   fmt.Sprintf("Resource rejected: %s", event.Resource.Name),
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, recipients, nil
 }
 
@@ -379,11 +355,9 @@ func (s *Service) resourceUnpublished(ctx context.Context, event domain.Resource
 	}
 
 	return domain.Notification{
-		EventKind:    domain.NotificationEventResourceUnpublished,
-		TargetUserID: "", // set later in the for notification loop
-		TargetEmail:  "", // set later in the for notification loop
-		Subject:      fmt.Sprintf("Resource unpublished: %s", event.Resource.Name),
-		Body:         body,
-		Channel:      domain.NotificationChannelEmail,
+		EventKind: domain.NotificationEventResourceUnpublished,
+		Subject:   fmt.Sprintf("Resource unpublished: %s", event.Resource.Name),
+		Body:      body,
+		Channel:   domain.NotificationChannelEmail,
 	}, recipients, nil
 }

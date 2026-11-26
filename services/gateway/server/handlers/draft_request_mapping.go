@@ -19,72 +19,11 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_Dataset{Dataset: metadata}
 		return request, gatewayapi.WriteResourceTypeDataset, nil
 	case q.IsCreateSoftwareApplicationResourceRequest():
-		v := q.CreateSoftwareApplicationResourceRequest.Metadata
-		metadata := &metadatalifecyclev1.SoftwareApplicationInput{
-			Name:          v.Name,
-			Description:   v.Description,
-			Keywords:      toProtoKeywords(v.Keywords),
-			Creators:      uuidStrings(v.Creators),
-			Categories:    uuidStrings(v.Categories),
-			ContactPoints: uuidStrings(v.ContactPoints),
-		}
-		if v.MainEntityOfPage.Set {
-			metadata.MainEntityOfPage = new(v.MainEntityOfPage.Value.String())
-		}
-		if v.License.Set && !v.License.Null {
-			metadata.License = new(v.License.Value)
-		}
-		if v.Version.Set && !v.Version.Null {
-			metadata.Version = new(v.Version.Value)
-		}
-		if v.DownloadURL.Set {
-			metadata.DownloadUrl = new(v.DownloadURL.Value.String())
-		}
-		if v.Requirements.Set && !v.Requirements.Null {
-			metadata.Requirements = new(v.Requirements.Value)
-		}
-		if v.OperatingSystem.Set && !v.OperatingSystem.Null {
-			metadata.OperatingSystem = new(v.OperatingSystem.Value)
-		}
-		for _, id := range v.Identifiers {
-			metadata.Identifiers = append(metadata.Identifiers, toProtoVersionedIdentifierInput(id))
-		}
+		metadata := toProtoSoftwareApplicationDraftMetadata(q.CreateSoftwareApplicationResourceRequest.Metadata)
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_SoftwareApplication{SoftwareApplication: metadata}
 		return request, gatewayapi.WriteResourceTypeSoftwareApplication, nil
 	case q.IsCreateSoftwareSourceCodeResourceRequest():
-		v := q.CreateSoftwareSourceCodeResourceRequest.Metadata
-		metadata := &metadatalifecyclev1.SoftwareSourceCodeInput{
-			Name:          v.Name,
-			Description:   v.Description,
-			Keywords:      toProtoKeywords(v.Keywords),
-			Creators:      uuidStrings(v.Creators),
-			Categories:    uuidStrings(v.Categories),
-			ContactPoints: uuidStrings(v.ContactPoints),
-		}
-		if v.ProgrammingLanguage.Set {
-			metadata.ProgrammingLanguage = new(v.ProgrammingLanguage.Value)
-		}
-		if v.Repository.Set {
-			metadata.Repository = new(v.Repository.Value.String())
-		}
-		if v.License.Set && !v.License.Null {
-			metadata.License = new(v.License.Value)
-		}
-		if v.Version.Set && !v.Version.Null {
-			metadata.Version = new(v.Version.Value)
-		}
-		if v.SoftwareRequirements.Set && !v.SoftwareRequirements.Null {
-			metadata.SoftwareRequirements = new(v.SoftwareRequirements.Value)
-		}
-		if v.RuntimePlatform.Set && !v.RuntimePlatform.Null {
-			metadata.RuntimePlatform = new(v.RuntimePlatform.Value)
-		}
-		if v.MainEntityOfPage.Set {
-			metadata.MainEntityOfPage = new(v.MainEntityOfPage.Value.String())
-		}
-		for _, id := range v.Identifiers {
-			metadata.Identifiers = append(metadata.Identifiers, toProtoVersionedIdentifierInput(id))
-		}
+		metadata := toProtoSoftwareSourceCodeDraftMetadata(q.CreateSoftwareSourceCodeResourceRequest.Metadata)
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_SoftwareSourceCode{SoftwareSourceCode: metadata}
 		return request, gatewayapi.WriteResourceTypeSoftwareSourceCode, nil
 	default:
