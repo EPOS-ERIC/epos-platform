@@ -19,7 +19,7 @@ type Service struct {
 func NewService(log *slog.Logger, metadataLifecycle *clients.MetadataLifecycle) *Service {
 	return &Service{
 		metadataLifecycle: metadataLifecycle,
-		log:               log.With("TODO-service", "identity"),
+		log:               log.With("component", "identity-service"),
 	}
 }
 

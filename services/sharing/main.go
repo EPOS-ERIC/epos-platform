@@ -46,7 +46,7 @@ func main() {
 		}
 	}()
 
-	log.Info("sharing service started")
+	log.Info("sharing service started", "version", version)
 
 	database, err := db.Open(ctx, log, cfg)
 	if err != nil {

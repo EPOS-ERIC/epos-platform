@@ -404,8 +404,7 @@ func (a *Authorizer) CanRevokeGroupMembership(ctx context.Context, userID string
 		return allowed, nil
 	}
 
-	// TODO: use an enum for GROUP_ADMIN
-	targetIsAdmin, err := a.repository.HasGroupRole(ctx, targetUserID, groupID, "GROUP_ADMIN")
+	targetIsAdmin, err := a.repository.HasGroupRole(ctx, targetUserID, groupID, string(domain.GroupRoleAdmin))
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check target group role: %w", err)
 	}
@@ -459,7 +458,7 @@ func (a *Authorizer) CanManageSpecificGroupRole(ctx context.Context, userID stri
 	}()
 
 	allowed, err := a.CanManageGroupRoles(ctx, userID, groupID)
-	if err != nil || !allowed.Allowed || role != "GROUP_ADMIN" {
+	if err != nil || !allowed.Allowed || role != string(domain.GroupRoleAdmin) {
 		return allowed, err
 	}
 

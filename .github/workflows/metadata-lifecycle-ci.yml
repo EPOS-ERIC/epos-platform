@@ -9,7 +9,6 @@ on:
       - packages/go/logging/**
       - packages/go/observability/**
       - packages/go/middleware/**
-      - packages/go/apidocs/**
       - packages/go/postgres/**
       - packages/protobuf/**
       - packages/scripts/epos-banner.sh
@@ -28,7 +27,6 @@ on:
       - packages/go/logging/**
       - packages/go/observability/**
       - packages/go/middleware/**
-      - packages/go/apidocs/**
       - packages/go/postgres/**
       - packages/protobuf/**
       - packages/scripts/epos-banner.sh

@@ -275,7 +275,5 @@ func (s *Service) groupRequestsURL(groupID uuid.UUID, concept domain.Concept) st
 	if s.publicURL == "" || groupID == uuid.Nil {
 		return ""
 	}
-	// TODO: update this with the right url for the backoffice page
-
 	return fmt.Sprintf("%s/%s/manage-group?groupId=%s&panel=membership-requests", s.publicURL, section, groupID)
 }

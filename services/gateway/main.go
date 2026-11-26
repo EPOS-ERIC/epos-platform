@@ -27,7 +27,7 @@ func main() {
 
 	log := logging.New("gateway").With("service", "gateway")
 
-	log.Info("gateway service started")
+	log.Info("gateway service started", "version", version)
 
 	cfg, err := config.Load(*cfgPath)
 	if err != nil {
