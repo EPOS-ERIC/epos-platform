@@ -40,12 +40,7 @@ func (h *ogenHandler) RevokeUserAPIToken(ctx context.Context, params gatewayapi.
 		return apperror.Default(apperror.CodeUnauthenticated)
 	}
 
-	userID := params.UserId
-	if userID == "self" {
-		userID = actor
-	}
-
-	if err := h.metadataLifecycleClient.RevokeUserAPIToken(ctx, actor, userID); err != nil {
+	if err := h.metadataLifecycleClient.RevokeUserAPIToken(ctx, actor, params.UserId); err != nil {
 		return fmt.Errorf("revoke user API token: %w", err)
 	}
 
@@ -53,5 +48,10 @@ func (h *ogenHandler) RevokeUserAPIToken(ctx context.Context, params gatewayapi.
 }
 
 func (h *ogenHandler) RevokeSelfUserAPIToken(ctx context.Context) error {
-	return h.RevokeUserAPIToken(ctx, gatewayapi.RevokeUserAPITokenParams{UserId: "self"})
+	actor, ok := authcontext.ActorID(ctx)
+	if !ok {
+		return apperror.Default(apperror.CodeUnauthenticated)
+	}
+
+	return h.RevokeUserAPIToken(ctx, gatewayapi.RevokeUserAPITokenParams{UserId: actor})
 }

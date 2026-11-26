@@ -33,7 +33,7 @@ var _ gatewayapi.SecurityHandler = (*securityHandler)(nil)
 
 func (s *securityHandler) HandleBearerAuth(ctx context.Context, operation gatewayapi.OperationName, token gatewayapi.BearerAuth) (context.Context, error) {
 	// check if the provided token is a pat and if so handle it as such
-	if ok := strings.HasPrefix(token.Token, "epos_pat_"); ok {
+	if strings.HasPrefix(token.Token, "epos_pat_") {
 		digest := sha256.Sum256([]byte(token.Token))
 
 		user, err := s.identity.UserForAPIToken(ctx, digest[:])
