@@ -28,6 +28,12 @@ type Service struct {
 }
 
 func New(store Store, authorizer Authorizer) *Service {
+	if store == nil {
+		panic("concepts: nil store")
+	}
+	if authorizer == nil {
+		panic("concepts: nil authorizer")
+	}
 	return &Service{store: store, authorizer: authorizer}
 }
 

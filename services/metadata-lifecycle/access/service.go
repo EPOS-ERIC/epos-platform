@@ -49,6 +49,18 @@ type Service struct {
 }
 
 func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier) *Service {
+	if log == nil {
+		panic("access: nil logger")
+	}
+	if store == nil {
+		panic("access: nil store")
+	}
+	if authorizer == nil {
+		panic("access: nil authorizer")
+	}
+	if notifier == nil {
+		panic("access: nil notifier")
+	}
 	return &Service{
 		store:      store,
 		authorizer: authorizer,

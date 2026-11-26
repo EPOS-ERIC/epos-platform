@@ -51,7 +51,6 @@ func NewRouter(
 	r.Use(requestLogger(log))
 	r.Use(recoverer(log))
 
-	// TODO: maybe we can have this endpoint be outside of the logger middleware so that we can siplify the middleware to not manually exclude health logs
 	r.Get("/health", health)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

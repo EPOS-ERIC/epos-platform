@@ -41,6 +41,15 @@ type Service struct {
 }
 
 func New(log *slog.Logger, store Store, authorizer Authorizer, publicURL string) *Service {
+	if log == nil {
+		panic("notifications: nil logger")
+	}
+	if store == nil {
+		panic("notifications: nil store")
+	}
+	if authorizer == nil {
+		panic("notifications: nil authorizer")
+	}
 	return &Service{
 		store:      store,
 		authorizer: authorizer,
@@ -67,7 +76,7 @@ func (s *Service) ListTopics(ctx context.Context) ([]domain.NotificationTopic, e
 	return result, nil
 }
 
-func (s *Service) ListSubscriptions(ctx context.Context, actor string, userID string) ([]domain.NotificationSubscription, error) {
+func (s *Service) ListSubscriptions(ctx context.Context, actor, userID string) ([]domain.NotificationSubscription, error) {
 	allowed, err := s.authorizer.CanManageGlobalNotificationSubscriptions(ctx, actor, userID)
 	if err != nil {
 		return nil, fmt.Errorf("authorize notification subscription list: %w", err)
@@ -112,7 +121,7 @@ func (s *Service) ListSubscriptions(ctx context.Context, actor string, userID st
 	return visible, nil
 }
 
-func (s *Service) Subscribe(ctx context.Context, actor string, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) (domain.NotificationSubscription, error) {
+func (s *Service) Subscribe(ctx context.Context, actor, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) (domain.NotificationSubscription, error) {
 	topic, err := s.authorizeSubscription(ctx, actor, userID, groupID, topicKey, channel)
 	if err != nil {
 		return domain.NotificationSubscription{}, err
@@ -130,7 +139,7 @@ func (s *Service) Subscribe(ctx context.Context, actor string, userID string, gr
 	return domain.NotificationSubscription{UserID: userID, GroupID: groupID, TopicKey: topic.Key, Channel: channel}, nil
 }
 
-func (s *Service) Unsubscribe(ctx context.Context, actor string, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) error {
+func (s *Service) Unsubscribe(ctx context.Context, actor, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) error {
 	_, err := s.authorizeSubscription(ctx, actor, userID, groupID, topicKey, channel)
 	if err != nil {
 		return err
@@ -149,7 +158,7 @@ func (s *Service) Unsubscribe(ctx context.Context, actor string, userID string, 
 	return nil
 }
 
-func (s *Service) authorizeSubscription(ctx context.Context, actor string, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) (domain.NotificationTopic, error) {
+func (s *Service) authorizeSubscription(ctx context.Context, actor, userID string, groupID *uuid.UUID, topicKey domain.NotificationTopicKey, channel domain.NotificationChannel) (domain.NotificationTopic, error) {
 	topic, err := s.topic(ctx, topicKey)
 	if err != nil {
 		return domain.NotificationTopic{}, err

@@ -26,6 +26,15 @@ type Service struct {
 
 // New creates an authorized metadata import service.
 func New(log *slog.Logger, repository Repository, authorizer Authorizer) *Service {
+	if log == nil {
+		panic("metadataimport: nil logger")
+	}
+	if repository == nil {
+		panic("metadataimport: nil repository")
+	}
+	if authorizer == nil {
+		panic("metadataimport: nil authorizer")
+	}
 	return &Service{
 		authorizer: authorizer,
 		repository: repository,

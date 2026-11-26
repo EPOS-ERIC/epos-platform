@@ -47,7 +47,7 @@ func (s *Service) IssueAPIToken(ctx context.Context, actor string, rotate bool) 
 	return token, nil
 }
 
-func (s *Service) RevokeAPIToken(ctx context.Context, actor string, userID string) error {
+func (s *Service) RevokeAPIToken(ctx context.Context, actor, userID string) error {
 	var allowed domain.Result
 	var err error
 

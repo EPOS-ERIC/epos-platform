@@ -16,6 +16,8 @@ type conversionStore struct {
 	t *testing.T
 }
 
+type conversionAuthorizer struct{ Authorizer }
+
 func (s conversionStore) GetNotificationUserContext(_ context.Context, id string) (domain.UserSummary, error) {
 	return domain.UserSummary{ID: id, GivenName: "Preview", FamilyName: "User", Email: "preview@example.org"}, nil
 }
@@ -51,7 +53,7 @@ func TestBuildConversionRequested(t *testing.T) {
 		DefaultURL: "https://example.org/data",
 	}
 
-	s := New(slog.New(slog.NewTextHandler(io.Discard, nil)), conversionStore{t: t}, nil, "https://example.org/backoffice/")
+	s := New(slog.New(slog.NewTextHandler(io.Discard, nil)), conversionStore{t: t}, conversionAuthorizer{}, "https://example.org/backoffice/")
 	got, err := s.Build(context.Background(), event)
 	if err != nil {
 		t.Fatalf("Build() error = %v", err)

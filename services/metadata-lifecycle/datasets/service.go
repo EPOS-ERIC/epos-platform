@@ -51,7 +51,18 @@ type Service struct {
 }
 
 func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier) *Service {
-	// TODO: in all services we should have a validation check that all inputs are injected correctly and panic if not
+	if log == nil {
+		panic("datasets: nil logger")
+	}
+	if store == nil {
+		panic("datasets: nil store")
+	}
+	if authorizer == nil {
+		panic("datasets: nil authorizer")
+	}
+	if notifier == nil {
+		panic("datasets: nil notifier")
+	}
 	return &Service{
 		store:      store,
 		authorizer: authorizer,

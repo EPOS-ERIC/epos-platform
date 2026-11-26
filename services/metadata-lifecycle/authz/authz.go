@@ -40,6 +40,12 @@ type Authorizer struct {
 
 // New creates an authorizer backed by repository.
 func New(log *slog.Logger, repository repository) *Authorizer {
+	if log == nil {
+		panic("authz: nil logger")
+	}
+	if repository == nil {
+		panic("authz: nil repository")
+	}
 	return &Authorizer{
 		repository: repository,
 		log:        log.With("component", "authz-service"),
@@ -56,7 +62,7 @@ func (a *Authorizer) ListPermissions(ctx context.Context) ([]domain.Permission, 
 	return permissions, nil
 }
 
-func (a *Authorizer) CanReadUser(ctx context.Context, actorID string, targetID string) (result domain.Result, err error) {
+func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) (result domain.Result, err error) {
 	defer func() {
 		recordAuthzDecision(ctx, "CanReadUser", result.Allowed, result.Reason, err)
 	}()
@@ -85,7 +91,7 @@ func (a *Authorizer) CanReadUser(ctx context.Context, actorID string, targetID s
 }
 
 // CanManageGlobalNotificationSubscriptions permits self-management and global notification administrators.
-func (a *Authorizer) CanManageGlobalNotificationSubscriptions(ctx context.Context, actorID string, targetID string) (result domain.Result, err error) {
+func (a *Authorizer) CanManageGlobalNotificationSubscriptions(ctx context.Context, actorID, targetID string) (result domain.Result, err error) {
 	defer func() {
 		recordAuthzDecision(ctx, "CanManageGlobalNotificationSubscriptions", result.Allowed, result.Reason, err)
 	}()
@@ -125,7 +131,7 @@ func (a *Authorizer) CanManageGlobalNotificationSubscriptions(ctx context.Contex
 }
 
 // CanManageGroupNotificationSubscriptions permits active members to manage themselves and group notification managers to manage others.
-func (a *Authorizer) CanManageGroupNotificationSubscriptions(ctx context.Context, actorID string, targetID string, groupID uuid.UUID) (result domain.Result, err error) {
+func (a *Authorizer) CanManageGroupNotificationSubscriptions(ctx context.Context, actorID, targetID string, groupID uuid.UUID) (result domain.Result, err error) {
 	defer func() {
 		recordAuthzDecision(ctx, "CanManageGroupNotificationSubscriptions", result.Allowed, result.Reason, err)
 	}()
@@ -203,7 +209,7 @@ func (a *Authorizer) CanSubscribeToNotificationTopic(ctx context.Context, userID
 }
 
 // GroupsWithAnyPermissionForActiveMember lists groups where actor has any requested permission and target has an active membership.
-func (a *Authorizer) GroupsWithAnyPermissionForActiveMember(ctx context.Context, actorID string, targetID string, permissions []domain.GroupPermission) (groupIDs []uuid.UUID, err error) {
+func (a *Authorizer) GroupsWithAnyPermissionForActiveMember(ctx context.Context, actorID, targetID string, permissions []domain.GroupPermission) (groupIDs []uuid.UUID, err error) {
 	defer func() {
 		recordAuthzDecision(ctx, "GroupsWithAnyPermissionForActiveMember", len(groupIDs) > 0, "", err)
 	}()

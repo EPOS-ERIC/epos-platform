@@ -46,6 +46,18 @@ type Service struct {
 }
 
 func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier) *Service {
+	if log == nil {
+		panic("users: nil logger")
+	}
+	if store == nil {
+		panic("users: nil store")
+	}
+	if authorizer == nil {
+		panic("users: nil authorizer")
+	}
+	if notifier == nil {
+		panic("users: nil notifier")
+	}
 	return &Service{
 		store:      store,
 		authorizer: authorizer,
@@ -54,7 +66,7 @@ func New(log *slog.Logger, store Store, authorizer Authorizer, notifier Notifier
 	}
 }
 
-func (s *Service) GetByID(ctx context.Context, actorID string, userID string) (domain.User, error) {
+func (s *Service) GetByID(ctx context.Context, actorID, userID string) (domain.User, error) {
 	if userID == "self" {
 		userID = actorID
 	}
@@ -113,7 +125,7 @@ func (s *Service) List(ctx context.Context, actorID string) ([]domain.UserSummar
 	return users, nil
 }
 
-func (s *Service) GrantGlobalPermission(ctx context.Context, actorID string, userID string, permission domain.GlobalPermission) ([]domain.Notification, error) {
+func (s *Service) GrantGlobalPermission(ctx context.Context, actorID, userID string, permission domain.GlobalPermission) ([]domain.Notification, error) {
 	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionPermissionManage)
 	if err != nil {
 		return nil, fmt.Errorf("authorize global permission grant: %w", err)
@@ -145,7 +157,7 @@ func (s *Service) GrantGlobalPermission(ctx context.Context, actorID string, use
 	return notifications, nil
 }
 
-func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID string, userID string, permission domain.GlobalPermission) error {
+func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID, userID string, permission domain.GlobalPermission) error {
 	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionPermissionManage)
 	if err != nil {
 		return fmt.Errorf("authorize global permission revoke: %w", err)
@@ -163,7 +175,7 @@ func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID string, us
 	return nil
 }
 
-func (s *Service) AssignGlobalRole(ctx context.Context, actorID string, userID, role string) ([]domain.Notification, error) {
+func (s *Service) AssignGlobalRole(ctx context.Context, actorID, userID, role string) ([]domain.Notification, error) {
 	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {
 		return nil, fmt.Errorf("authorize global role assignment: %w", err)
@@ -194,7 +206,7 @@ func (s *Service) AssignGlobalRole(ctx context.Context, actorID string, userID, 
 	return notifications, nil
 }
 
-func (s *Service) RemoveGlobalRole(ctx context.Context, actorID string, userID, role string) error {
+func (s *Service) RemoveGlobalRole(ctx context.Context, actorID, userID, role string) error {
 	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {
 		return fmt.Errorf("authorize global role removal: %w", err)
@@ -211,7 +223,7 @@ func (s *Service) RemoveGlobalRole(ctx context.Context, actorID string, userID, 
 	return nil
 }
 
-func (s *Service) BlockUser(ctx context.Context, actorID string, userID, reason string) error {
+func (s *Service) BlockUser(ctx context.Context, actorID, userID, reason string) error {
 	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {
 		return fmt.Errorf("authorize user blocking: %w", err)
@@ -228,7 +240,7 @@ func (s *Service) BlockUser(ctx context.Context, actorID string, userID, reason 
 	return nil
 }
 
-func (s *Service) UnblockUser(ctx context.Context, actorID string, userID string) error {
+func (s *Service) UnblockUser(ctx context.Context, actorID, userID string) error {
 	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {
 		return fmt.Errorf("authorize user unblocking: %w", err)

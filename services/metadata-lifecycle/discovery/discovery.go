@@ -37,6 +37,15 @@ func New(
 	repository Repository,
 	authorizer Authorizer,
 ) *Service {
+	if log == nil {
+		panic("discovery: nil logger")
+	}
+	if repository == nil {
+		panic("discovery: nil repository")
+	}
+	if authorizer == nil {
+		panic("discovery: nil authorizer")
+	}
 	return &Service{
 		repository: repository,
 		authorizer: authorizer,

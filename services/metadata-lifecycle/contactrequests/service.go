@@ -28,6 +28,12 @@ type Service struct {
 }
 
 func New(targets targetReader, users userReader) *Service {
+	if targets == nil {
+		panic("contactrequests: nil targets")
+	}
+	if users == nil {
+		panic("contactrequests: nil users")
+	}
 	return &Service{
 		targets: targets,
 		users:   users,
