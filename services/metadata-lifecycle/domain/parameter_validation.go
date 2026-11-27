@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"net/textproto"
@@ -10,6 +11,8 @@ import (
 	"text/template"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
+	"github.com/google/uuid"
+	"golang.org/x/net/http/httpguts"
 )
 
 var (
@@ -120,6 +123,104 @@ func parseParameter(value ParameterInput, allowTemplate, allowMultipleValues boo
 	}
 	value.Schema = schema
 	return value, nil
+}
+
+func validateRequiredParameterDefault(parameter ParameterInput) error {
+	if schema, ok := parameter.Schema.(TemplateSchemaInput); ok {
+		return validateRequiredParameterDefaults("parameters", schema.Parameters)
+	}
+
+	if parameter.Required && parameter.Schema.DefaultValue() == nil {
+		return apperror.Field("default", "Required parameters must have a default.", nil)
+	}
+
+	return nil
+}
+
+func validateRequiredParameterDefaults(field string, parameters []ParameterInput) error {
+	for i, parameter := range parameters {
+		if err := validateRequiredParameterDefault(parameter); err != nil {
+			return apperror.PrefixTarget(err, fmt.Sprintf("%s[%d]", field, i))
+		}
+	}
+
+	return nil
+}
+
+// validateTemplateDefaults checks required defaults and renders active templates
+// without caller-supplied values, reporting errors against metadata fields.
+func validateTemplateDefaults(field string, parameters []WebServiceParameterInput, body *RequestBodyInput) error {
+	for i, parameter := range parameters {
+		if err := validateRequiredParameterDefault(parameter.ParameterInput); err != nil {
+			return apperror.PrefixTarget(err, fmt.Sprintf("%s[%d]", field, i))
+		}
+
+		if err := parameter.validateHeaderDefault(); err != nil {
+			return apperror.PrefixTarget(err, fmt.Sprintf("%s[%d]", field, i))
+		}
+	}
+
+	if body != nil {
+		if err := validateRequiredParameterDefaults("body_parameters", body.Parameters); err != nil {
+			return err
+		}
+	}
+
+	for i, parameter := range parameters {
+		schema, ok := parameter.Schema.(TemplateSchemaInput)
+		if !ok {
+			continue
+		}
+
+		target := fmt.Sprintf("%s[%d].template", field, i)
+
+		rendered, err := validateTemplateDefault(target, schema.Template, schema.Parameters, parameter.Required)
+		if err != nil {
+			return err
+		}
+
+		if rendered != nil && parameter.Location == ParameterLocationHeader && !httpguts.ValidHeaderFieldValue(*rendered) {
+			return apperror.Field(target, "Template defaults produce an invalid HTTP header value.", nil)
+		}
+	}
+
+	if body != nil {
+		_, err := validateTemplateDefault("body_template", body.Template, body.Parameters, *body.Required)
+		return err
+	}
+
+	return nil
+}
+
+func validateTemplateDefault(target, source string, inputs []ParameterInput, required bool) (*string, error) {
+	parameters := renderParameterInputs(inputs)
+
+	index := make(map[uuid.UUID]Parameter, len(parameters))
+	for _, parameter := range parameters {
+		index[parameter.ID] = parameter
+	}
+
+	values := accessValues{
+		resolved: make(map[uuid.UUID]AccessArray),
+		supplied: make(map[uuid.UUID]bool),
+	}
+
+	if err := values.resolveDefaults(index); err != nil {
+		return nil, apperror.Field(target, "Template has an invalid input default.", err)
+	}
+
+	rendered, err := values.renderTemplate(source, parameters, required)
+	if err == nil {
+		return rendered, nil
+	}
+
+	detail := "Template could not be rendered with defaults. Check the template expressions and input defaults."
+	if execution, ok := errors.AsType[template.ExecError](err); ok {
+		// return the actual template error so that the user can debug the template
+		detail = execution.Error()
+	}
+
+	return nil, apperror.Field(target, detail, err)
 }
 
 func parseParameters(values []ParameterInput) ([]ParameterInput, error) {

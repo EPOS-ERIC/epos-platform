@@ -493,6 +493,7 @@ AS $$
 DECLARE
     v_parameter_id uuid;
     v_parameter_kind parameter_schema_kind;
+    v_required boolean;
     v_schema_exists boolean;
     v_template_parent_id uuid;
     v_parent_kind parameter_schema_kind;
@@ -509,8 +510,8 @@ BEGIN
         END IF;
     END IF;
 
-    SELECT p.schema_kind, p.template_parameter_id
-    INTO v_parameter_kind, v_template_parent_id
+    SELECT p.schema_kind, p.required, p.template_parameter_id
+    INTO v_parameter_kind, v_required, v_template_parent_id
     FROM parameters AS p
     WHERE p.id = v_parameter_id;
 
@@ -531,6 +532,18 @@ BEGIN
     END;
     IF NOT v_schema_exists THEN
         RAISE EXCEPTION 'parameter % is missing schema row for kind %', v_parameter_id, v_parameter_kind;
+    END IF;
+
+    IF v_required AND NOT (CASE v_parameter_kind
+        WHEN 'STRING' THEN EXISTS (SELECT 1 FROM string_parameter_schemas WHERE parameter_id = v_parameter_id AND cardinality(default_value) > 0)
+        WHEN 'BOOLEAN' THEN EXISTS (SELECT 1 FROM boolean_parameter_schemas WHERE parameter_id = v_parameter_id AND default_value IS NOT NULL)
+        WHEN 'INTEGER' THEN EXISTS (SELECT 1 FROM integer_parameter_schemas WHERE parameter_id = v_parameter_id AND cardinality(default_value) > 0)
+        WHEN 'FLOAT' THEN EXISTS (SELECT 1 FROM float_parameter_schemas WHERE parameter_id = v_parameter_id AND cardinality(default_value) > 0)
+        WHEN 'DATETIME' THEN EXISTS (SELECT 1 FROM datetime_parameter_schemas WHERE parameter_id = v_parameter_id AND default_value IS NOT NULL)
+        WHEN 'TEMPLATE' THEN true
+    END) THEN
+        RAISE EXCEPTION 'required parameter % is missing a default', v_parameter_id
+            USING ERRCODE = 'check_violation';
     END IF;
 
     SELECT schema_kind
@@ -594,6 +607,35 @@ AFTER INSERT OR UPDATE OR DELETE ON parameter_templates
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
 
+-- Change the parent row's version before deferred validation, so schema edits
+-- and required-flag edits cannot commit against different snapshots.
+-- +goose StatementBegin
+CREATE FUNCTION serialize_parameter_schema_edit() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE parameters SET required = required
+    WHERE id IN (NEW.parameter_id, OLD.parameter_id);
+    RETURN NULL;
+END;
+$$;
+-- +goose StatementEnd
+
+CREATE TRIGGER string_parameter_schema_serialize
+AFTER INSERT OR UPDATE OR DELETE ON string_parameter_schemas
+FOR EACH ROW EXECUTE FUNCTION serialize_parameter_schema_edit();
+CREATE TRIGGER boolean_parameter_schema_serialize
+AFTER INSERT OR UPDATE OR DELETE ON boolean_parameter_schemas
+FOR EACH ROW EXECUTE FUNCTION serialize_parameter_schema_edit();
+CREATE TRIGGER integer_parameter_schema_serialize
+AFTER INSERT OR UPDATE OR DELETE ON integer_parameter_schemas
+FOR EACH ROW EXECUTE FUNCTION serialize_parameter_schema_edit();
+CREATE TRIGGER float_parameter_schema_serialize
+AFTER INSERT OR UPDATE OR DELETE ON float_parameter_schemas
+FOR EACH ROW EXECUTE FUNCTION serialize_parameter_schema_edit();
+CREATE TRIGGER datetime_parameter_schema_serialize
+AFTER INSERT OR UPDATE OR DELETE ON datetime_parameter_schemas
+FOR EACH ROW EXECUTE FUNCTION serialize_parameter_schema_edit();
+
 -- +goose Down
 
 DROP TABLE IF EXISTS parameter_templates, datetime_parameter_schemas, float_parameter_schemas, integer_parameter_schemas, boolean_parameter_schemas, string_parameter_schemas, parameters, web_service_bodies, web_service_contact_points, generic_web_services, wms_layers, wms_services, wmts_layers, wmts_services, wfs_services, web_services;
@@ -602,6 +644,7 @@ DROP FUNCTION IF EXISTS is_valid_wms_styles(text[]);
 DROP FUNCTION IF EXISTS is_valid_wmts_styles(text[]);
 DROP FUNCTION IF EXISTS validate_web_service_configuration();
 DROP FUNCTION IF EXISTS validate_parameter_schema();
+DROP FUNCTION IF EXISTS serialize_parameter_schema_edit();
 DROP FUNCTION IF EXISTS enum_option_list_has_non_finite_float(float_parameter_enum_option[]);
 DROP FUNCTION IF EXISTS float_parameter_values_have_non_finite(double precision[]);
 DROP FUNCTION IF EXISTS enum_option_list_matches_bounds(jsonb, numeric, numeric, numeric[]);

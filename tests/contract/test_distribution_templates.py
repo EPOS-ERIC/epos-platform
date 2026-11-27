@@ -7,13 +7,13 @@ class DistributionTemplatesContractTest(DistributionContractTestCase):
     def test_template_activation_and_required_children(self) -> None:
         """Verify the same child/default/branch rules for parameter and body templates."""
         cases = [
-            ("required", True, "{{.value}}", [child()], {"value": "supplied"}, "supplied"),
+            ("required", True, "{{.value}}", [child(default="default")], {"value": "supplied"}, "supplied"),
             ("skipped", True, "{{if .enabled}}{{.value}}{{else}}fallback{{end}}",
              [child("enabled", "BOOLEAN", default=False), child(position=1)], {}, "fallback"),
-            ("evaluated-missing", True, "{{if .enabled}}{{.value}}{{end}}",
-             [child("enabled", "BOOLEAN", default=True), child(position=1)], {}, 400),
+            ("evaluated-missing-on-override", True, "{{if .enabled}}{{.value}}{{end}}",
+             [child("enabled", "BOOLEAN", default=False), child(position=1)], {"enabled": True}, 400),
             ("required-skipped", True, "{{if .enabled}}{{.value}}{{end}}",
-             [child("enabled", "BOOLEAN", default=False), child(position=1, required=True)], {}, 400),
+             [child("enabled", "BOOLEAN", default=False), child(position=1, required=True, default="unused")], {}, ""),
             ("optional-defaults", False, "{{.left}}/{{.right}}",
              [child("left", default="a"), child("right", position=1, default="b")], {}, "a/b"),
             ("optional-missing", False, "{{.left}}/{{.right}}",
@@ -75,7 +75,7 @@ class DistributionTemplatesContractTest(DistributionContractTestCase):
         """Verify typed conditions, datetime formatting and unescaped template text."""
         source = '{{if and .enabled (gt .count 2) (lt .ratio 2.0)}}{{.when}}|{{.text}}{{else}}skipped{{end}}'
         children = [
-            child("enabled", "BOOLEAN"), child("count", "INTEGER", position=1),
+            child("enabled", "BOOLEAN", default=False), child("count", "INTEGER", position=1),
             child("ratio", "FLOAT", position=2),
             child("when", "DATETIME", position=3, layout="YYYY/MM/DD hh:mm:ss"),
             child("text", position=4),

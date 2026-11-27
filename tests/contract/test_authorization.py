@@ -157,6 +157,7 @@ class AuthorizationContractTest(unittest.TestCase):
             "group.category.manage": "GROUP",
             "global.category.manage": "GLOBAL",
             "global.converter.manage": "GLOBAL",
+            "global.monitoring.read": "GLOBAL",
         }
 
         response = self.gateway.get("/permissions", headers=NO_AUTH_HEADERS)
@@ -173,6 +174,35 @@ class AuthorizationContractTest(unittest.TestCase):
             self.assertEqual(permission["scope"], expected_scopes[permission["key"]])
             self.assertTrue(permission["label"])
             self.assertTrue(permission["description"])
+
+    def test_monitoring_permission_and_api_token(self) -> None:
+        """Verify monitoring authentication, direct grants, token access, and revocation."""
+
+        self.assert_unauthorized(self.gateway.get("/monitoring/distributions", headers=NO_AUTH_HEADERS))
+        self.assert_invalid_token(
+            self.gateway.get("/monitoring/distributions", headers={"Authorization": "Bearer invalid"})
+        )
+        user, user_id = self.create_user("monitoring", uuid4().hex)
+        self.assert_forbidden(user.get("/monitoring/distributions"))
+        token_response = user.post("/users/self/api-token")
+        self.assertEqual(token_response.status_code, 201)
+        token_client = GatewayClient(
+            SCHEMA,
+            os.getenv("GATEWAY_API_URL", "http://localhost:32000/v1"),
+            token_response.json()["token"],
+        )
+        self.assert_forbidden(token_client.get("/monitoring/distributions"))
+        self.grant_global_permission(user_id, "global.monitoring.read")
+        response = token_client.get("/monitoring/distributions")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.json(), list)
+        revoked = self.gateway.delete(
+            "/users/{id}/global-permissions/{permission}",
+            id=user_id,
+            permission="global.monitoring.read",
+        )
+        self.assertEqual(revoked.status_code, 204)
+        self.assert_forbidden(token_client.get("/monitoring/distributions"))
 
     def test_public_and_optional_read_authorization(self) -> None:
         """Verify public reads ignore tokens and optional reads enforce them."""
@@ -381,6 +411,7 @@ class AuthorizationContractTest(unittest.TestCase):
                 "global.resource.unpublish",
                 "global.category.manage",
                 "global.converter.manage",
+                "global.monitoring.read",
             ],
         )
 

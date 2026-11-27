@@ -67,27 +67,6 @@ func normalizeWMSURL(value *string) error {
 	return nil
 }
 
-func validateWMSRequiredDefaults(field string, values []WebServiceParameterInput) error {
-	for i, parameter := range values {
-		path := fmt.Sprintf("%s[%d]", field, i)
-		if !parameter.Required {
-			continue
-		}
-		if schema, ok := parameter.Schema.(TemplateSchemaInput); ok {
-			for j, input := range schema.Parameters {
-				if input.Required && input.Schema.DefaultValue() == nil {
-					return apperror.Field(fmt.Sprintf("%s.parameters[%d].default", path, j), "Required template inputs need a default for immediate execution.", nil)
-				}
-			}
-			continue
-		}
-		if parameter.Schema.DefaultValue() == nil {
-			return apperror.Field(path+".default", "Required parameters need a default for immediate execution.", nil)
-		}
-	}
-	return nil
-}
-
 // ############### INPUT ###############
 
 type WMSWebServiceInput struct {
@@ -128,10 +107,10 @@ func (value *WMSWebServiceInput) Normalize() error {
 	}
 	value.GetMapParameters = mapParameters
 	value.GetFeatureInfoParameters = featureInfoParameters
-	if err := validateWMSRequiredDefaults("get_map_parameters", mapParameters); err != nil {
+	if err := validateTemplateDefaults("get_map_parameters", mapParameters, nil); err != nil {
 		return err
 	}
-	return validateWMSRequiredDefaults("get_feature_info_parameters", featureInfoParameters)
+	return validateTemplateDefaults("get_feature_info_parameters", featureInfoParameters, nil)
 }
 
 func validateWMSLayers(defaultLayer string, layers []WMSLayerInput) error {
@@ -237,7 +216,7 @@ func normalizePersistedOperationParameters(values []WebServiceParameter, field s
 	if err != nil {
 		return nil, err
 	}
-	if err := validateWMSRequiredDefaults(field, inputs); err != nil {
+	if err := validateTemplateDefaults(field, inputs, nil); err != nil {
 		return nil, err
 	}
 	return applyNormalizedWebServiceParameters(values, inputs)

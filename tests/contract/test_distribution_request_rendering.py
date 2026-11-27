@@ -22,8 +22,8 @@ class DistributionRequestRenderingContractTest(DistributionContractTestCase):
         """Verify path substitution and query escaping preserve serialized URL structure."""
         choices = [{"value": "a,b"}, {"value": "c/d"}]
         detail = self.create_draft([web_distribution([
-            parameter("path", location="PATH", required=True),
-            parameter("another", position=1, location="PATH", required=True),
+            parameter("path", location="PATH", required=True, default="path"),
+            parameter("another", position=1, location="PATH", required=True, default="another"),
             parameter("q name/&", position=2),
             parameter("repeat", position=3, multiple_values=True, explode=True, enum=choices),
             parameter("joined", position=4, multiple_values=True, enum=choices),
@@ -53,7 +53,7 @@ class DistributionRequestRenderingContractTest(DistributionContractTestCase):
             parameter("Authorization", position=1, location="HEADER"),
             parameter("Content-Type", position=2, location="HEADER"),
         ], method="POST", body_content_type="application/json", body_template='{"message":"{{.text}}"}',
-            body_parameters=[child("text")])])
+            body_parameters=[child("text", default="default")])])
         distribution = detail["metadata"]["distributions"][0]
         service = distribution["web_service"]
         identifiers = {item["name"]: item["id"] for item in service["parameters"]}

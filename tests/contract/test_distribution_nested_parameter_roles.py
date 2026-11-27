@@ -7,13 +7,15 @@ class DistributionNestedParameterRolesContractTest(DistributionContractTestCase)
     def test_wfs_filter_template_preserves_roles_and_renders_values(self) -> None:
         """Regression: roles on filter children survive and render correctly."""
         children = [
-            child("minlongitude", "FLOAT", role="MIN_LON"),
-            child("minlatitude", "FLOAT", position=1, role="MIN_LAT"),
-            child("maxlongitude", "FLOAT", position=2, role="MAX_LON"),
-            child("maxlatitude", "FLOAT", position=3, role="MAX_LAT"),
-            child("minmagnitude", "FLOAT", position=4),
-            child("startdate", "DATETIME", position=5, role="START_DATE", layout="YYYY-MM-DD"),
-            child("enddate", "DATETIME", position=6, role="END_DATE", layout="YYYY-MM-DD"),
+            child("minlongitude", "FLOAT", role="MIN_LON", default=-180),
+            child("minlatitude", "FLOAT", position=1, role="MIN_LAT", default=-90),
+            child("maxlongitude", "FLOAT", position=2, role="MAX_LON", default=180),
+            child("maxlatitude", "FLOAT", position=3, role="MAX_LAT", default=90),
+            child("minmagnitude", "FLOAT", position=4, default=0),
+            child("startdate", "DATETIME", position=5, role="START_DATE", layout="YYYY-MM-DD",
+                  default="1970-01-01T00:00:00Z"),
+            child("enddate", "DATETIME", position=6, role="END_DATE", layout="YYYY-MM-DD",
+                  default="2020-01-01T00:00:00Z"),
         ]
         template = (
             "<ogc:Filter><ogc:And><ogc:BBOX><ogc:PropertyName>the_geom</ogc:PropertyName>"

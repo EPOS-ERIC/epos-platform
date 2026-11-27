@@ -18,7 +18,7 @@ func TestNewWebServiceInputNormalizesAndPreservesParameterOrder(t *testing.T) {
 		Format:      " Application/JSON ; Charset=UTF-8 ",
 		Parameters: []WebServiceParameterInput{
 			{Position: 1, Name: "z", Label: " Z ", Schema: StringSchema{}, Location: ParameterLocationQuery},
-			{Position: 0, Name: "item-id", Label: " Item ", Required: true, Schema: StringSchema{}, Location: ParameterLocationPath},
+			{Position: 0, Name: "item-id", Label: " Item ", Required: true, Schema: StringSchema{Default: []string{"item"}}, Location: ParameterLocationPath},
 			{Position: 1, Name: "a", Label: " A ", Schema: StringSchema{}, Location: ParameterLocationQuery},
 		},
 	}
@@ -315,8 +315,8 @@ func TestNewWebServiceNormalizesTypeAndVisibleOn(t *testing.T) {
 		Method:      HTTPMethodGet,
 		Format:      "application/json",
 		Parameters: []WebServiceParameter{
-			{ID: longitudeID, Name: "lon", Label: "Longitude", Role: &longitudeRole, Required: true, Schema: FloatSchema{}, Location: ParameterLocationQuery},
-			{ID: latitudeID, Name: "lat", Label: "Latitude", Role: &latitudeRole, Required: true, Schema: FloatSchema{}, Location: ParameterLocationQuery},
+			{ID: longitudeID, Name: "lon", Label: "Longitude", Role: &longitudeRole, Required: true, Schema: FloatSchema{Default: []float64{0}}, Location: ParameterLocationQuery},
+			{ID: latitudeID, Name: "lat", Label: "Latitude", Role: &latitudeRole, Required: true, Schema: FloatSchema{Default: []float64{0}}, Location: ParameterLocationQuery},
 		},
 	}
 	if err := dynamic.Normalize(); err != nil {
@@ -355,7 +355,7 @@ func TestNewWebServiceInputValidatesBodyAgainstMethod(t *testing.T) {
 		Parameters: []ParameterInput{{
 			Name:   "value",
 			Label:  "Value",
-			Schema: StringSchema{},
+			Schema: StringSchema{Default: []string{"42"}},
 		}},
 	}
 	input := HTTPWebServiceInput{
@@ -404,7 +404,7 @@ func TestNewWebServiceInputValidatesBodyAgainstMethod(t *testing.T) {
 			Template:    `{"value": {{.value}}}`,
 			Parameters: []Parameter{{
 				ID:   bodyParameterID,
-				Name: "value", Label: "Value", Schema: StringSchema{},
+				Name: "value", Label: "Value", Schema: StringSchema{Default: []string{"42"}},
 			}},
 		},
 	}

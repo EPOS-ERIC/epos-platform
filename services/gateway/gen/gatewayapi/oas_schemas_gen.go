@@ -7414,6 +7414,7 @@ const (
 	GlobalPermissionGlobalCategoryManage      GlobalPermission = "global.category.manage"
 	GlobalPermissionGlobalConfigurationManage GlobalPermission = "global.configuration.manage"
 	GlobalPermissionGlobalConverterManage     GlobalPermission = "global.converter.manage"
+	GlobalPermissionGlobalMonitoringRead      GlobalPermission = "global.monitoring.read"
 )
 
 // AllValues returns all GlobalPermission values.
@@ -7440,6 +7441,7 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalCategoryManage,
 		GlobalPermissionGlobalConfigurationManage,
 		GlobalPermissionGlobalConverterManage,
+		GlobalPermissionGlobalMonitoringRead,
 	}
 }
 
@@ -7487,6 +7489,8 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 	case GlobalPermissionGlobalConfigurationManage:
 		return []byte(s), nil
 	case GlobalPermissionGlobalConverterManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalMonitoringRead:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -7558,6 +7562,9 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 		return nil
 	case GlobalPermissionGlobalConverterManage:
 		*s = GlobalPermissionGlobalConverterManage
+		return nil
+	case GlobalPermissionGlobalMonitoringRead:
+		*s = GlobalPermissionGlobalMonitoringRead
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -9958,6 +9965,279 @@ func (s *MembershipUser) SetEmail(val string) {
 	s.Email = val
 }
 
+// Ref: #/components/schemas/MonitoringConcept
+type MonitoringConcept struct {
+	Concept   string            `json:"concept"`
+	ConceptID uuid.UUID         `json:"concept_id"`
+	Groups    []MonitoringGroup `json:"groups"`
+}
+
+// GetConcept returns the value of Concept.
+func (s *MonitoringConcept) GetConcept() string {
+	return s.Concept
+}
+
+// GetConceptID returns the value of ConceptID.
+func (s *MonitoringConcept) GetConceptID() uuid.UUID {
+	return s.ConceptID
+}
+
+// GetGroups returns the value of Groups.
+func (s *MonitoringConcept) GetGroups() []MonitoringGroup {
+	return s.Groups
+}
+
+// SetConcept sets the value of Concept.
+func (s *MonitoringConcept) SetConcept(val string) {
+	s.Concept = val
+}
+
+// SetConceptID sets the value of ConceptID.
+func (s *MonitoringConcept) SetConceptID(val uuid.UUID) {
+	s.ConceptID = val
+}
+
+// SetGroups sets the value of Groups.
+func (s *MonitoringConcept) SetGroups(val []MonitoringGroup) {
+	s.Groups = val
+}
+
+// Ref: #/components/schemas/MonitoringContactPoint
+type MonitoringContactPoint struct {
+	ID    uuid.UUID `json:"id"`
+	Email string    `json:"email"`
+}
+
+// GetID returns the value of ID.
+func (s *MonitoringContactPoint) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetEmail returns the value of Email.
+func (s *MonitoringContactPoint) GetEmail() string {
+	return s.Email
+}
+
+// SetID sets the value of ID.
+func (s *MonitoringContactPoint) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetEmail sets the value of Email.
+func (s *MonitoringContactPoint) SetEmail(val string) {
+	s.Email = val
+}
+
+// Ref: #/components/schemas/MonitoringDistribution
+type MonitoringDistribution struct {
+	ResourceID    uuid.UUID                `json:"resource_id"`
+	VersionID     uuid.UUID                `json:"version_id"`
+	Name          string                   `json:"name"`
+	Request       MonitoringRequest        `json:"request"`
+	ContactPoints []MonitoringContactPoint `json:"contact_points"`
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *MonitoringDistribution) GetResourceID() uuid.UUID {
+	return s.ResourceID
+}
+
+// GetVersionID returns the value of VersionID.
+func (s *MonitoringDistribution) GetVersionID() uuid.UUID {
+	return s.VersionID
+}
+
+// GetName returns the value of Name.
+func (s *MonitoringDistribution) GetName() string {
+	return s.Name
+}
+
+// GetRequest returns the value of Request.
+func (s *MonitoringDistribution) GetRequest() MonitoringRequest {
+	return s.Request
+}
+
+// GetContactPoints returns the value of ContactPoints.
+func (s *MonitoringDistribution) GetContactPoints() []MonitoringContactPoint {
+	return s.ContactPoints
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *MonitoringDistribution) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
+// SetVersionID sets the value of VersionID.
+func (s *MonitoringDistribution) SetVersionID(val uuid.UUID) {
+	s.VersionID = val
+}
+
+// SetName sets the value of Name.
+func (s *MonitoringDistribution) SetName(val string) {
+	s.Name = val
+}
+
+// SetRequest sets the value of Request.
+func (s *MonitoringDistribution) SetRequest(val MonitoringRequest) {
+	s.Request = val
+}
+
+// SetContactPoints sets the value of ContactPoints.
+func (s *MonitoringDistribution) SetContactPoints(val []MonitoringContactPoint) {
+	s.ContactPoints = val
+}
+
+// Ref: #/components/schemas/MonitoringGroup
+type MonitoringGroup struct {
+	ID            uuid.UUID                `json:"id"`
+	Name          string                   `json:"name"`
+	Distributions []MonitoringDistribution `json:"distributions"`
+}
+
+// GetID returns the value of ID.
+func (s *MonitoringGroup) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *MonitoringGroup) GetName() string {
+	return s.Name
+}
+
+// GetDistributions returns the value of Distributions.
+func (s *MonitoringGroup) GetDistributions() []MonitoringDistribution {
+	return s.Distributions
+}
+
+// SetID sets the value of ID.
+func (s *MonitoringGroup) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *MonitoringGroup) SetName(val string) {
+	s.Name = val
+}
+
+// SetDistributions sets the value of Distributions.
+func (s *MonitoringGroup) SetDistributions(val []MonitoringDistribution) {
+	s.Distributions = val
+}
+
+// Ref: #/components/schemas/MonitoringRequest
+type MonitoringRequest struct {
+	Method  MonitoringRequestMethod     `json:"method"`
+	URL     url.URL                     `json:"url"`
+	Headers NilMonitoringRequestHeaders `json:"headers"`
+	Body    NilString                   `json:"body"`
+}
+
+// GetMethod returns the value of Method.
+func (s *MonitoringRequest) GetMethod() MonitoringRequestMethod {
+	return s.Method
+}
+
+// GetURL returns the value of URL.
+func (s *MonitoringRequest) GetURL() url.URL {
+	return s.URL
+}
+
+// GetHeaders returns the value of Headers.
+func (s *MonitoringRequest) GetHeaders() NilMonitoringRequestHeaders {
+	return s.Headers
+}
+
+// GetBody returns the value of Body.
+func (s *MonitoringRequest) GetBody() NilString {
+	return s.Body
+}
+
+// SetMethod sets the value of Method.
+func (s *MonitoringRequest) SetMethod(val MonitoringRequestMethod) {
+	s.Method = val
+}
+
+// SetURL sets the value of URL.
+func (s *MonitoringRequest) SetURL(val url.URL) {
+	s.URL = val
+}
+
+// SetHeaders sets the value of Headers.
+func (s *MonitoringRequest) SetHeaders(val NilMonitoringRequestHeaders) {
+	s.Headers = val
+}
+
+// SetBody sets the value of Body.
+func (s *MonitoringRequest) SetBody(val NilString) {
+	s.Body = val
+}
+
+type MonitoringRequestHeaders map[string]string
+
+func (s *MonitoringRequestHeaders) init() MonitoringRequestHeaders {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type MonitoringRequestMethod string
+
+const (
+	MonitoringRequestMethodGET    MonitoringRequestMethod = "GET"
+	MonitoringRequestMethodPOST   MonitoringRequestMethod = "POST"
+	MonitoringRequestMethodPUT    MonitoringRequestMethod = "PUT"
+	MonitoringRequestMethodDELETE MonitoringRequestMethod = "DELETE"
+)
+
+// AllValues returns all MonitoringRequestMethod values.
+func (MonitoringRequestMethod) AllValues() []MonitoringRequestMethod {
+	return []MonitoringRequestMethod{
+		MonitoringRequestMethodGET,
+		MonitoringRequestMethodPOST,
+		MonitoringRequestMethodPUT,
+		MonitoringRequestMethodDELETE,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MonitoringRequestMethod) MarshalText() ([]byte, error) {
+	switch s {
+	case MonitoringRequestMethodGET:
+		return []byte(s), nil
+	case MonitoringRequestMethodPOST:
+		return []byte(s), nil
+	case MonitoringRequestMethodPUT:
+		return []byte(s), nil
+	case MonitoringRequestMethodDELETE:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MonitoringRequestMethod) UnmarshalText(data []byte) error {
+	switch MonitoringRequestMethod(data) {
+	case MonitoringRequestMethodGET:
+		*s = MonitoringRequestMethodGET
+		return nil
+	case MonitoringRequestMethodPOST:
+		*s = MonitoringRequestMethodPOST
+		return nil
+	case MonitoringRequestMethodPUT:
+		*s = MonitoringRequestMethodPUT
+		return nil
+	case MonitoringRequestMethodDELETE:
+		*s = MonitoringRequestMethodDELETE
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // NewNilDateTime returns new NilDateTime with value set to v.
 func NewNilDateTime(v time.Time) NilDateTime {
 	return NilDateTime{
@@ -9997,6 +10277,51 @@ func (o NilDateTime) Get() (v time.Time, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o NilDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewNilMonitoringRequestHeaders returns new NilMonitoringRequestHeaders with value set to v.
+func NewNilMonitoringRequestHeaders(v MonitoringRequestHeaders) NilMonitoringRequestHeaders {
+	return NilMonitoringRequestHeaders{
+		Value: v,
+	}
+}
+
+// NilMonitoringRequestHeaders is nullable MonitoringRequestHeaders.
+type NilMonitoringRequestHeaders struct {
+	Value MonitoringRequestHeaders
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilMonitoringRequestHeaders) SetTo(v MonitoringRequestHeaders) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilMonitoringRequestHeaders) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilMonitoringRequestHeaders) SetToNull() {
+	o.Null = true
+	var v MonitoringRequestHeaders
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilMonitoringRequestHeaders) Get() (v MonitoringRequestHeaders, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilMonitoringRequestHeaders) Or(d MonitoringRequestHeaders) MonitoringRequestHeaders {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -18039,6 +18364,9 @@ func (s *WebServiceDistributionType) UnmarshalText(data []byte) error {
 	}
 }
 
+// Every service configuration must produce a default request without caller-supplied values. Required
+// scalar parameters, including template children and body parameters, must have defaults. Active
+// templates must render with those defaults.
 // Ref: #/components/schemas/WebServiceDraft
 // WebServiceDraft represents sum type.
 type WebServiceDraft struct {

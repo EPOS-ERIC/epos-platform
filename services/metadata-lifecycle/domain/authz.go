@@ -60,6 +60,7 @@ const (
 	GlobalPermissionCategoryManage      GlobalPermission = "global.category.manage"
 	GlobalPermissionConfigurationManage GlobalPermission = "global.configuration.manage"
 	GlobalPermissionConverterManage     GlobalPermission = "global.converter.manage"
+	GlobalPermissionMonitoringRead      GlobalPermission = "global.monitoring.read"
 )
 
 // GroupPermission is a permission evaluated within a group's scope.

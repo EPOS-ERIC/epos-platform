@@ -71,7 +71,7 @@ func (w *GenericWebServiceInput) normalize(serviceType WebServiceType) error {
 	if err := validatePathParameters(w.TemplateURL, pathParameterNames(parameters)); err != nil {
 		return apperror.Field("template_url", "Template URL placeholders must match declared path parameters.", err)
 	}
-	return nil
+	return validateTemplateDefaults("parameters", parameters, w.Body)
 }
 
 // ############### END INPUT ###############
@@ -130,6 +130,9 @@ func (w *GenericWebService) normalize(serviceType WebServiceType) error {
 	}
 	if err := validatePathParameters(w.TemplateURL, pathParameterNames(parameters)); err != nil {
 		return apperror.Field("template_url", "Template URL placeholders must match declared path parameters.", err)
+	}
+	if err := validateTemplateDefaults("parameters", parameters, bodyInput); err != nil {
+		return err
 	}
 	normalized, err := applyNormalizedWebServiceParameters(w.Parameters, parameters)
 	if err != nil {
@@ -229,7 +232,7 @@ func (w GenericWebService) prepareHTTPRequest(parameters []DistributionAccessPar
 		values.supplied[formatParameterID] = true
 	}
 
-	// Render parameter templates and serialize values once, before placing them in the request.
+	// Render parameter templates and serialize values before assembling the request.
 	parameterText := make(map[uuid.UUID][]string, len(w.Parameters))
 	for _, parameter := range w.Parameters {
 		items := values.resolved[parameter.ID]
@@ -460,6 +463,14 @@ func (w GenericWebService) resolveAccessValues(assignments []DistributionAccessP
 		values.supplied[assignment.ID] = true
 	}
 
+	if err := values.resolveDefaults(parameters); err != nil {
+		return accessValues{}, internalValidationError(err)
+	}
+
+	return values, nil
+}
+
+func (values accessValues) resolveDefaults(parameters map[uuid.UUID]Parameter) error {
 	for id, parameter := range parameters {
 		if values.supplied[id] {
 			continue
@@ -472,13 +483,13 @@ func (w GenericWebService) resolveAccessValues(assignments []DistributionAccessP
 
 		resolved, err := resolveAccessValue(parameter.Schema, value)
 		if err != nil {
-			return accessValues{}, internalValidationError(err)
+			return err
 		}
 
 		values.resolved[id] = resolved
 	}
 
-	return values, nil
+	return nil
 }
 
 // resolveAccessValue checks scalar/array shape against schema multiplicity and
